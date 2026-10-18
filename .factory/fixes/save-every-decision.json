@@ -1,6 +1,13 @@
 {
   "base": "8c9b59b387e92c9a6cc39f43556fb31da45ed85b",
   "branch": "fix/save-every-decision",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e96-5ac8-7073-8152-107b67173337",
+    "head": null,
+    "start": "694f8c5663e00304f257a88be140f95909c1e5c0"
+  },
   "done_when": "The coordinator guide tells agents to save every human decision, direction and idea the same turn where Forge keeps it (item plan Notes or the recorded choice, decision docs batched into the next fix, a parked ideas list in plans/ideas.md), and to grill new directions one question at a time; new and existing repos get it through init and sync, and the guide test covers both",
   "fix_kind": "mechanical",
   "kind": "fix",
