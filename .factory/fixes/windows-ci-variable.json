@@ -1,0 +1,15 @@
+{
+  "base": "a5cd9456c09f437b698c2a2f5af9e2c8e32aca52",
+  "branch": "fix/windows-ci-variable",
+  "done_when": "The test isolation removes CI so Windows .cmd stand-ins pass git formats unchanged, and both cache tests pass on Windows, Linux and the local Mac",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T15:30:01.446344+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows CI two cache tests fail because cmd.exe expands %CI% inside the git stand-in's arguments, turning git's %cI date code into 'true'"
+}
