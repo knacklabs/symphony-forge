@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-18T16:38:10.910770+00:00",
+      "because": "Issue 922 (a native round's lock keeps the live coordinator's pid after hand-back) is the root of one of issue 937's cases; same lock and running-state code",
+      "done_when": "An item whose recorded worker run has no live process (checked by process identity, as the lanes do) and no live lock shows as stopped with its forge work next step on the board and in forge next, on new and adopted repos"
+    }
+  ],
   "base": "9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd",
   "branch": "fix/stale-worker-running",
-  "done_when": "An item whose recorded worker run has no live process (checked by process identity, as the lanes do) and no live lock shows as stopped with its forge work next step on the board and in forge next, on new and adopted repos",
+  "done_when": "A successful hand-back releases the item's lock, and an item whose recorded worker run has no live process (checked by process identity, as the lanes do) and no live lock shows as stopped with its forge work next step on the board and in forge next, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
   "status": "started",
