@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_upgrade_command.py\tThree unchanged upgrade cases time out during the local machine wait and leave child processes.",
+      "kind": "bug",
+      "path": "tests/test_upgrade_command.py",
+      "line": 83,
+      "text": "Three unchanged upgrade cases time out during the local machine wait and leave child processes.",
+      "from": "worker",
+      "item": "trim-worker-speed-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

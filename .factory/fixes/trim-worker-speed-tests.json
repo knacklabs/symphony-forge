@@ -10,13 +10,29 @@
   },
   "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7255a3c3f881bc74f6bcf38516c2b6efe5974e2fbf6897774b2f326bd6dc92e8",
+    "changed": "273826cfbe3ea6b641d9a43a822793d103b964c132db34bfa87342c3d3213939",
+    "commit": "91ba6f23c9c82418e961dfbff36ee2c1be7c3b1c",
+    "dismissals": [],
+    "findings": [],
+    "id": "776e1760-7181-47b9-a398-de1c4c280038",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T06:34:45.125475+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:41:20.987372+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
@@ -25,6 +41,7 @@
     "keys": {},
     "round": null
   },
+  "tests": "`uv run --frozen --python 3.11 forge test --pytest fae2104adebec6d0ccf12dd3a6dabd5be7785647` exited with status 1 on this machine.\nstdout_seq = [b'Started fix upgrade-forge-to-v9-9-9 in /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiran...ush.\\n', b\"Committed the upgrade to Forge v9.9.9.\\nRunning Forge v9.9.9's forge close upgrade-forge-to-v9-9-9.\\n\", ...]\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\n    return subprocess.run([sys.executable, str(self.bin / \"forge\"), *args],\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 95762.148241416, orig_timeout = 60\nstdout_seq = [b'Started fix upgrade-forge-to-v9-9-9 in /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiran...ush.\\n', b\"Committed the upgrade to Forge v9.9.9.\\nRunning Forge v9.9.9's forge close upgrade-forge-to-v9-9-9.\\n\", ...]\nstderr_seq = [], skip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-fix-trim-worker-speed-tests/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-88/popen-gw1/test_4_clients_receive_the_stu0/bin/forge', 'upgrade', 'v9.9.9']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n2 failed, 61 passed, 2 errors in 200.47s (0:03:20)",
   "why": "The worker speed, settings and stuck-worker tests replay shared code per tool and repeat adopted rows",
   "worker": "codex"
 }
