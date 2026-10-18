@@ -216,9 +216,13 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     state = repo.read_state(item, top) or {}
     worker._restore_settings(item, top, state)
     # A session subagent has no worker guard in the commit hook, so a committed change comes back too.
-    if repo.git("diff", "--name-only", head, "HEAD", "--", "forge.toml", cwd=top) and not (
+    # Compare with where the branch last met the default branch, not the round's start: a round that
+    # merged the default branch brings its newer settings, which are not the worker's edit.
+    base = repo.run("git", "merge-base", f"origin/{repo.default_branch(top)}", "HEAD",
+                    cwd=top).stdout.strip() or head
+    if repo.git("diff", "--name-only", base, "HEAD", "--", "forge.toml", cwd=top) and not (
             task.settings_allowed(item, top, state)):
-        repo.git("checkout", head, "--", "forge.toml", cwd=top)
+        repo.git("checkout", base, "--", "forge.toml", cwd=top)
         repo.git("commit", "-q", "-m", "Restore forge.toml; settings change in their own fix",
                  "--", "forge.toml", cwd=top)
         print("Restored forge.toml changes committed on this branch; settings change in their own fix.",
