@@ -1,4 +1,4 @@
-"""Close uses small related selections; workers run shared inputs' full suite."""
+"""Close defers broad selections to CI; workers keep only the item's tests."""
 from __future__ import annotations
 
 import json
@@ -71,12 +71,13 @@ def record_run(request):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     expected = {"test_changed", "test_related"}
     if shared_input:
-        # The new close contract defers this full selection to required CI;
-        # the explicit worker command must still run it with the core cap.
+        # Close still defers shared inputs to CI. The owner's new worker rule
+        # runs only the fix's touched test, with the same core cap.
         assert not list(log.iterdir())
         tested = env.repo.forge("test", cwd=where)
         assert tested.returncode == 0, tested.stdout + tested.stderr
-        expected.update({"test_unrelated", *(f"test_other_{number}" for number in range(3))})
+        expected = {"test_changed"}
+        assert tested.stdout.count("CI runs the full suite.") == 1, tested.stdout
     assert {path.name for path in log.iterdir()} == expected
     assert {json.loads(path.read_text()) for path in log.iterdir()} == {
         max(1, (os.cpu_count() or 1) // 2)}
