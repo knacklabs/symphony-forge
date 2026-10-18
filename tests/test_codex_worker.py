@@ -9,13 +9,14 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 from pathlib import Path
 
 import pytest
 
-from conftest import REAL_UV, _cached_sdk, _install, _install_claude_sdk
+from conftest import REAL_UV, _cached_sdk, _install, _install_claude_sdk, patient
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
@@ -273,14 +274,18 @@ def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path, clau
         assert f"Accepted Codex's request {method}" in log
 
     # An SDK whose handler moved: forge work refuses before it records any status, and before
-    # it starts Codex at all.
+    # it starts Codex at all. An unchanged install now reuses its check, so model a changed
+    # installation in a private environment, without changing the shared SDK fixture.
     moved = tmp_path / "moved"
     moved.mkdir()
     (moved / "sitecustomize.py").write_text(MOVED, encoding="utf-8")
     monkeypatch.setenv("PYTHONPATH", str(moved))
+    relative = Path("forge/codex-sdk") / f"openai-codex-{PIN}"
+    env = moved / relative
+    patient(lambda: shutil.copytree(sdk_data / relative, env, symlinks=os.name != "nt"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(moved))
     head, before = repo.git("rev-parse", "HEAD", cwd=folder), len(_stub(calls))
     refused = repo.forge("work", "BOARD/PAGE")
-    env = sdk_data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
     assert refused.stderr == (
         f"The Codex SDK in {env} should be openai-codex {PIN}, openai-codex-cli-bin {PIN}, "
         f"codex-cli {PIN}, but its Python says: the SDK client has no _approval_handler for Forge "

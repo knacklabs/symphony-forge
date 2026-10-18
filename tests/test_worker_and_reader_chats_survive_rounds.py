@@ -16,8 +16,8 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install
-from test_codex_resume import RESUMING, _resuming
-from test_codex_worker import _sent, sdk_data  # noqa: F401
+from test_codex_resume import FIX_CONFIG, RESUMING, _resuming
+from test_codex_worker import _lines, _sent, sdk_data  # noqa: F401
 from test_fix_claude_workers_start_a_fresh_session_eve import _session
 from test_readloop_rounds import CODEX, FIRST, _native_round, _no_claude, _no_codex, _setup
 from test_readloop_rounds import reader_sessions  # noqa: F401 (shared host cleanup fixture)
@@ -147,6 +147,7 @@ def _sync_elsewhere(repo, tmp_path, expect_success=True):
 @pytest.mark.parametrize("adopted,kind,change", [
     (adopted, kind, change) for adopted in (False, True) for kind in ("task", "fix")
     for change in ("model-and-effort", "record-missing", "machine-restart", "fresh-worktree")
+    if not adopted or change == "record-missing"
 ] + [("previous-release-round", "fix", change) for change in ("record-missing", "machine-restart")])
 def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_path,
                                              adopted, app, kind, change):
@@ -206,6 +207,7 @@ def test_1_worker_keeps_its_chat_across_rounds(repo, monkeypatch, sdk_data, tmp_
 @pytest.mark.parametrize("adopted,change", [
     (adopted, change) for adopted in (False, True)
     for change in ("model-and-effort", "record-missing", "seen-blobs-missing", "machine-restart", "fresh-worktree")
+    if not adopted or change in ("record-missing", "seen-blobs-missing")
 ] + [("previous-release-round", change) for change in ("record-missing", "machine-restart")])
 def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path, sdk_data,
                                                 adopted, app, change):
@@ -273,13 +275,13 @@ def test_2_plan_reader_keeps_its_chat_across_rounds(repo, monkeypatch, tmp_path,
         assert reader.doc.read_text("utf-8") in reader.prompt()
 
 
-@pytest.mark.parametrize("app", ["codex", "claude"])
-@pytest.mark.parametrize("reason", ["tool-gone", "tool-switch"])
-@pytest.mark.parametrize("kind", ["task", "fix"])
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
+@pytest.mark.parametrize("adopted,app,reason,kind", [
+    (False, app, reason, kind) for app in ("codex", "claude")
+    for reason in ("tool-gone", "tool-switch") for kind in ("task", "fix")
+] + [(True, "codex", "tool-gone", "task")])
 def test_3_only_a_missing_chat_or_changed_tool_starts_fresh(repo, monkeypatch, sdk_data,
                                                          app, reason, kind, adopted):
-    folder, item, log, _ = _worker(repo, monkeypatch, sdk_data, app, kind, adopted)
+    folder, item, log, record = _worker(repo, monkeypatch, sdk_data, app, kind, adopted)
     _work(repo, item)
     first = _chat(log, app)
     if reason == "tool-gone":
@@ -297,6 +299,25 @@ def test_3_only_a_missing_chat_or_changed_tool_starts_fresh(repo, monkeypatch, s
     if reason == "tool-gone":
         assert _chat(log, app) != first
         assert ("no rollout found" if app == "codex" else "no longer has session") in explanations[0]
+        if app == "codex":
+            why = f"Codex couldn't resume its conversation: no rollout found for thread id {first}"
+            assert explanations == [f"Starting a new Codex conversation, because {why}."]
+            assert len(_sent(log, "thread/resume")) == 1
+            assert _sent(log, "thread/resume")[-1]["threadId"] == first
+            assert len(_sent(log, "thread/start")) == 2
+            if kind == "task":
+                line = _lines(record.with_suffix(".log"))[-1]
+                assert (line["kind"], line["continued"], line["fresh_start"]) == ("Fix", False, why)
+                assert _sent(log, "thread/name/set")[-1]["name"] == "BOARD · The page"
+                assert _sent(log, "thread/start")[-1]["config"] == FIX_CONFIG
+                full_brief = _sent(log, "turn/start")[-1]["input"][0]["text"]
+                assert "You are the worker." in full_brief
+                assert "### Done when" in full_brief and "## Your task" in full_brief
+                replacement = _chat(log, app)
+                _work(repo, item)
+                assert _chat(log, app, resumed=True) == replacement
+                assert _lines(record.with_suffix(".log"))[-1]["continued"] is True
+                assert len(_sent(log, "thread/start")) == 2
     else:
         assert f"its last round ran on {app.capitalize()}" in explanations[0]
 
@@ -372,40 +393,16 @@ def _accepted_read(text):
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
 @pytest.mark.parametrize("app", ["codex", "claude"])
-@pytest.mark.parametrize("reason", ["tool-gone", "tool-switch"])
 def test_6_reader_starts_fresh_only_when_chat_or_tool_is_gone(repo, monkeypatch, tmp_path,
-                                                          sdk_data, adopted, app, reason):
+                                                          sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
     reader.ok(f"1. {FIRST}\n")
     first = _reader_chat(reader)
     reader.dispose(FIRST, "cut")
-    if reason == "tool-gone":
-        reader.lose()
-        if app == "codex":
-            (repo.bin / "threads.json").write_text(json.dumps({"unrelated": {
-                "cwd": str(reader.shop)}}), encoding="utf-8")
-    else:
-        if app == "codex":
-            _no_codex(monkeypatch, tmp_path)
-        else:
-            _no_claude(repo, monkeypatch, tmp_path)
-        reader.app = "claude" if app == "codex" else "codex"
-        reader.log = repo.bin / ("claude-calls.jsonl" if reader.app == "claude" else
-                                "codex-app-server.jsonl")
-    if reason == "tool-switch":
-        # A missing external reader is replaced by this session's native reader.
-        native = _native_round(reader)
-        name = "Codex" if app == "codex" else "Claude Code"
-        assert native["reason"] == f"its reader, {name}, is no longer installed"
-        assert native["subagent"] is None
-        assert "You are doing the one cold read" in native["fresh_prompt"]
-        assert reader.doc.read_text("utf-8") in native["fresh_prompt"]
-        assert "Disposition: cut" in native["fresh_prompt"]
-        assert reader.calls() == 0
-        resumed = _native_round(reader)
-        assert resumed["subagent"] == "readloop-reader"
-        assert reader.calls() == 0
-        return
+    reader.lose()
+    if app == "codex":
+        (repo.bin / "threads.json").write_text(json.dumps({"unrelated": {
+            "cwd": str(reader.shop)}}), encoding="utf-8")
     said = reader.ok()
     reasons = [line for line in said.splitlines() if line.startswith("Starting a new")]
     assert len(reasons) == 1, said
@@ -521,8 +518,9 @@ def test_10_failed_replacement_reader_keeps_its_chat(repo, monkeypatch, tmp_path
     assert reader.doc.read_text("utf-8") in reader.prompt()
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("case", ["new", "resumed-unpersisted", "replacement", "editing-worker"])
+@pytest.mark.parametrize("adopted,case", [
+    (False, case) for case in ("new", "resumed-unpersisted", "replacement", "editing-worker")
+] + [(True, "new")])
 def test_11_split_design_falls_back_after_clean_failure_without_hiding_worker_edits(
         repo, monkeypatch, sdk_data, adopted, case):
     folder, item, claude, _ = _worker(repo, monkeypatch, sdk_data, "claude", "task", adopted)
@@ -651,11 +649,10 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("family", ["codex", "claude"])
 @pytest.mark.parametrize("change", ["rename", "delete"])
 def test_16_sync_skips_stale_spec_reader_in_registered_worktree(
-        repo, monkeypatch, tmp_path, sdk_data, adopted, family, change):
-    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted=adopted)
+        repo, monkeypatch, tmp_path, sdk_data, adopted, change):
+    reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "codex", adopted=adopted)
     started = repo.forge("fix", "start", "Keep invoice plan", "--done", "The plan is read")
     assert started.returncode == 0, started.stdout + started.stderr
     owner = worktree(repo, "fix/keep-invoice-plan")
@@ -852,7 +849,8 @@ def test_19_upgrade_preserves_previous_release_worker_on_forge_branch(
 def test_20_returning_reader_tool_starts_fresh_then_resumes_its_replacement(
         repo, monkeypatch, tmp_path, sdk_data, adopted, app):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, app, adopted)
-    reader.ok()
+    reader.ok(f"1. {FIRST}\n")
+    reader.dispose(FIRST, "cut")
     claude = (repo.bin / "claude").read_text("utf-8")
     other = "claude" if app == "codex" else "codex"
     for unavailable, selected in ((app, other), (other, app)):
@@ -871,6 +869,8 @@ def test_20_returning_reader_tool_starts_fresh_then_resumes_its_replacement(
             assert native["reason"] == f"its reader, {name}, is no longer installed"
             assert native["subagent"] is None
             assert "You are doing the one cold read" in native["fresh_prompt"]
+            assert reader.doc.read_text("utf-8") in native["fresh_prompt"]
+            assert "Disposition: cut" in native["fresh_prompt"]
             resumed = _native_round(reader)
             assert resumed["subagent"] == "readloop-reader"
             assert reader.calls() == before

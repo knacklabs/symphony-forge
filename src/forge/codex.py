@@ -132,11 +132,27 @@ def _python(env: Path) -> Path:
     return env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 
-def sdk_problem() -> str:
+def sdk_problem(*, reuse: bool = False) -> str:
     """Why the pinned SDK can't be used, in one sentence, or "" when it can."""
     env = sdk_env()
     if not installed():
         return f"The Codex SDK {SDK_PIN} isn't installed in {env}."
+    if reuse:
+        cache = machine._repos_file().parent / "codex-sdk-check.json"
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        with _one_at_a_time(cache):
+            marker = env / READY
+            try:
+                stamp = marker.stat().st_mtime_ns
+            except FileNotFoundError:
+                return sdk_problem()
+            key = [str(marker.resolve()), stamp]
+            saved = _json(cache)
+            if saved.get("marker") == key and isinstance(saved.get("problem"), str):
+                return saved["problem"]
+            problem = sdk_problem()
+            _record(cache, marker=key, problem=problem)
+            return problem
     done = repo.run(str(_python(env)), "-c", PROBE)
     said = (done.stdout.strip() or done.stderr.strip()
             or f"it exited with status {done.returncode} without output").splitlines()[-1]
