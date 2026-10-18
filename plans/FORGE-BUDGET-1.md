@@ -59,16 +59,25 @@ reverts with its pull request.
 2. Today each test run uses `-n` workers on its own and small selections bypass the test lane.
    Make the test lane's capacity a count of test processes (cores minus the agent share), give each
    run a share of it through the `-n` value it passes to pytest, and count small selections too.
-   Tests: two concurrent test runs on a 8-core budget together never exceed the budget's process
-   count.
+   Each test entry records its allocated process count (the `processes` field, pinned by MEMORY).
+   An entry from an older release has no such field; count it as the old default share (four
+   processes per run on eight cores) so mixed releases still respect one total, and doctor names
+   any older-release entries. Tests: two concurrent test runs on an 8-core budget together never
+   exceed the budget's process count; an older-format entry uses the default share. This rule
+   replaces the old two-runs-of-four policy, so tests/test_machine_test_lane_capacity.py changes
+   with it.
 3. A GitHub Actions runner on the machine (Runner.Worker processes, as doctor already detects
-   Runner.Listener) counts as busy cores while a job runs. Tests: a fake busy runner reduces the
-   agent and test budgets; idle runners do not.
+   Runner.Listener) counts as busy cores while a job runs. Capacity, memory and runner use are
+   recomputed on every waiting pass, not once at admission. Tests: a fake busy runner reduces the
+   agent and test budgets; a command already waiting starts when the runner becomes idle.
 4. src/forge/machine.py around 169 and 463: waiters poll every 0.5 s and run one process-identity
    command per queue entry, rewriting the queue each pass. Poll at 1 s (back off to 2 s after a
-   minute), read all entries' process identities in one `ps` call per pass, and rewrite the queue
-   only when it changes. Keep PID-reuse safety. Tests: a queue of many waiters makes one identity
-   call per pass.
+   minute), check all entries' process identities in one pass (one `ps` call on macOS and Linux;
+   on Windows the existing native handle and creation-time check, once per entry per pass), and
+   rewrite the queue only when it changes. Keep PID-reuse safety. Tests: on POSIX a queue of many
+   waiters makes one identity call per pass; on Windows each entry is checked once per pass.
+   MEMORY pins the shared allocation data: each lane entry records `processes` (its allocated
+   process count) and one function sums the machine's allocation for doctor and SHARE.
 5. Doctor's machine section lists cores, free memory and floor, test processes in use, and busy
    runners. Tests: doctor output on new and adopted repos.
 
@@ -77,7 +86,7 @@ reverts with its pull request.
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | MEMORY | Memory floor and runners | the memory floor for every lane, runner-aware budgets, doctor's budget lines | 1, 3, 5 | src/forge/machine.py, src/forge/doctor.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md | tests/test_machine_memory_budget.py | | | |
-| SHARE | Shared test budget and cheap waiting | one test-process budget shared by all test runs, cheaper polling and identity checks | 2, 4 | src/forge/machine.py, src/forge/fasttest.py, src/forge/quicktest.py | tests/test_machine_shared_test_budget.py | MEMORY | | |
+| SHARE | Shared test budget and cheap waiting | one test-process budget shared by all test runs, cheaper polling and identity checks | 2, 4 | src/forge/machine.py, src/forge/fasttest.py, src/forge/quicktest.py | tests/test_machine_shared_test_budget.py, tests/test_machine_test_lane_capacity.py | MEMORY | | |
 
 New moving parts: none
 

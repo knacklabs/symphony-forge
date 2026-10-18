@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-BUDGET-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-18T10:14:50.425592+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T10:19:44.802310+00:00",
+      "step": "read"
     }
   ],
   "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
