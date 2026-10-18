@@ -1,6 +1,13 @@
 {
   "base": "f915d25dfe7ac22420ddc879d4b822e20f28f3fe",
   "branch": "fix/append-only-events",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e81-a103-7c13-8d5b-e2d24bb2b82d",
+    "head": null,
+    "start": "95e9ae143a7f1c8c055f8c7e62b4583a6bd118d1"
+  },
   "done_when": "Progress updates no longer rewrite the whole event log: live progress is kept apart from the history and history is appended, every reader still sees the same events, and a test shows an update writes a bounded amount whatever the history size, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
