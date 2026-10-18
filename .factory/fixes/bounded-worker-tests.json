@@ -1,0 +1,15 @@
+{
+  "base": "f915d25dfe7ac22420ddc879d4b822e20f28f3fe",
+  "branch": "fix/bounded-worker-tests",
+  "done_when": "A worker's forge test runs only the tests the item names (or a bounded selection) when the selection is broad, says that CI runs the full suite, and a test proves a shared-fixture change no longer runs the full suite locally, on new and adopted repos",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T10:14:25.983249+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A worker's forge test runs the whole suite when a shared test fixture changes (one change ran 3,190 tests for two hours on the laptop), because the broad-selection skip applies only at close"
+}
