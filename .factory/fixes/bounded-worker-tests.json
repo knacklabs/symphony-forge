@@ -1,6 +1,13 @@
 {
   "base": "f915d25dfe7ac22420ddc879d4b822e20f28f3fe",
   "branch": "fix/bounded-worker-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e81-8ef4-76f3-8576-f0d863a15174",
+    "head": null,
+    "start": "ab08c657d645113456a374b566260915609df625"
+  },
   "done_when": "A worker's forge test runs only the tests the item names (or a bounded selection) when the selection is broad, says that CI runs the full suite, and a test proves a shared-fixture change no longer runs the full suite locally, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
