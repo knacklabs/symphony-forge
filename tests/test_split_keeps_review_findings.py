@@ -21,6 +21,7 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
                         env.repo.path, dirs_exist_ok=True)
         env.repo.git("add", "-A")
         env.repo.git("commit", "-q", "-m", "Adopt the earlier release")
+        env.repo.git("checkout", "-q", "-b", "fix/upgrade-client")
         version = env.repo.forge("--version").stdout.split()[-1]
         config = (env.repo.path / "forge.toml").read_text("utf-8")
         env.commit(env.repo.path, "forge.toml", config.replace('version = "v1.2.2"',
@@ -30,6 +31,8 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
         env.repo.git("config", "core.hooksPath", (tmp_path / "setup-hooks").as_posix())
         env.repo.git("add", "-A")
         env.repo.git("commit", "-q", "-m", "Upgrade Forge")
+        env.repo.git("checkout", "-q", "main")
+        env.repo.git("merge", "-q", "--ff-only", "fix/upgrade-client")
         env.repo.git("push", "-q", "origin", "main")
     else:
         client, initialized = _fresh_client(env.repo, env.gh, tmp_path)
