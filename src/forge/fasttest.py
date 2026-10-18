@@ -275,8 +275,8 @@ def test(args) -> int:
     if parent and any(run["id"] == parent and run["kind"] == "test" and run.get("started_at")
                       and run.get("checkout_root") == top.as_posix() for run in machine.entries()):
         return pytest_tests(args.base, command)
-    entry = machine.join("test", top, repo.current_branch(top), None, None,
-                         small=review.few_tests(top, f"forge test --pytest {args.base}", args.base))
+    item = review.branch_item(repo.current_branch(top), top)
+    entry = machine.join("test", top, item[0] if item else None, None, None)
     try:
         entry["test_cpus"] = int(machine.test_cpus())
         return pytest_tests(args.base, command, entry)
