@@ -404,6 +404,9 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    # cmd.exe expands %CI% in a .cmd stub's arguments, case-insensitively: git's
+    # --format=%x00%cI%x00 would reach git as %x00truex00 on CI runners.
+    monkeypatch.delenv("CI", raising=False)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 
