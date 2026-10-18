@@ -23,7 +23,7 @@
     "id": "cb8b193f-191d-41e2-8000-3456c04b1174",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -36,10 +36,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "336fdf4cfc9d406dbc540ae40d9c9527bec012d4",
-    "keys": {},
-    "round": null
+    "close": "ce674bc5-77be-4bb5-b657-ccf0822d9917",
+    "head": "3f22d771b216bf569f137a328159e6f190a8682b",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 1
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 80f61902060e0ec4fbdba358985dfa7997b29966` exited with status 1 on this machine.\nRelated tests: tests/test_board_skips_dropped_fixes.py, tests/test_doctor_batches_file_checks.py, tests/test_live_stage.py, tests/test_live_status.py, tests/test_next_reuses_command_work.py, tests/test_progress_updates_keep_history.py, tests/test_round_seconds.py, tests/test_stack_start.py\n                env.commit(folder, \"forge.toml\", config.read_text(\"utf-8\").replace(\n                    json.dumps(f'\"{sys.executable}\" -c \"print(123)\"'),\n                    json.dumps(f'\"{sys.executable}\" -m pytest -vv{parallel} test_progress.py')))\n            process = subprocess.Popen([sys.executable, str(repo.bin / \"forge\"),\n                                       \"read\" if case.startswith(\"read\") else \"close\" if case.startswith((\"progress\", \"ci\", \"review\")) else \"work\", item], cwd=repo.path,\n                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)\n            connections, activities = [], []\n            try:\n                for expected in ([None] if case.startswith((\"progress\", \"ci\")) else expected_steps):\n>                   connection, _ = listener.accept()\n                                    ^^^^^^^^^^^^^^^^^\n\ntests/test_live_status.py:325:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>\n\n    def accept(self):\n        \"\"\"accept() -> (socket object, address info)\n\n        Wait for an incoming connection.  Return a new socket\n        representing the connection, and the address of the client.\n        For IP sockets, the address info is a pair (hostaddr, port).\n        \"\"\"\n>       fd, addr = self._accept()\n                   ^^^^^^^^^^^^^^\nE       TimeoutError: timed out\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/socket.py:294: TimeoutError\n2 failed, 94 passed in 337.80s (0:05:37)",
   "why": "Every progress update rewrites Forge's 14 MB event log under one lock, parsing about 45,000 records each time",
