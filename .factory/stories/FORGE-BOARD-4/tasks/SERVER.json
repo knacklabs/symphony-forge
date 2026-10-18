@@ -88,28 +88,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "eb78115ef2c91707b404bb2f5a150c5997fe8022d4f98499f36954f81f023588",
-    "changed": "e4a3e893e88f85ddb68802706dbf1dbe554ad9016e9d69156de9e34c326330da",
-    "commit": "21609b827e858f51b30abb61fd859990e2a40ee6",
+    "branch_diff": "6c559dff78ef195c2629bc181dfbe6a2a0f663a6fdab0be2f3fb7fe26108a8cf",
+    "changed": "c89a6396df9053e08d5338a3a78732b6699292b902ba3c6997929c3643a1f9d5",
+    "commit": "873dca3d9242cca496146c6976b9a86ba3dd2a49",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. This route now always serves the placeholder, and the asset route was removed. When SHELL adds board_app/shell.html, app.js and tokens.css as assigned, `forge board` will still show the placeholder and return 404 for its assets. The server therefore cannot display SHELL's page or its automatic refresh.",
-        "file": "src/forge/board_server.py",
-        "follow_up": "New finding on lines unchanged since the previous review.",
-        "gain": 4,
-        "harm": 3,
-        "line": 237,
-        "priority": "P1",
-        "title": "Removing shell and asset serving breaks the live page when SHELL lands",
-        "work": 1
-      }
-    ],
-    "id": "5dc39cb3-86b3-48d2-b484-975864023a29",
+    "findings": [],
+    "id": "9bce3f09-e7d6-4cef-b64e-1508af1d91d1",
     "status": "clean"
   },
   "round": 8,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T06:15:46.941448+00:00",
@@ -129,6 +117,10 @@
     },
     {
       "at": "2026-10-17T14:31:25.975487+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T17:31:25.139491+00:00",
       "step": "review"
     }
   ],
