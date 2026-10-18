@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BUDGET-1-MEMORY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T10:26:36.882125+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e3c2556305f4365afb1641df43a134480e684b13",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
