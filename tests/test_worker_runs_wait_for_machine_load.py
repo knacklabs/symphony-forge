@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install, machine_cores
+from conftest import ROOT, _install, machine_cores, machine_runners
 from test_close import env  # noqa: F401
 from test_codex_worker import sdk_data  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
@@ -86,6 +86,7 @@ def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person,
     repo = env.repo
     _release(env, adopted, lane_adapter)
     machine_cores(repo, 8)
+    machine_runners(repo)
     pytest_args = ["-m", "pytest", "-q", "-p", "no:cacheprovider", "probe"]
     argv = [sys.executable, *pytest_args, "-n", "4"]  # a fixed count the budget must still cap
     command = subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)

@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import machine_runners
 from test_close import env, run  # noqa: F401 (pytest fixture)
 
 STORY = "FIX-FORGE-S-OWN-CLOSES-STILL-RUN-THE-WHOLE-T"
@@ -19,8 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.mark.parametrize("shared_input", [None, "conftest.py", "pyproject.toml", "uv.lock"])
 def test_1_close_runs_only_changed_and_module_related_tests_unless_shared_inputs_change(
         env, monkeypatch, shared_input):
+    machine_runners(env.repo)
     # Use this repo's commands and dependencies, with tiny real tests so closing cannot
-    # accidentally recurse into the enclosing suite. Only review and GitHub are faked.
+    # accidentally recurse into the enclosing suite. Only machine inputs, review and GitHub are faked.
     for rel in ("forge.toml", "pyproject.toml", "uv.lock"):
         source = ROOT / rel
         if source.exists():

@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from conftest import IDLE_MACHINE, _install, machine_cores
+from conftest import IDLE_MACHINE, _install, machine_cores, machine_runners
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import finish, hold_agents, make_work, start
@@ -68,10 +68,11 @@ def measurements(repo, tmp_path, available=800_000_000, runners=0, total=16_000_
                  f"else:\n    sys.exit(subprocess.call([{real!r}, *sys.argv[1:]]))\n")
         shim.write_text(source, "utf-8")
         return memory, busy
+    machine_runners(repo, busy)
+    source = source.replace(IDLE_MACHINE, "")
     shim.write_text(source.replace("from forge.cli import main",
         "import json, pathlib\nfrom forge import machine\n"
         f"machine.memory = lambda: json.loads(pathlib.Path({memory.as_posix()!r}).read_text('utf-8'))\n"
-        f"machine.busy_runners = lambda: int(pathlib.Path({busy.as_posix()!r}).read_text('utf-8'))\n"
         "from forge.cli import main"), "utf-8")
     return memory, busy
 

@@ -487,9 +487,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             # The machine budget also caps fixed xdist counts outside worker sessions.
             cap = f" --maxprocesses={workers}" if fasttest.XDIST.search(command) else ""
             with contextlib.chdir(top):
-                capped = (fasttest.narrow_command(command, [], workers, [])
-                          if any(kind == "python" for kind, _, _ in
-                                 fasttest.quicktest.test_parts(top, command)) else command)
+                capped = fasttest.narrow_command(command, [], workers, [], launchers=False)
             env = {**os.environ, "FORGE_WORKER": "1",
                    "FORGE_TEST_LANE": entry["id"],
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,

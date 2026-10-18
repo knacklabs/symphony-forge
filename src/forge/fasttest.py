@@ -57,10 +57,15 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def narrow_command(command: str, excluded: list[str], workers: str, always: list[str]) -> str:
+def narrow_command(command: str, excluded: list[str], workers: str, always: list[str], *,
+                   launchers: bool = True) -> str:
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
+    pytest_tokens = [index for index, token in enumerate(tokens)
+                     if Path(token.group().strip("\"'")).name in {"pytest", "pytest.exe"}]
+    if not launchers and not pytest_tokens:
+        return command
     replacements = []
     for token in tokens:
         value = token.group().strip("\"'")
@@ -75,14 +80,11 @@ def narrow_command(command: str, excluded: list[str], workers: str, always: list
     options += always  # forge.toml's always_test, whatever roots the command names
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
     additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
-    found = False
-    for index, token in enumerate(tokens):
-        if Path(token.group().strip("\"'")).name in {"pytest", "pytest.exe"}:
-            end = next((part.start() for part in tokens[index + 1:]
-                        if part.group()[0] in ";&|<>"), len(command))
-            replacements.append((end, end, " " + additions + " "))
-            found = True
-    if not found:
+    for index in pytest_tokens:
+        end = next((part.start() for part in tokens[index + 1:]
+                    if part.group()[0] in ";&|<>"), len(command))
+        replacements.append((end, end, " " + additions + " "))
+    if not pytest_tokens:
         # A test launcher must forward its arguments to pytest, just as for a full run.
         command += " " + additions
     for start, end, value in sorted(replacements, reverse=True):

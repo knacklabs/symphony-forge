@@ -49,11 +49,33 @@ sys.exit(main())
 
 def machine_cores(repo, count, system_count=None):
     """Report a machine's CPU count at the command boundary, without a production test flag."""
+    override = (f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+                f"os.process_cpu_count = lambda: {count!r}\n")
     shim = repo.bin / "forge"
     source = shim.read_text("utf-8")
     shim.write_text(source.replace("from forge.cli import main",
-        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
-        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
+        override + "from forge.cli import main"), "utf-8")
+    # Inline Python test commands inherit PYTHONPATH, but do not use the Forge launcher.
+    startup = repo.bin / "sitecustomize.py"
+    startup.write_text((startup.read_text("utf-8") if startup.exists() else "") + override, "utf-8")
+
+
+def machine_runners(repo, count: int | Path = 0):
+    """Supply runner inventory to inline Python too; keep process identity queries real."""
+    command = "tasklist" if os.name == "nt" else "ps"
+    real = shutil.which(command)
+    args = ["/FO", "CSV", "/NH"] if os.name == "nt" else ["-axo", "comm="]
+    reading = (f"int(pathlib.Path({count.as_posix()!r}).read_text('utf-8'))"
+               if isinstance(count, Path) else repr(count))
+    worker = ('"Runner.Worker.exe","101","Console","1","100 K"\n'
+              if os.name == "nt" else "/runner/bin/Runner.Worker\n")
+    _install(repo.bin, command, f'''#!{sys.executable}
+import pathlib, subprocess, sys
+if sys.argv[1:] == {args!r}:
+    sys.stdout.write({worker!r} * {reading})
+else:
+    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]]))
+''')
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
