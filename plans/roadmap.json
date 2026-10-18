@@ -294,6 +294,12 @@
       "title": "Drop a fix nobody wants any more, and bring it back later",
       "status": "pending",
       "order": 85
+    },
+    {
+      "key": "FORGE-GITCOST-1",
+      "title": "Forge commands start far fewer git processes",
+      "status": "pending",
+      "order": 86
     }
   ],
   "epics": [

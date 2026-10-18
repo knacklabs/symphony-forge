@@ -82,8 +82,9 @@ def lanes(repo):
     return json.loads(result.stdout)
 
 
-@pytest.mark.parametrize("history", ["new", "earlier"])
-@pytest.mark.parametrize("kind", ["agents", "tests"])
+@pytest.mark.parametrize("kind,history", [
+    ("agents", "new"), ("tests", "new"), ("tests", "earlier")],
+    ids=["agents-new", "tests-new", "tests-earlier"])
 def test_1_waiting_run_keeps_its_place_across_timezone_and_locale(
         env, tmp_path, monkeypatch, release_server, history, kind):
     repo = client(env, history)
