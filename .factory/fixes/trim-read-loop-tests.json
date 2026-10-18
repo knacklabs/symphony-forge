@@ -1,6 +1,13 @@
 {
   "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
   "branch": "fix/trim-read-loop-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14db2-22f3-7042-918a-476610070e08",
+    "head": null,
+    "start": "5cb25c48bf5bb023e8765dac9128b00eb87dece4"
+  },
   "done_when": "The read-loop and suggestion tests share one repo per setup where cases don't interfere, keep one adopted case per rule, and still cover every wording and suggestion row",
   "fix_kind": "mechanical",
   "kind": "fix",
