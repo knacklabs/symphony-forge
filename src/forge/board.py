@@ -242,9 +242,8 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
 
 def machine_board(top: Path, history: Item | None = None, trim: bool = True, cache: Item | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
-    `trim` leaves out work finished more than seven days ago; the page keeps it. The live page
-    passes `cache`, which keeps each row with its inputs between calls; only rows whose inputs
-    changed are derived again, and their ids are listed in `cache["rebuilt"]`."""
+    `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
+    `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
     from forge import known_issues, nextstep, time_records
 
     trees = story.worktrees(top)
@@ -361,9 +360,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if cache is None:
             return derive(item, kind, title, state, where)
-        # ponytail: a row's inputs are every fact that names its story or fix, a substring match
-        # that can over-include (SHOP-1 in SHOP-10) and so only rebuilds more; a fact that names
-        # neither waits for the row's own inputs to change.
+        # ponytail: a row's inputs are the facts that name its story or fix, a substring match that can
+        # over-include (SHOP-1 in SHOP-10) and only rebuilds more; a fact naming neither is not an input.
         own = item.split("/")[0]
         inputs = json.dumps([
             # A story's next step reads the default branch, so a story row also rebuilds when it moves.
