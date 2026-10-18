@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import time
+import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stdout
 from pathlib import Path
@@ -60,6 +61,7 @@ def hold(top: Path, item: str, kind: str, models: dict[str, str]) -> Iterator[tu
     """The session takes the item's lock and joins the agent line; both stay held until handback,
     and only a failure before the handout gives them back."""
     owner = session()
+    owner["process"]["native_run"] = str(uuid.uuid4())
     command = "read" if kind == "Grill" else "work"
     lock = codex._item_file(top, item, ".lock", kind)
     held = codex._take(lock, owner["process"])
@@ -199,7 +201,8 @@ def handback(args: Any) -> int:
             if "role" in pending:
                 kept = _work_result(path, args.item, pending, said, owner, args.subagent)
                 return 0
-            codex._record(path, native={"session": owner["id"], "subagent": args.subagent})
+            codex._record(path, native={"session": owner["id"], "subagent": args.subagent,
+                                        "native_run": held.get("native_run")})
             return story.read_result(Path(pending["checkout"]), args.item, pending["result"], said)
         finally:
             if not kept:
@@ -250,6 +253,7 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     codex._record(path, question=asked or None, question_id=identity,
                   **({"native_round": None} if said else {}),  # finished: next offers close
                   native={"session": owner["id"], "subagent": subagent,
+                          "native_run": pending["entry"]["process"].get("native_run"),
                           "head": repo.git("rev-parse", "HEAD", cwd=top),
                           "rounds": pending["result"]["round"], "outcome": outcome})
     repo.record_event(top, item, "run end", kind="work", round=pending["result"]["round"],

@@ -1000,13 +1000,19 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
     runs = board.active_runs(top, item, round_number=state.get("round"))
-    if (status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False)
+    if (status == "working" and codex._lock_alive(lock) is False
             and not any(run.get("kind") in ("work", "worker") for run in runs)):
         native_round = codex._json(lock.with_suffix(".json")).get("native_round")
-        sentence, step = "{label}'s worker has stopped.", "forge work {item}" if native_round else "forge close {item}"
+        activity = board._event_history(top)[1].get(item, [])
+        ended = {event.get("run_id") for event in activity if event.get("event") == "run end"}
+        interrupted = any(event.get("event") == "run start" and event.get("kind") in ("work", "worker")
+                          and event.get("id") not in ended and event.get("round") == state.get("round")
+                          for event in activity)
+        sentence, step = "{label}'s worker has stopped.", ("forge work {item}" if native_round or interrupted
+                                                          else "forge close {item}")
     if (status not in ("merged", "done") and any(run.get("kind") == "test" for run in runs)
             and not any(run.get("kind") in ("work", "worker", "review") for run in runs)
-            and (not lock.exists() or codex._alive(codex._json(lock)) is False)):
+            and codex._lock_alive(lock) is False):
         sentence, step = "Tests are running for {label}.", "wait for them to finish, then forge next"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch

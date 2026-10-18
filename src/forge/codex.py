@@ -1054,13 +1054,25 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
         lock.unlink(missing_ok=True)
 
 
+def _lock_alive(lock: Path) -> bool | None:
+    """A completed native round frees its lock even while its host session survives."""
+    owner, saved = _json(lock), _json(lock.with_suffix(".json"))
+    native = saved.get("native") or {}
+    if native and not saved.get("pending") and (
+            owner.get("native_run") and owner["native_run"] == native.get("native_run")
+            or not owner.get("native_run") and not owner.get("saves_chat")
+            and native.get("rounds") is not None and not saved.get("native_round")):
+        return False
+    return _alive(owner) if lock.is_file() else False
+
+
 def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] | None:
     """Take the lock for `me` by an exclusive create, clearing a stale one first. None once taken;
     else the owner keeping it, and True, or None when Forge can't tell, which counts as running."""
     with _one_at_a_time(lock):
         if lock.exists():
             owner = _json(lock)
-            alive = _alive(owner)
+            alive = _lock_alive(lock)
             if alive is not False:
                 return owner, alive
             lock.unlink(missing_ok=True)

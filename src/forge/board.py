@@ -231,7 +231,12 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
         kind = event.get("kind")
         if kind in ("work", "worker") or kind == "read" and event.get("family") == "codex":
             lock = codex._item_file(top, item, ".lock", "Grill" if kind == "read" else "Build")
-            if lock.is_file() and codex._alive(codex._json(lock)) is False:
+            live = repo.command_fact("live worker processes", top, machine.entries)
+            root = repo.command_fact("main checkout", top, lambda: machine.main_checkout(top).as_posix())
+            if codex._lock_alive(lock) is False and not any(
+                    run.get("repo_root") == root and run.get("item") == item
+                    and run.get("kind") in (("read",) if kind == "read" else ("work", "worker"))
+                    and run.get("round") == event.get("round") for run in live):
                 continue
         runs.append(event)
     return runs
@@ -380,7 +385,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                     if isinstance(f, dict) and n not in dismissed]
         worker = None
         lock = codex._item_file(top, item, ".lock", "Grill" if kind == "story" else "Build")
-        if lock.is_file() and codex._alive(codex._json(lock)) is not False:
+        if codex._lock_alive(lock) is not False:
             family = state.get("worker")
             role = "grill" if kind == "story" else "build" if kind == "task" else "lite"
             if family == "codex" and kind != "story":
