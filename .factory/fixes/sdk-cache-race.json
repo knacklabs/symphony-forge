@@ -4,12 +4,20 @@
   "done_when": "Parallel test workers never see a half-built or missing cached SDK: the rebuild builds in a private folder and moves it into place under a lock, and a test with two concurrent rebuilds passes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T02:21:06.661454+00:00",
       "step": "start"
     }
   ],
-  "why": "In CI, parallel test workers sometimes find the tests' cached Claude Agent SDK missing, because the cache rebuild added after the restart is not safe when two workers rebuild at once"
+  "stuck": {
+    "close": null,
+    "head": "4a38dbd8dd6faa55a2ea9143bfb442ff73f7da12",
+    "keys": {},
+    "round": null
+  },
+  "why": "In CI, parallel test workers sometimes find the tests' cached Claude Agent SDK missing, because the cache rebuild added after the restart is not safe when two workers rebuild at once",
+  "worker": "codex"
 }
