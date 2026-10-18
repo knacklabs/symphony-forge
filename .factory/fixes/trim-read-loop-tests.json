@@ -1,0 +1,15 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-read-loop-tests",
+  "done_when": "The read-loop and suggestion tests share one repo per setup where cases don't interfere, keep one adopted case per rule, and still cover every wording and suggestion row",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T06:26:48.412234+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The read-loop and test-suggestion tests build a fresh repo for every case and repeat adopted rows on the same paths"
+}
