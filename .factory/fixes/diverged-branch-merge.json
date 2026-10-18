@@ -4,12 +4,20 @@
   "done_when": "Close says the local and remote branches diverged and why, merges the remote branch when it merges cleanly and goes on, never force-pushes, stops with a plain next step on a conflict, and the worker brief says never to amend a pushed commit; tests cover a clean merge and a conflict",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T16:58:48.684347+00:00",
       "step": "start"
     }
   ],
-  "why": "When close finds its branch diverged from the pushed branch after an amended or rebased commit, it shows git's rejection and says only forge doctor (issue 926)"
+  "stuck": {
+    "close": null,
+    "head": "ba732a3243cdf1be6842d08f3996221ea46a7062",
+    "keys": {},
+    "round": null
+  },
+  "why": "When close finds its branch diverged from the pushed branch after an amended or rebased commit, it shows git's rejection and says only forge doctor (issue 926)",
+  "worker": "codex"
 }
