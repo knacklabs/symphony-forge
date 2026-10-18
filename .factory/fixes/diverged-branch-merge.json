@@ -23,8 +23,8 @@
     "id": "56d00346-700d-46ec-9e19-1d82c8151a52",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:58:48.684347+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ba732a3243cdf1be6842d08f3996221ea46a7062",
+    "close": "ffcb455e-4f4d-4d20-9e16-23f3174c7d97",
+    "head": "102d9fe66f863ee13f8e70ec65d1d3d001601938",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "When close finds its branch diverged from the pushed branch after an amended or rebased commit, it shows git's rejection and says only forge doctor (issue 926)",
   "worker": "codex"
