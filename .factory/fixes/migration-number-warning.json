@@ -73,7 +73,7 @@
     "id": "a563eae2-b84e-4268-9830-c3f1b559c7c4",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -86,10 +86,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d988b60075f6302bcd77c9fe1d5907137b90a1f7",
-    "keys": {},
-    "round": null
+    "close": "e1ef5ebf-834c-4050-9fab-159fe08488c3",
+    "head": "19b80126ba2cce75e5e9a8e5cf4be86e10cb3d47",
+    "keys": {
+      "the review finding \"Determine whether peers are open from their actual item and landed state\" in src/forge/migration_warnings.py": 1,
+      "the review finding \"Refresh origin's peer refs before checking collisions\" in src/forge/migration_warnings.py": 1
+    },
+    "round": 1
   },
   "why": "Two open items can add database migrations with the same number, and neither review sees the other branch (issue 925)",
   "worker": "codex"
