@@ -50,7 +50,7 @@
     "id": "b575b0d5-1c4c-4a5a-a86f-98b965029f8e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "1a02e5cb04ac385935af4051a66124a68f68aea8",
-    "keys": {},
-    "round": null
+    "close": "4a0696a6-6c5e-464e-88e0-e9cfa051d3d5",
+    "head": "c0b5c65a868723f6536ff02325d43dd586c8ecb5",
+    "keys": {
+      "the review finding \"Bind reused PR proof to the tree its run actually tested\" in .github/reuse-test-proof.py": 1
+    },
+    "round": 1
   },
   "why": "After a pull request passes, Forge's CI runs the same tests again on the merge to main and again on the release tag, though the code is identical",
   "worker": "codex"
