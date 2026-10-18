@@ -31,16 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9c53a24263485c4e3904b8c9b11f79af9a7f5efaf002d6cd6ba3ec545e931854",
-    "changed": "ef36521b7dbd332daa879d0bb76936a8871d9b8c0a3e78593a13dbc942194847",
-    "commit": "2b03b44b1df00583be59ee10ffe6b644e8ff1481",
+    "branch_diff": "bc17f80eeee719680507ab7a55f35a61300c7e1549483043dfad34c9bc919870",
+    "changed": "f3254fc7cde0cfa59da94171cdb17d7d49bb48c1badedc7886697b2d2e849fb9",
+    "commit": "348d6fa6b2d124952ca4178aeccb42f044ccde47",
     "dismissals": [],
     "findings": [],
-    "id": "a0c7d7f7-cde2-4671-8425-7b683c714678",
+    "id": "0b204e81-1c25-4200-a53a-5762d4167d8d",
     "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T10:43:53.558893+00:00",
@@ -61,6 +61,10 @@
     {
       "at": "2026-10-18T14:35:44.756259+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-18T15:03:05.453283+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
@@ -71,7 +75,6 @@
     },
     "round": 3
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 80f61902060e0ec4fbdba358985dfa7997b29966` exited with status 1 on this machine.\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 227 in run_one_test\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 206 in pytest_runtestloop\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121 in _multicall\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 384 in _main\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 330 in wrap_session\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/_pytest/main.py\", line 377 in pytest_cmdline_main\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_callers.py\", line 121 in _multicall\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_manager.py\", line 120 in _hookexec\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 427 in <module>\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1291 in executetask\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 341 in run\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 411 in _perform_spawn\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 389 in integrate_as_primary_thread\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1273 in serve\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1806 in serve\n  File \"<string>\", line 8 in <module>\n  File \"<string>\", line 1 in <module>\n.................[gw1] node down: Not properly terminated\nF....................................................................... [ 94%]\n.........                                                                [100%]\n=================================== FAILURES ===================================\n_________________ tests/test_land_releases_check_wait_slots.py _________________\n[gw1] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-land-frees-ci-slots/.venv/bin/python\nworker 'gw1' crashed while running 'tests/test_land_releases_check_wait_slots.py::test_1_a_check_wait_admits_independent_close_but_keeps_order_and_backpressure[new]'\n1 failed, 174 passed in 587.59s (0:09:47)",
   "why": "forge land --all holds its slots while its child closes only wait for GitHub checks, so other items cannot start closing",
   "worker": "codex"
 }
