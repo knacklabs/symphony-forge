@@ -1,6 +1,13 @@
 {
   "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
   "branch": "fix/migration-number-warning",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1500e-18e6-7bf2-b943-62af04044b8d",
+    "head": null,
+    "start": "d63689c6c5b08242da988572ece31457e56d0006"
+  },
   "done_when": "Close and forge next warn, without refusing, when another open item's branch adds a migration file with the same number under the repo's migrations folders, naming both items, and a test covers it on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
