@@ -10,13 +10,54 @@
   },
   "done_when": "The every-platform run has no macOS groups, Linux and Windows keep their groups and limits, and the CI budget tests match",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge-next.yml",
+      "file": ".github/workflows/forge-next.yml",
+      "gain": 2,
+      "harm": 2,
+      "line": 68,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Align documented release checks with the reduced matrix",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7fe04b0f8adecd4a8efa698c2573cd2ea09844b849d89df2f4b6f56ef182cdd4",
+    "changed": "d0b452c49bc37a428a3161331fa5599420c04b79205c81e53cd52cff2eb20e69",
+    "commit": "6a9b33db61e49dda84f4f5c329f40cad0ee419b9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 2, Work 1, Harm 2\nRemoving the macOS groups makes the documented release prerequisite impossible to satisfy: docs/guide.md:379\u2013380 instructs maintainers to dispatch this workflow and confirm Linux, Mac and Windows are green before tagging. README.md:261\u2013262 likewise requires checking all three platforms. Update both instructions to match Linux and Windows so maintainers can complete the documented checks.",
+        "file": ".github/workflows/forge-next.yml",
+        "gain": 2,
+        "harm": 2,
+        "line": 68,
+        "priority": "P2",
+        "title": "Follow-up: Align documented release checks with the reduced matrix",
+        "work": 1
+      }
+    ],
+    "id": "10b30131-a763-4fd7-87c3-db14eabb5d22",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T08:12:08.418177+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T08:15:51.888666+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
