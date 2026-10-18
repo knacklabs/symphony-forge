@@ -1,6 +1,13 @@
 {
   "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
   "branch": "fix/stop-waits-for-owner",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fff-15d5-7bd2-a800-8eb3766f6cd2",
+    "head": null,
+    "start": "912333234eee551fd553da7d66ad5af5e8e2bcd5"
+  },
   "done_when": "A stop that asks the owner is cleared only by the owner's recorded choice; a merge of main or a new review never clears it, and a test merges main into a stopped item and then records the choice, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
