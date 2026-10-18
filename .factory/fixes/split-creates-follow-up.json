@@ -1,6 +1,13 @@
 {
   "base": "b3880ba87978fefde7e106eb1d43ae6e18d42c0e",
   "branch": "fix/split-creates-follow-up",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe8-5555-7493-aed1-a1151c6def76",
+    "head": null,
+    "start": "6b4fa32a34c8d83905f8607a5262112a42eb05ea"
+  },
   "done_when": "Split creates one follow-up fix holding every split-out finding, linked from the item and named in close's output, and the item goes on without them; a test covers a fix and a story part, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
