@@ -4,12 +4,20 @@
   "done_when": "The read-loop and suggestion tests share one repo per setup where cases don't interfere, keep one adopted case per rule, and still cover every wording and suggestion row",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T06:26:48.412234+00:00",
       "step": "start"
     }
   ],
-  "why": "The read-loop and test-suggestion tests build a fresh repo for every case and repeat adopted rows on the same paths"
+  "stuck": {
+    "close": null,
+    "head": "03aea3e0ee98ae2e60b5c5ac3eb6edf98b1588d6",
+    "keys": {},
+    "round": null
+  },
+  "why": "The read-loop and test-suggestion tests build a fresh repo for every case and repeat adopted rows on the same paths",
+  "worker": "codex"
 }
