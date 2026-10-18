@@ -447,8 +447,6 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
             found[path.decode("utf-8")] = fields[1 if args[0] == "ls-files" else 2].decode()
         return found
 
-    # Only root names are needed to find requirements files, not the whole base tree.
-    before = repo.git("ls-tree", "--name-only", "-z", base, cwd=top).split("\0")
     # Only these repo files are read by the renderers. Materialize inputs, never a Git
     # worktree: no checkout filters, hooks, index changes or module discovery are needed.
     inputs = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".codex/hooks.json",
@@ -458,12 +456,29 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
     if hooks:
         inputs.update((hooks.relative_to(top) / name).as_posix()
                       for name in ("pre-commit", "pre-push"))
-    inputs.update(path for path in before if "/" not in path and
-                  path.startswith("requirements") and path.endswith(".txt"))
-    selected = sorted(inputs)
-    blobs = subprocess.run(["git", "cat-file", "--batch", "--follow-symlinks"], cwd=top,
-                           capture_output=True, check=True,
-                           input="".join(f"{base}:{path}\n" for path in selected).encode()).stdout
+    # Read the root tree and the renderer inputs through one Git process. A tree
+    # entry is mode/name, NUL, then a binary object ID (20 or 32 bytes).
+    with subprocess.Popen(["git", "cat-file", "--batch", "--follow-symlinks"], cwd=top,
+                          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE) as batch:
+        assert batch.stdin is not None and batch.stdout is not None
+        batch.stdin.write(f"{base}^{{tree}}\n".encode())
+        batch.stdin.flush()
+        header = batch.stdout.readline().split()
+        if len(header) != 3 or header[1] != b"tree":
+            raise subprocess.CalledProcessError(1, batch.args)
+        tree = batch.stdout.read(int(header[2]) + 1)[:-1]
+        offset = 0
+        while offset < len(tree):
+            end = tree.index(b"\0", offset)
+            name = tree[offset:end].split(b" ", 1)[1].decode("utf-8")
+            if name.startswith("requirements") and name.endswith(".txt"):
+                inputs.add(name)
+            offset = end + 1 + len(header[0]) // 2
+        selected = sorted(inputs)
+        blobs, errors = batch.communicate("".join(f"{base}:{path}\n" for path in selected).encode())
+        if batch.returncode:
+            raise subprocess.CalledProcessError(batch.returncode, batch.args, stderr=errors)
     with tempfile.TemporaryDirectory() as folder:
         snapshot = Path(folder)
         offset = 0
