@@ -4,12 +4,20 @@
   "done_when": "The board and forge board --json leave out a dropped fix and show it again after forge fix drop --undo, built on main without the page server",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T01:59:11.226098+00:00",
       "step": "start"
     }
   ],
-  "why": "A dropped fix still shows on the board, because the drop story's board part was built on the unmerged page server and cannot ship without it"
+  "stuck": {
+    "close": null,
+    "head": "64b1edfb64b3f58d20ab545331a67f875b3d0c3e",
+    "keys": {},
+    "round": null
+  },
+  "why": "A dropped fix still shows on the board, because the drop story's board part was built on the unmerged page server and cannot ship without it",
+  "worker": "codex"
 }
