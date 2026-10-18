@@ -4,12 +4,20 @@
   "done_when": "While a child close waits only for checks, land --all releases its slot so another item can start, keeping stack and shared-file order, and a test shows a waiting child does not block a new close",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T10:43:53.558893+00:00",
       "step": "start"
     }
   ],
-  "why": "forge land --all holds its slots while its child closes only wait for GitHub checks, so other items cannot start closing"
+  "stuck": {
+    "close": null,
+    "head": "7a60cc4dedb8fc42ad96f5014e8ba8459ca55c29",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge land --all holds its slots while its child closes only wait for GitHub checks, so other items cannot start closing",
+  "worker": "codex"
 }
