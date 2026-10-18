@@ -21,7 +21,7 @@
     "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-18T08:39:21.834305+00:00",
@@ -44,6 +44,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "Forge commands start far fewer git processes: Cheap generated-file check is stuck. It should deliver: the pre-commit hook compares generated files without a worktree or module parsing\nTwo rounds in a row left close's tests failing.\nThe worker tried: Read sync inputs with one Git process.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "tool": "codex",
+    "wait_id": "6a8be700-c14c-4de6-9f6b-f8c1302ba101"
+  },
   "stuck": {
     "close": "a1dec59b-2012-4287-b5f8-6910b603b181",
     "head": "5eac864f1c6d39a1ec78a8e5be2392495c470537",
