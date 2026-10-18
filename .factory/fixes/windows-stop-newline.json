@@ -1,0 +1,15 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/windows-stop-newline",
+  "done_when": "forge stop's message has the same line ending on Windows as elsewhere in what the test reads, and tests/test_stop_releases_abandoned_item.py passes on Windows",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T06:18:23.484378+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On Windows, forge stop's refusal ends with a carriage return, so the stop test compares the wrong line ending"
+}
