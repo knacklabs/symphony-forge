@@ -1,6 +1,13 @@
 {
   "base": "8c9b59b387e92c9a6cc39f43556fb31da45ed85b",
   "branch": "fix/shared-test-stubs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e91-6ac1-7c50-bf08-493671292765",
+    "head": null,
+    "start": "d2ea4e132a5c7bdfe908c7c8cffb6c826ed806b4"
+  },
   "done_when": "Test stand-in programs are written once per content into a shared read-only folder and linked into each test, Windows keeps copies, and the suite runs at least 8 percent faster on macOS with every test still passing",
   "fix_kind": "mechanical",
   "kind": "fix",
