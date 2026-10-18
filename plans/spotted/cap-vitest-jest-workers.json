@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/fasttest.py\tPreserve non-ASCII paths in the Node preload option\tcap-vitest-jest-workers",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 105,
+      "text": "Preserve non-ASCII paths in the Node preload option",
+      "from": "blocking",
+      "item": "cap-vitest-jest-workers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tPreserve npm lifecycle hooks when replacing a script's worker cap\tcap-vitest-jest-workers",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
