@@ -40,8 +40,10 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
         for host in (".codex", ".claude"):
             shutil.copytree(conftest.ROOT / host / "skills", repo.path / host / "skills")
         repo.write("forge.toml", repo.git("show", "HEAD:forge.toml") + '\nrepo = "forge-source"\n')
+        # Keep the shared idle-machine setup when loading the client's own source.
         conftest._install(repo.bin, "forge", (
-            f"#!{sys.executable}\nimport sys, subprocess\n"
+            conftest.FORGE_SHIM.split("sys.path.insert", 1)[0].format(python=sys.executable)
+            + "import subprocess\n"
             "from pathlib import Path\n"
             "root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip()\n"
             "sys.path.insert(0, str(Path(root) / 'src'))\n"
