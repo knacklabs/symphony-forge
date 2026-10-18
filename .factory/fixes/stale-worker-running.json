@@ -8,6 +8,13 @@
   ],
   "base": "9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd",
   "branch": "fix/stale-worker-running",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe0-c6b5-7ad0-b7ec-f6d8bc46b2af",
+    "head": null,
+    "start": "71c82943c33a839af103033c3924619a5bac3714"
+  },
   "done_when": "A successful hand-back releases the item's lock, and an item whose recorded worker run has no live process (checked by process identity, as the lanes do) and no live lock shows as stopped with its forge work next step on the board and in forge next, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
