@@ -92,6 +92,9 @@ def close(args: argparse.Namespace) -> int:
     if retried_history:
         backfill.run(top)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+    from forge import migration_warnings
+    for warning in migration_warnings.warnings(top):
+        print(warning)
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
