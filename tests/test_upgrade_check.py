@@ -18,7 +18,9 @@ SOURCE = "git+https://github.com/knacklabs/symphony-forge@"
 
 # This checkout's Forge, installed as the release <version> names: no later release exists yet.
 RELEASE = """#!{python}
-import sys
+import os, sys
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 sys.path.insert(0, {src!r})
 import forge
 forge.__version__ = "<version>"
