@@ -1,0 +1,15 @@
+{
+  "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
+  "branch": "fix/keep-main-settings-on-handback",
+  "done_when": "The hand-back reverts only the worker's own forge.toml edits, keeps settings that came from merging the default branch, and a test with a round that merges main's changed settings keeps them, on new and adopted repos",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T12:46:55.482512+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a build round merges main after main's forge.toml changed, the hand-back treats main's new settings as the worker's edit and restores the round's old copy, so merging the fix reverts main's settings"
+}
