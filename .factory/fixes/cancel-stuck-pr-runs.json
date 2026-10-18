@@ -1,0 +1,15 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/cancel-stuck-pr-runs",
+  "done_when": "Close and doctor cancel that pull request's own older queued or stuck runs holding its concurrency group, say which run they cancelled, and keep waiting for the new run; runs of other pull requests and branches are never touched; a test covers it",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T16:58:53.683132+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When a pull request's new run waits behind an older queued run of the same pull request in its concurrency group, close waits for ever (issue 928)"
+}
