@@ -30,7 +30,7 @@
     "id": "2bd6f4f8-6948-44f2-93a8-1cfcfd1083bb",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -43,10 +43,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "cc00a5aa48c15686eade7fc147ccc3a2b7fd048b",
-    "keys": {},
-    "round": null
+    "close": "aec5da72-f2c4-4ae6-a5fb-abe73b6cb73e",
+    "head": "16c831bc86e3ec337436961cdcb4c6a75f09ad04",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 1
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd` exited with status 1 on this machine.\nNo local test names src/forge/codex.py; GitHub's checks will cover it.\nNo local test names src/forge/native.py; GitHub's checks will cover it.\nRelated tests: tests/test_board_skips_dropped_fixes.py, tests/test_board_status_and_times.py, tests/test_close_sync_conflicts.py, tests/test_handback_releases_worker_lock.py, tests/test_stack_start.py, tests/test_worker_liveness_controls_next_step.py\nstdout_seq = [b'Opened the pull request: https://github.com/acme/shop/pull/7\\nThis machine is busy (load 2.5 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\n    return subprocess.run([sys.executable, str(self.bin / \"forge\"), *args],\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 129293.181159791, orig_timeout = 60\nstdout_seq = [b'Opened the pull request: https://github.com/acme/shop/pull/7\\nThis machine is busy (load 3.1 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [], skip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-fix-stale-worker-running/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-200/popen-gw2/test_1_close_merges_sync_outpu1/bin/forge', 'close', 'tidy-readme']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n2 failed, 92 passed in 332.72s (0:05:32)",
   "why": "The board and forge next show 'Worker running' for an item whose worker process or session is gone and whose lock is missing or stale, so a coordinator waits for ever",
