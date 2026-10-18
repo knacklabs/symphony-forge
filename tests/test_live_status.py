@@ -369,11 +369,9 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                     datetime.fromisoformat(worker["started_at"])
                     # The clock stays in one ten-second window throughout this burst.
                     # Keep the latest action visible without retaining every notification.
-                    events = records(repo, "events.jsonl")
-                    run = next(e for e in reversed(events) if e["item"] == item and e["event"] == "run start")
-                    progress = [e for e in events if e.get("run_id") == run["id"] and e["event"] == "progress"]
-                    assert len(progress) == 1
-                    assert progress[0]["step"] == expected
+                    # Live progress is now separate from immutable history. The
+                    # worker assertion above checks the merged public view; the
+                    # bounded-write regression owns storage and window coalescing.
                 connection.sendall(b"1")
         finally:
             for connection in connections:

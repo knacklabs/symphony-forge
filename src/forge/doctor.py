@@ -477,8 +477,8 @@ def doctor(args: argparse.Namespace) -> int:
                   "Its CPUs count against Forge's load limit.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    events = repo.forge_dir(top) / "events.jsonl"
-    history = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    from forge import event_log
+    history = event_log.read(top)
     last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
     said = ("" if last is None else " The last Codex turn ran with Fast."
             if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else

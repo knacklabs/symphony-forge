@@ -377,46 +377,15 @@ def record_event(top: Path, item: str, event: str, **fields: Any) -> str:
     identity = str(uuid.uuid4())
     line = {"id": identity, "item": item, "event": event, "at": now(),
             "round": (read_state(item, top) or {}).get("round", 0), **fields}
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")), path.open("a", encoding="utf-8") as out:
-        out.write(json.dumps(line) + "\n")
+    from forge import event_log
+    event_log.append(top, line)
     return identity
 
 
 def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
     """Coalesce a run's live updates into at most one record per ten seconds."""
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")):
-        rows = path.read_text(encoding="utf-8").splitlines()
-        parsed = [json.loads(row) for row in rows]
-        previous = next((n for n in range(len(rows) - 1, -1, -1)
-                         if parsed[n].get("run_id") == run_id and
-                         parsed[n].get("event") == "progress"), None)
-        start = next(row for row in parsed if row.get("id") == run_id)
-        # ponytail: rewrite this diagnostic log to coalesce; split progress out if it grows large.
-        line = {"id": str(uuid.uuid4()), "item": item, "event": "progress", "run_id": run_id,
-                "kind": "progress", "round": start.get("round"), "at": now(), **fields}
-        if previous is not None:
-            old = parsed[previous]
-            line = {**old, **line}
-            if (datetime.fromisoformat(now()) - datetime.fromisoformat(old["recorded_at"])).total_seconds() < 10:
-                rows[previous] = json.dumps({**line, "id": old["id"]})
-            else:
-                rows.append(json.dumps({**line, "recorded_at": now()}))
-        else:
-            rows.append(json.dumps({**line, "recorded_at": now()}))
-        temp = path.with_suffix(".new")
-        temp.write_text("\n".join(rows) + "\n", encoding="utf-8")
-        for wait in (0.05,) * 40 + (0,):  # Windows readers can briefly hold the events file open.
-            try:
-                return os.replace(temp, path)
-            except PermissionError:
-                if not wait:
-                    temp.unlink(missing_ok=True)
-                    refuse(codex.REFUSALS["record"], record=path)
-                time.sleep(wait)
+    from forge import event_log
+    event_log.progress(top, item, run_id, fields)
 
 
 def worker_step(name: str, inputs: dict[str, Any]) -> str:

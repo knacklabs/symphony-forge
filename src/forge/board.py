@@ -209,16 +209,10 @@ def _rollup(pr: Item) -> list[Item]:
 
 def _event_history(top: Path) -> tuple[list[Item], dict[str, list[Item]]]:
     def read():
-        path = repo.forge_dir(top) / "events.jsonl"
-        recorded, by_item = [], {}
-        for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
-            try:
-                event = json.loads(line)
-                if isinstance(event, dict):
-                    recorded.append(event)
-                    by_item.setdefault(event.get("item"), []).append(event)
-            except ValueError:
-                continue
+        from forge import event_log
+        recorded, by_item = event_log.read(top), {}
+        for event in recorded:
+            by_item.setdefault(event.get("item"), []).append(event)
         return recorded, by_item
     return repo.command_fact("board events", top, read)
 
