@@ -4,12 +4,20 @@
   "done_when": "When the test command runs Vitest or Jest, Forge adds --maxWorkers with the machine budget, as it adds --maxprocesses for pytest, and tests cover Vitest, Jest and a runner left as written",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T16:59:09.930837+00:00",
       "step": "start"
     }
   ],
-  "why": "Test runs cap pytest's workers to the machine budget but leave Vitest and Jest at one worker per core, so parallel rounds overload the machine (issue 924)"
+  "stuck": {
+    "close": null,
+    "head": "10190f9c639866de25440fe93235c1904ba2f76b",
+    "keys": {},
+    "round": null
+  },
+  "why": "Test runs cap pytest's workers to the machine budget but leave Vitest and Jest at one worker per core, so parallel rounds overload the machine (issue 924)",
+  "worker": "codex"
 }
