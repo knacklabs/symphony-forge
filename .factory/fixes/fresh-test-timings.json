@@ -1,6 +1,13 @@
 {
   "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
   "branch": "fix/fresh-test-timings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14eb6-0f1c-7ca2-b77c-2999b40c13e2",
+    "head": null,
+    "start": "bfeae896692e2acaa0d41ba0bb939c65a526a83d"
+  },
   "done_when": "CI splits by fresh test timings that name only existing tests, and the suite uses whichever xdist scheduling measured faster on the same run",
   "fix_kind": "mechanical",
   "kind": "fix",
