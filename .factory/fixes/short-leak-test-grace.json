@@ -10,13 +10,29 @@
   },
   "done_when": "The leak test uses a short grace period of its own while still proving leaked processes are found and ended, and the suite's cleanup keeps its normal grace",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0cbcd5388f144d499d9a3c36989ba904adb3e29098b817051eb6951c646218bf",
+    "changed": "d4b92ab44de70e98cd1b85deef577ccc5d15555a4a753b0c072c3d13b7cd5b28",
+    "commit": "fa715354b127cbcd04df7dcb3347a4355e2872a8",
+    "dismissals": [],
+    "findings": [],
+    "id": "1d02b096-eb15-4dc1-9e50-c61b1ccca04e",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T13:04:06.503581+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T13:38:29.543184+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
