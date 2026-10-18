@@ -10,13 +10,29 @@
   },
   "done_when": "forge stop's message has the same line ending on Windows as elsewhere in what the test reads, and tests/test_stop_releases_abandoned_item.py passes on Windows",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8635e25a8b4f2ebfed46be89535b375dcbb805b24c56d3456e53aacb1ab94e7a",
+    "changed": "a8455b3fbb91d299378d2fcae6db9649542f511d70f552521655f6e294d72e00",
+    "commit": "e2ee62d268cda08e7c0c55136485eb8769f68852",
+    "dismissals": [],
+    "findings": [],
+    "id": "b57faee1-7c05-4774-9c1a-524687be8ec5",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T06:18:23.484378+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T06:21:34.956501+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
