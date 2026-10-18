@@ -20,7 +20,7 @@
     "id": "ec6e4aba-b1da-4b66-9795-4a39cc316a04",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -41,10 +41,12 @@
     }
   ],
   "stuck": {
-    "close": "07b54a42-a74b-413d-88b1-034d7532b16b",
-    "head": "c43c05f1825f721778d098befeacc9ed4035661b",
-    "keys": {},
-    "round": 2
+    "close": "a1dec59b-2012-4287-b5f8-6910b603b181",
+    "head": "5eac864f1c6d39a1ec78a8e5be2392495c470537",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 3
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 80f61902060e0ec4fbdba358985dfa7997b29966` exited with status 1 on this machine.\nNo local test names src/forge/githooks.py; GitHub's checks will cover it.\n        first = commit(\"Sync and change five source files\")\n        assert first.returncode == 0, first.stderr\n        (folder / \"src/f0.py\").write_text(\"x = 2\\n\", encoding=\"utf-8\")\n>       second = commit(\"Change only ordinary source\")\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_hook_generated_check_speed.py:102:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\ntests/test_hook_generated_check_speed.py:96: in commit\n    measure(0)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nstatus = 0\n\n    def measure(status):\n        # A shared runner can pause one process. Keep the same 0.1-second budget\n        # for the median of five real checks of each unchanged staged snapshot.\n        log.write_text(\"\", encoding=\"utf-8\")\n        for _ in range(5):\n            checked = repo.forge(\"hook\", \"pre-commit\", cwd=folder)\n            assert checked.returncode == status, checked.stdout + checked.stderr\n        samples = [json.loads(line) for line in log.read_text(\"utf-8\").splitlines()]\n        assert len(samples) == 5, samples\n>       assert median(elapsed for elapsed, _, _ in samples) < 0.1, samples\nE       AssertionError: [[0.08647399999608751, 0, [['/opt/homebrew/bin/git', 'ls-tree', '--name-only', '-z', '0d8c7c7735462333b02345f8d0dada5d..., 'rev-parse', '--path-format=absolute', '--git-path', 'hooks'], ['git', 'cat-file', '--batch', '--follow-symlinks']]]]\nE       assert 0.11105262501223478 < 0.1\nE        +  where 0.11105262501223478 = median(<generator object test_2_generated_file_check_is_fast_and_checks_the_whole_fix.<locals>.measure.<locals>.<genexpr> at 0x10b7d6a40>)\n\ntests/test_hook_generated_check_speed.py:89: AssertionError\n3 failed, 5 passed in 46.99s",
   "worker": "codex"
