@@ -4,12 +4,20 @@
   "done_when": "Progress updates no longer rewrite the whole event log: live progress is kept apart from the history and history is appended, every reader still sees the same events, and a test shows an update writes a bounded amount whatever the history size, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T10:14:29.731299+00:00",
       "step": "start"
     }
   ],
-  "why": "Every progress update rewrites Forge's 14 MB event log under one lock, parsing about 45,000 records each time"
+  "stuck": {
+    "close": null,
+    "head": "336fdf4cfc9d406dbc540ae40d9c9527bec012d4",
+    "keys": {},
+    "round": null
+  },
+  "why": "Every progress update rewrites Forge's 14 MB event log under one lock, parsing about 45,000 records each time",
+  "worker": "codex"
 }
