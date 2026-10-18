@@ -288,8 +288,6 @@
     "tests/test_claude_worker_recovery.py::test_1_lost_session_recovery_searches_all_claude_output[previous-adoption]": 4.192797166999753,
     "tests/test_claude_worker_recovery.py::test_2_claude_ignores_codex_only_subagent_keys_on_first_fix[new-client]": 2.5867020010005035,
     "tests/test_claude_worker_recovery.py::test_2_claude_ignores_codex_only_subagent_keys_on_first_fix[previous-adoption]": 2.634732750999774,
-    "tests/test_claude_worker_recovery.py::test_3_progress_retries_a_busy_events_file_without_aborting_worker[new-client]": 2.4769835430001876,
-    "tests/test_claude_worker_recovery.py::test_3_progress_retries_a_busy_events_file_without_aborting_worker[previous-adoption]": 2.5909745009998915,
     "tests/test_client_rules_apply_to_every_repo.py::test_1_sync_and_worker_briefs_carry_only_general_rules[new]": 2.5691496680001364,
     "tests/test_client_rules_apply_to_every_repo.py::test_1_sync_and_worker_briefs_carry_only_general_rules[previous-release adoption]": 1.8671940849999373,
     "tests/test_client_rules_apply_to_every_repo.py::test_2_doctor_checks_and_repairs_forge_source_hooks_without_an_exemption": 2.015424124999754,
