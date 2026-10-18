@@ -86,7 +86,7 @@
     }
   ],
   "land": {
-    "rounds": 1,
+    "rounds": 2,
     "stop": null
   },
   "part_line_limit": 400,
@@ -100,8 +100,8 @@
     "id": "be6f3ebb-2aea-4f3a-be1f-dea9142f89b7",
     "status": "clean"
   },
-  "round": 9,
-  "status": "waiting for checks",
+  "round": 10,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T06:15:46.941448+00:00",
@@ -133,10 +133,10 @@
     }
   ],
   "stuck": {
-    "close": "dd46741a-f536-4b2b-8578-b93be540ad61",
-    "head": "ad099fb0ca0cb0afcd390096571eaecdaa2d6742",
+    "close": "6ac458a7-daca-4cf2-be8a-90f4eec3de98",
+    "head": "22227b143f0f676a80f6575dd783dab1c9a13d33",
     "keys": {},
-    "round": 8
+    "round": 9
   },
   "worker": "claude"
 }
