@@ -1,6 +1,13 @@
 {
   "base": "9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd",
   "branch": "fix/records-only-review",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe0-de73-7f61-bfd8-78a77299be70",
+    "head": null,
+    "start": "fbc5e3b617c2c4b8cdfe19f4feaea9c48e9daada"
+  },
   "done_when": "A branch whose diff holds only Forge's records needs no model review: close records it as clean and says so, and when Autoreview does write unreadable findings close shows where the output is instead of pointing at forge doctor",
   "fix_kind": "backend",
   "kind": "fix",
