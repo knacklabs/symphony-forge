@@ -362,8 +362,9 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 else:
                     worker = result["worker"]
                     model, effort = selections.get(expected, (model, effort))
+                    # Public review rounds start at one, before the first worker turn.
                     assert (worker["tool"], worker["model"], worker["effort"], worker["round"]) == (
-                        "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 0)
+                        "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 1)
                     assert worker["step"] == expected
                     datetime.fromisoformat(worker["started_at"])
                     # The clock stays in one ten-second window throughout this burst.

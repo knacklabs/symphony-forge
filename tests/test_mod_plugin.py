@@ -45,6 +45,8 @@ def strict_typescript_against_claude_declarations(packaged_mod):
     # Exact published declarations at this upstream commit, kept as a text
     # fixture so runner DNS availability cannot decide strict type checking.
     declarations = packaged_mod / ".claude-plugin/types"
+    if declarations.exists():
+        shutil.rmtree(declarations)
     declarations.mkdir(parents=True)
     shutil.copyfile(ROOT / "tests/fixtures/claude-code-684800b206824dfd0cc8a876e8604b20f72c3617.d.ts",
                     declarations / "claude-code.d.ts")
@@ -209,7 +211,8 @@ async function session(id, duringRefresh) {{
     env: {{get: async () => undefined}},
     session: {{id: async () => id, cwd: async () => {json.dumps(str(repo.path))}, repo: async () => ({{root: {json.dumps(str(repo.path))}}}),
       surfaces: async () => ['terminal']}},
-    store: {{get: async key => store.get(key), set: async (key, value) => store.set(key, value)}},
+    store: {{get: async key => store.get(key), set: async (key, value) => store.set(key, value),
+      delete: async key => store.delete(key)}},
     prompt: {{submit: async input => {{prompts.push(input.text); return {{text: input.text}}}}}},
     process: {{run: async argv => {{
       if (initialRefresh && duringRefresh) {{ initialRefresh = false; await duringRefresh(fire); }}

@@ -518,6 +518,8 @@ def fix_start(args: argparse.Namespace) -> None:
     if prototype and fix_kind == "ui":
         require_prototype_design(top)
     parent = branch_item(repo.current_branch(top), top)
+    if parent:
+        require_active(parent[0], top)
     base = "HEAD" if parent and not _merged(main, parent[0]) else main
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),
              "fix_kind": fix_kind or "mechanical"}
@@ -567,6 +569,125 @@ def amend(args: argparse.Namespace) -> None:
     print(f"Next: forge close {args.item}")
 
 
+def require_active(item: str, top: Path | None = None) -> None:
+    """A retained checkout cannot resume a dropped fix without an explicit restore."""
+    from forge import nextstep
+
+    if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", item):
+        top = top or repo.root()
+        for branch in (f"fix/{item}", f"forge/{item}"):
+            if nextstep.remote_state(top, item, branch).get("status") == "dropped":
+                raise repo.Refused(f"Fix {item} is dropped.", f"forge fix drop {item} --undo")
+
+
+def fix_drop(args: argparse.Namespace) -> None:
+    from forge import close, codex, machine, story
+
+    item = args.item
+    command = f'forge fix drop {item} --undo' if args.undo else f'forge fix drop {item} --because "<reason>"'
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", item):
+        raise repo.Refused("Give the name of a fix to drop or restore.", "forge next")
+    if bool(args.undo) == bool(args.because) or (args.because is not None and not _one_line(args.because)):
+        raise repo.Refused("Give one reason with --because, or use --undo to restore the fix.", command)
+    top = repo.root()
+    main = main_ref()
+    branch, rel = f"fix/{item}", repo.state_path(item)
+    remote = f"origin/{branch}"
+    trees = story.worktrees(top)
+    path = trees.get(branch)
+    local = show(branch, rel, top)
+    published = show(remote, rel, top)
+    state = json.loads((local if local else published) or "{}")
+    if not state or state.get("branch") != branch or state.get("kind") != "fix":
+        raise repo.Refused(f"Fix {item} has not started.", "forge next")
+    if path and git("status", "--porcelain", "--untracked-files=all", cwd=path):
+        raise repo.Refused(f"Fix {item} has uncommitted changes. Commit or set them aside first.", command)
+    root = machine.main_checkout(top)
+    held = any(entry.get("item") == item and entry.get("repo_root") == root.as_posix()
+               for entry in machine.entries())
+    lock = codex._item_file(top, item, ".lock", "Build")
+    if held or lock.exists() and codex._alive(codex._json(lock)) is not False:
+        raise repo.Refused(f"A Forge run on this machine holds fix {item}. Wait for it to finish.", command)
+    prs = json.loads(close._gh(top, "pr", "list", "--head", branch, "--state", "all",
+                             "--json", "number,state"))
+    if _merged(main, item, top) or any(pr.get("state") == "MERGED" for pr in prs):
+        raise repo.Refused(f"Fix {item} is already merged. Start a new fix instead.",
+                           'forge fix start "<why>" --done "<done when>"')
+    if not args.undo:
+        dependents = set()
+        refs = git("for-each-ref", "--format=%(refname)", "refs/heads/fix/",
+                   "refs/remotes/origin/fix/", cwd=top).splitlines()
+        for ref in refs:
+            name = ref.split("/fix/", 1)[1]
+            # The published record wins over a stale local checkout after another machine drops it.
+            text = show(f"origin/fix/{name}", repo.state_path(name), top) or show(ref, repo.state_path(name), top)
+            other = json.loads(text or "{}")
+            if (other.get("stacked_on") == item and other.get("status") != "dropped"
+                    and not _merged(main, name, top)):
+                dependents.add(name)
+        if dependents:
+            raise repo.Refused(f"Open fixes stacked on {item}: {', '.join(sorted(dependents))}. "
+                               "Drop or finish them first.", "forge next")
+    # Reconcile before writing the record; fast-forward only, so local work is never overwritten.
+    if published and local and run("git", "merge-base", "--is-ancestor", remote, branch, cwd=top).returncode:
+        if run("git", "merge-base", "--is-ancestor", branch, remote, cwd=top).returncode:
+            raise repo.Refused(f"Local and remote work for {item} differ. Reconcile the branch first.", command)
+    if args.undo and (json.loads(published or local or "{}").get("status") != "dropped"):
+        raise repo.Refused(f"Fix {item} is not dropped.", "forge next")
+    if path is None:
+        path = _folder(f"fix-{item}")
+        if local:
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+        else:
+            git("worktree", "add", "-q", "-b", branch, str(path), remote, cwd=top)
+    if published:
+        git("merge", "--ff-only", "--no-overwrite-ignore", remote, cwd=path)
+    state = repo.read_state(item, path) or {}
+    if args.undo:
+        dropped = state["drop"]
+        if number := dropped.get("pull_request"):
+            if any(pr.get("number") == number and pr.get("state") == "CLOSED" for pr in prs):
+                close._gh(path, "pr", "reopen", str(number))
+        previous = dropped["status"]
+        state["status"] = "waiting for checks" if previous == "ready" else previous
+        dropped["restored_at"] = repo.now()
+        repo.add_step(state, "restore")
+        repo.commit_state(f"Restore the fix: {state['why']}", repo.write_state(item, state, path), top=path)
+        git("push", "-q", "--set-upstream", "origin", branch, cwd=path)
+        print(f"Restored fix {item} in {path}.")
+        next_command = "close" if previous in ("ready", "waiting for checks", "reviewing") else "work"
+        print(f"Next: forge {next_command} {item}")
+    else:
+        git("push", "-q", "--set-upstream", "origin", branch, cwd=path)
+        pr = next((pr for pr in prs if pr.get("state") == "OPEN"), None)
+        if state.get("status") != "dropped":
+            state["drop"] = {"because": args.because.strip(), "by": git("var", "GIT_AUTHOR_IDENT", cwd=path),
+                             "at": repo.now(), "status": state.get("status", "started")}
+            if pr:
+                state["drop"]["pull_request"] = pr["number"]
+            state["status"] = "dropped"
+            repo.add_step(state, "drop")
+            repo.commit_state(f"Drop the fix: {state['why']}", repo.write_state(item, state, path), top=path)
+            git("push", "-q", "origin", branch, cwd=path)
+        if pr:
+            close._gh(path, "pr", "close", str(pr["number"]), "--comment", state["drop"]["because"])
+        ignored = git("ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z", cwd=path)
+        rebuildable = {".venv", "node_modules", ".pytest_cache", "__pycache__", "dist", "build"}
+        kept = [name for name in ignored.split("\0") if name and not any(
+            part in rebuildable and path.joinpath(*Path(name).parts[:index + 1]).is_dir()
+            and not path.joinpath(*Path(name).parts[:index + 1]).is_symlink()
+            for index, part in enumerate(Path(name).parts))]
+        print(f"Dropped fix {item}. Its remote branch keeps the work.")
+        if kept:
+            print(f"Kept the worktree for ignored paths: {', '.join(kept)}")
+        elif path.resolve() == root:
+            print("Kept the main checkout. Its fix is still dropped.")
+        else:
+            git("worktree", "remove", "--force", str(path), cwd=root)
+            git("branch", "-d", branch, cwd=root)
+    (repo.forge_dir(top if top.exists() else root) / "prs-cache.json").unlink(missing_ok=True)
+
+
 COMMANDS = [
     {"words": "assign", "run": "assign", "changes_state": True,
      "help": "Give a story or part to a developer by GitHub username",
@@ -584,6 +705,11 @@ COMMANDS = [
               (('--slug',), {"metavar": "NAME", "help": "the fix's name, instead of one cut from the why"})],
      "position": 110,
      "listing": '| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |'},
+    {"words": "fix drop", "run": "fix_drop", "changes_state": True,
+     "help": "Drop a fix with a reason, or restore it with --undo",
+     "args": [(("item",), {"metavar": "FIX"}), (("--because",), {"metavar": "REASON"}),
+              (("--undo",), {"action": "store_true"})], "position": 115,
+     "listing": '| `forge fix drop <fix> --because "<reason>"` / `--undo` | Drops a fix with your reason, or brings it back, keeping its remote branch |'},
     {"words": "fix allow-large", "run": "allow_large", "changes_state": True,
      "help": "Record the human's permission for this fix to go over the fix limit",
      "args": [(('reason',), {})], "position": 120,

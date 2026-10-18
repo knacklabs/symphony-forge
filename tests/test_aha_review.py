@@ -50,7 +50,8 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == "codex"
-    assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "codex=gpt-6-astra"
+    assert options["--thinking"] == "codex=high"
     # Every review asks for every priority; the light review's P0-only level applies after scoring.
     assert options["--max-priority"] == "P3"
     if problem:
@@ -93,4 +94,5 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
                            env.review_calls()[-1]["args"][1::2]))
         assert options["--engine"] == "codex"
         assert options["--max-priority"] == "P3"
-        assert "--model" not in options and "--thinking" not in options
+        assert options["--model"] == "codex=gpt-6-astra"
+        assert options["--thinking"] == "codex=high"

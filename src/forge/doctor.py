@@ -451,8 +451,6 @@ def doctor(args: argparse.Namespace) -> int:
             [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
             + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
                for name, entry in entries]) + ".")
-    if "review" in cfg.get("models", {}):
-        print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
@@ -469,6 +467,14 @@ def doctor(args: argparse.Namespace) -> int:
     budget = machine.half_cores()
     print(f"This machine: {cores} cores, so {budget} agents at once and "
           f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+    if os.name != "nt":
+        processes = repo.run("ps", "-axo", "command=")
+        if processes.returncode == 0 and re.search(
+                r"^(?:\S*/)?Runner\.Listener(?:\s|$)|"
+                r"^(?:(?:\S*/)?(?:bash|sh|dash|zsh)\s+)?(?:\S*/)?actions-runner/run\.sh(?:\s|$)",
+                processes.stdout, re.M):
+            print("- Warning: a GitHub Actions self-hosted runner runs on this machine. "
+                  "Its CPUs count against Forge's load limit.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
     events = repo.forge_dir(top) / "events.jsonl"

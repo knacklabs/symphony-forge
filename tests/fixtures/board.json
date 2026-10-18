@@ -100,6 +100,13 @@
       }
     ]
   },
+  "reviewing": {
+    "round": 1,
+    "activity": {"status": "running", "action": "review"},
+    "worker": {"kind": "review", "tool": "codex", "model": "gpt-6-sol", "effort": "high", "round": 1,
+               "started_at": "2026-10-16T12:00:00Z", "elapsed": 87},
+    "gates": {"plan_read": {"status": "none"}, "review": {"status": "running"}, "ci": {"status": "none"}}
+  },
   "live": {
     "activity": {"status": "running", "action": "worker"},
     "idle_since": null,

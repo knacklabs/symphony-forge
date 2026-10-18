@@ -4,7 +4,7 @@ export type Stage = { name: string; status?: string | null; started_at?: string 
 export type Item = {
   title: string; id?: string; kind?: string; stage?: string | null
   worker?: { kind: string; model: string | null; started_at: string | null } | null
-  pr?: { number: number | null; checks: string } | null
+  pr?: { number: number | null; checks: string; checked_at?: string | null } | null
   findings?: { count: number; titles: string[] }
   round?: number | null; total_seconds?: number | null; stages?: Stage[]
   children?: Item[]; [key: string]: unknown
@@ -26,7 +26,7 @@ const timestamp = (v: unknown) => v == null || (typeof v === 'string' && Number.
 function item(v: unknown): v is Item {
   if (!object(v) || typeof v.title !== 'string' || !nullable(v.stage, 'string')) return false
   if (v.worker != null && (!object(v.worker) || typeof v.worker.kind !== 'string' || !nullable(v.worker.model, 'string') || !nullable(v.worker.started_at, 'string') || !timestamp(v.worker.started_at))) return false
-  if (v.pr != null && (!object(v.pr) || !nullable(v.pr.number, 'number') || !['pass', 'fail', 'running', 'unknown'].includes(String(v.pr.checks)))) return false
+  if (v.pr != null && (!object(v.pr) || !nullable(v.pr.number, 'number') || !timestamp(v.pr.checked_at) || !['pass', 'fail', 'running', 'unknown'].includes(String(v.pr.checks)))) return false
   if (v.findings != null && (!object(v.findings) || typeof v.findings.count !== 'number' || !Array.isArray(v.findings.titles) || !v.findings.titles.every(t => typeof t === 'string'))) return false
   if (!nullable(v.round, 'number') || !nullable(v.total_seconds, 'number')) return false
   if (v.stages != null && (!Array.isArray(v.stages) || !v.stages.every(s => object(s) && typeof s.name === 'string' && nullable(s.status, 'string') && timestamp(s.started_at) && timestamp(s.ended_at) && nullable(s.seconds, 'number')))) return false
