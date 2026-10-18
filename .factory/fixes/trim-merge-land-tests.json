@@ -1,0 +1,15 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-merge-land-tests",
+  "done_when": "The listed duplicate tests and parameter rows are gone, every removed assertion that no other test owns is moved into its kept sibling, and the merge and land tests still pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T06:26:44.568322+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The merge and land tests repeat the same paths: three assignment tests that a later test covers, a merge-refresh case identical to another, and adopted rows on paths a sibling test already covers"
+}
