@@ -4,12 +4,20 @@
   "done_when": "A branch whose diff holds only Forge's records needs no model review: close records it as clean and says so, and when Autoreview does write unreadable findings close shows where the output is instead of pointing at forge doctor",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T16:37:43.227711+00:00",
       "step": "start"
     }
   ],
-  "why": "Close sends a branch whose diff against main holds only Forge's own records to Autoreview, which fails twice with unreadable findings, and the message points at forge doctor"
+  "stuck": {
+    "close": null,
+    "head": "e6c4b3e79eb56c58295634b46a60c7c8cef582fc",
+    "keys": {},
+    "round": null
+  },
+  "why": "Close sends a branch whose diff against main holds only Forge's own records to Autoreview, which fails twice with unreadable findings, and the message points at forge doctor",
+  "worker": "codex"
 }
