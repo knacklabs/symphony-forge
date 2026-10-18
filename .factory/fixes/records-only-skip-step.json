@@ -10,13 +10,29 @@
   },
   "done_when": "Forge ships a step any workflow can add first that passes in seconds on a records-only push whose parent run of that workflow passed, the guide shows the one line to add, and tests cover a records-only push skipping and a code push running, on new repos and after sync on existing repos",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "de3a6f3d21dce75d238831eac7dafe8a7f1058e7010c0e7592900c5ce3ee713e",
+    "changed": "29b720d4970362b596eb459e69b1453d8c6da5e2cd37ac9783f3596633010de7",
+    "commit": "dbcb0bada1afd68a4b15c6eb71354226ab7abec4",
+    "dismissals": [],
+    "findings": [],
+    "id": "9bf9e841-3066-46bf-bb7b-77daf00c8390",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T02:32:25.642916+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T02:39:52.096960+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
