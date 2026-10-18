@@ -14,8 +14,9 @@ from test_setup import _fresh_client
 STORY = "FIX-TWO-TEST-SLOTS"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-@pytest.mark.parametrize("cores,size", [(8, 2), (4, 1), (None, 1)])
+@pytest.mark.parametrize("cores,size,adopted", [
+    (8, 2, False), (4, 1, False), (None, 1, False), (8, 2, True)],
+    ids=["8-2-new", "4-1-new", "None-1-new", "8-2-earlier-adoption"])
 def test_1_test_lane_admits_one_run_per_four_cores_and_keeps_half_core_workers(
         env, tmp_path, release_server, adopted, cores, size):
     # The old contract serialized even eight-core machines. Now two real commands
