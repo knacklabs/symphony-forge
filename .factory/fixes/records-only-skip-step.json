@@ -1,6 +1,13 @@
 {
   "base": "a8f183d8e92446d68ac22664c610396ff12b84b9",
   "branch": "fix/records-only-skip-step",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14cda-83eb-7022-a45f-b428d2f7bcc2",
+    "head": null,
+    "start": "1683c6e747ee1fdb7b69a694730f659e64f66af4"
+  },
   "done_when": "Forge ships a step any workflow can add first that passes in seconds on a records-only push whose parent run of that workflow passed, the guide shows the one line to add, and tests cover a records-only push skipping and a code push running, on new repos and after sync on existing repos",
   "fix_kind": "backend",
   "kind": "fix",
