@@ -1,0 +1,15 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-close-tests",
+  "done_when": "The listed duplicate rows are gone, each rule keeps one adopted case, and the close tests still pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T06:26:52.275364+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Close's stop-choice and test-selection tests repeat legacy and adopted rows on the same path, and one checks-red case is identical to green"
+}
