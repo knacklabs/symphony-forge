@@ -31,13 +31,13 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "506e4c141a8e3c066e4b6b96e94cc8f2b9d8cc33849f8bc52db38332f86400df",
-    "changed": "fabe4ea0c46efd84a7fd8ede6ebe17fddd10e9822ddd75b90258e0aef75147b3",
-    "commit": "aaf569a89145b902fee50b6433fe6acf58c79302",
+    "branch_diff": "d6886e723cb6d7b3f5924d9434288f1bc4b62a1d50b8e3064e91044a5d82f39b",
+    "changed": "8fb9bbf5360d1bdd830b3bedbaac31e238fcfcffa70b43cfa40c04c85856ee9e",
+    "commit": "a5975be931f8af271be077e71c7157cd85772cd8",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. The new worker bound leaves existing suite tests asserting the previous behavior, so full CI will fail. In tests/test_close_runs_only_related_tests.py:77\u201380, the shared-input cases call bare `forge test` and expect all six tests; this branch now runs only `test_changed`. In tests/test_lanes_tests.py:379\u2013393, the `dirty-picker` case expects a failing related test and later the full suite. Its one-of-two selection is now broad, and neither test file was touched, so the command instead returns success without running tests. Update both proofs for the new contract, preserving dirty-source coverage with a selection below the broad threshold.",
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. The previous finding is not fixed: existing tests still assert the old worker behavior, so full CI will fail. In tests/test_close_runs_only_related_tests.py:77\u201380, shared-input cases call bare `forge test` and expect all six tests, but the new bound runs only `test_changed`. In tests/test_lanes_tests.py:379\u2013393, the dirty-picker case expects a failing related test and later the full suite. Its one-of-two selection exceeds the broad threshold; neither test file was touched, so the command returns success without running tests. Update both proofs for the bounded contract while preserving dirty-source coverage with a selection below the threshold.",
         "file": "src/forge/fasttest.py",
         "gain": 4,
         "harm": 2,
@@ -47,7 +47,7 @@
         "work": 2
       }
     ],
-    "id": "b80d47b7-1d49-4853-ac96-8602b36d5241",
+    "id": "e98a50a3-9984-4d81-be47-c3ae02339776",
     "status": "blocked"
   },
   "round": 1,
@@ -59,6 +59,10 @@
     },
     {
       "at": "2026-10-18T10:24:12.128212+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T11:46:29.543481+00:00",
       "step": "review"
     }
   ],
