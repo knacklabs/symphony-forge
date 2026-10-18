@@ -110,3 +110,7 @@ def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
             assert len(read_steps) == 1, next_step.stdout
             assert f"in plans/{key}.read.md a disposition" in read_steps[0]
         assert "write exactly `No findings.` and nothing else" in " ".join(prompt.split())
+        # Keep next's inventory to this row instead of re-reading every earlier story.
+        repo.git("worktree", "remove", str(shop))
+        repo.git("branch", "-D", f"story/{key}")
+        repo.git("push", "-q", "origin", "--delete", f"story/{key}")
