@@ -70,6 +70,10 @@ def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path
     _, folder = env.start_fix()
     monkeypatch.setenv("PYTHONPATH", str(folder))
     (folder / "app.py").write_text("VALUE = 2\n", "utf-8")
+    # These are the item's tests even when the broad-selection bound applies;
+    # the lane must still distinguish five selected files from six.
+    for path in (folder / "tests").glob("test_app_*.py"):
+        path.write_text(path.read_text("utf-8") + "\n# Worker test change\n", "utf-8")
     processes = []
     try:
         holding, output = start(held, tmp_path / "holding", repo, "test")

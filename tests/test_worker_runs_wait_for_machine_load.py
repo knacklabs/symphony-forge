@@ -99,6 +99,10 @@ def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person,
     # The worker runs tests the sanctioned way, then calls pytest -n auto directly; each probe
     # test records the xdist process it ran in.
     record = ("_bin = pathlib.Path({bin!r})\n"
+              # Bare forge test selects the item's tests, so the worker must
+              # touch its probe rather than depend on an unrestricted run.
+              "_probe = pathlib.Path({cwd} or os.getcwd()) / 'probe/test_probe.py'\n"
+              "_probe.write_text(_probe.read_text('utf-8') + '\\n# Worker test change\\n', encoding='utf-8')\n"
               "_out = __import__('subprocess').run([{python!r}, str(_bin / 'forge'), 'test'], cwd={cwd},\n"
               "    env=dict(os.environ, PROBE_OUT=str(_bin / 'via-forge')), capture_output=True, text=True)\n"
               "_direct = __import__('subprocess').run([{python!r}, *{args!r}, '-n', 'auto'], cwd={cwd},\n"
