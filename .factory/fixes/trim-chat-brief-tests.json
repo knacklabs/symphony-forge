@@ -1,6 +1,13 @@
 {
   "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
   "branch": "fix/trim-chat-brief-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14dd2-ed30-7433-a277-1349a94a8537",
+    "head": null,
+    "start": "7be4b21e8c57e4ef6ccad2b36428939a4a9d5572"
+  },
   "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
