@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_live_lanes_survive_environment_changes.py\tThe Linux check expected the old process record to be refused, but the command reported that it stopped the run.",
+      "kind": "bug",
+      "path": "tests/test_live_lanes_survive_environment_changes.py",
+      "line": 174,
+      "text": "The Linux check expected the old process record to be refused, but the command reported that it stopped the run.",
+      "from": "worker",
+      "item": "grill-after-cold-reads",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
