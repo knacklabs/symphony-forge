@@ -4,12 +4,20 @@
   "done_when": "CI splits by fresh test timings that name only existing tests, and the suite uses whichever xdist scheduling measured faster on the same run",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T11:11:50.314164+00:00",
       "step": "start"
     }
   ],
-  "why": "The CI test groups are split by test timings from 12 October that name about 100 tests that no longer exist, and pytest-xdist uses its default scheduling"
+  "stuck": {
+    "close": null,
+    "head": "6d911d40f69198dfa8c64b9e98eacd4f396bc9cb",
+    "keys": {},
+    "round": null
+  },
+  "why": "The CI test groups are split by test timings from 12 October that name about 100 tests that no longer exist, and pytest-xdist uses its default scheduling",
+  "worker": "codex"
 }
