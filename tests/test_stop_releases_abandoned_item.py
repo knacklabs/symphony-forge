@@ -69,6 +69,7 @@ def test_1_stop_releases_an_item_whose_run_ended(repo, gh, monkeypatch, tmp_path
             lock.write_text(json.dumps({"pid": host.pid}), "utf-8")
             refused = host.forge("stop", item)
             assert refused.returncode == 1
+            # Session reads text with universal newlines, including Windows refusals.
             assert refused.stderr == "Forge cannot verify this run's process; nothing was stopped.\n"
             assert lock.exists()
             lock.write_text(json.dumps(owner), "utf-8")

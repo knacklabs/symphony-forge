@@ -1,0 +1,46 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-worker-chat-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14ddd-0fd2-7ce2-9030-187a29378629",
+    "head": null,
+    "start": "2e178221803fc8299a44ffaddbf795807643b495"
+  },
+  "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a4ee22d6864d20bf69505d03bf5e45fc7ac24354043f55e9dc50fad519f48dfd",
+    "changed": "41d396e4216b356b51e7d7e2ca3210007afc715270f264d1634da4b138c2ec0f",
+    "commit": "90b6ae6298d5317024956298b205d538070ada43",
+    "dismissals": [],
+    "findings": [],
+    "id": "3087ee3b-5622-4f54-a934-1ab80561b5ce",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:34:41.013532+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:49:06.836412+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "fce5cd134bbbee745cff3ffe6e1aeecb154b209e",
+    "keys": {},
+    "round": null
+  },
+  "why": "The worker chat and resume tests repeat adopted rows on tool-agnostic paths and keep resume cases a newer test replaced",
+  "worker": "codex"
+}

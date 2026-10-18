@@ -91,9 +91,12 @@ change is dogfooded on Forge itself before clients get it.
 ## Review rules
 
 - A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
-  upgrade to the new release) each get, and its tests cover both, including an existing repo adopted
-  on an earlier release. Report a change that covers only one side, or only Forge's own repo, as
-  P1. A release's version bump changes no behaviour and needs no new upgrade test.
+  upgrade to the new release) each get. Each rule keeps its full cases on a new repo plus at least
+  one case on an existing repo adopted on an earlier release. Keep more existing-repo cases only
+  where Forge takes a different path for it. Report a change that covers only one side, or only
+  Forge's own repo, as P1. Report extra existing-repo cases that repeat the new-repo path as a
+  deletion candidate, not a gap. A release's version bump changes no behaviour and needs no new
+  upgrade test.
 - A change to what a coordinator or worker should do or can use (a command, an option, a setting,
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
@@ -118,9 +121,11 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
 
 ### Tests for Forge
 
+- Each rule keeps its full cases on a new repo plus at least one earlier-adopted repo case.
+  Keep more adopted-repo cases only where Forge takes a different path for it. In a test audit,
+  report extra adopted-repo cases that repeat the new-repo path as deletion candidates, not gaps.
 - Tests run the forge command and never import forge.
 - A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow
   sets it); don't set it in local runs.
 - A general process rule (how to plan, build, test, review, merge or release) added only to this
   repo's files instead of what Forge ships is P1: it belongs in `src/forge/templates` or a command.
-
