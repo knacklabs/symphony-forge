@@ -20,7 +20,7 @@ STORY = "FIX-APPEND-ONLY-EVENTS"
 
 # Trace the Python file-I/O boundary in the real command, rather than replacing
 # Forge's recorder. The external worker remains the only stub in the flow.
-TRACE = '''import builtins, io, os
+TRACE = '''import builtins, io, json, os
 from pathlib import Path
 original_open = builtins.open
 original_io_open = io.open
@@ -50,7 +50,8 @@ if getenv("PROGRESS_CLOCK"):
             size = len(data.encode("utf-8") if isinstance(data, str) else data)
             with original_open(audit, "a", encoding="utf-8") as output:
                 output.write(str(size) + "\\n")
-            if crash is not None and crash.exists() and Path(self.stream.name).name == "events.jsonl":
+            if (crash is not None and crash.exists() and Path(self.stream.name).name == "events.jsonl"
+                    and json.loads(data).get("event") == "run start"):
                 crash.unlink()
                 self.stream.write(data[:len(data) // 2])
                 self.stream.flush()
