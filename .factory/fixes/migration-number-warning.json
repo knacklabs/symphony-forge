@@ -21,7 +21,7 @@
       "gain": 5,
       "harm": 4,
       "line": 35,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -44,33 +44,23 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "2356ca50e1268fbeabba16381af5fcb6b111c8b56c258b363a95a8b7c0e40e02",
-    "changed": "0258569dc14f1d3fd009fab28ad887d2b64139af293ac382173d35774a62a7e9",
-    "commit": "890ffcee6d73dbd8c87b9c17bc17ba0c67e751d1",
+    "branch_diff": "fc15962462ba4ef6ccb19a09502257bcafa439092d89c40842f6cd15ec52da38",
+    "changed": "c216f38865ff8780da1a658f1cf7d3eee06602a6d355a07b71471e3cdc3362b5",
+    "commit": "b0cd7c0dfe1a04c76abde6379f59cbc3aa7603a9",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 4\nRaise: Functional. If another worker pushes a competing migration from a separate clone after this worker starts, both close and next miss it. `branch_tips` only lists local refs (`nextstep.py:808\u2013812`), and this path never fetches peer branches. Close's later fetch retrieves only the default branch (`close.py:681`); next also calculates warnings before its report can discover newer PR heads. Consequently, a missing or outdated origin peer ref silently suppresses the promised warning. Refresh peer refs once before scanning, then reuse that snapshot. The new test pushes peers from the same clone, which updates its tracking refs automatically and conceals this failure.",
-        "file": "src/forge/migration_warnings.py",
-        "gain": 5,
-        "harm": 4,
-        "line": 35,
-        "priority": "P1",
-        "title": "Refresh origin's peer refs before checking collisions",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 3, Harm 4\nRaise: Functional. Checking only the status stored on the peer branch includes finished items. Forge squash-merges PRs (`merge.py:109`), leaving retained branch tips with their pre-merge status and a three-dot diff that still contains their migration additions. Unlike the existing next report (`nextstep.py:270\u2013274`), this filter never checks whether the item's state has landed on the default branch, so completed peers keep producing warnings. Named tasks have another bypass: `_item` at line 64 converts only numeric T identifiers, although `task.py:88\u201398` supports names such as `BOARD/PAGE`. Such peers read `.factory/stories/BOARD-PAGE/story.json` instead of their task state, so even an explicit done status is ignored and the warning names the wrong item. Resolve the actual task identity and exclude landed or completed items. The test's final case points the peer ref at main, which does not exercise a retained squash-merged branch.",
+        "body": "Gain 3, Work 3, Harm 4\nRaise: Functional. The repair still includes completed story peers when completion was recorded by Forge's normal merge flow. `src/forge/merge.py:105\u2013107` records completion in a `Forge-story-done` squash-message trailer, leaving the saved story status approved; `src/forge/story.py:876\u2013903` resolves that trailer into the actual completed status. This condition instead reads only the saved JSON status. Consequently, a retained story branch whose three-dot diff contains migration additions continues producing collision warnings after all its tasks finish. Resolve story completion through the canonical completed-state logic. The added retained-squash test covers fixes and named tasks, so it does not detect this remaining part of the previous finding.",
         "file": "src/forge/migration_warnings.py",
         "gain": 3,
         "harm": 4,
-        "line": 45,
+        "line": 68,
         "priority": "P1",
         "title": "Determine whether peers are open from their actual item and landed state",
         "work": 3
       }
     ],
-    "id": "a563eae2-b84e-4268-9830-c3f1b559c7c4",
+    "id": "59aa7860-8f24-4a75-a859-6934346be528",
     "status": "blocked"
   },
   "round": 2,
@@ -82,6 +72,10 @@
     },
     {
       "at": "2026-10-18T18:01:37.527530+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:43:20.457901+00:00",
       "step": "review"
     }
   ],
