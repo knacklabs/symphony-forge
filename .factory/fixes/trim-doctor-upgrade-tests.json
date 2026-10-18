@@ -23,7 +23,7 @@
     "id": "d7ebe114-d688-4316-968e-ee56261bc9ca",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -36,10 +36,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "cc4493ce3477b5feca476da817ad975aceaef1d8",
-    "keys": {},
-    "round": null
+    "close": "ca0f96e0-87b1-48ae-b89d-e31f5c48fb43",
+    "head": "15039dda03a23dd4859e8b6924de2999d31486cd",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 1
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest fae2104adebec6d0ccf12dd3a6dabd5be7785647` exited with status 1 on this machine.\nstdout_seq = [b'Forge pin changed from v1.2.2 to v1.2.13; continuing forge close with v1.2.13.\\n', b'Opened the pull request: https...il it is under 1.5.\\n', b'This machine is busy (load 9.9 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\n    return subprocess.run([sys.executable, str(self.bin / \"forge\"), *args],\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 95099.858669708, orig_timeout = 60\nstdout_seq = [b'Forge pin changed from v1.2.2 to v1.2.13; continuing forge close with v1.2.13.\\n', b'Opened the pull request: https...il it is under 1.5.\\n', b'This machine is busy (load 9.9 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [], skip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-fix-trim-doctor-upgrade-tests/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-45/popen-gw3/test_1_upgrade_close_checks_ge0/bin/forge', 'close', 'tidy-readme']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n2 failed, 62 passed, 2 errors in 355.21s (0:05:55)",
   "why": "The doctor and upgrade tests repeat adopted rows and hold one duplicate proof test",
