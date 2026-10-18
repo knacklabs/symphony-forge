@@ -1,6 +1,13 @@
 {
   "base": "def4b36cea842387e6d3334cedb81f31e87453a3",
   "branch": "fix/drop-macos-ci",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e11-8a11-70d2-b056-74151451e6e8",
+    "head": null,
+    "start": "1141c96e3acd0a5743d49fa8f4fe7eccf37894be"
+  },
   "done_when": "The every-platform run has no macOS groups, Linux and Windows keep their groups and limits, and the CI budget tests match",
   "fix_kind": "mechanical",
   "kind": "fix",
