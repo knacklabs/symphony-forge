@@ -11,13 +11,29 @@
   },
   "done_when": "Forge's version is 1.2.13 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a479fd95f21041cb8c5cacc63699d93283f979e64a4d79239718abcc3ee96bd3",
+    "changed": "e67eaf968ec3896399977857416d36ed70bcef002e47c25242c5677d9a82bbea",
+    "commit": "349d0aecec406564ffd90a7e86210cb492ed323c",
+    "dismissals": [],
+    "findings": [],
+    "id": "69dee6eb-7225-4a0f-b601-9fa1a47c3120",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T04:49:36.998971+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T05:07:13.675022+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
