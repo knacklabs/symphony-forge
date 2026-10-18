@@ -1,6 +1,13 @@
 {
   "base": "656f68887541b0da388b43920126917a167d8812",
   "branch": "fix/cache-sdk-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e22-b713-7d02-b26c-5412f0e3f5a5",
+    "head": null,
+    "start": "a51727f92be8486e9b9e6275eee3a38aab6ea7a7"
+  },
   "done_when": "forge work reuses the last SDK check while the SDK's ready marker is unchanged, checks again after it changes, and a test proves both on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
