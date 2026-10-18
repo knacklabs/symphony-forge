@@ -172,7 +172,10 @@ def test_1_progress_updates_preserve_history_with_bounded_writes(
                 process.communicate()
     assert history.read_bytes().startswith(prefix)
     events = records(repo, "events.jsonl")
-    start = next(event for event in events if event["item"] == item and event["event"] == "run start")
+    # Recovery can include a failed provider attempt before the completed run.
+    end = next(event for event in reversed(events) if event["item"] == item
+               and event["event"] == "run end" and event.get("outcome") == "completed")
+    start = next(event for event in events if event.get("id") == end["run_id"])
     progress = [event for event in events if event.get("run_id") == start["id"] and event["event"] == "progress"]
     assert [event["step"] for event in progress] == ["editing second.py", "editing third.py"]
     assert all(event["round"] == start["round"] for event in progress)
