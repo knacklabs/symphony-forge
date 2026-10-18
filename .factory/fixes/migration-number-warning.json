@@ -10,13 +10,79 @@
   },
   "done_when": "Close and forge next warn, without refusing, when another open item's branch adds a migration file with the same number under the repo's migrations folders, naming both items, and a test covers it on new and adopted repos",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/migration_warnings.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "warnings() in src/forge/migration_warnings.py",
+      "file": "src/forge/migration_warnings.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 35,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh origin's peer refs before checking collisions",
+      "work": 3
+    },
+    {
+      "area": "warnings() in src/forge/migration_warnings.py",
+      "file": "src/forge/migration_warnings.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 45,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Determine whether peers are open from their actual item and landed state",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2356ca50e1268fbeabba16381af5fcb6b111c8b56c258b363a95a8b7c0e40e02",
+    "changed": "0258569dc14f1d3fd009fab28ad887d2b64139af293ac382173d35774a62a7e9",
+    "commit": "890ffcee6d73dbd8c87b9c17bc17ba0c67e751d1",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 4\nRaise: Functional. If another worker pushes a competing migration from a separate clone after this worker starts, both close and next miss it. `branch_tips` only lists local refs (`nextstep.py:808\u2013812`), and this path never fetches peer branches. Close's later fetch retrieves only the default branch (`close.py:681`); next also calculates warnings before its report can discover newer PR heads. Consequently, a missing or outdated origin peer ref silently suppresses the promised warning. Refresh peer refs once before scanning, then reuse that snapshot. The new test pushes peers from the same clone, which updates its tracking refs automatically and conceals this failure.",
+        "file": "src/forge/migration_warnings.py",
+        "gain": 5,
+        "harm": 4,
+        "line": 35,
+        "priority": "P1",
+        "title": "Refresh origin's peer refs before checking collisions",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 3, Harm 4\nRaise: Functional. Checking only the status stored on the peer branch includes finished items. Forge squash-merges PRs (`merge.py:109`), leaving retained branch tips with their pre-merge status and a three-dot diff that still contains their migration additions. Unlike the existing next report (`nextstep.py:270\u2013274`), this filter never checks whether the item's state has landed on the default branch, so completed peers keep producing warnings. Named tasks have another bypass: `_item` at line 64 converts only numeric T identifiers, although `task.py:88\u201398` supports names such as `BOARD/PAGE`. Such peers read `.factory/stories/BOARD-PAGE/story.json` instead of their task state, so even an explicit done status is ignored and the warning names the wrong item. Resolve the actual task identity and exclude landed or completed items. The test's final case points the peer ref at main, which does not exercise a retained squash-merged branch.",
+        "file": "src/forge/migration_warnings.py",
+        "gain": 3,
+        "harm": 4,
+        "line": 45,
+        "priority": "P1",
+        "title": "Determine whether peers are open from their actual item and landed state",
+        "work": 3
+      }
+    ],
+    "id": "a563eae2-b84e-4268-9830-c3f1b559c7c4",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:58:58.683303+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T18:01:37.527530+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
