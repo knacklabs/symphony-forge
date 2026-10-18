@@ -426,20 +426,20 @@ def files(top: Path, cfg: dict[str, Any], *, hooks_top: Path | None = None) -> d
 def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str]) -> set[str]:
     """The paths whose content at head ("" for the index) is exactly what forge sync writes over
     the base commit's files with this config, so a fix's size doesn't count them."""
-    def entries(*args: str) -> dict[str, tuple[str, str]]:
-        raw = subprocess.run(["git", *args], cwd=top, capture_output=True, check=True).stdout
+    def entries(*args: str) -> dict[str, str]:
+        raw = subprocess.run(["git", "--literal-pathspecs", *args], cwd=top,
+                             capture_output=True, check=True).stdout
         found = {}
         for row in raw.split(b"\0"):
             if not row:
                 continue
             meta, path = row.split(b"\t", 1)
             fields = meta.split()
-            found[path.decode("utf-8")] = (fields[0].decode(),
-                                          fields[1 if args[0] == "ls-files" else 2].decode())
+            found[path.decode("utf-8")] = fields[1 if args[0] == "ls-files" else 2].decode()
         return found
 
-    before = entries("ls-tree", "-rz", base)
-    after = entries("ls-tree", "-rz", head) if head else entries("ls-files", "--stage", "-z")
+    # Only root names are needed to find requirements files, not the whole base tree.
+    before = repo.git("ls-tree", "--name-only", "-z", base, cwd=top).split("\0")
     # Only these repo files are read by the renderers. Materialize inputs, never a Git
     # worktree: no checkout filters, hooks, index changes or module discovery are needed.
     inputs = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".codex/hooks.json",
@@ -472,14 +472,17 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
         wanted = files(snapshot, cfg, hooks_top=top)
-    algorithm = "sha256" if any(len(oid) == 64 for _, oid in after.values()) else "sha1"
+    candidates = [path for path in paths if path in wanted]
+    if not candidates:
+        return set()
+    after = (entries("ls-tree", "-rz", head, "--", *candidates) if head else
+             entries("ls-files", "--stage", "-z", "--", *candidates))
+    algorithm = "sha256" if any(len(oid) == 64 for oid in after.values()) else "sha1"
     matched = set()
-    for path in paths:
-        if path not in wanted:
-            continue
+    for path in candidates:
         content = wanted[path].encode("utf-8")
         digest = hashlib.new(algorithm, f"blob {len(content)}\0".encode() + content).hexdigest()
-        if after.get(path, ("", ""))[1] == digest or not content and path not in after:
+        if after.get(path) == digest or not content and path not in after:
             matched.add(path)
     return matched
 

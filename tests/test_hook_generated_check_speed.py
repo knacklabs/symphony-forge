@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import shutil
 from pathlib import Path
+from statistics import median
 
 import pytest
 
@@ -70,8 +71,23 @@ def profile(frame, event, result):
 sys.setprofile(profile)
 from forge.cli import main'''), encoding="utf-8")
 
+    def measure(status):
+        # A shared runner can pause one process. Keep the same 0.1-second budget
+        # for the median of five real checks of each unchanged staged snapshot.
+        log.write_text("", encoding="utf-8")
+        for _ in range(5):
+            checked = repo.forge("hook", "pre-commit", cwd=folder)
+            assert checked.returncode == status, checked.stdout + checked.stderr
+        samples = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
+        assert len(samples) == 5, samples
+        assert median(elapsed for elapsed, _, _ in samples) < 0.1, samples
+        for _, parses, commands in samples:
+            assert parses == 0, samples
+            assert not any("worktree" in command for command in commands), commands
+
     def commit(message):
         repo.git("add", "-A", cwd=folder)
+        measure(0)
         return git(folder, "commit", "-qm", message)
 
     first = commit("Sync and change five source files")
@@ -84,6 +100,7 @@ from forge.cli import main'''), encoding="utf-8")
     # An unstaged repair cannot hide what is actually being committed.
     (folder / ".claude/settings.json").write_text(
         repo.git("show", "HEAD:.claude/settings.json", cwd=folder) + "\n", encoding="utf-8")
+    measure(1)
     refused = git(folder, "commit", "-qm", "Hand edit generated settings")
     assert refused.returncode != 0
     expected = (
@@ -93,9 +110,3 @@ from forge.cli import main'''), encoding="utf-8")
     if kind == "new-husky":
         expected = "client-check\n" + expected + "husky - pre-commit script failed (code 1)\n"
     assert refused.stderr == expected
-    samples = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
-    assert len(samples) >= 3, samples
-    for elapsed, parses, commands in samples:
-        assert elapsed < 0.1, samples
-        assert parses == 0, samples
-        assert not any("worktree" in command for command in commands), commands
