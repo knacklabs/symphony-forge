@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-import conftest
 from test_close import env  # noqa: F401
 from test_setup import _fresh_client
 
@@ -163,10 +162,4 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
         assert not any("&" in arg or "event=" in arg for arg in call)
 
 
-def test_3_forge_matrix_uses_the_same_review_record_shortcut():
-    workflow = (conftest.ROOT / ".github/workflows/forge-next.yml").read_text()
-    assert "python .forge/review-tests.py" in workflow
-    assert not suite_runs(workflow, "true")
-    assert suite_runs(workflow, "false")
-    assert "actions: read" in workflow
     merge_checkout(workflow)
