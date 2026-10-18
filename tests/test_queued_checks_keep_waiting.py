@@ -179,6 +179,10 @@ def test_4_five_thousand_old_runs_need_at_most_101_history_requests(clock, histo
     output = done.stdout + done.stderr
     calls = [call for call in env.gh.calls()[before:] if call and call[0] == "api"
              and any("/actions/runs" in arg for arg in call)]
+    # Concurrency recovery samples active runs separately from runner history.
+    active = [call for call in calls if any(arg.startswith("status=") for arg in call)]
+    assert len(active) == 3, active
+    calls = [call for call in calls if call not in active]
 
     assert len(calls) <= 101, calls
     assert len(calls) == 101, calls  # A full recent page has no matching activity.

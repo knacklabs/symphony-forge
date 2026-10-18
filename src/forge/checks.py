@@ -158,12 +158,16 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
 
 
 def queued_reason(top: Path, sha: str, item: str = "") -> str:
-    """Doctor samples recent runner activity only for a five-minute queued check."""
+    """Doctor recovers queued runs, then diagnoses runner activity after five minutes."""
     now = datetime.fromisoformat(repo.now())
     queued = False
     untimed_suites = set()
-    for check in _ask(top, item, ".check_runs",
-                      f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100"):
+    checks = _ask(top, item, ".check_runs",
+                  f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100")
+    checks = [check for check in checks if check.get("head_sha", sha) == sha]
+    if _cancel_superseded(top, item, checks):
+        return ""
+    for check in checks:
         if check.get("status") != "queued" or check.get("head_sha", sha) != sha:
             continue
         try:
@@ -218,6 +222,51 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
             f"last seven days using runner = {json.dumps(runner)} in forge.toml")
 
 
+def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]]) -> bool:
+    """Recover the workflow/event/PR concurrency groups used by Forge's CI."""
+    suites = {check.get("check_suite", {}).get("id") for check in checks
+              if check.get("status") == "queued"} - {None}
+    if not suites:
+        return False
+    try:
+        # Read active runs only, including old blockers outside doctor's history window.
+        runs = {run["id"]: run for status in ("queued", "pending", "in_progress")
+                for run in _ask(top, item, ".workflow_runs", "repos/{owner}/{repo}/actions/runs",
+                                "--method", "GET", "--raw-field", "per_page=100",
+                                "--raw-field", f"status={status}") if isinstance(run.get("id"), int)}
+    except repo.Refused:
+        return False  # Recovery is optional when GitHub cannot supply run identities.
+    cancelled = False
+    for current in runs.values():
+        prs = current.get("pull_requests") or []
+        if (current.get("check_suite_id") not in suites
+                or current.get("status") not in ("queued", "pending")
+                or current.get("event") not in ("pull_request", "pull_request_target")
+                or not current.get("workflow_id") or not current.get("head_branch")
+                or not isinstance(current.get("run_number"), int)
+                or len(prs) != 1 or not prs[0].get("number")):
+            continue
+        same = [run for run in runs.values()
+                if all(run.get(key) == current[key] for key in ("workflow_id", "event", "head_branch"))
+                and [pr.get("number") for pr in run.get("pull_requests") or []] == [prs[0]["number"]]
+                and isinstance(run.get("run_number"), int)]
+        if any(run["run_number"] > current["run_number"] for run in same):
+            continue  # A stale head must not cancel runs on behalf of a superseded run.
+        for run in same:
+            if (run["run_number"] >= current["run_number"]
+                    or run.get("status") not in ("queued", "pending", "in_progress")):
+                continue
+            done = repo.run("gh", "run", "cancel", str(run["id"]), cwd=top)
+            if done.returncode == 0:
+                print(f"Cancelled older run {run['id']} for pull request {prs[0]['number']}. "
+                      f"Waiting for run {current['id']}.", flush=True)
+                cancelled = True
+            else:
+                print(f"Could not cancel older run {run['id']}: {done.stderr.strip() or done.stdout.strip()}.",
+                      flush=True)
+    return cancelled
+
+
 def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str]]:
     """Check outcomes on sha and the fields that show a run starting, ending or being replaced."""
     # Every page: a failed matrix job on page two must still count.
@@ -226,6 +275,7 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
     statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
     # Ignore earlier pushes for both readiness and progress; GitHub's ordering is not progress.
     runs = [run for run in runs if run.get("head_sha", sha) == sha]
+    _cancel_superseded(top, item, runs)
     snapshot = sorted(json.dumps([entry.get(field) for field in fields])
                       for entries, fields in (
                           (runs, ("id", "name", "status", "conclusion", "started_at", "completed_at")),
