@@ -23,8 +23,8 @@
     "id": "d564b295-7bfc-4cbe-8029-0c4188371505",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T10:14:29.731299+00:00",
@@ -40,12 +40,10 @@
     }
   ],
   "stuck": {
-    "close": "ce674bc5-77be-4bb5-b657-ccf0822d9917",
-    "head": "3f22d771b216bf569f137a328159e6f190a8682b",
-    "keys": {
-      "close's tests failing": 1
-    },
-    "round": 1
+    "close": "2d5f5372-9686-403b-ae1b-32eba64c5f1b",
+    "head": "4516cc0c84315231d0810f527910ad121810129e",
+    "keys": {},
+    "round": 2
   },
   "why": "Every progress update rewrites Forge's 14 MB event log under one lock, parsing about 45,000 records each time",
   "worker": "codex"
