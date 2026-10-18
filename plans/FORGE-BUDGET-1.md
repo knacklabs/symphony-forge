@@ -56,6 +56,9 @@ reverts with its pull request.
    free, starts above 1.6 GB") in the same place line the load wait uses. Unknown memory (an
    unreadable source) never blocks. Tests: a fake low-memory reading holds a work round, a read, a
    review and a test run, and a recovered reading starts them.
+   The suite's shared fixture (tests/conftest.py, where it already isolates load averages) also
+   supplies a plentiful memory reading and no busy runners by default, so existing command tests
+   never wait on the host's real memory or runners; tests that need pressure set it explicitly.
 2. Today each test run uses `-n` workers on its own and small selections bypass the test lane.
    Make the test lane's capacity a count of test processes (cores minus the agent share), give each
    run a share of it through the `-n` value it passes to pytest, and count small selections too.
@@ -85,7 +88,7 @@ reverts with its pull request.
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| MEMORY | Memory floor and runners | the memory floor for every lane, runner-aware budgets, doctor's budget lines | 1, 3, 5 | src/forge/machine.py, src/forge/doctor.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md | tests/test_machine_memory_budget.py | | | |
+| MEMORY | Memory floor and runners | the memory floor for every lane, runner-aware budgets, doctor's budget lines | 1, 3, 5 | src/forge/machine.py, src/forge/doctor.py, src/forge/templates/skill.md, .claude/skills/forge/SKILL.md, .codex/skills/forge/SKILL.md, tests/conftest.py | tests/test_machine_memory_budget.py | | | |
 | SHARE | Shared test budget and cheap waiting | one test-process budget shared by all test runs, cheaper polling and identity checks | 2, 4 | src/forge/machine.py, src/forge/fasttest.py, src/forge/quicktest.py | tests/test_machine_shared_test_budget.py, tests/test_machine_test_lane_capacity.py | MEMORY | | |
 
 New moving parts: none

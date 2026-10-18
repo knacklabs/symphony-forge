@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-18T10:19:44.779922+00:00
-seconds: 207.136
-read_hash: 48731db5ee323532eb316df7e080749493994774
-round: 1
+read_at: 2026-10-18T10:22:06.959741+00:00
+seconds: 82.212
+read_hash: 3da5705363df6d9cee7b059d383ec6038a4b4807
+round: 2
 passed: no
-doc_seen: 48731db5ee323532eb316df7e080749493994774
+doc_seen: 3da5705363df6d9cee7b059d383ec6038a4b4807
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 1af4bede05b1a8dbf556f9ad830813ce2cdf26bc
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a14e83-1d5e-7fe3-a9ad-1c6390be10e9
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -56,4 +56,11 @@ Only a genuine trade-off goes to the human, as a question with options.
 5. Blocking: Unproven: item 3: an already-waiting command starts when a runner becomes idle.
    Raise: Test. Admission currently calculates capacity once, before polling (`src/forge/machine.py:163-170`). Tests that compare separate busy-runner and idle-runner starts, as described at `plans/FORGE-BUDGET-1.md:64-66`, can pass while a waiter retains its original reduced capacity indefinitely. Item 3 explicitly promises that the runner frees the budget when idle.
    Gain 3, Work 2, Harm 3
+   Disposition: cut
+
+## Round 2
+
+6. Blocking: Trap: tests depend on real machine pressure: items 1 and 3.
+   Raise: Plan gap. `tests/conftest.py:33-41` isolates load averages but supplies no memory or runner readings. Existing command tests therefore inherit the host’s new admission gates and can time out on the low-memory laptop described in the story (`tests/conftest.py:266-268`). Faking readings only in the new tests leaves this suite-wide failure intact. Neither task assigns or scopes the shared fixture update (`plans/FORGE-BUDGET-1.md:88-89`).
+   Gain 4, Work 2, Harm 2
    Disposition: cut
