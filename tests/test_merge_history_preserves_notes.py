@@ -1,6 +1,7 @@
 """Refreshing merge history preserves the owner's sections in the published squash."""
 import json
 
+from conftest import _install
 from test_close import body, env, finding, report  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
 
@@ -24,8 +25,8 @@ def test_18_merge_refreshes_only_managed_history_and_keeps_handwritten_sections(
     github_merge(env, f"fix/{item}")
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
-    gh.write_text(source.replace('"isDraft": False',
-                                f'"isDraft": False, "body": {published!r}'), "utf-8")
+    _install(gh.parent, gh.name, source.replace('"isDraft": False',
+                                f'"isDraft": False, "body": {published!r}'))
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stderr
     refreshed = body(env.gh_calls("pr", "edit")[-1])
@@ -62,8 +63,8 @@ def test_19_merge_adds_history_to_an_already_ready_pre_upgrade_pull_request(env)
     github_merge(env, f"fix/{item}")
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
-    gh.write_text(source.replace('"isDraft": False',
-                                f'"isDraft": False, "body": {published!r}'), "utf-8")
+    _install(gh.parent, gh.name, source.replace('"isDraft": False',
+                                f'"isDraft": False, "body": {published!r}'))
 
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stdout + merged.stderr

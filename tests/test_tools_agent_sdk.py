@@ -84,7 +84,7 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
         _install(repo.bin, "uv", f'''#!{sys.executable}
 import json, pathlib, subprocess, sys
 args = sys.argv[1:]
-with (pathlib.Path(__file__).resolve().parent / "uv-sdk-calls.jsonl").open("a", encoding="utf-8") as out:
+with (pathlib.Path(__file__).absolute().parent / "uv-sdk-calls.jsonl").open("a", encoding="utf-8") as out:
     out.write(json.dumps(args) + "\\n")
 if args[:3] == ["venv", "--python", "3.11"]:
     subprocess.run([sys.executable, "-m", "venv", "--without-pip", args[-1]], check=True)
@@ -150,12 +150,12 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
             # Only command discovery changes: the SDK and its bundled program
             # remain installed. No separate Claude executable is required.
             launcher = repo.bin / "forge"
-            launcher.write_text(launcher.read_text("utf-8").replace(
+            _install(launcher.parent, launcher.name, launcher.read_text("utf-8").replace(
                 "from forge.cli import main",
                 "import shutil\n"
                 "_which = shutil.which\n"
                 "shutil.which = lambda name, *args, **kwargs: None if name == 'claude' else _which(name, *args, **kwargs)\n"
-                "from forge.cli import main"), encoding="utf-8")
+                "from forge.cli import main"))
         first = host.forge("work", ITEM)
         assert first.returncode == 0, first.stdout + first.stderr
         [fresh] = calls(sdk_log)

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, machine_cores
+from conftest import ROOT, machine_cores, _install
 from test_close import env  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_codex_worker import sdk_data  # noqa: F401
@@ -64,12 +64,16 @@ def test_1_a_reused_agent_pid_keeps_the_run_while_forge_runs(env, tmp_path, pers
             ("codex-app-server", "            ", 'name = pathlib.Path(cwd).name',
              '            turns += 1', "pathlib.Path")):
         stub = repo.bin / provider
-        stub.write_text(stub.read_text("utf-8").replace(named,
+        source = stub.read_text("utf-8").replace(named,
             f'{named}\n{indent}if name == {name!r} and (here / "first-ended").exists():\n'
             f'{indent}    name += "-nudge"').replace(marker,
             f'{indent}if name == {name!r}:\n'
             f'{indent}    {path_type}({dirty}).write_text("needs committing")\n'
-            f'{indent}    (here / "first-ended").touch()\n' + marker), "utf-8")
+            f'{indent}    (here / "first-ended").touch()\n' + marker)
+        if stub.suffix == ".py":
+            stub.write_text(source, "utf-8")
+        else:
+            _install(stub.parent, stub.name, source)
     queue = Path(os.environ["APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME"]) / "forge/agent-runs.json"
 
     def entries():

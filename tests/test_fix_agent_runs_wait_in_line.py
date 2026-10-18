@@ -16,7 +16,7 @@ WAITING = ("2 Forge agents already run on this machine, so this one waits its tu
 # is named for its folder. claude answers like a reader with no findings, which a worker ignores.
 HOLDING_CLAUDE = """#!{python}
 import os, pathlib, sys, time
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 sys.stdin.read()
 if "--output-format" in sys.argv:  # like claude: stream-json ends with a result event of its answer
     import atexit, io, json

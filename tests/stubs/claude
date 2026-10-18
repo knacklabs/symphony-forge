@@ -12,7 +12,7 @@ import os
 import pathlib
 import sys
 
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 # Plugin maintenance and version queries do not start a model turn.
 if args == ["--version"]:

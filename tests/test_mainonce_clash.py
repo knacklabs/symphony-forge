@@ -18,7 +18,7 @@ def _green_pull_request(env):
     code = '''import json, pathlib, subprocess, sys
 args = sys.argv[1:]
 if args[:2] == ["pr", "view"]:
-    here = pathlib.Path(__file__).resolve().parent
+    here = pathlib.Path(__file__).absolute().parent
     with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as calls:
         calls.write(json.dumps(args) + "\\n")
     head = subprocess.check_output(["git", "ls-remote", REMOTE,
@@ -43,7 +43,7 @@ def _draft_pull_request(env, content, require_current, *, is_draft=True, advance
     state.write_text(json.dumps({"body": content, "isDraft": is_draft}), encoding="utf-8")
     code = '''import json, pathlib, subprocess, sys
 args = sys.argv[1:]
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 if (ADVANCE_ON_CHECKS is not None and args[:1] == ["api"]
         and any("/check-runs" in arg for arg in args)
         and not (here / "main-advanced-during-checks").exists()):

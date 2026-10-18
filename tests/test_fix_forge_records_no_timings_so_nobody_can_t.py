@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _install
 from test_close import CLEAN, FAILED, blocked, env, finding, run  # noqa: F401
 from test_codex_worker import _codex_repo, _toml, sdk_data  # noqa: F401
 from test_worker import install_claude
@@ -21,8 +22,7 @@ def delay_tool(path: Path, report: str = "") -> None:
     script = (f"#!{sys.executable}\nimport os, sys, time\ntime.sleep(0.2)\n"
               + (f"print({report!r}, flush=True)\n" if report else "")
               + f"os.execv(sys.executable, [sys.executable, {str(original)!r}, *sys.argv[1:]])\n")
-    path.write_text(script, "utf-8")
-    path.chmod(0o755)
+    _install(path.parent, path.name, script)
 
 
 @pytest.mark.parametrize("scenario,review_model", [

@@ -505,10 +505,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
 def _copy_forge(repo, tmp_path):
     package = tmp_path / "plugged" / "forge"
     shutil.copytree(SOURCE, package)
-    (repo.bin / "forge").write_text(
-        conftest.FORGE_SHIM.format(python=sys.executable, src=str(package.parent)),
-        encoding="utf-8",
-    )
+    conftest._install(repo.bin, "forge",
+                     conftest.FORGE_SHIM.format(python=sys.executable, src=str(package.parent)))
     return package
 
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_close import CLEAN, env  # noqa: F401
 from test_machine_views import view
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
@@ -36,10 +36,10 @@ def test_1_running_review_has_a_positive_round_and_running_gate(env, previous):
     listener.settimeout(60)
     helper = Path(os.environ["AUTOREVIEW"])
     source = helper.read_text("utf-8")
-    helper.write_text(source.replace("args = sys.argv[1:]",
+    _install(helper.parent, helper.name, source.replace("args = sys.argv[1:]",
         "import socket\n"
         f"with socket.create_connection({listener.getsockname()!r}, timeout=60) as gate:\n"
-        "    gate.recv(1)\nargs = sys.argv[1:]"), "utf-8")
+        "    gate.recv(1)\nargs = sys.argv[1:]"))
     process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "close", item],
         cwd=repo.path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:

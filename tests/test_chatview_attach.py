@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import json
-import shutil
 
-from conftest import REAL_CODEX_HOME
+from conftest import _install, REAL_CODEX_HOME
 from test_chatview_start import _ready
 from test_close import CLEAN, GREEN, PIN, ROOT
 from test_codex_worker import _sent, _stub, sdk_data  # noqa: F401
@@ -22,7 +21,7 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
     repo.git("commit", "-q", "-am", "Close waits for tests", cwd=folder)
     skill = tmp_path / "autoreview"
     (skill / "scripts").mkdir(parents=True)
-    shutil.copy(ROOT / "tests" / "stubs" / "autoreview", skill / "scripts" / "autoreview")
+    _install(skill / "scripts", "autoreview", (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
     (skill / ".upstream-sha").write_text(PIN + "\n", "utf-8")
     queue = tmp_path / "reviews.json"
     queue.write_text(json.dumps([CLEAN]), "utf-8")

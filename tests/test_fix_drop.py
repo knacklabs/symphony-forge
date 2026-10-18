@@ -26,7 +26,7 @@ def _github(repo, prs=()):
     database.write_text(json.dumps(list(prs)), "utf-8")
     code = '''import json, pathlib, subprocess, sys
 from json_log import append_json
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 database = here / "drop-prs.json"
 rows = json.loads(database.read_text("utf-8"))

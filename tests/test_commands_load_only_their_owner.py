@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _install
+
 from conftest import ROOT
 from test_close import env  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
@@ -34,7 +36,7 @@ HELP = {**HELP_GOLDEN,
 def _trace(repo, log):
     # Observe the real entry point; neither parsing nor command results are replaced.
     shim = repo.bin / "forge"
-    shim.write_text(shim.read_text("utf-8").replace("from forge.cli import main", f'''
+    _install(shim.parent, shim.name, shim.read_text("utf-8").replace("from forge.cli import main", f'''
 import argparse, ast, atexit, json
 parsers, sources = [], []
 original_init, original_parse = argparse.ArgumentParser.__init__, ast.parse
@@ -54,7 +56,7 @@ def record():
                                                 if name == "forge" or name.startswith("forge."))}}) + "\\n")
 atexit.register(record)
 from forge.cli import main
-'''), "utf-8")
+'''))
 
 
 def _assert_hooks_are_small(repo, client, log):

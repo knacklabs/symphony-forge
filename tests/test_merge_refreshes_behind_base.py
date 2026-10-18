@@ -61,7 +61,7 @@ def _github_moves_default(env, conflict, merge_state, upgraded=None, failing_tes
     """GitHub advances main at the first merge attempt, then enforces head matching."""
     remote = env.repo.git("remote", "get-url", "origin")
     code = '''import json, pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 remote = REMOTE
 conflict = CONFLICT

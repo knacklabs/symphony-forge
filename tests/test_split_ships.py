@@ -95,8 +95,8 @@ def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / rel, target)
     launcher = repo.bin / "forge"
-    launcher.write_text(conftest.FORGE_SHIM.format(python=sys.executable,
-                                                  src=str(package.parent)), encoding="utf-8")
+    conftest._install(launcher.parent, launcher.name, conftest.FORGE_SHIM.format(python=sys.executable,
+                                                  src=str(package.parent)))
     before = {rel: file.read_bytes() for rel, file in files.items()}
     (package / "new_ship.py").write_text(
         'def ships(top, cfg):\n    return {"docs/new-owner.md": "Shipped by its owner.\\n"}\n',

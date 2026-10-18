@@ -39,7 +39,7 @@ UNREACHABLE = ("Couldn't reach GitHub, so older items' time stories weren't rebu
 
 # GitHub persists exactly the body the real command sends it; the edge makes no record.
 GITHUB = '''import json, pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 store = here / "historical-prs.json"
 prs = json.loads(store.read_text("utf-8"))

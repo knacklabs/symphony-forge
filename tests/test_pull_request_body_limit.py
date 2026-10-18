@@ -8,6 +8,7 @@ import re
 
 import pytest
 
+from conftest import _install
 from test_close import CLEAN, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_item_time_history import row
 from test_last_task_records_story_outcome import github_merge
@@ -32,19 +33,19 @@ if args[:1] == ["pr"] and len(args) > 1 and args[1] in ("create", "edit", "merge
     elif "--body" in args:
         text = args[args.index("--body") + 1]
     if text is not None:
-        with (pathlib.Path(__file__).resolve().parent / "submitted-bodies.jsonl").open("a", encoding="utf-8") as log:
+        with (pathlib.Path(__file__).absolute().parent / "submitted-bodies.jsonl").open("a", encoding="utf-8") as log:
             log.write(json.dumps({"operation": args[1], "body": text}) + "\\n")
         if len(text.encode("utf-8")) > 65536:
             sys.stderr.write("GitHub refused the pull request body: maximum 65536 bytes.\\n")
             sys.exit(1)
 '''
-    gh.write_text(header + "\n" + boundary + source, "utf-8")
+    _install(gh.parent, gh.name, header + "\n" + boundary + source)
     helper = env.queue.parent / "autoreview/scripts/autoreview"
     header, source = helper.read_text("utf-8").split("\n", 1)
-    helper.write_text(header + '\nimport sys\n'
+    _install(helper.parent, helper.name, header + '\nimport sys\n'
                      'if len(" ".join(sys.argv).encode("utf-16-le")) // 2 >= 32767:\n'
                      '    sys.exit("Review command exceeds the Windows command-line limit.")\n'
-                     + source, "utf-8")
+                     + source)
 
 
 def latest_body(env):
@@ -134,7 +135,7 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
     github_merge(env, branch)
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
-    gh.write_text(source.replace('"isDraft": False', f'"isDraft": False, "body": {text!r}'), "utf-8")
+    _install(gh.parent, gh.name, source.replace('"isDraft": False', f'"isDraft": False, "body": {text!r}'))
     reject_oversized_bodies(env)
     # Unicode exceeds the body limit while remaining below Windows' argv limit.
     outcome = "Basket quantities survive. " + "篮" * 23_000

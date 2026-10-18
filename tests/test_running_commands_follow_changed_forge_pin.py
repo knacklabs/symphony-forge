@@ -51,7 +51,7 @@ import json, os, pathlib, subprocess, sys
 if hasattr(os, "getloadavg"):
     os.getloadavg = lambda: (0.0, 0.0, 0.0)
 args = sys.argv[1:]
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")
 os.environ["PATH"] = {json.dumps(selected_bin.as_posix())} + os.pathsep + os.environ["PATH"]

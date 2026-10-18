@@ -7,7 +7,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import sys
 from pathlib import Path
 
@@ -27,7 +26,7 @@ args = sys.argv[1:]
 folder = args[args.index("-C") + 1]
 head = subprocess.run(["git", "-C", folder, "rev-parse", "HEAD"], capture_output=True,
                       text=True).stdout.strip()
-log = pathlib.Path(__file__).resolve().parent / "codex-calls.jsonl"
+log = pathlib.Path(__file__).absolute().parent / "codex-calls.jsonl"
 with open(log, "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"folder": folder, "head": head}}) + "\\n")
 '''
@@ -229,7 +228,7 @@ def body(call: list[str]) -> str:
 def env(repo, gh, tmp_path, monkeypatch) -> Forge:
     skill = tmp_path / "autoreview"
     (skill / "scripts").mkdir(parents=True)
-    shutil.copy(ROOT / "tests" / "stubs" / "autoreview", skill / "scripts" / "autoreview")
+    conftest._install(skill / "scripts", "autoreview", (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
     (skill / ".upstream-sha").write_text(PIN + "\n", "utf-8")
     monkeypatch.setenv("AUTOREVIEW", str(skill / "scripts" / "autoreview"))
     monkeypatch.setenv("AUTOREVIEW_STUB", str(tmp_path / "reviews.json"))

@@ -5,7 +5,7 @@ Existing title coverage never amends a published contract or changes the platfor
 """
 import pytest
 
-from conftest import patient
+from conftest import patient, _install
 from test_close import STORY_DOC, body, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
@@ -50,13 +50,13 @@ def test_4_close_reads_story_title_as_utf8_in_a_legacy_locale(env, previous, mon
     monkeypatch.setenv("PYTHONCOERCECLOCALE", "1")
     shim = env.repo.bin / "forge"
     source = shim.read_text("utf-8")
-    patient(lambda: shim.write_text(source.replace("from forge.cli import main",
+    patient(lambda: _install(shim.parent, shim.name, source.replace("from forge.cli import main",
         "import locale\n"
         "assert sys.getfilesystemencoding() == 'utf-8'\n"
         "assert not sys.flags.utf8_mode\n"
         "locale.setlocale(locale.LC_CTYPE, 'C')\n"
         "assert locale.getpreferredencoding(False).lower() not in ('utf-8', 'utf8')\n"
-        "from forge.cli import main"), encoding="utf-8"))
+        "from forge.cli import main")))
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     [created] = env.gh_calls("pr", "create")

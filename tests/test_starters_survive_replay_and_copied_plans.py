@@ -6,7 +6,6 @@ Only remote review/check services and GitHub's squash API are faked; Git is real
 No production seam is needed (test-audit authoring gate).
 """
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -44,7 +43,7 @@ def flow(client, gh, tmp_path, monkeypatch):
     client.git("config", "--unset", "core.hooksPath")
     skill = tmp_path / "autoreview"
     (skill / "scripts").mkdir(parents=True)
-    shutil.copy(ROOT / "tests/stubs/autoreview", skill / "scripts/autoreview")
+    _install(skill / "scripts", "autoreview", (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
     (skill / ".upstream-sha").write_text(PIN + "\n", "utf-8")
     monkeypatch.setenv("AUTOREVIEW", str(skill / "scripts/autoreview"))
     monkeypatch.setenv("AUTOREVIEW_STUB", str(tmp_path / "reviews.json"))

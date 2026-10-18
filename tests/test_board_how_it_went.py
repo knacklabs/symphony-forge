@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _install
+
 from test_close import CLEAN, GREEN, STORY_DOC, approve_story, body, blocked, env, finding, run  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_item_time_history import row
@@ -44,13 +46,13 @@ def published(env, item, *, merged_at=None):
 def github_list_fields(env):
     # GitHub only returns requested fields and rows matching the requested state.
     gh = env.repo.bin / "gh"
-    gh.write_text(gh.read_text("utf-8").replace('sys.stdout.write(rule["stdout"])', '''output = rule["stdout"]
+    _install(gh.parent, gh.name, gh.read_text("utf-8").replace('sys.stdout.write(rule["stdout"])', '''output = rule["stdout"]
         if args[:2] == ["pr", "list"] and "--json" in args:
             fields = args[args.index("--json") + 1].split(",")
             state = args[args.index("--state") + 1].upper() if "--state" in args else "ALL"
             output = json.dumps([{k: v for k, v in pr.items() if k in fields}
                                  for pr in json.loads(output) if state == "ALL" or pr["state"] == state])
-        sys.stdout.write(output)'''), "utf-8")
+        sys.stdout.write(output)'''))
 
 
 @pytest.mark.parametrize("case,previous", [("shared-fix", False), ("shared-fix", True),
@@ -606,13 +608,13 @@ def rebuilt_history(env):
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
     source = source.replace('"isDraft": False', f'"isDraft": False, "body": {text!r}')
-    gh.write_text(source.replace('if args[:2] == ["pr", "merge"]:',
-                                 'if args[:2] == ["pr", "merge"]:\n    sys.exit(1)'), "utf-8")
+    _install(gh.parent, gh.name, source.replace('if args[:2] == ["pr", "merge"]:',
+                                 'if args[:2] == ["pr", "merge"]:\n    sys.exit(1)'))
     refused = env.repo.forge("merge", item)
     assert refused.returncode == 1
     published(env, item)
     assert row(env.repo, item)["stage"] == "ready", "A refused GitHub merge must keep shared readiness"
-    gh.write_text(source, "utf-8")
+    _install(gh.parent, gh.name, source)
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stdout + merged.stderr
     assert "Rebuilt from history." in env.repo.git("log", "-1", "--format=%B", "origin/main")

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_close import env  # noqa: F401
 from test_close_always_tests import adopt_earlier
 
@@ -44,7 +44,8 @@ def test_1_close_reviews_a_change_that_adds_a_png_screenshot(env, adopted):
         env.repo.git("merge", "-q", "--ff-only", "fix/adopt")
         env.repo.git("-c", "core.hooksPath=/dev/null", "push", "-q", "origin", "main")
     helper = Path(os.environ["AUTOREVIEW"])
-    helper.write_text(IMAGE_REVIEW + (ROOT / "tests/stubs/autoreview").read_text("utf-8"), "utf-8")
+    _install(helper.parent, helper.name,
+             IMAGE_REVIEW + (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
     item, where = env.start_fix()
     (where / "docs").mkdir()
     (where / "docs/screen.png").write_bytes(png())

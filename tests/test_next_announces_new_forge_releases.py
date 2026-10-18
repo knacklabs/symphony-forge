@@ -9,7 +9,7 @@ import tomllib
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_setup import _fresh_client, _version
 
 STORY = "client-repos-never-learn-that-a-newer-fo"
@@ -80,12 +80,12 @@ def test_1_next_announces_new_releases_with_a_shared_daily_cache(repo, gh, tmp_p
     # GitHub answers after the deadline with a valid newer release: without the timeout,
     # next would wrongly print it. Let the shim exit even if Windows kills only its cmd parent.
     gh_path = repo.bin / "gh"
-    gh_path.write_text(gh_path.read_text("utf-8").replace(
+    _install(gh_path.parent, gh_path.name, gh_path.read_text("utf-8").replace(
         'responses = here / "gh-responses.json"',
         'if args[:2] == ["release", "view"]:\n'
         '    import threading\n    threading.Event().wait(4)\n'
         '    sys.stdout.write(\'{"tagName":"v99.10.0"}\')\n'
-        '    sys.exit(0)\nresponses = here / "gh-responses.json"'), encoding="utf-8")
+        '    sys.exit(0)\nresponses = here / "gh-responses.json"'))
     # Count lookups instead of elapsed seconds: busy runners can delay command startup.
     cached = repo.forge("next", cwd=client)
     assert cached.returncode == 0, cached.stderr

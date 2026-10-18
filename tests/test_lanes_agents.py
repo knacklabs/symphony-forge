@@ -69,7 +69,7 @@ def hold_agents(env):
     server = Path(__file__).parent / "stubs/codex-app-server"
     _install(env.repo.bin, "codex-app-server", server.read_text("utf-8").replace(
         '            turns += 1',
-        '            here = pathlib.Path(__file__).resolve().parent\n'
+        '            here = pathlib.Path(__file__).absolute().parent\n'
         '            name = pathlib.Path(cwd).name\n'
         '            (here / f"started-{name}").touch()\n'
         '            while not (here / f"go-{name}").exists() and not (here / "go-all").exists():\n'
@@ -121,11 +121,11 @@ def test_1_half_the_cores_admit_work_rounds_while_reads_and_reviews_skip_the_lin
     # Windows's venv redirector can have a different pid from the Forge interpreter.
     parent_pid = tmp_path / "forge-parent-pid"
     launcher = repo.bin / "forge"
-    launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+    _install(launcher.parent, launcher.name, launcher.read_text("utf-8").replace("from forge.cli import main",
         "import os, pathlib\n"
         f"if sys.argv[1:] == ['work', {first!r}]:\n"
         f"    pathlib.Path({str(parent_pid)!r}).write_text(str(os.getpid()))\n"
-        "from forge.cli import main"), "utf-8")
+        "from forge.cli import main"))
     # Exercise a redirecting launcher on every OS, rather than only Windows CI.
     redirector = tmp_path / "redirector.py"
     redirector.write_text("import subprocess, sys\n"
@@ -149,8 +149,8 @@ def test_1_half_the_cores_admit_work_rounds_while_reads_and_reviews_skip_the_lin
             shutil.copy(ROOT / "tests/fixtures/pr-check-before-branch-diff" / name, source / "forge" / name)
         legacy = tmp_path / "base-forge"
         # Keep the same simulated six-core OS boundary for the older checker.
-        legacy.write_text((repo.bin / "forge").read_text("utf-8").replace(
-            str(ROOT / "src"), str(source)), "utf-8")
+        _install(legacy.parent, legacy.name, (repo.bin / "forge").read_text("utf-8").replace(
+            str(ROOT / "src"), str(source)))
     # A dirty first turn forces a second model launch in the same work round.
     # Hold Git between launches: a per-launch reservation must not admit a waiter.
     for provider, indent, naming, marker, path_type in (
@@ -167,7 +167,10 @@ def test_1_half_the_cores_admit_work_rounds_while_reads_and_reviews_skip_the_lin
             f'{indent}if name == {first_name!r}:\n'
             f'{indent}    {path_type}({json.dumps((worktree(repo, "fix/" + first) / "dirty.txt").as_posix())}).write_text("needs committing")\n'
             f'{indent}    (here / "first-ended").touch()\n' + marker)
-        stub.write_text(source, "utf-8")
+        if stub.suffix == ".py":
+            stub.write_text(source, "utf-8")
+        else:
+            _install(stub.parent, stub.name, source)
     started = lambda name: (repo.bin / f"started-{name}").exists()
     processes = []
     try:
@@ -208,7 +211,7 @@ def test_1_half_the_cores_admit_work_rounds_while_reads_and_reviews_skip_the_lin
         real_git = shutil.which("git")
         _install(repo.bin, "git", f'''#!{sys.executable}
 import os, pathlib, signal, subprocess, sys, time
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 if sys.argv[1:] == ["status", "--porcelain", "-uall"] and pathlib.Path.cwd().name == {first_name!r} and (here / "first-ended").exists() and not (here / "between-launches").exists():
     if {cancel_between!r}:
         if os.name != "nt": signal.signal(signal.SIGTERM, signal.SIG_IGN)
@@ -224,7 +227,7 @@ sys.exit(subprocess.call([{real_git!r}, *sys.argv[1:]]))
         if lane_adapter == "codex" and os.name != "nt":
             _install(repo.bin, "ps", f'''#!{sys.executable}
 import pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 if sys.argv[1:] == {ps_args!r} and not (here / "last-process-snapshot").exists():
     (here / "last-process-snapshot").touch()
     sys.stdout.write({snapshot!r})

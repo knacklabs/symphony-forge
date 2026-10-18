@@ -17,7 +17,7 @@ STORY = "when-the-installed-forge-differs-from-th"
 # Asked to, it runs this checkout's forge again, so "the pinned release" still isn't the pin.
 UV = """#!{python}
 import json, os, pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"args": sys.argv[1:], "cwd": os.getcwd()}}) + "\\n")
 if (here / "uv-reruns").exists():

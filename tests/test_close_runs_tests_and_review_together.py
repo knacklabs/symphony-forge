@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, Repo, _end_left
+from conftest import ROOT, Repo, _end_left, _install
 from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
 from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
@@ -118,16 +118,15 @@ with socket.create_connection({address!r}) as connection:
         env.commit(repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config + "\n")
         repo.git("push", "-q", "origin", "main")
         helper = Path(os.environ["AUTOREVIEW"])
-        helper.write_text(helper.read_text("utf-8").replace(
+        _install(helper.parent, helper.name, helper.read_text("utf-8").replace(
             "args = sys.argv[1:]", _record_process(env.tmp / "review.owned-process.json")
             + wait.format(address=address, role=b"review")
-            + "\nargs = sys.argv[1:]"), encoding="utf-8")
+            + "\nargs = sys.argv[1:]"))
         item, where = env.start_fix()
         env.open_pr("")  # an earlier round left the pull request ready for review
         launcher = repo.bin / "forge"
-        launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
-            _record_process(env.tmp / "close.owned-process.json") + "from forge.cli import main"),
-            encoding="utf-8")
+        _install(launcher.parent, launcher.name, launcher.read_text("utf-8").replace("from forge.cli import main",
+            _record_process(env.tmp / "close.owned-process.json") + "from forge.cli import main"))
         # Bound the whole command, including preparation and lane admission, not either start.
         deadline = time.monotonic() + CLOSE_TIMEOUT
         process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), "close", item],

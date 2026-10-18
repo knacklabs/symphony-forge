@@ -56,10 +56,10 @@ def test_1_tests_and_reviews_wait_for_high_load_then_start(env, tmp_path, adopte
     load = tmp_path / "load"
     load.write_text("6.0", "utf-8")
     shim = repo.bin / "forge"
-    shim.write_text(shim.read_text("utf-8").replace("from forge.cli import main",
+    _install(shim.parent, shim.name, shim.read_text("utf-8").replace("from forge.cli import main",
         "import pathlib\n"
         f"os.getloadavg = lambda: (float(pathlib.Path({load.as_posix()!r}).read_text()),) * 3\n"
-        "from forge.cli import main"), "utf-8")
+        "from forge.cli import main"))
     processes = []
     try:
         args = ("test",) if kind == "test" else ("close", item)

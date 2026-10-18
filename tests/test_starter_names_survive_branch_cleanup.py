@@ -5,7 +5,6 @@ command lifecycle uses real Git at the GitHub edge, with no attribution fixture
 or production seam (test-audit authoring gate).
 """
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -44,7 +43,7 @@ def _github_squash(repo, branch, tmp_path):
     remote = repo.git("remote", "get-url", "origin")
     checkout = tmp_path / ("github-" + branch.replace("/", "-"))
     code = '''import json, pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 branch = __BRANCH__
 marker = here / "merged-claim"
@@ -106,7 +105,7 @@ def test_15_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
 
     skill = tmp_path / "autoreview"
     (skill / "scripts").mkdir(parents=True)
-    shutil.copy(ROOT / "tests/stubs/autoreview", skill / "scripts/autoreview")
+    _install(skill / "scripts", "autoreview", (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
     (skill / ".upstream-sha").write_text(PIN + "\n", "utf-8")
     monkeypatch.setenv("AUTOREVIEW", str(skill / "scripts/autoreview"))
     monkeypatch.setenv("AUTOREVIEW_STUB", str(tmp_path / "reviews.json"))

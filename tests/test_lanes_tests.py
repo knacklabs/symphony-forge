@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import machine_cores
+from conftest import machine_cores, _install
 from test_close import Forge, env  # noqa: F401
 from test_codex_worker import _started
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
@@ -207,10 +207,10 @@ def check_killing_forge_keeps_the_lane_until_the_test_command_ends(env, tmp_path
     # Kill the Forge interpreter, including when a venv redirector starts it.
     parent_pid = tmp_path / "forge-parent-pid"
     launcher = repo.bin / "forge"
-    launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+    _install(launcher.parent, launcher.name, launcher.read_text("utf-8").replace("from forge.cli import main",
         "import os, pathlib\n"
         f"pathlib.Path({json.dumps(str(parent_pid))}).write_text(str(os.getpid()))\n"
-        "from forge.cli import main"), "utf-8")
+        "from forge.cli import main"))
     redirector = tmp_path / "redirector.py"
     redirector.write_text("import subprocess, sys\n"
         f"raise SystemExit(subprocess.call([sys.executable, {json.dumps(str(launcher))}, *sys.argv[1:]]))\n",
@@ -264,15 +264,19 @@ def check_stop_removes_waiter_and_ends_worker_and_test(env, tmp_path, release_se
     provider = repo.bin / ("claude_agent_sdk/__init__.py" if lane_adapter == "claude" else "codex-app-server")
     indent = "    " if lane_adapter == "claude" else "            "
     marker = 'name = Path.cwd().name' if lane_adapter == "claude" else 'name = pathlib.Path(cwd).name'
-    provider.write_text(provider.read_text("utf-8").replace(marker,
-        marker + f'\n{indent}(here / "model-pid").write_text(str(os.getpid()))'), "utf-8")
+    source = provider.read_text("utf-8").replace(marker,
+        marker + f'\n{indent}(here / "model-pid").write_text(str(os.getpid()))')
+    if provider.suffix == ".py":
+        provider.write_text(source, "utf-8")
+    else:
+        _install(provider.parent, provider.name, source)
     worker_pid = tmp_path / "worker-pid"
     launcher = repo.bin / "forge"
-    launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+    _install(launcher.parent, launcher.name, launcher.read_text("utf-8").replace("from forge.cli import main",
         "import os, pathlib\n"
         f"if sys.argv[1:] == ['work', {json.dumps(item)}]:\n"
         f"    pathlib.Path({json.dumps(str(worker_pid))}).write_text(str(os.getpid()))\n"
-        "from forge.cli import main"), "utf-8")
+        "from forge.cli import main"))
     processes = []
     worker_processes = []
     try:

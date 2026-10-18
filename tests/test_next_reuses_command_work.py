@@ -51,7 +51,7 @@ def test_1_next_reuses_work_within_a_command(repo, gh, monkeypatch, history):
     # function or adding a production diagnostic just for this test.
     measurements = repo.bin / "next-work.json"
     shim = repo.bin / "forge"
-    shim.write_text(shim.read_text("utf-8").replace("sys.exit(main())", f'''
+    _install(shim.parent, shim.name, shim.read_text("utf-8").replace("sys.exit(main())", f'''
 import json, pathlib
 counts = {{"parser_builds": 0, "record_copies": 0, "_combined": 0, "through_forge": 0}}
 def observe(frame, event, arg):
@@ -76,7 +76,7 @@ finally:
     sys.setprofile(None)
     pathlib.Path({json.dumps(measurements.as_posix())}).write_text(json.dumps(counts), encoding="utf-8")
 sys.exit(status)
-'''), encoding="utf-8")
+'''))
     real_git = shutil.which("git")
     log = repo.bin / "git-calls.jsonl"
     _install(repo.bin, "git", f'''#!{sys.executable}

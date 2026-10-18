@@ -118,9 +118,8 @@ if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.
     answer(json.dumps({{"mergeable": "MERGEABLE" if clean else "CONFLICTING", "headRefOid": head}}))
 '''.format(moved=repr(moved), branch=repr(BRANCH), green=repr(_runs(GREEN)[0]),
            during_merge=repr(during_merge))
-    stub.write_text(stub.read_text(encoding="utf-8").replace(
-        'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'),
-        encoding="utf-8")
+    _install(stub.parent, stub.name, stub.read_text(encoding="utf-8").replace(
+        'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'))
     return where, before, moved
 
 
@@ -138,9 +137,8 @@ if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.
     answer(RESPONSE, CODE)
 '''.replace("RESPONSE", repr(response[0])).replace("CODE", str(response[1]))
         stub = repo.bin / "gh"
-        stub.write_text(stub.read_text(encoding="utf-8").replace(
-            'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'),
-            encoding="utf-8")
+        _install(stub.parent, stub.name, stub.read_text(encoding="utf-8").replace(
+            'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'))
         monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
         done = repo.forge("close", ITEM)
         assert done.returncode == 1, done.stdout + done.stderr
@@ -174,9 +172,8 @@ if args[:2] == ["pr", "view"] and "--json" in args and "mergeable" in args[args.
     answer(json.dumps({"mergeable": state, "headRefOid": heads()["refs/heads/" + args[2]]}))
 '''.replace("ALWAYS", repr(mode == "unknown-always"))
         stub = repo.bin / "gh"
-        stub.write_text(stub.read_text(encoding="utf-8").replace(
-            'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'),
-            encoding="utf-8")
+        _install(stub.parent, stub.name, stub.read_text(encoding="utf-8").replace(
+            'merged = here / "github-merged"', script + '\nmerged = here / "github-merged"'))
         if mode == "unknown-always":
             monkeypatch.setenv("FORGE_CHECKS_WAIT", "0")
         done = repo.forge("close", ITEM)
@@ -226,13 +223,13 @@ def test_3_clean_pull_request_keeps_normal_waiting(client, command):
     env, sleeps, _ = client
     _fix(env, "working", worked=True)
     stub = env.repo.bin / "gh"
-    stub.write_text(stub.read_text(encoding="utf-8").replace(
+    _install(stub.parent, stub.name, stub.read_text(encoding="utf-8").replace(
         'if args[:2] == ["pr", "view"]:',
         'if args[:2] == ["pr", "view"] and "--json" in args and '
         '"mergeable" in args[args.index("--json") + 1]:\n'
         '    answer(json.dumps({"mergeable": "MERGEABLE", '
         '"headRefOid": heads()["refs/heads/" + args[2]]}))\n'
-        'if args[:2] == ["pr", "view"]:'), encoding="utf-8")
+        'if args[:2] == ["pr", "view"]:'))
     _queue(env, RUNS, *_runs([], GREEN))
     done = env.repo.forge(command, ITEM)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -266,13 +263,13 @@ def test_5_land_stops_if_github_still_reports_a_conflict_after_close(client):
     _fix(env, "working", worked=True)
     env.checks([])
     stub = env.repo.bin / "gh"
-    stub.write_text(stub.read_text(encoding="utf-8").replace(
+    _install(stub.parent, stub.name, stub.read_text(encoding="utf-8").replace(
         'if args[:2] == ["pr", "view"]:',
         'if args[:2] == ["pr", "view"] and "--json" in args and '
         '"mergeable" in args[args.index("--json") + 1]:\n'
         '    answer(json.dumps({"mergeable": "CONFLICTING", '
         '"headRefOid": heads()["refs/heads/" + args[2]]}))\n'
-        'if args[:2] == ["pr", "view"]:'), encoding="utf-8")
+        'if args[:2] == ["pr", "view"]:'))
     done = env.repo.forge("land", ITEM)
     assert done.returncode == 1, done.stdout + done.stderr
     assert "GitHub reports this pull request clashes with the default branch" in done.stderr

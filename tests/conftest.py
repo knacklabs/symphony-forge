@@ -5,6 +5,7 @@ human reads and the calls the stubs recorded (spec criterion 4).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -18,7 +19,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import TemporaryDirectory, gettempdir
 from typing import Any, Callable, TypeVar
 
 import pytest
@@ -46,15 +47,15 @@ def machine_cores(repo, count, system_count=None):
     """Report a machine's CPU count at the command boundary, without a production test flag."""
     shim = repo.bin / "forge"
     source = shim.read_text("utf-8")
-    shim.write_text(source.replace("from forge.cli import main",
+    _install(shim.parent, shim.name, source.replace("from forge.cli import main",
         f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
-        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
+        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"))
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
 import json, pathlib, subprocess, sys
 from json_log import append_json
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 append_json(here / "gh-calls.jsonl", args)
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
@@ -81,11 +82,32 @@ sys.exit(1)
 
 def _install(bin_dir: Path, name: str, text: str) -> None:
     path = bin_dir / name
-    path.write_text(text, encoding="utf-8")
-    path.chmod(0o755)
     if os.name == "nt":  # Windows finds commands by extension; a .cmd hands off to Python.
+        path.write_text(text, encoding="utf-8", newline="\n")
+        path.chmod(0o755)
         (bin_dir / f"{name}.cmd").write_text(f'@"{sys.executable}" "%~dp0{name}" %*\n',
                                              encoding="utf-8")
+        return
+    import fcntl
+
+    cache = Path(gettempdir()) / f"forge-test-stubs-{os.getuid()}"
+    cache.mkdir(mode=0o700, exist_ok=True)
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    folder = cache / digest
+    target = folder / "program"
+    # Publish once, even when pytest workers first install the same content together.
+    with (cache / f"{digest}.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if not target.exists():
+            folder.mkdir(exist_ok=True)
+            with TemporaryDirectory(dir=cache) as temporary:
+                built = Path(temporary) / "program"
+                built.write_text(text, encoding="utf-8", newline="\n")
+                built.chmod(0o555)
+                os.replace(built, target)
+            folder.chmod(0o555)
+    path.unlink(missing_ok=True)
+    path.symlink_to(target)
 
 
 def _sdk_ready(env: Path) -> bool:

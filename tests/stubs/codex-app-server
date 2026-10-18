@@ -26,7 +26,7 @@ import time
 VERSION = "0.159.2"
 THREAD, TURN = "thr-stub-1", "turn-stub-1"
 DECLINE = {"decision": "decline"}
-LOG = pathlib.Path(__file__).resolve().parent / "codex-app-server.jsonl"
+LOG = pathlib.Path(__file__).absolute().parent / "codex-app-server.jsonl"
 
 
 def log(**entry):

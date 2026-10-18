@@ -78,9 +78,9 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
 
     _autoreview(tmp_path, monkeypatch)
     helper = os.environ["AUTOREVIEW"]
-    shutil.copyfile(ROOT / "tests/stubs/autoreview", helper + "-stub")
-    with open(helper, "w", encoding="utf-8") as out:
-        out.write(RECORDER.format(python=sys.executable, stub=json.dumps(helper + "-stub")))
+    _install(Path(helper).parent, Path(helper).name + "-stub", (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
+    _install(Path(helper).parent, Path(helper).name,
+             RECORDER.format(python=sys.executable, stub=json.dumps(helper + "-stub")))
     queue = tmp_path / "reviews.json"
     queue.write_text(json.dumps([{"report": {"review_status": "scoped-clean", "findings": []}}]),
                      encoding="utf-8")

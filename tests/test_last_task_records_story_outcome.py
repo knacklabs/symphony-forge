@@ -15,7 +15,7 @@ STORY = "recording-that-a-story-is-done-opens-a-s"
 def github_merge(env, branch):
     """Fake only GitHub: squash the pushed branch into the real bare remote."""
     code = '''import json, pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 if args[:2] == ["pr", "view"]:
     head = subprocess.check_output(["git", "rev-parse", BRANCH], text=True).strip()

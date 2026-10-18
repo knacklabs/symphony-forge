@@ -43,9 +43,9 @@ def test_1_a_work_round_waits_while_load_per_core_is_at_least_one_and_a_half(env
     load = tmp_path / "load"
     load.write_text("0.0", "utf-8")
     shim = repo.bin / "forge"
-    shim.write_text(shim.read_text("utf-8").replace("from forge.cli import main",
+    _install(shim.parent, shim.name, shim.read_text("utf-8").replace("from forge.cli import main",
         f"import pathlib\nos.getloadavg = lambda: (float(pathlib.Path({str(load)!r}).read_text()),) * 3\n"
-        "from forge.cli import main"), "utf-8")
+        "from forge.cli import main"))
     first, first_name = make_work(repo, "First typo")
     second, second_name = make_work(repo, "Second typo")
     hold_agents(env)

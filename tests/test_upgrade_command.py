@@ -28,7 +28,7 @@ MARK = "release marker"
 
 UV = """#!{python}
 import json, os, pathlib, re, shutil, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")

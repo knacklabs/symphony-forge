@@ -26,7 +26,7 @@ STEPS = re.compile(r"(Building(?! \S+ with )|Closing|Fix round|Re-running"
 # in the bare remote as GitHub would, and queued answers (the last repeats) for calls that change.
 GH = '''#!{python}
 import json, pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 remote = {remote!r}
 

@@ -26,7 +26,7 @@ with open(args[args.index("--json-output") + 1], "w", encoding="utf-8") as out:
 # The real claude: records its arguments and what its working folder holds.
 CLAUDE = '''#!{python}
 import json, os, pathlib, sys
-log = pathlib.Path(__file__).resolve().parent / "claude-review-calls.jsonl"
+log = pathlib.Path(__file__).absolute().parent / "claude-review-calls.jsonl"
 with open(log, "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"args": sys.argv[1:], "files": sorted(os.listdir("."))}}) + "\\n")
 '''

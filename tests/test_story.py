@@ -5,13 +5,14 @@ The helpers here set up stories; test_approval.py and test_next.py use them too.
 from __future__ import annotations
 
 import json
-import os
 import re
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+from conftest import _install
 
 DOC = """# Shoppers can save a basket
 
@@ -48,7 +49,7 @@ Risks: none
 # file named in claude-touch, to stand for a reader that changes a file.
 READER = """#!{python}
 import io, json, os, pathlib, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 # Plugin maintenance and version queries do not start a cold read.
 args = sys.argv[1:]
 if args == ["--version"]:
@@ -92,11 +93,7 @@ def setup(repo, kind="forge-source", keys=("SHOP",)):
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Set up Forge")
     repo.git("push", "-q", "origin", "main")
-    path = repo.bin / "claude"
-    path.write_text(READER.format(python=sys.executable), encoding="utf-8")
-    path.chmod(0o755)
-    if os.name == "nt":
-        (repo.bin / "claude.cmd").write_text(f'@"{sys.executable}" "%~dp0claude" %*\n', encoding="utf-8")
+    _install(repo.bin, "claude", READER.format(python=sys.executable))
 
 
 def worktree(repo, branch):

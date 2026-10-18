@@ -13,7 +13,7 @@ import tarfile
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_close import CLEAN, GREEN, blocked, env  # noqa: F401 (env is a fixture)
 from test_score_bar import _client_on_this_release, _says
 from test_score_notes import _scored
@@ -36,7 +36,7 @@ def _on_release(repo, tmp_path, release: str | None) -> None:
             tar.extractall(old, filter="data")
     there = repr(str(old / "src"))
     text = shim.read_text("utf-8")
-    shim.write_text(text.replace(here, there) if release else text.replace(there, here), "utf-8")
+    _install(shim.parent, shim.name, text.replace(here, there) if release else text.replace(there, here))
 
 
 def _move_to(repo, tmp_path, config: str, version: str, branch: str) -> None:

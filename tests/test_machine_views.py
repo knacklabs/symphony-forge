@@ -17,7 +17,7 @@ import pytest
 
 from test_story import setup, worktree
 from test_task import story
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_close import GREEN, STORY_DOC, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
 from test_mod_plugin import packaged_mod  # noqa: F401
@@ -79,7 +79,11 @@ def _board_shows_recorded_live_agent_metadata(env, kind):
             f'with socket.create_connection({listener.getsockname()!r}, timeout=30) as gate:\n    gate.recv(1)\n')
     if kind == "worker":
         wait = "".join("    " + line + "\n" for line in wait.splitlines())
-    stub.write_text(source.replace(marker, wait + marker), "utf-8")
+    source = source.replace(marker, wait + marker)
+    if stub.suffix == ".py":
+        stub.write_text(source, "utf-8")
+    else:
+        _install(stub.parent, stub.name, source)
     process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), command, item],
         cwd=repo.path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:

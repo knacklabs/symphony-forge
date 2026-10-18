@@ -6,6 +6,7 @@ GitHub and elapsed time are faked; no production seam or sleeping child is neede
 """
 import pytest
 
+from conftest import _install
 from test_close import GREEN, body, env, run  # noqa: F401
 from test_ci_waits_for_busy_runners import _client
 from test_item_time_history import records, row
@@ -33,12 +34,12 @@ def test_27_cancelled_ci_wait_keeps_observed_phase_reason_and_published_history(
     # The mergeability query follows the check lookup and its state classification.
     # It arms the clock only inside CI waiting, after the last GitHub child exits.
     stub = env.repo.bin / "gh"
-    stub.write_text(stub.read_text("utf-8").replace(
+    _install(stub.parent, stub.name, stub.read_text("utf-8").replace(
         'if args[:2] == ["pr", "view"]:',
         'if args[:2] == ["pr", "view"] and "--json" in args and '
         '"mergeable" in args[args.index("--json") + 1]:\n'
         f'    pathlib.Path({str(marker)!r}).touch()\n'
-        'if args[:2] == ["pr", "view"]:'), encoding="utf-8")
+        'if args[:2] == ["pr", "view"]:'))
     timer = env.tmp / "clock/sitecustomize.py"
     timer.write_text(timer.read_text("utf-8") +
         "\nimport signal\nfrom pathlib import Path\n"

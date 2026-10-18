@@ -73,13 +73,13 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
             native += ("import ctypes\ndef memory_status(pointer):\n"
                        f"    pointer._obj.total = {total}\n    pointer._obj.available = {available}\n"
                        "    return 1\nctypes.windll.kernel32.GlobalMemoryStatusEx = memory_status\n")
-        shim.write_text(original.replace("from forge.cli import main", native + "from forge.cli import main"), "utf-8")
+        _install(shim.parent, shim.name, original.replace("from forge.cli import main", native + "from forge.cli import main"))
         for command in ("board", "next"):
             result = repo.forge(command, "--json")
             assert result.returncode == 0, result.stderr
             assert json.loads(result.stdout)["machine"] == {
                 "load": list(load), "memory": {"total_bytes": total, "available_bytes": available}}
-    shim.write_text(original, "utf-8")
+    _install(shim.parent, shim.name, original)
     if sys.platform == "darwin":
         for command in ("sysctl", "vm_stat"):
             (repo.bin / command).unlink()
@@ -118,7 +118,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     # after the recorded group leader has exited.
     tree = repo.bin / "tree-helper.py"
     tree.write_text('import os, pathlib, signal, time\n'
-        'here = pathlib.Path(__file__).resolve().parent\n'
+        'here = pathlib.Path(__file__).absolute().parent\n'
         'if os.name != "nt": signal.signal(signal.SIGTERM, signal.SIG_IGN)\n'
         '(here / "tree-pid").write_text(str(os.getpid()))\n'
         'while not (here / "go-all").exists(): time.sleep(0.05)\n', "utf-8")
@@ -131,7 +131,10 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
                  + indent + '    subprocess.Popen([sys.executable, str(here / "tree-helper.py")],\n'
                  + indent + '        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n')
         source = source.replace(marker, spawn + marker)
-        path.write_text(source, "utf-8")
+        if path.suffix == ".py":
+            path.write_text(source, "utf-8")
+        else:
+            _install(path.parent, path.name, source)
     processes = []
     descendant = None
     try:
@@ -231,7 +234,7 @@ def check_stop_refuses_workers_and_unverified_processes(env, tmp_path, monkeypat
         # the model replying to our challenge has another pid.
         model = repo.bin / "held-model.py"
         model.write_text('import os, time\nfrom pathlib import Path\n'
-            'here = Path(__file__).resolve().parent\n'
+            'here = Path(__file__).absolute().parent\n'
             '(here / "model-pid").write_text(str(os.getpid()))\n'
             'while not (here / "go-all").exists():\n' + challenge.replace("        ", "    ") +
             '    time.sleep(0.05)\n', "utf-8")

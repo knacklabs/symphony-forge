@@ -103,8 +103,7 @@ def _codex_repo_direct(repo, monkeypatch, sdk_data: Path) -> tuple[Path, Path]:
     would rightly take the process for another one."""
     made = _codex_repo(repo, monkeypatch, sdk_data)
     stub = repo.bin / "codex-app-server"
-    stub.write_text(f"#!{sys.executable}\n" + stub.read_text(encoding="utf-8").split("\n", 1)[1],
-                    encoding="utf-8")
+    _install(stub.parent, stub.name, f"#!{sys.executable}\n" + stub.read_text(encoding="utf-8").split("\n", 1)[1])
     return made
 
 
@@ -470,9 +469,7 @@ def test_6_nothing_left_running(repo, monkeypatch, sdk_data, tmp_path, claude_se
         env = tmp_path / "data" / "forge" / "codex-sdk" / real.name
         (env / "bin").mkdir(parents=True)
         shutil.copy(real / "forge-sdk-ready", env)
-        (env / "bin" / "python").write_text(f'#!/bin/sh\nsleep 1\nexec "{real}/bin/python" "$@"\n',
-                                            encoding="utf-8")
-        (env / "bin" / "python").chmod(0o755)
+        _install(env / "bin", "python", f'#!/bin/sh\nsleep 1\nexec "{real}/bin/python" "$@"\n')
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
         work, saved, stub = _held(repo, calls, record, "stall")
         _crash(work, saved)

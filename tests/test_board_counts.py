@@ -61,7 +61,7 @@ def github(env, prs):
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
     if "STATE FILTER" not in source:
-        gh.write_text(source.replace('sys.stdout.write(rule["stdout"])', '''output = rule["stdout"]  # STATE FILTER
+        conftest._install(gh.parent, gh.name, source.replace('sys.stdout.write(rule["stdout"])', '''output = rule["stdout"]  # STATE FILTER
         if args[:2] == ["pr", "list"] and "--state" in args and output.startswith("[") and args[args.index("--state") + 1] != "all":
             state = args[args.index("--state") + 1].upper()
             output = json.dumps([pr for pr in json.loads(output) if pr.get("state") == state])
@@ -73,7 +73,7 @@ def github(env, prs):
             low, _, high = query.partition("..")
             output = json.dumps([pr for pr in json.loads(output) if (day := (pr.get("mergedAt") or "")[:10])
                                  and low <= day <= high])
-        sys.stdout.write(output)'''), "utf-8")
+        sys.stdout.write(output)'''))
     env.gh.respond("pr", "list", stdout=json.dumps(prs))
 
 

@@ -10,7 +10,7 @@ import shutil
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_close import CLEAN, GREEN, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
 from test_pull_request_body_limit import LIMIT, latest_body, reject_oversized_bodies
@@ -110,8 +110,7 @@ def test_1_a_bounded_pull_request_body_reaches_github_with_unchanged_newlines(
     text = latest_body(env)
     github_merge(env, "fix/tidy-readme")
     gh = env.repo.bin / "gh"
-    gh.write_text(gh.read_text("utf-8").replace('"isDraft": False', f'"isDraft": False, "body": {text!r}'),
-                  "utf-8")
+    _install(gh.parent, gh.name, gh.read_text("utf-8").replace('"isDraft": False', f'"isDraft": False, "body": {text!r}'))
     reject_oversized_bodies(env)
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stdout + merged.stderr

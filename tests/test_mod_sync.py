@@ -23,7 +23,7 @@ STORY = 'FORGE-MOD-1'
 
 CLAUDE = """#!{python}
 import json, pathlib, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 with open(here / 'claude-calls.jsonl', 'a', encoding='utf-8') as log:
     log.write(json.dumps(args) + '\\n')

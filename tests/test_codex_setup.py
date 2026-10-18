@@ -28,7 +28,7 @@ APPROVE = "- Note: when Codex asks you to approve Forge's hooks, approve them"
 UV_STUB = """#!{python}
 import json, pathlib, subprocess, sys
 args = sys.argv[1:]
-with open(pathlib.Path(__file__).resolve().parent / "uv-calls.jsonl", "a", encoding="utf-8") as log:
+with open(pathlib.Path(__file__).absolute().parent / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps(args) + "\\n")
 if args[0] == "venv":
     subprocess.run([sys.executable, "-m", "venv", "--without-pip", args[-1]], check=True)

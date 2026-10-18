@@ -7,6 +7,7 @@ import json
 
 import pytest
 
+from conftest import _install
 from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
@@ -20,13 +21,13 @@ def test_1_review_after_default_merge_covers_only_the_changes_own_work(env, prev
     original = helper.read_text("utf-8")
     capture = env.tmp / "review-diff.txt"
     # Capture what Autoreview sees before delegating to the shared service stub.
-    helper.write_text(
+    _install(helper.parent, helper.name,
         "import pathlib, subprocess, sys\n"
         "args = sys.argv[1:]\n"
         "diff = subprocess.run(['git', 'diff', args[args.index('--base') + 1], 'HEAD'],\n"
         "                      check=True, capture_output=True, text=True).stdout\n"
         f"pathlib.Path({json.dumps(capture.as_posix())}).write_text(diff, encoding='utf-8')\n"
-        + original, encoding="utf-8")
+        + original)
     own_title = "Greeting drops the reader's name"
     allowance = "The greeting needs two files"
     item, where = env.start_fix({"app.py": "print('hello')\n"}, allow_large=allowance)

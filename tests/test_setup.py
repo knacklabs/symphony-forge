@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import patient
+from conftest import _install, patient
 from test_close import PIN
 
 # Forge's subagent roles, including the native cold reader, which sync writes for both hosts.
@@ -47,8 +47,7 @@ OLD_FORGE_HOOK = "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_co
 
 
 def _executable(path: Path, text: str) -> None:
-    path.write_text(text, encoding="utf-8")
-    path.chmod(0o755)
+    _install(path.parent, path.name, text)
 
 
 def _version(repo) -> str:

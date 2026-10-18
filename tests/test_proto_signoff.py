@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import sys
 from pathlib import Path
+
+from conftest import _install
 
 STORY = "FORGE-PROTO-1"
 PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
@@ -32,7 +33,7 @@ def _client(repo, tmp_path, monkeypatch):
     fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
     helper = tmp_path / "autoreview"
     (helper / "scripts").mkdir(parents=True)
-    shutil.copy(Path(__file__).parent / "stubs/autoreview", helper / "scripts/autoreview")
+    _install(helper / "scripts", "autoreview", (Path(__file__).parent / "stubs/autoreview").read_text("utf-8"))
     (helper / ".upstream-sha").write_text(PIN)
     monkeypatch.setenv("AUTOREVIEW", str(helper / "scripts/autoreview"))
     queue = tmp_path / "reviews.json"

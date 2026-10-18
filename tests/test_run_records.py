@@ -7,6 +7,8 @@ from uuid import UUID
 
 import pytest
 
+from conftest import _install
+
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_worker import install_claude
@@ -34,7 +36,10 @@ def require_worker_environment(path):
     source = path.read_text('utf-8')
     lines = source.splitlines(keepends=True)
     lines.insert(1, 'import os\nassert os.environ.get("FORGE_WORKER") == "1"\n')
-    path.write_text(''.join(lines), 'utf-8')
+    if path.suffix == '.py':
+        path.write_text(''.join(lines), 'utf-8')
+    else:
+        _install(path.parent, path.name, ''.join(lines))
 
 
 def configure(env):
@@ -77,10 +82,10 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         require_worker_environment(repo.bin / 'codex-app-server')
         stub = repo.bin / 'codex-app-server'
         # Real provider turns have distinct ids, including a commit nudge's turn.
-        stub.write_text(stub.read_text('utf-8').replace('def main():',
+        _install(stub.parent, stub.name, stub.read_text('utf-8').replace('def main():',
             'def main():\n    global TURN').replace('turns += 1',
             'turns += 1\n            TURN = "turn-stub-" + str(1 + sum('
-            '"turn_started" in line for line in LOG.read_text("utf-8").splitlines()))'), 'utf-8')
+            '"turn_started" in line for line in LOG.read_text("utf-8").splitlines()))'))
         item = 'BOARD/PAGE'
         config = where / 'forge.toml'
         command = f'"{sys.executable}" -c "print(123)"'
@@ -342,7 +347,10 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
         if question_turn == 'failed':
             source = source.replace('status = int(os.environ.get("STUB_CLAUDE_EXIT", "0"))',
                                     'status = 3 if "Your turn ended" in prompt else 0')
-    stub.write_text(source, 'utf-8')
+    if stub.suffix == '.py':
+        stub.write_text(source, 'utf-8')
+    else:
+        _install(stub.parent, stub.name, source)
     (where / 'pending.py').write_text('print(1)\n', 'utf-8')
     worked = repo.forge('work', item)
     assert (worked.returncode == 0) == (question_turn != 'failed'), worked.stdout + worked.stderr

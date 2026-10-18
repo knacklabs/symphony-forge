@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 import json
-import os
-import shutil
-import sys
 from pathlib import Path
+
+from conftest import _install
 
 from test_task import story
 
@@ -16,12 +15,7 @@ WALKS_ALL = ("in every round, fix rounds included, it walks every Done-when item
 
 def install_claude(repo, *, worker=True) -> Path:
     """Install the reader CLI stub and select the worker SDK log by default."""
-    stub = repo.bin / "claude"
-    shutil.copy(ROOT / "tests" / "stubs" / "claude", stub)
-    stub.chmod(0o755)
-    if os.name == "nt":
-        (repo.bin / "claude.cmd").write_text(f'@"{sys.executable}" "%~dp0claude" %*\n',
-                                             encoding="utf-8")
+    _install(repo.bin, "claude", (ROOT / "tests/stubs/claude").read_text("utf-8"))
     return repo.bin / ("claude-sdk-calls.jsonl" if worker else "claude-calls.jsonl")
 
 

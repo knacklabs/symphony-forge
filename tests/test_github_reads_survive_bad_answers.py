@@ -8,6 +8,8 @@ import shutil
 
 import pytest
 
+from conftest import _install
+
 from conftest import ROOT
 from test_close import env  # noqa: F401
 from test_merge_command import _merge_at_github
@@ -53,7 +55,7 @@ if args[:len(prefix)] == prefix:
         sys.exit({code})
 responses = here / "gh-responses.json"
 ''')
-    gh.write_text(source, "utf-8")
+    _install(gh.parent, gh.name, source)
 
 
 @pytest.mark.parametrize("answer", [
@@ -177,7 +179,7 @@ if args[:len(prefix)] == prefix:
         sys.stderr.write({answer.get("stderr", "")!r})
         sys.exit({answer["code"]})
 if sys.argv[1:3] == ["pr", "view"]''', 1)
-    gh.write_text(source, "utf-8")
+    _install(gh.parent, gh.name, source)
 
     stopped = client.repo.forge("merge", item)
     assert stopped.returncode == 1, stopped.stdout + stopped.stderr

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, machine_cores
+from conftest import ROOT, machine_cores, _install
 from test_close import approve_story, env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import finish, hold_agents, make_work, start, lane_adapter, sdk_data  # noqa: F401
@@ -115,8 +115,8 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
         assert made.returncode == 0, made.stderr
     hold_agents(env)
     old_launcher = repo.bin / "older-forge"
-    old_launcher.write_text((repo.bin / "forge").read_text("utf-8").replace(
-        "from forge.cli import main", "import forge\nforge.__version__ = '0.0.0'\nfrom forge.cli import main"), "utf-8")
+    _install(old_launcher.parent, old_launcher.name, (repo.bin / "forge").read_text("utf-8").replace(
+        "from forge.cli import main", "import forge\nforge.__version__ = '0.0.0'\nfrom forge.cli import main"))
     processes = []
     test_processes = []
 

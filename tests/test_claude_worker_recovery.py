@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_setup import _fresh_client
 from test_worker import calls, install_claude
 
@@ -85,7 +85,7 @@ def test_3_progress_retries_a_busy_events_file_without_aborting_worker(repo, gh,
     # the real progress writer decides whether to retry, without a production seam.
     shim = repo.bin / "forge"
     marker = repo.bin / "busy-events-observed"
-    shim.write_text(shim.read_text("utf-8").replace('from forge.cli import main', f'''import os
+    _install(shim.parent, shim.name, shim.read_text("utf-8").replace('from forge.cli import main', f'''import os
 from pathlib import Path
 real_replace = os.replace
 busy = True
@@ -97,7 +97,7 @@ def replace(source, target):
         raise PermissionError("events file is held by a reader")
     return real_replace(source, target)
 os.replace = replace
-from forge.cli import main'''), encoding="utf-8")
+from forge.cli import main'''))
 
     worked = repo.forge("work", FIX)
 

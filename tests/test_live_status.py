@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _install
+
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_machine_views import github, pull, state, view
@@ -110,7 +112,7 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             else:
                 # Codex reports a null configured effort. Its matching model's default
                 # is on the second catalog page, after a different model's high default.
-                stub.write_text(stub.read_text("utf-8").replace('"stub-model"', '"gpt-6.1-sol"'), "utf-8")
+                _install(stub.parent, stub.name, stub.read_text("utf-8").replace('"stub-model"', '"gpt-6.1-sol"'))
             monkeypatch.setenv("STUB_SAY", "No findings.")
             model = "gpt-6-sol"
         if "default" in case:
@@ -223,8 +225,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             for index, (kind, inputs) in enumerate(tools):
                 event = {"type": kind, "id": f"live-{index}", **inputs}
                 events += f'notify("item/started", threadId=THREAD, turnId=TURN, item={event!r})\n' + gate
-            stub.write_text(source.replace('asked = {"stub-ask-1"',
-                events.replace("\n", "\n            ") + 'asked = {"stub-ask-1"'), "utf-8")
+            _install(stub.parent, stub.name, source.replace('asked = {"stub-ask-1"',
+                events.replace("\n", "\n            ") + 'asked = {"stub-ask-1"'))
         elif case in ("claude", "claude error") or case.startswith("read") and case.endswith("claude"):
             worker = not case.startswith("read")
             stub = repo.bin / ("claude_agent_sdk/__init__.py" if worker else "claude")
@@ -256,7 +258,10 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             else:
                 marker = 'said = here / "claude-says.md"'
                 replacement = events + 'print(json.dumps({"type": "result", "result": "No findings."}), flush=True)\nraise SystemExit(0)\n'
-            stub.write_text(source.replace(marker, replacement), "utf-8")
+            if worker:
+                stub.write_text(source.replace(marker, replacement), "utf-8")
+            else:
+                _install(stub.parent, stub.name, source.replace(marker, replacement))
         elif case.startswith("review"):
             stub = (Path(os.environ["HOME"]) / ".claude/skills/autoreview/scripts/autoreview"
                     if case.endswith("claude") else env.queue.parent / "autoreview/scripts/autoreview")
@@ -276,16 +281,16 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                     selections["thinking: high"] = (reported, "high")
                 expected_steps = [*selections, *expected_steps]
             events = "".join(f'print({step!r}, flush=True)\n' + gate for step in expected_steps)
-            stub.write_text(source.replace('if "--codex-bin" in args:', events + 'if "--codex-bin" in args:'), "utf-8")
+            _install(stub.parent, stub.name, source.replace('if "--codex-bin" in args:', events + 'if "--codex-bin" in args:'))
         elif case.startswith("ci"):
             stub = repo.bin / "gh"
             source = stub.read_text("utf-8")
             # History rebuilds also read check runs. Hold the live wait's commit-status
             # request, after its run starts, rather than an earlier historical lookup.
-            stub.write_text(source.replace('responses = here / "gh-responses.json"',
+            _install(stub.parent, stub.name, source.replace('responses = here / "gh-responses.json"',
                 'if args and "/status?" in args[-1] and not (here / "ci-held").exists():\n'
                 '    (here / "ci-held").touch()\n    ' + gate.replace("\n", "\n    ") +
-                '\nresponses = here / "gh-responses.json"'), "utf-8")
+                '\nresponses = here / "gh-responses.json"'))
             pr = pull(7, f"fix/{item}", None)
             check = pr["commits"]["nodes"][0]["commit"]["statusCheckRollup"]["contexts"]["nodes"][0]
             check["startedAt"] = "2026-10-06T11:59:00Z"

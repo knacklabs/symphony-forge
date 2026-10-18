@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from conftest import patient
+from conftest import patient, _install
 from test_close import GREEN, env, run  # noqa: F401
 from test_land import ITEM, RUNS, _agent, _fix, _queue, _runs, land  # noqa: F401
 from test_land_waits_for_check_progress import clock  # noqa: F401
@@ -171,8 +171,8 @@ def test_4_five_thousand_old_runs_need_at_most_101_history_requests(clock, histo
             "status": "completed", "started_at": OLD_RETRY_STARTED}]
         answer(json.dumps(jobs))
 '''.replace("OLD_RETRY_STARTED", repr((now - timedelta(minutes=1)).isoformat()))
-    patient(lambda: stub.write_text(stub.read_text("utf-8").replace(
-        "queues = here", edge + "queues = here", 1), encoding="utf-8"))
+    patient(lambda: _install(stub.parent, stub.name, stub.read_text("utf-8").replace(
+        "queues = here", edge + "queues = here", 1)))
     before = len(env.gh.calls())
 
     done = env.repo.forge("doctor", cwd=where)

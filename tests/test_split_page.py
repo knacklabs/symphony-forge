@@ -35,8 +35,8 @@ def test_5_new_owners_join_the_page_and_shipped_files(repo, tmp_path):
     _source_repo(repo)
     package = tmp_path / "plugged" / "forge"
     shutil.copytree(ROOT / "src/forge", package)
-    (repo.bin / "forge").write_text(
-        conftest.FORGE_SHIM.format(python=sys.executable, src=str(package.parent)), encoding="utf-8")
+    conftest._install(repo.bin, "forge",
+                     conftest.FORGE_SHIM.format(python=sys.executable, src=str(package.parent)))
     for rel in (".codex/skills/forge/fde.md", ".codex/skills/app-baseline/SKILL.md",
                 ".codex/skills/test-audit/SKILL.md",
                 ".codex/skills/test-audit/NOTICE.md", ".claude/skills/remote-approval/SKILL.md"):

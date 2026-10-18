@@ -38,7 +38,7 @@ LARGE = 200 * 1024
 RESUMING = r'''
 import json, os, pathlib, subprocess, sys, time
 
-HERE = pathlib.Path(__file__).resolve().parent
+HERE = pathlib.Path(__file__).absolute().parent
 STORE, LOG = HERE / "threads.json", HERE / "codex-app-server.jsonl"
 
 

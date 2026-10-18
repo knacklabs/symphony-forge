@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _install
 from test_close import CLEAN, blocked, env, finding, run  # noqa: F401
 
 STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
@@ -25,7 +26,8 @@ Path({observed!r}).write_text(json.dumps({{"remote": remote,
     "github": gh_log.read_text() if gh_log.exists() else ""}}))
 '''.format(origin=env.repo.git("remote", "get-url", "origin"),
            gh_log=str(env.repo.bin / "gh-calls.jsonl"), observed=str(env.tmp / "observed.json"))
-    helper.write_text(helper.read_text().replace('args = sys.argv[1:]', observer + '\nargs = sys.argv[1:]'))
+    _install(helper.parent, helper.name,
+             helper.read_text().replace('args = sys.argv[1:]', observer + '\nargs = sys.argv[1:]'))
 
     # Review once, then let the same head's CI progress from pending through red to green.
     # Every close still uses the real command; no repeated repo/review setup is needed to

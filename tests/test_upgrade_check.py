@@ -29,7 +29,7 @@ sys.exit(main())
 # Stands in for uv at its edge: records the call, and installs the release its tag names.
 UV_STUB = """#!{python}
 import json, pathlib, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as f:
     f.write(json.dumps(sys.argv[1:]) + "\\n")
 (here / "forge").write_text({release!r}.replace("<version>", sys.argv[-1].rsplit("@v", 1)[1]),

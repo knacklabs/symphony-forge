@@ -78,7 +78,7 @@ import json, pathlib, subprocess, sys
 folder = pathlib.Path(sys.argv[sys.argv.index("-C") + 1])
 history = subprocess.run(["git", "log", "-1", "--format=%s"], cwd=folder,
                          capture_output=True, text=True)
-path = pathlib.Path(__file__).resolve().parent / "review-history.json"
+path = pathlib.Path(__file__).absolute().parent / "review-history.json"
 path.write_text(json.dumps({{"git_directory": (folder / ".git").is_dir(),
                             "history": history.stdout.strip(),
                             "exit": history.returncode}}))
@@ -108,7 +108,7 @@ def test_7_review_base_is_fetched_remote_commit_when_local_main_lags(env):
     probe = '''#!{python}
 import json, pathlib, subprocess, sys
 folder = pathlib.Path(sys.argv[sys.argv.index("-C") + 1])
-base = pathlib.Path(__file__).resolve().parent / "expected-base"
+base = pathlib.Path(__file__).absolute().parent / "expected-base"
 sha = base.read_text().strip()
 read = subprocess.run(["git", "cat-file", "-e", sha + "^{{commit}}"], cwd=folder)
 (base.parent / "review-base.json").write_text(json.dumps({{"base_readable": read.returncode == 0}}))

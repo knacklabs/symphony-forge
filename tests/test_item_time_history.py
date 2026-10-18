@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from conftest import machine_cores
+from conftest import machine_cores, _install
 from test_close import GREEN, blocked, body, env, finding, report, run  # noqa: F401
 from test_close_holds_after_three_blocked_reviews import client_item
 from test_close_test_runs_wait_in_line import Close, ONE, SUITE, _fix, _release, _running, _with_test_command
@@ -338,7 +338,7 @@ def test_7_fix_squash_merge_keeps_how_it_went_from_the_published_pull_request(en
     # GitHub returns the body Forge really published, then squashes the real pushed branch.
     gh = env.repo.bin / "gh"
     source = gh.read_text("utf-8")
-    gh.write_text(source.replace('"isDraft": False', f'"isDraft": False, "body": {published!r}'), "utf-8")
+    _install(gh.parent, gh.name, source.replace('"isDraft": False', f'"isDraft": False, "body": {published!r}'))
     merged = env.repo.forge("merge", item)
     assert merged.returncode == 0, merged.stderr
     committed = env.repo.git("log", "-1", "--format=%B", "origin/main")

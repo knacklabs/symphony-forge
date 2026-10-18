@@ -37,7 +37,7 @@ def _merge_at_github(env, local_commit=None):
     stub = GH_STUB.format(python=sys.executable)
     head = env.repo.git("rev-parse", "fix/tidy-readme")
     code = '''import json, pathlib, subprocess, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 if sys.argv[1:3] == ["pr", "view"] and (here / "github-merged").exists():
     with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as calls:
         calls.write(json.dumps(sys.argv[1:]) + "\\n")

@@ -27,7 +27,7 @@ from test_story import worktree
 GH = '''#!PYTHON
 import json, pathlib, subprocess, sys, tempfile, time, zlib
 from json_log import append_json
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 args = sys.argv[1:]
 remote = REMOTE
 
@@ -186,7 +186,7 @@ def client(env, request):
              + GH_STUB.format(python=sys.executable).split("\n", 1)[1])
     _install(repo.bin, "claude", (ROOT / "tests/stubs/claude").read_text("utf-8"))
     stub = Path(os.environ["AUTOREVIEW"])
-    stub.write_text(stub.read_text("utf-8").replace("args = sys.argv[1:]\n", OWN_REVIEWS, 1), "utf-8")
+    _install(stub.parent, stub.name, stub.read_text("utf-8").replace("args = sys.argv[1:]\n", OWN_REVIEWS, 1))
     env.checks(GREEN)
     return env
 

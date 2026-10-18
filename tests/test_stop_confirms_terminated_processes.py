@@ -6,7 +6,7 @@ import signal
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
 from test_close import env  # noqa: F401
 from test_codex_record import _freeze
 from test_codex_worker import _started, sdk_data  # noqa: F401
@@ -33,11 +33,11 @@ def test_1_stop_confirms_termination_before_the_worker_reaps_its_model(
     hold_agents(env)
     parent = tmp_path / "worker-pid"
     launcher = repo.bin / "forge"
-    launcher.write_text(launcher.read_text("utf-8").replace("from forge.cli import main",
+    _install(launcher.parent, launcher.name, launcher.read_text("utf-8").replace("from forge.cli import main",
         "import os, pathlib\n"
         f"if sys.argv[1:] == ['work', {json.dumps(item)}]:\n"
         f"    pathlib.Path({json.dumps(str(parent))}).write_text(str(os.getpid()))\n"
-        "from forge.cli import main"), "utf-8")
+        "from forge.cli import main"))
     worker, output = start(repo.path, tmp_path / "worker", repo, "work", item)
     frozen = None
     try:

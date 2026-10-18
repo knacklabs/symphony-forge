@@ -261,8 +261,8 @@ def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, c
                         f"Reviewed work {number} remains available. 篮\n" for number in range(4_000))
                     gh = repo.bin / "gh"
                     source = gh.read_text("utf-8")
-                    gh.write_text(source.replace('"isDraft": False',
-                                                f'"isDraft": False, "body": {published!r}'), "utf-8")
+                    _install(gh.parent, gh.name, source.replace('"isDraft": False',
+                                                f'"isDraft": False, "body": {published!r}'))
                     reject_oversized_bodies(env)
                 merged = repo.forge("merge", "STACK/A")
                 assert merged.returncode == 0, merged.stdout + merged.stderr

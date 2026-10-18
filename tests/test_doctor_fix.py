@@ -30,7 +30,7 @@ HOOKS_ROW = "The git hooks that check each commit and push aren't installed."
 # into the folder that comes first on PATH, unless the test makes uv fail.
 UV = """#!{python}
 import json, pathlib, sys
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps(sys.argv[1:]) + "\\n")
 if {fail!r}:

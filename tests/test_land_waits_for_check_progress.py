@@ -112,7 +112,7 @@ def test_2_land_retries_one_bad_github_answer(clock, answer):
             '    (here / "bad-answer").unlink()\n'
             '    answer("unexpected end of JSON input", 1)\n'
             'queues = here / "gh-queues.json"')
-        stub.write_text(text, encoding="utf-8")
+        _install(stub.parent, stub.name, text)
         _queue(env, RUNS, *_runs(_pending(), GREEN))
     else:
         _queue(env, RUNS, *_runs(_pending()), answer, *_runs(GREEN))
@@ -169,10 +169,10 @@ def test_5_land_keeps_progress_waiting_during_merge_revalidation(clock, answer):
     _fix(env, "working", worked=True)
     if answer == "failed":
         stub = env.repo.bin / "gh"
-        stub.write_text(stub.read_text().replace('        answer(out)',
+        _install(stub.parent, stub.name, stub.read_text().replace('        answer(out)',
             '        if out == "failed-answer":\n'
             '            answer("unexpected end of JSON input", 1)\n'
-            '        answer(out)'), encoding="utf-8")
+            '        answer(out)'))
         answers = ["failed-answer", *_runs(GREEN)]
     elif answer == "unreadable":
         answers = ["{", *_runs(GREEN)]

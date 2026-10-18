@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _install
 from test_close import env, finding, report  # noqa: F401
 from test_close_holds_after_three_blocked_reviews import client_item
 
@@ -31,7 +32,7 @@ def test_1_close_and_land_review_the_repaired_head_before_reusing_blocking_findi
     # Fake only Autoreview: its answer depends on the file in Forge's real review checkout.
     helper = Path(os.environ["AUTOREVIEW"])
     log = tmp_path / "reviewed-heads.jsonl"
-    helper.write_text(
+    _install(helper.parent, helper.name,
         "import json, subprocess, sys\n"
         "from pathlib import Path\n"
         f"text = Path({json.dumps(path)}).read_text('utf-8')\n"
@@ -43,7 +44,7 @@ def test_1_close_and_land_review_the_repaired_head_before_reusing_blocking_findi
         "answer = clean if text == 'Hello readers\\n' else broken\n"
         "args = sys.argv[1:]\n"
         "Path(args[args.index('--json-output') + 1]).write_text(json.dumps(answer), 'utf-8')\n"
-        "sys.exit(0 if answer is clean else 1)\n", encoding="utf-8")
+        "sys.exit(0 if answer is clean else 1)\n")
     # This rule concerns a required main refresh, not an unrelated clean main move.
     env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
                    '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')

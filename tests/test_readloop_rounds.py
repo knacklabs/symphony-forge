@@ -40,7 +40,7 @@ def reader_sessions(repo):
 CODEX = r'''
 import json, os, pathlib, subprocess, sys
 
-HERE = pathlib.Path(__file__).resolve().parent
+HERE = pathlib.Path(__file__).absolute().parent
 STORE, LOG = HERE / "threads.json", HERE / "codex-app-server.jsonl"
 
 
@@ -129,7 +129,7 @@ main()
 CLAUDE = r'''
 import io, json, os, pathlib, sys
 
-here = pathlib.Path(__file__).resolve().parent
+here = pathlib.Path(__file__).absolute().parent
 prompt = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()
 args = sys.argv[1:]
 if "--input-format" in args and args[args.index("--input-format") + 1] == "stream-json":

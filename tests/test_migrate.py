@@ -81,7 +81,7 @@ def _review_and_checks(repo, gh, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     """A clean stub Autoreview, and only the tests check green (forge-pr-check can't run yet)."""
     skill = tmp_path / "autoreview"
     (skill / "scripts").mkdir(parents=True)
-    shutil.copy(ROOT / "tests" / "stubs" / "autoreview", skill / "scripts" / "autoreview")
+    conftest._install(skill / "scripts", "autoreview", (ROOT / "tests/stubs/autoreview").read_text("utf-8"))
     (skill / ".upstream-sha").write_text(PIN + "\n", "utf-8")
     monkeypatch.setenv("AUTOREVIEW", str(skill / "scripts" / "autoreview"))
     monkeypatch.setenv("AUTOREVIEW_STUB", str(tmp_path / "reviews.json"))
