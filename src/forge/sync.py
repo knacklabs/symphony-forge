@@ -406,7 +406,7 @@ def _synced_text(source: str, packaged: str) -> str:
     return (checked_in if checked_in.is_file() else TEMPLATES / packaged).read_text(encoding="utf-8")
 
 
-def files(top: Path, cfg: dict[str, Any], *, hooks_top: Path | None = None) -> dict[str, str]:
+def files(top: Path, cfg: dict[str, Any], *, husky: str | None = None) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
     cfg = cfg.get("shared", cfg)  # a developer's forge.local.toml never reaches committed files
     wanted: dict[str, str] = {}
@@ -414,7 +414,7 @@ def files(top: Path, cfg: dict[str, Any], *, hooks_top: Path | None = None) -> d
     for name in ("app_baseline", "approval", "githooks", "plain_english", "prcheck",
                  "review", "roles", "story", "sync"):
         module = importlib.import_module(f"forge.{name}")
-        output = (module.ships(top, cfg, hooks_top=hooks_top) if name == "githooks"
+        output = (module.ships(top, cfg, husky=husky) if name == "githooks"
                   else module.ships(top, cfg))
         for rel, text in output.items():
             if rel in wanted:
@@ -423,7 +423,8 @@ def files(top: Path, cfg: dict[str, Any], *, hooks_top: Path | None = None) -> d
     return wanted
 
 
-def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str]) -> set[str]:
+def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str], *,
+           hashes: dict[str, str] | None = None) -> set[str]:
     """The paths whose content at head ("" for the index) is exactly what forge sync writes over
     the base commit's files with this config, so a fix's size doesn't count them."""
     def entries(*args: str) -> dict[str, str]:
@@ -445,7 +446,8 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
     inputs = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".codex/hooks.json",
               ".codex/config.toml", ".gitattributes", ".gitignore", "package.json", ".nvmrc",
               ".node-version", "pyproject.toml"}
-    if hooks := githooks.husky_folder(top):
+    hooks = githooks.husky_folder(top)
+    if hooks:
         inputs.update((hooks.relative_to(top) / name).as_posix()
                       for name in ("pre-commit", "pre-push"))
     inputs.update(path for path in before if "/" not in path and
@@ -471,12 +473,13 @@ def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str
             target = snapshot / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
-        wanted = files(snapshot, cfg, hooks_top=top)
+        wanted = files(snapshot, cfg, husky=hooks.relative_to(top).as_posix() if hooks else "")
     candidates = [path for path in paths if path in wanted]
     if not candidates:
         return set()
-    after = (entries("ls-tree", "-rz", head, "--", *candidates) if head else
-             entries("ls-files", "--stage", "-z", "--", *candidates))
+    after = hashes if hashes is not None else (
+        entries("ls-tree", "-rz", head, "--", *candidates) if head else
+        entries("ls-files", "--stage", "-z", "--", *candidates))
     algorithm = "sha256" if any(len(oid) == 64 for oid in after.values()) else "sha1"
     matched = set()
     for path in candidates:

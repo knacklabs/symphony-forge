@@ -77,15 +77,15 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     return wanted
 
 
-def ships(top: Path, cfg: dict[str, Any], *, hooks_top: Path | None = None) -> dict[str, str]:
+def ships(top: Path, cfg: dict[str, Any], *, husky: str | None = None) -> dict[str, str]:
     from forge import sync
 
     hooks = {}
-    source = hooks_top or top
-    if folder := husky_folder(source):
-        if not folder.resolve().is_relative_to(source.resolve()):
+    # None discovers the folder; an empty string means the caller already found none.
+    folder = husky_folder(top) if husky is None else top / husky if husky else None
+    if folder:
+        if not folder.resolve().is_relative_to(top.resolve()):
             repo.refuse(sync.REFUSALS["outside"], path=folder)
-        folder = top / folder.resolve().relative_to(source.resolve())
         for hook in ("pre-commit", "pre-push"):
             path = folder / hook
             current = sync.read(path)
@@ -194,7 +194,13 @@ def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, he
     if state.get("allow_large"):
         return
     diff = (base, head) if head else ("--cached", base)
-    changed = git("diff", "--name-only", "--no-renames", "-z", *diff).split("\0")
+    rows = git("diff", "--raw", "--no-abbrev", "--no-renames", "-z", *diff).split("\0")
+    changed, hashes = [], {}
+    for index in range(0, len(rows) - 1, 2):
+        path, digest = rows[index + 1], rows[index].split()[3]
+        changed.append(path)
+        if set(digest) != {"0"}:
+            hashes[path] = digest
     interfaces = cfg["interfaces"]
     # Markdown, state and planning documents never count.
     code = [path for path in changed if path and not (
@@ -210,7 +216,7 @@ def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, he
     if len(code) > LIMIT:
         from forge import sync
 
-        output = sync.synced(repo.root(), cfg, base, head, code)
+        output = sync.synced(repo.root(), cfg, base, head, code, hashes=hashes)
         code = [path for path in code if path not in output]
     if len(code) > LIMIT:
         refuse(REFUSALS["promote"], fix=fix,
