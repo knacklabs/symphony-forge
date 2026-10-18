@@ -4,12 +4,20 @@
   "done_when": "The coordinator guide tells agents to save every human decision, direction and idea the same turn where Forge keeps it (item plan Notes or the recorded choice, decision docs batched into the next fix, a parked ideas list in plans/ideas.md), and to grill new directions one question at a time; new and existing repos get it through init and sync, and the guide test covers both",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T10:37:11.478543+00:00",
       "step": "start"
     }
   ],
-  "why": "When the human makes many quick decisions and raises ideas in chat, the coordinator can leave them only in the conversation, so they are lost when the session ends"
+  "stuck": {
+    "close": null,
+    "head": "162b0308992ad45462313425b489c7dec5cbdd6f",
+    "keys": {},
+    "round": null
+  },
+  "why": "When the human makes many quick decisions and raises ideas in chat, the coordinator can leave them only in the conversation, so they are lost when the session ends",
+  "worker": "codex"
 }
