@@ -1,6 +1,13 @@
 {
   "base": "ec508146c4911bc4a9b4db1f727d2c00695c5cea",
   "branch": "fix/release-1213",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14d58-42e9-7cb2-835f-8e563d8f0580",
+    "head": null,
+    "start": "2e030d420a1c446d7973319134f2e6820ded1378"
+  },
   "done_when": "Forge's version is 1.2.13 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
   "fix_kind": "mechanical",
   "kind": "fix",
