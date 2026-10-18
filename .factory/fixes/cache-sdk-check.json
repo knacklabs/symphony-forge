@@ -1,0 +1,46 @@
+{
+  "base": "656f68887541b0da388b43920126917a167d8812",
+  "branch": "fix/cache-sdk-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e22-b713-7d02-b26c-5412f0e3f5a5",
+    "head": null,
+    "start": "a51727f92be8486e9b9e6275eee3a38aab6ea7a7"
+  },
+  "done_when": "forge work reuses the last SDK check while the SDK's ready marker is unchanged, checks again after it changes, and a test proves both on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7da52b983aa6f730deb98469612d0e757edd1b910e4d4cebdd028a82ee345001",
+    "changed": "2f022d4e5daeb89679a83fbda65da1ad54f9cbf4030aecbf54a29bb6bbc74713",
+    "commit": "2c9b22b6a3e89683e9058389bee278063b3e9495",
+    "dismissals": [],
+    "findings": [],
+    "id": "655b86cf-ee8d-42fc-bd2a-db261fbd01e7",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T08:30:49.853942+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T08:37:42.081268+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7a11de0adb6b6f8f647d026c76d911ef462430a2",
+    "keys": {},
+    "round": null
+  },
+  "why": "Every forge work run starts a Python process to check the Codex SDK, about half a second each time, even when the SDK has not changed",
+  "worker": "codex"
+}

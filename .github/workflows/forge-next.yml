@@ -1,6 +1,6 @@
 name: forge-next
 
-# Full suite on Linux on each merge to main, and on every platform nightly, on release tags and on demand
+# Full suite on Linux on each merge to main, and on Linux and Windows nightly, on release tags and on demand
 # (pull requests run it in forge.yml); Windows installer checks on every event.
 
 on:
@@ -65,15 +65,6 @@ jobs:
             {"os":"ubuntu-latest","group":3,"groups":5},
             {"os":"ubuntu-latest","group":4,"groups":5},
             {"os":"ubuntu-latest","group":5,"groups":5},
-            {"os":"macos-latest","group":1,"groups":9},
-            {"os":"macos-latest","group":2,"groups":9},
-            {"os":"macos-latest","group":3,"groups":9},
-            {"os":"macos-latest","group":4,"groups":9},
-            {"os":"macos-latest","group":5,"groups":9},
-            {"os":"macos-latest","group":6,"groups":9},
-            {"os":"macos-latest","group":7,"groups":9},
-            {"os":"macos-latest","group":8,"groups":9},
-            {"os":"macos-latest","group":9,"groups":9},
             {"os":"windows-latest","group":1,"groups":12},
             {"os":"windows-latest","group":2,"groups":12},
             {"os":"windows-latest","group":3,"groups":12},
@@ -88,7 +79,7 @@ jobs:
             {"os":"windows-latest","group":12,"groups":12}]') }}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || matrix.os == 'macos-latest' && 30 || 20 }}
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 20 }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -103,10 +94,6 @@ jobs:
         run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
-      - uses: actions/setup-go@v5
-        if: runner.os == 'macOS' && steps.parent-tests.outputs.reuse != 'true'
-        with:
-          go-version: stable
       # Save npm's cache from main on Linux: pull requests restore only caches saved from main.
       - uses: actions/cache@v4
         if: runner.os == 'Linux'

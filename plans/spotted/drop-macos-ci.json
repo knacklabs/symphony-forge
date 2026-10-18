@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\t.github/workflows/forge-next.yml\tFollow-up: Align documented release checks with the reduced matrix",
+      "kind": "edge",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 68,
+      "text": "Follow-up: Align documented release checks with the reduced matrix",
+      "from": "review",
+      "item": "drop-macos-ci",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

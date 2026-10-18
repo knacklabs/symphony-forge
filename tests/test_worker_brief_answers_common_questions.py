@@ -54,17 +54,13 @@ def flat(text):
     return " ".join(text.split())
 
 
-def test_1_brief_names_the_plan_files_and_skips_the_coordinator_guide(brief):
+def test_1_brief_answers_worker_questions_and_ends_with_the_reviewers_checklist(brief):
     text = flat(brief)
     assert ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
             "everything a worker needs. Start from the files and tests this brief names, and "
             "search the rest of the repo only for what they call or what calls them.") in text
     assert "`src/api/**`" in text and "`tests/test_api.py`" in text
     assert "`tests/test_existing_api.py`" in text
-
-
-def test_2_brief_answers_separate_fix_and_narrow_choice_in_advance(brief):
-    text = flat(brief)
     assert ("Otherwise, fix the findings inside your Done-when in this round, including new "
             "findings after a recorded narrow or split;") in text
     assert "Otherwise, fix the findings in this round" not in text
@@ -73,9 +69,6 @@ def test_2_brief_answers_separate_fix_and_narrow_choice_in_advance(brief):
     assert ("Never ask to record a narrow choice: fix only the review findings inside your "
             "Done-when, and list each other finding in the `Proof list:` as "
             "`Outside Done-when: <finding> - <why>`.") in text
-
-
-def test_3_brief_ends_with_the_reviewers_checklist(brief):
     last = brief.rsplit("\n## ", 1)[1]
     assert last.startswith("Before you hand over\n")
     for check in ("Every Done-when item you cover", "fails without your change",

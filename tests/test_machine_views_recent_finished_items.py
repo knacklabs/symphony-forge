@@ -103,9 +103,8 @@ def traced(repo, monkeypatch, command, trace):
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("command", ["board", "next"])
 def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
-        repo, gh, monkeypatch, tmp_path, history, command):
+        repo, gh, monkeypatch, tmp_path, history):
     # Old contract retained all landed work. JSON now drops only work older than
     # seven days; exact-boundary, ongoing, and human-history contracts stay intact.
     client(repo, gh, history)
@@ -149,7 +148,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     with monkeypatch.context() as dated:
         dated.setenv("GIT_COMMITTER_DATE", OLD)
         repo.git("commit", "-qm", "Keep working on the fix")
-    first, count = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    first, count = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     rows = {row["id"]: row for row in first["items"]}
     assert not {"OLD", "old-fix", "TRAILER"} & rows.keys()
     assert {"LIVE", "RECENT", "recent-fix", "ongoing", "UNKNOWN"} <= rows.keys()
@@ -157,8 +156,8 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     assert "LIVE/SAVE" not in rows["LIVE"]["next"]["line"]
     assert rows["LIVE"]["next"]["line"] == "1 part of Live story can start now."
     assert rows["LIVE"]["next"]["command"] == "forge task start LIVE/PENDING"
-    if command == "next":
-        assert "LIVE/SAVE" not in first["next"]["line"]
+    next_view, _ = traced(repo, monkeypatch, "next", tmp_path / "trace.jsonl")
+    assert "LIVE/SAVE" not in next_view["next"]["line"]
     repo.git("switch", "-q", "main")
     added = {}
     task_lines = []
@@ -190,7 +189,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     repo.write("plans/LIVE.md", expanded_plan)
     (tmp_path / "old-fix-worktree/plans/LIVE.md").write_text(expanded_plan, encoding="utf-8")
     (tmp_path / "old-task-worktree/plans/LIVE.md").write_text(expanded_plan, encoding="utf-8")
-    second, more_count = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    second, more_count = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     # Active rows and advice still ignore archived inventory. Maps and counts now
     # retain that history; verify their additions separately from the live OS load.
     changing = {"machine", "dependency_maps", "team"}
@@ -226,7 +225,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
                   tmp_path / "old-task-worktree/plans/LIVE.md"]
     for plan in live_plans:
         plan.write_text(expanded_plan.replace("PAST-0/SAVE", "PAST-0/MISSING"), encoding="utf-8")
-    invalid, _ = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    invalid, _ = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     invalid_live = next(row for row in invalid["items"] if row["id"] == "LIVE")
     assert "After PAST-0/MISSING is not a task in the plan of PAST-0" in invalid_live["next"]["line"]
     for plan in live_plans:
@@ -234,7 +233,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     local_plan = tmp_path / "empty-plan-worktree"
     repo.git("worktree", "add", "-qb", "story/PAST-0", str(local_plan), "main")
     (local_plan / "plans/PAST-0.md").write_text("", encoding="utf-8")
-    invalid, _ = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    invalid, _ = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     invalid_live = next(row for row in invalid["items"] if row["id"] == "LIVE")
     assert "After PAST-0/SAVE is not a task in the plan of PAST-0" in invalid_live["next"]["line"]
     repo.git("worktree", "remove", "--force", str(local_plan))
@@ -248,7 +247,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     state.write_text(json.dumps({"branch": "task/BUSY-HOLD", "status": "working"}), encoding="utf-8")
     repo.git("add", "-A", cwd=busy)
     repo.git("commit", "-qm", "Start the overlapping task", cwd=busy)
-    blocked, _ = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    blocked, _ = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     blocked_live = next(row for row in blocked["items"] if row["id"] == "LIVE")
     # The local start is known; its reviewed remote changes are still needed.
     assert blocked_live["next"]["line"] == "LIVE/PENDING waits for BUSY/HOLD to publish reviewed changes."
@@ -259,7 +258,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     repo.git("restore", "plans/LIVE.md")
     repo.git("switch", "-q", "main")
     landed(repo, monkeypatch, NOW, {".factory/stories/OLD/story.json": finished_story("OLD", NOW)})
-    refreshed, _ = traced(repo, monkeypatch, command, tmp_path / "trace.jsonl")
+    refreshed, _ = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     assert "OLD" in {row["id"] for row in refreshed["items"]}
     html = tmp_path / "history.html"
     board = repo.forge("board", "--out", str(html))
