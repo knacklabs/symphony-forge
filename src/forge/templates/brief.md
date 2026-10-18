@@ -210,6 +210,10 @@ any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.
+When the pytest picker selects more than a third of the test files, bare `forge test` runs
+only the part's Tests column or the fix's touched test files, plus `always_test`, and says
+that CI runs the full suite. This includes shared-fixture changes. With no named tests it
+runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure

@@ -1327,7 +1327,11 @@ the normal check for a Forge record and a current review. New repos get this che
 existing repos get it after upgrading Forge. Sync refreshes these instructions for both.
 When the pytest selection would cover more than a third of the Python test files (shared
 test inputs select them all), close skips the local run, says so in one line, and relies on
-the pull request's required checks. `forge test` still runs its tests.
+the pull request's required checks. Bare `forge test` runs only the part's Tests column or
+the fix's touched test files, plus `always_test`, and says that CI runs the full suite.
+With no named tests it runs only `always_test`. An explicit `forge test --pytest <base>`
+keeps the full selection. New repos get this bound at init; existing repos get it after upgrade
+and sync.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
 Forge's initial optional-package Node command uses the same selection once an app adds
 `package.json`; with no package it still runs nothing.
@@ -1355,7 +1359,7 @@ that run the program from outside miss it locally and GitHub's checks cover it. 
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, requirements or lock files change, except for close's
-large-selection skip above.
+large-selection skip and bare `forge test`'s bound above.
 For `pyproject.toml`, every change triggers the full command unless all changed lines are
 known-harmless: `project.version` and `project.description`, or Hatch's packaged-file
 `include`, `exclude` and `force-include` settings under `tool.hatch.build` and its `wheel`
@@ -1377,8 +1381,9 @@ in the project: it loads a temporary pytest hook to exclude unrelated files, inc
 before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
 Workers run tests only through bare `forge test`. It runs `fast_test`, or `test` when none is
-set, with `{base}` as the merge base with `origin/<default branch>`, in the same fair machine-wide
-test lane as close. It prints the report close keeps and always runs, including docs-only and
+set (using pytest selection when supported), with `{base}` as the merge base with
+`origin/<default branch>`, in the same fair machine-wide test lane as close.
+It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in

@@ -389,6 +389,7 @@ def pytest_tests(base: str, command: str) -> int:
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
     closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
+    worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
     workers = machine.test_cpus()
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
@@ -397,10 +398,23 @@ def pytest_tests(base: str, command: str) -> int:
     always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
     picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
-    from forge.review import GAP  # imported late: review's imports lead back here
-    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+    from forge import review  # imported late: review's imports lead back here
+    print("".join(f"{review.GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
           end="", flush=True)
-    if closing and len(picked) * 3 > len(tests):
+    if worker and len(picked) * 3 > len(tests):
+        print("Broad selection: only the item's tests run locally. Other tests are skipped. "
+              "CI runs the full suite.", flush=True)
+        item = review.branch_item(repo.current_branch(Path.cwd()), Path.cwd())
+        if item and "/" in item[0]:
+            named = review.cells(review.task(Path.cwd(), item[0])[2].get("tests", ""))
+            always = list(dict.fromkeys(always + named))
+            picked = []
+        else:
+            changed = git_files("diff", "--no-renames", "--name-only", base)
+            changed += git_files("ls-files", "--others", "--exclude-standard")
+            picked = [path for path in tests if path in changed]
+        shared_changed = False
+    elif closing and len(picked) * 3 > len(tests):
         print(LARGE, flush=True)
         if not always:
             return 0
