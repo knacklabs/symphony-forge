@@ -94,6 +94,19 @@ jobs:
         run: python .forge/review-tests.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
+      - id: windows-paths
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force D:/t | Out-Null
+          "TEMP=D:/t" >> $env:GITHUB_ENV
+          "TMP=D:/t" >> $env:GITHUB_ENV
+          "npm-cache=$(npm config get cache)" >> $env:GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        if: runner.os == 'Windows'
+        with:
+          path: ${{ steps.windows-paths.outputs.npm-cache }}
+          key: npm-${{ runner.os }}-jest-30.2.0-vitest-3.2.4
       # Save npm's cache from main on Linux: pull requests restore only caches saved from main.
       - uses: actions/cache@v4
         if: runner.os == 'Linux'
@@ -108,8 +121,16 @@ jobs:
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '--reruns 1' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path .test_durations
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '--reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
         if: steps.parent-tests.outputs.reuse != 'true'
+      # Each artifact contains only this group's measurements, ready to combine into
+      # .test_durations_windows for the next dispatched run. The first run uses the Linux seed.
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Windows'
+        with:
+          name: Windows-test-durations-${{ matrix.group }}
+          path: ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
+          include-hidden-files: true
 
   net-lines:
     if: github.event_name == 'pull_request'
