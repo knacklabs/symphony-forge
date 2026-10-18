@@ -141,7 +141,6 @@ def close(args: argparse.Namespace) -> int:
             return 0
         if not continued:
             print("Recorded the human's choice.")
-    had_stop = bool(state.get("stop"))
     if not switch:
         check_stop(item, state, top)
     question = codex.record(top, item).get("question")
@@ -355,8 +354,6 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
     serious = review.blocking(result)
-    if not serious and not (state.get("stop") or {}).get("choice"):
-        state.pop("stop", None)
     stopped = None
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
     if not fresh or dismissals:
@@ -383,7 +380,7 @@ def close(args: argparse.Namespace) -> int:
         state["flagged"] = sorted(flagged | files)
     noted = (spotted.own_path(item),) if not switch and spotted.record(
         top, item, state, f"origin/{default}", result) else ()
-    if not fresh or dismissals or refreshed or had_stop and not state.get("stop"):
+    if not fresh or dismissals or refreshed:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="hotspot" if stopped else
                      "fixing" if serious or failed else "waiting for checks")
@@ -539,14 +536,9 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
 
 
 def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
-    """A human choice, the repo's default after 30 minutes or a later clean review releases a
-    review loop stop."""
-    result = state.get("review") or {}
-    if (result.get("status") == "clean" and not review.blocking(result) and
-            not (state.get("stop") or {}).get("choice") and "question" not in state.get("stop", {})):
-        state.pop("stop", None)
+    """A recorded choice releases a stop; a clean review does not answer its question."""
     if state.get("stop") and "question" in state["stop"]:
-        if not state["stop"].get("choice") and not state["stop"].get("size"):
+        if not state["stop"].get("choice"):
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
         return
     if state.get("stop") and not state["stop"].get("choice"):

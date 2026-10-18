@@ -1625,7 +1625,8 @@ Narrow or split the part as agreed before building again. Accept dismisses every
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
-A clean review clears an unanswered review-loop stop.
+A stop that asks the owner needs a recorded choice with `forge close --resolve`.
+A merge of the default branch or a clean review does not clear it. Close repeats the question.
 When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
 choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
 with that finding as its why. It does this only when every open finding has Harm 1 or 2; with
