@@ -17,7 +17,8 @@
     "id": "7fe73dac-5842-438c-b09a-d016c9472784",
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "round": 1,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:22:17.592021+00:00",
@@ -28,5 +29,12 @@
       "step": "review"
     }
   ],
-  "why": "Clients need v1.2.14 for the fix that stops a round's hand-back from reverting main's forge.toml (issue 921) and for the speed and test fixes merged since v1.2.13"
+  "stuck": {
+    "close": "a036404b-3e89-492c-a038-574ea7d84abf",
+    "head": "69b2a915a4fbdd8dcf2b372a38017bcc35e7c68e",
+    "keys": {},
+    "round": null
+  },
+  "why": "Clients need v1.2.14 for the fix that stops a round's hand-back from reverting main's forge.toml (issue 921) and for the speed and test fixes merged since v1.2.13",
+  "worker": "codex"
 }
