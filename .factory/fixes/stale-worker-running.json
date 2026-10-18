@@ -11,12 +11,20 @@
   "done_when": "A successful hand-back releases the item's lock, and an item whose recorded worker run has no live process (checked by process identity, as the lanes do) and no live lock shows as stopped with its forge work next step on the board and in forge next, on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T16:37:39.291311+00:00",
       "step": "start"
     }
   ],
-  "why": "The board and forge next show 'Worker running' for an item whose worker process or session is gone and whose lock is missing or stale, so a coordinator waits for ever"
+  "stuck": {
+    "close": null,
+    "head": "cc00a5aa48c15686eade7fc147ccc3a2b7fd048b",
+    "keys": {},
+    "round": null
+  },
+  "why": "The board and forge next show 'Worker running' for an item whose worker process or session is gone and whose lock is missing or stale, so a coordinator waits for ever",
+  "worker": "codex"
 }
