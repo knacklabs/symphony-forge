@@ -2159,7 +2159,6 @@
     "tests/test_review_record_reuses_parent_tests.py::test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent[previous-review]": 1.6898412079995069,
     "tests/test_review_record_reuses_parent_tests.py::test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent[source-base-advanced]": 2.9276393760001156,
     "tests/test_review_record_reuses_parent_tests.py::test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent[source-review]": 2.7168197089995374,
-    "tests/test_review_record_reuses_parent_tests.py::test_3_forge_matrix_uses_the_same_review_record_shortcut": 0.008142458999827795,
     "tests/test_review_survives_branch_replay.py::test_1_reused_review_passes_pr_check_after_replay[new]": 3.5550391269998727,
     "tests/test_review_survives_branch_replay.py::test_1_reused_review_passes_pr_check_after_replay[previously-adopted]": 4.340825625999969,
     "tests/test_reviews_allow_pending_pull_request_proof.py::test_1_review_defers_pending_pr_check_proof_but_keeps_failed_or_absent_proof_p1[init]": 3.1175019180000163,

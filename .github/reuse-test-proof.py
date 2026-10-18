@@ -54,7 +54,14 @@ def reused_run():
                           and r.get("event") == "pull_request"),
                          key=lambda r: r["id"], default={})
             if successful(latest):
-                return latest
+                # PR jobs check out GitHub's merge commit. Reconstruct that run's
+                # historical merge, not a new merge against today's main tip.
+                for snapshot in latest.get("pull_requests", []):
+                    if (snapshot.get("number") == pr["number"]
+                            and snapshot.get("head", {}).get("sha") == head):
+                        tested_base = commit(snapshot["base"]["sha"])
+                        if run("git", "merge-tree", "--write-tree", tested_base, head) == tree:
+                            return latest
     elif ref.startswith("refs/tags/"):
         for proof in github("actions/workflows/forge-next.yml/runs", ".workflow_runs[]",
                             branch="main", event="push", status="success"):

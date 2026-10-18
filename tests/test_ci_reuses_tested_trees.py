@@ -1,6 +1,7 @@
 """Forge's own CI reuses GitHub proof only for the same merged Git tree.
 
-The workflow command runs against real Git history; only GitHub responses are fake.
+The workflow command .github/reuse-test-proof.py runs against real Git history;
+only GitHub responses are fake.
 Client workflows stay PR-only and do not receive this Forge-source optimization.
 """
 import json
@@ -65,7 +66,8 @@ def commit(repo, path, text):
 @pytest.mark.parametrize("job", ["tests", "plugin", "windows-installers"])
 @pytest.mark.parametrize("case", ["passed", "squash", "changed-tree", "red", "pending",
                                   "missing", "target-only", "wrong-head", "unmerged",
-                                  "wrong-merge", "api-error", "newer-red"])
+                                  "wrong-merge", "api-error", "newer-red", "stale-base",
+                                  "missing-snapshot", "wrong-snapshot-head", "same-tree-base"])
 def test_1_main_reuses_only_successful_pull_request_proof_for_its_merged_tree(
         repo, gh, tmp_path, monkeypatch, job, case):
     base = repo.git("rev-parse", "HEAD")
@@ -73,7 +75,9 @@ def test_1_main_reuses_only_successful_pull_request_proof_for_its_merged_tree(
     head = commit(repo, "code.txt", "PR code\n")
     repo.git("switch", "-q", "main")
     # Main can advance independently before the merge.
-    commit(repo, "main.txt", "Main code\n")
+    tested_base = commit(repo, "main.txt", "Main code\n")
+    if case == "same-tree-base":
+        repo.git("commit", "--allow-empty", "-qm", "Advance main without changing its tree")
     repo.git("merge", "--squash" if case == "squash" else "--no-ff", "pr",
              *([] if case == "squash" else ["-m", "Merge PR"]))
     if case == "squash":
@@ -86,7 +90,17 @@ def test_1_main_reuses_only_successful_pull_request_proof_for_its_merged_tree(
     pr = {"number": 7, "merged_at": "2026-10-18T00:00:00Z", "merge_commit_sha": sha,
           "base": {"ref": "main"}, "head": {"sha": head}}
     run = {"id": 11, "head_sha": head, "event": "pull_request", "status": "completed",
-           "conclusion": "success", "html_url": "https://github.com/acme/forge/actions/runs/11"}
+           "conclusion": "success", "html_url": "https://github.com/acme/forge/actions/runs/11",
+           "pull_requests": [{"number": 7, "base": {"sha": tested_base},
+                              "head": {"sha": head}}]}
+    if case == "stale-base":
+        # Both PRs passed before main advanced. The actual merge includes main.txt,
+        # but the successful run's historical merge did not test that combined tree.
+        run["pull_requests"][0]["base"]["sha"] = base
+    if case == "missing-snapshot":
+        del run["pull_requests"]
+    if case == "wrong-snapshot-head":
+        run["pull_requests"][0]["head"]["sha"] = base
     if case in {"red", "pending", "target-only", "wrong-head"}:
         run.update({"red": {"conclusion": "failure"}, "pending": {"status": "in_progress"},
                     "target-only": {"event": "pull_request_target"},
@@ -99,7 +113,8 @@ def test_1_main_reuses_only_successful_pull_request_proof_for_its_merged_tree(
     if case == "newer-red":
         runs.append(dict(run, id=12, conclusion="failure"))
     assert decide(repo, gh, tmp_path, monkeypatch, "push", "refs/heads/main", sha,
-                  [pr], runs, job, case == "api-error") == (case in {"passed", "squash"})
+                  [pr], runs, job, case == "api-error") == (
+                      case in {"passed", "squash", "same-tree-base"})
     calls = gh.calls()
     if case in {"passed", "squash"}:
         expected = "forge.yml" if job == "tests" else "forge-next.yml"
