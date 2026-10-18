@@ -1,6 +1,13 @@
 {
   "base": "b3880ba87978fefde7e106eb1d43ae6e18d42c0e",
   "branch": "fix/reuse-test-proof",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fef-3167-75a0-b53b-5b5a0a094b46",
+    "head": null,
+    "start": "cf1e812d332bb42c5f69d4708d1fcc8ca21dd589"
+  },
   "done_when": "A merge to main skips its full test run when its tree equals the pull request's code merged onto main's previous tip and that pull request's checks passed; a release tag skips tests when its commit's tree already passed main's full run; both say so in the job summary; the nightly every-platform run still runs everything",
   "fix_kind": "mechanical",
   "kind": "fix",
