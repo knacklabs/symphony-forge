@@ -4,12 +4,20 @@
   "done_when": "The every-platform run has no macOS groups, Linux and Windows keep their groups and limits, and the CI budget tests match",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T08:12:08.418177+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's every-platform run spends nine macOS groups that time out on slow runners and have found no macOS-only product bug; Linux and Windows catch the platform bugs, and every close already runs its tests on a Mac"
+  "stuck": {
+    "close": null,
+    "head": "ff3cfb5da0f8fca5ca3238ad7149737489318843",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's every-platform run spends nine macOS groups that time out on slow runners and have found no macOS-only product bug; Linux and Windows catch the platform bugs, and every close already runs its tests on a Mac",
+  "worker": "codex"
 }
