@@ -7,13 +7,79 @@
     "head": null,
     "start": "f099a2fd5159e04f663f3508c7a8ff699c37d3ff"
   },
+  "flagged": [
+    "src/forge/machine.py"
+  ],
+  "known": [
+    {
+      "area": "join() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 208,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: New work, reads, reviews and test runs wait while free memory is below a safe floor, and start again when it recovers.",
+      "work": 2
+    },
+    {
+      "area": "test_cpus() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 45,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Cap fixed pytest counts when busy runners reduce the budget",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "173537993cc62183f03e72b28c772fa0ce006377e7d3d4003c981ae12ecaef60",
+    "changed": "db0712ffe50bc603e61e955ce20e0db8d33463f5281b32b101146510bae49250",
+    "commit": "c4ede349eaa43b13a4957e84a8d1480b9d202f0f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. The memory check only runs through machine.join(). Direct `forge test --pytest <base>` instead reaches src/forge/fasttest.py:269 and launches pytest at :428 without joining, so it starts even below the memory floor. The named small-test proof invokes bare `forge test` (tests/test_machine_memory_budget.py:116), whose outer admission hides this bypass. Gate standalone picker runs while preserving execution inside an already admitted test command.",
+        "file": "src/forge/machine.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 208,
+        "priority": "P1",
+        "title": "Not done: New work, reads, reviews and test runs wait while free memory is below a safe floor, and start again when it recovers.",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. On eight cores with two busy runners, a standalone `forge test` using `test = \"pytest -n 4\"` and no fast_test computes a two-process budget but still launches four workers. src/forge/review.py:488-492 only adds --maxprocesses when FORGE_TEST_CPUS already exists in the parent environment. The exported PYTEST_XDIST_AUTO_NUM_WORKERS affects automatic counts, not explicit -n values ([xdist contract](https://pytest-xdist.readthedocs.io/en/stable/distribution.html)). Runner reservations therefore go unenforced, while review.py:507 records two processes and doctor understates usage. The runner proof checks environment values in a script rather than the actual worker count.",
+        "file": "src/forge/machine.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 45,
+        "priority": "P1",
+        "title": "Cap fixed pytest counts when busy runners reduce the budget",
+        "work": 2
+      }
+    ],
+    "id": "6a75c6be-42a7-4b64-a9ce-17aa25c982f6",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T10:26:36.882125+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T12:24:28.630013+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
