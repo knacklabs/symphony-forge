@@ -23,8 +23,8 @@
     "id": "0a6c9920-485b-4c6c-a559-6f820dc97d9a",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T11:11:50.314164+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "6d911d40f69198dfa8c64b9e98eacd4f396bc9cb",
+    "close": "90083c56-5b22-433a-baec-2d7b5e3687f7",
+    "head": "2b0275836f29dcab0c0b6e788904f592f6461fc5",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The CI test groups are split by test timings from 12 October that name about 100 tests that no longer exist, and pytest-xdist uses its default scheduling",
   "worker": "codex"
