@@ -1,6 +1,13 @@
 {
   "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
   "branch": "fix/trim-history-view-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14de5-53f1-7c92-a6d2-f07a21dd0aec",
+    "head": null,
+    "start": "96fb23b7a0aa498f9961288a8e1b56fd816d0ae9"
+  },
   "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
