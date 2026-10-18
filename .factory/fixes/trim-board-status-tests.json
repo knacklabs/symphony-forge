@@ -72,8 +72,8 @@
     "id": "ce609de8-c81f-400d-9340-b436e270cb00",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T06:34:58.062612+00:00",
@@ -85,10 +85,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "5e55da1b23d99cd58287016626610864b24cd084",
+    "close": "b5911c21-4cf6-4e7c-8c09-ddc4e8654f87",
+    "head": "d6078495b8c782a63f5b90cd63730ec5a5cedabb",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The board status and machine view tests repeat adopted rows and one review priority with the same path",
   "worker": "codex"
