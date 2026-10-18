@@ -1,0 +1,15 @@
+{
+  "base": "8c9b59b387e92c9a6cc39f43556fb31da45ed85b",
+  "branch": "fix/land-frees-ci-slots",
+  "done_when": "While a child close waits only for checks, land --all releases its slot so another item can start, keeping stack and shared-file order, and a test shows a waiting child does not block a new close",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-18T10:43:53.558893+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "forge land --all holds its slots while its child closes only wait for GitHub checks, so other items cannot start closing"
+}
