@@ -4,12 +4,20 @@
   "done_when": "The forwarding lookup's imports load only when the command runs in Forge's own checkout, each forge process starts at least 10 ms faster, and the forwarding tests pass for Forge's repo and for client repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T08:30:45.998125+00:00",
       "step": "start"
     }
   ],
-  "why": "Every forge command and git hook spends about 15 to 20 ms importing the release-forwarding lookup, which only Forge's own checkout can use"
+  "stuck": {
+    "close": null,
+    "head": "3ce5bb4462f31db7185416ee2c395e98f7be5324",
+    "keys": {},
+    "round": null
+  },
+  "why": "Every forge command and git hook spends about 15 to 20 ms importing the release-forwarding lookup, which only Forge's own checkout can use",
+  "worker": "codex"
 }
