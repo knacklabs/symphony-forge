@@ -1,4 +1,4 @@
-"""New and previously adopted repos receive the mod's guide sections.
+"""New and previously adopted repos receive the coordinator's guide sections.
 
 The shipped text is the delivery contract. Plugin tests own runtime behavior;
 this check does not keep a second copy of the guide's wording.
@@ -37,8 +37,20 @@ def section(guide, heading):
 def test_1_new_and_previously_adopted_repos_receive_the_mod_guide_sections(guide):
     template = (ROOT / "src/forge/templates/skill.md").read_text(encoding="utf-8")
     for heading in ("Claude Code plugin core", "Installing the mod", "Approving with the pane",
-                    "The pane and strip", "Events"):
+                    "The pane and strip", "Events", "Save decisions and ideas"):
         expected = section(template, heading)
         assert expected, heading
         for shipped in guide:
             assert section(shipped, heading) == expected, heading
+    # Previously chat could be the only record. The delivered prompt must now
+    # name each durable home and how to question a new direction, in a short section.
+    decisions = section(template, "Save decisions and ideas")
+    assert len(decisions.splitlines()) <= 14
+    for contract in ("Understand each", "same turn", "never leave it only in chat",
+                     "Grill new directions", "one question at a time", "recommendation first",
+                     "plan's Notes", "forge close <item> --resolve", "--reason",
+                     "standing rule or direction", "forge decision new <slug>",
+                     "next fix", "one pull request per decision", "plans/ideas.md",
+                     "short dated list", "Create it on first use", "not yet chosen",
+                     "Remove an entry", "spec, story or fix"):
+        assert contract in decisions, contract
