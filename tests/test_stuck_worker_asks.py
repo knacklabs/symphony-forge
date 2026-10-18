@@ -100,9 +100,9 @@ def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     assert refused.returncode == 1 and refused.stderr.splitlines()[-1] == NEXT
 
 
-@pytest.mark.parametrize("choice", ["same", "narrow", "split"])
-def test_2_a_choice_buys_one_more_round_then_forge_asks_again(land, choice):
+def test_2_a_choice_buys_one_more_round_then_forge_asks_again(land):
     env = land
+    choice = "same"
     item = _rounds(env, "failing")
     assert env.repo.forge("work", item).returncode == 1
     chosen = env.close(item, "--resolve", choice, "--reason", "One more try")

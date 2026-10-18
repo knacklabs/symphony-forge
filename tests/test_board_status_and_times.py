@@ -197,7 +197,11 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
     assert not legacy["stalled"] and legacy["idle_seconds"] == 300
 
 
-@pytest.mark.parametrize("child_activity", ["running", "recently merged", "legacy timing", "branch commit", "stalled"])
+@pytest.mark.parametrize("client,child_activity", [
+    ("new", activity) for activity in
+    ("running", "recently merged", "legacy timing", "branch commit", "stalled")
+] + [("adopted-v1.2.2", activity) for activity in
+     ("recently merged", "legacy timing", "stalled")], indirect=["client"])
 def test_11_story_idle_time_tracks_its_parts(
         client, tmp_path, monkeypatch, claude_payload, gh, child_activity):
     configured = _fix(client)
@@ -277,7 +281,10 @@ def test_11_story_idle_time_tracks_its_parts(
         assert parent["waits_on"]
 
 
-@pytest.mark.parametrize("run_round", [1, 2], ids=["older round", "current round"])
+@pytest.mark.parametrize("client,run_round", [
+    ("new", 1), ("new", 2), ("adopted-v1.2.2", 2),
+], ids=["new-older round", "new-current round", "adopted-v1.2.2-current round"],
+    indirect=["client"])
 def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
         client, tmp_path, monkeypatch, run_round):
     with monkeypatch.context() as earlier:
@@ -310,7 +317,9 @@ def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
     assert "The fix correct-state's worker has stopped." in next_text.stdout
 
 
-@pytest.mark.parametrize("command", ["board", "next"])
+@pytest.mark.parametrize("client,command", [
+    ("new", "board"), ("new", "next"), ("adopted-v1.2.2", "board"),
+], indirect=["client"])
 def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
         client, tmp_path, monkeypatch, command):
     with monkeypatch.context() as earlier:
@@ -348,7 +357,9 @@ def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
             _records(client, "events.jsonl", events)
 
 
-@pytest.mark.parametrize("kind", ["work", "review"])
+@pytest.mark.parametrize("client,kind", [
+    ("new", "work"), ("new", "review"), ("adopted-v1.2.2", "work"),
+], indirect=["client"])
 def test_4_running_worker_or_review_overrides_old_needs_fixes(client, tmp_path, kind):
     _fix(client, status="fixing", round=2)
     _records(client, "events.jsonl", [{"event": "run start", "id": "current-run",

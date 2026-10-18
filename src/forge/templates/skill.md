@@ -71,6 +71,21 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+## Save decisions and ideas
+
+Understand each human decision, direction and idea. Save each in the same turn;
+never leave it only in chat. Grill new directions one question at a time, with your
+recommendation first. Save the answer before moving to the next question.
+
+- Put a choice about an item in its plan's Notes or the recorded choice:
+  `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+- Save a standing rule or direction with `forge decision new <slug>`. Batch decision
+  docs into the next fix; do not open one pull request per decision.
+- Park an idea not yet chosen in `plans/ideas.md`, a short dated list you keep.
+  Create it on first use. Remove an entry when it becomes a spec, story or fix.
+
+## Merges and settings
+
 Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
 the item's merge base with its head, so an older branch can merge after the owner enables agent
 merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged

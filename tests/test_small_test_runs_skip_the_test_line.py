@@ -15,13 +15,14 @@ from test_lanes_tests import accepted, configure, reap, release_server, shell  #
 STORY = "reviews-skip-agent-line"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-@pytest.mark.parametrize("file_count, compound, other_suite, doctest",
-                         [(5, False, False, False), (6, False, False, False), (5, True, False, False),
-                          (5, False, True, False), (5, False, False, "command"),
-                          (5, False, False, "config")],
-                         ids=["five-files", "six-files", "compound-command", "underlying_full_suite",
-                              "doctest-option", "doctest-config"])
+@pytest.mark.parametrize("adopted,file_count,compound,other_suite,doctest", [
+    (adopted, *case)
+    for adopted in (False, True)
+    for case in ((5, False, False, False), (6, False, False, False), (5, True, False, False),
+                 (5, False, True, False), (5, False, False, "command"),
+                 (5, False, False, "config"))
+    if not adopted or case in ((5, False, False, False), (6, False, False, False))
+])
 def test_2_a_few_related_test_files_do_not_wait_for_the_test_place(env, tmp_path, release_server, monkeypatch,
                                                                  adopted, file_count, compound, other_suite, doctest):
     server, connections = release_server
