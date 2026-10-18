@@ -20,8 +20,8 @@ NOW = datetime(2026, 11, 18, 12, tzinfo=timezone.utc)
 
 
 def setup(repo, gh, monkeypatch, history):
-    client(repo, gh, history)
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
+    client(repo, gh, history)
     gh.respond("api", "--paginate", stdout="")
     gh.respond("api", "user", stdout="builder\n")
     gh.respond("api", "repos/{owner}/{repo}/actions/runs", stdout='{"workflow_runs": []}')
@@ -80,8 +80,12 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
     assert len(git_log.read_text("utf-8").splitlines()) <= 100
     assert elapsed < (30 if os.name == "nt" else 10), f"warm next took {elapsed:.2f}s"
 
-    for seconds, expected in [(61, (1, 1, 0, 0, 0)), (599, (1, 1, 0, 0, 0)),
-                              (601, (0, 0, 0, 0, 1)), (86401, (1, 7, 1, 1, 1))]:
+    # Lifetimes are elapsed seconds from each fetch, not calendar boundaries.
+    # The open/current-week lists live 60 seconds, schedules 600 seconds,
+    # and past weeks, older merges and known issues 86400 seconds.
+    for seconds, expected in [(59, (0, 0, 0, 0, 0)), (60, (1, 1, 0, 0, 0)),
+                              (599, (1, 1, 0, 0, 0)), (600, (0, 0, 0, 0, 1)),
+                              (86400, (1, 7, 1, 1, 1)), (86401, (0, 0, 0, 0, 0))]:
         monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=seconds)).isoformat())
         before = len(gh.calls())
         read(repo)
