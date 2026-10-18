@@ -10,13 +10,29 @@
   },
   "done_when": "The coordinator guide tells agents to save every human decision, direction and idea the same turn where Forge keeps it (item plan Notes or the recorded choice, decision docs batched into the next fix, a parked ideas list in plans/ideas.md), and to grill new directions one question at a time; new and existing repos get it through init and sync, and the guide test covers both",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4fc636cb30332cfe3c4c8010dc00ff21ad6ffe21ec9fd26010a8a6206d97631f",
+    "changed": "6d5a5bfb51080f527659ad378538122fb70e14e73421decea14199ff44bd78aa",
+    "commit": "f7a7fb96c29fa0ff4595ddb3f4a66f69d62a5722",
+    "dismissals": [],
+    "findings": [],
+    "id": "182f6db5-194e-4062-8dab-e75fd2f6eddf",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T10:37:11.478543+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T10:41:32.196989+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
