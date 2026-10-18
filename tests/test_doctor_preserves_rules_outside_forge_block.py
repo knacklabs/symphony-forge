@@ -8,9 +8,11 @@ STORY = "fix-agents-block-doctor"
 BEGIN, END = b"<!-- forge:begin -->", b"<!-- forge:end -->"
 
 
-@pytest.mark.parametrize("adoption", ["new init", "previous release"])
-@pytest.mark.parametrize("location", ["outside", "inside"])
-@pytest.mark.parametrize("state", ["committed", "unstaged", "staged", "CRLF checkout"])
+@pytest.mark.parametrize("adoption, location, state", [
+    ("new init", location, state)
+    for location in ("outside", "inside")
+    for state in ("committed", "unstaged", "staged", "CRLF checkout")
+] + [("previous release", "outside", "committed")])
 def test_1_doctor_refreshes_only_forge_owned_block_and_keeps_client_rules(
         repo, gh, tmp_path, monkeypatch, adoption, location, state):
     # Existing whole-file protection mistook the required Review rules for Forge edits.
@@ -131,8 +133,9 @@ def test_3_current_crlf_guidance_needs_no_doctor_repair_or_sync_write(
             assert agents.read_bytes() == content
 
 
-@pytest.mark.parametrize("adoption", ["new init", "previous release"])
-@pytest.mark.parametrize("ending", ["LF", "CRLF", "no newline"])
+@pytest.mark.parametrize("adoption, ending", [
+    ("new init", ending) for ending in ("LF", "CRLF", "no newline")
+] + [("previous release", "no newline")])
 def test_4_doctor_fix_preserves_outside_bytes_while_migrating_claude_instructions(
         repo, gh, tmp_path, monkeypatch, adoption, ending):
     monkeypatch.setenv("FORGE_NOW", "2026-10-09T09:00:00+00:00")

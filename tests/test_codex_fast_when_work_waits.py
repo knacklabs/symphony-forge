@@ -65,13 +65,10 @@ def _policy(repo, folder, mode):
     ("PAGE", "always", [], "default"),
     ("PAGE", "always", None, "default"),
     ("PAGE", "always", "missing", "default"),
-    ("fix-the-login-typo", None, [{"id": "priority", "name": "Fast"}], "priority"),
-    ("fix-the-login-typo", "off", [{"id": "priority", "name": "Fast"}], "default"),
-    ("fix-the-login-typo", None, [], "default"),
 ])
 def test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting(
         repo, monkeypatch, sdk_data, item, mode, tiers, expected):
-    # Previously first-round standalone fixes ignored Fast; now every fix uses it when available.
+    # Fix selection is covered by test_codex_turn_speed_receipts's retry and doctor checks.
     # Ordinary first-round tasks and models without a tier still run normally.
     folder, calls = _codex_repo(repo, monkeypatch, sdk_data)
     _tiers(repo, tiers)
@@ -79,13 +76,9 @@ def test_1_codex_uses_fast_for_fixes_and_waited_on_work_and_honors_the_setting(
         started = repo.forge("task", "start", "BOARD/HELP")
         assert started.returncode == 0, started.stdout + started.stderr
         folder = repo.path.parent / f"{repo.path.name}-BOARD-HELP"
-    if item == "fix-the-login-typo":
-        started = repo.forge("fix", "start", "Fix the login typo", "--done", "It says Log in")
-        assert started.returncode == 0, started.stdout + started.stderr
-        folder = repo.path.parent / f"{repo.path.name}-fix-{item}"
     if mode:
         _policy(repo, folder, mode)
-    worked = repo.forge("work", item if item == "fix-the-login-typo" else f"BOARD/{item}")
+    worked = repo.forge("work", f"BOARD/{item}")
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert _sent(calls, "turn/start")[-1].get("serviceTierForTurn") == expected
     if expected != "default" or mode == "always":

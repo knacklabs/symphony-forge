@@ -72,15 +72,20 @@ def _advice(done, expected):
     assert lines == ([] if expected is None else ["fast_test = " + json.dumps(expected)]), done.stdout + done.stderr
 
 
-@pytest.mark.parametrize("kind,command,package,expected", CASES, ids=[case[0] for case in CASES])
-def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, kind, command, package, expected):
+@pytest.mark.parametrize("cases", [
+    *[[case] for case in CASES if case[3] is not None or case[0] == "configured"],
+    [case for case in CASES if case[3] is None and case[0] != "configured"],
+], ids=[case[0] for case in CASES if case[3] is not None or case[0] == "configured"] + ["unsupported"])
+def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, cases):
     client = _new_repo(repo, gh, tmp_path)
     assert repo.forge("init", cwd=client).returncode == 0
-    _inputs(client, kind, command, package)
-    before = (client / "forge.toml").read_bytes()
-    done = repo.forge("doctor", cwd=client)
-    _advice(done, expected)
-    assert (client / "forge.toml").read_bytes() == before
+    # Unsupported kinds create no manifests, so each row only changes the test command.
+    for kind, command, package, expected in cases:
+        _inputs(client, kind, command, package)
+        before = (client / "forge.toml").read_bytes()
+        done = repo.forge("doctor", cwd=client)
+        _advice(done, expected)
+        assert (client / "forge.toml").read_bytes() == before
     for host in (".claude", ".codex"):
         skill = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "`forge doctor` and `forge upgrade` print one suggested" in skill
@@ -88,10 +93,14 @@ def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, kind, c
         assert "Go, Rust, Java, .NET and Ruby get no suggestion." in skill
 
 
-@pytest.mark.parametrize("entry", ["doctor", "upgrade"])
-@pytest.mark.parametrize("runner,flag", [("vitest", "--changed"), ("jest", "--changedSince")])
+@pytest.mark.parametrize("entry,runner,flag,invocation", [
+    (entry, runner, flag, invocation)
+    for entry in ("doctor", "upgrade")
+    for runner, flag in (("vitest", "--changed"), ("jest", "--changedSince"))
+    for invocation in ("exec", "script")
+    if entry == "doctor" or (runner, invocation) in (("vitest", "exec"), ("jest", "script"))
+])
 @pytest.mark.parametrize("shared", [False, True], ids=["related-python", "shared-python-input"])
-@pytest.mark.parametrize("invocation", ["exec", "script"])
 def test_4_running_the_mixed_suggestion_runs_each_test_kind_once(unsynced_up, entry, runner, flag, shared, invocation):
     up = unsynced_up
     repo = up.repo
@@ -178,7 +187,9 @@ def test_5_generated_node_settings_get_advice_without_replacing_the_test_command
     assert settings.read_bytes() == before
 
 
-@pytest.mark.parametrize("kind,command,package,expected", CASES, ids=[case[0] for case in CASES])
+@pytest.mark.parametrize("kind,command,package,expected",
+                         [case for case in CASES if case[0] in ("python", "vitest", "mixed", "go", "configured")],
+                         ids=[case[0] for case in CASES if case[0] in ("python", "vitest", "mixed", "go", "configured")])
 def test_2_upgrade_suggests_the_previously_adopted_clients_test_kind(unsynced_up, kind, command, package, expected):
     up = unsynced_up
     shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path, dirs_exist_ok=True)

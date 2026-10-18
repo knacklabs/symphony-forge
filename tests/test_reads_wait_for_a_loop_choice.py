@@ -18,9 +18,14 @@ from test_story import DOC, READER, claude_plan, hook, new_story, setup, worktre
 from test_worker import calls, install_claude
 
 
-@pytest.mark.parametrize("previous,target", [(False, "SHOP"), (True, "SHOP"),
-                                            (False, "basket"), (True, "basket")])
-@pytest.mark.parametrize("choice", ["accept", "narrow", "split"])
+# Accept also settles dispositions and enables approval/confirmation; keep both targets.
+# Narrow and split share the resolution path; narrow retains the adopted spec case.
+@pytest.mark.parametrize("choice,previous,target", [
+    (choice, previous, target)
+    for choice in ("accept", "narrow", "split")
+    for previous in (False, True)
+    for target in (("SHOP",) if choice == "split" and previous else ("SHOP", "basket"))
+])
 def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_clients(
         env, tmp_path, claude_payload, previous, target, choice):
     _, where = client_item(env, tmp_path, previous)
