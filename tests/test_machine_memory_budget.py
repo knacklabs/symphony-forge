@@ -76,7 +76,7 @@ def measurements(repo, tmp_path, available=800_000_000, runners=0, total=16_000_
     return memory, busy
 
 
-def configure_marker(env, marker, picker=False):
+def configure_marker(env, marker, picker=False, fixed_workers=None):
     """A client's test records when Forge actually starts it."""
     command = shell([sys.executable, "-c",
                      f"from pathlib import Path; Path({marker.as_posix()!r}).touch()"])
@@ -84,22 +84,40 @@ def configure_marker(env, marker, picker=False):
     cfg = "\n".join(line for line in cfg.splitlines()
                     if line.partition("=")[0].strip() not in ("test", "fast_test", "workers"))
     cfg = 'workers = "claude"\n' + cfg
+    if picker or fixed_workers is not None:
+        argv = [sys.executable, "-m", "pytest", "-q"]
+        if fixed_workers is not None:
+            argv += ["-n", str(fixed_workers)]
+        command = shell(argv)
     if picker:
-        command = shell([sys.executable, "-m", "pytest", "-q"])
         cfg = 'fast_test = "forge test --pytest {base}"\n' + cfg
     env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + cfg)
     env.repo.git("push", "-q", "origin", "main")
 
 
+def pytest_probe(repo, marker, workers=None):
+    """A real pytest process records its public lane view and actual xdist count."""
+    return ("import pathlib, subprocess, sys\n"
+        "def test_machine_budget(request):\n"
+        + (f"    assert request.config.workerinput['workercount'] == {workers}\n" if workers else "")
+        + f"    lanes = subprocess.run([sys.executable, {(repo.bin / 'forge').as_posix()!r}, 'lanes', '--json'], "
+          "capture_output=True, text=True, encoding='utf-8', check=True)\n"
+        f"    marker = pathlib.Path({marker.as_posix()!r})\n"
+        "    pending = marker.with_suffix('.tmp')\n"
+        "    pending.write_text(lanes.stdout, encoding='utf-8')\n"
+        "    pending.replace(marker)\n")
+
+
 @pytest.mark.parametrize("kind,adopted", [
-    ("work", False), ("read", False), ("review", False), ("test", False), ("work", True),
-], ids=["work", "read", "review", "small-test", "earlier-adoption"])
+    ("work", False), ("read", False), ("review", False), ("test", False),
+    ("picker", False), ("work", True),
+], ids=["work", "read", "review", "small-test", "direct-picker", "earlier-adoption"])
 def test_1_every_lane_waits_for_memory_and_starts_when_it_recovers(env, tmp_path, kind, adopted):
     # Reads, reviews and small selections skip capacity places, but must obey the memory floor.
     repo = client(env, tmp_path, adopted)
     machine_cores(repo, 8)
     marker = repo.bin / "test-started"
-    configure_marker(env, marker, picker=kind == "test")
+    configure_marker(env, marker, picker=kind in ("test", "picker"))
     if kind == "work":
         item, folder = env.start_fix({"README.md": "Work after memory recovers\n"}, status="started")
         where, args, marker = repo.path, ("work", item), repo.bin / f"started-{folder.name}"
@@ -111,9 +129,9 @@ def test_1_every_lane_waits_for_memory_and_starts_when_it_recovers(env, tmp_path
         item, _ = env.start_fix({"README.md": "Review after memory recovers\n"})
         where, args, marker = repo.path, ("close", item), repo.bin / "started-review"
     else:
-        _, where = env.start_fix({"test_memory_start.py": "from pathlib import Path\n"
-            f"def test_starts():\n    Path({marker.as_posix()!r}).touch()\n"})
-        args = ("test",)
+        _, where = env.start_fix({"test_memory_start.py": pytest_probe(repo, marker)})
+        args = (("test", "--pytest", repo.git("merge-base", "origin/main", "HEAD", cwd=where))
+                if kind == "picker" else ("test",))
     hold_agents(env)
     # This read is above the fixed 1.5 GB minimum but below ten percent of RAM.
     available = 1_510_000_000 if kind == "read" else 800_000_000
@@ -133,23 +151,45 @@ def test_1_every_lane_waits_for_memory_and_starts_when_it_recovers(env, tmp_path
         _until(lambda: marker.exists() or process.poll() is not None,
                "the command to start after memory recovers")
         assert marker.exists(), output.read_text("utf-8")
+        if kind in ("test", "picker"):
+            entries = json.loads(marker.read_text("utf-8"))["tests"]["entries"]
+            assert len(entries) == 1 and entries[0]["started_at"], entries
         assert output.read_text("utf-8").count(memory_wait) == 1
     finally:
         publish(memory, json.dumps({"total_bytes": None, "available_bytes": None}))
         finish(repo, processes)
     assert process.returncode == 0, output.read_text("utf-8")
-    if kind == "test":
+    if kind in ("test", "picker"):
         # An unreadable source must fail open rather than hold otherwise runnable work.
         marker.unlink()
-        result = repo.forge("test", cwd=where)
+        result = repo.forge(*args, cwd=where)
         assert result.returncode == 0, result.stdout + result.stderr
         assert marker.exists()
         assert "waiting for memory" not in result.stdout
 
 
-@pytest.mark.parametrize("kind", ["work", "test"])
+@pytest.mark.parametrize("kind", ["work", "test", "fixed-test", "fixed-picker"])
 def test_3_busy_runners_reduce_budgets_and_idle_runners_release_waiters(
-        env, tmp_path, release_server, kind):
+        env, tmp_path, release_server, kind, monkeypatch):
+    if kind.startswith("fixed-"):
+        # A fixed xdist option must obey this machine's live runner budget even
+        # when this command was not launched by a worker with a pre-set cap.
+        monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)
+        repo = client(env, tmp_path, False)
+        machine_cores(repo, 8)
+        measurements(repo, tmp_path, available=8_000_000_000, runners=2)
+        marker = repo.bin / "worker-budget"
+        configure_marker(env, marker, fixed_workers=4)
+        _, folder = env.start_fix({"test_worker_budget.py": pytest_probe(repo, marker, workers=2)})
+        args = (("test", "--pytest", repo.git("merge-base", "origin/main", "HEAD", cwd=folder))
+                if kind == "fixed-picker" else ("test",))
+        result = repo.forge(*args, cwd=folder)
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert marker.exists(), result.stdout + result.stderr
+        entries = json.loads(marker.read_text("utf-8"))["tests"]["entries"]
+        assert len(entries) == 1 and entries[0]["started_at"], entries
+        assert "1 passed" in result.stdout, result.stdout
+        return
     repo = env.repo
     machine_cores(repo, 8)
     _, busy = measurements(repo, tmp_path, available=8_000_000_000, runners=2)

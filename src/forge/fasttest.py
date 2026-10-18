@@ -266,7 +266,22 @@ def test(args) -> int:
                                         always=True, closing=False)
         print(report)
         return status
-    return pytest_tests(args.base, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
+    from forge import review
+
+    top = Path.cwd().resolve()
+    command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
+    # A picker launched by close or bare forge test keeps that command's one place.
+    parent = os.environ.get("FORGE_TEST_LANE")
+    if parent and any(run["id"] == parent and run["kind"] == "test" and run.get("started_at")
+                      and run.get("checkout_root") == top.as_posix() for run in machine.entries()):
+        return pytest_tests(args.base, command)
+    entry = machine.join("test", top, repo.current_branch(top), None, None,
+                         small=review.few_tests(top, f"forge test --pytest {args.base}", args.base))
+    try:
+        entry["test_cpus"] = int(machine.test_cpus())
+        return pytest_tests(args.base, command, entry)
+    finally:
+        machine.leave(entry)
 
 
 LARGE = ("More than a third of the test files selected; skipping local tests and relying on the "
@@ -381,7 +396,7 @@ def pytest_runtest_logreport(report):
 """
 
 
-def pytest_tests(base: str, command: str) -> int:
+def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
@@ -392,6 +407,8 @@ def pytest_tests(base: str, command: str) -> int:
     workers = machine.test_cpus()
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
+    if entry is not None:
+        environment["FORGE_TEST_LANE"] = entry["id"]
     excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
@@ -425,5 +442,17 @@ def pytest_tests(base: str, command: str) -> int:
                                                   repr(always)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
-        return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
-                              env=environment).returncode
+        if entry is None:
+            return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
+                                  env=environment).returncode
+        from forge import codex
+
+        with subprocess.Popen(narrow_command(command, excluded, workers, always), shell=True,
+                              env=environment, **codex.GROUP) as process:
+            try:
+                machine.started(entry, process.pid)
+                return process.wait()
+            except BaseException:
+                codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
+                process.wait()
+                raise

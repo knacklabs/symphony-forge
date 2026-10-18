@@ -1388,7 +1388,10 @@ uncommitted changes. If the remote default branch is missing it says to fetch it
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
 a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
-its test command is capped with `--maxprocesses`. `pytest -n auto` honours
+its test command is capped with `--maxprocesses`, also outside a worker session.
+Direct `forge test --pytest <base>` runs join the test lane and obey its memory floor and budget.
+A picker inside close or bare `forge test` shares that run's single lane entry.
+`pytest -n auto` honours
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
