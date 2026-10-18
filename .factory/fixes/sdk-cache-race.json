@@ -10,13 +10,54 @@
   },
   "done_when": "Parallel test workers never see a half-built or missing cached SDK: the rebuild builds in a private folder and moves it into place under a lock, and a test with two concurrent rebuilds passes",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_concurrent_rebuilds_keep_one_ready_sdk.concurrent_install() in tests/test_sdk_cache_publication.py",
+      "file": "tests/test_sdk_cache_publication.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 40,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_concurrent_rebuilds_keep_one_ready_sdk",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "940966fd6609197b44f083f355d3c44d28da599fa33a981b1f6328d5ee1cbe17",
+    "changed": "b8448b3fcfc17ef434fcaa2b9e0e3e07588c8cab66cba86bdee3fea8eaca16bd",
+    "commit": "bb6d39e3c4854fd6ff6b6be36275f0088dcab5c9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The second worker waits here until the first rebuild has published and returned, so the publication sections never overlap. Removing the lock acquisition and release from `_cached_sdk` would still pass both parametrizations, despite allowing simultaneous publishers to both observe a broken cache and then delete or replace each other's publication. The required publication-lock behavior therefore lacks regression coverage. Extend this test so two completed private builds contend for publication and an ineffective lock causes failure.",
+        "file": "tests/test_sdk_cache_publication.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 40,
+        "priority": "P1",
+        "title": "Gate: test_1_concurrent_rebuilds_keep_one_ready_sdk",
+        "work": 2
+      }
+    ],
+    "id": "cbb864a4-a429-42cc-ab84-0e648dcf00ef",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T02:21:06.661454+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T04:50:39.844457+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
