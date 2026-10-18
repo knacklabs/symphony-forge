@@ -235,8 +235,9 @@ def close(args: argparse.Namespace) -> int:
     changed = review.fingerprint(head, item, top, state, base)
     branch_diff = review.fingerprint(head, item, top, state, base,
                                      branch_diff=True)
-    records_only = all(path.startswith(review.RECORDS) for path in repo.git(
-        "diff", "--name-only", "-z", "--no-renames", f"{base}...{head}", cwd=top).split("\0") if path)
+    ancestor = repo.git("merge-base", base, head, cwd=top)
+    records_only = all(path.startswith(review.BOOKKEEPING) for path in repo.git(
+        "diff", "--name-only", "-z", "--no-renames", ancestor, head, cwd=top).split("\0") if path)
     if records_only:
         print("nothing to review: only Forge's records changed", flush=True)
     fresh = choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff
