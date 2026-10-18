@@ -300,6 +300,12 @@
       "title": "Forge commands start far fewer git processes",
       "status": "pending",
       "order": 86
+    },
+    {
+      "key": "FORGE-BUDGET-1",
+      "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
+      "status": "pending",
+      "order": 87
     }
   ],
   "epics": [
