@@ -23,8 +23,8 @@
     "id": "07f310bd-bcbc-43d9-8b7a-6af9f40f7cd6",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:58:44.001927+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "73ef486e46816ed5c8df520818ae2952f04c5bae",
+    "close": "2d8c173c-021c-44bf-923e-ef82b3dc7e57",
+    "head": "e0b217b0ab062ab4fc97558a39cb716cf74dee29",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A stop that asks the owner is cleared when main is merged into the item and the next review is clean, so the owner's answer can no longer be recorded (issue 932)",
   "worker": "codex"
