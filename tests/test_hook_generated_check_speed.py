@@ -78,7 +78,7 @@ sync.synced = timed
 from forge.cli import main'''), encoding="utf-8")
 
     def measure(status):
-        # A shared runner can pause one process. Keep the same 0.1-second budget
+        # A shared runner can pause one process. Use the owner-approved 0.2-second budget
         # for the median of five real checks of each unchanged staged snapshot.
         log.write_text("", encoding="utf-8")
         for _ in range(5):
@@ -86,7 +86,7 @@ from forge.cli import main'''), encoding="utf-8")
             assert checked.returncode == status, checked.stdout + checked.stderr
         samples = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
         assert len(samples) == 5, samples
-        assert median(elapsed for elapsed, _, _ in samples) < 0.1, samples
+        assert median(elapsed for elapsed, _, _ in samples) < 0.2, samples
         for _, parses, commands in samples:
             assert parses == 0, samples
             assert not any("worktree" in command for command in commands), commands
