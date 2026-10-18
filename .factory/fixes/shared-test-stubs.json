@@ -11,7 +11,7 @@
   "done_when": "Test stand-in programs are written once per content into a shared read-only folder and linked into each test, Windows keeps copies, and the suite runs at least 8 percent faster on macOS with every test still passing",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
