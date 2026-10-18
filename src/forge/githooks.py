@@ -77,13 +77,15 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     return wanted
 
 
-def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+def ships(top: Path, cfg: dict[str, Any], *, hooks_top: Path | None = None) -> dict[str, str]:
     from forge import sync
 
     hooks = {}
-    if folder := husky_folder(top):
-        if not folder.resolve().is_relative_to(top.resolve()):
+    source = hooks_top or top
+    if folder := husky_folder(source):
+        if not folder.resolve().is_relative_to(source.resolve()):
             repo.refuse(sync.REFUSALS["outside"], path=folder)
+        folder = top / folder.resolve().relative_to(source.resolve())
         for hook in ("pre-commit", "pre-push"):
             path = folder / hook
             current = sync.read(path)

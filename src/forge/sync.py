@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import importlib
 import json
-import os
 import pkgutil
 import re
 import sys
@@ -406,19 +406,17 @@ def _synced_text(source: str, packaged: str) -> str:
     return (checked_in if checked_in.is_file() else TEMPLATES / packaged).read_text(encoding="utf-8")
 
 
-def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+def files(top: Path, cfg: dict[str, Any], *, hooks_top: Path | None = None) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
     cfg = cfg.get("shared", cfg)  # a developer's forge.local.toml never reaches committed files
     wanted: dict[str, str] = {}
-    for info in pkgutil.iter_modules(forge.__path__):
-        if info.ispkg:
-            continue
-        source = Path(info.module_finder.path) / f"{info.name}.py"
-        if not any(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "ships"
-                   for node in ast.parse(source.read_text(encoding="utf-8")).body):
-            continue
-        module = importlib.import_module(f"forge.{info.name}")
-        for rel, text in module.ships(top, cfg).items():
+    # The owners are known; rendering never needs to parse every command module.
+    for name in ("app_baseline", "approval", "githooks", "plain_english", "prcheck",
+                 "review", "roles", "story", "sync"):
+        module = importlib.import_module(f"forge.{name}")
+        output = (module.ships(top, cfg, hooks_top=hooks_top) if name == "githooks"
+                  else module.ships(top, cfg))
+        for rel, text in output.items():
             if rel in wanted:
                 raise ValueError(f"shipped twice: {rel}")
             wanted[rel] = text
@@ -428,27 +426,62 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str]) -> set[str]:
     """The paths whose content at head ("" for the index) is exactly what forge sync writes over
     the base commit's files with this config, so a fix's size doesn't count them."""
-    def show(rev: str, path: str) -> bytes:
-        done = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=top, capture_output=True)
-        return b"" if done.returncode else done.stdout  # a missing file, as sync's "" deletes it
+    def entries(*args: str) -> dict[str, tuple[str, str]]:
+        raw = subprocess.run(["git", *args], cwd=top, capture_output=True, check=True).stdout
+        found = {}
+        for row in raw.split(b"\0"):
+            if not row:
+                continue
+            meta, path = row.split(b"\t", 1)
+            fields = meta.split()
+            found[path.decode("utf-8")] = (fields[0].decode(),
+                                          fields[1 if args[0] == "ls-files" else 2].decode())
+        return found
 
-    # A detached worktree is the base exactly, with no export rules applied. A hook's git
-    # variables (its index among them) must not reach it, nor may the repo's own hooks run.
-    plain = {key: value for key, value in os.environ.items()
-             if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX")}
-    git = ["git", "-c", f"core.hooksPath={os.devnull}"]
-    # ponytail: checks out the whole base once per oversized fix; list sync's inputs if it's slow.
+    before = entries("ls-tree", "-rz", base)
+    after = entries("ls-tree", "-rz", head) if head else entries("ls-files", "--stage", "-z")
+    # Only these repo files are read by the renderers. Materialize inputs, never a Git
+    # worktree: no checkout filters, hooks, index changes or module discovery are needed.
+    inputs = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".codex/hooks.json",
+              ".codex/config.toml", ".gitattributes", ".gitignore", "package.json", ".nvmrc",
+              ".node-version", "pyproject.toml"}
+    if hooks := githooks.husky_folder(top):
+        inputs.update((hooks.relative_to(top) / name).as_posix()
+                      for name in ("pre-commit", "pre-push"))
+    inputs.update(path for path in before if "/" not in path and
+                  path.startswith("requirements") and path.endswith(".txt"))
+    selected = sorted(inputs)
+    blobs = subprocess.run(["git", "cat-file", "--batch", "--follow-symlinks"], cwd=top,
+                           capture_output=True, check=True,
+                           input="".join(f"{base}:{path}\n" for path in selected).encode()).stdout
     with tempfile.TemporaryDirectory() as folder:
-        tmp = str(Path(folder) / "base")
-        subprocess.run([*git, "worktree", "add", "-q", "--detach", tmp, base], cwd=top, env=plain,
-                       capture_output=True, check=True)
-        try:
-            wanted = files(Path(tmp), cfg)
-        finally:
-            subprocess.run([*git, "worktree", "remove", "--force", tmp], cwd=top, env=plain,
-                           capture_output=True)
-    return {path for path in paths
-            if path in wanted and show(head, path) == wanted[path].encode("utf-8")}
+        snapshot = Path(folder)
+        offset = 0
+        for path in selected:
+            end = blobs.index(b"\n", offset)
+            header = blobs[offset:end].split()
+            offset = end + 1
+            if header[-1] == b"missing":
+                continue
+            size = int(header[-1])
+            content = blobs[offset:offset + size]
+            offset += size + 1
+            if len(header) != 3:  # A dangling, cyclic or external link has no repo file to read.
+                content = b""
+            target = snapshot / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+        wanted = files(snapshot, cfg, hooks_top=top)
+    algorithm = "sha256" if any(len(oid) == 64 for _, oid in after.values()) else "sha1"
+    matched = set()
+    for path in paths:
+        if path not in wanted:
+            continue
+        content = wanted[path].encode("utf-8")
+        digest = hashlib.new(algorithm, f"blob {len(content)}\0".encode() + content).hexdigest()
+        if after.get(path, ("", ""))[1] == digest or not content and path not in after:
+            matched.add(path)
+    return matched
 
 
 def command_page() -> str:
