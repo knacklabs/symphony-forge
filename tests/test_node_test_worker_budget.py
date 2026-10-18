@@ -23,6 +23,10 @@ STORY = "FIX-NODE-TEST-BUDGET"
     ("fast_test", manager + " run check", runner + " run", ["run", "--maxWorkers=2"])
     for manager in ("npm", "pnpm", "yarn") for runner in ("vitest", "jest")
 ] + [
+    ("fast_test", manager + " run check", runner + " run --maxWorkers=8",
+     ["run", "--maxWorkers=2"])
+    for manager in ("npm", "pnpm", "yarn") for runner in ("vitest", "jest")
+] + [
     ("test", "npm test", "vitest --maxWorkers=1", ["--maxWorkers=1"]),
     ("test", "jest --maxWorkers=1%", None, ["--maxWorkers=1%"]),
     ("fast_test", "vitest --maxWorkers=90%", None, ["--maxWorkers=2"]),
@@ -44,8 +48,10 @@ args = sys.argv[1:]
 if pathlib.Path(sys.argv[0]).stem != 'npx':
     name = args.pop(0)
     if name == 'run': name = args.pop(0)
+    if name == 'exec' and args[:1] == ['--no']: args.pop(0)
     if args[:1] == ['--']: args.pop(0)
-    command = json.loads(pathlib.Path('package.json').read_text('utf-8'))['scripts'][name]
+    command = args.pop(0) if name == 'exec' else json.loads(
+        pathlib.Path('package.json').read_text('utf-8'))['scripts'][name]
 else:
     command = args.pop(0)
 command += ' ' + (subprocess.list2cmdline(args) if os.name == 'nt' else shlex.join(args))

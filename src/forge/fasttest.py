@@ -95,7 +95,16 @@ def node_worker_budget(command: str, workers: str) -> str:
             continue
         caps = [count(match[3]) for match in limit.finditer(text + " " + script)]
         budget = min([int(workers), *caps])
-        if limit.search(text):
+        if script and limit.search(script) and (limit.search(text) or min(caps) > int(workers)):
+            # Vitest rejects duplicate limits; replace the script's option through its manager.
+            arguments = words[index + 1:]
+            if arguments[:1] == ["--"]:
+                arguments = arguments[1:]
+            forwarded = subprocess.list2cmdline(arguments) if os.name == "nt" else shlex.join(arguments)
+            script = limit.sub(lambda match: f"{match[1]}{match[2]}{budget}{match[2]}", script)
+            text = words[0] + " exec" + (" --no -- " if words[0] == "npm" else " ")
+            text += script + " " + limit.sub("", forwarded)
+        elif limit.search(text):
             text = limit.sub(lambda match: match[0] if count(match[3]) <= budget else
                              f"{match[1]}{match[2]}{budget}{match[2]}", text)
         elif caps and min(caps) <= int(workers):
