@@ -151,6 +151,7 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     (the recorded review's unless findings is given), the item's story doc and roadmap entry, its
     fix contract when applicable, and the worker's functional check. Read through git so a pull
     request's head is only ever data."""
+    base, commit = repo.resolve_commit(top, base), repo.resolve_commit(top, commit)
     ancestor = repo.git("merge-base", base, commit, cwd=top)
     changed = repo.git("diff", "--name-only", "-z", "--no-renames", ancestor, commit,
                        cwd=top).split("\0")
@@ -406,18 +407,18 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     return prompt
 
 
-def close_test(top: Path, base: str, *, closing: bool = True) -> str:
+def close_test(top: Path, base: str, *, closing: bool = True, head: str = "HEAD") -> str:
     """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
     else supported runner selection when CI runs test. Workers still run test."""
     cfg = repo.config(top)
     command = cfg["fast_test"] or cfg["test"]
     if closing and command and not cfg["fast_test"] and "tests" in cfg["checks"]:
-        merge_base = repo.git("merge-base", base, "HEAD", cwd=top)
+        merge_base = repo.git("merge-base", base, head, cwd=top)
         code = (f"import sys; sys.path.insert(0, {str(Path(__file__).parents[1])!r}); "
                 f"from forge.fasttest import close_tests; sys.exit(close_tests({merge_base!r}))")
         words = [sys.executable, "-c", code]
         return subprocess.list2cmdline(words) if os.name == "nt" else shlex.join(words)
-    return command.replace("{base}", repo.git("merge-base", base, "HEAD", cwd=top)) if command else ""
+    return command.replace("{base}", repo.git("merge-base", base, head, cwd=top)) if command else ""
 
 
 def few_tests(top: Path, command: str, base: str) -> bool:
@@ -983,6 +984,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             else:
                 return {"commit": head}
             repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
+    base = repo.resolve_commit(top, base)
     return {"id": identity, "commit": head, **result,
             **{key: fingerprint(head, item, top, state, base, "P0" if light else "P1", findings,
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}

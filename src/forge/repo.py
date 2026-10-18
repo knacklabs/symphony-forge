@@ -159,6 +159,24 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
+    if args == ("git", "rev-parse", "--show-toplevel") and env is None and _command_cache is not None:
+        # A linked worktree has its own root, even though command_fact shares its git directory.
+        key = ("checkout root", Path(cwd or Path.cwd()).absolute())
+        if key not in _command_cache:
+            done = execute()
+            if done.returncode == 0:
+                _command_cache[key] = done
+            return done
+        return _command_cache[key]
+    if env is None and input is None and _immutable_git_read(args):
+        snapshots = command_fact(("git snapshots", Path(cwd or Path.cwd()).resolve()), cwd, dict)
+        if args not in snapshots:
+            done = execute()
+            # Missing objects can arrive in a later fetch; a negative ancestry answer is a fact.
+            if done.returncode == 0 or ("--is-ancestor" in args and done.returncode == 1):
+                snapshots[args] = done
+            return done
+        return snapshots[args]
     done = _github_read(args, execute) if args[0] == "gh" else execute()
     if args[:3] == ("gh", "pr", "merge") and not done.returncode:
         # Merges must show at once; other pull request changes wait for the minute cache.
@@ -183,6 +201,33 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
             if isinstance(key[0], tuple) and key[0][0] == "commits" and key[1] == common:
                 del _command_cache[key]
     return done
+
+
+def _immutable_git_read(args: tuple[str, ...]) -> bool:
+    """Only explicit object IDs: never a ref name, index or working-tree comparison."""
+    words = list(args[1:]) if args[:1] == ("git",) else []
+    if words[:1] == ["--literal-pathspecs"]:
+        words.pop(0)
+    if not words or words[0] not in ("merge-base", "diff", "ls-tree"):
+        return False
+    command, *words = words
+    words = words[:words.index("--")] if "--" in words else words
+    flags = {"merge-base": {"--is-ancestor", "--all"},
+             "ls-tree": {"-r", "-z", "--name-only", "--full-tree"},
+             "diff": {"--name-only", "--no-renames", "-z", "--raw", "--no-abbrev",
+                      "--no-ext-diff", "--no-color", "--numstat", "--summary",
+                      "--ignore-cr-at-eol", "-U0", "-M"}}
+    if any(word.startswith("-") and word not in flags[command] for word in words):
+        return False
+    refs = [word for word in words if not word.startswith("-")]
+    count = 1 if command == "ls-tree" else 2
+    return len(refs) == count and all(re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) for ref in refs)
+
+
+def resolve_commit(top: Path, ref: str) -> str:
+    """Resolve names on every ask; callers can reuse the resulting immutable commit ID."""
+    return ref if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) else git(
+        "rev-parse", "--verify", f"{ref}^{{commit}}", cwd=top)
 
 
 def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
@@ -259,7 +304,7 @@ def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str,
         return ("commits", top.resolve(), base, ref)
 
     def read():
-        tip = git("rev-parse", head, cwd=top)
+        tip = resolve_commit(top, head)
         return command_fact(key(tip), top, lambda: select(tip))
 
     def select(tip):
