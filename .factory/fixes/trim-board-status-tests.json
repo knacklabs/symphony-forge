@@ -42,38 +42,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4401c219d6bfe2331eadb0fd8b015752f37cfcd557e21667d5344d91d6b26498",
-    "changed": "2f9a6f39d463ec46b321b0b9a11b8ef6561556a94a42b848a32de0fc36942f8c",
-    "commit": "e44a8ef4525c6cfb0d819eda820cd177052b443a",
+    "branch_diff": "debbb0c8029d518e374ec384b01ef6787b39f437b08fc21074913494b8cb512c",
+    "changed": "1117202655e046813f40c8be6edc3813413173904dc3a423ad398c2f5396fdf6",
+    "commit": "80e25e8f4758ea45d7231404c0c92187d6a19255",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 1\nRaise: Not done. The selected patch only adds this fix record; it implements none of the requested test removals. Current source confirms every named candidate remains: tests/test_board_status_and_times.py:22 parametrizes the client over both histories, leaving the adopted cases in test_3, test_11 (line 200), test_12 (line 280), test_14 (line 311), and test_4 (line 351). tests/test_machine_views.py:513 still includes review P2 alongside P3. Consequently the Done-when item remains unmet: \u201cThe listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass\u201d. Apply the agreed removals while preserving unique assertions and the required adopted coverage.",
-        "file": ".factory/fixes/trim-board-status-tests.json",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 1,
-        "line": 11,
-        "priority": "P1",
-        "title": "Not done: The listed duplicate tests and repeated adopted rows are gone",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list is explicitly \u201cmissing\u201d, so there is no mapping from the acceptance criteria recorded here to their named checks. Provide proof for the candidate removals, preservation of unique assertions, retained adopted coverage, and the touched test files. The pending close run does not supply that missing mapping.",
-        "file": ".factory/fixes/trim-board-status-tests.json",
-        "gain": 3,
-        "harm": 1,
-        "line": 11,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "ce609de8-c81f-400d-9340-b436e270cb00",
+    "findings": [],
+    "id": "e8fe5a74-de2e-4436-8553-c3c3b821b6a7",
     "status": "clean"
   },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T06:34:58.062612+00:00",
@@ -81,6 +59,10 @@
     },
     {
       "at": "2026-10-18T07:39:13.111089+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T10:12:09.281943+00:00",
       "step": "review"
     }
   ],
