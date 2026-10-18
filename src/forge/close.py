@@ -426,7 +426,8 @@ def close(args: argparse.Namespace) -> int:
     try:
         checks.wait(top, item, head, [name for name in cfg["checks"]
                                      if not (migrating and name == "forge-pr-check")],
-                    branch=branch, progress=getattr(args, "wait_for_progress", False))
+                    branch=branch, progress=getattr(args, "wait_for_progress", False),
+                    slot=getattr(args, "check_slot", None))
     except BaseException:
         _publish(top, item, state, branch, default, pr, result, evidence)
         raise

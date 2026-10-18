@@ -78,13 +78,15 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.refuse(REFUSALS["changed"], item=item)
         try:
             checks.wait(worktree, item, head, config["checks"],
-                        branch=branch, progress=getattr(args, "wait_for_progress", False))
+                        branch=branch, progress=getattr(args, "wait_for_progress", False),
+                        slot=getattr(args, "check_slot", None))
         except repo.Refused as error:
             if error.entry is not checks.REFUSALS["conflict"] or refreshed:
                 raise
             print("GitHub reports a clash. Forge will run close again, then retry the merge.", flush=True)
             close.close(argparse.Namespace(item=item, dismiss=None, because=None,
                         wait_for_progress=getattr(args, "wait_for_progress", False),
+                        check_slot=getattr(args, "check_slot", None),
                         land_rounds=getattr(args, "land_rounds", None),
                         pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
             return merge(args, refreshed=True)
