@@ -4,12 +4,20 @@
   "done_when": "Close and forge next warn, without refusing, when another open item's branch adds a migration file with the same number under the repo's migrations folders, naming both items, and a test covers it on new and adopted repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T16:58:58.683303+00:00",
       "step": "start"
     }
   ],
-  "why": "Two open items can add database migrations with the same number, and neither review sees the other branch (issue 925)"
+  "stuck": {
+    "close": null,
+    "head": "d988b60075f6302bcd77c9fe1d5907137b90a1f7",
+    "keys": {},
+    "round": null
+  },
+  "why": "Two open items can add database migrations with the same number, and neither review sees the other branch (issue 925)",
+  "worker": "codex"
 }
