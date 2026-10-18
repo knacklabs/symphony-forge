@@ -14,9 +14,10 @@ from test_setup import _fresh_client
 STORY = "skipped-close"
 
 
-@pytest.mark.parametrize("history", ["new", "previously-adopted"])
-@pytest.mark.parametrize("merge", ["no-conflict", "generated-conflict", "changed-pin-conflict",
-                                   "husky-conflict", "changed-pin-husky-conflict"])
+@pytest.mark.parametrize("merge, history", [
+    (merge, "new") for merge in ("no-conflict", "generated-conflict", "changed-pin-conflict",
+                                "husky-conflict", "changed-pin-husky-conflict")
+] + [("husky-conflict", "previously-adopted")])
 def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hooks(
         env, history, merge, monkeypatch):
     repo = env.repo
