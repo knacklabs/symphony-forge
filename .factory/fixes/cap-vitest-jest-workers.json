@@ -10,13 +10,102 @@
   },
   "done_when": "When the test command runs Vitest or Jest, Forge adds --maxWorkers with the machine budget, as it adds --maxprocesses for pytest, and tests cover Vitest, Jest and a runner left as written",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/fasttest.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "node_worker_budget() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 113,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve Jest's serial execution mode",
+      "work": 2
+    },
+    {
+      "area": "node_worker_budget() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 105,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve npm lifecycle hooks when replacing a script's worker cap",
+      "work": 2
+    },
+    {
+      "area": "node_worker_budget() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 91,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cap the launcher forms Forge already recommends",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fc9d639e207328ee5de96fb0a7aef9694ddadc34342396f6ecf1b87df841a596",
+    "changed": "3e7c88d276b71a57adebeb45663167f16d08107093696da60751d316957cb792",
+    "commit": "00666a19f0e5ad76d88c63bd8f3d67349191d2f9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. `jest --runInBand` becomes `jest --runInBand --maxWorkers=2`. [Jest rejects these options together](https://raw.githubusercontent.com/jestjs/jest/main/packages/jest-cli/src/args.ts), so Forge now fails before running tests. This affects direct commands, npx and visible package scripts, including the existing supported script in `tests/test_quick_test_suggestions.py:31`. Preserve serial execution, including its `-i` alias, instead of adding a conflicting worker option.",
+        "file": "src/forge/fasttest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 113,
+        "priority": "P1",
+        "title": "Preserve Jest's serial execution mode",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. A script such as `\"test\": \"vitest run --maxWorkers=8\"` makes Forge replace `npm test` with `npm exec --no -- vitest run --maxWorkers=2`. New evidence beyond the fixed-cap ruling: [npm test runs pretest and posttest hooks](https://docs.npmjs.com/cli/v11/using-npm/scripts/), whereas this direct execution bypasses them. Repositories that generate fixtures in pretest now fail, and checks in posttest silently disappear. Adjusting the cap must retain the configured script's lifecycle.",
+        "file": "src/forge/fasttest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 105,
+        "priority": "P1",
+        "title": "Preserve npm lifecycle hooks when replacing a script's worker cap",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 2\n`npx --no-install vitest run` loses only its `npx` token, leaving `--no-install` as the presumed runner, so it receives no cap. Configured `npm exec vitest` and `pnpm exec jest` also remain uncapped because `exec` is treated as a package script name. These are existing supported command forms in `tests/test_quick_test_suggestions.py:29`, `:33` and `:45`, including generated fast_test suggestions. They therefore retain the worker oversubscription this fix addresses.",
+        "file": "src/forge/fasttest.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 91,
+        "priority": "P2",
+        "title": "Follow-up: Cap the launcher forms Forge already recommends",
+        "work": 2
+      }
+    ],
+    "id": "3e0cef8a-0d6c-44aa-bb99-09554de96815",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:59:09.930837+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-18T18:10:44.445026+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

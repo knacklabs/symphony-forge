@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tPreserve Jest's serial execution mode\tcap-vitest-jest-workers",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 113,
+      "text": "Preserve Jest's serial execution mode",
+      "from": "blocking",
+      "item": "cap-vitest-jest-workers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tPreserve npm lifecycle hooks when replacing a script's worker cap\tcap-vitest-jest-workers",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 105,
+      "text": "Preserve npm lifecycle hooks when replacing a script's worker cap",
+      "from": "blocking",
+      "item": "cap-vitest-jest-workers",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/fasttest.py\tFollow-up: Cap the launcher forms Forge already recommends",
+      "kind": "edge",
+      "path": "src/forge/fasttest.py",
+      "line": 91,
+      "text": "Follow-up: Cap the launcher forms Forge already recommends",
+      "from": "review",
+      "item": "cap-vitest-jest-workers",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
