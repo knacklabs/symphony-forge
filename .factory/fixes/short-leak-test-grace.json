@@ -4,12 +4,20 @@
   "done_when": "The leak test uses a short grace period of its own while still proving leaked processes are found and ended, and the suite's cleanup keeps its normal grace",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-18T13:04:06.503581+00:00",
       "step": "start"
     }
   ],
-  "why": "The process-leak test waits ten seconds before killing the processes it leaks on purpose"
+  "stuck": {
+    "close": null,
+    "head": "04a1b7501436aabd53ede1b354c00c86de1bf2c8",
+    "keys": {},
+    "round": null
+  },
+  "why": "The process-leak test waits ten seconds before killing the processes it leaks on purpose",
+  "worker": "codex"
 }
