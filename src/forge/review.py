@@ -40,7 +40,8 @@ SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
 TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
-BOOKKEEPING = (".factory/", "plans/")
+RECORDS = (".factory/",)
+BOOKKEEPING = (*RECORDS, "plans/")
 DOC_EXCLUDES = [f":(exclude,glob){path}**" for path in (*BOOKKEEPING, ".forge/", "docs/")]
 DOC_EXCLUDES += [":(exclude,glob,icase)**/*.md"]
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
@@ -64,7 +65,7 @@ REFUSALS = {
     "helper": ("The Autoreview helper at {path} is not the pinned version {pin} (found: {found}).",
                "forge doctor"),
     "failed": ("Autoreview did not finish a review twice in a row: {reason}.",
-               "forge doctor, then forge close {item}"),
+               "check Autoreview's output above, then forge close {item}"),
     "bad_doc": ("plans/{key}.md has no usable Tasks row for {task}.",
                 "fix that row in plans/{key}.md, then forge close {item}"),
 }
@@ -904,7 +905,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     _sweep()
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
         tmp = Path(folder)
-        tree, out = tmp / "tree", tmp / "review.json"
+        tree, out = tmp / "tree", repo.forge_dir(top) / f"review-{item.replace('/', '-')}.json"
         # A local clone keeps Git history inside the reviewer's read-only sandbox.
         repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
@@ -959,6 +960,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if reason and not signoff_prompt:
+            if out.is_file():
+                print(f"Raw Autoreview output: {out}", file=sys.stderr)
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt:

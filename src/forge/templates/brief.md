@@ -11,6 +11,8 @@ current review, even if its number changes. Only the human chooses which finding
 
 After a merge of the default branch, close reviews only this change's own diff against the new
 merge base, keeping earlier findings and allowances from this item's records.
+If that diff contains only Forge's records, close records a clean review without a model call.
+If Autoreview writes output that Forge cannot read, close shows the saved output path.
 From the second review round, close checks the previous round's findings and the lines changed
 since that review. New findings on unchanged lines become visible follow-ups, except security
 or data loss, which still block. `Not done` blocks only against an owner-approved Done-when

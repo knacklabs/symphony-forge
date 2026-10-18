@@ -235,7 +235,13 @@ def close(args: argparse.Namespace) -> int:
     changed = review.fingerprint(head, item, top, state, base)
     branch_diff = review.fingerprint(head, item, top, state, base,
                                      branch_diff=True)
+    records_only = all(path.startswith(review.RECORDS) for path in repo.git(
+        "diff", "--name-only", "-z", "--no-renames", f"{base}...{head}", cwd=top).split("\0") if path)
+    if records_only:
+        print("nothing to review: only Forge's records changed", flush=True)
     fresh = choice == "accept" or result.get("branch_diff", legacy_diff) == branch_diff
+    if records_only and review.blocking(result):
+        fresh = False
     if switch:
         fresh = fresh and result.get("mechanical") is True and not review.blocking(result)
     if choice != "accept" and (review.blocking(result) or
@@ -266,7 +272,7 @@ def close(args: argparse.Namespace) -> int:
                           "-G", '"choice":', "--", path, cwd=top)
         at_choice = json.loads(repo.git("show", f"{chosen}:{path}", cwd=top))
         choice_round = sum(step["step"] == "review" for step in at_choice.get("steps", []))
-    if (not switch and not fresh and round_number - choice_round >= 3 and
+    if (not switch and not records_only and not fresh and round_number - choice_round >= 3 and
             review.blocked_rounds(top, item)[0] >= 3 and
             score.loop_stops(previous, _known(top, item, state, f"origin/{default}", previous), round_number)):
         file = review.blocking(previous)[0][1]["file"]
@@ -295,7 +301,7 @@ def close(args: argparse.Namespace) -> int:
         with ThreadPoolExecutor(max_workers=1) as pool:
             testing = pool.submit(review.test_run, top, command, f"origin/{default}", always=switch)
             try:
-                if switch:
+                if switch or records_only:
                     head = repo.git("rev-parse", "HEAD", cwd=top)
                     identity = repo.record_event(top, item, "review result", commit=head, outcome="clean", findings=[],
                                                  review_round=review.round_number(top, item, state))
