@@ -1621,7 +1621,10 @@ Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Then run `forge land <item>` again. Land also prints open findings and failing checks when it
 stops for another reason or hands a round to a session subagent.
-Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
+Narrow or split the part as agreed before building again. Split creates one follow-up fix with
+every open finding's title and file:line in its why and Done-when. Close records the fix on the
+item, prints its name, and lets this item continue without those findings.
+Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.

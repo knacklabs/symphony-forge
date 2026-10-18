@@ -110,6 +110,16 @@ def close(args: argparse.Namespace) -> int:
         if not continued:
             if choice == "switch":  # the next forge work runs this item on the other tool
                 state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
+            if choice == "split" and (findings := score.open_findings(state.get("review") or {})):
+                details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})" for f in findings)
+                follow_up = _start_follow_up(top, state, f"Review findings split from {item}: {details}",
+                                            f"A review no longer finds: {details}")
+                state["stop"]["fixes"] = [follow_up]
+                for finding in findings:
+                    finding["follow_up"] = f"Split into follow-up fix {follow_up}"
+                state["review"]["status"] = "clean"
+                score.remember(_known(top, item, state, f"origin/{repo.default_branch(top)}", state["review"]),
+                               state["review"], sum(step["step"] == "review" for step in state.get("steps", [])), {})
             if choice == "accept":
                 result = state["review"]
                 dismissed = {d["finding"] for d in result["dismissals"]}
@@ -138,6 +148,8 @@ def close(args: argparse.Namespace) -> int:
         if choice != "accept":
             print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
                   f"then forge work {item}.")
+            if choice == "split" and state["stop"].get("fixes"):
+                print(f"Follow-up fix: {', '.join(state['stop']['fixes'])} owns the split findings.")
             return 0
         if not continued:
             print("Recorded the human's choice.")
@@ -504,9 +516,20 @@ def _areas(top: Path, result: dict[str, Any]) -> dict[tuple[str, str], str]:
             for f in result.get("findings", [])}
 
 
+def _start_follow_up(top: Path, state: dict[str, Any], why: str, done: str) -> str:
+    out, here = io.StringIO(), os.getcwd()
+    try:  # fix start works in the current checkout: the follow-up stacks on this item
+        os.chdir(top)
+        with contextlib.redirect_stdout(out):
+            task.fix_start(argparse.Namespace(why=why, done=done, slug=None,
+                                              kind=state.get("fix_kind") or "mechanical"))
+    finally:
+        os.chdir(here)
+    return re.search(r"Started fix (\S+)", out.getvalue())[1]
+
+
 def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
     """Record the repo's default choice, narrow, and start a follow-up fix for each open finding."""
-    from forge import task  # close imports story, which imports task
 
     fixes = []
     result = state.get("review") or {}
@@ -517,15 +540,7 @@ def _answer_by_default(top: Path, item: str, state: dict[str, Any]) -> None:
         why = " ".join(f"Review finding left open by {item}: {finding['title'].rstrip('.')} "
                        f"({finding['file']}:{finding['line']}): {score.strip(finding.get('body', ''))}".split())
         done = " ".join(f"A review no longer finds: {finding['title']}".split())
-        out, here = io.StringIO(), os.getcwd()
-        try:  # fix start works in the current checkout: the follow-up stacks on this item
-            os.chdir(top)
-            with contextlib.redirect_stdout(out):
-                task.fix_start(argparse.Namespace(why=why, done=done, slug=None,
-                                                  kind=state.get("fix_kind") or "mechanical"))
-        finally:
-            os.chdir(here)
-        fixes.append(re.search(r"Started fix (\S+)", out.getvalue())[1])
+        fixes.append(_start_follow_up(top, state, why, done))
     state["stop"].update(choice="narrow", by="default", fixes=fixes, worker_round=state.get("round"),
                          reason="Nobody answered in 30 minutes; the repo's default narrows the part "
                                 "to its Done-when lines and files each open finding as a follow-up fix")
