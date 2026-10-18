@@ -117,6 +117,7 @@ def test_1_round_records_total_input_cached_output_and_reasoning_tokens(
                                   '\n[models.grill.codex]\nmodel = "gpt-6-sol"\neffort = "high"\n',
                                   'utf-8')
             _sdk(repo, monkeypatch, request.getfixturevalue('sdk_data'), repo.path)
+            monkeypatch.setenv('STUB_CODEX_TEXT', 'No findings.')
             command = ('read', 'SHOP')
         two_responses(repo)
         # The second round resumes a conversation with earlier token use.
