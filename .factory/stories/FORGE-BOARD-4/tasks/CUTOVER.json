@@ -3,7 +3,7 @@
   "branch": "task/FORGE-BOARD-4-CUTOVER",
   "part_line_limit": 400,
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T11:18:36.810039+00:00",
@@ -11,10 +11,14 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The old page goes is stuck. It should deliver: `forge board` serves only the new page; the old HTML board and its renderers are removed; the coordinator guide, both synced copies, docs/commands.md and docs/guide.md describe the live page\nIt changes 706 lines outside tests, over its limit of 400.\nThe worker tried: Board tests read the board's facts instead of the old page; Remove the old board page; --out writes the board's facts as JSON.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "Owner accepted the size on 19 October 2026 and the part now has an allow-large reason",
     "size": true,
     "tool": "claude",
-    "wait_id": "333f4134-8ee6-4f62-b52d-2c0e5b63cff5"
+    "wait_id": "333f4134-8ee6-4f62-b52d-2c0e5b63cff5",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
