@@ -84,6 +84,23 @@
       "work": 2
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": {
+      "area": "src/forge/board_app/item.js",
+      "at": "2026-10-19T12:46:24.515844+00:00",
+      "by": "owner",
+      "choice": "split",
+      "file": "src/forge/board_app/item.js",
+      "fixes": [
+        "review-findings-split-from-forge-board-4"
+      ],
+      "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+      "reason": "Owner chose split on 19 October 2026: the five small drawer defects (command text in record lines, unknown vs not yet merged, Known issues tab label, ready-to-merge story stage, compacted round count) and a stronger history test move to a follow-up fix",
+      "wait_id": "340baa0a-cafe-4b1b-8d6b-092630b37dd5",
+      "worker_round": 1
+    }
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
@@ -162,7 +179,7 @@
     "id": "5cd8e9ef-389d-4616-9b96-f44d5428ea6e",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "settled_areas": [
     "src/forge/board_app/item.js"
   ],
@@ -192,10 +209,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "9911e16b23e0423dc478b767faaab0f6d8bb123b",
+    "close": "e16b2e74-116d-4961-a88a-38375f55da34",
+    "head": "ab8fd11b5209f391d44f1feabcf0e5805e138d25",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "claude"
 }
