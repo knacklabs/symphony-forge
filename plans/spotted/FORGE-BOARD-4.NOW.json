@@ -32,6 +32,17 @@
       "item": "FORGE-BOARD-4/NOW",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/item.css\titem.css styles page-wide class names (.more, .tag, .close, .figures, .who) without scoping them to .drawer or .item-page, so any other screen that uses those names changes look.",
+      "kind": "improve",
+      "path": "src/forge/board_app/item.css",
+      "line": 88,
+      "text": "item.css styles page-wide class names (.more, .tag, .close, .figures, .who) without scoping them to .drawer or .item-page, so any other screen that uses those names changes look.",
+      "from": "worker",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
