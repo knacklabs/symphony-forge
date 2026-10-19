@@ -1,12 +1,102 @@
 {
   "branch": "task/FORGE-BOARD-4-PAGES",
+  "flagged": [
+    "src/forge/board_app/insights.js",
+    "src/forge/board_app/releases.js"
+  ],
+  "known": [
+    {
+      "area": "src/forge/board_app/insights.js",
+      "file": "src/forge/board_app/insights.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 10,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve unknown weeks when calculating Insights",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/releases.js",
+      "file": "src/forge/board_app/releases.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/releases.js",
+      "file": "src/forge/board_app/releases.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Make kept-finding titles accessible from the keyboard",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6cd3ad6ed2c7b4fd905d82fff4f12fd6532afbf0df950c94e724a2f463e05c18",
+    "changed": "e2a6999c4c342e82d454d56c39be651a2e97daf66e06e1b59a2a354c58cf4076",
+    "commit": "b8ed1d145b4ac8b6506f8bc377873303ae3d018f",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. src/forge/board_trends.py:91-94 explicitly returns null team and person counts for incomplete weeks; src/forge/board_facts.py:132-133 produces this state when a weekly search reaches 1,000 merges. This helper converts those unknown counts to zero. Consequently, lines 16-17 can report that nothing merged when a week is unknown, and lines 50-63 calculate six-week shares using only the known weeks without disclosing the omission. Preserve unknown through the empty-state check and share calculation.",
+        "file": "src/forge/board_app/insights.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 10,
+        "priority": "P1",
+        "title": "Preserve unknown weeks when calculating Insights",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Kept-finding titles are copied verbatim into visible browser tooltips here; next-release story and fix titles are likewise copied at lines 101 and 106. Command-bearing titles are real repository data: .factory/stories/FORGE-MAINONCE-1/tasks/SPOTTED.json:60-64 contains a follow-up titled \"forge next names the wrong file when a per-item record is unreadable\", which src/forge/known_issues.py:14-24 passes through unchanged. Hovering that file therefore exposes command text outside the plan. The browser proof uses command-free fixtures and scans inner_text(), which excludes these title attributes. Render these titles without command text and cover command-bearing input.",
+        "file": "src/forge/board_app/releases.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 142,
+        "priority": "P1",
+        "title": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. The finding titles are available only through the title attribute of a non-focusable list item. A sighted keyboard user can read each filename and count but cannot focus the entry or reveal which problems were kept. Provide a keyboard-accessible way to expose the same titles. The keyboard proof at tests/test_board_releases_insights.py:105-117 only reaches the header links, so it misses this path.",
+        "file": "src/forge/board_app/releases.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 142,
+        "priority": "P1",
+        "title": "Make kept-finding titles accessible from the keyboard",
+        "work": 2
+      }
+    ],
+    "id": "dbe0893a-bf29-4846-a5c9-1ba35312b063",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T12:22:21.533680+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T12:44:58.915986+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

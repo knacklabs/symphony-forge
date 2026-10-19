@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/insights.js\tPreserve unknown weeks when calculating Insights\tFORGE-BOARD-4/PAGES",
+      "kind": "bug",
+      "path": "src/forge/board_app/insights.js",
+      "line": 10,
+      "text": "Preserve unknown weeks when calculating Insights",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/PAGES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/releases.js\tMake kept-finding titles accessible from the keyboard\tFORGE-BOARD-4/PAGES",
+      "kind": "bug",
+      "path": "src/forge/board_app/releases.js",
+      "line": 142,
+      "text": "Make kept-finding titles accessible from the keyboard",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/PAGES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/releases.js\tNot done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.\tFORGE-BOARD-4/PAGES",
+      "kind": "bug",
+      "path": "src/forge/board_app/releases.js",
+      "line": 142,
+      "text": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/PAGES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
