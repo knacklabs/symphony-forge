@@ -1415,10 +1415,11 @@ names no test command it says so and exits successfully. Forge sets `PYTEST_XDIS
 and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
 a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
-Vitest and Jest commands use the same budget through `--maxWorkers`, keeping a lower limit
-already set by the command. This includes direct commands, `npx`, and npm, pnpm or yarn scripts
-that run only Vitest or Jest and are visible in `package.json`. Serial Jest runs stay serial,
-and package scripts keep their lifecycle hooks. Other runners stay as written.
+Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
+This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
+Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
+Forge does not change npm, pnpm or yarn scripts to set their worker budget.
+Those scripts can read `FORGE_TEST_CPUS`. Other runners stay as written.
 Direct `forge test --pytest <base>` runs join the test lane and obey its memory floor and budget.
 A picker inside close or bare `forge test` shares that run's single lane entry.
 `pytest -n auto` honours

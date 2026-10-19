@@ -57,15 +57,9 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def node_worker_budget(command: str, workers: str, environment: dict[str, str]) -> str:
-    """Cap visible Vitest/Jest invocations, preserving shell text and smaller limits."""
+def node_worker_budget(command: str, workers: str) -> str:
+    """Budget direct Vitest/Jest commands; preserve scripts and explicit worker options."""
     segment = re.compile(r'''(?:[^;&|<>()"']|"[^"]*"|'[^']*')+''')
-    limit = re.compile(r'''((?<!\S)--maxWorkers(?:=|\s+))(["']?)(\d+%?)\2(?=\s|$)''')
-    cores = getattr(os, "process_cpu_count", os.cpu_count)() or 1
-
-    def count(value: str) -> int:
-        return max(1, cores * int(value[:-1]) // 100) if value.endswith("%") else int(value)
-
     replacements = []
     for part in segment.finditer(command):
         text = part.group().rstrip()
@@ -73,46 +67,23 @@ def node_worker_budget(command: str, workers: str, environment: dict[str, str]) 
             words = shlex.split(text)
         except ValueError:
             continue  # Leave shell constructs we cannot identify to their runner.
-        runner, script, passthrough = words, "", ""
-        if words and words[0] in {"npm", "pnpm", "yarn"}:
-            index = 2 if words[1:2] in (["run"], ["run-script"]) else 1
-            package = Path("package.json")
-            if len(words) <= index or not package.is_file():
-                continue
-            script = json.loads(package.read_text("utf-8")).get("scripts", {}).get(words[index], "")
-            # A compound script forwards arguments only to its last command.
-            if not script or not segment.fullmatch(script):
-                continue
-            try:
-                runner = shlex.split(script)
-            except ValueError:
-                continue
-            passthrough = " --" if words[0] == "npm" and "--" not in words else ""
-        if runner[:1] == ["npx"]:
-            runner = runner[1:]
-        name = runner[0].replace("\\", "/").rsplit("/", 1)[-1] if runner else ""
+        index = 0
+        if words[:1] == ["npx"]:
+            index = 2 if words[1:2] == ["--no-install"] else 1
+        elif words[:2] in (["npm", "exec"], ["pnpm", "exec"], ["yarn", "exec"]):
+            index = quicktest._npm_runner_index(words) if words[0] == "npm" else 2
+        name = words[index].replace("\\", "/").rsplit("/", 1)[-1] if index < len(words) else ""
         name = name.removesuffix(".cmd").removesuffix(".exe")
         if name not in {"vitest", "jest"}:
             continue
-        if name == "jest" and any(arg in {"--runInBand", "-i", "--runInBand=true", "-i=true"}
-                                  for arg in words + runner):
+        if any(arg.split("=", 1)[0] in {"--maxWorkers", "--runInBand", "-i"}
+               for arg in words[index + 1:]):
             continue
-        caps = [count(match[3]) for match in limit.finditer(text + " " + script)]
-        budget = min([int(workers), *caps])
-        if script and limit.search(script):
-            if any(cap > int(workers) for cap in caps):
-                # Replace fixed flags before Node's runner parses them, keeping the script's lifecycle.
-                hook = json.dumps(Path(__file__).with_name("node_workers.cjs").as_posix())
-                environment["NODE_OPTIONS"] = (environment.get("NODE_OPTIONS", "") + " --require " + hook).strip()
-                environment["FORGE_TEST_CPUS"] = workers
-            continue
-        elif limit.search(text):
-            text = limit.sub(lambda match: match[0] if count(match[3]) <= budget else
-                             f"{match[1]}{match[2]}{budget}{match[2]}", text)
-        elif caps and min(caps) <= int(workers):
-            continue
-        else:
-            text += f"{passthrough} --maxWorkers={budget}"
+        if words[:2] == ["npm", "exec"] and "--" not in words[:index]:
+            tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', text))
+            start = tokens[index].start()
+            text = text[:start] + "-- " + text[start:]
+        text += f" --maxWorkers={workers}"
         replacements.append((part.start(), part.start() + len(part.group().rstrip()), text))
     for start, end, text in reversed(replacements):
         command = command[:start] + text + command[end:]
@@ -120,8 +91,8 @@ def node_worker_budget(command: str, workers: str, environment: dict[str, str]) 
 
 
 def narrow_command(command: str, excluded: list[str], workers: str, always: list[str], *,
-                   environment: dict[str, str], launchers: bool = True) -> str:
-    command = node_worker_budget(command, workers, environment)
+                   launchers: bool = True) -> str:
+    command = node_worker_budget(command, workers)
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -287,19 +258,18 @@ def close_tests(base: str) -> int:
         if not package.is_file():
             return 0
         command = " && ".join(part for _, part, _ in parts)
-    environment = dict(os.environ)
-    command = node_worker_budget(command, machine.test_cpus(), environment)
+    command = node_worker_budget(command, machine.test_cpus())
     parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
     if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
             for kind, part, _ in parts if kind in ("vitest", "jest")
             for script in scripts if re.search(r"\b" + re.escape(script) + r"\b", part)):
-        return subprocess.run(command, shell=True, env=environment).returncode
+        return subprocess.run(command, shell=True).returncode
     if not any(kind in ("vitest", "jest") for kind, _, _ in parts):
         if any(kind == "python" for kind, _, _ in parts):
             return pytest_tests(base, command)
-        return subprocess.run(command, shell=True, env=environment).returncode
+        return subprocess.run(command, shell=True).returncode
     for kind, part, passthrough in parts:
         if kind == "python":
             status = pytest_tests(base, part)
@@ -313,7 +283,7 @@ def close_tests(base: str) -> int:
                 changed = "--changed" if kind == "vitest" else "--changedSince"
                 argument = subprocess.list2cmdline([base]) if os.name == "nt" else shlex.quote(base)
                 part += f"{passthrough} {changed} {argument} --passWithNoTests"
-            status = subprocess.run(part, shell=True, env=environment).returncode
+            status = subprocess.run(part, shell=True).returncode
         if status:
             return status
     return 0
@@ -525,11 +495,11 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
         if entry is None:
-            return subprocess.run(narrow_command(command, excluded, workers, always, environment=environment), shell=True,
+            return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
                                   env=environment).returncode
         from forge import codex
 
-        with subprocess.Popen(narrow_command(command, excluded, workers, always, environment=environment), shell=True,
+        with subprocess.Popen(narrow_command(command, excluded, workers, always), shell=True,
                               env=environment, **codex.GROUP) as process:
             try:
                 machine.started(entry, process.pid)

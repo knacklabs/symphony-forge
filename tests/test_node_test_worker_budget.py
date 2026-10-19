@@ -37,10 +37,11 @@ def client(repo, gh, upgrade):
     (setting, prefix + runner + options, None, expected)
     for setting in ("test", "fast_test")
     for runner in ("vitest", "jest")
-    for prefix in ("", "npx ")
+    for prefix in ("", "npx ", "npx --no-install ", "npm exec ", "npm exec -- ",
+                   "pnpm exec ", "yarn exec ")
     for options, expected in ((" run", ["run", "--maxWorkers=2"]),
                               (" --maxWorkers=1", ["--maxWorkers=1"]),
-                              (" --maxWorkers 8", ["--maxWorkers", "2"]))
+                              (" --maxWorkers 8", ["--maxWorkers", "8"]))
 ] + [
     (setting, command, script, [serial])
     for setting in ("test", "fast_test")
@@ -51,16 +52,16 @@ def client(repo, gh, upgrade):
     ("fast_test", "npm test", "jest " + serial, [serial])
     for serial in ("--runInBand", "-i")
 ] + [
-    ("fast_test", manager + " run check", runner + " run", ["run", "--maxWorkers=2"])
+    ("fast_test", manager + " run check", runner + " run", ["run"])
     for manager in ("npm", "pnpm", "yarn") for runner in ("vitest", "jest")
 ] + [
     ("fast_test", manager + " run check", runner + " run --maxWorkers=8",
-     ["run", "--maxWorkers=2"])
+     ["run", "--maxWorkers=8"])
     for manager in ("npm", "pnpm", "yarn") for runner in ("vitest", "jest")
 ] + [
     ("test", "npm test", "vitest --maxWorkers=1", ["--maxWorkers=1"]),
     ("test", "jest --maxWorkers=1%", None, ["--maxWorkers=1%"]),
-    ("fast_test", "vitest --maxWorkers=90%", None, ["--maxWorkers=2"]),
+    ("fast_test", "vitest --maxWorkers=90%", None, ["--maxWorkers=90%"]),
     ("test", "other vitest", None, ["vitest"]),
     ("test", "other --maxWorkers=8", None, ["--maxWorkers=8"]),
     ("test", "npm run check", "other vitest", ["vitest"]),
@@ -90,6 +91,7 @@ if pathlib.Path(sys.argv[0]).stem != 'npx':
     command = args.pop(0) if name == 'exec' else json.loads(
         pathlib.Path('package.json').read_text('utf-8'))['scripts'][name]
 else:
+    if args[:1] == ['--no-install']: args.pop(0)
     command = args.pop(0)
 command += ' ' + (subprocess.list2cmdline(args) if os.name == 'nt' else shlex.join(args))
 raise SystemExit(subprocess.call(command, shell=True))
@@ -115,7 +117,7 @@ raise SystemExit(subprocess.call(command, shell=True))
 
 
 @pytest.mark.parametrize("upgrade", [False, True], ids=["new", "earlier-adopted"])
-def test_2_npm_script_caps_keep_their_lifecycle(repo, gh, monkeypatch, upgrade):
+def test_2_package_scripts_keep_arguments_and_lifecycle(repo, gh, monkeypatch, upgrade):
     # Real npm must run its hooks; the runner only records the arguments it receives.
     assert NODE and shutil.which("npm"), "The npm lifecycle contract requires Node.js and npm"
     machine_cores(repo, 8)
@@ -127,6 +129,7 @@ def test_2_npm_script_caps_keep_their_lifecycle(repo, gh, monkeypatch, upgrade):
         "const fs = require('node:fs'); const assert = require('node:assert/strict');\n"
         "assert.equal(fs.readFileSync('fixture', 'utf8'), 'ready');\n"
         "assert.equal(process.env.npm_lifecycle_event, 'test');\n"
+        "assert.equal(process.env.FORGE_TEST_CPUS, '2');\n"
         "fs.writeFileSync('observed.json', JSON.stringify(process.argv.slice(2)));\n"
         "fs.appendFileSync('events', 'test\\n');\n")
     runner.chmod(0o755)
@@ -139,7 +142,7 @@ def test_2_npm_script_caps_keep_their_lifecycle(repo, gh, monkeypatch, upgrade):
         "posttest": "node finish.cjs"}}))
     config = (repo.path / "forge.toml").read_text("utf-8")
     repo.write("forge.toml", re.sub(r'^test = .*$', 'test = "npm test"', config, flags=re.M))
-    # Keep a client's existing Node preload active alongside Forge's budget hook.
+    # Package scripts retain their arguments and the client's own Node options.
     repo.write("client-preload.cjs", "process.env.CLIENT_PRELOAD = 'kept';\n")
     monkeypatch.setenv("NODE_OPTIONS", "--require " + json.dumps(
         (repo.path / "client-preload.cjs").as_posix()))
@@ -149,4 +152,4 @@ def test_2_npm_script_caps_keep_their_lifecycle(repo, gh, monkeypatch, upgrade):
     assert ran.returncode == 0, ran.stdout + ran.stderr
     assert (repo.path / "events").read_text("utf-8").splitlines() == ["pre", "test", "post"]
     assert not (repo.path / "fixture").exists()
-    assert json.loads((repo.path / "observed.json").read_text("utf-8")) == ["run", "--maxWorkers=2"]
+    assert json.loads((repo.path / "observed.json").read_text("utf-8")) == ["run", "--maxWorkers=8"]

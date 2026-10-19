@@ -495,7 +495,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                    "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
                    "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
             with contextlib.chdir(top):
-                capped = fasttest.narrow_command(command, [], workers, [], environment=env, launchers=False)
+                capped = fasttest.narrow_command(command, [], workers, [], launchers=False)
             # Every pytest the command starts, the client's own or Forge's picker, loads Forge's
             # results hook, which no command option can turn off.
             hook = repo.forge_dir(top) / "pytest"
