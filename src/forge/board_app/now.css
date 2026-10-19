@@ -1,8 +1,9 @@
 /* The Now screen, laid out to fit one laptop window: the needs-you strip, the five stages and the
    stories rail, and the figures along the bottom. Tokens come from tokens.css. */
-body:has(.now) { height: 100vh; }
+/* Only while the Now screen shows: a hidden main must stay hidden (display none), so an item page can take its place. */
+body:has(> main:not([hidden]) > .now) { height: 100vh; }
 
-main:has(> .now) {
+main:not([hidden]):has(> .now) {
   display: flex;
   flex-direction: column;
   padding-bottom: 0;
