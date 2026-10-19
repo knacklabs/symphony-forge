@@ -1,12 +1,103 @@
 {
   "branch": "task/FORGE-BOARD-4-ASSIGNUI",
+  "flagged": [
+    "src/forge/board_app/assign.js",
+    "src/forge/board_server.py",
+    "tests/test_board_assign_ui.py"
+  ],
+  "known": [
+    {
+      "area": "src/forge/board_app/assign.js",
+      "file": "src/forge/board_app/assign.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 146,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve keyboard focus across successive live redraws",
+      "work": 1
+    },
+    {
+      "area": "reason() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 58,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Remove Git command text from assignment refusals",
+      "work": 2
+    },
+    {
+      "area": "test_19_a_manager_gives_a_story_from_the_board_and_a_teammate_sees_the_owner() in tests/test_board_assign_ui.py",
+      "file": "tests/test_board_assign_ui.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 121,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_19_a_manager_gives_a_story_from_the_board_and_a_teammate_sees_the_owner",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2992a863b10ec50049af6b63f5a05483424f9ff8546d4f8e24d3d038dd807cd9",
+    "changed": "4ede4cc2bba0215550edcd1cf7fe285f64dba482ec1c516ff764fd3b4afebbe8",
+    "commit": "1dfd73b556f9f5a366061d9e01b2b7a5fc87d02a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Calling focus() synchronously triggers the new control's focusin handler, which records its replacement node in last; the following last = null immediately erases that record. A second live redraw therefore removes the focused username field without restoring focus. On an active story whose parts change while a manager types, keyboard input stops reaching the field. Keep the replacement focus record so restoration works on every redraw. Both drawer and full-page controls use this path; item.js:379\u2013383 redraws them when their rows change.",
+        "file": "src/forge/board_app/assign.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 146,
+        "priority": "P1",
+        "title": "Preserve keyboard focus across successive live redraws",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. The filter rejects forge commands and flags but accepts Git command text. Every assignment fetches first (task.py:234 and :136); an ordinary network or authentication failure is converted by cli.py:158\u2013161 into a refusal beginning \"git fetch failed: ...\". This function returns that technical text directly to the board, without a recovery action. Handle this transport failure with a plain-language reason and next step while retaining the detailed command error in the terminal.",
+        "file": "src/forge/board_server.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 58,
+        "priority": "P1",
+        "title": "Remove Git command text from assignment refusals",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The promised teammate-board proof ends with a fresh CLI JSON derivation; it never opens a teammate's live board before the assignment or verifies its refresh afterward. A board that stops noticing fetched remote story-branch changes would still pass this test. The existing server test at tests/test_board_server.py:189\u2013216 changes the default branch instead, so it does not cover this publication path. Keep a teammate board running and assert that its displayed owner changes after it receives the assignment.",
+        "file": "tests/test_board_assign_ui.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 121,
+        "priority": "P1",
+        "title": "Gate: test_19_a_manager_gives_a_story_from_the_board_and_a_teammate_sees_the_owner",
+        "work": 2
+      }
+    ],
+    "id": "1c25f2f1-6d70-4305-b8be-3a44f5cf6669",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T19:08:24.493062+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T19:24:18.310081+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
