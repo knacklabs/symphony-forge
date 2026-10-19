@@ -94,12 +94,14 @@ for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exist
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
-if args[:2] == ["pr", "view"] and args[-2:] == ["--json", "mergeable,headRefOid"]:
+if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
+        "mergeable,headRefOid", "mergeable,headRefOid,number,headRefName"):
     # Ordinary close fixtures have a mergeable pull request on the real pushed head.
     # Explicit responses above still own API errors and conflicting/unknown states.
     head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
                                     "refs/heads/" + args[2]], text=True).split()[0]
-    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head}}))
+    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head,
+                                 "number": 7, "headRefName": args[2]}}))
     sys.exit(0)
 sys.stderr.write("stub gh: no response for: gh " + " ".join(args) + "\\n")
 sys.exit(1)

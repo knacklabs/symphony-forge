@@ -28,7 +28,10 @@ def test_1_cancel_only_older_runs_of_the_same_pull_request(clock, history, comma
     head = env.repo.git("rev-parse", "HEAD", cwd=where)
     path = ".github/workflows/forge.yml@main" if event == "pull_request_target" else ".github/workflows/forge.yml"
     stuck_state = "queued" if event == "pull_request_target" else "in_progress"
-    base = dict(workflow_id=12, path=path, name="forge", event=event, head_branch=BRANCH,
+    # An explicit PR number can identify a trusted run using the base branch.
+    run_branch = "main" if event == "pull_request_target" else BRANCH
+    expected = ["101", "102"] if event == "pull_request_target" else ["101", "102", "109"]
+    base = dict(workflow_id=12, path=path, name="forge", event=event, head_branch=run_branch,
                 pull_requests=[{"number": 7}], run_number=10,
                 head_sha="old-head", check_suite_id=10, status="queued")
     rows = [dict(base, id=101, name="FORGE"), dict(base, id=102, status="in_progress"),
@@ -38,7 +41,7 @@ def test_1_cancel_only_older_runs_of_the_same_pull_request(clock, history, comma
             dict(base, id=106, workflow_id=99, path=".github/workflows/client.yml"),
             dict(base, id=107, event="pull_request_target" if event == "pull_request" else "pull_request"),
             dict(base, id=108, status="completed"),
-            dict(base, id=109, pull_requests=[]),
+            dict(base, id=109, pull_requests=[], head_branch=BRANCH),
             dict(base, id=111, pull_requests=[], head_branch="unknown-branch"),
             # Renaming a workflow changes its concurrency group but retains its ID.
             dict(base, id=110, name="other checks"),
@@ -75,11 +78,11 @@ if args and args[0] == "api" and "--jq" in args:
         polls.write_text(str(count))
         # Bound a broken wait: GitHub eventually reports a running check, which
         # still cannot succeed until Forge cancels both blocking runs.
-        released = {"101", "102", "109"} <= cancelled and (not STUCK or count >= 3)
+        released = set(NEEDED) <= cancelled and (not STUCK or count >= 3)
         answer(GREEN if released else QUEUED if count < 3 else RUNNING)
 if args[:2] == ["pr", "list"] and any(arg.startswith("headRefOid,state") for arg in args):
     answer(PR)
-'''.replace("STUCK_STATE", repr(stuck_state)).replace("STUCK", repr(stuck)).replace("ROWS", repr(json.dumps(rows))).replace("GREEN", repr(json.dumps(GREEN))).replace(
+'''.replace("NEEDED", repr(expected)).replace("STUCK_STATE", repr(stuck_state)).replace("STUCK", repr(stuck)).replace("ROWS", repr(json.dumps(rows))).replace("GREEN", repr(json.dumps(GREEN))).replace(
         "QUEUED", repr(json.dumps(queued))).replace("RUNNING", repr(json.dumps([
             run("tests", None, "in_progress"), run("forge-pr-check")]))).replace("PR)", repr(json.dumps([
             {"state": "OPEN", "headRefOid": head, "number": 7, "headRefName": BRANCH}])) + ")")
@@ -90,11 +93,13 @@ if args[:2] == ["pr", "list"] and any(arg.startswith("headRefOid,state") for arg
     done = env.repo.forge(command, *([ITEM] if command == "close" else []), cwd=where)
     output = done.stdout + done.stderr
     cancelled = [call[2] for call in env.gh_calls("run", "cancel")]
-    assert cancelled == ([] if newer else ["101", "102", "109"]), output
+    assert cancelled == ([] if newer else expected), output
     if newer:
         assert "Cancelled older run" not in output, output
     else:
-        assert "Cancelled older run 102" in output and "Cancelled older run 109" in output, output
+        assert "Cancelled older run 102" in output, output
+        if "109" in expected:
+            assert "Cancelled older run 109" in output, output
         if stuck:
             assert f"Run 101 is still {stuck_state.replace('_', ' ')}" in output, output
             assert "gh api -X POST repos/{owner}/{repo}/actions/runs/101/force-cancel" in output, output
@@ -103,7 +108,8 @@ if args[:2] == ["pr", "list"] and any(arg.startswith("headRefOid,state") for arg
             assert "Cancelled older run 101" in output, output
             assert "force-cancel" not in output, output
         assert env.gh_calls("run", "view"), output
-    assert not any("force-cancel" in arg for call in env.gh.calls() for arg in call), env.gh.calls()
+    assert not any(arg == "--force" or "force-cancel" in arg
+                   for call in env.gh.calls() for arg in call), env.gh.calls()
     if command == "close":
         assert done.returncode == 0, output
         assert "clean review and green checks" in output, output

@@ -231,7 +231,7 @@ def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]], *,
     """Recover only the selected PR's generated forge.yml concurrency groups."""
     suites = {check.get("check_suite", {}).get("id") for check in checks
               if check.get("status") == "queued"} - {None}
-    if not suites or not branch:
+    if not suites or not (number or branch):
         return False
     if requested is None:
         requested = set()
@@ -240,7 +240,7 @@ def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]], *,
         # Never borrow identity from a commit-scoped check suite. Empty PR lists
         # are usable only with the selected PR's head branch, not its commit.
         prs = {pr.get("number") for pr in run.get("pull_requests") or []}
-        return (run.get("head_branch") == branch and (not prs or prs == {number})
+        return ((prs == {number} if prs else run.get("head_branch") == branch)
                 and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml")
     try:
         # Read active runs only, including old blockers outside doctor's history window.
