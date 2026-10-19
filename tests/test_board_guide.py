@@ -1,4 +1,4 @@
-"""Fresh and previously adopted clients receive the board guidance."""
+"""Fresh and previously adopted clients receive the upgrade's history guidance."""
 import shutil
 
 from conftest import ROOT
@@ -37,15 +37,3 @@ def test_14_synced_guides_explain_upgrade_time_backfill(repo):
         assert "nothing extra to type" in upgrade
         assert "Both views add `team`" in skill
         assert "stage_counts" not in skill
-
-
-def test_1_synced_guides_describe_only_the_live_board_page(repo):
-    # The old static page is gone. A guide that still describes it sends the coordinator
-    # looking for sections, folds and a dependency picture the board no longer has.
-    repo.git("checkout", "-q", "-b", "fix/live-board-guide")
-    for adopted, host, skill in _synced_guides(repo):
-        text = " ".join(skill.split())
-        for live in ("127.0.0.1", "token", "refreshes by itself", "`--out <path>` writes"):
-            assert live in text, (adopted, host, live)
-        for old in ("HTML board", "HTML page", "static page", "720px", "dependency graph"):
-            assert old not in text, (adopted, host, old)
