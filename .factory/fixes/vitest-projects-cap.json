@@ -1,6 +1,13 @@
 {
   "base": "8ae6064e84ef4fe32c87974e15501540ea9fe7d7",
   "branch": "fix/vitest-projects-cap",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a154c7-b7de-78b2-aa99-ce27af18e38d",
+    "head": null,
+    "start": "452481af3082fd5b6eb2e12f46654288bb6e40b5"
+  },
   "done_when": "The coordinator guide tells repos whose test command runs Vitest through a script with Vitest projects to pass --maxWorkers=${FORGE_TEST_CPUS:-2} on the command line instead of in the config, and both synced guides match",
   "fix_kind": "mechanical",
   "kind": "fix",
