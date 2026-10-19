@@ -56,8 +56,8 @@
     "id": "6eb3fde8-7714-47f5-a603-9e90d41c60fe",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:37:39.291311+00:00",
@@ -73,12 +73,10 @@
     }
   ],
   "stuck": {
-    "close": "aec5da72-f2c4-4ae6-a5fb-abe73b6cb73e",
-    "head": "16c831bc86e3ec337436961cdcb4c6a75f09ad04",
-    "keys": {
-      "close's tests failing": 1
-    },
-    "round": 1
+    "close": "e5ff6da7-f539-49d9-bea5-7e23c2361e37",
+    "head": "b18ab73e570364c49977b7515a44cade07bacd8c",
+    "keys": {},
+    "round": 2
   },
   "why": "The board and forge next show 'Worker running' for an item whose worker process or session is gone and whose lock is missing or stale, so a coordinator waits for ever",
   "worker": "codex"
