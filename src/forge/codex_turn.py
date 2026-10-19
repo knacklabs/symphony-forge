@@ -72,6 +72,12 @@ class Client(CodexClient):
     speed_thread: str = ""
 
     def _coerce_notification(self, method, params):
+        if method == "thread/tokenUsage/updated" and isinstance(params, dict):
+            thread, turn = params["threadId"], params["turnId"]
+            # Resume reports the earlier turn's totals before this turn's notifications.
+            # Rate-limit and compaction updates can repeat usage without a model response.
+            self.usage_before_turn.setdefault((thread, turn), self.usage_by_thread.get(thread, {}))
+            self.usage_by_thread[thread] = params["tokenUsage"]["total"]
         # Settings receipts are thread-scoped, so the SDK's turn stream omits them.
         if (method == "thread/settings/updated" and isinstance(params, dict)
                 and self.speed_thread and params.get("threadId") == self.speed_thread):
@@ -83,6 +89,8 @@ class Client(CodexClient):
         return super()._coerce_notification(method, params)
 
     def start(self) -> None:
+        self.usage_by_thread = {}
+        self.usage_before_turn = {}
         with STARTING:
             super().start()
             SERVER.append(self._proc.pid)
@@ -305,7 +313,9 @@ def main() -> int:
                 if isinstance(payload, ItemCompletedNotification):
                     items.append(payload.item)
                 elif isinstance(payload, ThreadTokenUsageUpdatedNotification):
-                    usage = params["tokenUsage"]["last"]
+                    before = client.usage_before_turn[(thread.id, turn.id)]
+                    usage = {key: count - before.get(key, 0)
+                             for key, count in params["tokenUsage"]["total"].items()}
                 elif isinstance(payload, TurnCompletedNotification):
                     error = payload.turn.error
                     busy = payload.turn.status.value == "failed" and overloaded(

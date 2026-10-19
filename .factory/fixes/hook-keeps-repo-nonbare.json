@@ -1,0 +1,56 @@
+{
+  "base": "f2ab8aae1ff6a5b6577bc10e8e5770db435ba6d4",
+  "branch": "fix/hook-keeps-repo-nonbare",
+  "done_when": "Forge runs uv without GIT_DIR, GIT_WORK_TREE, GIT_COMMON_DIR and GIT_INDEX_FILE, so a merge commit in a linked worktree across a pin change keeps the repo non-bare, its index intact and the merge committed, and a test proves it on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_3_a_merge_commit_handed_to_the_pinned_release_keeps_the_repository() in tests/test_temporary_git_repositories_ignore_inherited_environment.py",
+      "file": "tests/test_temporary_git_repositories_ignore_inherited_environment.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 93,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: merge-hook proof on earlier-adopted repositories",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eda3566b0178ad11d69d6bc198e23b0de9b3248ae9766138df5ce74b64ef1567",
+    "changed": "524eb3e30ff8145a3ba4d9611e6cd3df6a40bd3a39513f9660659c38d8a423f2",
+    "commit": "6c406a88c1311eba3bedf0cee5e5510b61bc6ffc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The Done-when explicitly requires this regression test on new and adopted repositories, but this test only uses a fresh repository. `tests/conftest.py:446` creates that repository from scratch, and `tests/test_close.py:229` supplies no adoption variant. The earlier-adopted cases in `test_running_commands_follow_changed_forge_pin.py` do not install this pre-commit hook or exercise uv's Git operations under its inherited environment. Add an earlier-adopted case to this command-level regression so it also proves the repository remains non-bare, its index intact, and the merge committed after upgrade.",
+        "file": "tests/test_temporary_git_repositories_ignore_inherited_environment.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 93,
+        "priority": "P1",
+        "title": "Gate: merge-hook proof on earlier-adopted repositories",
+        "work": 2
+      }
+    ],
+    "id": "e13d451a-4e70-4092-9627-a2e8090ef5d5",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T04:39:40.897693+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T04:47:23.912217+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Forge's pre-commit hook hands a merge commit to the pinned release through uv with git's hook variables, and uv's own git init then turns the whole repo bare so no git command works"
+}

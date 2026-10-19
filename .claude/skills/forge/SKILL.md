@@ -1621,11 +1621,15 @@ Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Then run `forge land <item>` again. Land also prints open findings and failing checks when it
 stops for another reason or hands a round to a session subagent.
-Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
+Narrow or split the part as agreed before building again. Split creates one follow-up fix with
+every open finding's title and file:line in its why and Done-when. Close records the fix on the
+item, prints its name, and lets this item continue without those findings.
+Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
-A clean review clears an unanswered review-loop stop.
+A stop that asks the owner needs a recorded choice with `forge close --resolve`.
+A merge of the default branch or a clean review does not clear it. Close repeats the question.
 When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
 choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
 with that finding as its why. It does this only when every open finding has Harm 1 or 2; with

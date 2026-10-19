@@ -25,7 +25,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import machine, repo, score, spotted
+from forge import autoreview, machine, repo, score, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -33,7 +33,6 @@ AUTOREVIEW_PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
 # Its standard installs: the Codex skills folder, then the Claude one.
 HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autoreview"
            for host in (".codex", ".claude")]
-PRIORITIES = ("P0", "P1", "P2", "P3")
 # Untracked in the review tree, which branch mode leaves out of the diff.
 STANDARDS = "forge-standards.md"
 SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
@@ -64,7 +63,7 @@ REFUSALS = {
     "helper": ("The Autoreview helper at {path} is not the pinned version {pin} (found: {found}).",
                "forge doctor"),
     "failed": ("Autoreview did not finish a review twice in a row: {reason}.",
-               "forge doctor, then forge close {item}"),
+               "check Autoreview's output above, then forge close {item}"),
     "bad_doc": ("plans/{key}.md has no usable Tasks row for {task}.",
                 "fix that row in plans/{key}.md, then forge close {item}"),
 }
@@ -907,6 +906,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     with tempfile.TemporaryDirectory(prefix="forge-review-", ignore_cleanup_errors=True) as folder:
         tmp = Path(folder)
         tree, out = tmp / "tree", tmp / "review.json"
+        saved = repo.forge_dir(top) / f"review-{item.replace('/', '-')}.json"
+        saved.unlink(missing_ok=True)
         # A local clone keeps Git history inside the reviewer's read-only sandbox.
         repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
@@ -953,14 +954,18 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         with machine.agent_slot(top, "review", item):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine) as ran:
-                    findings, reason = _attempt(argv, tree, out, selected, top, item, ran["run_id"],
-                                                strict=bool(signoff_prompt))
+                    findings, reason = autoreview.attempt(argv, tree, out, selected, top, item, ran["run_id"],
+                                                         strict=bool(signoff_prompt))
+                    if out.is_file():
+                        shutil.copyfile(out, saved)
                     ran["outcome"] = "failed" if reason else "completed"
                     ran.update(selected, **_spent(tmp / SPENT))
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
         if reason and not signoff_prompt:
+            if saved.is_file():
+                print(f"Raw Autoreview output: {saved}", file=sys.stderr)
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt:
@@ -1079,58 +1084,6 @@ def signoff(top: Path, answers: str) -> str:
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 
 
-def _attempt(argv: list[str], cwd: Path, out: Path,
-             selected: dict[str, str], top: Path, item: str, run_id: str,
-             strict: bool = False) -> tuple[list[dict[str, Any]], str]:
-    """Run Autoreview once: its findings, or the reason the run doesn't count."""
-    from forge import codex  # importing it here avoids sync's hook-import cycle
-    out.unlink(missing_ok=True)
-    proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, env={**os.environ, "FORGE_WORKER": "1"},
-                            **codex.GROUP)
-    with proc, machine.agent_process(proc):
-        last = ""
-        for line in proc.stdout or []:  # streamed as bytes: its progress is how a person watches it
-            line = line.replace(b"\0", b"")
-            sys.stderr.buffer.write(line)
-            sys.stderr.flush()
-            last = line.decode("utf-8", "replace").strip() or last
-            if match := re.fullmatch(r"(model|thinking): (.*)", last):
-                selected[{"model": "model", "thinking": "effort"}[match[1]]] = match[2]
-            elif match := re.fullmatch(
-                    r"codex model \S+ is unavailable for this account; retrying with (\S+)", last):
-                selected["model"] = match[1]
-            if line.strip():
-                repo.record_progress(top, item, run_id, step=" ".join(last.split()), **selected)
-        code = proc.wait()
-    try:
-        # Decode first: JSON represents null characters as escaped text.
-        report = json.loads(out.read_text(encoding="utf-8"), object_hook=lambda fields: {
-            key: value.replace("\0", "") if isinstance(value, str) else value
-            for key, value in fields.items()})
-    except (OSError, ValueError):
-        report = None
-    if code not in (0, 1, 2) or not isinstance(report, dict):
-        return [], last or f"it exited with code {code}"
-    # The helper moves a finding pinned outside the changed files to scope_rejected_findings and
-    # calls the review incomplete for it. Ordinary reviews keep those findings; sign-off requires
-    # a complete run even when rejected findings are present.
-    rejected = report.get("scope_rejected_findings") or []
-    if (strict or not rejected) and (code == 2 or report.get("review_status") == "incomplete"):
-        return [], "it reported the review as incomplete"
-    if strict and report.get("review_status") not in (
-            "scoped-clean", "findings", "filtered", "incorrect"):
-        return [], "it did not report a completed review"
-    raw = report.get("findings")
-    findings = ([_finding(f) for f in [*raw, *rejected]]
-                if isinstance(raw, list) and isinstance(rejected, list) else [None])
-    if None in findings:
-        return [], "it wrote findings Forge cannot read"
-    if not findings and report.get("overall_correctness") == "patch is incorrect":
-        return [], "it called the patch incorrect without naming a finding"
-    return findings, ""  # type: ignore[return-value]
-
-
 def _spent(path: Path) -> dict[str, Any]:
     """The review engine's token use summed over its runs (a chunked review has one per pass,
     a retry one more) and its first chat, read once: Codex's `exec --json` events or Claude's
@@ -1157,25 +1110,6 @@ def _spent(path: Path) -> dict[str, Any]:
         return {}
     return {"chat": runs[0]["chat"], **{key: sum(counts) if (counts := [
         run[key] for run in runs if isinstance(run.get(key), int)]) else None for key in TOKENS}}
-
-
-def _finding(raw: Any) -> dict[str, Any] | None:
-    """The fields Forge uses from one finding, or None when they can't be read."""
-    where = raw.get("code_location") if isinstance(raw, dict) else None
-    if not isinstance(where, dict) or raw.get("priority") not in PRIORITIES:
-        return None
-    title = str(raw.get("title", ""))
-    body = str(raw.get("body", ""))
-    category = str(raw.get("category", "")).strip().casefold().replace("_", " ").replace("-", " ")
-    if category in ("security", "data loss") and not any(
-            name == category and pattern.search(body) for pattern, name in score.FLOORS[:2]):
-        body += f"\nRaise: {category.capitalize()}"
-    scores, body = score.normalise(title, body)
-    if not scores:  # a new finding must carry its score line
-        return None
-    return {"priority": raw["priority"], "title": title, "body": body,
-            "gain": scores[0], "work": scores[1], "harm": scores[2],
-            "file": str(where.get("file_path", "")), "line": where.get("line", 0)}
 
 
 def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
