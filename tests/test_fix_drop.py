@@ -135,7 +135,7 @@ def test_1_drop_hides_a_fix_and_preserves_its_remote_commits(client, pull_reques
     assert board.returncode == 0, board.stdout + board.stderr
     assert "unwanted" not in {row["id"] for row in json.loads(board.stdout)["items"]}
     assert "unwanted" not in client.forge("next").stdout
-    page = client.forge("board")
+    page = client.forge("board", "--out", str(client.path / ".git/forge/board.html"))  # the static page, not the live one
     assert page.returncode == 0, page.stdout + page.stderr
     assert "Readers can see a greeting" not in seen(client.path / ".git/forge/board.html")
     queued = client.forge("land", "--all")

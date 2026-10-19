@@ -189,7 +189,7 @@ def test_15_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
     assert story["started_by"] == "Original Story Starter"
     assert part["started_by"] == "Original Part Starter"
     assert fix["started_by"] == "Original Fix Starter"
-    page = viewer.forge("board")
+    page = viewer.forge("board", "--out", str(observer / ".git/forge/board.html"))
     assert page.returncode == 0, page.stdout + page.stderr
     words = seen(observer / ".git/forge/board.html")
     for starter in ("Original Story Starter", "Original Part Starter", "Original Fix Starter"):

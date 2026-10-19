@@ -27,7 +27,8 @@ def _ready_before_switch(env, adopted=False, changes_setting=False):
     settings = (repo.path / "forge.toml").read_text("utf-8")
     changes = {"forge.toml": settings.replace('merge = "human"', 'merge = "agent"')
                if 'merge = "human"' in settings else 'merge = "agent"\n' + settings}
-    item, where = env.start_fix(changes if changes_setting else None)
+    item, where = env.start_fix(changes if changes_setting else None,
+                              **({"done_when": "forge.toml permits agent merges"} if changes_setting else {}))
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     env.commit(where, "README.md", "# Hello\n")

@@ -392,12 +392,13 @@ def doctor(args: argparse.Namespace) -> int:
                     add(f"The {event} hook in {rel} fails with exit code " f"{done.returncode}{bare}: {said[0]}", fix)
     if not cfg["checks"]: add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
     if shutil.which("gh"):
-        prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state")
+        prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state,number,headRefName")
         for pr in prs if isinstance(prs, list) else []:
             if not isinstance(pr, dict) or pr.get("state") != "OPEN" or not pr.get("headRefOid"):
                 continue
             try:
-                if reason := checks.queued_reason(top, pr["headRefOid"]):
+                if reason := checks.queued_reason(top, pr["headRefOid"], number=pr.get("number"),
+                                                  branch=pr.get("headRefName") or ""):
                     add(reason, "make a matching runner available or correct runner in forge.toml, "
                         "then run forge sync only if you change the runner setting")
             except repo.Refused as error:

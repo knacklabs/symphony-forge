@@ -57,8 +57,42 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
+def node_worker_budget(command: str, workers: str) -> str:
+    """Budget direct Vitest/Jest commands; preserve scripts and explicit worker options."""
+    segment = re.compile(r'''(?:[^;&|<>()"']|"[^"]*"|'[^']*')+''')
+    replacements = []
+    for part in segment.finditer(command):
+        text = part.group().rstrip()
+        try:
+            words = shlex.split(text)
+        except ValueError:
+            continue  # Leave shell constructs we cannot identify to their runner.
+        index = 0
+        if words[:1] == ["npx"]:
+            index = 2 if words[1:2] == ["--no-install"] else 1
+        elif words[:2] in (["npm", "exec"], ["pnpm", "exec"], ["yarn", "exec"]):
+            index = quicktest._npm_runner_index(words) if words[0] == "npm" else 2
+        name = words[index].replace("\\", "/").rsplit("/", 1)[-1] if index < len(words) else ""
+        name = name.removesuffix(".cmd").removesuffix(".exe")
+        if name not in {"vitest", "jest"}:
+            continue
+        if any(arg.split("=", 1)[0] in {"--maxWorkers", "--runInBand", "-i"}
+               for arg in words[index + 1:]):
+            continue
+        if words[:2] == ["npm", "exec"] and "--" not in words[:index]:
+            tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', text))
+            start = tokens[index].start()
+            text = text[:start] + "-- " + text[start:]
+        text += f" --maxWorkers={workers}"
+        replacements.append((part.start(), part.start() + len(part.group().rstrip()), text))
+    for start, end, text in reversed(replacements):
+        command = command[:start] + text + command[end:]
+    return command
+
+
 def narrow_command(command: str, excluded: list[str], workers: str, always: list[str], *,
                    launchers: bool = True) -> str:
+    command = node_worker_budget(command, workers)
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
@@ -224,6 +258,8 @@ def close_tests(base: str) -> int:
         if not package.is_file():
             return 0
         command = " && ".join(part for _, part, _ in parts)
+    command = node_worker_budget(command, machine.test_cpus())
+    parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
     if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
