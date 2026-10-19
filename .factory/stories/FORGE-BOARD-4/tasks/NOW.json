@@ -72,7 +72,7 @@
     }
   ],
   "land": {
-    "rounds": 2,
+    "rounds": 3,
     "stop": null
   },
   "part_line_limit": 400,
@@ -86,11 +86,11 @@
     "id": "57c514c7-fd83-4f62-aacb-721b055bc326",
     "status": "clean"
   },
-  "round": 5,
+  "round": 6,
   "settled_areas": [
     "src/forge/board_app/now.js"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T12:22:09.231462+00:00",
@@ -126,10 +126,10 @@
     }
   ],
   "stuck": {
-    "close": "def75559-4bfa-4f7c-bf41-f780bcd30bfc",
-    "head": "54b32e3d764d0f83f790421861ac32976095d4f7",
+    "close": "bbe126ce-dae3-400b-aa56-e1431bb36ab6",
+    "head": "a5af37fabaa46ab73da5ec1e5ed0a919d4924fc1",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "worker": "claude"
 }
