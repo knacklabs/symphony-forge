@@ -177,6 +177,17 @@
       "closed_by": "review-findings-split-from-forge-board-4"
     },
     {
+      "key": "edge\ttests/test_board_item_page.py\tOn this laptop the fix drawer's axe scan runs while the drawer still fades in (200 ms), so its text reads as low contrast and the test fails, with or without the Now screen installed.",
+      "kind": "edge",
+      "path": "tests/test_board_item_page.py",
+      "line": 76,
+      "text": "On this laptop the fix drawer's axe scan runs while the drawer still fades in (200 ms), so its text reads as low contrast and the test fails, with or without the Now screen installed.",
+      "from": "worker",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4"
+    },
+    {
       "key": "edge\ttests/test_board_item_page.py\tThe other board browser tests give their script 300 s under pytest's 150 s limit, so a slow run can also end the worker before cleanup.",
       "kind": "edge",
       "path": "tests/test_board_item_page.py",
