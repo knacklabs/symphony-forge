@@ -10,7 +10,7 @@ def test_2_platform_sensitive_tests_are_marked():
     # This is a test-policy guard, not a list of today's selected tests. New files,
     # imported platform helpers and OS-specific branches must opt in too.
     areas = re.compile(r"install|hooks?|quot|cmd|paths?|crlf|windows|process|locking|shell|launcher|line_endings|worktree|shim|shlex|fcntl|msvcrt", re.I)
-    branches = re.compile(r"sys\.platform|os\.(?:name|linesep|sep)|platform\.(?:system|win32)|sys\.getwindowsversion|\.cmd\b|cmd\.exe|CRLF|crlf|killpg|SIGKILL|flock|msvcrt")
+    branches = re.compile(r"sys\.platform|os\.(?:name|linesep|sep)|platform\.(?:system|win32)|sys\.getwindowsversion|\.cmd\b|cmd\.exe|CRLF|crlf|killpg|SIGKILL|flock|msvcrt|pre-commit|pre-push|hooks\.sh")
     missing = []
     for path in sorted(Path(__file__).parent.glob("test_*.py")):
         if path == Path(__file__):

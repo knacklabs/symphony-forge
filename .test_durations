@@ -224,7 +224,7 @@
     "tests/test_ci_hang.py::test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap": 0.0074996240000473335,
     "tests/test_ci_hang.py::test_3_forge_sync_keeps_the_timeout_in_the_generated_workflow": 0.898851250000007,
     "tests/test_ci_job_budgets.py::test_1_each_platform_runs_every_group_once_with_its_time_limit[ubuntu-latest-5-20-False]": 9.57633462900003,
-    "tests/test_ci_job_budgets.py::test_1_each_platform_runs_every_group_once_with_its_time_limit[windows-latest-12-45-False]": 6.001866919999429,
+    "tests/test_ci_job_budgets.py::test_1_each_platform_runs_every_group_once_with_its_time_limit[windows-latest-4-45-False]": 6.001866919999429,
     "tests/test_ci_limits_pull_requests_to_linux.py::test_1_event_runs_every_required_platform_group_once[pull_request-counts0]": 0.017872292000447487,
     "tests/test_ci_limits_pull_requests_to_linux.py::test_1_event_runs_every_required_platform_group_once[push-counts1]": 0.014114916999915295,
     "tests/test_ci_limits_pull_requests_to_linux.py::test_1_event_runs_every_required_platform_group_once[schedule-counts3]": 0.01595425100003922,

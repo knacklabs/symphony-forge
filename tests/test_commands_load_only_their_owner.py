@@ -101,6 +101,7 @@ def test_2_earlier_adopted_clients_get_small_hooks_after_upgrade(unsynced_up):
 
 
 @pytest.mark.parametrize("words,expected", HELP.items())
+@pytest.mark.platform
 def test_3_root_groups_and_commands_keep_their_help(repo, monkeypatch, words, expected):
     monkeypatch.setenv("COLUMNS", "80")
     result = repo.forge(*words.split(), "--help")
@@ -109,6 +110,7 @@ def test_3_root_groups_and_commands_keep_their_help(repo, monkeypatch, words, ex
 
 @pytest.mark.parametrize("words", [words for words, text in HELP.items()
                                    if words and "\ncommands:\n" not in text])
+@pytest.mark.platform
 def test_4_command_help_parses_only_its_owner_and_builds_only_its_command(repo, tmp_path, words):
     log = tmp_path / "starts.jsonl"
     _trace(repo, log)

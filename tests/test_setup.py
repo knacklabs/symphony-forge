@@ -97,6 +97,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
     return log
 
 
+@pytest.mark.platform
 def test_28_sync(repo, tmp_path, monkeypatch):
     """Repos without Husky keep local shims and commit only the generated adapters."""
     _on_a_branch_with_forge_toml(repo)

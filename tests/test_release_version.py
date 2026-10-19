@@ -4,11 +4,14 @@ import json
 import tomllib
 from pathlib import Path
 
+import pytest
+
 
 STORY = "FIX-RELEASE-1216"
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.platform
 def test_1_forge_version_is_1_2_16_everywhere_it_is_recorded(repo):
     assert repo.forge("--version").stdout.split()[-1] == "v1.2.16"
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
