@@ -1,6 +1,13 @@
 {
   "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
   "branch": "fix/merge-enable-wording",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155bb-6628-73c2-9c00-9bf15d4430c0",
+    "head": null,
+    "start": "79d807c37beb060b09bd3d826abff7fb8222ab7e"
+  },
   "done_when": "The forge merge enable refusal from an agent shell says to run it in a terminal outside Claude Code or Codex, and a test covers the message on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
