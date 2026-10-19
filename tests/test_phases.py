@@ -131,7 +131,8 @@ def test_40_interfaces(repo, gh, tmp_path, env):
     assert env.close(item).returncode == 0
     assert "Promote:" not in env.prompt()
     toml = (where / "forge.toml").read_text("utf-8")
-    env.commit(where, "forge.toml", toml.replace('interfaces = ["**/routes/**"]', "interfaces = []"))
+    env.commit(repo.path, "forge.toml", toml.replace('interfaces = ["**/routes/**"]', "interfaces = []"))
+    repo.git("push", "-q", "origin", "main")
     env.close(item)
     assert ("Report any change to an interface (an API route, a database schema or migration, a "
             "command table or a config schema) as a P1 finding titled `Promote: <the interface>`"
