@@ -23,8 +23,8 @@
     "id": "452c5373-fd48-496b-8c02-647d922b7378",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T15:57:35.565002+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "77ea4ddadfe91ca7ba2232e1923f3381b7ff6c5a",
+    "close": "ef9568c1-c443-4078-96b4-1c10f3c20403",
+    "head": "5ea74a108287f9aec9fa50473a04df31d0272514",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "Windows test groups run about six times longer than Linux ones: test repos sit on the slower C: drive, npm downloads are not cached on Windows, and Windows groups are split by Linux timings",
   "worker": "codex"
