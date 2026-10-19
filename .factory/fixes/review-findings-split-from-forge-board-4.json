@@ -68,6 +68,10 @@
       "work": 3
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "review": {
     "blocking_level": "P1",
     "branch_diff": "5f9f289b904e7ba0ea329f76cfce03816566800855349cfd2a47a905cb1e6cab",
@@ -78,7 +82,7 @@
     "id": "3996f182-08c3-407f-afc4-006dfd0a1a38",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-BOARD-4/DETAIL",
   "status": "fixing",
   "steps": [
@@ -100,12 +104,12 @@
     }
   ],
   "stuck": {
-    "close": "5a197050-0818-4ebb-bcd3-d791912a8f7e",
-    "head": "86611521762d353a2f31327059045898b952c46e",
+    "close": "7a639aaf-362a-4a1b-9314-610577f544b9",
+    "head": "0da8764bccb82bd094861b34461d909a87414b2b",
     "keys": {
-      "the review finding \"Preserve keyboard focus when live item data refreshes\" in src/forge/board_app/item.js": 2
+      "close's tests failing": 1
     },
-    "round": 2
+    "round": 3
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 8ae6064e84ef4fe32c87974e15501540ea9fe7d7` exited with status 1 on this machine.\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/pluggy/_hooks.py\", line 512 in __call__\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/xdist/remote.py\", line 427 in <module>\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1291 in executetask\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 341 in run\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 411 in _perform_spawn\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 389 in integrate_as_primary_thread\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1273 in serve\n  File \"/Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/lib/python3.11/site-packages/execnet/gateway_base.py\", line 1806 in serve\n  File \"<string>\", line 8 in <module>\n  File \"<string>\", line 1 in <module>\n[gw2] node down: Not properly terminated\nF[gw3] node down: Not properly terminated\nF                                                                        [100%]\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11452 /Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/bin/python /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pyt\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11634 /Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/bin/python /private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pyt\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11637 /opt/homebrew/bin/uv run --no-project --python 3.11 --with playwright==1.55.0 python -c \\012import re, subprocess, sys\\012from pathlib import Path\\012from playwright.sync_api import expect, sync\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11640 /Users/ravikiranvemula/.cache/uv/archive-v0/lqJWfRHIp3goqiDXrSkiT/bin/python3 -c \\012import re, subprocess, sys\\012from pathlib import Path\\012from playwright.sync_api import expect, sync_playwr\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11669 /Users/ravikiranvemula/.cache/uv/archive-v0/lqJWfRHIp3goqiDXrSkiT/lib/python3.11/site-packages/playwright/driver/node /Users/ravikiranvemula/.cache/uv/archive-v0/lqJWfRHIp3goqiDXrSkiT/lib/python\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11859 /opt/homebrew/bin/uv run --no-project --python 3.11 --with playwright==1.55.0 python -c \\012import re, subprocess, sys\\012from pathlib import Path\\012from playwright.sync_api import expect, sync\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11862 /Users/ravikiranvemula/.cache/uv/archive-v0/lqJWfRHIp3goqiDXrSkiT/bin/python3 -c \\012import re, subprocess, sys\\012from pathlib import Path\\012from playwright.sync_api import expect, sync_playwr\nThe test with temp folder test_2_live_item_updates_keep_0 left processes running: 11874 /Users/ravikiranvemula/.cache/uv/archive-v0/lqJWfRHIp3goqiDXrSkiT/lib/python3.11/site-packages/playwright/driver/node /Users/ravikiranvemula/.cache/uv/archive-v0/lqJWfRHIp3goqiDXrSkiT/lib/python\n\n=================================== FAILURES ===================================\n__________________ tests/test_board_item_keyboard_refresh.py ___________________\n[gw2] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/bin/python\nworker 'gw2' crashed while running 'tests/test_board_item_keyboard_refresh.py::test_2_live_item_updates_keep_keyboard_focus_and_navigation[new]'\n__________________ tests/test_board_item_keyboard_refresh.py ___________________\n[gw3] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-fix-review-findings-split-from-forge-board-4/.venv/bin/python\nworker 'gw3' crashed while running 'tests/test_board_item_keyboard_refresh.py::test_2_live_item_updates_keep_keyboard_focus_and_navigation[adopted-v1.2.2]'\n2 failed, 4 passed in 180.27s (0:03:00)",
   "tool": "claude",
