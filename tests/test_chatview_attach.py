@@ -9,6 +9,8 @@ from test_chatview_start import _ready
 from test_close import CLEAN, GREEN, PIN, ROOT
 from test_codex_worker import _sent, _stub, sdk_data  # noqa: F401
 
+import pytest
+
 STORY = "FORGE-CHATVIEW-1"
 URL = "https://github.com/acme/board/pull/12"
 
@@ -45,6 +47,7 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
     return folder, calls
 
 
+@pytest.mark.platform
 def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
         repo, gh, monkeypatch, tmp_path, sdk_data, claude_session):
     _, calls = _closable(repo, gh, monkeypatch, tmp_path, sdk_data)

@@ -13,6 +13,8 @@ import pytest
 
 from test_board_status_and_times import OLD, _board, _fix, _records, _row, client  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-STALE-WORKER-RUNNING"
 
 

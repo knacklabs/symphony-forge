@@ -8,6 +8,8 @@ import pytest
 from test_close import env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-OUTSIDE-PR-CHECK"
 
 MESSAGE = ('This branch was not started by Forge, so it cannot merge. '

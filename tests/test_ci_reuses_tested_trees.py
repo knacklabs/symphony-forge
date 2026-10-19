@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+from test_ci_limits_pull_requests_to_linux import expression
+
 STORY = "FIX-REUSE-TEST-PROOF"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,11 +27,13 @@ def workflow_steps(job):
 
 
 def decide(repo, gh, tmp_path, monkeypatch, event, ref, sha, prs=(), runs=(), job="tests",
-           api_error=False, diagnostics=None):
+           api_error=False, diagnostics=None, runner="ubuntu-latest"):
     steps = workflow_steps(job)
     proof = next(step for step in steps if step.startswith("id: parent-tests\n"))
     command = re.search(r"^        run: (.+)$", proof, re.M)[1]
     workflow = re.search(r"^          PR_WORKFLOW: (.+)$", proof, re.M)[1]
+    if workflow.startswith("${{"):
+        workflow = expression(workflow.replace("matrix.os", "github.runner"), runner=runner)
     # Every expensive step must honor the output; checkout and the decision still succeed.
     assert "fetch-depth: 0" in steps[0]
     for step in steps[2:]:
@@ -65,13 +69,16 @@ def commit(repo, path, text):
     return repo.git("rev-parse", "HEAD")
 
 
-@pytest.mark.parametrize("job", ["tests", "plugin", "windows-installers"])
+@pytest.mark.parametrize("job,runner", [("tests", "ubuntu-latest"),
+                                       ("tests", "windows-latest"),
+                                       ("plugin", "ubuntu-latest"),
+                                       ("windows-installers", "windows-latest")])
 @pytest.mark.parametrize("case", ["passed", "squash", "changed-tree", "red", "pending",
                                   "missing", "target-only", "wrong-head", "unmerged",
                                   "wrong-merge", "api-error", "newer-red", "stale-base",
                                   "missing-snapshot", "wrong-snapshot-head", "same-tree-base"])
 def test_1_main_reuses_only_successful_pull_request_proof_for_its_merged_tree(
-        repo, gh, tmp_path, monkeypatch, job, case):
+        repo, gh, tmp_path, monkeypatch, job, runner, case):
     base = repo.git("rev-parse", "HEAD")
     repo.git("switch", "-qc", "pr")
     head = commit(repo, "code.txt", "PR code\n")
@@ -115,11 +122,11 @@ def test_1_main_reuses_only_successful_pull_request_proof_for_its_merged_tree(
     if case == "newer-red":
         runs.append(dict(run, id=12, conclusion="failure"))
     assert decide(repo, gh, tmp_path, monkeypatch, "push", "refs/heads/main", sha,
-                  [pr], runs, job, case == "api-error") == (
+                  [pr], runs, job, case == "api-error", runner=runner) == (
                       case in {"passed", "squash", "same-tree-base"})
     calls = gh.calls()
     if case in {"passed", "squash"}:
-        expected = "forge.yml" if job == "tests" else "forge-next.yml"
+        expected = "forge.yml" if job == "tests" and runner == "ubuntu-latest" else "forge-next.yml"
         assert any(f"repos/acme/forge/actions/workflows/{expected}/runs" in call
                    and f"head_sha={head}" in call for call in calls)
     assert repo.git("rev-parse", "HEAD") == sha

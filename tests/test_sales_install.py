@@ -5,6 +5,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-SALES-1"
 ROOT = Path(__file__).resolve().parents[1]
 

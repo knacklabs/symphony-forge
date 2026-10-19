@@ -28,6 +28,7 @@ sys.exit(subprocess.run([sys.executable, {stub}, *args]).returncode)
 '''
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption-upgrade"])
 def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path, monkeypatch, adopted):
     if adopted:

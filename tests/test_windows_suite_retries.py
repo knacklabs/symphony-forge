@@ -11,6 +11,8 @@ from types import SimpleNamespace
 
 import pytest
 
+pytestmark = pytest.mark.platform
+
 STORY = "windows-rerun-flakes"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,7 +49,7 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
     # CI's real pytest plugins, including xdist and split, own the attempts and exit status.
     head = "@pytest.fixture\ndef sample():\n" if phase != "call" else "def test_sample():\n"
     (tmp_path / "test_sample.py").write_text(
-        "from pathlib import Path\nimport pytest\n"
+        "from pathlib import Path\nimport pytest\npytestmark = pytest.mark.platform\n"
         + head + "    path = Path(__file__).with_name('attempts.txt')\n"
         "    count = int(path.read_text()) + 1 if path.exists() else 1\n"
         "    path.write_text(str(count))\n"

@@ -21,6 +21,8 @@ from conftest import _install
 from test_close import env  # noqa: F401
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-DOCTORFIX-1"
 WHY = "Bring the files Forge writes for Claude Code and Codex up to date"
 SETTINGS, HOOKS, SKILL = ".claude/settings.json", ".codex/hooks.json", ".claude/skills/forge/SKILL.md"

@@ -33,6 +33,7 @@ def client(repo, gh, upgrade):
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("setting,command,script,expected", [
     (setting, prefix + runner + options, None, expected)
     for setting in ("test", "fast_test")
@@ -116,6 +117,7 @@ raise SystemExit(subprocess.call(command, shell=True))
     assert json.loads((repo.path / "observed.json").read_text("utf-8")) == expected
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("upgrade", [False, True], ids=["new", "earlier-adopted"])
 def test_2_package_scripts_keep_arguments_and_lifecycle(repo, gh, monkeypatch, upgrade):
     # Real npm must run its hooks; the runner only records the arguments it receives.

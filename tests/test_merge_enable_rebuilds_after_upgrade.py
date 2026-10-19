@@ -15,6 +15,8 @@ from test_merge_enable import (BRANCH, READY, TAKEN, FAIL_SETTING_COMMIT, enable
 from test_setup import _fresh_client
 from test_upgrade_command import NAME, RELEASE, install, unsynced_up  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "merge-enable-stale"
 
 

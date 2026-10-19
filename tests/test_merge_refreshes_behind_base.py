@@ -189,6 +189,7 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
                    for line in result.stdout.splitlines()), result.stdout
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
 @pytest.mark.parametrize("command,failing_test", [("merge", False), ("land", False),
                                                 ("merge", True)],

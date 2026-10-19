@@ -11,6 +11,8 @@ from test_close_preserves_default_settings import MESSAGE, _setup
 from test_upgrade_command import Upgrade
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "windows-test-fixes-2"
 
 

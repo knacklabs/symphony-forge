@@ -22,6 +22,8 @@ from test_codex_record import _freeze
 from test_story import worktree
 from test_lanes_tests import release_server  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-LANES-1"
 
 

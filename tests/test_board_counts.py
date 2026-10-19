@@ -18,6 +18,8 @@ from test_board_github_once import github_read_once
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import READER, worktree
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-BOARD-2"
 
 PLAN = STORY_DOC.replace(

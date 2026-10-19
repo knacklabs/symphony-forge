@@ -1,5 +1,4 @@
-"""Forge's own extra workflow runs the Linux groups on merges and every platform nightly, on release
-tags and on demand; pull requests run them once, in the gating workflow."""
+"""Linux runs the whole suite; Windows runs platform tests beside it on each pull request."""
 import json
 import re
 import tomllib
@@ -24,7 +23,7 @@ def expression(text, **github):
 def matrix_rows(event, ref="refs/heads/main"):
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
-    # The gating workflow runs the pull request's groups; this one runs only on other events.
+    # The gating workflow owns Linux's pull-request groups.
     if re.search(r"^    if: github.event_name != 'pull_request'$", tests_job, re.M) and (
             event == "pull_request"):
         return []
@@ -36,11 +35,11 @@ def matrix_rows(event, ref="refs/heads/main"):
 
 
 @pytest.mark.parametrize("event,counts", [
-    ("pull_request", {}),
-    ("push", {"ubuntu-latest": 5}),
-    ("tag", {"ubuntu-latest": 5, "windows-latest": 12}),
-    ("schedule", {"ubuntu-latest": 5, "windows-latest": 12}),
-    ("workflow_dispatch", {"ubuntu-latest": 5, "windows-latest": 12}),
+    ("pull_request", {"windows-latest": 4}),
+    ("push", {"ubuntu-latest": 5, "windows-latest": 4}),
+    ("tag", {"ubuntu-latest": 5, "windows-latest": 4}),
+    ("schedule", {"ubuntu-latest": 5, "windows-latest": 4}),
+    ("workflow_dispatch", {"ubuntu-latest": 5, "windows-latest": 4}),
 ])
 def test_1_event_runs_every_required_platform_group_once(event, counts):
     rows = (matrix_rows("push", "refs/tags/v1.2.3") if event == "tag" else matrix_rows(event))

@@ -3,6 +3,10 @@ import shlex
 
 from test_story import setup
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "a-new-security-advisory-in-a-transitive"
 
 LISTED = "The dependencies and base images haven't been refreshed in over a week; refresh them."

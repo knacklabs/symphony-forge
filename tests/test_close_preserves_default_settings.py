@@ -43,6 +43,7 @@ def _setup(env, client, tmp_path, named=False, renamed_check=False):
     return folder, settings, incoming
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("client", [False, True], indirect=True, ids=["new", "adopted"])
 @pytest.mark.usefixtures("claude_session")
 def test_1_codex_open_merge_keeps_incoming_settings_through_close(

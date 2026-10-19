@@ -122,6 +122,7 @@ def test_3_task_permission_comes_from_its_current_covered_done_when(client, monk
         assert "settings change in their own fix" in committed.stderr
 
 
+@pytest.mark.platform
 @pytest.mark.usefixtures("claude_session")
 @pytest.mark.parametrize("client, case", [
     pytest.param(False, case, id=f"new-client-{case}")
@@ -179,6 +180,7 @@ settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker setting
     assert (folder / "product.txt").read_text("utf-8") == "Product work\n"
 
 
+@pytest.mark.platform
 def test_5_coordinator_upgrade_commits_settings_through_installed_hooks(unsynced_up, client):
     # Unlike a raw git commit, upgrade uses Forge's subprocess environment and new-release hooks.
     up = Upgrade(unsynced_up.env, unsynced_up.tmp)

@@ -113,6 +113,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         finish(repo, list(processes.values()))
 
 
+@pytest.mark.platform
 def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
         env, tmp_path, monkeypatch, claude_payload):
     repo = env.repo

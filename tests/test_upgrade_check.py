@@ -12,6 +12,8 @@ import conftest
 import pytest
 from test_close import env  # noqa: F401 (the shared fixture)
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-UPGRADE-1"
 
 SOURCE = "git+https://github.com/knacklabs/symphony-forge@"

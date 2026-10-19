@@ -24,6 +24,7 @@ MODELS = {"claude": ('[models.build]\nmodel = "sonnet"\neffort = "medium"\n'
                     '[models.lite]\nmodel = "gpt-6-mini"\neffort = "medium"\n')}
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted"])
 @pytest.mark.parametrize("tool", ["claude", "codex"])
 def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path, tool, history):

@@ -100,6 +100,7 @@ def _module_selection(repo, monkeypatch, launcher=None):
     assert "7 passed" in result.stdout
 
 
+@pytest.mark.platform
 def test_2_only_imports_dotted_names_and_file_paths_select_module_tests(repo, monkeypatch):
     # Replaces filename and arbitrary changed-input readers with module references.
     _module_selection(repo, monkeypatch)

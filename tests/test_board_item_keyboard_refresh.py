@@ -18,6 +18,8 @@ from test_board_item_page import PLAN
 from test_board_counts import github
 from test_board_server import client, clone, live, pushed  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-ITEM-FACTS"
 
 SCRIPT = r"""

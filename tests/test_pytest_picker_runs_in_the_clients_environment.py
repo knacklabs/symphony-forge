@@ -15,6 +15,8 @@ from test_close import GREEN, env  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_upgrade_command import NAME, RELEASE, unsynced_up  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-THE-SHIPPED-PYTHON-TEST-PICKER-UV-RUN-PY"
 
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from test_close import blocked, env, finding  # noqa: F401  (env is a fixture)
 
+import pytest
+
 STORY = "most-extra-review-rounds-come-from-findi"
 
 
@@ -22,6 +24,7 @@ def test_1_review_blocks_only_on_real_gaps_and_wishlists_are_p2(env):
             "are never \"simpler\": a missing one is its own P1 finding") in prompt
 
 
+@pytest.mark.platform
 def test_2_close_lists_non_blocking_findings_under_their_own_heading(env):
     item, _ = env.start_fix()
     env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting"),

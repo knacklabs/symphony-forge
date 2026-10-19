@@ -1,6 +1,7 @@
 """Forge's platform groups cover the suite once within their job budgets."""
 import argparse
 import json
+import os
 import re
 import shlex
 import subprocess
@@ -20,14 +21,14 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
     # (Windows) on 12 October, so the limits leave room for the suite to grow. macOS left the
     # full run on 18 October: its groups timed out and found no macOS-only product bug.
     ("ubuntu-latest", 5, 20, False),
-    ("windows-latest", 12, 45, False),
-    ("windows-latest", 12, 45, True),
+    ("windows-latest", 4, 45, False),
+    ("windows-latest", 4, 45, True),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(
         runner, count, minutes, windows_timings, tmp_path):
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
-    # The budget contract covers every OS on the nightly full run; merges and PRs select Linux.
+    # Nightly runs use the same Linux suite and Windows subset as pull requests.
     rows = [(row["group"], row["groups"], row.get("timeout"))
             for row in matrix_rows("schedule") if row["os"] == runner]
     assert sorted((int(group), int(groups)) for group, groups, _ in rows) == [
@@ -74,6 +75,9 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(
         "${{ matrix.group }}", "1")
     tokens = shlex.split(command)
     options = tokens[tokens.index("pytest") + 1:]
+    # Windows now covers only the marked OS boundary; Linux still covers every test.
+    assert (options[options.index("-m") + 1] if "-m" in options else None) == (
+        "platform" if runner == "windows-latest" else None)
     parser = argparse.ArgumentParser()
     parser.add_argument("--durations-path", default=".test_durations")
     configured, _ = parser.parse_known_args(options)
@@ -89,10 +93,12 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(
     # Collection checks the split without replacing the input timings with an empty report.
     options = [option for option in options if option not in (
         "--store-durations", "--clean-durations")]
+    marker = ["-m", "platform"] if runner == "windows-latest" else []
+    environment = {key: value for key, value in os.environ.items() if key != "PYTEST_ADDOPTS"}
     collected = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests", "-q", "--collect-only",
+        [sys.executable, "-m", "pytest", "tests", "-q", *marker, "--collect-only",
          "--basetemp", str(tmp_path / "all")],
-        cwd=root, capture_output=True, text=True, timeout=60)
+        cwd=root, env=environment, capture_output=True, text=True, timeout=60)
     assert collected.returncode == 0, collected.stdout + collected.stderr
     nodeids = {line for line in collected.stdout.splitlines()
                if line.startswith("tests/") and "::" in line}
@@ -101,7 +107,7 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(
     grouped = subprocess.run(
         [sys.executable, "-m", "pytest", *options, "--collect-only",
          "--basetemp", str(tmp_path / "group")],
-        cwd=root, capture_output=True, text=True, timeout=60)
+        cwd=root, env=environment, capture_output=True, text=True, timeout=60)
     assert grouped.returncode == 0, grouped.stdout + grouped.stderr
     assert "No test durations found" not in grouped.stdout
     selected = {line for line in grouped.stdout.splitlines()

@@ -11,6 +11,8 @@ import pytest
 from test_close import GREEN, env, run  # noqa: F401
 from test_merge_command import _merge_at_github, _ready
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-MERGESWITCH-1"
 FIX = "let-the-agent-merge"
 BRANCH = f"fix/{FIX}"

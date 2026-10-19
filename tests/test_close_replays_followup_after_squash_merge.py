@@ -9,6 +9,8 @@ import pytest
 from test_close import body, env  # noqa: F401
 from test_stacked_fixes_count_only_their_own_changes import configured, land_on_default, started
 
+pytestmark = pytest.mark.platform
+
 STORY = "stacked-replay"
 
 

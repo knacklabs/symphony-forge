@@ -203,6 +203,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     return client, initialized
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case, rows", [
     ("fresh", ()),
     # Claude's mod is optional: absence is advice, rather than a failed doctor check.
@@ -371,6 +372,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
             assert log.read_text(encoding="utf-8").count("hook deny\n") == 1
 
 
+@pytest.mark.platform
 def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path):
     _on_a_branch_with_forge_toml(repo)
     assert repo.forge("sync").returncode == 0
