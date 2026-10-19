@@ -4,12 +4,20 @@
   "done_when": "forge fix amend accepts --append '<text>' to add to the Done-when, and both --done and --append print the old and new text before writing; a test covers both on a new and an adopted repo, and the coordinator guide names --append",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:54:37.464195+00:00",
       "step": "start"
     }
   ],
-  "why": "forge fix amend --done replaces the whole Done-when, so a coordinator who meant to add a line wiped it (issue 973)"
+  "stuck": {
+    "close": null,
+    "head": "5086173ca1baf944fd4cf614c6290a2b22c003e7",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge fix amend --done replaces the whole Done-when, so a coordinator who meant to add a line wiped it (issue 973)",
+  "worker": "codex"
 }
