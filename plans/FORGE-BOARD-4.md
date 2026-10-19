@@ -137,7 +137,7 @@ difference listed. Sample data in the artboards is not a requirement; Forge's fa
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | SERVER | The local live server | server, token, CSP, fresh `/board.json`, `/plan/<KEY>`, `/events` and the per-row snapshot cache | 1 | src/forge/board_server.py, src/forge/board.py | tests/test_board_server.py | | yes | |
-| SHELL | The page shell | the shell page, design tokens and the pinned `Board` interfaces with stubs, served by SERVER | 1 | src/forge/board_app/shell.html, src/forge/board_app/tokens.css, src/forge/board_app/app.js | tests/test_board_shell.py | SERVER | yes | |
+| SHELL | The page shell | the shell page, design tokens and the pinned `Board` interfaces with stubs, served by SERVER | 1 | src/forge/board_app/shell.html, src/forge/board_app/tokens.css, src/forge/board_app/app.js, src/forge/board_server.py (only the page and asset routes) | tests/test_board_shell.py | SERVER | yes | |
 | NOW | The first screen | needs-you strip, pipeline, stories rail, figures, Team and Me | 2, 6 | src/forge/board_app/now.js, src/forge/board_app/now.css | tests/test_board_now_screen.py | SHELL | yes | |
 | DETAIL | Drawer and full item page | drawer, item page tabs, inert plan rendering | 3, 6 | src/forge/board_app/item.js, src/forge/board_app/item.css, src/forge/board_app/markdown.js | tests/test_board_item_page.py | SHELL | yes | |
 | PAGES | Releases and Insights | the two pages | 5, 6 | src/forge/board_app/releases.js, src/forge/board_app/insights.js | tests/test_board_releases_insights.py | SHELL | yes | |
@@ -152,6 +152,8 @@ New moving parts: a local web server started by `forge board`, bound to 127.0.0.
   SHELL takes the page shell, styles and app script, so each part fits its size limit.
 - Moved on 17 October 2026 by the owner's choice: CUTOVER comes right after SHELL, so the old
   page goes before the screens land. Hold the next release until NOW merges.
+- SERVER serves only a placeholder page to fit its size limit; SHELL adds the shell and asset
+  routes back in board_server.py and shows the snapshot's `updating` mark.
 
 - Waits for FORGE-BOARD-3 for owners, round times, known issues and releases; until those
   land, those regions show unknown.
