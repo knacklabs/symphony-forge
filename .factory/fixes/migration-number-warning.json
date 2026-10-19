@@ -64,7 +64,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-18T16:58:58.683303+00:00",
@@ -79,6 +79,11 @@
       "step": "review"
     }
   ],
+  "stop": {
+    "question": "Two open items can add database migrations with the same number, and is stuck. It should deliver: Close and forge next warn, without refusing, when another open item's branch adds a migration file with the same number under the repo's migrations folders, naming both items, and a test covers it on new and adopted repos\nTwo rounds in a row left the review finding \"Determine whether peers are open from their actual item and landed state\" in src/forge/migration_warnings.py.\nThe worker tried: Refresh migration peers and exclude completed work.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "tool": "codex",
+    "wait_id": "3055810b-7bf3-46e2-9517-8033112f86b0"
+  },
   "stuck": {
     "close": "e1ef5ebf-834c-4050-9fab-159fe08488c3",
     "head": "19b80126ba2cce75e5e9a8e5cf4be86e10cb3d47",
