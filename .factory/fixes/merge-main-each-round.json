@@ -1,6 +1,13 @@
 {
   "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
   "branch": "fix/merge-main-each-round",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155bb-66ec-7c13-bb80-99910c54d001",
+    "head": null,
+    "start": "5bfe1e9db02752dbc8e925c6733bd04d96a6bf32"
+  },
   "done_when": "forge work merges the default branch into the item's branch before every work round, and when close finds a merge conflict it offers a short resolve-only round instead of a full worker round; a test covers both on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
