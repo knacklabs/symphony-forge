@@ -10,14 +10,30 @@
   },
   "done_when": "A review no longer finds: Preserve unknown waiting time instead of displaying zero (src/forge/board_app/now.js:83); Retain readiness for assigned, unstarted story parts (src/forge/board_app/now.js:72); Give story part progress an accessible text equivalent (src/forge/board_app/now.js:165); Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable (tests/test_board_now_screen.py:106)",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1450ea045632a1291f5a82e711d73c9f338da175ffbc0c09c84ad9ac05919c01",
+    "changed": "19aaff90314fe69f2fb89bb4a02c746620dfd012850393f01408d6353aefc634",
+    "commit": "ad40255766da542594c14710525a707e7d5ab3f3",
+    "dismissals": [],
+    "findings": [],
+    "id": "ebfff707-be4f-4dbd-8718-499877023d56",
+    "status": "clean"
+  },
   "round": 1,
   "stacked_on": "FORGE-BOARD-4/NOW",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T14:55:26.741589+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T18:55:21.591976+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
