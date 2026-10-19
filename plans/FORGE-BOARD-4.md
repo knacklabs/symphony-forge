@@ -154,6 +154,8 @@ New moving parts: a local web server started by `forge board`, bound to 127.0.0.
   page goes before the screens land. Hold the next release until NOW merges.
 - SERVER serves only a placeholder page to fit its size limit; SHELL adds the shell and asset
   routes back in board_server.py and shows the snapshot's `updating` mark.
+- Ruled on 19 October 2026 by the owner: the board is a laptop page with no mobile view. No
+  part builds or tests a phone layout; check the desktop width only.
 
 - Waits for FORGE-BOARD-3 for owners, round times, known issues and releases; until those
   land, those regions show unknown.
