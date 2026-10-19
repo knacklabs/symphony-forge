@@ -10,13 +10,54 @@
   },
   "done_when": "Windows CI runs only tests marked as platform-sensitive (installers, git hooks, shell quoting, paths, line endings, command stand-ins) on every pull request beside Linux; Linux still runs the whole suite; a test fails when a test in those areas lacks the mark; and a measured Windows run on the branch uses at most 2 times Linux's total runner minutes and at most 2 times Linux's longest group",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_2_platform_sensitive_tests_are_marked() in tests/test_platform_sensitive_selection.py",
+      "file": "tests/test_platform_sensitive_selection.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 40,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_platform_sensitive_tests_are_marked",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0c5480149183f5517b493fd6209af18370ad3bfa5506cbf994145552e7896c2a",
+    "changed": "2ec3bf480d79acdf2e48bdf62824f9cfae41bd237aa80643f41da2ce498be83f",
+    "commit": "efcc218efb1723c41b349ca062c048403219342e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test. The guard searches test bodies only for `branches`, so actual hook tests can remain unmarked without failing it. For example, `tests/test_setup.py:100` defines unmarked `test_28_sync`; lines 169\u2013184 execute commit/push hooks, verify argument forwarding, and verify that a refusing hook blocks the commit. Neither its filename nor function name matches `areas`, and its body contains none of the `branches` patterns. Consequently, Windows now deselects this hook coverage while the new guard passes. Extend detection to cover these hook operations and mark the omitted test.",
+        "file": "tests/test_platform_sensitive_selection.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 40,
+        "priority": "P1",
+        "title": "Gate: test_2_platform_sensitive_tests_are_marked",
+        "work": 2
+      }
+    ],
+    "id": "744c4d28-06b3-4554-9ad4-42291e4ee1f1",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T20:09:40.594291+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T21:20:26.572261+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
