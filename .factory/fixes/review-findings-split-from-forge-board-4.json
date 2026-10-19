@@ -10,14 +10,126 @@
   },
   "done_when": "A review no longer finds: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)",
   "fix_kind": "mechanical",
+  "flagged": [
+    "src/forge/board_app/item.js"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 86,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep command text out of recorded reviews and known issues",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_item_page.py",
+      "file": "tests/test_board_item_page.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 122,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
+      "work": 3
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 342,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve keyboard focus when live item data refreshes",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 268,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Read item history beyond the repository's latest twenty events",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "23f9b1bbe3f8b9503ccdcf0635e24a1e399e13fa874893b397fcf45ba612db37",
+    "changed": "92dc51ed6a0a01e648d28194936844749c66cd5e9d1f31631285a11da595c4e1",
+    "commit": "0fd0dcc925b95b693bd9ca933c0158cb549de608",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Replacing waits_on with status fixes the stopped-close example, but roundWhat still displays recorded review text verbatim. src/forge/time_records.py:358\u2013363 includes finding titles in that text, so a normal finding discussing `forge test` still exposes commands in the drawer and Rounds tab. History events at item.js:278 and retained finding titles/reasons at item.js:320 have the same problem. Apply the command-free presentation to these paths and test populated records.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 86,
+        "priority": "P1",
+        "title": "Keep command text out of recorded reviews and known issues",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 3, Harm 3\nRaise: Test. The gate identified in the fix remains unresolved: the fixture creates no populated review history, measured review or retained finding, and these assertions check only panel visibility. The added facts test checks a compacted count and an empty Known issues panel, but never displayed round durations or retained problem content. Removing the round list or populated known-issue rendering would still pass both proofs. Add recorded reviews, durations and a kept problem, then assert their displayed values.",
+        "file": "tests/test_board_item_page.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 122,
+        "priority": "P1",
+        "title": "Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. A snapshot update calls fillDrawer, which replaces every drawer child, including the focused Full history link or part button. The full-page refresh similarly replaces its tab buttons through fillPage. When a worker updates the item during keyboard navigation, the focused element is removed and focus falls back to the document, interrupting the keyboard path. Preserve or restore the focused control when refreshing both views.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 342,
+        "priority": "P2",
+        "title": "Preserve keyboard focus when live item data refreshes",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 3, Harm 3\nRaise: Functional. Overview filters Board.snapshot.events for the selected item, but src/forge/board.py:827\u2013832 limits that collection to the latest twenty events across the entire repository. After twenty events from other work, opening an older item's Full history page shows none of its activity, even though the records still exist. Obtain the selected item's history independently of the repository-wide recent-event window.",
+        "file": "src/forge/board_app/item.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 268,
+        "priority": "P2",
+        "title": "Read item history beyond the repository's latest twenty events",
+        "work": 3
+      }
+    ],
+    "id": "45366b21-a51a-4073-92d5-95d817170ba7",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-BOARD-4/DETAIL",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T14:05:51.340822+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T14:28:04.526989+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

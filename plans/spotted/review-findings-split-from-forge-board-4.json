@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tCount the rounds represented by compacted history\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 92,
+      "text": "Count the rounds represented by compacted history",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tGive the Known issues panel a valid accessible label reference\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 246,
+      "text": "Give the Known issues panel a valid accessible label reference",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tKeep command text out of recorded reviews and known issues\treview-findings-split-from-forge-board-4",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 86,
+      "text": "Keep command text out of recorded reviews and known issues",
+      "from": "blocking",
+      "item": "review-findings-split-from-forge-board-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tKeep unknown merger facts distinct from an item that has not merged\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 272,
+      "text": "Keep unknown merger facts distinct from an item that has not merged",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tMap the server's ready-to-merge story stage\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 9,
+      "text": "Map the server's ready-to-merge story stage",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tNot done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 142,
+      "text": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tPreserve keyboard focus when live item data refreshes\treview-findings-split-from-forge-board-4",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 342,
+      "text": "Preserve keyboard focus when live item data refreshes",
+      "from": "blocking",
+      "item": "review-findings-split-from-forge-board-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tPreserve keyboard focus when live item data refreshes",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 342,
+      "text": "Preserve keyboard focus when live item data refreshes",
+      "from": "review",
+      "item": "review-findings-split-from-forge-board-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tRead item history beyond the repository's latest twenty events",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 268,
+      "text": "Read item history beyond the repository's latest twenty events",
+      "from": "review",
+      "item": "review-findings-split-from-forge-board-4",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
