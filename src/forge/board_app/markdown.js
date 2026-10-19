@@ -78,8 +78,12 @@ function blocks(lines, into) {
       const [head, ...body] = rows.filter((row) => !/^\s*\|[\s|:-]+\|\s*$/.test(row));
       const table = el('table', el('thead', el('tr', ...cells(head).map((cell) => el('th', ...inline(cell))))));
       table.append(el('tbody', ...body.map((row) => el('tr', ...cells(row).map((cell) => el('td', ...inline(cell)))))));
-      into.append(el('div', table));
-      into.lastChild.className = 'table';
+      // A wide table scrolls sideways, so its box takes keyboard focus and has a name.
+      const box = el('div', table);
+      Object.assign(box, { className: 'table', tabIndex: 0 });
+      box.setAttribute('role', 'region');
+      box.setAttribute('aria-label', 'Table');
+      into.append(box);
     } else {
       para.push(line.trim());
     }
