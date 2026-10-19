@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-BOARD-4-SHELL",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T08:38:59.186865+00:00",
+      "step": "start"
+    }
+  ]
+}
