@@ -223,7 +223,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
             ".forge/records-only/action.yml": (sync.TEMPLATES / "records-only-action.yml").read_text(encoding="utf-8"),
-            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
+            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")
+                .replace("# <docs-only-rule>", (sync.TEMPLATES.parent / "docskip.py").read_text(encoding="utf-8"))}
 
 
 def pr_check(args: argparse.Namespace) -> int:

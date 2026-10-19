@@ -29,12 +29,11 @@ SOURCES = {
            f"src/forge/templates/skills/simplified-technical-english/{name}" for name in PLAIN_ENGLISH},
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
-    ".forge/review-tests.py": "src/forge/templates/review-tests.py",
     ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
-GENERATED = {"plain": {".gitattributes", ".gitignore", ".forge/hooks.sh", ".claude/settings.json", ".codex/hooks.json",
+GENERATED = {"plain": {".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
                        "git-hook/pre-push", *ROLE_FILES}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}

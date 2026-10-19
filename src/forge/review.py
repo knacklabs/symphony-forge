@@ -25,7 +25,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import autoreview, machine, repo, score, spotted
+from forge import autoreview, docskip, machine, repo, score, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -586,9 +586,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
 
 def docs_only(top: Path, base: str) -> bool:
     """Docs skip tests; settings alone retain the always_test contract."""
-    changed = repo.git("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD",
-                       "--", ".", *DOC_EXCLUDES, cwd=top).strip("\0")
-    return not changed or changed == "forge.toml" and not repo.config(top)["always_test"]
+    return docskip.only_docs(top, base, DOC_EXCLUDES,
+                             allow_settings=not repo.config(top)["always_test"])
 
 
 DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "

@@ -9,6 +9,9 @@ from pathlib import Path
 from urllib.parse import quote
 
 
+# <docs-only-rule>
+
+
 def run(*args: str) -> str:
     # Resolve PATH first, including the .cmd shims used on Windows.
     return subprocess.run([shutil.which(args[0]) or args[0], *args[1:]], check=True,
@@ -63,11 +66,10 @@ def reuse() -> bool:
 docs_only = False
 records_only = "--records-only" in sys.argv[1:]
 try:
-    # Sync supplies the same Git path exclusions that close and the part-size rule use.
+    # Sync copies close's classifier and supplies its Git path exclusions.
     if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
-        docs_only = not run("git", "diff", "--name-only", "-z", "--no-renames",
-                            f"{os.environ['BASE_SHA']}...HEAD", "--", ".",
-                            *json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
+        docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
+                              json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
     if records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
