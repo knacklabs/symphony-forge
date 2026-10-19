@@ -39,8 +39,8 @@
     "id": "28269fc1-bf46-4e25-aa35-13f388a2c871",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T08:39:44.784976+00:00",
@@ -56,12 +56,10 @@
     }
   ],
   "stuck": {
-    "close": "1130eadb-4834-4944-ba35-1fa916cd7cb4",
-    "head": "7e45a6c0301a3c945211f84ef065f23e6abba847",
-    "keys": {
-      "the review finding \"[P1] Preserve independent check failures alongside test timeouts\" in src/forge/checks.py": 1
-    },
-    "round": 1
+    "close": "43d51a17-9361-4e6f-81b9-3b95b7c7cad6",
+    "head": "c36acbc235ad8cda8fb1fbac028fcee1a25d1545",
+    "keys": {},
+    "round": 2
   },
   "why": "Node client repos' generated CI gives tests 10 minutes and close treats a timeout as the worker's failure (issue 950)",
   "worker": "codex"
