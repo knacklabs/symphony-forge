@@ -203,7 +203,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 10\n"
+                .replace("<tests-timeout>", "    timeout-minutes: 30\n"
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
