@@ -23,8 +23,8 @@
     "id": "b0bac329-501b-41a0-adb3-52ccdb690bf7",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T19:54:41.482829+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "3be2cd1d7cd9f3ab29993374d00bf00f6873b1fd",
+    "close": "33fe44f9-d0fc-4a21-9790-abff12d4a5f6",
+    "head": "028696942f2bbd3b8a72de8f28c84ad6397565b2",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The sign-off answers check refuses over one trailing blank line, which cost a full strict-review run (issue 974)",
   "worker": "codex"
