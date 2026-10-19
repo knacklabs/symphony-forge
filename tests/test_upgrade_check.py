@@ -109,7 +109,7 @@ def _run_pr_check_job(env, where, steps) -> subprocess.CompletedProcess[str]:
     env.repo.git("push", "-q", "origin", "HEAD:refs/pull/1/head", cwd=where)
     github_env = env.tmp / "github-env"
     github_env.write_text("", "utf-8")
-    variables = {**os.environ, "PR": "1", "GITHUB_ENV": str(github_env),
+    variables = {**os.environ, "PR": "1", "GITHUB_ENV": str(github_env), "RUNNER_TEMP": str(env.tmp),
                  "BASE_SHA": env.repo.git("rev-parse", "main"),
                  "HEAD_SHA": env.repo.git("rev-parse", "HEAD", cwd=where),
                  "HEAD_REF": "fix/tidy-readme"}

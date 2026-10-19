@@ -133,7 +133,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF" 2> "$RUNNER_TEMP/forge-pr-check.log"
       - name: Report review status
         if: always()
         env:
@@ -142,6 +142,9 @@ jobs:
           REVIEW_OUTCOME: ${{ steps.review.outcome }}
           REVIEW_PENDING: ${{ steps.review.outputs.review-pending }}
         run: |
+          if [ -f "$RUNNER_TEMP/forge-pr-check.log" ]; then
+            cat "$RUNNER_TEMP/forge-pr-check.log"
+          fi
           state=failure
           if [ "$REVIEW_OUTCOME" = success ]; then
             state=success

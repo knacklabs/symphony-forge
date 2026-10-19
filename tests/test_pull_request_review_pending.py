@@ -33,6 +33,7 @@ def test_1_generated_gate_reports_review_state(env, tmp_path, adopted, review):
                  "HEAD_SHA": repo.git("rev-parse", "HEAD", cwd=where),
                  "HEAD_REF": "fix/tidy-readme", "GH_TOKEN": "test-token",
                  "GITHUB_REPOSITORY": "example/client", "GITHUB_RUN_ID": "123",
+                 "RUNNER_TEMP": str(tmp_path),
                  "GITHUB_OUTPUT": str(tmp_path / "outputs")}
     endpoint = f"repos/example/client/statuses/{variables['HEAD_SHA']}"
     job_url = "https://github.com/example/client/actions/runs/123/job/456"
@@ -56,6 +57,12 @@ def test_1_generated_gate_reports_review_state(env, tmp_path, adopted, review):
         reported = subprocess.run(["bash", "-e", "-c", script], cwd=repo.path, env=variables,
                                   capture_output=True, text=True, encoding="utf-8", timeout=60)
         assert reported.returncode == (1 if review in {"stale", "blocked"} else 0), reported.stderr
+        if review in {"stale", "blocked"}:
+            # gh --log-failed sees only the failed reporter, since the gate allows failure.
+            problem = ("out of date: the product files or what the change must do changed after it"
+                       if review == "stale" else "blocked by serious findings no one fixed or dismissed")
+            assert (f"The committed review at the head of fix/tidy-readme is {problem}.\n"
+                    "Next: forge close tidy-readme\n") in reported.stdout + reported.stderr
     calls = env.gh_calls("api", "--method", "POST", endpoint)
     assert len(calls) == 1, (checked.stdout, checked.stderr, calls)
     fields = dict(arg.split("=", 1) for arg in calls[0] if "=" in arg)
