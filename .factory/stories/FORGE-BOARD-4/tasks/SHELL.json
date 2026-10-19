@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-4-SHELL",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T08:38:59.186865+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "db8d914355a5f82ea12342e4bd0726da893c1e03",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
