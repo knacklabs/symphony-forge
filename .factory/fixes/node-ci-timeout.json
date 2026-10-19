@@ -4,12 +4,20 @@
   "done_when": "The generated tests job for Node client repos has a 30-minute limit, and close reports a tests job that ran out of time as a timeout with its own next step instead of sending the item to a worker, on new repos and after sync on existing repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T08:39:44.784976+00:00",
       "step": "start"
     }
   ],
-  "why": "Node client repos' generated CI gives tests 10 minutes and close treats a timeout as the worker's failure (issue 950)"
+  "stuck": {
+    "close": null,
+    "head": "c07c77449dec4c68bfaafe30b561821ce10c46a3",
+    "keys": {},
+    "round": null
+  },
+  "why": "Node client repos' generated CI gives tests 10 minutes and close treats a timeout as the worker's failure (issue 950)",
+  "worker": "codex"
 }
