@@ -43,7 +43,7 @@ with sync_playwright() as p:
         assert 'forge ' not in seen['answer']['message'].lower(), seen
         # Board.navigate and the keyboard both move between pages, and the address keeps the page.
         page.evaluate("async () => " + BOARD + ".navigate('releases')")
-        assert page.get_by_role('link', name='Releases').get_attribute('aria-current') == 'page'
+        expect(page.get_by_role('link', name='Releases')).to_have_attribute('aria-current', 'page')
         assert page.url.endswith('#releases')
         for _ in range(10):
             page.keyboard.press('Tab')
@@ -51,8 +51,8 @@ with sync_playwright() as p:
                 break
         assert page.evaluate("getComputedStyle(document.activeElement).outlineStyle") != 'none'
         page.keyboard.press('Enter')
-        assert page.get_by_role('link', name='Insights').get_attribute('aria-current') == 'page'
-        assert page.get_by_role('link', name='Releases').get_attribute('aria-current') is None
+        expect(page.get_by_role('link', name='Insights')).to_have_attribute('aria-current', 'page')
+        expect(page.get_by_role('link', name='Releases')).not_to_have_attribute('aria-current', 'page')
         light = page.evaluate('getComputedStyle(document.body).backgroundColor')
         page.close()
         for width, height, scheme in ((390, 844, 'dark'), (1440, 900, 'dark')):
