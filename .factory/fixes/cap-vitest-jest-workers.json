@@ -60,7 +60,7 @@
       "gain": 3,
       "harm": 3,
       "line": 105,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -70,30 +70,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8ab80bcd951418d720002923cdb7acb35dd2547fbaca9072ccd51318f0c452c4",
-    "changed": "ea21d9a66748881771072447d77a12a83224d817f985fa4043248f9c345b77dd",
-    "commit": "ea7779619c95e69f6ad4355644a5c7f58e231a7e",
+    "branch_diff": "938357ccfb15134c719cdbfdfed694c8e57125b56ad639c8cf99e9b2c9d995b9",
+    "changed": "981720698e72fdd11b3d89745755a777de9128ea4d3cd045c1fba4c4a6aca1ba",
+    "commit": "e6a26765a61be92ca3d9743aa863e9108e5c17c6",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. `json.dumps` defaults to ASCII escaping, but [Node's NODE_OPTIONS parser](https://github.com/nodejs/node/blob/v22.x/src/node_options.cc#L1694) removes escape backslashes rather than decoding JSON Unicode escapes. If Forge is installed under a non-ASCII user directory such as `C:/Users/Jos\u00e9/`, the preload path instead contains `Josu00e9`. Running `npm test` with a visible script such as `vitest run --maxWorkers=8` then fails with MODULE_NOT_FOUND before npm or its lifecycle hooks run. Preserve Unicode characters when constructing the quoted preload path.",
-        "file": "src/forge/fasttest.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 105,
-        "priority": "P1",
-        "title": "Preserve non-ASCII paths in the Node preload option",
-        "work": 1
-      }
-    ],
-    "id": "53f8f42c-f826-42ff-974b-0c232d367658",
-    "status": "blocked"
+    "findings": [],
+    "id": "95722932-85b2-479e-a890-fc502872f302",
+    "status": "clean"
   },
   "round": 3,
   "settled_areas": [
     "node_worker_budget() in src/forge/fasttest.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T16:59:09.930837+00:00",
@@ -105,6 +94,10 @@
     },
     {
       "at": "2026-10-18T18:28:21.052812+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T05:35:16.867171+00:00",
       "step": "review"
     }
   ],
@@ -128,7 +121,6 @@
     },
     "round": 2
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 61d87cbf053d6e765cbbeb4ef778b0c8293dfde2` exited with status 1 on this machine.\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: 'uv run --frozen --python 3.11 forge test --pyt...>\nendtime = 134609.45167975, orig_timeout = 120\nstdout_seq = [b'This machine is busy (load 2.2 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [b'warning: `VIRTUAL_ENV=/Users/ravikiranvemula/Workdir/symphony-forge-fix-cap-vitest-jest-workers/.venv` does not mat...gnored\\n', b'Using CPython 3.11.11\\n', b'Creating virtual environment at: .venv\\n', b'Installed 12 packages in 20ms\\n']\nskip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command 'uv run --frozen --python 3.11 forge test --pytest ea7779619c95e69f6ad4355644a5c7f58e231a7e' timed out after 120 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n1 failed, 70 passed, 1 error in 230.27s (0:03:50)",
   "why": "Test runs cap pytest's workers to the machine budget but leave Vitest and Jest at one worker per core, so parallel rounds overload the machine (issue 924)",
   "worker": "codex"
 }
