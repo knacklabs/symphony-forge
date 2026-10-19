@@ -2,13 +2,19 @@
   "branch": "task/FORGE-BOARD-4-NOW",
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-19T12:22:09.231462+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The first screen is stuck. It should deliver: needs-you strip, pipeline, stories rail, figures, Team and Me\nIt changes 599 lines outside tests, over its limit of 400.\nThe worker tried: Cards keep long keys and tags inside, Merged counts one set, and the first screen fits about 120 words; The board's first screen shows what needs you, the work in five stages, the stories and four figures.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "claude",
+    "wait_id": "3f26939f-8ba4-4731-a38d-9661c5cc1010"
+  },
   "stuck": {
     "close": null,
     "head": "441456201c21e28cf016eb0b4e7731a1175786a1",
