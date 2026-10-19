@@ -116,7 +116,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
       - id: windows-paths
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && steps.parent-tests.outputs.reuse != 'true'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force D:/t | Out-Null
@@ -124,7 +124,7 @@ jobs:
           "TMP=D:/t" >> $env:GITHUB_ENV
           "npm-cache=$(npm config get cache)" >> $env:GITHUB_OUTPUT
       - uses: actions/cache@v4
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && steps.parent-tests.outputs.reuse != 'true'
         with:
           path: ${{ steps.windows-paths.outputs.npm-cache }}
           key: npm-${{ runner.os }}-jest-30.2.0-vitest-3.2.4
@@ -147,7 +147,7 @@ jobs:
       # Each artifact contains only this group's measurements, ready to combine into
       # .test_durations_windows for the next dispatched run. The first run uses the Linux seed.
       - uses: actions/upload-artifact@v4
-        if: always() && runner.os == 'Windows'
+        if: always() && runner.os == 'Windows' && steps.parent-tests.outputs.reuse != 'true'
         with:
           name: Windows-test-durations-${{ matrix.group }}
           path: ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
