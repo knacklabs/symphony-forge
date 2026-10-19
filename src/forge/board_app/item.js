@@ -6,7 +6,7 @@ const { renderPlan } = await import(`./markdown.js${TOKEN}`);
 const STAGES = {
   working: 'Building', fixing: 'Building', building: 'Building', 'checks failed': 'Building',
   reviewing: 'Review', 'waiting for checks': 'Review', hotspot: 'Review',
-  ready: 'Ready', merged: 'Merged', done: 'Merged',
+  ready: 'Ready', 'ready to merge': 'Ready', merged: 'Merged', done: 'Merged',
 };
 const TONE = { Building: 'moving', Review: 'moving', Ready: 'ready', Merged: 'ready', Planned: 'waiting' };
 
@@ -89,7 +89,8 @@ function roundWhat(round) {
 function figures(row) {
   const count = row.findings?.count;
   return el('dl', { class: 'figures' },
-    [['review rounds', row.rounds ? row.rounds.length : row.round ?? 'unknown'],
+    [['review rounds', row.rounds ? row.rounds.reduce((total, round) => total
+      + (round.first != null && round.last != null ? round.last - round.first + 1 : 1), 0) : row.round ?? 'unknown'],
      ['known issues kept', issues(row).length],
      ['open findings', typeof count === 'number' ? count : 'unknown']]
       .map(([label, value]) => el('div', {}, el('dt', {}, label), el('dd', {}, String(value)))));
@@ -139,7 +140,7 @@ function drawerBody(row) {
       el('h2', { id: 'drawer-title', tabindex: '-1' }, row.title),
       el('p', { class: 'who' }, el('span', { 'data-assign': row.id }, person(row)),
         el('a', { href: `#item/${row.id}`, class: 'more' }, 'Full history')),
-      el('p', { class: 'state-line' }, [row.status, row.waits_on].filter(Boolean).join('. ') || 'Status unknown.')),
+      el('p', { class: 'state-line' }, row.status || 'Status unknown.')),
     timeBar(row),
     el('section', { class: 'block' }, el('h3', {}, 'Rounds'), roundList(row, 4)),
     parts.length ? el('section', { class: 'block' }, el('h3', {}, row.kind === 'story' ? 'Its parts' : 'Its story’s parts'),
@@ -235,15 +236,16 @@ async function showPage() {
 
 function fillPage() {
   const { row } = page;
+  const tabId = (name) => `tab-${name.replaceAll(' ', '-')}`;
   page.seen = JSON.stringify(rows().find((one) => one.id === row.id) || null);
   const tabs = ['Overview', ...(row.kind === 'story' ? ['Plan'] : []), 'Rounds', 'Known issues'];
   const kept = issues(row);
   page.node.querySelector('.crumbs [aria-current]').textContent = row.title;
   const tablist = el('div', { role: 'tablist', 'aria-label': row.title, class: 'tabs' }, tabs.map((name) => el('button', {
-    type: 'button', role: 'tab', id: `tab-${name}`, 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
-    onclick: () => { page.tab = name; fillPage(); document.getElementById(`tab-${name}`).focus(); },
+    type: 'button', role: 'tab', id: tabId(name), 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
+    onclick: () => { page.tab = name; fillPage(); document.getElementById(tabId(name)).focus(); },
   }, name === 'Known issues' ? `Known issues · ${kept.length}` : name)));
-  const panel = el('section', { role: 'tabpanel', id: 'tab-panel', 'aria-labelledby': `tab-${page.tab}`, class: 'panel' });
+  const panel = el('section', { role: 'tabpanel', id: 'tab-panel', 'aria-labelledby': tabId(page.tab), class: 'panel' });
   panel.append(...{ Overview: overview, Plan: plan, Rounds: roundsTab, 'Known issues': knownIssues }[page.tab](row, panel));
   page.node.replaceChildren(page.node.firstChild,
     el('div', { class: 'item-grid' },
@@ -269,7 +271,8 @@ function overview(row) {
     el('section', { class: 'block' }, el('h2', {}, 'History'),
       el('dl', { class: 'facts' },
         fact('Started by', row.started_by), fact('Approved by', row.approved_by),
-        fact(row.merged_at ? 'Merged' : 'Merged by', row.merged_at ? `${day(row.merged_at)} by ${row.merged_by?.name || 'unknown'}` : row.merged_by ? row.merged_by.name : 'not yet'),
+        fact(row.merged_at ? 'Merged' : 'Merged by', row.merged_at ? `${day(row.merged_at)} by ${row.merged_by?.name || 'unknown'}`
+          : row.merged_by?.name || (['merged', 'done'].includes(row.stage) ? 'unknown' : 'not yet')),
         pr ? el('div', {}, el('dt', {}, 'Pull request'), el('dd', {}, pr)) : null),
       history.length ? el('ol', { class: 'events' }, history.slice().reverse().map((event) =>
         el('li', {}, el('time', { datetime: event.time }, day(event.time)), el('span', {}, event.line)))) : null),

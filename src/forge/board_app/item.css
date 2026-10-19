@@ -15,8 +15,8 @@
   border-left: 1px solid var(--line);
   background: var(--surface);
   box-shadow: -12px 0 32px rgb(21 23 26 / 0.10);
-  transition: translate 200ms var(--ease-out), opacity 200ms var(--ease-out);
-  @starting-style { translate: 24px 0; opacity: 0; }
+  transition: translate 200ms var(--ease-out);
+  @starting-style { translate: 24px 0; }
 }
 
 .drawer .head {
