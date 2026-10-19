@@ -1,4 +1,4 @@
-"""Clients receive coordinator recovery guidance, and close points to it on a conflict."""
+"""Clients receive recovery guidance; close offers a short conflict resolution round."""
 import shutil
 from pathlib import Path
 
@@ -33,13 +33,12 @@ def test_1_synced_skill_explains_keeping_work_moving_and_close_names_it(env, tmp
     refused = env.close(item)
     assert refused.returncode == 1, refused.stdout + refused.stderr
     assert "Merging main into fix/tidy-readme conflicts in README.md." in refused.stderr
-    assert "Keeping work moving" in refused.stderr
+    assert f"Next: forge work {item} for a short resolve-only round" in refused.stderr
     assert "then forge close tidy-readme" in refused.stderr
     assert repo.git("status", "--porcelain", cwd=where) == ""
 
     for host in (".claude", ".codex"):
         skill = client / host / "skills/forge/SKILL.md"
-        assert f"{host}/skills/forge/SKILL.md" in refused.stderr
         section = skill.read_text(encoding="utf-8").split("## Keeping work moving\n", 1)[1]
         flat = " ".join(section.split("\n## ", 1)[0].split())
         for instruction in (

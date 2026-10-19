@@ -210,6 +210,9 @@ def _work(args: argparse.Namespace) -> bool:
         from forge import close  # close imports story, which imports this module
 
         close.stuck_round(top, item, state, config, findings)
+        default = repo.default_branch(top)
+        conflicts = close._merge_default(top, item, repo.current_branch(top), default, None,
+                                         config, before_work=True)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -219,16 +222,29 @@ def _work(args: argparse.Namespace) -> bool:
             round_number = 1 + len({(entry["conversation"], entry["turn"])
                                     for line in turns.read_text(encoding="utf-8").splitlines()
                                     if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
-        changes = ""
-        if thread:
-            saved = session_record if is_native else session or codex.record(top, item)
-            changes = _changes(top, saved.get("head") or saved["start"])
-        brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
-                                continued=bool(thread), changes=changes)
-        fresh_brief = None
-        if thread:
-            fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
-                                   round_number)
+        if conflicts:
+            subject = "Resolve only the merge conflicts"
+            brief = (f"# {subject}\n\nWork in `{top.as_posix()}` on this item's branch.\n"
+                     f"Run `git merge origin/{default}` and resolve only these files: "
+                     + ", ".join(f"`{path}`" for path in conflicts) + ".\n"
+                     "Keep both changes. Stage only the resolved files and commit the merge.\n"
+                     + SETTINGS + "\n"
+                     "If forge.toml conflicts, keep the incoming settings and this branch's version pin.\n"
+                     "Keep the previous Proof list: in the merge commit message.\n"
+                     "Do not fix review findings or add other work in this round.\n"
+                     "Do not push or run forge close. End after the merge commit.\n")
+            fresh_brief = brief
+        else:
+            changes = ""
+            if thread:
+                saved = session_record if is_native else session or codex.record(top, item)
+                changes = _changes(top, saved.get("head") or saved["start"])
+            brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
+                                    continued=bool(thread), changes=changes)
+            fresh_brief = None
+            if thread:
+                fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
+                                       round_number)
         state["status"] = "fixing" if findings or failing else "working"
         state["worker"] = family
         state["round"] = round_number
@@ -296,7 +312,7 @@ def _work(args: argparse.Namespace) -> bool:
                     repo.commit_state(f"{item} fell back to Codex",
                                       repo.write_state(item, state, top), top=top)
                     brief, fresh_brief = fresh_brief or brief, None
-                    if thread:
+                    if thread and not conflicts:
                         saved = codex.record(top, item)
                         fresh_brief = brief
                         brief, _ = _brief(match, top, state, findings, failing, note, question,

@@ -362,10 +362,8 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            # Recovery now points to the shipped recipe before committing the resolved merge.
-            "next": re.compile(r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
-                               r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
-                               r"then forge close tidy-readme")}
+            # Recovery now offers a bounded worker round instead of a manual merge recipe.
+            "next": "forge work tidy-readme for a short resolve-only round, then forge close tidy-readme"}
 
 
 def _bad_dismissal(env):
