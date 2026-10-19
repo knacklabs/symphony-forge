@@ -236,6 +236,7 @@ def _failures_keep_run_end_occurrences(env, monkeypatch, failure):
             config = where / 'forge.toml'
             env.commit(where, 'forge.toml', config.read_text('utf-8').replace(
                 'print(123)', 'raise SystemExit(1)'))
+            Upgrade(env, env.tmp).on_main('forge.toml', config.read_text('utf-8'))
             step = 'test run'
         else:
             from test_close import FAILED
