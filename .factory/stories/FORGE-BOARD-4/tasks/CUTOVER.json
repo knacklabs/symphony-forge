@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-4-CUTOVER",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T11:18:36.810039+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "784dd24a640f009d73bcb7c1cd2495892cfad3ec",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
