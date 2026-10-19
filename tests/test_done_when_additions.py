@@ -25,12 +25,12 @@ def test_1_amend_preserves_done_when_on_append_and_previews_both_changes(client)
         assert f"Old Done-when:\n{old}\nNew Done-when:\n{expected}\n" in amended.stdout
         assert amended.stdout.index("New Done-when:") < amended.stdout.index(
             "Fix greet-readers is now done when:")
-        # The real worker command must receive the stored result, not only an output preview.
-        worked = client.forge("work", "greet-readers")
-        assert worked.returncode == 0, worked.stdout + worked.stderr
-        brief = calls(log)[-1]["brief"]
-        assert f"Done when: {expected}\n" in brief
+        # The next amendment's old text proves the previous change was stored.
         old = expected
+    # Start one worker after both changes; resumed briefs do not repeat Done-when.
+    worked = client.forge("work", "greet-readers")
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    assert f"Done when: {old}\n" in calls(log)[-1]["brief"]
     for host in (".codex", ".claude"):
         guide = (folder / host / "skills/forge/SKILL.md").read_text("utf-8")
         assert 'forge fix amend <fix> --append "<text>" --because "<why>"' in guide
