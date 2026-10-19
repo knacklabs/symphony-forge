@@ -1,6 +1,13 @@
 {
   "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
   "branch": "fix/signoff-whitespace",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155bb-6bd0-76d1-850f-9e8a3698f1b6",
+    "head": null,
+    "start": "0e2e03478c97007df1e061a2858bae5805bd912b"
+  },
   "done_when": "forge decision accept client-signoff ignores trailing whitespace and line-ending differences when it compares the Answers to BRIEF, and a refusal names the first line that differs; a test covers both on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
