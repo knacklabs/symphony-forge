@@ -10,13 +10,29 @@
   },
   "done_when": "On Windows CI the temp folder is on D:, npm downloads are cached, groups split by Windows timings, and two dispatched Windows runs measured with the same script show the change in runner-minutes and the longest group",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3ec5a57497d4f2d4a7e688a42a5fb9b9168b516e1f807c81ea0fed8ac746860f",
+    "changed": "9997bb8139e9486016a1874486740611c23537bee4cc305df4449d141a46fb45",
+    "commit": "2ed8ac3c0eb5baee882b385670c71501c415fcc5",
+    "dismissals": [],
+    "findings": [],
+    "id": "452c5373-fd48-496b-8c02-647d922b7378",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T15:57:35.565002+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T08:41:15.316837+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
