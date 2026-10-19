@@ -97,7 +97,10 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "settled_areas": [
+    "_cancel_superseded() in src/forge/checks.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:58:53.683132+00:00",
@@ -111,9 +114,13 @@
   "stop": {
     "area": "_cancel_superseded() in src/forge/checks.py",
     "at": "2026-10-18T17:54:46.733438+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "_cancel_superseded() in src/forge/checks.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "6b649fbb-ba29-4d7a-a08a-f33c75806f13"
+    "reason": "Owner narrowed (19 Oct): cancel only Forge's own forge.yml runs of this pull request's number that are older than its newest run; if a cancel doesn't release the concurrency group, say so and name GitHub's force-cancel; client workflows are never touched.",
+    "wait_id": "6b649fbb-ba29-4d7a-a08a-f33c75806f13",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
