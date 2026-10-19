@@ -89,7 +89,7 @@
     "id": "53f8f42c-f826-42ff-974b-0c232d367658",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "settled_areas": [
     "node_worker_budget() in src/forge/fasttest.py"
   ],
@@ -120,13 +120,13 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "7eb6606b-1c7c-456f-a0c0-218fe2590c28",
-    "head": "d8f3f4ecec0ea25bef0f40e4f094933824d197c4",
+    "close": "07c3e3a8-6ae3-4908-8aa5-fe39d62ca3a7",
+    "head": "c6fd6833868b0c4ff101886b2ad31d6eef42027f",
     "keys": {
-      "the review finding \"Preserve Jest's serial execution mode\" in src/forge/fasttest.py": 1,
-      "the review finding \"Preserve npm lifecycle hooks when replacing a script's worker cap\" in src/forge/fasttest.py": 1
+      "close's tests failing": 1,
+      "the review finding \"Preserve non-ASCII paths in the Node preload option\" in src/forge/fasttest.py": 1
     },
-    "round": 1
+    "round": 2
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 61d87cbf053d6e765cbbeb4ef778b0c8293dfde2` exited with status 1 on this machine.\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: 'uv run --frozen --python 3.11 forge test --pyt...>\nendtime = 134609.45167975, orig_timeout = 120\nstdout_seq = [b'This machine is busy (load 2.2 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [b'warning: `VIRTUAL_ENV=/Users/ravikiranvemula/Workdir/symphony-forge-fix-cap-vitest-jest-workers/.venv` does not mat...gnored\\n', b'Using CPython 3.11.11\\n', b'Creating virtual environment at: .venv\\n', b'Installed 12 packages in 20ms\\n']\nskip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command 'uv run --frozen --python 3.11 forge test --pytest ea7779619c95e69f6ad4355644a5c7f58e231a7e' timed out after 120 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n1 failed, 70 passed, 1 error in 230.27s (0:03:50)",
   "why": "Test runs cap pytest's workers to the machine budget but leave Vitest and Jest at one worker per core, so parallel rounds overload the machine (issue 924)",
