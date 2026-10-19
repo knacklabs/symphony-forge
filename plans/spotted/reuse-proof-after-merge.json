@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe CI conftest.py case exceeds the 60-second limit and leaves child processes alive.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 79,
+      "text": "The CI conftest.py case exceeds the 60-second limit and leaves child processes alive.",
+      "from": "worker",
+      "item": "reuse-proof-after-merge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_ci_reuses_proof_without_pr_snapshots.py\tNot done: a real merge's run skips its tests",
       "kind": "edge",
       "path": "tests/test_ci_reuses_proof_without_pr_snapshots.py",
