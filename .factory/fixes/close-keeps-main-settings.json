@@ -23,7 +23,7 @@
       "gain": 4,
       "harm": 4,
       "line": 108,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -36,7 +36,7 @@
       "gain": 4,
       "harm": 3,
       "line": 373,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -49,7 +49,7 @@
       "gain": 3,
       "harm": 3,
       "line": 220,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -59,47 +59,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e3048a5776a1fb8ac8c0b46af7e0327e0d8b7a948572f0609033cdfe69f5fa01",
-    "changed": "e277bc2bb8ea0f7946abfdfb89865d515299d1f81d2784ec69f700be6953689a",
-    "commit": "0031967994205f273b04e7982ec83e2bd2da32d2",
+    "branch_diff": "0409c6b569662964fa54f0b54d90cb76012d03ec2cbab3609d95069bf7641c99",
+    "changed": "061b19004f39174cf8ec79504798bdd6567f3daad33244612382cce005b5f021",
+    "commit": "a2d2e672ecd4a86826992436ceb67180990849c7",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4 (floor: migration)\nRaise: Functional \u2014 Closing a normal migration now deletes its newly created forge.toml and fails. src/forge/migrate.py:170 defines a Done-when without the literal `forge.toml`, so settings_allowed returns false; the migration creates that file at lines 634\u2013642 while origin/main still has no copy. This restore removes the file from the index and worktree, and the following read raises FileNotFoundError. Preserve migration-owned settings until their initial pull request merges.",
-        "file": "src/forge/task.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 108,
-        "priority": "P1",
-        "title": "Exclude initial migrations from restoring default settings",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 Restoring incoming settings leaves the normal commit nudge unable to finish the merge. worker.py:330\u2013337 asks the successful Codex worker to commit remaining changes, but githooks.py:129\u2013134 rejects every worker commit with forge.toml staged, including these unchanged incoming settings. Unlike the previous restoration, this leaves that forbidden staged difference intact, so the nudge encounters the same refusal and the merge remains open. The new evidence beyond the recorded initial hook refusal is this blocked post-restoration commit. The new test avoids that path by forcing a failed turn and finishing the merge outside the worker at test_close_preserves_default_settings.py:66\u201376.",
-        "file": "src/forge/worker.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 373,
-        "priority": "P1",
-        "title": "Allow the worker to finish a merge containing incoming settings",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional \u2014 Close continues using stale settings after committing main's restored configuration. `cfg` was loaded at close.py:98 and is still passed to review.run at line 336 and checks.wait at line 451. For example, when main removes or renames a required check, this repair writes the current check list but close still waits for the obsolete check and refuses despite all current checks passing. Reload the repaired configuration before subsequent review and check decisions.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 220,
-        "priority": "P1",
-        "title": "Reload configuration after repairing forge.toml",
-        "work": 1
-      }
-    ],
-    "id": "cb23c0d7-6ed6-4f6a-8ebc-2f1fd703140d",
-    "status": "blocked"
+    "findings": [],
+    "id": "60ba4656-6f13-4482-b44f-f035d300b02d",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T08:39:40.297418+00:00",
@@ -107,6 +76,10 @@
     },
     {
       "at": "2026-10-19T09:20:46.056534+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T09:43:29.596200+00:00",
       "step": "review"
     }
   ],
