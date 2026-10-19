@@ -3,7 +3,7 @@
 /* Scoped so these short class names never restyle the other screens. */
 @scope (.drawer, .item-page) {
 
-.drawer {
+&.drawer {
   position: fixed;
   top: 48px;
   right: 0;
@@ -22,14 +22,14 @@
   @starting-style { translate: 24px 0; }
 }
 
-.drawer .head {
+&.drawer .head {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--space-2);
 }
 
-.drawer .head > :not(.kind, .close) { grid-column: 1 / -1; }
-.drawer h2:focus { outline: none; }
+&.drawer .head > :not(.kind, .close) { grid-column: 1 / -1; }
+&.drawer h2:focus { outline: none; }
 
 .kind {
   margin: 0;
@@ -68,7 +68,7 @@
 
 .close svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
 
-.drawer h2, .item-page h1 {
+&.drawer h2, &.item-page h1 {
   margin: 0;
   font-size: var(--size-title);
   line-height: 30px;
@@ -155,7 +155,7 @@
 
 .rounds .what strong { font-weight: 600; }
 
-.drawer .rounds .what {
+&.drawer .rounds .what {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -222,7 +222,7 @@
 
 /* The full page */
 
-.item-page {
+&.item-page {
   flex: 1;
   min-height: 0;
   display: flex;
