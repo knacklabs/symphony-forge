@@ -37,6 +37,8 @@ COMMAND = re.compile(r"\bforge [a-z]|--[a-z]|`")
 axe = Axe()
 
 def scan(page, where, context=None):
+    # Scan what stays on screen, not a frame of the drawer's entry: wait for every animation to end.
+    page.evaluate('Promise.all(document.getAnimations().map(a => a.finished))')
     found = axe.run(page, context=context).response['violations']
     assert not found, (where, [(v['id'], [n['target'] for n in v['nodes']]) for v in found])
 
