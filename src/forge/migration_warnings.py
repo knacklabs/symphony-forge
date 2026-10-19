@@ -7,10 +7,13 @@ from pathlib import Path
 from forge import board, repo, story
 
 
-def before_close(top: Path) -> None:
-    """One fresh origin snapshot supplies both warnings and close's default-branch merge."""
+def before_close(top: Path) -> bool:
+    """Print warnings and report whether this close refreshed origin."""
+    fetched = repo.command_fact("fetched origin", top, dict)
+    fresh = not fetched.get("all")
     for warning in warnings(top):
         print(warning)
+    return fresh and bool(fetched.get("all"))
 
 
 def fetch_default(top: Path, default: str, *, refreshed: bool) -> None:
