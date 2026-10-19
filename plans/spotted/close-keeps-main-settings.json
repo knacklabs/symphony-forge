@@ -32,6 +32,17 @@
       "item": "close-keeps-main-settings",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tThe CI command times out after sixty seconds and leaves child processes alive.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 71,
+      "text": "The CI command times out after sixty seconds and leaves child processes alive.",
+      "from": "worker",
+      "item": "close-keeps-main-settings",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
