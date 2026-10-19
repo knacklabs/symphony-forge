@@ -63,7 +63,7 @@
     "id": "59aa7860-8f24-4a75-a859-6934346be528",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -79,23 +79,13 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "Two open items can add database migrations with the same number, and is stuck. It should deliver: Close and forge next warn, without refusing, when another open item's branch adds a migration file with the same number under the repo's migrations folders, naming both items, and a test covers it on new and adopted repos\nTwo rounds in a row left the review finding \"Determine whether peers are open from their actual item and landed state\" in src/forge/migration_warnings.py.\nThe worker tried: Refresh migration peers and exclude completed work.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "Owner set the rule on 19 October 2026: an item is open only when the board and forge next show it unfinished; one focused round reuses that completed-state logic",
-    "tool": "codex",
-    "wait_id": "3055810b-7bf3-46e2-9517-8033112f86b0",
-    "worker_round": 2
-  },
   "stuck": {
-    "close": "e1ef5ebf-834c-4050-9fab-159fe08488c3",
-    "head": "19b80126ba2cce75e5e9a8e5cf4be86e10cb3d47",
+    "close": "63ff2ebe-a534-48c2-8edc-cbc81795b78f",
+    "head": "908111f9a422be25470fbb934a8a06c353131d7d",
     "keys": {
-      "the review finding \"Determine whether peers are open from their actual item and landed state\" in src/forge/migration_warnings.py": 1,
-      "the review finding \"Refresh origin's peer refs before checking collisions\" in src/forge/migration_warnings.py": 1
+      "the review finding \"Determine whether peers are open from their actual item and landed state\" in src/forge/migration_warnings.py": 2
     },
-    "round": 1
+    "round": 2
   },
   "why": "Two open items can add database migrations with the same number, and neither review sees the other branch (issue 925)",
   "worker": "codex"
