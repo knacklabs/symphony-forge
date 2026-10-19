@@ -23,8 +23,8 @@
     "id": "822061b5-d5c8-4b9f-a212-b881554be4d4",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T19:54:49.797624+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "e6c50ab281f37beeba55aa2bec87c4fc0b6ff371",
+    "close": "3e788788-7b7d-4f31-82c0-37edbc12d7dc",
+    "head": "a25f4870e83c07e9e0d58168a017cab2b3c7355b",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The forge merge enable refusal from an agent shell tells the owner to use their own terminal, and an owner tried the ! prefix inside the session instead (issue 977)",
   "worker": "codex"
