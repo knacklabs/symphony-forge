@@ -3,6 +3,10 @@
   "branch": "task/FORGE-BOARD-4-CUTOVER",
   "flagged": [],
   "known": [],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
@@ -14,8 +18,8 @@
     "id": "ba7701c3-fe55-4e7a-ba5b-9d70db2afe27",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T11:18:36.810039+00:00",
@@ -27,10 +31,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "784dd24a640f009d73bcb7c1cd2495892cfad3ec",
+    "close": "60e518b6-f065-48a5-a9aa-7185ff2cbbea",
+    "head": "3c978884276d63672af2c91959e3e08bf3f68703",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "claude"
 }
