@@ -109,12 +109,12 @@ function card(row, focus = `card:${row.id}`) {
     'data-stage': row.stage, 'data-focus': focus, onclick: open(row) },
   el('span', { class: 'chip-title' }, row.title),
   el('span', { class: 'chip-meta' }, el('span', { class: 'key' }, row.kind === 'fix' ? 'Fix' : key(row.id)),
-    note && el('span', { class: 'tag', 'data-note': note }, note)));
+    note && el('span', { class: 'now-tag', 'data-note': note }, note)));
 }
 
 function more(name, title, entries, shown) {
   if (entries.length <= shown) return null;
-  return el('button', { type: 'button', class: 'more', 'data-focus': `more:${name}`, 'aria-haspopup': 'dialog',
+  return el('button', { type: 'button', class: 'now-more', 'data-focus': `more:${name}`, 'aria-haspopup': 'dialog',
     onclick: () => { list = { key: name, title, entries }; Board.screens.now(...last); } },
   `and ${entries.length - shown} more`);
 }
@@ -130,7 +130,7 @@ function ask(entry) {
 function strip(shown) {
   const count = shown.asks.length;
   return el('section', { class: 'needs', 'aria-label': 'Needs you' },
-    el('p', { class: 'needs-count' }, shown.viewer ? el('span', { class: 'who' }, `@${shown.viewer.replace(/^@/, '')}`) : null,
+    el('p', { class: 'needs-count' }, shown.viewer ? el('span', { class: 'now-who' }, `@${shown.viewer.replace(/^@/, '')}`) : null,
       el('strong', {}, String(count)), ' ', count === 1 ? 'needs you' : 'need you'),
     shown.viewer === '' ? el('p', { class: 'note' }, 'Your GitHub login is unknown, so no item shows as yours.') : null,
     shown.asks.slice(0, ASKS).map(ask),
@@ -184,7 +184,7 @@ function rail(shown) {
 
 function figures(shown) {
   const figure = (value, words, tone) => el('p', { 'data-tone': tone }, el('strong', {}, String(value)), ' ', words);
-  return el('section', { class: 'figures', 'aria-label': 'Figures' },
+  return el('section', { class: 'now-figures', 'aria-label': 'Figures' },
     figure(shown.merged, 'merged, 7 days'),
     figure(shown.median, 'median item'),
     figure(shown.waiting, 'waiting on people', 'needs-you'),
@@ -197,7 +197,7 @@ function full(shown) {
   const entries = list.key === 'asks' ? shown.asks : list.key === 'stories' ? shown.stories : shown.stages[list.key];
   const panel = el('section', { class: 'list', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'now-list-title' },
     el('header', {}, el('h2', { id: 'now-list-title', tabindex: '-1', 'data-focus': 'list' }, `${list.title}, all ${entries.length}`),
-      el('button', { type: 'button', class: 'close', 'data-focus': 'list-close', onclick: close }, 'Close')),
+      el('button', { type: 'button', class: 'now-close', 'data-focus': 'list-close', onclick: close }, 'Close')),
     el('ul', {}, entries.map((entry) => el('li', {}, list.key === 'asks' ? ask(entry)
       : list.key === 'stories' ? story(entry).firstChild : card(entry, `list:${entry.id}`)))));
   panel.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); });

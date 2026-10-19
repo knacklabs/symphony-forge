@@ -70,7 +70,7 @@ main:has(> .now) {
   color: var(--needs-you);
 }
 
-.needs-count .who {
+.needs-count .now-who {
   font-weight: 600;
   color: var(--ink);
 }
@@ -110,7 +110,7 @@ main:has(> .now) {
   font-weight: 600;
 }
 
-.now .more {
+.now .now-more {
   align-self: center;
   border: 0;
   border-radius: var(--radius-tag);
@@ -121,7 +121,7 @@ main:has(> .now) {
   font-weight: 600;
 }
 
-.stage .more, .rail .more { align-self: flex-start; }
+.stage .now-more, .rail .now-more { align-self: flex-start; }
 
 /* Pipeline and rail */
 .work {
@@ -220,15 +220,15 @@ main:has(> .now) {
   text-overflow: ellipsis;
 }
 
-.chip-meta .tag { flex: none; }
+.chip-meta .now-tag { flex: none; }
 
-.tag {
+.now-tag {
   border-radius: var(--radius-tag);
   padding: 0 6px;
   border: 1px dashed var(--ink-2);
 }
 
-.tag[data-note="checks failed"] {
+.now-tag[data-note="checks failed"] {
   border: 0;
   color: var(--stuck);
   font-weight: 600;
@@ -323,7 +323,7 @@ main:has(> .now) {
 
 .list .ask { width: 100%; }
 
-.close {
+.now-close {
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   padding: var(--space-1) var(--space-3);
@@ -332,7 +332,7 @@ main:has(> .now) {
 }
 
 /* Figures */
-.figures {
+.now-figures {
   flex: none;
   display: flex;
   align-items: baseline;
@@ -341,7 +341,7 @@ main:has(> .now) {
   padding: var(--space-4) 0 var(--space-6);
 }
 
-.figures p {
+.now-figures p {
   margin: 0;
   display: flex;
   align-items: baseline;
@@ -350,18 +350,18 @@ main:has(> .now) {
   color: var(--ink-2);
 }
 
-.figures strong {
+.now-figures strong {
   font-size: var(--size-title);
   line-height: 28px;
   font-weight: 600;
   color: var(--ink);
 }
 
-.figures [data-tone="needs-you"] strong { color: var(--needs-you); }
-.figures [data-tone="stuck"] strong { color: var(--stuck); }
+.now-figures [data-tone="needs-you"] strong { color: var(--needs-you); }
+.now-figures [data-tone="stuck"] strong { color: var(--stuck); }
 
 @media (hover: hover) and (pointer: fine) {
   .chip:hover, .ask:hover { border-color: var(--ink-2); }
-  .story:hover .story-title, .done button:hover, .more:hover { text-decoration: underline; }
+  .story:hover .story-title, .done button:hover, .now-more:hover { text-decoration: underline; }
   .kinds button[aria-pressed="false"]:hover { color: var(--ink); }
 }
