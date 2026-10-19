@@ -164,6 +164,8 @@ def landed(client, tmp_path, monkeypatch, tags=(), merged_days_ago=9):
         pushed(teammate, "Plan a basket and fix the readers", {
             "plans/SHOP.md": DOC.replace("## What changes", "Owner: ana\n\n## What changes"),
             "plans/roadmap.json": json.dumps({"items": [{"key": "SHOP"}]}),
+            # The kept problems' files are on the default branch; the board leaves out deleted files.
+            "src/basket.py": "total = 0\n", "src/page.py": "page = 1\n",
             ".factory/fixes/old.json": json.dumps({"kind": "fix", "branch": "fix/old", "why": "Readers see old",
                                                    "done_when": "Readers see it", "status": "merged", "known": KEPT})})
     client.git("fetch", "-q", "--tags", "origin")
