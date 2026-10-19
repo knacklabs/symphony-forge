@@ -37,8 +37,8 @@
     "id": "ba3b479e-e3a6-4f68-b8bd-3f0b29c52eef",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T19:54:37.464195+00:00",
@@ -58,10 +58,10 @@
     }
   ],
   "stuck": {
-    "close": "ac00868c-eb89-4228-b94e-34d0adcd2d0b",
-    "head": "86339b79d4149022c06343f7ce9b144498359e6e",
+    "close": "89fcb37d-99b6-4156-9b74-ad3ed41d973c",
+    "head": "e5c60b790cff84535ddc67f6d5ad03f99e09bd89",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "forge fix amend --done replaces the whole Done-when, so a coordinator who meant to add a line wiped it (issue 973)",
   "worker": "codex"
