@@ -10,13 +10,56 @@
   },
   "done_when": "The generated tests job for Node client repos has a 30-minute limit, and close reports a tests job that ran out of time as a timeout with its own next step instead of sending the item to a worker, on new repos and after sync on existing repos",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/checks.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 101,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Preserve independent check failures alongside test timeouts",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "19c6f6553e8ae4094034808e3d9ecd9e16756d382eea7aa79f4d53c25fe7d9ab",
+    "changed": "1239049c5694d33e09b653861da76ce54a0980c16916822e35f40a6995325430",
+    "commit": "2c6db76ba771e0ff143e56d92b6e444bc2324c3c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. When one test group times out while another group or lint fails normally, this call raises the timeout refusal before `_pending` examines the independent failures. Those failures consequently lose their worker-recovery path: `src/forge/land.py:94\u2013115` invokes that recovery only for the red refusal. Instead, the user receives only rerun/split guidance. Preserve red handling for independent failures while recognizing the aggregate `tests` failure caused by timed-out groups. The added tests cover failures and timeouts separately, so they miss this mixed-result case.",
+        "file": "src/forge/checks.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 101,
+        "priority": "P1",
+        "title": "[P1] Preserve independent check failures alongside test timeouts",
+        "work": 2
+      }
+    ],
+    "id": "fd6f6e5d-0c38-49e7-97f8-4b1cf6c0b41e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T08:39:44.784976+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T08:56:20.398561+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
