@@ -25,6 +25,19 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
+function replaceContent(node, ...children) {
+  const focused = node.contains(document.activeElement) ? document.activeElement.dataset.focus : null;
+  node.replaceChildren(...children);
+  if (focused) [...node.querySelectorAll('[data-focus]')]
+    .find((control) => control.dataset.focus === focused)?.focus({ preventScroll: true });
+}
+
+function recordedWords(value, fallback = 'See the recorded review for technical details.') {
+  const text = String(value || '');
+  return /\b(?:forge|git|uv|npm|npx|pnpm|yarn|python3?|node)\s+[\w-]|--[a-z]|`/i.test(text)
+    ? fallback : text || 'unknown';
+}
+
 function duration(seconds) {
   if (typeof seconds !== 'number') return 'unknown';
   const minutes = Math.round(seconds / 60);
@@ -83,7 +96,10 @@ function roundName(round) {
 }
 
 function roundWhat(round) {
-  return String(round.line || '').replace(/^Rounds? [^:]*:\s*/, '') || 'unknown';
+  const text = String(round.line || '').replace(/^Rounds? [^:]*:\s*/, '');
+  // Finding titles follow the measured summary. Keep that summary when a title
+  // contains terminal instructions, without exposing the instructions on the board.
+  return recordedWords(text, recordedWords(text.split(' — ')[0]));
 }
 
 function figures(row) {
@@ -124,6 +140,7 @@ function roundList(row, limit) {
 function partList(parts, current) {
   return el('ul', { class: 'parts' }, parts.map((part) => el('li', {},
     el('button', { type: 'button', class: `part ${part.id === current ? 'current' : ''}`,
+                   'data-focus': `part-${part.id}`,
                    'aria-current': part.id === current ? 'true' : 'false', onclick: () => openDrawer(part.id) },
       el('span', {}, part.title), el('span', { class: `state ${TONE[stage(part)] || 'needs-you'}` }, stage(part))))));
 }
@@ -136,10 +153,10 @@ function drawerBody(row) {
   return [
     el('div', { class: 'head' },
       el('p', { class: 'kind' }, tag(row), el('span', {}, kind(row))),
-      el('button', { type: 'button', class: 'close', 'aria-label': 'Close', onclick: closeDrawer }, closeIcon()),
-      el('h2', { id: 'drawer-title', tabindex: '-1' }, row.title),
+      el('button', { type: 'button', class: 'close', 'aria-label': 'Close', 'data-focus': 'close', onclick: closeDrawer }, closeIcon()),
+      el('h2', { id: 'drawer-title', tabindex: '-1', 'data-focus': 'drawer-title' }, row.title),
       el('p', { class: 'who' }, el('span', { 'data-assign': row.id }, person(row)),
-        el('a', { href: `#item/${row.id}`, class: 'more' }, 'Full history')),
+        el('a', { href: `#item/${row.id}`, class: 'more', 'data-focus': 'history' }, 'Full history')),
       el('p', { class: 'state-line' }, row.status || 'Status unknown.')),
     timeBar(row),
     el('section', { class: 'block' }, el('h3', {}, 'Rounds'), roundList(row, 4)),
@@ -183,7 +200,7 @@ async function openDrawer(id) {
 
 function fillDrawer(row) {
   drawer.seen = JSON.stringify(row);
-  drawer.node.replaceChildren(...drawerBody(row));
+  replaceContent(drawer.node, ...drawerBody(row));
 }
 
 function closeDrawer(restore = true) {
@@ -242,12 +259,12 @@ function fillPage() {
   const kept = issues(row);
   page.node.querySelector('.crumbs [aria-current]').textContent = row.title;
   const tablist = el('div', { role: 'tablist', 'aria-label': row.title, class: 'tabs' }, tabs.map((name) => el('button', {
-    type: 'button', role: 'tab', id: tabId(name), 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
+    type: 'button', role: 'tab', id: tabId(name), 'data-focus': tabId(name), 'aria-controls': 'tab-panel', 'aria-selected': String(name === page.tab),
     onclick: () => { page.tab = name; fillPage(); document.getElementById(tabId(name)).focus(); },
   }, name === 'Known issues' ? `Known issues · ${kept.length}` : name)));
   const panel = el('section', { role: 'tabpanel', id: 'tab-panel', 'aria-labelledby': tabId(page.tab), class: 'panel' });
   panel.append(...{ Overview: overview, Plan: plan, Rounds: roundsTab, 'Known issues': knownIssues }[page.tab](row, panel));
-  page.node.replaceChildren(page.node.firstChild,
+  replaceContent(page.node, page.node.firstChild,
     el('div', { class: 'item-grid' },
       el('div', { class: 'summary' },
         el('p', { class: 'kind' }, tag(row), el('span', {}, kind(row))),
@@ -275,7 +292,8 @@ function overview(row) {
           : row.merged_by?.name || (['merged', 'done'].includes(row.stage) ? 'unknown' : 'not yet')),
         pr ? el('div', {}, el('dt', {}, 'Pull request'), el('dd', {}, pr)) : null),
       history.length ? el('ol', { class: 'events' }, history.slice().reverse().map((event) =>
-        el('li', {}, el('time', { datetime: event.time }, day(event.time)), el('span', {}, event.line)))) : null),
+        el('li', {}, el('time', { datetime: event.time }, day(event.time)),
+          el('span', {}, recordedWords(event.line, 'A worker asked a technical question.'))))) : null),
     timeBar(row),
     row.took?.length ? el('section', { class: 'block' }, el('h2', {}, 'How long each step took'),
       el('ul', { class: 'took-list' }, row.took.map((line) => el('li', {}, line)))) : null,
@@ -317,7 +335,8 @@ function knownIssues(row) {
   const byFile = Map.groupBy(kept, (issue) => issue.file || 'No file named');
   return [...byFile].map(([file, list]) => el('section', { class: 'block' }, el('h2', { class: 'file' }, file),
     el('ul', { class: 'issues' }, list.map((issue) => el('li', {},
-      el('span', {}, issue.title), el('span', { class: 'quiet' }, [issue.kept, issue.reason].filter(Boolean).join(': ') || 'unknown'))))));
+      el('span', {}, recordedWords(issue.title)), el('span', { class: 'quiet' },
+        recordedWords([issue.kept, issue.reason].filter(Boolean).join(': '), 'The review kept this problem for later.')))))));
 }
 
 function closePage() {
