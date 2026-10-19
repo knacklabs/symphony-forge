@@ -1060,10 +1060,12 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
 def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] | None:
     """Take the lock for `me` by an exclusive create, clearing a stale one first. None once taken;
     else the owner keeping it, and True, or None when Forge can't tell, which counts as running."""
+    from forge import native
+
     with _one_at_a_time(lock):
         if lock.exists():
             owner = _json(lock)
-            alive = _alive(owner)
+            alive = native.lock_alive(lock)
             if alive is not False:
                 return owner, alive
             lock.unlink(missing_ok=True)

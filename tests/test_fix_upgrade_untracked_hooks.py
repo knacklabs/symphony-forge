@@ -1,4 +1,7 @@
-"""An upgrade ignores Husky's generated runtime files but checks its committed Forge hooks."""
+"""An upgrade ignores Husky's generated runtime files but checks its committed Forge hooks.
+
+Commit resolution in src/forge/repo.py must also work through the runtime git.cmd launcher.
+"""
 from __future__ import annotations
 
 import json
@@ -23,7 +26,8 @@ def test_1_untracked_hook_files_never_block_an_upgrade_but_a_stale_tracked_file_
     prepare = ('node -e "const fs = require(\'fs\'); fs.mkdirSync(\'.husky/_\', {recursive:true}); '
                'fs.writeFileSync(\'.husky/_/h\', \'husky\')"')
     toml += f"test = {json.dumps(prepare)}\nfast_test = {json.dumps(prepare)}\n"
-    item, where = env.start_fix({"forge.toml": toml}, allow_large="Forge's first synced files")
+    item, where = env.start_fix({"forge.toml": toml}, allow_large="Forge's first synced files",
+                                done_when="forge.toml upgrades Forge and runs Husky preparation")
     synced = env.repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert (where / ".husky/pre-commit").exists()

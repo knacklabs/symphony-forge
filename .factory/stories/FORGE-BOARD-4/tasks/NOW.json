@@ -11,7 +11,7 @@
       "gain": 3,
       "harm": 3,
       "line": 83,
-      "outcome": "open",
+      "outcome": "follow-up",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 3,
       "harm": 3,
       "line": 72,
-      "outcome": "open",
+      "outcome": "follow-up",
       "reason": "",
       "round": 1,
       "security": false,
@@ -37,7 +37,7 @@
       "gain": 3,
       "harm": 3,
       "line": 165,
-      "outcome": "open",
+      "outcome": "follow-up",
       "reason": "",
       "round": 1,
       "security": false,
@@ -56,62 +56,41 @@
       "security": false,
       "title": "Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable",
       "work": 3
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 5,
+      "harm": 3,
+      "line": 13,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Remove the duplicate closing bracket that prevents the board from loading",
+      "work": 1
     }
   ],
+  "land": {
+    "rounds": 3,
+    "stop": null
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3aa9570b247faa834e952d1db88d4f31e855285450dda2dabfb5717c24f950f3",
-    "changed": "cb3f78ef51db22d3f05422c1f194a70c2149f77cadde179bc43673b9b682016f",
-    "commit": "c7f456f59e713c5faf6ea1b6f88e21eae7a970b1",
+    "branch_diff": "bc186821e91e88bdeb1ab19dd3aed2d4fd9d1775b08d053437e034928d33a9ca",
+    "changed": "cec0c9d822c139b1ede8e291fc0ea36fe4069ae820c9d644828067956ebebe90",
+    "commit": "930e21ed96d683c4e75ea68611733922a34e7b83",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. A recently merged legacy item can have known start/end times but no activity breakdown. `time_records.py:246` initializes missing categories to null, while lines 369\u2013374 independently calculate total and unknown seconds. These fallbacks turn both missing waiting categories into zero, so an item whose entire duration is unrecorded displays `0% waiting on people`. Preserve `unknown` when Forge cannot establish the waiting share; elapsed time alone does not establish zero waiting.",
-        "file": "src/forge/board_app/now.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 83,
-        "priority": "P1",
-        "title": "Preserve unknown waiting time instead of displaying zero",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. `board.py:710\u2013715` already creates child rows with stage `unstarted` for parts assigned to a developer, while lines 778\u2013785 separately provide their readiness in dependency_maps. Because these child IDs are in `known`, this filter discards their `Can start now` status. The later card renderer only tags that literal status, so assigned, startable parts lose their `can start` indication and priority ordering, including in Me. Reconcile dependency-map readiness with existing unstarted children instead of using it only for missing rows.",
-        "file": "src/forge/board_app/now.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 72,
-        "priority": "P1",
-        "title": "Retain readiness for assigned, unstarted story parts",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Every story's part count and progress are conveyed exclusively by empty colored spans, and their entire container is hidden from assistive technology. The button's remaining text contains only its title, key and owner. Screen-reader users therefore cannot obtain the part information required on this first screen; the same defect appears in the full Stories list because it reuses story(). Provide an accessible progress summary alongside the visual bars.",
-        "file": "src/forge/board_app/now.js",
-        "gain": 3,
-        "harm": 3,
-        "line": 165,
-        "priority": "P1",
-        "title": "Give story part progress an accessible text equivalent",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 3, Harm 2\nRaise: Test. The named browser proofs leave claimed first-screen behavior unverified. Neither fixture creates a needs-you wait, and the only Needs you assertion checks the viewer's login, so attention cards, their reasons and their count are never exercised. Stories is checked only for its overflow button, with no assertion for story identity, part progress or owners. In test_13, the fixture contains only fixes and clicking Fixes merely asserts that an already-visible fix remains visible; a completely ineffective kind filter would pass, and Story parts and All are never exercised. Add behavioral assertions with nonempty attention records, known story progress/owners and mixed parts/fixes so these named proofs fail when their claimed behavior breaks.",
-        "file": "tests/test_board_now_screen.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 106,
-        "priority": "P1",
-        "title": "Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable",
-        "work": 3
-      }
-    ],
-    "id": "eb45f7c1-ec63-4555-9ca8-3e3c3e01a9c2",
-    "status": "blocked"
+    "findings": [],
+    "id": "26a66264-22a3-464d-b32e-b47b5532fe18",
+    "status": "clean"
   },
-  "round": 2,
-  "status": "hotspot",
+  "round": 6,
+  "settled_areas": [
+    "src/forge/board_app/now.js"
+  ],
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T12:22:09.231462+00:00",
@@ -120,20 +99,41 @@
     {
       "at": "2026-10-19T14:36:53.875165+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:58:34.542128+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:03:10.548396+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:17:45.358411+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T16:36:42.501992+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T16:49:49.170982+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T17:06:43.244539+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T17:27:17.771834+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "area": "src/forge/board_app/now.js",
-    "at": "2026-10-19T14:36:53.938525+00:00",
-    "file": "src/forge/board_app/now.js",
-    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "ea486e17-6d41-43b9-9254-076ee8d443f9"
-  },
   "stuck": {
-    "close": null,
-    "head": "441456201c21e28cf016eb0b4e7731a1175786a1",
+    "close": "bbe126ce-dae3-400b-aa56-e1431bb36ab6",
+    "head": "a5af37fabaa46ab73da5ec1e5ed0a919d4924fc1",
     "keys": {},
-    "round": null
+    "round": 5
   },
   "worker": "claude"
 }

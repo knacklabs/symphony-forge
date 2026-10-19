@@ -32,6 +32,39 @@
       "item": "FORGE-BOARD-4/NOW",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/app.js\tRemove the duplicate closing bracket that prevents the board from loading",
+      "kind": "edge",
+      "path": "src/forge/board_app/app.js",
+      "line": 13,
+      "text": "Remove the duplicate closing bracket that prevents the board from loading",
+      "from": "review",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_board_item_page.py\tOn this laptop the fix drawer's axe scan runs while the drawer still fades in (200 ms), so its text reads as low contrast and the test fails, with or without the Now screen installed.",
+      "kind": "edge",
+      "path": "tests/test_board_item_page.py",
+      "line": 76,
+      "text": "On this laptop the fix drawer's axe scan runs while the drawer still fades in (200 ms), so its text reads as low contrast and the test fails, with or without the Now screen installed.",
+      "from": "worker",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/board_app/item.css\titem.css styles page-wide class names (.more, .tag, .close, .figures, .who) without scoping them to .drawer or .item-page, so any other screen that uses those names changes look.",
+      "kind": "improve",
+      "path": "src/forge/board_app/item.css",
+      "line": 88,
+      "text": "item.css styles page-wide class names (.more, .tag, .close, .figures, .who) without scoping them to .drawer or .item-page, so any other screen that uses those names changes look.",
+      "from": "worker",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

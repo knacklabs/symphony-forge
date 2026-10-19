@@ -7,6 +7,8 @@ const PAGES = ['now', 'releases', 'insights'];
 // token, because the server checks it on every file.
 const SCREENS = [
   'now',
+  'item',
+  'releases', 'insights',
 ];
 const POLL = 10000; // ms between reads while the events stream is down
 const listeners = [];
@@ -108,6 +110,9 @@ function listen() {
   events.addEventListener('open', () => {
     clearInterval(polling);
     polling = null;
+    // The stream counts from the snapshot it sees when it connects, so read once more: a
+    // rebuild that finished before it connected sends no "changed".
+    refresh();
   });
   events.addEventListener('error', () => {
     if (polling) return;
