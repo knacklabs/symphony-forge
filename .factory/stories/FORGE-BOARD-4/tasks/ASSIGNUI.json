@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-4-ASSIGNUI",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:08:24.493062+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "673b833cda9b5d724fdca8bd574a92ba9dc99541",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
