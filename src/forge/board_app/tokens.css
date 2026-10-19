@@ -195,12 +195,6 @@ main {
   background: var(--surface);
 }
 
-@media (max-width: 720px) {
-  .bar { padding: var(--space-2) var(--space-4); }
-  .tail { margin-left: 0; }
-  main { padding: var(--space-4); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }

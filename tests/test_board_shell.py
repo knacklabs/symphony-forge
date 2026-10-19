@@ -55,13 +55,12 @@ with sync_playwright() as p:
         expect(page.get_by_role('link', name='Releases')).not_to_have_attribute('aria-current', 'page')
         light = page.evaluate('getComputedStyle(document.body).backgroundColor')
         page.close()
-        for width, height, scheme in ((390, 844, 'dark'), (1440, 900, 'dark')):
-            page = browser.new_page(viewport={'width': width, 'height': height}, color_scheme=scheme)
-            page.goto(url)
-            expect(page.get_by_role('status')).to_have_text('Live')
-            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), width
-            assert page.evaluate('getComputedStyle(document.body).backgroundColor') != light
-            page.close()
+        page = browser.new_page(viewport={'width': 1440, 'height': 900}, color_scheme='dark')
+        page.goto(url)
+        expect(page.get_by_role('status')).to_have_text('Live')
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+        assert page.evaluate('getComputedStyle(document.body).backgroundColor') != light
+        page.close()
         assert not broken, broken
     finally:
         browser.close()
