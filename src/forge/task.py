@@ -99,6 +99,21 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
     return None
 
 
+def restore_default_settings(item: str, top: Path, state: dict[str, Any], default: str) -> None:
+    """Close keeps the default branch's settings unless this item's Done-when permits edits."""
+    if settings_allowed(item, top, state) or not git(
+            "diff", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top):
+        return
+    pin = re.search(r"^version[ \t]*=.*$", git("show", "HEAD:forge.toml", cwd=top), re.M)[0]
+    git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+    path = top / "forge.toml"
+    text = re.sub(r"^version[ \t]*=.*$", lambda _: pin, path.read_text(encoding="utf-8"),
+                  count=1, flags=re.M)
+    path.write_bytes(text.encode("utf-8"))
+    if repo.commit_state(f"Keep {default}'s settings", "forge.toml", top=top):
+        print(f"Kept {default}'s settings in forge.toml and this branch's version pin.", flush=True)
+
+
 def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
     """Only this item's own Done-when can permit forge.toml edits."""
     done = state.get("done_when", "")

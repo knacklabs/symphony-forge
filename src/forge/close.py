@@ -217,6 +217,7 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
     if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
         state.pop("stop")
+    task.restore_default_settings(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     if switch:

@@ -368,8 +368,10 @@ def questions(*answers: str) -> str:
 def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
     if (git("status", "--porcelain", "--", "forge.toml", cwd=top)
             and not task.settings_allowed(item, top, state)):
-        git("restore", "--source=HEAD", "--staged", "--worktree", "--", "forge.toml", cwd=top)
-        print("Restored uncommitted forge.toml changes from this branch; settings change in their own fix.",
+        merging = repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode == 0
+        source, name = ("MERGE_HEAD", "the incoming merge") if merging else ("HEAD", "this branch")
+        git("restore", f"--source={source}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+        print(f"Restored uncommitted forge.toml changes from {name}; settings change in their own fix.",
               flush=True)
 
 

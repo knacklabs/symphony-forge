@@ -69,6 +69,9 @@ and review it before you start a part on top of it.
 $delegation
 - Edit files only inside this checkout.
 - $settings
+- After a merge of the default branch, close keeps that branch's settings unless this item's
+  Done-when permits settings changes. It keeps this branch's version pin. The worker's settings
+  restore uses the incoming side while a merge is open.
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
