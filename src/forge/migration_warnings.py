@@ -7,6 +7,18 @@ from pathlib import Path
 from forge import board, repo, story
 
 
+def before_close(top: Path) -> None:
+    """One fresh origin snapshot supplies both warnings and close's default-branch merge."""
+    for warning in warnings(top):
+        print(warning)
+
+
+def fetch_default(top: Path, default: str, *, refreshed: bool) -> None:
+    """Reuse the warning snapshot initially; fetch again after CI, when main can have moved."""
+    if not refreshed or not repo.command_fact("fetched origin", top, dict).get("all"):
+        repo.git("fetch", "-q", "origin", default, cwd=top)
+
+
 def warnings(top: Path) -> list[str]:
     from forge.nextstep import branch_tips
 
