@@ -71,7 +71,12 @@ def test_2_close_links_the_pr_using_codex_string_identity_after_client_setup(
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "fix/upgrade")
     repo.git("config", "core.hooksPath", str(tmp_path / "setup-hooks"))
-    _, calls = _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=True)
+    folder, calls = _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=True)
+    # The coordinator owns the check list on main; this task only exercises chat links.
+    repo.write("forge.toml", (folder / "forge.toml").read_text("utf-8"))
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-qm", "Configure chat link checks")
+    repo.git("push", "-q", "origin", "main")
     # Codex rejects a sequence identity; its successful reply carries a record object.
     server = SERVER.replace('        if method in ("thread/metadata/update", "thread/attachment/add"):',
         '''        if method == "thread/attachment/add":

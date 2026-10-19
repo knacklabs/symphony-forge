@@ -123,7 +123,10 @@ def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
         text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
         row = rows(sections(text)).get(match["task"], {})
         covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
-        parsed = story.parse(text)
+        try:
+            parsed = story.parse(text)
+        except ValueError as exc:
+            refuse(story.REFUSALS["bad_doc"], doc=f"plans/{match['key']}.md", problem=exc)
         done = "\n".join(story.item(parsed, n, True) for n in parsed["done"] if n in covers)
     return "forge.toml" in done
 
