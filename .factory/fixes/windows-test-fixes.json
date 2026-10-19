@@ -10,13 +10,29 @@
   },
   "done_when": "On windows-latest, these tests pass: tests/test_tools_native_work.py::test_3 (all cases), tests/test_hook_generated_check_speed.py::test_2, tests/test_pull_request_cache_survives_close.py::test_1, tests/test_read_accepts_no_findings.py::test_1 and tests/test_fix_upgrade_untracked_hooks.py::test_1, with no behaviour change on Linux",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "42ae2996d1d7fb1833f8f2eb95c3bff6249ca427a03a2f5d5cc78225707cdedc",
+    "changed": "e3a5860cdd632eeabd28b3ff7308bd7908884b8b5ce9f46e7c8a900901f9f732",
+    "commit": "ad780821c786d27a5f24e00ed0ca18d1f65659bc",
+    "dismissals": [],
+    "findings": [],
+    "id": "f242c141-6b80-4de7-862b-abc11715503b",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T18:08:27.998440+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T18:21:42.430185+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
