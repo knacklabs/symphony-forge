@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import subprocess
 import threading
+from pathlib import Path
 
 import pytest
 
@@ -33,7 +34,7 @@ def test_1_concurrent_rebuilds_keep_one_ready_sdk(tmp_path, monkeypatch, pytestc
     run = subprocess.run
 
     def concurrent_install(command, *args, **kwargs):
-        if "venv" in command:
+        if "venv" in command and Path(command[-1]).parent == env.parent:  # this SDK's build
             # Both callers have found the same stale cache before either build finishes.
             position = installing.wait()
             if position == 1:

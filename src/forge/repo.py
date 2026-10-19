@@ -819,7 +819,15 @@ def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | Non
     return subprocess.run(
         [shutil.which("uv") or "uv", "tool", "run", "--from",
          f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
-        cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": release}).returncode
+        cwd=cwd, env={**uv_env(), "FORGE_PINNED_RUN": release}).returncode
+
+
+def uv_env() -> dict[str, str]:
+    """This environment for uv, without a git hook's repository: uv fetches a git+ source with
+    its own `git init` and `git reset --hard`, which would turn this repo bare or overwrite its
+    index. The program uv starts finds the repository from its folder."""
+    return {key: value for key, value in os.environ.items()
+            if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE")}
 
 
 def set_version(text: str, release: str) -> str:

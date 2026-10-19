@@ -1,5 +1,4 @@
 """The owner's acceptance dismisses the latest findings and carries on after changes."""
-import json
 import shutil
 from pathlib import Path
 
@@ -7,7 +6,6 @@ import pytest
 
 from test_close import CLEAN, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
-from test_close_waits_for_review_loop_choice import stopped
 from test_hotspot_stop import saved, seed
 from test_setup import _fresh_client
 
@@ -65,23 +63,6 @@ def test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on(env, pr
     assert checked.returncode == 0, checked.stdout + checked.stderr
 
 
-def test_4_a_clean_review_clears_an_unanswered_stop(env):
-    item, where = stopped(env)
-    assert env.close(item, "--resolve", "narrow", "--reason", "Owner narrows the part").returncode == 0
-    env.commit(where, "app.py", "print('fixed')\n")
-    env.reviews(CLEAN)
-    assert env.close(item).returncode == 0
-    state = saved(where, item)
-    # Earlier clients may retain an unanswered hold beside a later clean result.
-    state["stop"] = {"file": "src/a.py"}
-    env.commit(where, f".factory/fixes/{item}.json", json.dumps(state), "An old hold remains")
-    result = env.close(item)
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert "stop" not in saved(where, item)
-    assert len(env.review_calls()) == 4
-    assert "--resolve" not in env.repo.forge("next").stdout
-
-
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption"])
 def test_5_clients_receive_the_choice_and_clean_review_rules(repo, gh, tmp_path, previous):
     if previous:
@@ -100,4 +81,4 @@ def test_5_clients_receive_the_choice_and_clean_review_rules(repo, gh, tmp_path,
         assert "every remaining finding" in text
         assert "owner's reason" in text
         assert "without checking whether code or the default branch changed" in text
-        assert "A clean review clears an unanswered review-loop stop" in text
+        assert "A merge of the default branch or a clean review does not clear it." in text

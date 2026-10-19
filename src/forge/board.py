@@ -252,7 +252,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for rel, state, where in history["copies"]:
         if where == landed:
             merged.add(rel)
-        if rel not in best or len(_steps(state)) > len(_steps(best[rel][0])):
+        if (rel not in best or len(_steps(state)) > len(_steps(best[rel][0])) or
+                len(_steps(state)) == len(_steps(best[rel][0])) and where == trees.get(state.get("branch"))):
             best[rel] = state, where
     prs = _machine_prs(top)
     by_branch = {p.get("headRefName"): p for p in prs}

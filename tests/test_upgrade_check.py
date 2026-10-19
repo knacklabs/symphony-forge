@@ -18,13 +18,15 @@ SOURCE = "git+https://github.com/knacklabs/symphony-forge@"
 
 # This checkout's Forge, installed as the release <version> names: no later release exists yet.
 RELEASE = """#!{python}
-import sys
+import os, sys
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 sys.path.insert(0, {src!r})
 import forge
 forge.__version__ = "<version>"
 from forge.cli import main
 sys.exit(main())
-"""
+""".replace("from forge.cli import main", conftest.IDLE_MACHINE + "from forge.cli import main")
 
 # Stands in for uv at its edge: records the call, and installs the release its tag names.
 UV_STUB = """#!{python}
