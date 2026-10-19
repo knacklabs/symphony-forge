@@ -166,6 +166,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/board_app/now.css\tThe Now screen still styles the bare .parts, .stage and .needs class names for the whole page.",
+      "kind": "edge",
+      "path": "src/forge/board_app/now.css",
+      "line": 280,
+      "text": "The Now screen still styles the bare .parts, .stage and .needs class names for the whole page.",
+      "from": "worker",
+      "item": "review-findings-split-from-forge-board-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\ttests/test_board_item_page.py\tGate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
       "kind": "edge",
       "path": "tests/test_board_item_page.py",

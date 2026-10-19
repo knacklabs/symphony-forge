@@ -74,17 +74,17 @@
   },
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "51e206789de25475cec2d6021aced9ed9937b3598f9067ec692f89af1fc0ae88",
-    "changed": "e8d56cb6509de6b8e3725a3125736fef5fff8239dd65deae0d8e2ad3ddc25ce7",
-    "commit": "21d15d7c3c9a39467760fa0f3a0cd32d720435f7",
+    "branch_diff": "e9e2d6e6b64889f3750dcbebfa323257b1eeb2d8a7301b51206f4d7f95802b58",
+    "changed": "2467cefa49ced06c5e000d5ae518524d707c3a4c040ab9c37e25154f5fc3b22e",
+    "commit": "6942e49ecc51a26ff66d9c56406d29bf4fd2b901",
     "dismissals": [],
     "findings": [],
-    "id": "2b81aec0-4cbb-450a-94fa-b745eaefea3a",
+    "id": "3c689ece-7ece-4a6a-bbb0-7204ec161d64",
     "status": "clean"
   },
   "round": 7,
   "stacked_on": "FORGE-BOARD-4/DETAIL",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T14:05:51.340822+00:00",
@@ -104,6 +104,10 @@
     },
     {
       "at": "2026-10-19T15:56:09.281516+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T18:23:08.762904+00:00",
       "step": "review"
     }
   ],
