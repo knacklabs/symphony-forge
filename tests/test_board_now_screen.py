@@ -72,6 +72,7 @@ def tab_to(page, focus, limit=120):
     raise AssertionError(f'Tab never reached {focus}')
 
 def accessible(page):
+    page.evaluate('Promise.all(document.getAnimations().map(a => a.finished))')
     found = Axe().run(page, options={'runOnly': ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']}).response['violations']
     assert not found, [(v['id'], [n['target'] for n in v['nodes']][:3]) for v in found]
 
@@ -87,6 +88,14 @@ with sync_playwright() as p:
             assert 100 <= len(words) <= 130, (len(words), ' '.join(words))
             # Every card keeps its title, key and tag inside its own box, and Merged counts one set:
             # the merged items of the last 7 days, shown and in its "and N more".
+            needs = page.get_by_role('region', name='Needs you')
+            expect(needs).to_contain_text('1 needs you')
+            expect(needs.get_by_role('button', name='Decide Fix Basket totals')).to_be_visible()
+            stories = page.get_by_role('region', name='Stories')
+            delivery = stories.get_by_role('button', name=re.compile('Couriers book slots'))
+            expect(delivery).to_contain_text('SHOP-DELIVERY-SLOTS-12')
+            expect(delivery).to_contain_text('@asha')
+            expect(delivery.get_by_role('img', name='0 of 4 parts merged')).to_be_visible()
             spills = page.evaluate(SPILLS)
             assert not spills, spills
             merged = page.get_by_role('region', name='Merged', exact=True)
@@ -151,22 +160,32 @@ def look(url, mode, expected):
 
 
 def test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable(repo, gh, tmp_path):
-    """The client-sized repo: 44 stories, 10 open fixes and six weeks of merges, plus one approved story
-    with a long key whose first part can start, so a long key and a tag share one card."""
+    """The client-sized repo includes a real decision wait and an assigned story with a long key.
+    Its owner and part progress must fit beside the stages, with every overflow item reachable."""
     (tmp_path / "shop").mkdir()
     shop = Repo(board_fixture.build(tmp_path / "shop", repo.forge("--version").stdout.split()[-1]), repo.bin)
     long = "SHOP-DELIVERY-SLOTS-12"
     plan = shop.path.joinpath("plans/SHOP-1.md").read_text(encoding="utf-8").replace("shop-1", long.lower())
-    shop.write(f"plans/{long}.md", plan.replace("Shoppers can save a basket", "Couriers book a delivery slot", 1))
+    shop.write(f"plans/{long}.md", plan.replace("Shoppers can save a basket", "Couriers book slots", 1)
+               + "\nOwner: asha\n")
     shop.write(f".factory/stories/{long}/story.json", json.dumps({
-        "doc": f"plans/{long}.md", "title": "Couriers book a delivery slot", "status": "approved",
+        "doc": f"plans/{long}.md", "title": "Couriers book slots", "status": "approved",
         "approval": {"at": datetime.now(timezone.utc).isoformat()}}))
     roadmap = json.loads(shop.path.joinpath("plans/roadmap.json").read_text(encoding="utf-8"))
-    roadmap["items"].insert(0, {"key": long, "title": "Couriers book a delivery slot"})  # first in Planned
+    roadmap["items"].insert(0, {"key": long, "title": "Couriers book slots"})  # first in Planned
     shop.write("plans/roadmap.json", json.dumps(roadmap, indent=2))
     shop.git("add", "-A")
     shop.git("commit", "-qm", "Plan delivery slots")
     shop.git("push", "-q", "origin", "main")
+    shop.git("switch", "-q", "fix/open-1")
+    stopped = json.loads(shop.path.joinpath(".factory/fixes/open-1.json").read_text(encoding="utf-8"))
+    stopped["why"] = "Basket totals"
+    stopped["stop"] = {"question": "Which total does the basket need?", "at": datetime.now(timezone.utc).isoformat()}
+    shop.write(".factory/fixes/open-1.json", json.dumps(stopped))
+    shop.git("add", "-A")
+    shop.git("commit", "-qm", "Ask which basket total to show")
+    shop.git("push", "-q", "origin", "HEAD")
+    shop.git("switch", "-q", "main")
     gh.respond("pr", "list", stdout="[]")
     gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {"pullRequests": {"nodes": []}}}}))
     with live(shop) as url:

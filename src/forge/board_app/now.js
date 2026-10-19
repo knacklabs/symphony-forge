@@ -67,11 +67,14 @@ function facts(snapshot) {
   const rows = snapshot.items.flatMap((row) => (row.kind === 'story' ? row.children : [row]));
   const known = new Set(rows.map((row) => row.id));
   const maps = (snapshot.dependency_maps || []).filter((map) => map.id !== 'fixes');
+  const readiness = new Map(maps.flatMap((map) => map.parts.map((part) => [part.id, part.status])));
   // Parts no one has started are on the plan only; they wait in Planned beside the started ones.
   const planned = maps.filter((map) => map.stage !== 'done').flatMap((map) => map.parts)
     .filter((part) => !known.has(part.id) && STAGE_OF[part.status] === 'planned')
     .map((part) => ({ id: part.id, kind: 'task', title: part.title, owner: part.owner, stage: part.status }));
-  const cards = [...rows, ...planned].filter(mine).filter((row) => kind === 'all' || row.kind === kind);
+  const cards = [...rows, ...planned].map((row) => row.stage === 'unstarted'
+    ? { ...row, stage: readiness.get(row.id) || row.stage } : row)
+    .filter(mine).filter((row) => kind === 'all' || row.kind === kind);
   const stages = Object.fromEntries(STAGES.map(([name]) => [name, []]));
   for (const row of cards) stages[STAGE_OF[row.stage] || 'planned'].push(row);
   stages.planned.sort((a, b) => (b.stage === 'Can start now') - (a.stage === 'Can start now'));
@@ -83,6 +86,8 @@ function facts(snapshot) {
   const waited = timed.reduce((sum, row) => sum + (row.time_breakdown.waiting_for_owner || 0)
     + (row.time_breakdown.nothing_running || 0), 0);
   const total = timed.reduce((sum, row) => sum + row.total_seconds, 0);
+  const waitingKnown = timed.every((row) => row.time_breakdown.waiting_for_owner != null
+    || row.time_breakdown.nothing_running != null);
   const ids = new Set([...stories.filter(mine), ...cards].map((row) => row.id));
   return {
     viewer, stages,
@@ -90,7 +95,7 @@ function facts(snapshot) {
     merged: viewer === null ? (kind === 'all' ? counted.parts + counted.fixes : counted[kind === 'task' ? 'parts' : 'fixes'])
       : recent.length,
     median: timed.length ? hours(median(timed.map((row) => row.total_seconds))) : 'unknown',
-    waiting: total ? `${+(100 * waited / total).toFixed(1)}%` : 'unknown',
+    waiting: total && waitingKnown ? `${+(100 * waited / total).toFixed(1)}%` : 'unknown',
     red: cards.filter((row) => row.gates?.ci?.status === 'red' && STAGE_OF[row.stage] !== 'merged').length,
     stories: maps.filter((map) => !['done', 'needs a spec'].includes(map.stage))
       .map((map) => ({ ...map, owner: stories.find((row) => row.id === map.id)?.owner || map.owner }))
@@ -162,7 +167,8 @@ function stage([name, title], shown) {
 function story(map) {
   return el('li', {}, el('button', { type: 'button', class: 'story', 'data-focus': `story:${map.id}`, onclick: open(map) },
     el('span', { class: 'story-title' }, map.title),
-    el('span', { class: 'parts', 'aria-hidden': 'true' }, map.parts.map((part) =>
+    el('span', { class: 'parts', role: 'img',
+      'aria-label': `${map.parts.filter((part) => part.status === 'Merged').length} of ${map.parts.length} parts merged` }, map.parts.map((part) =>
       el('span', { 'data-status': part.status }))),
     el('span', { class: 'chip-meta' }, el('span', { class: 'key' }, map.id),
       el('span', { class: 'owner' }, map.owner ? `@${map.owner.replace(/^@/, '')}` : 'unknown'))));

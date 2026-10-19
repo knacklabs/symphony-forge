@@ -9,7 +9,10 @@ main:not([hidden]):has(> .now) {
   padding-bottom: 0;
 }
 
-.now {
+/* Short class names belong to this screen alone. */
+@scope (.now) {
+
+:scope {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -17,7 +20,7 @@ main:not([hidden]):has(> .now) {
   gap: 20px;
 }
 
-.now h2 {
+:scope h2 {
   margin: 0;
   display: flex;
   justify-content: space-between;
@@ -25,13 +28,13 @@ main:not([hidden]):has(> .now) {
   font-weight: 600;
 }
 
-.now ul {
+:scope ul {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.now button {
+:scope button {
   font: inherit;
   color: inherit;
   text-align: left;
@@ -39,7 +42,7 @@ main:not([hidden]):has(> .now) {
   transition: transform 160ms var(--ease-out);
 }
 
-.now button:active { transform: scale(0.97); }
+:scope button:active { transform: scale(0.97); }
 
 .key, .count, .owner, .chip-meta {
   font-size: var(--size-label);
@@ -111,7 +114,7 @@ main:not([hidden]):has(> .now) {
   font-weight: 600;
 }
 
-.now .now-more {
+:scope .now-more {
   align-self: center;
   border: 0;
   border-radius: var(--radius-tag);
@@ -365,4 +368,6 @@ main:not([hidden]):has(> .now) {
   .chip:hover, .ask:hover { border-color: var(--ink-2); }
   .story:hover .story-title, .done button:hover, .now-more:hover { text-decoration: underline; }
   .kinds button[aria-pressed="false"]:hover { color: var(--ink); }
+}
+
 }
