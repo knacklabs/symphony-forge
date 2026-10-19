@@ -29,6 +29,11 @@ ROOT = Path(__file__).resolve().parents[1]
 REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
+IDLE_MACHINE = """from forge import machine
+machine.memory = lambda: dict(total_bytes=16_000_000_000, available_bytes=8_000_000_000)
+machine.busy_runners = lambda: 0
+"""
+
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
 import os, signal, sys
@@ -39,16 +44,38 @@ signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
-"""
+""".replace("from forge.cli import main", IDLE_MACHINE + "from forge.cli import main")
 
 
 def machine_cores(repo, count, system_count=None):
     """Report a machine's CPU count at the command boundary, without a production test flag."""
+    override = (f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+                f"os.process_cpu_count = lambda: {count!r}\n")
     shim = repo.bin / "forge"
     source = shim.read_text("utf-8")
     shim.write_text(source.replace("from forge.cli import main",
-        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
-        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
+        override + "from forge.cli import main"), "utf-8")
+    # Inline Python test commands inherit PYTHONPATH, but do not use the Forge launcher.
+    startup = repo.bin / "sitecustomize.py"
+    startup.write_text((startup.read_text("utf-8") if startup.exists() else "") + override, "utf-8")
+
+
+def machine_runners(repo, count: int | Path = 0):
+    """Supply runner inventory to inline Python too; keep process identity queries real."""
+    command = "tasklist" if os.name == "nt" else "ps"
+    real = shutil.which(command)
+    args = ["/FO", "CSV", "/NH"] if os.name == "nt" else ["-axo", "comm="]
+    reading = (f"int(pathlib.Path({count.as_posix()!r}).read_text('utf-8'))"
+               if isinstance(count, Path) else repr(count))
+    worker = ('"Runner.Worker.exe","101","Console","1","100 K"\n'
+              if os.name == "nt" else "/runner/bin/Runner.Worker\n")
+    _install(repo.bin, command, f'''#!{sys.executable}
+import pathlib, subprocess, sys
+if sys.argv[1:] == {args!r}:
+    sys.stdout.write({worker!r} * {reading})
+else:
+    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]]))
+''')
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
@@ -67,12 +94,14 @@ for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exist
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
-if args[:2] == ["pr", "view"] and args[-2:] == ["--json", "mergeable,headRefOid"]:
+if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
+        "mergeable,headRefOid", "mergeable,headRefOid,number,headRefName"):
     # Ordinary close fixtures have a mergeable pull request on the real pushed head.
     # Explicit responses above still own API errors and conflicting/unknown states.
     head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
                                     "refs/heads/" + args[2]], text=True).split()[0]
-    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head}}))
+    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head,
+                                 "number": 7, "headRefName": args[2]}}))
     sys.exit(0)
 sys.stderr.write("stub gh: no response for: gh " + " ".join(args) + "\\n")
 sys.exit(1)

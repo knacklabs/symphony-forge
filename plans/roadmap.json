@@ -266,6 +266,12 @@
       "order": 83
     },
     {
+      "key": "FORGE-BOARD-4",
+      "title": "The board shows a team what moves, what needs them and when it ships, at a glance",
+      "status": "pending",
+      "order": 84
+    },
+    {
       "key": "FORGE-PACE-1",
       "title": "Prototypes start from an approved design and reach sign-off faster, and signed-off work ships without redoing it",
       "status": "pending",
@@ -300,6 +306,12 @@
       "title": "Forge commands start far fewer git processes",
       "status": "pending",
       "order": 86
+    },
+    {
+      "key": "FORGE-BUDGET-1",
+      "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
+      "status": "pending",
+      "order": 87
     }
   ],
   "epics": [

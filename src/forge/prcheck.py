@@ -203,7 +203,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 10\n"
+                .replace("<tests-timeout>", "    timeout-minutes: 30\n"
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
@@ -223,7 +223,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
             ".forge/records-only/action.yml": (sync.TEMPLATES / "records-only-action.yml").read_text(encoding="utf-8"),
-            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
+            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")
+                .replace("# <docs-only-rule>", (sync.TEMPLATES.parent / "docskip.py").read_text(encoding="utf-8"))}
 
 
 def pr_check(args: argparse.Namespace) -> int:

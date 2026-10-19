@@ -302,7 +302,7 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(600):
-            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid"] in env.gh.calls():
+            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid,number,headRefName"] in env.gh.calls():
                 break
             time.sleep(0.2)
         # The draft stays in place: a Windows process can hold its starting folder open.

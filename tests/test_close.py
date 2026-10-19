@@ -262,7 +262,7 @@ def _review_fails_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "codex: the model is unavailable.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _review_incomplete_twice(env):
@@ -270,7 +270,7 @@ def _review_incomplete_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "it reported the review as incomplete.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _open_serious_finding(env):

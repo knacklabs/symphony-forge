@@ -11,6 +11,8 @@ current review, even if its number changes. Only the human chooses which finding
 
 After a merge of the default branch, close reviews only this change's own diff against the new
 merge base, keeping earlier findings and allowances from this item's records.
+If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call.
+If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 From the second review round, close checks the previous round's findings and the lines changed
 since that review. New findings on unchanged lines become visible follow-ups, except security
 or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
@@ -41,6 +43,8 @@ $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
 review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+A stop that asks the owner needs a recorded choice with `forge close --resolve`.
+A merge of the default branch or a clean review does not clear it. Close repeats the question.
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
@@ -77,10 +81,14 @@ $delegation
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
+- Never amend or rebase a commit that is already pushed.
 - `forge close` pushes the committed branch and runs CI on every platform. CI output reaches you
   in your next round. If you need CI evidence, commit and stop instead of asking the coordinator
   to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
   waiting for CI results or timings.
+- Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
+- If close reports that the tests ran out of time, rerun the tests job or split the suite.
+  This timeout does not send the item to a worker. Node client tests get 30 minutes in CI.
 - Run tests in the foreground and wait for them to finish. Never end your turn while a command you
   started still runs in the background. Commit your work before your turn ends: the review reads
   only what is committed.

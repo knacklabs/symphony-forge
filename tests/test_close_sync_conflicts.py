@@ -40,14 +40,13 @@ def test_1_close_merges_sync_output_and_stops_on_code_conflicts(env, kind, tmp_p
         for host in (".codex", ".claude"):
             shutil.copytree(conftest.ROOT / host / "skills", repo.path / host / "skills")
         repo.write("forge.toml", repo.git("show", "HEAD:forge.toml") + '\nrepo = "forge-source"\n')
-        # Keep the shared idle-machine setup when loading the client's own source.
         conftest._install(repo.bin, "forge", (
-            conftest.FORGE_SHIM.split("sys.path.insert", 1)[0].format(python=sys.executable)
-            + "import subprocess\n"
+            f"#!{sys.executable}\nimport os, sys, subprocess\n"
+            "if hasattr(os, 'getloadavg'): os.getloadavg = lambda: (0.0, 0.0, 0.0)\n"
             "from pathlib import Path\n"
             "root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], text=True).strip()\n"
             "sys.path.insert(0, str(Path(root) / 'src'))\n"
-            "from forge.cli import main\nsys.exit(main())\n"))
+            + conftest.IDLE_MACHINE + "from forge.cli import main\nsys.exit(main())\n"))
     repo.git("checkout", "-q", "-b", "fix/setup")
     repo.write(".factory/fixes/setup.json", json.dumps({"kind": "fix", "status": "working",
                "branch": "fix/setup", "why": "Set up Forge", "done_when": "Forge is set up"}))

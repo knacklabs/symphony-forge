@@ -246,14 +246,18 @@ Forge gives agents half the available cores (at least one place), across all rep
 share a line. Plan reads and close reviews take no place in that line. Every run, including
 tests, reviews and plan reads, waits while the machine's
 one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
-(Windows) only the half-cores rule applies. Waiting items that other planned work waits on go
+(Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
 one on four. A run of Forge's pytest picker that selects five or fewer test files takes no
-place when the whole command is the picker, optionally run through `uv run`. It still waits for load.
+place when the whole command is the picker, optionally run through `uv run`. It still waits for load and memory.
 Compound commands, including the picker's underlying `test` command, keep their place.
 Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
-and the per-test budget. On Mac and Linux, it warns when a GitHub Actions self-hosted runner
+and the per-test budget, free memory and its floor, test processes in use, and busy runners.
+Every run waits when free memory is below 1.5 GB or ten percent of RAM, whichever is larger.
+An unreadable memory source does not block work. Each busy local `Runner.Worker` reserves one core
+from Forge's half-core budget, with at least one core left for Forge. Waiting runs check memory
+and runner use again on each pass and start when capacity returns. On Mac and Linux, doctor warns when a GitHub Actions self-hosted runner
 runs on this machine: its CPUs count against Forge's load limit.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
@@ -1030,7 +1034,8 @@ when linked to a spec, it must also serve that spec's behaviour.
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
 reviews), across all its repos; the rest wait in line. Every run also waits while load per
-core is 1.5 or more, including when external jobs cause the load. Items that other planned work waits on go
+core is 1.5 or more, including when external jobs cause the load, or free memory is below its floor.
+Busy local CI jobs reduce the available budget until they finish. Items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
 each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
@@ -1409,7 +1414,15 @@ uncommitted changes. If the remote default branch is missing it says to fetch it
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
 a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
-its test command is capped with `--maxprocesses`. `pytest -n auto` honours
+its test command is capped with `--maxprocesses`, also outside a worker session.
+Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
+This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
+Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
+Forge does not change npm, pnpm or yarn scripts to set their worker budget.
+Those scripts can read `FORGE_TEST_CPUS`. Other runners stay as written.
+Direct `forge test --pytest <base>` runs join the test lane and obey its memory floor and budget.
+A picker inside close or bare `forge test` shares that run's single lane entry.
+`pytest -n auto` honours
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
@@ -1522,7 +1535,8 @@ Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
 To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
 `forge work` already queues work rounds across the machine, while reads and close reviews skip
-that line. All runs wait for high load to fall. Close and worker tests share the separate test lane, except picker runs of five or fewer
+that line. All runs wait for high load to fall and memory to recover. Busy local CI jobs reserve
+cores from the budget until they finish. Close and worker tests share the separate test lane, except picker runs of five or fewer
 test files, with one place per four available cores
 (at least one), so no private slot loop is needed.
 
@@ -1612,11 +1626,15 @@ Record the choice with
 `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 Then run `forge land <item>` again. Land also prints open findings and failing checks when it
 stops for another reason or hands a round to a session subagent.
-Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
+Narrow or split the part as agreed before building again. Split creates one follow-up fix with
+every open finding's title and file:line in its why and Done-when. Close records the fix on the
+item, prints its name, and lets this item continue without those findings.
+Accept dismisses every remaining finding
 of the latest review with the owner's reason and carries on without checking whether code or
 the default branch changed since that review. Close still requires green checks; later work
 needs another review.
-A clean review clears an unanswered review-loop stop.
+A stop that asks the owner needs a recorded choice with `forge close --resolve`.
+A merge of the default branch or a clean review does not clear it. Close repeats the question.
 When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
 choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
 with that finding as its why. It does this only when every open finding has Harm 1 or 2; with
