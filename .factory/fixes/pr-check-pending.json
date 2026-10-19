@@ -1,6 +1,13 @@
 {
   "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
   "branch": "fix/pr-check-pending",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155bb-5e67-7832-bbed-833b849b08f2",
+    "head": null,
+    "start": "d139586c8b7623f1f2e11756429d29ff7d8c3565"
+  },
   "done_when": "forge-pr-check reports pending, not failure, on a pull request that has no committed review yet, and still fails on a stale or blocked review; a test covers the generated workflow on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
