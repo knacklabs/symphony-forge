@@ -115,7 +115,7 @@ def test_1_the_board_answers_only_on_this_computer_and_only_with_its_token(clien
         address = urlsplit(url)
         assert address.hostname == "127.0.0.1"
         status, headers, page = get(url)
-        assert status == 200 and f"board.json?{address.query}".encode() in page
+        assert status == 200 and f"app.js?{address.query}".encode() in page  # the shell loads its script with the token
         assert "default-src 'none'" in headers["Content-Security-Policy"]
         assert headers["Referrer-Policy"] == "no-referrer"
         status, _, plan = get(url, "/plan/SHOP")
