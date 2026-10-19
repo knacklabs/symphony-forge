@@ -133,6 +133,7 @@ def test_40_interfaces(repo, gh, tmp_path, env):
     toml = (where / "forge.toml").read_text("utf-8")
     env.commit(repo.path, "forge.toml", toml.replace('interfaces = ["**/routes/**"]', "interfaces = []"))
     repo.git("push", "-q", "origin", "main")
+    repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
     # New task work requests a fresh review under the coordinator's changed policy.
     env.commit(where, "app.py", "print('updated')\n")
     assert env.close(item).returncode == 0
