@@ -4,7 +4,7 @@
   "flagged": [],
   "known": [],
   "land": {
-    "rounds": 1,
+    "rounds": 2,
     "stop": null
   },
   "part_line_limit": 400,
@@ -18,8 +18,8 @@
     "id": "2dbdef4c-f8ec-4672-842d-e086437a8953",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T11:18:36.810039+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": "60e518b6-f065-48a5-a9aa-7185ff2cbbea",
-    "head": "3c978884276d63672af2c91959e3e08bf3f68703",
+    "close": "9d34db83-7e55-4785-b6e5-b30347eb6bca",
+    "head": "3b5dc597f50a590f6a58c6cdb89485b27b2f68f1",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "claude"
 }
