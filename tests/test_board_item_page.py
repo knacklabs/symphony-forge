@@ -91,7 +91,7 @@ with sync_playwright() as p:
             expect(drawer).to_contain_text('page-dev')
             tab_to(page, 'Full history')
             page.keyboard.press('Enter')
-            assert page.url.endswith('#item/SHOP'), page.url
+            expect(page).to_have_url(re.compile(r'#item/SHOP$'))  # the address changes after Enter, not with it
             expect(page.get_by_role('heading', level=1, name='Shoppers can save a basket')).to_be_visible()
             tabs = page.get_by_role('tablist')
             expect(tabs.get_by_role('tab')).to_have_text(['Overview', 'Plan', 'Rounds', re.compile('^Known issues')])
