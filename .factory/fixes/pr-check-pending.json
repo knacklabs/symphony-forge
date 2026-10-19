@@ -50,7 +50,7 @@
     "id": "891f7a77-bb09-4958-b246-cf3c0b46a0c6",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "20ddc7cfb33209115e0f4493e4bb9ebfcea87d5c",
-    "keys": {},
-    "round": null
+    "close": "f74f724e-33a2-4240-8ea1-625a3dd65405",
+    "head": "d809fca4db57da95c03403e7f72254ca7fe3d421",
+    "keys": {
+      "the review finding \"[P1] Preserve review refusal messages in failed-step logs\" in src/forge/prcheck.py": 1
+    },
+    "round": 1
   },
   "why": "On every pull request the forge-pr-check fails on the first push and passes only after the committed review lands, so every pull request shows a red check first (issue 976)",
   "worker": "codex"
