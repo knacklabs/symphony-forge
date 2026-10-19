@@ -60,12 +60,11 @@ def warnings(top: Path) -> list[str]:
             state = story.json_of(texts.get(peer_spec))
             if not state or branch.startswith("task/") and state.get("branch") != branch:
                 continue
-            landed = story.json_of(texts.get(landed_spec))
             # A squash leaves the old tip intact. Its state on main proves it landed;
-            # stories keep their approved plan on main until all their tasks finish.
+            # stories keep approved JSON, so use the board's resolved completion.
             if (state.get("status") not in ("dropped", "merged", "done")
                     and (landed_spec not in texts or branch.startswith("story/")
-                         and landed.get("status") != "done")):
+                         and story.completed(top, item, default).get("status") != "done")):
                 changes[branch] = own if own is not None and branch == current else added(ref)
                 names[branch] = item
             break

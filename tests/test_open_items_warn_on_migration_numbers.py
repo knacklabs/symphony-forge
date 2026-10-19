@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from test_close import env  # noqa: F401
+from test_close import STORY_DOC, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
 STORY = "migration-number-warning"
@@ -84,7 +84,9 @@ def test_1_next_and_close_warn_without_refusing_duplicate_migration_numbers(env,
     (False, "fix/add-orders", "add-orders", ".factory/fixes/add-orders.json"),
     (False, "task/SHOP-PAGE", "SHOP/PAGE", ".factory/stories/SHOP/tasks/PAGE.json"),
     (True, "fix/add-orders", "add-orders", ".factory/fixes/add-orders.json"),
-], ids=["new-fix", "new-named-task", "adopted-fix"])
+    (False, "story/ORDERS", "ORDERS", ".factory/stories/ORDERS/story.json"),
+    (True, "story/ORDERS", "ORDERS", ".factory/stories/ORDERS/story.json"),
+], ids=["new-fix", "new-named-task", "adopted-fix", "new-story", "adopted-story"])
 def test_2_finished_peers_do_not_warn_even_with_retained_squash_branches(
         env, previous, peer, peer_item, peer_state):
     # Audit: retained squash tips keep additions and pre-merge status. The old
@@ -95,7 +97,11 @@ def test_2_finished_peers_do_not_warn_even_with_retained_squash_branches(
     other = env.tmp / "peer-clone"
     repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(other))
     repo.git("switch", "-qc", peer, cwd=other)
-    env.commit(other, peer_state, json.dumps({"branch": peer, "status": "working"}))
+    saved_status = "approved" if peer.startswith("story/") else "working"
+    env.commit(other, peer_state, json.dumps({"branch": peer, "status": saved_status}))
+    if peer.startswith("story/"):
+        plan = "\n".join(line for line in STORY_DOC.splitlines() if not line.startswith("| T2 |"))
+        env.commit(other, "plans/ORDERS.md", plan + "\n")
     env.commit(other, "db/migrations/0002_orders.sql", "select 20;\n")
     repo.git("push", "-q", "origin", peer, cwd=other)
     repo.git("fetch", "-q", "origin")  # Isolate identity from refresh behavior.
@@ -111,11 +117,23 @@ def test_2_finished_peers_do_not_warn_even_with_retained_squash_branches(
     assert finished.returncode == 0, finished.stdout + finished.stderr
     assert "add migration number" not in finished.stdout
     # A squash merge retains the old remote tip and its pre-merge status.
-    env.commit(other, peer_state, json.dumps({"branch": peer, "status": "working"}))
+    env.commit(other, peer_state, json.dumps({"branch": peer, "status": saved_status}))
     repo.git("push", "-q", "origin", peer, cwd=other)
     repo.git("fetch", "-q", "origin")
     repo.git("merge", "--squash", f"origin/{peer}")
     repo.git("commit", "-qm", "Land the peer through a squash merge")
+    if peer.startswith("story/"):
+        # Audit: Forge's last-task squash records completion in its message.
+        # Saved story JSON remains approved, so moving a tip or writing done
+        # cannot prove that warnings follow the board's completed-state logic.
+        repo.git("push", "-q", "origin", "main")
+        unfinished = repo.forge("next", cwd=where)
+        assert unfinished.returncode == 0, unfinished.stdout + unfinished.stderr
+        assert warning in unfinished.stdout
+        env.commit(repo.path, ".factory/stories/ORDERS/tasks/T1.json",
+                   json.dumps({"branch": "task/ORDERS-T1", "status": "ready"}),
+                   "Finish the last part\n\nForge-story-done: "
+                   + json.dumps({"key": "ORDERS", "outcome": "Orders work"}))
     repo.git("push", "-q", "origin", "main")
     assert "db/migrations/0002_orders.sql" in repo.git(
         "diff", "--name-only", f"origin/main...origin/{peer}")
