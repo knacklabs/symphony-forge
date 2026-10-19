@@ -4,12 +4,20 @@
   "done_when": "Windows CI runs only tests marked as platform-sensitive (installers, git hooks, shell quoting, paths, line endings, command stand-ins) on every pull request beside Linux; Linux still runs the whole suite; a test fails when a test in those areas lacks the mark; and a measured Windows run on the branch uses at most 2 times Linux's total runner minutes and at most 2 times Linux's longest group",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T20:09:40.594291+00:00",
       "step": "start"
     }
   ],
-  "why": "Windows CI takes about 6 times Linux (313 against 53 runner minutes, longest group 31.8 against 12.3 minutes) because it runs the whole suite, and it runs only nightly, so Windows bugs show up the next day"
+  "stuck": {
+    "close": null,
+    "head": "9c51fc9ea64da8374f3bec26f751732b73687190",
+    "keys": {},
+    "round": null
+  },
+  "why": "Windows CI takes about 6 times Linux (313 against 53 runner minutes, longest group 31.8 against 12.3 minutes) because it runs the whole suite, and it runs only nightly, so Windows bugs show up the next day",
+  "worker": "codex"
 }
