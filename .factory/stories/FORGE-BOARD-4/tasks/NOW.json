@@ -73,20 +73,7 @@
   ],
   "land": {
     "rounds": 1,
-    "stop": {
-      "area": "src/forge/board_app/now.js",
-      "at": "2026-10-19T14:36:53.938525+00:00",
-      "by": "owner",
-      "choice": "split",
-      "file": "src/forge/board_app/now.js",
-      "fixes": [
-        "review-findings-split-from-forge-board-4-2"
-      ],
-      "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-      "reason": "Same choice the owner made for the drawer on 19 October 2026: the three small first-screen defects (unknown waiting share, can-start on assigned parts, text for part progress) and a stronger test move to a follow-up fix",
-      "wait_id": "ea486e17-6d41-43b9-9254-076ee8d443f9",
-      "worker_round": 2
-    }
+    "stop": null
   },
   "part_line_limit": 400,
   "review": {
@@ -99,7 +86,7 @@
     "id": "6f652e64-b460-4efa-9ed5-5b3b6322d069",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "settled_areas": [
     "src/forge/board_app/now.js"
   ],
@@ -130,22 +117,13 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The first screen is stuck. It should deliver: needs-you strip, pipeline, stories rail, figures, Team and Me\nTwo rounds in a row left close's tests failing.\nThe worker tried: Review of FORGE-BOARD-4/NOW: clean; Keep one screen list after merging main; The first screen keeps its look next to the item page: its own class names no longer meet the drawer's.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "reason": "The tests failed on the live-page Updating race, which the old-page removal fixed on main; main is now merged in",
-    "tool": "claude",
-    "wait_id": "d22d819c-9037-4530-9b13-8a665aaa34b8",
-    "worker_round": 3
-  },
   "stuck": {
-    "close": "9fbdd3b0-39ec-4e5b-b3be-5f89adc17ba0",
-    "head": "fe9126ee35c7bbc6e9c0ea7944bd2350ca3462dc",
+    "close": "ad98f8ec-f3ee-4b64-98a3-8c08453f1677",
+    "head": "543482a8c739e0945e2cb66431cf9810ccf754fd",
     "keys": {
-      "close's tests failing": 1
+      "close's tests failing": 2
     },
-    "round": 2
+    "round": 3
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 83721ff565526d0122ca013bf39f95ef5c31011c` exited with status 1 on this machine.\nE           File \"<string>\", line 40, in opened\nE           File \"/Users/ravikiranvemula/.cache/uv/archive-v0/GlPDm-1UD8wSug4WbCBd7/lib/python3.11/site-packages/playwright/sync_api/_generated.py\", line 19981, in to_have_text\nE             self._sync(\nE           File \"/Users/ravikiranvemula/.cache/uv/archive-v0/GlPDm-1UD8wSug4WbCBd7/lib/python3.11/site-packages/playwright/_impl/_sync_base.py\", line 115, in _sync\nE             return task.result()\nE                    ^^^^^^^^^^^^^\nE           File \"/Users/ravikiranvemula/.cache/uv/archive-v0/GlPDm-1UD8wSug4WbCBd7/lib/python3.11/site-packages/playwright/_impl/_assertions.py\", line 559, in to_have_text\nE             await self._expect_impl(\nE           File \"/Users/ravikiranvemula/.cache/uv/archive-v0/GlPDm-1UD8wSug4WbCBd7/lib/python3.11/site-packages/playwright/_impl/_assertions.py\", line 83, in _expect_impl\nE             raise AssertionError(\nE         AssertionError: Locator expected to have text 'Live'\nE         Actual value: Reading\nE         Call log:\nE           - Expect \"to_have_text\" with timeout 60000ms\nE           - waiting for get_by_role(\"status\")\nE             63 \u00d7 locator resolved to <p role=\"status\" class=\"status\" data-state=\"reading\">Reading</p>\nE                - unexpected value \"Reading\"\nE\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/opt/homebrew/bin/uv', 'run', '--no-project', '--python', '3.11', '--with', 'playwright==1.55....resolved to <p role=\"status\" class=\"status\" data-state=\"reading\">Reading</p>\\n       - unexpected value \"Reading\"\\n\\n').returncode\n\ntests/test_board_now_screen.py:150: AssertionError\n________________________ tests/test_board_now_screen.py ________________________\n[gw1] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-FORGE-BOARD-4-NOW/.venv/bin/python\nworker 'gw1' crashed while running 'tests/test_board_now_screen.py::test_13_the_figures_and_the_me_view_follow_forges_records[new]'\n________________________ tests/test_board_now_screen.py ________________________\n[gw2] darwin -- Python 3.11.11 /Users/ravikiranvemula/Workdir/symphony-forge-FORGE-BOARD-4-NOW/.venv/bin/python\nworker 'gw2' crashed while running 'tests/test_board_now_screen.py::test_13_the_figures_and_the_me_view_follow_forges_records[adopted-v1.2.2]'\n3 failed in 179.72s (0:02:59)",
   "worker": "claude"
