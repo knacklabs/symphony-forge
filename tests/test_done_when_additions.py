@@ -1,5 +1,8 @@
 """Amend adds to or replaces Done-when and shows the change before it writes."""
 from pathlib import Path
+import os
+import subprocess
+import sys
 
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
 from test_worker import calls, install_claude
@@ -19,6 +22,20 @@ def test_1_amend_preserves_done_when_on_append_and_previews_both_changes(client)
     for option, text, expected in (("--append", extra, f"{old} {extra}"),
                                    ("--done", "Readers see the install steps",
                                     "Readers see the install steps")):
+        before = client.git("rev-parse", "HEAD", cwd=folder)
+        # A closed output pipe makes the preview fail. No write can precede it,
+        # including an uncommitted record write. Close the reader before launch.
+        reader, writer = os.pipe()
+        os.close(reader)
+        with os.fdopen(writer, "wb") as output:
+            interrupted = subprocess.run(
+                [sys.executable, str(client.bin / "forge"), "fix", "amend", "greet-readers",
+                 option, text, "--because", "The owner clarified the result"],
+                cwd=client.path, stdout=output, stderr=subprocess.PIPE,
+                text=True, encoding="utf-8", timeout=60)
+        assert interrupted.returncode != 0, interrupted.stderr
+        assert client.git("rev-parse", "HEAD", cwd=folder) == before
+        assert client.git("status", "--porcelain", cwd=folder) == ""
         amended = client.forge("fix", "amend", "greet-readers", option, text,
                                "--because", "The owner clarified the result")
         assert amended.returncode == 0, amended.stdout + amended.stderr
