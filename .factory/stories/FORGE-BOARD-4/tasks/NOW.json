@@ -78,19 +78,19 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "88c269bef455d0f68b1adf7ab44edef45e10cdd7b50cf7c9cca184c7056a04e2",
-    "changed": "f555dfde4099db22832d560c5b74b249a694428d8570793111efa522b291eb28",
-    "commit": "ccf2fcce5594bb36102889c5fd1ef436f7c01ef9",
+    "branch_diff": "bc186821e91e88bdeb1ab19dd3aed2d4fd9d1775b08d053437e034928d33a9ca",
+    "changed": "cec0c9d822c139b1ede8e291fc0ea36fe4069ae820c9d644828067956ebebe90",
+    "commit": "930e21ed96d683c4e75ea68611733922a34e7b83",
     "dismissals": [],
     "findings": [],
-    "id": "57c514c7-fd83-4f62-aacb-721b055bc326",
+    "id": "26a66264-22a3-464d-b32e-b47b5532fe18",
     "status": "clean"
   },
   "round": 6,
   "settled_areas": [
     "src/forge/board_app/now.js"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T12:22:09.231462+00:00",
@@ -122,6 +122,10 @@
     },
     {
       "at": "2026-10-19T17:06:43.244539+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T17:27:17.771834+00:00",
       "step": "review"
     }
   ],
