@@ -1,6 +1,13 @@
 {
   "base": "94879950a86a26c40af58a3315e866afe1823537",
   "branch": "fix/node-ci-timeout",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15351-58d6-71d2-af5e-791a856bf304",
+    "head": null,
+    "start": "509cf5c4d2f97f05cf480a03b296d6cccf60b061"
+  },
   "done_when": "The generated tests job for Node client repos has a 30-minute limit, and close reports a tests job that ran out of time as a timeout with its own next step instead of sending the item to a worker, on new repos and after sync on existing repos",
   "fix_kind": "backend",
   "kind": "fix",
