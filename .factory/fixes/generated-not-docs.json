@@ -1,6 +1,13 @@
 {
   "base": "94879950a86a26c40af58a3315e866afe1823537",
   "branch": "fix/generated-not-docs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15351-694b-7920-ac17-dd75a28a5fc6",
+    "head": null,
+    "start": "184a9a17b49df2d69fb00242f7a55f8c2ecd0202"
+  },
   "done_when": "A path marked linguist-generated in .gitattributes is never docs-only: close and the generated CI workflow share one rule and run the tests when such a file changes, on new repos and after sync on existing repos",
   "fix_kind": "backend",
   "kind": "fix",
