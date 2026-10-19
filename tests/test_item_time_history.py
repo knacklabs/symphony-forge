@@ -92,12 +92,13 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     suite.write_text(SUITE.format(tmp=env.tmp.as_posix()), "utf-8")
     command = f'"{sys.executable}" "{suite}"'
     # Close now restores main's settings; install the coordinator's test command there.
+    env.repo.git("merge", "--ff-only", "origin/main")
     Upgrade(env, tmp_path).on_main("forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
                'checks = ["tests", "forge-pr-check"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n'
                + f'test = {json.dumps(command)}\n')
     env.repo.git("fetch", "-q", "origin", "main")
-    env.repo.git("merge", "--no-edit", "origin/main", cwd=where)
+    env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     if previous:
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stderr

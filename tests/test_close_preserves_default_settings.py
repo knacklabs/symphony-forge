@@ -105,6 +105,6 @@ def test_2_close_commits_main_settings_with_head_pin_unless_settings_are_allowed
     assert client.git("show", "HEAD:forge.toml", cwd=folder) == expected.strip()
     repaired = case == "stale"
     assert closed.stdout.count(MESSAGE) == int(repaired)
-    commits = client.git("log", "--format=%s", f"{before}..HEAD", cwd=folder).splitlines()
-    assert ("Keep main's settings" in commits) == repaired
+    commits = client.git("log", "--format=%H", f"{before}..HEAD", "--", "forge.toml", cwd=folder).splitlines()
+    assert len(commits) == int(repaired)
     assert client.git("status", "--porcelain", cwd=folder) == ""
