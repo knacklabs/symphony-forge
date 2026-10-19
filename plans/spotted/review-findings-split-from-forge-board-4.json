@@ -23,6 +23,17 @@
       "closed_by": "review-findings-split-from-forge-board-4"
     },
     {
+      "key": "bug\tsrc/forge/board_app/item.js\tItem history still uses the repository's latest twenty events.",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 285,
+      "text": "Item history still uses the repository's latest twenty events.",
+      "from": "worker",
+      "item": "review-findings-split-from-forge-board-4",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/board_app/item.js\tKeep command text out of recorded reviews and known issues\treview-findings-split-from-forge-board-4",
       "kind": "bug",
       "path": "src/forge/board_app/item.js",
