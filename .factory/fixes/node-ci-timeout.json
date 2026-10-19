@@ -21,7 +21,7 @@
       "gain": 3,
       "harm": 3,
       "line": 101,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,27 +31,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "19c6f6553e8ae4094034808e3d9ecd9e16756d382eea7aa79f4d53c25fe7d9ab",
-    "changed": "1239049c5694d33e09b653861da76ce54a0980c16916822e35f40a6995325430",
-    "commit": "2c6db76ba771e0ff143e56d92b6e444bc2324c3c",
+    "branch_diff": "aeab62741f0adfa03ce945ea93113a58d28071cf4fda6cd7cf31bb784b66d6da",
+    "changed": "de5ed1cdc889549346fd9714c006681193f7365cea8ca0c07d19e0f52143d529",
+    "commit": "f081754bc8249ca26e8b8b2ef1087e14a137d6b5",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. When one test group times out while another group or lint fails normally, this call raises the timeout refusal before `_pending` examines the independent failures. Those failures consequently lose their worker-recovery path: `src/forge/land.py:94\u2013115` invokes that recovery only for the red refusal. Instead, the user receives only rerun/split guidance. Preserve red handling for independent failures while recognizing the aggregate `tests` failure caused by timed-out groups. The added tests cover failures and timeouts separately, so they miss this mixed-result case.",
-        "file": "src/forge/checks.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 101,
-        "priority": "P1",
-        "title": "[P1] Preserve independent check failures alongside test timeouts",
-        "work": 2
-      }
-    ],
-    "id": "fd6f6e5d-0c38-49e7-97f8-4b1cf6c0b41e",
-    "status": "blocked"
+    "findings": [],
+    "id": "28269fc1-bf46-4e25-aa35-13f388a2c871",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T08:39:44.784976+00:00",
@@ -59,6 +48,10 @@
     },
     {
       "at": "2026-10-19T08:56:20.398561+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T09:04:27.046297+00:00",
       "step": "review"
     }
   ],
