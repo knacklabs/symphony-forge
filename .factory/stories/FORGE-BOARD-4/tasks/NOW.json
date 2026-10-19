@@ -115,7 +115,7 @@
   "settled_areas": [
     "src/forge/board_app/now.js"
   ],
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T12:22:09.231462+00:00",
@@ -139,9 +139,13 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The first screen is stuck. It should deliver: needs-you strip, pipeline, stories rail, figures, Team and Me\nTwo rounds in a row left close's tests failing.\nThe worker tried: Review of FORGE-BOARD-4/NOW: clean; Keep one screen list after merging main; The first screen keeps its look next to the item page: its own class names no longer meet the drawer's.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "The tests failed on the live-page Updating race, which the old-page removal fixed on main; main is now merged in",
     "tool": "claude",
-    "wait_id": "d22d819c-9037-4530-9b13-8a665aaa34b8"
+    "wait_id": "d22d819c-9037-4530-9b13-8a665aaa34b8",
+    "worker_round": 3
   },
   "stuck": {
     "close": "9fbdd3b0-39ec-4e5b-b3be-5f89adc17ba0",
