@@ -30,12 +30,24 @@ BOARD = "(await import(new URL('app.js' + location.search, location.href))).Boar
 
 SEEN = '''() => {
   const seen = [], range = document.createRange();
+  const measure = document.createElement('canvas').getContext('2d');
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
     const node = walker.currentNode;
-    let clip = null;
+    let right = innerWidth, bottom = innerHeight;
     for (let at = node.parentElement; at && at !== document.body; at = at.parentElement) {
-      if (getComputedStyle(at).overflow !== 'visible') { clip = at.getBoundingClientRect(); break; }
+      const style = getComputedStyle(at);
+      if (style.overflow === 'visible') continue;
+      const box = at.getBoundingClientRect();
+      let edge = box.right - parseFloat(style.borderRightWidth);
+      // Text under the painted ellipsis is hidden, even when its range fits
+      // inside the element. Its width follows the platform's actual font.
+      if (style.textOverflow === 'ellipsis' && at.scrollWidth > at.clientWidth) {
+        measure.font = style.font;
+        edge -= parseFloat(style.paddingRight) + measure.measureText('…').width;
+      }
+      right = Math.min(right, edge);
+      bottom = Math.min(bottom, box.bottom);
     }
     for (const word of node.textContent.matchAll(/\\S+/g)) {
       if (!/[A-Za-z]/.test(word[0]) || /^[A-Z][A-Z0-9-]*-[0-9]+$/.test(word[0])) continue;
@@ -43,7 +55,7 @@ SEEN = '''() => {
       range.setEnd(node, word.index + word[0].length);
       const box = range.getBoundingClientRect();
       if (!box.width || box.bottom > innerHeight) continue;
-      if (clip && (box.right > clip.right + 1 || box.bottom > clip.bottom + 1)) continue;
+      if (box.right > right + 1 || box.bottom > bottom + 1) continue;
       seen.push(word[0]);
     }
   }

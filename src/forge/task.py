@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -104,7 +105,14 @@ def restore_default_settings(item: str, top: Path, state: dict[str, Any], defaul
     if state.get("kind") in ("migrate", "adopt") or settings_allowed(item, top, state) or not git(
             "diff", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top):
         return
-    pin = re.search(r"^version[ \t]*=.*$", git("show", "HEAD:forge.toml", cwd=top), re.M)[0]
+    head = git("show", "HEAD:forge.toml", cwd=top)
+    current = tomllib.loads(head)
+    incoming = tomllib.loads(git("show", f"origin/{default}:forge.toml", cwd=top))
+    current.pop("version", None)
+    incoming.pop("version", None)
+    if current == incoming:
+        return
+    pin = re.search(r"^version[ \t]*=.*$", head, re.M)[0]
     git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
     path = top / "forge.toml"
     text = re.sub(r"^version[ \t]*=.*$", lambda _: pin, path.read_text(encoding="utf-8"),

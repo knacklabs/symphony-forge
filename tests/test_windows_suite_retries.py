@@ -56,6 +56,10 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
         + ("    yield\n" if phase == "setup" else "")
         + ("def test_sample(sample):\n    pass\n" if phase != "call" else ""), encoding="utf-8")
     options[options.index("auto")] = "2"
+    # Pytest validates every basetemp value, even one overridden later. CI's
+    # Windows root is an ancestor of this sample's cwd, so keep only our own.
+    base = options.index("--basetemp")
+    del options[base:base + 2]
     # Keep CI's relative timing path: an external option path makes pytest's root
     # the common ancestor of that path and the test, causing filesystem-wide collection.
     (tmp_path / ".test_durations").write_text('{"test_sample.py::test_sample": 1.0}\n', encoding="utf-8")
