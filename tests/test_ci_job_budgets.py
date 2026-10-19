@@ -12,6 +12,8 @@ import pytest
 
 from test_ci_limits_pull_requests_to_linux import matrix_rows
 
+pytestmark = pytest.mark.platform
+
 STORY = "SIMPLIFY-CI-WORKFLOW"
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.yml"
 

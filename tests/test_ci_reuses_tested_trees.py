@@ -15,6 +15,8 @@ import pytest
 
 from test_ci_limits_pull_requests_to_linux import expression
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-REUSE-TEST-PROOF"
 ROOT = Path(__file__).resolve().parents[1]
 
