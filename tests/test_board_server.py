@@ -146,6 +146,10 @@ def test_2_the_board_rebuilds_only_what_changed(client, tmp_path):
         # Nothing changed: the same snapshot, with no rebuild.
         again = snapshot(url)
         assert again == first
+        # A test run's per-test results are not board input: writing them rebuilds nothing.
+        (client.path / ".git/forge/test-results-alpha.txt").write_text("passed tests/test_a.py::test_a\n",
+                                                                       encoding="utf-8")
+        assert snapshot(url) == first
         # One item changed: only its row is derived again.
         commit(alpha, "alpha.txt")
         changed = snapshot(url)

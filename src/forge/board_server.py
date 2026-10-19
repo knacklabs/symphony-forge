@@ -33,8 +33,9 @@ KINDS = {"js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8
 # Nothing on the page loads from or talks to another origin, and nothing inline runs.
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
-# Files the derivation itself writes under Forge's folder; watching them would rebuild forever.
-WRITTEN = re.compile(r"(-cache\.json|prs-week-[\d-]+\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|"
+# Files under Forge's folder the board never reads: the derivation's own writes, which would rebuild
+# forever, and test runs' per-test results, which the test lane rewrites all the time.
+WRITTEN = re.compile(r"(-cache\.json|^test-results-.*\.txt|prs-week-[\d-]+\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|"
                      r"\.guard|\.tmp|\.new)$")
 # ponytail: the tests' seams, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
