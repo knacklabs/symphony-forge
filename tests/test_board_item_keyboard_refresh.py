@@ -6,8 +6,12 @@ It covers keyed controls and plain links: the breadcrumb, the pull request, and 
 fold and links, which load after the page redraws. Only GitHub's answers are fixtures.
 """
 import json
+import os
+import signal
 import subprocess
 from types import SimpleNamespace
+
+import pytest
 
 from conftest import REAL_UV
 from test_board_item_page import PLAN
@@ -101,7 +105,20 @@ with sync_playwright() as p:
 assert not failures, failures
 """
 
+# Eight live refreshes can take minutes on a loaded machine. The browser gets its own
+# budget below pytest's, so a slow run fails with this message and every process stops,
+# instead of pytest's timeout ending the worker before any cleanup runs.
+BROWSER_SECONDS = 420
 
+
+def stop_tree(process):
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/F", "/T", "/PID", str(process.pid)], capture_output=True, timeout=30)
+    else:
+        os.killpg(process.pid, signal.SIGKILL)
+
+
+@pytest.mark.timeout(BROWSER_SECONDS + 180)
 def test_2_live_item_updates_keep_keyboard_focus_and_navigation(client, gh, tmp_path):
     teammate = clone(client, tmp_path)
     pushed(teammate, "Plan a basket", {"plans/SHOP.md": PLAN, ".factory/stories/SHOP/story.json":
@@ -118,8 +135,20 @@ def test_2_live_item_updates_keep_keyboard_focus_and_navigation(client, gh, tmp_
     teammate.git("switch", "-q", "main")
     client.git("fetch", "-q", "origin")
     with live(client, FORGE_BOARD_FETCH_WAIT="3600") as url:
-        shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
-                                "playwright==1.55.0", "python", "-c", SCRIPT, url,
-                                str(teammate.path), str(client.path)], capture_output=True, text=True,
-                               encoding="utf-8", timeout=300)
-        assert shown.returncode == 0, shown.stdout + shown.stderr
+        # Its own process group, so a stop also ends uv's Python and the browser it started.
+        shown = subprocess.Popen([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
+                                  "playwright==1.55.0", "python", "-c", SCRIPT, url,
+                                  str(teammate.path), str(client.path)], stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                 start_new_session=os.name != "nt")
+        try:
+            out, err = shown.communicate(timeout=BROWSER_SECONDS)
+        except subprocess.TimeoutExpired:
+            stop_tree(shown)
+            out, err = shown.communicate(timeout=30)
+            pytest.fail(f"The browser journey ran past {BROWSER_SECONDS} s and was stopped.\n{out}{err}")
+        finally:
+            if shown.poll() is None:
+                stop_tree(shown)
+                shown.wait(timeout=30)
+        assert shown.returncode == 0, out + err
