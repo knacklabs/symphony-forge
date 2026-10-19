@@ -25,7 +25,7 @@ def workflow_steps(job):
 
 
 def decide(repo, gh, tmp_path, monkeypatch, event, ref, sha, prs=(), runs=(), job="tests",
-           api_error=False):
+           api_error=False, diagnostics=None):
     steps = workflow_steps(job)
     proof = next(step for step in steps if step.startswith("id: parent-tests\n"))
     command = re.search(r"^        run: (.+)$", proof, re.M)[1]
@@ -48,6 +48,8 @@ def decide(repo, gh, tmp_path, monkeypatch, event, ref, sha, prs=(), runs=(), jo
     done = subprocess.run([sys.executable, str(ROOT / args[1]), *args[2:]], cwd=repo.path,
                           capture_output=True, text=True, timeout=30)
     assert done.returncode == 0, done.stderr
+    if diagnostics is not None:
+        diagnostics.append(done.stdout)
     reused = output.read_text(encoding="utf-8").strip() == "reuse=true"
     note = summary.read_text(encoding="utf-8") if summary.exists() else ""
     assert bool(note) == reused

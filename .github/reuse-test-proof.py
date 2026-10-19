@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 
@@ -37,7 +38,8 @@ def successful(proof):
 
 def reused_run():
     if os.environ.get("GITHUB_EVENT_NAME") != "push":
-        return None
+        return None, "this event needs its own tests"
+    reason = "no matching successful proof for this tree"
     ref, sha = os.environ["GITHUB_REF"], os.environ["GITHUB_SHA"]
     tree = run("git", "rev-parse", f"{sha}^{{tree}}")
     if ref == "refs/heads/main":
@@ -54,6 +56,15 @@ def reused_run():
                           and r.get("event") == "pull_request"),
                          key=lambda r: r["id"], default={})
             if successful(latest):
+                if latest.get("pull_requests") == []:
+                    # GitHub clears snapshots after a PR merges. With main moving
+                    # forward, its merge parent must predate the tested merge ref.
+                    base_time = datetime.fromisoformat(
+                        run("git", "show", "-s", "--format=%cI", f"{sha}^1"))
+                    run_time = datetime.fromisoformat(latest["created_at"].replace("Z", "+00:00"))
+                    if base_time <= run_time:
+                        return latest, "main tip existed by the run start and the merge tree matches"
+                    reason = "main tip was committed after the pull request run started"
                 # PR jobs check out GitHub's merge commit. Reconstruct that run's
                 # historical merge, not a new merge against today's main tip.
                 for snapshot in latest.get("pull_requests", []):
@@ -61,23 +72,25 @@ def reused_run():
                             and snapshot.get("head", {}).get("sha") == head):
                         tested_base = commit(snapshot["base"]["sha"])
                         if run("git", "merge-tree", "--write-tree", tested_base, head) == tree:
-                            return latest
+                            return latest, "the recorded pull request merge tree matches"
     elif ref.startswith("refs/tags/"):
         for proof in github("actions/workflows/forge-next.yml/runs", ".workflow_runs[]",
                             branch="main", event="push", status="success"):
             if (successful(proof) and proof.get("event") == "push"
                     and proof.get("head_branch") == "main"
                     and run("git", "rev-parse", f"{commit(proof['head_sha'])}^{{tree}}") == tree):
-                return proof
-    return None
+                return proof, "the successful main run tested the same tree"
+    return None, reason
 
 
 try:
-    proof = reused_run()
+    proof, reason = reused_run()
     link = proof["html_url"] if proof is not None else None
-except (subprocess.SubprocessError, OSError, ValueError, KeyError, TypeError):
+except (subprocess.SubprocessError, OSError, ValueError, KeyError, TypeError) as error:
     # Missing history, conflicting merges or unavailable GitHub proof must run the tests.
     proof = None
+    reason = f"could not verify successful proof ({type(error).__name__})"
+print(f"Tests skipped: {reason}." if proof is not None else f"Tests will run: {reason}.")
 with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
     output.write(f"reuse={str(proof is not None).lower()}\n")
 if proof is not None:
