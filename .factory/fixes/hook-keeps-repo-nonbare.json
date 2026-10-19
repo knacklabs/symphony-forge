@@ -1,0 +1,15 @@
+{
+  "base": "f2ab8aae1ff6a5b6577bc10e8e5770db435ba6d4",
+  "branch": "fix/hook-keeps-repo-nonbare",
+  "done_when": "Forge runs uv without GIT_DIR, GIT_WORK_TREE, GIT_COMMON_DIR and GIT_INDEX_FILE, so a merge commit in a linked worktree across a pin change keeps the repo non-bare, its index intact and the merge committed, and a test proves it on new and adopted repos",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T04:39:40.897693+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's pre-commit hook hands a merge commit to the pinned release through uv with git's hook variables, and uv's own git init then turns the whole repo bare so no git command works"
+}
