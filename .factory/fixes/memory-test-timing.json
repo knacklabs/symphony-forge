@@ -10,13 +10,29 @@
   },
   "done_when": "tests/test_machine_memory_budget.py's small-test case no longer depends on fixed short waits, prints the command's last output when it fails, and passes repeatedly under parallel load",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7491949257093009df3bf2f969f2bbc6dc7626d7b8ee9f463db3db7a067cce27",
+    "changed": "61feb5661967f7bdb08e02947aab96ccd24e144bef20dbba68db46243b3fb7b7",
+    "commit": "f2a0b05ccd9953382b17fe319441d0104de354b0",
+    "dismissals": [],
+    "findings": [],
+    "id": "43ca2b4f-fd39-42f7-a532-b473d127717d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T08:39:52.721640+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T08:57:56.868930+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
