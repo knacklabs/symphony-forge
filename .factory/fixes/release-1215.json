@@ -1,0 +1,15 @@
+{
+  "base": "e012b9860190381dc9837139d057ae973357f92c",
+  "branch": "fix/release-1215",
+  "done_when": "Forge's version is 1.2.15 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T05:00:56.053944+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.15 now: a merge commit in a linked worktree across a Forge pin change can turn their whole repo bare, so no git command works"
+}
