@@ -1,6 +1,13 @@
 {
   "base": "94879950a86a26c40af58a3315e866afe1823537",
   "branch": "fix/memory-test-timing",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1535b-85ba-7120-94b2-1be00d782574",
+    "head": null,
+    "start": "455e65a4a15ee83b9eaf87ea1a62c2e3ccabef6f"
+  },
   "done_when": "tests/test_machine_memory_budget.py's small-test case no longer depends on fixed short waits, prints the command's last output when it fails, and passes repeatedly under parallel load",
   "fix_kind": "mechanical",
   "kind": "fix",
