@@ -13,10 +13,10 @@ const STAGE_OF = {
 const VERB = { approval: 'Approve', 'worker question': 'Answer', merge: 'Merge' }; // every other wait: Decide
 const KINDS = [['all', 'All'], ['task', 'Story parts'], ['fix', 'Fixes']];
 const RUN = { work: 'Building', worker: 'Building', review: 'Reviewing', read: 'Reading the plan', test: 'Testing' };
-const CARDS = 6; // per stage, then "and N more"
+const CARDS = 4; // per stage, then "and N more"
 const STORIES = 5;
 const ASKS = 3;
-const MERGED = 5;
+const MERGED = 3;
 const WEEK = 7 * 86400 * 1000;
 
 let Board;
@@ -77,6 +77,7 @@ function facts(snapshot) {
   stages.planned.sort((a, b) => (b.stage === 'Can start now') - (a.stage === 'Can start now'));
   stages.merged.sort((a, b) => (b.merged_at || '').localeCompare(a.merged_at || ''));
   const recent = stages.merged.filter((row) => Date.now() - Date.parse(row.merged_at) < WEEK);
+  stages.merged = recent; // one set: the header, the titles and "and N more" all count the last 7 days
   const counted = snapshot.team.counts.finished_last_7_days;
   const timed = recent.filter((row) => row.total_seconds != null);
   const waited = timed.reduce((sum, row) => sum + (row.time_breakdown.waiting_for_owner || 0)
@@ -184,10 +185,10 @@ function rail(shown) {
 function figures(shown) {
   const figure = (value, words, tone) => el('p', { 'data-tone': tone }, el('strong', {}, String(value)), ' ', words);
   return el('section', { class: 'figures', 'aria-label': 'Figures' },
-    figure(shown.merged, 'merged in 7 days'),
+    figure(shown.merged, 'merged, 7 days'),
     figure(shown.median, 'median item'),
     figure(shown.waiting, 'waiting on people', 'needs-you'),
-    figure(shown.red, shown.red === 1 ? 'item failing checks' : 'items failing checks', shown.red ? 'stuck' : null));
+    figure(shown.red, 'red checks', shown.red ? 'stuck' : null));
 }
 
 function full(shown) {

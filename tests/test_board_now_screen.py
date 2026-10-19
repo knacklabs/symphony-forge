@@ -50,6 +50,14 @@ SEEN = '''() => {
   return seen;
 }'''
 
+SPILLS = '''() => [...document.querySelectorAll('main button')].flatMap(card => {
+  const box = card.getBoundingClientRect();
+  return [...card.querySelectorAll('*')].filter(part => {
+    const at = part.getBoundingClientRect();
+    return at.width && (at.left < box.left - 1 || at.right > box.right + 1 || at.bottom > box.bottom + 1);
+  }).map(part => card.textContent + ': ' + part.textContent);
+})'''
+
 def opened(page, url, scheme):
     page.goto(url)
     expect(page.get_by_role('status')).to_have_text('Live', timeout=60000)
@@ -76,15 +84,25 @@ with sync_playwright() as p:
             # keys, and not the hidden end of a title cut to one line.
             assert page.evaluate('document.documentElement.scrollHeight <= innerHeight'), 'the page scrolls'
             words = page.evaluate(SEEN)
-            assert 100 <= len(words) <= 160, (len(words), ' '.join(words))
+            assert 100 <= len(words) <= 130, (len(words), ' '.join(words))
+            # Every card keeps its title, key and tag inside its own box, and Merged counts one set:
+            # the merged items of the last 7 days, shown and in its "and N more".
+            spills = page.evaluate(SPILLS)
+            assert not spills, spills
+            merged = page.get_by_role('region', name='Merged', exact=True)
+            shown = merged.get_by_role('listitem').count()
+            rest = merged.get_by_role('button', name=re.compile('^and [0-9]+ more$'))
+            hidden = int(rest.inner_text().split()[1]) if rest.count() else 0
+            assert merged.get_by_role('heading').inner_text().split()[-1] == str(shown + hidden) == \
+                page.get_by_role('region', name='Figures').inner_text().split()[0], (shown, hidden)
             text = page.locator('body').inner_text()
             # The board's own words carry no command text, and an unknown fact says unknown.
             assert not re.search(r'\bforge [a-z]|--[a-z]|`', text), text  # a command, never the Forge name
             assert 'unknown median item' in ' '.join(page.get_by_role('region', name='Figures').inner_text().split())
             for name, count in expected['stages'].items():
                 region = page.get_by_role('region', name=name, exact=True)
-                if count > 6:
-                    expect(region.get_by_role('button', name=f'and {count - 6} more')).to_be_visible()
+                if count > 4:
+                    expect(region.get_by_role('button', name=f'and {count - 4} more')).to_be_visible()
             expect(page.get_by_role('region', name='Stories').get_by_role(
                 'button', name=f"and {expected['stories'] - 5} more")).to_be_visible()
             expect(page.get_by_role('region', name='Planned', exact=True).get_by_text('can start').first).to_be_visible()
@@ -133,9 +151,22 @@ def look(url, mode, expected):
 
 
 def test_2_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable(repo, gh, tmp_path):
-    """The client-sized repo: 44 stories, 10 open fixes and six weeks of merges."""
+    """The client-sized repo: 44 stories, 10 open fixes and six weeks of merges, plus one approved story
+    with a long key whose first part can start, so a long key and a tag share one card."""
     (tmp_path / "shop").mkdir()
     shop = Repo(board_fixture.build(tmp_path / "shop", repo.forge("--version").stdout.split()[-1]), repo.bin)
+    long = "SHOP-DELIVERY-SLOTS-12"
+    plan = shop.path.joinpath("plans/SHOP-1.md").read_text(encoding="utf-8").replace("shop-1", long.lower())
+    shop.write(f"plans/{long}.md", plan.replace("Shoppers can save a basket", "Couriers book a delivery slot", 1))
+    shop.write(f".factory/stories/{long}/story.json", json.dumps({
+        "doc": f"plans/{long}.md", "title": "Couriers book a delivery slot", "status": "approved",
+        "approval": {"at": datetime.now(timezone.utc).isoformat()}}))
+    roadmap = json.loads(shop.path.joinpath("plans/roadmap.json").read_text(encoding="utf-8"))
+    roadmap["items"].insert(0, {"key": long, "title": "Couriers book a delivery slot"})  # first in Planned
+    shop.write("plans/roadmap.json", json.dumps(roadmap, indent=2))
+    shop.git("add", "-A")
+    shop.git("commit", "-qm", "Plan delivery slots")
+    shop.git("push", "-q", "origin", "main")
     gh.respond("pr", "list", stdout="[]")
     gh.respond("api", "graphql", stdout=json.dumps({"data": {"repository": {"pullRequests": {"nodes": []}}}}))
     with live(shop) as url:
@@ -198,5 +229,5 @@ def test_2_the_figures_and_the_me_view_follow_forges_records(client, gh, tmp_pat
         merged = sum(board["team"]["counts"]["finished_last_7_days"].values())
         timed = [row["id"] for row in board["items"] if row["stage"] == "merged" and row["total_seconds"] is not None]
         assert merged >= 3 and sorted(timed) == ["done-1", "done-2", "done-3"], (merged, timed)
-        look(url, "figures", {"figures": [f"{merged} merged in 7 days", "2 h median item", "13.9% waiting on people",
-                                          "1 item failing checks"]})
+        look(url, "figures", {"figures": [f"{merged} merged, 7 days", "2 h median item", "13.9% waiting on people",
+                                          "1 red checks"]})

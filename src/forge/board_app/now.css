@@ -213,6 +213,15 @@ main:has(> .now) {
   white-space: nowrap;
 }
 
+/* A long key gives way to the tag: it is cut to fit, never pushed out of the card. */
+.chip-meta .key {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-meta .tag { flex: none; }
+
 .tag {
   border-radius: var(--radius-tag);
   padding: 0 6px;
