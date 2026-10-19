@@ -4,12 +4,20 @@
   "done_when": "forge work merges the default branch into the item's branch before every work round, and when close finds a merge conflict it offers a short resolve-only round instead of a full worker round; a test covers both on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:54:33.365473+00:00",
       "step": "start"
     }
   ],
-  "why": "Closes fail with 'merging main conflicts in ...' and each costs a whole worker round, and rounds that start on a stale base show diffs that seem to delete main's newer files (issue 969)"
+  "stuck": {
+    "close": null,
+    "head": "29b428b6cb9e2c86c7c7bba3a3e7fd7785f3420b",
+    "keys": {},
+    "round": null
+  },
+  "why": "Closes fail with 'merging main conflicts in ...' and each costs a whole worker round, and rounds that start on a stale base show diffs that seem to delete main's newer files (issue 969)",
+  "worker": "codex"
 }
