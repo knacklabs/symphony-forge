@@ -52,8 +52,8 @@
     "id": "e16a58f2-b596-45fc-b508-092edb67f7cb",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:58:58.683303+00:00",
@@ -73,12 +73,10 @@
     }
   ],
   "stuck": {
-    "close": "63ff2ebe-a534-48c2-8edc-cbc81795b78f",
-    "head": "908111f9a422be25470fbb934a8a06c353131d7d",
-    "keys": {
-      "the review finding \"Determine whether peers are open from their actual item and landed state\" in src/forge/migration_warnings.py": 2
-    },
-    "round": 2
+    "close": "946e796f-21c3-4e65-9dab-8553f737a0e4",
+    "head": "1847e38d32740e67d4b4539e96ec5ba7498b69bd",
+    "keys": {},
+    "round": 3
   },
   "why": "Two open items can add database migrations with the same number, and neither review sees the other branch (issue 925)",
   "worker": "codex"
