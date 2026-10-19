@@ -10,13 +10,54 @@
   },
   "done_when": "forge fix amend accepts --append '<text>' to add to the Done-when, and both --done and --append print the old and new text before writing; a test covers both on a new and an adopted repo, and the coordinator guide names --append",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_amend_preserves_done_when_on_append_and_previews_both_changes() in tests/test_done_when_additions.py",
+      "file": "tests/test_done_when_additions.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 26,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_amend_preserves_done_when_on_append_and_previews_both_changes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9418d4ff6178bf3f0534cd6be09d008b12f7784eec7609dc9e58958402ce5c85",
+    "changed": "af614ce5f5afcbc474579cc5b63c9dcad4266c10c92638dc8d849cd59396a7ce",
+    "commit": "7bb54fff0a7bfcd42a1654cf205d9ed9d509e944",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. The test checks that the preview precedes the final success message, but never establishes that it precedes writing. Moving the preview in src/forge/task.py:592 after repo.commit_state at lines 600\u2013601 would violate the explicit before-writing requirement while every assertion still passes for both options and both repository fixtures. Strengthen the command-level proof to detect persistence occurring before the preview.",
+        "file": "tests/test_done_when_additions.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 26,
+        "priority": "P1",
+        "title": "Gate: test_1_amend_preserves_done_when_on_append_and_previews_both_changes",
+        "work": 2
+      }
+    ],
+    "id": "8ffebebd-13c1-4933-b548-9e254c08b736",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T19:54:37.464195+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T20:15:49.570085+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
