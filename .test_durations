@@ -1052,7 +1052,7 @@
     "tests/test_fix_forge_s_questions_and_story_docs_are_har.py::test_2_story_done_when_and_builder_sections_are_readable_after_sync": 1.4861455429995658,
     "tests/test_fix_forge_s_questions_and_story_docs_are_har.py::test_3_plan_framing_and_status_updates_have_one_shape_after_sync": 1.1285565839998526,
     "tests/test_fix_forge_s_questions_and_story_docs_are_har.py::test_4_new_story_has_an_at_a_glance_line_outside_approved_sections": 1.3148616689995833,
-    "tests/test_fix_forge_says_end_to_end_tests_come_first_b.py::test_1_sync_gives_package_client_tests_ten_minutes": 0.6127598329999273,
+    "tests/test_fix_forge_says_end_to_end_tests_come_first_b.py::test_1_sync_gives_package_client_tests_thirty_minutes": 0.6127598329999273,
     "tests/test_fix_forge_says_end_to_end_tests_come_first_b.py::test_2_browser_scope_guidance": 0.00847216500005743,
     "tests/test_fix_forge_says_end_to_end_tests_come_first_b.py::test_3_one_check_starts_app_and_runs_all_tests": 0.008455917000446789,
     "tests/test_fix_forge_says_end_to_end_tests_come_first_b.py::test_4_test_data_comes_through_running_api": 0.012694957999883627,

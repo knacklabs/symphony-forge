@@ -81,8 +81,8 @@ def test_2_close_distinguishes_test_time_limits_from_worker_failures(
     done = env.repo.forge("close", ITEM, cwd=where)
     assert done.returncode == 1, done.stdout + done.stderr
     if timeout:
-        assert "the tests ran out of time after 30 minutes" in done.stderr
-        assert "split the suite" in done.stderr
+        assert ("On the pull request, the tests ran out of time after 30 minutes.\n"
+                f"Next: rerun the tests job, or split the suite, then forge close {ITEM}\n") in done.stderr
         assert "forge work" not in done.stderr
         assert "Checks failed on the pull request" not in done.stderr
     else:
