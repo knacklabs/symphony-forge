@@ -52,8 +52,8 @@
     "id": "53baee19-b7cb-4321-9fed-1182b5bf25a2",
     "status": "clean"
   },
-  "round": 6,
-  "status": "waiting for checks",
+  "round": 7,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:58:58.683303+00:00",
@@ -85,10 +85,10 @@
     }
   ],
   "stuck": {
-    "close": "4b49976a-050f-4693-8b4b-63fcea10d9d0",
-    "head": "52ba2ef4c2e1efd639fe00b6263ec9c475c48775",
+    "close": "09c29303-ef01-4b58-a205-05b43a33bb68",
+    "head": "05b0100c97d25a80ee976994e83ac72f3e125163",
     "keys": {},
-    "round": 5
+    "round": 6
   },
   "why": "Two open items can add database migrations with the same number, and neither review sees the other branch (issue 925)",
   "worker": "codex"
