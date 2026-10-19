@@ -1,0 +1,15 @@
+{
+  "base": "af7648175aa885bf6ccd8cac51ab3a423e4ddc4f",
+  "branch": "fix/reuse-proof-after-merge",
+  "done_when": "When a merged pull request's run lists no pull requests, the proof check accepts the run if main's tip at merge time was committed before that run started and the merge tree equals the tested merge, a test covers an empty list and a main that moved after the run started, and a real merge's run skips its tests",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T05:18:14.328296+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Merges to main still rerun the full test suite: GitHub empties a pull request run's pull_requests list after the merge, so the proof check never matches the tested base"
+}
