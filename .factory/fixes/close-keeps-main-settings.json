@@ -67,8 +67,8 @@
     "id": "60ba4656-6f13-4482-b44f-f035d300b02d",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T08:39:40.297418+00:00",
@@ -84,14 +84,10 @@
     }
   ],
   "stuck": {
-    "close": "daddb94c-92bf-47bb-b7eb-c306db702396",
-    "head": "2b2d6aee26d4e2596c4cc344df5688456c627448",
-    "keys": {
-      "the review finding \"Allow the worker to finish a merge containing incoming settings\" in src/forge/worker.py": 1,
-      "the review finding \"Exclude initial migrations from restoring default settings\" in src/forge/task.py": 1,
-      "the review finding \"Reload configuration after repairing forge.toml\" in src/forge/close.py": 1
-    },
-    "round": 1
+    "close": "46e67f9d-4512-4615-a8c3-9700d97e2ccb",
+    "head": "172da5f9865f7e0fe31f9de3bfc8950e79303119",
+    "keys": {},
+    "round": 2
   },
   "why": "After a Codex round merges main, the branch can still carry its older forge.toml, so the squash merge reverts main's settings (issue 921, Codex path)",
   "worker": "codex"
