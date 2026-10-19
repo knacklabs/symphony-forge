@@ -4,12 +4,20 @@
   "done_when": "The coordinator guide tells repos whose test command runs Vitest through a script with Vitest projects to pass --maxWorkers=${FORGE_TEST_CPUS:-2} on the command line instead of in the config, and both synced guides match",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T15:23:12.889468+00:00",
       "step": "start"
     }
   ],
-  "why": "With Vitest projects, a maxWorkers cap in the config fails ('projects have different maxWorkers but same sequence.groupOrder'), and the guide does not say to cap on the command line instead"
+  "stuck": {
+    "close": null,
+    "head": "f93ab270616210c952da50820910cfcae72de787",
+    "keys": {},
+    "round": null
+  },
+  "why": "With Vitest projects, a maxWorkers cap in the config fails ('projects have different maxWorkers but same sequence.groupOrder'), and the guide does not say to cap on the command line instead",
+  "worker": "codex"
 }
