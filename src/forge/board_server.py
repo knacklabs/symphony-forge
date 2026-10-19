@@ -46,16 +46,24 @@ DENIED = "This board link is not valid. Open the board again to get a new link."
 ASSIGN_WAIT = 300  # seconds `forge assign` may take, a fetch and a push included
 ASSIGNING = threading.Lock()  # one assignment at a time: two would commit in the same story checkout
 ASSIGN_FAILED = "Forge could not give this work. The terminal that runs the board shows why."
+TOOL_FAILED = ("A git step failed. Check the network connection, then try again. "
+               "The terminal that runs the board shows the details.")
+# Text a person should not have to read: commands, flags, quoted names and tools' own errors.
+TOOL_TEXT = re.compile(r"\b(?:forge|git|gh|uv|npm|python3?)\s+[a-z-]|--[a-z]|`|\b(?:failed|fatal|error):", re.I)
 
 
 def reason(text: str) -> str:
-    """A refusal's first sentence for the page: no `Next:` line and no command text."""
+    """A refusal's problem line for the page, without its `Next:` line. From the first sentence
+    that holds command or tool text on, it says in plain words that a git step failed."""
     first = text.strip().splitlines()[0] if text.strip() else ""
-    if first.startswith(("Traceback", "Next:")):
+    if not first or first.startswith(("Traceback", "Next:")):
         return ASSIGN_FAILED
-    first = re.match(r".*?[.!?](?=\s|$)", first)[0] if re.search(r"[.!?](\s|$)", first) else first
-    first = re.sub(r"\s*`[^`]*`", "", first).strip()  # a quoted command or path
-    return first if first and not re.search(r"\bforge [a-z]|--[a-z]", first) else ASSIGN_FAILED
+    kept = []
+    for sentence in re.split(r"(?<=[.!?])\s+", first):
+        if TOOL_TEXT.search(sentence):
+            return " ".join([*kept, TOOL_FAILED])
+        kept.append(sentence)
+    return first
 
 
 def assign(top: Path, key: str, login: str) -> dict[str, Any]:

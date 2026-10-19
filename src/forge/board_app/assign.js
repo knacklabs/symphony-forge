@@ -143,7 +143,8 @@ function mount() {
     slot.after(box);
     const lost = last && last.id === id && !last.node.isConnected
       && (document.activeElement === document.body || document.activeElement === null);
-    if (lost) box.querySelector(`[data-part=${last.part}]`)?.focus(), last = null;
+    // The focus moves the record to the new part, so the next redraw restores it again.
+    if (lost) box.querySelector(`[data-part=${last.part}]`)?.focus();
   }
 }
 
