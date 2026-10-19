@@ -4,13 +4,21 @@
   "done_when": "A review no longer finds: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "round": 1,
   "stacked_on": "FORGE-BOARD-4/DETAIL",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T14:05:51.340822+00:00",
       "step": "start"
     }
   ],
-  "why": "Review findings split from FORGE-BOARD-4/DETAIL: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)"
+  "stuck": {
+    "close": null,
+    "head": "bda13744d1f6b6331302abdf90694ffc37d1fff7",
+    "keys": {},
+    "round": null
+  },
+  "why": "Review findings split from FORGE-BOARD-4/DETAIL: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)",
+  "worker": "codex"
 }
