@@ -73,7 +73,7 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
     env.repo.git("push", "-q", "origin", "main")
     install_claude(env.repo)
     item = "resume-observed-work"
-    for args in (("fix", "start", "Resume observed work", "--done", "The admission stays visible"),
+    for args in (("fix", "start", "Resume observed work", "--done", "The admission stays visible; forge.toml is upgraded"),
                  ("work", item)):
         done = subprocess.run([sys.executable, str(env.repo.bin / "old-forge"), *args],
                               cwd=env.repo.path, capture_output=True, text=True, timeout=60)

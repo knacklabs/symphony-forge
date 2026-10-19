@@ -38,7 +38,7 @@ def test_1_fix_title_is_the_whole_first_sentence(env, client, why, title):
         env.commit(env.repo.path, "forge.toml", settings, "Use earlier Forge")
         env.repo.git("push", "-q", "origin", "main")
         started = subprocess.run([sys.executable, str(env.repo.bin / "old-forge"), "fix", "start",
-                                  why, "--done", "The readme is tidy"],
+                                  why, "--done", "The readme is tidy; forge.toml is upgraded"],
                                  cwd=env.repo.path, capture_output=True, text=True, timeout=60)
         assert started.returncode == 0, started.stdout + started.stderr
         item = started.stdout.strip().rsplit("Next: forge work ", 1)[1].split()[0]
