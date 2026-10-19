@@ -185,7 +185,7 @@ def team(client, gh, tmp_path, monkeypatch):
     return client
 
 
-def test_5_releases_show_kept_problems_by_file_and_insights_show_unranked_shares(team, tmp_path, monkeypatch):
+def test_14_releases_show_kept_problems_by_file_and_insights_show_unranked_shares(team, tmp_path, monkeypatch):
     at = landed(team, tmp_path, monkeypatch)
     with live(team) as url:
         view = json.loads(get(url, "/board.json?page=releases")[2])
@@ -201,7 +201,7 @@ def test_5_releases_show_kept_problems_by_file_and_insights_show_unranked_shares
                        {"name": "ben Ode", "login": "ben", "open": 0, "owned": 0, "share": "50%"}]})
 
 
-def test_5_a_week_github_could_not_count_leaves_its_counts_and_the_shares_unknown(team, tmp_path, monkeypatch):
+def test_15_a_week_github_could_not_count_leaves_its_counts_and_the_shares_unknown(team, tmp_path, monkeypatch):
     at = landed(team, tmp_path, monkeypatch)
     capped = at - timedelta(weeks=1)  # a week of 1,000 merges, more than one search returns
     many = [{"number": 100 + n, "headRefName": f"bulk-{n}", "state": "MERGED", "title": "A change", "body": "",
@@ -221,7 +221,7 @@ def test_5_a_week_github_could_not_count_leaves_its_counts_and_the_shares_unknow
                        {"name": "ben Ode", "login": "ben", "open": 0, "owned": 0, "share": "unknown"}]})
 
 
-def test_5_the_next_release_carries_unreleased_work_since_the_last_tag(team, tmp_path, monkeypatch):
+def test_16_the_next_release_carries_unreleased_work_since_the_last_tag(team, tmp_path, monkeypatch):
     landed(team, tmp_path, monkeypatch, tags=("v1.0.0",), merged_days_ago=56)
     with live(team) as url:
         view = json.loads(get(url, "/board.json?page=releases")[2])
@@ -231,7 +231,7 @@ def test_5_the_next_release_carries_unreleased_work_since_the_last_tag(team, tmp
             "releases": {"next": ["Readers see old"], "tags": ["v1.0.0"]}, "people": None})
 
 
-def test_6_releases_and_insights_words_keyboard_and_contrast(team, tmp_path, monkeypatch):
+def test_17_releases_and_insights_words_keyboard_and_contrast(team, tmp_path, monkeypatch):
     landed(team, tmp_path, monkeypatch)
     with live(team) as url:
         browse(WORDS_KEYS_AND_CONTRAST, url, {})
