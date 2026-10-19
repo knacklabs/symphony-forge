@@ -10,13 +10,29 @@
   },
   "done_when": "On windows-latest, close leaves forge.toml alone when an item's settings match main's (only line endings or the version pin differ), and these tests pass: test_close_preserves_default_settings test_2, test_chatview_attach test_5, test_codex_project_paths_and_pr_links test_2, test_pytest_picker_runs_in_the_clients_environment test_6, test_windows_suite_retries test_1 and test_board_now_screen test_12, with no behaviour change on Linux",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "29fb5fb574835203d326f6e7c18ac6ac30a974537e97a259f5a41439b9455595",
+    "changed": "0b4514b835aff2da91e92221e94a478f85de777dff6b1333d1e631c0495e42f2",
+    "commit": "5ca3cbaa13dd74e0bb55e0b3fce1bbe0f19a91db",
+    "dismissals": [],
+    "findings": [],
+    "id": "cd5f61d7-28f2-4d99-99dd-e355360f5063",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T19:07:18.409497+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T19:22:33.500654+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
