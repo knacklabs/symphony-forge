@@ -1,0 +1,16 @@
+{
+  "base": "99ec35b298faf57dfbb66ae759ad3ce215588fd4",
+  "branch": "fix/review-findings-split-from-forge-board-4-2",
+  "done_when": "A review no longer finds: Preserve unknown waiting time instead of displaying zero (src/forge/board_app/now.js:83); Retain readiness for assigned, unstarted story parts (src/forge/board_app/now.js:72); Give story part progress an accessible text equivalent (src/forge/board_app/now.js:165); Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable (tests/test_board_now_screen.py:106)",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "stacked_on": "FORGE-BOARD-4/NOW",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T14:55:26.741589+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Review findings split from FORGE-BOARD-4/NOW: Preserve unknown waiting time instead of displaying zero (src/forge/board_app/now.js:83); Retain readiness for assigned, unstarted story parts (src/forge/board_app/now.js:72); Give story part progress an accessible text equivalent (src/forge/board_app/now.js:165); Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable (tests/test_board_now_screen.py:106)"
+}
