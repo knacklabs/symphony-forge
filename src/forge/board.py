@@ -826,7 +826,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             "known_issues": known_issues.collect(top, {
                 "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
                 for rel, state, where in history["copies"]
-                if where == landed and (match := STATE.fullmatch(rel))}),
+                if where == landed and (match := STATE.fullmatch(rel))}, landed),
             "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
