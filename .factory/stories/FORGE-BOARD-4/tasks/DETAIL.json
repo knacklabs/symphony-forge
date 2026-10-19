@@ -104,86 +104,19 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "300330b75dc0f285a4d3bdd5c287894052984483d6272041fa994a9696182abc",
-    "changed": "fc9704f61caac130d84bb071fe1e506f24299a913d9c321b9bdc7b200ac6a6a8",
-    "commit": "37fbb939fde82eb6734c35dd4f1854895631356b",
+    "branch_diff": "463e41b168089508f82ac482b47f326d8ac3ed4a38556109c3cd4dd188b3c478",
+    "changed": "b183cd293e3764012bba6f55f6aabd7463ae71effd7562c6603bbbd7ab1a5ff5",
+    "commit": "9a02cbb036cb151b2cb55e96084e5455d7c2d4ff",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Test. The named proof never verifies populated history, round times or kept problems. Its fixture creates an approved story and starts a fix without reviewing either; the Rounds and Known issues checks assert only that the panel is visible. Removing the history facts or returning empty content from both tabs would still pass. Add recorded history, a timed review and a retained finding, and assert their displayed values through the browser.",
-        "file": "tests/test_board_item_page.py",
-        "follow_up": "Split into follow-up fix review-findings-split-from-forge-board-4",
-        "gain": 4,
-        "harm": 3,
-        "line": 122,
-        "priority": "P1",
-        "title": "Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Command-bearing records are displayed verbatim outside Plan. This drawer line renders `row.waits_on`; `src/forge/board.py:432` explicitly produces a next-step failure containing \u201crun forge next\u201d, which becomes `waits_on` at line 642. The same gap affects review text through `roundWhat` (item.js:85\u201386), history events (275), and retained finding titles/reasons (317): a normal review discussing a Forge command exposes that command on these screens. These strings need a command-free presentation before rendering.",
-        "file": "src/forge/board_app/item.js",
-        "follow_up": "Split into follow-up fix review-findings-split-from-forge-board-4",
-        "gain": 3,
-        "harm": 3,
-        "line": 142,
-        "priority": "P1",
-        "title": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. A completed historical item without a recorded merge date or actor displays \u201cMerged by: not yet\u201d. This is a supported earlier-repo case: `src/forge/board.py:656\u2013657` permits both fields to be null for finished work, and tests/test_board_status_and_times.py:124\u2013151 covers completed roadmap stories without completion records. Check the item's completed stage before choosing \u201cnot yet\u201d; missing historical facts must display \u201cunknown\u201d.",
-        "file": "src/forge/board_app/item.js",
-        "follow_up": "Split into follow-up fix review-findings-split-from-forge-board-4",
-        "gain": 3,
-        "harm": 3,
-        "line": 272,
-        "priority": "P1",
-        "title": "Keep unknown merger facts distinct from an item that has not merged",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Selecting Known issues sets `aria-labelledby=\"tab-Known issues\"`, while its button receives that entire string as its ID at line 243. ARIA interprets the attribute as two whitespace-separated references, neither of which exists, so the panel loses its accessible name. Use a whitespace-free identifier shared by the tab and panel. The current axe checks cover Overview and Plan but omit this tab.",
-        "file": "src/forge/board_app/item.js",
-        "follow_up": "Split into follow-up fix review-findings-split-from-forge-board-4",
-        "gain": 3,
-        "harm": 3,
-        "line": 246,
-        "priority": "P1",
-        "title": "Give the Known issues panel a valid accessible label reference",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Stories whose remaining parts are ready receive stage `ready to merge` from `src/forge/nextstep.py:627\u2013629`, published unchanged by `src/forge/board.py:790\u2013797`. This lookup omits that stage, so `stage()` falls back to Planned. Opening such a story therefore shows a Planned badge beside its \u201cReady to merge\u201d status. Include the server's story-stage value in the mapping.",
-        "file": "src/forge/board_app/item.js",
-        "follow_up": "Split into follow-up fix review-findings-split-from-forge-board-4",
-        "gain": 3,
-        "harm": 3,
-        "line": 9,
-        "priority": "P1",
-        "title": "Map the server's ready-to-merge story stage",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. The review-round figure counts history entries rather than review rounds. Once published history exceeds its 20,000-byte budget, `src/forge/time_records.py:40\u201352,566\u2013567` combines earlier rounds into entries carrying `first` and `last`. For example, a summary of rounds 1\u20139 followed by round 10 displays \u201c2 review rounds\u201d in both the drawer and full page. Count the represented ranges, preserving unknown where the complete count is unavailable.",
-        "file": "src/forge/board_app/item.js",
-        "follow_up": "Split into follow-up fix review-findings-split-from-forge-board-4",
-        "gain": 3,
-        "harm": 3,
-        "line": 92,
-        "priority": "P1",
-        "title": "Count the rounds represented by compacted history",
-        "work": 2
-      }
-    ],
-    "id": "5cd8e9ef-389d-4616-9b96-f44d5428ea6e",
+    "findings": [],
+    "id": "a86c5246-2b59-42aa-8b48-fc7b67ddfcf9",
     "status": "clean"
   },
   "round": 2,
   "settled_areas": [
     "src/forge/board_app/item.js"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T12:22:15.451751+00:00",
@@ -191,6 +124,10 @@
     },
     {
       "at": "2026-10-19T12:46:24.419211+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:29:07.560934+00:00",
       "step": "review"
     }
   ],
