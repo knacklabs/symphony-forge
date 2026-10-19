@@ -68,17 +68,18 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
     previous = None
     queued_since = None
     printed_minute = None
+    requested: set[int] = set()
     while True:
         queued = False
         try:
-            seen, snapshot = _seen(top, item, sha)
+            seen, snapshot, check_runs = _seen(top, item, sha)
             result["state"] = ("running" if any(state == PENDING for _, state in seen)
                                else "queued" if any(state == QUEUED for _, state in seen)
                                else "unknown")
             if progress and snapshot != previous:
                 previous = snapshot
                 deadline = time.monotonic() + timeout
-            shown = repo.run("gh", "pr", "view", branch, "--json", "mergeable,headRefOid", cwd=top)
+            shown = repo.run("gh", "pr", "view", branch, "--json", "mergeable,headRefOid,number,headRefName", cwd=top)
             try:
                 pr = json.loads(shown.stdout) if shown.returncode == 0 else None
             except ValueError:
@@ -91,6 +92,9 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             mergeable = pr.get("mergeable") if pr.get("headRefOid") == sha else None
             if mergeable == "CONFLICTING":
                 repo.refuse(REFUSALS["conflict"], item=item)
+            if pr.get("headRefOid") == sha:
+                _cancel_superseded(top, item, check_runs, number=pr.get("number"), branch=branch,
+                                   requested=requested)
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
@@ -157,7 +161,7 @@ def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:
                         for name in pending])
 
 
-def queued_reason(top: Path, sha: str, item: str = "") -> str:
+def queued_reason(top: Path, sha: str, item: str = "", *, number: int | None = None, branch: str = "") -> str:
     """Doctor recovers queued runs, then diagnoses runner activity after five minutes."""
     now = datetime.fromisoformat(repo.now())
     queued = False
@@ -165,7 +169,7 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
     checks = _ask(top, item, ".check_runs",
                   f"repos/{{owner}}/{{repo}}/commits/{sha}/check-runs?per_page=100")
     checks = [check for check in checks if check.get("head_sha", sha) == sha]
-    if _cancel_superseded(top, item, checks):
+    if _cancel_superseded(top, item, checks, number=number, branch=branch):
         return ""
     for check in checks:
         if check.get("status") != "queued" or check.get("head_sha", sha) != sha:
@@ -222,12 +226,22 @@ def queued_reason(top: Path, sha: str, item: str = "") -> str:
             f"last seven days using runner = {json.dumps(runner)} in forge.toml")
 
 
-def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]]) -> bool:
-    """Recover the workflow/event/PR concurrency groups used by Forge's CI."""
+def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]], *,
+                       number: int | None, branch: str, requested: set[int] | None = None) -> bool:
+    """Recover only the selected PR's generated forge.yml concurrency groups."""
     suites = {check.get("check_suite", {}).get("id") for check in checks
               if check.get("status") == "queued"} - {None}
-    if not suites:
+    if not suites or not branch:
         return False
+    if requested is None:
+        requested = set()
+
+    def belongs(run: dict[str, Any]) -> bool:
+        # Never borrow identity from a commit-scoped check suite. Empty PR lists
+        # are usable only with the selected PR's head branch, not its commit.
+        prs = {pr.get("number") for pr in run.get("pull_requests") or []}
+        return (run.get("head_branch") == branch and (not prs or prs == {number})
+                and str(run.get("path", "")).partition("@")[0] == ".github/workflows/forge.yml")
     try:
         # Read active runs only, including old blockers outside doctor's history window.
         runs = {run["id"]: run for status in ("queued", "pending", "in_progress")
@@ -236,39 +250,54 @@ def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]]) -> bo
                                 "--raw-field", f"status={status}") if isinstance(run.get("id"), int)}
     except repo.Refused:
         return False  # Recovery is optional when GitHub cannot supply run identities.
-    cancelled = False
+    pending: dict[int, int] = {}
     for current in runs.values():
-        prs = current.get("pull_requests") or []
         if (current.get("check_suite_id") not in suites
+                or not belongs(current)
                 or current.get("status") not in ("queued", "pending")
                 or current.get("event") not in ("pull_request", "pull_request_target")
                 or not current.get("workflow_id") or not current.get("name") or not current.get("head_branch")
-                or not isinstance(current.get("run_number"), int)
-                or len(prs) != 1 or not prs[0].get("number")):
+                or not isinstance(current.get("run_number"), int)):
             continue
         same = [run for run in runs.values()
-                if all(run.get(key) == current[key] for key in ("workflow_id", "event", "head_branch"))
+                if belongs(run) and all(run.get(key) == current[key] for key in ("workflow_id", "event", "head_branch"))
                 and (run.get("name") or "").casefold() == current["name"].casefold()
-                and [pr.get("number") for pr in run.get("pull_requests") or []] == [prs[0]["number"]]
                 and isinstance(run.get("run_number"), int)]
         if any(run["run_number"] > current["run_number"] for run in same):
             continue  # A stale head must not cancel runs on behalf of a superseded run.
         for run in same:
             if (run["run_number"] >= current["run_number"]
-                    or run.get("status") not in ("queued", "pending", "in_progress")):
+                    or run.get("status") not in ("queued", "pending", "in_progress")
+                    or run["id"] in requested):
                 continue
             done = repo.run("gh", "run", "cancel", str(run["id"]), cwd=top)
             if done.returncode == 0:
-                print(f"Cancelled older run {run['id']} for pull request {prs[0]['number']}. "
-                      f"Waiting for run {current['id']}.", flush=True)
-                cancelled = True
+                requested.add(run["id"])
+                pending[run["id"]] = current["id"]
             else:
                 print(f"Could not cancel older run {run['id']}: {done.stderr.strip() or done.stdout.strip()}.",
                       flush=True)
-    return cancelled
+    if pending:
+        time.sleep(2)
+    for run_id, current_id in pending.items():
+        shown = repo.run("gh", "run", "view", str(run_id), "--json", "status", cwd=top)
+        try:
+            status = json.loads(shown.stdout).get("status") if shown.returncode == 0 else None
+        except (ValueError, AttributeError):
+            status = None
+        if status in ("queued", "pending", "in_progress"):
+            state = "in progress" if status == "in_progress" else "queued"
+            print(f"Run {run_id} is still {state} after cancellation. "
+                  "If needed, use GitHub's force-cancel endpoint: "
+                  f"gh api -X POST repos/{{owner}}/{{repo}}/actions/runs/{run_id}/force-cancel", flush=True)
+        elif status == "completed":
+            print(f"Cancelled older run {run_id}. Waiting for run {current_id}.", flush=True)
+        else:
+            print(f"Requested cancellation of older run {run_id}. GitHub did not confirm its status.", flush=True)
+    return bool(pending)
 
 
-def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str]]:
+def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[str], list[dict[str, Any]]]:
     """Check outcomes on sha and the fields that show a run starting, ending or being replaced."""
     # Every page: a failed matrix job on page two must still count.
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
@@ -276,7 +305,6 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
     statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
     # Ignore earlier pushes for both readiness and progress; GitHub's ordering is not progress.
     runs = [run for run in runs if run.get("head_sha", sha) == sha]
-    _cancel_superseded(top, item, runs)
     snapshot = sorted(json.dumps([entry.get(field) for field in fields])
                       for entries, fields in (
                           (runs, ("id", "name", "status", "conclusion", "started_at", "completed_at")),
@@ -289,7 +317,7 @@ def _seen(top: Path, item: str, sha: str) -> tuple[list[tuple[str, str]], list[s
              for run in runs]
             + [(str(status.get("context")), {"success": PASS, "pending": PENDING}.get(
                 status.get("state"), RED)) for status in statuses])
-    return seen, snapshot
+    return seen, snapshot, runs
 
 
 def _ask(top: Path, item: str, field: str, endpoint: str, *options: str,

@@ -16,36 +16,54 @@ from test_ci_waits_for_busy_runners import _client
 STORY = "FIX-SUPERSEDED-PR-RUNS"
 
 
-@pytest.mark.parametrize("history,command,newer", [("new", "close", False), ("new", "doctor", False),
-                                                  ("upgraded", "close", False), ("new", "doctor", True)])
+@pytest.mark.parametrize("history,command,newer,stuck", [
+    ("new", "close", False, False), ("new", "doctor", False, False),
+    ("upgraded", "close", False, False), ("new", "doctor", True, False),
+    ("new", "close", False, True), ("new", "doctor", False, True)])
 @pytest.mark.parametrize("event", ["pull_request", "pull_request_target"])
-def test_1_cancel_only_older_runs_of_the_same_pull_request(clock, history, command, newer, event):
+def test_1_cancel_only_older_runs_of_the_same_pull_request(clock, history, command, newer, stuck, event):
     env = clock
     _client(env, history, "ubuntu-latest")
     where = _fix(env, "working", worked=True)
     head = env.repo.git("rev-parse", "HEAD", cwd=where)
-    base = dict(workflow_id=12, name="forge", event=event, head_branch=BRANCH,
+    path = ".github/workflows/forge.yml@main" if event == "pull_request_target" else ".github/workflows/forge.yml"
+    stuck_state = "queued" if event == "pull_request_target" else "in_progress"
+    base = dict(workflow_id=12, path=path, name="forge", event=event, head_branch=BRANCH,
                 pull_requests=[{"number": 7}], run_number=10,
                 head_sha="old-head", check_suite_id=10, status="queued")
     rows = [dict(base, id=101, name="FORGE"), dict(base, id=102, status="in_progress"),
             dict(base, id=103, pull_requests=[{"number": 8}]),
             dict(base, id=104, event="push", pull_requests=[]),
             dict(base, id=105, head_branch="another-branch"),
-            dict(base, id=106, workflow_id=99),
+            dict(base, id=106, workflow_id=99, path=".github/workflows/client.yml"),
             dict(base, id=107, event="pull_request_target" if event == "pull_request" else "pull_request"),
             dict(base, id=108, status="completed"),
             dict(base, id=109, pull_requests=[]),
+            dict(base, id=111, pull_requests=[], head_branch="unknown-branch"),
             # Renaming a workflow changes its concurrency group but retains its ID.
             dict(base, id=110, name="other checks"),
-            dict(base, id=201, run_number=21, workflow_id=12 if newer else 99),
+            dict(base, id=201, run_number=21, workflow_id=12 if newer else 99,
+                 path=".github/workflows/forge.yml" if newer else ".github/workflows/client.yml"),
+            # A second PR shares this commit and reports its own queued suite.
+            dict(base, id=300, run_number=30, check_suite_id=88, head_sha=head,
+                 pull_requests=[{"number": 8}], head_branch="fix/other-pr"),
+            dict(base, id=299, run_number=29, pull_requests=[{"number": 8}], head_branch="fix/other-pr"),
+            # A client workflow also reports a queued suite on this same commit.
+            dict(base, id=400, run_number=40, check_suite_id=99, head_sha=head,
+                 workflow_id=99, path=".github/workflows/client.yml"),
+            dict(base, id=399, run_number=39, workflow_id=99, path=".github/workflows/client.yml"),
             dict(base, id=200, run_number=20, check_suite_id=77, head_sha=head,
                  status="pending" if event == "pull_request_target" else "queued")]
-    queued = [dict(run("tests", None, "queued"), check_suite={"id": 77}), run("forge-pr-check")]
+    queued = [dict(run("tests", None, "queued"), check_suite={"id": 77}),
+              dict(run("other PR", None, "queued"), check_suite={"id": 88}),
+              dict(run("client workflow", None, "queued"), check_suite={"id": 99}), run("forge-pr-check")]
     edge = '''
 if args[:2] == ["run", "cancel"]:
     with (here / "cancelled").open("a", encoding="utf-8") as log:
         log.write(args[2] + "\\n")
     answer("")
+if args[:2] == ["run", "view"]:
+    answer(json.dumps({"status": STUCK_STATE if STUCK and args[2] == "101" else "completed"}))
 if args and args[0] == "api" and "--jq" in args:
     field = args[args.index("--jq") + 1]
     if field == ".workflow_runs[]":
@@ -57,13 +75,14 @@ if args and args[0] == "api" and "--jq" in args:
         polls.write_text(str(count))
         # Bound a broken wait: GitHub eventually reports a running check, which
         # still cannot succeed until Forge cancels both blocking runs.
-        answer(GREEN if {"101", "102"} <= cancelled else QUEUED if count < 3 else RUNNING)
-if args[:2] == ["pr", "list"] and "headRefOid,state" in args:
+        released = {"101", "102", "109"} <= cancelled and (not STUCK or count >= 3)
+        answer(GREEN if released else QUEUED if count < 3 else RUNNING)
+if args[:2] == ["pr", "list"] and any(arg.startswith("headRefOid,state") for arg in args):
     answer(PR)
-'''.replace("ROWS", repr(json.dumps(rows))).replace("GREEN", repr(json.dumps(GREEN))).replace(
+'''.replace("STUCK_STATE", repr(stuck_state)).replace("STUCK", repr(stuck)).replace("ROWS", repr(json.dumps(rows))).replace("GREEN", repr(json.dumps(GREEN))).replace(
         "QUEUED", repr(json.dumps(queued))).replace("RUNNING", repr(json.dumps([
             run("tests", None, "in_progress"), run("forge-pr-check")]))).replace("PR)", repr(json.dumps([
-            {"state": "OPEN", "headRefOid": head}])) + ")")
+            {"state": "OPEN", "headRefOid": head, "number": 7, "headRefName": BRANCH}])) + ")")
     stub = env.repo.bin / "gh"
     patient(lambda: stub.write_text(stub.read_text("utf-8").replace(
         'merged = here / "github-merged"', edge + '\nmerged = here / "github-merged"', 1), encoding="utf-8"))
@@ -71,11 +90,20 @@ if args[:2] == ["pr", "list"] and "headRefOid,state" in args:
     done = env.repo.forge(command, *([ITEM] if command == "close" else []), cwd=where)
     output = done.stdout + done.stderr
     cancelled = [call[2] for call in env.gh_calls("run", "cancel")]
-    assert cancelled == ([] if newer else ["101", "102"]), output
+    assert cancelled == ([] if newer else ["101", "102", "109"]), output
     if newer:
         assert "Cancelled older run" not in output, output
     else:
-        assert "Cancelled older run 101" in output and "Cancelled older run 102" in output, output
+        assert "Cancelled older run 102" in output and "Cancelled older run 109" in output, output
+        if stuck:
+            assert f"Run 101 is still {stuck_state.replace('_', ' ')}" in output, output
+            assert "gh api -X POST repos/{owner}/{repo}/actions/runs/101/force-cancel" in output, output
+            assert "Cancelled older run 101" not in output, output
+        else:
+            assert "Cancelled older run 101" in output, output
+            assert "force-cancel" not in output, output
+        assert env.gh_calls("run", "view"), output
+    assert not any("force-cancel" in arg for call in env.gh.calls() for arg in call), env.gh.calls()
     if command == "close":
         assert done.returncode == 0, output
         assert "clean review and green checks" in output, output

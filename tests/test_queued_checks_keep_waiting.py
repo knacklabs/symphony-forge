@@ -56,7 +56,8 @@ def _doctor_client(clock, history, monkeypatch, queued_minutes=6, state="queued"
     check["check_suite"] = {"id": 7}
     env.checks([check, run("forge-pr-check")])
     env.gh.respond("pr", "list", stdout=json.dumps([
-        {"state": "OPEN", "headRefOid": head}]))
+        {"state": "OPEN", "headRefOid": head, "number": 7,
+         "headRefName": env.repo.git("branch", "--show-current", cwd=where)}]))
     return env, where, now
 
 
