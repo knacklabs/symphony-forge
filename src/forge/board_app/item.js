@@ -25,11 +25,31 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
+let lostFocus = null; // the control a redraw removed before its copy loaded, such as a plan link
+
+// A control without a data-focus key is known by its tag, address and words.
+function focusKey(control) {
+  return control.dataset.focus || `${control.tagName} ${control.getAttribute('href')} ${control.textContent}`;
+}
+
+function refocus(node, key) {
+  const control = [...node.querySelectorAll('a, button, summary, [tabindex]')].find((one) => focusKey(one) === key);
+  if (!control) return false;
+  if (control.tagName !== 'SUMMARY') control.closest('details:not([open])')?.setAttribute('open', '');
+  control.focus({ preventScroll: true });
+  return true;
+}
+
 function replaceContent(node, ...children) {
-  const focused = node.contains(document.activeElement) ? document.activeElement.dataset.focus : null;
+  const active = document.activeElement;
+  const key = active !== node && node.contains(active) ? focusKey(active) : null;
   node.replaceChildren(...children);
-  if (focused) [...node.querySelectorAll('[data-focus]')]
-    .find((control) => control.dataset.focus === focused)?.focus({ preventScroll: true });
+  if (key) lostFocus = refocus(node, key) ? null : { node, key };
+}
+
+function restoreLostFocus(part) {
+  if (!lostFocus || !lostFocus.node.contains(part) || document.activeElement !== document.body) return;
+  if (refocus(part, lostFocus.key)) lostFocus = null;
 }
 
 function recordedWords(value, fallback = 'See the recorded review for technical details.') {
@@ -305,7 +325,7 @@ function plan(row, panel) {
   fetch(`plan/${encodeURIComponent(row.id)}${TOKEN}`, { cache: 'no-store' })
     .then(async (answer) => {
       const text = await answer.text();
-      if (answer.ok) return doc.replaceChildren(renderPlan(text));
+      if (answer.ok) return doc.replaceChildren(renderPlan(text)), restoreLostFocus(doc);
       let reason = 'The board could not read the plan. Open the tab again in a moment.';
       try {
         reason = JSON.parse(text).error;
