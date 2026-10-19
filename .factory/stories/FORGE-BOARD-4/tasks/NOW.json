@@ -58,6 +58,23 @@
       "work": 3
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": {
+      "area": "src/forge/board_app/now.js",
+      "at": "2026-10-19T14:36:53.938525+00:00",
+      "by": "owner",
+      "choice": "split",
+      "file": "src/forge/board_app/now.js",
+      "fixes": [
+        "review-findings-split-from-forge-board-4-2"
+      ],
+      "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+      "reason": "Same choice the owner made for the drawer on 19 October 2026: the three small first-screen defects (unknown waiting share, can-start on assigned parts, text for part progress) and a stronger test move to a follow-up fix",
+      "wait_id": "ea486e17-6d41-43b9-9254-076ee8d443f9",
+      "worker_round": 2
+    }
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
@@ -69,7 +86,7 @@
     "id": "15d3be35-847a-4f91-a0e8-fba21f26e1c9",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "settled_areas": [
     "src/forge/board_app/now.js"
   ],
@@ -103,10 +120,12 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": null,
-    "head": "441456201c21e28cf016eb0b4e7731a1175786a1",
-    "keys": {},
-    "round": null
+    "close": "9fbdd3b0-39ec-4e5b-b3be-5f89adc17ba0",
+    "head": "fe9126ee35c7bbc6e9c0ea7944bd2350ca3462dc",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 2
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 591f98c110b64120e38fa2261fa964120e47b056` exited with status 1 on this machine.\n            stages = {name: [row for row in rows + unstarted if STAGE[row.get(\"stage\") or row[\"status\"]] == name]\n                      for name in (\"Planned\", \"Building\")}\n            assert len(stages[\"Planned\"]) > 6 and len(stages[\"Building\"]) > 6, stages\n            stories = [plan for plan in board[\"dependency_maps\"] if plan[\"id\"] != \"fixes\"\n                       and plan[\"stage\"] not in (\"done\", \"needs a spec\")]\n>           look(url, \"client\", {\"stages\": {name: len(found) for name, found in stages.items()},\n                                 \"last_building\": stages[\"Building\"][-1][\"id\"], \"stories\": len(stories)})\n\ntests/test_board_now_screen.py:183:\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nurl = 'http://127.0.0.1:62415/?token=tx_Pkr_7iZnywHKtABoPnc3H4keLw0VM'\nmode = 'client'\nexpected = {'stages': {'Planned': 26, 'Building': 16}, 'last_building': 'open-9', 'stories': 11}\n\n    def look(url, mode, expected):\n        shown = subprocess.run([REAL_UV or \"uv\", \"run\", \"--no-project\", \"--python\", \"3.11\", \"--with\", \"playwright==1.55.0\",\n                                \"--with\", \"axe-playwright-python==0.1.4\", \"python\", \"-c\", BROWSER, url, mode,\n                                json.dumps(expected)], capture_output=True, text=True, encoding=\"utf-8\", timeout=300)\n>       assert shown.returncode == 0, shown.stdout + shown.stderr\nE       AssertionError: warning: `--frozen` has no effect when used alongside `--no-project`\nE         Traceback (most recent call last):\nE           File \"<string>\", line 73, in <module>\nE         AssertionError: (3, 0)\nE\nE       assert 1 == 0\nE        +  where 1 = CompletedProcess(args=['/opt/homebrew/bin/uv', 'run', '--no-project', '--python', '3.11', '--with', 'playwright==1.55....`--no-project`\\nTraceback (most recent call last):\\n  File \"<string>\", line 73, in <module>\\nAssertionError: (3, 0)\\n').returncode\n\ntests/test_board_now_screen.py:150: AssertionError\n1 failed, 2 passed in 32.80s",
   "worker": "claude"
