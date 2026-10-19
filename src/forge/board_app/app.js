@@ -10,7 +10,6 @@ const SCREENS = [
   'item',
   'releases', 'insights',
 ];
-];
 const POLL = 10000; // ms between reads while the events stream is down
 const listeners = [];
 const main = document.querySelector('main');
