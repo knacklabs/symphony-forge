@@ -59,7 +59,8 @@ def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
         env.repo.git("merge", "-q", "--ff-only", "fix/adopt")
     env.repo.git("-c", "core.hooksPath=/dev/null", "push", "-q", "origin", "main")
     item, _ = env.start_fix({f"tests/unit/test_case_{number}.py": f"def test_case_{number}():\n    assert 2 + 2 == 4\n"
-                             for number in range(changed)} or {"forge.toml": listed + settings})
+                             for number in range(changed)} or {"forge.toml": listed + settings},
+                            **({"done_when": "forge.toml lists the tests that always run"} if changed == 0 else {}))
     env.checks([run("tests"), run("forge-pr-check")])
     return item, log
 

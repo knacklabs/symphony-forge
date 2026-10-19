@@ -313,9 +313,12 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             config = folder / "forge.toml"
             parallel = " -n 2 --dist loadfile" if case == "progress parallel" else ""
             parallel += " -k test_two" if case == "progress selected" else ""
-            env.commit(folder, "forge.toml", config.read_text("utf-8").replace(
+            # Product close now keeps main's settings, including this real pytest command.
+            env.commit(repo.path, "forge.toml", config.read_text("utf-8").replace(
                 json.dumps(f'"{sys.executable}" -c "print(123)"'),
                 json.dumps(f'"{sys.executable}" -m pytest -vv{parallel} test_progress.py')))
+            repo.git("push", "-q", "origin", "main")
+            repo.git("merge", "--no-edit", "origin/main", cwd=folder)
         process = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
                                    "read" if case.startswith("read") else "close" if case.startswith(("progress", "ci", "review")) else "work", item], cwd=repo.path,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

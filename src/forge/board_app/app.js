@@ -5,7 +5,10 @@ const TOKEN = location.search; // every request carries this run's token
 const PAGES = ['now', 'releases', 'insights'];
 // Each screen part adds its module here; a module exports install(Board). The import carries the
 // token, because the server checks it on every file.
-const SCREENS = ['item'];
+const SCREENS = [
+  'item',
+  'releases', 'insights',
+];
 const POLL = 10000; // ms between reads while the events stream is down
 const listeners = [];
 const main = document.querySelector('main');

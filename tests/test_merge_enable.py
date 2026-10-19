@@ -227,7 +227,8 @@ def _prototype_run(env, _):
 def _other_fix_changes_merge(env, _):
     prototype(env)
     text = (env.repo.path / "forge.toml").read_text("utf-8")
-    item, where = env.start_fix({"forge.toml": text + 'merge = "agent"\n'})
+    item, where = env.start_fix({"forge.toml": text + 'merge = "agent"\n'},
+                                done_when="forge.toml lets the agent merge")
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
     env.gh.respond("pr", "view", stdout=json.dumps({

@@ -12,7 +12,7 @@ from conftest import REAL_UV
 from test_board import DOC
 from test_board_server import client, clone, fix, live, pushed, snapshot  # noqa: F401
 
-STORY = "FIX-ITEM-FACTS"
+STORY = "FORGE-BOARD-4"
 
 # The story's plan, with an Owner line so its parts are on the board, a builders section to fold,
 # and hostile markup that must stay inert text.
@@ -24,7 +24,8 @@ Hostile: <img src=x onerror="window.pwned=1"> and [run me](javascript:window.pwn
 ## Tasks
 
 Owner: page-dev
-""", 1).replace("## Why\n", "## Why\n\n- Shoppers *lose* work\n- Support gets `calls`\n", 1)
+""", 1).replace("## Why\n", "## Why\n\n- Shoppers *lose* work\n- Support gets `calls`\n", 1).replace(
+    "`src/share.py`", "`src/" + "share/" * 30 + "basket.py`", 1)  # a table wider than the page scrolls
 
 SCRIPT = r"""
 import json, re, sys
@@ -139,7 +140,7 @@ with sync_playwright() as p:
 """
 
 
-def test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan(client, tmp_path):
+def test_11_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan(client, tmp_path):
     pushed(clone(client, tmp_path), "Plan a basket", {"plans/SHOP.md": PLAN, ".factory/stories/SHOP/story.json":
            json.dumps({"doc": "plans/SHOP.md", "title": "Shoppers can save a basket", "status": "approved"})})
     client.git("fetch", "-q", "origin")
