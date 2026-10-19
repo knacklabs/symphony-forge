@@ -20,7 +20,7 @@ ENABLE = "let-the-agent-merge"
 REFUSALS = {
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
                  "the repo owner runs forge merge enable in their own terminal"),
-    "owner_only": ("Only the repo owner switches on agent merges, on {default}, from their own terminal.", "the repo owner runs forge merge enable on {default} in their own terminal"),
+    "owner_only": ("Only the repo owner switches on agent merges, on {default}, from a terminal outside Claude Code or Codex.", "the repo owner runs forge merge enable on {default} in a terminal outside Claude Code or Codex"),
     "enabled": ("The default branch's forge.toml already lets the agent merge.", "forge next"),
     "taken": ("The fix let-the-agent-merge holds other work, so Forge left it alone.", "finish or remove that fix, then forge merge enable"),
     "owner_merges": ("{item} changes the merge setting in forge.toml, so only the repo owner merges its pull request.", "the repo owner merges its pull request, then forge next"),

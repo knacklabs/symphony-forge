@@ -41,7 +41,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
-| "Let the agent merge" | The owner runs `forge merge enable` in their own terminal; never you |
+| "Let the agent merge" | The owner runs `forge merge enable` in a terminal outside Claude Code or Codex; never you |
 | "What should we build?" or "Find the real problem" | Discovery, below |
 | "Is it worth building?" | `forge spec payback --build-days <days> --day-rate <rate>` plus a value group |
 | "Save this spec" | `forge spec save <slug>` |
@@ -131,7 +131,7 @@ same waiting and doctor behaviour from the upgraded Forge commands.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
-in their own terminal; it opens the change for them to merge. If an interrupted switch's fix
+in a terminal outside Claude Code or Codex; it opens the change for them to merge. If an interrupted switch's fix
 contains only that setting and the default branch has moved, it rebuilds the same fix on the
 current default branch, preserving its other settings. It leaves remote work outside that fix
 alone and refuses to replace a remote branch that changes after its check. The owner still
