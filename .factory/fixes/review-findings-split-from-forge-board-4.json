@@ -119,7 +119,7 @@
     "id": "45366b21-a51a-4073-92d5-95d817170ba7",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-BOARD-4/DETAIL",
   "status": "fixing",
   "steps": [
@@ -133,10 +133,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "bda13744d1f6b6331302abdf90694ffc37d1fff7",
-    "keys": {},
-    "round": null
+    "close": "9fd653f8-7307-4d3c-99c0-93311d40bdd2",
+    "head": "0afb85ad935d70448eb745b2e52ac9d1e74c675b",
+    "keys": {
+      "the review finding \"Keep command text out of recorded reviews and known issues\" in src/forge/board_app/item.js": 1,
+      "the review finding \"Preserve keyboard focus when live item data refreshes\" in src/forge/board_app/item.js": 1
+    },
+    "round": 1
   },
   "why": "Review findings split from FORGE-BOARD-4/DETAIL: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)",
   "worker": "codex"
