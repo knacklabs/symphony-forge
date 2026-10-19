@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 
 import conftest
-from test_board import seen as page_text
 from test_close import body, env  # noqa: F401 (env is a fixture)
 from test_story import READER, claude_plan, hook, worktree
 
@@ -134,9 +133,9 @@ def walk(env, claude_payload, monkeypatch) -> dict:
                 "mergedAt": merged[call[call.index("--head") + 1]], "files": [],
                 "statusCheckRollup": []} for call in env.gh_calls("pr", "create")]
     gh.respond("pr", "list", "--state", "merged", stdout=json.dumps(listing))
-    page = env.tmp / "board.html"
+    page = env.tmp / "board.json"
     step("24T09:00", "board", "--out", str(page))
-    seen["board"] = page_text(page)
+    seen["board"] = json.loads(page.read_text("utf-8"))
     return seen
 
 
@@ -161,11 +160,10 @@ def test_42_story_done(env, claude_payload, monkeypatch):
         assert fact in recorded, fact
 
     # The board shows the finished story, who approved it, its outcome and each merged part.
-    text = seen["board"]
-    for line in ("Shoppers can share a cart CART Story Done Finished on 23 September 2026",
-                 "Plan approved by Forge Test.", "Save a cart merged on 22 September.",
-                 "Send a cart merged on 23 September.",
-                 "Approved by Forge Test.", f"The story was finished. {OUTCOME}",
-                 "Save a cart Part Done Finished on 22 September 2026",
-                 "Send a cart Part Done Finished on 23 September 2026"):
-        assert line in text, (line, text)
+    cart = next(row for row in seen["board"]["items"] if row["id"] == "CART")
+    assert (cart["title"], cart["state"], cart["status"]) == (
+        "Shoppers can share a cart", "done", "Finished on 23 September 2026")
+    assert (cart["approved_by"], cart["outcome"]) == ("Forge Test", OUTCOME)
+    assert [(part["title"], part["state"], part["status"], part["merged_at"][:10]) for part in cart["children"]] == [
+        ("Save a cart", "done", "Finished on 22 September 2026", "2026-09-22"),
+        ("Send a cart", "done", "Finished on 23 September 2026", "2026-09-23")]

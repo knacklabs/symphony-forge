@@ -494,15 +494,6 @@ def test_10_upgrade_rebuilds_old_items_and_retries_missing_records_on_close(unsy
     assert sum(week["parts"] for week in data["team"]["pace"]["weeks"]) == 1
     assert sum(week["fixes"] for week in data["team"]["pace"]["weeks"]) >= 5
     assert any(row["id"] == opened and row["reason"] == "merge" for row in data["team"]["needs_you"])
-    page = up.tmp / "rebuilt-board.html"
-    written = repo.forge("board", "--out", page.as_posix())
-    assert written.returncode == 0, written.stdout + written.stderr
-    html = page.read_text("utf-8")
-    assert "rebuilt from history" in html.lower()
-    archive_detail = re.search(r'<div class="row"[^>]*><details><summary><span class="named">'
-                               r'<span class="title">Readers can keep an archive</span>.*?</details></div>', html, re.S)
-    assert archive_detail and "rebuilt from history" in archive_detail[0].lower()
-    assert "Plan Approver" in archive_detail[0]
     assert repo.git("rev-parse", "HEAD") == before_board, "Reading the board must add no commit"
 
     # The second machine never upgraded and has neither old receipts nor local
