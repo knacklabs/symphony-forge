@@ -98,7 +98,7 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
             if pr.get("headRefOid") == sha:
                 _cancel_superseded(top, item, check_runs, number=pr.get("number"), branch=branch,
                                    requested=requested)
-            _tests_timeout(top, item, sha, names, check_runs)
+            _tests_timeout(top, item, sha, names, check_runs, seen)
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
@@ -141,10 +141,10 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
 
 
 def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
-                   runs: list[dict[str, Any]]) -> None:
+                   runs: list[dict[str, Any]], seen: list[tuple[str, str]]) -> None:
     if "tests" not in names:
         return
-    candidates = [run for run in runs if run.get("status") == "completed"
+    candidates = [(index, run) for index, run in enumerate(runs) if run.get("status") == "completed"
                   and run.get("conclusion") in ("timed_out", "cancelled")
                   and (run.get("name") == "tests"
                        or str(run.get("name", "")).startswith("tests (")
@@ -156,7 +156,8 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
     job = re.search(r"(?ms)^  tests:[ \t]*\n(.*?)(?=^  \S|\Z)", workflow.stdout)
     cap = re.search(r"(?m)^    timeout-minutes: (\d+)[ \t]*$", job[1]) if job else None
     limit = int(cap[1]) if cap else None
-    for run in candidates:
+    timed_out: dict[int, str] = {}
+    for index, run in candidates:
         try:
             seconds = (datetime.fromisoformat(run["completed_at"])
                        - datetime.fromisoformat(run["started_at"])).total_seconds()
@@ -166,8 +167,21 @@ def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
                 limit is None or seconds is None or abs(seconds - limit * 60) > 60):
             continue
         minutes = limit if limit is not None else round(seconds / 60) if seconds is not None else None
-        duration = f" after {minutes} minutes" if minutes is not None else ""
-        repo.refuse(REFUSALS["timeout"], duration=duration, item=item)
+        timed_out[index] = f" after {minutes} minutes" if minutes is not None else ""
+    if not timed_out:
+        return
+    ignored = set(timed_out)
+    suites = {runs[index].get("check_suite", {}).get("id") for index in timed_out
+              if re.fullmatch(r"test group \d+ of \d+", str(runs[index].get("name", "")))}
+    if suites:
+        # The generated tests aggregate fails when a group times out.
+        ignored.update(index for index, run in enumerate(runs)
+                       if run.get("name") == "tests" and run.get("conclusion") == "failure"
+                       and run.get("check_suite", {}).get("id") in suites)
+    # _seen lists check runs first, then commit statuses. Keep every independent
+    # failure, including one from another workflow with the same check name.
+    _pending(item, names, [entry for index, entry in enumerate(seen) if index not in ignored])
+    repo.refuse(REFUSALS["timeout"], duration=next(iter(timed_out.values())), item=item)
 
 
 def _pending(item: str, names: list[str], seen: list[tuple[str, str]]) -> str:

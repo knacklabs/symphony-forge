@@ -89,3 +89,34 @@ def test_2_close_distinguishes_test_time_limits_from_worker_failures(
         assert "Checks failed on the pull request" in done.stderr
         assert f"Next: forge work {ITEM}" in done.stderr
     assert not env.gh_calls("pr", "ready")
+
+
+@pytest.mark.parametrize("history,other", [
+    ("new", "lint"),
+    ("new", "test group 2 of 2"),
+    ("new", "tests (windows-latest)"),
+    ("new", "tests"),
+    ("upgraded", "lint"),
+])
+def test_3_independent_failures_keep_worker_recovery_alongside_timeouts(land, history, other):
+    # The aggregate tests failure follows the timed-out group. The other failure
+    # still needs a worker, so it must win over timeout-only recovery guidance.
+    env = land
+    _client(env, history, "ubuntu-latest")
+    where = _fix(env, "working", worked=True)
+    start = datetime(2026, 10, 19, tzinfo=timezone.utc)
+    timeout = {**run("test group 1 of 2", "timed_out"),
+               "check_suite": {"id": 7},
+               "started_at": start.isoformat(),
+               "completed_at": (start + timedelta(minutes=30)).isoformat()}
+    env.checks([{**run("tests", "failure"), "check_suite": {"id": 7}}, timeout,
+                {**run(other, "failure"), "check_suite": {"id": 8}}, run("forge-pr-check")])
+
+    done = env.repo.forge("close", ITEM, cwd=where)
+
+    assert done.returncode == 1, done.stdout + done.stderr
+    expected = "tests" if other.startswith("tests (") else other
+    assert f"Checks failed on the pull request: {expected}." in done.stderr
+    assert f"Next: forge work {ITEM}" in done.stderr
+    assert "the tests ran out of time" not in done.stderr
+    assert not env.gh_calls("pr", "ready")
