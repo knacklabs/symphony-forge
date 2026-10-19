@@ -150,7 +150,7 @@ def look(url, mode, expected):
     assert shown.returncode == 0, shown.stdout + shown.stderr
 
 
-def test_2_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable(repo, gh, tmp_path):
+def test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable(repo, gh, tmp_path):
     """The client-sized repo: 44 stories, 10 open fixes and six weeks of merges, plus one approved story
     with a long key whose first part can start, so a long key and a tag share one card."""
     (tmp_path / "shop").mkdir()
@@ -204,7 +204,7 @@ def merged_fixes(repo, tmp_path, times):
         log.writelines(json.dumps(event) + "\n" for event in events)
 
 
-def test_2_the_figures_and_the_me_view_follow_forges_records(client, gh, tmp_path):
+def test_13_the_figures_and_the_me_view_follow_forges_records(client, gh, tmp_path):
     """Three fixes merged this week took 1, 2 and 9 hours and waited 10, 30 and 60 minutes for a person:
     a median of 2 h and 6000 of 43200 seconds waiting. One open fix's checks fail. The viewer, asha,
     opened one of the two open fixes, so Me shows only that one."""
