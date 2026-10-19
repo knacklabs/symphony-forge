@@ -1419,7 +1419,11 @@ Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
 Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
 Forge does not change npm, pnpm or yarn scripts to set their worker budget.
-Those scripts can read `FORGE_TEST_CPUS`. Other runners stay as written.
+Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
+with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
+for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap
+in the Vitest config. A config cap can leave projects with different `maxWorkers` but the
+same `sequence.groupOrder`, which Vitest refuses. Other runners stay as written.
 Direct `forge test --pytest <base>` runs join the test lane and obey its memory floor and budget.
 A picker inside close or bare `forge test` shares that run's single lane entry.
 `pytest -n auto` honours
