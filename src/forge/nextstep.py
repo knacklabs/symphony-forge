@@ -17,8 +17,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
-                   score, task, time_records, upgrade)
+from forge import (__version__, approval, board, board_facts, close, codex, machine, migration_warnings,
+                   native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _started, developer, github_login, owner, stack_base, start_base, waits_for
 
 COMMANDS = [
@@ -118,7 +118,7 @@ def next_step(args: Any) -> int:
     top = repo.root()
     notice = upgrade.release_notice(top)
     history = board._machine_history(top) if args.json else None
-    lines = _report(top, history, schedules=True)[0]
+    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
@@ -262,8 +262,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 lines += found
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
-    pushed = repo.git("for-each-ref", "--format=%(refname:strip=3)", "refs/remotes/origin/fix/",
-                      "refs/remotes/origin/forge/", cwd=top).splitlines()
+    pushed = [ref.removeprefix("refs/remotes/origin/") for ref in branch_tips(top)
+              if ref.startswith(("refs/remotes/origin/fix/", "refs/remotes/origin/forge/"))]
     landed = story.landed_ref(top)
     for branch in sorted(set(prs) | set(pushed)):  # a fix started elsewhere, with no worktree here
         kind, _, name = branch.partition("/")
@@ -485,8 +485,8 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"
         if state is not None and found.get(key, (None, {}, ""))[1].get("status") != "done":
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
-    for branch in repo.git("for-each-ref", "--format=%(refname:strip=3)",
-                           "refs/remotes/origin/story/", cwd=top).splitlines():
+    for branch in [ref.removeprefix("refs/remotes/origin/") for ref in branch_tips(top)
+                   if ref.startswith("refs/remotes/origin/story/")]:
         key = branch.removeprefix("story/")
         if history is not None and repo.state_path(key) in history["expired"]:
             continue
@@ -805,11 +805,15 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
     return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
 
 
-def _commit(top: Path, ref: str) -> str:
-    tips = repo.command_fact(("commits", "ref tips"), top, lambda: dict(
+def branch_tips(top: Path) -> dict[str, str]:
+    return repo.command_fact(("commits", "ref tips"), top, lambda: dict(
         line.split("\0", 1) for line in repo.git(
             "for-each-ref", "--format=%(refname)%00%(objectname)",
             "refs/heads", "refs/remotes", cwd=top).splitlines()))
+
+
+def _commit(top: Path, ref: str) -> str:
+    tips = branch_tips(top)
     if ref.startswith(("refs/heads/", "refs/remotes/")):
         return tips.get(ref, "")
     if ref in tips.values():
@@ -1000,13 +1004,19 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
     runs = board.active_runs(top, item, round_number=state.get("round"))
-    if (status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False)
+    if (status == "working" and native.lock_alive(lock) is False
             and not any(run.get("kind") in ("work", "worker") for run in runs)):
         native_round = codex._json(lock.with_suffix(".json")).get("native_round")
-        sentence, step = "{label}'s worker has stopped.", "forge work {item}" if native_round else "forge close {item}"
+        activity = board._event_history(top)[1].get(item, [])
+        ended = {event.get("run_id") for event in activity if event.get("event") == "run end"}
+        interrupted = any(event.get("event") == "run start" and event.get("kind") in ("work", "worker")
+                          and event.get("id") not in ended and event.get("round") == state.get("round")
+                          for event in activity)
+        sentence, step = "{label}'s worker has stopped.", ("forge work {item}" if native_round or interrupted
+                                                          else "forge close {item}")
     if (status not in ("merged", "done") and any(run.get("kind") == "test" for run in runs)
             and not any(run.get("kind") in ("work", "worker", "review") for run in runs)
-            and (not lock.exists() or codex._alive(codex._json(lock)) is False)):
+            and native.lock_alive(lock) is False):
         sentence, step = "Tests are running for {label}.", "wait for them to finish, then forge next"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch

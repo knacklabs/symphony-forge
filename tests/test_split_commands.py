@@ -223,7 +223,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           'options:\n'
           '  -h, --help  show this help message and exit\n'
           '  --json      Print the machine view\n'
-          '  --out PATH  write the static page here instead\n',
+          '  --out PATH  write every item\'s facts here as JSON instead\n',
  'story new': 'usage: forge story new [-h] [--from-fix FIX] key [title]\n'
               '\n'
               'Start a story branch, worktree and story doc, or promote a fix\n'

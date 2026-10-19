@@ -29,7 +29,14 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
                      lambda m: m[2] if runner == m[1] else m[3], command)
     command = re.sub(r"\$\{\{ matrix.os == '([^']+)' && (\d+) \|\| (\d+) \}\}",
                      lambda m: m[2] if runner == m[1] else m[3], command)
+    # This sample repo has no native Windows timings, so CI uses the Linux seed.
+    # Resolve the new timing selector before pytest can mistake it for test paths.
+    command = re.sub(
+        r"\$\{\{ matrix.os == 'windows-latest' && hashFiles\('\.test_durations_windows'\) != ''"
+        r" && '\.test_durations_windows' \|\| '\.test_durations' \}\}",
+        ".test_durations", command)
     command = command.replace("${{ matrix.groups }}", "1").replace("${{ matrix.group }}", "1")
+    assert "${{" not in command, f"Unresolved CI expression: {command}"
     tokens = shlex.split(command)
     options = tokens[tokens.index("pytest") + 2:]
     expected = ["--reruns", "1"] if runner == "windows-latest" else []

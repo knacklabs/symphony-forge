@@ -73,7 +73,7 @@ export default defineConfig({
 ```
 
 The test command above starts the app with Compose. If the app starts outside Compose, configure
-Playwright's `webServer` instead. A client's generated `tests` job has a 10-minute cap; split a
+Playwright's `webServer` instead. A Node client's generated `tests` job has a 30-minute cap; split a
 suite that outgrows it into groups within the same check.
 
 For an existing app, add a browser test for each new or changed flow. An untouched old flow gets

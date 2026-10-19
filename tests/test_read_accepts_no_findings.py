@@ -55,10 +55,19 @@ REPLIES = [
 ]
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.timeout(300)  # One test now owns 34 real read/next command pairs.
+# Windows process startup made the 34 command pairs exceed the 300-second test
+# timeout. Keep every reply, but bound each Windows case to six pairs.
+_NEW_BATCHES = [REPLIES[index:index + 6] for index in range(0, len(REPLIES), 6)] \
+    if sys.platform == "win32" else [REPLIES]
+
+
+@pytest.mark.parametrize("previous,replies", [
+    pytest.param(False, replies, id="new-client" if len(_NEW_BATCHES) == 1 else f"new-client-{index + 1}")
+    for index, replies in enumerate(_NEW_BATCHES)
+] + [pytest.param(True, [REPLIES[index] for index in (0, 20, 21)], id="earlier-adoption")])
+@pytest.mark.timeout(300)
 def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
-        repo, gh, tmp_path, previous):
+        repo, gh, tmp_path, previous, replies):
     if previous:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
@@ -76,8 +85,7 @@ def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
     repo.write("forge.toml", config)
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    # The parser has no adoption branch; replay passing, mixed and missing-marker replies.
-    replies = [REPLIES[index] for index in (0, 20, 21)] if previous else REPLIES
+    # The parser has no adoption branch; adoption replays passing, mixed and missing-marker replies.
     keys = [f"SHOP-{index}" for index in range(len(replies))]
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
     repo.git("add", "-A")

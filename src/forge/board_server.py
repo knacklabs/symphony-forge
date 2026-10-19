@@ -27,20 +27,21 @@ from urllib.parse import parse_qs, urlsplit
 from forge import board, machine, repo, story
 
 PLAN = re.compile(r"/plan/([A-Z][A-Z0-9-]*)")
+APP = Path(__file__).with_name("board_app")
+ASSET = re.compile(r"/([a-z-]+)\.(js|css)")
+KINDS = {"js": "text/javascript; charset=utf-8", "css": "text/css; charset=utf-8"}
 # Nothing on the page loads from or talks to another origin, and nothing inline runs.
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
-# Files the derivation itself writes under Forge's folder; watching them would rebuild forever.
-WRITTEN = re.compile(r"(-cache\.json|prs-week-[\d-]+\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|"
+# Files under Forge's folder the board never reads: the derivation's own writes, which would rebuild
+# forever, and test runs' per-test results, which the test lane rewrites all the time.
+WRITTEN = re.compile(r"(-cache\.json|^test-results-.*\.txt|prs-week-[\d-]+\.json|viewer-login\.json|known-issues\.json|board-snapshot\.json|"
                      r"\.guard|\.tmp|\.new)$")
 # ponytail: the tests' seams, like FORGE_CHECKS_WAIT
 FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 # How long a request waits for a rebuild before it gets the last snapshot marked as updating.
 REBUILD_WAIT = float(os.environ.get("FORGE_BOARD_REBUILD_WAIT", "0.5"))
 TICK = 1.0  # seconds between the events stream's input checks
-# ponytail: a placeholder page until the page shell part replaces it
-PLACEHOLDER = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Forge board</title></head><body>'
-               '<h1>Forge board</h1><p>The board is live. Its data is at <a href="board.json?token={token}">board.json</a>.')
 DENIED = "This board link is not valid. Open the board again to get a new link."
 
 
@@ -235,9 +236,11 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
                 self.say(500, "The board could not read the work. The terminal that runs it shows why.")
 
         def route(self, path: str, query: dict[str, list[str]]) -> None:
-            if path == "/":
-                page = PLACEHOLDER.format(token=token).encode("utf-8")
+            if path == "/":  # the shell's own files carry the token too: every route checks it
+                page = (APP / "shell.html").read_text(encoding="utf-8").replace("{{token}}", token).encode("utf-8")
                 self.send(200, "text/html; charset=utf-8", page, **{"Content-Security-Policy": CSP})
+            elif (asset := ASSET.fullmatch(path)) and (APP / path[1:]).is_file():
+                self.send(200, KINDS[asset[2]], (APP / path[1:]).read_bytes())
             elif path == "/board.json":
                 self.board(query.get("page", ["now"])[0], query.get("id", [""])[0])
             elif plan := PLAN.fullmatch(path):

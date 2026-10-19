@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import time
+import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stdout
 from pathlib import Path
@@ -60,6 +61,7 @@ def hold(top: Path, item: str, kind: str, models: dict[str, str]) -> Iterator[tu
     """The session takes the item's lock and joins the agent line; both stay held until handback,
     and only a failure before the handout gives them back."""
     owner = session()
+    owner["process"]["native_run"] = str(uuid.uuid4())
     command = "read" if kind == "Grill" else "work"
     lock = codex._item_file(top, item, ".lock", kind)
     held = codex._take(lock, owner["process"])
@@ -156,6 +158,29 @@ def hand_out(top: Path, item: str, owner: dict[str, Any], entry: dict[str, Any],
           "with its last message on stdin.")
 
 
+def lock_alive(lock: Path) -> bool | None:
+    """A completed native round frees its lock even while its host session survives."""
+    owner, saved = codex._json(lock), codex._json(lock.with_suffix(".json"))
+    native = saved.get("native") or {}
+    completed = not saved.get("pending") and (
+            owner.get("native_run") and owner["native_run"] == native.get("native_run")
+            or not owner.get("native_run") and not owner.get("saves_chat")
+            and native.get("rounds") is not None and not saved.get("native_round")
+            and native.get("session", "").endswith(f":{owner.get('pid')}:{owner.get('started')}"))
+    return False if completed or not lock.is_file() else codex._alive(owner)
+
+
+def worker_alive(top: Path, item: str, kind: str, round_number: int | None) -> bool:
+    """A worker keeps its round while either its item lock or its machine place is live."""
+    lock = codex._item_file(top, item, ".lock", "Grill" if kind == "read" else "Build")
+    live = repo.command_fact("live worker processes", top, machine.entries)
+    root = repo.command_fact("main checkout", top, lambda: machine.main_checkout(top).as_posix())
+    return lock_alive(lock) is not False or any(
+        run.get("repo_root") == root and run.get("item") == item
+        and run.get("kind") in (("read",) if kind == "read" else ("work", "worker"))
+        and run.get("round") == round_number for run in live)
+
+
 def cancel(entry: dict[str, Any]) -> None:
     """Free only this handout; a later round may already hold the same item."""
     top = Path(entry["checkout_root"])
@@ -199,7 +224,8 @@ def handback(args: Any) -> int:
             if "role" in pending:
                 kept = _work_result(path, args.item, pending, said, owner, args.subagent)
                 return 0
-            codex._record(path, native={"session": owner["id"], "subagent": args.subagent})
+            codex._record(path, native={"session": owner["id"], "subagent": args.subagent,
+                                        "native_run": held.get("native_run")})
             return story.read_result(Path(pending["checkout"]), args.item, pending["result"], said)
         finally:
             if not kept:
@@ -250,6 +276,7 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     codex._record(path, question=asked or None, question_id=identity,
                   **({"native_round": None} if said else {}),  # finished: next offers close
                   native={"session": owner["id"], "subagent": subagent,
+                          "native_run": pending["entry"]["process"].get("native_run"),
                           "head": repo.git("rev-parse", "HEAD", cwd=top),
                           "rounds": pending["result"]["round"], "outcome": outcome})
     repo.record_event(top, item, "run end", kind="work", round=pending["result"]["round"],

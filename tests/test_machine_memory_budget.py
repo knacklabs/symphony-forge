@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import subprocess
 import sys
 
 import pytest
@@ -139,18 +140,25 @@ def test_1_every_lane_waits_for_memory_and_starts_when_it_recovers(env, tmp_path
     memory_wait = f"waiting for memory: {available / 1e9:.1f} GB free, starts above 1.6 GB"
     memory, _ = measurements(repo, tmp_path, available=available)
     processes = []
+
+    def wait_for(check):
+        # The suite timeout bounds a stuck command; a loaded runner needs no shorter deadline.
+        while not check() and process.poll() is None:
+            try:
+                process.wait(timeout=0.05)
+            except subprocess.TimeoutExpired:
+                pass
+
     try:
         process, output = start(where, tmp_path / "held", repo, *args)
         processes.append(process)
-        _until(lambda: memory_wait in output.read_text("utf-8") or marker.exists() or process.poll() is not None,
-               "the command to explain its memory wait")
+        wait_for(lambda: memory_wait in output.read_text("utf-8") or marker.exists())
         assert memory_wait in output.read_text("utf-8"), output.read_text("utf-8")
         assert process.poll() is None
         assert not marker.exists()
         publish(memory, json.dumps({"total_bytes": 16_000_000_000,
                                     "available_bytes": 2_000_000_000}))
-        _until(lambda: marker.exists() or process.poll() is not None,
-               "the command to start after memory recovers")
+        wait_for(marker.exists)
         assert marker.exists(), output.read_text("utf-8")
         if kind in ("test", "picker"):
             entries = json.loads(marker.read_text("utf-8"))["tests"]["entries"]
@@ -158,7 +166,12 @@ def test_1_every_lane_waits_for_memory_and_starts_when_it_recovers(env, tmp_path
         assert output.read_text("utf-8").count(memory_wait) == 1
     finally:
         publish(memory, json.dumps({"total_bytes": None, "available_bytes": None}))
-        finish(repo, processes)
+        (repo.bin / "go-all").touch()
+        for process in processes:
+            try:
+                process.wait()
+            finally:
+                print(output.read_text("utf-8"))
     assert process.returncode == 0, output.read_text("utf-8")
     if kind in ("test", "picker"):
         # An unreadable source must fail open rather than hold otherwise runnable work.

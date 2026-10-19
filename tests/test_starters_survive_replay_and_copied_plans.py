@@ -14,7 +14,6 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, ROOT, Repo, _install
-from test_board import seen
 from test_close import CLEAN, CODEX_STUB, GREEN, PIN, Forge
 from test_started_branches_claim_the_work import client  # noqa: F401
 from test_starter_names_survive_branch_cleanup import _github_squash, _start
@@ -79,9 +78,7 @@ def _observer(client, tmp_path):
     viewer = Repo(observer, client.bin)
     listing = viewer.forge("board", "--json")
     assert listing.returncode == 0, listing.stdout + listing.stderr
-    page = viewer.forge("board", "--out", str(observer / ".git/forge/board.html"))
-    assert page.returncode == 0, page.stdout + page.stderr
-    return json.loads(listing.stdout)["items"], seen(observer / ".git/forge/board.html")
+    return json.loads(listing.stdout)["items"]
 
 
 def _plan(client, claude_payload, key, doc, rejected=False):
@@ -139,10 +136,9 @@ def test_12_ownership_after_rejected_stacked_start_close_replay_and_cleanup(
                               cwd=client.path, capture_output=True, text=True, encoding="utf-8")
     assert ancestry.returncode == 1, ancestry.stdout + ancestry.stderr
     assert not followup.exists()
-    rows, words = _observer(client, tmp_path)
+    rows = _observer(client, tmp_path)
     fix = next(row for row in rows if row["id"] == "followup")
     assert fix["started_by"] == "Original Followup Starter"
-    assert "Started by Original Followup Starter." in words, words
 
 
 def test_13_ownership_after_copied_plan_first_part_cleanup(
@@ -167,12 +163,9 @@ def test_13_ownership_after_copied_plan_first_part_cleanup(
     flow.commit(part, "src/checkout.py", "checkout = True\n", "Save the checkout")
     _finish(client, gh, tmp_path, "CHECK/SAVE", "task/CHECK-SAVE")
     _remove_plan(client, "CHECK", plan)
-    rows, words = _observer(client, tmp_path)
+    rows = _observer(client, tmp_path)
     story = next(row for row in rows if row["id"] == "CHECK")
     part = next(row for row in story["children"] if row["id"] == "CHECK/SAVE")
     assert story["started_by"] == "Original Story Starter"
     assert part["started_by"] == "Original Part Starter"
     assert story["approved_by"] == part["approved_by"] == "Plan Approver"
-    for sentence in ("Started by Original Story Starter.", "Started by Original Part Starter.",
-                     "Approved by Plan Approver."):
-        assert sentence in words, words
