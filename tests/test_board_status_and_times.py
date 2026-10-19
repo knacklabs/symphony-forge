@@ -1,7 +1,6 @@
 """Board cards, counts and durations agree at the real command boundary."""
 import json
 import os
-import re
 import subprocess
 import sys
 import textwrap
@@ -9,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import REAL_UV, _install
+from conftest import _install
 from test_board import DOC, pr
 from test_board_dependency_timelines import _client, _land_fixture
 from test_story import GRILL, READER, claude_plan, hook, ready, worktree
@@ -71,61 +70,14 @@ def _live_work_lock(repo, item):
 
 
 def _board(repo, tmp_path):
+    """The trimmed `--json` view, the text `--out` wrote, and that text's every-item facts."""
     machine = repo.forge("board", "--json")
     assert machine.returncode == 0, machine.stderr
-    path = tmp_path / "board.html"
-    page = repo.forge("board", "--out", str(path))
-    assert page.returncode == 0, page.stderr
-    return json.loads(machine.stdout), _rendered_text(path), path.read_text("utf-8")
-
-
-def _rendered_text(path, width=1280, accessibility=False):
-    browser = subprocess.run([
-        REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with", "playwright==1.55.0",
-        "python", "-c",
-        "import json, sys\nfrom playwright.sync_api import sync_playwright\n"
-        "with sync_playwright() as p:\n"
-        "    browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])\n"
-        "    try:\n"
-        "        width = int(sys.argv[2])\n"
-        "        page = browser.new_page(viewport={'width': width, 'height': 900})\n"
-        "        page.goto(sys.argv[1])\n"
-        "        for summary in page.locator('details > summary').all():\n"
-        "            if summary.locator('..').get_attribute('open') is None:\n"
-        "                summary.click()\n"
-        "        if width == 375:\n"
-        "            assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')\n"
-        "        if sys.argv[3] == 'True':\n"
-        "            page.emulate_media(color_scheme='dark')\n"
-        "            links = page.locator('a[href]')\n"
-        "            assert links.count() > 0, 'The rendered board needs a real pull-request link'\n"
-        "            for link in links.all():\n"
-        "                contrast = link.evaluate('''link => {\n"
-        "                    const rgb = color => color.match(/[\\d.]+/g).slice(0, 3).map(Number);\n"
-        "                    const luminance = color => rgb(color).map(v => {\n"
-        "                        v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;\n"
-        "                    }).reduce((sum, value, index) => sum + value * [.2126, .7152, .0722][index], 0);\n"
-        "                    let background = link;\n"
-        "                    while (getComputedStyle(background).backgroundColor === 'rgba(0, 0, 0, 0)')\n"
-        "                        background = background.parentElement;\n"
-        "                    const a = luminance(getComputedStyle(link).color);\n"
-        "                    const b = luminance(getComputedStyle(background).backgroundColor);\n"
-        "                    return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);\n"
-        "                }''')\n"
-        "                assert contrast >= 4.5, f'Pull-request link contrast is {contrast}:1'\n"
-        "            page.evaluate('''() => {\n"
-        "                const sizes = [...document.querySelectorAll('body, body *')].map(element =>\n"
-        "                    [element, parseFloat(getComputedStyle(element).fontSize)]);\n"
-        "                for (const [element, size] of sizes) element.style.fontSize = `${size * 2}px`;\n"
-        "            }''')\n"
-        "            assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), '200% text overflows'\n"
-        "        print(json.dumps(' '.join(page.locator('body').inner_text().split())))\n"
-        "    finally:\n"
-        "        browser.close()\n",
-        path.resolve().as_uri(), str(width), str(accessibility)],
-        capture_output=True, text=True, encoding="utf-8", timeout=60)
-    assert browser.returncode == 0, browser.stdout + browser.stderr
-    return json.loads(browser.stdout)
+    path = tmp_path / "board.json"
+    written = repo.forge("board", "--out", str(path))
+    assert written.returncode == 0, written.stderr
+    raw = path.read_text("utf-8")
+    return json.loads(machine.stdout), raw, json.loads(raw)
 
 
 def _row(data, key):
@@ -151,12 +103,11 @@ def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path, monkey
     (tree / "plans/roadmap.json").write_text(json.dumps({"items": [
         {"key": "PAST", "title": "People keep saved baskets", "status": "done"}]}), "utf-8")
     client.path = tree
-    data, text, _ = _board(client, tmp_path)
+    data, _, full = _board(client, tmp_path)
     row = _row(data, "PAST")
     assert row["stage"] == "done" and not row["stalled"]
-    assert "People keep saved baskets PAST Story Done Finished" in text
     assert row["status"] == "Finished"
-    assert "People keep saved baskets Finished on" not in text
+    assert (_row(full, "PAST")["title"], _row(full, "PAST")["state"]) == ("People keep saved baskets", "done")
     assert data["team"]["counts"]["stories"]["done"] == 1
     assert data["team"]["counts"]["stories"]["no plan yet"] == 0
 
@@ -171,14 +122,14 @@ def test_2_finished_story_parts_never_remain_in_progress(client, tmp_path):
     (story / "tasks/SAVE.json").write_text(json.dumps({"status": "working", "branch": "task/PAST-SAVE",
         "steps": [{"step": "start", "at": OLD}]}), "utf-8")
     (tree / "plans/PAST.md").write_text(DOC, "utf-8")
-    data, text, _ = _board(client, tmp_path)
+    data, _, full = _board(client, tmp_path)
     parent = _row(data, "PAST")
     assert all(child["stage"] in ("done", "merged") and not child["stalled"]
                for child in parent["children"])
     mapping = next(m for m in data["dependency_maps"] if m["id"] == "PAST")
     assert all(part["status"] in ("Finished", "Merged") for part in mapping["parts"])
-    assert re.search(r"Save a basket\s+Part\s+Done", text)
-    assert not re.search(r"Save a basket\s+Part\s+In progress", text)
+    parts = {child["title"]: child["state"] for child in _row(full, "PAST")["children"]}
+    assert parts["Save a basket"] == "done" and set(parts.values()) == {"done"}
 
 
 def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client, tmp_path, monkeypatch):
@@ -195,17 +146,14 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
     # 1.2.2 wrote this timing shape without run events or a new dated state step.
     _records(client, "timings.jsonl", [{"item": "legacy-work", "step": "worker round",
         "start": "2026-10-09T11:54:00+00:00", "seconds": 60, "outcome": "completed"}])
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     idle, done = _row(data, "correct-state"), _row(data, "finished-help")
     assert idle["stalled"] and idle["idle_seconds"] == 4 * 86400
     assert idle["waits_on"]
-    assert re.search(r"Stalled.*4 days", text, re.I)
-    assert idle["waits_on"] in text
     assert not done["stalled"]
     day_idle = _row(data, "day-idle")
     assert day_idle["stalled"] and day_idle["idle_seconds"] == 25 * 3600
-    assert day_idle["waits_on"] and day_idle["waits_on"] in text
-    assert re.search(r"Help text waits for fixes.*Stalled", text)
+    assert day_idle["waits_on"]
     legacy = _row(data, "legacy-work")
     assert not legacy["stalled"] and legacy["idle_seconds"] == 300
 
@@ -272,16 +220,14 @@ def test_11_story_idle_time_tracks_its_parts(
                 dated.setenv("GIT_COMMITTER_DATE", "2026-10-09T11:55:00+00:00")
                 client.git("commit", "-qm", "Save baskets", cwd=part)
     _records(client, "events.jsonl", events)
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     parent = _row(data, "SHOP")
     if child_activity == "stalled":
         assert parent["stalled"] and parent["idle_seconds"] == 4 * 86400
         assert "Save a basket" in parent["waits_on"]
         assert "SHOP/SAVE" not in parent["waits_on"]
-        assert parent["waits_on"] in text
         return
     assert not parent["stalled"]
-    assert "Stalled" not in text
     if child_activity == "running":
         assert parent["idle_since"] is None and parent["idle_seconds"] is None
         assert parent["waits_on"] is None
@@ -317,13 +263,12 @@ def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
     locks.mkdir(parents=True, exist_ok=True)
     (locks / "correct-state.lock").write_text(json.dumps({"pid": exited.pid,
         "started": "The earlier process", "command": "python"}), "utf-8")
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
     assert row["activity"]["status"] == "idle" and row["worker"] is None
     assert row["stalled"] and row["idle_seconds"] == 4 * 86400
     assert not any(stage["status"] == "running" for stage in row["stages"])
     assert "running" not in row["status"].lower()
-    assert "Worker running" not in text
     assert "worker has stopped" in row["next"]["line"]
     # An abandoned current round must resume work; an older round does not replace
     # the current round's close step.
@@ -384,12 +329,11 @@ def test_4_running_worker_or_review_overrides_old_needs_fixes(client, tmp_path, 
         "item": "correct-state", "kind": kind, "round": 2, "at": "2026-10-09T11:50:00Z"}])
     if kind == "work":
         _live_work_lock(client, "correct-state")
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
     assert row["activity"]["status"] == "running" and row["worker"]["elapsed"] == 600
-    assert "running" in row["status"].lower()
-    assert "Needs fixes" not in text
-    assert "10 minutes" in text
+    assert "running" in row["status"].lower() and "10 minutes" in row["status"]
+    assert "Needs fixes" not in row["status"]
     assert not row["stalled"]
     next_json = client.forge("next", "--json")
     assert next_json.returncode == 0, next_json.stderr
@@ -413,11 +357,10 @@ def test_5_ready_receipt_agrees_with_card_header_and_next(client, tmp_path):
     folder.mkdir(exist_ok=True)
     (folder / "correct-state.json").write_text(json.dumps({"review": "clean",
         "commit": client.git("rev-parse", "fix/correct-state")}), "utf-8")
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
     assert row["stage"] == "ready" and row["status"] == "Ready to merge"
     assert data["team"]["counts"]["fixes"]["ready to merge"] == 1
-    assert "Ready to merge: 1" in text
     next_step = client.forge("next")
     assert next_step.returncode == 0, next_step.stderr
     assert any(phrase in next_step.stdout for phrase in (
@@ -442,10 +385,9 @@ def test_6_live_plan_read_is_planning_then_clean_read_waits_for_approval(client,
     ready(client, "SHOP", DOC)
     _records(client, "events.jsonl", [{"event": "run start", "id": "plan-read",
         "item": "SHOP", "kind": "read", "round": 2, "at": "2026-10-09T11:50:00Z"}])
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     row = _row(data, "SHOP")
     assert row["stage"] == "planning" and "running" in row["status"].lower()
-    assert "Waiting for approval." not in text
     assert row["worker"]["round"] == 2 and row["worker"]["elapsed"] == 600
     next_json = client.forge("next", "--json")
     assert next_json.returncode == 0, next_json.stderr
@@ -460,9 +402,8 @@ def test_6_live_plan_read_is_planning_then_clean_read_waits_for_approval(client,
     assert next_text.returncode == 0, next_text.stderr
     assert current["next"]["line"] in next_text.stdout
     _records(client, "events.jsonl", [])
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     assert _row(data, "SHOP")["stage"] == "waiting for approval"
-    assert "Waiting for approval" in text
     assert "waiting for approval" in client.forge("next").stdout
 
 
@@ -480,24 +421,21 @@ def test_7_prose_and_timeline_use_recorded_stage_durations(client, tmp_path, gh)
         {"item": "correct-state", "round": 1, "step": step, "seconds": seconds,
          "start": "2026-10-09T11:00:00Z", "outcome": outcome}
         for step, seconds, outcome in (("worker round", 120, "completed"), ("review", 60, "clean"))])
-    data, text, page = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
     assert row["stages"][0]["seconds"] == 120
-    assert "Build: 2 minutes" in page and "Review: 1 minute" in page
-    assert "2 minutes" in " ".join(row["took"])
+    assert {"Build: 2 minutes", "Review: 1 minute"} <= set(row["took"])
     # No time inferred between saved steps (built in 3 hours, checked in 50 minutes).
-    assert "built in 3 hours" not in text.lower()
-    assert "50 minutes" not in text
+    assert not {3 * 3600, 50 * 60} & {stage.get("seconds") for stage in row["stages"]}
+    assert not any("3 hours" in took or "50 minutes" in took for took in row["took"])
 
 
 def test_8_header_separates_stories_and_fixes_and_titles_end_at_a_word(client, tmp_path):
     title = "Readers can follow the progress of their improvement without contradictory information everywhere"
     _fix(client, title)
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     shortened = textwrap.shorten(title, width=70, placeholder="…")
     assert _row(data, "correct-state")["title"] == shortened
-    assert shortened in text
-    assert "Stories" in text and "Fixes" in text
     assert set(data["team"]["counts"]) == {"stories", "parts", "fixes", "finished_last_7_days"}
     assert data["team"]["counts"]["fixes"]["in progress"] == 1
 
@@ -527,32 +465,12 @@ def test_9_one_person_has_one_display_name_across_approval_history(
             tree = ready(client, key, DOC)
             approved = hook(client, claude_plan(claude_payload, DOC, cwd=tree))
             assert approved.returncode == 0, approved.stderr
-    data, text, _ = _board(client, tmp_path)
+    data, raw, _ = _board(client, tmp_path)
     for key in ("FIRST", "SECOND"):
         person = _row(data, key)
         assert person["started_by"] == person["approved_by"] == "Sam Reader"
     assert _row(data, "correct-state")["started_by"] == "Forge Test"
-    assert text.count("Approved by Sam Reader") == 2
-    assert "Sam Alias" not in text
-
-
-def test_10_mobile_browser_shows_running_status_and_counts_without_overflow(client, tmp_path, gh):
-    _fix(client, status="fixing", round=1)
-    long_title = "Read " + "saved_basket_state_" * 3 + ".py"
-    _fix(client, long_title, "long-path", status="working", round=1)
-    opened = pr("fix/long-path", long_title, "The filename stays readable.", None, [], ["README.md"])
-    opened.update(state="OPEN", number=7, url="https://github.com/acme/shop/pull/7")
-    gh.respond("pr", "list", stdout=json.dumps([opened]))
-    gh.respond("pr", "list", "--state", "merged", stdout="[]")
-    _records(client, "events.jsonl", [{"event": "run start", "id": "browser-run",
-        "item": "correct-state", "kind": "review", "round": 1, "at": "2026-10-09T11:50:00Z"}])
-    data, _, _ = _board(client, tmp_path)
-    row = _row(data, "correct-state")
-    text = _rendered_text(tmp_path / "board.html", width=375, accessibility=True)
-    assert row["status"] in text
-    assert "10 minutes" in text
-    assert "Needs fixes" not in text
-    assert "Stories" in text and "Fixes" in text
+    assert "Sam Alias" not in raw
 
 
 def test_15_review_loop_stop_needs_a_decision_on_the_board_and_next(client, tmp_path):
@@ -563,9 +481,7 @@ def test_15_review_loop_stop_needs_a_decision_on_the_board_and_next(client, tmp_
     assert "Close stopped" in next_step.stdout
     # No scored findings saved, so the owner decides.
     assert "Ask the human to narrow the part, split it, or accept the remaining findings, in these words:" in next_step.stdout
-    data, text, _ = _board(client, tmp_path)
+    data, _, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
-    assert row["stage"] == "hotspot"
+    assert row["stage"] == "hotspot" and row["state"] == "in progress"
     assert row["status"] == "Needs your decision"
-    assert re.search(r"Readers see the correct state\s+Fix\s+In progress\s+Needs your decision", text)
-    assert "Not started yet" not in text

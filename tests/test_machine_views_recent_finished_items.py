@@ -260,11 +260,13 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     landed(repo, monkeypatch, NOW, {".factory/stories/OLD/story.json": finished_story("OLD", NOW)})
     refreshed, _ = traced(repo, monkeypatch, "board", tmp_path / "trace.jsonl")
     assert "OLD" in {row["id"] for row in refreshed["items"]}
-    html = tmp_path / "history.html"
-    board = repo.forge("board", "--out", str(html))
+    # The written board keeps finished work the trimmed view leaves out.
+    out = tmp_path / "history.json"
+    board = repo.forge("board", "--out", str(out))
     assert board.returncode == 0, board.stderr
-    page = html.read_text("utf-8")
-    assert "Finished story PAST-0" in page and "Finished fix old-fix" in page
+    written = {row["id"]: row for row in json.loads(out.read_text("utf-8"))["items"]}
+    assert written["PAST-0"]["title"] == "Finished story PAST-0"
+    assert written["old-fix"]["title"] == "Finished fix old-fix"
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])

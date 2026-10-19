@@ -290,8 +290,15 @@ are left out of its rows. New repos receive the mod on setup; existing repos rec
 upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
 failed refreshes keep the last rows. The mod adds no background work or dependencies.
 
+`forge board` opens the board as a live page on this computer: a server on 127.0.0.1 at a free
+port, with a per-run token in the page address that every request must carry, so no other computer
+and no old link can open it. The page refreshes by itself when the work changes, and the server
+stops when the command ends (Ctrl-C). It rebuilds only the rows whose inputs changed and fetches
+from GitHub at most once a minute. `--out <path>` writes every item's facts as JSON instead,
+finished ones included.
+
 `forge board --json` and `forge next --json` print JSON for the Claude Code mod and
-other readers. The usual commands still print text or open the HTML board. Both views
+other readers. The usual commands still print text. Both views
 include `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
 `forge next --json` uses the same 60-second GitHub cache as `forge board --json`, while text
@@ -301,29 +308,15 @@ Merges clear it at once. Each command fetches the default branch's settings at m
 After close, a matching receipt still shows "ready to merge" while the cached list lacks the pull request's link.
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
-Finished stories, tasks and fixes older than seven days are left out of JSON;
-the HTML board keeps them. The page is drawn from the same rows, so each state and time on it
-matches the JSON. A bar pinned to the top jumps to Overview, Roadmap, Stories and Fixes, and
-each section folds; Stories and Fixes start folded when they hold more than 20 rows. Each section
-sorts its rows needs you, blocked, in progress, planned, no plan yet, then done in one closed
-fold, and the Roadmap has a one-line key to the map's shapes and the words part, fix and plan.
-Each story shows its key small beside its title, the one ID on the board. Story rows carry
+Finished stories, tasks and fixes older than seven days are left out of `--json`;
+`--out` keeps them. The live page reads the same rows, so each state and time on it matches the
+JSON. Each story shows its key small beside its title, the one ID on the board. Story rows carry
 `read_rounds`: each cold-read round of the plan with its number, its findings' first lines and
 their dispositions (`cut`, `defer` or `keep` with its `reason`), and `read_at` on the latest round
-only; a story's history on the page lists them before its approval and merged parts. It uses the full window, has light and dark themes and stacks to one column below
-720px. Each call reads current state without a history cache.
-The page's first screen answers what is in progress, what needs a person, what is stuck and when
-the work can go live, on one time axis with a today line: the team sentence, the labelled totals,
-then Needs you (an amber bar for each wait), In progress (each story or fix as a runway, solid
-where working, thin where waiting, dotted where unknown) and Blocked or slow, five rows each with
-"and N more" opening the rest, then Pace with go-live as a date band. Every row opens in place to
-its time split, round lines and who started, approved and merged it. Below it, the team and
-each person show merged pull requests per week, through and around Forge, in alphabetical order,
-beside the pull requests merged around Forge in the last 7 days.
+only. Each call reads current state without a history cache.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
-task IDs in the plan are ignored by both boards.
-The HTML page also draws one inline dependency graph of every roadmap story and stage timelines, without scripts or
-external assets. `forge board --json` supplies `dependency_maps`: one entry per roadmap story
+task IDs in the plan are ignored by the board.
+`forge board --json` supplies `dependency_maps`: one entry per roadmap story
 with `planned` (false for a story with no plan yet, which has no parts), `done` (its finished
 parts) and its full planned parts, plain titles, labelled states and `waits_for` item references,
 including old merged dependencies omitted from active rows. Each unfinished part has `column`:
@@ -331,11 +324,7 @@ including old merged dependencies omitted from active rows. Each unfinished part
 stories, so parts in one column can run at the same time; parts that wait on each other share a
 column and say so in `note`. Finished parts have a null `column`. When fixes are open, an entry
 with `kind: "fixes"` lists them in column 0 with `running` and `started_on` (the story part a
-stacked fix was started on). The graph draws the Fixes row first, then a row per story with
-parts placed by column and arrows to the waiting part, finished parts folded into "N done",
-finished stories and stories with no plan as small boxes. It keeps its own size and fills a
-laptop-wide window; a narrow window scrolls it sideways inside its box. Shapes and labels
-distinguish running, waiting, can start now and not started. Startability and scope
+stacked fix was started on). Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
 Both views add `team`: `sentence`, `counts`, `needs_you`, `in_progress`, `blocked`, `pace`,
 `go_live`, `trends` and `around_forge`; a key not worked out yet is null. Every story, part and
@@ -343,7 +332,7 @@ fix row has one `state`, and `team.counts` counts each kind apart, finished ones
 `stories` (done, building, approved but not started, waiting for approval, planning, no plan yet),
 `parts` of approved stories and `fixes` (done, ready to merge, in progress, to do), and
 `finished_last_7_days`. A story is building only once one of its parts has started. Rows also
-carry `merged_at`, and `approved_by` is a name or null. The page prints the same totals.
+carry `merged_at`, and `approved_by` is a name or null.
 GitHub's pull request lists are read at most once a minute: the open ones and one search per
 week for the last six full weeks and this one.
 `team.pace` counts parts and fixes merged on the default branch per full week (Monday to Monday
@@ -351,7 +340,7 @@ UTC) for six weeks. `team.go_live` gives a date range for the parts of approved 
 merge, from the last three and six weeks' pace: `range`, `about` when the two agree, `not enough
 history` when the oldest merged part is under three weeks old or the last three weeks merged none,
 or `done`; it counts the stories with no plan yet as the unknown, and `team.sentence` says the
-same in a count, not names. `team.in_progress` lists the stories and fixes the page shows under In
+same in a count, not names. `team.in_progress` lists the stories and fixes in
 progress (`id`, `title`, `kind`, `state`). `team.trends` counts merged pull requests per week for the team and each person
 (alphabetical, no totals or ranking), split into through Forge (a `story/`, `task/` or `fix/`
 branch) and around it; `team.around_forge` lists the ones merged around Forge in the last 7 days.
@@ -573,10 +562,10 @@ The pane's Board tab, on the terminal and the Desktop app's Code tab alike, open
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
 Each part shows only when the board's `team` fact behind it is known and not zero; when
 none of them applies, the line counts the rows the tab shows in its own group words instead,
-such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board page's
+such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board's
 own sentence (`team.sentence`) and its labelled totals, one line per kind, such as
-`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, word for word as the page shows
-them. Groups follow in this order, each only when it has items, and each in the board's own
+`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, words built from
+`team.counts`. Groups follow in this order, each only when it has items, and each in the board's own
 order: NEEDS YOU (one row per `team.needs_you` entry, oldest first, with how long it has waited,
 such as `waiting 3h`), STUCK (one row per `team.blocked` entry with its reason in words and its
 age, such as `1 unfinished part waits on it · 2d`, and the longest stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
@@ -588,7 +577,7 @@ beside it, one line of state in words and, where there is something to do, its n
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
 An older Forge without the `team` lists draws the same groups from each row's `needs_person`,
 stalled, running and ready flags, and shows no sentence or totals.
-Outside the totals copied from the page, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
+Outside those totals, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
 dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
 relative (`12 min`, `8 days`), and every time rounds as the board's do (`2m`, never `1m 30s`). Stage chains, round lines and the time breakdown stay on
 the board page. An empty board says `Nothing in progress.` `/forge` always returns the
@@ -1321,6 +1310,10 @@ Generated-conflict sync and the merge commit check use the new pin too, so the m
 before the original land or close command continues.
 The board and next use failed pull request checks only when they belong to that pull request's
 current head, including branches that exist only on the remote or are ahead of the local branch.
+Close and `forge next` warn when this item and another open branch add the same migration
+number under a `migrations` folder. The warning names both items and the number. It does not
+stop work or need a setting. Forge refreshes origin once and reads its branch snapshot without
+a checkout. Completed items do not cause warnings, even when their branches remain on origin.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
@@ -1419,7 +1412,11 @@ Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
 Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
 Forge does not change npm, pnpm or yarn scripts to set their worker budget.
-Those scripts can read `FORGE_TEST_CPUS`. Other runners stay as written.
+Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
+with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
+for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap
+in the Vitest config. A config cap can leave projects with different `maxWorkers` but the
+same `sequence.groupOrder`, which Vitest refuses. Other runners stay as written.
 Direct `forge test --pytest <base>` runs join the test lane and obey its memory floor and budget.
 A picker inside close or bare `forge test` shares that run's single lane entry.
 `pytest -n auto` honours

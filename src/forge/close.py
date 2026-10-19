@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, githooks, init, repo, review, score, spotted, story, sync, task, time_records
+from forge import __version__, checks, codex, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -96,6 +96,7 @@ def close(args: argparse.Namespace) -> int:
     if retried_history:
         backfill.run(top)
     state, cfg = repo.read_state(item, top) or {}, repo.config(top)
+    refreshed = migration_warnings.before_close(top)
     switch = (item == ENABLE and state.get("kind") == "fix" and
               (state.get("why"), state.get("done_when")) == (WHY, DONE))
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
@@ -165,7 +166,7 @@ def close(args: argparse.Namespace) -> int:
     if not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
     dismissals = _dismissals(args, item)
-    branch, default = repo.current_branch(top), repo.default_branch(top)
+    branch, default = state["branch"], repo.default_branch(top)
     pr = _pull_request(top, branch)
     migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
     if pr and pr["state"] == "MERGED":
@@ -184,7 +185,7 @@ def close(args: argparse.Namespace) -> int:
         legacy_diff = review.fingerprint(previous["commit"], item, top, state,
                                          f"origin/{default}", branch_diff=True)
     try:
-        _merge_default(top, item, branch, default, pr)
+        _merge_default(top, item, branch, default, pr, cfg, refreshed=refreshed)
     except repo.Refused as error:
         if error.entry in (REFUSALS["conflict"], REFUSALS["replay_conflict"]):
             if not time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
@@ -461,7 +462,7 @@ def close(args: argparse.Namespace) -> int:
         _gh(top, "pr", "ready", str(pr["number"]))
     # Main can move during checks; DRAFT also hides an up-to-date requirement until ready.
     pr = _pull_request(top, branch) or pr
-    _merge_default(top, item, branch, default, pr)
+    _merge_default(top, item, branch, default, pr, cfg)
     if repo.git("rev-parse", "HEAD", cwd=top) != head:
         _publish(top, item, state, branch, default, pr, result, evidence)
         repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None),
@@ -696,9 +697,8 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str,
-                   pr: dict[str, Any] | None) -> None:
-    cfg = repo.config(top)
-    repo.git("fetch", "-q", "origin", default, cwd=top)
+                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False) -> None:
+    migration_warnings.fetch_default(top, default, refreshed=refreshed)
     repo.command_fact(("fetch default", default), top, lambda: None)
     state = repo.read_state(item, top) or {}
     base, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))

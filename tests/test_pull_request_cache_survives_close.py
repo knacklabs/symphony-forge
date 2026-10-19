@@ -1,4 +1,7 @@
-"""Closing work keeps the shared minute cache; next fetches default settings once per run."""
+"""Closing work keeps the minute cache; next refreshes default and peer branches once per run.
+
+Includes shared fetch reuse for src/forge/migration_warnings.py.
+"""
 import json
 import os
 import shutil
@@ -97,7 +100,10 @@ def test_2_next_fetches_default_settings_once_and_fetches_again_on_the_next_run(
         assert item in shown.stdout and "ready" in shown.stdout, shown.stdout
         calls = git_calls()[before[0]:]
         fetches = [call for call in calls if call[0] == "fetch"]
-        assert fetches == [["fetch", "-q", "origin", "main"]], fetches
+        # The old contract fetched only main. Migration warnings now need peer
+        # branches too; that one snapshot must also supply default settings.
+        assert fetches == [["fetch", "-q", "--prune", "origin",
+                            "+refs/heads/*:refs/remotes/origin/*"]], fetches
         assert len(calls) <= 180
         assert len(env.gh.calls()) - before[1] <= 12
         assert elapsed < (90 if os.name == "nt" else 30), elapsed

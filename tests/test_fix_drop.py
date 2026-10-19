@@ -9,7 +9,6 @@ import sys
 import pytest
 
 from conftest import GH_STUB, Repo, _install
-from test_board import seen
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import hold_agents, start, finish
@@ -135,9 +134,10 @@ def test_1_drop_hides_a_fix_and_preserves_its_remote_commits(client, pull_reques
     assert board.returncode == 0, board.stdout + board.stderr
     assert "unwanted" not in {row["id"] for row in json.loads(board.stdout)["items"]}
     assert "unwanted" not in client.forge("next").stdout
-    page = client.forge("board", "--out", str(client.path / ".git/forge/board.html"))  # the static page, not the live one
+    out = client.path / ".git/forge/board.json"  # the untrimmed board keeps finished work, never a dropped fix
+    page = client.forge("board", "--out", str(out))
     assert page.returncode == 0, page.stdout + page.stderr
-    assert "Readers can see a greeting" not in seen(client.path / ".git/forge/board.html")
+    assert "unwanted" not in {row["id"] for row in json.loads(out.read_text("utf-8"))["items"]}
     queued = client.forge("land", "--all")
     assert queued.returncode == 0, queued.stdout + queued.stderr
     assert "unwanted" not in queued.stdout

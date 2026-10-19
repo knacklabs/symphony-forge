@@ -111,6 +111,9 @@ function listen() {
   events.addEventListener('open', () => {
     clearInterval(polling);
     polling = null;
+    // The stream counts from the snapshot it sees when it connects, so read once more: a
+    // rebuild that finished before it connected sends no "changed".
+    refresh();
   });
   events.addEventListener('error', () => {
     if (polling) return;
