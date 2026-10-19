@@ -1,0 +1,15 @@
+{
+  "base": "94879950a86a26c40af58a3315e866afe1823537",
+  "branch": "fix/close-keeps-main-settings",
+  "done_when": "At close, an item that may not change settings and carries a forge.toml different from main's gets main's copy back (its version pin line kept), committed with one printed line; the worker's settings restore takes main's side of an open merge; tests cover a Codex round that merged main's changed settings, on new and adopted repos",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T08:39:40.297418+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After a Codex round merges main, the branch can still carry its older forge.toml, so the squash merge reverts main's settings (issue 921, Codex path)"
+}
