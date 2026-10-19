@@ -1,8 +1,9 @@
 """The drawer and item page styles change only those views, never the other board screens.
 
 Their short class names (more, tag, close, figures, who) are common words another
-screen may use. This loads the real board, gives the Now screen one element per name,
-and compares it with the drawer's own copy after the item styles load.
+screen may use. This loads the real board, adds one element per name outside the item views,
+and compares it with the drawer's own copy after the item styles load. The probes sit
+outside main, which the Now screen redraws on every live refresh.
 """
 import json
 import subprocess
@@ -29,7 +30,7 @@ with sync_playwright() as p:
         expect(page.get_by_role('status')).to_have_text('Live', timeout=60000)
         page.evaluate("names => { const box = document.createElement('div'); box.id = 'elsewhere'; "
                       "for (const name of names) { const e = document.createElement('a'); e.className = name; "
-                      "e.textContent = name; box.append(e); } document.querySelector('main').append(box); }", NAMES)
+                      "e.textContent = name; box.append(e); } document.body.append(box); }", NAMES)
         plain = page.evaluate("() => { const e = document.createElement('a'); e.textContent = 'plain'; "
                               "document.getElementById('elsewhere').append(e); return (" + LOOK + ")(e); }")
         page.evaluate("async () => " + BOARD + ".openDrawer('SHOP')")

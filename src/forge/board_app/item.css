@@ -137,7 +137,7 @@
 
 .legend .for-you { color: var(--needs-you); }
 
-.rounds, .parts, .events, .issues, .took-list {
+.rounds, .part-list, .events, .issues, .took-list {
   margin: 0;
   padding: 0;
   list-style: none;

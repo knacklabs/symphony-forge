@@ -158,7 +158,7 @@ function roundList(row, limit) {
 }
 
 function partList(parts, current) {
-  return el('ul', { class: 'parts' }, parts.map((part) => el('li', {},
+  return el('ul', { class: 'part-list' }, parts.map((part) => el('li', {},
     el('button', { type: 'button', class: `part ${part.id === current ? 'current' : ''}`,
                    'data-focus': `part-${part.id}`,
                    'aria-current': part.id === current ? 'true' : 'false', onclick: () => openDrawer(part.id) },
