@@ -4,13 +4,21 @@
   "done_when": "A review no longer finds: Preserve unknown waiting time instead of displaying zero (src/forge/board_app/now.js:83); Retain readiness for assigned, unstarted story parts (src/forge/board_app/now.js:72); Give story part progress an accessible text equivalent (src/forge/board_app/now.js:165); Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable (tests/test_board_now_screen.py:106)",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "round": 1,
   "stacked_on": "FORGE-BOARD-4/NOW",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T14:55:26.741589+00:00",
       "step": "start"
     }
   ],
-  "why": "Review findings split from FORGE-BOARD-4/NOW: Preserve unknown waiting time instead of displaying zero (src/forge/board_app/now.js:83); Retain readiness for assigned, unstarted story parts (src/forge/board_app/now.js:72); Give story part progress an accessible text equivalent (src/forge/board_app/now.js:165); Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable (tests/test_board_now_screen.py:106)"
+  "stuck": {
+    "close": null,
+    "head": "7d11f14e44d1cd4ad8562c9a9e311c9c14e147e0",
+    "keys": {},
+    "round": null
+  },
+  "why": "Review findings split from FORGE-BOARD-4/NOW: Preserve unknown waiting time instead of displaying zero (src/forge/board_app/now.js:83); Retain readiness for assigned, unstarted story parts (src/forge/board_app/now.js:72); Give story part progress an accessible text equivalent (src/forge/board_app/now.js:165); Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable (tests/test_board_now_screen.py:106)",
+  "worker": "codex"
 }
