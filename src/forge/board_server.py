@@ -43,6 +43,34 @@ FETCH_WAIT = float(os.environ.get("FORGE_BOARD_FETCH_WAIT", "60"))
 REBUILD_WAIT = float(os.environ.get("FORGE_BOARD_REBUILD_WAIT", "0.5"))
 TICK = 1.0  # seconds between the events stream's input checks
 DENIED = "This board link is not valid. Open the board again to get a new link."
+ASSIGN_WAIT = 300  # seconds `forge assign` may take, a fetch and a push included
+ASSIGNING = threading.Lock()  # one assignment at a time: two would commit in the same story checkout
+ASSIGN_FAILED = "Forge could not give this work. The terminal that runs the board shows why."
+
+
+def reason(text: str) -> str:
+    """A refusal's first sentence for the page: no `Next:` line and no command text."""
+    first = text.strip().splitlines()[0] if text.strip() else ""
+    if first.startswith(("Traceback", "Next:")):
+        return ASSIGN_FAILED
+    first = re.match(r".*?[.!?](?=\s|$)", first)[0] if re.search(r"[.!?](\s|$)", first) else first
+    first = re.sub(r"\s*`[^`]*`", "", first).strip()  # a quoted command or path
+    return first if first and not re.search(r"\bforge [a-z]|--[a-z]", first) else ASSIGN_FAILED
+
+
+def assign(top: Path, key: str, login: str) -> dict[str, Any]:
+    """Runs `forge assign` as its own process and gives the page its outcome in plain words."""
+    with ASSIGNING:
+        try:
+            done = subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())",
+                                   "assign", "--", key, login], cwd=top, stdin=subprocess.DEVNULL,
+                                  capture_output=True, text=True, encoding="utf-8", timeout=ASSIGN_WAIT)
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "message": "Forge took too long to give this work. Try again in a moment."}
+    if done.returncode:
+        print(done.stderr, end="", file=sys.stderr, flush=True)  # the terminal keeps the whole refusal
+        return {"ok": False, "message": reason(done.stderr)}
+    return {"ok": True, "message": reason(done.stdout)}
 
 
 class Snapshots:
@@ -234,6 +262,28 @@ def handler(snapshots: Snapshots, token: str) -> type[BaseHTTPRequestHandler]:
             except Exception:
                 traceback.print_exc()
                 self.say(500, "The board could not read the work. The terminal that runs it shows why.")
+
+        def do_POST(self) -> None:
+            url = urlsplit(self.path)
+            if not hmac.compare_digest(parse_qs(url.query).get("token", [""])[0].encode(), token.encode()):
+                self.send(403, "text/plain; charset=utf-8", DENIED.encode("utf-8"))
+                return
+            if url.path != "/assign":
+                self.say(404, "The board has no page here.")
+                return
+            try:
+                size = int(self.headers.get("Content-Length") or 0)
+                asked = json.loads(self.rfile.read(size)) if 0 < size <= 4096 else None
+            except ValueError:
+                asked = None
+            if not (isinstance(asked, dict) and isinstance(asked.get("key"), str) and isinstance(asked.get("login"), str)):
+                self.say(400, "The board sent a request Forge cannot read. Reload the page and try again.")
+                return
+            try:
+                answer = assign(snapshots.top, asked["key"], asked["login"].strip())
+                self.send(200, "application/json", json.dumps(answer).encode("utf-8"))
+            except (BrokenPipeError, ConnectionResetError):
+                pass  # the page closed or reloaded
 
         def route(self, path: str, query: dict[str, list[str]]) -> None:
             if path == "/":  # the shell's own files carry the token too: every route checks it

@@ -9,6 +9,7 @@ const SCREENS = [
   'now',
   'item',
   'releases', 'insights',
+  'assign',
 ];
 const POLL = 10000; // ms between reads while the events stream is down
 const listeners = [];
