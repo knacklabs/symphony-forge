@@ -23,8 +23,8 @@
     "id": "cd5f61d7-28f2-4d99-99dd-e355360f5063",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T19:07:18.409497+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "1c1dadd3e7701210551102aba9271f00c769fc12",
+    "close": "215a6b79-1620-435f-8885-e4e25a661533",
+    "head": "4e7134c931904c152bad948f22d0c1e0cd625b6b",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "On Windows, close prints 'Kept main's settings in forge.toml' for items that did not change settings, and other new v1.2.16 tests fail only on Windows",
   "worker": "codex"
