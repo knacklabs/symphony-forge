@@ -4,12 +4,20 @@
   "done_when": "forge decision accept client-signoff ignores trailing whitespace and line-ending differences when it compares the Answers to BRIEF, and a refusal names the first line that differs; a test covers both on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:54:41.482829+00:00",
       "step": "start"
     }
   ],
-  "why": "The sign-off answers check refuses over one trailing blank line, which cost a full strict-review run (issue 974)"
+  "stuck": {
+    "close": null,
+    "head": "3be2cd1d7cd9f3ab29993374d00bf00f6873b1fd",
+    "keys": {},
+    "round": null
+  },
+  "why": "The sign-off answers check refuses over one trailing blank line, which cost a full strict-review run (issue 974)",
+  "worker": "codex"
 }
