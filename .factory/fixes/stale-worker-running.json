@@ -36,28 +36,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "1ae86aff4ef22f23c17a6ee567ae265b13acbbbf3dfb4672b4066fea3feba7e9",
-    "changed": "b46495bd3abacd01fb5a91cc6c2975ec19939d5188d870bf97b645755da6c39a",
-    "commit": "c79d133ae878579a641e0b0b7fd262c2ac3ae1a8",
+    "branch_diff": "3ab26de19785be4f55565125215e565db72d6631bed16f9cd3bb56748fca3981",
+    "changed": "3722e54de1a353fa693617e3332d77392629a58549aa2635e9d22a7d4945df7e",
+    "commit": "fdc003b48c6e84a97f58e8793e2cf221d6a31bd9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate. This change increases src/forge/board.py from 1,197 to 1,202 lines and src/forge/codex.py from 1,191 to 1,203 lines. tests/test_rules.py:63\u201365 counts newline bytes and asserts that no module exceeds 1,200 lines. Both changed modules therefore fail test_5_forge_stays_small, preventing the required test gate from passing.",
-        "file": "src/forge/codex.py",
-        "follow_up": "New finding on lines unchanged since the previous review.",
-        "gain": 4,
-        "harm": 3,
-        "line": 1060,
-        "priority": "P1",
-        "title": "Gate: module ceilings fail in board.py and codex.py",
-        "work": 2
-      }
-    ],
-    "id": "6eb3fde8-7714-47f5-a603-9e90d41c60fe",
+    "findings": [],
+    "id": "11c33f2c-75c2-4cb9-8867-e4ccc255ce8a",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T16:37:39.291311+00:00",
@@ -69,6 +57,10 @@
     },
     {
       "at": "2026-10-19T12:46:42.545739+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T13:12:10.440801+00:00",
       "step": "review"
     }
   ],
