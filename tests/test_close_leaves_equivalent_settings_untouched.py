@@ -35,7 +35,12 @@ def test_1_close_leaves_equivalent_settings_and_the_branch_pin_untouched(
     content = (text.replace("\n", ending) if ending else text.rstrip("\n")).encode("utf-8")
     path = folder / "forge.toml"
     path.write_bytes(content)
-    client.git("add", "forge.toml", cwd=folder)
+    if pin:
+        # A genuine version difference also needs the generated files for this
+        # release, just like a real upgrade; do not bypass close's sync gate.
+        synced = client.forge("sync", cwd=folder)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+    client.git("add", "-A", cwd=folder)
     client.git("commit", "-qm", "Keep checkout formatting", cwd=folder)
     before = client.git("rev-parse", "HEAD", cwd=folder)
 
