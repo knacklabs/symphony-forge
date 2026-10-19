@@ -56,6 +56,19 @@ def _records(repo, name, records):
     return folder
 
 
+def _live_work_lock(repo, item):
+    # A start event is history; these timing tests also need an actual live owner.
+    from test_worker_liveness_controls_next_step import live_identity
+
+    folder = Path(repo.git("rev-parse", "--git-common-dir"))
+    if not folder.is_absolute():
+        folder = repo.path / folder
+    path = folder / "forge/threads" / ("task" if "/" in item else "fix") / (item + ".lock")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(live_identity()), "utf-8")
+    return path
+
+
 def _board(repo, tmp_path):
     """The trimmed `--json` view, the text `--out` wrote, and that text's every-item facts."""
     machine = repo.forge("board", "--json")
@@ -175,6 +188,7 @@ def test_11_story_idle_time_tracks_its_parts(
     if child_activity == "running":
         events = [{"event": "run start", "id": "save-work", "item": "SHOP/SAVE",
                    "kind": "work", "round": 1, "at": "2026-10-09T11:50:00Z"}]
+        _live_work_lock(client, "SHOP/SAVE")
     elif child_activity == "recently merged":
         merged = pr("task/SHOP-SAVE", "Save a basket", "Baskets are saved.",
                     "2026-10-09T11:55:00Z", [], ["src/basket.py"])
@@ -256,7 +270,9 @@ def test_12_exited_worker_run_does_not_hide_idle_time_or_stopped_worker(
     assert not any(stage["status"] == "running" for stage in row["stages"])
     assert "running" not in row["status"].lower()
     assert "worker has stopped" in row["next"]["line"]
-    assert row["next"]["command"] == "forge close correct-state"
+    # An abandoned current round must resume work; an older round does not replace
+    # the current round's close step.
+    assert row["next"]["command"] == f"forge {'work' if run_round == 2 else 'close'} correct-state"
     next_text = client.forge("next")
     assert next_text.returncode == 0, next_text.stderr
     assert "The fix correct-state's worker has stopped." in next_text.stdout
@@ -276,6 +292,7 @@ def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
     events.append({"event": "run start", "id": "basket-work", "item": "basket-0",
                    "kind": "work", "round": 1, "at": "2026-10-09T11:50:00+00:00"})
     _records(client, "events.jsonl", events)
+    lock = _live_work_lock(client, "basket-0")
     observer = tmp_path / "event-reads"
     observer.mkdir()
     reads = observer / "reads"
@@ -300,6 +317,7 @@ def test_14_event_history_is_read_once_per_command_and_refreshes_between_calls(
             events.append({"event": "run end", "id": "basket-end", "run_id": "basket-work", "item": "basket-0",
                            "kind": "work", "round": 1, "at": NOW})
             _records(client, "events.jsonl", events)
+            lock.unlink()
 
 
 @pytest.mark.parametrize("client,kind", [
@@ -309,6 +327,8 @@ def test_4_running_worker_or_review_overrides_old_needs_fixes(client, tmp_path, 
     _fix(client, status="fixing", round=2)
     _records(client, "events.jsonl", [{"event": "run start", "id": "current-run",
         "item": "correct-state", "kind": kind, "round": 2, "at": "2026-10-09T11:50:00Z"}])
+    if kind == "work":
+        _live_work_lock(client, "correct-state")
     data, _, _ = _board(client, tmp_path)
     row = _row(data, "correct-state")
     assert row["activity"]["status"] == "running" and row["worker"]["elapsed"] == 600

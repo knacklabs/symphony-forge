@@ -21,6 +21,7 @@ from conftest import ROOT
 from test_close import GREEN, STORY_DOC, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
 from test_mod_plugin import packaged_mod  # noqa: F401
+from test_upgrade_command import Upgrade
 
 STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
@@ -39,6 +40,7 @@ def _board_consumes_current_round_times_from_real_runs(env, tests):
         config = folder / "forge.toml"
         env.commit(folder, "forge.toml", config.read_text("utf-8").replace(
             "print(123)", "raise SystemExit(1)"))
+        Upgrade(env, env.tmp).on_main("forge.toml", config.read_text("utf-8"))
     closed = env.close(item)
     assert (closed.returncode == 0) == (tests != "failed"), closed.stderr
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
