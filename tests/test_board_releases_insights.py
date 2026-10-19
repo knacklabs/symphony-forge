@@ -23,7 +23,7 @@ KEPT = [{"outcome": "follow-up", "file": "src/basket.py", "line": 3, "title": "B
          "gain": 2, "work": 1, "harm": 1},
         {"outcome": "lived with", "file": "src/basket.py", "line": 9, "title": "Basket name is not trimmed",
          "gain": 1, "work": 1, "harm": 1},
-        {"outcome": "follow-up", "file": "src/page.py", "line": 1, "title": "Page title repeats",
+        {"outcome": "follow-up", "file": "src/page.py", "line": 1, "title": "`forge next` names the wrong page --json",
          "gain": 1, "work": 1, "harm": 1}]
 
 PRELUDE = r"""
@@ -73,7 +73,7 @@ with sync_playwright() as p:
             expect(legend).to_have_count(len(names))
             assert [legend.nth(n).inner_text().strip() for n in range(legend.count())] == names
             for week, total in expected['weeks']:
-                expect(weekly.get_by_role('img', name=re.compile(rf'^Week of {week}: {total} merged'))).to_have_count(1)
+                expect(weekly.get_by_role('img', name=re.compile(rf'^Week of {week}: {total}\b'))).to_have_count(1)
             people = page.get_by_role('region', name='People')
             cells = people.locator('tbody tr')
             expect(cells).to_have_count(len(expected['people']))
@@ -113,6 +113,20 @@ with sync_playwright() as p:
             if label == 'Insights':
                 break
         assert reached[-1] == 'Insights', reached
+        # Past the header, each file's kept problems open with Enter and close with Escape, in plain words.
+        while not page.evaluate("document.activeElement.textContent.trim().startsWith('src/page.py')"):
+            page.keyboard.press('Tab')
+            assert page.evaluate("getComputedStyle(document.activeElement).outlineStyle") != 'none'
+            assert len(reached) < 30, reached
+            reached.append(page.evaluate('document.activeElement.textContent.trim()'))
+        kept = page.get_by_role('region', name='Known issues by file')
+        page.keyboard.press('Enter')
+        expect(kept.get_by_text("Forge's next step names the wrong page")).to_be_visible()
+        assert not COMMANDS.search(page.locator('main').inner_text())
+        page.keyboard.press('Escape')
+        expect(kept.get_by_text("Forge's next step names the wrong page")).to_be_hidden()
+        assert page.evaluate("document.activeElement.tagName") == 'SUMMARY'
+        page.get_by_role('link', name='Insights').focus()
         page.keyboard.press('Enter')
         expect(page.get_by_role('region', name='Merged per week')).to_be_visible()
         # A page whose facts cannot be read says so in plain words and keeps the header working.
@@ -185,6 +199,26 @@ def test_5_releases_show_kept_problems_by_file_and_insights_show_unranked_shares
             # Alphabetical ignoring case; three open parts and one story are ana's; each merged one of two.
             "people": [{"name": "Ana Silva", "login": "ana", "open": 3, "owned": 1, "share": "50%"},
                        {"name": "ben Ode", "login": "ben", "open": 0, "owned": 0, "share": "50%"}]})
+
+
+def test_5_a_week_github_could_not_count_leaves_its_counts_and_the_shares_unknown(team, tmp_path, monkeypatch):
+    at = landed(team, tmp_path, monkeypatch)
+    capped = at - timedelta(weeks=1)  # a week of 1,000 merges, more than one search returns
+    many = [{"number": 100 + n, "headRefName": f"bulk-{n}", "state": "MERGED", "title": "A change", "body": "",
+             "isDraft": False, "mergedAt": capped.isoformat(), "mergedBy": {"login": "cara"},
+             "author": {"login": "cara", "name": "Cara Lee"}, "url": f"https://github.com/acme/shop/pull/{100 + n}"}
+            for n in range(1000)]
+    shown = json.loads(team.gh.responses.read_text("utf-8"))[-1]["stdout"]
+    github(SimpleNamespace(repo=team, gh=team.gh), json.loads(shown) + many)
+    with live(team) as url:
+        view = json.loads(get(url, "/board.json?page=releases")[2])
+        week = max(w for w in view["team"]["trends"]["weeks"] if w <= capped.date().isoformat())
+        day = datetime.fromisoformat(week)
+        browse(RELEASES_AND_INSIGHTS, url, {
+            "releases": None if "releases" not in view else {"next": ["Readers see old"], "tags": []},
+            "weeks": [[f"{day.day} {day:%b}", "unknown"]],
+            "people": [{"name": "Ana Silva", "login": "ana", "open": 3, "owned": 1, "share": "unknown"},
+                       {"name": "ben Ode", "login": "ben", "open": 0, "owned": 0, "share": "unknown"}]})
 
 
 def test_5_the_next_release_carries_unreleased_work_since_the_last_tag(team, tmp_path, monkeypatch):

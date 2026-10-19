@@ -13,11 +13,11 @@ function weekly(trends) {
   const body = [];
   if (!trends) {
     body.push(h('p', {}, 'Merged work per week: unknown. The board could not read the merged pull requests.'));
-  } else if (!trends.team.some((week) => merged(week))) {
+  } else if (trends.team.every((week) => week && !merged(week))) {
     body.push(h('p', {}, 'Nothing merged in the last six weeks. Merged work shows here by week and by person.'));
   } else {
     const colour = (n) => `var(--person-${(n % COLOURS) + 1})`;
-    const most = Math.max(...trends.team.map(merged));
+    const most = Math.max(1, ...trends.team.map(merged));
     body.push(h('ul', { class: 'legend', 'aria-label': 'People' },
       trends.people.map((person, n) => h('li', { '--swatch': colour(n) }, person.name)),
       h('li', { class: 'around' }, 'around Forge')));
@@ -47,7 +47,10 @@ function people(view) {
     const who = login(row.owner || row.developer_login);
     if (who && !found.has(who)) found.set(who, { name: row.owner || row.developer_login, login: who });
   }
-  const team = (trends?.team || []).reduce((sum, week) => sum + merged(week), 0);
+  // A week GitHub could not count in full is unknown, and so is every six-week sum that includes it.
+  const counted = (weeks) => (trends && weeks?.length === trends.weeks.length && weeks.every(Boolean)
+    ? weeks.reduce((sum, week) => sum + merged(week), 0) : null);
+  const team = counted(trends?.team);
   const listed = [...found].sort((a, b) => a[1].name.localeCompare(b[1].name, undefined, { sensitivity: 'base' }) || a[0].localeCompare(b[0]));
   if (!listed.length) {
     return h('section', { class: 'panel', 'aria-labelledby': 'people' }, h('h2', { id: 'people' }, 'People'),
@@ -59,8 +62,8 @@ function people(view) {
       h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Person · alphabetical'), h('th', { scope: 'col', class: 'num' }, 'Open now'),
         h('th', { scope: 'col', class: 'num' }, 'Stories owned'), h('th', { scope: 'col' }, 'Share of the team\'s merged work, last six weeks'))),
       h('tbody', {}, listed.map(([who, person]) => {
-        const theirs = (person.weeks || []).reduce((sum, week) => sum + merged(week), 0);
-        const share = trends && team ? Math.round((theirs / team) * 100) : null;
+        const theirs = person.weeks ? counted(person.weeks) : team === null ? null : 0; // owns work, merged none
+        const share = team && theirs !== null ? Math.round((theirs / team) * 100) : team === 0 ? 0 : null;
         return h('tr', {},
           h('th', { scope: 'row', class: 'who' }, person.name, ' ', h('small', {}, `@${person.login || who}`)),
           h('td', { class: 'num' }, all.filter((row) => row.kind !== 'story' && !FINISHED.includes(row.stage) && mine(who, row)).length),

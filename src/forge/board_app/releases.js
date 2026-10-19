@@ -24,6 +24,12 @@ export function day(iso) {
   return `${at.getUTCDate()} ${MONTHS[at.getUTCMonth()]}`;
 }
 
+// Titles come from people and agents and can name a command; the board says what it means instead.
+export function plain(text) {
+  return String(text ?? '').replace(/`([^`]*)`/g, '$1').replace(/\bforge\s+([a-z][a-z-]*)/gi, "Forge's $1 step")
+    .replace(/(^|\s)--[a-z][\w-]*/gi, '$1').replace(/\s+/g, ' ').trim();
+}
+
 export function rows(view) {
   return view.items.flatMap((item) => [item, ...item.children]);
 }
@@ -98,12 +104,12 @@ function upcoming(view) {
           findings.length ? `${findings.length} merged changes have open findings` : 'No merged change has an open finding')),
       h('ul', { class: 'stories' },
         stories.map((story) => h('li', {},
-          h('span', {}, h('b', {}, story.title), ' ', h('span', { class: 'key' }, story.id)),
+          h('span', {}, h('b', {}, plain(story.title)), ' ', h('span', { class: 'key' }, story.id)),
           h('span', { class: 'parts', 'aria-hidden': 'true' }, story.children.map((part) => h('span', {
             'data-stage': FINISHED.includes(part.stage) ? 'merged' : part.stage === 'unstarted' ? 'waiting' : 'moving' }))),
           h('span', { class: 'note-end' }, story.stage === 'done' ? 'done' : 'held back'))),
         carried.filter((row) => row.kind === 'fix').slice(0, 5).map((row) => h('li', {},
-          h('span', {}, row.title), h('span'), h('span', { class: 'note-end' }, 'fix'))),
+          h('span', {}, plain(row.title)), h('span'), h('span', { class: 'note-end' }, 'fix'))),
         h('li', { class: 'total' }, h('span', {}, 'Fixes'), h('span'), h('b', { class: 'num' }, fixes))),
     ] : h('p', {}, 'Nothing has merged since the last release. Finished stories and fixes show here until a release carries them.'));
 }
@@ -135,16 +141,25 @@ function known(view) {
     const files = new Map();
     for (const issue of view.known_issues) {
       const file = issue.file || 'No file named';
-      files.set(file, [...(files.get(file) || []), issue.title]);
+      files.set(file, [...(files.get(file) || []), plain(issue.title) || 'A problem with no title']);
     }
     const sorted = [...files].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
     const most = sorted[0][1].length;
-    body.push(h('ul', {}, sorted.map(([file, titles]) => h('li', { title: titles.join('\n') },
-      h('span', { class: 'file' }, file,
+    // Each file opens with Enter to list its kept problems and closes with Escape.
+    body.push(h('ul', {}, sorted.map(([file, titles]) => h('li', {}, h('details', {},
+      h('summary', {}, h('span', { class: 'file' }, file,
         h('span', { class: 'meter', 'aria-hidden': 'true' }, h('span', { '--w': `${(titles.length / most) * 100}%` }))),
-      h('span', { class: 'count' }, titles.length)))));
+        h('span', { class: 'count' }, titles.length)),
+      h('ul', { class: 'titles' }, titles.map((title) => h('li', {}, title))))))));
   }
-  return region('known-issues', 'known', 'Known issues by file', ...body);
+  const section = region('known-issues', 'known', 'Known issues by file', ...body);
+  section.addEventListener('keydown', (event) => {
+    const open = event.key === 'Escape' && event.target.closest('details[open]');
+    if (!open) return;
+    open.open = false;
+    open.querySelector('summary').focus();
+  });
+  return section;
 }
 
 export function install(Board) {
