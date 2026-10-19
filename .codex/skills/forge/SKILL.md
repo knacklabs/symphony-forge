@@ -807,6 +807,9 @@ it in `approved_via` and `approved_on`, then run `forge decision accept client-s
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
 records.
 
+The Answers check ignores trailing whitespace and line-ending differences. A refusal names the first
+different line in the Answers section, including its heading.
+
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
 it uses Codex when installed and Claude otherwise. Forge passes the selected tool's

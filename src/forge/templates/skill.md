@@ -799,15 +799,16 @@ missing, malformed, or marked ask the client or later, and sign-off also refuses
 our default or the agent, so record each as the client, salesperson or developer answered it. Then
 run the strict sign-off review before anyone asks for sign-off: write `forge decision new
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
-approved via and approved on empty). The Answers check ignores trailing whitespace and line-ending
-differences. A refusal names the first different line in the Answers section, including its heading.
-Run `forge decision accept client-signoff --by "<name>"`
+approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded; it runs the strict review alone and stops. Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
 records.
+
+The Answers check ignores trailing whitespace and line-ending differences. A refusal names the first
+different line in the Answers section, including its heading.
 
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
