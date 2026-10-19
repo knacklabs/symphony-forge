@@ -10,13 +10,29 @@
   },
   "done_when": "forge decision accept client-signoff ignores trailing whitespace and line-ending differences when it compares the Answers to BRIEF, and a refusal names the first line that differs; a test covers both on a new and an adopted repo",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f0129293845a3f7579b6ecf3f59c39e4de5f306ed0ccb148333038fd9029ca5f",
+    "changed": "001f3ba60606f879d203162ccc78b31225d01e13329041f27cbf1b9c718b4d76",
+    "commit": "16954485ef30cb7a01fb2969e07ae1de0adb5b2f",
+    "dismissals": [],
+    "findings": [],
+    "id": "b0bac329-501b-41a0-adb3-52ccdb690bf7",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T19:54:41.482829+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T20:09:52.991253+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
