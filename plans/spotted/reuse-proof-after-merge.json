@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\ttests/test_ci_reuses_proof_without_pr_snapshots.py\tNot done: a real merge's run skips its tests",
+      "kind": "edge",
+      "path": "tests/test_ci_reuses_proof_without_pr_snapshots.py",
+      "line": 45,
+      "text": "Not done: a real merge's run skips its tests",
+      "from": "review",
+      "item": "reuse-proof-after-merge",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

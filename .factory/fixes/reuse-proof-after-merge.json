@@ -10,13 +10,55 @@
   },
   "done_when": "When a merged pull request's run lists no pull requests, the proof check accepts the run if main's tip at merge time was committed before that run started and the merge tree equals the tested merge, a test covers an empty list and a main that moved after the run started, and a real merge's run skips its tests",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_merged_run_without_snapshots_requires_an_older_main_tip_and_the_same_tree() in tests/test_ci_reuses_proof_without_pr_snapshots.py",
+      "file": "tests/test_ci_reuses_proof_without_pr_snapshots.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 45,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a real merge's run skips its tests",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1ce575be14ffa74f56be16f85ab9a6b475ba4520709711e1b52a6b8a0af72d25",
+    "changed": "98384c2a21fc1e16fc1fa96abff0cb3ffa01e600391cd6a8725f3d8f1c5a9138",
+    "commit": "49fce4fce9aee426dbd6784d42193a2cf0d94f94",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Not done. The Done-when explicitly requires that \"a real merge's run skips its tests\", but the proof list marks this evidence as missing. This test invokes the real script against local Git history with stubbed GitHub responses; it does not demonstrate that an actual merged workflow skips its test steps. The concurrent pytest check cannot establish that outcome either. Supply a real merged workflow run demonstrating reuse to complete this acceptance clause.",
+        "file": "tests/test_ci_reuses_proof_without_pr_snapshots.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 1,
+        "line": 45,
+        "priority": "P1",
+        "title": "Not done: a real merge's run skips its tests",
+        "work": 2
+      }
+    ],
+    "id": "27d65283-8148-4ce7-af52-993a2227075d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T05:18:14.328296+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T05:22:43.448169+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
