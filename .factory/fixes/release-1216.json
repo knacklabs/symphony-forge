@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bump changes the version everywhere it is recorded, in one change",
   "base": "ca8be90505cf29ffc620f8b80e727ecd39d03e87",
   "branch": "fix/release-1216",
   "done_when": "Forge's version is 1.2.16 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
