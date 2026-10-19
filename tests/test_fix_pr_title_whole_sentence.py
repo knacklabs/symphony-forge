@@ -44,6 +44,9 @@ def test_1_fix_title_is_the_whole_first_sentence(env, client, why, title):
         item = started.stdout.strip().rsplit("Next: forge work ", 1)[1].split()[0]
         where = env.repo.path.parent / f"{env.repo.path.name}-fix-{item}"
         env.commit(where, "forge.toml", current, "Upgrade Forge")
+        # This adoption upgrade also replaces the older release's generated files.
+        allowed = env.repo.forge("fix", "allow-large", "Upgrade the earlier adoption in this fix", cwd=where)
+        assert allowed.returncode == 0, allowed.stdout + allowed.stderr
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         env.repo.git("add", "-A", cwd=where)

@@ -82,6 +82,9 @@ def test_24_resumed_earlier_worker_attaches_real_admission_wait_to_its_new_turn(
     saved = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
     assert saved["status"] == "working" and "round" not in saved
     env.commit(where, "forge.toml", modern, "Upgrade resumed work")
+    # Resuming this adoption upgrades the installed generated files as well.
+    allowed = env.repo.forge("fix", "allow-large", "Upgrade the earlier adoption in this fix", cwd=where)
+    assert allowed.returncode == 0, allowed.stdout + allowed.stderr
     synced = env.repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     env.repo.git("add", "-A", cwd=where)

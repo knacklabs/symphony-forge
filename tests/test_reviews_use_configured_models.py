@@ -40,7 +40,7 @@ def test_1_reviews_use_configured_model_and_effort_or_tool_defaults(
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         repo.path = client
     repo.git("push", "-q", "origin", "main")
-    started = repo.forge("fix", "start", "Review settings", "--done", "Reviews use settings",
+    started = repo.forge("fix", "start", "Review settings", "--done", "Reviews use forge.toml settings",
                          "--kind", "backend")
     assert started.returncode == 0, started.stdout + started.stderr
     where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])

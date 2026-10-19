@@ -101,7 +101,7 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
 
 def restore_default_settings(item: str, top: Path, state: dict[str, Any], default: str) -> None:
     """Close keeps the default branch's settings unless this item's Done-when permits edits."""
-    if settings_allowed(item, top, state) or not git(
+    if state.get("kind") in ("migrate", "adopt") or settings_allowed(item, top, state) or not git(
             "diff", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top):
         return
     pin = re.search(r"^version[ \t]*=.*$", git("show", "HEAD:forge.toml", cwd=top), re.M)[0]
