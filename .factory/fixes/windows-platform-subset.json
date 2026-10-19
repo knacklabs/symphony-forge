@@ -1,6 +1,13 @@
 {
   "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
   "branch": "fix/windows-platform-subset",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155c9-9b4a-7801-8ac4-16af20cca723",
+    "head": null,
+    "start": "c792fdeb64eef11c8d8a55365bfd61e7b975f916"
+  },
   "done_when": "Windows CI runs only tests marked as platform-sensitive (installers, git hooks, shell quoting, paths, line endings, command stand-ins) on every pull request beside Linux; Linux still runs the whole suite; a test fails when a test in those areas lacks the mark; and a measured Windows run on the branch uses at most 2 times Linux's total runner minutes and at most 2 times Linux's longest group",
   "fix_kind": "backend",
   "kind": "fix",
