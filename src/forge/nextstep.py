@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
+from forge import (__version__, approval, board, board_facts, close, codex, machine, native, records, repo, review, spotted, story,
                    score, task, time_records, upgrade)
 from forge.task import _started, developer, github_login, owner, stack_base, start_base, waits_for
 
@@ -1000,7 +1000,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
     runs = board.active_runs(top, item, round_number=state.get("round"))
-    if (status == "working" and codex._lock_alive(lock) is False
+    if (status == "working" and native.lock_alive(lock) is False
             and not any(run.get("kind") in ("work", "worker") for run in runs)):
         native_round = codex._json(lock.with_suffix(".json")).get("native_round")
         activity = board._event_history(top)[1].get(item, [])
@@ -1012,7 +1012,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                                                           else "forge close {item}")
     if (status not in ("merged", "done") and any(run.get("kind") == "test" for run in runs)
             and not any(run.get("kind") in ("work", "worker", "review") for run in runs)
-            and codex._lock_alive(lock) is False):
+            and native.lock_alive(lock) is False):
         sentence, step = "Tests are running for {label}.", "wait for them to finish, then forge next"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch

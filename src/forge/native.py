@@ -158,6 +158,29 @@ def hand_out(top: Path, item: str, owner: dict[str, Any], entry: dict[str, Any],
           "with its last message on stdin.")
 
 
+def lock_alive(lock: Path) -> bool | None:
+    """A completed native round frees its lock even while its host session survives."""
+    owner, saved = codex._json(lock), codex._json(lock.with_suffix(".json"))
+    native = saved.get("native") or {}
+    completed = not saved.get("pending") and (
+            owner.get("native_run") and owner["native_run"] == native.get("native_run")
+            or not owner.get("native_run") and not owner.get("saves_chat")
+            and native.get("rounds") is not None and not saved.get("native_round")
+            and native.get("session", "").endswith(f":{owner.get('pid')}:{owner.get('started')}"))
+    return False if completed or not lock.is_file() else codex._alive(owner)
+
+
+def worker_alive(top: Path, item: str, kind: str, round_number: int | None) -> bool:
+    """A worker keeps its round while either its item lock or its machine place is live."""
+    lock = codex._item_file(top, item, ".lock", "Grill" if kind == "read" else "Build")
+    live = repo.command_fact("live worker processes", top, machine.entries)
+    root = repo.command_fact("main checkout", top, lambda: machine.main_checkout(top).as_posix())
+    return lock_alive(lock) is not False or any(
+        run.get("repo_root") == root and run.get("item") == item
+        and run.get("kind") in (("read",) if kind == "read" else ("work", "worker"))
+        and run.get("round") == round_number for run in live)
+
+
 def cancel(entry: dict[str, Any]) -> None:
     """Free only this handout; a later round may already hold the same item."""
     top = Path(entry["checkout_root"])
