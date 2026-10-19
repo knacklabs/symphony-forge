@@ -1,4 +1,7 @@
-"""An upgrade ignores Husky's generated runtime files but checks its committed Forge hooks."""
+"""An upgrade ignores Husky's generated runtime files but checks its committed Forge hooks.
+
+Commit resolution in src/forge/repo.py must also work through the runtime git.cmd launcher.
+"""
 from __future__ import annotations
 
 import json

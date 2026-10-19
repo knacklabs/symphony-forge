@@ -227,7 +227,7 @@ def _immutable_git_read(args: tuple[str, ...]) -> bool:
 def resolve_commit(top: Path, ref: str) -> str:
     """Resolve names on every ask; callers can reuse the resulting immutable commit ID."""
     return ref if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) else git(
-        "rev-parse", "--verify", f"{ref}^{{commit}}", cwd=top)
+        "rev-parse", "--verify", f"{ref}~0", cwd=top)
 
 
 def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
