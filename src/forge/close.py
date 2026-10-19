@@ -153,7 +153,7 @@ def close(args: argparse.Namespace) -> int:
     if not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
     dismissals = _dismissals(args, item)
-    branch, default = repo.current_branch(top), repo.default_branch(top)
+    branch, default = state["branch"], repo.default_branch(top)
     pr = _pull_request(top, branch)
     migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
     if pr and pr["state"] == "MERGED":

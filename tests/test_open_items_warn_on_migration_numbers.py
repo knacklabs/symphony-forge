@@ -1,4 +1,7 @@
-"""Open branches warn about added migration numbers through next and close."""
+"""Open branches warn about added migration numbers through next and close.
+
+Command-boundary owner coverage for src/forge/migration_warnings.py.
+"""
 import json
 
 import pytest

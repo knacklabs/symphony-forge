@@ -10,7 +10,8 @@ from forge import board, repo, story
 def warnings(top: Path) -> list[str]:
     from forge.nextstep import branch_tips
 
-    current = repo.current_branch(top)
+    current = next((branch for branch, path in story.worktrees(top).items()
+                    if path.resolve() == top.resolve()), "")
     default = f"origin/{repo.default_branch(top)}"
     lanes = ("task/", "fix/", "story/")
     fetched = repo.command_fact("fetched origin", top, dict)
@@ -21,9 +22,6 @@ def warnings(top: Path) -> list[str]:
             return ["Warning: Forge could not refresh origin's branches. "
                     "Check the remote and run this command again."]
         fetched["all"] = True
-    tips = branch_tips(top)
-    default = tips.get(f"refs/remotes/{default}", default)
-    head = tips.get(f"refs/heads/{current}", "HEAD")
 
     def added(ref: str) -> dict[int, str]:
         result = repo.run("git", "diff", "--name-only", "-z", "--no-renames",
@@ -40,9 +38,12 @@ def warnings(top: Path) -> list[str]:
                             break
         return numbers
 
-    own = added(head) if current.startswith(lanes) else None
+    own = added("HEAD") if current.startswith(lanes) else None
     if own == {}:
         return []  # Most items add no migrations, so do not read their peers.
+    tips = branch_tips(top)
+    default = tips.get(f"refs/remotes/{default}", default)
+    head = tips.get(f"refs/heads/{current}", "HEAD")
     branches = {ref.removeprefix("refs/remotes/origin/"): tip
                 for ref, tip in tips.items()
                 if ref.startswith(tuple(f"refs/remotes/origin/{lane}" for lane in lanes))
