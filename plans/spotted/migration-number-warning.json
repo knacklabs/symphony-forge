@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/board_app/app.js\tThe board can miss a rebuild between its first snapshot and its event subscription.",
+      "kind": "bug",
+      "path": "src/forge/board_app/app.js",
+      "line": 126,
+      "text": "The board can miss a rebuild between its first snapshot and its event subscription.",
+      "from": "worker",
+      "item": "migration-number-warning",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/migration_warnings.py\tDetermine whether peers are open from their actual item and landed state\tmigration-number-warning",
       "kind": "bug",
       "path": "src/forge/migration_warnings.py",
