@@ -115,7 +115,7 @@
   "settled_areas": [
     "src/forge/board_app/now.js"
   ],
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-19T12:22:09.231462+00:00",
@@ -139,18 +139,9 @@
     }
   ],
   "stop": {
-    "area": "src/forge/board_app/now.js",
-    "at": "2026-10-19T14:36:53.938525+00:00",
-    "by": "owner",
-    "choice": "split",
-    "file": "src/forge/board_app/now.js",
-    "fixes": [
-      "review-findings-split-from-forge-board-4-2"
-    ],
-    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "reason": "Same choice the owner made for the drawer on 19 October 2026: the three small first-screen defects (unknown waiting share, can-start on assigned parts, text for part progress) and a stronger test move to a follow-up fix",
-    "wait_id": "ea486e17-6d41-43b9-9254-076ee8d443f9",
-    "worker_round": 2
+    "question": "The board shows a team what moves, what needs them and when it ships, at a glance: The first screen is stuck. It should deliver: needs-you strip, pipeline, stories rail, figures, Team and Me\nTwo rounds in a row left close's tests failing.\nThe worker tried: Review of FORGE-BOARD-4/NOW: clean; Keep one screen list after merging main; The first screen keeps its look next to the item page: its own class names no longer meet the drawer's.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "tool": "claude",
+    "wait_id": "d22d819c-9037-4530-9b13-8a665aaa34b8"
   },
   "stuck": {
     "close": "9fbdd3b0-39ec-4e5b-b3be-5f89adc17ba0",
