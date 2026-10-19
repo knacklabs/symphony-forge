@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tGate: existing worker-selection regression tests\tbounded-worker-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 404,
+      "text": "Gate: existing worker-selection regression tests",
+      "from": "blocking",
+      "item": "bounded-worker-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

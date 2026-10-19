@@ -71,6 +71,7 @@ REFUSALS = {
 
 def checkout(item: str) -> tuple[re.Match[str], Path]:
     """Find a work checkout and refuse its unfinished merge before parsing any settings."""
+    task.require_active(item)
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
@@ -385,7 +386,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
                   (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
                                                                           "claude"))
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
-    problem = None if native else codex.sdk_problem()  # native sessions need no driver SDK
+    problem = None if native else codex.sdk_problem(reuse=True)  # native sessions need no driver SDK
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse

@@ -1,0 +1,42 @@
+{
+  "approval": {
+    "at": "2026-10-18T13:35:50.910481+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01FBEtVxwLkHZ7SA6rCSxp9N",
+    "hash": "b39df0ea64b8db4c0139d9a4c46ece01ebcb2ad4f553988b52f3e2dcb7ad216b",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-GITCOST-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-18T08:31:38.338294+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T08:36:00.451518+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-18T08:37:37.860914+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-18T08:38:41.949783+00:00",
+      "step": "approved"
+    },
+    {
+      "at": "2026-10-18T13:30:59.881011+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-18T13:35:50.910696+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Forge commands start far fewer git processes",
+  "touches": 2
+}

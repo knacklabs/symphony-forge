@@ -1,0 +1,110 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/cancel-stuck-pr-runs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15008-1c9c-7df2-a28e-a402abe4651d",
+    "head": null,
+    "start": "b115eeab8c992010589e50d05fe57665cca2efac"
+  },
+  "done_when": "Close and doctor cancel that pull request's own older queued or stuck runs holding its concurrency group, say which run they cancelled, and keep waiting for the new run; runs of other pull requests and branches are never touched; a test covers it",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/checks.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_cancel_superseded() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 242,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Bind cancellation to the pull request being checked",
+      "work": 2
+    },
+    {
+      "area": "_cancel_superseded() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 249,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Verify concurrency membership before cancelling older runs",
+      "work": 2
+    },
+    {
+      "area": "_cancel_superseded() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 260,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Recover blockers that ignore ordinary cancellation",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "78c961295f03259a821e15dc33ff50bfdfd16cc4d967a0b79405c4ebc69eddf3",
+    "changed": "21a54c8357399cac2875b71f7f9b0133c5bfc2309a44175c58fa9d85f16d28fb",
+    "commit": "cd51d51017ee8df8ec123f42bcdefea73d76dfb7",
+    "dismissals": [],
+    "findings": [],
+    "id": "97dd24e5-e06c-4f00-afc2-2c213216fea8",
+    "status": "clean"
+  },
+  "round": 2,
+  "settled_areas": [
+    "_cancel_superseded() in src/forge/checks.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:58:53.683132+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:54:46.697494+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T05:39:56.199759+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "_cancel_superseded() in src/forge/checks.py",
+    "at": "2026-10-18T17:54:46.733438+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "_cancel_superseded() in src/forge/checks.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner narrowed (19 Oct): cancel only Forge's own forge.yml runs of this pull request's number that are older than its newest run; if a cancel doesn't release the concurrency group, say so and name GitHub's force-cancel; client workflows are never touched.",
+    "wait_id": "6b649fbb-ba29-4d7a-a08a-f33c75806f13",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "ccb9692b-e0cf-497f-ab3c-3abe2d1644df",
+    "head": "cfa23692ecd61a7dac2fd8f4082114f05ad9d91c",
+    "keys": {
+      "the review finding \"[P1] Bind cancellation to the pull request being checked\" in src/forge/checks.py": 1,
+      "the review finding \"[P1] Recover blockers that ignore ordinary cancellation\" in src/forge/checks.py": 1,
+      "the review finding \"[P1] Verify concurrency membership before cancelling older runs\" in src/forge/checks.py": 1
+    },
+    "round": 1
+  },
+  "why": "When a pull request's new run waits behind an older queued run of the same pull request in its concurrency group, close waits for ever (issue 928)",
+  "worker": "codex"
+}

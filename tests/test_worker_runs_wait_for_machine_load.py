@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install, machine_cores
+from conftest import ROOT, _install, machine_cores, machine_runners
 from test_close import env  # noqa: F401
 from test_codex_worker import sdk_data  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
@@ -41,7 +41,7 @@ def test_1_a_work_round_waits_while_load_per_core_is_at_least_one_and_a_half(env
     # Load counts against the cores Forge may use, not the host's 64.
     machine_cores(repo, 4, system_count=64)
     load = tmp_path / "load"
-    load.write_text("6.0", "utf-8")  # exactly 1.5 per core: busy
+    load.write_text("0.0", "utf-8")
     shim = repo.bin / "forge"
     shim.write_text(shim.read_text("utf-8").replace("from forge.cli import main",
         f"import pathlib\nos.getloadavg = lambda: (float(pathlib.Path({str(load)!r}).read_text()),) * 3\n"
@@ -51,9 +51,10 @@ def test_1_a_work_round_waits_while_load_per_core_is_at_least_one_and_a_half(env
     hold_agents(env)
     processes = []
     try:
-        # With no other agent running, waiting would never lower the load, so the first starts.
+        # Every run now waits for external load too. Start the first before load rises.
         processes.append(start(repo.path, tmp_path / "first", repo, "work", first)[0])
         _until(lambda: (repo.bin / f"started-{first_name}").exists(), "the first round")
+        load.write_text("6.0", "utf-8")  # exactly 1.5 per core: busy
         process, output = start(repo.path, tmp_path / "second", repo, "work", second)
         processes.append(process)
         _until(lambda: BUSY in output.read_text("utf-8"), "the second round to say it waits")
@@ -78,11 +79,14 @@ def test_probe(n):
 """
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-repo", "existing-repo"])
+@pytest.mark.parametrize("adopted,lane_adapter", [
+    (False, "claude"), (False, "codex"), (True, "claude")],
+    indirect=["lane_adapter"], ids=["claude-new-repo", "codex-new-repo", "claude-existing-repo"])
 def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person, lane_adapter, adopted):
     repo = env.repo
     _release(env, adopted, lane_adapter)
     machine_cores(repo, 8)
+    machine_runners(repo)
     pytest_args = ["-m", "pytest", "-q", "-p", "no:cacheprovider", "probe"]
     argv = [sys.executable, *pytest_args, "-n", "4"]  # a fixed count the budget must still cap
     command = subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
@@ -96,6 +100,10 @@ def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person,
     # The worker runs tests the sanctioned way, then calls pytest -n auto directly; each probe
     # test records the xdist process it ran in.
     record = ("_bin = pathlib.Path({bin!r})\n"
+              # Bare forge test selects the item's tests, so the worker must
+              # touch its probe rather than depend on an unrestricted run.
+              "_probe = pathlib.Path({cwd} or os.getcwd()) / 'probe/test_probe.py'\n"
+              "_probe.write_text(_probe.read_text('utf-8') + '\\n# Worker test change\\n', encoding='utf-8')\n"
               "_out = __import__('subprocess').run([{python!r}, str(_bin / 'forge'), 'test'], cwd={cwd},\n"
               "    env=dict(os.environ, PROBE_OUT=str(_bin / 'via-forge')), capture_output=True, text=True)\n"
               "_direct = __import__('subprocess').run([{python!r}, *{args!r}, '-n', 'auto'], cwd={cwd},\n"

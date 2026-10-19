@@ -88,7 +88,7 @@ def test_3_a_single_entry_asked_for_by_the_other_family_gives_the_default_model(
     assert "gpt-6-nova" not in options.values()
 
 
-def test_4_the_review_ignores_model_entries_for_both_engines(env, tmp_path, monkeypatch):
+def test_4_the_review_honours_the_selected_engines_model_entry(env, tmp_path, monkeypatch):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review.codex]\nmodel = "gpt-6-sol"\neffort = "xhigh"\n'
@@ -107,4 +107,5 @@ def test_4_the_review_ignores_model_entries_for_both_engines(env, tmp_path, monk
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == "claude"
-    assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "claude=sonnet"
+    assert options["--thinking"] == "claude=medium"

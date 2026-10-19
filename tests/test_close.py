@@ -262,7 +262,7 @@ def _review_fails_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "codex: the model is unavailable.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _review_incomplete_twice(env):
@@ -270,7 +270,7 @@ def _review_incomplete_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "it reported the review as incomplete.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _open_serious_finding(env):
@@ -378,14 +378,17 @@ def _bad_dismissal(env):
             "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
 
 
-def _stale_dismissal(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+def _dismissal_of_replaced_finding(env):
+    # A changed branch no longer invalidates a dismissal. A different title still does.
+    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")),
+                blocked(finding("P1", "A different defect")))
     item, where = env.start_fix()
     env.close(item)
     env.commit(where, "app.py", "print('hello again')\n")
     return {"item": item, "args": ["--dismiss", "1", "--because", "app.py:1 it greets here"],
-            "problem": "The branch changed since the review those finding numbers came from.",
-            "next": "forge close tidy-readme"}
+            "problem": "Each --dismiss needs a finding number from the latest review and its own "
+                       "--because that starts with the file:line proving that finding wrong.",
+            "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
 
 
 def _dismissal_cites_no_such_line(env):
@@ -426,7 +429,7 @@ def _task_row_missing(env):
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
          _red_check_not_named, _skipped_named_check, _pending_check_not_named, _pending_check,
          _missing_required_check, _github_api_error, _no_checks_named,
-         _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal,
+         _not_started, _merge_conflict, _bad_dismissal, _dismissal_of_replaced_finding,
          _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]
 
@@ -466,7 +469,7 @@ def test_18_close(env, kind):
     env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
     env.repo.git("push", "-q", "origin", "main")
-    toml = env.repo.path / "forge.toml"  # legacy pins remain valid but Autoreview owns selection
+    toml = env.repo.path / "forge.toml"  # configured review pins override Autoreview defaults
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     item, where = env.start_task() if kind == "task" else env.start_fix()
@@ -489,7 +492,8 @@ def test_18_close(env, kind):
     assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority")} == {
         "--mode": "branch", "--base": env.repo.git("rev-parse", "origin/main"),
         "--engine": "codex", "--max-priority": "P3"}
-    assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "codex=gpt-6-astra"
+    assert options["--thinking"] == "codex=high"
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones

@@ -362,17 +362,16 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 else:
                     worker = result["worker"]
                     model, effort = selections.get(expected, (model, effort))
+                    # Public review rounds start at one, before the first worker turn.
                     assert (worker["tool"], worker["model"], worker["effort"], worker["round"]) == (
-                        "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 0)
+                        "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 1)
                     assert worker["step"] == expected
                     datetime.fromisoformat(worker["started_at"])
                     # The clock stays in one ten-second window throughout this burst.
                     # Keep the latest action visible without retaining every notification.
-                    events = records(repo, "events.jsonl")
-                    run = next(e for e in reversed(events) if e["item"] == item and e["event"] == "run start")
-                    progress = [e for e in events if e.get("run_id") == run["id"] and e["event"] == "progress"]
-                    assert len(progress) == 1
-                    assert progress[0]["step"] == expected
+                    # Live progress is now separate from immutable history. The
+                    # worker assertion above checks the merged public view; the
+                    # bounded-write regression owns storage and window coalescing.
                 connection.sendall(b"1")
         finally:
             for connection in connections:

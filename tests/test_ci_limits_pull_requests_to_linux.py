@@ -37,21 +37,21 @@ def matrix_rows(event, ref="refs/heads/main"):
 
 @pytest.mark.parametrize("event,counts", [
     ("pull_request", {}),
-    ("push", {"ubuntu-latest": 3}),
-    ("tag", {"ubuntu-latest": 3, "macos-latest": 6, "windows-latest": 8}),
-    ("schedule", {"ubuntu-latest": 3, "macos-latest": 6, "windows-latest": 8}),
-    ("workflow_dispatch", {"ubuntu-latest": 3, "macos-latest": 6, "windows-latest": 8}),
+    ("push", {"ubuntu-latest": 5}),
+    ("tag", {"ubuntu-latest": 5, "windows-latest": 12}),
+    ("schedule", {"ubuntu-latest": 5, "windows-latest": 12}),
+    ("workflow_dispatch", {"ubuntu-latest": 5, "windows-latest": 12}),
 ])
 def test_1_event_runs_every_required_platform_group_once(event, counts):
     rows = (matrix_rows("push", "refs/tags/v1.2.3") if event == "tag" else matrix_rows(event))
-    # Only a merge may reuse its parent's run: that run was Linux-only, so a full run never may.
+    # Merges and tags can reuse proof. Nightly and manual runs always run every group.
     workflow = WORKFLOW.read_text(encoding="utf-8")
     step = workflow.split("      - id: parent-tests\n", 1)[1].split("\n      - ", 1)[0]
     guard = re.search(r"^        if: (.+)$", step, re.M)
     assert guard, "Guard the parent-tests reuse by event"
     event_name, ref = ("push", "refs/tags/v1.2.3") if event == "tag" else (event, "refs/heads/main")
     assert bool(expression("${{ " + guard[1] + " }}", event_name=event_name, ref=ref)) == (
-        event == "push")
+        event in {"push", "tag"})
     assert sorted((row["os"], row["group"], row["groups"]) for row in rows) == sorted(
         (os, group, count) for os, count in counts.items() for group in range(1, count + 1))
     workflow = WORKFLOW.read_text(encoding="utf-8")

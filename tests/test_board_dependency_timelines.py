@@ -304,7 +304,7 @@ def test_1_dependency_map_and_stage_timelines_use_the_command_data(
         assert json.loads(plan_json.stdout)["team"]["counts"] == part_counts
     plan_next = repo.forge("next")
     assert plan_next.returncode == 0, plan_next.stderr
-    assert all(f"PLAN/{tid} is ready and waiting for someone to merge it." in plan_next.stdout
+    assert all(f"PLAN/{tid} is ready to merge." in plan_next.stdout
                for tid in ("SAVE", "SHOW"))
     assert "Next: merge its pull request, then forge next" in plan_next.stdout
     plan_page = repo.forge("board", "--out", str(out))

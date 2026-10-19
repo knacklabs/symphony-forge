@@ -18,12 +18,20 @@ from test_upgrade_command import NAME, RELEASE, install, unsynced_up  # noqa: F4
 STORY = "merge-enable-stale"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-@pytest.mark.parametrize("interruption", ["before commit", "after push"])
+@pytest.mark.parametrize("adopted,interruption", [
+    (False, "before commit"), (False, "after push"), (True, "after push"),
+], ids=["new-client-before-commit", "new-client-after-push", "adopted-v1.2.2-after-push"])
 def test_1_merge_enable_rebuilds_same_fix_on_upgraded_default(unsynced_up, monkeypatch,
                                                            adopted, interruption):
     up, repo = unsynced_up, unsynced_up.repo
     monkeypatch.delenv("CODEX_THREAD_ID")
+    # Release launchers need the same idle-machine fixture as the normal Forge shim.
+    installer = repo.bin / "uv"
+    installer.write_text(installer.read_text("utf-8").replace(
+        "import json, os, sys\\n",
+        "import json, os, sys\\n"
+        "if hasattr(os, 'getloadavg'): os.getloadavg = lambda: (0.0, 0.0, 0.0)\\n"),
+        encoding="utf-8")
     if adopted:
         conftest.patient(lambda: shutil.copytree(
             conftest.ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True))

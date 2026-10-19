@@ -13,11 +13,13 @@ import sys
 import threading
 import time
 from functools import partial
+from graphlib import TopologicalSorter
 from pathlib import Path
 
-from forge import board, checks, close, codex, machine, merge, nextstep, repo, review, spotted, story, task, worker
+from forge import board, checks, close, codex, machine, merge, nextstep, repo, review, score, spotted, story, task, worker
 
 ROUNDS = 3
+NEEDS_CHOICE = 3
 REFUSALS = {
     "rerun": ("GitHub has not started the re-run of {check}.", "forge land {item}"),
     "one_or_all": ("Give one change or --all, not both and not neither.",
@@ -26,6 +28,7 @@ REFUSALS = {
 }
 # A child of forge land --all: fix rounds off, so a change that needs a worker or the owner stops.
 QUEUED = "FORGE_LAND_QUEUED"
+SLOT_WAIT, SLOT_RESUME = "::forge-land-wait::", "::forge-land-resume::"
 IN_CLOSE = ("reviewing", "fixing", "waiting for checks", "ready")
 say = partial(print, flush=True)
 
@@ -44,21 +47,26 @@ def land(args: argparse.Namespace) -> int:
         repo.refuse(merge.REFUSALS["owner_merges"], item=item)
     top = close._worktree(item)
     pin = repo.config(top)["version"]
-    state, branch = _wait_for_choice(top, item, queued), repo.current_branch(top)
+    state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
     step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
-    # A round handed to a session subagent ends this run; the next one carries on its count until
-    # the item is ready or the owner records a choice.
-    saved = state.get("land") or {}
-    rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0")) or (
-        saved.get("rounds", 0) if state.get("status") != "ready" and saved.get("stop") == state.get("stop")
-        else 0)
+    if queued:
+        step.check_slot = _check_slot
+    rounds = 0
     conflict_retry = False
+    review_retry = False
     try:
+        close.check_stop(item, state, top)
+        # A session round carries its count until ready or a recorded choice, including a default.
+        saved = state.get("land") or {}
+        rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0")) or (
+            saved.get("rounds", 0) if state.get("status") != "ready" and saved.get("stop") == state.get("stop")
+            else 0)
         merged = _merged(top, branch)
         status = state.get("status", "started")
         start = repo.git("log", "-1", "--diff-filter=A", "--format=%H", "--",
                          repo.state_path(item), cwd=top)
         if _pending(top, item):  # a round is out with the session's subagent, whatever the status
+            _problems(top, item)
             say(f"Next: run the subagent, forge handback {item}, then forge land {item}")
             return 0
         head = repo.git("rev-parse", "HEAD", cwd=top)
@@ -80,24 +88,29 @@ def land(args: argparse.Namespace) -> int:
             try:
                 close.close(step)
             except repo.Refused as error:
-                if error.entry is close.REFUSALS["hotspot"] and not queued:
-                    state = _wait_for_choice(top, item)
-                    rounds = step.land_rounds = 0
-                    if (state.get("stop") or {}).get("choice") in ("narrow", "split") and (
-                            _handed_out(step, top)):
-                        return 0
-                    continue
                 if error.entry is checks.REFUSALS["conflict"] and not conflict_retry:
                     conflict_retry = True
                     continue
                 red = error.entry is checks.REFUSALS["red"]
+                failing = worker._failing(branch) if red else []
+                if (red and str(error).splitlines()[0] == checks.REFUSALS["red"][0].format(
+                        names="forge-pr-check") and len(failing) == 1 and
+                        failing[0][0] == "forge-pr-check" and any(
+                            f"The committed review at the head of {branch} is {problem}" in failing[0][1]
+                            for problem in ("missing.", "for a commit that isn't part of this branch.",
+                                            "out of date:"))):
+                    if review_retry:
+                        raise repo.Refused(str(error).split("\nNext: ")[0], f"forge close {item}",
+                                           error.code, error.entry) from None
+                    review_retry = True
+                    continue
                 if red and _rerun(top, item, branch):
                     continue
                 what = ("the review's serious findings" if error.entry is close.REFUSALS["blocked"]
                         else "the failing tests" if error.entry is close.REFUSALS["tests_failed"]
                         # In a queue run, close's own check gate decides (a skipped required check
                         # fails there too); one change's fix rounds still use the worker's reading.
-                        else "the failing checks" if red and (queued or worker._failing(branch)) else "")
+                        else "the failing checks" if red and (queued or failing) else "")
                 if not what:
                     raise
                 if queued:  # forge land <item> runs this change's fix rounds
@@ -144,9 +157,14 @@ def land(args: argparse.Namespace) -> int:
                 if error.entry is not checks.REFUSALS["conflict"] or conflict_retry:
                     raise
                 conflict_retry = True
-    except repo.Refused:
+    except repo.Refused as error:
+        _problems(top, item)
         if rounds <= ROUNDS:
             say(f"Stopped: {item} needs you.")
+        if error.entry is close.REFUSALS["hotspot"]:
+            problem, _, next_step = str(error).partition("\nNext: ")
+            raise repo.Refused(problem, f"{next_step}, then forge land {item}",
+                               NEEDS_CHOICE, error.entry) from None
         raise
 
 
@@ -155,6 +173,7 @@ def _handed_out(step: argparse.Namespace, top: Path) -> bool:
     worker.work(step)
     if not _pending(top, step.item):
         return False
+    _problems(top, step.item)
     say(f"Next: run the subagent, forge handback {step.item}, then forge land {step.item}")
     return True
 
@@ -165,24 +184,20 @@ def _pending(top: Path, item: str) -> bool:
     return any(run["id"] == (pending.get("entry") or {}).get("id") for run in machine.entries())
 
 
-def _wait_for_choice(top: Path, item: str, queued: bool = False) -> dict:
-    """Keep land alive through a review stop; an owner answer or the default releases it."""
-    said = False
-    while True:
-        state = repo.read_state(item, top) or {}
-        try:
-            close.check_stop(item, state)
-            return state
-        except repo.Refused as error:
-            if (error.entry is not close.REFUSALS["hotspot"] or queued
-                    or repo.config(top)["stop_default"] == "off"):
-                raise
-            if not said:
-                say(review.stop_question(top, item, state))  # the question forge next repeats
-                say("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
-                    "the repo's default applies.")
-                said = True
-            time.sleep(15)
+def _problems(top: Path, item: str) -> None:
+    """Show the coordinator the evidence that also goes into the worker's brief."""
+    state = repo.read_state(item, top) or {}
+    findings = score.open_findings(state.get("review") or {})
+    _, failing = worker._fix_round(state)
+    if findings:
+        say("Open findings:")
+        for finding in findings:
+            say(f"- {finding.get('title', '')} ({finding.get('file', '')}:"
+                f"{finding.get('line', '')}): {finding.get('body', '')}")
+    if failing:
+        say("Failing checks:")
+        for name, tail in failing:
+            say(f"- {name}\n{tail}")
 
 
 def _rerun(top: Path, item: str, branch: str) -> bool:
@@ -252,6 +267,13 @@ def _merged(top: Path, branch: str) -> bool:
     return (close._pull_request(top, branch) or {}).get("state") == "MERGED"
 
 
+def _check_slot(waiting: bool) -> None:
+    """Lend this child's place during CI, then wait for the queue to return it."""
+    say(SLOT_WAIT if waiting else SLOT_RESUME)
+    if not waiting and not sys.stdin.readline():
+        raise SystemExit("The land queue ended before this close could resume.")
+
+
 def _land_all() -> int:
     """One run per repo, from the main checkout: a merge may remove the worktree it started in."""
     top = machine.main_checkout(Path.cwd())
@@ -267,20 +289,24 @@ def _land_all() -> int:
 
 
 def _queue(top: Path) -> int:
-    """Close and merge every change in close, oldest first, up to the agent places at once. A change
+    """Close and merge every change in close, bases before stacked fixes, otherwise oldest first.
+    Run up to the agent places at once. A change
     not yet ready waits for an older one in the run that shares a file with it, unless a human
     merges: then nothing merges in the run, so nothing waits."""
     repo.git("fetch", "-q", "origin", cwd=top)
     default = repo.default_branch(top)
     hold = repo.merge_setting(top) == "agent"
     live = {run.get("item") for run in machine.entries() if run.get("repo_root") == top.as_posix()}
-    changes, needs = [], {}
+    changes, needs, stacked = [], {}, {}
     prs = {pr.get("headRefName"): pr for pr in board._machine_prs(top)}
     for branch, tree in story.worktrees(top).items():
         found = None if branch.startswith("story/") else task.branch_item(branch, tree)
         if not found:
             continue
         item, state = found
+        state = nextstep.at_ref(top, item, state, prs.get(branch))
+        if state.get("status") == "dropped":
+            continue
         age = (int(repo.git("log", "-1", "--diff-filter=A", "--format=%ct", "--",
                             repo.state_path(item), cwd=tree) or 0), item)
         if state.get("stop"):  # close decides: the owner's choice, its 30-minute default, or a stop
@@ -307,13 +333,52 @@ def _queue(top: Path) -> int:
             ready = nextstep._item_readiness(item, state, tree, board._checks(
                 pr, repo.config(tree)["checks"])[0], pr=pr)[0] == "ready"
             changes.append((age, item, files, ready))
+            stacked[item] = state.get("stacked_on")
     changes.sort()
+    queued = {item: age for age, item, *_ in changes}
+    dependencies = TopologicalSorter({
+        item: [stacked[item]] if stacked[item] in queued else []
+        for _, item, *_ in changes})
+    dependencies.prepare()
+    available = list(dependencies.get_ready())
+    order = {}
+    while available:
+        item = min(available, key=queued.__getitem__)
+        available.remove(item)
+        order[item] = len(order)
+        dependencies.done(item)
+        available.extend(dependencies.get_ready())
+    changes.sort(key=lambda change: order[change[1]])
     running: dict[str, tuple[subprocess.Popen, threading.Thread, list[str]]] = {}
+    slots: dict[str, str] = {}
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     while len(finished) < len(changes):
-        for index, (_, item, files, ready) in enumerate(changes):
+        # A returning child takes a free place before any new close starts.
+        for item, (child, _, _) in running.items():
+            if slots[item] == SLOT_RESUME and child.poll() is None and (
+                    sum(value == "active" for value in slots.values()) < machine.half_cores()):
+                slots[item] = "active"
+                try:
+                    child.stdin.write("resume\n")
+                    child.stdin.flush()
+                except BrokenPipeError:  # The child ended after poll; the result below owns it.
+                    pass
+        for index, (age, item, files, ready) in enumerate(changes):
             if item in running or item in finished:
                 continue
+            parent = stacked[item]
+            if parent and parent not in queued and not task._merged(f"origin/{default}", parent, top):
+                needs[item] = (age, *needs[parent][1:]) if parent in needs else (
+                    age, f"its base {parent} is not merged.", f"forge land {parent}")
+                finished.add(item)
+                continue
+            if hold and parent in queued:
+                if parent not in finished:
+                    continue
+                if parent in needs:
+                    needs[item] = (age, *needs[parent][1:])
+                    finished.add(item)
+                    continue
             # The hold first, so a held change says whom it waits for whatever the places are doing.
             older = next(((other, min(files & theirs)) for _, other, theirs, _ in changes[:index]
                           if other not in finished and files & theirs), None)
@@ -322,29 +387,31 @@ def _queue(top: Path) -> int:
                     say(f"{item} waits for {older[0]}: both change {older[1]}.")
                     waiting.add(item)
                 continue
-            # Strictly oldest first: the next change starts once every started one has entered close.
-            if len(running) >= machine.half_cores() or any(
+            # Keep queue order: the next change starts once every started one has entered close.
+            if sum(value == "active" for value in slots.values()) >= machine.half_cores() or any(
                     child.poll() is None and f"Closing {other}." not in lines
                     for other, (child, _, lines) in running.items()):
                 continue
             say(f"Starting {item}.")
-            running[item] = _child(top, item)
+            running[item] = _child(top, item, slots)
         for age, item, *_ in changes:
             if item not in running or running[item][0].poll() is None:
                 continue
             child, reader, lines = running.pop(item)
             reader.join()
+            slots.pop(item)
+            child.stdin.close()
             # Two closes fetching at the same moment can collide on git's lock of a shared ref.
             if child.returncode and item not in retried and any("cannot lock ref" in line for line in lines):
                 retried.add(item)
                 say(f"{item} met another change's git lock; starting it again once.")
-                running[item] = _child(top, item)
+                running[item] = _child(top, item, slots)
                 continue
             finished.add(item)
             url = next((line.rsplit(": ", 1)[1] for line in lines
                         if line.startswith(f"{item} is ready; a human merges")), None)
             if child.returncode == 0 and url:
-                ready_prs.append((age, f"{item} {url}"))
+                ready_prs.append((order[item], f"{item} {url}"))
                 say(f"{item} is ready for a human merge.")
             elif child.returncode == 0:
                 merged.append(item)
@@ -359,7 +426,7 @@ def _queue(top: Path) -> int:
                 say(f"{item} stopped: {needs[item][1]}")
         time.sleep(0.5)
     stopped = sorted(needs, key=lambda item: needs[item][0])
-    ready_prs = [line for _, line in sorted(ready_prs)]  # oldest first: the order to merge them
+    ready_prs = [line for _, line in sorted(ready_prs)]  # queue order: bases before stacked fixes
     say(f"Merged ({len(merged)}): {', '.join(merged) or 'none'} · Ready to merge ({len(ready_prs)}): "
         f"{', '.join(ready_prs) or 'none'} · Needs you ({len(stopped)}): {', '.join(stopped) or 'none'}")
     for item in stopped:
@@ -367,19 +434,23 @@ def _queue(top: Path) -> int:
     return 1 if stopped else 0
 
 
-def _child(top: Path, item: str) -> tuple[subprocess.Popen, threading.Thread, list[str]]:
+def _child(top: Path, item: str, slots: dict[str, str]) -> tuple[subprocess.Popen, threading.Thread, list[str]]:
     """forge land <item> in its own process, since close and merge change the working folder; its
     lines come out prefixed with the change's name."""
     code = (f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r}); "
             "from forge.cli import main; raise SystemExit(main())")
     child = subprocess.Popen([sys.executable, "-c", code, "land", item], cwd=top,
-                             env={**os.environ, QUEUED: "1"}, stdin=subprocess.DEVNULL,
+                             env={**os.environ, QUEUED: "1"}, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                              encoding="utf-8", errors="replace")
     lines: list[str] = []
+    slots[item] = "active"
 
     def relay() -> None:
         for line in child.stdout:
+            if line.rstrip("\n") in (SLOT_WAIT, SLOT_RESUME):
+                slots[item] = line.rstrip("\n")
+                continue
             lines.append(line.rstrip("\n"))
             say(f"{item}: {lines[-1]}")
     reader = threading.Thread(target=relay, daemon=True)

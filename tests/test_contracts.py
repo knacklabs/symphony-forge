@@ -606,6 +606,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
+                 ("fix", "drop", "tidy-the-readme", "--because", "Pause the readme change"),
+                 ("fix", "drop", "tidy-the-readme", "--undo"),
                  ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
                  ("handback", "tidy-the-readme", "--subagent", "reader", "--text", "No findings."),
                  ("spec", "save", "carts"),
@@ -614,6 +616,9 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
                  ("roadmap", "retire", "CARTS-1", "--by", "carts")):
         done = repo.forge(*args)
+        if args[:2] == ("fix", "drop"):
+            # Both successful transitions must leave the default branch untouched.
+            assert done.returncode == 0, done.stdout + done.stderr
         if args[0] == "assign":
             # Exercise a published assignment, not only a refusal that leaves main alone.
             assert done.returncode == 0, done.stdout + done.stderr

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import importlib
 import json
-import os
 import pkgutil
 import re
 import sys
@@ -406,49 +406,112 @@ def _synced_text(source: str, packaged: str) -> str:
     return (checked_in if checked_in.is_file() else TEMPLATES / packaged).read_text(encoding="utf-8")
 
 
-def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+def files(top: Path, cfg: dict[str, Any], *, husky: str | None = None,
+          check_syntax: bool = True) -> dict[str, str]:
     """Every committed file sync writes: repo-relative path -> its text for this checkout."""
     cfg = cfg.get("shared", cfg)  # a developer's forge.local.toml never reaches committed files
     wanted: dict[str, str] = {}
     for info in pkgutil.iter_modules(forge.__path__):
         if info.ispkg:
             continue
-        source = Path(info.module_finder.path) / f"{info.name}.py"
-        if not any(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "ships"
-                   for node in ast.parse(source.read_text(encoding="utf-8")).body):
+        source = (Path(info.module_finder.path) / f"{info.name}.py").read_text(encoding="utf-8")
+        # Sync validates every owner; the commit check only needs their declarations.
+        owns_files = (any(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                          and node.name == "ships" for node in ast.parse(source).body)
+                      if check_syntax else re.search(r"^(?:async\s+)?def ships\s*\(", source, re.M))
+        if not owns_files:
             continue
         module = importlib.import_module(f"forge.{info.name}")
-        for rel, text in module.ships(top, cfg).items():
+        output = (module.ships(top, cfg, husky=husky) if info.name == "githooks"
+                  else module.ships(top, cfg))
+        for rel, text in output.items():
             if rel in wanted:
                 raise ValueError(f"shipped twice: {rel}")
             wanted[rel] = text
     return wanted
 
 
-def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str]) -> set[str]:
+def synced(top: Path, cfg: dict[str, Any], base: str, head: str, paths: list[str], *,
+           hashes: dict[str, str] | None = None) -> set[str]:
     """The paths whose content at head ("" for the index) is exactly what forge sync writes over
     the base commit's files with this config, so a fix's size doesn't count them."""
-    def show(rev: str, path: str) -> bytes:
-        done = subprocess.run(["git", "show", f"{rev}:{path}"], cwd=top, capture_output=True)
-        return b"" if done.returncode else done.stdout  # a missing file, as sync's "" deletes it
+    def entries(*args: str) -> dict[str, str]:
+        raw = subprocess.run(["git", "--literal-pathspecs", *args], cwd=top,
+                             capture_output=True, check=True).stdout
+        found = {}
+        for row in raw.split(b"\0"):
+            if not row:
+                continue
+            meta, path = row.split(b"\t", 1)
+            fields = meta.split()
+            found[path.decode("utf-8")] = fields[1 if args[0] == "ls-files" else 2].decode()
+        return found
 
-    # A detached worktree is the base exactly, with no export rules applied. A hook's git
-    # variables (its index among them) must not reach it, nor may the repo's own hooks run.
-    plain = {key: value for key, value in os.environ.items()
-             if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX")}
-    git = ["git", "-c", f"core.hooksPath={os.devnull}"]
-    # ponytail: checks out the whole base once per oversized fix; list sync's inputs if it's slow.
+    # Only these repo files are read by the renderers. Materialize inputs, never a Git
+    # worktree: no checkout filters, hooks, index changes or module discovery are needed.
+    inputs = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".codex/hooks.json",
+              ".codex/config.toml", ".gitattributes", ".gitignore", "package.json", ".nvmrc",
+              ".node-version", "pyproject.toml"}
+    hooks = githooks.husky_folder(top)
+    if hooks:
+        inputs.update((hooks.relative_to(top) / name).as_posix()
+                      for name in ("pre-commit", "pre-push"))
+    # Read the root tree and the renderer inputs through one Git process. A tree
+    # entry is mode/name, NUL, then a binary object ID (20 or 32 bytes).
+    with subprocess.Popen(["git", "cat-file", "--batch", "--follow-symlinks"], cwd=top,
+                          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE) as batch:
+        assert batch.stdin is not None and batch.stdout is not None
+        batch.stdin.write(f"{base}^{{tree}}\n".encode())
+        batch.stdin.flush()
+        header = batch.stdout.readline().split()
+        if len(header) != 3 or header[1] != b"tree":
+            raise subprocess.CalledProcessError(1, batch.args)
+        tree = batch.stdout.read(int(header[2]) + 1)[:-1]
+        offset = 0
+        while offset < len(tree):
+            end = tree.index(b"\0", offset)
+            name = tree[offset:end].split(b" ", 1)[1].decode("utf-8")
+            if name.startswith("requirements") and name.endswith(".txt"):
+                inputs.add(name)
+            offset = end + 1 + len(header[0]) // 2
+        selected = sorted(inputs)
+        blobs, errors = batch.communicate("".join(f"{base}:{path}\n" for path in selected).encode())
+        if batch.returncode:
+            raise subprocess.CalledProcessError(batch.returncode, batch.args, stderr=errors)
     with tempfile.TemporaryDirectory() as folder:
-        tmp = str(Path(folder) / "base")
-        subprocess.run([*git, "worktree", "add", "-q", "--detach", tmp, base], cwd=top, env=plain,
-                       capture_output=True, check=True)
-        try:
-            wanted = files(Path(tmp), cfg)
-        finally:
-            subprocess.run([*git, "worktree", "remove", "--force", tmp], cwd=top, env=plain,
-                           capture_output=True)
-    return {path for path in paths
-            if path in wanted and show(head, path) == wanted[path].encode("utf-8")}
+        snapshot = Path(folder)
+        offset = 0
+        for path in selected:
+            end = blobs.index(b"\n", offset)
+            header = blobs[offset:end].split()
+            offset = end + 1
+            if header[-1] == b"missing":
+                continue
+            size = int(header[-1])
+            content = blobs[offset:offset + size]
+            offset += size + 1
+            if len(header) != 3:  # A dangling, cyclic or external link has no repo file to read.
+                content = b""
+            target = snapshot / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+        wanted = files(snapshot, cfg, husky=hooks.relative_to(top).as_posix() if hooks else "",
+                       check_syntax=False)
+    candidates = [path for path in paths if path in wanted]
+    if not candidates:
+        return set()
+    after = hashes if hashes is not None else (
+        entries("ls-tree", "-rz", head, "--", *candidates) if head else
+        entries("ls-files", "--stage", "-z", "--", *candidates))
+    algorithm = "sha256" if any(len(oid) == 64 for oid in after.values()) else "sha1"
+    matched = set()
+    for path in candidates:
+        content = wanted[path].encode("utf-8")
+        digest = hashlib.new(algorithm, f"blob {len(content)}\0".encode() + content).hexdigest()
+        if after.get(path) == digest or not content and path not in after:
+            matched.add(path)
+    return matched
 
 
 def command_page() -> str:

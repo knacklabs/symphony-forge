@@ -109,6 +109,10 @@ def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp
         "vcs_info": {"vcs": "git"}}), "utf-8")
     cold = tmp_path / "cold-tool"
     cold.mkdir()
+    # The real uv interpreter must not wait on unrelated host load in this fixture.
+    (cold / "sitecustomize.py").write_text(
+        "import os\nif hasattr(os, 'getloadavg'): os.getloadavg = lambda: (0., 0., 0.)\n", "utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(cold) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     _install(cold, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old)))
     monkeypatch.setenv("PATH", str(cold) + os.pathsep + os.environ["PATH"])
     command = tomllib.loads((source / "forge.toml").read_text("utf-8"))["fast_test"]

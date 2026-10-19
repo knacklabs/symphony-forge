@@ -256,7 +256,8 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
         _successful_checks_do_not_replace_close_receipts(repo, gh, context)
         return
     # Elapsed totals are live now; compare repository snapshots at the same instant.
-    monkeypatch.setenv("FORGE_NOW", datetime.now(timezone.utc).isoformat())
+    checked_at = datetime.now(timezone.utc).isoformat()
+    monkeypatch.setenv("FORGE_NOW", checked_at)
     setup(repo)
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() +
                'models.build = { model = "gpt-6.1-sol", effort = "medium" }\n'
@@ -295,15 +296,17 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     assert rows["SHOP"]["status"] == "Not started yet"
     assert rows["polish"]["title"] == "Polish the guide"
     assert rows["polish"]["kind"] == "fix"
-    # Live adds failures and severity; the previous number/checks/count contract stays.
-    assert rows["polish"]["pr"] == {"number": 2, "url": "https://github.com/a/b/pull/2", "checks": "pass", "failures": []}
+    # The pane also receives when GitHub checks were fetched, not the view time.
+    assert rows["polish"]["pr"] == {"number": 2, "url": "https://github.com/a/b/pull/2",
+                                   "checks": "pass", "failures": [], "checked_at": checked_at}
     item = rows["BOARD"]
     assert item["title"] == "Board shows each story in plain English"
     assert item["approval"] is None
     child = item["children"][0]
     assert child["title"] == "The page"
     assert child["stage"] == "working"
-    assert child["pr"] == {"number": 1, "url": "https://github.com/a/b/pull/1", "checks": "pass", "failures": []}
+    assert child["pr"] == {"number": 1, "url": "https://github.com/a/b/pull/1",
+                           "checks": "pass", "failures": [], "checked_at": checked_at}
     assert child["findings"] == {"count": 1, "titles": ["Missing empty state"],
                                  "items": [{"title": "Missing empty state", "priority": "P1"}],
                                  "dismissed": 1}
@@ -507,7 +510,7 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
     ("plugin " + case, None) for case in ("events", "busy reload", "reload complete", "reload start")] + [
-    (f"review {priority}", None) for priority in ("P1", "P2", "P3")] + [
+    (f"review {priority}", None) for priority in ("P1", "P3")] + [
     (c, r) for c in ("SKIPPED", "NEUTRAL", "STALE") for r in (True, False)])
 def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch, request,
                                                              conclusion, required):

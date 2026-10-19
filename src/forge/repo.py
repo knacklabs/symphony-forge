@@ -159,9 +159,27 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
+    if args == ("git", "rev-parse", "--show-toplevel") and env is None and _command_cache is not None:
+        # A linked worktree has its own root, even though command_fact shares its git directory.
+        key = ("checkout root", Path(cwd or Path.cwd()).absolute())
+        if key not in _command_cache:
+            done = execute()
+            if done.returncode == 0:
+                _command_cache[key] = done
+            return done
+        return _command_cache[key]
+    if env is None and input is None and _immutable_git_read(args):
+        snapshots = command_fact(("git snapshots", Path(cwd or Path.cwd()).resolve()), cwd, dict)
+        if args not in snapshots:
+            done = execute()
+            # Missing objects can arrive in a later fetch; a negative ancestry answer is a fact.
+            if done.returncode == 0 or ("--is-ancestor" in args and done.returncode == 1):
+                snapshots[args] = done
+            return done
+        return snapshots[args]
     done = _github_read(args, execute) if args[0] == "gh" else execute()
-    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
-        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+    if args[:3] == ("gh", "pr", "merge") and not done.returncode:
+        # Merges must show at once; other pull request changes wait for the minute cache.
         (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
         if args[-1] == "origin" and run("git", "config", "--get-all", "remote.origin.fetch", cwd=cwd).stdout.strip() == (
@@ -183,6 +201,33 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
             if isinstance(key[0], tuple) and key[0][0] == "commits" and key[1] == common:
                 del _command_cache[key]
     return done
+
+
+def _immutable_git_read(args: tuple[str, ...]) -> bool:
+    """Only explicit object IDs: never a ref name, index or working-tree comparison."""
+    words = list(args[1:]) if args[:1] == ("git",) else []
+    if words[:1] == ["--literal-pathspecs"]:
+        words.pop(0)
+    if not words or words[0] not in ("merge-base", "diff", "ls-tree"):
+        return False
+    command, *words = words
+    words = words[:words.index("--")] if "--" in words else words
+    flags = {"merge-base": {"--is-ancestor", "--all"},
+             "ls-tree": {"-r", "-z", "--name-only", "--full-tree"},
+             "diff": {"--name-only", "--no-renames", "-z", "--raw", "--no-abbrev",
+                      "--no-ext-diff", "--no-color", "--numstat", "--summary",
+                      "--ignore-cr-at-eol", "-U0", "-M"}}
+    if any(word.startswith("-") and word not in flags[command] for word in words):
+        return False
+    refs = [word for word in words if not word.startswith("-")]
+    count = 1 if command == "ls-tree" else 2
+    return len(refs) == count and all(re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) for ref in refs)
+
+
+def resolve_commit(top: Path, ref: str) -> str:
+    """Resolve names on every ask; callers can reuse the resulting immutable commit ID."""
+    return ref if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) else git(
+        "rev-parse", "--verify", f"{ref}^{{commit}}", cwd=top)
 
 
 def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
@@ -259,7 +304,7 @@ def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str,
         return ("commits", top.resolve(), base, ref)
 
     def read():
-        tip = git("rev-parse", head, cwd=top)
+        tip = resolve_commit(top, head)
         return command_fact(key(tip), top, lambda: select(tip))
 
     def select(tip):
@@ -332,46 +377,15 @@ def record_event(top: Path, item: str, event: str, **fields: Any) -> str:
     identity = str(uuid.uuid4())
     line = {"id": identity, "item": item, "event": event, "at": now(),
             "round": (read_state(item, top) or {}).get("round", 0), **fields}
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")), path.open("a", encoding="utf-8") as out:
-        out.write(json.dumps(line) + "\n")
+    from forge import event_log
+    event_log.append(top, line)
     return identity
 
 
 def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
     """Coalesce a run's live updates into at most one record per ten seconds."""
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")):
-        rows = path.read_text(encoding="utf-8").splitlines()
-        parsed = [json.loads(row) for row in rows]
-        previous = next((n for n in range(len(rows) - 1, -1, -1)
-                         if parsed[n].get("run_id") == run_id and
-                         parsed[n].get("event") == "progress"), None)
-        start = next(row for row in parsed if row.get("id") == run_id)
-        # ponytail: rewrite this diagnostic log to coalesce; split progress out if it grows large.
-        line = {"id": str(uuid.uuid4()), "item": item, "event": "progress", "run_id": run_id,
-                "kind": "progress", "round": start.get("round"), "at": now(), **fields}
-        if previous is not None:
-            old = parsed[previous]
-            line = {**old, **line}
-            if (datetime.fromisoformat(now()) - datetime.fromisoformat(old["recorded_at"])).total_seconds() < 10:
-                rows[previous] = json.dumps({**line, "id": old["id"]})
-            else:
-                rows.append(json.dumps({**line, "recorded_at": now()}))
-        else:
-            rows.append(json.dumps({**line, "recorded_at": now()}))
-        temp = path.with_suffix(".new")
-        temp.write_text("\n".join(rows) + "\n", encoding="utf-8")
-        for wait in (0.05,) * 40 + (0,):  # Windows readers can briefly hold the events file open.
-            try:
-                return os.replace(temp, path)
-            except PermissionError:
-                if not wait:
-                    temp.unlink(missing_ok=True)
-                    refuse(codex.REFUSALS["record"], record=path)
-                time.sleep(wait)
+    from forge import event_log
+    event_log.progress(top, item, run_id, fields)
 
 
 def worker_step(name: str, inputs: dict[str, Any]) -> str:
@@ -514,7 +528,7 @@ def default_config(top: Path) -> dict[str, Any]:
     """Fetch and read only the default branch's config for merge permission and checks."""
     default = default_branch(top)
     if not command_fact("fetched origin", top, dict).get("all"):
-        git("fetch", "-q", "origin", default, cwd=top)
+        command_fact(("fetch default", default), top, lambda: git("fetch", "-q", "origin", default, cwd=top))
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
@@ -805,7 +819,15 @@ def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | Non
     return subprocess.run(
         [shutil.which("uv") or "uv", "tool", "run", "--from",
          f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
-        cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": release}).returncode
+        cwd=cwd, env={**uv_env(), "FORGE_PINNED_RUN": release}).returncode
+
+
+def uv_env() -> dict[str, str]:
+    """This environment for uv, without a git hook's repository: uv fetches a git+ source with
+    its own `git init` and `git reset --hard`, which would turn this repo bare or overwrite its
+    index. The program uv starts finds the repository from its folder."""
+    return {key: value for key, value in os.environ.items()
+            if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE")}
 
 
 def set_version(text: str, release: str) -> str:

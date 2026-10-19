@@ -1,0 +1,68 @@
+{
+  "base": "376d51792efa6db70b0b3ad711f9c529d4a84505",
+  "branch": "fix/pane-rerun-cache-window",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14b6c-8fd6-7060-ae43-110b403c8dd5",
+    "head": null,
+    "start": "faa39d2c48025794119d864ce880fe0572613da9"
+  },
+  "done_when": "A queued CI failure is not delivered while the same workflow and commit has a newer run on GitHub, even inside the checks cache window, and a test covers a rerun that starts within the cache window",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 109,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Queued CI failures are lost if the pane session restarts during the freshness wait",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "88a1020d767b97c9d0e0a481d14486a371b808e0f65583e2fa7f0d539a17c688",
+    "changed": "e7ebb7a6a7c498f9b96b247b5c14f594610d5b8758618c5ed5c64111e007c054",
+    "commit": "bd6c9d74863da8f8076f03d47c91dcb933c0d829",
+    "dismissals": [],
+    "findings": [],
+    "id": "2a41527d-bf16-4ae6-b44c-02538090ca00",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T19:52:40.865537+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T20:23:12.914882+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:52:50.254366+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c228150e-f977-4a69-8360-d756c8d885db",
+    "head": "22d4e5f1a318eb21de99dde89399b24544c447e9",
+    "keys": {
+      "the review finding \"Queued CI failures are lost if the pane session restarts during the freshness wait\" in src/forge/mod/hooks/events.ts": 1
+    },
+    "round": 1
+  },
+  "why": "The pane can still deliver a queued CI failure when its rerun starts within the board's one-minute checks cache, because the cached snapshot does not show the rerun yet",
+  "worker": "codex"
+}
