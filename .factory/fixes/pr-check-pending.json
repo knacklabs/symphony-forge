@@ -4,12 +4,20 @@
   "done_when": "forge-pr-check reports pending, not failure, on a pull request that has no committed review yet, and still fails on a stale or blocked review; a test covers the generated workflow on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:54:45.776792+00:00",
       "step": "start"
     }
   ],
-  "why": "On every pull request the forge-pr-check fails on the first push and passes only after the committed review lands, so every pull request shows a red check first (issue 976)"
+  "stuck": {
+    "close": null,
+    "head": "20ddc7cfb33209115e0f4493e4bb9ebfcea87d5c",
+    "keys": {},
+    "round": null
+  },
+  "why": "On every pull request the forge-pr-check fails on the first push and passes only after the committed review lands, so every pull request shows a red check first (issue 976)",
+  "worker": "codex"
 }
