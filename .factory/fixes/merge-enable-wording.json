@@ -10,13 +10,29 @@
   },
   "done_when": "The forge merge enable refusal from an agent shell says to run it in a terminal outside Claude Code or Codex, and a test covers the message on a new and an adopted repo",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f7872c695d10735322aebc574863c174655742a690944cf3ce400ec0437ce32f",
+    "changed": "5122b7e3ad298289fe9848c0e2aeea823038405b34a662c84118f419bae56b79",
+    "commit": "511c15923972dbec8f60c28a87dacce8529ab6d0",
+    "dismissals": [],
+    "findings": [],
+    "id": "822061b5-d5c8-4b9f-a212-b881554be4d4",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T19:54:49.797624+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T20:44:36.646634+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
