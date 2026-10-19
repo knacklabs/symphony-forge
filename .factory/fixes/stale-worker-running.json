@@ -19,19 +19,45 @@
   "fix_kind": "backend",
   "flagged": [],
   "kind": "fix",
-  "known": [],
+  "known": [
+    {
+      "area": "_lock_alive() in src/forge/codex.py",
+      "file": "src/forge/codex.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1060,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: module ceilings fail in board.py and codex.py",
+      "work": 2
+    }
+  ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0ee21e729b3e934943a2e4bbefef087a09d9e4b2478e5ccdfbb577c8ff058e4d",
-    "changed": "6807a12b52b9b8ecb321fbba292b56ffdf0093474061c473cf2a829997406f3c",
-    "commit": "daaa94c37b05fa603bf8a3b8443d9c637db115fe",
+    "branch_diff": "1ae86aff4ef22f23c17a6ee567ae265b13acbbbf3dfb4672b4066fea3feba7e9",
+    "changed": "b46495bd3abacd01fb5a91cc6c2975ec19939d5188d870bf97b645755da6c39a",
+    "commit": "c79d133ae878579a641e0b0b7fd262c2ac3ae1a8",
     "dismissals": [],
-    "findings": [],
-    "id": "2bd6f4f8-6948-44f2-93a8-1cfcfd1083bb",
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate. This change increases src/forge/board.py from 1,197 to 1,202 lines and src/forge/codex.py from 1,191 to 1,203 lines. tests/test_rules.py:63\u201365 counts newline bytes and asserts that no module exceeds 1,200 lines. Both changed modules therefore fail test_5_forge_stays_small, preventing the required test gate from passing.",
+        "file": "src/forge/codex.py",
+        "follow_up": "New finding on lines unchanged since the previous review.",
+        "gain": 4,
+        "harm": 3,
+        "line": 1060,
+        "priority": "P1",
+        "title": "Gate: module ceilings fail in board.py and codex.py",
+        "work": 2
+      }
+    ],
+    "id": "6eb3fde8-7714-47f5-a603-9e90d41c60fe",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-18T16:37:39.291311+00:00",
@@ -39,6 +65,10 @@
     },
     {
       "at": "2026-10-18T17:00:52.465978+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T12:46:42.545739+00:00",
       "step": "review"
     }
   ],
@@ -50,7 +80,6 @@
     },
     "round": 1
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd` exited with status 1 on this machine.\nNo local test names src/forge/codex.py; GitHub's checks will cover it.\nNo local test names src/forge/native.py; GitHub's checks will cover it.\nRelated tests: tests/test_board_skips_dropped_fixes.py, tests/test_board_status_and_times.py, tests/test_close_sync_conflicts.py, tests/test_handback_releases_worker_lock.py, tests/test_stack_start.py, tests/test_worker_liveness_controls_next_step.py\nstdout_seq = [b'Opened the pull request: https://github.com/acme/shop/pull/7\\nThis machine is busy (load 2.5 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\n    return subprocess.run([sys.executable, str(self.bin / \"forge\"), *args],\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 129293.181159791, orig_timeout = 60\nstdout_seq = [b'Opened the pull request: https://github.com/acme/shop/pull/7\\nThis machine is busy (load 3.1 per core), so this work round waits until it is under 1.5.\\n']\nstderr_seq = [], skip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-fix-stale-worker-running/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-200/popen-gw2/test_1_close_merges_sync_outpu1/bin/forge', 'close', 'tidy-readme']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n2 failed, 92 passed in 332.72s (0:05:32)",
   "why": "The board and forge next show 'Worker running' for an item whose worker process or session is gone and whose lock is missing or stale, so a coordinator waits for ever",
   "worker": "codex"
 }
