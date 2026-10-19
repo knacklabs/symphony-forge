@@ -1,6 +1,13 @@
 {
   "base": "8ca3720b2fcc5d239147430d141b582d7922bfff",
   "branch": "fix/windows-test-fixes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1555a-b22f-79b1-9740-a35591a373c7",
+    "head": null,
+    "start": "81a59e47ce54aca922f689a4c1a0ecbbd8ccc871"
+  },
   "done_when": "On windows-latest, these tests pass: tests/test_tools_native_work.py::test_3 (all cases), tests/test_hook_generated_check_speed.py::test_2, tests/test_pull_request_cache_survives_close.py::test_1, tests/test_read_accepts_no_findings.py::test_1 and tests/test_fix_upgrade_untracked_hooks.py::test_1, with no behaviour change on Linux",
   "fix_kind": "backend",
   "kind": "fix",
