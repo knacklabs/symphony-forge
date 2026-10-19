@@ -10,13 +10,29 @@
   },
   "done_when": "The coordinator guide tells repos whose test command runs Vitest through a script with Vitest projects to pass --maxWorkers=${FORGE_TEST_CPUS:-2} on the command line instead of in the config, and both synced guides match",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "43915a9667f21c0dd45a95953de9a8f6dad4d2a0b5ceab4adaea4738e44e1066",
+    "changed": "d1d978e448465c2ed1b6aa5a2b53c074ca685559fc82c4bfeda53585945d37b7",
+    "commit": "cf6bc0f147c05e162a258c61839fcf93d534b68a",
+    "dismissals": [],
+    "findings": [],
+    "id": "8b9b0b14-5ea5-4472-9023-fc1fe1f423c2",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T15:23:12.889468+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T15:31:37.504529+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
