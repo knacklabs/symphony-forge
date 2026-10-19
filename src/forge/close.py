@@ -793,7 +793,8 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                 # Isolate Python imports too: the old checkout may have set PYTHONPATH.
                 done = repo.run("uv", "run", "--isolated", "--no-project", "--with",
                                 f"git+https://github.com/knacklabs/symphony-forge@{release}",
-                                "--python", sys.executable, "python", "-I", "-c", script, cwd=top)
+                                "--python", sys.executable, "python", "-I", "-c", script, cwd=top,
+                                env=repo.uv_env())
             else:
                 package = json.dumps((top / "src" if cfg.get("repo") == "forge-source"
                                       else Path(__file__).resolve().parent.parent).as_posix())
