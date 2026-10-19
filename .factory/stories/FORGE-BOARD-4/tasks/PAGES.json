@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-4-PAGES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T12:22:21.533680+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "363b1f8b6da3c6432ce15748677c2342ea36555d",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
