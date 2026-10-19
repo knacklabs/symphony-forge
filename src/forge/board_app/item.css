@@ -1,5 +1,8 @@
 /* An item's drawer and full page, from the approved Drawer and Item artboards (docs/board-design). */
 
+/* Scoped so these short class names never restyle the other screens. */
+@scope (.drawer, .item-page) {
+
 .drawer {
   position: fixed;
   top: 48px;
@@ -344,3 +347,5 @@
 
 .plan details[open] > * + * { margin-top: var(--space-4); }
 .plan summary { font-size: var(--size-body); font-weight: 600; color: var(--ink-2); cursor: pointer; }
+
+}
