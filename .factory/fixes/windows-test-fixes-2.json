@@ -4,12 +4,20 @@
   "done_when": "On windows-latest, close leaves forge.toml alone when an item's settings match main's (only line endings or the version pin differ), and these tests pass: test_close_preserves_default_settings test_2, test_chatview_attach test_5, test_codex_project_paths_and_pr_links test_2, test_pytest_picker_runs_in_the_clients_environment test_6, test_windows_suite_retries test_1 and test_board_now_screen test_12, with no behaviour change on Linux",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:07:18.409497+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows, close prints 'Kept main's settings in forge.toml' for items that did not change settings, and other new v1.2.16 tests fail only on Windows"
+  "stuck": {
+    "close": null,
+    "head": "1c1dadd3e7701210551102aba9271f00c769fc12",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows, close prints 'Kept main's settings in forge.toml' for items that did not change settings, and other new v1.2.16 tests fail only on Windows",
+  "worker": "codex"
 }
