@@ -46,6 +46,10 @@
       "work": 2
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
@@ -88,7 +92,7 @@
     "id": "1c25f2f1-6d70-4305-b8be-3a44f5cf6669",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -101,10 +105,14 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "673b833cda9b5d724fdca8bd574a92ba9dc99541",
-    "keys": {},
-    "round": null
+    "close": "0f636078-8ddd-47bc-9c8c-651aa249ad65",
+    "head": "e3e35311a9d98689bb23051ff51b05e48d98d2bf",
+    "keys": {
+      "the review finding \"Gate: test_19_a_manager_gives_a_story_from_the_board_and_a_teammate_sees_the_owner\" in tests/test_board_assign_ui.py": 1,
+      "the review finding \"Preserve keyboard focus across successive live redraws\" in src/forge/board_app/assign.js": 1,
+      "the review finding \"Remove Git command text from assignment refusals\" in src/forge/board_server.py": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
