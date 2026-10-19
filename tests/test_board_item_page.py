@@ -12,7 +12,7 @@ from conftest import REAL_UV
 from test_board import DOC
 from test_board_server import client, clone, fix, live, pushed, snapshot  # noqa: F401
 
-STORY = "FORGE-BOARD-4"
+STORY = "FIX-ITEM-FACTS"
 
 # The story's plan, with an Owner line so its parts are on the board, a builders section to fold,
 # and hostile markup that must stay inert text.
