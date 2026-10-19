@@ -92,7 +92,7 @@
     "id": "dbe0893a-bf29-4846-a5c9-1ba35312b063",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -104,16 +104,6 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "The board shows a team what moves, what needs them and when it ships, at a glance: Releases and Insights is stuck. It should deliver: the two pages\nIt changes 406 lines outside tests, over its limit of 400.\nThe worker tried: Unknown weeks stay unknown and kept problems open from the keyboard.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "reason": "Owner accepted the size on 19 October 2026: new screen code checked in the browser; the part now has an allow-large reason, and one round renumbers its tests",
-    "size": true,
-    "tool": "claude",
-    "wait_id": "b51fdbd4-88e1-490c-906b-53e31e6f05b2",
-    "worker_round": 2
-  },
   "stuck": {
     "close": "2497f53d-65f8-44ad-8644-3bfa79e2e760",
     "head": "27e87b9c279218b9b5cba25eeb34a34237856351",
