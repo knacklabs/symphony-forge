@@ -96,7 +96,7 @@
     "id": "3b8c101a-82c1-4dba-920e-0208205ba370",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "settled_areas": [
     "_cancel_superseded() in src/forge/checks.py"
   ],
@@ -123,10 +123,14 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "6cfca25934c6332bedaaf8190787b26fea58cef4",
-    "keys": {},
-    "round": null
+    "close": "ccb9692b-e0cf-497f-ab3c-3abe2d1644df",
+    "head": "cfa23692ecd61a7dac2fd8f4082114f05ad9d91c",
+    "keys": {
+      "the review finding \"[P1] Bind cancellation to the pull request being checked\" in src/forge/checks.py": 1,
+      "the review finding \"[P1] Recover blockers that ignore ordinary cancellation\" in src/forge/checks.py": 1,
+      "the review finding \"[P1] Verify concurrency membership before cancelling older runs\" in src/forge/checks.py": 1
+    },
+    "round": 1
   },
   "why": "When a pull request's new run waits behind an older queued run of the same pull request in its concurrency group, close waits for ever (issue 928)",
   "worker": "codex"
