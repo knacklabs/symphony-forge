@@ -4,12 +4,20 @@
   "done_when": "The forge merge enable refusal from an agent shell says to run it in a terminal outside Claude Code or Codex, and a test covers the message on a new and an adopted repo",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:54:49.797624+00:00",
       "step": "start"
     }
   ],
-  "why": "The forge merge enable refusal from an agent shell tells the owner to use their own terminal, and an owner tried the ! prefix inside the session instead (issue 977)"
+  "stuck": {
+    "close": null,
+    "head": "e6c50ab281f37beeba55aa2bec87c4fc0b6ff371",
+    "keys": {},
+    "round": null
+  },
+  "why": "The forge merge enable refusal from an agent shell tells the owner to use their own terminal, and an owner tried the ! prefix inside the session instead (issue 977)",
+  "worker": "codex"
 }
