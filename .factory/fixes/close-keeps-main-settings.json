@@ -67,8 +67,8 @@
     "id": "d52faeb0-a9de-4b30-b773-172aefa3bd27",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T08:39:40.297418+00:00",
@@ -92,10 +92,10 @@
     }
   ],
   "stuck": {
-    "close": "904db2e4-d3c6-499e-90b2-2f245b9aaf9a",
-    "head": "a74c7bfd5bceeabc0815e1f1948bc7e328bac4ff",
+    "close": "5cb6ec6d-ac28-47fd-8432-e1aa8997c5f8",
+    "head": "003100122dcb15279b3b8ff1652bfd99286e9b64",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "After a Codex round merges main, the branch can still carry its older forge.toml, so the squash merge reverts main's settings (issue 921, Codex path)",
   "worker": "codex"
