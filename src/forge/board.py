@@ -25,7 +25,7 @@ from pathlib import Path
 from textwrap import shorten
 from typing import Any
 
-from forge import __version__, approval, board_facts, board_graph, board_visuals, codex, machine, repo, story, task
+from forge import __version__, approval, board_facts, board_graph, board_visuals, codex, machine, native, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -233,8 +233,7 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
             continue
         kind = event.get("kind")
         if kind in ("work", "worker") or kind == "read" and event.get("family") == "codex":
-            lock = codex._item_file(top, item, ".lock", "Grill" if kind == "read" else "Build")
-            if lock.is_file() and codex._alive(codex._json(lock)) is False:
+            if not native.worker_alive(top, item, kind, event.get("round")):
                 continue
         runs.append(event)
     return runs
@@ -438,7 +437,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     if isinstance(f, dict) and n not in dismissed]
         worker = None
         lock = codex._item_file(top, item, ".lock", "Grill" if kind == "story" else "Build")
-        if lock.is_file() and codex._alive(codex._json(lock)) is not False:
+        if native.lock_alive(lock) is not False:
             family = state.get("worker")
             role = "grill" if kind == "story" else "build" if kind == "task" else "lite"
             if family == "codex" and kind != "story":

@@ -130,7 +130,9 @@ def pre_commit(args: argparse.Namespace) -> None:
     if os.environ.get("FORGE_WORKER") and git(
             "diff", "--cached", "--name-only", "--no-renames", "--", "forge.toml", cwd=top):
         if not task.settings_allowed(item, top, state):
-            refuse(REFUSALS["worker_settings"])
+            incoming = run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode == 0
+            if not incoming or git("diff", "--cached", "MERGE_HEAD", "--", "forge.toml", cwd=top):
+                refuse(REFUSALS["worker_settings"])
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []

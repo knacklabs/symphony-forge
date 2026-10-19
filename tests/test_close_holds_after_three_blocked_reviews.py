@@ -10,6 +10,7 @@ import pytest
 
 from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
 from test_setup import _fresh_client
+from test_upgrade_command import Upgrade
 from test_worker import calls, install_claude
 
 
@@ -19,10 +20,10 @@ RULE = (
 )
 QUESTION_RULE = ("When a cold read or review loop stops and you must ask, ask the human the question it printed, "
                  "in its words, one item per question.")
-PATHS = ["docs/product/BRIEF.md", "docs/specs/README.md", "forge.toml"]
+PATHS = ["docs/product/BRIEF.md", "docs/specs/README.md", "docs/product/settings.md"]
 
 
-def client_item(env, tmp_path, previous):
+def client_item(env, tmp_path, previous, stop_default=False):
     if previous:
         # Land the earlier release's plain-text adoption fixture before it installs git hooks.
         for path in PATHS[:-1]:
@@ -36,6 +37,10 @@ def client_item(env, tmp_path, previous):
         client, initialized = _fresh_client(env.repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stderr
         env.repo.path = client
+    if stop_default:
+        # Product fixes now keep default settings, so coordinator setup belongs on main.
+        config = (env.repo.path / "forge.toml").read_text("utf-8")
+        Upgrade(env, tmp_path).on_main("forge.toml", 'stop_default = "off"\n' + config)
     item, where = env.start_fix()
     if previous:
         version = env.repo.forge("--version").stdout.split()[-1]
@@ -59,9 +64,8 @@ def client_item(env, tmp_path, previous):
 @pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env, tmp_path, previous, same_file, choice):
-    item, where = client_item(env, tmp_path, previous)
     # With the default on, land waits out the stop; this checks that land refuses until a choice.
-    env.commit(where, "forge.toml", 'stop_default = "off"\n' + (where / "forge.toml").read_text("utf-8"))
+    item, where = client_item(env, tmp_path, previous, stop_default=True)
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")

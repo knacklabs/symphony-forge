@@ -239,9 +239,9 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     assert 'fast_test = "forge test --pytest {base}"' in doctor.stdout
     assert upgraded_config.read_text("utf-8") == expected
     # The owner's sole configuration edit replaces the broken command; upgrade never does it.
-    replacement = expected.replace(json.dumps(legacy), '"forge test --pytest {base}"')
+    replacement = settings.replace(json.dumps(legacy), '"forge test --pytest {base}"')
     env = up.env
-    env.commit(up.folder, "forge.toml", replacement, "Use the proposed picker")
+    up.on_main("forge.toml", replacement, "Use the proposed picker")
     env.commit(up.folder, "prices.py", "PRICE = 2\n")
     closed = subprocess.run([str(installed), "close", NAME], cwd=up.folder,
                             capture_output=True, text=True, timeout=60)

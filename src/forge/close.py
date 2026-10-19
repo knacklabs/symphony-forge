@@ -217,8 +217,10 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["chosen"], item=item)  # the answer waits for its worker round
     if (state.get("stop") or {}).get("size"):  # the part fits again or is allowed: no question
         state.pop("stop")
+    task.restore_default_settings(item, top, state, default)
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
+    cfg = repo.config(top)
     if switch:
         base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top)
         files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}...HEAD",
@@ -697,6 +699,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
                    pr: dict[str, Any] | None) -> None:
     cfg = repo.config(top)
     repo.git("fetch", "-q", "origin", default, cwd=top)
+    repo.command_fact(("fetch default", default), top, lambda: None)
     state = repo.read_state(item, top) or {}
     base, parent = str(state.get("base", "")), str(state.get("stacked_on", ""))
     target = f"origin/{default}"
