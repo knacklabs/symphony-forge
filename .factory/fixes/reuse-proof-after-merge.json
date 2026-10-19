@@ -1,6 +1,13 @@
 {
   "base": "af7648175aa885bf6ccd8cac51ab3a423e4ddc4f",
   "branch": "fix/reuse-proof-after-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15298-b158-7a80-ad7a-a40d322004c2",
+    "head": null,
+    "start": "546d3da266dde371007f114800d9b6923a17a23e"
+  },
   "done_when": "When a merged pull request's run lists no pull requests, the proof check accepts the run if main's tip at merge time was committed before that run started and the merge tree equals the tested merge, a test covers an empty list and a main that moved after the run started, and a real merge's run skips its tests",
   "fix_kind": "mechanical",
   "kind": "fix",
