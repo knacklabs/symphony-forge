@@ -17,17 +17,31 @@ STORY = "FIX-NODE-CI-TIMEOUT"
 
 
 @pytest.mark.parametrize("history", ["new", "upgraded"])
-def test_1_node_tests_get_thirty_minutes_on_adoption_and_sync(repo, gh, history):
-    repo.write("package.json", '{"scripts":{"test":"node --test"}}\n')
+def test_1_node_tests_get_thirty_minutes_on_adoption_and_sync(repo, gh, tmp_path, history):
     if history == "new":
+        # init needs an empty history, unlike the ordinary repo fixture.
+        client, remote = tmp_path / "node-client", tmp_path / "node-client.git"
+        repo.git("init", "-q", "--bare", "-b", "main", str(remote))
+        repo.git("init", "-q", "-b", "main", str(client))
+        repo.git("remote", "add", "origin", str(remote), cwd=client)
+        repo.path = client
+        repo.write("package.json", '{"scripts":{"test":"node --test"}}\n')
         gh.respond("api", stdout="{}")
         done = repo.forge("init")
     else:
         repo.git("switch", "-qc", "fix/upgrade-client")
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
+        repo.write("package.json", '{"scripts":{"test":"node --test"}}\n')
+        repo.write(".github/workflows/forge.yml", "name: forge\non: pull_request\njobs:\n"
+                   "  tests:\n    timeout-minutes: 10\n    runs-on: ubuntu-latest\n"
+                   "    steps:\n      - run: npm test\n")
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Adopt an earlier release")
+        # Upgrade the fixture's pin so sync runs this checkout, not v1.2.2.
+        version = repo.forge("--version").stdout.split()[-1]
+        config = (repo.path / "forge.toml").read_text(encoding="utf-8")
+        repo.write("forge.toml", config.replace('version = "v1.2.2"', f'version = "{version}"'))
         done = repo.forge("sync")
     assert done.returncode == 0, done.stdout + done.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
