@@ -90,7 +90,10 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "settled_areas": [
+    "node_worker_budget() in src/forge/fasttest.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-18T16:59:09.930837+00:00",
@@ -108,9 +111,13 @@
   "stop": {
     "area": "node_worker_budget() in src/forge/fasttest.py",
     "at": "2026-10-18T18:28:21.053062+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "node_worker_budget() in src/forge/fasttest.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "bf9c9250-0da9-49d5-a55b-996a26181d42"
+    "reason": "Owner narrowed (19 Oct): add --maxWorkers only when the test command itself runs vitest or jest (including npx/pnpm exec); skip when it already sets --maxWorkers, --runInBand or -i; leave npm/yarn scripts alone; the guide says read FORGE_TEST_CPUS there.",
+    "wait_id": "bf9c9250-0da9-49d5-a55b-996a26181d42",
+    "worker_round": 2
   },
   "stuck": {
     "close": "7eb6606b-1c7c-456f-a0c0-218fe2590c28",
