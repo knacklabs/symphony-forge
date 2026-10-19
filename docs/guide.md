@@ -102,6 +102,11 @@ See the [command list](commands.md) for every Forge command.
 
 You never run the hook commands yourself: git, the host hooks and CI call them.
 
+`forge board` opens the board as a live page on this computer. It serves the page on 127.0.0.1
+with a per-run token in the address, so only this computer can open it, and the page refreshes by
+itself when the work changes. Press Ctrl-C to stop it. `forge board --json` prints the current
+work as JSON, and `--out <path>` writes every item's facts, finished ones included, as JSON.
+
 ## How a story runs
 
 In a client repo, finish the prototype review and customer sign-off above before starting here.

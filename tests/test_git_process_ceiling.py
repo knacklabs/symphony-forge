@@ -1,4 +1,7 @@
-"""Per-command git facts keep next and close cheap without changing their answers."""
+"""Per-command git facts keep next and close cheap without changing their answers.
+
+Includes the warning work in src/forge/migration_warnings.py for related-test selection.
+"""
 
 import json
 import os

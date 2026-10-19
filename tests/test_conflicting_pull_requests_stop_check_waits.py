@@ -3,6 +3,7 @@
 Audit: a missing mergeability check waits to timeout, and a dropped land retry never
 merges the advanced default. Existing tests cover conflicts present before close,
 not a default update during CI. Only GitHub and elapsed time are faked.
+Includes src/forge/migration_warnings.py so related runs cover snapshot reuse across close retries.
 """
 import json
 import os

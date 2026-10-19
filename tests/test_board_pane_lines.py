@@ -50,7 +50,7 @@ def an_older_forge_board_draws_rows_and_no_team_line(_request, tmp_path):
 def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
     """Real forge commands build a repo with six plans waiting for approval, read newest-first by key,
     six stalled fixes, a part other parts wait on, six fixes in progress and enough pace for
-    go-live; the mounted Board tab shows the same facts as `forge board --json` and its page."""
+    go-live; the mounted Board tab shows the same facts as `forge board --json`."""
     env, monkeypatch = request.getfixturevalue("env"), request.getfixturevalue("monkeypatch")
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
@@ -91,7 +91,7 @@ def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
         f"{counts['parts']['in progress'] + counts['fixes']['in progress']} in progress",
         f"{len(team['needs_you'])} needs you", f"{len(team['blocked'])} stuck",
         f"go-live about {due:%b} {due.day}"]) in shown, shown
-    # The page's sentence and its labelled totals, word for word.
+    # The board's sentence and its labelled totals, word for word.
     assert team["sentence"] in shown, shown
     labels = {"finished_last_7_days": "Finished in the last 7 days"}
     for kind, by in counts.items():
@@ -115,22 +115,18 @@ def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
         assert rows == [shown_as(e) for e in entries][:5], (name, lines)
         return lines
 
-    # Each wait and block shows the age the page shows, in short units (3 hours reads 3h).
-    page = tmp_path / "board.html"
-    assert env.repo.forge("board", "--out", str(page)).returncode == 0
-    html = page.read_text("utf-8")
-
-    def ages(lane):
-        what = re.findall(r'class="what">(.*?)</span>', html[html.index(f'id="{lane}"'):html.index(f"<!-- end {lane} -->")])
-        return [re.sub(r"(\d+) ([smhd])\w*", r"\1\2", text.rsplit(" · ", 1)[-1].rsplit("waiting ", 1)[-1])
-                for text in what]
+    # Each wait and block shows the board's age for it, in short units (3 hours reads 3h).
+    def short(seconds):
+        # ponytail: plain()'s rounding for whole hours under a day and days over it, all this fixture makes.
+        return f"{round(seconds / 3600)}h" if seconds < 86400 else f"{round(seconds / 86400)}d"
 
     needs = group("NEEDS YOU", team["needs_you"])
-    assert [age for age in ages("needs-you")[:5] if any(f"waiting {age}" in line for line in needs)] \
-        == ages("needs-you")[:5], (ages("needs-you"), needs)
+    assert [found for line in needs for found in re.findall(r" · waiting (\S+)$", line)] \
+        == [short(e["waited_seconds"]) for e in team["needs_you"][:5]], needs
     stuck = group("STUCK", team["blocked"])
     assert all(any(e["detail"] in line for line in stuck) for e in team["blocked"][:5]), stuck
-    assert all(any(line.endswith(f" · {age}") for line in stuck) for age in ages("blocked")[:5]), (ages("blocked"), stuck)
+    assert [found for line in stuck for found in re.findall(r" · (\d+[hd])$", line)] \
+        == [short(e["seconds"]) for e in team["blocked"][:5]], stuck
     group("MOVING", [e for e in team["in_progress"] if e["state"] != "ready to merge"])
 
 
