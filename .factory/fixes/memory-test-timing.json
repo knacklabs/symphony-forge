@@ -1,0 +1,15 @@
+{
+  "base": "94879950a86a26c40af58a3315e866afe1823537",
+  "branch": "fix/memory-test-timing",
+  "done_when": "tests/test_machine_memory_budget.py's small-test case no longer depends on fixed short waits, prints the command's last output when it fails, and passes repeatedly under parallel load",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T08:39:52.721640+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A memory budget test fails at random on loaded CI runners"
+}
