@@ -37,6 +37,8 @@ COMMAND = re.compile(r"\bforge [a-z]|--[a-z]|`")
 axe = Axe()
 
 def scan(page, where, context=None):
+    # Scan what stays on screen, not a frame of the drawer's entry: wait for every animation to end.
+    page.evaluate('Promise.all(document.getAnimations().map(a => a.finished))')
     found = axe.run(page, context=context).response['violations']
     assert not found, (where, [(v['id'], [n['target'] for n in v['nodes']]) for v in found])
 
@@ -91,7 +93,7 @@ with sync_playwright() as p:
             expect(drawer).to_contain_text('page-dev')
             tab_to(page, 'Full history')
             page.keyboard.press('Enter')
-            assert page.url.endswith('#item/SHOP'), page.url
+            expect(page).to_have_url(re.compile(r'#item/SHOP$'))  # the address changes after Enter, not with it
             expect(page.get_by_role('heading', level=1, name='Shoppers can save a basket')).to_be_visible()
             tabs = page.get_by_role('tablist')
             expect(tabs.get_by_role('tab')).to_have_text(['Overview', 'Plan', 'Rounds', re.compile('^Known issues')])

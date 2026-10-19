@@ -1,0 +1,368 @@
+/* The Now screen, laid out to fit one laptop window: the needs-you strip, the five stages and the
+   stories rail, and the figures along the bottom. Tokens come from tokens.css. */
+/* Only while the Now screen shows: a hidden main must stay hidden (display none), so an item page can take its place. */
+body:has(> main:not([hidden]) > .now) { height: 100vh; }
+
+main:not([hidden]):has(> .now) {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+
+.now {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.now h2 {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--size-body);
+  font-weight: 600;
+}
+
+.now ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.now button {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out);
+}
+
+.now button:active { transform: scale(0.97); }
+
+.key, .count, .owner, .chip-meta {
+  font-size: var(--size-label);
+  color: var(--ink-2);
+}
+
+/* Needs you */
+.needs {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+  min-height: 72px;
+}
+
+.needs-count {
+  width: 96px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: var(--size-label);
+  color: var(--ink-2);
+}
+
+.needs-count strong {
+  font-size: var(--size-title);
+  line-height: 28px;
+  color: var(--needs-you);
+}
+
+.needs-count .now-who {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.needs > .note { align-self: center; }
+
+.ask {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  background: var(--surface);
+}
+
+.ask-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.verb {
+  border-radius: var(--radius-tag);
+  padding: 2px var(--space-2);
+  background: var(--needs-you);
+  color: var(--surface);
+  font-size: var(--size-label);
+  font-weight: 600;
+}
+
+.ask-title, .chip-title, .story-title, .done button {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.now .now-more {
+  align-self: center;
+  border: 0;
+  border-radius: var(--radius-tag);
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  color: var(--moving);
+  font-size: var(--size-label);
+  font-weight: 600;
+}
+
+.stage .now-more, .rail .now-more { align-self: flex-start; }
+
+/* Pipeline and rail */
+.work {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--space-6);
+}
+
+.pipeline {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kinds {
+  align-self: flex-end;
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 2px;
+  background: var(--surface);
+}
+
+.kinds button {
+  border: 0;
+  border-radius: 4px;
+  padding: var(--space-1) 10px;
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--size-label);
+  line-height: 16px;
+}
+
+.kinds button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--surface);
+  font-weight: 600;
+}
+
+.stages {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.stage {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--line) 45%, var(--ground));
+}
+
+.stage h2 { padding-bottom: var(--space-1); }
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chip {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--waiting);
+  border-radius: var(--radius-card);
+  padding: 6px 10px;
+  background: var(--surface);
+}
+
+.chip[data-tone="building"], .chip[data-tone="review"] { border-left-color: var(--moving); }
+.chip[data-tone="ready"], .chip[data-tone="merged"] { border-left-color: var(--ready); }
+.chip[data-stage="checks failed"], .chip[data-stage="hotspot"] { border-color: var(--stuck); }
+
+.chip-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+/* A long key gives way to the tag: it is cut to fit, never pushed out of the card. */
+.chip-meta .key {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-meta .now-tag { flex: none; }
+
+.now-tag {
+  border-radius: var(--radius-tag);
+  padding: 0 6px;
+  border: 1px dashed var(--ink-2);
+}
+
+.now-tag[data-note="checks failed"] {
+  border: 0;
+  color: var(--stuck);
+  font-weight: 600;
+}
+
+.done li + li { border-top: 1px solid var(--line); }
+
+.done button {
+  width: 100%;
+  border: 0;
+  padding: 6px 0;
+  background: none;
+  font-size: var(--size-label);
+  line-height: 16px;
+}
+
+.rail, .list {
+  width: 352px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  background: var(--surface);
+}
+
+.rail h2, .list h2 { font-size: var(--size-region); }
+
+.stories, .runs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.story {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--radius-tag);
+  padding: 0;
+  background: none;
+}
+
+.parts {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+}
+
+.parts span {
+  flex: 1;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.parts [data-status="Merged"] { background: var(--ready); }
+.parts [data-status="Running"] { background: var(--moving); }
+.parts [data-status="Waiting"] { background: var(--waiting); }
+
+.runs li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* A full list, opened from "and N more", in the drawer area */
+.list {
+  width: 480px;
+  min-height: 0;
+}
+
+.list header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.list h2:focus { outline: none; }
+
+.list ul {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px;
+}
+
+.list .ask { width: 100%; }
+
+.now-close {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-1) var(--space-3);
+  background: none;
+  font-size: var(--size-label);
+}
+
+/* Figures */
+.now-figures {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+  border-top: 1px solid var(--line);
+  padding: var(--space-4) 0 var(--space-6);
+}
+
+.now-figures p {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--size-label);
+  color: var(--ink-2);
+}
+
+.now-figures strong {
+  font-size: var(--size-title);
+  line-height: 28px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.now-figures [data-tone="needs-you"] strong { color: var(--needs-you); }
+.now-figures [data-tone="stuck"] strong { color: var(--stuck); }
+
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover, .ask:hover { border-color: var(--ink-2); }
+  .story:hover .story-title, .done button:hover, .now-more:hover { text-decoration: underline; }
+  .kinds button[aria-pressed="false"]:hover { color: var(--ink); }
+}

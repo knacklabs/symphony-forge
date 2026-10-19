@@ -6,6 +6,7 @@ const PAGES = ['now', 'releases', 'insights'];
 // Each screen part adds its module here; a module exports install(Board). The import carries the
 // token, because the server checks it on every file.
 const SCREENS = [
+  'now',
   'item',
   'releases', 'insights',
 ];
