@@ -4,12 +4,20 @@
   "done_when": "At 1440x900 the Releases page shows at most the 10 files with the most kept problems, then an 'and N more' control that opens the full list; files no longer in the repo's default branch are left out; a browser test covers both on a new and an adopted repo",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T19:11:50.851183+00:00",
       "step": "start"
     }
   ],
-  "why": "The Releases page lists known issues for about 130 files, which makes it about 5,100 pixels tall at laptop size, and it includes files that no longer exist in the repo"
+  "stuck": {
+    "close": null,
+    "head": "78ed0d790b9d11e15c4fef98078d3dd7c965c0aa",
+    "keys": {},
+    "round": null
+  },
+  "why": "The Releases page lists known issues for about 130 files, which makes it about 5,100 pixels tall at laptop size, and it includes files that no longer exist in the repo",
+  "worker": "claude"
 }
