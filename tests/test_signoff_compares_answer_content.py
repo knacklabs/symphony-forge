@@ -40,6 +40,8 @@ def test_1_signoff_ignores_trailing_whitespace_and_line_endings(
     elif style == "brief whitespace":
         (fix / "docs/product/BRIEF.md").write_bytes(
             ("# Brief\r\n\r\n" + answers.replace("\n", " \t\r\n") + "\r\n\r\n").encode())
+        repo.git("add", "docs/product/BRIEF.md", cwd=fix)
+        repo.git("commit", "-qm", "Format the source answers", cwd=fix)
     else:
         quote = answers.rstrip("\n")
     page = _decision(fix, answers)
