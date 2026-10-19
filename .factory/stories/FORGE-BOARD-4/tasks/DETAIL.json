@@ -3,7 +3,7 @@
   "branch": "task/FORGE-BOARD-4-DETAIL",
   "part_line_limit": 400,
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T12:22:15.451751+00:00",
@@ -11,10 +11,14 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "The board shows a team what moves, what needs them and when it ships, at a glance: Drawer and full item page is stuck. It should deliver: drawer, item page tabs, inert plan rendering\nIt changes 795 lines outside tests, over its limit of 400.\nThe worker tried: Open any item in a drawer and a full page with its plan.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "Owner accepted the size on 19 October 2026: about 790 new lines, a third of them styles, checked in the browser; the part now has an allow-large reason",
     "size": true,
     "tool": "claude",
-    "wait_id": "8286096b-3ad8-4ad8-b16e-250718c96354"
+    "wait_id": "8286096b-3ad8-4ad8-b16e-250718c96354",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
