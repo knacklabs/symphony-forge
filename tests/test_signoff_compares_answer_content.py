@@ -3,25 +3,21 @@ import shutil
 
 import pytest
 
-from conftest import ROOT, Repo
+from conftest import ROOT
 from test_proto_signoff import _client, _decision
-from test_setup import _fresh_client
 
 STORY = "FIX-SIGNOFF-WHITESPACE"
 
 
 def _signoff(repo, gh, tmp_path, monkeypatch, history):
-    if history == "new":
-        client, initialized = _fresh_client(repo, gh, tmp_path)
-        assert initialized.returncode == 0, initialized.stderr
-        repo = Repo(client, repo.bin)
-    else:
-        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
-                        dirs_exist_ok=True)
-        assert 'version = "v1.2.2"' in (repo.path / "forge.toml").read_text("utf-8")
-        repo.git("add", "-A")
-        repo.git("commit", "-qm", "Adopt earlier Forge")
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
+    if history == "adopted":
+        current_config = (fix / "forge.toml").read_text("utf-8")
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", fix,
+                        dirs_exist_ok=True)
+        assert 'version = "v1.2.2"' in (fix / "forge.toml").read_text("utf-8")
+        (fix / "forge.toml").write_text(current_config, "utf-8")
+        (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers, "utf-8")
     synced = repo.forge("sync", cwd=fix)
     assert synced.returncode == 0, synced.stderr
     return repo, fix, answers, queue
