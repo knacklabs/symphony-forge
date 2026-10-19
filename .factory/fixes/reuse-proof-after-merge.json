@@ -49,8 +49,8 @@
     "id": "27d65283-8148-4ce7-af52-993a2227075d",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T05:18:14.328296+00:00",
@@ -62,10 +62,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "10b624102eeba5cf64cd66a05b6d2d85ce72a583",
+    "close": "c8fefdba-c17d-47de-ab08-4bda56844b35",
+    "head": "8145695dee6967edbdb5a240e231b3a0387ebe06",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Merges to main still rerun the full test suite: GitHub empties a pull request run's pull_requests list after the merge, so the proof check never matches the tested base",
   "worker": "codex"
