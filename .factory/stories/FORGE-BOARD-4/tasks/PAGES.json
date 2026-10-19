@@ -45,6 +45,10 @@
       "work": 2
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
@@ -87,7 +91,7 @@
     "id": "dbe0893a-bf29-4846-a5c9-1ba35312b063",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -100,10 +104,14 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "363b1f8b6da3c6432ce15748677c2342ea36555d",
-    "keys": {},
-    "round": null
+    "close": "2497f53d-65f8-44ad-8644-3bfa79e2e760",
+    "head": "27e87b9c279218b9b5cba25eeb34a34237856351",
+    "keys": {
+      "the review finding \"Make kept-finding titles accessible from the keyboard\" in src/forge/board_app/releases.js": 1,
+      "the review finding \"Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.\" in src/forge/board_app/releases.js": 1,
+      "the review finding \"Preserve unknown weeks when calculating Insights\" in src/forge/board_app/insights.js": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
