@@ -4,12 +4,20 @@
   "done_when": "A path marked linguist-generated in .gitattributes is never docs-only: close and the generated CI workflow share one rule and run the tests when such a file changes, on new repos and after sync on existing repos",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-19T08:39:48.820363+00:00",
       "step": "start"
     }
   ],
-  "why": "The docs-only skip treats a repo's generated docs as documentation, so their test never runs (issue 879)"
+  "stuck": {
+    "close": null,
+    "head": "85abcd535e592949831334e3ccb92bfde3c1b1e1",
+    "keys": {},
+    "round": null
+  },
+  "why": "The docs-only skip treats a repo's generated docs as documentation, so their test never runs (issue 879)",
+  "worker": "codex"
 }
