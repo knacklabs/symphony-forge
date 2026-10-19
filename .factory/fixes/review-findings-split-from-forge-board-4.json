@@ -89,7 +89,7 @@
     "id": "706bcbe8-3371-4735-b907-64c490b599f6",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "FORGE-BOARD-4/DETAIL",
   "status": "fixing",
   "steps": [
@@ -106,25 +106,15 @@
       "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "switch",
-    "question": "Review findings split from FORGE-BOARD-4/DETAIL: Gate is stuck. It should deliver: A review no longer finds: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)\nTwo rounds in a row left the review finding \"Preserve keyboard focus when live item data refreshes\" in src/forge/board_app/item.js.\nThe worker tried: Review of review-findings-split-from-forge-board-4: blocked; Give the item journey this fix's test key; Keep review text plain and keyboard focus steady.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "Owner chose Claude Opus on 19 October 2026: Opus built the drawer; one focused round fixes keyboard focus on live refresh (keyed and unkeyed elements, plan links) and the remaining split defects",
-    "tool": "codex",
-    "wait_id": "bd4f9b77-dbcd-4fd6-a355-3dba4d46c8eb",
-    "worker_round": 2
-  },
   "stuck": {
-    "close": "9fd653f8-7307-4d3c-99c0-93311d40bdd2",
-    "head": "0afb85ad935d70448eb745b2e52ac9d1e74c675b",
+    "close": "5a197050-0818-4ebb-bcd3-d791912a8f7e",
+    "head": "86611521762d353a2f31327059045898b952c46e",
     "keys": {
-      "the review finding \"Keep command text out of recorded reviews and known issues\" in src/forge/board_app/item.js": 1,
-      "the review finding \"Preserve keyboard focus when live item data refreshes\" in src/forge/board_app/item.js": 1
+      "the review finding \"Preserve keyboard focus when live item data refreshes\" in src/forge/board_app/item.js": 2
     },
-    "round": 1
+    "round": 2
   },
   "tool": "claude",
   "why": "Review findings split from FORGE-BOARD-4/DETAIL: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)",
-  "worker": "codex"
+  "worker": "claude"
 }
