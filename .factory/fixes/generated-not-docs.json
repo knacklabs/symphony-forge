@@ -10,13 +10,29 @@
   },
   "done_when": "A path marked linguist-generated in .gitattributes is never docs-only: close and the generated CI workflow share one rule and run the tests when such a file changes, on new repos and after sync on existing repos",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5a65c04f46540b7396d6157e09bdeb73d29e3c1cc73ae5776d4c1e47e775077a",
+    "changed": "63f1018ccc13a239085a3227cbbd279dbfc2329e458a6e76acf45bdea4f40509",
+    "commit": "7ee677cbfacde26b1fc05fdf8a6a86fddfa38e16",
+    "dismissals": [],
+    "findings": [],
+    "id": "c1f2d256-bda8-4c83-ba54-06fbe7be2e49",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T08:39:48.820363+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-19T08:54:00.355034+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
