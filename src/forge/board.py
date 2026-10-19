@@ -1,11 +1,11 @@
-"""`forge board`: one static page that tells each story's history and current state in plain English,
-how long each step took, which steps were slow, and the three success numbers. `forge next` shows
-those numbers in one line once the check date is here.
+"""`forge board`: the facts behind the live board page (board_server.py) and `--json`: each story's
+history and current state in plain English, how long each step took, which steps were slow, and the
+three success numbers. `forge next` shows those numbers in one line once the check date is here.
 
 It reads every copy of the state: in local worktrees, on Forge's branches on the remote, and on the
 default branch. Steps are only ever added, so the copy with the most dated steps is the newest. gh
 adds each pull request's title, summary line, merge date and when its checks passed; close stores
-none of those. Without gh the page shows the state and its dates only.
+none of those. Without gh the board shows the state and its dates only.
 """
 from __future__ import annotations
 
@@ -19,21 +19,20 @@ import shutil
 import statistics
 import subprocess
 import sys
-import webbrowser
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from textwrap import shorten
 from typing import Any
 
-from forge import __version__, approval, board_facts, board_graph, board_visuals, codex, machine, repo, story, task
+from forge import __version__, approval, board_facts, board_graph, codex, machine, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
     "help": "Open the live board page on this computer",
     "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"}),
-             (('--out',), {"metavar": "PATH", "help": "write the static page here instead"})],
+             (('--out',), {"metavar": "PATH", "help": "write every item's facts here as JSON instead"})],
     "position": 60,
-    "listing": "| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes the static page instead) |",
+    "listing": "| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
 }]
 
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure
@@ -59,16 +58,10 @@ def board(args: Any) -> int:
     if not args.out:
         from forge import board_server
         return board_server.serve(top)
-    view = machine_board(top, trim=False)
-    stories, prs = _gather(top)
-    page = board_visuals.page(view, "How the factory is doing: " + "; ".join(_numbers(stories, prs)) + ".",
-                              prs is not None, _when(repo.now()) or datetime.now(timezone.utc))
-    out = Path(args.out)
+    out = Path(args.out)  # every item, finished ones included: what the live page's other pages read
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(page.encode("utf-8"))  # same bytes on Windows
+    out.write_bytes(json.dumps(machine_board(top, trim=False)).encode("utf-8"))  # same bytes on Windows
     print(f"Wrote the board to {out}")
-    if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
-        webbrowser.open(out.resolve().as_uri())
     return 0
 
 
@@ -602,11 +595,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         if worker:
             status = {"build": "Worker", "read": "Plan read", "review": "Review"}.get(worker["kind"], "Worker") + " running"
             if worker.get("elapsed") is not None:
-                status += " for " + board_visuals.duration(worker["elapsed"])
+                status += " for " + time_records.plain(worker["elapsed"])
         elif tests:
             status = "Tests running"
             if tests.get("elapsed") is not None:
-                status += " for " + board_visuals.duration(tests["elapsed"])
+                status += " for " + time_records.plain(tests["elapsed"])
         idle_seconds = elapsed(idle_since)
         developer = board_facts.person(
             (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
@@ -634,8 +627,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                          or owners.get(read_key),
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
-                         + board_visuals.stage_duration(s) for s in stages
-                         if board_visuals.stage_seconds(s) is not None],
+                         + time_records.plain(_stage_seconds(s)) for s in stages
+                         if _stage_seconds(s) is not None],
                 "activity": {"status": "running", "action": active[-1].get("kind")} if active else
                             {"status": "running", "action": worker["kind"]} if worker else {"status": "idle"},
                 "idle_since": idle_since, "idle_seconds": idle_seconds,
@@ -1191,6 +1184,14 @@ def _took(delta: timedelta) -> str:
 
 def _times(n: float) -> str:
     return {1: "once", 2: "twice"}.get(n, f"{n:g} times")
+
+
+def _stage_seconds(stage: Item) -> float | None:
+    """A stage's recorded seconds, with a running stage's elapsed time added."""
+    seconds = stage.get("seconds")
+    if stage.get("status") == "running" and stage.get("elapsed") is not None:
+        seconds = (seconds or 0) + stage["elapsed"]
+    return seconds
 
 
 def _day(when: datetime | None) -> str:
