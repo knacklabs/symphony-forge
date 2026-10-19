@@ -1,0 +1,15 @@
+{
+  "base": "ca8be90505cf29ffc620f8b80e727ecd39d03e87",
+  "branch": "fix/release-1216",
+  "done_when": "Forge's version is 1.2.16 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-19T17:42:08.763968+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.16: the new live board page, the fix for forge.toml reverting after a Codex round merges main, migration-number warnings, Vitest and Jest worker caps, and steadier CI"
+}
