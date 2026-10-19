@@ -1,6 +1,13 @@
 {
   "base": "2b927a947284d75869b227de7140d50b24bba832",
   "branch": "fix/windows-test-fixes-2",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1558f-ba65-7851-b808-abade79f5d50",
+    "head": null,
+    "start": "c0da57979eaa27115708231d7efd8a1ecea61123"
+  },
   "done_when": "On windows-latest, close leaves forge.toml alone when an item's settings match main's (only line endings or the version pin differ), and these tests pass: test_close_preserves_default_settings test_2, test_chatview_attach test_5, test_codex_project_paths_and_pr_links test_2, test_pytest_picker_runs_in_the_clients_environment test_6, test_windows_suite_retries test_1 and test_board_now_screen test_12, with no behaviour change on Linux",
   "fix_kind": "backend",
   "kind": "fix",
