@@ -83,7 +83,7 @@ def _pr_check_steps(env) -> list[str]:
     for step in re.split(r"^      - ", job, flags=re.M)[1:]:
         # Advisory reporting now has its own real-script proof in test_client_setup_and_migration;
         # this harness preserves the required gate's output and refusal checks.
-        if "continue-on-error: true" in step:
+        if "Report pull request size" in step or "Report review status" in step:
             continue
         found = re.search(r"^ *run: (\|\n)?(.*)", step, re.M | re.S)
         if found:

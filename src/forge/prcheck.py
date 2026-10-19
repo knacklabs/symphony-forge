@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from fnmatch import fnmatch
 from pathlib import Path
@@ -102,7 +103,11 @@ jobs:
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
-    name: ${{ github.event_name == 'pull_request_target' && 'forge-pr-check' || 'forge-pr-check (other event)' }}
+    name: Review pull request
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
     runs-on: <runner>
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
@@ -122,11 +127,30 @@ jobs:
           git fetch --no-tags origin "refs/pull/$PR/head"
           test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
 <choose>      - run: <install>
-      - env:
+      - id: review
+        continue-on-error: true
+        env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+      - name: Report review status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REVIEW_OUTCOME: ${{ steps.review.outcome }}
+          REVIEW_PENDING: ${{ steps.review.outputs.review-pending }}
+        run: |
+          state=failure
+          if [ "$REVIEW_OUTCOME" = success ]; then
+            state=success
+          elif [ "$REVIEW_OUTCOME" = failure ] && [ "$REVIEW_PENDING" = true ]; then
+            state=pending
+          fi
+          job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          test "$state" != failure
       - name: Report pull request size
         if: always()
         continue-on-error: true
@@ -261,6 +285,10 @@ def pr_check(args: argparse.Namespace) -> int:
     result = state.get("review")
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):
+        # Keep the command's refusal, but let the trusted workflow distinguish the first push.
+        if result is None and os.environ.get("GITHUB_OUTPUT"):
+            with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+                output.write("review-pending=true\n")
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"

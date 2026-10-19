@@ -1340,6 +1340,8 @@ which passes only when every group passes: six groups when `test` calls pytest d
 the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
 and syncing; branch protection keeps the same `tests` check.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
+Before the first committed review, this check stays pending. A stale or blocked review still
+fails. New repos get this rule at init. Existing repos get it after upgrade and sync.
 Redo the change with `forge fix start "<why>" --done "<done when>"` and copy the commits there.
 Forge's generated `forge/*` branches and doctor's dated `fix/forge-files-*` branches still use
 the normal check for a Forge record and a current review. New repos get this check at init;
