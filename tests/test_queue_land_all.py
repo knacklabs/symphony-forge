@@ -158,6 +158,11 @@ SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 @pytest.fixture(params=["new", "adopted"])
 def client(env, request):
     repo = env.repo
+    # Queued land children use python -c instead of the idle Forge launcher.
+    # Keep their host-load input isolated too; machine_cores appends its CPU override.
+    (repo.bin / "sitecustomize.py").write_text(
+        "import os\nif hasattr(os, 'getloadavg'):\n"
+        "    os.getloadavg = lambda: (0.0, 0.0, 0.0)\n", encoding="utf-8")
     config = (repo.path / "forge.toml").read_text("utf-8") + 'merge = "agent"\n'
     if request.param == "new":
         path, made = _fresh_client(repo, env.gh, env.tmp)
