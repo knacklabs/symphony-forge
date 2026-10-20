@@ -88,7 +88,7 @@
     "id": "2949eeeb-9d68-4cc4-898d-d1467563d710",
     "status": "blocked"
   },
-  "round": 3,
+  "round": 4,
   "status": "fixing",
   "steps": [
     {
@@ -109,10 +109,12 @@
     }
   ],
   "stuck": {
-    "close": "a05a8a71-94e1-4f1c-8da9-e6069f4271a4",
-    "head": "27abec815f0af2716222ddd832f20032eb671dd2",
-    "keys": {},
-    "round": 2
+    "close": "db42e03e-a12b-422a-a859-c3908bec2c10",
+    "head": "e2cf84989dc0f993bba15b6b2186ef69efae47ad",
+    "keys": {
+      "the review finding \"Gate: test closing a task with a pre-upgrade approval\" in src/forge/close.py": 1
+    },
+    "round": 3
   },
   "worker": "codex"
 }
