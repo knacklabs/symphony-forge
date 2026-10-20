@@ -235,7 +235,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
     `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
     `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
-    from forge import known_issues, nextstep, time_records
+    from forge import known_issues, nextstep, releases, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
@@ -822,6 +822,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
+            **releases.collect(top, history, maps, items),
             "known_issues": known_issues.collect(top, {
                 "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
                 for rel, state, where in history["copies"]
