@@ -23,8 +23,8 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
     # (Windows) on 12 October, so the limits leave room for the suite to grow. macOS left the
     # full run on 18 October: its groups timed out and found no macOS-only product bug.
     ("ubuntu-latest", 5, 20, False),
-    ("windows-latest", 4, 45, False),
-    ("windows-latest", 4, 45, True),
+    ("windows-latest", 5, 45, False),
+    ("windows-latest", 5, 45, True),
 ])
 def test_1_each_platform_runs_every_group_once_with_its_time_limit(
         runner, count, minutes, windows_timings, tmp_path):

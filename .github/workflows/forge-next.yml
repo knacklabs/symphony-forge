@@ -77,19 +77,21 @@ jobs:
         # Linux pull request groups already run in forge.yml; Windows always runs its subset.
         include: >-
           ${{ fromJSON(github.event_name == 'pull_request' && '[
-            {"os":"windows-latest","group":1,"groups":4},
-            {"os":"windows-latest","group":2,"groups":4},
-            {"os":"windows-latest","group":3,"groups":4},
-            {"os":"windows-latest","group":4,"groups":4}]' || '[
+            {"os":"windows-latest","group":1,"groups":5},
+            {"os":"windows-latest","group":2,"groups":5},
+            {"os":"windows-latest","group":3,"groups":5},
+            {"os":"windows-latest","group":4,"groups":5},
+            {"os":"windows-latest","group":5,"groups":5}]' || '[
             {"os":"ubuntu-latest","group":1,"groups":5},
             {"os":"ubuntu-latest","group":2,"groups":5},
             {"os":"ubuntu-latest","group":3,"groups":5},
             {"os":"ubuntu-latest","group":4,"groups":5},
             {"os":"ubuntu-latest","group":5,"groups":5},
-            {"os":"windows-latest","group":1,"groups":4},
-            {"os":"windows-latest","group":2,"groups":4},
-            {"os":"windows-latest","group":3,"groups":4},
-            {"os":"windows-latest","group":4,"groups":4}]') }}
+            {"os":"windows-latest","group":1,"groups":5},
+            {"os":"windows-latest","group":2,"groups":5},
+            {"os":"windows-latest","group":3,"groups":5},
+            {"os":"windows-latest","group":4,"groups":5},
+            {"os":"windows-latest","group":5,"groups":5}]') }}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
     timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 20 }}

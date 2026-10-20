@@ -35,11 +35,11 @@ def matrix_rows(event, ref="refs/heads/main"):
 
 
 @pytest.mark.parametrize("event,counts", [
-    ("pull_request", {"windows-latest": 4}),
-    ("push", {"ubuntu-latest": 5, "windows-latest": 4}),
-    ("tag", {"ubuntu-latest": 5, "windows-latest": 4}),
-    ("schedule", {"ubuntu-latest": 5, "windows-latest": 4}),
-    ("workflow_dispatch", {"ubuntu-latest": 5, "windows-latest": 4}),
+    ("pull_request", {"windows-latest": 5}),
+    ("push", {"ubuntu-latest": 5, "windows-latest": 5}),
+    ("tag", {"ubuntu-latest": 5, "windows-latest": 5}),
+    ("schedule", {"ubuntu-latest": 5, "windows-latest": 5}),
+    ("workflow_dispatch", {"ubuntu-latest": 5, "windows-latest": 5}),
 ])
 def test_1_event_runs_every_required_platform_group_once(event, counts):
     rows = (matrix_rows("push", "refs/tags/v1.2.3") if event == "tag" else matrix_rows(event))

@@ -221,10 +221,11 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         newer = (folder / "forge.toml").read_text("utf-8") + "# A setting main changed\n"
         index = tmp_path / "main-index"
         plumbing = {**os.environ, "GIT_INDEX_FILE": str(index)}
-        git = lambda *args, **kw: subprocess.run(["git", *args], cwd=folder, env=plumbing, text=True,
-                                                 capture_output=True, check=True, **kw).stdout.strip()
+        # Raw Git objects must keep the fixture's LF bytes; Windows text stdin adds CRLF.
+        git = lambda *args, **kw: subprocess.run(["git", *args], cwd=folder, env=plumbing,
+                                                 capture_output=True, check=True, **kw).stdout.decode("ascii").strip()
         git("read-tree", main)
-        blob = git("hash-object", "-w", "--stdin", input=newer)
+        blob = git("hash-object", "-w", "--stdin", input=newer.encode("utf-8"))
         git("update-index", "--cacheinfo", f"100644,{blob},forge.toml")
         moved = git("commit-tree", git("write-tree"), "-p", main, "-m", "Main changes a setting")
         repo.git("update-ref", "refs/remotes/origin/main", moved, cwd=folder)
