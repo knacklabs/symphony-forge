@@ -7,13 +7,29 @@
     "head": null,
     "start": "bb41785fd837ed4ff9bbca32e8cd038af1e39370"
   },
+  "flagged": [],
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d31c4c736a85a405175c2e2ee587c92270d7d7202265fef36c8961d1b19de8e1",
+    "changed": "24e642e4dafb6aa7f2dbd75f2f8f4454a8786839bbacbda818bfc7df30c99fa4",
+    "commit": "40586e47c160d5038a0859c2c8e0bfd219c323c6",
+    "dismissals": [],
+    "findings": [],
+    "id": "bdcea0c6-703a-4a88-a8ff-61ddaf696d60",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T09:23:33.674074+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-20T10:04:16.138251+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
