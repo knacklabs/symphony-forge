@@ -19,7 +19,7 @@ PAST_PEOPLE = """query PastPeople($owner: String!, $name: String!, $endCursor: S
       pageInfo { hasNextPage endCursor }
       nodes { number headRefName mergedAt
         author { login ... on User { name } }
-        mergedBy { login name }
+        mergedBy { login ... on User { name } }
       }
     }
   }

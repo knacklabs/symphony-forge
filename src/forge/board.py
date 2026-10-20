@@ -256,10 +256,12 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     github = board_facts.prs(top)
     people_prs = board_facts.prs(top, people=True)
     past_people = backfill.people(top)
-    people_branches = {pr["headRefName"]: pr for pr in [
-        *past_people,
-        *(people_prs or {}).get("open", []), *board_facts.merged_prs(people_prs)]
-        if isinstance(pr.get("headRefName"), str)}
+    people_branches = {}
+    for pr in [*past_people, *(people_prs or {}).get("open", []), *board_facts.merged_prs(people_prs)]:
+        if isinstance(branch := pr.get("headRefName"), str):
+            previous = people_branches.get(branch, {})
+            people_branches[branch] = {**pr, **{
+                field: pr.get(field) or previous.get(field) for field in ("author", "mergedBy")}}
     names = {("email", email): name for email, name in _display_names(top).items()}
     for pr in sorted([*people_branches.values(), *past_people],
                      key=lambda pr: pr.get("mergedAt") or "", reverse=True):

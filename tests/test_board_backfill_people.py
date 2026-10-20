@@ -48,6 +48,7 @@ def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, mon
     repo.git("push", "-q", "origin", head + ":refs/pull/31/head")
     repo.git("worktree", "remove", original.as_posix())
     history.prs[0]["headRefOid"] = head
+    history.item("recent-people", 33, 10)
     history.at(NOW)
     repo.git("push", "-q", "origin", "main")
     repo.git("tag", "v0.1.0")
@@ -79,6 +80,18 @@ def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, mon
     assert first["SHOP/T1"]["released_in"] == first["SHOP/T2"]["released_in"] == "v0.1.0"
     before = history.stored()
     failure.unlink()
+    # A later GitHub response can omit an actor. The recorded login still holds.
+    store = repo.bin / "historical-prs.json"
+    refreshed = list(before.values())
+    for pr in refreshed:
+        if pr["number"] == 33:
+            pr.update(author=None, mergedBy=None)
+    store.write_text(json.dumps(refreshed), "utf-8")
+    monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=121)).isoformat())
+    refreshed_people = rows(board(repo))["recent-people"]
+    assert refreshed_people["started_by_login"] == "starter"
+    assert refreshed_people["merged_by"] == {"name": "Human Merger", "login": "merger"}
+    before = history.stored()
     again = up.run(RELEASE)
     assert again.returncode == 0, again.stdout + again.stderr
     assert history.stored() == before
@@ -86,6 +99,6 @@ def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, mon
     monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(days=2)).isoformat())
     offline = rows(board(repo))
     assert board(repo)["known_issues"] == [issue]
-    for item in ("SHOP", "SHOP/T1", "SHOP/T2"):
+    for item in ("SHOP", "SHOP/T1", "SHOP/T2", "recent-people"):
         for field in ("started_by", "started_by_login", "developer", "developer_login", "released_in"):
             assert offline[item][field] == first[item][field]
