@@ -38,7 +38,7 @@ UNREACHABLE = ("Couldn't reach GitHub, so older items' time stories weren't rebu
                "the next forge close on this machine tries again.")
 
 # GitHub persists exactly the body the real command sends it; the edge makes no record.
-GITHUB = '''import json, pathlib, subprocess, sys
+GITHUB = '''import json, pathlib, re, subprocess, sys
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 store = here / "historical-prs.json"
@@ -47,6 +47,23 @@ def output(value):
     with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
         calls.write(json.dumps(args) + "\\n")
     print(json.dumps(value))
+    sys.exit(0)
+if args[:2] == ["api", "graphql"] and any("PastPeople" in arg for arg in args):
+    # Both fields return Actor, which has login but no direct name field.
+    # https://docs.github.com/en/graphql/reference/pulls#pullrequest
+    query = next(arg for arg in args if arg.startswith("query="))
+    if (here / "batch-launcher").exists() and any("\\n" in arg or "\\r" in arg for arg in args):
+        sys.exit("A batch launcher splits arguments at line breaks")
+    if re.search(r"(?:author|mergedBy)\\s*\\{\\s*login\\s+name\\b", query):
+        sys.exit("Cannot query field name on type Actor")
+    if (here / "history-unreachable").exists():
+        sys.exit("GitHub is unreachable")
+    for pr in prs:
+        if pr["state"] == "MERGED":
+            fields = ("number", "headRefName", "mergedAt", "author", "mergedBy")
+            if re.search(r"\\bbody\\b", query):
+                fields += ("body",)
+            print(json.dumps({field: pr.get(field) for field in fields}))
     sys.exit(0)
 if args[:2] == ["api", "graphql"]:
     # GitHub independently reports successful required checks at the PR's actual

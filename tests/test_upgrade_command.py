@@ -130,6 +130,9 @@ class Upgrade:
 
 @pytest.fixture
 def unsynced_up(env, tmp_path, monkeypatch) -> Upgrade:
+    # Ordinary upgrade fixtures have no past merged pull requests. Historical
+    # fixtures replace gh with their paginated archive at the service edge.
+    env.gh.respond("api", "graphql", "--paginate", stdout="")
     conftest._install(env.repo.bin, "uv", UV.format(python=sys.executable, mark=MARK,
                                                     root=str(conftest.ROOT), idle_machine=conftest.IDLE_MACHINE))
     monkeypatch.setenv("PATH", f"{tmp_path / 'uvbin'}{os.pathsep}{os.environ['PATH']}")

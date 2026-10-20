@@ -235,7 +235,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
     `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
     `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
-    from forge import known_issues, nextstep, releases, time_records
+    from forge import backfill, known_issues, nextstep, releases, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
@@ -255,11 +255,17 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     # Older open PRs keep their number, but deliberately have unknown checks.
     github = board_facts.prs(top)
     people_prs = board_facts.prs(top, people=True)
-    people_branches = {pr["headRefName"]: pr for pr in [
-        *(people_prs or {}).get("open", []), *board_facts.merged_prs(people_prs)]
-        if isinstance(pr.get("headRefName"), str)}
+    past_people = backfill.people(top)
+    by_branch = {**{pr["headRefName"]: pr for pr in past_people}, **by_branch}
+    people_branches = {}
+    for pr in [*past_people, *(people_prs or {}).get("open", []), *board_facts.merged_prs(people_prs)]:
+        if isinstance(branch := pr.get("headRefName"), str):
+            previous = people_branches.get(branch, {})
+            people_branches[branch] = {**pr, **{
+                field: pr.get(field) or previous.get(field) for field in ("author", "mergedBy")}}
     names = {("email", email): name for email, name in _display_names(top).items()}
-    for pr in sorted(people_branches.values(), key=lambda pr: pr.get("mergedAt") or "", reverse=True):
+    for pr in sorted([*people_branches.values(), *past_people],
+                     key=lambda pr: pr.get("mergedAt") or "", reverse=True):
         for actor in (pr.get("author"), pr.get("mergedBy")):
             if actor and actor.get("name"):
                 board_facts.person(actor, names=names)
@@ -673,9 +679,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             text = (_read(top, plan_where, f"plans/{key}.md", history)
                     if key in completed or story.plan_ref(top, key, history) == landed
                     else story._plan(top, key, history=history))
-            names = task.rows(task.sections(text))
-            names = {cell.strip("` "): spec for cell, spec in names.items()}
-            title = (names.get(tid) or {}).get("Name") or "A part with no name yet"
+            specs = task.rows(task.sections(text))
+            specs = {cell.strip("` "): spec for cell, spec in specs.items()}
+            title = (specs.get(tid) or {}).get("Name") or "A part with no name yet"
             children.setdefault(key, []).append(row(f"{key}/{tid}", "task", title, state, where))
         else:
             key = match["key"]
