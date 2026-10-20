@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BOARD-3-RELEASES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-20T09:10:58.589167+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a7edd71034565dac84bd6137324767dbb73a7dcf",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
