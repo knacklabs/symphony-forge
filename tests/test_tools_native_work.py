@@ -51,6 +51,9 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
     models = MODELS[tool] if history == "new" else ""
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{setting}\n'
                              f'test = "pytest -q"\n{models}')
+    # Exercise Windows settings bytes on every host, including the later main merge.
+    config = repo.path / "forge.toml"
+    config.write_bytes(config.read_text("utf-8").replace("\n", "\r\n").encode("utf-8"))
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "BOARD"}]}))
     repo.write(".factory/fixes/settings.json", json.dumps({
         "kind": "fix", "branch": "fix/settings", "status": "working",
@@ -161,6 +164,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert str(folder.resolve().as_posix()) in short.read_text("utf-8")
         assert "If this session can't reach it, start a new worker subagent with" in given.stdout
         settings = (folder / "forge.toml").read_text("utf-8")
+        settings_bytes = (folder / "forge.toml").read_bytes()
         before = repo.git("rev-parse", "HEAD", cwd=folder)
         (folder / "forge.toml").write_text(settings + "[[[ not settings\n", "utf-8")
         # The item's pull request is published, so its record is refreshed with the question.
@@ -213,19 +217,20 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert repo.git("log", "-1", "--format=%s", cwd=folder) == (
             "Restore forge.toml; settings change in their own fix")
         assert repo.git("rev-list", "--count", f"{handed}..HEAD", cwd=folder) == "2"
+        assert (folder / "forge.toml").read_bytes() == settings_bytes
 
         # A round that merges the default branch after main's forge.toml changed keeps main's
         # settings: only the worker's own edits come back (issue 921).
         _, _, number = handout("BOARD/HELP", "worker")
         main = repo.git("rev-parse", "origin/main", cwd=folder)
-        newer = (folder / "forge.toml").read_text("utf-8") + "# A setting main changed\n"
+        newer = settings_bytes + b"# A setting main changed\r\n"
         index = tmp_path / "main-index"
         plumbing = {**os.environ, "GIT_INDEX_FILE": str(index)}
-        # Raw Git objects must keep the fixture's LF bytes; Windows text stdin adds CRLF.
+        # Raw Git objects must keep the fixture bytes; text stdin translates Windows newlines.
         git = lambda *args, **kw: subprocess.run(["git", *args], cwd=folder, env=plumbing,
                                                  capture_output=True, check=True, **kw).stdout.decode("ascii").strip()
         git("read-tree", main)
-        blob = git("hash-object", "-w", "--stdin", input=newer.encode("utf-8"))
+        blob = git("hash-object", "-w", "--stdin", input=newer)
         git("update-index", "--cacheinfo", f"100644,{blob},forge.toml")
         moved = git("commit-tree", git("write-tree"), "-p", main, "-m", "Main changes a setting")
         repo.git("update-ref", "refs/remotes/origin/main", moved, cwd=folder)
@@ -235,7 +240,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         merged = handback("BOARD/HELP", number, "Merged main.", cwd=folder)
         assert merged.returncode == 0, merged.stdout + merged.stderr
         assert "Restored forge.toml" not in merged.stdout
-        assert (folder / "forge.toml").read_text("utf-8") == newer
+        assert (folder / "forge.toml").read_bytes() == newer
         assert repo.git("log", "-1", "--format=%s", cwd=folder) != (
             "Restore forge.toml; settings change in their own fix")
         repo.git("update-ref", "refs/remotes/origin/main", main, cwd=folder)
