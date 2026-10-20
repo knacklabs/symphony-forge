@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import copy
 import functools
-import io
 import json
 import os
 import re
@@ -883,42 +882,19 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
 
 
 def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> dict[str, str]:
-    """Read git objects in one process; sizes are bytes, including on Windows."""
-    if not specs:
-        return {}
+    """Read objects and their older notes through the command's shared Git reader."""
     pending, seen, texts = list(dict.fromkeys(specs)), set(specs), {}
-    if not follow_notes:
-        done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
-                              input="".join(spec + "\n" for spec in pending).encode("utf-8"),
-                              capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
-        output = io.BytesIO(done.stdout)
-        for spec in pending:
-            header = output.readline()
-            if header.endswith(b" missing\n"):
-                continue
-            text = output.read(int(header.split()[-1])).decode("utf-8", errors="replace")
-            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
-            output.read(1)
-        return texts
-    with subprocess.Popen([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
-                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                          env={**os.environ, "FORGE_WORKER": "1"}) as process:
-        assert process.stdin is not None and process.stdout is not None
-        for spec in pending:
-            process.stdin.write((spec + "\n").encode("utf-8"))
-            process.stdin.flush()
-            header = process.stdout.readline()
-            if header.endswith(b" missing\n"):
-                continue
-            text = process.stdout.read(int(header.split()[-1])).decode("utf-8", errors="replace")
-            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
-            process.stdout.read(1)
-            if follow_notes and (previous := story._record(texts[spec])[0].get("notes_seen")) and previous not in seen:
+    while pending:
+        found = repo.blob_texts(top, pending)
+        texts.update(found)
+        pending = []
+        if follow_notes:
+            for text in found.values():
+                previous = story._record(text)[0].get("notes_seen")
+                if not previous or previous in seen:
+                    continue
                 seen.add(previous)
                 pending.append(previous)
-        output, errors = process.communicate()
-        if process.returncode:
-            raise subprocess.CalledProcessError(process.returncode, process.args, output, errors)
     return texts
 
 

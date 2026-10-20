@@ -1338,10 +1338,17 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+Docs and brand-asset changes get the light review, which blocks only on P0 findings.
 Close and the generated `forge.yml` skip the test command when every changed path is Markdown
 (case-insensitive), or under `docs/`, `plans/`, `.factory/` or `.forge/`. They compare against the
 base with the same rule as the part-size check. No setting is needed. The required `tests` check
-passes and says `docs only: tests skipped`. One code file runs tests as usual. New repos get
+passes and says `docs only: tests skipped`. Images and fonts also count as assets, wherever they
+live. Files marked `linguist-generated` and docs or assets referenced by tests keep the full
+review and tests. Forge resolves literal paths from the repository or test file's folder on
+both sides of the change, including literal path joins, `__tests__/` files and shared
+`conftest.py` fixtures.
+CI checks this once before the test groups and skips the group jobs for a docs-only change.
+One code file runs tests as usual. New repos get
 this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
 For other changes, the generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
 which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
