@@ -10,13 +10,29 @@
   },
   "done_when": "forge read <decision-slug> runs a cold read of a decision record the same way it reads a spec, on a new repo and on an earlier-adopted repo; the coordinator guide names it",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cf44a2b01f5edcc3edec9cc212116ce2a4fe7b03e64207a614061ffc54c82627",
+    "changed": "2d754497d58410eaf2a49027dba2171c3226da34d52b86bfbcfeef214e7d3174",
+    "commit": "db7cb8b0fef9f00596cf4a9400be68899ec6673a",
+    "dismissals": [],
+    "findings": [],
+    "id": "3ad70d5c-c23f-40d0-acab-5e9ddb3c6b48",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T05:43:52.086375+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-20T05:49:07.408856+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
