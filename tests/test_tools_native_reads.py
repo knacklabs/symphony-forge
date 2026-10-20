@@ -115,16 +115,16 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     written = notes.read_text("utf-8")
     assert f"reader: {tool} ({model}), a subagent of this " in written
     assert f"because forge.toml's tools is {tool}" in written
-    # Every handout consumes its round, including failed or stopped reads.
-    assert f"round: {findings_offer['round']}\n" in written and "passed: no\n" in written
-    assert "1. Missing saved basket ownership." in written
-    assert "2. Missing save failure behavior." in written
+    # Failed handouts consume rounds too. This result arrives after round two,
+    # so unscored non-P0 notes now pass as automatically kept follow-ups.
+    assert f"round: {findings_offer['round']}\n" in written and "passed: yes\n" in written
+    assert "passed with follow-ups." in findings.stdout
     for finding in ("1. Missing saved basket ownership.", "2. Missing save failure behavior."):
-        written = written.replace(finding, finding + "\n   Disposition: keep - clarified in the plan")
-    notes.write_text(written, "utf-8")
+        assert finding + "\n   Disposition: keep - Left open after round two" in written
+    assert repo.git("show", "HEAD:plans/SHOP.read.md", cwd=shop) == written.strip()
     doc.write_text(DOC + "\nSaved baskets belong to their shopper; failures leave the basket intact.\n", "utf-8")
     second = handout()
-    assert "Disposition: keep - clarified in the plan" in second["fresh_prompt"]
+    assert "Disposition: keep - Left open after round two" in second["fresh_prompt"]
     assert second["subagent"] == "reader-chat"
     result = handback("1. Advisory: State how long baskets are kept.")
     assert result.returncode == 0, result.stdout + result.stderr

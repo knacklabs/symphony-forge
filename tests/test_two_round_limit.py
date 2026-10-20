@@ -169,7 +169,7 @@ def test_2_a_cold_read_ends_after_round_two(repo, gh, tmp_path, adopted, target,
         assert f"Next: forge read {target}" not in next_step.stdout
         return
     resolution = f'forge read {target} --resolve <accept|more|split> --reason "<human\'s choice>"'
-    assert "2" in read.stderr and "P0" in read.stderr
+    assert f"Round 2 of the cold read of {target} still has a P0 note open." in read.stderr
     assert "One more round, split or accept?" in read.stderr and title in read.stderr
     assert resolution in read.stderr
     held = repo.forge("read", target, cwd=where)
@@ -178,7 +178,9 @@ def test_2_a_cold_read_ends_after_round_two(repo, gh, tmp_path, adopted, target,
     assert resolution in next_step.stdout and title in next_step.stdout
     assert len(calls.read_text("utf-8").splitlines()) == 2
     invalid = repo.forge("read", target, "--resolve", case, "--reason", " ", cwd=where)
-    assert invalid.returncode == 1 and "non-empty --reason" in invalid.stderr
+    assert invalid.returncode == 1
+    assert ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason."
+            in invalid.stderr)
     assert len(calls.read_text("utf-8").splitlines()) == 2
     chosen = repo.forge("read", target, "--resolve", case, "--reason",
                         "The owner chose this after reading the remaining basket loss", cwd=where)
