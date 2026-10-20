@@ -48,11 +48,23 @@ def _setup(env, client, tmp_path, named=False, renamed_check=False):
 def test_1_codex_open_merge_keeps_incoming_settings_through_close(
         env, client, monkeypatch, sdk_data, tmp_path):
     folder, _, incoming = _setup(env, client, tmp_path)
+    # Startup now merges main. Publish another change only after the worker starts,
+    # so this case still exercises cleanup while a real merge remains open.
+    baseline = client.git("rev-parse", "origin/main")
+    incoming += "# Settings changed after the worker started\n"
+    Upgrade(env, tmp_path).on_main("forge.toml", incoming)
+    future = client.git("rev-parse", "HEAD")
+    remote = client.git("remote", "get-url", "origin")
+    client.git("update-ref", "refs/heads/main", baseline, cwd=remote)
+    client.git("update-ref", "refs/remotes/origin/main", baseline)
     source = (ROOT / "tests/stubs/codex-app-server").read_text("utf-8")
     insertion = '                if os.environ.get("STUB_CODEX_TOUCH"):'
-    merge = '''                import subprocess
+    merge = f'''                import subprocess
                 marker = pathlib.Path(cwd) / "merged-main.txt"
                 if not marker.exists():
+                    subprocess.run(["git", "update-ref", "refs/heads/main", {json.dumps(future)}],
+                                   cwd={json.dumps(remote)}, check=True)
+                    subprocess.run(["git", "fetch", "-q", "origin", "main"], cwd=cwd, check=True)
                     subprocess.run(["git", "merge", "-q", "--no-commit", "origin/main"],
                                    cwd=cwd, check=True, stdout=sys.stderr, stderr=sys.stderr)
                     settings = pathlib.Path(cwd) / "forge.toml"
