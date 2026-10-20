@@ -7,13 +7,100 @@
     "head": null,
     "start": "4b2c6197ceddcf15f85ff6925bba5a1a2255de38"
   },
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 294,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: moving an idea leaves one item on the board",
+      "work": 2
+    },
+    {
+      "area": "story_drop() in src/forge/intake.py",
+      "file": "src/forge/intake.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 167,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Check task ownership before refusing a story drop",
+      "work": 2
+    },
+    {
+      "area": "test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list() in tests/test_start_sorts_ideas.py",
+      "file": "tests/test_start_sorts_ideas.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 289,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f847c10f30c92b331a275da149a859f70d3b6de9165e9af2bac4b4004223e6b1",
+    "changed": "529ebf1cb68f4791822f15911f54c6884790620c7fb15348feab1a13b767adfb",
+    "commit": "f84df180af9f478092605296cfa15ef3bd54490c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - run the documented plan-to-fix move from the story's checkout. `fix_start` inherits that checkout's planning state (`src/forge/task.py:550\u2013562`). The board reads worktrees first and selects state by step count (`src/forge/board.py:250\u2013252,957\u2013959`), while `story_drop` records no additional step (`src/forge/intake.py:183\u2013186`). Consequently, the inherited planning state wins over the published dropped state, this dropped-key set misses the story, and the board displays both items. A teammate's stale story checkout produces the same result after fetching. This misses item 5: \u201cThe owner moves an idea to another lane with one short instruction, and Forge moves it without losing what was written and leaves one item on the board.\u201d Reconcile the published story state before filtering.",
+        "file": "src/forge/board.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 294,
+        "priority": "P1",
+        "title": "Not done: moving an idea leaves one item on the board",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - stories named SHOP and SHOP-MOBILE coexist, and SHOP-MOBILE has a started task. The `task/SHOP-*` patterns also match `task/SHOP-MOBILE-SPEC`, so dropping the unapproved, unstarted SHOP story incorrectly reports that its parts have started. This blocks the documented plan-to-fix move because of unrelated work. Inspect the matched branches' state under `.factory/stories/SHOP/tasks/` before treating them as SHOP's tasks; branch names alone are ambiguous because both story keys and task IDs allow hyphens.",
+        "file": "src/forge/intake.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 167,
+        "priority": "P1",
+        "title": "Check task ownership before refusing a story drop",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - an unclear or important idea is sorted without the owner requesting deferral. This test supplies the discovery, later and fix choices itself. Its only selection-policy assertion checks the product-behaviour sentence at line 289; no test checks that the delivered explorer prompt requires discovery for an unguessable problem or restricts parking to owner-requested deferral. Removing those directives from `templates/start.md`, or instructing automatic parking by importance, leaves the named proof green. The command-level proof needs to verify those emitted policy instructions as well as executing the supplied lane replies.",
+        "file": "tests/test_start_sorts_ideas.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 289,
+        "priority": "P1",
+        "title": "Gate: test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list",
+        "work": 2
+      }
+    ],
+    "id": "e7fcff52-00ec-4c48-b43b-595e632124b9",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T17:15:07.809453+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-20T21:10:53.401098+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
