@@ -282,13 +282,22 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 pinned += alert[:-1] + found
             else:
                 lines += found
-    for path in sorted(trees.values()):  # a spec read stopped on any work branch
+    for path in sorted(trees.values()):  # a spec's read or confirmation on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
             text = notes.read_text(encoding="utf-8")
             spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
             if spec.is_file():
-                if story.stopped(*story._record(text)):  # pyright: ignore[reportPrivateUsage]
-                    lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
+                record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
+                spec_text = spec.read_text(encoding="utf-8")
+                fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
+                if story.stopped(record, findings):
+                    lines += _read_loop(spec.stem, spec_text, text, path)
+                elif (fields.get("status") == "draft" and story.passed(record, findings)
+                      and record.get("read_hash") == repo.git("hash-object", "--", str(spec), cwd=path)):
+                    title = re.search(r"^# (.+)$", body, re.M)
+                    cd = f"cd {repo.quote(str(path))} && " if path != top else ""
+                    lines += [f"{review.plain(title[1]) if title else spec.stem} is ready for confirmation.",
+                              f'Next: {cd}forge spec confirm {spec.stem} --by "<name>"']
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
@@ -610,7 +619,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     waiting = (stack_waits if _report_config(top, refusals)["stack"] == "on" else
                [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                 if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)])
-    reread = _next_round(top, key, notes, doc_hash, title, required, text)
+    reread = _next_round(key, notes, doc_hash, title, required, text)
     if readiness is not None:
         readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
@@ -658,7 +667,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str], text: str, readiness: dict[str, Any] | None = None) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
-    reread = _next_round(top, key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
+    reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
                          story.rounds(notes), text)
     if reread:
         return reread
@@ -683,7 +692,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
     """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
     changed above `## For the builders`: `text` is the notes, `doc_hash` and `doc` the doc's git
     hash and text."""
