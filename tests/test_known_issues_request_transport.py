@@ -9,8 +9,10 @@ production code or deciding the board result in a fake.
 import json
 import re
 import subprocess
+from datetime import timedelta
 from urllib.parse import parse_qs, urlsplit
 
+from test_board_after_upgrade import NOW
 from test_board_counts import board
 from test_close import env  # noqa: F401
 from test_known_issues import kept_history  # noqa: F401
@@ -22,7 +24,7 @@ STORY = "FIX-KNOWN-ISSUES-TRANSPORT"
 
 
 @pytest.mark.platform
-def test_1_board_history_request_survives_windows_batch_launchers(kept_history):
+def test_1_board_history_request_survives_windows_batch_launchers(kept_history, monkeypatch):
     repo, _, item = kept_history
     github = repo.bin / "gh"
     github.write_text(github.read_text("utf-8").replace(
@@ -30,6 +32,9 @@ def test_1_board_history_request_survives_windows_batch_launchers(kept_history):
 with open(pathlib.Path(__file__).parent / "transport-calls.jsonl", "a", encoding="utf-8") as calls:
     calls.write(json.dumps(args) + "\\n")''', 1), "utf-8")
 
+    # Upgrade fills the daily history cache before request recording starts.
+    # Expire it so both new and adopted repos exercise the request transport.
+    monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(days=2)).isoformat())
     issues = board(repo)["known_issues"]
     assert any(row["item"] == item for row in issues), issues
     calls = [json.loads(line) for line in
