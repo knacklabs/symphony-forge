@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-20T07:04:51.516871+00:00",
+      "because": "Owner rule of 20 October 2026: leftovers after review round two that are not P0 become follow-ups",
+      "done_when": "A change that touches only docs and asset files gets the light review and its pull request skips the test jobs, on a new repo and on an earlier-adopted repo; a docs or asset file that a test reads, or a linguist-generated file, does not count as docs-only; the coordinator guide says so"
+    }
+  ],
   "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
   "branch": "fix/docs-assets-light",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "63ee94025caf21f2bab3ac9ad5fea040c1e82895"
   },
-  "done_when": "A change that touches only docs and asset files gets the light review and its pull request skips the test jobs, on a new repo and on an earlier-adopted repo; a docs or asset file that a test reads, or a linguist-generated file, does not count as docs-only; the coordinator guide says so",
+  "done_when": "A change that touches only docs and asset files gets the light review and its pull request skips the test jobs, on a new repo and on an earlier-adopted repo; a docs or asset file that a test reads, or a linguist-generated file, does not count as docs-only; the coordinator guide says so Out of scope, a follow-up: a test that builds an asset path by joining Path(__file__) with relative parts is not detected as reading that asset.",
   "fix_kind": "backend",
   "flagged": [
     "src/forge/docskip.py"
