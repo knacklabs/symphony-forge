@@ -1,6 +1,13 @@
 {
   "base": "1e1e48286498821699c46da9cdc1ca4ebb3a26da",
   "branch": "task/FORGE-ROUNDS-1-STOP",
+  "chat": {
+    "approval": "24d98103c5d69eb74043f84c181e8cf014dce9cf6b2575b9391509ec688bd6f3",
+    "claude": null,
+    "conversation": "01a158e1-1cde-7931-84d2-ed1047c6d088",
+    "head": null,
+    "start": "6551235b77dc2fe4f6caf932c5c4fa2dfe3c63e1"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-INTAKE-1/SORT",
