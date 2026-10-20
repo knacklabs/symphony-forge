@@ -54,7 +54,7 @@
       "gain": 4,
       "harm": 3,
       "line": 44,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 2,
       "security": false,
@@ -64,30 +64,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "68b35660a64d2e1711fef09ffdb46ef9753a25e9b237cb765a6c70b958573ef3",
-    "changed": "0431f19b297d724917c147afcf7617e25ef530396a3a7b12218ef4fbcae0213c",
-    "commit": "48527df5ebbcdd1cb10a6f1a406d834704e19de9",
+    "branch_diff": "9e88add1adc0b2ebfc944f2818ca6c4ab899ebc8dae26f8ad6269687839ec9cc",
+    "changed": "4039a82682249881b749f1ae632cc34681811604093308d43963219727c0a7d3",
+    "commit": "51927fa8a14dd425af3289d31451dfe351ac009e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 A test reading `(Path(__file__).parent / '../brand' / 'logo.svg').read_text()` is missed when `brand/logo.svg` changes. The join regex requires a quoted first argument, so it cannot fold `Path(__file__)`; the subsequent scan checks `../brand` and `logo.svg` separately, neither of which resolves to the changed file. Consequently, this test-read asset receives light review and skips every CI test group. Literal `.joinpath()` constructions have the same gap. The generated `.forge/review-tests.py:55` repeats the defect. The added relative-path test uses one complete path literal, so it does not catch this regression.",
-        "file": "src/forge/docskip.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 44,
-        "priority": "P1",
-        "title": "Preserve full checks for file-relative path joins",
-        "work": 2
-      }
-    ],
-    "id": "28744c0f-e086-44f3-9dd5-2e526e79ad69",
-    "status": "blocked"
+    "findings": [],
+    "id": "db4b1167-ea0f-4617-9422-87c19f4cea19",
+    "status": "clean"
   },
   "round": 2,
   "settled_areas": [
     "only_docs() in src/forge/docskip.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T05:43:56.114060+00:00",
@@ -99,6 +88,10 @@
     },
     {
       "at": "2026-10-20T06:23:26.411776+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:08:19.334247+00:00",
       "step": "review"
     }
   ],
