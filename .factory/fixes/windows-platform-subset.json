@@ -37,8 +37,8 @@
     "id": "c9b7e2e4-1479-4ee6-af79-f10cadda6e12",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T20:09:40.594291+00:00",
@@ -62,10 +62,10 @@
     }
   ],
   "stuck": {
-    "close": "92699fdb-7362-4ee9-9276-732ebf686459",
-    "head": "ec38df64dffeb3b50c4a75ea212e2a57d8ad0856",
+    "close": "234cc4e6-135e-4337-91bc-e9372b9499e0",
+    "head": "e1e94f07938d74e6c09777411dee221f7d575cf8",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "Windows CI takes about 6 times Linux (313 against 53 runner minutes, longest group 31.8 against 12.3 minutes) because it runs the whole suite, and it runs only nightly, so Windows bugs show up the next day",
   "worker": "codex"
