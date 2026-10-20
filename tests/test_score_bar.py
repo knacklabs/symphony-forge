@@ -18,7 +18,6 @@ from conftest import _install
 from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env  # noqa: F401 (env is a fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_score_notes import _client_repo, _scored
-from test_stop_default_answer import follow_ups, later
 from test_story import DOC, READER, new_story
 from test_worker import calls, install_claude
 
@@ -88,6 +87,11 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
         assert repo.forge("work", item).returncode == 0
         brief = _findings_in(calls(log)[-1]["brief"])
         assert "Saved serious finding" in brief and "Saved advice" not in brief
+        # The bar below is a first-round contract; the saved review already counts as round one.
+        item, where = env.start("score-bar", "fix/score-bar", ".factory/fixes/score-bar.json",
+                                {"kind": "fix", "why": "Check the first-round bar",
+                                 "done_when": "The bar decides what holds work"},
+                                {"app.py": "print('hello')\n"})
 
     # Stop and fix-this-round scores hold, regardless of the reviewer's priority.
     held = [("Saving loses the note", 3, 2, 3),
@@ -195,9 +199,10 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Sign-in is out of scope" in known and "The title could be shorter" in known
 
-    # Three findings at the bar in one area stop the part; the owner accepts them.
+    # Three P0s in one area still stop the part; the owner accepts them.
+    # Non-P0 findings now become follow-ups from round two.
     env.commit(where, "app.py", "print('saved twice')\n")
-    env.reviews(blocked(*[_scored("P1", title, "Gain 4, Work 2, Harm 1\nRaise: Functional")
+    env.reviews(blocked(*[_scored("P0", title, "Gain 5, Work 2, Harm 4\nRaise: Functional")
                           for title in ("Saving drops the basket", "Saving skips the coupon",
                                         "Saving forgets the address")],
                         _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
@@ -259,49 +264,16 @@ SHOP = ("def save(basket):\n    total = 0\n    return total\n\n\nLIMIT = 5\n\n\n
 
 
 @pytest.mark.parametrize("case", CASES)
-@pytest.mark.parametrize("loop", ["new-harm-1", "harm-3-open", "only-harm-2", "only-harm-2-saved-before-known", "area",
-                                  "read-below-bar-harm-3", "case-only-repeat"])
-def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, case, loop):
+@pytest.mark.parametrize("loop", ["area", "read-below-bar-harm-3", "case-only-repeat"])
+def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, case, loop):
     _client_on_this_release(env, tmp_path, case)
     item, where = env.start_fix()
-    before = follow_ups(env)
-    # Loop findings must still hold work under the new bar; low-Harm Gain 3 no longer does.
-    at_bar = lambda title, file, harm=1, line=1: {  # noqa: E731
+    # Round-two non-P0 follow-ups belong to test_two_round_limit.
+    # Retained area and identity checks use P0s, which still hold work.
+    at_bar = lambda title, file, harm=4, line=1: {  # noqa: E731
         **_scored("P1", title, f"Gain 4, Work 2, Harm {harm}\nRaise: Functional", file),
         "code_location": {"file_path": file, "line": line}}
-    if loop == "new-harm-1":  # three blocked rounds of new Harm 1 findings: a fourth review runs
-        for number in (1, 2, 3):
-            _round(env, item, where, number, at_bar(f"Round {number} defect", f"docs/{number}.md"))
-        assert "Ready:" in _round(env, item, where, 4, code=0).stdout
-        assert len(env.review_calls()) == 4
-    elif loop == "harm-3-open":  # an open Harm 3 follow-up stops it, and waits for the owner
-        for number in (1, 2):
-            _round(env, item, where, number, at_bar(f"Round {number} defect", f"docs/{number}.md"))
-        _round(env, item, where, 3, at_bar("Round 3 defect", "docs/3.md", harm=2),
-               _scored("P2", "Follow-up: other shells", "Gain 3, Work 4, Harm 3\nRaise: Functional", "docs/4.md"))
-        stop = _round(env, item, where, 4).stderr
-        assert "Ask the human" in stop and "| 2 | other shells" in stop  # the finding that caused the stop
-        later(monkeypatch, 31)
-        held = env.close(item)
-        assert held.returncode == 1 and "Ask the human" in held.stderr
-        assert len(env.review_calls()) == 3 and follow_ups(env) == before
-    elif loop.startswith("only-harm-2"):  # a finding at the bar that keeps coming back; the default narrows
-        for number in (1, 2, 3):
-            _round(env, item, where, number, at_bar("Saving drops the basket", "docs/1.md", harm=2))
-        if loop.endswith("saved-before-known"):  # rounds an earlier release saved without the known list
-            path = ".factory/fixes/tidy-readme.json"
-            state = json.loads((where / path).read_text("utf-8"))
-            state.pop("known")
-            env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
-        stopped = _round(env, item, where, 4).stderr
-        # The owner now decides even when every open finding has low Harm.
-        assert "Ask the human" in stopped and "settle it yourself" not in stopped
-        assert len(env.review_calls()) == 3
-        later(monkeypatch, 31)
-        narrowed = env.close(item)
-        assert "Forge recorded the repo's default choice: narrow" in narrowed.stdout
-        assert len(follow_ups(env)) == len(before) + 1
-    elif loop == "case-only-repeat":  # one finding whatever its case: a third round still holds it
+    if loop == "case-only-repeat":  # one P0 whatever its case: a third round still holds it
         for number, title in enumerate(("Saving drops the basket", "saving drops the basket", "Saving drops the basket"), 1):
             held = _round(env, item, where, number, at_bar(title, "docs/1.md"))
         assert "The review left serious findings open" in held.stderr
@@ -336,5 +308,5 @@ def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, ca
         assert narrow.returncode == 0, narrow.stdout + narrow.stderr
         assert "Ready:" in _round(env, item, where, 4, at_bar("Save adds tax twice", shop, harm=2, line=2),
                                   code=0).stdout
-        held = _round(env, item, where, 5, at_bar("Save loses cents", shop, harm=3, line=2))
-        assert "The review left serious findings open: finding 1 (Save loses cents)." in held.stderr
+        held = _round(env, item, where, 5, at_bar("Save loses the basket", shop, line=2))
+        assert "The review left serious findings open: finding 1 (Save loses the basket)." in held.stderr

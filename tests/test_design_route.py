@@ -9,6 +9,8 @@ from test_codex_worker import QUIET, _codex_repo, _sent, sdk_data
 from test_worker import calls, install_claude
 from test_story import prototype_design
 
+import pytest
+
 STORY = "FORGE-DESIGN-1"
 
 
@@ -111,6 +113,7 @@ def test_3_user_facing_task_uses_design_claude_with_split_workers(repo, monkeypa
     assert len(_sent(codex_log, "turn/start")) == 2
 
 
+@pytest.mark.platform
 def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
                                                                             sdk_data):
     # A two-tool fallback needs both kits, so run without a coordinating session.

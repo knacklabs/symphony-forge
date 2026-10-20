@@ -1,6 +1,7 @@
 """Close keeps both review-loop holds and their owner choices after init or upgrade."""
 STORY = "any-file-hold"
 
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ import pytest
 
 from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
 from test_setup import _fresh_client
+from test_upgrade_command import Upgrade
 from test_worker import calls, install_claude
 
 
@@ -18,10 +20,10 @@ RULE = (
 )
 QUESTION_RULE = ("When a cold read or review loop stops and you must ask, ask the human the question it printed, "
                  "in its words, one item per question.")
-PATHS = ["docs/product/BRIEF.md", "docs/specs/README.md", "forge.toml"]
+PATHS = ["docs/product/BRIEF.md", "docs/specs/README.md", "docs/product/settings.md"]
 
 
-def client_item(env, tmp_path, previous):
+def client_item(env, tmp_path, previous, stop_default=False):
     if previous:
         # Land the earlier release's plain-text adoption fixture before it installs git hooks.
         for path in PATHS[:-1]:
@@ -35,6 +37,10 @@ def client_item(env, tmp_path, previous):
         client, initialized = _fresh_client(env.repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stderr
         env.repo.path = client
+    if stop_default:
+        # Product fixes now keep default settings, so coordinator setup belongs on main.
+        config = (env.repo.path / "forge.toml").read_text("utf-8")
+        Upgrade(env, tmp_path).on_main("forge.toml", 'stop_default = "off"\n' + config)
     item, where = env.start_fix()
     if previous:
         version = env.repo.forge("--version").stdout.split()[-1]
@@ -49,6 +55,7 @@ def client_item(env, tmp_path, previous):
     return item, where
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous,same_file,choice", [
     (False, False, "narrow"), (True, False, "split"),
     (False, False, "accept"), (True, False, "accept"),
@@ -58,9 +65,8 @@ def client_item(env, tmp_path, previous):
 @pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env, tmp_path, previous, same_file, choice):
-    item, where = client_item(env, tmp_path, previous)
     # With the default on, land waits out the stop; this checks that land refuses until a choice.
-    env.commit(where, "forge.toml", 'stop_default = "off"\n' + (where / "forge.toml").read_text("utf-8"))
+    item, where = client_item(env, tmp_path, previous, stop_default=True)
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
@@ -68,8 +74,8 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env.commit(where, path, f"# Review round {number}\n" + previous)
         # The advice note repeats each round; from round 2 it is known below the bar, so already settled.
         env.reviews(blocked(finding("P3", "Advice only"),
-                            {**finding("P1", f"Functional: Round {number} defect", path),
-                             "body": "Gain 3, Work 2, Harm 3\nRaise: Functional \u2014 Saving at `app.py:3` drops the basket "
+                            {**finding("P0", f"Functional: Round {number} defect", path),
+                             "body": "Gain 3, Work 2, Harm 4\nRaise: Functional \u2014 Saving at `app.py:3` drops the basket "
                                      "(a3f9c2e1b). Returning shoppers lose their saved items. "
                                      "More detail."}))
         result = env.close(item)
@@ -79,6 +85,10 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         assert len(env.review_calls()) == number
     round_number = 3 if same_file else 4
     if not same_file:
+        # Three different files do not trigger the third-round same-file stop.
+        state = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
+        assert state["status"] == "fixing"
+        assert "stop" not in state
         # Unlike the existing same-file stop, this hold refuses before spending a fourth review.
         env.commit(where, "app.py", "print('attempt fourth review')\n")
         env.reviews(CLEAN)
@@ -92,8 +102,8 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         "Readme greets new readers: The readme opens with a greeting",
         moved + "It still has these problems:",
         "| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
-        "| 2 | Round 3 defect: saving drops the basket. Returning shoppers lose their saved items. | 3 | 2 | 3 "
-        "| fix this round |",
+        "| 2 | Round 3 defect: saving drops the basket. Returning shoppers lose their saved items. | 3 | 2 | 4 "
+        "| fix now |",
         "Accept, narrow or split?",
         "- Accept: every finding in this review, the 1 listed, is dismissed "
         "with your reason and recorded; close then goes on to the checks, and merging is still a "
@@ -119,8 +129,10 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     assert f'forge close {item} --resolve <narrow|split|accept>' in next_step.stdout
     for command in ("close", "land"):
         waiting = env.repo.forge(command, item)
-        assert waiting.returncode == 1, waiting.stdout + waiting.stderr
-        assert waiting.stderr.splitlines()[-9:] == result.stderr.splitlines()[-9:]
+        assert waiting.returncode == (3 if command == "land" else 1), waiting.stdout + waiting.stderr
+        assert waiting.stderr.splitlines()[-9:-1] == result.stderr.splitlines()[-9:-1]
+        assert waiting.stderr.splitlines()[-1] == result.stderr.splitlines()[-1] + (
+            f", then forge land {item}" if command == "land" else "")
         assert len(env.review_calls()) == 3
     reason = "The human chose this after reading the remaining findings"
     chosen = env.close(item, "--resolve", choice, "--reason", reason)
@@ -160,10 +172,10 @@ def test_3_only_consecutive_serious_blocked_reviews_hold_the_next_reviewer(env, 
         env.commit(where, "app.py", f"print('round {number}')\n")
         env.commit(where, f"docs/{number}.md", f"# Review round {number}\n")
         clean = number == 5 or number == 2 and interruption == "clean"
-        # Harm 3 holds the loop by the bar; files of their own keep each finding in its own area.
+        # P0 findings still hold later rounds; separate files keep each finding in its own area.
         env.reviews(CLEAN if clean else blocked(
-            {**finding("P1", f"Round {number} defect", f"docs/{number}.md"),
-             "body": "Gain 3, Work 2, Harm 3\nEvidence"}))
+            {**finding("P0", f"Round {number} defect", f"docs/{number}.md"),
+             "body": "Gain 3, Work 2, Harm 4\nEvidence"}))
         result = env.close(item)
         assert result.returncode == (0 if clean else 1), result.stdout + result.stderr
         assert len(env.review_calls()) == number

@@ -16,6 +16,8 @@ from test_spotted import entry, LIST
 from test_measure import SPEC
 from test_story import prototype_design
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-PACE-1"
 
 

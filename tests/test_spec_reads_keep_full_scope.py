@@ -11,6 +11,7 @@ from test_story import worktree
 STORY = "FIX-PLAN-READS-CAPPED"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgrade-sync"])
 def test_3_specs_keep_full_document_blocking_in_later_rounds(repo, gh, tmp_path, previous):
     _client(repo, gh, tmp_path, previous)

@@ -266,6 +266,12 @@
       "order": 83
     },
     {
+      "key": "FORGE-BOARD-4",
+      "title": "The board shows a team what moves, what needs them and when it ships, at a glance",
+      "status": "pending",
+      "order": 84
+    },
+    {
       "key": "FORGE-PACE-1",
       "title": "Prototypes start from an approved design and reach sign-off faster, and signed-off work ships without redoing it",
       "status": "pending",
@@ -288,6 +294,36 @@
       "title": "The board's data knows who owns what, what shipped when, and what was left",
       "status": "pending",
       "order": 84
+    },
+    {
+      "key": "FORGE-DROP-1",
+      "title": "Drop a fix nobody wants any more, and bring it back later",
+      "status": "pending",
+      "order": 85
+    },
+    {
+      "key": "FORGE-GITCOST-1",
+      "title": "Forge commands start far fewer git processes",
+      "status": "pending",
+      "order": 86
+    },
+    {
+      "key": "FORGE-BUDGET-1",
+      "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
+      "status": "pending",
+      "order": 87
+    },
+    {
+      "key": "FORGE-INTAKE-1",
+      "title": "Forge sorts every new idea into a fix, a plan, discovery or the idea list",
+      "status": "pending",
+      "order": 88
+    },
+    {
+      "key": "FORGE-ROUNDS-1",
+      "title": "Reads and reviews end after two rounds",
+      "status": "pending",
+      "order": 88
     }
   ],
   "epics": [

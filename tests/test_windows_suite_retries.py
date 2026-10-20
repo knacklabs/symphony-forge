@@ -11,6 +11,8 @@ from types import SimpleNamespace
 
 import pytest
 
+pytestmark = pytest.mark.platform
+
 STORY = "windows-rerun-flakes"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -29,7 +31,14 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
                      lambda m: m[2] if runner == m[1] else m[3], command)
     command = re.sub(r"\$\{\{ matrix.os == '([^']+)' && (\d+) \|\| (\d+) \}\}",
                      lambda m: m[2] if runner == m[1] else m[3], command)
+    # This sample repo has no native Windows timings, so CI uses the Linux seed.
+    # Resolve the new timing selector before pytest can mistake it for test paths.
+    command = re.sub(
+        r"\$\{\{ matrix.os == 'windows-latest' && hashFiles\('\.test_durations_windows'\) != ''"
+        r" && '\.test_durations_windows' \|\| '\.test_durations' \}\}",
+        ".test_durations", command)
     command = command.replace("${{ matrix.groups }}", "1").replace("${{ matrix.group }}", "1")
+    assert "${{" not in command, f"Unresolved CI expression: {command}"
     tokens = shlex.split(command)
     options = tokens[tokens.index("pytest") + 2:]
     expected = ["--reruns", "1"] if runner == "windows-latest" else []
@@ -40,7 +49,7 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
     # CI's real pytest plugins, including xdist and split, own the attempts and exit status.
     head = "@pytest.fixture\ndef sample():\n" if phase != "call" else "def test_sample():\n"
     (tmp_path / "test_sample.py").write_text(
-        "from pathlib import Path\nimport pytest\n"
+        "from pathlib import Path\nimport pytest\npytestmark = pytest.mark.platform\n"
         + head + "    path = Path(__file__).with_name('attempts.txt')\n"
         "    count = int(path.read_text()) + 1 if path.exists() else 1\n"
         "    path.write_text(str(count))\n"
@@ -49,6 +58,10 @@ def test_1_only_the_windows_full_suite_retries_once_and_keeps_second_failures(tm
         + ("    yield\n" if phase == "setup" else "")
         + ("def test_sample(sample):\n    pass\n" if phase != "call" else ""), encoding="utf-8")
     options[options.index("auto")] = "2"
+    # Pytest validates every basetemp value, even one overridden later. CI's
+    # Windows root is an ancestor of this sample's cwd, so keep only our own.
+    base = options.index("--basetemp")
+    del options[base:base + 2]
     # Keep CI's relative timing path: an external option path makes pytest's root
     # the common ancestor of that path and the test, causing filesystem-wide collection.
     (tmp_path / ".test_durations").write_text('{"test_sample.py::test_sample": 1.0}\n', encoding="utf-8")

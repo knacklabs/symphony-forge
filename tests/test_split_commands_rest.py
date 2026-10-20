@@ -2,6 +2,8 @@
 import ast
 from pathlib import Path
 
+import pytest
+
 from test_split_commands import commands_keep_their_help_and_register_a_new_owner
 
 STORY = "FORGE-SPLIT-1"
@@ -19,7 +21,7 @@ OWNERS = {
     "records": {"spec save", "spec confirm", "spec measure", "decision new",
                 "decision accept", "roadmap add", "roadmap retire"},
     "story": {"story new", "story done", "read"},
-    "task": {"assign", "task start", "fix start", "fix allow-large", "fix amend"},
+    "task": {"assign", "task start", "fix start", "fix drop", "fix allow-large", "fix amend"},
     "worker": {"work"},
 }
 
@@ -30,6 +32,7 @@ def _assignments(module):
             for target in node.targets if isinstance(target, ast.Name)}
 
 
+@pytest.mark.platform
 def test_2_remaining_commands_are_owned_and_keep_their_help(repo, tmp_path, monkeypatch):
     assert "TABLE" not in _assignments("cli")
     for module, words in OWNERS.items():

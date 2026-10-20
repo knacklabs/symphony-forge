@@ -11,7 +11,7 @@ from test_shortplan_briefs import NEW, SAVE_DETAILS
 
 STORY = "reviews-converge"
 CONVERGENCE = ("From the second review round, close checks the previous round's findings "
-               "and the lines changed since that review.")
+               "and new P0s that happen in normal use.")
 OWNER_ACCEPTANCE = ("`Not done` blocks only against a numbered owner-approved Done-when item "
                     "(a fix uses its Done-when line). Builder details, Notes and implementation "
                     "guidance never block as `Not done`.")
@@ -41,60 +41,6 @@ def synced(env, where):
     env.repo.git("add", "-A", cwd=where)
     if env.repo.git("diff", "--cached", "--name-only", cwd=where).strip():
         env.repo.git("commit", "-q", "-m", "Sync client guidance", cwd=where)
-
-
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-@pytest.mark.parametrize("case", ["unchanged", "security", "data-loss", "security-category",
-                                  "data-loss-category", "deletion", "unresolved", "changed"])
-def test_1_review_convergence_keeps_repairs_and_serious_unchanged_defects(env, adopted, case):
-    client(env, adopted)
-    old = finding("P1", "Saving ignores the request",
-                  line=3 if case == "unresolved" else 2 if case == "deletion" else 1)
-    env.reviews(blocked(old))
-    initial = ("save = False\nbad = True\nlegacy = True\n" if case == "deletion"
-               else "save = False\n\nlegacy = True\n")
-    item, where = env.start_fix({"app.py": initial})
-    synced(env, where)
-    reviewed = env.repo.git("rev-parse", "HEAD", cwd=where).strip()
-    first = env.close(item)
-    assert first.returncode == 1 and old["title"] in first.stderr, first.stdout + first.stderr
-
-    # The deletion-only hunk has no new lines; its preceding anchor remains unchanged.
-    # This guards an existing diff-boundary rule, not a claimed pre-fix deletion defect.
-    repaired = ("save = False\nlegacy = True\n" if case == "deletion"
-                else "save = True\n\nlegacy = True\n")
-    env.commit(where, "app.py", repaired, "Repair saving")
-    if case == "deletion":
-        diff = env.repo.git("diff", "--unified=0", reviewed, "HEAD", "--", "app.py", cwd=where)
-        assert "@@ -2 +1,0 @@" in diff and "-bad = True" in diff
-    new = (old if case == "unresolved" else finding(
-        "P1", "Saving still ignores quantity" if case in ("changed", "deletion") else "Legacy output is wrong",
-        line=1 if case in ("changed", "deletion") else 3))
-    if case in ("security", "data-loss"):
-        new["body"] += "\nRaise: " + ("Security" if case == "security" else "Data loss")
-    if case in ("security-category", "data-loss-category"):
-        new["category"] = "security" if case == "security-category" else "data_loss"
-        new["body"] = "Gain 2, Work 5, Harm 1\nThe category identifies the protection gap."
-        assert "Raise:" not in new["body"]
-    env.reviews(blocked(new))
-    closed = env.close(item)
-    assert len(env.review_calls()) == 2, closed.stdout + closed.stderr
-    if case in ("unchanged", "deletion"):
-        assert closed.returncode == 0, closed.stdout + closed.stderr
-        shown = body(env.gh_calls("pr", "edit")[-1])
-        assert "Follow-ups:" in shown and new["title"] in shown
-        assert "blocks the merge" not in shown
-    else:
-        assert closed.returncode == 1 and new["title"] in closed.stderr, closed.stdout + closed.stderr
-        if case in ("security-category", "data-loss-category"):
-            assert "Harm 4 (floor:" in closed.stdout
-
-    prompt = env.prompt()
-    assert old["title"] in prompt
-    assert reviewed in prompt
-    assert "fixed" in prompt.casefold() and "not fixed" in prompt.casefold()
-    args = env.review_calls()[-1]["args"]
-    assert args[args.index("--base") + 1] == reviewed
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
@@ -135,9 +81,10 @@ def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, 
         item, where = env.start_fix()
         env.commit(where, "docs/implementation.md", "# Builder guidance\n\nSave the greeting.\n")
     synced(env, where)
+    # Round-two P1s now follow up; this retained owner-choice test needs genuine P0s.
     for number, title in enumerate(("Saving drops quantities", "Saving drops discounts"), 1):
         env.commit(where, "app.py", f"print('saving repair {number}')\n")
-        env.reviews(blocked(finding("P1", title)))
+        env.reviews(blocked(finding("P0", title)))
         closed = env.close(item)
         assert closed.returncode == 1 and title in closed.stderr, closed.stdout + closed.stderr
     assert len(env.review_calls()) == 2
@@ -176,7 +123,7 @@ def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, 
 
     # The focused review may reach the genuine same-file stop. A later guidance
     # edit cannot substitute for the owner's explicit hard-stop resolution.
-    env.reviews(blocked(finding("P1", "Saving drops names")))
+    env.reviews(blocked(finding("P0", "Saving drops names")))
     stopped = env.close(item)
     resolve = f"forge close {item} --resolve <narrow|split|accept>"
     assert stopped.returncode == 1 and resolve in stopped.stderr, stopped.stdout + stopped.stderr

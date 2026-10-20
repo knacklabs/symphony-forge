@@ -859,8 +859,7 @@ def plan_behind(top: Path, key: str, ref: str, history: dict[str, Any] | None = 
 
 def show(top: Path, ref: str, path: str) -> str | None:
     """A file's text at a commit, or None when it isn't there."""
-    done = repo.run("git", "show", f"{ref}:{path}", cwd=top)
-    return done.stdout if done.returncode == 0 else None
+    return repo.read_blob(top, f"{ref}:{path}")
 
 
 def merged_at(top: Path, ref: str, path: str) -> str:
@@ -914,15 +913,15 @@ def json_of(text: str | None) -> dict[str, Any]:
 
 
 def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool]:
-    """The checkout, doc and notes file of a story key or a spec slug, and whether it's a story."""
+    """The checkout, doc and notes of a story, spec or decision, and whether it's a story."""
+    from forge import records
+
     if KEY.fullmatch(target):
         top = story_checkout(target, top)
         return top, top / "plans" / f"{target}.md", top / "plans" / f"{target}.read.md", True
     top = top or repo.root()
-    doc = top / "docs" / "specs" / f"{target}.md"
-    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", target) or not doc.is_file():
-        repo.refuse(REFUSALS["no_spec"], slug=target)
-    return top, doc, doc.with_name(f"{target}.read.md"), False
+    doc = records.read_path(top, target)
+    return top, doc, doc.with_suffix(".read.md"), False
 
 
 def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
@@ -1186,12 +1185,12 @@ COMMANDS = [
      "args": [(('key',), {}), (('outcome',), {})], "position": 80,
      "listing": '| `forge story done <KEY> "<outcome>"` | Corrects a finished story\'s outcome on an existing work branch; opens no separate pull request |'},
     {"words": "read", "run": "read", "changes_state": True,
-     "help": "Run a round of the cold read of a story doc or spec",
-     "args": [(('target',), {"help": "a story key or a spec slug"}),
+     "help": "Run a round of the cold read of a story doc, spec or decision",
+     "args": [(('target',), {"help": "a story key, spec slug or decision slug"}),
               (('--resolve',), {"choices": ["accept", "narrow", "split"]}),
               (('--reason',), {})],
      "position": 90,
-     "listing": '| `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |'},
+     "listing": '| `forge read <KEY or spec or decision>` | Runs the next round of the cold read of a story doc, spec or decision, until a round finds nothing |'},
 ]
 
 GROUP_HELP = {"story": "Start a story, or record its outcome"}

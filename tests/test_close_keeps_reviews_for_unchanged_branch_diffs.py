@@ -1,6 +1,6 @@
 """Close keeps clean review decisions across an unchanged branch diff.
 
-Open findings also require unchanged reviewed files before numbered dismissals can be used.
+Open findings require another review when reviewed files change. Dismissals follow the finding.
 
 The real close command owns review reuse and dismissals; only Autoreview and GitHub are faked.
 """
@@ -78,19 +78,8 @@ def test_1_close_keeps_review_and_dismissals_when_main_moves(env, previous, dism
     env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
                    '"body":"","isDraft":false,"mergeStateStatus":"BEHIND"}]')
     closed = env.close(item, *(() if dismiss_before_merge else dismissal))
-    if not dismiss_before_merge:
-        # The old contract reused open findings despite changes to their cited file. Close now
-        # reviews that file first; dismissals already saved on a clean review still survive.
-        assert closed.returncode == 1, closed.stdout + closed.stderr
-        assert closed.stderr.splitlines() == [
-            "The branch changed since the review those finding numbers came from.",
-            f"Next: forge close {item}",
-        ]
-        assert len(env.review_calls()) == 1
-        refreshed = env.close(item)
-        assert refreshed.returncode == 1, refreshed.stdout + refreshed.stderr
-        assert "The review left serious findings open:" in refreshed.stderr
-        closed = env.close(item, *dismissal)
+    # The old contract refused a pending dismissal after main changed a reviewed file.
+    # Close now reviews again and applies that dismissal to the matching finding.
     assert closed.returncode == 0, closed.stdout + closed.stderr
     env.repo.git("merge-base", "--is-ancestor", moved, "HEAD", cwd=where)
     assert env.repo.git("diff", "--raw", "--no-abbrev", "-z", "origin/main...HEAD",

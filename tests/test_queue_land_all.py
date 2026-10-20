@@ -302,7 +302,7 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(600):
-            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid"] in env.gh.calls():
+            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid,number,headRefName"] in env.gh.calls():
                 break
             time.sleep(0.2)
         # The draft stays in place: a Windows process can hold its starting folder open.
@@ -395,6 +395,7 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
             "  Next: forge land aa"]
 
 
+@pytest.mark.platform
 @pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monkeypatch):
     env = client

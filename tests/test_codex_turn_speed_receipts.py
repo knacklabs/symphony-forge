@@ -15,9 +15,7 @@ from test_setup import _autoreview, _fresh_client, _stub_forge
 STORY = "fast-mode-visible"
 
 
-# From Claude Code, so these Codex workers run through the Codex kit.
-@pytest.mark.usefixtures("claude_session")
-@pytest.mark.parametrize("tiers, mode, receipt, received, said, doctor", [
+SPEED_CASES = [
     ([{"id": "priority", "name": "Fast"}], "needed", None, "priority",
      "Codex Fast: requested for this turn.",
      "the last codex turn ran with fast"),
@@ -42,8 +40,16 @@ STORY = "fast-mode-visible"
      "Codex Fast: requested for this turn.", "codex did not report the last turn's speed"),
     ([{"id": "priority", "name": "Fast"}], "off", None, "default",
      "Codex speed: normal requested for this turn.", "the last codex turn ran at normal speed"),
+]
+
+
+# From Claude Code, so these Codex workers run through the Codex kit.
+@pytest.mark.usefixtures("claude_session")
+@pytest.mark.parametrize("tiers, mode, receipt, received, said, doctor, adopted", [
+    pytest.param(*case, adopted, id=f"{'adopted-release' if adopted else 'new'}-tiers{index}")
+    for index, case in enumerate(SPEED_CASES)
+    for adopted in (False, True) if not adopted or index in (0, 9)
 ])
-@pytest.mark.parametrize("adopted", [False, True], ids=["new", "adopted-release"])
 def test_1_each_turn_says_and_records_whether_fast_ran(
         repo, monkeypatch, sdk_data, tiers, mode, receipt, received, said, doctor, adopted):
     # Old proof only checked text somewhere; receipts now cover each capacity retry as well.
@@ -78,6 +84,9 @@ def test_1_each_turn_says_and_records_whether_fast_ran(
     assert len({row["turn"] for row in speeds}) == 2
     expected = "priority" if tiers and mode != "off" else "default"
     assert all(row["requested_tier"] == expected and row["tier"] == received for row in speeds)
+    assert all(turn.get("serviceTierForTurn") == expected for turn in _sent(calls, "turn/start"))
+    if expected != "default":
+        assert _sent(calls, "model/list")
     assert worked.stdout.splitlines()[0] == said
     checked = repo.forge("doctor")
     lines = [line.lower() for line in checked.stdout.splitlines() if "codex fast" in line.lower()]

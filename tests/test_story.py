@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.platform
 DESIGN_IMAGE = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"></svg>\n'
 _blob = hashlib.sha1(f'blob {len(DESIGN_IMAGE)}\0'.encode() + DESIGN_IMAGE.encode()).digest()
 _tree = b'100644 screen.svg\0' + _blob

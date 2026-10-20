@@ -1,0 +1,64 @@
+{
+  "base": "af7648175aa885bf6ccd8cac51ab3a423e4ddc4f",
+  "branch": "fix/reuse-proof-after-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15298-b158-7a80-ad7a-a40d322004c2",
+    "head": null,
+    "start": "546d3da266dde371007f114800d9b6923a17a23e"
+  },
+  "done_when": "When a merged pull request's run lists no pull requests, the proof check accepts the run if main's tip at merge time was committed before that run started and the merge tree equals the tested merge, a test covers an empty list and a main that moved after the run started, and a real merge's run skips its tests",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_merged_run_without_snapshots_requires_an_older_main_tip_and_the_same_tree() in tests/test_ci_reuses_proof_without_pr_snapshots.py",
+      "file": "tests/test_ci_reuses_proof_without_pr_snapshots.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 45,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a real merge's run skips its tests",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9c3edcdc76ec1969d72feb8f0aea12db38c99c930f27ee2eba581364d8c06370",
+    "changed": "98384c2a21fc1e16fc1fa96abff0cb3ffa01e600391cd6a8725f3d8f1c5a9138",
+    "commit": "bd86e0fa2a834f09cd9cef0b60efdae15da7ad6a",
+    "dismissals": [],
+    "findings": [],
+    "id": "4c38df9d-281b-41b7-a683-0aa771a254b5",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T05:18:14.328296+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T05:22:43.448169+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T05:53:07.277622+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c8fefdba-c17d-47de-ab08-4bda56844b35",
+    "head": "8145695dee6967edbdb5a240e231b3a0387ebe06",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Merges to main still rerun the full test suite: GitHub empties a pull request run's pull_requests list after the merge, so the proof check never matches the tested base",
+  "worker": "codex"
+}

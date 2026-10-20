@@ -51,7 +51,8 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     found = lambda title, scores, number, who="": _scored(  # noqa: E731
         "P1", title, f"{scores}\nRaise: Functional.{who}", f"docs/{number}.md")
     for number in (1, 2):
-        _round(env, item, where, number, found(f"Round {number} defect", "Gain 4, Work 2, Harm 1", number))
+        # P0s keep the staged three-round stop reachable; non-P0s now follow up at round two.
+        _round(env, item, where, number, found(f"Round {number} defect", "Gain 5, Work 2, Harm 4", number))
     _round(env, item, where, 3,
            found("Other shells", "Gain 3, Work 4, Harm 3", 3, " Fish users get no prompt."),
            found("Saving drops the basket", "Gain 3, Work 2, Harm 2", 4, " Returning shoppers lose it."),

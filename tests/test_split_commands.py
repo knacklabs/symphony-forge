@@ -17,9 +17,11 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # Machine views deliberately add --json to next and board (FORGE-MOD-1).
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
 # Test adds the lane and picker; stop adds cancellation; FORGE-BOARD-3 adds assign.
+# Dropping and restoring a fix adds a fix subcommand, with no new top-level command.
+# Amend now offers --append alongside --done and describes the preview of both texts.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,start,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -30,7 +32,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,start,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
@@ -44,11 +46,13 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    upgrade             Upgrade Forge in this repo to a release, or the\n'
      '                        newest, through one fix\n'
      '    next                Say where things stand and give the exact next command\n'
-     '    board               Write and open the plain-English board page\n'
+     '    board               Open the live board page on this computer\n'
      "    lanes               Show this release's machine-wide runs\n"
      '    stop                Stop a running or waiting run (only a person)\n'
+     '    start               Choose how an idea starts\n'
      '    story               Start a story, or record its outcome\n'
-     '    read                Run a round of the cold read of a story doc or spec\n'
+     '    read                Run a round of the cold read of a story doc, spec or\n'
+     '                        decision\n'
      '    assign              Give a story or part to a developer by GitHub username\n'
      '    task                Start a task\n'
      '    fix                 Start a fix, let it go over the fix limit, or change\n'
@@ -75,7 +79,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
              '  {new,accept}\n'
              '    new         Write a decision record\n'
              '    accept      Accept a decision after the human confirms in chat\n',
- 'fix': 'usage: forge fix [-h] {start,allow-large,amend} ...\n'
+ 'fix': 'usage: forge fix [-h] {start,drop,allow-large,amend} ...\n'
         '\n'
         'Start a fix, let it go over the fix limit, or change its done-when\n'
         '\n'
@@ -83,13 +87,14 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         '  -h, --help            show this help message and exit\n'
         '\n'
         'commands:\n'
-        '  {start,allow-large,amend}\n'
+        '  {start,drop,allow-large,amend}\n'
         '    start               Start a fix in its own branch and worktree, with a\n'
         '                        one-line why and done-when\n'
+        '    drop                Drop a fix with a reason, or restore it with --undo\n'
         "    allow-large         Record the human's permission for this fix to go over\n"
         '                        the fix limit\n'
-        "    amend               Replace a fix's done-when, keeping the old text and\n"
-        '                        the reason in its record\n',
+        '    amend               Show the old and new Done-when, then replace it with\n'
+        '                        --done or add text with --append\n',
  'hook': 'usage: forge hook [-h]\n'
          '                  {context,handoff,approval,deny,pre-commit,pre-push,merge-roadmap,pr-check}\n'
          '                  ...\n'
@@ -216,12 +221,12 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
          '  --json      Print the machine view\n',
  'board': 'usage: forge board [-h] [--json] [--out PATH]\n'
           '\n'
-          'Write and open the plain-English board page\n'
+          'Open the live board page on this computer\n'
           '\n'
           'options:\n'
           '  -h, --help  show this help message and exit\n'
           '  --json      Print the machine view\n'
-          '  --out PATH  write the page here instead of .git/forge/board.html\n',
+          '  --out PATH  write every item\'s facts here as JSON instead\n',
  'story new': 'usage: forge story new [-h] [--from-fix FIX] key [title]\n'
               '\n'
               'Start a story branch, worktree and story doc, or promote a fix\n'
@@ -246,10 +251,10 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
  'read': 'usage: forge read [-h] [--resolve {accept,narrow,split}] [--reason REASON]\n'
          '                  target\n'
          '\n'
-         'Run a round of the cold read of a story doc or spec\n'
+         'Run a round of the cold read of a story doc, spec or decision\n'
          '\n'
          'positional arguments:\n'
-         '  target                a story key or a spec slug\n'
+         '  target                a story key, spec slug or decision slug\n'
          '\n'
          'options:\n'
          '  -h, --help            show this help message and exit\n'
@@ -289,6 +294,17 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
               '  --kind {ui,backend,mechanical}\n'
               '                        the worker kind; required for prototype fixes\n'
               "  --slug NAME           the fix's name, instead of one cut from the why\n",
+ 'fix drop': 'usage: forge fix drop [-h] [--because REASON] [--undo] FIX\n'
+             '\n'
+             'Drop a fix with a reason, or restore it with --undo\n'
+             '\n'
+             'positional arguments:\n'
+             '  FIX\n'
+             '\n'
+             'options:\n'
+             '  -h, --help        show this help message and exit\n'
+             '  --because REASON\n'
+             '  --undo\n',
  'fix allow-large': 'usage: forge fix allow-large [-h] reason\n'
                     '\n'
                     "Record the human's permission for this fix to go over the fix limit\n"
@@ -298,9 +314,11 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                     '\n'
                     'options:\n'
                     '  -h, --help  show this help message and exit\n',
- 'fix amend': 'usage: forge fix amend [-h] --done DONE_WHEN --because WHY FIX\n'
+ 'fix amend': 'usage: forge fix amend [-h] [--done DONE_WHEN] [--append TEXT] --because WHY\n'
+              '                       FIX\n'
               '\n'
-              "Replace a fix's done-when, keeping the old text and the reason in its record\n"
+              'Show the old and new Done-when, then replace it with --done or add text with\n'
+              '--append\n'
               '\n'
               'positional arguments:\n'
               '  FIX\n'
@@ -308,6 +326,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
               'options:\n'
               '  -h, --help        show this help message and exit\n'
               '  --done DONE_WHEN\n'
+              '  --append TEXT\n'
               '  --because WHY\n',
  'work': 'usage: forge work [-h] [--note TEXT] item\n'
          '\n'
@@ -487,6 +506,12 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                   '\n'
                   'options:\n'
                   '  -h, --help  show this help message and exit\n'}
+
+
+HELP_GOLDEN["start"] = (
+    "usage: forge start [-h] idea\n\nChoose how an idea starts\n\n"
+    "positional arguments:\n  idea\n\noptions:\n  -h, --help  show this help message and exit\n"
+)
 
 
 def _copy_forge(repo, tmp_path):

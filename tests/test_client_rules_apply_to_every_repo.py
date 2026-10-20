@@ -78,6 +78,7 @@ def test_1_sync_and_worker_briefs_carry_only_general_rules(repo, gh, tmp_path, m
             assert forbidden not in brief
 
 
+@pytest.mark.platform
 def test_2_doctor_checks_and_repairs_forge_source_hooks_without_an_exemption(repo, gh):
     repo.write("forge.toml", f'version = "{_version(repo)}"\nrepo = "forge-source"\n'
                              'workers = "claude"\ntest = "true"\nchecks = ["tests"]\n')

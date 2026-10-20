@@ -21,7 +21,10 @@ STORY = "land-waits-ci"
 def clock(land, tmp_path, monkeypatch):
     folder = tmp_path / "clock"
     folder.mkdir()
-    (folder / "sitecustomize.py").write_text("""import time
+    (folder / "sitecustomize.py").write_text("""import subprocess, time
+from types import SimpleNamespace
+# Child-process deadlines and POSIX wait polling must use real elapsed time.
+subprocess.time = SimpleNamespace(sleep=time.sleep)
 real = time.monotonic
 elapsed = 0
 

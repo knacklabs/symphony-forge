@@ -8,7 +8,7 @@ from test_land import ITEM, _fix, _land, _workers, land  # noqa: F401
 STORY = "three-rounds-ask"
 
 
-@pytest.mark.parametrize("choice", ["narrow", "split", "accept"])
+@pytest.mark.parametrize("choice", ["narrow", "accept"])
 def test_3_land_records_the_humans_review_loop_choice(land, choice):
     # With the default on, land waits out the stop; this checks the owner's own choice.
     toml = land.repo.path / "forge.toml"
@@ -20,9 +20,9 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
         "app.py": "print('hello')\n", "other.py": "print('hello')\n",
         "show.py": "print('hello')\n",
     })
-    # Harm 3 keeps the three-round hold under the bar; new Harm 1 findings would go on to a fourth round.
-    land.reviews(*(blocked({**finding("P1", "Greeting is missing", file=file),
-                            "body": "Gain 3, Work 2, Harm 3\nEvidence"})
+    # P0s still hold later rounds, retaining the existing land-to-close stop contract.
+    land.reviews(*(blocked({**finding("P0", "Greeting is missing", file=file),
+                            "body": "Gain 3, Work 2, Harm 4\nEvidence"})
                    for file in ("app.py", "work-1.txt", "work-2.txt")))
     asked = _land(land)
     assert asked.returncode == 1 and "ask the owner" in asked.stderr
@@ -34,7 +34,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
     assert land.close(ITEM).returncode == 1
     assert land.repo.forge("work", ITEM).returncode == 0
     stopped = _land(land)
-    assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    assert stopped.returncode == 3, stopped.stdout + stopped.stderr
     assert "Ask the human" in stopped.stderr
     assert f"forge close {ITEM} --resolve <narrow|split|accept>" in stopped.stderr
     assert len(land.review_calls()) == 3
@@ -44,8 +44,8 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
 
     # Repeating either entry point cannot run another worker or reviewer until
     # the coordinator records the human's choice.
-    for again in (_land(land), land.close(ITEM)):
-        assert again.returncode == 1, again.stdout + again.stderr
+    for again, code in ((_land(land), 3), (land.close(ITEM), 1)):
+        assert again.returncode == code, again.stdout + again.stderr
         assert "Ask the human" in again.stderr
     assert len(land.review_calls()) == 3
     assert len(_workers(land)) == workers

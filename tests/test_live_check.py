@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 
 STORY = "FORGE-LIVE-1"
-NOTE = ("Forge didn't start this branch, so it checks nothing here; "
-        "the repo's own CI and review apply.")
 
 
 def _configured(repo, checks: list[str]) -> None:
@@ -17,23 +15,19 @@ def _configured(repo, checks: list[str]) -> None:
     repo.git("commit", "-q", "-m", "Configure Forge")
 
 
-def test_3_other_branches_pass_with_note_and_forge_branches_still_check(repo, tmp_path):
+def test_3_forge_branches_require_a_started_record(repo, tmp_path):
     _configured(repo, ["forge-pr-check"])
     base = repo.git("rev-parse", "HEAD")
-    for branch in ("dependabot/npm/updates", "fix/untracked"):
-        where = tmp_path / branch.replace("/", "-")
-        repo.git("worktree", "add", "-q", "-b", branch, str(where))
-        (where / "README.md").write_text(f"# {branch}\n", encoding="utf-8")
-        repo.git("add", "README.md", cwd=where)
-        repo.git("commit", "-q", "-m", "Update readme", cwd=where)
-        checked = repo.forge("hook", "pr-check", "--base", base, "--head",
-                             repo.git("rev-parse", "HEAD", cwd=where), "--branch", branch)
-        if branch.startswith("fix/"):
-            assert checked.returncode == 1
-            assert "Forge did not start fix/untracked" in checked.stderr
-        else:
-            assert checked.returncode == 0, checked.stderr
-            assert checked.stdout.strip() == NOTE
+    branch = "fix/untracked"
+    where = tmp_path / branch.replace("/", "-")
+    repo.git("worktree", "add", "-q", "-b", branch, str(where))
+    (where / "README.md").write_text(f"# {branch}\n", encoding="utf-8")
+    repo.git("add", "README.md", cwd=where)
+    repo.git("commit", "-q", "-m", "Update readme", cwd=where)
+    checked = repo.forge("hook", "pr-check", "--base", base, "--head",
+                         repo.git("rev-parse", "HEAD", cwd=where), "--branch", branch)
+    assert checked.returncode == 1
+    assert "Forge did not start fix/untracked" in checked.stderr
 
 
 def test_5_only_named_tests_job_ships_and_doctor_compares_protection(repo, gh, tmp_path,

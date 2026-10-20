@@ -36,7 +36,8 @@ def blocked_rows(repo):
 
 
 def review_rounds(env, item, where, count, tag):
-    env.reviews(blocked(finding("P1", "Basket disappears", "loop.py")))
+    # The looping row needs blocked reviews; P1s now finish as round-two follow-ups.
+    env.reviews(blocked(finding("P0", "Basket disappears", "loop.py")))
     for number in range(count):
         env.commit(where, "loop.py", f"x = '{tag}-{number}'\n")
         assert env.close(item).returncode == 1

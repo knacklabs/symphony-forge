@@ -17,8 +17,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from forge import (__version__, approval, board, board_facts, close, codex, machine, records, repo, review, spotted, story,
-                   score, task, time_records, upgrade)
+from forge import (__version__, approval, board, board_facts, close, codex, machine, migration_warnings,
+                   native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _started, developer, github_login, owner, stack_base, start_base, waits_for
 
 COMMANDS = [
@@ -54,7 +54,7 @@ STATUS = {
     "fixing": ("Close stopped on {label}: {reason}.", "forge work {item}"),
     "waiting for checks": ("{label} is waiting for its checks.", "forge close {item}"),
     "checks failed": ("{label}'s checks failed.", "forge work {item}"),
-    "ready": ("{label} is ready and waiting for someone to merge it.",
+    "ready": ("{label} is ready to merge.",
               "merge its pull request, then forge next"),
 }
 
@@ -76,6 +76,7 @@ def parse_answers(top: Path) -> dict[str, list[tuple[str, str] | None]]:
     found: dict[str, list[tuple[str, str] | None]] = {}
     in_answers = False
     for line in text.splitlines():
+        line = line.rstrip()
         if line == "## Answers":
             in_answers = True
             continue
@@ -118,7 +119,7 @@ def next_step(args: Any) -> int:
     top = repo.root()
     notice = upgrade.release_notice(top)
     history = board._machine_history(top) if args.json else None
-    lines = _report(top, history, schedules=True)[0]
+    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
@@ -248,6 +249,9 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         state = (repo.read_state(name, path) if kind in ("fix", "forge")
                  and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
         if state is not None:
+            state = at_ref(top, name, state, prs.get(branch))
+            if state.get("status") == "dropped":
+                continue
             if history is not None and repo.state_path(name) in history["expired"]:
                 continue
             if branch in merged_prs:
@@ -259,8 +263,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 lines += found
             states.append(f"The fix {name} ({state.get('status', 'started')}): "
                           f"{_touches(state.get('touches', 0))} so far.")
-    pushed = repo.git("for-each-ref", "--format=%(refname:strip=3)", "refs/remotes/origin/fix/",
-                      "refs/remotes/origin/forge/", cwd=top).splitlines()
+    pushed = [ref.removeprefix("refs/remotes/origin/") for ref in branch_tips(top)
+              if ref.startswith(("refs/remotes/origin/fix/", "refs/remotes/origin/forge/"))]
     landed = story.landed_ref(top)
     for branch in sorted(set(prs) | set(pushed)):  # a fix started elsewhere, with no worktree here
         kind, _, name = branch.partition("/")
@@ -271,6 +275,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                     else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
+            if state.get("status") == "dropped":
+                continue
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
             if alert := claim(state):
                 pinned += alert[:-1] + found
@@ -480,8 +486,8 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
         state, doc = repo.read_state(key, path), path / "plans" / f"{key}.md"
         if state is not None and found.get(key, (None, {}, ""))[1].get("status") != "done":
             found[key] = (path, state, doc.read_text(encoding="utf-8") if doc.is_file() else "")
-    for branch in repo.git("for-each-ref", "--format=%(refname:strip=3)",
-                           "refs/remotes/origin/story/", cwd=top).splitlines():
+    for branch in [ref.removeprefix("refs/remotes/origin/") for ref in branch_tips(top)
+                   if ref.startswith("refs/remotes/origin/story/")]:
         key = branch.removeprefix("story/")
         if history is not None and repo.state_path(key) in history["expired"]:
             continue
@@ -588,11 +594,16 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     stack_waits: list[str] = []
     for name, deps in waits.items():
         if deps and _report_config(top, refusals)["stack"] == "on":
-            try:
-                if base := stack_base(f"{key}/{name}", deps, story.landed_ref(top), top):
-                    stacked[name] = base
-            except repo.Refused as error:
-                stack_waits += str(error).splitlines()
+            item, main = f"{key}/{name}", story.landed_ref(top)
+            def read_base():
+                try:
+                    return stack_base(item, deps, main, top), []
+                except repo.Refused as error:
+                    return None, str(error).splitlines()
+            base, problems = repo.command_fact(("stack base", item, tuple(deps), main), top, read_base)
+            if base:
+                stacked[name] = base
+            stack_waits += problems
     ready = [task["id"] for task in doc["tasks"] if waits.get(task["id"]) == [] or task["id"] in stacked]
     assignments = {row["id"]: developer(row) or owner(text) for row in doc["tasks"]}
     if any(assignments[name] for name in ready):
@@ -765,7 +776,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     elif ref and not receipt and not record and checks == "pass":
         # An older release's pull request: its state file at the head says it was closed clean.
         older = story.json_of(story.show(top, ref, repo.state_path(item)))
-        if older.get("review") and not review.blocking(older["review"]) and \
+        if not older.get("drop") and older.get("review") and not review.blocking(older["review"]) and \
                 older.get("status") in ("waiting for checks", "ready"):
             evidence = {"commit": ref, "review": "clean", "shared": True}
     if status not in ("merged", "done", "hotspot"):
@@ -795,11 +806,15 @@ def remote_state(top: Path, item: str, branch: str, pr: dict[str, Any] | None = 
     return story.json_of(story.show(top, ref, repo.state_path(item))) if ref else {}
 
 
-def _commit(top: Path, ref: str) -> str:
-    tips = repo.command_fact(("commits", "ref tips"), top, lambda: dict(
+def branch_tips(top: Path) -> dict[str, str]:
+    return repo.command_fact(("commits", "ref tips"), top, lambda: dict(
         line.split("\0", 1) for line in repo.git(
             "for-each-ref", "--format=%(refname)%00%(objectname)",
             "refs/heads", "refs/remotes", cwd=top).splitlines()))
+
+
+def _commit(top: Path, ref: str) -> str:
+    tips = branch_tips(top)
     if ref.startswith(("refs/heads/", "refs/remotes/")):
         return tips.get(ref, "")
     if ref in tips.values():
@@ -821,6 +836,11 @@ def _review_ref(top: Path, branch: str, pr: dict[str, Any] | None) -> str:
     head = (pr or {}).get("headRefOid") or _commit(top, f"refs/remotes/origin/{branch}")
     if re.fullmatch(r"[0-9a-f]{40}", head) and not _commit(top, head):  # pushed since the last fetch: fetch just it
         repo.run("git", "fetch", "-q", "origin", head, cwd=top)
+    remote = _commit(top, f"refs/remotes/origin/{branch}") if branch.startswith("fix/") else ""
+    # A cached pull request can precede a drop or restoration already fetched from its branch.
+    if remote and remote != head and (not head or repo.run(
+            "git", "merge-base", "--is-ancestor", head, remote, cwd=top).returncode == 0):
+        head = remote
     if local and (not head or local == head or repo.run(
             "git", "merge-base", "--is-ancestor", head, local, cwd=top).returncode == 0):
         return local
@@ -935,6 +955,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         return held
     pr = (prs or {}).get(state.get("branch", "")) or {}
     state = at_ref(top, item, state, pr)
+    if state.get("status") == "dropped":
+        return []
     checks = board._checks(pr, _report_config(path or top, refusals)["checks"])[0] if pr else "unknown"
     status, receipt = _item_readiness(item, state, top, checks, pr=pr)
     status = status or "started"
@@ -983,13 +1005,19 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     # forge work holds the item's lock, recording its own process, until its round ends.
     lock = codex._item_file(top, item, ".lock", "Build")
     runs = board.active_runs(top, item, round_number=state.get("round"))
-    if (status == "working" and (not lock.exists() or codex._alive(codex._json(lock)) is False)
+    if (status == "working" and native.lock_alive(lock) is False
             and not any(run.get("kind") in ("work", "worker") for run in runs)):
         native_round = codex._json(lock.with_suffix(".json")).get("native_round")
-        sentence, step = "{label}'s worker has stopped.", "forge work {item}" if native_round else "forge close {item}"
+        activity = board._event_history(top)[1].get(item, [])
+        ended = {event.get("run_id") for event in activity if event.get("event") == "run end"}
+        interrupted = any(event.get("event") == "run start" and event.get("kind") in ("work", "worker")
+                          and event.get("id") not in ended and event.get("round") == state.get("round")
+                          for event in activity)
+        sentence, step = "{label}'s worker has stopped.", ("forge work {item}" if native_round or interrupted
+                                                          else "forge close {item}")
     if (status not in ("merged", "done") and any(run.get("kind") == "test" for run in runs)
             and not any(run.get("kind") in ("work", "worker", "review") for run in runs)
-            and (not lock.exists() or codex._alive(codex._json(lock)) is False)):
+            and native.lock_alive(lock) is False):
         sentence, step = "Tests are running for {label}.", "wait for them to finish, then forge next"
     switch = (state.get("why"), state.get("done_when")) == (close.WHY, close.DONE)
     if (status == "ready" and state.get("kind") != "migrate" and not switch

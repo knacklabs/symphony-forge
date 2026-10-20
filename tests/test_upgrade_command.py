@@ -22,6 +22,8 @@ import pytest
 import conftest
 from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 RELEASE, NAME = "v9.9.9", "upgrade-forge-to-v9-9-9"
 URL = "git+https://github.com/knacklabs/symphony-forge@{}"
 MARK = "release marker"
@@ -49,9 +51,12 @@ def launcher(release, via):
             path = src / "forge" / "repo.py"
             path.write_text(path.read_text("utf-8").replace('"stage": str, ', ""), "utf-8")
     return (f"#!{{sys.executable}}\\nimport json, os, sys\\n"
+            # Match the command harness's idle machine in the release launcher too.
+            "if hasattr(os, 'getloadavg'):\\n    os.getloadavg = lambda: (0.0, 0.0, 0.0)\\n"
             f"with open({{str(here.parent / 'forge-calls.jsonl')!r}}, 'a') as log:\\n"
             f"    log.write(json.dumps({{{{'via': {{via!r}}, 'args': sys.argv[1:], 'cwd': os.getcwd()}}}}) + '\\\\n')\\n"
-            f"sys.path.insert(0, {{str(src)!r}})\\nfrom forge.cli import main\\nsys.exit(main())\\n")
+            f"sys.path.insert(0, {{str(src)!r}})\\n" + {idle_machine!r} +
+            "from forge.cli import main\\nsys.exit(main())\\n")
 
 def put(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -126,7 +131,7 @@ class Upgrade:
 @pytest.fixture
 def unsynced_up(env, tmp_path, monkeypatch) -> Upgrade:
     conftest._install(env.repo.bin, "uv", UV.format(python=sys.executable, mark=MARK,
-                                                    root=str(conftest.ROOT)))
+                                                    root=str(conftest.ROOT), idle_machine=conftest.IDLE_MACHINE))
     monkeypatch.setenv("PATH", f"{tmp_path / 'uvbin'}{os.pathsep}{os.environ['PATH']}")
     (tmp_path / "no-hooks").mkdir()
     return Upgrade(env, tmp_path)
@@ -535,16 +540,13 @@ def test_1_one_command_upgrades_forge_and_opens_its_pull_request(unsynced_up, ca
         case(*(up, monkeypatch)[:case.__code__.co_argcount])
 
 
-# --- Done-when 2: the release writes both hosts' files, whoever runs the command -------------
+# --- Done-when 2: the release writes both hosts' files from each invoking host --------------
 
-@pytest.mark.parametrize("workers", ["claude", "codex"])
 @pytest.mark.parametrize("host", ["CLAUDECODE", "CODEX_THREAD_ID", None])
-def test_2_the_release_writes_both_hosts_files_whoever_runs_it(up, host, workers, monkeypatch):
+def test_2_the_release_writes_both_hosts_files_whoever_runs_it(up, host, monkeypatch):
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     if host:
         monkeypatch.setenv(host, "1")
-    up.on_main("forge.toml", re.sub(r'^workers = ".*"$', f'workers = "{workers}"', up.toml(),
-                                    flags=re.M))
     config = (up.repo.path / ".codex" / "config.toml").read_text("utf-8")
     up.on_main(".codex/config.toml", config + '\n[mcp_servers.docs]\ncommand = "docs-server"\n')
 

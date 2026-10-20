@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_upgrade_command.py\tThe installed-release launcher uses host load, so the successful-upgrade test can time out in the suite.",
+      "kind": "bug",
+      "path": "tests/test_upgrade_command.py",
+      "line": 50,
+      "text": "The installed-release launcher uses host load, so the successful-upgrade test can time out in the suite.",
+      "from": "worker",
+      "item": "trim-read-loop-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

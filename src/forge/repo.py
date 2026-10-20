@@ -17,9 +17,10 @@ import sys
 import time
 import tomllib
 import uuid
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import RLock
 from typing import Any, NoReturn
 
 from forge import __version__
@@ -82,15 +83,18 @@ def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
 
 
 _command_cache: dict[tuple, Any] | None = None
+_blob_lock = RLock()
 
 
 @contextmanager
 def command_cache():
     """Repository facts and worker history live only for this command, never the next one."""
     global _command_cache
-    previous, _command_cache = _command_cache, {}
+    previous = _command_cache
     try:
-        yield
+        with ExitStack() as resources:
+            _command_cache = {("resources",): resources}
+            yield
     finally:
         _command_cache = previous
 
@@ -131,11 +135,65 @@ def blob_hash(text: str) -> str:
 
 
 def read_blob(top: Path, name: str) -> str | None:
-    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    """A blob's text or None; only object IDs can reuse text after a ref moves."""
     def read() -> str | None:
-        done = run("git", "cat-file", "blob", name, cwd=top)
+        if ":" in name and not re.fullmatch(r"[\w./-]+(?:[~^]\d*)*", name.partition(":")[0]):
+            done = run("git", "show", name, cwd=top)
+        elif _command_cache is not None and "\n" not in name and "\r" not in name:
+            return blob_texts(top, [name]).get(name)
+        else:
+            done = run("git", "cat-file", "blob", name, cwd=top)
         return done.stdout if done.returncode == 0 else None
-    return command_fact(("read blob", name), top, read)
+    return command_fact(("read blob", name), top, read) if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", name) else read()
+
+
+def blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
+    """Share one byte-framed Git reader across this command's file and history reads."""
+    if not specs:
+        return {}
+    if _command_cache is None:
+        with command_cache():
+            return blob_texts(top, specs)
+
+    def start():
+        process = _command_cache[("resources",)].enter_context(subprocess.Popen(
+            [shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+        _command_cache[("resources",)].callback(process.communicate)
+        return process
+
+    texts = {}
+    with _blob_lock:
+        process = command_fact("blob reader", top, start)
+        assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+        for spec in dict.fromkeys(specs):
+            if "\n" in spec or "\r" in spec:
+                continue  # These paths use the original Git command, outside the line protocol.
+            request = spec
+            if re.match(r"HEAD(?:[:~^]|$)", spec):
+                # HEAD belongs to a checkout, while this process serves all linked worktrees.
+                dot = root(top) / ".git"
+                if dot.is_file():
+                    gitdir = (dot.parent / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
+                    prefix = f"worktrees/{gitdir.name}"
+                else:
+                    prefix = "main-worktree"
+                request = prefix + "/" + spec
+            process.stdin.write((request + "\n").encode("utf-8"))
+            process.stdin.flush()
+            header = process.stdout.readline()
+            if header.endswith((b" missing\n", b" ambiguous\n")):
+                continue
+            if not header:
+                process.wait()
+                raise subprocess.CalledProcessError(process.returncode or 1, process.args,
+                                                    stderr=process.stderr.read().decode("utf-8", errors="replace"))
+            _, kind, size = header.split()
+            data = process.stdout.read(int(size))
+            process.stdout.read(1)
+            if kind == b"blob":
+                texts[spec] = data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    return texts
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
@@ -144,6 +202,16 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     exe = shutil.which(args[0])
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
+    if _command_cache is not None and env is None and input is None:
+        spec = (args[2] if len(args) == 3 and args[:2] == ("git", "show")
+                and ":" in args[2] and not args[2].startswith("-")
+                and re.fullmatch(r"[\w./-]+(?:[~^]\d*)*", args[2].split(":", 1)[0])
+                else args[3] if len(args) == 4 and args[:3] == ("git", "cat-file", "blob") else None)
+        if spec is not None:
+            text = blob_texts(Path(cwd or Path.cwd()), [spec]).get(spec)
+            if text is not None:
+                return subprocess.CompletedProcess([exe, *args[1:]], 0, text, "")
+            # Keep Git's exact diagnostics for a missing object, non-blob, or unusual path.
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
     # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
     # bounded pull request body past GitHub's limit and changes messages and hashes.
@@ -159,9 +227,27 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
+    if args == ("git", "rev-parse", "--show-toplevel") and env is None and _command_cache is not None:
+        # A linked worktree has its own root, even though command_fact shares its git directory.
+        key = ("checkout root", Path(cwd or Path.cwd()).absolute())
+        if key not in _command_cache:
+            done = execute()
+            if done.returncode == 0:
+                _command_cache[key] = done
+            return done
+        return _command_cache[key]
+    if env is None and input is None and _immutable_git_read(args):
+        snapshots = command_fact(("git snapshots", Path(cwd or Path.cwd()).resolve()), cwd, dict)
+        if args not in snapshots:
+            done = execute()
+            # Missing objects can arrive in a later fetch; a negative ancestry answer is a fact.
+            if done.returncode == 0 or ("--is-ancestor" in args and done.returncode == 1):
+                snapshots[args] = done
+            return done
+        return snapshots[args]
     done = _github_read(args, execute) if args[0] == "gh" else execute()
-    if args[:2] == ("gh", "pr") and args[2:3] in (("create",), ("edit",), ("ready",), ("merge",)) and not done.returncode:
-        # The board's pull request lists, which forge next --json reads too, show Forge's own change.
+    if args[:3] == ("gh", "pr", "merge") and not done.returncode:
+        # Merges must show at once; other pull request changes wait for the minute cache.
         (forge_dir(cwd) / "prs-cache.json").unlink(missing_ok=True)
     if _command_cache is not None and done.returncode == 0 and args[:2] == ("git", "fetch"):
         if args[-1] == "origin" and run("git", "config", "--get-all", "remote.origin.fetch", cwd=cwd).stdout.strip() == (
@@ -183,6 +269,33 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
             if isinstance(key[0], tuple) and key[0][0] == "commits" and key[1] == common:
                 del _command_cache[key]
     return done
+
+
+def _immutable_git_read(args: tuple[str, ...]) -> bool:
+    """Only explicit object IDs: never a ref name, index or working-tree comparison."""
+    words = list(args[1:]) if args[:1] == ("git",) else []
+    if words[:1] == ["--literal-pathspecs"]:
+        words.pop(0)
+    if not words or words[0] not in ("merge-base", "diff", "ls-tree"):
+        return False
+    command, *words = words
+    words = words[:words.index("--")] if "--" in words else words
+    flags = {"merge-base": {"--is-ancestor", "--all"},
+             "ls-tree": {"-r", "-z", "--name-only", "--full-tree"},
+             "diff": {"--name-only", "--no-renames", "-z", "--raw", "--no-abbrev",
+                      "--no-ext-diff", "--no-color", "--numstat", "--summary",
+                      "--ignore-cr-at-eol", "-U0", "-M"}}
+    if any(word.startswith("-") and word not in flags[command] for word in words):
+        return False
+    refs = [word for word in words if not word.startswith("-")]
+    count = 1 if command == "ls-tree" else 2
+    return len(refs) == count and all(re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) for ref in refs)
+
+
+def resolve_commit(top: Path, ref: str) -> str:
+    """Resolve names on every ask; callers can reuse the resulting immutable commit ID."""
+    return ref if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) else git(
+        "rev-parse", "--verify", f"{ref}~0", cwd=top)
 
 
 def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
@@ -259,7 +372,7 @@ def commit_log(top: Path, base: str, head: str = "HEAD") -> list[tuple[str, str,
         return ("commits", top.resolve(), base, ref)
 
     def read():
-        tip = git("rev-parse", head, cwd=top)
+        tip = resolve_commit(top, head)
         return command_fact(key(tip), top, lambda: select(tip))
 
     def select(tip):
@@ -332,46 +445,15 @@ def record_event(top: Path, item: str, event: str, **fields: Any) -> str:
     identity = str(uuid.uuid4())
     line = {"id": identity, "item": item, "event": event, "at": now(),
             "round": (read_state(item, top) or {}).get("round", 0), **fields}
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")), path.open("a", encoding="utf-8") as out:
-        out.write(json.dumps(line) + "\n")
+    from forge import event_log
+    event_log.append(top, line)
     return identity
 
 
 def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
     """Coalesce a run's live updates into at most one record per ten seconds."""
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")):
-        rows = path.read_text(encoding="utf-8").splitlines()
-        parsed = [json.loads(row) for row in rows]
-        previous = next((n for n in range(len(rows) - 1, -1, -1)
-                         if parsed[n].get("run_id") == run_id and
-                         parsed[n].get("event") == "progress"), None)
-        start = next(row for row in parsed if row.get("id") == run_id)
-        # ponytail: rewrite this diagnostic log to coalesce; split progress out if it grows large.
-        line = {"id": str(uuid.uuid4()), "item": item, "event": "progress", "run_id": run_id,
-                "kind": "progress", "round": start.get("round"), "at": now(), **fields}
-        if previous is not None:
-            old = parsed[previous]
-            line = {**old, **line}
-            if (datetime.fromisoformat(now()) - datetime.fromisoformat(old["recorded_at"])).total_seconds() < 10:
-                rows[previous] = json.dumps({**line, "id": old["id"]})
-            else:
-                rows.append(json.dumps({**line, "recorded_at": now()}))
-        else:
-            rows.append(json.dumps({**line, "recorded_at": now()}))
-        temp = path.with_suffix(".new")
-        temp.write_text("\n".join(rows) + "\n", encoding="utf-8")
-        for wait in (0.05,) * 40 + (0,):  # Windows readers can briefly hold the events file open.
-            try:
-                return os.replace(temp, path)
-            except PermissionError:
-                if not wait:
-                    temp.unlink(missing_ok=True)
-                    refuse(codex.REFUSALS["record"], record=path)
-                time.sleep(wait)
+    from forge import event_log
+    event_log.progress(top, item, run_id, fields)
 
 
 def worker_step(name: str, inputs: dict[str, Any]) -> str:
@@ -514,7 +596,7 @@ def default_config(top: Path) -> dict[str, Any]:
     """Fetch and read only the default branch's config for merge permission and checks."""
     default = default_branch(top)
     if not command_fact("fetched origin", top, dict).get("all"):
-        git("fetch", "-q", "origin", default, cwd=top)
+        command_fact(("fetch default", default), top, lambda: git("fetch", "-q", "origin", default, cwd=top))
     found = run("git", "show", f"origin/{default}:forge.toml", cwd=top)
     if found.returncode:
         refuse(REFUSALS["no_config"])
@@ -729,8 +811,8 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     fetched still pins an older one, and a fix worktree pins the installed one.
     """
     if words == "work":
-        from forge.worker import checkout
-        checkout(item)  # A conflicted forge.toml cannot supply a release pin yet.
+        from forge.worker import prepare
+        prepare(item)  # Merge the default before even the release pin reads settings.
     done = run("git", "rev-parse", "--show-toplevel", cwd=cwd)
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():
@@ -805,7 +887,15 @@ def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | Non
     return subprocess.run(
         [shutil.which("uv") or "uv", "tool", "run", "--from",
          f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
-        cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": release}).returncode
+        cwd=cwd, env={**uv_env(), "FORGE_PINNED_RUN": release}).returncode
+
+
+def uv_env() -> dict[str, str]:
+    """This environment for uv, without a git hook's repository: uv fetches a git+ source with
+    its own `git init` and `git reset --hard`, which would turn this repo bare or overwrite its
+    index. The program uv starts finds the repository from its folder."""
+    return {key: value for key, value in os.environ.items()
+            if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE")}
 
 
 def set_version(text: str, release: str) -> str:
