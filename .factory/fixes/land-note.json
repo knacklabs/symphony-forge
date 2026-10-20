@@ -10,13 +10,29 @@
   },
   "done_when": "forge land <item> --note \"<text>\" passes the note to the round it starts, the same way forge work --note does, on a new repo and on an earlier-adopted repo; the coordinator guide says to queue several items by running forge land for each in the background, because Forge admits their rounds by machine capacity",
   "fix_kind": "backend",
+  "flagged": [],
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3f578d9d83150d33c1184e4ed955bd430330403ce63624983a60f3c62cd44db3",
+    "changed": "3139886fa4ca43f54054c32e47b79c36a77c0b43e71b7d3803e2cfaafa2021dc",
+    "commit": "d44ff6d8643e8dacf14072aeb7ce7323b55990e6",
+    "dismissals": [],
+    "findings": [],
+    "id": "955f1f9f-582d-4e94-ac19-d2acececd0cb",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T05:59:00.845581+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-20T06:09:36.921292+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
