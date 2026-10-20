@@ -5,6 +5,7 @@ human reads and the calls the stubs recorded (spec criterion 4).
 """
 from __future__ import annotations
 
+import faulthandler
 import json
 import os
 import re
@@ -28,6 +29,27 @@ import _pytest.tmpdir
 ROOT = Path(__file__).resolve().parents[1]
 REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+
+_deadline_log = None
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Windows CI needs a native deadline even outside the per-test timeout."""
+    global _deadline_log
+    seconds = float(os.environ.get("PYTEST_SESSION_DEADLINE") or "0")
+    if not seconds:
+        return
+    # Keep a descriptor outside pytest capture: a stuck capture flush must not hide
+    # the stacks or prevent the native watchdog from terminating the process.
+    _deadline_log = os.fdopen(os.dup(sys.stderr.fileno()), "w", encoding="utf-8")
+    if hasattr(config, "workerinput"):
+        seconds -= min(60, seconds / 2)  # Workers dump before the controller exits.
+    faulthandler.dump_traceback_later(seconds, file=_deadline_log, exit=True)
+
+
+def pytest_runtest_logstart(nodeid: str, location: tuple) -> None:
+    if _deadline_log is not None:
+        print(f"Test started: {nodeid}", file=_deadline_log, flush=True)
 
 IDLE_MACHINE = """from forge import machine
 machine.memory = lambda: dict(total_bytes=16_000_000_000, available_bytes=8_000_000_000)
