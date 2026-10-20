@@ -72,11 +72,11 @@
     "id": "6f13a9c6-5b79-4d8f-8637-7aa96d4d0520",
     "status": "clean"
   },
-  "round": 4,
+  "round": 5,
   "settled_areas": [
     "_work() in src/forge/worker.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T19:54:33.365473+00:00",
@@ -111,10 +111,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "c74f1372-d420-4d15-b6d4-584e85891ace",
-    "head": "04b2f95163558c9efb49102124ebcff731c4ccc4",
+    "close": "e688ddab-3287-4538-bcb9-7615b3ead7d2",
+    "head": "8efcba61777786488fb2bcd05efe2ab8b2ac499f",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "why": "Closes fail with 'merging main conflicts in ...' and each costs a whole worker round, and rounds that start on a stale base show diffs that seem to delete main's newer files (issue 969)",
   "worker": "codex"
