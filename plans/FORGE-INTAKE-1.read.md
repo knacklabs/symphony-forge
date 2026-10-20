@@ -100,8 +100,9 @@ Only a genuine trade-off goes to the human, as a question with options.
 13. Blocking: The new promotion push can delete remote work absent from the local fix.
     Raise: Data loss — [plan:259](/plans/FORGE-INTAKE-1.md:259) unconditionally deletes the remote fix branch. [story.py:127](/src/forge/story.py:127) promotes the local checkout without reconciling remote commits. Resuming an older checkout after work was pushed from another machine therefore deletes the branch holding those additional commits. The replacement task lacks them, and the `forge-start` tag preserves only the initial commit ([task.py:178](/src/forge/task.py:178)). Neither the new test nor Risks covers this loss.
     Gain 5, Work 3, Harm 4
+    Disposition: cut
 
 14. Advisory: The new “now” test can pass while the idea remains parked on the fix branch.
     Raise: Test — [plan:291](/plans/FORGE-INTAKE-1.md:291) checks only that the entry disappears from the main checkout. The carry at [plan:215](/plans/FORGE-INTAKE-1.md:215) already copies that entry into the new branch and clears main. Omitting the guide’s subsequent removal from the new branch would still pass this test and merge the completed idea back into the idea list.
     Gain 3, Work 1, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut
