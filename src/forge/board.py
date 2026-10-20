@@ -291,10 +291,14 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             if rel not in merged and state.get("branch") not in merged_prs:
                 state = nextstep.at_ref(top, fix, state, by_branch.get(state.get("branch")))
             best[rel] = state, where
-    best = {rel: pair for rel, pair in best.items() if pair[0].get("status") != "dropped"}
+    dropped = {STATE.fullmatch(rel)["key"] for rel, (state, _) in best.items()
+               if rel.endswith("/story.json") and state.get("status") == "dropped"}
+    promoted = {state["from_fix"] for state, _ in best.values() if state.get("from_fix")}
+    best = {rel: pair for rel, pair in best.items()
+            if pair[0].get("status") != "dropped" and STATE.fullmatch(rel)["fix"] not in promoted}
     readiness: dict[str, Item] = {}
     person_waits: dict[str, list[Item]] = {}  # each part's and fix's waits on a person, for Needs you
-    roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
+    roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded" and s["key"] not in dropped}
     completed = {key: state for key, state in history["stories"].items() if state.get("status") == "done"}
     completed.update({key: state for key, state in roadmap.items() if state.get("status") == "done"})
     completed.update({STATE.fullmatch(rel)["key"]: state for rel, (state, _) in best.items()

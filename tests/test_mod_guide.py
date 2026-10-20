@@ -51,8 +51,8 @@ def test_1_new_and_previously_adopted_repos_receive_the_mod_guide_sections(guide
                      "plan's Notes", "forge close <item> --resolve", "--reason",
                      "standing rule or direction", "forge decision new <slug>",
                      "next fix", "one pull request per decision", "plans/ideas.md",
-                     "short dated list", "Create it on first use", "not yet chosen",
-                     "Remove an entry", "spec, story or fix"):
+                     "short dated list", "forge start", "owner says later",
+                     "waiting entries", "Remove an entry", "do it now"):
         assert contract in decisions, contract
     # A clean read used to lead straight to approval, hiding choices made while
     # answering notes. Both delivery paths must carry the questions before approval.

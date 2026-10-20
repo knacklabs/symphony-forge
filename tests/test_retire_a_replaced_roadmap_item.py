@@ -7,7 +7,7 @@ import subprocess
 
 STORY = "roadmap-items-a-new-spec-replaces-can-on"
 
-DISCOVER = "No story or fix is in progress and the roadmap is empty, so start with discovery, as "
+IDLE = 'No story or fix is in progress.\nNext: forge start "<idea>"\n'
 
 
 def _item(key: str, status: str, order: int, **more: str) -> dict:
@@ -97,7 +97,7 @@ def test_3_forge_next_no_longer_offers_a_retired_item(repo):
     _on_main(repo, [_item("OLD-1", "pending", 1)])
     assert _ok(repo.forge("next")).splitlines()[:2] == [
         "No story or fix is in progress.",
-        'Next: forge story new <KEY> "<title>"']
+        'Next: forge start "<idea>"']
 
     _fix(repo)
     _ok(repo.forge("roadmap", "retire", "OLD-1", "--by", "new-way"))
@@ -108,7 +108,7 @@ def test_3_forge_next_no_longer_offers_a_retired_item(repo):
     repo.git("push", "-q", "origin", "main")
     repo.git("branch", "-q", "-D", "fix/new-way")
 
-    assert _ok(repo.forge("next")).startswith(DISCOVER)
+    assert _ok(repo.forge("next")).startswith(IDLE)
 
 
 def _git(repo, *args: str) -> subprocess.CompletedProcess[str]:

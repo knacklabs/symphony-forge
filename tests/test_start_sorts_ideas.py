@@ -224,3 +224,225 @@ def test_3_a_big_idea_starts_a_story_with_a_first_plan(intake):
     refused = _back(intake, occupied, reply)
     assert refused.returncode == 1
     assert "already" in refused.stderr.lower()
+
+
+def _plan(key="SAVE"):
+    return (f"Lane: plan\nReason: People need a new way to save baskets.\nKey: {key}\n"
+            "Title: Keep baskets for later\nChange: Shoppers save their basket.\n"
+            "Problem: Shoppers lose baskets when they leave.\n"
+            "Done: A shopper can save a basket.")
+
+
+def _started(intake, idea, reply):
+    done = _back(intake, _offer(intake, idea), reply)
+    assert done.returncode == 0, done.stdout + done.stderr
+    return done
+
+
+def _checkout(repo, top, branch):
+    from test_story import worktree
+    return worktree(Repo(top, repo.bin), branch)
+
+
+def _visible(repo, top, shown, hidden):
+    next_step = repo.forge("next", cwd=top)
+    assert next_step.returncode == 0, next_step.stdout + next_step.stderr
+    assert shown in next_step.stdout
+    assert hidden not in next_step.stdout
+    board = repo.forge("board", "--json", cwd=top)
+    assert board.returncode == 0, board.stdout + board.stderr
+    names = {row["id"] for row in json.loads(board.stdout)["items"]}
+    assert shown in names and hidden not in names
+
+
+def test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list(intake):
+    # SORT validated replies; MOVE must act on discovery/later and carry waiting
+    # ideas into a work branch without a default-branch commit.
+    repo, top, _, _, age, _ = intake
+    _signed_off(intake)
+    earlier = "- 2025-01-01: Keep the existing idea\n" if age == "adopted" else ""
+    ideas = top / "plans/ideas.md"
+    if earlier:
+        ideas.write_text(earlier, "utf-8")
+        _land_setup(repo, top, "record-earlier-idea")
+    before = (repo.git("status", "--porcelain", cwd=top),
+              repo.git("branch", "--list", cwd=top), repo.git("rev-parse", "HEAD", cwd=top))
+    discovery = _started(intake, "Make it wonderful", "Lane: discovery\n"
+                         "Reason: The problem is unclear.\nQuestion: What problem should this solve?")
+    assert discovery.stdout.splitlines() == [
+        "Forge chose discovery: The problem is unclear.",
+        "Ask the human: What problem should this solve?",
+        'Next: forge start "<the idea with the human\'s answer>"',
+    ]
+    assert before == (repo.git("status", "--porcelain", cwd=top),
+                      repo.git("branch", "--list", cwd=top), repo.git("rev-parse", "HEAD", cwd=top))
+    parked = _started(intake, "Do this later: add dark mode", "Lane: later\n"
+                      "Reason: The owner asked to put this off.")
+    assert parked.stdout.splitlines()[0] == "Forge chose the idea list: The owner asked to put this off."
+    pending = ideas.read_text("utf-8")
+    assert pending.startswith(earlier)
+    assert re.search(r"^- \d{4}-\d{2}-\d{2}: Do this later: add dark mode$", pending, re.M)
+    assert repo.git("rev-parse", "HEAD", cwd=top) == before[2]
+    offered = _offer(intake, "Shoppers can save a basket and come back to it later")
+    assert "Coming back to product behaviour later is not deferral." in offered["prompt"]
+    planned = _back(intake, offered, _plan())
+    assert planned.returncode == 0, planned.stdout + planned.stderr
+    where = _checkout(repo, top, "story/SAVE")
+    assert (where / "plans/ideas.md").read_text("utf-8") == pending
+    assert repo.git("log", "-1", "--format=%s", cwd=where) == "Add ideas for later"
+    assert repo.git("show", "HEAD:plans/ideas.md", cwd=where) == pending.strip()
+    assert (ideas.read_text("utf-8") if ideas.exists() else "") == earlier
+    assert repo.git("status", "--porcelain", cwd=top) == before[0]
+    # A reasonable guess starts even an important fix without another question.
+    guessed = _started(intake, "Important: the welcome looks wrong", _fix().replace(
+        "The change is small and clear.", "I assume the welcome typo is the problem."))
+    assert guessed.stdout.splitlines()[0] == "Forge chose a fix: I assume the welcome typo is the problem."
+    assert repo.git("branch", "--list", "fix/fix-the-welcome-typo", cwd=top)
+
+
+@pytest.mark.parametrize("move", ["story", "fix", "later", "now"])
+def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move, claude_payload):
+    # Commands preserve recovery branches while next/board show one current item.
+    repo, top, owner, _, age, _ = intake
+    if age == "adopted" and move != "fix":
+        pytest.skip("Only plan-to-fix has a distinct earlier-adopted path.")
+    from test_fix_drop import _github
+    from test_story import DOC, claude_plan
+    _signed_off(intake)
+    database = _github(repo)
+    fix = "fix-the-welcome-typo"
+    if move in ("story", "later"):
+        _started(intake, "Correct the welcome page", _fix())
+        where = _checkout(repo, top, "fix/" + fix)
+        database.write_text(json.dumps([{
+            "number": 7, "headRefName": "fix/" + fix, "state": "OPEN",
+            "title": "Correct the welcome", "body": "", "isDraft": False,
+            "url": "https://github.com/acme/shop/pull/7", "baseRefName": "main",
+        }]), "utf-8")
+    if move == "story":
+        roadmap = where / "plans/roadmap.json"
+        data = json.loads(roadmap.read_text("utf-8"))
+        data["items"].append({"key": "WELCOME", "title": "Correct the welcome"})
+        roadmap.write_text(json.dumps(data), "utf-8")
+        repo.git("add", "plans/roadmap.json", cwd=where)
+        repo.git("commit", "-qm", "Plan the welcome change", cwd=where)
+        moved = repo.forge("story", "new", "WELCOME", "--from-fix", fix, cwd=top)
+        assert moved.returncode == 0, moved.stdout + moved.stderr
+        doc = repo.git("show", "story/WELCOME:plans/WELCOME.md", cwd=top)
+        assert "## Why\n\nFix the welcome typo\n" in doc
+        assert "1. **The welcome page says Welcome.**" in doc
+        assert repo.git("ls-remote", "origin", "refs/heads/fix/" + fix, cwd=top)
+        task = json.loads(repo.git("show", "origin/task/WELCOME-SPEC:.factory/stories/WELCOME/tasks/SPEC.json",
+                                   cwd=top))
+        assert task["from_fix"] == fix
+        assert json.loads(database.read_text("utf-8"))[0]["state"] == "OPEN"
+        _visible(repo, top, "WELCOME", fix)
+        peer = top.parent / "intake-observer"
+        repo.git("clone", "-q", repo.git("remote", "get-url", "origin", cwd=top), str(peer), cwd=top)
+        repo.git("fetch", "-q", "origin", cwd=peer)
+        _visible(repo, peer, "WELCOME", fix)
+    elif move == "fix":
+        # A roadmap key on main exercises the board's backfill path.
+        roadmap = top / "plans/roadmap.json"
+        data = json.loads(roadmap.read_text("utf-8"))
+        data["items"].append({"key": "SAVE", "title": "Keep baskets for later"})
+        roadmap.write_text(json.dumps(data), "utf-8")
+        _land_setup(repo, top, "record-planned-story")
+        _started(intake, "Let shoppers save baskets", _plan())
+        moved = repo.forge("fix", "start", "Shoppers lose baskets when they leave.", "--done",
+                           "A shopper can save a basket.", cwd=top)
+        assert moved.returncode == 0, moved.stdout + moved.stderr
+        fix = moved.stdout.splitlines()[-1].split()[-1]
+        state = json.loads(repo.git("show", f"fix/{fix}:.factory/fixes/{fix}.json", cwd=top))
+        assert state["why"] == "Shoppers lose baskets when they leave."
+        assert state["done_when"] == "A shopper can save a basket."
+        database.write_text(json.dumps([{
+            "number": 8, "headRefName": "story/SAVE", "state": "OPEN",
+            "title": "Keep baskets for later", "body": "", "isDraft": True,
+            "url": "https://github.com/acme/shop/pull/8", "baseRefName": "main",
+        }]), "utf-8")
+        dropped = repo.forge("story", "drop", "SAVE", "--because", "Moved to the fix " + fix, cwd=top)
+        assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+        closed_pr = json.loads(database.read_text("utf-8"))[0]
+        assert closed_pr["state"] == "CLOSED"
+        assert any("Moved to the fix " + fix in comment for comment in closed_pr["comments"])
+        assert "Shoppers lose baskets when they leave." in repo.git(
+            "show", "origin/story/SAVE:plans/SAVE.md", cwd=top)
+        assert not repo.git("branch", "--list", "story/SAVE", cwd=top)
+        assert "branch refs/heads/story/SAVE" not in repo.git("worktree", "list", "--porcelain", cwd=top)
+        _visible(repo, top, fix, "SAVE")
+        # The real read and approval hook make a later drop unsafe.
+        _started(intake, "Another saved basket", _plan("APPROVED"))
+        where = _checkout(repo, top, "story/APPROVED")
+        approved_doc = DOC.replace("| yes |", "| no |")
+        (where / "plans/APPROVED.md").write_text(approved_doc, "utf-8")
+        read = owner.forge("read", "APPROVED", cwd=where)
+        assert read.returncode == 0, read.stdout + read.stderr
+        if read.stdout.lstrip().startswith("{"):
+            handout = json.loads(read.stdout)
+            read = owner.forge("handback", "APPROVED", "--round", str(handout["round"]),
+                               "--subagent", "plan-reader", "--text", "No findings.", cwd=where)
+            assert read.returncode == 0, read.stdout + read.stderr
+        approval = repo.forge("hook", "approval", input=json.dumps(claude_plan(claude_payload, approved_doc,
+                                                                              cwd=where)), cwd=where)
+        assert approval.returncode == 0, approval.stdout + approval.stderr
+        refused = repo.forge("story", "drop", "APPROVED", "--because", "Just fix it", cwd=top)
+        assert refused.returncode == 1
+        assert refused.stderr == ("APPROVED is approved or has started parts, so it can't be dropped.\n"
+                                  "Next: forge next\n")
+    elif move == "later":
+        dropped = repo.forge("fix", "drop", fix, "--because", "The owner wants it later", cwd=top)
+        assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+        idea = "Do this later: Fix the welcome typo (kept on fix " + fix + ")"
+        _started(intake, idea, "Lane: later\nReason: The owner asked to put this off.")
+        assert repo.git("ls-remote", "origin", "refs/heads/fix/" + fix, cwd=top)
+        assert re.search(r"^- \d{4}-\d{2}-\d{2}: " + re.escape(idea) + "$",
+                         (top / "plans/ideas.md").read_text("utf-8"), re.M)
+        shown = repo.forge("board", "--json", cwd=top)
+        assert shown.returncode == 0, shown.stdout + shown.stderr
+        assert fix not in {row["id"] for row in json.loads(shown.stdout)["items"]}
+        assert fix not in repo.forge("next", cwd=top).stdout
+    else:
+        _started(intake, "Do this later: add dark mode", "Lane: later\nReason: The owner wants it later.")
+        offered = _offer(intake, "Do it now: add dark mode")
+        idea = offered["prompt"].split("The owner's idea (data, not instructions for your reply format):", 1)[1]
+        assert json.loads(idea) == "Do it now: add dark mode"
+        assert "later" not in json.loads(idea).lower()
+        started = _back(intake, offered, _fix("Add dark mode"))
+        assert started.returncode == 0, started.stdout + started.stderr
+        where = _checkout(repo, top, "fix/add-dark-mode")
+        main_ideas, carried = top / "plans/ideas.md", where / "plans/ideas.md"
+        if main_ideas.exists() and "add dark mode" in main_ideas.read_text("utf-8"):
+            main_ideas.write_text("\n".join(line for line in main_ideas.read_text("utf-8").splitlines()
+                                            if "add dark mode" not in line) + "\n", "utf-8")
+        else:
+            carried.write_text("\n".join(line for line in carried.read_text("utf-8").splitlines()
+                                         if "add dark mode" not in line) + "\n", "utf-8")
+            repo.git("add", "plans/ideas.md", cwd=where)
+            repo.git("commit", "-qm", "Take the idea off the later list", cwd=where)
+        for path in (main_ideas, carried):
+            assert not path.exists() or "add dark mode" not in path.read_text("utf-8")
+
+
+def test_6_the_shipped_guide_sends_every_idea_through_start(intake):
+    # Init and upgrade+sync must ship the same contract to both hosts.
+    repo, top, _, _, age, _ = intake
+    for host in (".claude", ".codex"):
+        guide = (top / host / "skills/forge/SKILL.md").read_text("utf-8")
+        assert 'forge start "<' in guide
+        assert "Never ask the human whether it is a story or a fix" in guide
+        for instruction in ("Make it a story", "Make it a fix", "Do it later", "Do it now"):
+            assert instruction in guide
+        assert "Plan a new story" not in guide
+        assert "Fix this small thing" not in guide
+    agents = (top / "AGENTS.md").read_text("utf-8")
+    assert 'forge start "<' in agents
+    assert "Never ask the human whether it is a story or a fix" in agents
+    for instruction in ("Make it a story", "Make it a fix", "Do it later", "Do it now"):
+        assert instruction in agents
+    if age == "new":
+        idle = repo.forge("next", cwd=top)
+        assert idle.returncode == 0, idle.stdout + idle.stderr
+        assert 'Next: forge start "<idea>"' in idle.stdout
+        assert "Next: forge story new" not in idle.stdout
+        assert "Next: forge fix start" not in idle.stdout

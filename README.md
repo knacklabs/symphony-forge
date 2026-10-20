@@ -279,6 +279,7 @@ Your agent runs these for you. You'll see them in its messages.
 
 | Command | What it does |
 |---|---|
+| `forge start "<idea>"` | Chooses a fix, a plan, discovery or the idea list |
 | `forge next` | Says where things stand and gives the exact next step |
 | `forge board` | Opens a plain-English page showing the work and its progress |
 | `forge story new` | Starts a new story and its plan |

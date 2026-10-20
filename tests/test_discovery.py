@@ -13,13 +13,8 @@ STORY = "FORGE-FDE-1"
 
 HOSTS = (".claude", ".codex")
 FIELDS = ("Job", "Workaround", "Cost", "Who feels it", "How often", "Evidence")
-DISCOVER = ["No story or fix is in progress and the roadmap is empty, so start with discovery, as "
-            "the Forge skill's Discovery section says.",
-            'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
-            'filled problem card and the brief names it" --kind mechanical']
-PLAN_STORY = ["No story or fix is in progress and the roadmap is empty; the discovery notes hold a "
-              "problem card, so plan its story with the problem in Why.",
-              'Next: forge story new <KEY> "<title>"']
+# Intake chooses the lane, whether the discovery card is empty or already filled.
+START = ["No story or fix is in progress.", 'Next: forge start "<idea>"']
 
 
 def _ok(done) -> str:
@@ -59,13 +54,13 @@ def test_1_discovery_asks_by_size(repo, gh, tmp_path):
         assert rule in section, rule
 
 
-def test_2_a_new_project_starts_with_an_empty_card_and_discovery_first(repo, gh, tmp_path):
+def test_2_a_new_project_keeps_an_empty_card_and_sends_new_ideas_through_start(repo, gh, tmp_path):
     client = _client(repo, gh, tmp_path)
     notes = (client / "docs/product/DISCOVERY.md").read_text(encoding="utf-8")
     problems = notes.split("\n## Problems\n")[1].split("\n## ")[0]
     assert re.findall(r"^### .+$", problems, re.M) == ["### <short problem title>"]
     assert re.findall(r"^- (.+?): (.*)$", problems, re.M) == [(field, "unknown") for field in FIELDS]
-    assert _ok(repo.forge("next", cwd=client)).splitlines()[:2] == DISCOVER
+    assert _ok(repo.forge("next", cwd=client)).splitlines()[:2] == START
 
     # The card lands in the discovery notes, named in the brief and the spec's Why.
     section = _discovery(client)
@@ -80,7 +75,7 @@ def test_2_a_new_project_starts_with_an_empty_card_and_discovery_first(repo, gh,
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Discover the problem")
     repo.git("push", "-q", "origin", "main")
-    assert _ok(repo.forge("next")).splitlines()[:2] == PLAN_STORY
+    assert _ok(repo.forge("next")).splitlines()[:2] == START
 
     # Anything on the roadmap means planning is under way: the usual idle lines.
     repo.write("plans/roadmap.json", '{"items": [{"key": "INV-1", "spec": "docs/specs/inv.md"}]}\n')

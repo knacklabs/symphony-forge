@@ -24,16 +24,19 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 |---|---|
 | "What now?" | `forge next` |
 | "Show me progress" | `forge board` |
-| "Plan a new story" | `forge story new <KEY> "<title>"` |
+| "I have an idea", "Fix this" or "Plan this" | `forge start "<their words>"` |
 | "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec or decision |
 | "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
 | "Give this story or part to a developer" | `forge assign <KEY or KEY/TASK> <login>` |
-| "Fix this small thing" | `forge fix start "<why>" --done "<done when>"` |
 | "Name this fix" | `forge fix start "<why>" --done "<done when>" --slug <name>` |
 | "Change this fix's Done-when" | `forge fix amend <fix> --done "<done when>" --because "<why>"` |
 | "Add to this fix's Done-when" | `forge fix amend <fix> --append "<text>" --because "<why>"` |
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
+| "Make it a story" (a fix) | Add the key to the fix's roadmap and commit it, then `forge story new <KEY> --from-fix <fix>` |
+| "Make it a fix" or "Just fix it" (a plan in planning) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
+| "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
+| "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
@@ -64,6 +67,9 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
+Send every new idea through `forge start "<their words>"`. Never ask the human whether it is a
+story or a fix. When the answer is a fix, run its `forge land <fix>` in the background and watch it.
+
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
 After sign-off, the default branch's `forge.toml` merge setting applies: the human merges by
@@ -86,8 +92,8 @@ recommendation first. Save the answer before moving to the next question.
   and answer findings between rounds, as for a spec. Notes stay beside the numbered decision
   record. Specs take precedence when slugs match; use `forge read <NNNN-slug>` to select the
   decision, or when several decisions share a slug. A cold read does not accept the decision.
-- Park an idea not yet chosen in `plans/ideas.md`, a short dated list you keep.
-  Create it on first use. Remove an entry when it becomes a spec, story or fix.
+- `forge start` keeps `plans/ideas.md`, a short dated list, only when the owner says later, and carries waiting entries into the next fix or story.
+  Remove an entry when the owner says to do it now, as the command table explains.
 
 ## Merges and settings
 
@@ -947,7 +953,7 @@ or a builder could not act on it. Readers prefix numbered findings with `Blockin
 `Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
 findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
 
-Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
+Start with `forge start "<their words>"`. A spec is optional: when Forge chooses a plan, its branch adds
 its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
 The entry travels with its tasks to the default branch, including tasks waiting on another story.
 Write the problem, today's workaround and its cost in the plan's Why; the title seeds that

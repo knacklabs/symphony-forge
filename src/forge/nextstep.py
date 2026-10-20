@@ -3,7 +3,7 @@
 It reads each story from its own worktree (or from the default branch once it landed), each task
 from its worktree (merged once its state is on the default branch) and each fix from its worktree.
 A spec's success check is read from the default branch as landed, and listed first. With nothing
-in progress and an empty roadmap, it offers discovery until a problem card is filled.
+in progress, it sends each new idea through forge start.
 """
 from __future__ import annotations
 
@@ -58,9 +58,6 @@ STATUS = {
               "merge its pull request, then forge next"),
 }
 
-DISCOVERY = "docs/product/DISCOVERY.md"
-# A problem card's six fields; a card is filled once any of them reads something other than unknown.
-CARD_FIELD = re.compile(r"^- (?:Job|Workaround|Cost|Who feels it|How often|Evidence):(.*)$", re.M)
 MUST_ANSWER_TOPICS = ("Sign-off person", "Demo workflow", "Users and roles",
                       "Existing systems", "Sign-in", "Personal data", "Production host")
 ANSWER_TOPICS = (*MUST_ANSWER_TOPICS, "Data import", "Email or SMS", "Domain",
@@ -223,11 +220,16 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             for rel, state in history["states"].items()):
         merged_prs.update(board_facts.merged_before_weeks(top))
     story_lines, unassigned_starts = [], []
+    promoted = {state["from_fix"] for _, state, _ in history["copies"] if state.get("from_fix")} if history else set()
     for key, (path, state, text) in sorted(stories.items()):
         if state.get("status") == "done":
+            promoted.update(part["from_fix"] for name in task.rows(task.sections(text))
+                            if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)
+                            and (part := _task(top, key, name, trees, merged_prs, history, prs)).get("from_fix"))
             continue
         title = state.get("title") or key
         found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history)
+        promoted.update(state["from_fix"] for state in tasks if state.get("from_fix"))
         assignments = {f"{key}/{tid}": developer(row) or owner(text)
                        for tid, row in task.rows(task.sections(text)).items()}
         ready = {line: assignments.get(match[1]) for line in found
@@ -250,7 +252,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                  and re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) else None)
         if state is not None:
             state = at_ref(top, name, state, prs.get(branch))
-            if state.get("status") == "dropped":
+            if state.get("status") == "dropped" or name in promoted:
                 continue
             if history is not None and repo.state_path(name) in history["expired"]:
                 continue
@@ -275,7 +277,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                     else story.show(top, landed, repo.state_path(name)) is not None)):
             continue
         if state := remote_state(top, name, branch, prs.get(branch), history):
-            if state.get("status") == "dropped":
+            if state.get("status") == "dropped" or name in promoted:
                 continue
             found = _item(name, f"The fix {name}", state, top, None, prs, refusals)
             if alert := claim(state):
@@ -447,23 +449,8 @@ def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
 
 
 def _idle(top: Path) -> list[str]:
-    """Nothing in progress: discover a problem, then plan its story; specs are optional."""
-    ref = story.landed_ref(top)
-    items = story.json_of(story.show(top, ref, records.ROADMAP)).get("items")
-    if isinstance(items, list) and any(
-            not isinstance(item, dict) or item.get("status") != "superseded" for item in items):
-        return ["No story or fix is in progress.",
-                'Next: forge story new <KEY> "<title>"',
-                'Next: forge fix start "<why>" --done "<done when>" --kind mechanical']
-    fields = CARD_FIELD.findall(story.show(top, ref, DISCOVERY) or "")
-    if any(value.strip().lower() not in ("", "unknown") for value in fields):
-        return ["No story or fix is in progress and the roadmap is empty; the discovery notes hold "
-                "a problem card, so plan its story with the problem in Why.",
-                'Next: forge story new <KEY> "<title>"']
-    return ["No story or fix is in progress and the roadmap is empty, so start with discovery, as "
-            "the Forge skill's Discovery section says.",
-            'Next: forge fix start "Find the problem to solve" --done "The discovery notes hold a '
-            'filled problem card and the brief names it" --kind mechanical']
+    """Nothing in progress: let intake choose the next idea's lane."""
+    return ["No story or fix is in progress.", 'Next: forge start "<idea>"']
 
 
 def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tuple[Path | None, dict[str, Any], str]]:
@@ -501,7 +488,7 @@ def _stories(top: Path, history: dict[str, Any] | None = None) -> dict[str, tupl
             state = history["ref_states"].get(full, {}).get(repo.state_path(key), {})
         if state:
             found[key] = (story.stories_here(top).get(key), state, story._plan(top, key, history=history))
-    return found
+    return {key: item for key, item in found.items() if item[1].get("status") != "dropped"}
 
 
 def _blocker(top: Path, key: str, ref: str, problem: str, readiness: dict[str, Any] | None) -> None:
@@ -518,15 +505,17 @@ def _story(top: Path, key: str, path: Path | None, text: str,
            readiness: dict[str, Any] | None = None
            ) -> tuple[list[str], list[dict[str, Any]]]:
     """A story's lines, and its tasks' states."""
-    if readiness is not None:
-        readiness.update(stage="planning", parts={}, waits={})
-    if held := _native_round(top, key, title, "Grill"):
-        return held, []
-    if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
-        return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], []
     ref = story.plan_ref(top, key, history)
     if ref != story.landed_ref(top):
         text = story._plan(top, key, history=history)
+    states = {name: _task(top, key, name, trees, merged_prs, history, prs)
+              for name in task.rows(task.sections(text)) if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)}
+    if readiness is not None:
+        readiness.update(stage="planning", parts={}, waits={})
+    if held := _native_round(top, key, title, "Grill"):
+        return held, list(states.values())
+    if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
+        return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], list(states.values())
     if history is None:
         notes, saved = story.show(top, ref, f"plans/{key}.read.md") or "", story.show(top, ref, repo.state_path(key))
     else:  # the board's one read of every ref
@@ -543,16 +532,14 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     except ValueError as exc:
         lines = [f"The story doc of {title} is malformed: {exc}.", f"Next: edit plans/{key}.md, then run forge next"]
         _blocker(top, key, ref, lines[0], readiness)
-        return lines, []
+        return lines, list(states.values())
     digest = approval.waiting_digest(key, path) if path else None
     if readiness is not None:
         readiness["parts"] = {task["id"]: "Not started" for task in doc["tasks"]}
     if digest:
-        return _approval(top, key, path, title, digest, refusals, text, readiness), []
+        return _approval(top, key, path, title, digest, refusals, text, readiness), list(states.values())
     if readiness is not None:
         readiness["stage"] = "building"
-    states = {task["id"]: _task(top, key, task["id"], trees, merged_prs, history, prs)
-              for task in doc["tasks"]}
     merged = {task for task, state in states.items() if state.get("status") == "merged"}
     cleanup = [line for task in doc["tasks"]
                if (tree := trees.get(f"task/{key}-{task['id']}")) and task["id"] in merged
