@@ -17,6 +17,7 @@ from test_story import DOC
 STORY = "cheaper-next"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 def test_1_next_reuses_work_within_a_command(repo, gh, monkeypatch, history):
     # One boundary test owns the speed contract: real git, real plans and time

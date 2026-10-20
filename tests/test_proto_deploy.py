@@ -13,6 +13,8 @@ import uuid
 
 import pytest
 
+pytestmark = pytest.mark.platform
+
 
 def _client(repo, gh, tmp_path):
     client = tmp_path / "client"

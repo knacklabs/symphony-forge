@@ -262,7 +262,7 @@ def _review_fails_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "codex: the model is unavailable.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _review_incomplete_twice(env):
@@ -270,7 +270,7 @@ def _review_incomplete_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "it reported the review as incomplete.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _open_serious_finding(env):
@@ -362,10 +362,8 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            # Recovery now points to the shipped recipe before committing the resolved merge.
-            "next": re.compile(r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
-                               r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
-                               r"then forge close tidy-readme")}
+            # The normal worker finishes the merge before it continues the item's work.
+            "next": "forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme"}
 
 
 def _bad_dismissal(env):
@@ -469,7 +467,7 @@ def test_18_close(env, kind):
     env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
     env.repo.git("push", "-q", "origin", "main")
-    toml = env.repo.path / "forge.toml"  # legacy pins remain valid but Autoreview owns selection
+    toml = env.repo.path / "forge.toml"  # configured review pins override Autoreview defaults
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     item, where = env.start_task() if kind == "task" else env.start_fix()
@@ -492,7 +490,8 @@ def test_18_close(env, kind):
     assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority")} == {
         "--mode": "branch", "--base": env.repo.git("rev-parse", "origin/main"),
         "--engine": "codex", "--max-priority": "P3"}
-    assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "codex=gpt-6-astra"
+    assert options["--thinking"] == "codex=high"
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones

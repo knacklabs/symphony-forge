@@ -115,7 +115,7 @@ def test_1_the_board_answers_only_on_this_computer_and_only_with_its_token(clien
         address = urlsplit(url)
         assert address.hostname == "127.0.0.1"
         status, headers, page = get(url)
-        assert status == 200 and f"board.json?{address.query}".encode() in page
+        assert status == 200 and f"app.js?{address.query}".encode() in page  # the shell loads its script with the token
         assert "default-src 'none'" in headers["Content-Security-Policy"]
         assert headers["Referrer-Policy"] == "no-referrer"
         status, _, plan = get(url, "/plan/SHOP")
@@ -146,6 +146,10 @@ def test_2_the_board_rebuilds_only_what_changed(client, tmp_path):
         # Nothing changed: the same snapshot, with no rebuild.
         again = snapshot(url)
         assert again == first
+        # A test run's per-test results are not board input: writing them rebuilds nothing.
+        (client.path / ".git/forge/test-results-alpha.txt").write_text("passed tests/test_a.py::test_a\n",
+                                                                       encoding="utf-8")
+        assert snapshot(url) == first
         # One item changed: only its row is derived again.
         commit(alpha, "alpha.txt")
         changed = snapshot(url)
@@ -211,6 +215,7 @@ def test_4_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_
         assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
 
 
+@pytest.mark.platform
 def test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_path):
     """A worker edits an open story's plan and a fix's record without committing: the next
     request shows both, and only those items are derived again: an unedited fix keeps its row."""

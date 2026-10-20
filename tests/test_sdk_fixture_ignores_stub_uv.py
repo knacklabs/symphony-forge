@@ -13,6 +13,7 @@ from conftest import ROOT, _install
 STORY = "one-forge-close-looks-up-the-same-git-fa"
 
 
+@pytest.mark.platform
 def test_2_sdk_data_builds_with_real_uv_when_another_test_puts_a_stub_on_path(tmp_path):
     if shutil.which("uv") is None:
         pytest.skip("uv is missing, so the Codex SDK test environment cannot be built")

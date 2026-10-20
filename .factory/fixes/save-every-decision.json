@@ -1,0 +1,46 @@
+{
+  "base": "8c9b59b387e92c9a6cc39f43556fb31da45ed85b",
+  "branch": "fix/save-every-decision",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e96-5ac8-7073-8152-107b67173337",
+    "head": null,
+    "start": "694f8c5663e00304f257a88be140f95909c1e5c0"
+  },
+  "done_when": "The coordinator guide tells agents to save every human decision, direction and idea the same turn where Forge keeps it (item plan Notes or the recorded choice, decision docs batched into the next fix, a parked ideas list in plans/ideas.md), and to grill new directions one question at a time; new and existing repos get it through init and sync, and the guide test covers both",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4fc636cb30332cfe3c4c8010dc00ff21ad6ffe21ec9fd26010a8a6206d97631f",
+    "changed": "6d5a5bfb51080f527659ad378538122fb70e14e73421decea14199ff44bd78aa",
+    "commit": "f7a7fb96c29fa0ff4595ddb3f4a66f69d62a5722",
+    "dismissals": [],
+    "findings": [],
+    "id": "182f6db5-194e-4062-8dab-e75fd2f6eddf",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T10:37:11.478543+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T10:41:32.196989+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "162b0308992ad45462313425b489c7dec5cbdd6f",
+    "keys": {},
+    "round": null
+  },
+  "why": "When the human makes many quick decisions and raises ideas in chat, the coordinator can leave them only in the conversation, so they are lost when the session ends",
+  "worker": "codex"
+}

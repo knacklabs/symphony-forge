@@ -16,9 +16,8 @@ STORY = "FIX-WHERE-TIME-WENT"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("command", ["close", "merge"])
 @pytest.mark.parametrize("checkpoint", [True, False], ids=["recorded-checkpoint", "earlier-published-format"])
-def test_28_fresh_clone_preserves_published_rounds_findings_and_durations(env, previous, command, checkpoint):
+def test_28_fresh_clone_preserves_published_rounds_findings_and_durations(env, previous, checkpoint):
     client(env, previous)
     version = env.repo.forge("--version").stdout.split()[-1]
     env.commit(env.repo.path, "forge.toml", f'version = "{version}"\nstage = "live"\n'
@@ -74,33 +73,36 @@ def test_28_fresh_clone_preserves_published_rounds_findings_and_durations(env, p
     assert again.returncode == 0, again.stdout + again.stderr
     assert len(env.review_calls()) == reviewed
     refreshed = body(env.gh_calls("pr", "edit")[-1])
-    if command == "merge":
-        # Supply the fetched body independently to guard merge's own refresh path.
-        # The resumed close above produced the real ready receipt in the fresh clone.
-        github_merge(env, f"fix/{item}")
-        gh = env.repo.bin / "gh"
-        source = gh.read_text("utf-8")
-        gh.write_text(source.replace('"isDraft": False',
-                                    f'"isDraft": False, "body": {published!r}'), "utf-8")
-        merged = env.repo.forge("merge", item)
-        assert merged.returncode == 0, merged.stdout + merged.stderr
-        refreshed = body(env.gh_calls("pr", "edit")[-1])
-        committed = env.repo.git("log", "-1", "--format=%B", "origin/main")
-        assert earlier_round in committed
-        assert before in committed and after.strip() in committed
-    assert refreshed.startswith(before) and refreshed.endswith(after)
-    managed = refreshed.split("<!-- forge:begin -->", 1)[1].split("<!-- forge:end -->", 1)[0]
-    # Count the rendered history, excluding the shared machine record carried beside it.
-    managed = re.sub(r"<!--.*?-->", "", managed, flags=re.S)
-    assert earlier_round in managed
-    assert managed.count("Round 1:") == managed.count("Round 2:") == 1
-    assert managed.count("## How it went") == 1
-    assert "Keep the basket label clear" in managed
-    if checkpoint:
-        # Shared intervals retain earlier work; later CI and idle time update the single total.
-        for category in ("building", "own tests", "reviewing", "fixing findings"):
-            fragment = re.search(rf"(?:^|; )({category}: [^;]+)", earlier_times)[1]
-            assert fragment in managed
-    else:
-        # Without interval evidence, legacy snapshots remain separate and unchanged.
-        assert earlier_times in managed
+    # Check both publication boundaries in one lifecycle; merge must not hide a
+    # history loss in the resumed close by restoring the fetched published body.
+    for command in ("close", "merge"):
+        if command == "merge":
+            # Supply the fetched body independently to guard merge's own refresh path.
+            # The resumed close above produced the real ready receipt in the fresh clone.
+            github_merge(env, f"fix/{item}")
+            gh = env.repo.bin / "gh"
+            source = gh.read_text("utf-8")
+            gh.write_text(source.replace('"isDraft": False',
+                                        f'"isDraft": False, "body": {published!r}'), "utf-8")
+            merged = env.repo.forge("merge", item)
+            assert merged.returncode == 0, merged.stdout + merged.stderr
+            refreshed = body(env.gh_calls("pr", "edit")[-1])
+            committed = env.repo.git("log", "-1", "--format=%B", "origin/main")
+            assert earlier_round in committed
+            assert before in committed and after.strip() in committed
+        assert refreshed.startswith(before) and refreshed.endswith(after)
+        managed = refreshed.split("<!-- forge:begin -->", 1)[1].split("<!-- forge:end -->", 1)[0]
+        # Count the rendered history, excluding the shared machine record carried beside it.
+        managed = re.sub(r"<!--.*?-->", "", managed, flags=re.S)
+        assert earlier_round in managed
+        assert managed.count("Round 1:") == managed.count("Round 2:") == 1
+        assert managed.count("## How it went") == 1
+        assert "Keep the basket label clear" in managed
+        if checkpoint:
+            # Shared intervals retain earlier work; later CI and idle time update the single total.
+            for category in ("building", "own tests", "reviewing", "fixing findings"):
+                fragment = re.search(rf"(?:^|; )({category}: [^;]+)", earlier_times)[1]
+                assert fragment in managed
+        else:
+            # Without interval evidence, legacy snapshots remain separate and unchanged.
+            assert earlier_times in managed

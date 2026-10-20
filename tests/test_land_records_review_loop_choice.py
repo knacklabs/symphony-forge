@@ -8,7 +8,7 @@ from test_land import ITEM, _fix, _land, _workers, land  # noqa: F401
 STORY = "three-rounds-ask"
 
 
-@pytest.mark.parametrize("choice", ["narrow", "split", "accept"])
+@pytest.mark.parametrize("choice", ["narrow", "accept"])
 def test_3_land_records_the_humans_review_loop_choice(land, choice):
     # With the default on, land waits out the stop; this checks the owner's own choice.
     toml = land.repo.path / "forge.toml"

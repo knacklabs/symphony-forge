@@ -1,4 +1,5 @@
 """A real coordinating process owns read places, chats and round hand-backs."""
+import io
 import json
 import os
 import shutil
@@ -16,6 +17,8 @@ from test_codex_reader import GRILL
 from test_codex_worker import _toml
 from test_fix_agent_runs_wait_in_line import _until
 from test_story import DOC, new_story, setup
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-TOOLS-1"
 
@@ -95,8 +98,10 @@ class Session:
     def _receive(self):
         for line in self.process.stdout:
             result = json.loads(line)
+            # JSON escapes bypass the pipe's universal newlines. Match repo.forge's text mode.
             self.pending[result["id"]].set_result(subprocess.CompletedProcess(
-                [], result["code"], result["stdout"], result["stderr"]))
+                [], result["code"], io.StringIO(result["stdout"], newline=None).read(),
+                io.StringIO(result["stderr"], newline=None).read()))
         error = self.process.stderr.read()
         for future in self.pending.values():
             if not future.done():

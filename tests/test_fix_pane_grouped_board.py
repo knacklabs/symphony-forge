@@ -119,28 +119,65 @@ def groups_in_plain_words(_request, tmp_path):
 NEEDS YOU
   Ask asks for the comparison period  ASK
     Review found 3 problems. The builder is stuck.
-    → decide: {RESOLVE}
+
+    Build → Tests → Review → CI → Merge
+
+    Plan read  none
+    Review     blocked
+    CI         none
+    3 open findings · 2 dismissed
+
+    Next: decide: {RESOLVE}
 
 STUCK (no progress 8 days)
   Actual-versus-Budget answers ask for the period  AVB
     Building · last activity Oct 5
-    → forge work AVB/PERIOD
+
+    Build → Tests → Review → CI → Merge
+
+    Plan read  none
+    Review     none
+    CI         none
+
+    Next: forge work AVB/PERIOD
 
 MOVING
   Board counts
-    Review running · 12 min
-    → wait for the review, then forge close counts
+    Review running · 12m
+
+    Build → Tests → Review ● 12m → CI → Merge
+
+    Plan read  none
+    Review     none
+    CI         none
+
+    Next: wait for the review, then forge close counts
 
 READY TO MERGE
   Codex trust fix
     Ready to merge · checks green
-    → merge its pull request, then forge next
+
+    Build → Tests → Review → CI → Merge
+
+    Plan read  none
+    Review     none
+    CI         none (PR #9)
+
+    Next: merge its pull request, then forge next
+
   Polish the guide
     Ready to merge
-    → merge its pull request, then forge next
+
+    Build → Tests → Review → CI → Merge
+
+    Plan read  none
+    Review     none
+    CI         none
+
+    Next: merge its pull request, then forge next
 
 WAITING OR NOT STARTED (1) · forge board for all"""
-    for hidden in ("unknown", "T11:", "P1", "dismissed", " 0 ", "Build → Tests", "round"):
+    for hidden in ("unknown", "T11:", "P1", " 0 ", "round"):
         assert hidden not in shown
 
 
@@ -162,7 +199,14 @@ def an_older_forge_board_draws_rows_and_no_team_line(_request, tmp_path):
 READY TO MERGE
   Polish the guide
     Ready to merge
-    → Polish the guide is ready and waiting for someone to merge it.
+
+    Build → Tests → Review → CI → Merge
+
+    Plan read  none
+    Review     none
+    CI         none
+
+    Next: Polish the guide is ready and waiting for someone to merge it.
 
 WAITING OR NOT STARTED (1) · forge board for all"""
 
@@ -182,7 +226,11 @@ def a_review_stop_needs_you_with_the_step_forge_next_prints(request, tmp_path):
     assert polish["next"]["command"] is None
     assert polish["next"]["step"] == step.removeprefix("Next: ")
     shown = lines(tmp_path, board)
-    assert f"NEEDS YOU\n  Polish the guide\n    The builder is stuck.\n    → decide: {polish['next']['step']}" in shown
+    assert re.search("NEEDS YOU\n  Polish the guide\n    The builder is stuck.\n\n"
+                     "    Build → Tests → Review → CI → Merge\n"
+                     r"(?:    Total [^\n]+\n)?"
+                     "\n    Plan read  none\n    Review     none\n    CI         none\n\n"
+                     + re.escape(f"    Next: decide: {polish['next']['step']}"), shown), shown
 
 
 def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
@@ -196,9 +244,14 @@ def a_worker_question_needs_you_with_its_answer_step(request, tmp_path):
     step = next(line for line in repo.forge("next").stdout.splitlines() if line.startswith("Next: "))
     assert step == f'Next: forge work {item} --note "<answer>"'
     shown = board_tab(tmp_path, repo)
-    # The row carries how long the question has waited, as the board's Needs you does.
-    assert re.search("NEEDS YOU\nReadme greets new readers\nThe builder asked a question. · waiting \\d+s\n"
-                     + re.escape(f"→ decide: {step.removeprefix('Next: ')}"), shown), shown
+    assert shown.splitlines()[:2] == ["● Board (b)", "Machine (m)"]
+    # The row shows a recorded positive wait, its round and the answer after the gates.
+    assert re.search(r"NEEDS YOU\nReadme greets new readers\n  The builder asked a question\."
+                     r"(?: · waiting [1-9]\d*s)? · round 1\n"
+                     r" \n  Build ✓[^\n]* → Tests → Review → CI → Merge\n"
+                     r"(?:  Total [^\n]+\n)? \n"
+                     r"  Plan read  none\n  Review     none\n  CI         none\n \n"
+                     + re.escape(f"  Next: decide: {step.removeprefix('Next: ')}"), shown), shown
 
 
 def opened_waiting_rows_and_a_remote_ready_row_show_their_state_and_step(_request, tmp_path):
@@ -207,10 +260,14 @@ def opened_waiting_rows_and_a_remote_ready_row_show_their_state_and_step(_reques
                                  "line": "Polish the guide is ready to merge; Forge Test merges it from their machine."}
     board["items"][1]["next"]["step"] = "forge read WAIT"
     shown = board_tab(tmp_path, canned={"board": board, "next": FIXTURE["next"]}, press="waiting")
-    assert ("READY TO MERGE\nPolish the guide\nReady to merge\n"
-            "→ Polish the guide is ready to merge; Forge Test merges it from their machine.") in shown, shown
+    assert ("READY TO MERGE\nPolish the guide\n  Ready to merge\n \n"
+            "  Build → Tests → Review → CI → Merge\n \n"
+            "  Plan read  none\n  Review     none\n  CI         none\n \n"
+            "  Next: Polish the guide is ready to merge; Forge Test merges it from their machine.") in shown, shown
     assert ("Hide waiting or not started (1)\nBoard shows each story in plain English  WAIT\n"
-            "Planning\n→ forge read WAIT") in shown, shown
+            "  Planning\n \n  Build → Tests → Review → CI → Merge\n \n"
+            "  Plan read  none\n  Review     none\n  CI         none\n \n"
+            "  Next: forge read WAIT") in shown, shown
     assert "merge its pull request" not in shown
 
 
@@ -218,7 +275,10 @@ def a_ready_row_with_unknown_checks_still_says_ready_and_its_step(_request, tmp_
     board = copy.deepcopy(PREVIOUS["board"])
     board["items"][0]["next"] = {"command": None}
     shown = board_tab(tmp_path, canned={"board": board, "next": FIXTURE["next"]})
-    assert "READY TO MERGE\nPolish the guide\nReady to merge\n→ see forge next" in shown, shown
+    assert ("READY TO MERGE\nPolish the guide\n  Ready to merge\n \n"
+            "  Build → Tests → Review → CI → Merge\n \n"
+            "  Plan read  none\n  Review     none\n  CI         none\n \n"
+            "  Next: see forge next") in shown, shown
 
 
 @pytest.mark.parametrize("case", [a_worker_question_needs_you_with_its_answer_step,

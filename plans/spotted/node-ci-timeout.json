@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\t[P1] Preserve independent check failures alongside test timeouts\tnode-ci-timeout",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 101,
+      "text": "[P1] Preserve independent check failures alongside test timeouts",
+      "from": "blocking",
+      "item": "node-ci-timeout",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

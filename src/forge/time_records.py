@@ -57,6 +57,9 @@ def checkpoint(rows: list[dict[str, Any]]) -> list[Any]:
 
 
 def read(top: Path, name: str) -> list[dict[str, Any]]:
+    if name == "events":
+        from forge import event_log
+        return event_log.read(top)
     path = repo.forge_dir(top) / f"{name}.jsonl"
     rows = []
     for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:

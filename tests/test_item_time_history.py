@@ -12,6 +12,7 @@ from test_close_holds_after_three_blocked_reviews import client_item
 from test_close_test_runs_wait_in_line import Close, ONE, SUITE, _fix, _release, _running, _with_test_command
 from test_worker import install_claude
 from test_last_task_records_story_outcome import github_merge
+from test_upgrade_command import Upgrade
 
 STORY = "FIX-WHERE-TIME-WENT"
 CATEGORIES = {"building", "own_tests", "reviewing", "fixing_findings", "waiting_for_ci",
@@ -90,10 +91,14 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     suite = env.tmp / "suite.py"
     suite.write_text(SUITE.format(tmp=env.tmp.as_posix()), "utf-8")
     command = f'"{sys.executable}" "{suite}"'
-    env.commit(where, "forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
+    # Close now restores main's settings; install the coordinator's test command there.
+    env.repo.git("merge", "--ff-only", "origin/main")
+    Upgrade(env, tmp_path).on_main("forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
                'checks = ["tests", "forge-pr-check"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n'
                + f'test = {json.dumps(command)}\n')
+    env.repo.git("fetch", "-q", "origin", "main")
+    env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     if previous:
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stderr

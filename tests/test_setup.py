@@ -28,7 +28,7 @@ ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
 # The bundled plain English skill's files, the same in both hosts.
 PLAIN_ENGLISH = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.md",
                  "references/substitutions.md", "examples/before-after.md", "scripts/ste_check.py")
-LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".forge/records-only/action.yml", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
@@ -97,6 +97,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
     return log
 
 
+@pytest.mark.platform
 def test_28_sync(repo, tmp_path, monkeypatch):
     """Repos without Husky keep local shims and commit only the generated adapters."""
     _on_a_branch_with_forge_toml(repo)
@@ -203,6 +204,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     return client, initialized
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case, rows", [
     ("fresh", ()),
     # Claude's mod is optional: absence is advice, rather than a failed doctor check.
@@ -371,6 +373,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
             assert log.read_text(encoding="utf-8").count("hook deny\n") == 1
 
 
+@pytest.mark.platform
 def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path):
     _on_a_branch_with_forge_toml(repo)
     assert repo.forge("sync").returncode == 0

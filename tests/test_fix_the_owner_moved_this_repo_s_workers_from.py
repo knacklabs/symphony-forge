@@ -11,6 +11,10 @@ from test_codex_worker import QUIET, _sent, sdk_data  # noqa: F401 (fixture)
 from test_setup import _autoreview, _stub_forge
 from test_subagent_roles import _settings
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "the-owner-moved-this-repo-s-workers-from"
 SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
 OPUS = {"model": "claude-opus-5-5", "effort": "medium"}

@@ -85,30 +85,22 @@
       "work": 1
     }
   ],
+  "land": {
+    "rounds": 3,
+    "stop": null
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "eb78115ef2c91707b404bb2f5a150c5997fe8022d4f98499f36954f81f023588",
-    "changed": "e4a3e893e88f85ddb68802706dbf1dbe554ad9016e9d69156de9e34c326330da",
-    "commit": "21609b827e858f51b30abb61fd859990e2a40ee6",
+    "branch_diff": "b68fa02eba6316995aa858712ab42eba72fffac29f65725dc1a18eca21a42621",
+    "changed": "f27916fe5184be44fddc9b757b8eaa58b3246b6359b185a45fb1f95689ffbe32",
+    "commit": "0ec41ecc49345b8ede6913a2c9c6a239b8eac0a6",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. This route now always serves the placeholder, and the asset route was removed. When SHELL adds board_app/shell.html, app.js and tokens.css as assigned, `forge board` will still show the placeholder and return 404 for its assets. The server therefore cannot display SHELL's page or its automatic refresh.",
-        "file": "src/forge/board_server.py",
-        "follow_up": "New finding on lines unchanged since the previous review.",
-        "gain": 4,
-        "harm": 3,
-        "line": 237,
-        "priority": "P1",
-        "title": "Removing shell and asset serving breaks the live page when SHELL lands",
-        "work": 1
-      }
-    ],
-    "id": "5dc39cb3-86b3-48d2-b484-975864023a29",
+    "findings": [],
+    "id": "f0e117ae-4be8-4003-bdfb-f69d54c45f29",
     "status": "clean"
   },
-  "round": 7,
+  "round": 11,
   "status": "waiting for checks",
   "steps": [
     {
@@ -130,13 +122,25 @@
     {
       "at": "2026-10-17T14:31:25.975487+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-18T17:31:25.139491+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:14:07.877878+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T05:29:29.661515+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
-    "close": "87ead75c-089e-4a76-ad39-2c2aada3270f",
-    "head": "d99e8b412ad29b466cb7c5809d59a8c4a057e3b6",
+    "close": "85c6edfe-6ab7-4a4b-9002-96c5934edd45",
+    "head": "8fb9e83f6412732be2ec8b8d5df487d6b8ac4492",
     "keys": {},
-    "round": 5
+    "round": 10
   },
   "worker": "claude"
 }

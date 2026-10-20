@@ -3,10 +3,18 @@ import json
 
 import pytest
 
-from test_board import DOC, seen
+from test_board import DOC
 from test_machine_views_recent_finished_items import client, landed, NOW, OLD
 
 STORY = "skipped-sync-board"
+
+
+def facts(repo, tmp_path):
+    """Every item's facts, finished ones included, as `forge board --out` writes them."""
+    out = tmp_path / "board.json"
+    result = repo.forge("board", "--out", out.as_posix())
+    assert result.returncode == 0, result.stderr
+    return json.loads(out.read_text("utf-8"))
 
 
 def assigned_doc():
@@ -29,10 +37,8 @@ def test_3_merged_assignment_older_than_seven_days_is_never_unstarted(
     assert result.returncode == 0, result.stderr
     story = next(r for r in json.loads(result.stdout)["items"] if r["id"] == "SHOP")
     assert "SHOP/SAVE" not in {r["id"] for r in story["children"]}, "Old merged work stays outside active rows"
-    out = tmp_path / "board.html"
-    result = repo.forge("board", "--out", out.as_posix())
-    assert result.returncode == 0, result.stderr
-    assert "Story Building In progress: 1 of 3 parts finished" in seen(out)
+    story = next(r for r in facts(repo, tmp_path)["items"] if r["id"] == "SHOP")
+    assert (story["state"], story["status"]) == ("building", "In progress: 1 of 3 parts finished")
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
@@ -50,7 +56,5 @@ def test_4_backticked_task_ids_render_on_both_boards(repo, gh, monkeypatch, tmp_
     assert result.returncode == 0, result.stderr
     story = next(r for r in json.loads(result.stdout)["items"] if r["id"] == "SHOP")
     assert {r["id"] for r in story["children"]} == {"SHOP/SAVE", "SHOP/SHOW", "SHOP/SHARE"}
-    out = tmp_path / "board.html"
-    result = repo.forge("board", "--out", out.as_posix())
-    assert result.returncode == 0, result.stderr
-    assert all(name in seen(out) for name in ("Save a basket", "Show when it was saved", "Share a basket"))
+    story = next(r for r in facts(repo, tmp_path)["items"] if r["id"] == "SHOP")
+    assert {r["title"] for r in story["children"]} == {"Save a basket", "Show when it was saved", "Share a basket"}

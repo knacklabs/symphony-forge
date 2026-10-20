@@ -20,6 +20,8 @@ from test_fix_agent_runs_wait_in_line import (
     HOLDING_CLAUDE, HOLDING_AUTOREVIEW, _other_repo, _until,
 )
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-LANES-1"
 
 

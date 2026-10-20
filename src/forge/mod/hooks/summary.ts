@@ -25,19 +25,33 @@ export function stages(i: Item): Stage[] {
   return ['Build', 'Tests', 'Review', 'CI', 'Merge'].map(name => i.stages?.find(s => s.name === name) ?? { name })
 }
 
+export function duration(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || half(value) <= 0) return ''
+  const n = half(value)
+  return n < 60 ? `${n}s` : n < 3600 ? `${Math.floor(n / 60)}m${n % 60 ? ` ${n % 60}s` : ''}` : seconds(n)
+}
+
 export function stageText(s: Stage, now: number): string {
   if (s.status == null) return s.name
   if (s.status === 'skipped') return `${s.name} –`
-  const symbol = s.status === 'pass' ? '✓' : s.status === 'fail' ? '✗' : s.status === 'running' ? '●' : '?'
-  const time = s.status === 'running' ? (s.started_at ? seconds(elapsed(s.started_at, now)) : 'unknown') : s.seconds != null ? seconds(s.seconds) : 'unknown'
-  return `${s.name} ${symbol} ${time}`
+  const symbol = s.status === 'pass' ? '✓' : s.status === 'fail' ? '✗' : s.status === 'running' ? '●' : ''
+  const time = s.status === 'running' ? (s.started_at ? duration(elapsed(s.started_at, now)) : '') : duration(s.seconds)
+  return [s.name, symbol, time].filter(Boolean).join(' ')
 }
 
 export function total(i: Item, now: number): string {
-  if (i.time_breakdown != null) return i.total_seconds == null ? 'unknown' : seconds(i.total_seconds)
+  if (i.time_breakdown != null) return duration(i.total_seconds)
   // Build includes the worker's own tests; concurrent stages must not double time.
   const live = Math.max(0, ...stages(i).filter(s => s.status === 'running' && s.started_at).map(s => elapsed(s.started_at!, now)))
-  return i.total_seconds == null ? 'unknown' : seconds(i.total_seconds + live)
+  return i.total_seconds == null ? '' : duration(i.total_seconds + live)
+}
+
+export function itemStatus(i: Item, now: number, state?: string): string {
+  const stage = stages(i).find(s => s.status === 'running'), w = record(i.worker), a = record(i.activity)
+  const start = stage?.started_at ?? (typeof w.started_at === 'string' ? w.started_at : null)
+  const status = state ?? DOING[stage?.name ?? String(w.kind ?? a.action)] ?? (typeof i.state === 'string' ? upper(i.state) : 'In progress')
+  const worker = [typeof w.tool === 'string' ? upper(w.tool) : '', w.model, w.effort].filter(v => typeof v === 'string' && v && v !== 'unknown').join(' ')
+  return [status, typeof i.round === 'number' && i.round > 0 ? `round ${i.round}` : '', worker, start ? duration(elapsed(start, now)) : ''].filter(Boolean).join(' · ')
 }
 
 export function activeRows(data: Data): Item[] {
@@ -58,7 +72,7 @@ export function laneCounts(data: Data) {
 }
 
 export function itemTime(i: Item, now: number): string {
-  return `${i.title}: ${stages(i).map(s => stageText(s, now)).join(' → ')} · round ${i.round ?? 'unknown'} · total ${total(i, now)}`
+  return `${i.title} · ${itemStatus(i, now)}`
 }
 
 // Before a first good refresh: loading, or why that refresh failed.
@@ -141,8 +155,7 @@ export function board(data: Data, now: number): View {
       put('STUCK')
     } else if (record(i.activity).status !== 'queued' && running(i)) {
       const stage = stages(i).find(s => s.status === 'running'), w = record(i.worker), a = record(i.activity)
-      const start = stage?.started_at ?? (typeof w.started_at === 'string' ? w.started_at : null)
-      row.state = [DOING[stage?.name ?? String(w.kind ?? a.action)] ?? 'Running', start ? ago(elapsed(start, now)) : ''].filter(Boolean).join(' · ')
+      row.state = DOING[stage?.name ?? String(w.kind ?? a.action)] ?? 'Running'
       put('MOVING')
     } else if (i.state === 'ready to merge' || i.stage === 'ready') {
       row.state = ['Ready to merge', CHECKS[String(i.pr?.checks)]].filter(Boolean).join(' · ')
@@ -164,7 +177,7 @@ export function board(data: Data, now: number): View {
       return { title: String(e.title), key, state, next: known?.next, item: known?.item ?? { id: String(e.id), title: String(e.title) } as Item }
     }
     // Each wait and block carries the age the page shows, in the pane's short units; unknown stays out.
-    const aged = (state: string | undefined, age: unknown, words = '') => [state, typeof age === 'number' ? `${words}${seconds(age)}` : ''].filter(Boolean).join(' · ') || undefined
+    const aged = (state: string | undefined, age: unknown, words = '') => [state, duration(age) ? `${words}${duration(age)}` : ''].filter(Boolean).join(' · ') || undefined
     for (const e of list(team.needs_you)) {
       const known = found.get(e.id)
       const row = known?.group === 'NEEDS YOU' ? { ...known.row } : entry(e, ASKS[String(e.reason)] ?? (e.reason ? `${upper(String(e.reason))}.` : undefined))
@@ -209,17 +222,34 @@ export function board(data: Data, now: number): View {
   }
 }
 
-// One line for a row with nothing to do here; title, state and step lines otherwise.
-export function rowLines(r: Row): string[] {
-  const title = `${r.title}${r.key ? `  ${r.key}` : ''}`
-  return r.next ? [title, ...(r.state ? [`  ${r.state}`] : []), `  → ${r.next}`] : [[title, r.state].filter(Boolean).join(' · ')]
+// The pane and text command share the same item blocks.
+export function rowLines(r: Row, now: number): string[] {
+  const i = r.item, gates = record(i.gates), pr = record(i.pr)
+  const gate = (name: string) => {
+    const value = record(gates[name]).status
+    return typeof value === 'string' && value && value !== 'unknown' ? value : 'none'
+  }
+  const failures = list(pr.failures).map(f => f.job).filter(v => typeof v === 'string' && v.trim())
+  const ci = gate('ci'), failed = ci === 'red' || pr.checks === 'fail'
+  const ciText = [failed ? `failed${failures.length ? `: ${failures.join(', ')}` : ''}` : ci === 'green' ? 'passed' : ci,
+    typeof pr.number === 'number' ? `(PR #${pr.number})` : ''].filter(Boolean).join(' ')
+  const findings = record(i.findings)
+  const counts = [typeof findings.count === 'number' && findings.count > 0 ? plural(findings.count, 'open finding') : '',
+    typeof findings.dismissed === 'number' && findings.dismissed > 0 ? `${findings.dismissed} dismissed` : ''].filter(Boolean).join(' · ')
+  const time = total(i, now)
+  return [
+    `${r.title}${r.key ? `  ${r.key}` : ''}`, `  ${itemStatus(i, now, r.state)}`, '',
+    `  ${stages(i).map(s => stageText(s, now)).join(' → ')}`, ...(time ? [`  Total ${time}`] : []), '',
+    `  Plan read  ${gate('plan_read')}`, `  Review     ${gate('review')}`, `  CI         ${ciText}`,
+    ...(counts ? [`  ${counts}`] : []), ...(r.next ? ['', `  Next: ${r.next}`] : []),
+  ]
 }
 
 export function teamLines(data: Data, now: number): string[] {
   const b = board(data, now), blocks: string[][] = []
   if (b.summary) blocks.push([b.summary])
   if (b.sentence) blocks.push([b.sentence, ...b.totals])
-  for (const g of b.groups) blocks.push([g.name, ...g.rows.flatMap(r => rowLines(r).map(l => `  ${l}`)), ...(g.more ? [`  and ${g.more} more · forge board for all`] : [])])
+  for (const g of b.groups) blocks.push([g.name, ...g.rows.flatMap((r, n) => [...(n ? [''] : []), ...rowLines(r, now).map(l => l ? `  ${l}` : '')]), ...(g.more ? [`  and ${g.more} more · forge board for all`] : [])])
   if (b.waiting.length) blocks.push([`WAITING OR NOT STARTED (${b.waiting.length}) · forge board for all`])
   if (data.board && !b.groups.length && !b.waiting.length) blocks.push(['Nothing in progress.'])
   return blocks.flatMap((block, n) => n ? ['', ...block] : block)

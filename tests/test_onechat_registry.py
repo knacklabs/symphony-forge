@@ -10,9 +10,12 @@ from pathlib import Path
 from test_migrate import _copied_client
 from test_setup import _fresh_client
 
+import pytest
+
 STORY = "FORGE-ONECHAT-1"
 
 
+@pytest.mark.platform
 def test_2_successful_commands_remember_one_main_checkout(repo, gh, tmp_path, monkeypatch):
     config = tmp_path / "config"
     monkeypatch.setenv("APPDATA" if os.name == "nt" else "XDG_CONFIG_HOME", str(config))

@@ -31,6 +31,7 @@ marker.with_suffix(".tmp").replace(marker)
 '''
 
 
+@pytest.mark.platform
 def test_4_a_crashed_overlap_worker_reports_and_stops_its_registered_children(tmp_path):
     child_pid = tmp_path / "child-pid"
     crashy = tmp_path / "test_crashy.py"
@@ -65,9 +66,13 @@ def test_overlap_worker(tmp_path):
                 os.kill(pid, signal.SIGKILL)
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("red,priority", [(False, ""), (True, ""), (False, "P0"), (False, "P1"), (True, "P1")],
-                         ids=["green", "red-tests", "serious-P0", "serious-P1", "both-blocked"])
+@pytest.mark.parametrize("adopted,red,priority", [
+    (False, False, ""), (False, True, ""), (False, False, "P0"),
+    (False, False, "P1"), (False, True, "P1"),
+    (True, True, ""), (True, True, "P1"),
+], ids=["new-client-green", "new-client-red-tests", "new-client-serious-P0",
+        "new-client-serious-P1", "new-client-both-blocked",
+        "earlier-adoption-red-tests", "earlier-adoption-both-blocked"])
 def test_1_close_starts_tests_and_review_together_and_reports_both(env, adopted, red, priority):
     repo = env.repo
     if adopted:

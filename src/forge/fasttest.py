@@ -57,10 +57,49 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
-def narrow_command(command: str, excluded: list[str], workers: str, always: list[str]) -> str:
+def node_worker_budget(command: str, workers: str) -> str:
+    """Budget direct Vitest/Jest commands; preserve scripts and explicit worker options."""
+    segment = re.compile(r'''(?:[^;&|<>()"']|"[^"]*"|'[^']*')+''')
+    replacements = []
+    for part in segment.finditer(command):
+        text = part.group().rstrip()
+        try:
+            words = shlex.split(text)
+        except ValueError:
+            continue  # Leave shell constructs we cannot identify to their runner.
+        index = 0
+        if words[:1] == ["npx"]:
+            index = 2 if words[1:2] == ["--no-install"] else 1
+        elif words[:2] in (["npm", "exec"], ["pnpm", "exec"], ["yarn", "exec"]):
+            index = quicktest._npm_runner_index(words) if words[0] == "npm" else 2
+        name = words[index].replace("\\", "/").rsplit("/", 1)[-1] if index < len(words) else ""
+        name = name.removesuffix(".cmd").removesuffix(".exe")
+        if name not in {"vitest", "jest"}:
+            continue
+        if any(arg.split("=", 1)[0] in {"--maxWorkers", "--runInBand", "-i"}
+               for arg in words[index + 1:]):
+            continue
+        if words[:2] == ["npm", "exec"] and "--" not in words[:index]:
+            tokens = list(re.finditer(r'''(?:[^\s"']+|"[^"]*"|'[^']*')+''', text))
+            start = tokens[index].start()
+            text = text[:start] + "-- " + text[start:]
+        text += f" --maxWorkers={workers}"
+        replacements.append((part.start(), part.start() + len(part.group().rstrip()), text))
+    for start, end, text in reversed(replacements):
+        command = command[:start] + text + command[end:]
+    return command
+
+
+def narrow_command(command: str, excluded: list[str], workers: str, always: list[str], *,
+                   launchers: bool = True) -> str:
+    command = node_worker_budget(command, workers)
     # Preserve the shell's setup and quoting; alter only pytest's argument tokens.
     paths = {Path(path).resolve() for path in excluded}
     tokens = list(re.finditer(r'''(?:[^\s"';&|<>]+|"[^"]*"|'[^']*')+|[;&|<>]+''', command))
+    pytest_tokens = [index for index, token in enumerate(tokens)
+                     if Path(token.group().strip("\"'")).name in {"pytest", "pytest.exe"}]
+    if not launchers and not pytest_tokens:
+        return command
     replacements = []
     for token in tokens:
         value = token.group().strip("\"'")
@@ -75,14 +114,11 @@ def narrow_command(command: str, excluded: list[str], workers: str, always: list
     options += always  # forge.toml's always_test, whatever roots the command names
     # CLI options win over ini and PYTEST_ADDOPTS, including fixed xdist counts.
     additions = (subprocess.list2cmdline(options) if os.name == "nt" else shlex.join(options))
-    found = False
-    for index, token in enumerate(tokens):
-        if Path(token.group().strip("\"'")).name in {"pytest", "pytest.exe"}:
-            end = next((part.start() for part in tokens[index + 1:]
-                        if part.group()[0] in ";&|<>"), len(command))
-            replacements.append((end, end, " " + additions + " "))
-            found = True
-    if not found:
+    for index in pytest_tokens:
+        end = next((part.start() for part in tokens[index + 1:]
+                    if part.group()[0] in ";&|<>"), len(command))
+        replacements.append((end, end, " " + additions + " "))
+    if not pytest_tokens:
         # A test launcher must forward its arguments to pytest, just as for a full run.
         command += " " + additions
     for start, end, value in sorted(replacements, reverse=True):
@@ -222,6 +258,8 @@ def close_tests(base: str) -> int:
         if not package.is_file():
             return 0
         command = " && ".join(part for _, part, _ in parts)
+    command = node_worker_budget(command, machine.test_cpus())
+    parts = quicktest.test_parts(Path.cwd(), command)
     scripts = json.loads(package.read_text("utf-8")).get("scripts", {}) if package.is_file() else {}
     # Compound scripts forward npm arguments to the last command, not every runner.
     if not parts or re.search(r"[;|]", command) or any(re.search(r"&&|[;|]", scripts[script])
@@ -266,7 +304,22 @@ def test(args) -> int:
                                         always=True, closing=False)
         print(report)
         return status
-    return pytest_tests(args.base, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
+    from forge import review
+
+    top = Path.cwd().resolve()
+    command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
+    # A picker launched by close or bare forge test keeps that command's one place.
+    parent = os.environ.get("FORGE_TEST_LANE")
+    if parent and any(run["id"] == parent and run["kind"] == "test" and run.get("started_at")
+                      and run.get("checkout_root") == top.as_posix() for run in machine.entries()):
+        return pytest_tests(args.base, command)
+    item = review.branch_item(repo.current_branch(top), top)
+    entry = machine.join("test", top, item[0] if item else None, None, None)
+    try:
+        entry["test_cpus"] = int(machine.test_cpus())
+        return pytest_tests(args.base, command, entry)
+    finally:
+        machine.leave(entry)
 
 
 LARGE = ("More than a third of the test files selected; skipping local tests and relying on the "
@@ -381,7 +434,7 @@ def pytest_runtest_logreport(report):
 """
 
 
-def pytest_tests(base: str, command: str) -> int:
+def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     parts = quicktest.test_parts(Path.cwd(), command)
     mixed = any(kind in ("vitest", "jest") for kind, _, _ in parts)
     if mixed:
@@ -389,18 +442,34 @@ def pytest_tests(base: str, command: str) -> int:
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
     environment = dict(os.environ)
     closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
+    worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
     workers = machine.test_cpus()
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
+    if entry is not None:
+        environment["FORGE_TEST_LANE"] = entry["id"]
     excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
     picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
-    from forge.review import GAP  # imported late: review's imports lead back here
-    print("".join(f"{GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+    from forge import review  # imported late: review's imports lead back here
+    print("".join(f"{review.GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
           end="", flush=True)
-    if closing and len(picked) * 3 > len(tests):
+    if worker and len(picked) * 3 > len(tests):
+        print("Broad selection: only the item's tests run locally. Other tests are skipped. "
+              "CI runs the full suite.", flush=True)
+        item = review.branch_item(repo.current_branch(Path.cwd()), Path.cwd())
+        if item and "/" in item[0]:
+            named = review.cells(review.task(Path.cwd(), item[0])[2].get("tests", ""))
+            always = list(dict.fromkeys(always + named))
+            picked = []
+        else:
+            changed = git_files("diff", "--no-renames", "--name-only", base)
+            changed += git_files("ls-files", "--others", "--exclude-standard")
+            picked = [path for path in tests if path in changed]
+        shared_changed = False
+    elif closing and len(picked) * 3 > len(tests):
         print(LARGE, flush=True)
         if not always:
             return 0
@@ -425,5 +494,17 @@ def pytest_tests(base: str, command: str) -> int:
                                                   repr(always)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
-        return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
-                              env=environment).returncode
+        if entry is None:
+            return subprocess.run(narrow_command(command, excluded, workers, always), shell=True,
+                                  env=environment).returncode
+        from forge import codex
+
+        with subprocess.Popen(narrow_command(command, excluded, workers, always), shell=True,
+                              env=environment, **codex.GROUP) as process:
+            try:
+                machine.started(entry, process.pid)
+                return process.wait()
+            except BaseException:
+                codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
+                process.wait()
+                raise

@@ -27,6 +27,8 @@ from test_phases import _flat
 from test_story import DOC, new_story, setup, worktree
 from test_tools_session_hold import Session
 
+pytestmark = pytest.mark.platform
+
 
 @pytest.fixture(autouse=True)
 def reader_sessions(repo):
@@ -374,6 +376,14 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
         assert not _sent(reader.log, "thread/archive")
     assert "Next: in Claude Code, show plans/SHOP.md in Plan Mode" in repo.forge("next").stdout
 
+    if app == "codex":
+        # The same tool can take over its external reader as a session subagent.
+        assert "reader: codex (gpt-6-sol)\n" in reader.text()
+        reader.coordinate("codex")
+        native = _native_round(reader)
+        assert "Round 4 of your cold read" in native["fresh_prompt"]
+        assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
+
 
 def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader = _setup(repo, monkeypatch, tmp_path, sdk_data, app)
@@ -502,23 +512,6 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
 
 
-def _same_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
-    reader = _setup(repo, monkeypatch, tmp_path, sdk_data, "codex")
-    reader.ok(f"1. {FIRST}\n")
-    assert "reader: codex (gpt-6-sol)\n" in reader.text()
-    reader.dispose(FIRST, "cut")
-    reader.coordinate("codex")
-    offered = reader.read()
-    assert offered.returncode == 0, offered.stdout + offered.stderr
-    native = json.loads(offered.stdout)
-    assert native["role"] == "reader" and native["tool"] == "codex"
-    assert "Round 2 of your cold read" in native["fresh_prompt"]
-    finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
-                             "--subagent", "codex-reader", "--text", "No findings.")
-    assert finished.returncode == 0, finished.stdout + finished.stderr
-    assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
-
-
 def _native_round(reader, text="No findings."):
     offered = reader.native("read", "SHOP")
     assert offered.returncode == 0, offered.stdout + offered.stderr
@@ -606,7 +599,7 @@ def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
 
 @pytest.mark.parametrize("walk, app", [
     (_continues, "codex"), (_continues, "claude"), (_starts_fresh, "codex"),
-    (_starts_fresh, "claude"), (_stays_pinned, "claude"), (_same_app, "codex"),
+    (_starts_fresh, "claude"), (_stays_pinned, "claude"),
     (_one_app, "both"), (_spec_diff, "claude")], ids=lambda value: getattr(value, "__name__", value))
 def test_1_the_same_reader_reads_again(repo, monkeypatch, tmp_path, sdk_data, walk, app):  # noqa: F811
     walk(repo, monkeypatch, tmp_path, sdk_data, app)

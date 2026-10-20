@@ -44,7 +44,11 @@ def client(repo, gh, tmp_path, request):
     return repo
 
 
-@pytest.mark.parametrize("case", ["unrelated-worker", "settings-fix", "release-bump", "coordinator"])
+@pytest.mark.parametrize("client, case", [
+    pytest.param(False, case, id=f"new-client-{case}")
+    for case in ("unrelated-worker", "settings-fix", "release-bump", "coordinator")
+] + [pytest.param(True, "unrelated-worker", id="previous-adoption-unrelated-worker")],
+    indirect=["client"])
 def test_1_worker_settings_commits_require_named_done_when(client, monkeypatch, case):
     # The old hook accepted an unrelated worker's settings edit. Only an explicit
     # Done-when now allows it; a note mentioning settings grants no permission.
@@ -118,53 +122,44 @@ def test_3_task_permission_comes_from_its_current_covered_done_when(client, monk
         assert "settings change in their own fix" in committed.stderr
 
 
-@pytest.mark.parametrize("family", ["claude", "codex"])
-@pytest.mark.parametrize("case", ["unstaged", "staged", "named", "failed"])
+@pytest.mark.platform
+@pytest.mark.usefixtures("claude_session")
+@pytest.mark.parametrize("client, case", [
+    pytest.param(False, case, id=f"new-client-{case}")
+    for case in ("unstaged", "staged", "named", "failed")
+] + [pytest.param(True, "failed", id="previous-adoption-failed")], indirect=["client"])
 def test_4_worker_round_restores_uncommitted_settings_unless_done_when_names_them(
-        client, monkeypatch, sdk_data, tmp_path, family, case, request):
+        client, monkeypatch, sdk_data, tmp_path, case):
     # The fake model edits files; real forge work owns restoration, permission and hand-back.
-    if family == "claude":
-        install_claude(client)
-        worker = client.bin / "claude_agent_sdk" / "__init__.py"
-        source = worker.read_text("utf-8")
-        insertion = '    yield ResultMessage(session_id=session'
-        cwd = "Path.cwd()"
-        if case == "failed":
-            monkeypatch.setenv("STUB_CLAUDE_EXIT", "1")
-    else:
-        request.getfixturevalue("claude_session")
-        client.git("switch", "-q", "fix/settings-setup")
-        client.write("forge.toml", _toml(client.forge("--version").stdout.split()[-1],
-                                        "codex", MODELS, "client"))
-        client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qam", "Use Codex")
-        client.git("switch", "-q", "main")
-        client.git("merge", "-q", "--ff-only", "fix/settings-setup")
-        client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
-        worker = client.bin / "codex-app-server"
-        source = (ROOT / "tests/stubs/codex-app-server").read_text("utf-8")
-        insertion = '                if os.environ.get("STUB_CODEX_TOUCH"):'
-        cwd = "pathlib.Path(cwd)"
-        monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-        home = tmp_path / "settings-codex-home"
-        home.mkdir()
-        (home / "config.toml").write_text(
-            f'[projects.{json.dumps(str(client.path))}]\ntrust_level = "trusted"\n', "utf-8")
-        monkeypatch.setenv("CODEX_HOME", str(home))
-        monkeypatch.setenv("CODEX_BIN", str(worker.with_suffix(".cmd") if sys.platform == "win32" else worker))
-        if case == "failed":
-            monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
+    # Both tools share worker.work's restoration in finally.
+    client.git("switch", "-q", "fix/settings-setup")
+    client.write("forge.toml", _toml(client.forge("--version").stdout.split()[-1],
+                                    "codex", MODELS, "client"))
+    client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qam", "Use Codex")
+    client.git("switch", "-q", "main")
+    client.git("merge", "-q", "--ff-only", "fix/settings-setup")
+    client.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    worker = client.bin / "codex-app-server"
+    source = (ROOT / "tests/stubs/codex-app-server").read_text("utf-8")
+    insertion = '                if os.environ.get("STUB_CODEX_TOUCH"):'
+    cwd = "pathlib.Path(cwd)"
+    monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
+    home = tmp_path / "settings-codex-home"
+    home.mkdir()
+    (home / "config.toml").write_text(
+        f'[projects.{json.dumps(str(client.path))}]\ntrust_level = "trusted"\n', "utf-8")
+    monkeypatch.setenv("CODEX_HOME", str(home))
+    monkeypatch.setenv("CODEX_BIN", str(worker.with_suffix(".cmd") if sys.platform == "win32" else worker))
+    if case == "failed":
+        monkeypatch.setenv("STUB_CODEX_STATUS", "failed")
     edit = f'''settings = {cwd} / "forge.toml"
 settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker settings\\n", encoding="utf-8")
 ({cwd} / "product.txt").write_text("Product work\\n", encoding="utf-8")
 '''
     if case == "staged":
         edit += f'import subprocess\nsubprocess.run(["git", "add", "forge.toml"], cwd={cwd}, check=True)\n'
-    indent = " " * 16 if family == "codex" else " " * 4
-    edit = "".join(indent + line + "\n" for line in edit.splitlines())
-    if family == "claude":
-        worker.write_text(source.replace(insertion, edit + insertion, 1), encoding="utf-8")
-    else:
-        _install(client.bin, worker.name, source.replace(insertion, edit + insertion, 1))
+    edit = "".join(" " * 16 + line + "\n" for line in edit.splitlines())
+    _install(client.bin, worker.name, source.replace(insertion, edit + insertion, 1))
     named = case == "named"
     started = client.forge("fix", "start", "Correct spelling", "--done",
                            "Update forge.toml" if named else "Correct the spelling", "--kind", "mechanical")
@@ -185,6 +180,7 @@ settings.write_text(settings.read_text("utf-8") + "\\n# Temporary worker setting
     assert (folder / "product.txt").read_text("utf-8") == "Product work\n"
 
 
+@pytest.mark.platform
 def test_5_coordinator_upgrade_commits_settings_through_installed_hooks(unsynced_up, client):
     # Unlike a raw git commit, upgrade uses Forge's subprocess environment and new-release hooks.
     up = Upgrade(unsynced_up.env, unsynced_up.tmp)

@@ -11,15 +11,17 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
-import uuid
 from pathlib import Path
 
 import pytest
 
-from conftest import REAL_UV, _install, _install_claude_sdk
+from conftest import REAL_UV, _cached_sdk, _claude_sdk_env, _install, _install_claude_sdk, patient
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-WARM-1"
 PIN = "0.159.2"
@@ -75,41 +77,27 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
     if uv is None:
         pytest.skip("uv is missing, so the Codex SDK test environment can't be built")
     data = pytestconfig.cache.mkdir(f"codex-sdk-{PIN}")
+    # Forge checks both SDKs under one XDG_DATA_HOME, and many tests point it here directly.
+    _claude_sdk_env(data)
     env = data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
-    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    if (env / "forge-sdk-ready").is_file():
-        try:
-            if subprocess.run([python, "-I", "-c", "pass"], capture_output=True,
-                              timeout=10).returncode == 0:
-                return data
-        except (OSError, subprocess.TimeoutExpired):
-            pass  # A restart can remove the Python that this cached venv points to.
-    if env.exists():
-        try:
-            shutil.rmtree(env)
-        except FileNotFoundError:  # another worker removed the stale cache first
-            pass
-    build = env.with_name(f"building-{uuid.uuid4().hex}")  # parallel workers each build their own
-    build.parent.mkdir(parents=True, exist_ok=True)
-    python = build / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    subprocess.run([uv, "venv", "-q", "--python", "3.11", str(build)], check=True)
-    subprocess.run([uv, "pip", "install", "-q", "--python", str(python), "--no-deps",
-                    f"openai-codex=={PIN}"], check=True)
-    site = Path(subprocess.run([python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
-                               capture_output=True, text=True, check=True).stdout.strip())
-    metadata = (next(site.glob("openai_codex-*.dist-info")) / "METADATA").read_text(encoding="utf-8")
-    needs = [line.split(":", 1)[1].strip() for line in metadata.splitlines()
-             if line.startswith("Requires-Dist:") and "openai-codex-cli-bin" not in line]
-    subprocess.run([uv, "pip", "install", "-q", "--python", str(python), *needs], check=True)
-    (site / "codex_cli_bin.py").write_text(PROGRAM, encoding="utf-8")
-    info = site / f"openai_codex_cli_bin-{PIN}.dist-info"
-    info.mkdir()
-    (info / "METADATA").write_text(f"Name: openai-codex-cli-bin\nVersion: {PIN}\n", encoding="utf-8")
-    (build / "forge-sdk-ready").write_text(f"{PIN}\n", encoding="utf-8")
-    try:
-        build.rename(env)
-    except OSError:  # another worker got there first
-        shutil.rmtree(build, ignore_errors=True)
+    with _cached_sdk(env, PIN) as build:
+        if build is None:
+            return data
+        python = build / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        # The cache outlives repo fixtures and their private uv Python install homes.
+        subprocess.run([uv, "venv", "-q", "--python", sys.executable, str(build)], check=True)
+        subprocess.run([uv, "pip", "install", "-q", "--python", str(python), "--no-deps",
+                        f"openai-codex=={PIN}"], check=True)
+        site = Path(subprocess.run([python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
+                                   capture_output=True, text=True, check=True).stdout.strip())
+        metadata = (next(site.glob("openai_codex-*.dist-info")) / "METADATA").read_text(encoding="utf-8")
+        needs = [line.split(":", 1)[1].strip() for line in metadata.splitlines()
+                 if line.startswith("Requires-Dist:") and "openai-codex-cli-bin" not in line]
+        subprocess.run([uv, "pip", "install", "-q", "--python", str(python), *needs], check=True)
+        (site / "codex_cli_bin.py").write_text(PROGRAM, encoding="utf-8")
+        info = site / f"openai_codex_cli_bin-{PIN}.dist-info"
+        info.mkdir()
+        (info / "METADATA").write_text(f"Name: openai-codex-cli-bin\nVersion: {PIN}\n", encoding="utf-8")
     return data
 
 
@@ -292,14 +280,18 @@ def test_2_every_request_is_answered(repo, monkeypatch, sdk_data, tmp_path, clau
         assert f"Accepted Codex's request {method}" in log
 
     # An SDK whose handler moved: forge work refuses before it records any status, and before
-    # it starts Codex at all.
+    # it starts Codex at all. An unchanged install now reuses its check, so model a changed
+    # installation in a private environment, without changing the shared SDK fixture.
     moved = tmp_path / "moved"
     moved.mkdir()
     (moved / "sitecustomize.py").write_text(MOVED, encoding="utf-8")
     monkeypatch.setenv("PYTHONPATH", str(moved))
+    relative = Path("forge/codex-sdk") / f"openai-codex-{PIN}"
+    env = moved / relative
+    patient(lambda: shutil.copytree(sdk_data / relative, env, symlinks=os.name != "nt"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(moved))
     head, before = repo.git("rev-parse", "HEAD", cwd=folder), len(_stub(calls))
     refused = repo.forge("work", "BOARD/PAGE")
-    env = sdk_data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
     assert refused.stderr == (
         f"The Codex SDK in {env} should be openai-codex {PIN}, openai-codex-cli-bin {PIN}, "
         f"codex-cli {PIN}, but its Python says: the SDK client has no _approval_handler for Forge "

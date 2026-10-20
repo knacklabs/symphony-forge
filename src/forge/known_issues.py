@@ -62,8 +62,9 @@ def _pull(top: Path, pr: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def collect(top: Path, states: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
-    """Default-branch lists win, including empty lists. Older items use their PR heads.
+def collect(top: Path, states: dict[str, dict[str, Any]], landed: str) -> list[dict[str, Any]]:
+    """Default-branch lists win, including empty lists. Older items use their PR heads. A problem in
+    a file the default branch (`landed`) no longer has is left out; one with no file stays.
 
     The paginated GitHub listing has no time cutoff: the board's six-week runway
     must not discard findings kept earlier in the repo's life.
@@ -71,8 +72,9 @@ def collect(top: Path, states: dict[str, dict[str, Any]]) -> list[dict[str, Any]
     saved = {item: state["known"] for item, state in states.items() if "known" in state}
 
     def historical(_now: Any) -> list[dict[str, Any]] | None:
-        done = repo.run("gh", "api", "--paginate",
-                        "repos/{owner}/{repo}/pulls?state=closed&per_page=100", "--jq",
+        # A query-string ampersand becomes a command separator through gh.cmd on Windows.
+        done = repo.run("gh", "api", "--paginate", "--method", "GET", "--raw-field", "per_page=100",
+                        "repos/{owner}/{repo}/pulls?state=closed", "--jq",
                         ".[] | select(.merged_at != null) | {number, headRefName: .head.ref}", cwd=top)
         if done.returncode:
             return None
@@ -96,4 +98,6 @@ def collect(top: Path, states: dict[str, dict[str, Any]]) -> list[dict[str, Any]
     older = board_facts._cached(top, "known-issues", historical, stale=True, seconds=86400) or []
     rows = [row for row in older if row["item"] not in saved]
     rows.extend(row for item, known in saved.items() for row in _rows(item, known))
+    present = set(repo.git("ls-tree", "-r", "-z", "--name-only", landed, cwd=top).split("\0"))
+    rows = [row for row in rows if not row["file"] or row["file"] in present]
     return sorted(rows, key=lambda row: (row["item"], row["file"], row["line"], row["title"]))

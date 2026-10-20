@@ -85,5 +85,4 @@ New moving parts: none
 
 ## Notes
 
-- BOARD does not wait for FORGE-BOARD-4/SERVER (owner, 17 October 2026: ship drop in v1.2.13);
-  SERVER merges main and resolves any board.py conflict after the release.
+- BOARD waits for FORGE-BOARD-4/SERVER to merge, because both change src/forge/board.py.
