@@ -4,12 +4,20 @@
   "done_when": "forge read <decision-slug> runs a cold read of a decision record the same way it reads a spec, on a new repo and on an earlier-adopted repo; the coordinator guide names it",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-20T05:43:52.086375+00:00",
       "step": "start"
     }
   ],
-  "why": "Large decisions such as architecture or privacy need cold reads over several rounds, but forge read takes only story keys and spec slugs, so teams draft decisions as specs first (issue 970)"
+  "stuck": {
+    "close": null,
+    "head": "3daed144b997ba935ab017207c361d54185e6847",
+    "keys": {},
+    "round": null
+  },
+  "why": "Large decisions such as architecture or privacy need cold reads over several rounds, but forge read takes only story keys and spec slugs, so teams draft decisions as specs first (issue 970)",
+  "worker": "codex"
 }
