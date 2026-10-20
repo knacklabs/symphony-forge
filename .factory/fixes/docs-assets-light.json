@@ -1,6 +1,13 @@
 {
   "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
   "branch": "fix/docs-assets-light",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a157d6-a4db-7e82-afca-dd45393813fb",
+    "head": null,
+    "start": "63ee94025caf21f2bab3ac9ad5fea040c1e82895"
+  },
   "done_when": "A change that touches only docs and asset files gets the light review and its pull request skips the test jobs, on a new repo and on an earlier-adopted repo; a docs or asset file that a test reads, or a linguist-generated file, does not count as docs-only; the coordinator guide says so",
   "fix_kind": "backend",
   "kind": "fix",
