@@ -72,11 +72,11 @@
     "id": "db4b1167-ea0f-4617-9422-87c19f4cea19",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "settled_areas": [
     "only_docs() in src/forge/docskip.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T05:43:56.114060+00:00",
@@ -107,13 +107,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "16bbfc65-bffd-460d-bfd3-3d4b722fa0a9",
-    "head": "a37819d6a482fdd372ee86964796ae1f8d32d074",
-    "keys": {
-      "the review finding \"Distinguish unrelated inputs that share a filename\" in src/forge/docskip.py": 1,
-      "the review finding \"Include supported test consumers in the input-reference scan\" in src/forge/docskip.py": 1
-    },
-    "round": 1
+    "close": "0c61b2f0-37e3-4634-b7e7-cdf9abe75731",
+    "head": "c1dc7489a620dc6e5fc2cea72e139daf7e2ceada",
+    "keys": {},
+    "round": 2
   },
   "why": "Docs and brand-asset fixes still wait for the full review and every CI test job (issue 975)",
   "worker": "codex"
