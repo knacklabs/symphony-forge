@@ -72,11 +72,11 @@
     "id": "6c54d0de-29c4-4175-aef8-a7eaceb7ae24",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "settled_areas": [
     "only_docs() in src/forge/docskip.py"
   ],
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T05:43:56.114060+00:00",
@@ -111,10 +111,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "0c61b2f0-37e3-4634-b7e7-cdf9abe75731",
-    "head": "c1dc7489a620dc6e5fc2cea72e139daf7e2ceada",
+    "close": "2cfff1de-38a0-4c9e-9e10-13bf4c33d7d0",
+    "head": "6d6a3ee4444dc14430605daf319711f3092c4b83",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Docs and brand-asset fixes still wait for the full review and every CI test job (issue 975)",
   "worker": "codex"
