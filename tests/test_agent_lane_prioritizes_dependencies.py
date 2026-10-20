@@ -154,6 +154,9 @@ def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
                 _land_fixture(repo)
                 for number in range(40):
                     repo.git("branch", f"story/FINISHED-{number}")
+            # Compare admission with equally current bases, excluding Git's real startup merge cost.
+            repo.git("merge", "-q", "--no-edit", "origin/main",
+                     cwd=worktree(repo, f"task/SHOP-{part}"))
             trace = tmp_path / f"admission-{index}.jsonl"
             with monkeypatch.context() as tracing:
                 tracing.setenv("GIT_TRACE2_EVENT", trace.as_posix())
