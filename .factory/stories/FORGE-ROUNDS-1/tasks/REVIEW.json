@@ -17,7 +17,7 @@
       "gain": 4,
       "harm": 2,
       "line": 829,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5f0b9de7f8432daccf629fa8de65d62e8fed2af89b39885cf9742fd837326c5a",
-    "changed": "21ea85a420129c0e673f3cb78a8f90b59df96c60af99dcccae03762fe40ef94a",
-    "commit": "a38dcec84135eb474d8c6fae5fa93465ffa587a3",
+    "branch_diff": "6e36dbb2e05a723ace39cf15879e10b812652c9ecd5beb1d98d930a6d84d4380",
+    "changed": "3aeb7a8fdead14875a38afab95509240d373379623b46a8e41fd7c83013ec396",
+    "commit": "ca596ae46ad5e324ec2addd76b2288908537583b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - Round two leaves a non-P0 finding in a file added by the branch.\nThe new unmerged-state input still goes through `known_issues.collect(..., landed)`. Its filter at `src/forge/known_issues.py:101\u2013102` removes findings whose files are absent from the default branch, so these follow-ups disappear from the board while close declares the change Ready. The new proof test exercises this problem: it introduces `app.py` only on the fix branch at `tests/test_two_round_limit.py:55`, then expects its findings in Known issues. Active findings need their files checked against the active branch.",
-        "file": "src/forge/board.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 829,
-        "priority": "P1",
-        "title": "Keep follow-ups on newly added files visible in Known issues",
-        "work": 2
-      }
-    ],
-    "id": "91d4fc1e-355d-4cb6-8a81-575ceb0c4427",
-    "status": "blocked"
+    "findings": [],
+    "id": "1eb7e59e-4f6a-422c-9185-739bf10053af",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T06:41:15.723130+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-10-20T07:06:11.623806+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:24:00.708848+00:00",
       "step": "review"
     }
   ],
@@ -68,6 +61,5 @@
     },
     "round": 1
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 756909ec34b5ff26e7b749f8abef2aa262d2c5ce` exited with status 1 on this machine.\nRelated tests: tests/test_board_skips_dropped_fixes.py, tests/test_failed_legacy_review_history.py, tests/test_fast_test_selects_explicit_module_references.py, tests/test_fix_lean_review_prompts.py, tests/test_item_time_history.py, tests/test_live_stage.py, tests/test_live_status.py, tests/test_review_loop_records_each_stop_choice.py, tests/test_reviews_converge_on_changed_lines.py, tests/test_steer_question.py, tests/test_two_round_limit.py\n            call = json.loads((env.repo.bin / \"claude-calls.jsonl\").read_text(\"utf-8\").splitlines()[-1])\n            prompt = call[\"prompt\"]\n        else:\n            entry = note(\"P0\" if case == \"declined p0\" else \"P1\", \"Saving loses quantities\")\n            if case == \"rare finding\":\n                entry[\"body\"] = (\"Gain 4, Work 1, Harm 4\\n\"\n                                 \"Case: rare - An operator edits the import file during saving.\")\n            env.reviews(blocked(entry))\n            item, where = env.start_fix()\n            first = env.close(item)\n            if case == \"rare finding\":\n                assert first.returncode == 0, first.stdout + first.stderr\n                assert entry[\"title\"] in published(env).split(\"Follow-ups:\", 1)[1]\n            else:\n                assert first.returncode == 1 and entry[\"title\"] in first.stderr, first.stdout + first.stderr\n                decline = \"Declined: Saving loses quantities (app.py): not worth the code - The repair costs more than this case.\"\n                env.repo.git(\"commit\", \"--allow-empty\", \"-q\", \"-m\", \"Keep the current save flow\", \"-m\", decline,\n                             cwd=where)\n                reused = env.close(item)\n                assert len(env.review_calls()) == 1, reused.stdout + reused.stderr\n                if case == \"declined p0\":\n                    assert reused.returncode == 1 and entry[\"title\"] in reused.stderr, reused.stdout + reused.stderr\n                    return\n                assert reused.returncode == 0 and \"Ready\" in reused.stdout, reused.stdout + reused.stderr\n>               assert known(env, where)[entry[\"title\"]][\"reason\"].startswith(\"Declined as not worth the code:\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               KeyError: 'Saving loses quantities'\n\ntests/test_two_round_limit.py:164: KeyError\n7 failed, 95 passed in 267.57s (0:04:27)",
   "worker": "codex"
 }
