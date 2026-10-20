@@ -101,6 +101,18 @@ serious. Only Harm 4 or more can stop the work for such a note.
 The Harm 4 or 5 and Gain 5 stop rule comes first. Below that rule, Gain 3 holds work only at
 Harm 3 with Work 1 or 2.
 
+A note with `Case: rare` never stops the work, whatever its scores. A note that stops work
+must name a case in normal use. A security hole or data loss that any user can reach is normal use.
+
+From code review round two, only P0 findings stop the change. The review checks each earlier
+finding and raises new findings only for P0s in normal use. A fix that breaks the main path is a P0.
+Forge records all other open findings in Known issues with the reason "Left open after round two".
+The change continues to its checks and can become ready to merge.
+
+A worker can decline a finding as "not worth the code" with a reason in a commit message.
+Forge records it as a follow-up, even if no code changed. A P0 stays open.
+Review rules and recorded owner decisions settle a question for later readers and reviewers.
+
 ### Who decides
 
 - **The reader gives the scores.** The worker and the agent do not change a score.

@@ -22,6 +22,8 @@ import pytest
 import conftest
 from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 RELEASE, NAME = "v9.9.9", "upgrade-forge-to-v9-9-9"
 URL = "git+https://github.com/knacklabs/symphony-forge@{}"
 MARK = "release marker"

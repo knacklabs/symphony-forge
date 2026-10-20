@@ -29,8 +29,9 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
         env.commit(where, "app.py", f"print({number})\n")
         if number == 3:
             env.commit(where, "README.md", "The owner requires a greeting on every page.\n")
-        defect = finding("P1", f"Saving loses the greeting, case {number}")
-        defect["body"] = f"Gain 4, Work 2, Harm {harm}\nReturning readers lose their greeting."
+        # P1s become round-two follow-ups; Gain 5 keeps both low- and high-Harm stops open.
+        defect = finding("P0", f"Saving loses the greeting, case {number}")
+        defect["body"] = f"Gain 5, Work 2, Harm {harm}\nReturning readers lose their greeting."
         env.reviews(blocked(defect))
         assert env.close(item).returncode == 1
     _red_checks(env)

@@ -395,6 +395,7 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
             "  Next: forge land aa"]
 
 
+@pytest.mark.platform
 @pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monkeypatch):
     env = client

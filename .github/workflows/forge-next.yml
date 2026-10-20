@@ -1,7 +1,7 @@
 name: forge-next
 
-# Reuse passed proof on identical merges and release tags. Run every platform nightly and on demand.
-# Pull requests run the full suite in forge.yml and plugin/installer checks here.
+# Reuse passed proof on identical merges and release tags.
+# Pull requests run Linux's full suite in forge.yml and the Windows platform subset here.
 
 on:
   pull_request:
@@ -38,7 +38,7 @@ jobs:
         run: python .github/reuse-test-proof.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
-      - run: uv run --frozen --python 3.11 pytest tests/test_installers_explain_docker_start.py -q -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
+      - run: uv run --frozen --python 3.11 pytest tests/test_installers_explain_docker_start.py -q -m platform -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
         if: steps.parent-tests.outputs.reuse != 'true'
 
   plugin:
@@ -67,39 +67,31 @@ jobs:
         run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k 'native-plugin-checks or real-local-install' -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
 
   tests:
-    if: github.event_name != 'pull_request'
-    # Not "tests": this job skips on pull requests, and a skipped job would fail the required check.
-    name: full suite on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
+    # Keep these matrix checks separate from the required Linux tests check in forge.yml.
+    name: ${{ matrix.os == 'windows-latest' && 'platform-sensitive tests' || 'full suite' }} on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
     env:
       FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
     strategy:
       fail-fast: false
       matrix:
-        # Merges to main run Linux only; slower platforms need more runners as the suite grows.
+        # Linux pull request groups already run in forge.yml; Windows always runs its subset.
         include: >-
-          ${{ fromJSON(github.event_name == 'push' && github.ref == 'refs/heads/main' && '[
-            {"os":"ubuntu-latest","group":1,"groups":5},
-            {"os":"ubuntu-latest","group":2,"groups":5},
-            {"os":"ubuntu-latest","group":3,"groups":5},
-            {"os":"ubuntu-latest","group":4,"groups":5},
-            {"os":"ubuntu-latest","group":5,"groups":5}]' || '[
+          ${{ fromJSON(github.event_name == 'pull_request' && '[
+            {"os":"windows-latest","group":1,"groups":5},
+            {"os":"windows-latest","group":2,"groups":5},
+            {"os":"windows-latest","group":3,"groups":5},
+            {"os":"windows-latest","group":4,"groups":5},
+            {"os":"windows-latest","group":5,"groups":5}]' || '[
             {"os":"ubuntu-latest","group":1,"groups":5},
             {"os":"ubuntu-latest","group":2,"groups":5},
             {"os":"ubuntu-latest","group":3,"groups":5},
             {"os":"ubuntu-latest","group":4,"groups":5},
             {"os":"ubuntu-latest","group":5,"groups":5},
-            {"os":"windows-latest","group":1,"groups":12},
-            {"os":"windows-latest","group":2,"groups":12},
-            {"os":"windows-latest","group":3,"groups":12},
-            {"os":"windows-latest","group":4,"groups":12},
-            {"os":"windows-latest","group":5,"groups":12},
-            {"os":"windows-latest","group":6,"groups":12},
-            {"os":"windows-latest","group":7,"groups":12},
-            {"os":"windows-latest","group":8,"groups":12},
-            {"os":"windows-latest","group":9,"groups":12},
-            {"os":"windows-latest","group":10,"groups":12},
-            {"os":"windows-latest","group":11,"groups":12},
-            {"os":"windows-latest","group":12,"groups":12}]') }}
+            {"os":"windows-latest","group":1,"groups":5},
+            {"os":"windows-latest","group":2,"groups":5},
+            {"os":"windows-latest","group":3,"groups":5},
+            {"os":"windows-latest","group":4,"groups":5},
+            {"os":"windows-latest","group":5,"groups":5}]') }}
     runs-on: ${{ matrix.os }}
     # Give the suite time to finish and pytest-timeout time to name a slow test.
     timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 20 }}
@@ -111,7 +103,7 @@ jobs:
         if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_WORKFLOW: forge.yml
+          PR_WORKFLOW: ${{ matrix.os == 'windows-latest' && 'forge-next.yml' || 'forge.yml' }}
         run: python .github/reuse-test-proof.py
       - uses: astral-sh/setup-uv@v6
         if: steps.parent-tests.outputs.reuse != 'true'
@@ -142,7 +134,7 @@ jobs:
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '--reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '-m platform --reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
         if: steps.parent-tests.outputs.reuse != 'true'
       # Each artifact contains only this group's measurements, ready to combine into
       # .test_durations_windows for the next dispatched run. The first run uses the Linux seed.

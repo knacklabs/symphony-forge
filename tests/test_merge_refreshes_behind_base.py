@@ -158,10 +158,8 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         assert result.returncode == 1, result.stdout + result.stderr
         assert result.stderr.splitlines()[-2] == (
             "Merging main into fix/tidy-readme conflicts in README.md.")
-        assert re.fullmatch(
-            r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
-            r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
-            r"then forge close tidy-readme", result.stderr.splitlines()[-1])
+        assert result.stderr.splitlines()[-1] == (
+            "Next: forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme")
         assert len(attempts) == 1
         assert len(env.review_calls()) == before_reviews
         assert env.repo.git("rev-parse", "HEAD", cwd=where) == first_head
@@ -189,6 +187,7 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
                    for line in result.stdout.splitlines()), result.stdout
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
 @pytest.mark.parametrize("command,failing_test", [("merge", False), ("land", False),
                                                 ("merge", True)],

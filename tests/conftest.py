@@ -74,7 +74,7 @@ import pathlib, subprocess, sys
 if sys.argv[1:] == {args!r}:
     sys.stdout.write({worker!r} * {reading})
 else:
-    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]]))
+    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]], timeout=60))
 ''')
 
 GH_STUB = """#!{python}
@@ -99,7 +99,8 @@ if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
     # Ordinary close fixtures have a mergeable pull request on the real pushed head.
     # Explicit responses above still own API errors and conflicting/unknown states.
     head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
-                                    "refs/heads/" + args[2]], text=True).split()[0]
+                                    "refs/heads/" + args[2]], text=True,
+                                   stdin=subprocess.DEVNULL, timeout=60).split()[0]
     sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head,
                                  "number": 7, "headRefName": args[2]}}))
     sys.exit(0)
@@ -167,7 +168,8 @@ def _claude_sdk_env(data: Path, pin: str = "0.2.161") -> None:
     env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
     with _cached_sdk(env, pin) as build:
         if build is not None:
-            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True)
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True,
+                           stdin=subprocess.DEVNULL, timeout=120)
 
 
 def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
@@ -287,7 +289,7 @@ class Repo:
     def git(self, *args: str, cwd: Path | None = None) -> str:
         try:
             return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
-                                  text=True, encoding="utf-8").stdout.strip()
+                                  text=True, encoding="utf-8", stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
         except subprocess.CalledProcessError as error:
             error.add_note(error.stdout + error.stderr)
             raise
@@ -485,8 +487,10 @@ elif args == ["plugin", "list", "--json"]:
     monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)
 
     remote, path = tmp_path / "remote.git", tmp_path / "repo"
-    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
-    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True)
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
     made = Repo(path, bin_dir)
     # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
     (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")

@@ -18,6 +18,8 @@ from test_codex_worker import _toml
 from test_fix_agent_runs_wait_in_line import _until
 from test_story import DOC, new_story, setup
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-TOOLS-1"
 
 # Only the host is a shim: every child runs the real command and real OS identity lookup.

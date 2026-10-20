@@ -37,6 +37,7 @@ def merge_checkout(workflow):
 
 # The helper has one implementation. Exercise its full trust boundary once; upgrade and
 # Forge-source delivery each still prove both reuse and running the suite on a changed base.
+@pytest.mark.platform
 @pytest.mark.parametrize("client_kind,case", [
     (client_kind, case)
     for client_kind in ("new", "previous", "source")

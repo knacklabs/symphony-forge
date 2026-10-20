@@ -13,6 +13,10 @@ import conftest
 
 from test_close import env  # noqa: F401 (the shared fixture)
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-UPGRADE-UNTRACKED-HOOKS"
 
 

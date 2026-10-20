@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import copy
 import functools
-import io
 import json
 import os
 import re
@@ -236,7 +235,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
     `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
     `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
-    from forge import known_issues, nextstep, time_records
+    from forge import known_issues, nextstep, releases, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
@@ -303,8 +302,12 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     timings = time_records.read(top, "timings")
 
     refs = [line.split("\0") for line in repo.git(
-        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)%00%(objectname)",
-        "refs/heads", "refs/remotes/origin", cwd=top).splitlines()]
+        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)%00%(objectname)"
+        "%00%(objecttype)%00%(taggerdate:iso-strict)%00%(refname)",
+        "refs/heads", "refs/remotes/origin", "refs/tags", cwd=top).splitlines()]
+    tag_refs = [(ref.removeprefix("refs/tags/"), kind, at) for _, _, _, kind, at, ref in refs
+                if ref.startswith("refs/tags/")]
+    refs = [(name, date, tip) for name, date, tip, _, _, ref in refs if not ref.startswith("refs/tags/")]
     branch_dates = {name: date for name, date, _ in refs}
     tips = {name: tip for name, _, tip in refs}
     timing_dates: dict[str, list[str]] = {}
@@ -823,10 +826,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
+            **releases.collect(top, history, maps, items, tag_refs),
             "known_issues": known_issues.collect(top, {
-                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
-                for rel, state, where in history["copies"]
-                if where == landed and (match := STATE.fullmatch(rel))}),
+                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): (state, where)
+                for rel, state, where in (
+                    [(rel, state, where) for rel, (state, where) in best.items() if rel not in merged]
+                    + [(rel, state, where) for rel, state, where in history["copies"] if where == landed])
+                if (match := STATE.fullmatch(rel))}, landed),
             "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
@@ -883,42 +889,19 @@ def _gather(top: Path, checks: list[str] | None = None) -> tuple[list[Item], lis
 
 
 def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> dict[str, str]:
-    """Read git objects in one process; sizes are bytes, including on Windows."""
-    if not specs:
-        return {}
+    """Read objects and their older notes through the command's shared Git reader."""
     pending, seen, texts = list(dict.fromkeys(specs)), set(specs), {}
-    if not follow_notes:
-        done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
-                              input="".join(spec + "\n" for spec in pending).encode("utf-8"),
-                              capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
-        output = io.BytesIO(done.stdout)
-        for spec in pending:
-            header = output.readline()
-            if header.endswith(b" missing\n"):
-                continue
-            text = output.read(int(header.split()[-1])).decode("utf-8", errors="replace")
-            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
-            output.read(1)
-        return texts
-    with subprocess.Popen([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
-                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                          env={**os.environ, "FORGE_WORKER": "1"}) as process:
-        assert process.stdin is not None and process.stdout is not None
-        for spec in pending:
-            process.stdin.write((spec + "\n").encode("utf-8"))
-            process.stdin.flush()
-            header = process.stdout.readline()
-            if header.endswith(b" missing\n"):
-                continue
-            text = process.stdout.read(int(header.split()[-1])).decode("utf-8", errors="replace")
-            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
-            process.stdout.read(1)
-            if follow_notes and (previous := story._record(texts[spec])[0].get("notes_seen")) and previous not in seen:
+    while pending:
+        found = repo.blob_texts(top, pending)
+        texts.update(found)
+        pending = []
+        if follow_notes:
+            for text in found.values():
+                previous = story._record(text)[0].get("notes_seen")
+                if not previous or previous in seen:
+                    continue
                 seen.add(previous)
                 pending.append(previous)
-        output, errors = process.communicate()
-        if process.returncode:
-            raise subprocess.CalledProcessError(process.returncode, process.args, output, errors)
     return texts
 
 

@@ -65,8 +65,9 @@ def test_1_generated_tests_check_skips_only_documentation(env, tmp_path, monkeyp
         subprocess.run(command, shell=True, cwd=client, check=True)
     assert receipt.exists() == code, checked.stdout
     assert ("docs only: tests skipped" in checked.stdout) == (not code)
-    # All skipped suite steps leave a successful tests job, which passes the required check.
-    assert "needs: tests" in workflow and 'run: test "$GROUPS" = success' in workflow
+    # Docs now skip the matrix jobs; the prerequisite and required check still run.
+    assert "needs: [docs-check, tests]" in workflow
+    assert 'test "$DOCS_CHECK" = success' in workflow
     assert (outputs.get("docs-only") == "true") == (not code)
     assert 'run: "echo \'docs only: tests skipped\'"' in workflow
 

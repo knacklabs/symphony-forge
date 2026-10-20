@@ -13,6 +13,7 @@ from test_setup import _fresh_client
 STORY = "when-forge-close-merges-the-default-bran"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("kind", ["new", "adopted", "source", "source CRLF", "code conflict",
                                   "new code conflict", "adopted code conflict",
                                   "source code conflict"])

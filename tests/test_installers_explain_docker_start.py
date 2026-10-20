@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-SKIPPED-TEMPLATES"
 ROOT = Path(__file__).resolve().parents[1]
 

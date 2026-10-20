@@ -9,6 +9,8 @@ import pytest
 
 from conftest import ROOT, FORGE_SHIM, _install
 
+pytestmark = pytest.mark.platform
+
 STORY = "forge-sync-points-git-s-merge-rule-for-t"
 DRIVER = 'forge hook merge-roadmap %O %A %B'
 

@@ -34,7 +34,10 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     rounds(env, item, where, ["src/a.py"] * 2)
     env.commit(where, "app.py", "print(3)\n")
     env.commit(where, "src/a.py", "pass  # review round 3\n")
-    env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py"),
+    # Gain 5 is still P0, while low Harm keeps the existing timed-default path eligible.
+    defect = {**finding("P0", "Round 3 defect", "src/a.py"),
+              "body": "Gain 5, Work 2, Harm 1\nEvidence for: Round 3 defect"}
+    env.reviews(blocked(defect,
                         finding("P2", "Follow-up: advice", "src/a.py"),
                         finding("P3", "Polish advice", "src/a.py")))
     assert "Ask the human" in env.close(item).stderr
@@ -97,7 +100,7 @@ def test_2_off_keeps_waiting_for_the_owner(env, monkeypatch):
 @pytest.mark.parametrize("entry", ["running", "same-file", "stopped"])
 def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
     if entry == "stopped":
-        item, where = stopped(land)
+        item, where = stopped(land, low_harm=True)
         land.reviews(CLEAN)
     else:
         if entry == "same-file":
@@ -107,21 +110,27 @@ def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
             "app.py": "print('hello')\n", "other.py": "print('hello')\n", "show.py": "print('hello')\n"})
         paths = ["app.py"] * 3 if entry == "same-file" else ["app.py", "other.py", "show.py"]
         # A new finding title each round: the same finding twice would stop the stuck worker first.
-        land.reviews(*(blocked(finding("P1", f"Greeting is missing, case {n}", file=file))
+        # A low-Harm Gain 5 P0 retains the timed-default contract until STOP removes it.
+        land.reviews(*(blocked({**finding("P1" if entry == "running" else "P0",
+                                         f"Greeting is missing, case {n}", file=file),
+                                "body": f"Gain {4 if entry == 'running' else 5}, Work 2, Harm 1\nEvidence"})
                        for n, file in enumerate(paths, 1)), CLEAN)
     # Land returns a stop; a later invocation can apply an overdue low-harm default.
     if entry != "stopped":
         for number in (1, 2):
             land.commit(where, paths[number - 1], f"print({number})\n")
-            assert land.close(item).returncode == 1
+            assert land.close(item).returncode == (0 if entry == "running" and number == 2 else 1)
+        if entry == "running":
+            # Non-P0s now finish at round two rather than buying a fourth review.
+            landed = _land(land, item)
+            assert landed.returncode == 0, landed.stdout + landed.stderr
+            assert f"{item} is ready; a human merges" in landed.stdout
+            assert "Nobody answered the review loop stop" not in landed.stdout
+            assert len(land.review_calls()) == 2
+            return
         # The owner's second-round rule permits one focused round before the timer test starts.
         land.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
         land.commit(where, paths[2], "print('third greeting repair')\n")
-        if entry == "running":
-            assert land.close(item).returncode == 1
-            # Distinct low-Harm findings do not require a recorded hard-stop choice.
-            focused = land.repo.forge("work", item)
-            assert focused.returncode == 0, focused.stdout + focused.stderr
     if entry != "running":
         stopped_run = _land(land, item)
         assert stopped_run.returncode == 3, stopped_run.stdout + stopped_run.stderr
@@ -129,9 +138,6 @@ def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
     landed = _land(land, item)
     assert landed.returncode == 0, landed.stdout + landed.stderr
     assert f"{item} is ready; a human merges" in landed.stdout
-    if entry == "running":  # new Harm 1 findings in three files never stop: the fourth review runs
-        assert "Nobody answered the review loop stop" not in landed.stdout
-        return
     assert "Nobody answered the review loop stop in 30 minutes" in landed.stdout
     brief = _workers(land)[-1]["brief"]
     assert "the repo's default choice: narrow this part to its Done-when lines" in brief
@@ -163,7 +169,7 @@ def test_4_new_and_existing_clients_get_the_default(repo, gh, tmp_path):
 
 
 def test_5_owner_choice_after_the_default_reaches_the_worker(land, monkeypatch):
-    item, _ = stopped(land)
+    item, _ = stopped(land, low_harm=True)
     later(monkeypatch, 31)
     assert "repo's default" in land.close(item).stdout
     reason = "The owner splits the greeting into its own fix"

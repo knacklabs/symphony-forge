@@ -14,11 +14,30 @@ permissions:
   actions: read
 
 jobs:
-  tests:
+  docs-check:
     if: github.event_name == 'pull_request'
-    name: test group ${{ matrix.group }} of 6
+    runs-on: "ubuntu-latest"
     outputs:
-      docs-only: ${{ steps.parent-tests.outputs.docs-only }}
+      docs-only: ${{ steps.docs.outputs.docs-only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - id: docs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**", ":(exclude,glob).forge/**", ":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md", ":(exclude,glob,icase)**/*.png", ":(exclude,glob,icase)**/*.jpg", ":(exclude,glob,icase)**/*.jpeg", ":(exclude,glob,icase)**/*.gif", ":(exclude,glob,icase)**/*.svg", ":(exclude,glob,icase)**/*.webp", ":(exclude,glob,icase)**/*.avif", ":(exclude,glob,icase)**/*.ico", ":(exclude,glob,icase)**/*.bmp", ":(exclude,glob,icase)**/*.tif", ":(exclude,glob,icase)**/*.tiff", ":(exclude,glob,icase)**/*.icns", ":(exclude,glob,icase)**/*.woff", ":(exclude,glob,icase)**/*.woff2", ":(exclude,glob,icase)**/*.ttf", ":(exclude,glob,icase)**/*.otf", ":(exclude,glob,icase)**/*.eot"]'
+        run: python .forge/review-tests.py
+
+  tests:
+    needs: docs-check
+    if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
+    name: test group ${{ matrix.group }} of 6
     strategy:
       fail-fast: false
       matrix:
@@ -40,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**", ":(exclude,glob).forge/**", ":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md"]'
+          DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**", ":(exclude,glob).forge/**", ":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md", ":(exclude,glob,icase)**/*.png", ":(exclude,glob,icase)**/*.jpg", ":(exclude,glob,icase)**/*.jpeg", ":(exclude,glob,icase)**/*.gif", ":(exclude,glob,icase)**/*.svg", ":(exclude,glob,icase)**/*.webp", ":(exclude,glob,icase)**/*.avif", ":(exclude,glob,icase)**/*.ico", ":(exclude,glob,icase)**/*.bmp", ":(exclude,glob,icase)**/*.tif", ":(exclude,glob,icase)**/*.tiff", ":(exclude,glob,icase)**/*.icns", ":(exclude,glob,icase)**/*.woff", ":(exclude,glob,icase)**/*.woff2", ":(exclude,glob,icase)**/*.ttf", ":(exclude,glob,icase)**/*.otf", ":(exclude,glob,icase)**/*.eot"]'
         run: python .forge/review-tests.py
       - uses: actions/cache@v4
         if: steps.parent-tests.outputs.reuse != 'true'
@@ -55,20 +74,26 @@ jobs:
     # tests-passed and forge-pr-check. The skipped one takes another name, because a skipped
     # job would otherwise pass a required check of the same name; always() keeps a failed
     # group from skipping this one.
-    needs: tests
+    needs: [docs-check, tests]
     if: always() && github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: "ubuntu-latest"
     steps:
       - env:
           GROUPS: ${{ needs.tests.result }}
-        run: test "$GROUPS" = success
-      - if: needs.tests.outputs.docs-only == 'true'
+          DOCS_CHECK: ${{ needs.docs-check.result }}
+          DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
+        run: test "$DOCS_CHECK" = success && { test "$GROUPS" = success || { test "$DOCS_ONLY" = true && test "$GROUPS" = skipped; }; }
+      - if: needs.docs-check.outputs.docs-only == 'true'
         run: "echo 'docs only: tests skipped'"
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
-    name: ${{ github.event_name == 'pull_request_target' && 'forge-pr-check' || 'forge-pr-check (other event)' }}
+    name: Review pull request
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
     runs-on: "ubuntu-latest"
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
@@ -88,11 +113,33 @@ jobs:
           git fetch --no-tags origin "refs/pull/$PR/head"
           test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
       - run: uv tool install .
-      - env:
+      - id: review
+        continue-on-error: true
+        env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF" 2> "$RUNNER_TEMP/forge-pr-check.log"
+      - name: Report review status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REVIEW_OUTCOME: ${{ steps.review.outcome }}
+          REVIEW_PENDING: ${{ steps.review.outputs.review-pending }}
+        run: |
+          if [ -f "$RUNNER_TEMP/forge-pr-check.log" ]; then
+            cat "$RUNNER_TEMP/forge-pr-check.log"
+          fi
+          state=failure
+          if [ "$REVIEW_OUTCOME" = success ]; then
+            state=success
+          elif [ "$REVIEW_OUTCOME" = failure ] && [ "$REVIEW_PENDING" = true ]; then
+            state=pending
+          fi
+          job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          test "$state" != failure
       - name: Report pull request size
         if: always()
         continue-on-error: true

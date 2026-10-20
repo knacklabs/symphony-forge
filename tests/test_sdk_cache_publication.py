@@ -13,6 +13,7 @@ from test_codex_worker import PIN, sdk_data
 STORY = "sdk-cache-race"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("sdk", ["codex", "claude"])
 def test_1_concurrent_rebuilds_keep_one_ready_sdk(tmp_path, monkeypatch, pytestconfig, sdk):
     if sdk == "codex" and REAL_UV is None:

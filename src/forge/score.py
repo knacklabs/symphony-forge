@@ -15,6 +15,9 @@ FLOORS = ((re.compile(r"^[ \t]*Raise:[ \t]*Security\b", re.I | re.M), "security"
           (re.compile(r"^[ \t]*Raise:[ \t]*Data loss\b", re.I | re.M), "data loss"),
           (re.compile(r"\bmigrations?\b", re.I), "migration"))
 ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
+RARE = re.compile(r"^[ \t]*Case:[ \t]*rare\b", re.I | re.M)
+ROUND_TWO = "Left open after round two"
+DECLINED = "Declined as not worth the code: "
 HOLD = ("block", "fix now")
 Scores = tuple[int, int, int]
 
@@ -52,7 +55,7 @@ def notes(said: str) -> str:
         if not body:
             return block
         scores, body = normalise(title, body)
-        if (outcome := bar(scores)) not in (None, *HOLD):
+        if (outcome := "follow-up" if RARE.search(block) else bar(scores)) not in (None, *HOLD):
             kept = body.rstrip("\n")
             body = f"{kept}\n   Disposition: keep - below the bar ({outcome})" + body[len(kept):]
         return f"{title}\n{body}"
@@ -100,7 +103,7 @@ def of(finding: dict[str, Any]) -> Scores | None:
 
 def holds(finding: dict[str, Any], level: str | None = "P1") -> bool:
     """A finding holds work by the bar (only `block` at the P0-only level), or unscored by priority."""
-    if finding.get("follow_up"):
+    if finding.get("follow_up") or RARE.search(finding.get("body", "")):
         return False
     outcome = bar(of(finding))
     if outcome is None:
@@ -110,6 +113,8 @@ def holds(finding: dict[str, Any], level: str | None = "P1") -> bool:
 
 def note_holds(note: str) -> bool:
     """A read note (text after its number) holds by the bar, or unscored unless `Advisory:`."""
+    if RARE.search(note):
+        return False
     outcome = bar(parse(note))
     return outcome in HOLD if outcome else not ADVISORY.match(note)
 
@@ -149,10 +154,11 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
     raised = set()
     for n, f in enumerate(result.get("findings", []), 1):
         raised.add(key := identity(f["file"], f["title"]))
-        reason = because.get(n, "")
+        reason = because.get(n, f.get("follow_up", ""))
         outcome = ("lived with" if reason.startswith("settled area") else "accepted" if n in because
                    else "open" if holds(f, result.get("blocking_level"))
-                   else "follow-up" if f.get("follow_up") or bar(of(f)) == "follow-up" else "lived with")
+                   else "follow-up" if f.get("follow_up") or RARE.search(f.get("body", ""))
+                   or bar(of(f)) == "follow-up" else "lived with")
         if key not in by:
             known.append(by.setdefault(key, {
                 "title": f["title"], "file": f["file"], "line": f["line"], "gain": f.get("gain"),

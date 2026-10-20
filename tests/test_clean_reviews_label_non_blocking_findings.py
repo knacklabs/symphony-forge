@@ -4,6 +4,8 @@ import pytest
 from test_close import blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
+pytestmark = pytest.mark.platform
+
 STORY = "clean-review-labels"
 
 

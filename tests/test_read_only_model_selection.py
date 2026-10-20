@@ -17,6 +17,8 @@ from test_upgrade_command import (  # noqa: F401
 )
 from test_worker import calls, install_claude
 
+pytestmark = pytest.mark.platform
+
 STORY = "explore-kind"
 MODELS = """
 [models.lite.codex]

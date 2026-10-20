@@ -12,6 +12,7 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 STORY = "FIX-THE-QUICK-TEST-PICKER-BREAKS-ON-CLIENT-R"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("version", ["7.4.4", "8.1.2", "8.2.2"])
 def test_1_picker_narrows_old_and_new_pytest_without_installing_forge(repo, version, monkeypatch):
     # Real pinned pytest: before 8.2, @selection.txt is treated as a missing test path.

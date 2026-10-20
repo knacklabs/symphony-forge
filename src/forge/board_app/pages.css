@@ -116,7 +116,20 @@
   .num { text-align: right; }
   tbody th { font-weight: 600; padding: var(--space-2) var(--space-4) var(--space-2) 0; border-top: 1px solid var(--line-soft); }
 
-  .known { width: 360px; flex: none; }
+  .known { width: 360px; flex: none; min-height: 0; overflow-y: auto; } /* a long list scrolls in the rail, never the page */
+  .known header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+  .known h2:focus { outline: none; }
+  .known .more, .known .close {
+    align-self: flex-start;
+    border-radius: var(--radius-tag);
+    padding: var(--space-1) var(--space-2);
+    background: none;
+    font-size: var(--size-label);
+    font-weight: 600;
+  }
+  .known .more { border: 0; color: var(--moving); }
+  .known .more:hover { text-decoration: underline; }
+  .known .close { border: 1px solid var(--line); color: var(--ink); }
   .known ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
   .known summary { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 10px; align-items: center; cursor: pointer;
     border-radius: var(--radius-tag); }

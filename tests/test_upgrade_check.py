@@ -12,6 +12,8 @@ import conftest
 import pytest
 from test_close import env  # noqa: F401 (the shared fixture)
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-UPGRADE-1"
 
 SOURCE = "git+https://github.com/knacklabs/symphony-forge@"
@@ -83,7 +85,7 @@ def _pr_check_steps(env) -> list[str]:
     for step in re.split(r"^      - ", job, flags=re.M)[1:]:
         # Advisory reporting now has its own real-script proof in test_client_setup_and_migration;
         # this harness preserves the required gate's output and refusal checks.
-        if "continue-on-error: true" in step:
+        if "Report pull request size" in step or "Report review status" in step:
             continue
         found = re.search(r"^ *run: (\|\n)?(.*)", step, re.M | re.S)
         if found:
@@ -109,7 +111,7 @@ def _run_pr_check_job(env, where, steps) -> subprocess.CompletedProcess[str]:
     env.repo.git("push", "-q", "origin", "HEAD:refs/pull/1/head", cwd=where)
     github_env = env.tmp / "github-env"
     github_env.write_text("", "utf-8")
-    variables = {**os.environ, "PR": "1", "GITHUB_ENV": str(github_env),
+    variables = {**os.environ, "PR": "1", "GITHUB_ENV": str(github_env), "RUNNER_TEMP": str(env.tmp),
                  "BASE_SHA": env.repo.git("rev-parse", "main"),
                  "HEAD_SHA": env.repo.git("rev-parse", "HEAD", cwd=where),
                  "HEAD_REF": "fix/tidy-readme"}

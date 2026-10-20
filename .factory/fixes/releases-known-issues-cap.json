@@ -1,0 +1,43 @@
+{
+  "base": "d15970a2cd27d363d4bbabe45c98937aaebc59bb",
+  "branch": "fix/releases-known-issues-cap",
+  "done_when": "At 1440x900 the Releases page shows at most the 10 files with the most kept problems, then an 'and N more' control that opens the full list; files no longer in the repo's default branch are left out; a browser test covers both on a new and an adopted repo",
+  "fix_kind": "ui",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6c8b018c9389b13b33710efc4c91dafb4612751eef8b3c40f24d9a4de1e921eb",
+    "changed": "6897a3f38f26d45f59b32cf3108a335f8de7de840477961580fb6d178dba16c3",
+    "commit": "89a2dd5426b524324df78955e78b916a5e77ad48",
+    "dismissals": [],
+    "findings": [],
+    "id": "d69aee24-8335-4724-a374-610157a47b79",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "fixing",
+  "steps": [
+    {
+      "at": "2026-10-19T19:11:50.851183+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T19:26:45.281151+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "554013be-4998-4599-93e8-d618077b28e3",
+    "head": "5d95b3fd355e96b63738bc36325d9c8281cc72ba",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The Releases page lists known issues for about 130 files, which makes it about 5,100 pixels tall at laptop size, and it includes files that no longer exist in the repo",
+  "worker": "claude"
+}

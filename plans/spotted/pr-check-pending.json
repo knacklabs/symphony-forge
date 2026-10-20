@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/prcheck.py\t[P1] Preserve review refusal messages in failed-step logs\tpr-check-pending",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 131,
+      "text": "[P1] Preserve review refusal messages in failed-step logs",
+      "from": "blocking",
+      "item": "pr-check-pending",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

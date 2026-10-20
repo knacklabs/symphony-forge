@@ -12,7 +12,8 @@ DISMISSED = "app.py:1 the greeting is here"
 def test_1_rulings_and_dismissals_reach_the_second_review(env):
     item, where = env.start_fix()
     env.reviews(blocked(finding("P1", "Greeting is missing")),
-                blocked(finding("P1", "Greeting should be translated")), CLEAN)
+                # Only P0s remain blocked in round two and need an explicit dismissal.
+                blocked(finding("P0", "Saving corrupts the basket")), CLEAN)
     assert env.close(item).returncode == 1
     assert env.close(item, "--dismiss", "1", "--because", DISMISSED).returncode == 0
     env.commit(where, "app.py", "print('hello again')\n",
@@ -24,10 +25,10 @@ def test_1_rulings_and_dismissals_reach_the_second_review(env):
     assert "only with new evidence" in prompt
 
     # The third review's findings don't repeat the dismissed one; its reason still reaches it.
-    assert env.close(item, "--dismiss", "1", "--because", "app.py:1 English only").returncode == 0
+    assert env.close(item, "--dismiss", "1", "--because", "app.py:1 The basket is intact").returncode == 0
     env.commit(where, "app.py", "print('hello once more')\n")
     assert env.close(item).returncode == 0
     prompt = env.prompt()
     assert RULING in prompt
     assert f"Greeting is missing (app.py): dismissed because {DISMISSED}" in prompt
-    assert "Greeting should be translated (app.py): dismissed because app.py:1 English only" in prompt
+    assert "Saving corrupts the basket (app.py): dismissed because app.py:1 The basket is intact" in prompt

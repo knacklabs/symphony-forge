@@ -15,6 +15,8 @@ from test_next_names_a_failed_scheduled_run import RUNS, LOG, runs
 from test_spotted import entry, LIST
 from test_measure import SPEC
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-PACE-1"
 
 
