@@ -15,6 +15,7 @@ from test_which_worker_builds import _help
 STORY = "FORGE-TOOLS-1"
 
 
+@pytest.mark.platform
 def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeypatch, sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)

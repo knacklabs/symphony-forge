@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.platform
+
 DOC = """# Shoppers can save a basket
 
 ## What changes for you

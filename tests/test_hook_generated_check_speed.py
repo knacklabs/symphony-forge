@@ -12,6 +12,8 @@ import pytest
 from test_fix_sync_output_skips_fix_limit import git, hand_edit, synced_fix
 from test_githooks import NEXT_PROMOTE, hooked
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-GITCOST-1"
 
 

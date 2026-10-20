@@ -7,6 +7,8 @@ import sys
 import conftest
 from test_close import CLEAN, blocked, env, finding
 
+import pytest
+
 STORY = "FIX-AUTOREVIEW-BRIEF"
 
 
@@ -48,6 +50,7 @@ def test_3_non_user_items_use_their_named_test(env):
     assert "runtime behaviour" in prompt
 
 
+@pytest.mark.platform
 def test_4_edge_case_advice_is_next_to_blocking_rules(env):
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0

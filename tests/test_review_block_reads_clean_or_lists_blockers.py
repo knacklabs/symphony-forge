@@ -2,6 +2,8 @@
 advisory findings away; a blocked one lists its open blocking findings plainly first."""
 from test_close import blocked, body, env, finding  # noqa: F401 - command-level fixture
 
+import pytest
+
 STORY = "the-pull-request-body-lists-dismissed-an"
 BEGIN = "<!-- forge:begin -->\n"
 
@@ -28,6 +30,7 @@ def test_1_clean_review_opens_with_one_line_and_folds_the_rest(env):
         "- Finding 3 (P3): Simpler (existing): one helper (app.py:1): Gain 2, Work 1, Harm 1\n\n")
 
 
+@pytest.mark.platform
 def test_2_blocked_review_lists_open_blocking_findings_first(env):
     item, _ = env.start_fix()
     env.reviews(blocked(finding("P2", "Simpler: drop the cache"), finding("P1", "Greeting is missing")))

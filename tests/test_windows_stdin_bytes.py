@@ -15,6 +15,8 @@ from test_close import CLEAN, GREEN, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
 from test_pull_request_body_limit import LIMIT, latest_body, reject_oversized_bodies
 
+pytestmark = pytest.mark.platform
+
 STORY = "windows-stdin-bytes"
 
 WINDOWS_STDIN = '''import subprocess

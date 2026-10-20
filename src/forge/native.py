@@ -1,6 +1,7 @@
 """Session-owned reads use the existing item record, lock and machine lane."""
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import time
@@ -257,15 +258,16 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
         with tempfile.TemporaryDirectory(prefix="forge-settings-") as folder:
             files = [Path(folder) / name for name in ("inherited", "base", "incoming")]
             for file, ref in zip(files, (head, common, base)):
-                shown = repo.run("git", "show", f"{ref}:forge.toml", cwd=top)
-                shown.check_returncode()
-                file.write_text(shown.stdout, encoding="utf-8", newline="\n")
-            merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
-            merged.check_returncode()
-        current = repo.run("git", "show", "HEAD:forge.toml", cwd=top)
-        current.check_returncode()
-        if current.stdout != merged.stdout:
-            (top / "forge.toml").write_text(merged.stdout, encoding="utf-8", newline="\n")
+                # repo.run normalizes command output; settings must retain their exact bytes.
+                file.write_bytes(subprocess.check_output(
+                    ["git", "show", f"{ref}:forge.toml"], cwd=top, stdin=subprocess.DEVNULL))
+            merged = subprocess.check_output(
+                ["git", "merge-file", "-p", *(str(file) for file in files)],
+                cwd=top, stdin=subprocess.DEVNULL)
+        current = subprocess.check_output(
+            ["git", "show", "HEAD:forge.toml"], cwd=top, stdin=subprocess.DEVNULL)
+        if current != merged:
+            (top / "forge.toml").write_bytes(merged)
             repo.git("add", "--", "forge.toml", cwd=top)
             repo.git("commit", "-q", "-m", "Restore forge.toml; settings change in their own fix",
                      "--", "forge.toml", cwd=top)

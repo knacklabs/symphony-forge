@@ -12,6 +12,8 @@ import pytest
 
 from test_codex_record import _up
 
+pytestmark = pytest.mark.platform
+
 STORY = "forge-s-own-test-suite-leaves-stopped-co"
 TESTS = Path(__file__).resolve().parent
 

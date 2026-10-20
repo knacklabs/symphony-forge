@@ -8,6 +8,8 @@ import pytest
 from test_close import env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-OUTSIDE-PR-CHECK"
 
 MESSAGE = ('This branch was not started by Forge, so it cannot merge. '
@@ -29,9 +31,11 @@ def test_1_required_check_rejects_outside_branch_with_fix_flow(env, tmp_path, ad
     workflow = repo.git("show", f"{base}:.github/workflows/forge.yml")
     job = workflow.split("\n  forge-pr-check:\n", 1)[1]
     assert "if: github.event_name == 'pull_request_target'" in job
-    gate = job.split("      - env:")[-1].split("      - name:", 1)[0]
-    assert "continue-on-error:" not in gate
-    command = shlex.split(re.search(r"^        run: (forge hook pr-check .+)$", gate, re.M)[1])
+    gate = job.split("      - id: review\n", 1)[1].split("      - name:", 1)[0]
+    # The reporter maps the command's refusal to a failed required commit status.
+    assert "test \"$state\" != failure" in job
+    command = shlex.split(re.search(r"^        run: (forge hook pr-check .+)$", gate, re.M)[1]
+                          .split(" 2>", 1)[0])  # run the command directly, without CI's log redirect
     # The author makes a real commit in a clone without Forge's local hooks.
     outside = tmp_path / "outside"
     repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(outside))

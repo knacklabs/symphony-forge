@@ -2,9 +2,12 @@
 import json
 import subprocess
 
+import pytest
+
 STORY = "FIX-CLIENT-REPOS-LOSE-THE-AGENT-S-STATE-THE"
 
 
+@pytest.mark.platform
 def test_1_sync_ships_precompact_handoff_and_hook_preserves_decisions(repo, monkeypatch):
     monkeypatch.setenv("FORGE_NOW", "2026-09-28T12:00:00+00:00")
     version = repo.forge("--version").stdout.split()[-1]

@@ -11,6 +11,8 @@ import pytest
 
 from conftest import _install
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-ON-WINDOWS-FORGE-S-PROCESS-CHECK-CODEX-I"
 
 

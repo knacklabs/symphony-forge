@@ -29,6 +29,7 @@ def native_host(repo, monkeypatch, tmp_path, tool):
         owner.close()
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("tool,model", [("codex", "gpt-6-sol"), ("claude", "opus")])
 def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, tmp_path,
                                                        tool, model, native_host):

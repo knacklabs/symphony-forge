@@ -14,6 +14,7 @@ from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 STORY = "one-forge-close-looks-up-the-same-git-fa"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
 @pytest.mark.parametrize("history", ["unreviewed", "legacy-review", "legacy-review-base-merge"])
 def test_1_close_looks_up_shared_git_facts_once_and_batches_commit_messages(env, monkeypatch, previous, history):

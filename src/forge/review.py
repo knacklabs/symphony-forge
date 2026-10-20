@@ -42,6 +42,9 @@ SERIOUS = ("P0", "P1")
 BOOKKEEPING = (".factory/", "plans/")
 DOC_EXCLUDES = [f":(exclude,glob){path}**" for path in (*BOOKKEEPING, ".forge/", "docs/")]
 DOC_EXCLUDES += [":(exclude,glob,icase)**/*.md"]
+DOC_EXCLUDES += [f":(exclude,glob,icase)**/*.{suffix}" for suffix in
+                 ("png", "jpg", "jpeg", "gif", "svg", "webp", "avif", "ico", "bmp",
+                  "tif", "tiff", "icns", "woff", "woff2", "ttf", "otf", "eot")]
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
@@ -194,12 +197,12 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     parts.append(functional_check(top, base, commit))
     if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
         parts.append(proof)
-    current_level = blocking_level(top, item, state, base, commit)
     saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
     if saved_level == "P0":
         parts.append("P0-only prototype review")
-    if saved_level != current_level:
-        parts.append("The recorded review level is no longer allowed")
+        # Full reviews remain sufficient; only a light review can lose its allowance.
+        if blocking_level(top, item, state, base, commit) != saved_level:
+            parts.append("The recorded review level is no longer allowed")
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
@@ -207,7 +210,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
-    """P0 for an unsigned client prototype fix, P1 for every other review."""
+    """Docs/assets and unsigned client prototype fixes get a light review."""
+    if docskip.only_docs(top, base, DOC_EXCLUDES, head=commit):
+        return "P0"
     if ("/" in item or state.get("kind") != "fix" or
             state.get("allow_large") != "Prototype before sign-off"):
         return "P1"
@@ -590,7 +595,7 @@ def docs_only(top: Path, base: str) -> bool:
                              allow_settings=not repo.config(top)["always_test"])
 
 
-DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
+DOCS_ONLY = ("This change touches only forge.toml, docs, assets, plans, Markdown or Forge's records, so close "
              "did not run `{command}` (docs only: tests skipped).")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")
@@ -642,7 +647,7 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
     their reasons, oldest first. Git holds both; Forge copies them, never stores them."""
     commits = list(reversed(repo.commit_log(top, base)))
     found = [line.strip() for _, message, _ in commits
-             for line in message.splitlines() if line.startswith("Ruling:")]
+             for line in message.splitlines() if line.startswith(("Ruling:", "Declined:"))]
     found += [part.strip() for _, message, _ in commits
               for part in re.findall(r"^Coordinator note:.*\Z", message, re.M | re.S)]
     for result in history:
@@ -685,7 +690,7 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
             if finding.get("follow_up"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]),
-                                   "known: follow-up outside this review's boundary")
+                                   "known: " + finding["follow_up"])
         accepted = set()
         for dismissal in result.get("dismissals", []):
             finding = result["findings"][dismissal["finding"] - 1]
@@ -799,7 +804,9 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
                           key=lambda word: {"error": 2, "failed": 1}.get(word, 0))
     ran = [(outcome, node) for node, outcome in worst.items()]
 
-    ran_none = not command or docs_only(top, base)  # close runs no tests for this change
+    proof = commit_paragraph(top, base, "Proof list:")
+    # Classifying the diff cannot change a proof list that names no tests.
+    ran_none = bool(TEST_NAME.search(proof)) and (not command or docs_only(top, base))
 
     def result(found: re.Match) -> str:  # the worker's words stay; a name gains its result
         name = found[0].rstrip(".:)")
@@ -827,7 +834,7 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         return said + found[0][len(name):]
 
     lines = []
-    for number, line in enumerate(commit_paragraph(top, base, "Proof list:").splitlines()):
+    for number, line in enumerate(proof.splitlines()):
         if not TEST_NAME.search(line):  # close cannot match a line without pytest names to its run
             lines.append(line if number == 0 or not line.strip() else f"{line} (not checked)")
             continue
@@ -972,7 +979,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
-            _bound_findings(top, item, state, previous, head, findings)
+            _bound_findings(top, item, state, previous, findings)
             result.update(findings=findings, dismissals=[
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
@@ -1004,7 +1011,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
 
 
 def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[str, Any],
-                    head: str, findings: list[dict[str, Any]]) -> None:
+                    findings: list[dict[str, Any]]) -> bool:
     """Keep advice visible without letting a fresh review widen the approved work."""
     from forge import story
 
@@ -1019,33 +1026,36 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[
         approved = {sentence(doc["done"][n]) for n in covers if n in doc["done"]}
     else:
         approved = {sentence(str(state.get("done_when", "")))}
-    old = {score.identity(f["file"], f["title"]) for f in previous.get("findings", [])}
-    diffs = {}
+    changed = False
     for finding in findings:
-        # Security and data loss remain in scope even on unchanged code.
-        if any(pattern.search(finding["body"]) for pattern, _ in score.FLOORS[:2]):
-            continue
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
         reason = ""
-        if missed and sentence(missed[1]) not in approved:
+        if score.RARE.search(finding["body"]):
+            reason = "Rare case outside normal use"
+        elif missed and sentence(missed[1]) not in approved:
             reason = "Not done names no owner-approved Done-when item; builder details are guidance."
-        elif previous.get("commit") and score.identity(finding["file"], finding["title"]) not in old:
-            path = finding["file"]
-            if path not in diffs:
-                diff = repo.run("git", "--literal-pathspecs", "diff", "--no-ext-diff", "--no-color",
-                                "--no-renames", "-U0", previous["commit"], head, "--", path, cwd=top)
-                diffs[path] = None if diff.returncode else [
-                    (int(start), int(count or 1)) for start, count in re.findall(
-                        r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", diff.stdout, re.M)]
-            hunks = diffs[path]
-            line = finding["line"]
-            if hunks is not None and not any(
-                    start <= int(line) < start + count for start, count in hunks
-                    if str(line).isdigit()):
-                reason = "New finding on lines unchanged since the previous review."
-        if reason:
+        elif previous.get("commit") and score.holds(finding) and not score.holds(finding, "P0"):
+            reason = score.ROUND_TWO
+        if reason and finding.get("follow_up") != reason:
             finding["follow_up"] = reason
+            changed = True
+    return changed
+
+
+def declines(top: Path, base: str, result: dict[str, Any]) -> bool:
+    """Worker declines settle minor findings; P0s still need a repair or the owner."""
+    reasons = {score.identity(file, title): reason
+               for _, message, _ in reversed(repo.commit_log(top, base))
+               for title, file, reason in re.findall(
+                   r"^Declined: (.+) \((.+)\): not worth the code - (.+)$", message, re.M)}
+    changed = False
+    for finding in result.get("findings", []):
+        reason = reasons.get(score.identity(finding["file"], finding["title"]))
+        if reason and not score.holds(finding, "P0") and finding.get("follow_up") != score.DECLINED + reason:
+            finding["follow_up"] = score.DECLINED + reason
+            changed = True
+    return changed
 
 
 def _hide_generated(tree: Path, start: str, head: str) -> str:

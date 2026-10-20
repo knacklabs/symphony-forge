@@ -30,7 +30,8 @@ PRELUDE = r"""
 import json, re, sys
 from playwright.sync_api import expect, sync_playwright
 url, expected = sys.argv[1], json.loads(sys.argv[2])
-COMMANDS = re.compile(r"\bforge\s+[a-z]|`|(^|\s)--[a-z]", re.I)
+# A title ending in Forge above a fix label is not a command.
+COMMANDS = re.compile(r"\bforge[ \t]+[a-z]|`|(^|\s)--[a-z]", re.I)
 
 def opened(browser, scheme, page_name):
     page = browser.new_page(viewport={'width': 1440, 'height': 900}, color_scheme=scheme)
@@ -98,7 +99,9 @@ with sync_playwright() as p:
                 expect(page.locator('main section').first).to_be_visible()
                 text = page.locator('main').inner_text()
                 assert not COMMANDS.search(text), (name, text)
-                assert 'unknown' in text.lower() or name == 'insights', (name, text)
+                if name == 'releases':
+                    # Release facts now distinguish a known empty list from missing facts.
+                    expect(page.get_by_role('region', name='Past releases')).to_contain_text('No releases tagged yet')
                 found = Axe().run(page).response['violations']
                 assert not found, (scheme, name, [(v['id'], v['nodes'][0]['target']) for v in found])
                 page.close()
@@ -164,6 +167,8 @@ def landed(client, tmp_path, monkeypatch, tags=(), merged_days_ago=9):
         pushed(teammate, "Plan a basket and fix the readers", {
             "plans/SHOP.md": DOC.replace("## What changes", "Owner: ana\n\n## What changes"),
             "plans/roadmap.json": json.dumps({"items": [{"key": "SHOP"}]}),
+            # The kept problems' files are on the default branch; the board leaves out deleted files.
+            "src/basket.py": "total = 0\n", "src/page.py": "page = 1\n",
             ".factory/fixes/old.json": json.dumps({"kind": "fix", "branch": "fix/old", "why": "Readers see old",
                                                    "done_when": "Readers see it", "status": "merged", "known": KEPT})})
     client.git("fetch", "-q", "--tags", "origin")

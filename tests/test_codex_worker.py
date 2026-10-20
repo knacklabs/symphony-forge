@@ -21,6 +21,8 @@ from conftest import REAL_UV, _cached_sdk, _claude_sdk_env, _install, _install_c
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-WARM-1"
 PIN = "0.159.2"
 ROOT = Path(__file__).resolve().parents[1]

@@ -65,7 +65,7 @@ if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
         bootstrap = "import sys; sys.path.insert(0, " + repr({json.dumps((ROOT / 'src').as_posix())}) + "); "
         command = [{json.dumps(REAL_UV)}, *args[:3], "--offline", "--no-python-downloads",
                    *args[5:program], *args[program:program + 3], bootstrap + args[program + 3]]
-        sys.exit(subprocess.run(command).returncode)
+        sys.exit(subprocess.run(command, timeout=180).returncode)
     exec(args[program + 3])
     sys.exit(0)
 assert args[:3] == ["tool", "run", "--from"], args
@@ -91,9 +91,12 @@ if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
     (root / "forge.toml").write_text({json.dumps(upgraded)}, encoding="utf-8")
     for args in (["add", "forge.toml"], ["commit", "-q", "-m", "Upgrade Forge"],
                  ["push", "-q", "origin", "main"]):
-        subprocess.run(["git", "-C", str(root), *args], check=True)
-subprocess.run(["git", "fetch", "-q", "origin"], check=True)
-subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
+        subprocess.run(["git", "-C", str(root), *args], check=True,
+                       stdin=subprocess.DEVNULL, timeout=60)
+subprocess.run(["git", "fetch", "-q", "origin"], check=True,
+               stdin=subprocess.DEVNULL, timeout=60)
+subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True,
+               stdin=subprocess.DEVNULL, timeout=60)
 '''
     upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
     module.write_text(worker.replace('    if not int(os.environ.get(',
@@ -103,6 +106,7 @@ subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
 @pytest.mark.parametrize("stage", ["land-build", "land-fix", "close-merge", "land-merge",
                                    "land-guide-conflict", "close-guide-conflict"])
+@pytest.mark.platform
 def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         land, adoption, stage, monkeypatch):
     env = land
@@ -211,7 +215,8 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     upgraded = original.replace('version = "v1.2.2"',
         f'version = "{current}"\nfast_test = {failing_test}\ntest = {failing_test}')
     env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN,
-                blocked(finding("P1", "The greeting is too long", "work-2.txt")), CLEAN)
+                # A P0 keeps the later repair needed after P1s become round-two follow-ups.
+                blocked(finding("P0", "The greeting is too long", "work-2.txt")), CLEAN)
     _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")

@@ -11,6 +11,8 @@ from pathlib import Path
 from conftest import Repo, machine_cores
 from test_close import CLEAN, FAILED, Forge, env  # noqa: F401
 
+import pytest
+
 STORY = "FIX-CLOSE-RERUNS-THE-FULL-TEST-COMMAND-EVEN"
 
 # The repo's test command: it logs each run's start and end, and ends when the test lets it (or at
@@ -123,6 +125,7 @@ def test_4_a_repeat_close_that_keeps_its_green_review_says_the_tests_already_pas
     assert "already passed on this machine" in closed.stdout
 
 
+@pytest.mark.platform
 def test_5_close_runs_the_test_command_when_the_worktree_has_an_untracked_file(env):
     log = _with_test_command(env)
     item, where = env.start_fix()
