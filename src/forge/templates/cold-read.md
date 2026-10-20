@@ -1,6 +1,6 @@
 Cold read of $target.
 
-You are doing the one cold read of a story doc or a spec before a human approves it. You have
+You are doing the one cold read of a story doc, spec or decision before a human approves it. You have
 not seen it before. Read it as a skeptical senior engineer who wants the smallest thing that works.
 
 Do not change any file. This read is discarded if any file in the repository changes.
@@ -124,6 +124,10 @@ Check:
    This repository's own known traps, from its AGENTS.md:
 
 $traps
+
+For a decision, check its Context, Decision and Consequences for gaps, contradictions and
+tradeoffs the human needs to settle. Skip story and spec checks about tasks, Done when,
+success measures and `New moving parts`.
 
 If the doc is a spec (it has no Tasks table), skip the checks about tasks and `New moving parts`.
 Instead, check that the Why or the success measure needs every behaviour line, variant, role,
