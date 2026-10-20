@@ -4,12 +4,20 @@
   "done_when": "A hung Windows test group fails within 30 minutes with the name and stack of the test that hung in its log, and the test that hung no longer hangs on windows-latest; Linux CI is unchanged",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-20T10:24:42.303727+00:00",
       "step": "start"
     }
   ],
-  "why": "On Windows, one platform-sensitive test group sometimes hangs until GitHub's 55-minute job limit while the other groups finish in about 20 minutes; it hit a different group on three pull requests on 20 October 2026, and close then waits 30 minutes and stops"
+  "stuck": {
+    "close": null,
+    "head": "e1d4c66540466e2df220a94ac484a3f99799d5b2",
+    "keys": {},
+    "round": null
+  },
+  "why": "On Windows, one platform-sensitive test group sometimes hangs until GitHub's 55-minute job limit while the other groups finish in about 20 minutes; it hit a different group on three pull requests on 20 October 2026, and close then waits 30 minutes and stops",
+  "worker": "codex"
 }
