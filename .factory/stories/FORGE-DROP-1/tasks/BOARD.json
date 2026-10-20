@@ -8,26 +8,32 @@
     "head": null,
     "start": "0767569bef9a7fe19f5f910117238a19bdcde749"
   },
+  "flagged": [],
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "branch_diff": "0d2f662b244c48fc61a0157b6d522e56cc579f6dcb70b41b6682d5e7ea389486",
+    "changed": "3b1d1b1290025bb3e94661ad3197d2c78d248cc50962d9285fdb8bea9cdcce51",
+    "commit": "ced31edc8c4e7d533e9cc8c0961d4a34ec297108",
+    "dismissals": [],
+    "findings": [],
+    "id": "222ca520-af85-46a1-9047-1b0f543cc72a",
+    "mechanical": true,
+    "status": "clean"
+  },
   "round": 1,
   "stacked_on": "FORGE-BOARD-4/SERVER",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-17T20:41:19.516274+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-20T07:28:53.370097+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "narrow",
-    "question": "Drop a fix nobody wants any more, and bring it back later: The board skips dropped fixes is stuck. It should deliver: the board and `forge board --json` leave out a dropped fix and show it again after `--undo`\nIt changes 409 lines outside tests, over its limit of 400.\nThe worker tried: Keep the board within its module limit; Keep dropped fixes out of board counts.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "Main already ships this part's result through the board-skips-dropped fix; after merging main the part changes no code, so it closes as done.",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "ef8f82f0-3b81-44a3-ab95-3ce8de0b6900",
-    "worker_round": 1
-  },
   "stuck": {
     "close": null,
     "head": "84d1c0d247302473038b81a8f1ae8636eefb64ba",
