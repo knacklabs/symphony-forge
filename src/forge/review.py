@@ -42,6 +42,9 @@ SERIOUS = ("P0", "P1")
 BOOKKEEPING = (".factory/", "plans/")
 DOC_EXCLUDES = [f":(exclude,glob){path}**" for path in (*BOOKKEEPING, ".forge/", "docs/")]
 DOC_EXCLUDES += [":(exclude,glob,icase)**/*.md"]
+DOC_EXCLUDES += [f":(exclude,glob,icase)**/*.{suffix}" for suffix in
+                 ("png", "jpg", "jpeg", "gif", "svg", "webp", "avif", "ico", "bmp",
+                  "tif", "tiff", "icns", "woff", "woff2", "ttf", "otf", "eot")]
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
@@ -194,12 +197,12 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     parts.append(functional_check(top, base, commit))
     if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
         parts.append(proof)
-    current_level = blocking_level(top, item, state, base, commit)
     saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
     if saved_level == "P0":
         parts.append("P0-only prototype review")
-    if saved_level != current_level:
-        parts.append("The recorded review level is no longer allowed")
+        # Full reviews remain sufficient; only a light review can lose its allowance.
+        if blocking_level(top, item, state, base, commit) != saved_level:
+            parts.append("The recorded review level is no longer allowed")
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
@@ -207,7 +210,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
-    """P0 for an unsigned client prototype fix, P1 for every other review."""
+    """Docs/assets and unsigned client prototype fixes get a light review."""
+    if docskip.only_docs(top, base, DOC_EXCLUDES, head=commit):
+        return "P0"
     if ("/" in item or state.get("kind") != "fix" or
             state.get("allow_large") != "Prototype before sign-off"):
         return "P1"
@@ -590,7 +595,7 @@ def docs_only(top: Path, base: str) -> bool:
                              allow_settings=not repo.config(top)["always_test"])
 
 
-DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
+DOCS_ONLY = ("This change touches only forge.toml, docs, assets, plans, Markdown or Forge's records, so close "
              "did not run `{command}` (docs only: tests skipped).")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")
@@ -799,7 +804,9 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
                           key=lambda word: {"error": 2, "failed": 1}.get(word, 0))
     ran = [(outcome, node) for node, outcome in worst.items()]
 
-    ran_none = not command or docs_only(top, base)  # close runs no tests for this change
+    proof = commit_paragraph(top, base, "Proof list:")
+    # Classifying the diff cannot change a proof list that names no tests.
+    ran_none = bool(TEST_NAME.search(proof)) and (not command or docs_only(top, base))
 
     def result(found: re.Match) -> str:  # the worker's words stay; a name gains its result
         name = found[0].rstrip(".:)")
@@ -827,7 +834,7 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         return said + found[0][len(name):]
 
     lines = []
-    for number, line in enumerate(commit_paragraph(top, base, "Proof list:").splitlines()):
+    for number, line in enumerate(proof.splitlines()):
         if not TEST_NAME.search(line):  # close cannot match a line without pytest names to its run
             lines.append(line if number == 0 or not line.strip() else f"{line} (not checked)")
             continue

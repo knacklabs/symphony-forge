@@ -34,12 +34,14 @@ def jobs(workflow):
 def gate_passes(gate, result):
     # Run the required check's own step with what GitHub reports for the group jobs.
     step = re.search(r"run: (.+)$", gate, re.M)[1]
-    return bash("-c", step, env={"GROUPS": result}).returncode == 0
+    return bash("-c", step, env={"GROUPS": result, "DOCS_CHECK": "success",
+                                "DOCS_ONLY": "false"}).returncode == 0
 
 
 def check_gate(workflow):
     gate = jobs(workflow)["tests-passed"]
-    assert "&& 'tests' || 'tests (other event)'" in gate and "needs: tests" in gate
+    assert "&& 'tests' || 'tests (other event)'" in gate
+    assert "needs: [docs-check, tests]" in gate
     assert "if: always() && github.event_name == 'pull_request'" in gate
     assert gate_passes(gate, "success")
     for result in ("failure", "cancelled", "skipped"):
