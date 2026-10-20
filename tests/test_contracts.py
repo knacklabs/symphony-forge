@@ -661,6 +661,10 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                                   "--subagent", "idea-explorer", "--text", reply)
                 assert done.returncode == 0, done.stdout + done.stderr
                 assert repo.git("branch", "--list", branch)
+            # Dropping the intake plan publishes its state without changing main.
+            dropped = repo.forge("story", "drop", "IDEA", "--because", "Move this plan to a fix")
+            assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+            assert repo.git("show", "origin/story/IDEA:plans/IDEA.md")
         finally:
             owner.close()
     changing = {words for words, changes in commands.items() if changes}
