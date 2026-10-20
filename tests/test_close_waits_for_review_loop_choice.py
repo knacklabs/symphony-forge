@@ -35,8 +35,11 @@ def stopped(env, kind="task"):
     if kind == "task":
         assert ("Save a basket (part of Shoppers can save a basket): "
                 "Shoppers can save their basket with one click") in result.stderr
-    assert f"Review round {final_round}" in result.stderr
-    assert f"Round {final_round} defect" in result.stderr and "Forge stopped" in result.stderr
+    if "/" in item:
+        assert f"Review round {final_round}" in result.stderr and "Forge stopped" in result.stderr
+    else:
+        assert "This fix's review found an open P0." in result.stderr
+    assert f"Round {final_round} defect" in result.stderr
     assert "One more round, split or accept?" in result.stderr
     assert (f'Next: forge close {item} --resolve <more|split|accept> '
             '--reason "<human\'s choice>"') in result.stderr

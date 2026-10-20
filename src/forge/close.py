@@ -1117,5 +1117,5 @@ COMMANDS = [{
              (('--resolve',), {"choices": ["more", "narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The human's choice after a review loop stop"})],
     "position": 150,
-    "listing": "| `forge close <item>` | Closes a task or fix; a P0 after review round two waits for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
+    "listing": "| `forge close <item>` | Closes a task or fix; a fix gets one review round and a part two; an open P0 then waits for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
 }]
