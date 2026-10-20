@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-ROUNDS-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-20T06:04:15.819666+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Reads and reviews end after two rounds",
+  "touches": 0
+}
