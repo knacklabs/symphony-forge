@@ -10,7 +10,7 @@ import sys
 import pytest
 
 from conftest import _install
-from test_close import CLEAN, ROOT, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, ROOT, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
 from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
@@ -48,7 +48,7 @@ def question(stuck, tried="Worker round", part=False):
 
 
 def _rounds(env, case):
-    """Start the fix whose every close fails, then run work and close once (twice for fail pass
+    """Start the item whose every close fails, then run work and close once (twice for fail pass
     fail)."""
     # P1s become follow-ups in round two; P0s preserve these independent stuck/progress cases.
     if case in ("finding", "no change"):
@@ -73,7 +73,7 @@ def _rounds(env, case):
         env.repo.git("push", "-q", "origin", "main")
     # Fix P0s now wait for the owner after one review. Story parts retain
     # the repeated-finding progress/stuck contract; red tests still use fixes.
-    item, _ = (env.start_fix() if case in ("failing", "work twice") else env.start_task())
+    item, _ = (env.start_fix() if case in ("failing", "work twice") else env.start_approved_task(STORY_DOC))
     for _ in range(2 if case == "fail pass fail" else 1):
         assert env.close(item).returncode == 1
         # A second round with no close between has no new result, so it counts nothing.

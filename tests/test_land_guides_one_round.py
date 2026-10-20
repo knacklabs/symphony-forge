@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, ROOT, _install
-from test_close import CLEAN, GREEN, STORY_DOC, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, approve_story, blocked, env, finding  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_land import GH, ITEM, URL, _fix, _workers, land  # noqa: F401
 from test_setup import _fresh_client
@@ -53,11 +53,12 @@ def guided_client(land, request):
 def test_1_land_guides_only_the_round_it_starts(guided_client, worked):
     client = guided_client
     # Previously a committed branch went straight to close; explicit guidance must start work.
-    item, where = client.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json",
-                               {"status": "working" if worked else "started"},
-                               {"app.py": "print('hello')\n"} if worked else {})
-    if not (where / "plans/SHOP.md").exists():
-        client.commit(where, "plans/SHOP.md", STORY_DOC)
+    approve_story(client.repo, STORY_DOC)
+    client.repo.git("merge", "-q", "--ff-only", "story/SHOP")
+    client.repo.git("push", "-q", "origin", "main")
+    item, _ = client.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json",
+                           {"status": "working" if worked else "started"},
+                           {"app.py": "print('hello')\n"} if worked else {})
     client.reviews(blocked(finding("P1", "Saving drops the greeting", "work-1.txt")), CLEAN)
     done = client.repo.forge("land", item, "--note", NOTE)
     assert done.returncode == 0, done.stdout + done.stderr

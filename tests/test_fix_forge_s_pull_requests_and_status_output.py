@@ -2,7 +2,7 @@
 import json
 import re
 import pytest
-from test_close import CLEAN, blocked, body, env, finding  # noqa: F401 - command-level fixture
+from test_close import CLEAN, STORY_DOC, blocked, body, env, finding  # noqa: F401 - command-level fixture
 from test_story import setup
 
 STORY = "forge-s-pull-requests-and-status-output"
@@ -152,7 +152,7 @@ def test_7_next_names_pr_after_successful_close(env):
 
 
 def test_8_next_names_finding_after_close_stops(env):
-    item, _ = env.start_task()
+    item, _ = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(finding("P1", "A greeting is missing")))
     assert env.close(item).returncode == 1
     result = env.repo.forge("next")

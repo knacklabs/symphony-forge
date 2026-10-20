@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from test_close import CLEAN, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
 from test_hotspot_stop import seed, rounds
 from test_land import _land, _workers, land  # noqa: F401
@@ -30,7 +30,7 @@ def follow_ups(env):
 
 def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     seed(env, "src/a.py")
-    item, where = env.start_task()
+    item, where = env.start_approved_task(STORY_DOC)
     rounds(env, item, where, ["src/a.py"] * 2)
     env.commit(where, "app.py", "print(3)\n")
     env.commit(where, "src/a.py", "pass  # review round 3\n")
@@ -105,7 +105,7 @@ def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
     else:
         if entry == "same-file":
             seed(land, "app.py")
-        item, where = land.start_task(changes={
+        item, where = land.start_approved_task(STORY_DOC, changes={
             "app.py": "print('hello')\n", "other.py": "print('hello')\n", "show.py": "print('hello')\n"})
         paths = ["app.py"] * 3 if entry == "same-file" else ["app.py", "other.py", "show.py"]
         # A new finding title each round: the same finding twice would stop the stuck worker first.

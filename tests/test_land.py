@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, _install
-from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, env, finding, run  # noqa: F401
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
 from test_worker import calls
 
@@ -318,7 +318,7 @@ def _red_checks(env, bucket: str = "fail") -> None:
 
 def _blocked_once_then_clean(env):
     _agent(env)
-    ITEM, _ = env.start_task()
+    ITEM, _ = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(BLOCKER), CLEAN)
     done = _land(env, ITEM)
     assert done.returncode == 0, done.stderr
@@ -335,7 +335,7 @@ def _three_blocked_reviews_hold_the_fourth(env):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
     env.repo.git("push", "-q", "origin", "main")
-    ITEM, where = env.start_task()
+    ITEM, where = env.start_approved_task(STORY_DOC)
     # A new P0 finding each round, each in a file of its own: the same one twice would stop
     # the worker sooner, and three in one file would stop by area.
     env.reviews(*(blocked(finding("P0", f"Saving drops the greeting, case {n}", file))
@@ -392,7 +392,7 @@ def _red_without_a_failing_check_stops(env, conclusion, bucket):
 
 
 def _blocked_red_blocked_red(env):
-    ITEM, _ = env.start_task()
+    ITEM, _ = env.start_approved_task(STORY_DOC)
     # The clean second review settles the greeting defect; round three finds a new one.
     env.reviews(blocked(BLOCKER), CLEAN,
                 blocked(finding("P0", "Saving loses the reader name", "work-2.txt")), CLEAN)
@@ -412,7 +412,7 @@ def _session_rounds_count_across_reruns(env, monkeypatch):
     from test_tools_session_hold import Session
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
-    ITEM, where = env.start_task()
+    ITEM, where = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(BLOCKER), CLEAN,
                 blocked(finding("P0", "Saving loses the reader name", "round-2.txt")), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
@@ -439,7 +439,7 @@ def _session_rounds_count_across_reruns(env, monkeypatch):
 
 def _default_stop_shows_the_question_and_exits(env):
     # The default setting also returns control to the coordinator immediately.
-    ITEM, where = env.start_task()
+    ITEM, where = env.start_approved_task(STORY_DOC)
     # New findings before the last: the same one twice would stop the stuck worker first.
     env.reviews(*(blocked(finding("P0", f"Saving drops the greeting, case {n}")) for n in (1, 2)),
                 blocked(BLOCKER), CLEAN)
@@ -464,7 +464,7 @@ def _default_stop_shows_the_question_and_exits(env):
 
 
 def _findings_after_three_rounds_ask_a_question(env):
-    ITEM, _ = env.start_task()
+    ITEM, _ = env.start_approved_task(STORY_DOC)
     # Clean reviews with red checks spend the remaining repair budget without
     # the two-consecutive-blocked owner question taking precedence over land's stop.
     env.reviews(blocked(BLOCKER), CLEAN, CLEAN,
@@ -497,7 +497,7 @@ def _findings_after_three_rounds_ask_a_question(env):
 
 def _dismissed_before_land(env):
     _agent(env)
-    ITEM, where = env.start_task()
+    ITEM, where = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(BLOCKER))
     assert env.close(ITEM).returncode == 1
     dismissed = env.close(ITEM, "--dismiss", "1", "--because", "app.py:1 it greets here")

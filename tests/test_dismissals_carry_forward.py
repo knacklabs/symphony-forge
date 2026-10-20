@@ -14,7 +14,7 @@ APP = "".join(f"line{n} = {n}\n" for n in range(1, 21))
 
 
 @pytest.mark.parametrize("case", CASES)
-def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
+def test_1_dismissal_holds_until_its_cited_lines_change(env, case):
     client(env, case != "init")
     item, where = env.start_task(changes={"app.py": APP})
     # A P0 still holds after round two, so changing cited lines must reactivate it.

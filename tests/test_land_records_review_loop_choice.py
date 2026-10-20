@@ -2,7 +2,7 @@
 
 import pytest
 
-from test_close import CLEAN, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_land import _land, _workers, land  # noqa: F401
 
 STORY = "three-rounds-ask"
@@ -16,7 +16,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
     land.repo.git("push", "-q", "origin", "main")
     # Different files avoid the existing same-file stop, so this exercises the
     # three-consecutive-blocked-round hold and its land-to-close handoff.
-    ITEM, where = land.start_task(changes={
+    ITEM, where = land.start_approved_task(STORY_DOC, changes={
         "app.py": "print('hello')\n", "other.py": "print('hello')\n",
         "show.py": "print('hello')\n",
     })

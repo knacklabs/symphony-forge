@@ -92,6 +92,7 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     Upgrade(env, tmp_path).on_main("forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
                'checks = ["tests", "forge-pr-check"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n'
+               'models.build = { model = "sonnet", effort = "medium" }\n'
                + f'test = {json.dumps(command)}\n')
     env.repo.git("fetch", "-q", "origin", "main")
     env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)

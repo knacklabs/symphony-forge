@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, _install
-from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, env, finding, run  # noqa: F401
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_land import (ITEM, RUNS, _agent, _fix, _land, _queue, _refusal, _runs, _steps,
                        _workers, land)  # noqa: F401
@@ -237,7 +237,7 @@ def test_5_same_run_under_either_host_and_workers(request, land, monkeypatch, ho
         request.getfixturevalue("claude_session")
         _codex_workers(land, monkeypatch, request.getfixturevalue("sdk_data"))
     _agent(land)
-    ITEM, _ = land.start_task()
+    ITEM, _ = land.start_approved_task(STORY_DOC)
     land.reviews(blocked(BLOCKER), CLEAN)
     done = _land(land, ITEM)
     assert done.returncode == 0, done.stdout + done.stderr

@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from test_close import CLEAN, GREEN, STORY_DOC, blocked, env, finding  # noqa: F401
+from test_close_keeps_reviews_for_unchanged_branch_diffs import client as review_client
 from test_setup import _fresh_client
 from test_upgrade_command import Upgrade
 from test_worker import calls, install_claude
@@ -24,6 +25,15 @@ PATHS = ["docs/product/BRIEF.md", "docs/specs/README.md", "docs/product/settings
 
 
 def client_item(env, tmp_path, previous, stop_default=False, part=False):
+    if part:
+        # Story workers and next need the approved plan on the coordinator's current release.
+        review_client(env, previous)
+        if stop_default:
+            config = (env.repo.path / "forge.toml").read_text("utf-8")
+            Upgrade(env, tmp_path).on_main("forge.toml", 'stop_default = "off"\n' + config)
+        item, where = env.start_approved_task(STORY_DOC)
+        env.checks(GREEN)
+        return item, where
     if previous:
         # Land the earlier release's plain-text adoption fixture before it installs git hooks.
         for path in PATHS[:-1]:
@@ -41,12 +51,7 @@ def client_item(env, tmp_path, previous, stop_default=False, part=False):
         # Product fixes now keep default settings, so coordinator setup belongs on main.
         config = (env.repo.path / "forge.toml").read_text("utf-8")
         Upgrade(env, tmp_path).on_main("forge.toml", 'stop_default = "off"\n' + config)
-    item, where = env.start_task() if part else env.start_fix()
-    if part:
-        # Init and earlier adoption need not retain the fixture's story plan.
-        plan = where / "plans/SHOP.md"
-        if not plan.exists() or plan.read_text("utf-8") != STORY_DOC:
-            env.commit(where, "plans/SHOP.md", STORY_DOC)
+    item, where = env.start_fix()
     if previous:
         version = env.repo.forge("--version").stdout.split()[-1]
         config = (where / "forge.toml").read_text("utf-8")

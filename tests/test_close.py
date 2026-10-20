@@ -515,7 +515,9 @@ def test_18_close(env, kind):
     if kind == "fix":
         [create] = env.gh_calls("pr", "create")
         published = body(create)
-        assert "--draft" not in create
+        # Close publishes a draft before review; the clean fix then becomes ready.
+        assert "--draft" in create
+        assert env.gh_calls("pr", "ready")
         assert "Follow-ups:" in published
         assert f"Finding 1 (P1): Not done: {owner_item} (app.py:1)" in published
         assert "Simpler: drop the cache → a dict" in published

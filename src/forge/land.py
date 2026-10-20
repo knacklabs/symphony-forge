@@ -165,7 +165,7 @@ def land(args: argparse.Namespace) -> int:
         _problems(top, item)
         if rounds <= ROUNDS:
             say(f"Stopped: {item} needs you.")
-        if error.entry is close.REFUSALS["hotspot"]:
+        if error.entry in (close.REFUSALS["hotspot"], close.REFUSALS["fix_p0"]):
             problem, _, next_step = str(error).partition("\nNext: ")
             raise repo.Refused(problem, f"{next_step}, then forge land {item}",
                                NEEDS_CHOICE, error.entry) from None

@@ -88,16 +88,13 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
     env.repo.git("switch", "-q", "main")
     env.repo.git("merge", "-q", "--ff-only", "fix/configure-docs-checks")
     _land_fixture(env.repo)
-    base = env.repo.git("rev-parse", "HEAD")
     changes = {path: "Updated\n"}
     if case == "code":
         changes["app.py"] = "value = 1\n"
     # Story parts retain the full-vs-light P1 boundary; fixes now follow up
     # every non-P0 after their first review.
-    item, where = env.start_task(changes=changes)
-    plan = where / "plans/SHOP.md"
-    if not plan.exists() or plan.read_text("utf-8") != STORY_DOC:
-        env.commit(where, "plans/SHOP.md", STORY_DOC)
+    item, where = env.start_approved_task(STORY_DOC, changes=changes)
+    base = env.repo.git("rev-parse", "origin/main")
     light = case in {"docs", "asset", "longer-name"} or case.startswith("duplicate-")
     env.reviews(blocked(finding("P1", "Docs review finding", path)))
     closed = env.close(item)
