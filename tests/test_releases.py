@@ -69,6 +69,7 @@ def test_5_board_lists_tagged_releases_and_each_items_first_release(unsynced_up,
     env.commit(repo.path, "unreleased.txt", "not on main\n", "Unreleased work")
     repo.git("tag", "v0.1.0")
     repo.git("switch", "-q", "main")
+    repo.git("tag", "v0.2.0", repo.git("rev-parse", "HEAD:README.md"))
     for tag in ("forge-start/example", "forge-plan/example", "demo"):
         repo.git("tag", tag)
     annotated = history != "new-lightweight"

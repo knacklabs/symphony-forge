@@ -13,15 +13,12 @@ VERSION = re.compile(r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z][0-9A-Za-z.+-]*)?")
 
 
 def collect(top: Path, history: dict[str, Any], maps: list[dict[str, Any]],
-            items: dict[str, Any]) -> dict[str, Any]:
+            items: dict[str, Any], tag_refs: list[tuple[str, str, str]]) -> dict[str, Any]:
     from forge.board import STATE
 
     landed = history["landed"]
     tags = []
-    for line in repo.git("for-each-ref", f"--merged={landed}",
-                         "--format=%(refname:strip=2)%00%(objecttype)%00%(taggerdate:iso-strict)",
-                         "refs/tags", cwd=top).splitlines():
-        tag, kind, date = line.split("\0")
+    for tag, kind, date in tag_refs:
         if VERSION.fullmatch(tag):
             tags.append({"tag": tag, "date": date if kind == "tag" else None, "items": []})
     released = {}
@@ -29,8 +26,12 @@ def collect(top: Path, history: dict[str, Any], maps: list[dict[str, Any]],
         # Ancestry orders releases even when dates are unknown or clocks disagree.
         order = {commit: n for n, commit in enumerate(repo.git(
             "rev-list", "--topo-order", "--reverse", landed, cwd=top).splitlines())}
-        tips = {entry["tag"]: repo.git("rev-parse", f"refs/tags/{entry['tag']}^{{commit}}", cwd=top)
-                for entry in tags}
+        tips = {}
+        for entry in tags:
+            tip = repo.run("git", "rev-parse", "--verify", f"refs/tags/{entry['tag']}^{{commit}}", cwd=top)
+            if not tip.returncode and tip.stdout.strip() in order:
+                tips[entry["tag"]] = tip.stdout.strip()
+        tags = [entry for entry in tags if entry["tag"] in tips]
         tags.sort(key=lambda entry: (order[tips[entry["tag"]]], entry["tag"]))
 
         def published(_now: Any) -> dict[str, str] | None:

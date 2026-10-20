@@ -98,7 +98,9 @@ with sync_playwright() as p:
                 expect(page.locator('main section').first).to_be_visible()
                 text = page.locator('main').inner_text()
                 assert not COMMANDS.search(text), (name, text)
-                assert 'unknown' in text.lower() or name == 'insights', (name, text)
+                if name == 'releases':
+                    # Release facts now distinguish a known empty list from missing facts.
+                    expect(page.get_by_role('region', name='Past releases')).to_contain_text('No releases tagged yet')
                 found = Axe().run(page).response['violations']
                 assert not found, (scheme, name, [(v['id'], v['nodes'][0]['target']) for v in found])
                 page.close()
