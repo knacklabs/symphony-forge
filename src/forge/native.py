@@ -101,9 +101,10 @@ def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_pro
           why: str, models: dict[str, str]) -> int:
     with hold(top, target, "Grill", models) as (owner, entry):
         path = codex._item_file(top, target, ".json", "Grill")
-        previous = codex.record(top, target, "Grill").get("native") or {}
+        previous = {} if "intake" in result else codex.record(top, target, "Grill").get("native") or {}
         resume = previous.get("subagent") if not why and previous.get("session") == owner["id"] else None
-        round_number = max(result["round"], codex._json(path).get("native_round", 0) + 1)
+        round_number = (1 if "intake" in result else
+                        max(result["round"], codex._json(path).get("native_round", 0) + 1))
         result = {**result, "round": round_number}
         reason = why or ("continue this session's reader" if resume else
                          "because the session that ran its last round has ended" if previous else
@@ -111,12 +112,13 @@ def offer(top: Path, target: str, result: dict[str, Any], prompt: str, fresh_pro
         codex._record(path, **({"claude": None} if result["reader"] == "codex" else
                               {"conversation": None, "start": None}))
         _start(top, target, "Grill", owner, entry, result=result)
+    role = "explorer" if "intake" in result else "reader"
     instruction = ("Continue the named reader with the short brief as a background subagent.\n"
                    "Start fresh with the whole brief if this session cannot reach that subagent."
-                   if resume else "Start a reader as a background subagent with the whole brief.")
+                   if resume else f"Start a {role} as a background subagent with the whole brief.")
     instruction += (f"\nChange no files. Hand its final message and id back with forge handback {target} "
                     f"--round {round_number} --subagent <id> --text <message>.")
-    print(json.dumps({"target": target, "role": "reader", "tool": result["reader"],
+    print(json.dumps({"target": target, "role": role, "tool": result["reader"],
                       "checkout": top.resolve().as_posix(), **models, "round": round_number,
                       "prompt": prompt if resume else fresh_prompt, "fresh_prompt": fresh_prompt,
                       "subagent": resume, "reason": reason, "instruction": instruction}))
@@ -221,6 +223,10 @@ def handback(args: Any) -> int:
             raise repo.Refused("That round was stopped or replaced, so Forge recorded nothing.", "")
         said = (args.text if args.text is not None else sys.stdin.read()).strip()
         try:
+            if "intake" in pending["result"]:
+                from forge import intake
+                kept = intake.result(path, pending, said, args.subagent)
+                return 0
             if "role" in pending:
                 kept = _work_result(path, args.item, pending, said, owner, args.subagent)
                 return 0
