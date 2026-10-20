@@ -824,10 +824,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
             "known_issues": known_issues.collect(top, {
-                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
-                for rel, state in (
-                    [(rel, state) for rel, (state, _) in best.items() if rel not in merged]
-                    + [(rel, state) for rel, state, where in history["copies"] if where == landed])
+                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): (state, where)
+                for rel, state, where in (
+                    [(rel, state, where) for rel, (state, where) in best.items() if rel not in merged]
+                    + [(rel, state, where) for rel, state, where in history["copies"] if where == landed])
                 if (match := STATE.fullmatch(rel))}, landed),
             "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
