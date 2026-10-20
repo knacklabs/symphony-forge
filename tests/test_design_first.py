@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, _install
+from test_close import env
 from test_story import DOC, claude_plan, hook, new_story, setup
 from test_setup import _fresh_client
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
@@ -17,10 +18,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"><text x="20" y="40">Basket</text></svg>\n'
 
 
-def test_24_pre_upgrade_user_facing_approval_still_starts(repo, tmp_path, claude_payload):
+def test_24_pre_upgrade_user_facing_approval_still_starts(repo, tmp_path, claude_payload, env):
     # An actual earlier reader and approval hook own this historical approval. Task admission
     # must retain it without silently applying the new design contract to existing work.
     setup(repo)
+    env.commit(repo.path, "forge.toml", (repo.path / "forge.toml").read_text("utf-8")
+               + 'checks = ["tests", "forge-pr-check"]\n')
+    repo.git("push", "-q", "origin", "main")
     folder = new_story(repo, "SHOP")
     legacy = "\n".join(line for line in DOC.split("\n") if not line.startswith("Design:"))
     (folder / "plans/SHOP.md").write_text(legacy, encoding="utf-8")
@@ -40,6 +44,13 @@ def test_24_pre_upgrade_user_facing_approval_still_starts(repo, tmp_path, claude
     shown = repo.forge("next")
     assert shown.returncode == 0, shown.stderr
     assert "needs its design" not in shown.stdout and "no screen images" not in shown.stdout
+    # Close must retain the same historical approval after the worker commits its changes.
+    task_folder = Path(re.search(r" in (.+)\n", started.stdout)[1])
+    env.commit(task_folder, "src/basket.py", "print('saved basket')\n")
+    closed = env.close("SHOP/SAVE")
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert "Ready: SHOP/SAVE" in closed.stdout
+    assert env.gh_calls("pr", "ready"), closed.stdout
     # The next actual plan read adopts the new contract; passive status checks do not.
     read = repo.forge("read", "SHOP")
     assert read.returncode == 1 and "needs its design" in read.stderr, read.stdout + read.stderr
