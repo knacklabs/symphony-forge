@@ -27,7 +27,8 @@ def _section(text, heading):
 def _conventions(repo, client):
     # A worker reads the conventions from the folder its brief names, so read them from there.
     log = install_claude(repo)
-    started = repo.forge("fix", "start", "Show their work", "--done", "The demo has data", cwd=client)
+    started = repo.forge("fix", "start", "Show their work", "--done", "The demo has data",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stderr
     fix = repo.git("worktree", "list", "--porcelain", cwd=client).split("worktree ")[-1].splitlines()[0]
     toml = Path(fix) / "forge.toml"  # the fix's own settings
@@ -37,8 +38,7 @@ def _conventions(repo, client):
     repo.git("commit", "-qam", "Use Claude workers", cwd=fix)
     built = repo.forge("work", "show-their-work", cwd=client)
     assert built.returncode == 0, built.stderr
-    args = calls(log)[-1]["args"]
-    folder = Path(args[args.index("--add-dir") + 1])
+    folder = Path(calls(log)[-1]["options"]["add_dirs"][0])
     assert f"`{folder}`" in calls(log)[-1]["brief"]
     return {p.name: " ".join(p.read_text(encoding="utf-8").split()) for p in folder.glob("*.md")}
 

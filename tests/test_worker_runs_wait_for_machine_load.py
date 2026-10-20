@@ -6,14 +6,17 @@ import shlex
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install, machine_cores
+from conftest import ROOT, _install, machine_cores, machine_runners
 from test_close import env  # noqa: F401
 from test_codex_worker import sdk_data  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import finish, hold_agents, lane_adapter, make_work, person, start  # noqa: F401
+
+pytestmark = pytest.mark.platform
 
 STORY = "admit-by-load"
 BUSY = "This machine is busy (load 1.5 per core), so this work round waits until it is under 1.5."
@@ -40,7 +43,7 @@ def test_1_a_work_round_waits_while_load_per_core_is_at_least_one_and_a_half(env
     # Load counts against the cores Forge may use, not the host's 64.
     machine_cores(repo, 4, system_count=64)
     load = tmp_path / "load"
-    load.write_text("6.0", "utf-8")  # exactly 1.5 per core: busy
+    load.write_text("0.0", "utf-8")
     shim = repo.bin / "forge"
     shim.write_text(shim.read_text("utf-8").replace("from forge.cli import main",
         f"import pathlib\nos.getloadavg = lambda: (float(pathlib.Path({str(load)!r}).read_text()),) * 3\n"
@@ -50,9 +53,10 @@ def test_1_a_work_round_waits_while_load_per_core_is_at_least_one_and_a_half(env
     hold_agents(env)
     processes = []
     try:
-        # With no other agent running, waiting would never lower the load, so the first starts.
+        # Every run now waits for external load too. Start the first before load rises.
         processes.append(start(repo.path, tmp_path / "first", repo, "work", first)[0])
         _until(lambda: (repo.bin / f"started-{first_name}").exists(), "the first round")
+        load.write_text("6.0", "utf-8")  # exactly 1.5 per core: busy
         process, output = start(repo.path, tmp_path / "second", repo, "work", second)
         processes.append(process)
         _until(lambda: BUSY in output.read_text("utf-8"), "the second round to say it waits")
@@ -77,11 +81,14 @@ def test_probe(n):
 """
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-repo", "existing-repo"])
+@pytest.mark.parametrize("adopted,lane_adapter", [
+    (False, "claude"), (False, "codex"), (True, "claude")],
+    indirect=["lane_adapter"], ids=["claude-new-repo", "codex-new-repo", "claude-existing-repo"])
 def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person, lane_adapter, adopted):
     repo = env.repo
     _release(env, adopted, lane_adapter)
     machine_cores(repo, 8)
+    machine_runners(repo)
     pytest_args = ["-m", "pytest", "-q", "-p", "no:cacheprovider", "probe"]
     argv = [sys.executable, *pytest_args, "-n", "4"]  # a fixed count the budget must still cap
     command = subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
@@ -95,20 +102,35 @@ def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person,
     # The worker runs tests the sanctioned way, then calls pytest -n auto directly; each probe
     # test records the xdist process it ran in.
     record = ("_bin = pathlib.Path({bin!r})\n"
-              "_out = __import__('subprocess').run([sys.executable, str(_bin / 'forge'), 'test'], cwd={cwd},\n"
+              # Bare forge test selects the item's tests, so the worker must
+              # touch its probe rather than depend on an unrestricted run.
+              "_probe = pathlib.Path({cwd} or os.getcwd()) / 'probe/test_probe.py'\n"
+              "_probe.write_text(_probe.read_text('utf-8') + '\\n# Worker test change\\n', encoding='utf-8')\n"
+              "_out = __import__('subprocess').run([{python!r}, str(_bin / 'forge'), 'test'], cwd={cwd},\n"
               "    env=dict(os.environ, PROBE_OUT=str(_bin / 'via-forge')), capture_output=True, text=True)\n"
-              "__import__('subprocess').run([sys.executable, *{args!r}, '-n', 'auto'], cwd={cwd},\n"
+              "_direct = __import__('subprocess').run([{python!r}, *{args!r}, '-n', 'auto'], cwd={cwd},\n"
               "    env=dict(os.environ, PROBE_OUT=str(_bin / 'direct')), capture_output=True)\n"
-              "(_bin / 'worker-tests').write_text(_out.stdout + _out.stderr)\n")
-    _install(repo.bin, "claude", f"#!{sys.executable}\nimport os, pathlib, sys\nsys.stdin.read()\n"
-             + record.format(bin=str(repo.bin), cwd="None", args=pytest_args) + "print('Done.')\n")
+              "(_bin / 'worker-tests').write_text(_out.stdout + _out.stderr)\n"
+              "assert _out.returncode == 0, _out.stdout + _out.stderr\n"
+              "assert _direct.returncode == 0, _direct.stdout + _direct.stderr\n")
+    # The SDK's interpreter owns only the provider. The test client has pytest
+    # in its own environment, and real worker-launched tests must run there.
+    sdk = repo.bin / "claude_agent_sdk" / "__init__.py"
+    sdk_record = record.format(bin=repo.bin.as_posix(), cwd="None", args=pytest_args,
+                               python=Path(sys.executable).as_posix()).replace("pathlib.Path", "Path")
+    sdk.write_text(sdk.read_text("utf-8").replace(
+        '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)',
+        "".join("    " + line + "\n" for line in sdk_record.splitlines()) +
+        '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'), "utf-8")
     server = ROOT / "tests/stubs/codex-app-server"
     _install(repo.bin, "codex-app-server", server.read_text("utf-8").replace(
         "            turns += 1",
         "".join("            " + line + "\n" for line in
-                record.format(bin=str(repo.bin), cwd="cwd", args=pytest_args).splitlines())
+                record.format(bin=repo.bin.as_posix(), cwd="cwd", args=pytest_args,
+                              python=Path(sys.executable).as_posix()).splitlines())
         + "            turns += 1"))
     worked = repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
     assert (repo.bin / "worker-tests").exists(), worked.stdout + worked.stderr
     report = (repo.bin / "worker-tests").read_text("utf-8")
     for run in ("via-forge", "direct"):

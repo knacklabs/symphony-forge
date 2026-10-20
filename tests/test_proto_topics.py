@@ -66,7 +66,7 @@ def test_9_cold_read_instructs_reader_to_resolve_deferred_answers(repo, monkeypa
     repo.git("push", "-q", "origin", "main")
     made = repo.forge("story", "new", "DEMO", "Demo the product")
     assert made.returncode == 0, made.stderr
-    log = install_claude(repo)
+    log = install_claude(repo, worker=False)
     read = repo.forge("read", "DEMO")
     assert read.returncode == 0, read.stderr
     [call] = calls(log)

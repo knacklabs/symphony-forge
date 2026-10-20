@@ -77,21 +77,24 @@ for rule in rules:
         answer(out)
 '''
 
-# The stub claude, committing a file as a worker does when its round succeeds.
+# The SDK stub commits a file as a worker does when its round succeeds.
 COMMITS = '''if not int(os.environ.get("STUB_CLAUDE_EXIT", "0")):
     import subprocess
-    done = len(list(pathlib.Path.cwd().glob("work-*.txt")))
-    pathlib.Path(f"work-{done + 1}.txt").write_text("worked\\n", encoding="utf-8")
+    done = len(list(Path.cwd().glob("work-*.txt")))
+    Path(f"work-{done + 1}.txt").write_text("worked\\n", encoding="utf-8")
     subprocess.run(["git", "add", "-A"], check=True)
     subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True)
-print("stub claude: built it")'''
+'''
 
 
 @pytest.fixture
 def land(env, tmp_path):
     root = Path(__file__).resolve().parent
-    stub = (root / "stubs" / "claude").read_text("utf-8")
-    _install(env.repo.bin, "claude", stub.replace('print("stub claude: built it")', COMMITS))
+    stub = (root / "stubs" / "claude_agent_sdk.py").read_text("utf-8")
+    module = env.repo.bin / "claude_agent_sdk" / "__init__.py"
+    commits = "".join("    " + line + "\n" for line in COMMITS.splitlines())
+    module.write_text(stub.replace('    yield ResultMessage(session_id=session',
+                                  commits + '    yield ResultMessage(session_id=session'), "utf-8")
     _install(env.repo.bin, "gh", GH.format(python=sys.executable, remote=str(tmp_path / "remote.git"),
                                            url=URL) + GH_STUB.format(python=sys.executable).split("\n", 1)[1])
     toml = env.repo.path / "forge.toml"
@@ -139,7 +142,7 @@ def _steps(done) -> list[str]:
 
 
 def _workers(env) -> list[dict]:
-    return calls(env.repo.bin / "claude-calls.jsonl")
+    return calls(env.repo.bin / "claude-sdk-calls.jsonl")
 
 
 def _refusal(done) -> list[str]:
@@ -331,19 +334,29 @@ def _three_blocked_reviews_hold_the_fourth(env):
     where = _fix(env, "working", worked=True)
     # A new Harm 3 finding each round, each in a file of its own: the same one twice would stop
     # the worker sooner, and three in one file would stop by area.
-    env.reviews(*(blocked({**finding("P1", f"Saving drops the greeting, case {n}", f"docs/{n}.md"),
-                           "body": "Gain 3, Work 2, Harm 3\nEvidence"}) for n in (1, 2, 3)))
+    env.reviews(*(blocked({**finding("P1", f"Saving drops the greeting, case {n}", file),
+                           "body": "Gain 3, Work 2, Harm 3\nEvidence"})
+                  for n, file in enumerate(("app.py", "work-1.txt", "work-2.txt"), 1)))
+    asked = _land(env)
+    assert asked.returncode == 1 and "ask the owner" in asked.stderr
+    assert len(env.review_calls()) == 2
+    env.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    focused = env.repo.forge("work", ITEM)
+    assert focused.returncode == 0, focused.stdout + focused.stderr
+    assert env.close(ITEM).returncode == 1
+    # A further proposed repair must not spend a fourth reviewer before the hard-stop choice.
+    assert env.repo.forge("work", ITEM).returncode == 0
     done = _land(env)
-    assert done.returncode == 1
-    rounds = [f"Fix round {n} of 3: the worker fixes {FINDINGS_ROUND}." for n in (1, 2, 3)]
-    assert _steps(done) == [step for n in rounds for step in (f"Closing {ITEM}.", n)] + [
-        f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
+    assert done.returncode == 3
+    assert _steps(asked) == [f"Closing {ITEM}.", f"Fix round 1 of 3: the worker fixes {FINDINGS_ROUND}.",
+                             f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
+    assert _steps(done) == [f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
     lines = done.stderr.splitlines()
     assert [lines[-11], lines[-1]] == [
-        f"Review round 4 of {ITEM} still finds serious problems in docs/3.md, which an earlier "
+        f"Review round 4 of {ITEM} still finds serious problems in work-2.txt, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human "
         "to narrow the part, split it, or accept the remaining findings, in these words:",
-        f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"']
+        f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>", then forge land {ITEM}']
     assert len(_workers(env)) == 3
     assert len(env.review_calls()) == 3
     assert not env.gh_calls("pr", "merge")
@@ -379,7 +392,7 @@ def _blocked_red_blocked_red(env):
     _fix(env, "working", worked=True)
     # The clean second review settles the greeting defect; round three finds a new one.
     env.reviews(blocked(BLOCKER), CLEAN,
-                blocked(finding("P1", "Saving loses the reader name")), CLEAN)
+                blocked(finding("P1", "Saving loses the reader name", "work-2.txt")), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     done = _land(env)
@@ -398,7 +411,7 @@ def _session_rounds_count_across_reruns(env, monkeypatch):
     monkeypatch.setenv("CLAUDECODE", "1")
     where = _fix(env, "working", worked=True)
     env.reviews(blocked(BLOCKER), CLEAN,
-                blocked(finding("P1", "Saving loses the reader name")), CLEAN)
+                blocked(finding("P1", "Saving loses the reader name", "round-2.txt")), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     host = Session(env.repo, env.tmp / "host", "claude-session")
@@ -421,45 +434,42 @@ def _session_rounds_count_across_reruns(env, monkeypatch):
         host.close()
 
 
-def _default_stop_shows_the_question_while_it_waits(env):
-    # With the default stop setting, land waits for the owner; advance only its clock.
-    _fix(env, "working", worked=True)
+def _default_stop_shows_the_question_and_exits(env):
+    # The default setting also returns control to the coordinator immediately.
+    where = _fix(env, "working", worked=True)
     # New findings before the last: the same one twice would stop the stuck worker first.
     env.reviews(*(blocked(finding("P1", f"Saving drops the greeting, case {n}")) for n in (1, 2)),
                 blocked(BLOCKER), CLEAN)
-    shim = env.repo.bin / "forge"
-    clock = """import os, time
-from datetime import datetime, timedelta, timezone
-def advance(seconds):
-    current = datetime.fromisoformat(os.environ.get('FORGE_NOW') or datetime.now(timezone.utc).isoformat())
-    os.environ['FORGE_NOW'] = (current + timedelta(seconds=seconds)).isoformat()
-time.sleep = advance
-"""
-    shim.write_text(shim.read_text().replace("from forge.cli import main", clock + "from forge.cli import main"))
+    for number in (1, 2):
+        env.commit(where, "app.py", f"print({number})\n")
+        assert env.close(ITEM).returncode == 1
+    # After the second-round ask, the owner settles the missing rule before this focused round.
+    env.commit(where, "README.md", "The owner requires a greeting on every page.\n", "Record the owner's rule")
+    env.commit(where, "app.py", "print('focused repair')\n", "Repair the greeting")
     done = _land(env)
-    assert done.returncode == 0, done.stdout + done.stderr
-    lines = done.stdout.splitlines()
-    waiting = lines.index("The review loop is stopped. Waiting for the owner's choice; after 30 minutes "
-                          "the repo's default applies.")
+    assert done.returncode == 3, done.stdout + done.stderr
+    lines = done.stderr.splitlines()
     # The third distinct finding in app.py stops by area, with a structural move proposed.
-    shown = lines[waiting - 9:waiting - 4]
+    shown = lines[-10:-5]
     assert shown[0] == "Readme greets new readers: The readme opens with a greeting"
     assert shown[1].startswith("Findings keep coming in app.py; proposed: cut the code")
     assert shown[2:] == ["| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
                          "| 1 | Saving drops the greeting: evidence for: Saving drops the greeting | 4 | 2 | 1 | fix this round |"]
     assert sum("It still has these problems:" in line for line in lines) == 1
+    assert "Waiting for the owner's choice" not in done.stdout
 
 
 def _findings_after_three_rounds_ask_a_question(env):
     _fix(env, "working", worked=True)
-    # A clean, red second round breaks the review hold, so land's own three-round stop is reached.
-    env.reviews(blocked(BLOCKER), CLEAN, blocked(BLOCKER),
-                blocked({**finding("P1", "Saving loses the reader name"),
+    # Clean reviews with red checks spend the remaining repair budget without
+    # the two-consecutive-blocked owner question taking precedence over land's stop.
+    env.reviews(blocked(BLOCKER), CLEAN, CLEAN,
+                blocked({**finding("P1", "Saving loses the reader name", "work-3.txt"),
                          "body": "Gain 4, Work 2, Harm 1\nA returning reader at `src/save.py:9` sees no name. More."}))
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     done = _land(env)
-    assert done.returncode == 1
+    assert done.returncode == 3
     assert f"Stopped after 3 fix rounds: {ITEM} still has {FINDINGS_ROUND}." in done.stdout
     # The stop's own refusal: the question, every choice, then the close --resolve step.
     lines = done.stderr.splitlines()
@@ -472,7 +482,7 @@ def _findings_after_three_rounds_ask_a_question(env):
         "Accept, narrow or split?",
         question[6], question[7], question[8]]
     assert [line.split(":")[0] for line in question[6:]] == ["- Accept", "- Narrow", "- Split"]
-    assert lines[-1] == f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>"'
+    assert lines[-1] == f'Next: forge close {ITEM} --resolve <narrow|split|accept> --reason "<human\'s choice>", then forge land {ITEM}'
     # The stop is recorded, so forge next repeats the question and close records the choice.
     said = env.repo.forge("next").stdout
     assert "\n".join(question) in said
@@ -513,7 +523,7 @@ def _codex_question_stops(repo, monkeypatch, sdk_data, gh):
 
 TWO = [_blocked_once_then_clean, _three_blocked_reviews_hold_the_fourth, _red_check_gives_a_fix_round,
        ("cancelled", "cancel"), ("skipped", "skipping"), _blocked_red_blocked_red,
-       _findings_after_three_rounds_ask_a_question, _default_stop_shows_the_question_while_it_waits,
+       _findings_after_three_rounds_ask_a_question, _default_stop_shows_the_question_and_exits,
        _dismissed_before_land, _codex_question_stops, _session_rounds_count_across_reruns]
 
 

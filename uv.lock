@@ -157,6 +157,19 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-rerunfailures"
+version = "16.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d1/b0/6b5337f9d59b26b0069ea3d5e863c31dc04b69e51bbfb1cf2ea6328fba87/pytest_rerunfailures-16.7.tar.gz", hash = "sha256:6956ddfb65ca1d07e7e3d99e2c5359d82300f4cb062e6049563bd2c106f72d5c", size = 59666 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/d3/07ea35102cf2020ddaaac368d2a6f0bcc63d6523fb8918805bac3eb8b98f/pytest_rerunfailures-16.7-py3-none-any.whl", hash = "sha256:edf1886209c2b7dafe35b5bf1708d6ec40ccf6c6b357f0f02807efcec0204c99", size = 23952 },
+]
+
+[[package]]
 name = "pytest-split"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -195,7 +208,7 @@ wheels = [
 
 [[package]]
 name = "symphony-forge"
-version = "1.2.12"
+version = "1.2.16"
 source = { editable = "." }
 dependencies = [
     { name = "pillow" },
@@ -204,6 +217,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "pytest-rerunfailures" },
     { name = "pytest-split" },
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
@@ -215,6 +229,7 @@ requires-dist = [{ name = "pillow", specifier = ">=12.3.0" }]
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest" },
+    { name = "pytest-rerunfailures", specifier = "==16.7" },
     { name = "pytest-split" },
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },

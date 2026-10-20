@@ -5,6 +5,8 @@ import pytest
 
 from test_setup import _on_a_branch_with_forge_toml
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-PR-CHECK-INSTALL"
 
 

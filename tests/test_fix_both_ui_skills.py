@@ -7,6 +7,8 @@ from test_close import env  # noqa: F401 (pytest fixture)
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge
 from test_worker import calls, install_claude
 
+import pytest
+
 STORY = "FIX-BOTH-UI-SKILLS"
 
 
@@ -29,6 +31,7 @@ def test_1_sync_delivers_both_ui_skills_and_motion_resolutions(env):
         assert "cubic-bezier(0.23, 1, 0.32, 1)" in standard
 
 
+@pytest.mark.platform
 def test_2_worker_and_review_get_both_ui_skills_and_blocking_checks(env):
     repo = env.repo
     config = repo.path / "forge.toml"
@@ -58,6 +61,7 @@ def test_2_worker_and_review_get_both_ui_skills_and_blocking_checks(env):
     assert "not a `Simpler:` finding" in review
 
 
+@pytest.mark.platform
 def test_3_doctor_requires_both_ui_skills_where_the_worker_reads_them(repo, gh, tmp_path,
                                                                        monkeypatch):
     client, initialized = _fresh_client(repo, gh, tmp_path)

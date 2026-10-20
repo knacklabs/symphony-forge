@@ -14,6 +14,8 @@ from test_fix_when_the_installed_forge_differs_from_th import _calls, _uv
 from test_setup import _fresh_client, _version
 from test_task import story
 
+pytestmark = pytest.mark.platform
+
 STORY = "task-start-pin"
 
 

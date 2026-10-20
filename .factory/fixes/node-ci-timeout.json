@@ -1,0 +1,70 @@
+{
+  "base": "94879950a86a26c40af58a3315e866afe1823537",
+  "branch": "fix/node-ci-timeout",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15351-58d6-71d2-af5e-791a856bf304",
+    "head": null,
+    "start": "509cf5c4d2f97f05cf480a03b296d6cccf60b061"
+  },
+  "done_when": "The generated tests job for Node client repos has a 30-minute limit, and close reports a tests job that ran out of time as a timeout with its own next step instead of sending the item to a worker, on new repos and after sync on existing repos",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/checks.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 101,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Preserve independent check failures alongside test timeouts",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "98a50c49c0a1329d57835aac73d6540a4015f34a14cd5aaa2a41707d0a7cb38b",
+    "changed": "c3834209b90095b095320d2518dc2cd5e416771e39f6e0a368e51273d644b94d",
+    "commit": "e22e431d0ea1164bc9733305f250d0ca3e0ae914",
+    "dismissals": [],
+    "findings": [],
+    "id": "a7a6708f-6638-4083-bf6c-9b891f52f804",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T08:39:44.784976+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T08:56:20.398561+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T09:04:27.046297+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T09:38:15.776019+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "43d51a17-9361-4e6f-81b9-3b95b7c7cad6",
+    "head": "c36acbc235ad8cda8fb1fbac028fcee1a25d1545",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Node client repos' generated CI gives tests 10 minutes and close treats a timeout as the worker's failure (issue 950)",
+  "worker": "codex"
+}

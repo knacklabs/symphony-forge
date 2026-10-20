@@ -33,6 +33,7 @@ def row(repo, item):
 
 
 # ponytail: each case runs several forge commands; a busy machine needs more than the 150 s default.
+@pytest.mark.platform
 @pytest.mark.parametrize("case", ["idle", "remote fix", "remote task", "checks", "claude", "claude error", "codex", "read claude", "read codex", "read default claude", "read default codex", "review claude", "review codex", "review default claude", "review default codex", "review fallback claude", "review fallback codex", "progress", "progress parallel", "progress error", "progress teardown", "progress single", "progress selected", "restart", "plan", "plan detached", "ci", "ci red", "ci green"])
 @pytest.mark.timeout(600)
 def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
@@ -226,7 +227,8 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             stub.write_text(source.replace('asked = {"stub-ask-1"',
                 events.replace("\n", "\n            ") + 'asked = {"stub-ask-1"'), "utf-8")
         elif case in ("claude", "claude error") or case.startswith("read") and case.endswith("claude"):
-            stub = repo.bin / "claude"
+            worker = not case.startswith("read")
+            stub = repo.bin / ("claude_agent_sdk/__init__.py" if worker else "claude")
             events = ""
             if "default" in case:
                 event = {"type": "system", "subtype": "init", "model": model}
@@ -236,17 +238,25 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 events += f'print({json.dumps(event)!r}, flush=True)\n'
             for tool, inputs in (("Edit", {"file_path": "src/forge/close.py"}),
                                  ("Bash", {"command": "git commit -m Done"})):
-                event = {"type": "assistant", "message": {"content": [
-                    {"type": "tool_use", "name": tool, "input": inputs}]}}
-                events += f'print({json.dumps(event)!r}, flush=True)\n' + gate
+                if worker:
+                    events += f'yield AssistantMessage([ToolUseBlock({tool!r}, {tool!r}, {inputs!r})], options.model)\n' + gate
+                else:
+                    event = {"type": "assistant", "message": {"content": [
+                        {"type": "tool_use", "name": tool, "input": inputs}]}}
+                    events += f'print({json.dumps(event)!r}, flush=True)\n' + gate
             source = stub.read_text("utf-8")
             question = "Question: May I reuse the parser?"
-            marker = 'said = here / "claude-says.md"' if case.startswith("read") else 'print("stub claude: built it")'
-            replacement = events + ('print(json.dumps({"type": "result", "result": "No findings."}), flush=True)\nraise SystemExit(0)\n' if case.startswith("read") else
-                f'print(json.dumps({{"type": "assistant", "message": {{"content": [{{"type": "text", "text": {question!r}}}]}}}}), flush=True)\n'
-                f'print(json.dumps({{"type": "result", "result": {question!r}}}), flush=True)')
-            if case == "claude error":
-                replacement = events + 'print(json.dumps({"type": "result", "subtype": "error_during_execution", "errors": ["Provider connection closed"]}), flush=True)\nraise SystemExit(3)\n'
+            if worker:
+                marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
+                replacement = events + f'yield AssistantMessage([TextBlock({question!r})], options.model)\n'
+                if case == "claude error":
+                    replacement = events + ('yield ResultMessage(subtype="error_during_execution", is_error=True, '
+                        'session_id=session, result="", errors=["Provider connection closed"])\nreturn\n')
+                replacement = "".join("    " + line + "\n" for line in replacement.splitlines())
+                source = source.replace('"stub claude: built it\\n"', repr(question))
+            else:
+                marker = 'said = here / "claude-says.md"'
+                replacement = events + 'print(json.dumps({"type": "result", "result": "No findings."}), flush=True)\nraise SystemExit(0)\n'
             stub.write_text(source.replace(marker, replacement), "utf-8")
         elif case.startswith("review"):
             stub = (Path(os.environ["HOME"]) / ".claude/skills/autoreview/scripts/autoreview"
@@ -304,9 +314,12 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
             config = folder / "forge.toml"
             parallel = " -n 2 --dist loadfile" if case == "progress parallel" else ""
             parallel += " -k test_two" if case == "progress selected" else ""
-            env.commit(folder, "forge.toml", config.read_text("utf-8").replace(
+            # Product close now keeps main's settings, including this real pytest command.
+            env.commit(repo.path, "forge.toml", config.read_text("utf-8").replace(
                 json.dumps(f'"{sys.executable}" -c "print(123)"'),
                 json.dumps(f'"{sys.executable}" -m pytest -vv{parallel} test_progress.py')))
+            repo.git("push", "-q", "origin", "main")
+            repo.git("merge", "--no-edit", "origin/main", cwd=folder)
         process = subprocess.Popen([sys.executable, str(repo.bin / "forge"),
                                    "read" if case.startswith("read") else "close" if case.startswith(("progress", "ci", "review")) else "work", item], cwd=repo.path,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -353,17 +366,16 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 else:
                     worker = result["worker"]
                     model, effort = selections.get(expected, (model, effort))
+                    # Public review rounds start at one, before the first worker turn.
                     assert (worker["tool"], worker["model"], worker["effort"], worker["round"]) == (
-                        "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 0)
+                        "claude" if case == "claude error" else case.split()[-1], model, effort, number if not case.startswith("review") else 1)
                     assert worker["step"] == expected
                     datetime.fromisoformat(worker["started_at"])
                     # The clock stays in one ten-second window throughout this burst.
                     # Keep the latest action visible without retaining every notification.
-                    events = records(repo, "events.jsonl")
-                    run = next(e for e in reversed(events) if e["item"] == item and e["event"] == "run start")
-                    progress = [e for e in events if e.get("run_id") == run["id"] and e["event"] == "progress"]
-                    assert len(progress) == 1
-                    assert progress[0]["step"] == expected
+                    # Live progress is now separate from immutable history. The
+                    # worker assertion above checks the merged public view; the
+                    # bounded-write regression owns storage and window coalescing.
                 connection.sendall(b"1")
         finally:
             for connection in connections:

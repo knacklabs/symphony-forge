@@ -10,8 +10,10 @@ import pytest
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_worker import install_claude
-from test_upgrade_command import unsynced_up  # noqa: F401
+from test_upgrade_command import Upgrade, unsynced_up  # noqa: F401
 from test_story import DOC, new_story, setup
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-MOD-1-RUNS"
 
@@ -69,7 +71,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
     repo = env.repo
     if family == 'claude':
         configure(env)
-        require_worker_environment(repo.bin / 'claude')
+        require_worker_environment(repo.bin / 'claude_agent_sdk' / '__init__.py')
         item, where = env.start_fix()
     else:
         request.getfixturevalue("claude_session")
@@ -87,6 +89,8 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         env.commit(where, 'forge.toml', 'checks = ["tests", "forge-pr-check"]\n'
                    + f'test = {json.dumps(command)}\nfast_test = {json.dumps(command)}\n'
                    + config.read_text('utf-8'))
+        # Coordinator test settings belong on main, not to the timing task's diff.
+        Upgrade(env, env.tmp).on_main('forge.toml', config.read_text('utf-8'))
     require_worker_environment(env.queue.parent / 'autoreview' / 'scripts' / 'autoreview')
     for number in (1, 2):
         # A commit nudge finishes this round, even though Codex logs another turn.
@@ -164,10 +168,9 @@ def _repeated_worker_questions(env, monkeypatch, request, family):
         monkeypatch.setenv('STUB_SAY', '\n\n' + question)
     else:
         configure(env)
-        stub = repo.bin / 'claude'
+        stub = repo.bin / 'claude_agent_sdk' / '__init__.py'
         require_worker_environment(stub)
-        stub.write_text(stub.read_text('utf-8').replace(
-            'print("stub claude: built it")', f'print("\\n\\n" + {question!r})'), 'utf-8')
+        monkeypatch.setenv('STUB_CLAUDE_RESULT', '\n\n' + question)
         item, _ = env.start_fix()
     for args in [(), ('--note', 'Yes, use it.')]:
         worked = repo.forge('work', item, *args)
@@ -235,6 +238,7 @@ def _failures_keep_run_end_occurrences(env, monkeypatch, failure):
             config = where / 'forge.toml'
             env.commit(where, 'forge.toml', config.read_text('utf-8').replace(
                 'print(123)', 'raise SystemExit(1)'))
+            Upgrade(env, env.tmp).on_main('forge.toml', config.read_text('utf-8'))
             step = 'test run'
         else:
             from test_close import FAILED
@@ -334,13 +338,15 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
                 'models.design.claude = { model = "sonnet", effort = "medium" }\n')
         else:
             item, where = env.start_fix()
-        stub = repo.bin / 'claude'
-        source = stub.read_text('utf-8').replace('print("stub claude: built it")',
-            f'print("\\n\\n" + ({nudged!r} if "Your turn ended" in brief else {initial!r}))')
+        stub = repo.bin / 'claude_agent_sdk' / '__init__.py'
+        source = stub.read_text('utf-8').replace('    yield ResultMessage(session_id=session',
+            f'    os.environ["STUB_CLAUDE_RESULT"] = "\\n\\n" + '
+            f'({nudged!r} if "Your turn ended" in prompt else {initial!r})\n'
+            '    yield ResultMessage(session_id=session')
         monkeypatch.setenv('STUB_CLAUDE_COMMIT_FROM', '2')
         if question_turn == 'failed':
-            source = source.replace('sys.exit(int(os.environ.get("STUB_CLAUDE_EXIT", "0")))',
-                                    'sys.exit(3 if "Your turn ended" in brief else 0)')
+            source = source.replace('status = int(os.environ.get("STUB_CLAUDE_EXIT", "0"))',
+                                    'status = 3 if "Your turn ended" in prompt else 0')
     stub.write_text(source, 'utf-8')
     (where / 'pending.py').write_text('print(1)\n', 'utf-8')
     worked = repo.forge('work', item)

@@ -12,6 +12,7 @@ from test_close_holds_after_three_blocked_reviews import client_item
 from test_close_test_runs_wait_in_line import Close, ONE, SUITE, _fix, _release, _running, _with_test_command
 from test_worker import install_claude
 from test_last_task_records_story_outcome import github_merge
+from test_upgrade_command import Upgrade
 
 STORY = "FIX-WHERE-TIME-WENT"
 CATEGORIES = {"building", "own_tests", "reviewing", "fixing_findings", "waiting_for_ci",
@@ -90,10 +91,14 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     suite = env.tmp / "suite.py"
     suite.write_text(SUITE.format(tmp=env.tmp.as_posix()), "utf-8")
     command = f'"{sys.executable}" "{suite}"'
-    env.commit(where, "forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
+    # Close now restores main's settings; install the coordinator's test command there.
+    env.repo.git("merge", "--ff-only", "origin/main")
+    Upgrade(env, tmp_path).on_main("forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
                'checks = ["tests", "forge-pr-check"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n'
                + f'test = {json.dumps(command)}\n')
+    env.repo.git("fetch", "-q", "origin", "main")
+    env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     if previous:
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stderr
@@ -150,6 +155,7 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     wait_started = datetime.fromisoformat(loop_wait["at"])
     monkeypatch.setenv("FORGE_NOW", (wait_started + timedelta(seconds=30)).isoformat())
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
+    # Acceptance in src/forge/close.py must retain the historical commit of a review still on this branch.
     accepted = env.close(item, "--resolve", "accept", "--reason", "The owner accepts this version")
     assert accepted.returncode == 1, accepted.stdout + accepted.stderr
     assert "queued" in accepted.stderr
@@ -346,18 +352,15 @@ def test_7_fix_squash_merge_keeps_how_it_went_from_the_published_pull_request(en
     assert "CI passed, then passed" in committed
 
 
-def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(env):
+def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(env, monkeypatch):
     install_claude(env.repo)
     config = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", config.read_text("utf-8")
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
     question = "Question: May I reuse the existing parser?"
-    stub.write_text(source.replace('print("stub claude: built it")',
-                                   f'print("\\n\\n" + {question!r})'), "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\n" + question)
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     assert question in asked.stdout
@@ -367,7 +370,7 @@ def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(
     assert waiting["rounds"][0]["worker_round"] == 1
     question_event = next(event for event in records(env.repo, "events.jsonl")
                           if event["event"] == "worker question")
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse it")
     assert answered.returncode == 0, answered.stderr
     current = row(env.repo, item)

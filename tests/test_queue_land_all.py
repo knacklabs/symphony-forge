@@ -26,16 +26,15 @@ from test_story import worktree
 # GitHub would, and every other call answered by the stub's queued responses.
 GH = '''#!PYTHON
 import json, pathlib, subprocess, sys, tempfile, time, zlib
+from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 remote = REMOTE
 
 
 def answer(out, code=0):
-    with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as log:
-        log.write(json.dumps(args) + "\\n")
-    with open(here / "gh-timed.jsonl", "a", encoding="utf-8") as log:
-        log.write(json.dumps({"args": args, "at": time.time()}) + "\\n")
+    append_json(here / "gh-calls.jsonl", args)
+    append_json(here / "gh-timed.jsonl", {"args": args, "at": time.time()})
     sys.stdout.write(out)
     sys.exit(code)
 
@@ -205,6 +204,9 @@ def _fix(env, monkeypatch, slug: str, day: int, files: dict[str, str], status: s
     (env.tmp / f"reviews-fix-{slug}.json").write_text(json.dumps([answer]), "utf-8")
     for path, text in files.items():
         (where / path).write_text(text, encoding="utf-8")
+    if state.get("review"):
+        # Saved reviews name their real reviewed commit, as close's history reader requires.
+        state["review"].setdefault("commit", env.repo.git("rev-parse", "HEAD", cwd=where))
     record = where / ".factory" / "fixes" / f"{slug}.json"
     record.write_text(json.dumps({**json.loads(record.read_text("utf-8")), "status": status, **state}),
                       encoding="utf-8")
@@ -300,12 +302,13 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(600):
-            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid"] in env.gh.calls():
+            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid,number,headRefName"] in env.gh.calls():
                 break
             time.sleep(0.2)
+        # The draft stays in place: a Windows process can hold its starting folder open.
         # Two runs started at the same moment: one works, the other refuses.
         runs = [subprocess.Popen([*forge, "land", "--all"], cwd=where, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE, encoding="utf-8") for where in (cherry, env.repo.path)]
+                                 stderr=subprocess.PIPE, encoding="utf-8") for where in (started, env.repo.path)]
         (out, err), (other, refused) = (run.communicate(timeout=600) for run in runs)
     finally:
         waiting.kill()
@@ -392,6 +395,8 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
             "  Next: forge land aa"]
 
 
+@pytest.mark.platform
+@pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monkeypatch):
     env = client
     # Close runs fast_test, so only its passed record says the tests passed here.

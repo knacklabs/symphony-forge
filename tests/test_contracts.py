@@ -19,7 +19,6 @@ import pytest
 
 import conftest
 from test_approval import _digest
-from test_board import seen as page_text
 from test_close import PIN, body, env, finding, report, run  # noqa: F401 (env is a fixture)
 from test_setup import _executable, _hook_commands, _version
 from test_story import DOC, READER, claude_plan, codex_question, ready, setup, worktree
@@ -27,6 +26,8 @@ from test_codex_worker import _codex_repo, sdk_data  # noqa: F401 (sdk_data is a
 from test_walkthrough import DOC as CART_DOC
 from test_walkthrough import walk, with_models
 from test_worker import calls, install_claude
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-NEXT-1"
 ROOT = Path(__file__).resolve().parents[1]
@@ -379,9 +380,9 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
             "statusCheckRollup": [{"__typename": "CheckRun", "name": "tests", "status": "COMPLETED",
                                    "conclusion": "SUCCESS", "completedAt": "2026-09-24T09:00:00Z",
                                    **EXTRA}], **EXTRA}]))
-        page = env.tmp / "board.html"
-        assert repo.forge("board", "--out", str(page)).returncode == 0
-        assert "Readme greets new readers Fix Done Finished on 24 September 2026" in page_text(page)
+        fix = _rows(_facts(env))["tidy-readme"]
+        assert (fix["title"], fix["state"], fix["status"]) == (
+            "Readme greets new readers", "done", "Finished on 24 September 2026")
     else:
         # The host's hook payloads, with fields Forge doesn't use at every level.
         setup(repo, keys=("WISH",))  # SHOP is the close fixture's story, already on main
@@ -411,15 +412,14 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
         approved = hooked("approval", payload)
         assert approved.returncode == 0, approved.stderr
         assert "Next: forge task start WISH/SAVE" in repo.forge("next").stdout
-        if tool == "claude":  # the headless worker gets the brief on stdin; Forge reads its exit code
+        if tool == "claude":  # the SDK worker receives the brief; Forge checks its result and exit
             assert repo.forge("task", "start", "WISH/SAVE").returncode == 0
             log = install_claude(repo)
             worked = repo.forge("work", "WISH/SAVE")
             assert worked.returncode == 0 and "stub claude: built it" in worked.stdout
             # forge init's build entry is a gpt model, which is Codex's, so Claude takes Forge's
             # default (once its own settings; forge work now names the model it runs).
-            assert calls(log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
-                                                  "--effort", "xhigh"]
+            assert (calls(log)[-1]["options"]["model"], calls(log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
 
 
 # --- criterion 7: the same result on both hosts ------------------------------------------------
@@ -481,6 +481,18 @@ JARGON = {"a hash": r"\b[0-9a-f]{7,}\b", "a UUID": r"\b[0-9a-f]{8}-[0-9a-f]{4}-"
 IDS = ("SHOP", "CART", "T1", "T2", "tidy-readme")
 
 
+def _facts(env):
+    """Every item's facts, finished ones included, as `forge board --out` writes them."""
+    out = env.tmp / "board.json"
+    written = env.repo.forge("board", "--out", str(out))
+    assert written.returncode == 0, written.stdout + written.stderr
+    return json.loads(out.read_text("utf-8"))
+
+
+def _rows(data):
+    return {row["id"]: row for parent in data["items"] for row in [parent, *parent["children"]]}
+
+
 def _not_plain(text: str) -> list[str]:
     return [name for name, pattern in JARGON.items() if re.search(pattern, text)] + [
         f"the ID {name}" for name in IDS
@@ -519,18 +531,17 @@ def test_8_plain_english(env):
          "title": call[call.index("--title") + 1], "body": body(call),
          "mergedAt": "2026-09-25T10:00:00Z", "files": [], "statusCheckRollup": []}
         for call in creates]))
-    page = env.tmp / "board.html"
-    assert repo.forge("board", "--out", str(page)).returncode == 0
-    text = page_text(page)
-    for line in ("Save a basket", "Shoppers can share a cart CART",
-                 "Readme greets new readers Fix Done Finished on 25 September 2026"):
-        assert line in text, text
-    # The one ID the board shows is a story's own key, small beside its title.
-    unkeyed = env.tmp / "board-unkeyed.html"
-    unkeyed.write_text(re.sub(r'<span class="key">[^<]*</span>', "", page.read_text("utf-8")), "utf-8")
-    assert not _not_plain(page_text(unkeyed)), (_not_plain(page_text(unkeyed)), text)
-    # Inline SVG geometry also preserves the page's no-hash contract.
-    assert not re.search(JARGON["a hash"], page.read_text("utf-8")), "a hash is in the page"
+    data = _facts(env)
+    rows = _rows(data)
+    assert rows["SHOP/T1"]["title"] == "Save a basket"
+    assert rows["CART"]["title"] == "Shoppers can share a cart"
+    fix = rows["tidy-readme"]
+    assert (fix["title"], fix["state"], fix["status"]) == (
+        "Readme greets new readers", "done", "Finished on 25 September 2026")
+    # Every title, state and status line a person reads, and the team's sentence, are plain.
+    shown = [data["team"]["sentence"]] + [row[field] for row in rows.values()
+                                          for field in ("title", "state", "status")]
+    assert not [(text, _not_plain(text)) for text in shown if _not_plain(text)]
 
     # Ctrl-C ends a command quietly: no traceback, just the usual exit code. A gh that waits
     # stands in for a slow step. ponytail: POSIX only; Windows has no SIGINT to send one process.
@@ -602,10 +613,13 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
 
     repo.forge = checked
     walk(env, claude_payload, monkeypatch)  # a story from story new to story done
-    for args in (("init",), ("sync",), ("migrate",),
+    ready(repo, "ASSIGN")
+    for args in (("assign", "ASSIGN", "alice"), ("init",), ("sync",), ("migrate",),
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
+                 ("fix", "drop", "tidy-the-readme", "--because", "Pause the readme change"),
+                 ("fix", "drop", "tidy-the-readme", "--undo"),
                  ("fix", "allow-large", "It touches six files"), ("land", "tidy-the-readme"),
                  ("handback", "tidy-the-readme", "--subagent", "reader", "--text", "No findings."),
                  ("spec", "save", "carts"),
@@ -613,7 +627,14 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
                  ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
                  ("roadmap", "retire", "CARTS-1", "--by", "carts")):
-        repo.forge(*args)
+        done = repo.forge(*args)
+        if args[:2] == ("fix", "drop"):
+            # Both successful transitions must leave the default branch untouched.
+            assert done.returncode == 0, done.stdout + done.stderr
+        if args[0] == "assign":
+            # Exercise a published assignment, not only a refusal that leaves main alone.
+            assert done.returncode == 0, done.stdout + done.stderr
+            assert "Owner: alice" in repo.git("show", "origin/story/ASSIGN:plans/ASSIGN.md")
     changing = {words for words, changes in commands.items() if changes}
     assert not changing - ran, f"state-changing commands not run: {sorted(changing - ran)}"
 

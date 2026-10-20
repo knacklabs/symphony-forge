@@ -116,7 +116,7 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
     hold_agents(env)
     old_launcher = repo.bin / "older-forge"
     old_launcher.write_text((repo.bin / "forge").read_text("utf-8").replace(
-        "from forge.cli import main", "import forge\nforge.__version__ = '0.0.0'\nfrom forge.cli import main"), "utf-8")
+        "from forge import machine", "import forge\nforge.__version__ = '0.0.0'\nfrom forge import machine"), "utf-8")
     processes = []
     test_processes = []
 

@@ -62,7 +62,7 @@ SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 4, Work 2, Harm 1"}
 
 
 def finding(priority: str, title: str, file: str = "app.py", line: int = 1) -> dict:
-    # confidence, category and column are fields Forge doesn't use; it must ignore them.
+    # confidence and column are unused; unknown categories such as bug are tolerated.
     return {"title": title, "body": f"{SCORES.get(priority, 'Gain 2, Work 1, Harm 1')}\n"
                                     f"Evidence for: {title}", "priority": priority,
             "confidence": 0.8, "category": "bug",
@@ -262,7 +262,7 @@ def _review_fails_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "codex: the model is unavailable.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _review_incomplete_twice(env):
@@ -270,7 +270,7 @@ def _review_incomplete_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "it reported the review as incomplete.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _open_serious_finding(env):
@@ -362,10 +362,8 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            # Recovery now points to the shipped recipe before committing the resolved merge.
-            "next": re.compile(r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
-                               r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
-                               r"then forge close tidy-readme")}
+            # The normal worker finishes the merge before it continues the item's work.
+            "next": "forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme"}
 
 
 def _bad_dismissal(env):
@@ -378,14 +376,17 @@ def _bad_dismissal(env):
             "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
 
 
-def _stale_dismissal(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+def _dismissal_of_replaced_finding(env):
+    # A changed branch no longer invalidates a dismissal. A different title still does.
+    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")),
+                blocked(finding("P1", "A different defect")))
     item, where = env.start_fix()
     env.close(item)
     env.commit(where, "app.py", "print('hello again')\n")
     return {"item": item, "args": ["--dismiss", "1", "--because", "app.py:1 it greets here"],
-            "problem": "The branch changed since the review those finding numbers came from.",
-            "next": "forge close tidy-readme"}
+            "problem": "Each --dismiss needs a finding number from the latest review and its own "
+                       "--because that starts with the file:line proving that finding wrong.",
+            "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
 
 
 def _dismissal_cites_no_such_line(env):
@@ -426,7 +427,7 @@ def _task_row_missing(env):
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
          _red_check_not_named, _skipped_named_check, _pending_check_not_named, _pending_check,
          _missing_required_check, _github_api_error, _no_checks_named,
-         _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal,
+         _not_started, _merge_conflict, _bad_dismissal, _dismissal_of_replaced_finding,
          _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]
 
@@ -466,29 +467,31 @@ def test_18_close(env, kind):
     env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
     env.repo.git("push", "-q", "origin", "main")
-    toml = env.repo.path / "forge.toml"  # legacy pins remain valid but Autoreview owns selection
+    toml = env.repo.path / "forge.toml"  # configured review pins override Autoreview defaults
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     item, where = env.start_task() if kind == "task" else env.start_fix()
+    owner_item = "A shopper can save a basket" if kind == "task" else "The readme opens with a greeting"
     branch = "task/SHOP-T1" if kind == "task" else "fix/tidy-readme"
     moved = env.commit(env.repo.path, "NEWS.md", "The shop opens.\n")  # main moves on meanwhile
     env.repo.git("push", "-q", "origin", "main")
-    env.reviews(blocked(finding("P1", "Not done: A shopper can save a basket"),
+    env.reviews(blocked(finding("P1", "Not done: " + owner_item),
                         finding("P2", "Simpler: drop the cache → a dict")))
 
     first = env.close(item)
 
-    # The default branch is merged in first, and Autoreview reviews that head, read-only.
+    # An unrelated main move stays out of the branch; Autoreview still reads its actual head.
     assert first.returncode == 1
     [call] = env.review_calls()
-    env.repo.git("merge-base", "--is-ancestor", moved, call["head"])  # raises if main wasn't merged
+    assert env.repo.git("merge-base", moved, call["head"]) != moved
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     # The old contract passed origin/main, which a clone could resolve to stale local main.
     # The reviewer now gets the exact fetched remote commit.
     assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority")} == {
         "--mode": "branch", "--base": env.repo.git("rev-parse", "origin/main"),
         "--engine": "codex", "--max-priority": "P3"}
-    assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "codex=gpt-6-astra"
+    assert options["--thinking"] == "codex=high"
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones
@@ -511,7 +514,7 @@ def test_18_close(env, kind):
     # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")
     assert create[2] == "--draft" and not env.gh_calls("pr", "ready")
-    assert "- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): blocks the merge" in body(create)
+    assert f"- Finding 1 (P1): Not done: {owner_item} (app.py:1): blocks the merge" in body(create)
     assert "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): Gain 2, Work 1, Harm 1" in body(create)
     assert env.repo.git("status", "--porcelain", cwd=where) == ""
     assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
@@ -528,7 +531,7 @@ def test_18_close(env, kind):
     second = env.close(item, "--dismiss", "1", "--because", "app.py:1 the basket is saved here")
     assert second.returncode == 0, second.stderr
     assert len(env.review_calls()) == 1
-    assert ("- Finding 1 (P1): Not done: A shopper can save a basket (app.py:1): dismissed because app.py:1 "
+    assert (f"- Finding 1 (P1): Not done: {owner_item} (app.py:1): dismissed because app.py:1 "
             "the basket is saved here") in body(env.gh_calls("pr", "edit")[-1])
     assert second.stdout.splitlines()[-1] == (
         f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
@@ -583,7 +586,7 @@ def test_18_close(env, kind):
 
 # --- criterion 19: the functional check -----------------------------------------------------
 
-MISSING_CHECK = finding("P1", "Not done: functional check", "show.py")
+MISSING_CHECK = finding("P1", "Gate: functional check", "show.py")
 HOLLOW_CHECK = {**MISSING_CHECK, "body": "Gain 4, Work 2, Harm 1\nThe check says only 'it works'; nothing was exercised."}
 STALE_CHECK = {**MISSING_CHECK, "body": "Gain 4, Work 2, Harm 1\nThe only check is in an older commit's message."}
 
@@ -595,7 +598,7 @@ STALE_CHECK = {**MISSING_CHECK, "body": "Gain 4, Work 2, Harm 1\nThe only check 
     ids=["missing", "hollow", "stale", "user-facing-clean", "not-user-facing", "empty-commit"])
 def test_19_functional_check(env, task, answer, refused):
     # A user-facing task's review is told to report a missing or hollow functional check as a P1
-    # `Not done`; close refuses on that finding and passes once the check is there.
+    # `Gate`; close refuses on that finding and passes once the check is there.
     if task == "empty":
         return _empty_commit_check(env)
     item, where = env.start_task(task, {"show.py": "print('basket')\n"})
@@ -607,11 +610,11 @@ def test_19_functional_check(env, task, answer, refused):
         env.commit(where, "show.py", "print('saved basket twice')\n", "Tidy the basket")
     env.reviews(answer)
     done = env.close(item)
-    assert ("`Not done: functional check`" in env.prompt()) is (task == "T2")
+    assert ("`Gate: functional check`" in env.prompt()) is (task == "T2")
     if refused:
         assert done.returncode == 1
         assert done.stderr.splitlines()[-2] == (
-            "The review left serious findings open: finding 1 (Not done: functional check).")
+            "The review left serious findings open: finding 1 (Gate: functional check).")
         assert "None: the worker's last commit message has no `Functional check:`" in env.prompt()
         [create] = env.gh_calls("pr", "create")
         assert check not in env.prompt() and check not in body(create)

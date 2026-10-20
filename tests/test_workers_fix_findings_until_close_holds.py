@@ -59,8 +59,8 @@ def test_1_workers_fix_each_round_unless_close_has_stopped_the_review_loop(env, 
     resumed = env.repo.forge("work", item)
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     call = calls(log)[-1]
-    assert "--resume" in call["args"]
-    assert (call["args"][call["args"].index("--resume") + 1]
-            == first["args"][first["args"].index("--session-id") + 1])
+    assert bool(call["options"].get("resume"))
+    assert (call["options"]["resume"]
+            == first["options"]["session_id"])
     assert "The earlier brief in this conversation still applies." in call["brief"]
     assert rule in " ".join(call["brief"].split())

@@ -10,6 +10,7 @@ import os
 import re
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -43,7 +44,7 @@ def through_forge(pr: Item) -> bool:
     if not branch.startswith(("story/", "task/", "fix/")):
         return False
     files = pr.get("files")
-    if time_records.from_body(pr.get("body") or "") or not isinstance(files, list) or len(files) >= 100:
+    if time_records.view_body(pr.get("body") or "") or not isinstance(files, list) or len(files) >= 100:
         return True  # Missing or capped file evidence cannot establish that the state is absent.
     return item_key(branch, [file["path"] for file in files if isinstance(file, dict)
                              and isinstance(file.get("path"), str)]) is not None
@@ -56,22 +57,34 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def _cached(top: Path, name: str, fetch: Any) -> Any:
-    """`fetch()`'s answer, kept for a minute in .git/forge/<name>.json; None is never kept."""
+def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: int = 60) -> Any:
+    """Serialize readers through the fetch and write, then let waiters reuse the answer."""
+    from forge import codex
+    with ExitStack() as guard:
+        try:
+            guard.enter_context(codex._one_at_a_time(repo.forge_dir(top) / f"{name}.lock"))
+        except OSError:
+            pass  # A read-only Git directory must not prevent a view.
+        return _read_cached(top, name, fetch, stale=stale, seconds=seconds)
+
+
+def _read_cached(top: Path, name: str, fetch: Any, *, stale: bool, seconds: int) -> Any:
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    previous = None
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
+        previous = saved.get("data")
         at = time_records.when(saved.get("fetched_at"))
-        if at and 0 <= (now - at).total_seconds() < 60 and "data" in saved:
+        if at and 0 <= (now - at).total_seconds() < seconds and "data" in saved:
             return saved["data"]
     except (OSError, ValueError, AttributeError):
         pass
     if not shutil.which("gh"):
-        return None
+        return previous if stale else None
     data = fetch(now)
     if data is None:
-        return None  # A failed fetch is never cached.
+        return previous if stale else None
     temp = cache.with_name(f"{name}-{os.getpid()}.tmp")
     try:
         temp.write_text(json.dumps({"fetched_at": repo.now(), "data": data}), encoding="utf-8")
@@ -92,10 +105,11 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
     return rows if isinstance(rows, list) and all(isinstance(r, dict) for r in rows) else None
 
 
-def prs(top: Path, *, fresh: bool = False) -> Item | None:
+def prs(top: Path, *, fresh: bool = False, people: bool = False) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
-    this one, cached together for a minute. None when gh is missing or any list fails."""
-    # ponytail: eight list calls a minute at most; a week over 1,000 merges shows unknown, search by day if a team needs it.
+    this one. Past weeks live a day; open and current-week lists live a minute.
+    Only people may use expired records during an outage."""
+    # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
         opened = _listing(top, "open")
         if opened is None:
@@ -103,9 +117,14 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
         # Board restoration and backfill share these windows. The first Monday
         # is at least 42 days ago, including the cutoff on a Sunday (48 days).
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
+        def week(start: datetime) -> list[Item] | None:
+            def listing(_now: datetime) -> list[Item] | None:
+                return _listing(top, "merged", "--search",
+                                f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}")
+            return (listing(now) if fresh or start == starts[-1] else
+                    _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
         with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
-            lists = list(pool.map(lambda start: _listing(
-                top, "merged", "--search", f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"), starts))
+            lists = list(pool.map(week, starts))
         if None in lists:
             return None
         weeks = []
@@ -115,25 +134,42 @@ def prs(top: Path, *, fresh: bool = False) -> Item | None:
         return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
     if fresh:
         return fetch(time_records.when(repo.now()) or datetime.now(timezone.utc))
-    return repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
+    current = repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
+    return (_cached(top, "prs-cache", lambda _: None, stale=True)
+            if current is None and people else current)
 
 
-def people(body: str) -> Item:
-    """Original actors survive a deleted squash branch in the item's shared evidence."""
-    record = time_records.from_body(body)
-    events, summary = record.get("events", []), record.get("summary") or {}
-    return {field: summary.get(field) or next((event.get("by") for event in events if event.get("event") == name), None)
-            for field, name in (("started_by", "item started"), ("approved_by", "plan approved"))}
+def person(record: Item | str | None = None, name: str | None = None, *, field: str | None = None,
+           names: dict | None = None) -> Item:
+    """Use a loaded login and keep its name; a login alone is also a visible name."""
+    if field:
+        actors = record if isinstance(record, dict) else {}
+        summary = actors.get("summary") or {}
+        event = next((entry for entry in actors.get("events", [])
+                      if entry.get("event") == {"started_by": "item started", "approved_by": "plan approved"}[field]), {})
+        record = ({"name": summary.get(field), "login": summary.get(field + "_login")}
+                  if summary.get(field) or summary.get(field + "_login")
+                  else {"name": event.get("by"), "login": event.get("by_login"), "email": event.get("email")})
+    record = {"login": record} if isinstance(record, str) else record or {}
+    login = record.get("login")
+    display = record.get("name") or name or login
+    identity = ("login", login.casefold()) if login else (
+        ("email", record["email"].casefold()) if record.get("email") else None)
+    if names is not None and identity and display:
+        display = names.setdefault(identity, display)
+    return {"name": display, "login": login}
 
 
 def merged_before_weeks(top: Path) -> dict[str, Item]:
     """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
-    kept for a minute. Only asked when an unfinished story has parts merged that long ago."""
+    kept for a day. Only asked when an unfinished story has parts merged that long ago."""
     # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
-    def fetch(now: datetime) -> list[Item] | None:
+    now = time_records.when(repo.now()) or datetime.now(timezone.utc)
+    cutoff = full_weeks(now, 6)[0] - timedelta(days=1)
+    def fetch(_now: datetime) -> list[Item] | None:
         # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
-        return _listing(top, "merged", "--search", f"merged:*..{full_weeks(now, 6)[0] - timedelta(days=1):%Y-%m-%d}")
-    return {pr["headRefName"]: pr for pr in _cached(top, "prs-older-cache", fetch) or []
+        return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}")
+    return {pr["headRefName"]: pr for pr in _cached(top, f"prs-older-cache-{cutoff:%Y-%m-%d}", fetch, seconds=86400) or []
             if isinstance(pr.get("headRefName"), str)}
 
 
@@ -148,7 +184,7 @@ def details(top: Path) -> list[Item]:
 def failed_schedules(top: Path) -> list[Item]:
     """Each workflow whose latest scheduled run on the default branch failed: its name and file,
     failed jobs and failing pytest tests as printed; [] when none failed or GitHub can't be read.
-    One request for the runs and one log per failed workflow, kept a minute."""
+    One request for the runs and one log per failed workflow, kept ten minutes."""
     branch = repo.default_branch(top)
 
     def fetch(now: datetime) -> list[Item] | None:
@@ -180,7 +216,7 @@ def failed_schedules(top: Path) -> list[Item]:
                            "tests": sorted({found[1] for line in lines if (found := re.search(
                                r"(?:FAILED|ERROR) (\S+?::[^\s\[]+(?:\[.*?\])?)(?= - |$)", line))})})
         return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
-    return _cached(top, "schedule-cache", fetch) or []
+    return _cached(top, "schedule-cache", fetch, seconds=600) or []
 
 
 def merged_prs(github: Item | None) -> list[Item]:
@@ -272,7 +308,7 @@ def blocked(top: Path, rows: list[Item], best: dict[str, Any], maps: list[Item],
 
 def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], best: dict[str, Any],
          completed: dict[str, Item], github: Item | None, readiness: dict[str, Item],
-         person_waits: dict[str, list[Item]]) -> Item:
+         person_waits: dict[str, list[Item]], names: dict | None = None) -> Item:
     """Give every row its `state` and return the board's `team` facts."""
     stories = "\0".join(rel for rel in best if rel.startswith(".factory/stories/"))
     approvals: dict[str, list[Any]] = {}
@@ -336,7 +372,7 @@ def team(top: Path, history: Item, items: dict[str, Item], maps: list[Item], bes
             counts["finished_last_7_days"]["fixes"] += recent(row)
         else:
             counts["fixes"]["done"] += 1  # a fix left out of the rows finished more than seven days ago
-    later, clause = board_trends.facts(top, history, counts, list(items.values()), github)
+    later, clause = board_trends.facts(top, history, counts, list(items.values()), github, names)
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     rows = [row for parent in items.values() for row in (parent, *parent["children"])]
     waiting, slow = needs_you(top, rows, readiness, person_waits, now), blocked(top, rows, best, maps, now)

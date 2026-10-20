@@ -13,8 +13,8 @@ from test_hotspot_stop import rounds, saved, seed
 from test_setup import _fresh_client
 
 GUIDANCE = (
-    "To ask, ask the human to narrow the part, split it, or accept the remaining findings. "
-    "Run `forge land <item>` in the background after a close stop, or keep the current land running."
+    "Ask the owner to narrow the part, split it, or accept the remaining findings. "
+    "Land prints the owner's question, open findings and failing checks, then exits with status 3 (needs a choice)."
 )
 
 
@@ -31,8 +31,8 @@ def stopped(env, kind="fix"):
                              "Shoppers can save their basket with one click")
     assert [lines[-11], lines[-1]] == [
         f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
-        "round flagged too, so Forge stops sending the worker back. Every open note has Harm 1 or 2: "
-        "settle it yourself (accept or narrow with a reason) and tell the owner after.",
+        "round flagged too, so Forge stops sending the worker back. Ask the human to narrow the part, "
+        "split it, or accept the remaining findings, in these words:",
         f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
     ]
     return item, where
@@ -58,12 +58,12 @@ def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, 
     env.reviews(CLEAN)
     for command in ("close", "land", "close", "land"):
         result = env.repo.forge(command, item)
-        assert result.returncode == 1, result.stdout + result.stderr
-        assert "settle it yourself (accept or narrow with a reason)" in result.stderr
+        assert result.returncode == (3 if command == "land" else 1), result.stdout + result.stderr
+        assert "Ask the human" in result.stderr
         assert len(env.review_calls()) == before
         assert env.repo.git("rev-parse", "HEAD", cwd=where) == head
     result = env.repo.forge("next")
-    assert "settle it yourself (accept or narrow with a reason)" in result.stdout
+    assert "Ask the human" in result.stdout
     assert "--resolve" in result.stdout
 
 
@@ -92,20 +92,25 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         checked = env.repo.forge("hook", "pr-check", "--base", "origin/main",
                                  "--head", "HEAD", "--branch", "fix/tidy-readme", cwd=where)
         assert checked.returncode == 0, checked.stderr
-        # An upstream edit to a reviewed file needs a new review, but the accepted finding stays
-        # settled: a plain repeat of it no longer holds the work.
-        env.commit(env.repo.path, "src/a.py", "print('upstream change')\n")
+        # An upstream edit outside this branch's diff no longer gets merged by close, so its
+        # accepted review stays valid until the worker changes the branch itself.
+        env.commit(env.repo.path, "NEWS.md", "Unrelated upstream change\n")
         env.repo.git("push", "-q", "origin", "main")
         env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py")))
         changed_base = env.close(item)
         assert changed_base.returncode == 0, changed_base.stdout + changed_base.stderr
-        assert len(env.review_calls()) == before + 1
-        before += 1
+        assert len(env.review_calls()) == before
+        assert (where / "src/a.py").read_text("utf-8") == "pass  # review round 3\n"
+    elif choice == "split":
+        # Split now transfers the open findings to a follow-up, so the item can continue.
+        resumed = env.close(item)
+        assert resumed.returncode == 0, resumed.stdout + resumed.stderr
+        assert "Ready:" in resumed.stdout
     else:
         resumed = env.close(item)
         assert resumed.returncode == 1
         assert "The review left serious findings open" in resumed.stderr
-    env.commit(where, "app.py", "print('human choice implemented')\n")
+    env.commit(where, "src/a.py", "pass  # human choice implemented\n")
     # An accepted finding comes back only as a disputed keep with new evidence of harm.
     title = "Disputed keep 1: Round 3 defect loses saved baskets" if choice == "accept" else "A new defect"
     # The choice settled src/a.py's area, where only Harm 3 or more at the bar still holds work.
@@ -125,9 +130,11 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     assert env.close(item).returncode == 1
     evidence = "src/a.py:1 Proven harmless"
     assert env.close(item, "--dismiss", "1", "--because", evidence).returncode == 0
-    defect = finding("P1", "Unfixed defect", "src/a.py")
+    defect = finding("P1", "Unfixed defect", "src/a.py", line=2)
     for number in (2, 3):
         env.commit(where, "app.py", f"print({number})\n")
+        if number == 2:
+            env.commit(where, "src/a.py", "pass\npass  # unfixed defect\n")
         env.reviews(blocked(safe, defect))
         assert env.close(item).returncode == 1
     reason = "The human accepts this risk for this version"
@@ -142,7 +149,7 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     assert reviewed.returncode == 0, reviewed.stderr
     assert len(env.review_calls()) == before + 1
     prompt = env.prompt()
-    assert "Unfixed defect (src/a.py:1): Gain 4, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
+    assert "Unfixed defect (src/a.py:2): Gain 4, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
     # The owner's acceptance reaches the reviewer as known and accepted, not as a ruling.
     known = prompt.split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert f"Unfixed defect (src/a.py): accepted by the owner: Human accepted the remaining finding: {reason}" in known

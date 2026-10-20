@@ -9,6 +9,8 @@ from test_chatview_start import _ready
 from test_close import CLEAN, GREEN, PIN, ROOT
 from test_codex_worker import _sent, _stub, sdk_data  # noqa: F401
 
+import pytest
+
 STORY = "FORGE-CHATVIEW-1"
 URL = "https://github.com/acme/board/pull/12"
 
@@ -20,6 +22,11 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
     toml.write_text(toml.read_text("utf-8").replace(
         'workers = "codex"', 'workers = "codex"\nchecks = ["tests"]', 1), encoding="utf-8")
     repo.git("commit", "-q", "-am", "Close waits for tests", cwd=folder)
+    # The coordinator's check list belongs on main, not to the chat-link task.
+    repo.write("forge.toml", toml.read_text("utf-8"))
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-qm", "Configure chat link checks")
+    repo.git("push", "-q", "origin", "main")
     skill = tmp_path / "autoreview"
     (skill / "scripts").mkdir(parents=True)
     shutil.copy(ROOT / "tests" / "stubs" / "autoreview", skill / "scripts" / "autoreview")
@@ -40,14 +47,17 @@ def _closable(repo, gh, monkeypatch, tmp_path, sdk_data, client=False):
     return folder, calls
 
 
+@pytest.mark.platform
 def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
         repo, gh, monkeypatch, tmp_path, sdk_data, claude_session):
     _, calls = _closable(repo, gh, monkeypatch, tmp_path, sdk_data)
-    # With no recorded chat, close sends Codex nothing and never asks GitHub for the link.
+    # With no recorded chat, close sends no attachment and never asks GitHub for the link.
+    # Its review may still run through Codex.
     before = repo.forge("close", "BOARD/PAGE")
     assert before.returncode == 0, before.stdout + before.stderr
     assert "Ready:" in before.stdout
-    assert not any(call[:2] == ["pr", "view"] for call in gh.calls())
+    # Close now checks mergeability even with green checks; only the chat-link lookup is absent.
+    assert ["pr", "view", "task/BOARD-PAGE", "--json", "number,url,headRefName"] not in gh.calls()
     assert _sent(calls, "thread/attachment/add") == []
 
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
@@ -56,6 +66,8 @@ def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
     # A close that finds no pull request opens one, then links it in the recorded chat.
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout=URL + "\n")
+    # Startup merges can refresh the review; close opens a draft before that review finishes.
+    gh.respond("pr", "ready", "12")
     closed = repo.forge("close", "BOARD/PAGE")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert f"Opened the pull request: {URL}" in closed.stdout

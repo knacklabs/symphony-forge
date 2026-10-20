@@ -102,6 +102,11 @@ See the [command list](commands.md) for every Forge command.
 
 You never run the hook commands yourself: git, the host hooks and CI call them.
 
+`forge board` opens the board as a live page on this computer. It serves the page on 127.0.0.1
+with a per-run token in the address, so only this computer can open it, and the page refreshes by
+itself when the work changes. Press Ctrl-C to stop it. `forge board --json` prints the current
+work as JSON, and `--out <path>` writes every item's facts, finished ones included, as JSON.
+
 ## How a story runs
 
 In a client repo, finish the prototype review and customer sign-off above before starting here.
@@ -253,7 +258,9 @@ what you measured with `forge spec measure <slug> --result "<text>"` in a fix. D
 
 ## Closing
 
-`forge close <item>` follows the close rule: it merges the default branch in, pushes and opens or
+`forge close <item>` fetches the default branch. It merges that branch in only when a trial merge
+finds a clash, or GitHub reports the pull request conflicting or behind under its up-to-date rule.
+An unrelated change on the default branch adds no merge to the pull request. Close pushes and opens or
 updates the pull request, runs the review until no serious finding is left, waits for the checks
 `forge.toml` names (`tests` and `forge-pr-check` by default), and marks the item ready. While the
 review is blocked the pull request is a draft, and close marks it ready for review once the review
@@ -261,6 +268,13 @@ is clean and the checks are green. When it stops, it prints why and the next
 command, usually `forge work <item>` for a fix round. Open the line a finding cites first: if the
 code proves the finding wrong, dismiss it with
 `forge close <item> --dismiss <n> --because "<file:line> <reason>"`.
+
+Close checks GitHub's clash state at every look, even when all checks are green. If this head
+clashes, close stops and says to run close again to bring the default branch in. It waits when
+GitHub has not yet determined whether this head can merge.
+
+If GitHub refuses a pull request body update, close stops after one attempt, including during a
+history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 
 Close runs `forge.toml`'s `test` command before the review, and the pull request's `tests` check
 runs it again. When that check runs the full suite, ask your agent to set `fast_test` too: a
@@ -273,10 +287,50 @@ six groups when `test` calls pytest directly (not through make or tox) and the r
 pytest-split, otherwise one.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.
+For a client with a `windows-*` runner, the generated check runs the configured test command
+again once if it fails. A second failure fails the check. New clients get this at init; existing
+clients get it after upgrading Forge and running `forge sync`. Windows keeps PowerShell as its
+test shell, so configured PowerShell syntax and `.ps1` scripts still work. Linux, Mac and the trusted
+`forge-pr-check` gate keep their commands. Forge's own Windows full-suite job instead reruns
+each failed pytest test once and gives the known slow tests longer timeouts on Windows.
 When the pytest selection would cover more than a third of the repo's Python test files
 (shared test inputs select them all), close skips the local run, says so in one line, and
 relies on the pull request's required checks. `forge test` still runs its tests. New repos
 get this from init; existing repos get it on upgrade.
+
+Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
+After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.
+Give the job `contents: read` and `actions: read` permissions, and fetch the full history.
+The runner needs Python, Bash and the GitHub CLI, as GitHub-hosted runners provide.
+Add the condition below to each later step that can skip the records commit:
+
+```yaml
+permissions:
+  contents: read
+  actions: read
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0
+  - {id: forge-records, uses: ./.forge/records-only}
+  - if: steps.forge-records.outputs.records_only != 'true'
+    run: your-build-command
+```
+
+The output is `records_only=true` only for a push or pull request whose parent passed this
+same workflow. The step uses Forge's existing close-record rule. Code changes, documentation
+changes, a failed parent run or missing proof produce `false`, so the workflow runs normally.
+For pull requests, the parent must also include the current base and its run must cover that base.
+Each job that uses the step skips only its guarded steps.
+
+## Parts that build on reviewed work
+
+New and upgraded repos use `stack = "on"` by default, with no settings change. A part can start
+on one reviewed, unmerged part when its After list or Scope makes it wait for that part.
+The base must use the same Forge release and must start from the default branch.
+A part that builds on another can become a base after Forge merges the lower part and close
+moves it onto that merged code and reviews it again. Set `stack = "off"` to make new parts
+wait for merges. Parts that already started on another part keep their base.
 
 ## Merging a ready item
 
@@ -294,6 +348,9 @@ worktree. It leaves a worktree with uncommitted changes in place and says so. Fo
 item's recorded Codex conversations; Codex can restore archived chats. The agent merges only
 through `forge merge <item>`; the hook still refuses a raw `gh pr merge` command. When agent
 merging is off, a human merges the ready pull request.
+
+If GitHub reports a clash during the check wait, or refuses the merge as behind or conflicting,
+Forge runs close and retries the merge once. A pull request that can merge keeps its current head.
 
 The story's last task records its completion in the same squash merge. Pass
 `forge merge <KEY>/<TASK> --outcome "<outcome>"` to say what it achieved, or omit the option to

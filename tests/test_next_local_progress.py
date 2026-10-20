@@ -21,6 +21,7 @@ from test_close import body, env  # noqa: F401
 STORY = "skipped-next"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("merge", ["human", "agent"])
 def test_8_ready_pull_request_without_worktree_follows_the_merge_policy(env, merge):
     # Real close publishes readiness, then another checkout has only the remote branch.
@@ -98,9 +99,9 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
     matching = repo.forge("next")
     assert "The fix page's checks failed." in matching.stdout
     assert "Next: forge work page" in matching.stdout
-    board, text, _ = _board(repo, tmp_path)
+    board, _, full = _board(repo, tmp_path)
     assert _row(board, "page")["stage"] == "checks failed"
-    assert "Checks failed" in text
+    assert _row(full, "page")["status"] == "Checks failed"
 
     (folder / "page.py").write_text("print('repaired')\n", "utf-8")
     repo.git("add", "page.py", cwd=folder)
@@ -111,9 +112,9 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
                                  "status": "waiting for checks"}), "utf-8")
     current = repo.forge("next")
     assert "The fix page's checks failed." in current.stdout
-    board, text, _ = _board(repo, tmp_path)
+    board, _, full = _board(repo, tmp_path)
     assert _row(board, "page")["pr"]["checks"] == "fail"
-    assert "Checks failed" in text
+    assert _row(full, "page")["status"] == "Checks failed"
 
     # GitHub now reports the repaired head, but its check evidence still describes
     # the earlier commit. Those failures must not override the repaired item.
@@ -129,14 +130,14 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
     assert machine.returncode == 0, machine.stderr
     following = json.loads(machine.stdout)
     assert following["next"]["command"] == "forge close page"
-    board, text, _ = _board(repo, tmp_path)
+    board, _, full = _board(repo, tmp_path)
     for data in (board, following):
         row = _row(data, "page")
         assert row["stage"] == "waiting for checks"
         assert row["pr"]["checks"] == "unknown" and not row["pr"]["failures"]
         assert row["gates"]["ci"]["status"] == "none"
         assert row["next"]["command"] == "forge close page"
-    assert "Checks failed" not in text
+    assert _row(full, "page")["status"] != "Checks failed"
 
     # A clean close receipt for the repaired commit remains ready even while GitHub
     # still describes the failed previous push, then when it reports the current pass.
@@ -152,7 +153,7 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
             github(gh, [passing])
             # The earlier calls deliberately retained the cached failed push.
             (receipt.parent / "checks-cache.json").unlink()
-        board, text, _ = _board(repo, tmp_path)
+        board, _, full = _board(repo, tmp_path)
         machine = repo.forge("next", "--json")
         assert machine.returncode == 0, machine.stderr
         for data in (board, json.loads(machine.stdout)):
@@ -162,8 +163,8 @@ def test_4_failed_checks_override_next_only_for_the_current_pull_request_head(re
             assert data["team"]["counts"]["fixes"]["ready to merge"] == 1
             assert any(phrase in row["next"]["line"] for phrase in (
                 "is ready to merge", "ready and waiting for someone to merge"))
-        assert "Ready to merge: 1" in text
-        assert "Checks failed" not in text
+        assert _row(full, "page")["status"] == "Ready to merge"
+        assert full["team"]["counts"]["fixes"]["ready to merge"] == 1
         plain = repo.forge("next")
         assert plain.returncode == 0, plain.stderr
         assert any(phrase in plain.stdout for phrase in (
@@ -197,7 +198,7 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
     failed["commits"]["nodes"][0]["commit"]["oid"] = failed["headRefOid"]
     github(gh, [failed])
 
-    board, text, _ = _board(repo, tmp_path)
+    board, _, full = _board(repo, tmp_path)
     machine = repo.forge("next", "--json")
     assert machine.returncode == 0, machine.stderr
     for data in (board, json.loads(machine.stdout)):
@@ -209,7 +210,7 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
         assert row["next"]["command"] == ("forge work page" if local == "behind" else None)
         if local == "remote-only":
             assert row["next"]["line"].endswith("was started by Forge Test and runs on their machine.")
-    assert "Checks failed" in text
+    assert _row(full, "page")["status"] == "Checks failed"
     if local == "behind":
         plain = repo.forge("next")
         assert plain.returncode == 0, plain.stderr

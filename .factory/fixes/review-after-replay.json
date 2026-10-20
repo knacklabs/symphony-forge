@@ -1,0 +1,58 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/review-after-replay",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14856-d42b-7b51-9c75-15d6179fe178",
+    "head": null,
+    "start": "4616528d587b1663537d7905428a071a64c1fba4"
+  },
+  "done_when": "A reused review is recorded against the branch's new head after a replay, so the pull request check passes; and when the only failing check is Forge's own review check, land closes again instead of starting a worker round",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "72188ad3205499c143ba827a7d6e1f4cf6cf49ff5cf0524ec1807f152e20b2d1",
+    "changed": "aada0838658c86a91b10ffafe688ead906b44e5706a3143bda2eb60c51a6815a",
+    "commit": "839436f994c74fbb95f48dcef4421b8accfc4eeb",
+    "dismissals": [],
+    "findings": [],
+    "id": "6b40eab5-516c-4892-a843-4b7f9b06a876",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:27.568963+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:57:14.493713+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:08:29.497510+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T13:45:28.673592+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T15:10:00.036511+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "16287029-6140-49cd-bf6c-1929c2616ea2",
+    "head": "bdb8a2b2d5ffc273398e8f557e334ee517f79145",
+    "keys": {},
+    "round": 2
+  },
+  "why": "After land replays a branch, close reuses the clean review but keeps the old commit in its record, so the pull request check fails on every push; and land then hands the worker a round it cannot fix",
+  "worker": "codex"
+}

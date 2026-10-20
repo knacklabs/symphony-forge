@@ -45,7 +45,7 @@ def test_5_close_aborts_merge_it_cannot_finish(env, previous, cause):
     if cause == "source clash":
         assert f"Merging main into fix/tidy-readme conflicts in {module}." in closed.stderr
         assert "syntax" not in closed.stderr
-        assert f"Next: git -C {where} merge origin/main" in closed.stderr
+        assert f"Next: forge work {item} to merge the default branch and continue this work" in closed.stderr
         assert f"then forge close {item}" in closed.stderr
     else:
         assert "Merging main into fix/tidy-readme failed; the merge was aborted:" in closed.stderr

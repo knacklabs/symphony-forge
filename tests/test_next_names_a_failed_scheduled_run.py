@@ -18,6 +18,8 @@ from conftest import ROOT
 from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git
 from test_setup import _fresh_client, _version
 
+pytestmark = pytest.mark.platform
+
 RUNS = ("api", "repos/{owner}/{repo}/actions/runs")
 
 
@@ -41,7 +43,7 @@ LOG = "\n".join([
 WHY = "The scheduled forge-next (forge-next-1.yml) run fails on main"
 DONE = ("full suite on macos-latest, group 1 of 3; full suite on windows-latest, group 2 of 3 of the "
         "scheduled forge-next (forge-next-1.yml) workflow pass again on the next scheduled run on main")
-COMMAND = f'Next: forge fix start "{WHY}" --done "{DONE}"'
+COMMAND = f'Next: forge fix start "{WHY}" --done "{DONE}" --kind mechanical'
 
 
 @pytest.mark.parametrize("adoption", ["new", "previous release"])

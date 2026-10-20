@@ -575,7 +575,7 @@ def _with_developers(text: str, assignments: dict[str, str | None], include: boo
                 cells.pop(column)
             if include:
                 value = ("Developer" if cells[0].strip() == "ID" else "---"
-                         if set(cells[0].strip()) <= set("-: ") else assignments.get(cells[0].strip()) or "")
+                         if set(cells[0].strip()) <= set("-: ") else assignments.get(cells[0].strip("` ")) or "")
                 cells.append(f" {value} ")
             line = "|" + "|".join(cells) + "|\n"
         lines.append(line)
@@ -601,16 +601,16 @@ def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] |
     base_ref = repo.git("merge-base", local_ref, remote, cwd=top)
     base = show(top, base_ref, rel) or ""
     tables = [task.rows(task.sections(text)) for text in (base, local, published)]
-    before, ours, theirs = tables
-    assignments = {tid: task.developer(ours.get(tid, {}))
-                   if task.developer(ours.get(tid, {})) != task.developer(before.get(tid, {}))
-                   else task.developer(theirs.get(tid, {})) for tid in ours.keys() | theirs.keys()}
+    before, ours, theirs = [{tid: task.developer(row) for tid, row in table.items()} for table in tables]
+    assignments = {tid: ours.get(tid) if ours.get(tid) != before.get(tid) else theirs.get(tid)
+                   for tid in ours.keys() | theirs.keys()}
+    owner = task.owner(local) if task.owner(local) != task.owner(base) else task.owner(published)
     columns = [any("Developer" in row for row in table.values()) for table in tables]
-    include = columns[1] if columns[1] != columns[0] else columns[2]
     with tempfile.TemporaryDirectory(prefix="forge-plan-") as folder:
         files = [Path(folder) / name for name in ("local", "base", "published")]
         for file, text in zip(files, (local, base, published)):
-            file.write_text(_with_developers(text, assignments, include), encoding="utf-8")
+            text = re.sub(r"(?m)^Owner:[^\n]*\n?", f"Owner: {owner}\n" if owner else "", text)
+            file.write_text(_with_developers(text, assignments, columns[1] if columns[1] != columns[0] else columns[2]), encoding="utf-8")
         merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
     if merged.returncode:
         raise repo.Refused(f"Local and published edits to plans/{key}.md conflict; reconcile them before continuing.",
@@ -702,7 +702,9 @@ def changed_since_read(read_hash: str | None, doc_hash: str, text: str | None = 
     if doc_hash == read_hash or text is None:
         return doc_hash != read_hash
     old = repo.read_blob(top, read_hash or "-")
-    return old is None or above_builders(old) != above_builders(text)
+    return (old is None
+            or _with_developers(re.sub(r"(?m)^Owner:[^\n]*\n", "", above_builders(old)), {}, False)
+            != _with_developers(re.sub(r"(?m)^Owner:[^\n]*\n", "", above_builders(text)), {}, False))
 
 
 def passed(record: dict[str, str], findings: str) -> bool:
@@ -915,15 +917,15 @@ def json_of(text: str | None) -> dict[str, Any]:
 
 
 def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool]:
-    """The checkout, doc and notes file of a story key or a spec slug, and whether it's a story."""
+    """The checkout, doc and notes of a story, spec or decision, and whether it's a story."""
+    from forge import records
+
     if KEY.fullmatch(target):
         top = story_checkout(target, top)
         return top, top / "plans" / f"{target}.md", top / "plans" / f"{target}.read.md", True
     top = top or repo.root()
-    doc = top / "docs" / "specs" / f"{target}.md"
-    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", target) or not doc.is_file():
-        repo.refuse(REFUSALS["no_spec"], slug=target)
-    return top, doc, doc.with_name(f"{target}.read.md"), False
+    doc = records.read_path(top, target)
+    return top, doc, doc.with_suffix(".read.md"), False
 
 
 def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
@@ -1187,12 +1189,12 @@ COMMANDS = [
      "args": [(('key',), {}), (('outcome',), {})], "position": 80,
      "listing": '| `forge story done <KEY> "<outcome>"` | Corrects a finished story\'s outcome on an existing work branch; opens no separate pull request |'},
     {"words": "read", "run": "read", "changes_state": True,
-     "help": "Run a round of the cold read of a story doc or spec",
-     "args": [(('target',), {"help": "a story key or a spec slug"}),
+     "help": "Run a round of the cold read of a story doc, spec or decision",
+     "args": [(('target',), {"help": "a story key, spec slug or decision slug"}),
               (('--resolve',), {"choices": ["accept", "narrow", "split"]}),
               (('--reason',), {})],
      "position": 90,
-     "listing": '| `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |'},
+     "listing": '| `forge read <KEY or spec or decision>` | Runs the next round of the cold read of a story doc, spec or decision, until a round finds nothing |'},
 ]
 
 GROUP_HELP = {"story": "Start a story, or record its outcome"}

@@ -1,0 +1,91 @@
+/* The Assign control, from the approved Drawer and Item artboards (docs/board-design). */
+
+/* Scoped so these names never restyle the other screens. */
+@scope (.assign) {
+
+:scope {
+  position: relative;
+  display: inline-flex;
+  font-size: var(--size-label);
+  color: var(--ink);
+}
+
+button, input {
+  font: inherit;
+  color: inherit;
+}
+
+.assign-open, .assign-give {
+  border-radius: var(--radius-card);
+  padding: 2px var(--space-2);
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out);
+}
+
+.assign-open {
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--surface));
+  background: var(--surface);
+}
+
+.assign-open:active, .assign-give:active { transform: scale(0.97); }
+
+@media (hover: hover) and (pointer: fine) {
+  .assign-open:hover { background: var(--ground); }
+}
+
+/* The form and the result open under their button, over the drawer's content. */
+.assign-layer {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: 1;
+  width: 280px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(21 23 26 / 0.12);
+  color: var(--ink);
+}
+
+label { color: var(--ink-2); }
+
+.assign-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, var(--surface));
+  border-radius: var(--radius-card);
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface);
+}
+
+.assign-give {
+  border: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--moving);
+  color: var(--surface);
+  font-weight: 600;
+}
+
+.assign-give[aria-disabled="true"] { cursor: progress; }
+
+.assign-note { margin: 0; }
+
+.assign-note.refused {
+  border-left: 3px solid var(--stuck);
+  padding-left: var(--space-2);
+}
+
+}
+
+/* The full page's owner line is plain text, not a row with gaps like the drawer's. */
+.person > .assign { margin-left: var(--space-2); }

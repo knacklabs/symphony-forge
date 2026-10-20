@@ -1,0 +1,46 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-close-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14db2-2be5-7a02-8eee-b59c9a86eb60",
+    "head": null,
+    "start": "41546070b753ae5aaad30a07f104de9bdb5dd9d5"
+  },
+  "done_when": "The listed duplicate rows are gone, each rule keeps one adopted case, and the close tests still pass",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5f75c42d1c03166e3055e46f9b15b8e8ac2bfdf7265bc01c35f8982dc2153cf8",
+    "changed": "4325510a52702229224fe250b44313ec89e5eb9f79ac63bd7442ef9997c724dc",
+    "commit": "44f337bae0f9d3eb6ec0b21fe4569bd4c77993d7",
+    "dismissals": [],
+    "findings": [],
+    "id": "add95327-ad3c-457b-b102-146cbb76fa10",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:26:52.275364+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:23:00.610438+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1a100197f59524555aea5e3c6aecd1856280c813",
+    "keys": {},
+    "round": null
+  },
+  "why": "Close's stop-choice and test-selection tests repeat legacy and adopted rows on the same path, and one checks-red case is identical to green",
+  "worker": "codex"
+}

@@ -111,7 +111,8 @@ def test_2_machine_views_cost_a_small_fixed_number_of_git_calls_per_item_in_prog
     step = (counts[12] - counts[4]) / 8
     assert step <= PER_ITEM, f"each item in progress cost {step} git commands: {counts}"
     assert counts[12] - counts[8] == counts[8] - counts[4], f"cost is not linear in items: {counts}"
-    assert asked[4] == asked[8] == asked[12], f"GitHub calls grew with the items in progress: {asked}"
+    # The first read fills six past weeks; later reads refresh only open PRs and this week.
+    assert asked == {4: 8, 8: 2, 12: 2}, f"GitHub calls grew with the items in progress: {asked}"
 
 
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])

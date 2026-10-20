@@ -3,7 +3,7 @@
 in a new folder. Generated on demand, never checked in.
 
 Usage: python tests/board_fixture.py <empty folder> <forge version>
-Then run `forge board --out <page>` in <folder>/client.
+Then run `forge board` in <folder>/client for the live page, or `forge board --out <file>` for its facts as JSON.
 """
 from __future__ import annotations
 

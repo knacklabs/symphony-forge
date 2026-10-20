@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from fnmatch import fnmatch
 from pathlib import Path
@@ -15,6 +16,9 @@ from typing import Any
 from forge import repo, review
 
 REFUSALS = {
+    "outside_branch": ('This branch was not started by Forge, so it cannot merge. '
+                       'Redo the change with forge fix start "<why>" --done "<done when>" '
+                       'and copy the commits there.', ""),
     "usage": ("forge hook pr-check needs the pull request's --base, --head and --branch.",
               "forge hook pr-check --base <base commit> --head <head commit> --branch <branch>"),
     "not_started": ("Forge did not start {branch}: no task or fix at its head is on that branch.",
@@ -54,6 +58,8 @@ jobs:
   tests:
     if: github.event_name == 'pull_request'
     name: test group ${{ matrix.group }} of <groups>
+    outputs:
+      docs-only: ${{ steps.parent-tests.outputs.docs-only }}
     strategy:
       fail-fast: false
       matrix:
@@ -74,6 +80,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_EXCLUDES: '<docs-excludes>'
         run: python .forge/review-tests.py
 <npm-cache><node>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
@@ -91,10 +98,16 @@ jobs:
       - env:
           GROUPS: ${{ needs.tests.result }}
         run: test "$GROUPS" = success
+      - if: needs.tests.outputs.docs-only == 'true'
+        run: "echo 'docs only: tests skipped'"
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
-    name: ${{ github.event_name == 'pull_request_target' && 'forge-pr-check' || 'forge-pr-check (other event)' }}
+    name: Review pull request
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
     runs-on: <runner>
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
@@ -114,11 +127,33 @@ jobs:
           git fetch --no-tags origin "refs/pull/$PR/head"
           test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
 <choose>      - run: <install>
-      - env:
+      - id: review
+        continue-on-error: true
+        env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF" 2> "$RUNNER_TEMP/forge-pr-check.log"
+      - name: Report review status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REVIEW_OUTCOME: ${{ steps.review.outcome }}
+          REVIEW_PENDING: ${{ steps.review.outputs.review-pending }}
+        run: |
+          if [ -f "$RUNNER_TEMP/forge-pr-check.log" ]; then
+            cat "$RUNNER_TEMP/forge-pr-check.log"
+          fi
+          state=failure
+          if [ "$REVIEW_OUTCOME" = success ]; then
+            state=success
+          elif [ "$REVIEW_OUTCOME" = failure ] && [ "$REVIEW_PENDING" = true ]; then
+            state=pending
+          fi
+          job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          test "$state" != failure
       - name: Report pull request size
         if: always()
         continue-on-error: true
@@ -178,14 +213,24 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                            [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
     test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
                           "least_duration" if groups > 1 else "")
+    windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
     if groups > 1:
         # Empty groups pass only if the unsplit suite still collects tests successfully.
-        test += ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }'
+        test += ("; if ($LASTEXITCODE -eq 5) { " + cfg["test"] + " --collect-only }" if windows
+                 else ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }')
+    if windows:
+        # Each attempt gets its own PowerShell process, so exit or throw cannot end the retry.
+        script = ("$ErrorActionPreference = 'Stop'\n& {\n" + test +
+                  "\n}\nif (Test-Path variable:LASTEXITCODE) { exit $LASTEXITCODE }")
+        attempt = ("& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -Command '" +
+                   script.replace("'", "''") + "'")
+        test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
     workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
+                .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 10\n"
+                .replace("<tests-timeout>", "    timeout-minutes: 30\n"
                          if cfg.get("repo") == "client" and (top / "package.json").is_file()
                          else "")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
@@ -204,7 +249,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
-            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
+            ".forge/records-only/action.yml": (sync.TEMPLATES / "records-only-action.yml").read_text(encoding="utf-8"),
+            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")
+                .replace("# <docs-only-rule>", (sync.TEMPLATES.parent / "docskip.py").read_text(encoding="utf-8"))}
 
 
 def pr_check(args: argparse.Namespace) -> int:
@@ -214,9 +261,7 @@ def pr_check(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["usage"])
     base, head, branch = given["--base"], given["--head"], given["--branch"]
     if not branch.startswith(("task/", "fix/", "story/", "forge/")):
-        print("Forge didn't start this branch, so it checks nothing here; the repo's own CI and "
-              "review apply.")
-        return 0
+        repo.refuse(REFUSALS["outside_branch"])
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     item, state = _started(top, head, branch)
@@ -243,6 +288,10 @@ def pr_check(args: argparse.Namespace) -> int:
     result = state.get("review")
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):
+        # Keep the command's refusal, but let the trusted workflow distinguish the first push.
+        if result is None and os.environ.get("GITHUB_OUTPUT"):
+            with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+                output.write("review-pending=true\n")
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"

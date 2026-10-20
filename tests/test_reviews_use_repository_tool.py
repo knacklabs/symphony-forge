@@ -1,4 +1,4 @@
-"""Autoreview chooses models; Forge selects the repository tool for every review kind."""
+"""Forge selects the repository tool and its configured review model for every review kind."""
 import json
 
 import pytest
@@ -11,11 +11,11 @@ STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 
 @pytest.mark.parametrize("family", ["claude", "codex"])
 @pytest.mark.parametrize("light", [False, True], ids=["normal", "light"])
-def test_6_close_uses_repository_tool_without_model_or_effort_overrides(env, family, light):
+def test_6_close_uses_repository_tool_with_its_model_and_effort(env, family, light):
     toml = env.repo.path / "forge.toml"
     # The tools setting now owns routing; workers only assigns builds under both.
     text = toml.read_text("utf-8") + f'\ntools = "{family}"\n'
-    # Legacy configured pins must not become overrides of the external program's defaults.
+    # Configured pins now override Autoreview's defaults on normal and light reviews.
     text += ('\n[models.review.codex]\nmodel = "gpt-6-astra"\neffort = "xhigh"\n'
              '\n[models.review.claude]\nmodel = "custom-claude"\neffort = "low"\n')
     if light:
@@ -29,7 +29,9 @@ def test_6_close_uses_repository_tool_without_model_or_effort_overrides(env, fam
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == family
     assert options["--max-priority"] == "P3"  # the light review's level applies after scoring
-    assert "--model" not in options and "--thinking" not in options
+    model, effort = (("gpt-6-astra", "xhigh") if family == "codex" else ("custom-claude", "low"))
+    assert options["--model"] == f"{family}={model}"
+    assert options["--thinking"] == f"{family}={effort}"
 
 
 @pytest.mark.parametrize("family", ["claude", "codex"])

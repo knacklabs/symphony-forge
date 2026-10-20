@@ -9,6 +9,8 @@ from conftest import ROOT, FORGE_SHIM, _install
 from test_setup import _fresh_client, _version
 from test_worker import calls, install_claude
 
+pytestmark = pytest.mark.platform
+
 STORY = "workers-build-on-macos-or-linux-so-windo"
 
 
@@ -21,7 +23,7 @@ def test_1_sync_and_worker_brief_carry_the_windows_checklist(repo, gh, tmp_path,
         client, made = _fresh_client(repo, gh, tmp_path)
         assert made.returncode == 0, made.stdout + made.stderr
         made = repo.forge("fix", "start", "Check Windows guidance", "--done",
-                          "Workers receive the Windows checklist", cwd=client)
+                          "Workers receive the Windows checklist", "--kind", "mechanical", cwd=client)
         client = tmp_path / "client-fix-check-windows-guidance"
         item = "check-windows-guidance"
     else:

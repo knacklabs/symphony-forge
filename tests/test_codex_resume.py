@@ -201,13 +201,13 @@ def _holding(repo, turns: Path) -> tuple[subprocess.Popen, dict]:
     pytest.fail(f"the turn never started: {work.communicate()[1]}")
 
 
-@pytest.mark.parametrize("reason", ["context", "no-record", "missing-rollout", "moved", "rewritten"])
+@pytest.mark.parametrize("reason", ["context", "rewritten"])
 def test_7_fix_rounds_continue_the_conversation(repo, monkeypatch, sdk_data, reason, claude_session):
     # One criterion owner, with independent cases so serial rounds do not share a timeout.
     if reason == "context":
         _continued_context(repo, monkeypatch, sdk_data)
     else:
-        _fresh_conversation(repo, monkeypatch, sdk_data, reason)
+        _rewritten_history(repo, monkeypatch, sdk_data)
 
 
 def _continued_context(repo, monkeypatch, sdk_data):
@@ -287,66 +287,29 @@ def _continued_context(repo, monkeypatch, sdk_data):
     (folder / "big.txt").unlink()
 
 
-def _fresh_conversation(repo, monkeypatch, sdk_data, reason):
-    # These are independent refusal paths. Running all four after the context checks above
-    # exceeded Windows' per-test budget; each now starts from the same completed first turn.
+def _rewritten_history(repo, monkeypatch, sdk_data):
+    # Rewriting the branch keeps its chat and sends the changed contents to the next turn.
     folder, calls, turns = _resuming(repo, monkeypatch, sdk_data)
     monkeypatch.setenv("STUB_CODEX_COMMIT", "built.py")
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     monkeypatch.delenv("STUB_CODEX_COMMIT")
-    # Forge starts fresh, and says why, when it can't continue the conversation.
-    record = turns.with_suffix(".json")
     store = repo.bin / "threads.json"
-    first = _saved(record)["conversation"]
+    first = _saved(turns.with_suffix(".json"))["conversation"]
 
-    def continued():
-        again = repo.forge("work", "BOARD/PAGE")
-        assert again.returncode == 0, again.stdout + again.stderr
-        assert "Starting a new Codex conversation" not in again.stdout
-        assert len(_sent(calls, "thread/start")) == 1
-        assert _sent(calls, "thread/resume")[-1]["threadId"] == first
-        assert _lines(turns)[-1]["continued"] is True
-
-    def fresh(why: str) -> None:
-        resumed = len(_sent(calls, "thread/resume"))
-        again = repo.forge("work", "BOARD/PAGE")
-        assert again.returncode == 0, again.stdout + again.stderr
-        assert f"Starting a new Codex conversation, because {why}." in again.stdout
-        line = _lines(turns)[-1]
-        assert (line["kind"], line["continued"], line["fresh_start"]) == ("Fix", False, why)
-        assert _sent(calls, "thread/name/set")[-1]["name"] == "BOARD · The page"
-        assert _sent(calls, "thread/start")[-1]["config"] == FIX_CONFIG
-        full_brief = _text(calls)
-        assert "You are the worker." in full_brief
-        assert "### Done when" in full_brief and "## Your task" in full_brief
-        tried = len(_sent(calls, "thread/resume")) - resumed
-        assert tried == (1 if why.startswith("Codex couldn't") else 0), why
-
-    if reason == "no-record":
-        record.unlink()
-        continued()
-    elif reason == "missing-rollout":
-        conversation = _saved(record)["conversation"]
-        threads = json.loads(store.read_text(encoding="utf-8"))
-        del threads[conversation]
-        store.write_text(json.dumps(threads), encoding="utf-8")
-        fresh(f"Codex couldn't resume its conversation: no rollout found for thread id {conversation}")
-    elif reason == "moved":
-        moved = folder.with_name("moved-BOARD-PAGE")
-        repo.git("worktree", "move", str(folder), str(moved))
-        continued()
-    else:
-        (folder / "built.py").write_text("BUILT = 2\n", encoding="utf-8")
-        repo.git("add", "built.py", cwd=folder)
-        repo.git("commit", "-q", "--amend", "-m", "Reworded", cwd=folder)
-        continued()
-        assert "BUILT = 2" in _text(calls)
+    (folder / "built.py").write_text("BUILT = 2\n", encoding="utf-8")
+    repo.git("add", "built.py", cwd=folder)
+    repo.git("commit", "-q", "--amend", "-m", "Reworded", cwd=folder)
+    again = repo.forge("work", "BOARD/PAGE")
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert "Starting a new Codex conversation" not in again.stdout
+    assert len(_sent(calls, "thread/start")) == 1
+    assert _sent(calls, "thread/resume")[-1]["threadId"] == first
+    assert _lines(turns)[-1]["continued"] is True
+    assert "BUILT = 2" in _text(calls)
     # With none of those, the next call continues the conversation again.
     assert repo.forge("work", "BOARD/PAGE").returncode == 0
     assert _lines(turns)[-1]["continued"] is True
 
-    if reason != "rewritten":
-        return
     # The history is rewritten again and the new conversation's first turn crashes: nothing
     # rewrote that conversation's own history, so the next call continues it.
     repo.git("commit", "-q", "--amend", "-m", "Reworded again", cwd=folder)

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tPrototype fixes suggested by forge next omit the required kind\tFORGE-PACE-1/ROUTING",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 516,
+      "text": "Prototype fixes suggested by forge next omit the required kind",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/ROUTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/conftest.py\tNested pytest inherits the outer run's selection options, so filtered runs can select the wrong tests or recurse.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 315,
+      "text": "Nested pytest inherits the outer run's selection options, so filtered runs can select the wrong tests or recurse.",
+      "from": "worker",
+      "item": "FORGE-PACE-1/ROUTING",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

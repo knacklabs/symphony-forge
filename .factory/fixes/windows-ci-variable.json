@@ -1,0 +1,31 @@
+{
+  "base": "a5cd9456c09f437b698c2a2f5af9e2c8e32aca52",
+  "branch": "fix/windows-ci-variable",
+  "done_when": "The test isolation removes CI so Windows .cmd stand-ins pass git formats unchanged, and both cache tests pass on Windows, Linux and the local Mac",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6e99e98ac120c6d9c0bc110b9d74379966dace9ca81aef21d34e7b12078157e2",
+    "changed": "5a10534e2d6fde04999261bc3e569fb5d0daa45695c617124e260f191dba0052",
+    "commit": "37afe8fe0f5fdf75c7ea111e733e408e0920df43",
+    "dismissals": [],
+    "findings": [],
+    "id": "e9c6f321-d774-4096-b643-5d3b2035aef1",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T15:30:01.446344+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T16:08:08.802421+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "On Windows CI two cache tests fail because cmd.exe expands %CI% inside the git stand-in's arguments, turning git's %cI date code into 'true'"
+}

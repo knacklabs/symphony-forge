@@ -1,0 +1,77 @@
+{
+  "base": "9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd",
+  "branch": "fix/records-only-review",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe0-de73-7f61-bfd8-78a77299be70",
+    "head": null,
+    "start": "fbc5e3b617c2c4b8cdfe19f4feaea9c48e9daada"
+  },
+  "done_when": "A branch whose diff holds only Forge's records needs no model review: close records it as clean and says so, and when Autoreview does write unreadable findings close shows where the output is instead of pointing at forge doctor",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 43,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Records-only close still reviews Forge's planning records",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 963,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve unreadable findings when the retry produces no report",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0573f1a742b8190eb7b2ac6f18e98d92f2b98dc4cfee56b5ba5e82d3b28a968b",
+    "changed": "3937bdee19ec0659fc49bba7c0d136a9dc3c08b7a0305f3432fd4d28287956ee",
+    "commit": "8b080ed108d4a452743853e5c35f5c447446e18a",
+    "dismissals": [],
+    "findings": [],
+    "id": "429cfcbb-bb21-4fbd-8825-816758238d15",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:37:43.227711+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:17:02.167562+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:30:51.717302+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "1ee5ff54-7617-4a05-8c4d-0ce6dfa2c97d",
+    "head": "e53268a607a86e03c94aa732aa121d0a8c97ed9d",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Close sends a branch whose diff against main holds only Forge's own records to Autoreview, which fails twice with unreadable findings, and the message points at forge doctor",
+  "worker": "codex"
+}

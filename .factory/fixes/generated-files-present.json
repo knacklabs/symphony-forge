@@ -1,0 +1,64 @@
+{
+  "base": "ff7cfd0caa6f9cf53e8f8bd2df3cb0986d4446e3",
+  "branch": "fix/generated-files-present",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1465e-60a8-73f0-9e17-09df33a2087c",
+    "head": null,
+    "start": "0d273312033c43418152eef13754571575ad8447"
+  },
+  "done_when": "The review prompt's Generated files section says each listed file is committed at the real branch head with the listed line counts, that the review tree only restores it to the start to keep its contents out of the diff, and that a missing or untracked copy in the review tree is not a finding; a test proves the wording for a generated file the branch adds",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_hide_generated() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 1061,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Generated files notice makes inaccurate claims for deletions and repeat reviews",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3f6bfab6b88d5f9357c8d859c89307d9d1b3f932d4c4b9a396dc027e95aa5500",
+    "changed": "4c783e19669cbc82cfc7baa6068cea8df70fdbea5da5c97dac48987decf8fc5e",
+    "commit": "cc0f66c33dc4523f6fe29c5a5bba4b8903d81f89",
+    "dismissals": [],
+    "findings": [],
+    "id": "8594bba7-fa3d-4eb8-9150-051fdf6757b7",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T20:19:06.577674+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T20:23:40.427671+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T20:43:13.692983+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "7513a9d5-8e0d-4e69-b7fa-20ce924b0816",
+    "head": "1aad2e479e37f1241ad9129b991aa372fb617ac8",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Reviews hide linguist-generated files by restoring them to the branch start, so a generated file the branch adds is missing from the review tree's HEAD and left untracked; reviewers then report the branch's fonts, media and logos as not committed",
+  "worker": "codex"
+}

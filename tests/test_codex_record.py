@@ -21,6 +21,8 @@ import pytest
 from conftest import _install
 from test_codex_worker import PIN, _codex_repo, _running, _sent, _stub, sdk_data  # noqa: F401 (a fixture)
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-WARM-1"
 KILL = getattr(signal, "SIGKILL", signal.SIGTERM)  # on Windows os.kill ends a process either way
 # That tool, a second slower: two calls that start together both read a stale lock before either

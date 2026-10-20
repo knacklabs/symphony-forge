@@ -15,6 +15,8 @@ from test_close import GREEN, env  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_upgrade_command import NAME, RELEASE, unsynced_up  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-THE-SHIPPED-PYTHON-TEST-PICKER-UV-RUN-PY"
 
 
@@ -109,6 +111,10 @@ def test_4_forges_own_fast_command_works_with_an_older_release_on_path(repo, tmp
         "vcs_info": {"vcs": "git"}}), "utf-8")
     cold = tmp_path / "cold-tool"
     cold.mkdir()
+    # The real uv interpreter must not wait on unrelated host load in this fixture.
+    (cold / "sitecustomize.py").write_text(
+        "import os\nif hasattr(os, 'getloadavg'): os.getloadavg = lambda: (0., 0., 0.)\n", "utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(cold) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     _install(cold, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old)))
     monkeypatch.setenv("PATH", str(cold) + os.pathsep + os.environ["PATH"])
     command = tomllib.loads((source / "forge.toml").read_text("utf-8"))["fast_test"]
@@ -164,7 +170,8 @@ def test_5_new_pytest_client_runs_the_proposed_picker_through_close(env, tmp_pat
     repo.git("add", "-A", cwd=client)
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qm", "Configure pytest", cwd=client)
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main", cwd=client)
-    started = repo.forge("fix", "start", "Change prices", "--done", "Related tests pass", cwd=client)
+    started = repo.forge("fix", "start", "Change prices", "--done", "Related tests pass",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     folder = client.parent / "client-fix-change-prices"
     env.commit(folder, "prices.py", "PRICE = 2\n")
@@ -195,8 +202,9 @@ def test_7_large_pytest_repos_keep_the_shell_command_below_windows_limit(repo):
     assert "1 passed" in result.stdout
 
 
+@pytest.mark.parametrize("line_ending", ["\n", "\r\n"], ids=["LF", "CRLF"])
 def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replaces_it_and_closes(
-        unsynced_up, tmp_path, monkeypatch):
+        unsynced_up, tmp_path, monkeypatch, line_ending):
     up, repo = unsynced_up, unsynced_up.repo
     python, dependencies = _pytest_environment(repo)
     monkeypatch.setenv("PYTHONPATH", str(dependencies))
@@ -210,7 +218,7 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     legacy = "python -m forge.fasttest {base}"
     monkeypatch.setenv("PATH", str(python.parent) + os.pathsep + os.environ["PATH"])
     settings = "fast_test = " + json.dumps(legacy) + "\n" + settings
-    config.write_text(settings, "utf-8")
+    config.write_bytes(settings.replace("\n", line_ending).encode("utf-8"))
     repo.git("switch", "-qc", "adoption")
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Adopt earlier Forge with legacy picker")
@@ -234,9 +242,11 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     assert 'fast_test = "forge test --pytest {base}"' in doctor.stdout
     assert upgraded_config.read_text("utf-8") == expected
     # The owner's sole configuration edit replaces the broken command; upgrade never does it.
-    replacement = expected.replace(json.dumps(legacy), '"forge test --pytest {base}"')
+    # Keep the source file's line endings: changing them too creates a different merge case.
+    replacement = config.read_bytes().decode("utf-8").replace(
+        json.dumps(legacy), '"forge test --pytest {base}"')
     env = up.env
-    env.commit(up.folder, "forge.toml", replacement, "Use the proposed picker")
+    up.on_main("forge.toml", replacement, "Use the proposed picker")
     env.commit(up.folder, "prices.py", "PRICE = 2\n")
     closed = subprocess.run([str(installed), "close", NAME], cwd=up.folder,
                             capture_output=True, text=True, timeout=60)

@@ -80,6 +80,7 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         item, where = env.start_fix()
         rounds(env, item, where, ["src/a.py"] * 2)
         env.commit(where, "app.py", "print(3)\n")
+        env.commit(where, "src/a.py", "pass  # third repair\n")
         env.reviews(blocked(_scored("P1", "Round 3 defect",
                                     "Gain 4, Work 2, Harm 1\nSaving drops the basket.", "src/a.py")))
         env.close(item)

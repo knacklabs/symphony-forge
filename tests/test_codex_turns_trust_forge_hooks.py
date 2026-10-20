@@ -19,6 +19,8 @@ from test_story import DOC, new_story, setup
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_live_adopt import ANSWERS
 
+pytestmark = pytest.mark.platform
+
 STORY = "codex-hook-trust"
 GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
          "grill.claude": {"model": "opus", "effort": "high"}}
@@ -245,7 +247,8 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
     if lifecycle == "new":
         made = repo.forge("init", cwd=client)
         assert made.returncode == 0, made.stdout + made.stderr
-        started = repo.forge("fix", "start", "Hook trust", "--done", "Forge hooks are trusted", cwd=client)
+        started = repo.forge("fix", "start", "Hook trust", "--done", "Forge hooks are trusted",
+                             "--kind", "mechanical", cwd=client)
         assert started.returncode == 0, started.stdout + started.stderr
         _canonical_checkout(repo, client, "fix/hook-trust")
     else:

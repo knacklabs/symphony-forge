@@ -1,0 +1,85 @@
+{
+  "allow_large": "Owner allowed (18 Oct): one docs-only path rule shared by the generated workflow, close and sync needs 6 code files",
+  "base": "7167abd06bd0e58c60bb72f102ccad1db8f6f216",
+  "branch": "fix/docs-only-skips-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14afb-ae54-7403-99ef-ee6b4fb3cd20",
+    "head": null,
+    "start": "59d0f6645259895ed9e04dd2904c683f9681ddac"
+  },
+  "done_when": "A pull request that changes only Markdown, docs/, plans/ or Forge's records skips the test suite in the generated workflow and at close, and the required tests check passes with a docs-only note, on new repos and after sync on existing repos",
+  "fix_kind": "backend",
+  "flagged": [
+    ".factory/fixes/cheaper-next.json",
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/cheaper-next.json",
+      "file": ".factory/fixes/cheaper-next.json",
+      "gain": 4,
+      "harm": 2,
+      "line": 2,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: parser-cache allowance does not cover the mixed change",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 96,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "A queued CI failure can be delivered after a rerun within the cache window",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8fc272997f92712c7fe122c00099069cfcbb3a622e5b22e5544ac77aaf1ca8c2",
+    "changed": "5a4b9678db893ec95a0d8f3710e8825eefb9093dcef84df100250af2db78ecb0",
+    "commit": "ce90dab542c21e657b7ee8d4d3211816ae801e8b",
+    "dismissals": [],
+    "findings": [],
+    "id": "2ace3d22-b6df-4581-b59a-68a0f00b4c5a",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T17:49:25.029989+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T18:15:09.959293+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:44:45.922633+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T02:05:55.941537+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ba2ce0f5-c48f-4519-b88c-0bc550d742fb",
+    "head": "96d6295736c431271280756c8204f4898c5febea",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Every pull request runs the full test suite, even one that changes only Markdown, docs, plans or Forge's records",
+  "worker": "codex"
+}

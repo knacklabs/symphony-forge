@@ -162,6 +162,7 @@ def test_7_merge_preserves_the_outage_refusal_and_resumes_without_replaying_a_wr
         "headRefName": "fix/tidy-readme", "title": "Tidy readme", "isDraft": False}))
     _merge_at_github(client)
     prefix = ["pr", "view", "7" if confirmation else "fix/tidy-readme"]
+    before = sum(call[:len(prefix)] == prefix for call in client.gh.calls())
     gh = client.repo.bin / "gh"
     # Intercept the service's reads before its post-merge answer, keeping its real squash write.
     source = gh.read_text("utf-8").replace('if sys.argv[1:3] == ["pr", "view"]', f'''
@@ -169,7 +170,7 @@ args = sys.argv[1:]
 prefix = {prefix!r}
 if args[:len(prefix)] == prefix:
     calls = [json.loads(line) for line in (here / "gh-calls.jsonl").read_text("utf-8").splitlines()]
-    if sum(call[:len(prefix)] == prefix for call in calls) < 4:
+    if sum(call[:len(prefix)] == prefix for call in calls) < {before + 4}:
         with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as log:
             log.write(json.dumps(args) + "\\n")
         sys.stdout.write({answer.get("stdout", "")!r})
@@ -181,7 +182,7 @@ if sys.argv[1:3] == ["pr", "view"]''', 1)
     stopped = client.repo.forge("merge", item)
     assert stopped.returncode == 1, stopped.stdout + stopped.stderr
     assert stopped.stderr == "GitHub did not answer. Rerun the command.\n"
-    assert len(client.gh_calls(*prefix)) == 4
+    assert len(client.gh_calls(*prefix)) - before == 4
     assert len(client.gh_calls("pr", "merge")) == int(confirmation)
     assert where.exists()
 

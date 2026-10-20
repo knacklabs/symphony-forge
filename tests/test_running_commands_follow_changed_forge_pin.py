@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import FORGE_SHIM, REAL_UV, ROOT, _install
+from conftest import FORGE_SHIM, IDLE_MACHINE, REAL_UV, ROOT, _install
 from test_close import CLEAN, blocked, body, env, finding  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
 from test_land import ITEM, URL, _fix, _workers, land  # noqa: F401
@@ -47,12 +47,16 @@ def _earlier_release(env, *, real_uv=False):
     # its actual close, tests, review and GitHub checks decide whether this command succeeds.
     _install(env.repo.bin, "uv", f'''#!{sys.executable}
 import json, os, pathlib, subprocess, sys
+# Match FORGE_SHIM's idle machine when the selected release runs in this process.
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 args = sys.argv[1:]
 here = pathlib.Path(__file__).resolve().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")
 os.environ["PATH"] = {json.dumps(selected_bin.as_posix())} + os.pathsep + os.environ["PATH"]
 sys.path.insert(0, {json.dumps((ROOT / 'src').as_posix())})
+{IDLE_MACHINE}
 if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
     program = args.index("python")
     assert args[program:program + 3] == ["python", "-I", "-c"], args
@@ -79,9 +83,10 @@ def _upgrade_default(env, upgraded):
 
 def _worker_merges_upgrade(env, upgraded):
     # The model edits and merges git; Forge decides whether and how its command continues.
-    worker = (env.repo.bin / "claude").read_text("utf-8")
+    module = env.repo.bin / "claude_agent_sdk" / "__init__.py"
+    worker = module.read_text("utf-8")
     upgrade = f'''import subprocess
-root = pathlib.Path({json.dumps(env.repo.path.as_posix())})
+root = Path({json.dumps(env.repo.path.as_posix())})
 if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
     (root / "forge.toml").write_text({json.dumps(upgraded)}, encoding="utf-8")
     for args in (["add", "forge.toml"], ["commit", "-q", "-m", "Upgrade Forge"],
@@ -90,13 +95,15 @@ if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
 subprocess.run(["git", "fetch", "-q", "origin"], check=True)
 subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
 '''
-    _install(env.repo.bin, "claude", worker.replace('if not int(os.environ.get(',
-             upgrade + '\nif not int(os.environ.get(', 1))
+    upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
+    module.write_text(worker.replace('    if not int(os.environ.get(',
+                      upgrade + '    if not int(os.environ.get(', 1), "utf-8")
 
 
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
 @pytest.mark.parametrize("stage", ["land-build", "land-fix", "close-merge", "land-merge",
                                    "land-guide-conflict", "close-guide-conflict"])
+@pytest.mark.platform
 def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         land, adoption, stage, monkeypatch):
     env = land
@@ -136,6 +143,10 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
                    "Refresh the default branch's generated guide")
     if stage in ("close-merge", "land-merge") or guide_conflict:
         _upgrade_default(env, upgraded)
+        if not guide_conflict:
+            # Preserve the pin-handoff rule for a refresh GitHub requires.
+            env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                           '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     else:
         if stage == "land-fix":
             env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN)
@@ -201,7 +212,7 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     upgraded = original.replace('version = "v1.2.2"',
         f'version = "{current}"\nfast_test = {failing_test}\ntest = {failing_test}')
     env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN,
-                blocked(finding("P1", "The greeting is too long")), CLEAN)
+                blocked(finding("P1", "The greeting is too long", "work-2.txt")), CLEAN)
     _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
@@ -237,6 +248,8 @@ def test_3_close_continues_the_current_human_accept_choice_under_changed_pin(
                                 f'version = "{current}"\nfast_test = ""')
     _upgrade_default(env, upgraded)
     reason = "The human accepts the remaining greeting defect for this version"
+    env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
+                   '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     args = ["close", item, "--resolve", "accept", "--reason", reason]
     done = env.repo.forge(*args, cwd=where)
     assert done.returncode == 0, done.stdout + done.stderr

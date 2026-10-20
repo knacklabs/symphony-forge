@@ -21,7 +21,7 @@ const row = {
 }
 const story = { id: 'story', kind: 'story', title: 'A better board', stage: 'planning', activity: { status: 'idle' }, idle_since: '1969-12-30T00:00:00Z', stalled: true, children: [row], stages: stages.map(s => ({ name: s.name, status: null })) }
 const board = { version: '1.2.5', repo_root: '/repo', items: [story] }
-const following = { version: '1.2.5', repo_root: '/repo', next: { command: 'forge close guide', line: 'Close the guide.' } }
+const following = { ...board, next: { command: 'forge close guide', line: 'Close the guide.' } }
 const lanes = { version: '1.2.5', agents: { size: 4, entries: [{ started_at: '1970-01-01T00:00:00Z', item: 'other', repo_root: '/other' }, { started_at: null }] }, tests: { size: 1, entries: [{ started_at: '1970-01-01T00:00:00Z', item: 'guide', repo_root: '/repo' }, { started_at: null }] } }
 
 // The shipped registration and mounted surfaces decide behavior; only the host
@@ -44,23 +44,23 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('command.register', () => ({ value: { command: 'forge' } }))
     on('ui.open', (_$, e) => { opens.push(e); return { value: undefined } })
     on('process.run', (_$, e) => {
-      if (mode === 'bad' && e.argv[1] === 'board') return { value: { exitCode: 0, stdout: '{"items":[{}]}', stderr: '' } }
-      const value = e.argv[1] === 'next' ? following : e.argv[1] === 'lanes' ? lanes : { ...board, items: mode === 'empty' ? [] : mode === 'missing' ? [{ title: 'Lost state' }] : mode === 'queued' ? [{ ...row, worker: null, activity: { status: 'queued', lane: 'agents', place: 2 } }] : [early] }
+      if (mode === 'bad' && e.argv[1] === 'next') return { value: { exitCode: 0, stdout: '{"items":[{}]}', stderr: '' } }
+      const value = e.argv[1] === 'lanes' ? lanes : { ...following, items: mode === 'empty' ? [] : mode === 'missing' ? [{ title: 'Lost state' }] : mode === 'queued' ? [{ ...row, worker: null, activity: { status: 'queued', lane: 'agents', place: 2 } }] : [early] }
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     expect(opens[0]).toEqual({ id: 'forge', title: 'Forge' })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
     let drawn = JSON.stringify(await ui.drawn())
-    for (const shown of ['MOVING', 'Polish the guide', '  story', ' · Review running · under a minute']) expect(drawn).toContain(shown)
-    for (const hidden of ['unknown', 'P1', 'dismissed', 'idle since', 'Build → Tests', 'round']) expect(drawn).not.toContain(hidden)
+    for (const shown of ['MOVING', 'Polish the guide', '  story', 'Review running · round 2 · Codex sol medium · 59s', '2 open findings · 1 dismissed']) expect(drawn).toContain(shown)
+    for (const hidden of ['unknown', 'P1', 'idle since', 'Review ● 0s']) expect(drawn).not.toContain(hidden)
     await clock.advance(5000)
     drawn = JSON.stringify(await ui.drawn())
-    expect(drawn).toContain('Review running · 1 min')
+    expect(drawn).toContain('Review running · round 2 · Codex sol medium · 1m 4s')
     const reply = await $.command.run({ command: 'forge', args: '', origin: { kind: 'sdk' }, presentation: { isFullscreen: false, columns: 80 } })
-    expect(reply.text).toBe('MOVING\n  Polish the guide  story · Review running · 1 min')
+    expect(reply.text).toBe('MOVING\n  Polish the guide  story\n    Review running · round 2 · Codex sol medium · 1m 4s\n\n    Build ✓ 4s → Tests ✗ 5s → Review ● 1m 4s → CI → Merge –\n    Total 1m 13s\n\n    Plan read  passed\n    Review     blocked\n    CI         failed: Windows, Linux (PR #7)\n    2 open findings · 1 dismissed')
     expect(opens.at(-1)).toEqual({ id: 'forge', title: 'Forge', focus: true })
-    for (const [reason, time, step] of [['clear', '2 min', 30000], ['resume', '3 min', 60000]] as const) {
+    for (const [reason, time, step] of [['clear', '1m 34s', 30000], ['resume', '2m 34s', 60000]] as const) {
       await $.session.end({ reason, sessionId: 'previous', resume: { id: 'previous' } })
       await clock.advance(step)
       expect(JSON.stringify(await ui.drawn())).toContain(time)
@@ -68,7 +68,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     mode = 'bad'; await clock.advance(10000)
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('Polish the guide')
-    expect(drawn).toContain("Couldn't refresh: Malformed forge board output")
+    expect(drawn).toContain("Couldn't refresh: Malformed forge next output")
     mode = 'empty'; await clock.advance(10000)
     expect(JSON.stringify(await ui.drawn())).toContain('Nothing in progress.')
     mode = 'missing'; await clock.advance(10000)
@@ -100,7 +100,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('prompt.submit', (_$, e) => { if (failSubmit) return { drop: 'Prompt unavailable' }; submitted.push(e.text); origins.push(e.origin); return { text: e.text, origin: e.origin } })
     on('process.run', (_$, e) => {
       if (failRead && e.argv[1] === 'next') return { value: { exitCode: 1, stdout: '', stderr: 'offline' } }
-      const value = e.argv[1] === 'board' ? board : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command } } : lanes
+      const value = e.argv[1] === 'next' ? { ...following, next: { ...following.next, command } } : lanes
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
@@ -144,41 +144,41 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('prompt.submit', (_$, e) => { submissions.push(e.text); return { text: e.text } })
     on('process.run', (_$, e) => {
       if (old && e.argv[1] === 'lanes') return { value: { exitCode: 2, stdout: '', stderr: "invalid choice: 'lanes'" } }
-      const items = inactive ? [] : [long ? { ...row, title: 'A very long guide title that must never displace stage times or the total', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
-      const value = e.argv[1] === 'board' ? { ...board, items } : e.argv[1] === 'next' ? { ...following, next: { ...following.next, command: nextCommand } } : lanes
+      const items = inactive ? [] : [long ? { ...row, title: 'A very long guide title that must never displace worker details or elapsed time', total_seconds: 360009, stages: stages.map(s => s.status === 'running' || s.status == null || s.status === 'skipped' ? s : { ...s, seconds: 360000 }) } : row, { ...row, id: 'another', title: 'Another fix' }, ...(extra ? [{ ...row, id: 'third', title: 'Third fix' }] : [])]
+      const value = e.argv[1] === 'next' ? { ...following, items, next: { ...following.next, command: nextCommand } } : lanes
       return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
     })
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'AbovePrompt', props: band })
     let drawn = JSON.stringify(await ui.drawn())
     const itemRows = await ui.findAll({ type: 'Box' })
-    expect(itemRows.some(b => b.text.includes('Another fix: Build ✓ 4s'))).toBe(true)
-    expect(itemRows.some(b => b.text.includes('Polish the guide: Build ✓ 4s'))).toBe(true)
+    expect(itemRows.some(b => b.text.includes('Another fix · Review running · round 2 · Codex sol medium'))).toBe(true)
+    expect(itemRows.some(b => b.text.includes('Polish the guide · Review running · round 2 · Codex sol medium'))).toBe(true)
     expect(drawn).toContain('Tests 1/1 (1 waiting)')
     expect(drawn).toContain('Polish the guide · ')
     expect(drawn).toContain('editing the guide')
-    expect(drawn).toContain('round 2 · total 9s')
-    expect((await ui.findAll({ type: 'Text' })).some(t => t.text.includes('Tests ✗ 5s'))).toBe(true)
+    expect(drawn).toContain('Review running · round 2 · Codex sol medium')
+    expect((await ui.findAll({ type: 'Text' })).some(t => t.text.includes('Build ✓ 4s → Tests ✗ 5s'))).toBe(false)
     // A mounted description does not paint clipping. Check the allocated cells:
-    // the timing block must fit without shrinking; only the title may truncate.
+    // the status block must fit without shrinking; only the title may truncate.
     for (const bodyColumns of [80, 100]) {
       await ui.redraw({ ...band, bodyColumns })
-      const blocks = (await ui.findAll({ type: 'Box' })).filter(b => b.props.flexShrink === 0 && b.text.includes('total 9s'))
-      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0 && b.text.endsWith(': '))
+      const blocks = (await ui.findAll({ type: 'Box' })).filter(b => b.props.flexShrink === 0 && b.text.includes('Review running · round 2 · Codex sol medium'))
+      const titles = (await ui.findAll({ type: 'Box' })).filter(b => b.props.minWidth === 0 && b.text.endsWith(' · ') && b.props.width === bodyColumns - blocks[0]!.text.length)
       expect(blocks.length).toBe(2)
       expect(titles.length).toBe(2)
       expect(Number(titles[0]?.props.width) + Number(blocks[0]?.props.width)).toBe(bodyColumns)
       for (const block of blocks) {
         expect(Number(block.props.width)).toBe(block.text.length)
         expect(block.text.length < bodyColumns).toBe(true)
-        for (const fact of ['Build ✓ 4s', 'Tests ✗ 5s', 'Review ● 0s', 'CI', 'Merge –', 'round 2', 'total 9s']) expect(block.text).toContain(fact)
+        for (const fact of ['Review running', 'round 2', 'Codex sol medium']) expect(block.text).toContain(fact)
       }
     }
     await ui.redraw(band)
     extra = true; await clock.advance(10000)
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('+2 more · /forge for all')
-    expect(drawn).not.toContain('Third fix:')
+    expect(drawn).not.toContain('Third fix · ')
     await ui.redraw({ ...band, bodyColumns: 79 })
     drawn = JSON.stringify(await ui.drawn())
     expect(drawn).toContain('2 running, 1+1 waiting')
@@ -193,16 +193,16 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await ui.press({ key: 'next-step' })
     expect(submissions.at(-1)).toBe('forge close guide')
     await ui.redraw({ ...band, bodyColumns: 79 })
-    expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide:')
+    expect(JSON.stringify(await ui.drawn())).not.toContain('Polish the guide · Review running')
     expect((await ui.find({ key: 'next-step' }))?.props.hotkey).toBe('1')
     await ui.press({ key: 'next-step' })
     expect(submissions).toEqual(['forge close guide', 'forge close guide'])
     old = false; extra = false; long = true; await clock.advance(10000)
     await ui.redraw({ ...band, bodyColumns: 80 })
-    const protectedTime = (await ui.findAll({ type: 'Box' })).find(b => b.props.flexShrink === 0 && b.text.includes('100h'))!
+    const protectedTime = (await ui.findAll({ type: 'Box' })).find(b => b.props.flexShrink === 0 && b.text.includes('Review running · round 2 · Codex sol medium · 30s'))!
     expect(Number(protectedTime.props.width)).toBe(protectedTime.text.length)
     expect(protectedTime.text.length < 80).toBe(true)
-    for (const fact of ['Build✓100h0m', 'Tests✗100h0m', 'Review●30s', 'CI', 'Merge–', 'round2', 'total100h0m']) expect(protectedTime.text).toContain(fact)
+    for (const fact of ['Review running', 'round 2', 'Codex sol medium', '30s']) expect(protectedTime.text).toContain(fact)
     // Compact rows need the same cell-budget proof, including the no-button path.
     for (const state of ['ready', 'long command', 'busy', 'null']) {
       if (state === 'long command') {
@@ -217,7 +217,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
       for (const bodyColumns of [79, 120]) {
         await ui.redraw({ ...band, bodyColumns, maxRows: bodyColumns < 80 ? band.maxRows : 1, isWorking: state === 'busy' })
         const boxes = await ui.findAll({ type: 'Box' })
-        const timing = boxes.find(b => b.props.flexShrink === 0 && b.text === ': Review ● 30s (100h 0m) · ')!
+        const timing = boxes.find(b => b.props.flexShrink === 0 && b.text === ' · Review ● 30s (4d) · ')!
         expect(timing).toBeDefined()
         expect(timing.props.width).toBe(timing.text.length)
         const cells = boxes.filter(b => typeof b.props.width === 'number' && b.props.width !== bodyColumns)
@@ -336,13 +336,13 @@ for (const surface of ['terminal', 'desktop'] as const) {
   test(`${surface} Board tab draws the summary and all four groups with their steps`, async ($, on) => {
     mock.clock(on)
     let shown: object = grouped
-    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'board' ? shown : argv[1] === 'next' ? following : lanes) } }))
+    host(on, surface, argv => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(argv[1] === 'next' ? { ...following, ...shown } : lanes) } }))
     await $.session.start({ cwd: '/repo', surface, isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'forge', surface, component: 'Pane', requestId: 'forge', props: pane })
     const drawn = JSON.stringify(await ui.drawn())
     const order = ['3 in progress · 1 needs you · 1 stuck · go-live about Jan 20', 'NEEDS YOU', 'Ask asks for the period', 'Review found 3 problems. The builder is stuck.',
-      '→ decide: forge close ASK/PERIOD --resolve <narrow|split>', 'STUCK (no progress 8 days)', 'Budget answers', 'Building · last activity Dec 24', '→ forge work late',
-      'MOVING', 'Board counts', 'Review running · 12 min', '→ wait for the review, then forge close counts', 'READY TO MERGE', 'Codex trust fix', 'checks green', '→ merge its pull request, then forge next',
+      'Next: decide: forge close ASK/PERIOD --resolve <narrow|split>', 'STUCK (no progress 8 days)', 'Budget answers', 'Building · last activity Dec 24', 'Next: forge work late',
+      'MOVING', 'Board counts', 'Review running · 12m', 'Next: wait for the review, then forge close counts', 'READY TO MERGE', 'Codex trust fix', 'checks green', 'Next: merge its pull request, then forge next',
       'Show waiting or not started (1)']
     const at = order.map(text => drawn.indexOf(text))
     expect(at.every(n => n >= 0)).toBe(true)

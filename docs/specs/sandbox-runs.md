@@ -2,9 +2,9 @@
 slug: sandbox-runs
 title: Close and build rounds overflow to a remote sandbox when the laptop is full
 status: confirmed
-saved: 2026-10-14T12:56:04.895020+00:00
+saved: 2026-10-14T14:15:22.364942+00:00
 confirmed_by: "Ravi"
-confirmed_hash: 50a346011262e96d8f4ea9b3fe1674be402c4861d6b4f45953c9cf03c1170d81
+confirmed_hash: eebc5b83f456d7acdc25757dae72ac2ccb654eee1ab8adcd02076862465d4050
 ---
 
 # Close and build rounds overflow to a remote sandbox when the laptop is full
@@ -67,22 +67,44 @@ The owner chose each of these on 14 October 2026:
    checks refuse a bundle, Mainline pushes nothing and the item shows the reason in Needs you. Forge
    then collects the refused bundle into a local branch, where the developer reviews it and pushes it
    with their own GitHub access, or discards it; either choice clears the result.
-3. **Model access: each tool's allowed sign-in.**
-   **Claude:** Claude rounds use the team's own Anthropic API key, or the team's own Amazon Bedrock or
-   Google Vertex credentials, from Mainline's vault, billed to the team. Anthropic lets a platform run
-   the unmodified Claude Code CLI in hosted sandboxes, but does not let it collect, store or
-   intermediate Claude.ai credentials or session tokens, so Mainline stores no Claude subscription
-   token. The sandbox runs the Claude Code CLI itself in headless mode, not a harness built on the
-   Agent SDK. Subscription plans stay on the laptop; the owner asks Anthropic about plans in sandboxes
-   later.
+3. **Model access: each developer's own plan.**
+   **Claude:** Claude rounds use the developer's own Claude subscription. During setup the developer
+   runs `claude setup-token` once; the one-year token (`CLAUDE_CODE_OAUTH_TOKEN`, which Anthropic
+   documents for CI and scripts) is kept in Mainline's vault for that person only, and only runs that
+   person starts receive it. The sandbox runs the unmodified Claude Code CLI in headless mode, not a
+   harness built on the Agent SDK. Known risk, accepted by the owner on 14 October 2026: Anthropic's
+   terms say developers may not collect, store or intermediate Claude.ai credentials or session
+   tokens, and Anthropic may enforce this without notice. The owner asks Anthropic for agreement.
+   If a token is missing, refused or stops working, the Claude round runs on the laptop instead, or
+   waits in its line when the laptop is full.
+   **Model credentials stay apart from repository commands.** The relay starts the Claude Code CLI
+   with a clean environment that holds only the developer's `CLAUDE_CODE_OAUTH_TOKEN`: no
+   `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or provider-selection variable, so the subscription is
+   always the credential in use. It also sets `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`, so Bash and hook
+   subprocesses (the tests and every repository command) do not inherit the token. The repo's sandbox
+   secrets reach only those commands, through `forge test` and the worker's command runner, never the
+   Claude process itself, so an app secret named `ANTHROPIC_API_KEY` cannot replace the developer's
+   subscription. Settings the repo ships cannot change this either: the relay starts Claude Code with
+   `--setting-sources user`, so the repo's own `.claude/settings.json` and local settings (their
+   `env`, `apiKeyHelper` and gateway addresses) do not load, and Forge writes the user settings the
+   round needs, such as its hooks. The sandbox image also carries a managed settings file with
+   `allowedProviders` set to Anthropic only and `forceLoginMethod` set to `claudeai`, so a session
+   that tries any other provider or gateway, or an API key, auth token or key helper, is refused.
+   Forge writes the user settings before the round starts and makes them read-only to the user that
+   runs the agent and repository commands. The Codex login file is readable only by the Codex process's own user, not by the
+   user that runs repository commands. Residual risk, accepted by the owner: with Docker available, a
+   repository command can still reach the machine as root; the egress allowlist keeps it from sending
+   a token to any host outside the list, and each machine is thrown away after its run.
+   **No API keys for build work.** Sandbox rounds use plan logins only. LLM API keys serve the apps
+   and agents a team runs (through Mainline's token router), not Symphony's build rounds.
    **Codex:** the developer signs in once with `codex login --device-auth` into Mainline's vault. This
    is a separate sandbox login, never a copy of the laptop's `~/.codex/auth.json`: a Codex refresh
    token works only once, and OpenAI says to use one `auth.json` for each runner or serialized stream.
    Mainline lends one login to one running sandbox at a time. The relay writes the refreshed file back
    to the vault each time Codex refreshes it, not only at the end. When a run ends without that
    write-back (for example a reclaimed sandbox), Mainline marks the login "sign in again" and never lends
-   it again; the developer signs in once more with `codex login --device-auth`. A second Codex round at the same time needs a second sign-in, or it uses the team's
-   OpenAI API key, or it waits. The ChatGPT security settings must allow device sign-in.
+   it again; the developer signs in once more with `codex login --device-auth`. A second Codex round at the same time needs a second sign-in, or it runs on the laptop,
+   or it waits. The ChatGPT security settings must allow device sign-in.
 4. **When remote: only when the laptop is full.** Each kind of run follows its own line. Close's
    test run (with its review) goes to the sandbox when the laptop's test lane is full; a build round
    goes there when the agent line is full. With a free place, either runs locally. The sandbox has its
@@ -204,7 +226,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
   the developer through signing in to Mainline (Forge opens the browser, or shows a short device code
   on a machine with no browser; the team's $5 starter credits arrive once an Owner adds a card or UPI mandate),
   moving the `.env` values
-  into the vault, the sandbox model access (the team's Anthropic API key or cloud credentials for Claude, and `codex login --device-auth` for Codex), installing the team's GitHub App on the repo, the test services the repo needs, and one close in a sandbox; then a fix turns it on.
+  into the vault, the sandbox model sign-ins (`claude setup-token` for Claude and `codex login --device-auth` for Codex; no API keys), installing the team's GitHub App on the repo, the test services the repo needs, and one close in a sandbox; then a fix turns it on.
 - **A team on one app.** Several developers' laptops share one Mainline team: its fair-share places,
   its result store and one live team board that Mainline hosts. The board shows Symphony's team view
   (in progress, needs whom, blocked, go-live) with every run on every laptop and sandbox, by person,
@@ -260,7 +282,7 @@ finish sooner without extra steps, and her team lead, who owns the Mainline team
 2. With them on and the laptop's line full, and Mainline reachable with credits left, close's test run and review, and the next build round, run in the sandbox, with close's results posted to the pull request by the laptop, and Mainline pushes its commits with the team's GitHub App after it checks the bundle; with a free place, the round runs locally; with both full, it waits in line and takes the next free place; when Mainline is down or the team's credits are used up, new runs return to the laptop's line and say why; when credits are used up, running rounds may go on for at most one more hour each, then stop and are collected.
 3. The sandbox gets only committed code (a bundle of the item's branch and the default branch, in a fresh history with no remote, where `forge test` runs), never an ignored file, the laptop's `.git` folder or a GitHub write credential; secrets reach it only from the repo's `sandbox` environment in the vault, never `dev` or `production` values, as environment variables for that run; Mainline refuses a bundle with commits outside the item's branch, commits that are not new on top of the round's start, or changes under `.github/workflows`, pushes nothing and shows the reason in Needs you; the App token that pushes covers that one repo, with contents and pull-request permissions and no workflows permission, and never enters the sandbox.
 4. A sandbox run shows in the machine view with its minutes, credits used and output, and `forge stop` ends it.
-5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in in the browser, with the token returned to a local port with PKCE, a device code only on a machine with no browser, and the token in the keychain; `.env` values moved into the vault; the sandbox model sign-ins; the team's GitHub App installed on the repo; test services; one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` names any key the sandbox environment still lacks and any token in a tracked file; a Claude round runs the Claude Code CLI in headless mode with the team's own Anthropic API key or Bedrock or Vertex credentials from the vault, and Mainline stores no Claude subscription token; a Codex round uses that developer's separate `codex login --device-auth` login from the vault, lent to one running sandbox at a time and written back refreshed when the run ends; with no free plan login, a round uses the team's API key from the vault or waits; credits, balance alerts and top-ups live on Mainline's dashboard (FORGE-SANDBOX-3).
+5. The agent offers it when work waits for the laptop and sets it up with the developer (Mainline sign-in in the browser, with the token returned to a local port with PKCE, a device code only on a machine with no browser, and the token in the keychain; `.env` values moved into the vault; the sandbox model sign-ins; the team's GitHub App installed on the repo; test services; one close in a sandbox); `forge secrets` adds and lists vault entries without showing values; the repo's image and test services start in the sandbox and `forge doctor` reports what is missing; `forge.toml` never holds a token or secret value; `forge doctor` names any key the sandbox environment still lacks and any token in a tracked file; a Claude round runs the Claude Code CLI in headless mode with the `claude setup-token` token of the developer who started it, kept in the vault for that person only, and runs on the laptop when that token is missing or refused; a Codex round uses that developer's separate `codex login --device-auth` login from the vault, lent to one running sandbox at a time and written back refreshed when the run ends; with no free plan login, a round runs on the laptop or waits, and no API key is used for build work; credits, balance alerts and top-ups live on Mainline's dashboard (FORGE-SANDBOX-3).
 6. A remote round's question, stuck stop or failure reaches the laptop and shows in Needs you and `forge work` exactly as a local round's does; a reclaimed sandbox loses at most 5 minutes of a round's changes; Forge collects the checkpoint bundle and patch a stopped or reclaimed sandbox left and applies them before the next round, which starts from the last saved commits.
 7. With the laptop asleep, running rounds finish and Mainline pushes them at once; on wake Forge fetches them and updates its records; Mainline deletes a result only after its push succeeds and Forge has fetched it, or after Forge has collected a refused result into a local branch or the developer discarded it; turning it off first waits until every round is pushed and fetched, and collects what stopped sandboxes left and every refused result, then, with an Owner's sign-in, deletes the repo's sandboxes, images, caches and results in Mainline and says what it removed; an item never runs two rounds at once, even when the laptop loses touch with a sandbox.
 8. (FORGE-SANDBOX-3) On a team, each active developer gets an equal slice of the team's places, with unused slices lent and returned as the next place frees, never by stopping a running round; every member can watch any run's output, while only the starter can send notes, and the starter or an Owner can stop it; the team board and every pane show every run on every signed-in laptop and every sandbox, and mark teammates who are not signed in.

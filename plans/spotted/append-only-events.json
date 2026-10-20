@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_live_status.py\tThree existing Codex cases failed in the related run and one also failed on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 42,
+      "text": "Three existing Codex cases failed in the related run and one also failed on the default branch.",
+      "from": "worker",
+      "item": "append-only-events",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tTwo Codex cases failed in the related suite but passed a targeted rerun and the read-Codex refusal also occurs on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 42,
+      "text": "Two Codex cases failed in the related suite but passed a targeted rerun and the read-Codex refusal also occurs on the default branch.",
+      "from": "worker",
+      "item": "append-only-events",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

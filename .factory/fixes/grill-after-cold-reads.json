@@ -1,0 +1,54 @@
+{
+  "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
+  "branch": "fix/grill-after-cold-reads",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14f13-d44d-77c1-b233-ec27594197c6",
+    "head": null,
+    "start": "801b58003823c54b8a107cbee613132cdeb20f38"
+  },
+  "done_when": "The coordinator guide says: answer cold-read rounds yourself, and once a read is clean, grill the human one question at a time on the choices you made answering the notes (behaviours, limits, refusals, scope cuts) and record the answers in the plan before approval; new and existing repos get it through init and sync, and the guide test covers both",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1c05d8cacad5c7f8b0af31d39ba52da9b2c54368a4955a86f2cb0076d7ee5c1b",
+    "changed": "c45210e008b8af89537510c5e5fc24cc03346d76f85bd1fd8a0b684ad26b8085",
+    "commit": "6e9527bc1e0a5e33ce19a94117a8c5af4b53bcac",
+    "dismissals": [],
+    "findings": [],
+    "id": "a95bbafa-5c5c-46bd-87b9-11f000e2bb02",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T12:53:36.910635+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T12:58:21.693468+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T13:09:55.222732+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T13:18:47.590345+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "74225f14-c695-49ab-b80e-d03e541be973",
+    "head": "c332ac89476fb63c0ad3af59aaddac22a754c0be",
+    "keys": {},
+    "round": 2
+  },
+  "why": "After cold reads pass, the coordinator brings the plan straight to approval, so the choices it made alone while answering the read notes never reach the human",
+  "worker": "codex"
+}

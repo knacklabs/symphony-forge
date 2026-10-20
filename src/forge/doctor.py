@@ -11,11 +11,11 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, close, codex, init, machine, quicktest, repo, review, story, sync, task
+from forge import __version__, checks, claude_sdk, close, codex, init, machine, quicktest, repo, review, story, sync, task
 
 COMMANDS = [{"words": "doctor", "run": "doctor", "changes_state": False,
     "help": "Check tools, versions, hooks, adapter drift and the named CI checks", "args": [(('--fix',), {"action": "store_true", "help":
-              "repair what doctor safely can: the pinned Forge, the Codex SDK, the git hooks, "
+              "repair what doctor safely can: the pinned Forge, the agent SDKs, the git hooks, "
               "the folders of finished work and the files forge sync writes"})], "position": 30,
     "listing": "| `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |",
 }]
@@ -322,6 +322,12 @@ def doctor(args: argparse.Namespace) -> int:
         if not shutil.which(tool): add(f"{tool} is not installed or not on PATH.", INSTALL[tool])
     if shutil.which("gh") and repo.run("gh", "auth", "status", cwd=top).returncode: add("gh is not signed in to GitHub.", "gh auth login")
     if needs_sdk and (problem := sdk_failed or codex.sdk_problem()): add(problem)
+    needs_claude_sdk = workers != "codex" and not os.environ.get("CLAUDECODE")
+    claude_failed = ""
+    if args.fix and needs_claude_sdk and shutil.which("uv") and claude_sdk.sdk_problem():
+        try: claude_sdk.install()
+        except repo.Refused as refused: claude_failed = str(refused).partition("\nNext: ")[0]
+    if needs_claude_sdk and (problem := claude_failed or claude_sdk.sdk_problem()): add(problem)
     try:  # the reviewer close runs, at the version Forge pins
         review.helper()
     except repo.Refused as refused: add(str(refused).partition("\nNext: ")[0], INSTALL["autoreview"])
@@ -386,12 +392,13 @@ def doctor(args: argparse.Namespace) -> int:
                     add(f"The {event} hook in {rel} fails with exit code " f"{done.returncode}{bare}: {said[0]}", fix)
     if not cfg["checks"]: add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
     if shutil.which("gh"):
-        prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state")
+        prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state,number,headRefName")
         for pr in prs if isinstance(prs, list) else []:
             if not isinstance(pr, dict) or pr.get("state") != "OPEN" or not pr.get("headRefOid"):
                 continue
             try:
-                if reason := checks.queued_reason(top, pr["headRefOid"]):
+                if reason := checks.queued_reason(top, pr["headRefOid"], number=pr.get("number"),
+                                                  branch=pr.get("headRefName") or ""):
                     add(reason, "make a matching runner available or correct runner in forge.toml, "
                         "then run forge sync only if you change the runner setting")
             except repo.Refused as error:
@@ -445,8 +452,6 @@ def doctor(args: argparse.Namespace) -> int:
             [f"{key} = {local[key]}" for key in ("tools", "workers") if key in local]
             + [f"models.{name} ({', '.join(f'{key} {value}' for key, value in entry.items())})"
                for name, entry in entries]) + ".")
-    if "review" in cfg.get("models", {}):
-        print("- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort.")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
@@ -460,13 +465,30 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"Everything {'checks' if trusted or cfg['tools'] == 'claude' else 'else checks'} out for Forge {cfg['version']}.")
         print(compared)
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
-    budget = machine.half_cores()
+    runners = machine.busy_runners()
+    budget = machine.half_cores(runners)
     print(f"This machine: {cores} cores, so {budget} agents at once and "
-          f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+          f"{machine.test_slots(runners)} test runs at once, each on {budget} cores.")
+    memory = machine.memory()
+    free = memory["available_bytes"]
+    available = "unknown" if free is None else f"{free / 1e9:.1f} GB"
+    print(f"Memory: {available} free, floor {machine.memory_floor(memory) / 1e9:.1f} GB.")
+    allocations = [run.get("test_cpus") for run in machine.entries()
+                   if run["kind"] == "test" and run.get("started_at")]
+    processes = "unknown" if None in allocations else str(sum(allocations))
+    print(f"Test processes in use: {processes}. Busy runners: {runners} ({runners} cores reserved).")
+    if os.name != "nt":
+        processes = repo.run("ps", "-axo", "command=")
+        if processes.returncode == 0 and re.search(
+                r"^(?:\S*/)?Runner\.Listener(?:\s|$)|"
+                r"^(?:(?:\S*/)?(?:bash|sh|dash|zsh)\s+)?(?:\S*/)?actions-runner/run\.sh(?:\s|$)",
+                processes.stdout, re.M):
+            print("- Warning: a GitHub Actions self-hosted runner runs on this machine. "
+                  "Its CPUs count against Forge's load limit.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    events = repo.forge_dir(top) / "events.jsonl"
-    history = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    from forge import event_log
+    history = event_log.read(top)
     last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
     said = ("" if last is None else " The last Codex turn ran with Fast."
             if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else

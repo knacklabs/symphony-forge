@@ -16,6 +16,8 @@ from test_codex_worker import _started
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-LANES-1"
 
 
@@ -261,9 +263,9 @@ def check_stop_removes_waiter_and_ends_worker_and_test(env, tmp_path, release_se
     configure(env, server)
     item, folder = env.start_fix()
     hold_agents(env)
-    provider = repo.bin / ("claude" if lane_adapter == "claude" else "codex-app-server")
-    indent = "" if lane_adapter == "claude" else "            "
-    marker = 'name = pathlib.Path.cwd().name' if lane_adapter == "claude" else 'name = pathlib.Path(cwd).name'
+    provider = repo.bin / ("claude_agent_sdk/__init__.py" if lane_adapter == "claude" else "codex-app-server")
+    indent = "    " if lane_adapter == "claude" else "            "
+    marker = 'name = Path.cwd().name' if lane_adapter == "claude" else 'name = pathlib.Path(cwd).name'
     provider.write_text(provider.read_text("utf-8").replace(marker,
         marker + f'\n{indent}(here / "model-pid").write_text(str(os.getpid()))'), "utf-8")
     worker_pid = tmp_path / "worker-pid"
@@ -366,6 +368,11 @@ def check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monk
                "def test_current_app():\n    assert VALUE == 1\n")
     repo.write("tests/test_unrelated.py", "def test_unrelated():\n"
                "    assert False, 'unrelated test was selected'\n")
+    # One related file out of four stays below the broad-selection threshold,
+    # so this still proves dirty source runs rather than the item's fallback.
+    for number in range(2):
+        repo.write(f"tests/test_other_{number}.py", f"def test_other_{number}():\n"
+                   "    assert False, 'unrelated test was selected'\n")
     cfg = (repo.path / "forge.toml").read_text("utf-8")
     cfg += "test = " + json.dumps(shell([sys.executable, "-m", "pytest", "tests", "-q"])) + "\n"
     cfg += 'fast_test = "forge test --pytest {base}"\n'
@@ -381,13 +388,14 @@ def check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monk
     assert "test_current_app" in result.stdout and "1 failed" in result.stdout
     assert "unrelated test was selected" not in result.stdout
     assert "exited with status 1" in result.stdout
-    # Dirty shared pytest settings must select the full suite, even with no dirty source.
+    # Shared inputs make the selection broad. No test file was touched, so
+    # the worker leaves the suite to CI instead of running the unrelated failures.
     (folder / "app.py").write_text("VALUE = 1\n", "utf-8")
     project = folder / "pyproject.toml"
     project.write_text(project.read_text("utf-8") + '\n[tool.pytest.ini_options]\naddopts = "-ra"\n',
                        "utf-8")
     result = repo.forge("test", cwd=folder)
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "Shared test inputs changed" in result.stdout
-    assert "unrelated test was selected" in result.stdout
-    assert "1 failed, 1 passed" in result.stdout
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.count("CI runs the full suite.") == 1, result.stdout
+    assert "No changed or module-related test files to run." in result.stdout
+    assert "unrelated test was selected" not in result.stdout

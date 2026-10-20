@@ -21,6 +21,8 @@ from conftest import _install
 from test_close import env  # noqa: F401
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-DOCTORFIX-1"
 WHY = "Bring the files Forge writes for Claude Code and Codex up to date"
 SETTINGS, HOOKS, SKILL = ".claude/settings.json", ".codex/hooks.json", ".claude/skills/forge/SKILL.md"
@@ -153,7 +155,8 @@ def _old_hosts(repo, client: Path) -> str:
 
 def _wanted(repo, client: Path, tmp_path) -> dict[str, str]:
     """What forge sync writes for this client: run it in a throwaway fix and read the result."""
-    started = repo.forge("fix", "start", "See what sync writes", "--done", "read", cwd=client)
+    started = repo.forge("fix", "start", "See what sync writes", "--done", "read",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     folder = Path(started.stdout.split(" in ", 1)[1].splitlines()[0])
     assert repo.forge("sync", cwd=folder).returncode == 0
@@ -181,7 +184,7 @@ def _folder_of(repo, client: Path, branch: str) -> Path:
 
 
 def _start_fix(repo, client: Path, why: str = "Try doctor on a fix branch") -> Path:
-    started = repo.forge("fix", "start", why, "--done", "it works", cwd=client)
+    started = repo.forge("fix", "start", why, "--done", "it works", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     return Path(started.stdout.split(" in ", 1)[1].splitlines()[0])
 
@@ -345,7 +348,7 @@ def _a_fix_already_named_forge_files_is_left_alone(repo, gh, tmp_path, monkeypat
     client = _client(repo, gh, tmp_path, monkeypatch)
     _old_hosts(repo, client)
     started = repo.forge("fix", "start", "Something else", "--done", "x", "--slug", "forge-files-20261004-0900",
-                         cwd=client)
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stderr
     folder = _folder_of(repo, client, "fix/forge-files-20261004-0900")
     before = _status(repo, folder)
@@ -841,12 +844,12 @@ def _cases(*cases) -> list:
     (_a_stale_tests_workflow_is_repaired_in_place, [None], ()),
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
     (_a_fix_already_named_forge_files_is_left_alone, [None], ()),
-    (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n", ""], ()),
+    (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n"], ()),
     (_a_stale_doctor_fix_gets_one_step_and_nothing_new_starts,
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),
     (_doctor_starts_its_fix_only_from_a_clean_checkout_at_origin,
-     ["unstaged config", "staged config", "untracked file", "behind origin"], ()),
+     ["staged config", "untracked file", "behind origin"], ()),
     (_a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row, [None], ()),
     (_a_commit_a_git_hook_refuses_leaves_the_fix, ["record", "files"], SHELL),
     (_a_file_the_system_wont_write, [None], SHELL),

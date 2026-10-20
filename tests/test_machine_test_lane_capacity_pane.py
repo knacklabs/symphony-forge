@@ -37,10 +37,10 @@ function text(node) {{
   if (Array.isArray(node)) return node.map(text).join('');
   return node?.props ? text(node.props.children ?? node.props.label ?? '') : '';
 }}
-function button(node, label) {{
-  if (Array.isArray(node)) return node.map(child => button(child, label)).find(Boolean);
-  if (node?.type === 'Button' && node.props.label === label) return node;
-  return node?.props ? button(node.props.children, label) : undefined;
+function button(node, key) {{
+  if (Array.isArray(node)) return node.map(child => button(child, key)).find(Boolean);
+  if (node?.type === 'Button' && node.props.key === key) return node;
+  return node?.props ? button(node.props.children, key) : undefined;
 }}
 mod.register(on);
 await fire('session.start', {{cwd:{json.dumps(str(repo.path))}, isInteractive:false, surface:'mobile'}}, api);
@@ -51,7 +51,7 @@ const wide = text(await fire('ui.render', prompt, api));
 const compact = text(await fire('ui.render', {{...prompt, props:{{...prompt.props, bodyColumns:60, maxRows:1}}}}, api));
 const pane = {{component:'Pane', requestId:'forge', surface:'terminal', props:{{bodyColumns:120}}}};
 const board = await fire('ui.render', pane, api);
-button(board, 'Machine').props.onPress();
+button(board, 'tab-Machine').props.onPress();
 const machine = text(await fire('ui.render', pane, api));
 console.log(JSON.stringify({{headless, wide, compact, machine}}));
 """)

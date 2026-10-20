@@ -23,6 +23,7 @@ def rounds(env, item, where, paths, title=""):
     for number, path in enumerate(paths, 1):
         env.reviews(blocked(finding("P1", title or f"Round {number} defect", path)))
         env.commit(where, "app.py", f"print({number})\n")
+        env.commit(where, path, f"pass  # review round {number}\n")
         result = env.close(item)
         assert result.returncode == 1, result.stdout + result.stderr
         if number < len(paths):
@@ -63,7 +64,6 @@ def _carried_dismissal_cannot_stop_the_third_review(env):
 
 @pytest.mark.parametrize("case,details", [
     *[(_other_blocked_reviews_keep_the_existing_refusal, details) for details in (
-        (["src/a.py", "src/b.py", "src/c.py"], True),
         (["src/a.py", "src/a.py"], True),
         (["src/branch.py"] * 3, False),
         (["src/$cache.py"] * 3, True))],

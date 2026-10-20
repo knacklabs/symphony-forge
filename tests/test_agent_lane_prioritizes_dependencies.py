@@ -41,7 +41,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         assert "Waiting items that other planned work waits on go first, first-come within each group" in guide
     machine_cores(repo, 2)
     configured = repo.forge("fix", "start", "Configure the client", "--done", "Workers use Claude",
-                            "--slug", "configure-client")
+                            "--slug", "configure-client", "--kind", "mechanical")
     assert configured.returncode == 0, configured.stderr
     main = repo.path
     repo.path = worktree(repo, "fix/configure-client")
@@ -113,6 +113,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         finish(repo, list(processes.values()))
 
 
+@pytest.mark.platform
 def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
         env, tmp_path, monkeypatch, claude_payload):
     repo = env.repo
@@ -154,6 +155,9 @@ def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
                 _land_fixture(repo)
                 for number in range(40):
                     repo.git("branch", f"story/FINISHED-{number}")
+            # Compare admission with equally current bases, excluding Git's real startup merge cost.
+            repo.git("merge", "-q", "--no-edit", "origin/main",
+                     cwd=worktree(repo, f"task/SHOP-{part}"))
             trace = tmp_path / f"admission-{index}.jsonl"
             with monkeypatch.context() as tracing:
                 tracing.setenv("GIT_TRACE2_EVENT", trace.as_posix())

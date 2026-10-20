@@ -1,15 +1,17 @@
-"""`forge board`: one static page that tells each story's history and current state in plain English,
-how long each step took, which steps were slow, and the three success numbers. `forge next` shows
-those numbers in one line once the check date is here.
+"""`forge board`: the facts behind the live board page (board_server.py) and `--json`: each story's
+history and current state in plain English, how long each step took, which steps were slow, and the
+three success numbers. `forge next` shows those numbers in one line once the check date is here.
 
 It reads every copy of the state: in local worktrees, on Forge's branches on the remote, and on the
 default branch. Steps are only ever added, so the copy with the most dated steps is the newest. gh
 adds each pull request's title, summary line, merge date and when its checks passed; close stores
-none of those. Without gh the page shows the state and its dates only.
+none of those. Without gh the board shows the state and its dates only.
 """
 from __future__ import annotations
 
+import copy
 import functools
+import io
 import json
 import os
 import re
@@ -17,22 +19,20 @@ import shutil
 import statistics
 import subprocess
 import sys
-import webbrowser
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from textwrap import shorten
 from typing import Any
 
-from forge import __version__, approval, board_facts, board_graph, board_visuals, codex, machine, repo, story, task
+from forge import __version__, approval, board_facts, board_graph, codex, machine, native, repo, story, task
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
-    "help": "Write and open the plain-English board page",
+    "help": "Open the live board page on this computer",
     "args": [(('--json',), {"action": "store_true", "help": "Print the machine view"}),
-             (('--out',), {"metavar": "PATH", "help":
-              "write the page here instead of .git/forge/board.html"})],
+             (('--out',), {"metavar": "PATH", "help": "write every item's facts here as JSON instead"})],
     "position": 60,
-    "listing": "| `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |",
+    "listing": "| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |",
 }]
 
 CHECK_DATE = "2026-11-15"  # ponytail: the rebuild's check date, from the spec's success measure
@@ -55,16 +55,13 @@ def board(args: Any) -> int:
     if args.json:
         print(json.dumps(machine_board(top)))
         return 0
-    view = machine_board(top, trim=False)
-    stories, prs = _gather(top)
-    page = board_visuals.page(view, "How the factory is doing: " + "; ".join(_numbers(stories, prs)) + ".",
-                              prs is not None, _when(repo.now()) or datetime.now(timezone.utc))
-    out = Path(args.out) if args.out else repo.forge_dir(top) / "board.html"
+    if not args.out:
+        from forge import board_server
+        return board_server.serve(top)
+    out = Path(args.out)  # every item, finished ones included: what the live page's other pages read
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(page.encode("utf-8"))  # same bytes on Windows
+    out.write_bytes(json.dumps(machine_board(top, trim=False)).encode("utf-8"))  # same bytes on Windows
     print(f"Wrote the board to {out}")
-    if sys.stdout.isatty():  # ponytail: open it for a person at a terminal; never in a pipe or a test
-        webbrowser.open(out.resolve().as_uri())
     return 0
 
 
@@ -82,7 +79,8 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
         commits(last: 1) { nodes { commit { oid statusCheckRollup {
           contexts(first: 100) { pageInfo { hasNextPage } nodes {
             __typename
-            ... on CheckRun { databaseId name status conclusion startedAt completedAt }
+            ... on CheckRun { databaseId name status conclusion startedAt completedAt
+              checkSuite { status conclusion workflowRun { workflow { id name } } } }
             ... on StatusContext { id context state createdAt }
           } }
         } } } }
@@ -95,12 +93,13 @@ CHECKS_QUERY = """query($owner: String!, $name: String!) {
 def _machine_prs(top: Path) -> list[Item]:
     """One request for the newest 25 open PRs, cached across command invocations for 60s."""
     cache = repo.forge_dir(top) / "checks-cache.json"
-    now = _when(repo.now())
+    fetched_at = repo.now()
+    now = _when(fetched_at)
     try:
         saved = json.loads(cache.read_text(encoding="utf-8"))
         at = _when(saved.get("fetched_at"))
         if now and at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("prs"), list):
-            return saved["prs"]
+            return [{**pr, "checks_fetched_at": saved["fetched_at"]} for pr in saved["prs"]]
     except (OSError, ValueError, AttributeError):
         pass
     done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
@@ -127,13 +126,13 @@ def _machine_prs(top: Path) -> list[Item]:
                 pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
     temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
     try:
-        temp.write_text(json.dumps({"fetched_at": repo.now(), "prs": prs}), encoding="utf-8")
+        temp.write_text(json.dumps({"fetched_at": fetched_at, "prs": prs}), encoding="utf-8")
         os.replace(temp, cache)
     except OSError:
         pass  # A read-only/full Git directory must not prevent a view.
     finally:
         temp.unlink(missing_ok=True)
-    return prs
+    return [{**pr, "checks_fetched_at": fetched_at} for pr in prs]
 
 
 def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
@@ -150,10 +149,25 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
     except (KeyError, TypeError, IndexError):
         return "unknown", [], []
     statuses, events, names, failures = [], [], [], []
+    workflows = set()
     for check in nodes:
         if not isinstance(check, dict):
             continue
         name = check.get("name") or check.get("context") or "Check"
+        suite = check.get("checkSuite") or {}
+        workflow = (suite.get("workflowRun") or {}).get("workflow") or {}
+        workflow_id = workflow.get("id")
+        if (workflow_id and suite.get("status") == "COMPLETED" and suite.get("conclusion")
+                and workflow_id not in workflows):
+            workflows.add(workflow_id)
+            result = {"SUCCESS": "passed", "FAILURE": "failed", "TIMED_OUT": "timed out",
+                      "CANCELLED": "cancelled", "ACTION_REQUIRED": "needs action",
+                      "STARTUP_FAILURE": "failed to start", "NEUTRAL": "neutral",
+                      "SKIPPED": "skipped", "STALE": "stale"}.get(
+                          suite["conclusion"], suite["conclusion"].lower().replace("_", " "))
+            events.append({"id": f"workflow:{workflow_id}:{pr['headRefOid']}",
+                           "kind": "run_finished", "title": f"{workflow['name']} {result}",
+                           "conclusion": suite["conclusion"]})
         names.append(name)
         value = (check.get("conclusion") if check.get("status") == "COMPLETED" else None) or check.get("state")
         failed = (value in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE")
@@ -168,7 +182,7 @@ def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list
             identity = (f"check-run:{check['databaseId']}:{check['completedAt']}"
                         if check.get("databaseId") is not None and check.get("completedAt")
                         else f"status:{check['id']}" if check.get("__typename") == "StatusContext" and check.get("id") else None)
-            if identity:
+            if identity and not workflow:
                 events.append({"id": identity, "kind": "checks_failed", "title": f"{name} failed"})
     missing = any(not any(n == want or n.startswith(want + " (") for n in names) for want in required)
     status = ("fail" if "fail" in statuses else "running" if "running" in statuses else
@@ -191,16 +205,10 @@ def _rollup(pr: Item) -> list[Item]:
 
 def _event_history(top: Path) -> tuple[list[Item], dict[str, list[Item]]]:
     def read():
-        path = repo.forge_dir(top) / "events.jsonl"
-        recorded, by_item = [], {}
-        for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else []:
-            try:
-                event = json.loads(line)
-                if isinstance(event, dict):
-                    recorded.append(event)
-                    by_item.setdefault(event.get("item"), []).append(event)
-            except ValueError:
-                continue
+        from forge import event_log
+        recorded, by_item = event_log.read(top), {}
+        for event in recorded:
+            by_item.setdefault(event.get("item"), []).append(event)
         return recorded, by_item
     return repo.command_fact("board events", top, read)
 
@@ -218,47 +226,67 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
             continue
         kind = event.get("kind")
         if kind in ("work", "worker") or kind == "read" and event.get("family") == "codex":
-            lock = codex._item_file(top, item, ".lock", "Grill" if kind == "read" else "Build")
-            if lock.is_file() and codex._alive(codex._json(lock)) is False:
+            if not native.worker_alive(top, item, kind, event.get("round")):
                 continue
         runs.append(event)
     return runs
 
 
-def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> Item:
+def machine_board(top: Path, history: Item | None = None, trim: bool = True, cache: Item | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
-    `trim` leaves out work finished more than seven days ago; the page keeps it."""
-    from forge import nextstep, time_records
+    `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
+    `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
+    from forge import known_issues, nextstep, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
     if not trim:
         history = {**history, "expired": set()}
     landed = history["landed"]
-    starters = _starters(top)
     best: dict[str, tuple[Item, Path | str]] = {}
     merged = set()
     for rel, state, where in history["copies"]:
         if where == landed:
             merged.add(rel)
-        if rel not in best or len(_steps(state)) > len(_steps(best[rel][0])):
+        if (rel not in best or len(_steps(state)) > len(_steps(best[rel][0])) or
+                len(_steps(state)) == len(_steps(best[rel][0])) and where == trees.get(state.get("branch"))):
             best[rel] = state, where
     prs = _machine_prs(top)
     by_branch = {p.get("headRefName"): p for p in prs}
     # Older open PRs keep their number, but deliberately have unknown checks.
     github = board_facts.prs(top)
+    people_prs = board_facts.prs(top, people=True)
+    people_branches = {pr["headRefName"]: pr for pr in [
+        *(people_prs or {}).get("open", []), *board_facts.merged_prs(people_prs)]
+        if isinstance(pr.get("headRefName"), str)}
+    names = {("email", email): name for email, name in _display_names(top).items()}
+    for pr in sorted(people_branches.values(), key=lambda pr: pr.get("mergedAt") or "", reverse=True):
+        for actor in (pr.get("author"), pr.get("mergedBy")):
+            if actor and actor.get("name"):
+                board_facts.person(actor, names=names)
+        actors = time_records.from_body(pr.get("body") or "")
+        for field in ("started_by", "approved_by"):
+            board_facts.person(actors, field=field, names=names)
     for pr in (github or {}).get("open", []):
         if isinstance(pr.get("headRefName"), str):
             by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
     finished_prs = board_facts.merged_prs(github)
+    remembered = {branch for branch, pr in people_branches.items() if pr.get("author") or pr.get("mergedBy")}
     # The upgrade's six-week history is visible immediately, including older finished rows.
     history = {**history, "expired": history["expired"] - {
         rel for rel, (state, _) in best.items()
-        if state.get("branch") in {pr["headRefName"] for pr in finished_prs}}}
+        if state.get("branch") in remembered | {pr["headRefName"] for pr in finished_prs}}}
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
     merged_prs = set(merged_details)
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
+    # Rows and counts must read the same published drop or restore, even with a stale worktree.
+    for rel, (state, where) in list(best.items()):
+        if fix := STATE.fullmatch(rel)["fix"]:
+            if rel not in merged and state.get("branch") not in merged_prs:
+                state = nextstep.at_ref(top, fix, state, by_branch.get(state.get("branch")))
+            best[rel] = state, where
+    best = {rel: pair for rel, pair in best.items() if pair[0].get("status") != "dropped"}
     readiness: dict[str, Item] = {}
     person_waits: dict[str, list[Item]] = {}  # each part's and fix's waits on a person, for Needs you
     roadmap = {s["key"]: s for s in repo.roadmap(top) if s.get("status") != "superseded"}
@@ -267,11 +295,18 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     completed.update({STATE.fullmatch(rel)["key"]: state for rel, (state, _) in best.items()
                       if rel.endswith("/story.json") and state.get("status") == "done"})
     recorded, by_item = _event_history(top)
+    story_event_dates: dict[str, list[Any]] = {}
+    for event in recorded:
+        key, separator, _ = str(event.get("item", "")).partition("/")
+        if separator:
+            story_event_dates.setdefault(key, []).append(event.get("at"))
     timings = time_records.read(top, "timings")
 
-    branch_dates = dict(line.split("\0", 1) for line in repo.git(
-        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)",
-        "refs/heads", "refs/remotes/origin", cwd=top).splitlines())
+    refs = [line.split("\0") for line in repo.git(
+        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)%00%(objectname)",
+        "refs/heads", "refs/remotes/origin", cwd=top).splitlines()]
+    branch_dates = {name: date for name, date, _ in refs}
+    tips = {name: tip for name, _, tip in refs}
     timing_dates: dict[str, list[str]] = {}
     timings_by_item: dict[Any, list[Item]] = {}
     for timing in timings:
@@ -281,6 +316,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             end = start + timedelta(seconds=timing.get("seconds") or 0)
             timing_dates.setdefault(timing.get("item"), []).append(end.isoformat())
 
+    owners = {}
+
     @functools.cache
     def story_read(key: str) -> tuple[str, Item]:
         """A story's plan read and task rows: the same for the story and each of its parts."""
@@ -288,7 +325,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if where == f"story/{key}":
             where = trees.get(where) or where
         notes = _read(top, where, f"plans/{key}.read.md", history)
-        assignments = task.rows(task.sections(story._plan(top, key, landed if key in completed else None, history)))
+        plan = story._plan(top, key, landed if key in completed else None, history)
+        owners[key] = task.owner(plan)
+        assignments = task.rows(task.sections(plan))
         if not story._record(notes)[0]:
             return "none", assignments
         text = _read(top, where, f"plans/{key}.md", history)
@@ -299,7 +338,58 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         except repo.Refused:
             return "blocked", assignments
 
+    forge_files = repo.forge_dir(top)
+    people = "" if cache is None else repo.blob_hash(json.dumps(sorted(map(str, names.items()))))  # in every row
+    files = [] if cache is None else [  # Forge's per-item records: locks, turn logs, approvals
+        (path.relative_to(forge_files).as_posix(), path.stat().st_mtime_ns)
+        for path in forge_files.rglob("*") if path.is_file()]
+    docs = {} if cache is None else {name: repo.blob_hash(text) for name, text in history.get("docs", {}).items()}
+    local = [] if cache is None else [entry for entry in cache.get("local", [])  # records and plans on disk
+                                      if entry[1] not in ("forge.toml", "plans/roadmap.json")]
+    starters = {} if cache is None else _starters(top)
+
     def row(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
+        if cache is None:
+            return derive(item, kind, title, state, where)
+        # ponytail: a row's inputs are the facts that name its story or fix, a substring match that can
+        # over-include (SHOP-1 in SHOP-10) and only rebuilds more; a fact naming neither is not an input.
+        own = item.split("/")[0]
+        inputs = json.dumps([
+            # A story's next step reads the default branch, so a story row also rebuilds when it moves.
+            item, kind, title, state, str(where), tips.get(str(where)) if where != landed else None,
+            tips.get(landed) if kind == "story" else None, [entry for entry in local if own in entry[0] + entry[1]],
+            [(name, blob) for name, blob in docs.items() if own in name],
+            completed.get(own), starters.get(repo.state_path(item)), people,
+            [(branch, pr) for branch, pr in people_branches.items() if own in branch],
+            [(ref, tip) for ref, tip in tips.items() if own in ref],
+            [(branch, pr) for branch, pr in by_branch.items() if own in str(branch)],
+            sorted(rel for rel in merged if own in rel), [(rel, at) for rel, at in history["dates"].items() if own in rel],
+            [(rel, part) for rel, (part, _) in best.items() if own in rel],
+            [(name, e) for name, e in by_item.items() if own in str(name)],
+            [(name, t) for name, t in timings_by_item.items() if own in str(name)],
+            [f for f in files if own in f[0]]], sort_keys=True, default=str)  # hashed below, kept small to save
+        kept, inputs = cache["rows"].get(item), repo.blob_hash(inputs)
+        if kept and kept[0] == inputs:
+            made, ready, waits, owner = copy.deepcopy(kept[1])
+            if owner is not None:  # the story's owner, which its unstarted parts read after the rows
+                owners.setdefault(own, owner)
+            if made["idle_since"] and (now := _when(repo.now())) and _when(made["idle_since"]):
+                made["idle_seconds"] = max(0, (now - _when(made["idle_since"])).total_seconds())
+                made["stalled"] = made["idle_seconds"] > 86400
+        else:
+            made = derive(item, kind, title, state, where)
+            ready, waits = readiness.get(item), person_waits.get(item)
+            cache["rebuilt"].append(item)
+            running = made["worker"] or made["tests"] or made["activity"]["status"] == "running"  # times move
+            kept = [made, ready, waits, owners.get(own)]
+            cache["rows"][item] = None if running else (inputs, copy.deepcopy(kept))
+        if ready is not None:
+            readiness[item] = ready
+        if waits is not None:
+            person_waits[item] = waits
+        return made
+
+    def derive(item: str, kind: str, title: str, state: Item, where: Path | str) -> Item:
         if kind == "story" and item in completed:
             state = {**state, **completed[item], "status": "done"}
         elif kind == "task" and item.split("/")[0] in completed:
@@ -340,7 +430,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                     if isinstance(f, dict) and n not in dismissed]
         worker = None
         lock = codex._item_file(top, item, ".lock", "Grill" if kind == "story" else "Build")
-        if lock.is_file() and codex._alive(codex._json(lock)) is not False:
+        if native.lock_alive(lock) is not False:
             family = state.get("worker")
             role = "grill" if kind == "story" else "build" if kind == "task" else "lite"
             if family == "codex" and kind != "story":
@@ -396,7 +486,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                  + timing_dates.get(item, [])
                  + [branch_dates.get(branch), branch_dates.get("origin/" + branch)])
         if kind == "story":
-            dates.extend(e.get("at") for e in recorded if str(e.get("item", "")).startswith(item + "/"))
+            dates.extend(story_event_dates.get(item, []))
             prefix = f".factory/stories/{item}/tasks/"
             dates.extend(s.get("at") for rel, (part, _) in best.items() if rel.startswith(prefix)
                          for s in _steps(part))
@@ -445,6 +535,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             if live:
                 stages[-1].update(status="running", started_at=live[0].get("at"), ended_at=None)
                 stages[-1]["elapsed"] = elapsed(live[0].get("at"))
+        # The initial close has no worker turn yet (stored as zero); people count from one.
+        if round_number is not None:
+            round_number = max(1, round_number)
+        if worker and worker.get("round") is not None:
+            worker["round"] = max(1, worker["round"])
         stage, receipt = (nextstep._item_readiness(item, state, top, checks, runs=active, pr=pr)
                           if kind != "story" else (state.get("status"), {}))
         if kind == "story" and not finished:
@@ -457,11 +552,14 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
             else:
                 lines = [f"A reader is reading {title}.", "Next: wait for the reader to finish"]
         stage = stage or "unknown"
-        pending = codex.record(top, item).get("question_id")
+        pending = (codex.record(top, item).get("question_id")
+                   if any(e.get("event") == "worker question" for e in activity) else None)
         latest_review = next((e for e in reversed(activity) if e.get("event") == "review result"), {})
         for event in activity:
             event_kind = event.get("event")
             if event_kind == "run end":
+                if event.get("kind") == "ci":
+                    continue
                 occurrence_kind, message = "run_finished", f"{event.get('kind', 'Run').capitalize()} finished"
             elif event_kind == "worker question" and event.get("id") == pending:
                 occurrence_kind, message = "worker_question", event.get("question")
@@ -496,21 +594,40 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if worker:
             status = {"build": "Worker", "read": "Plan read", "review": "Review"}.get(worker["kind"], "Worker") + " running"
             if worker.get("elapsed") is not None:
-                status += " for " + board_visuals.duration(worker["elapsed"])
+                status += " for " + time_records.plain(worker["elapsed"])
         elif tests:
             status = "Tests running"
             if tests.get("elapsed") is not None:
-                status += " for " + board_visuals.duration(tests["elapsed"])
+                status += " for " + time_records.plain(tests["elapsed"])
         idle_seconds = elapsed(idle_since)
+        developer = board_facts.person(
+            (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
+            or owners.get(read_key), names=names)
+        people_pr = people_branches.get(branch) or pr or {}
+        recorded_people = time_records.from_body(people_pr.get("body") or "")
+        author = people_pr.get("author") or {}
+        starter_name = None
+        if author.get("login") and not author.get("name"):
+            starter_name = (board_facts.person(recorded_people, field="started_by")["name"]
+                            or _starters(top).get(repo.state_path(item)))
+        starter = board_facts.person(author, starter_name, names=names)
+        if not starter["name"]:
+            starter = board_facts.person(recorded_people, field="started_by", names=names)
+            if not starter["name"]:
+                starter = board_facts.person(name=_starters(top).get(repo.state_path(item)))
+        approver = board_facts.person(recorded_people, field="approved_by", names=names)
+        if not approver["name"] and read_key:
+            approver = board_facts.person(_approver(top, read_key), names=names)
         return {"id": item, "kind": kind, "title": title, "stage": stage, "status": status,
-                "started_by": board_facts.people((pr or {}).get("body") or "")["started_by"] or starters.get(repo.state_path(item)),
-                "approved_by": (board_facts.people((pr or {}).get("body") or "")["approved_by"]
-                                or (_approver(top, read_key) if read_key else None)),
-                "developer": task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None,
+                "started_by": starter["name"], "started_by_login": starter["login"],
+                "approved_by": approver["name"], "approved_by_login": approver["login"],
+                "developer": developer["name"], "developer_login": developer["login"],
+                "owner": (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
+                         or owners.get(read_key),
                 "outcome": " ".join(str(state.get("outcome") or "").split()) or None if kind == "story" else None,
                 "took": [("Checks" if s["name"] == "CI" else s["name"]) + ": "
-                         + board_visuals.stage_duration(s) for s in stages
-                         if board_visuals.stage_seconds(s) is not None],
+                         + time_records.plain(_stage_seconds(s)) for s in stages
+                         if _stage_seconds(s) is not None],
                 "activity": {"status": "running", "action": active[-1].get("kind")} if active else
                             {"status": "running", "action": worker["kind"]} if worker else {"status": "idle"},
                 "idle_since": idle_since, "idle_seconds": idle_seconds,
@@ -519,15 +636,17 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                     top, item, state, stage, pr, readiness.get(item, {}).get("blocker")))),
                 "stalled": bool(idle_seconds is not None and idle_seconds > 86400),
                 "gates": {"plan_read": {"status": plan_read},
-                          "review": {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
+                          "review": {"status": "running"} if any(e.get("kind") == "review" for e in active) else
+                              {"status": "blocked", "count": len(findings)} if nextstep.review.blocking(review) else
                               {"status": "clean" if review else "none"}, "ci": ci},
                 "tests": tests,
                 "approval": {"doc": doc.resolve().as_posix()} if doc else None,
                 "worker": worker, "pr": {"number": (pr or {}).get("number"), "url": (pr or {}).get("url"),
-                       "checks": checks, "failures": failures},
+                       "checks": checks, "failures": failures, "checked_at": (pr or {}).get("checks_fetched_at")},
                 "findings": {"count": len(findings), "titles": [f["title"] for f in findings], "items": findings,
                              "dismissed": len(dismissed & set(range(1, len(review.get("findings", [])) + 1)))}, "round": round_number,
-                "merged_by": (pr or {}).get("mergedBy"), "merged_at": finished_at if finished else None,
+                "merged_by": board_facts.person(people_pr["mergedBy"], names=names) if people_pr.get("mergedBy") else None,
+                "merged_at": finished_at if finished else None,
                 **({k: v for k, v in time_records.combined(
                     top, item, state, (pr or {}).get("body") or "", events=activity, timings=item_timings,
                     ended_at=merged_dates.get(branch)).items()
@@ -581,7 +700,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
         if item["kind"] != "story" or item["stage"] == "done":
             continue
         for tid, spec in task.rows(task.sections(story._plan(top, key, history=history))).items():
-            if (task.developer(spec) and repo.state_path(f"{key}/{tid}") not in history["expired"]
+            if ((task.developer(spec) or owners.get(key)) and repo.state_path(f"{key}/{tid}") not in history["expired"]
                     and not any(child["id"] == f"{key}/{tid}" for child in item["children"])):
                 child = row(f"{key}/{tid}", "task", spec.get("Name") or tid, {}, landed)
                 child.update(stage="unstarted", next=nextstep.machine_next(["Next: forge next"]))
@@ -654,6 +773,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                       or current.get("gates", {}).get("ci", {}).get("status") == "running" else
                       "Waiting" if current else readiness.get(key, {}).get("parts", {}).get(tid, "Not started"))
             parts.append({"id": item, "title": spec.get("Name") or "A part with no name yet",
+                          "owner": task.developer(spec) or task.owner(text),
                           "status": status, "waits_for": waits})
         phase = ("done" if key in completed else
                  readiness.get(key, {}).get("stage", "planning"))
@@ -668,9 +788,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                 + (f", {ready_parts} ready to merge" if ready_parts else ""))
             items[key]["stage"] = phase
         maps.append({"id": key, "title": items.get(key, {}).get("title") or state.get("title")
-                     or "A story with no title yet", "parts": parts, "stage": phase, "planned": bool(parts)})
+                     or "A story with no title yet", "owner": task.owner(text),
+                     "parts": parts, "stage": phase, "planned": bool(parts)})
     mapped = {m["id"] for m in maps}
     maps.extend({"id": s["key"], "title": s.get("title") or "A story with no title yet",
+                 "owner": None,
                  "parts": [], "stage": "done" if s["key"] in completed else "needs a spec", "planned": False}
                 for s in roadmap.values() if s["key"] not in mapped)
     order = list(roadmap)  # roadmap order; stories off the roadmap keep theirs, after it
@@ -684,7 +806,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
     for entry in maps:
         if entry["stage"] == "needs a spec" and not items[entry["id"]].get("worker"):
             items[entry["id"]].update(stage="needs a spec", status="Not started yet")
-    team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits)
+    team = board_facts.team(top, history, items, maps, best, completed, github, readiness, person_waits, names)
     fixes = [{"id": row["id"], "title": row["title"], "waits_for": [], "running": row["activity"]["status"] == "running"
               or bool(row.get("worker")) or row["gates"]["ci"]["status"] == "running",
               "started_on": next((on for on in [best.get(repo.state_path(row["id"]), ({}, None))[0].get("stacked_on")]
@@ -700,7 +822,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True) -> 
                {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
-    return {"version": __version__, "repo_root": repo_root(top), "items": list(items.values()),
+    return {"version": __version__, "repo_root": repo_root(top),
+            "known_issues": known_issues.collect(top, {
+                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
+                for rel, state, where in history["copies"]
+                if where == landed and (match := STATE.fullmatch(rel))}, landed),
+            "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
+            "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
 
@@ -759,6 +887,19 @@ def _blob_texts(top: Path, specs: list[str], *, follow_notes: bool = False) -> d
     if not specs:
         return {}
     pending, seen, texts = list(dict.fromkeys(specs)), set(specs), {}
+    if not follow_notes:
+        done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+                              input="".join(spec + "\n" for spec in pending).encode("utf-8"),
+                              capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
+        output = io.BytesIO(done.stdout)
+        for spec in pending:
+            header = output.readline()
+            if header.endswith(b" missing\n"):
+                continue
+            text = output.read(int(header.split()[-1])).decode("utf-8", errors="replace")
+            texts[spec] = text.replace("\r\n", "\n").replace("\r", "\n")
+            output.read(1)
+        return texts
     with subprocess.Popen([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
                           stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                           env={**os.environ, "FORGE_WORKER": "1"}) as process:
@@ -826,18 +967,10 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     found: list[tuple[str, Item, Path | str]] = []
     trees = story.worktrees(top)
     parsed: dict[str, Item] = {}  # most copies match; a shared state is never changed in place
-    for branch, path in trees.items():
-        if branch.startswith(PREFIXES):
-            for file in sorted(path.glob(".factory/**/*.json")):
-                rel = file.relative_to(path).as_posix()
-                if STATE.fullmatch(rel):
-                    text = file.read_text(encoding="utf-8")
-                    if text not in parsed:
-                        parsed[text] = story.json_of(text)
-                    found.append((rel, parsed[text], path))
     listing = repo.git("for-each-ref", "--format=%(refname) %(tree) %(objectname)",
                        *(f"refs/remotes/origin/{prefix}" for prefix in PREFIXES),
-                       *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()), cwd=top)
+                       *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()),
+                       *(f"refs/heads/{branch}" for branch in trees if branch.startswith(PREFIXES)), cwd=top)
     refs = {line.split()[0]: line.split()[1] for line in listing.splitlines()}
     if history is not None:
         history["tips"] = {line.split()[0]: line.split()[2] for line in listing.splitlines()}
@@ -864,6 +997,25 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 tree = line.split()[1]
     texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
     blobs = {blob: story.json_of(text) for blob, text in texts.items()}
+    # Clean working files already have bytes in the bulk Git read. Only changed or
+    # untracked state needs a separate disk read, even with many linked worktrees.
+    for branch, path in trees.items():
+        if not branch.startswith(PREFIXES):
+            continue
+        saved = snapshots.get(refs.get(f"refs/heads/{branch}"), {})
+        changed = set(repo.git("diff", "HEAD", "--name-only", "--no-renames", "-z",
+                               "--", ".factory", cwd=path).split("\0"))
+        for file in sorted(path.glob(".factory/**/*.json")):
+            rel = file.relative_to(path).as_posix()
+            if STATE.fullmatch(rel):
+                if rel in saved and rel not in changed:
+                    state = blobs[saved[rel]]
+                else:
+                    text = file.read_text(encoding="utf-8")
+                    if text not in parsed:
+                        parsed[text] = story.json_of(text)
+                    state = parsed[text]
+                found.append((rel, state, path))
     for ref, tree in refs.items():
         if ref == landed or ref.startswith("refs/remotes/"):
             found.extend((rel, blobs[blob], ref) for rel, blob in snapshots[tree].items() if STATE.fullmatch(rel))
@@ -969,6 +1121,19 @@ def _starters(top: Path) -> dict[str, str]:
     return found
 
 
+def _approver(top: Path, key: str) -> Item | None:
+    """The approval commit's own author, independent of the plan's assignee."""
+    def read():
+        log = repo.git("log", "--all", "--format=%x00%aN%x00%aE%x00", "-F",
+                       "--grep=Approve the plan: ", "--name-only", "--", ".factory/stories", cwd=top).split("\0")[1:]
+        found = {}
+        for name, email, paths in zip(log[::3], log[1::3], log[2::3]):
+            for rel in paths.splitlines():
+                found.setdefault(rel, {"name": name, "email": email})
+        return found
+    return repo.command_fact("board approval authors", top, read).get(repo.state_path(key))
+
+
 def _read_rounds(notes: str) -> list[Item]:
     """Each round of a plan's cold read, from its notes: the round number, each finding's first
     line with its disposition (cut, defer or keep, and keep's reason), and the date of the latest
@@ -985,22 +1150,6 @@ def _read_rounds(notes: str) -> list[Item]:
         rounds.append({"round": int(number), "findings": findings,
                        "read_at": record.get("read_at") if number == record.get("round") else None})
     return rounds
-
-
-def _approver(top: Path, key: str, display_names: dict[str, str] | None = None) -> str | None:
-    """Who approved the plan, by git name: the author of Forge's approval commit, while a ref has it."""
-    if display_names is None:
-        display_names = _display_names(top)
-    log = repo.command_fact("board approvers", top, lambda: repo.git(
-        "log", "--all", "--format=%x00%aN%x00%aE%x00", "-F", "--grep=Approve the plan: ", "--name-only",
-        "--", ".factory/stories", cwd=top)).split("\0")[1:]
-    newest = {}
-    for found, address, paths in zip(log[::3], log[1::3], log[2::3]):
-        for rel in paths.splitlines():
-            newest.setdefault(rel, (found, address))
-    name, email = newest.get(repo.state_path(key), ("", ""))
-    name = display_names.get(email.casefold(), name)
-    return name or None
 
 
 # --- plain English ---------------------------------------------------------------------------
@@ -1036,6 +1185,13 @@ def _times(n: float) -> str:
     return {1: "once", 2: "twice"}.get(n, f"{n:g} times")
 
 
+def _stage_seconds(stage: Item) -> float | None:
+    """A stage's recorded seconds, with a running stage's elapsed time added."""
+    seconds = stage.get("seconds")
+    if stage.get("status") == "running" and stage.get("elapsed") is not None:
+        seconds = (seconds or 0) + stage["elapsed"]
+    return seconds
+
+
 def _day(when: datetime | None) -> str:
     return f"{when.day} {when:%B %Y}" if when else "a date that wasn't recorded"
-

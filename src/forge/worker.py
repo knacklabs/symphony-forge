@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, doctor, machine, native, repo, score, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, score, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -71,6 +71,7 @@ REFUSALS = {
 
 def checkout(item: str) -> tuple[re.Match[str], Path]:
     """Find a work checkout and refuse its unfinished merge before parsing any settings."""
+    task.require_active(item)
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
@@ -89,12 +90,34 @@ def work(args: argparse.Namespace) -> None:
         _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
 
 
+def prepare(item: str) -> tuple[re.Match[str], Path, str]:
+    """Merge before even the pin check reads settings; work consumes this one-shot result."""
+    pending = repo.command_fact("prepared work", Path.cwd(), dict)
+    if item not in pending:
+        match, top = checkout(item)
+        default = repo.default_branch(top)
+        first = ""
+        with codex.hold(top, item, "Build"):
+            git("fetch", "-q", "origin", default, cwd=top)
+            merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
+            if merged.returncode:
+                if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
+                    merged.check_returncode()
+                # Round records cannot commit during an unfinished merge. The full brief retries it.
+                git("merge", "--abort", cwd=top)
+                first = (f"First, finish the merge of origin/{default}: run git merge origin/{default}, "
+                         "resolve conflicts, and commit it before other work.\n\n")
+        pending[item] = match, top, first
+    return pending[item]
+
+
 def _work(args: argparse.Namespace) -> bool:
     item = args.item
     note = getattr(args, "note", None)
     if note is not None and not note.strip():
         refuse(REFUSALS["empty_note"], item=item)
-    match, top = checkout(item)
+    match, top, merge_first = prepare(item)
+    repo.command_fact("prepared work", top, dict).pop(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     from forge import close, nextstep, time_records  # close imports story, which imports this module
@@ -116,13 +139,14 @@ def _work(args: argparse.Namespace) -> bool:
         row = task.rows(sections).get(match["task"], {})
         design = repo.user_facing(config, row)
     else:
-        design = state.get("allow_large") == "Prototype before sign-off" and repo.is_prototype(top)
+        design = state.get("fix_kind") == "ui"
     tool = getattr(args, "fallback", None) or state.get("tool")
     family = repo.worker(config, "build", design, tool)[0]
     on_codex = family == "codex"
     # The coordinating app's own tool runs the round as one of the session's subagents.
     is_native = repo.route(config, family, command="work", item=item) == "native"
-    role = "frontend" if design else "worker" if match["task"] else "fixer"
+    role = ("frontend" if design else "worker" if match["task"] else
+            "coder" if state.get("fix_kind") == "backend" else "fixer")
     if note is None and (question := (asked_open[-1].get("question") if asked_open else None)
                          or codex.record(top, item).get("question")):
         refuse(REFUSALS["question"], item=item, question=question)
@@ -131,10 +155,11 @@ def _work(args: argparse.Namespace) -> bool:
     later = not is_native and (on_codex or design) and bool(codex.record(top, item).get("start") or
                                            state.get("status", "started") != "started")
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
-    # Every check refuses before the status commit, so a refused call changes nothing.
+    if not match["task"] and state.get("fix_kind"):
+        kind = "Build" if state["fix_kind"] == "backend" else "Lite"
+    # Readiness checks run before the round's status commit.
     approval = _approval(match["key"], item, top) if match["task"] else None
-    claude = [] if design and not on_codex else ready(top, config, kind, on_codex, design=design,
-                                                      native=is_native)
+    claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
     why = "Claude failed this design round" if getattr(args, "fallback", None) else why
     building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
@@ -221,11 +246,14 @@ def _work(args: argparse.Namespace) -> bool:
             saved = session_record if is_native else session or codex.record(top, item)
             changes = _changes(top, saved.get("head") or saved["start"])
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
-                                continued=bool(thread), changes=changes)
+                                continued=bool(thread) and not merge_first, changes=changes)
         fresh_brief = None
         if thread:
             fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
                                    round_number)
+        brief = merge_first + brief
+        if fresh_brief:
+            fresh_brief = merge_first + fresh_brief
         state["status"] = "fixing" if findings or failing else "working"
         state["worker"] = family
         state["round"] = round_number
@@ -270,8 +298,7 @@ def _work(args: argparse.Namespace) -> bool:
                             state.get("tool") or
                             story._snapshot(top) != before):  # pyright: ignore[reportPrivateUsage]
                         raise
-                    reason = ("claude command missing" if shutil.which("claude") is None else
-                              str(error).split("\n", 1)[0].removeprefix("The worker "))
+                    reason = str(error).split("\n", 1)[0].removeprefix("The worker ")
                     chosen = repo.design_models(config, "codex")
                     building = (f"Building {item} with Codex ({chosen['model']}, "
                                 f"{chosen['effort']}) because Claude {reason}")
@@ -294,7 +321,7 @@ def _work(args: argparse.Namespace) -> bool:
                     repo.commit_state(f"{item} fell back to Codex",
                                       repo.write_state(item, state, top), top=top)
                     brief, fresh_brief = fresh_brief or brief, None
-                    if thread:
+                    if thread and not merge_first:
                         saved = codex.record(top, item)
                         fresh_brief = brief
                         brief, _ = _brief(match, top, state, findings, failing, note, question,
@@ -307,7 +334,7 @@ def _work(args: argparse.Namespace) -> bool:
                         print(NUDGING, flush=True)
                         saved = codex.record(top, item)["claude"]
                         try:
-                            nudged = _run(item, top, nudge, claude, ["--resume", saved["id"]])
+                            nudged = _run(item, top, nudge, claude, resume=saved["id"])
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
@@ -366,8 +393,10 @@ def questions(*answers: str) -> str:
 def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
     if (git("status", "--porcelain", "--", "forge.toml", cwd=top)
             and not task.settings_allowed(item, top, state)):
-        git("restore", "--source=HEAD", "--staged", "--worktree", "--", "forge.toml", cwd=top)
-        print("Restored uncommitted forge.toml changes from this branch; settings change in their own fix.",
+        merging = repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode == 0
+        source, name = ("MERGE_HEAD", "the incoming merge") if merging else ("HEAD", "this branch")
+        git("restore", f"--source={source}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+        print(f"Restored uncommitted forge.toml changes from {name}; settings change in their own fix.",
               flush=True)
 
 
@@ -377,11 +406,14 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     the SDK with the declining handler's place and the project's trust. Returns
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
+        if not native and kind != "Grill" and (problem := claude_sdk.sdk_problem()):
+            refuse(REFUSALS["sdk"], problem=problem)
         # A worker always names its models; a cold read with no entry runs on Claude's own.
-        chosen = (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
-                                                                           "claude")
+        chosen = (repo.design_models(config, "claude") if design else
+                  (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
+                                                                          "claude"))
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
-    problem = None if native else codex.sdk_problem()  # native sessions need no driver SDK
+    problem = None if native else codex.sdk_problem(reuse=True)  # native sessions need no driver SDK
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
@@ -591,7 +623,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
                 before_turn()
             size = log.stat().st_size if log.exists() else 0
             try:
-                return _run(item, top, brief, models, ["--resume", resume])
+                return _run(item, top, brief, models, resume=resume)
             except repo.Refused:
                 # Claude refuses a session it doesn't have before the turn starts, with this line.
                 output = log.read_bytes()[size:].decode("utf-8", "replace")
@@ -610,7 +642,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         codex.remember(top, item, codex._json(path))
         if before_turn is not None:
             before_turn()
-        return _run(item, top, fresh_brief or brief, models, ["--session-id", session["id"]])
+        return _run(item, top, fresh_brief or brief, models, session_id=session["id"])
     finally:
         if session:
             codex._record(path, claude={**session, "rounds": rounds + 1,
@@ -618,16 +650,17 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
 
 
 def _run(item: str, top: Path, brief: str, models: list[str],
-         session: list[str] | None = None) -> str:
-    """Run Claude Code headless in the checkout; its output goes to the terminal and the log."""
-    exe = shutil.which("claude")
-    if exe is None:
-        refuse(repo.REFUSALS["missing_tool"], tool="claude")
+         *, resume: str | None = None, session_id: str | None = None) -> str:
+    """Drive the isolated Claude SDK; stream its messages to the terminal and the log."""
     log = repo.work_log(top, item)
-    # Full access, like Codex workers: the checkout's synced deny hook is the guard, in every mode.
-    command = [exe, "-p", *models, "--permission-mode", "bypassPermissions",
-               "--output-format", "stream-json", "--verbose",
-               "--add-dir", str(CONVENTIONS), *(session or [])]
+    if problem := claude_sdk.sdk_problem():
+        refuse(REFUSALS["sdk"], problem=problem)
+    command = [str(claude_sdk.python()), str(claude_sdk.TURN)]
+    request = {"prompt": brief, "cwd": str(top),
+               "model": models[models.index("--model") + 1],
+               "effort": models[models.index("--effort") + 1],
+               "permission_mode": "bypassPermissions", "add_dirs": [str(CONVENTIONS)],
+               "resume": resume, "session_id": session_id}
     final_result = None
     with repo.record_run(top, item, "worker", family="claude",
                          model=models[models.index("--model") + 1],
@@ -638,7 +671,7 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             env=machine.worker_env(), **codex.GROUP) as worker, \
             machine.agent_process(worker, log):
         out.write(f"--- forge work {item} at {repo.now()}\n")
-        worker._stdin_write(brief)
+        worker._stdin_write(json.dumps(request))
         for line in worker.stdout:
             out.write(line)
             try:
@@ -648,7 +681,8 @@ def _run(item: str, top: Path, brief: str, models: list[str],
             if isinstance(event, dict):
                 line = repo.claude_output(top, item, ran, event)
                 # A result after no model turn (the prompt used up before the model ran) is no round.
-                if event.get("type") == "result" and event.get("num_turns") != 0:
+                if (event.get("type") == "result" and event.get("num_turns") != 0
+                        and (event.get("result") or event.get("errors"))):
                     final_result = line.rstrip("\n")
             if line and (not isinstance(event, dict) or event.get("type") == "result"):
                 print(line, end="", flush=True)

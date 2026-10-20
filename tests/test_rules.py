@@ -11,6 +11,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "docs" / "specs" / "lean-forge-v1.md"
 WORKFLOW = ROOT / ".github" / "workflows" / "forge-next.yml"
@@ -66,12 +68,13 @@ def test_5_forge_stays_small(repo):
 
     help_text = repo.forge("--help").stdout
     commands = re.search(r"\{([^}]+)\}", help_text)[1].split(",")
-    # Decisions 0104/0105 add test/stop; approved FORGE-MOD-1 item 6 adds lanes.
-    assert len(commands) <= 23, f"{len(commands)} commands: {commands}"
+    # Decisions 0104/0105 add test/stop; FORGE-MOD-1 adds lanes; FORGE-BOARD-3 adds assign.
+    assert len(commands) <= 24, f"{len(commands)} commands: {commands}"
 
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 
 
+@pytest.mark.platform
 def test_10_version_pin(repo, tmp_path, monkeypatch):
     version = repo.forge("--version").stdout.split()[-1]
     # A mismatch runs the pinned release through uv; inside that run, a mismatch still refuses.
@@ -118,7 +121,8 @@ def test_10_version_pin(repo, tmp_path, monkeypatch):
 
 def test_31_speed():
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    for runner in ("ubuntu-latest", "macos-latest", "windows-latest"):
+    # macOS left the full run on 18 October: Linux and Windows catch the platform bugs.
+    for runner in ("ubuntu-latest", "windows-latest"):
         assert runner in workflow, f"the suite doesn't run on {runner}"
     assert "pytest tests" in workflow
     timeouts = [int(n) for n in re.findall(r"timeout-minutes: (\d+)", workflow)]

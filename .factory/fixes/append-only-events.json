@@ -1,0 +1,54 @@
+{
+  "base": "f915d25dfe7ac22420ddc879d4b822e20f28f3fe",
+  "branch": "fix/append-only-events",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e81-a103-7c13-8d5b-e2d24bb2b82d",
+    "head": null,
+    "start": "95e9ae143a7f1c8c055f8c7e62b4583a6bd118d1"
+  },
+  "done_when": "Progress updates no longer rewrite the whole event log: live progress is kept apart from the history and history is appended, every reader still sees the same events, and a test shows an update writes a bounded amount whatever the history size, on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "810ec9e394e2157b8f389b437a6d5b71c31a10148a085683108858329318ea31",
+    "changed": "2279c5177339ad71de818912acc3c9a132f1383ecb253a5adf3ddb81598bc01b",
+    "commit": "79fa06b7672ee9058e42c66d41c73792f9a94943",
+    "dismissals": [],
+    "findings": [],
+    "id": "f3e9ba0b-312d-4ec9-bdea-29648f8fbe58",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T10:14:29.731299+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T10:43:17.416897+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T12:39:38.821912+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T13:06:48.938334+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2d5f5372-9686-403b-ae1b-32eba64c5f1b",
+    "head": "4516cc0c84315231d0810f527910ad121810129e",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Every progress update rewrites Forge's 14 MB event log under one lock, parsing about 45,000 records each time",
+  "worker": "codex"
+}
