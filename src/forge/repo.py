@@ -627,13 +627,18 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
     def wanted(name: str) -> bool:
         return name == pinned if pinned else name.endswith("client-signoff.md")
 
+    local_names = [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")
+                   if wanted(path.relative_to(top).as_posix())]
+
     def texts():
         if not refs:
-            yield from (path.read_text(encoding="utf-8") for path in top.glob("docs/decisions/*.md")
-                        if wanted(path.relative_to(top).as_posix()))
+            yield from ((top / name).read_text(encoding="utf-8") for name in local_names)
         for ref in refs or (story.landed_ref(top),):
+            # Probe known names on the requested ref; local acceptance never stands in for it.
+            yield from (story.show(top, ref, name) or "" for name in local_names)
             names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-            yield from (story.show(top, ref, name) or "" for name in names if wanted(name))
+            yield from (story.show(top, ref, name) or "" for name in names
+                        if name not in local_names and wanted(name))
 
     return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
                    for text in texts() if text.startswith("---"))
