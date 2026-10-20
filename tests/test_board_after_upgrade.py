@@ -48,6 +48,14 @@ def output(value):
         calls.write(json.dumps(args) + "\\n")
     print(json.dumps(value))
     sys.exit(0)
+if args[:2] == ["api", "graphql"] and any("PastPeople" in arg for arg in args):
+    if (here / "history-unreachable").exists():
+        sys.exit("GitHub is unreachable")
+    for pr in prs:
+        if pr["state"] == "MERGED":
+            print(json.dumps({field: pr.get(field) for field in (
+                "number", "headRefName", "mergedAt", "author", "mergedBy")}))
+    sys.exit(0)
 if args[:2] == ["api", "graphql"]:
     # GitHub independently reports successful required checks at the PR's actual
     # head. The board must combine those checks with Forge's rebuilt clean review.
