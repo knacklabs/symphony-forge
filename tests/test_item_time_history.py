@@ -37,7 +37,7 @@ def queued_first_close(env, item, where):
     machine_cores(env.repo, 4)
     log = env.tmp / "runs.log"
     held = subprocess.Popen([sys.executable, str(env.repo.bin / "forge"), "test"], cwd=where,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                             encoding="utf-8")
     waiting = None
     try:

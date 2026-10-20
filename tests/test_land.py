@@ -40,7 +40,7 @@ def answer(out, code=0):
 
 def heads():
     listed = subprocess.run(["git", "ls-remote", "--heads", remote], capture_output=True,
-                            text=True).stdout.split()
+                            text=True, stdin=subprocess.DEVNULL, timeout=60).stdout.split()
     return dict(zip(listed[1::2], listed[0::2]))
 
 
@@ -61,11 +61,13 @@ if args[:2] == ["pr", "merge"]:
     if branch is None:
         answer("", 1)
     checkout = here / "github-merge"
-    subprocess.run(["git", "clone", "-q", remote, str(checkout)], check=True)
+    subprocess.run(["git", "clone", "-q", remote, str(checkout)], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
     for step in (["fetch", "-q", "origin", branch], ["merge", "-q", "--squash", "FETCH_HEAD"],
                  ["commit", "-q", "-m", args[args.index("--subject") + 1]],
                  ["push", "-q", "origin", "main"]):
-        subprocess.run(["git", *step], cwd=checkout, check=True, capture_output=True)
+        subprocess.run(["git", *step], cwd=checkout, check=True, capture_output=True,
+                       stdin=subprocess.DEVNULL, timeout=60)
     merged.write_text(head)
     answer("")
 queues = here / "gh-queues.json"
@@ -82,8 +84,9 @@ COMMITS = '''if not int(os.environ.get("STUB_CLAUDE_EXIT", "0")):
     import subprocess
     done = len(list(Path.cwd().glob("work-*.txt")))
     Path(f"work-{done + 1}.txt").write_text("worked\\n", encoding="utf-8")
-    subprocess.run(["git", "add", "-A"], check=True)
-    subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True)
+    subprocess.run(["git", "add", "-A"], check=True, stdin=subprocess.DEVNULL, timeout=60)
+    subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
 '''
 
 

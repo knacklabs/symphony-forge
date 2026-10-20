@@ -26,7 +26,7 @@ import json, pathlib, subprocess, sys
 args = sys.argv[1:]
 folder = args[args.index("-C") + 1]
 head = subprocess.run(["git", "-C", folder, "rev-parse", "HEAD"], capture_output=True,
-                      text=True).stdout.strip()
+                      text=True, stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
 log = pathlib.Path(__file__).resolve().parent / "codex-calls.jsonl"
 with open(log, "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"folder": folder, "head": head}}) + "\\n")

@@ -65,7 +65,7 @@ if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
         bootstrap = "import sys; sys.path.insert(0, " + repr({json.dumps((ROOT / 'src').as_posix())}) + "); "
         command = [{json.dumps(REAL_UV)}, *args[:3], "--offline", "--no-python-downloads",
                    *args[5:program], *args[program:program + 3], bootstrap + args[program + 3]]
-        sys.exit(subprocess.run(command).returncode)
+        sys.exit(subprocess.run(command, timeout=180).returncode)
     exec(args[program + 3])
     sys.exit(0)
 assert args[:3] == ["tool", "run", "--from"], args
@@ -91,9 +91,12 @@ if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
     (root / "forge.toml").write_text({json.dumps(upgraded)}, encoding="utf-8")
     for args in (["add", "forge.toml"], ["commit", "-q", "-m", "Upgrade Forge"],
                  ["push", "-q", "origin", "main"]):
-        subprocess.run(["git", "-C", str(root), *args], check=True)
-subprocess.run(["git", "fetch", "-q", "origin"], check=True)
-subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
+        subprocess.run(["git", "-C", str(root), *args], check=True,
+                       stdin=subprocess.DEVNULL, timeout=60)
+subprocess.run(["git", "fetch", "-q", "origin"], check=True,
+               stdin=subprocess.DEVNULL, timeout=60)
+subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True,
+               stdin=subprocess.DEVNULL, timeout=60)
 '''
     upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
     module.write_text(worker.replace('    if not int(os.environ.get(',

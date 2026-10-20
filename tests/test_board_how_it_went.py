@@ -319,7 +319,8 @@ def read_history_batching(env, monkeypatch):
             notes = notes.replace("\n---", fields + "\n---", 1)
             # Historical notes are actual Git objects, including objects unreachable from refs.
             stored = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=env.repo.path,
-                                    input=notes, capture_output=True, text=True, encoding="utf-8", check=True)
+                                    input=notes, capture_output=True, text=True, encoding="utf-8", check=True,
+                                    timeout=60)
             previous = stored.stdout.strip()
         for key, tree in trees.items():
             env.commit(tree, f"plans/{key}.read.md", notes)
