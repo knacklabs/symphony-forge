@@ -565,6 +565,11 @@ def test_18_close(env, kind):
         "below the bar (live with); Gain 2, Work 1, Harm 1"]
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
 
+    # Round two holds the P0 for the owner before another close can publish it.
+    assert f"Review round 2 of {item} still has an open P0 in app.py, so Forge stopped." in third.stderr
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+
     # A repo that allows no drafts (a private one on GitHub's free plan): the pull request opens,
     # and stays, ready for review, and forge-pr-check still blocks its merge.
     no_drafts = "GraphQL: Draft pull requests are not supported in this repository.\n"
