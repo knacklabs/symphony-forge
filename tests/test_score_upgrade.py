@@ -46,7 +46,10 @@ def _move_to(repo, tmp_path, config: str, version: str, branch: str) -> None:
     repo.write("forge.toml", config.replace(config.split('"')[1], version, 1))
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
+    # An upgrade keeps the item's roadmap contract; replacing it would correctly
+    # invalidate the story review instead of exercising saved-review reuse.
+    if not (repo.path / "plans/roadmap.json").exists():
+        repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
     repo.git("add", "-A")
     repo.git("-c", no_hooks, "commit", "-qm", f"Move to {version}")
     repo.git("switch", "-q", "main")

@@ -68,8 +68,7 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     # The PR now starts as a draft before review, and only both gates make it ready.
     assert "--draft" in create
     assert bool(env.gh_calls("pr", "ready")) is ready
-    light = not signed_off and allowance == "Prototype before sign-off"
-    assert ("advisory" in body(create)) is (ready and light)
+    assert ("advisory" in body(create)) is ready
     if ready:  # first-round fix findings stay visible with their scores in either mode
         assert "Gain 4, Work 2, Harm 1" in body(env.gh_calls("pr", "edit")[-1])
     branch = "fix/tidy-readme"

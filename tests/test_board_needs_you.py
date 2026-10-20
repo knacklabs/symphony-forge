@@ -84,7 +84,8 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     env.repo.git("push", "-q", "origin", "story/WAIT")
     # A story part can reach three blocked closes; a fix now stops at its first P0.
     clock(monkeypatch, now + timedelta(minutes=1))
-    loop_item, loop = env.start_approved_task(STORY_DOC, changes={"loop.py": "x\n"})
+    loop_doc = STORY_DOC.replace("basket", "shopping list")
+    loop_item, loop = env.start_approved_task(loop_doc, changes={"loop.py": "x\n"})
     rounds(env, loop_item, loop, ["src/a.py"] * 3)
     share(env, prs, loop_item, 1, "task/SHOP-T1")
     # A close ending ready in a repo where a human merges.

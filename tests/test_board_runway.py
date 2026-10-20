@@ -132,7 +132,8 @@ def test_7_first_screen(env, monkeypatch, previous):
     clock(monkeypatch, now)
     # A second building story and five fixes in progress. Story parts retain a
     # blocked first P1 review; a fix would now finish with a follow-up instead.
-    approve_story(env.repo, ONE_PART, key="SPEED")
+    speed_doc = ONE_PART.replace("basket", "page").replace("saved", "cached").replace("save", "cache")
+    approve_story(env.repo, speed_doc, key="SPEED")
     started = env.repo.forge("task", "start", "SPEED/T1")
     assert started.returncode == 0, started.stdout + started.stderr
     tree = worktree(env.repo, "task/SPEED-T1")
