@@ -23,8 +23,8 @@
     "id": "cab0cc21-69f6-41f5-9062-1db0cadcf57e",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T05:43:52.086375+00:00",
@@ -44,10 +44,10 @@
     }
   ],
   "stuck": {
-    "close": "cd5992a5-3ff4-401b-8049-8b946d8fde93",
-    "head": "05dc14b13e76ab64ce2f3e87e5384929113217e5",
+    "close": "ab8b350e-065a-4b99-b9c4-a458e2849ea8",
+    "head": "98ead3882adce8fd4a85935df0d4112ddfabdf94",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Large decisions such as architecture or privacy need cold reads over several rounds, but forge read takes only story keys and spec slugs, so teams draft decisions as specs first (issue 970)",
   "worker": "codex"
