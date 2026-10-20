@@ -51,6 +51,7 @@ def client(env, lane_adapter, request):
     return lane_adapter
 
 
+@pytest.mark.platform
 def test_1_a_reused_agent_pid_keeps_the_run_while_forge_runs(env, tmp_path, person, client):
     repo = env.repo
     machine_cores(repo, 2)

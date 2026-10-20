@@ -19,6 +19,8 @@ import pytest
 
 from conftest import REAL_CODEX_HOME
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-WARM-1"
 PIN = "0.159.2"
 ROOT = Path(__file__).resolve().parents[1]

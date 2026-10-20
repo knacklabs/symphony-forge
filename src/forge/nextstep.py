@@ -76,6 +76,7 @@ def parse_answers(top: Path) -> dict[str, list[tuple[str, str] | None]]:
     found: dict[str, list[tuple[str, str] | None]] = {}
     in_answers = False
     for line in text.splitlines():
+        line = line.rstrip()
         if line == "## Answers":
             in_answers = True
             continue

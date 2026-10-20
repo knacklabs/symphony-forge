@@ -11,6 +11,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = ROOT / "docs" / "specs" / "lean-forge-v1.md"
 WORKFLOW = ROOT / ".github" / "workflows" / "forge-next.yml"
@@ -67,11 +69,13 @@ def test_5_forge_stays_small(repo):
     help_text = repo.forge("--help").stdout
     commands = re.search(r"\{([^}]+)\}", help_text)[1].split(",")
     # Decisions 0104/0105 add test/stop; FORGE-MOD-1 adds lanes; FORGE-BOARD-3 adds assign.
-    assert len(commands) <= 24, f"{len(commands)} commands: {commands}"
+    # FORGE-INTAKE-1 adds start.
+    assert len(commands) <= 25, f"{len(commands)} commands: {commands}"
 
     assert "git diff --numstat" in WORKFLOW.read_text(encoding="utf-8"), "CI prints no net lines"
 
 
+@pytest.mark.platform
 def test_10_version_pin(repo, tmp_path, monkeypatch):
     version = repo.forge("--version").stdout.split()[-1]
     # A mismatch runs the pinned release through uv; inside that run, a mismatch still refuses.

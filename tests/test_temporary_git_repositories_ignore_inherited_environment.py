@@ -90,6 +90,7 @@ def test_2_migrate_source_fetch_preserves_sentinel_repository_settings(
             (repo.path / ".git/index").read_bytes()) == before
 
 
+@pytest.mark.platform
 def test_3_a_merge_commit_handed_to_the_pinned_release_keeps_the_repository(env):
     repo = env.repo
     # uv fetches a git+ source with its own plain `git init` and `git reset --hard`, run with

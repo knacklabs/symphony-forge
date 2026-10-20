@@ -23,6 +23,8 @@ from test_last_task_records_story_outcome import github_merge
 from test_mod_plugin import packaged_mod  # noqa: F401
 from test_upgrade_command import Upgrade
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
 

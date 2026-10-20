@@ -1,0 +1,32 @@
+{
+  "allow_large": "A release version bump repeats the last release's version lines across install scripts, manifests and tests",
+  "base": "f66449f6a12d571de55a33cd5734007e5213bc2c",
+  "branch": "fix/release-1217",
+  "done_when": "Forge's version is 1.2.17 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "923e59915633f00c856e19f32882c52c4335ff46c99f80ddbba0674d03d88d2c",
+    "changed": "2a8ec5368e8588a391551ef98ae08330a63a54f2cccb593cb2f592f57da7e797",
+    "commit": "0fe1e41a5246fcd21822d95fc425477f937cc4c6",
+    "dismissals": [],
+    "findings": [],
+    "id": "0671b48c-12a9-4b30-91e9-175540f9e535",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T09:26:09.049216+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T09:28:07.765497+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients need v1.2.17: a merge of main at the start of every round, decision cold reads, a light review for docs-only changes, forge land --note, Windows CI at about two times Linux, fewer git processes, and four small fixes"
+}

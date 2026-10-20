@@ -269,6 +269,7 @@ def test_1_machine_views_omit_old_finished_items_without_more_git_calls(
     assert written["old-fix"]["title"] == "Finished fix old-fix"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 def test_2_machine_next_preserves_due_spec_guidance_with_crlf(
         repo, gh, monkeypatch, tmp_path, history):

@@ -14,6 +14,10 @@ from test_setup import _fresh_client
 from test_story import DOC, new_story, setup
 from test_worker import calls, install_claude
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 
 def _flat(text: str) -> str:
     """The text with every run of whitespace as one space, so line wraps don't matter."""

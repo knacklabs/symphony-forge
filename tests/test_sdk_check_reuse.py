@@ -16,6 +16,7 @@ from test_setup import _fresh_client, _version
 STORY = "cache-sdk-check"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("setup", ["new", "earlier-adopted"])
 def test_1_work_reuses_sdk_check_until_ready_marker_changes(
         repo, gh, tmp_path, monkeypatch, sdk_data, claude_session, setup):

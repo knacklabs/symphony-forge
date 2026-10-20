@@ -26,6 +26,9 @@ from test_codex_worker import _codex_repo, sdk_data  # noqa: F401 (sdk_data is a
 from test_walkthrough import DOC as CART_DOC
 from test_walkthrough import walk, with_models
 from test_worker import calls, install_claude
+from test_tools_session_hold import Session
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-NEXT-1"
 ROOT = Path(__file__).resolve().parents[1]
@@ -590,7 +593,7 @@ def _commands() -> dict[str, bool]:
     return commands
 
 
-def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypatch):
+def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypatch, tmp_path):
     repo, commands = env.repo, _commands()
     groups = {words.split()[0] for words in commands if " " in words}
     ran: set[str] = set()
@@ -633,6 +636,33 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
             # Exercise a published assignment, not only a refusal that leaves main alone.
             assert done.returncode == 0, done.stdout + done.stderr
             assert "Owner: alice" in repo.git("show", "origin/story/ASSIGN:plans/ASSIGN.md")
+    # Intake holds its place outside the checkout; handback writes each draft on its own branch.
+    with monkeypatch.context() as host:
+        host.delenv("CLAUDECODE", raising=False)
+        host.setenv("CODEX_THREAD_ID", "intake-contract-session")
+        owner = Session(repo, tmp_path / "intake-host", "codex-contract-session")
+        try:
+            forge = owner.forge
+            for idea, reply, branch in (
+                ("Correct the welcome typo",
+                 "Lane: fix\nReason: The change is small and clear.\n"
+                 "Why: Correct the welcome typo\nDone: The welcome page says Welcome.\nKind: backend",
+                 "fix/correct-the-welcome-typo"),
+                ("Save baskets for later",
+                 "Lane: plan\nReason: Shoppers need a new way to save baskets.\n"
+                 "Key: IDEA\nTitle: Save baskets\nChange: Shoppers can save baskets.\n"
+                 "Problem: Shoppers lose baskets.\nDone: A saved basket returns.",
+                 "story/IDEA"),
+            ):
+                offered = repo.forge("start", idea)
+                assert offered.returncode == 0, offered.stdout + offered.stderr
+                pending = json.loads(offered.stdout)
+                done = repo.forge("handback", pending["target"], "--round", str(pending["round"]),
+                                  "--subagent", "idea-explorer", "--text", reply)
+                assert done.returncode == 0, done.stdout + done.stderr
+                assert repo.git("branch", "--list", branch)
+        finally:
+            owner.close()
     changing = {words for words, changes in commands.items() if changes}
     assert not changing - ran, f"state-changing commands not run: {sorted(changing - ran)}"
 

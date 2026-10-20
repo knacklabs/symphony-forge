@@ -8,13 +8,15 @@ from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 STORY = "windows-accept-body"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
 def test_1_dismissed_findings_keep_their_evidence_after_line_ending_changes(env, previous):
     client(env, previous)
     env.repo.git("config", "core.autocrlf", "false")
     item, where = env.start_fix()
     env.commit(where, "src/a.py", "pass\r\n")
-    safe = finding("P1", "Already proved safe", "src/a.py")
+    # A P0 still blocks later rounds when the cited text changes.
+    safe = finding("P0", "Already proved safe", "src/a.py")
     env.reviews(blocked(safe))
     assert env.close(item).returncode == 1
     reason = "src/a.py:1 Proven safe"

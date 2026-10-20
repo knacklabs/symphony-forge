@@ -80,6 +80,7 @@ def kept_history(unsynced_up, monkeypatch, request):
         {"file": "reader.py", "line": 12, "title": "An ordinary dismissal", "gain": 2,
          "work": 2, "harm": 1, "outcome": "accepted", "reason": "The report was incorrect"}]
     saved = {**state, "branch": "fix/current-help", "known": known}
+    env.commit(repo.path, "reader.py", "print('read')\n", "Add the reader")  # the board leaves out deleted files
     env.commit(repo.path, ".factory/fixes/current-help.json", json.dumps(saved), "Keep help review decisions")
     repo.git("push", "-q", "origin", "main")
     repo.git("switch", "-q", "-c", "fix/unmerged-help")

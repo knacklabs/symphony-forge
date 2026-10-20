@@ -48,7 +48,8 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     for number in range(1, 4):
         env.commit(where, "src/a.py", f"pass  # round {number}\n")
         env.commit(where, "app.py", f"print({number})\n")
-        defects = [finding("P1", f"Round {number} defect", "src/a.py")]
+        # P1s no longer reach this stop after round two; retain open P0s for the split.
+        defects = [finding("P0", f"Round {number} defect", "src/a.py")]
         if number == 3:
             defects.append(finding("P0", "Second split defect", "app.py"))
         env.reviews(blocked(*defects, safe))

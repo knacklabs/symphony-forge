@@ -21,9 +21,9 @@ def _stop_with_remaining_findings(env):
     assert env.close(item, "--dismiss", "1", "--because", "src/a.py:1 Proven safe").returncode == 0
     for number in (2, 3):
         env.commit(where, "app.py", f"print({number})\n")
-        # The new defect concerns the repair, while the cited dismissal line stays intact.
+        # A new P0 keeps the stop reachable after round two; the dismissal line stays intact.
         env.commit(where, "src/a.py", f"pass\nprint({number})\n")
-        env.reviews(blocked(safe, finding("P1", "Remaining defect", "src/a.py", line=2),
+        env.reviews(blocked(safe, finding("P0", "Remaining defect", "src/a.py", line=2),
                             finding("P2", "Remaining advice", "src/a.py")))
         assert env.close(item).returncode == 1
     assert saved(where, item)["status"] == "hotspot"

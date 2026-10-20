@@ -11,6 +11,8 @@ from test_close import GREEN, env  # noqa: F401
 from test_running_commands_follow_changed_forge_pin import _earlier_release
 from test_setup import _fresh_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "skipped-close"
 
 

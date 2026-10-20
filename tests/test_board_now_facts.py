@@ -119,7 +119,8 @@ def test_21_story_progress_has_a_spoken_merged_part_count(client, tmp_path):
 
 def test_22_now_styles_do_not_change_the_releases_screen(client, tmp_path):
     """Loading Now must not set the type, colour or layout of another screen's issue counts."""
-    pushed(clone(client, tmp_path), "Keep a basket follow-up", {".factory/fixes/old.json": json.dumps({
+    pushed(clone(client, tmp_path), "Keep a basket follow-up", {"src/basket.py": "total = 0\n",
+                                                               ".factory/fixes/old.json": json.dumps({
         "kind": "fix", "branch": "fix/old", "status": "merged", "why": "Readers see old",
         "done_when": "It shows", "known": [{"outcome": "follow-up", "file": "src/basket.py", "line": 3,
             "title": "Basket total rounds down", "gain": 2, "work": 1, "harm": 1}]})})

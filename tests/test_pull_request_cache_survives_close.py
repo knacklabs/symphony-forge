@@ -17,6 +17,8 @@ from test_board_github_once import lists, row
 from test_close import body, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
+pytestmark = pytest.mark.platform
+
 STORY = "keep-pr-cache"
 NOW = datetime(2026, 10, 14, 15, tzinfo=timezone.utc)
 

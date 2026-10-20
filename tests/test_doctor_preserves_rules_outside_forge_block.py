@@ -8,6 +8,7 @@ STORY = "fix-agents-block-doctor"
 BEGIN, END = b"<!-- forge:begin -->", b"<!-- forge:end -->"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adoption, location, state", [
     ("new init", location, state)
     for location in ("outside", "inside")
@@ -108,6 +109,7 @@ def test_2_doctor_refreshes_a_repaired_block_despite_malformed_history(
     assert b"Old Forge guidance." not in result and b"## Working here with Forge" in result
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adoption", ["new init", "previous release"])
 def test_3_current_crlf_guidance_needs_no_doctor_repair_or_sync_write(
         repo, gh, tmp_path, monkeypatch, adoption):
@@ -133,6 +135,7 @@ def test_3_current_crlf_guidance_needs_no_doctor_repair_or_sync_write(
             assert agents.read_bytes() == content
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adoption, ending", [
     ("new init", ending) for ending in ("LF", "CRLF", "no newline")
 ] + [("previous release", "no newline")])

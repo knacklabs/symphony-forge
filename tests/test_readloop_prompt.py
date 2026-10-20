@@ -14,6 +14,10 @@ from test_discovery import HOSTS, _client
 from test_phases import _flat
 from test_story import DOC, new_story, setup
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 TEMPLATE = Path(__file__).resolve().parents[1] / "src" / "forge" / "templates" / "cold-read.md"
 
 

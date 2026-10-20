@@ -20,8 +20,9 @@ def saved(where, item):
 
 
 def rounds(env, item, where, paths, title=""):
+    # Only P0s still block from round two; keep these stop scenarios genuinely blocked.
     for number, path in enumerate(paths, 1):
-        env.reviews(blocked(finding("P1", title or f"Round {number} defect", path)))
+        env.reviews(blocked(finding("P0", title or f"Round {number} defect", path)))
         env.commit(where, "app.py", f"print({number})\n")
         env.commit(where, path, f"pass  # review round {number}\n")
         result = env.close(item)

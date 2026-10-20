@@ -18,6 +18,8 @@ from test_board_github_once import github_read_once
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import READER, worktree
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-BOARD-2"
 
 PLAN = STORY_DOC.replace(
@@ -360,7 +362,8 @@ def newer_findings(env, monkeypatch, previous):
     record = resumed / ".factory/fixes" / f"{item}.json"  # a second worker round, as forge work starts it
     env.commit(resumed, record.relative_to(resumed).as_posix(),
                json.dumps({**json.loads(record.read_text("utf-8")), "round": 2, "status": "working"}))
-    env.reviews(blocked(finding("P1", "Basket disappears")))
+    # The newer second review needs a P0 to remain blocked, rather than a P1 follow-up.
+    env.reviews(blocked(finding("P0", "Basket disappears")))
     stopped = env.close(item)
     assert stopped.returncode == 1, stopped.stdout + stopped.stderr
     newer = json.loads(env.repo.git("show", f"origin/fix/{item}:.factory/fixes/{item}.json"))

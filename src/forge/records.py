@@ -31,6 +31,7 @@ import hashlib
 import json
 import re
 from datetime import date
+from itertools import zip_longest
 from pathlib import Path
 
 from forge import repo, story
@@ -268,8 +269,13 @@ def decision_accept(args: argparse.Namespace) -> None:
                          f"correct {rel}, then {next_step}"))
         brief = _text(top / "docs/product/BRIEF.md")
         quote = _answer_section(body)
-        if not brief or not quote or quote != _answer_section(brief):
-            repo.refuse((f"{rel}'s Answers must quote docs/product/BRIEF.md word for word.",
+        expected = _answer_section(brief)
+        if not brief or not quote or quote != expected:
+            line = next((number for number, (actual, wanted) in enumerate(
+                zip_longest(quote.splitlines(), expected.splitlines()), 1)
+                if actual != wanted), 1)
+            repo.refuse((f"{rel}'s Answers first differ at line {line} of the Answers section "
+                         "from docs/product/BRIEF.md. Copy its words exactly.",
                          f"copy its Answers section, then {next_step}"))
         open_topics = nextstep.open_must_answer_topics(top)
         answers = nextstep.parse_answers(top)
@@ -424,6 +430,18 @@ def _roadmap_items(slug: str, body: str) -> dict[str, str]:
     return items
 
 
+def read_path(top: Path, target: str) -> Path:
+    """Specs keep precedence; numbered decision names select a decision with the same slug."""
+    spec = top / "docs" / "specs" / f"{target}.md"
+    if SLUG.fullmatch(target):
+        if spec.is_file():
+            return spec
+        decision = _decision(top, target, "forge read <NNNN-slug>")
+        if decision:
+            return top / decision
+    repo.refuse(story.REFUSALS["no_spec"], slug=target)
+
+
 def _decision(top: Path, name: str, next_step: str, called: str = "") -> str:
     """The one decision named NNNN-slug (that exact file) or slug, or "" when there is none."""
     folder = top / "docs" / "decisions"
@@ -471,8 +489,8 @@ def _sections(body: str) -> dict[str, str]:
 
 
 def _answer_section(body: str) -> str:
-    match = re.search(r"(?ms)^## Answers\r?\n.*?(?=^## |\Z)", body)
-    return match[0] if match else ""
+    match = re.search(r"(?ms)^## Answers[ \t]*\r?\n.*?(?=^## |\Z)", body)
+    return "\n".join(line.rstrip() for line in match[0].splitlines()).rstrip() if match else ""
 
 
 COMMANDS = [

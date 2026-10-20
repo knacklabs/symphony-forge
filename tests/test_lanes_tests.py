@@ -16,6 +16,8 @@ from test_codex_worker import _started
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-LANES-1"
 
 

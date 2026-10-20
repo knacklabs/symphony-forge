@@ -27,6 +27,8 @@ from test_phases import _flat
 from test_story import DOC, new_story, setup, worktree
 from test_tools_session_hold import Session
 
+pytestmark = pytest.mark.platform
+
 
 @pytest.fixture(autouse=True)
 def reader_sessions(repo):
