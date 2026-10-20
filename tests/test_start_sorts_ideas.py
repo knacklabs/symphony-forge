@@ -350,6 +350,15 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         assert refused.stderr == ("WELCOME is approved or has started parts, so it can't be dropped.\n"
                                   "Next: forge next\n")
     elif move == "fix":
+        if age == "new":
+            for key, because, problem in (
+                ("not-a-story", "Move it", "Give a story key to drop."),
+                ("ABSENT", "", "Give one reason to drop the plan."),
+                ("ABSENT", "Move it", "ABSENT has not started."),
+            ):
+                refused = repo.forge("story", "drop", key, "--because", because, cwd=top)
+                assert refused.returncode == 1
+                assert refused.stderr == problem + "\nNext: forge next\n"
         # A roadmap key on main exercises the board's backfill path.
         roadmap = top / "plans/roadmap.json"
         roadmap.parent.mkdir(parents=True, exist_ok=True)
@@ -358,6 +367,16 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         roadmap.write_text(json.dumps(data), "utf-8")
         _land_setup(repo, top, "record-planned-story")
         _started(intake, "Let shoppers save baskets", _plan())
+        if age == "new":
+            draft = _checkout(repo, top, "story/SAVE") / "draft.txt"
+            draft.write_text("Keep this draft.\n", "utf-8")
+            refused = repo.forge("story", "drop", "SAVE", "--because", "Move it", cwd=top)
+            assert refused.returncode == 1
+            assert refused.stderr == ("SAVE has uncommitted changes. Commit or set them aside first.\n"
+                                      "Next: forge next\n")
+            assert draft.read_text("utf-8") == "Keep this draft.\n"
+            assert "SAVE" in repo.forge("next", cwd=top).stdout
+            draft.unlink()
         moved = repo.forge("fix", "start", "Shoppers lose baskets when they leave.", "--done",
                            "A shopper can save a basket.", cwd=top)
         assert moved.returncode == 0, moved.stdout + moved.stderr
@@ -380,6 +399,8 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         assert not repo.git("branch", "--list", "story/SAVE", cwd=top)
         assert "branch refs/heads/story/SAVE" not in repo.git("worktree", "list", "--porcelain", cwd=top)
         _visible(repo, top, fix, "SAVE")
+        if age == "adopted":
+            return  # The earlier-adopted case owns the move; new repos keep all refusal cases.
         # The real read and approval hook make a later drop unsafe.
         _started(intake, "Another saved basket", _plan("APPROVED"))
         where = _checkout(repo, top, "story/APPROVED")
