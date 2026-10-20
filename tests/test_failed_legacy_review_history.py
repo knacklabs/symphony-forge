@@ -81,11 +81,13 @@ def test_25_failed_earlier_review_keeps_retry_ordinal_and_unseen_findings_unknow
     monkeypatch.setenv("FORGE_NOW", (began + timedelta(seconds=30)).isoformat())
     env.reviews(CLEAN if mechanical else blocked(finding("P1", "Greeting disappears")))
     retried = env.close(item)
-    assert retried.returncode == (0 if mechanical else 1), retried.stdout + retried.stderr
+    # The failed legacy attempt has no completed review. The modern first fix
+    # review now publishes a non-P0 finding as a follow-up and proceeds.
+    assert retried.returncode == 0, retried.stdout + retried.stderr
+    assert "Ready:" in retried.stdout
     if not mechanical:
-        assert "serious findings" in retried.stderr
-    else:
-        assert "Ready:" in retried.stdout
+        published = body(env.gh_calls("pr", "edit")[-1])
+        assert "Greeting disappears" in published.split("Follow-ups:", 1)[1]
     history = row(env.repo, item)["rounds"]
     assert len(history) == 2, history
     legacy, current = history

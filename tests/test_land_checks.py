@@ -237,9 +237,9 @@ def test_5_same_run_under_either_host_and_workers(request, land, monkeypatch, ho
         request.getfixturevalue("claude_session")
         _codex_workers(land, monkeypatch, request.getfixturevalue("sdk_data"))
     _agent(land)
-    _fix(land, "working", worked=True)
+    ITEM, _ = land.start_task()
     land.reviews(blocked(BLOCKER), CLEAN)
-    done = _land(land)
+    done = _land(land, ITEM)
     assert done.returncode == 0, done.stdout + done.stderr
     assert _steps(done) == [f"Closing {ITEM}.",
                             "Fix round 1 of 3: the worker fixes the review's serious findings.",

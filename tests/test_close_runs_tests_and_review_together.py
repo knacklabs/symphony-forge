@@ -265,10 +265,10 @@ def test_5_tests_passing_later_keep_a_blocked_review_blocked(env):
     env.repo.git("push", "-q", "origin", "main")
     env.checks(GREEN)
     env.reviews(blocked(finding("P1", "Greeting loses the basket")))
-    item, where = env.start_fix()
+    item, where = env.start_task()
     assert env.close(item).returncode == 1
     marker.write_text("", "utf-8")  # the same tests pass on the next close, with no branch change
     again = env.close(item)
     assert again.returncode == 1 and "Greeting loses the basket" in again.stdout + again.stderr
-    state = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
+    state = json.loads((where / ".factory/stories/SHOP/tasks/T1.json").read_text("utf-8"))
     assert state["status"] == "fixing"

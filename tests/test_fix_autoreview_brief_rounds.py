@@ -13,7 +13,7 @@ STORY = "FIX-AUTOREVIEW-BRIEF"
 
 
 def test_1_previous_findings_and_dismissal_reasons_reach_next_review(env):
-    item, where = env.start_fix()
+    item, where = env.start_task()
     env.reviews(blocked(finding("P1", "Greeting is missing"),
                         finding("P2", "Simpler: remove the extra step")), CLEAN)
     assert env.close(item).returncode == 1

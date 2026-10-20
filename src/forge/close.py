@@ -574,7 +574,7 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
     if state.get("stop") and not state["stop"].get("choice"):
         top = top or _worktree(item)  # land passes no checkout
         from forge.nextstep import default_due  # nextstep imports close
-        if not state["stop"].get("review_limit") and default_due(top, state):
+        if default_due(top, state):
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
         if advice := review.loop_advice(top or _worktree(item), item):

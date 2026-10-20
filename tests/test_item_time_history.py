@@ -70,7 +70,7 @@ def queued_first_close(env, item, where):
 def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_history(
         env, tmp_path, previous, monkeypatch):
     # Review reports are third-party inputs; Forge itself must retain and classify the history.
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=True)
     if not previous:
         # Init starts a prototype; the owner moves its fetched default branch to live.
         live = tmp_path / "live-default"
@@ -82,10 +82,6 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         env.repo.git("push", "-q", "origin", "main", cwd=live)
         env.repo.git("fetch", "-q", "origin", "main")
         env.repo.git("merge", "--no-edit", "origin/main", cwd=where)
-    if previous:
-        # Upgrading an old adoption also changes the installed generated files.
-        allowed = env.repo.forge("fix", "allow-large", "Upgrade the earlier adoption in this fix", cwd=where)
-        assert allowed.returncode == 0, allowed.stderr
     install_claude(env.repo)
     version = env.repo.forge("--version").stdout.split()[-1]
     suite = env.tmp / "suite.py"
@@ -381,7 +377,8 @@ def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(
 
 
 def test_9_closes_without_another_worker_turn_keep_separate_review_rounds(env):
-    item, where = env.start_fix(round=1)
+    item, where = env.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json",
+                            {"round": 1}, {"app.py": "print('saved')\n"})
     # Keep two blocked rounds without another worker; a round-two P1 would now pass.
     env.reviews(blocked(finding("P0", "Basket disappears", "app.py")))
     first = env.close(item)

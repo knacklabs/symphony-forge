@@ -68,19 +68,23 @@ def test_3_blocked_or_slow_names_each_reason_and_how_long(env, monkeypatch, prev
     at(monkeypatch, now - timedelta(hours=25))
     started = env.repo.forge("task", "start", "SHOP/T1")
     assert started.returncode == 0, started.stdout + started.stderr
-    # A fix closed clean 31 hours ago, then blocked four rounds from 30 hours ago.
+    # A story part closed clean 31 hours ago, then blocked four rounds from 30 hours ago.
     at(monkeypatch, now - timedelta(hours=31))
     env.reviews(CLEAN)
-    _, loop = env.start("loop", "fix/loop", ".factory/fixes/loop.json", {**FIX, "why": "Loop"}, {"loop.py": "x\n"})
-    assert env.close("loop").returncode == 0
+    env.commit(env.repo.path, "plans/LOOP.md", STORY_DOC)
+    env.commit(env.repo.path, "plans/OTHER.md", STORY_DOC)
+    env.repo.git("push", "-q", "origin", "main")
+    _, loop = env.start("LOOP/T1", "task/LOOP-T1", ".factory/stories/LOOP/tasks/T1.json", {},
+                        {"loop.py": "x\n"})
+    assert env.close("LOOP/T1").returncode == 0
     for hours in (30, 29, 28, 27):
         at(monkeypatch, now - timedelta(hours=hours))
-        review_rounds(env, "loop", loop, 1, hours)
-    # Another fix has one blocked round on this machine.
+        review_rounds(env, "LOOP/T1", loop, 1, hours)
+    # Another story part has one blocked round on this machine.
     at(monkeypatch, now - timedelta(minutes=10))
-    _, other = env.start("other", "fix/other", ".factory/fixes/other.json", {**FIX, "why": "Other"},
+    _, other = env.start("OTHER/T1", "task/OTHER-T1", ".factory/stories/OTHER/tasks/T1.json", {},
                          {"loop.py": "y\n"})
-    review_rounds(env, "other", other, 1, "a")
+    review_rounds(env, "OTHER/T1", other, 1, "a")
 
     # A fix started 30 hours ago whose tests are running has no idle time, so it is never slow.
     at(monkeypatch, now - timedelta(hours=30))
@@ -96,24 +100,24 @@ def test_3_blocked_or_slow_names_each_reason_and_how_long(env, monkeypatch, prev
     assert "busy" not in {row["id"] for row in shown["team"]["blocked"]}
     rows = blocked_rows(env.repo)
     assert rows[("SHOP/T1", "stalled")]["seconds"] == pytest.approx(25 * 3600, abs=60)
-    assert rows[("loop", "looping")]["seconds"] == 30 * 3600
+    assert rows[("LOOP/T1", "looping")]["seconds"] == 30 * 3600
     assert rows[("CART/T1", "blocks the most")]["seconds"] == 40 * 3600
     assert "3" in rows[("CART/T1", "blocks the most")]["detail"]
     assert all(row["detail"] for row in rows.values())
-    assert not any(key in rows for key in [("old", "stalled"), ("other", "looping")])
+    assert not any(key in rows for key in [("old", "stalled"), ("OTHER/T1", "looping")])
     seconds = [row["seconds"] for row in board(env.repo)["team"]["blocked"]]
     assert seconds == sorted(seconds, reverse=True)
 
-    # Machine B pushes three more blocked rounds of the other fix; after a fetch, it loops here too.
+    # Machine B pushes three more blocked rounds of the other part; after a fetch, it loops here too.
     machine_a = env.repo.path
     machine_b = env.tmp / "blocked-machine-b"
     env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(machine_b))
     env.repo.path = machine_b
     resumed = env.tmp / "blocked-other-b"
-    env.repo.git("worktree", "add", "-q", "-b", "fix/other", str(resumed), "origin/fix/other")
+    env.repo.git("worktree", "add", "-q", "-b", "task/OTHER-T1", str(resumed), "origin/task/OTHER-T1")
     at(monkeypatch, now - timedelta(minutes=5))
-    review_rounds(env, "other", Path(resumed), 3, "b")
+    review_rounds(env, "OTHER/T1", Path(resumed), 3, "b")
     env.repo.path = machine_a
     env.repo.git("fetch", "-q", "origin")
     at(monkeypatch, now)
-    assert ("other", "looping") in blocked_rows(env.repo)
+    assert ("OTHER/T1", "looping") in blocked_rows(env.repo)

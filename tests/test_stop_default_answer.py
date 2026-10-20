@@ -12,7 +12,7 @@ import pytest
 from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
 from test_hotspot_stop import seed, rounds
-from test_land import ITEM, _fix, _land, _workers, land  # noqa: F401
+from test_land import _land, _workers, land  # noqa: F401
 from test_setup import _fresh_client
 
 GUIDANCE = ("When nobody answers a review-loop stop in 30 minutes, close or land records the repo's "
@@ -30,7 +30,7 @@ def follow_ups(env):
 
 def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     seed(env, "src/a.py")
-    item, where = env.start_fix()
+    item, where = env.start_task()
     rounds(env, item, where, ["src/a.py"] * 2)
     env.commit(where, "app.py", "print(3)\n")
     env.commit(where, "src/a.py", "pass  # review round 3\n")
@@ -49,7 +49,7 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
 
     later(monkeypatch, 31)
     shown = env.repo.forge("next").stdout
-    assert (f"Nobody answered the review loop stop on The fix {item} in 30 minutes, so close "
+    assert (f"Nobody answered the review loop stop on {item} in 30 minutes, so close "
             "records the repo's default choice: narrow.") in shown
     assert f"Next: forge close {item}\n" in shown
     answered = env.close(item)
@@ -66,10 +66,10 @@ def test_1_unanswered_stop_gets_the_default_after_30_minutes(env, monkeypatch):
     branch = next(b for b in branches if "Round 3 defect" in
                   env.repo.git("log", "-1", "--format=%s", b))
     assert (env.repo.git("log", "-1", "--format=%s", branch)
-            == "Start the fix: Review finding left open by tidy-readme: Round 3 defect (src/a.py:1): "
-               "Evidence for: Round 3 defect")
+            == f"Start the fix: Review finding left open by {item}: Round 3 defect (src/a.py:1): "
+                "Evidence for: Round 3 defect")
     shown = env.repo.forge("next").stdout
-    assert (f"The repo's default answered the review loop stop on The fix {item}: narrow it to its "
+    assert (f"The repo's default answered the review loop stop on {item}: narrow it to its "
             "Done-when lines; follow-up fixes own the open findings:") in shown
     board = env.repo.forge("board", "--json")
     assert board.returncode == 0 and "fixing" in board.stdout
@@ -105,8 +105,7 @@ def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
     else:
         if entry == "same-file":
             seed(land, "app.py")
-        item = ITEM
-        where = _fix(land, "working", worked=True, changes={
+        item, where = land.start_task(changes={
             "app.py": "print('hello')\n", "other.py": "print('hello')\n", "show.py": "print('hello')\n"})
         paths = ["app.py"] * 3 if entry == "same-file" else ["app.py", "other.py", "show.py"]
         # A new finding title each round: the same finding twice would stop the stuck worker first.
@@ -121,7 +120,7 @@ def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
             land.commit(where, paths[number - 1], f"print({number})\n")
             assert land.close(item).returncode == (0 if entry == "running" and number == 2 else 1)
         if entry == "running":
-            # Non-P0s now finish at round two rather than buying a fourth review.
+            # Story-part non-P0s finish at round two rather than buying a fourth review.
             landed = _land(land, item)
             assert landed.returncode == 0, landed.stdout + landed.stderr
             assert f"{item} is ready; a human merges" in landed.stdout
@@ -145,7 +144,7 @@ def test_3_land_carries_on_and_the_worker_narrows(land, monkeypatch, entry):
     assert ("follow-up fixes own these findings: then\nremove what goes beyond" in brief) == (
         "Close stopped on these." in brief)
     shown = land.repo.forge("next").stdout
-    assert f"The repo's default answered the review loop stop on The fix {item}" in shown
+    assert f"The repo's default answered the review loop stop on {item}" in shown
     assert where.exists()
 
 

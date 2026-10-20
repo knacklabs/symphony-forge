@@ -37,7 +37,7 @@ STORY = "second-stop-choice"
 def test_1_each_new_stop_waits_for_and_records_its_own_choice(
         env, tmp_path, previous, same_file, first, second, legacy):
     # With the default on, land waits out the stop; this checks the owner's own choices.
-    item, where = client_item(env, tmp_path, previous, stop_default=True)
+    item, where = client_item(env, tmp_path, previous, stop_default=True, part=True)
     if legacy:
         # The actual earlier close writes the choice; no synthetic stop record.
         old = tmp_path / "earlier-close"

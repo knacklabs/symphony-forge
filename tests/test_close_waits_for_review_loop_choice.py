@@ -18,12 +18,12 @@ GUIDANCE = (
 )
 
 
-def stopped(env, kind="fix", *, low_harm=False):
+def stopped(env, kind="task", *, low_harm=False):
     seed(env, "src/a.py")
     # A task's plan row may hold markdown and paths; its question names it in plain words.
     doc = STORY_DOC.replace("Shoppers can save their basket with one click",
                             "Shoppers can **save** their basket at `app.py:3` with one click")
-    item, where = env.start_approved_task(doc) if kind == "task" else env.start_fix()
+    item, where = env.start_approved_task(doc)
     if low_harm:
         # Gain 5 still blocks after round one; low Harm exercises the retained timed default.
         for number in range(1, 4):
@@ -36,9 +36,8 @@ def stopped(env, kind="fix", *, low_harm=False):
     else:
         result = rounds(env, item, where, ["src/a.py"] * 3)
     lines = result.stderr.splitlines()
-    if kind == "task":
-        assert lines[-10] == ("Save a basket (part of Shoppers can save a basket): "
-                             "Shoppers can save their basket with one click")
+    assert lines[-10] == ("Save a basket (part of Shoppers can save a basket): "
+                         "Shoppers can save their basket with one click")
     assert [lines[-11], lines[-1]] == [
         f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
         "round flagged too, so Forge stops sending the worker back. Ask the human to narrow the part, "
@@ -48,19 +47,19 @@ def stopped(env, kind="fix", *, low_harm=False):
     return item, where
 
 
-@pytest.mark.parametrize("kind", ["fix", "task", "fix-claude"])
+@pytest.mark.parametrize("kind", ["task", "task-claude"])
 def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, kind):
     # Human-only waiting is now opt-in; the default keeps land alive for a timed answer.
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
     env.repo.git("push", "-q", "origin", "main")
-    if kind == "fix-claude":
+    if kind == "task-claude":
         _claude_only(tmp_path, monkeypatch, env.repo.bin,
                      (ROOT / "tests/stubs/autoreview").read_text())
     item, where = stopped(env, kind)
     for call in env.review_calls():
         # With tools absent, both chooses Codex when installed and Claude otherwise.
-        expected = "claude" if kind == "fix-claude" else "codex"
+        expected = "claude" if kind == "task-claude" else "codex"
         assert call["args"][call["args"].index("--engine") + 1] == expected
     before = len(env.review_calls())
     env.commit(where, "app.py", "print('changed after stop')\n")
@@ -100,7 +99,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert "Ready:" in resumed.stdout
         assert len(env.review_calls()) == before
         checked = env.repo.forge("hook", "pr-check", "--base", "origin/main",
-                                 "--head", "HEAD", "--branch", "fix/tidy-readme", cwd=where)
+                                 "--head", "HEAD", "--branch", "task/SHOP-T1", cwd=where)
         assert checked.returncode == 0, checked.stderr
         # An upstream edit outside this branch's diff no longer gets merged by close, so its
         # accepted review stays valid until the worker changes the branch itself.
@@ -134,7 +133,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
 def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env):
     # Inspect the instructions delivered to the reviewer, not whether a canned response obeys them.
     seed(env, "src/a.py")
-    item, where = env.start_fix()
+    item, where = env.start_task()
     safe = finding("P1", "Proven safe", "src/a.py")
     env.reviews(blocked(safe))
     assert env.close(item).returncode == 1

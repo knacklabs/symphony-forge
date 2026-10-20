@@ -43,7 +43,7 @@ def review_round(env, item, where, number):
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgraded"])
 @pytest.mark.parametrize("phase", ["review", "remote-review", "story-read", "spec-read"])
 def test_1_next_asks_the_owner_after_two_blocked_rounds(env, tmp_path, previous, phase):
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=phase in ("review", "remote-review"))
     client_where = where
     if phase in ("review", "remote-review"):
         review_round(env, item, where, 1)
@@ -90,9 +90,9 @@ def test_1_next_asks_the_owner_after_two_blocked_rounds(env, tmp_path, previous,
                             "builder details", "one focused round"):
             assert instruction in guide
     if phase == "remote-review":
-        # Keep only the published fix branch under its original name, as on another machine.
+        # Keep only the published task branch under its original name, as on another machine.
         env.repo.git("worktree", "remove", str(where))
-        env.repo.git("branch", "-m", f"fix/{item}", f"worker/{item}")
+        env.repo.git("branch", "-m", "task/SHOP-T1", f"worker/{item}")
         remote = env.repo.forge("next")
         assert remote.returncode == 0, remote.stderr
         assert_owner_question(remote.stdout)
@@ -101,7 +101,7 @@ def test_1_next_asks_the_owner_after_two_blocked_rounds(env, tmp_path, previous,
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgraded"])
 def test_2_close_asks_the_owner_after_two_blocked_reviews(env, tmp_path, previous):
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=True)
     first = review_round(env, item, where, 1)
     assert ASK not in first.stderr
     second = review_round(env, item, where, 2)
@@ -118,7 +118,7 @@ def test_2_close_asks_the_owner_after_two_blocked_reviews(env, tmp_path, previou
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption-upgraded"])
 @pytest.mark.parametrize("remote", [False, True], ids=["local", "remote"])
 def test_3_hard_stop_keeps_the_owner_question_and_resolution_step(env, tmp_path, previous, remote):
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=True)
     titles = (*TITLES, "Checkout loses the total")
     for number, title in enumerate(titles, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
@@ -135,7 +135,7 @@ def test_3_hard_stop_keeps_the_owner_question_and_resolution_step(env, tmp_path,
     assert "then send one focused round" not in stopped.stderr
     if remote:
         env.repo.git("worktree", "remove", str(where))
-        env.repo.git("branch", "-m", f"fix/{item}", f"worker/{item}")
+        env.repo.git("branch", "-m", "task/SHOP-T1", f"worker/{item}")
     shown = env.repo.forge("next")
     assert shown.returncode == 0, shown.stderr
     assert resolution in shown.stdout

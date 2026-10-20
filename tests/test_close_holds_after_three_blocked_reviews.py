@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_setup import _fresh_client
 from test_upgrade_command import Upgrade
 from test_worker import calls, install_claude
@@ -23,7 +23,7 @@ QUESTION_RULE = ("When a cold read or review loop stops and you must ask, ask th
 PATHS = ["docs/product/BRIEF.md", "docs/specs/README.md", "docs/product/settings.md"]
 
 
-def client_item(env, tmp_path, previous, stop_default=False):
+def client_item(env, tmp_path, previous, stop_default=False, part=False):
     if previous:
         # Land the earlier release's plain-text adoption fixture before it installs git hooks.
         for path in PATHS[:-1]:
@@ -41,7 +41,12 @@ def client_item(env, tmp_path, previous, stop_default=False):
         # Product fixes now keep default settings, so coordinator setup belongs on main.
         config = (env.repo.path / "forge.toml").read_text("utf-8")
         Upgrade(env, tmp_path).on_main("forge.toml", 'stop_default = "off"\n' + config)
-    item, where = env.start_fix()
+    item, where = env.start_task() if part else env.start_fix()
+    if part:
+        # Init and earlier adoption need not retain the fixture's story plan.
+        plan = where / "plans/SHOP.md"
+        if not plan.exists() or plan.read_text("utf-8") != STORY_DOC:
+            env.commit(where, "plans/SHOP.md", STORY_DOC)
     if previous:
         version = env.repo.forge("--version").stdout.split()[-1]
         config = (where / "forge.toml").read_text("utf-8")
@@ -66,7 +71,7 @@ def client_item(env, tmp_path, previous, stop_default=False):
 def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
         env, tmp_path, previous, same_file, choice):
     # With the default on, land waits out the stop; this checks that land refuses until a choice.
-    item, where = client_item(env, tmp_path, previous, stop_default=True)
+    item, where = client_item(env, tmp_path, previous, stop_default=True, part=True)
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for number, path in enumerate(paths, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
@@ -86,7 +91,7 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
     round_number = 3 if same_file else 4
     if not same_file:
         # Three different files do not trigger the third-round same-file stop.
-        state = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
+        state = json.loads((where / ".factory/stories/SHOP/tasks/T1.json").read_text("utf-8"))
         assert state["status"] == "fixing"
         assert "stop" not in state
         # Unlike the existing same-file stop, this hold refuses before spending a fourth review.
@@ -99,7 +104,7 @@ def test_1_close_holds_after_three_blocked_reviews_before_a_fourth_reviewer(
              "or replace the cases with one general rule; or narrow that Done when item; or make it "
              "fail closed. " if same_file else "")
     question = [
-        "Readme greets new readers: The readme opens with a greeting",
+        "Save a basket (part of Shoppers can save a basket): Shoppers can save their basket with one click",
         moved + "It still has these problems:",
         "| # | Problem, for whom | Gain | Work | Harm | Proposed |", "|---|---|---|---|---|---|",
         "| 2 | Round 3 defect: saving drops the basket. Returning shoppers lose their saved items. | 3 | 2 | 4 "
@@ -167,7 +172,7 @@ def test_2_fresh_and_resumed_workers_receive_the_review_loop_hold_rule(env):
 @pytest.mark.parametrize("interruption", ["clean", "dismissed"])
 def test_3_only_consecutive_serious_blocked_reviews_hold_the_next_reviewer(env, interruption):
     # New branch files avoid the separate existing same-file hotspot rule.
-    item, where = env.start_fix(changes={"app.py": "print('work')\n"})
+    item, where = env.start_task(changes={"app.py": "print('work')\n"})
     for number in range(1, 6):
         env.commit(where, "app.py", f"print('round {number}')\n")
         env.commit(where, f"docs/{number}.md", f"# Review round {number}\n")

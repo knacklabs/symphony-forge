@@ -3,7 +3,7 @@
 import pytest
 
 from test_close import CLEAN, blocked, env, finding  # noqa: F401
-from test_land import ITEM, _fix, _land, _workers, land  # noqa: F401
+from test_land import _land, _workers, land  # noqa: F401
 
 STORY = "three-rounds-ask"
 
@@ -16,7 +16,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
     land.repo.git("push", "-q", "origin", "main")
     # Different files avoid the existing same-file stop, so this exercises the
     # three-consecutive-blocked-round hold and its land-to-close handoff.
-    where = _fix(land, "working", worked=True, changes={
+    ITEM, where = land.start_task(changes={
         "app.py": "print('hello')\n", "other.py": "print('hello')\n",
         "show.py": "print('hello')\n",
     })
@@ -24,7 +24,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
     land.reviews(*(blocked({**finding("P0", "Greeting is missing", file=file),
                             "body": "Gain 3, Work 2, Harm 4\nEvidence"})
                    for file in ("app.py", "work-1.txt", "work-2.txt")))
-    asked = _land(land)
+    asked = _land(land, ITEM)
     assert asked.returncode == 1 and "ask the owner" in asked.stderr
     assert len(land.review_calls()) == 2
     # The coordinator records the owner's rule, then sends the focused third round.
@@ -33,7 +33,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
     assert focused.returncode == 0, focused.stdout + focused.stderr
     assert land.close(ITEM).returncode == 1
     assert land.repo.forge("work", ITEM).returncode == 0
-    stopped = _land(land)
+    stopped = _land(land, ITEM)
     assert stopped.returncode == 3, stopped.stdout + stopped.stderr
     assert "Ask the human" in stopped.stderr
     assert f"forge close {ITEM} --resolve <narrow|split|accept>" in stopped.stderr
@@ -44,7 +44,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
 
     # Repeating either entry point cannot run another worker or reviewer until
     # the coordinator records the human's choice.
-    for again, code in ((_land(land), 3), (land.close(ITEM), 1)):
+    for again, code in ((_land(land, ITEM), 3), (land.close(ITEM), 1)):
         assert again.returncode == code, again.stdout + again.stderr
         assert "Ask the human" in again.stderr
     assert len(land.review_calls()) == 3
@@ -61,7 +61,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
         assert f"{choice.capitalize()} the part as agreed" in recorded.stdout
         land.commit(where, "app.py", "print('greeting')\n", "Make the agreed change")
         land.reviews(CLEAN)
-        continued = _land(land)
+        continued = _land(land, ITEM)
         assert continued.returncode == 0, continued.stdout + continued.stderr
         assert f"{ITEM} is ready; a human merges" in continued.stdout
         assert len(land.review_calls()) == 4

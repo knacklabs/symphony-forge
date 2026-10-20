@@ -36,7 +36,7 @@ def _other_blocked_reviews_keep_the_existing_refusal(env, paths, on_default):
     if on_default:
         for path in sorted(set(paths)):
             seed(env, path)
-    item, where = env.start_fix()
+    item, where = env.start_task()
     if not on_default:
         env.commit(where, paths[0], "pass\n")
     # One finding that keeps coming back: three distinct ones in one file would stop by area.
@@ -48,7 +48,7 @@ def _other_blocked_reviews_keep_the_existing_refusal(env, paths, on_default):
 
 def _carried_dismissal_cannot_stop_the_third_review(env):
     seed(env, "src/a.py")
-    item, where = env.start_fix()
+    item, where = env.start_task()
     defect = blocked(finding("P1", "Dismissed defect", "src/a.py"))
     env.reviews(defect)
     assert env.close(item).returncode == 1

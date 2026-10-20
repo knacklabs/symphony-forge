@@ -863,7 +863,7 @@ def at_ref(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | Non
 def default_due(top: Path, state: dict[str, Any]) -> bool:
     """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
     stop = state.get("stop") or {}
-    if (not stop or stop.get("choice") or "question" in stop or repo.config(top)["stop_default"] == "off"
+    if (not stop or stop.get("choice") or stop.get("review_limit") or "question" in stop or repo.config(top)["stop_default"] == "off"
             or any(f.get("harm", 1) > 2 for f in score.open_findings(state.get("review") or {}))):
         return False
     # Stops from earlier releases have no time of their own; their owner wait event has one.
@@ -972,7 +972,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if default_due(path or top, state):
             return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
                     "records the repo's default choice: narrow.", f"Next: forge close {item}"]
-        return advice[:-1] + [f"Close stopped {label}: {stop['file']} keeps breaking.",
+        reason = "its review found an open P0" if stop.get("review_limit") else f"{stop['file']} keeps breaking"
+        return advice[:-1] + [f"Close stopped {label}: {reason}.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if advice:

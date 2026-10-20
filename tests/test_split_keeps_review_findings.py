@@ -45,17 +45,19 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     seed(env, "src/safe.py")
     item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
     safe = finding("P1", "Proven safe", "src/safe.py")
-    for number in range(1, 4):
+    # A fix's first P0 asks the owner; a part retains its three-round stop and prior dismissal.
+    last_round = 3 if kind == "task" else 1
+    for number in range(1, last_round + 1):
         env.commit(where, "src/a.py", f"pass  # round {number}\n")
         env.commit(where, "app.py", f"print({number})\n")
         # P1s no longer reach this stop after round two; retain open P0s for the split.
         defects = [finding("P0", f"Round {number} defect", "src/a.py")]
-        if number == 3:
+        if number == last_round:
             defects.append(finding("P0", "Second split defect", "app.py"))
-        env.reviews(blocked(*defects, safe))
+        env.reviews(blocked(*defects, *([safe] if kind == "task" else [])))
         held = env.close(item)
         assert held.returncode == 1, held.stdout + held.stderr
-        if number == 1:
+        if number == 1 and kind == "task":
             dismissed = env.close(item, "--dismiss", "2", "--because", "src/safe.py:1 This case is safe")
             assert dismissed.returncode == 1, dismissed.stdout + dismissed.stderr
     assert "Ask the human" in held.stderr, held.stdout + held.stderr
@@ -69,7 +71,7 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     name = branch.removeprefix("fix/")
     follow_up = json.loads(env.repo.git("show", f"{branch}:.factory/fixes/{name}.json"))
     for field in ("why", "done_when"):
-        for title, location in (("Round 3 defect", "src/a.py:1"),
+        for title, location in ((f"Round {last_round} defect", "src/a.py:1"),
                                 ("Second split defect", "app.py:1")):
             assert title in follow_up[field] and location in follow_up[field]
         assert "Proven safe" not in follow_up[field]

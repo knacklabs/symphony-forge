@@ -37,11 +37,14 @@ STUCK = {"failing": TESTS, "work twice": TESTS,
 NEXT = 'Next: forge close tidy-readme --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'
 
 
-def question(stuck, tried="Worker round"):
-    return ["Readme greets new readers is stuck. It should deliver: The readme opens with a greeting",
+def question(stuck, tried="Worker round", part=False):
+    name = ("Shoppers can save a basket: Save a basket is stuck. It should deliver: "
+            "Shoppers can save their basket with one click" if part else
+            "Readme greets new readers is stuck. It should deliver: The readme opens with a greeting")
+    return [name,
             f"Two rounds in a row left {stuck}.", f"The worker tried: {tried}.",
             "Choose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-            NEXT]
+            NEXT.replace("tidy-readme", "SHOP/T1") if part else NEXT]
 
 
 def _rounds(env, case):
@@ -68,7 +71,9 @@ def _rounds(env, case):
         env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                    + "test = " + json.dumps(f"{sys.executable} {script}") + "\n")
         env.repo.git("push", "-q", "origin", "main")
-    item, _ = env.start_fix()
+    # Fix P0s now wait for the owner after one review. Story parts retain
+    # the repeated-finding progress/stuck contract; red tests still use fixes.
+    item, _ = (env.start_fix() if case in ("failing", "work twice") else env.start_task())
     for _ in range(2 if case == "fail pass fail" else 1):
         assert env.close(item).returncode == 1
         # A second round with no close between has no new result, so it counts nothing.
@@ -89,16 +94,17 @@ def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     if case in ("fail pass fail", "finding then test"):
         assert stuck.returncode == 0, stuck.stdout + stuck.stderr
         return
-    asked = question(STUCK[case], "no new commits" if case == "no change" else "Worker round")
+    part = "/" in item
+    asked = question(STUCK[case], "no new commits" if case == "no change" else "Worker round", part)
     assert stuck.returncode == 1, stuck.stdout + stuck.stderr
     assert ("The worker can't get past the same problem, so Forge stopped sending it back. "
             "Ask the human:\n") in stuck.stderr
     assert stuck.stderr.splitlines()[-5:] == asked
     assert env.close(item).stderr.splitlines()[-5:] == asked
     shown = env.repo.forge("next").stdout
-    assert question(STUCK[case])[0] in shown and NEXT in shown
+    assert asked[0] in shown and asked[-1] in shown
     refused = env.close(item, "--resolve", "accept", "--reason", "Accept it")
-    assert refused.returncode == 1 and refused.stderr.splitlines()[-1] == NEXT
+    assert refused.returncode == 1 and refused.stderr.splitlines()[-1] == asked[-1]
 
 
 def test_2_a_choice_buys_one_more_round_then_forge_asks_again(land):

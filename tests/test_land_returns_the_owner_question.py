@@ -15,7 +15,7 @@ from test_tools_session_hold import Session
 
 @pytest.mark.parametrize("previous,harm", [(False, 1), (True, 3)])
 def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_path, previous, harm):
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=True)
     if not previous:
         # Init's prototype merges automatically: reuse land's GitHub edge fake for that final step.
         remote = Path(env.repo.git("remote", "get-url", "origin")).as_posix()
@@ -46,7 +46,7 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
     assert f"then forge land {item}" in output
     assert len(env.review_calls()) == 3
     env.gh.respond("pr", "checks", stdout="[]")
-    env.gh.respond("pr", "view", f"fix/{item}", "--json", "url",
+    env.gh.respond("pr", "view", "task/SHOP-T1", "--json", "url",
                    stdout='{"url": "https://github.com/acme/shop/pull/7"}')
     resolved = env.close(item, "--resolve", "accept", "--reason", "The owner accepts the greeting limit")
     assert resolved.returncode == 0, resolved.stdout + resolved.stderr

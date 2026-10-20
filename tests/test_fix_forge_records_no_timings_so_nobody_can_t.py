@@ -136,7 +136,7 @@ def _failed_close(env, failure):
         env.reviews(CLEAN)
         env.checks([run("tests", "failure"), run("forge-pr-check")])
         expected = [("review", "clean"), ("CI wait", "failed")]
-    item, _ = env.start_fix()
+    item, _ = env.start_task() if failure == "blocked" else env.start_fix()
     timings = env.repo.path / ".git" / "forge" / "timings.jsonl"
 
     closed = env.close(item)

@@ -62,7 +62,9 @@ def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, a
     env.reviews(blocked(note))
     closed = env.close(item)
     assert len(env.review_calls()) == 1, closed.stdout + closed.stderr
-    if owner_item:
+    # A fix's first review keeps even owner-item P1s as follow-ups. Story
+    # parts still block on a missed owner item in their first round.
+    if owner_item and kind == "task":
         assert closed.returncode == 1 and note["title"].rstrip(".") in closed.stderr, closed.stdout + closed.stderr
     else:
         assert closed.returncode == 0, closed.stdout + closed.stderr
@@ -72,14 +74,11 @@ def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, a
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-@pytest.mark.parametrize("kind", ["fix", "task"])
-def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, adopted, kind):
+def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, adopted):
     client(env, adopted)
-    if kind == "task":
-        item, where = env.start_approved_task(NEW)
-    else:
-        item, where = env.start_fix()
-        env.commit(where, "docs/implementation.md", "# Builder guidance\n\nSave the greeting.\n")
+    # Fixes now stop for the owner at their first P0; story parts own the
+    # separate second-round advice and later hard-stop contract.
+    item, where = env.start_approved_task(NEW)
     synced(env, where)
     # Round-two P1s now follow up; this retained owner-choice test needs genuine P0s.
     for number, title in enumerate(("Saving drops quantities", "Saving drops discounts"), 1):
@@ -102,15 +101,11 @@ def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, 
     assert question in unanswered.stdout
 
     rule = "Owner rule: Saving keeps every basket line and its quantity."
-    if kind == "task":
-        plan = "plans/SHOP.md"
-        text = (where / plan).read_text("utf-8")
-        anchor = "Tests save a two-line basket through the app."
-        assert anchor in text
-        env.commit(where, plan, text.replace(anchor, anchor + " " + rule), "Record the owner's saving rule")
-    else:
-        env.commit(where, "docs/implementation.md", "# Builder guidance\n\n" + rule + "\n",
-                   "Record the owner's saving rule")
+    plan = "plans/SHOP.md"
+    text = (where / plan).read_text("utf-8")
+    anchor = "Tests save a two-line basket through the app."
+    assert anchor in text
+    env.commit(where, plan, text.replace(anchor, anchor + " " + rule), "Record the owner's saving rule")
     answered = env.repo.forge("next")
     assert answered.returncode == 0, answered.stdout + answered.stderr
     assert question not in answered.stdout, answered.stdout
@@ -127,7 +122,7 @@ def test_3_review_convergence_owner_rule_answers_the_second_round_question(env, 
     stopped = env.close(item)
     resolve = f"forge close {item} --resolve <narrow|split|accept>"
     assert stopped.returncode == 1 and resolve in stopped.stderr, stopped.stdout + stopped.stderr
-    path = "plans/SHOP.md" if kind == "task" else "docs/implementation.md"
+    path = "plans/SHOP.md"
     env.commit(where, path, (where / path).read_text("utf-8") + "\nKeep the owner's rule.\n")
     held = env.repo.forge("next")
     assert held.returncode == 0 and resolve in held.stdout, held.stdout + held.stderr

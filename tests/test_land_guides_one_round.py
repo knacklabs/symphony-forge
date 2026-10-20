@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, ROOT, _install
-from test_close import CLEAN, GREEN, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_land import GH, ITEM, URL, _fix, _workers, land  # noqa: F401
 from test_setup import _fresh_client
@@ -53,15 +53,19 @@ def guided_client(land, request):
 def test_1_land_guides_only_the_round_it_starts(guided_client, worked):
     client = guided_client
     # Previously a committed branch went straight to close; explicit guidance must start work.
-    _fix(client, "working" if worked else "started", worked=worked)
+    item, where = client.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json",
+                               {"status": "working" if worked else "started"},
+                               {"app.py": "print('hello')\n"} if worked else {})
+    if not (where / "plans/SHOP.md").exists():
+        client.commit(where, "plans/SHOP.md", STORY_DOC)
     client.reviews(blocked(finding("P1", "Saving drops the greeting", "work-1.txt")), CLEAN)
-    done = client.repo.forge("land", ITEM, "--note", NOTE)
+    done = client.repo.forge("land", item, "--note", NOTE)
     assert done.returncode == 0, done.stdout + done.stderr
     first, repair = _workers(client)
     assert f"## From the coordinator\n\n{NOTE}" in first["brief"]
     assert "## From the coordinator" not in repair["brief"]
     assert "Saving drops the greeting" in repair["brief"]
-    assert f"{ITEM} is ready; a human merges its pull request: {URL}" in done.stdout
+    assert f"{item} is ready; a human merges its pull request: {URL}" in done.stdout
 
 
 @pytest.mark.parametrize("args,message", [

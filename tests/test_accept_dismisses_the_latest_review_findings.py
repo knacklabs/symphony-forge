@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from test_close import CLEAN, blocked, body, env, finding  # noqa: F401
+from test_close import CLEAN, STORY_DOC, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_hotspot_stop import saved, seed
 from test_setup import _fresh_client
@@ -14,7 +14,9 @@ STORY = "the-owner-s-review-loop-choice-often-can"
 
 def _stop_with_remaining_findings(env):
     seed(env, "src/a.py")
-    item, where = env.start_fix()
+    item, where = env.start_task()
+    if not (where / "plans/SHOP.md").exists():
+        env.commit(where, "plans/SHOP.md", STORY_DOC)
     safe = finding("P1", "Already proved safe", "src/a.py")
     env.reviews(blocked(safe))
     assert env.close(item).returncode == 1
@@ -59,7 +61,7 @@ def test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on(env, pr
     line = next(line for line in shown.splitlines() if "Remaining advice" in line)
     assert "dismissed because known: below the bar (live with)" in line
     checked = env.repo.forge("hook", "pr-check", "--base", "origin/main", "--head", "HEAD",
-                             "--branch", "fix/tidy-readme", cwd=where)
+                             "--branch", "task/SHOP-T1", cwd=where)
     assert checked.returncode == 0, checked.stdout + checked.stderr
 
 
