@@ -33,7 +33,7 @@ REFUSALS = {
     "remote_merge": ("The merge of the remote branch failed: {problem}",
                      "in {path}, finish or abort the merge, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
-                 "forge work {item} for a short resolve-only round, then forge close {item}"),
+                 "forge work {item} to merge the default branch and continue this work, then forge close {item}"),
     "merge_failed": ("Merging {default} into {branch} failed; the merge was aborted: {problem}",
                      "forge close {item}"),
     "replay_conflict": ("Replaying this fix's own commits onto {default} conflicts in {files}.",
@@ -695,8 +695,7 @@ def _check_line(top: Path, item: str, commit: str, base: str, where: str) -> boo
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str,
-                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False,
-                   *, before_work: bool = False) -> list[str] | None:
+                   pr: dict[str, Any] | None, cfg: dict[str, Any], refreshed: bool = False) -> None:
     migration_warnings.fetch_default(top, default, refreshed=refreshed)
     repo.command_fact(("fetch default", default), top, lambda: None)
     state = repo.read_state(item, top) or {}
@@ -707,7 +706,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
     trial = repo.run("git", "merge-tree", "--write-tree", "--no-messages", "HEAD", target, cwd=top)
     if trial.returncode not in (0, 1):
         trial.check_returncode()
-    if (not before_work and trial.returncode and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
+    if (trial.returncode and state.get("kind") == "fix" and repo.ITEM.fullmatch(parent)
             and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", base)
             and task._merged(target, parent, top)
             and repo.run("git", "merge-base", "--is-ancestor", base, "HEAD", cwd=top).returncode == 0):
@@ -750,7 +749,7 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
             repo.git("reset", "--keep", original, cwd=top)
             repo.refuse(REFUSALS["replay_push"], branch=branch, item=item)
         return
-    if (not before_work and trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
+    if (trial.returncode == 0 and (pr or {}).get("mergeable") != "CONFLICTING"
             and (pr or {}).get("mergeStateStatus") != "BEHIND"):
         return
     done = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
@@ -813,8 +812,6 @@ def _merge_default(top: Path, item: str, branch: str, default: str,
         repo.refuse(REFUSALS["merge_failed"], default=default, branch=branch,
                     problem=(getattr(error, "stderr", "") or str(error)).strip(), item=item)
     repo.git("merge", "--abort", cwd=top)
-    if before_work:
-        return files
     repo.refuse(REFUSALS["conflict"], default=default, branch=branch, files=", ".join(files),
                 path=top, item=item)
 

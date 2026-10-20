@@ -90,12 +90,34 @@ def work(args: argparse.Namespace) -> None:
         _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
 
 
+def prepare(item: str) -> tuple[re.Match[str], Path, str]:
+    """Merge before even the pin check reads settings; work consumes this one-shot result."""
+    pending = repo.command_fact("prepared work", Path.cwd(), dict)
+    if item not in pending:
+        match, top = checkout(item)
+        default = repo.default_branch(top)
+        first = ""
+        with codex.hold(top, item, "Build"):
+            git("fetch", "-q", "origin", default, cwd=top)
+            merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
+            if merged.returncode:
+                if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
+                    merged.check_returncode()
+                # Round records cannot commit during an unfinished merge. The full brief retries it.
+                git("merge", "--abort", cwd=top)
+                first = (f"First, finish the merge of origin/{default}: run git merge origin/{default}, "
+                         "resolve conflicts, and commit it before other work.\n\n")
+        pending[item] = match, top, first
+    return pending[item]
+
+
 def _work(args: argparse.Namespace) -> bool:
     item = args.item
     note = getattr(args, "note", None)
     if note is not None and not note.strip():
         refuse(REFUSALS["empty_note"], item=item)
-    match, top = checkout(item)
+    match, top, merge_first = prepare(item)
+    repo.command_fact("prepared work", top, dict).pop(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
     from forge import close, nextstep, time_records  # close imports story, which imports this module
@@ -135,7 +157,7 @@ def _work(args: argparse.Namespace) -> bool:
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     if not match["task"] and state.get("fix_kind"):
         kind = "Build" if state["fix_kind"] == "backend" else "Lite"
-    # Every check refuses before the status commit, so a refused call changes nothing.
+    # Readiness checks run before the round's status commit.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
@@ -210,9 +232,6 @@ def _work(args: argparse.Namespace) -> bool:
         from forge import close  # close imports story, which imports this module
 
         close.stuck_round(top, item, state, config, findings)
-        default = repo.default_branch(top)
-        conflicts = close._merge_default(top, item, repo.current_branch(top), default, None,
-                                         config, before_work=True)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -222,29 +241,19 @@ def _work(args: argparse.Namespace) -> bool:
             round_number = 1 + len({(entry["conversation"], entry["turn"])
                                     for line in turns.read_text(encoding="utf-8").splitlines()
                                     if "turn" in (entry := json.loads(line))}) if turns.exists() else 1
-        if conflicts:
-            subject = "Resolve only the merge conflicts"
-            brief = (f"# {subject}\n\nWork in `{top.as_posix()}` on this item's branch.\n"
-                     f"Run `git merge origin/{default}` and resolve only these files: "
-                     + ", ".join(f"`{path}`" for path in conflicts) + ".\n"
-                     "Keep both changes. Stage only the resolved files and commit the merge.\n"
-                     + SETTINGS + "\n"
-                     "If forge.toml conflicts, keep the incoming settings and this branch's version pin.\n"
-                     "Keep the previous Proof list: in the merge commit message.\n"
-                     "Do not fix review findings or add other work in this round.\n"
-                     "Do not push or run forge close. End after the merge commit.\n")
-            fresh_brief = brief
-        else:
-            changes = ""
-            if thread:
-                saved = session_record if is_native else session or codex.record(top, item)
-                changes = _changes(top, saved.get("head") or saved["start"])
-            brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
-                                    continued=bool(thread), changes=changes)
-            fresh_brief = None
-            if thread:
-                fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
-                                       round_number)
+        changes = ""
+        if thread:
+            saved = session_record if is_native else session or codex.record(top, item)
+            changes = _changes(top, saved.get("head") or saved["start"])
+        brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
+                                continued=bool(thread) and not merge_first, changes=changes)
+        fresh_brief = None
+        if thread:
+            fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
+                                   round_number)
+        brief = merge_first + brief
+        if fresh_brief:
+            fresh_brief = merge_first + fresh_brief
         state["status"] = "fixing" if findings or failing else "working"
         state["worker"] = family
         state["round"] = round_number
@@ -312,7 +321,7 @@ def _work(args: argparse.Namespace) -> bool:
                     repo.commit_state(f"{item} fell back to Codex",
                                       repo.write_state(item, state, top), top=top)
                     brief, fresh_brief = fresh_brief or brief, None
-                    if thread and not conflicts:
+                    if thread and not merge_first:
                         saved = codex.record(top, item)
                         fresh_brief = brief
                         brief, _ = _brief(match, top, state, findings, failing, note, question,

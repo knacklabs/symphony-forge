@@ -159,7 +159,7 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         assert result.stderr.splitlines()[-2] == (
             "Merging main into fix/tidy-readme conflicts in README.md.")
         assert result.stderr.splitlines()[-1] == (
-            "Next: forge work tidy-readme for a short resolve-only round, then forge close tidy-readme")
+            "Next: forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme")
         assert len(attempts) == 1
         assert len(env.review_calls()) == before_reviews
         assert env.repo.git("rev-parse", "HEAD", cwd=where) == first_head

@@ -1,4 +1,4 @@
-"""Work rounds begin on the current default; merge conflicts get a bounded repair.
+"""Work rounds merge the default before settings; conflicts keep the full build contract.
 
 The real command and real git history own these contracts. Only the coordinating
 host and external tools use the existing client fixtures. Earlier coverage stops
@@ -60,13 +60,14 @@ def _advance(environment, remote, path, text):
     return moved
 
 
-def _handout(host):
-    given = host.forge("work", ITEM)
+def _handout(host, *args, cwd=None):
+    given = host.forge("work", ITEM, *args, cwd=cwd)
     assert given.returncode == 0, given.stdout + given.stderr
     number = re.search(r"forge handback " + ITEM + r" --round (\d+) --subagent", given.stdout)[1]
-    fresh = re.search(r"(?i)start a new \w+ subagent with: Read (.+\.fresh\.md) and follow it",
-                      given.stdout)[1]
-    return number, Path(fresh).read_text("utf-8")
+    delivered = re.search(
+        r"(?:Continue subagent \S+ with|[Ss]tart a new \w+ subagent with): Read (.+\.md) and follow it",
+        given.stdout)[1]
+    return number, Path(delivered).read_text("utf-8")
 
 
 def test_1_every_work_round_merges_the_latest_default(rounds):
@@ -85,25 +86,67 @@ def test_1_every_work_round_merges_the_latest_default(rounds):
         assert handed.returncode == 0, handed.stdout + handed.stderr
 
 
-def test_2_close_conflicts_offer_only_a_merge_resolution_round(rounds):
+@pytest.mark.parametrize("client,continued", [("new", False), ("new", True), ("adopted", True)],
+                         indirect=["client"])
+def test_2_conflicts_keep_the_full_brief_and_coordinator_answers(rounds, continued):
     environment, remote, where, host = rounds
     repo = environment.repo
+    if continued:
+        number, _ = _handout(host)
+        handed = host.forge("handback", ITEM, "--round", number, "--subagent", "w1",
+                            input="Question:\nShould I keep the item's text?")
+        assert handed.returncode == 0, handed.stdout + handed.stderr
     environment.commit(where, "shared.txt", "The item's text\n")
     _advance(environment, remote, "shared.txt", "The default's text\n")
-    refused = repo.forge("close", ITEM)
-    assert refused.returncode != 0
-    assert "shared.txt" in refused.stderr
-    assert f"Next: forge work {ITEM}" in refused.stderr
-    assert "resolve-only" in refused.stderr.lower()
-    number, brief = _handout(host)
-    assert "Resolve only the merge conflicts" in brief
-    assert "shared.txt" in brief and "git merge origin/main" in brief
-    assert "## Standards" not in brief and "## Functional check" not in brief
-    assert "The item keeps its work" not in brief
-    assert len(brief.splitlines()) < 60
+    if not continued:
+        refused = repo.forge("close", ITEM)
+        assert refused.returncode != 0
+        assert "shared.txt" in refused.stderr
+        assert f"Next: forge work {ITEM}" in refused.stderr
+        assert "resolve-only" not in refused.stderr.lower()
+    number, brief = _handout(host, "--note", "Keep the item's text and add the default's text.")
+    assert brief.splitlines()[0] == (
+        "First, finish the merge of origin/main: run git merge origin/main, resolve conflicts, "
+        "and commit it before other work.")
+    assert "The item keeps its work" in brief
+    assert "## Standards" in brief and "## Functional check" in brief
+    assert "Keep the item's text and add the default's text." in brief
+    if continued:
+        assert "Should I keep the item's text?" in brief
+    assert "Resolve only the merge conflicts" not in brief
     assert repo.git("status", "--porcelain", cwd=where) == ""
     # Work aborts its trial before handing out a round, so its records can commit.
     assert not (where / repo.git("rev-parse", "--git-path", "MERGE_HEAD", cwd=where)).exists()
     handed = host.forge("handback", ITEM, "--round", number, "--subagent", "w1",
-                        input="Merge resolution needs no other changes.")
+                        input="The full build contract was delivered.")
+    assert handed.returncode == 0, handed.stdout + handed.stderr
+
+
+def test_3_merge_precedes_settings_validation_and_worker_model_selection(rounds):
+    environment, remote, where, host = rounds
+    repo = environment.repo
+    config = (where / "forge.toml").read_text("utf-8")
+    # Build a shared obsolete release without asking today's hooks to accept its settings.
+    # A branch-only edit would survive a correct merge, so both tips inherit this old setting.
+    old_default = ""
+    for folder in (repo.path, where):
+        parent = repo.git("rev-parse", "HEAD", cwd=folder)
+        (folder / "forge.toml").write_bytes(config.replace(
+            'workers = "claude"', 'workers = "retired"').encode("utf-8"))
+        repo.git("add", "forge.toml", cwd=folder)
+        parents = ["-p", parent] + (["-p", old_default] if old_default else [])
+        old_default = repo.git("commit-tree", repo.git("write-tree", cwd=folder),
+                               *parents, "-m", "Earlier release settings", cwd=folder)
+        repo.git("update-ref", "HEAD", old_default, cwd=folder)
+    incoming = config.replace('model = "opus"', 'model = "sonnet"').replace(
+        'effort = "high"', 'effort = "medium"')
+    moved = _advance(environment, remote, "forge.toml", incoming)
+    given = host.forge("work", ITEM, cwd=where)
+    assert given.returncode == 0, given.stdout + given.stderr
+    assert "Start it on sonnet at medium effort" in given.stdout
+    assert repo.git("merge-base", moved, "HEAD", cwd=where) == moved
+    assert (where / "forge.toml").read_text("utf-8") == incoming
+    number = re.search(r"forge handback " + ITEM + r" --round (\d+) --subagent", given.stdout)[1]
+    handed = host.forge("handback", ITEM, "--round", number, "--subagent", "w1",
+                        input="The current worker settings were used.")
     assert handed.returncode == 0, handed.stdout + handed.stderr

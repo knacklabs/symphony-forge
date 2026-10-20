@@ -362,8 +362,8 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            # Recovery now offers a bounded worker round instead of a manual merge recipe.
-            "next": "forge work tidy-readme for a short resolve-only round, then forge close tidy-readme"}
+            # The normal worker finishes the merge before it continues the item's work.
+            "next": "forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme"}
 
 
 def _bad_dismissal(env):

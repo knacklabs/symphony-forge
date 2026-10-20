@@ -1,4 +1,4 @@
-"""Clients receive recovery guidance; close offers a short conflict resolution round."""
+"""Clients receive recovery guidance; close sends merge conflicts to normal work."""
 import shutil
 from pathlib import Path
 
@@ -33,7 +33,7 @@ def test_1_synced_skill_explains_keeping_work_moving_and_close_names_it(env, tmp
     refused = env.close(item)
     assert refused.returncode == 1, refused.stdout + refused.stderr
     assert "Merging main into fix/tidy-readme conflicts in README.md." in refused.stderr
-    assert f"Next: forge work {item} for a short resolve-only round" in refused.stderr
+    assert f"Next: forge work {item} to merge the default branch and continue this work" in refused.stderr
     assert "then forge close tidy-readme" in refused.stderr
     assert repo.git("status", "--porcelain", cwd=where) == ""
 
