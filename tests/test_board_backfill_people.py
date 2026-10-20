@@ -19,6 +19,7 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 STORY = "FORGE-BOARD-3"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("outage", [False, True], ids=["reachable", "retry-on-close"])
 def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, monkeypatch, outage):
     history = History(unsynced_up, monkeypatch)
