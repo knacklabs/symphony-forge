@@ -15,6 +15,8 @@ from test_lanes_tests import accepted, configure, reap, release_server, rows, sh
 from test_runs_wait_for_machine_load import client
 from test_story import worktree
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-BUDGET-1"
 
 

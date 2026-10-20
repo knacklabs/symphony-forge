@@ -11,6 +11,8 @@ import pytest
 from test_board_dependency_timelines import _client
 from test_close import env  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-RECORDS-ONLY-SKIP-STEP"
 
 

@@ -73,6 +73,7 @@ def test_2_close_leaves_conflicting_merge_for_resolution_and_can_resume(env):
         repo.git("merge-base", "--is-ancestor", commit, pushed, cwd=where)
 
 
+@pytest.mark.platform
 def test_3_close_names_merge_failure_and_preserves_history_when_a_hook_refuses(env):
     item, where = env.start_fix()
     repo = env.repo

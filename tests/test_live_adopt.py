@@ -169,6 +169,7 @@ def _keeps_gitattributes(repo) -> None:
 @pytest.mark.parametrize("case", ["adopts", "team gitattributes", "taken files", "state file",
                                   "foreign forge.toml", "missing answers", "uncommitted",
                                   "adopting"])
+@pytest.mark.platform
 def test_4_a_repo_with_history_adopts_forge(repo, gh, tmp_path, monkeypatch, case):
     if case == "adopts":
         _adopts(repo, gh, tmp_path, monkeypatch)

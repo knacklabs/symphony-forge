@@ -118,6 +118,7 @@ def test_2_a_choice_buys_one_more_round_then_forge_asks_again(land):
     assert asked.returncode == 1 and asked.stderr.splitlines()[-1] == NEXT
 
 
+@pytest.mark.platform
 def test_3_switch_runs_the_next_round_on_the_other_tool(land, sdk_data, monkeypatch):
     env = land
     item = _rounds(env, "failing")

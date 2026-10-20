@@ -103,6 +103,7 @@ subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
 @pytest.mark.parametrize("stage", ["land-build", "land-fix", "close-merge", "land-merge",
                                    "land-guide-conflict", "close-guide-conflict"])
+@pytest.mark.platform
 def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         land, adoption, stage, monkeypatch):
     env = land

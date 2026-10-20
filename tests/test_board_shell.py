@@ -10,6 +10,10 @@ from pathlib import PurePath
 from conftest import REAL_UV
 from test_board_server import client, commit, fix, get, live, snapshot  # noqa: F401
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-BOARD-4"
 
 SCRIPT = r"""

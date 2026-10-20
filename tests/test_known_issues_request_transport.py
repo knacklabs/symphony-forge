@@ -16,9 +16,12 @@ from test_close import env  # noqa: F401
 from test_known_issues import kept_history  # noqa: F401
 from test_upgrade_command import unsynced_up  # noqa: F401
 
+import pytest
+
 STORY = "FIX-KNOWN-ISSUES-TRANSPORT"
 
 
+@pytest.mark.platform
 def test_1_board_history_request_survives_windows_batch_launchers(kept_history):
     repo, _, item = kept_history
     github = repo.bin / "gh"

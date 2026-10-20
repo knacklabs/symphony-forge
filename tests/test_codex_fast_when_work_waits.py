@@ -163,6 +163,7 @@ def test_5_invalid_fast_settings_name_the_problem_and_next_action(repo, value, p
     assert refused.stderr == f"forge.toml is not usable: {problem}.\nNext: forge doctor\n"
 
 
+@pytest.mark.platform
 def test_4_init_and_previous_release_upgrade_deliver_the_default_and_guidance(
         unsynced_up, tmp_path):
     up, repo = unsynced_up, unsynced_up.repo

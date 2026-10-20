@@ -10,6 +10,8 @@ from conftest import ROOT
 from test_setup import _fresh_client, _version
 from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git, _commit_roadmap
 
+pytestmark = pytest.mark.platform
+
 STORY = "skipped-sync-board"
 
 

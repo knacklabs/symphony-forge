@@ -101,7 +101,7 @@ def test_1_item_details_keep_recorded_facts_and_accessible_plain_words(client, g
              "title": "Run `forge test --pytest main` before review", "reason": "Use forge close SHOP/SAVE"},
             {"file": "basket.py", "line": 2, "outcome": "follow-up",
              "title": "Basket title wraps", "reason": "The next page change owns the repair"}]
-    pushed(teammate, "Plan a basket", {"plans/SHOP.md": plan, ".factory/stories/SHOP/story.json":
+    pushed(teammate, "Plan a basket", {"basket.py": "total = 0\n", "plans/SHOP.md": plan, ".factory/stories/SHOP/story.json":
            json.dumps({"doc": "plans/SHOP.md", "title": "Shoppers can save a basket", "status": "approved", "known": kept}),
            ".factory/stories/OLD/story.json": json.dumps({"title": "Older change", "status": "done"})})
     teammate.git("switch", "-qc", "task/SHOP-SAVE")

@@ -33,9 +33,7 @@ REFUSALS = {
     "remote_merge": ("The merge of the remote branch failed: {problem}",
                      "in {path}, finish or abort the merge, then retry this command"),
     "conflict": ("Merging {default} into {branch} conflicts in {files}.",
-                 "git -C {path} merge origin/{default}, follow Keeping work moving in "
-                 ".codex/skills/forge/SKILL.md or .claude/skills/forge/SKILL.md and commit, "
-                 "then forge close {item}"),
+                 "forge work {item} to merge the default branch and continue this work, then forge close {item}"),
     "merge_failed": ("Merging {default} into {branch} failed; the merge was aborted: {problem}",
                      "forge close {item}"),
     "replay_conflict": ("Replaying this fix's own commits onto {default} conflicts in {files}.",

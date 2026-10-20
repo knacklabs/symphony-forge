@@ -215,6 +215,7 @@ def test_4_a_teammates_pushed_assignment_shows_after_the_next_fetch(client, tmp_
         assert kept["owner"] == "page-dev" and kept["children"] == shown["children"], kept
 
 
+@pytest.mark.platform
 def test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request(client, tmp_path):
     """A worker edits an open story's plan and a fix's record without committing: the next
     request shows both, and only those items are derived again: an unedited fix keeps its row."""

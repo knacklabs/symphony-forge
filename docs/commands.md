@@ -21,7 +21,7 @@
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |
 | `forge fix drop <fix> --because "<reason>"` / `--undo` | Drops a fix with your reason, or brings it back, keeping its remote branch |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
-| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix's done-when; the old text and the reason stay in its record, and the next review judges the new text |
+| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Shows the old and new Done-when before it writes. Use --append "<text>" instead of --done to add text. The old text and reason stay in its record |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
 | `forge close <item>` | Closes a task or fix; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |

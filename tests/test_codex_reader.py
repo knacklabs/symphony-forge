@@ -20,6 +20,8 @@ from test_setup import _fresh_client
 from test_story import DOC, new_story, setup
 from test_worker import calls as claude_calls
 
+import pytest
+
 STORY = "FORGE-WARM-1"
 GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
          "grill.claude": {"model": "opus", "effort": "high"}}
@@ -27,6 +29,7 @@ COORDINATOR = ("Forge can't tell which app is coordinating, so it can't pick the
                "read.\nNext: run forge read SHOP from Claude Code or Codex\n")
 
 
+@pytest.mark.platform
 def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_data, tmp_path):
     monkeypatch.setenv("STUB_CODEX_RESUME", "1")
     monkeypatch.setenv("FORGE_NOW", NOW)

@@ -79,6 +79,7 @@ def test_1_tests_and_reviews_wait_for_high_load_then_start(env, tmp_path, adopte
     assert process.returncode == 0, output.read_text("utf-8")
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="The Mac/Linux load diagnostic uses ps; Windows has no load average")
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
 def test_2_doctor_warns_that_self_hosted_runner_cpus_count_against_load(env, tmp_path, adopted):

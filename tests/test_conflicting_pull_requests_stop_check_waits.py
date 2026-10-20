@@ -210,7 +210,7 @@ def test_2_land_retries_close_to_merge_default_or_report_its_conflict(client, co
     if conflict:
         assert done.returncode == 1
         assert "Merging main into fix/tidy-readme conflicts in AGENTS.md, app.py." in done.stderr
-        assert "Next: git -C " in done.stderr and " merge origin/main" in done.stderr
+        assert f"Next: forge work {ITEM} to merge the default branch and continue this work" in done.stderr
         assert "has not reported" not in done.stderr
         assert not env.gh_calls("pr", "merge")
         assert env.repo.git("status", "--porcelain", cwd=where) == ""

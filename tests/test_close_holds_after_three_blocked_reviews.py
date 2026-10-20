@@ -55,6 +55,7 @@ def client_item(env, tmp_path, previous, stop_default=False):
     return item, where
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous,same_file,choice", [
     (False, False, "narrow"), (True, False, "split"),
     (False, False, "accept"), (True, False, "accept"),

@@ -13,6 +13,8 @@ from conftest import ROOT, _install
 from test_setup import _fresh_client
 from test_story import DOC, READER, claude_plan, hook, new_story
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-READ-BLOCKING-ONLY"
 
 

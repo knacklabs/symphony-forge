@@ -51,6 +51,7 @@ print(json.dumps(wanted))
 
 
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
+@pytest.mark.platform
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
     # Exercise this checkout's sync, rather than routing to a historical release.

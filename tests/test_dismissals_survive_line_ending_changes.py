@@ -8,6 +8,7 @@ from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 STORY = "windows-accept-body"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
 def test_1_dismissed_findings_keep_their_evidence_after_line_ending_changes(env, previous):
     client(env, previous)

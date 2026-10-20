@@ -743,8 +743,8 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     fetched still pins an older one, and a fix worktree pins the installed one.
     """
     if words == "work":
-        from forge.worker import checkout
-        checkout(item)  # A conflicted forge.toml cannot supply a release pin yet.
+        from forge.worker import prepare
+        prepare(item)  # Merge the default before even the release pin reads settings.
     done = run("git", "rev-parse", "--show-toplevel", cwd=cwd)
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():

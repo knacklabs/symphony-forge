@@ -828,7 +828,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                 for rel, state in (
                     [(rel, state) for rel, (state, _) in best.items() if rel not in merged]
                     + [(rel, state) for rel, state, where in history["copies"] if where == landed])
-                if (match := STATE.fullmatch(rel))}),
+                if (match := STATE.fullmatch(rel))}, landed),
             "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,

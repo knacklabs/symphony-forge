@@ -9,6 +9,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-FORGE-S-FAST-TEST-COMMAND-SELECTS-ANY-TE"
 ROOT = Path(__file__).resolve().parents[1]
 

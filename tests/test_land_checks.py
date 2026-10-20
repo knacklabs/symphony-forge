@@ -15,6 +15,8 @@ from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_land import (ITEM, RUNS, _agent, _fix, _land, _queue, _refusal, _runs, _steps,
                        _workers, land)  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 RED = [run("tests", "failure"), run("forge-pr-check")]
 LINK = "https://github.com/acme/shop/actions/runs/5/job/{}"
 RERUN = ("Re-running {} once: its failure names none of this change's files and the tests "

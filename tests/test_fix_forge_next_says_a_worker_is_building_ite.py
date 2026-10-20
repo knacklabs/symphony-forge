@@ -8,6 +8,10 @@ import sys
 
 from test_story import setup
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "forge-next-says-a-worker-is-building-ite"
 
 

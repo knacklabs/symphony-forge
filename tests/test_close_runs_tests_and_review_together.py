@@ -31,6 +31,7 @@ marker.with_suffix(".tmp").replace(marker)
 '''
 
 
+@pytest.mark.platform
 def test_4_a_crashed_overlap_worker_reports_and_stops_its_registered_children(tmp_path):
     child_pid = tmp_path / "child-pid"
     crashy = tmp_path / "test_crashy.py"

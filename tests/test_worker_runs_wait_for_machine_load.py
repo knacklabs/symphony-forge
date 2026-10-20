@@ -16,6 +16,8 @@ from test_codex_worker import sdk_data  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import finish, hold_agents, lane_adapter, make_work, person, start  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "admit-by-load"
 BUSY = "This machine is busy (load 1.5 per core), so this work round waits until it is under 1.5."
 

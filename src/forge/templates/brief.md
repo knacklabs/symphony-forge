@@ -67,6 +67,9 @@ moves its own changes onto the default branch after the base merges through Forg
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish
 and review it before you start a part on top of it.
 
+Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
+If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings

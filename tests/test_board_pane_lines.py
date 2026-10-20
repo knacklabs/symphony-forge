@@ -148,6 +148,7 @@ def adopted_client_board_tab_matches(request, tmp_path):
     the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous=True)
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", [seven_items_need_you_shows_five_and_n_more,
                                   an_older_forge_board_draws_rows_and_no_team_line, pane_times_round_like_the_board,
                                   new_client_board_tab_matches, adopted_client_board_tab_matches])

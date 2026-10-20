@@ -9,6 +9,10 @@ from pathlib import Path
 
 from test_task import story
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 ROOT = Path(__file__).resolve().parents[1]
 WALKS_ALL = ("in every round, fix rounds included, it walks every Done-when item this\n"
              "part covers, not only what the round changed.")
