@@ -103,7 +103,7 @@
     "id": "db94d1a5-ded5-4caa-a3b4-5378e3d8dd07",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "settled_areas": [
     "_work() in src/forge/worker.py"
   ],
@@ -130,10 +130,14 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "29b428b6cb9e2c86c7c7bba3a3e7fd7785f3420b",
-    "keys": {},
-    "round": null
+    "close": "c6eeb569-5a29-43f5-81f8-8b76fc380391",
+    "head": "f2271796dcee9a257997038b98f1dbce387336b9",
+    "keys": {
+      "the review finding \"Preserve coordinator answers through resolve-only rounds\" in src/forge/worker.py": 1,
+      "the review finding \"Select the worker using the settings brought in by the merge\" in src/forge/worker.py": 1,
+      "the review finding \"Send the full build brief after a fresh resolve-only session\" in src/forge/worker.py": 1
+    },
+    "round": 1
   },
   "why": "Closes fail with 'merging main conflicts in ...' and each costs a whole worker round, and rounds that start on a stale base show diffs that seem to delete main's newer files (issue 969)",
   "worker": "codex"
