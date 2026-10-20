@@ -64,19 +64,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9e88add1adc0b2ebfc944f2818ca6c4ab899ebc8dae26f8ad6269687839ec9cc",
-    "changed": "4039a82682249881b749f1ae632cc34681811604093308d43963219727c0a7d3",
-    "commit": "51927fa8a14dd425af3289d31451dfe351ac009e",
+    "branch_diff": "77af753b07cc6036a94a80d41f8d99e8c2a607e301f0cff3fe4518e724e24b95",
+    "changed": "be502dac74e400727c83c05ef6ec51c369c42260b25f3bbc5d5c7c6e7722faa1",
+    "commit": "003c5d1ec8f7f4146bcac6854434c4f207acdc82",
     "dismissals": [],
     "findings": [],
-    "id": "db4b1167-ea0f-4617-9422-87c19f4cea19",
+    "id": "6c54d0de-29c4-4175-aef8-a7eaceb7ae24",
     "status": "clean"
   },
   "round": 3,
   "settled_areas": [
     "only_docs() in src/forge/docskip.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T05:43:56.114060+00:00",
@@ -92,6 +92,10 @@
     },
     {
       "at": "2026-10-20T07:08:19.334247+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:22:27.574324+00:00",
       "step": "review"
     }
   ],
