@@ -50,7 +50,7 @@
     "id": "f2c39879-c3cc-4849-ae3c-9e359df2f7ae",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -63,10 +63,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "1f55b2e5b0e1cec61ca3017942a659f8a5c54940",
-    "keys": {},
-    "round": null
+    "close": "094a440e-6769-44de-a716-2b83c46360e8",
+    "head": "a4c85c2855a18c045829bca83ab0ac2e81feba33",
+    "keys": {
+      "the review finding \"Update the remaining tests that require blocked fix reviews\" in src/forge/review.py": 1
+    },
+    "round": 1
   },
   "why": "The owner wants a clear difference between a light fix and a story part: a fix gets one review round, a story part two. People also give ideas without knowing what a story, a part or a fix is, so the agent must never ask them to choose",
   "worker": "codex"
