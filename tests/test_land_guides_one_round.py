@@ -42,6 +42,10 @@ def guided_client(land, request):
     _publish_default(repo, remote)
     repo.git("switch", "main")
     repo.git("merge", "--ff-only", "fix/upgrade-client")
+    # An owner's clone prepares the approved plan before the task installs client hooks.
+    writer = land.tmp / "owner-writer"
+    repo.git("clone", "-q", remote, str(writer))
+    repo.path = writer
     _install(repo.bin, "gh", GH.format(python=sys.executable, remote=remote, url=URL)
              + GH_STUB.format(python=sys.executable).split("\n", 1)[1])
     land.checks(GREEN)

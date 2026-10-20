@@ -88,6 +88,11 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
     env.repo.git("switch", "-q", "main")
     env.repo.git("merge", "-q", "--ff-only", "fix/configure-docs-checks")
     _land_fixture(env.repo)
+    # Prepare the owner's plan from a fresh clone; installed client hooks
+    # correctly refuse the helper's setup commits on the original main.
+    coordinator = tmp_path / "story-coordinator"
+    env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(coordinator))
+    env.repo.path = coordinator
     changes = {path: "Updated\n"}
     if case == "code":
         changes["app.py"] = "value = 1\n"

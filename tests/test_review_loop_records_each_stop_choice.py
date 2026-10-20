@@ -52,15 +52,17 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
         _install(env.repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=(old / "src").as_posix()))
     paths = [PATHS[0]] * 3 if same_file else PATHS
     for cycle, choice in enumerate((first, second)):
+        # Each stop owns a fresh area; the first choice already settled its earlier area.
         # Keep the any-file case from hitting the same-file rule across cycles.
-        if cycle and not same_file:
-            paths = ["README.md", "docs/second-check.md", "docs/third-check.md"]
+        if cycle:
+            paths = (["docs/second-check.md"] * 3 if same_file else
+                     ["README.md", "docs/second-check.md", "docs/third-check.md"])
         for offset, path in enumerate(paths, 1):
             number = cycle * 3 + offset
             env.commit(where, "app.py", f"print('round {number}')\n")
             contents = (where / path).read_text("utf-8") if (where / path).exists() else ""
             env.commit(where, path, f"# Review round {number}\n" + contents)
-            # Only P0s still block round two, including in an area an earlier choice settled.
+            # Only P0s still block later rounds after an earlier owner choice.
             env.reviews(blocked(finding("P0", f"New defect {number}", path)))
             result = env.close(item)
             assert result.returncode == 1, result.stdout + result.stderr

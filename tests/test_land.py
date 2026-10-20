@@ -410,9 +410,9 @@ def _blocked_red_blocked_red(env):
 def _session_rounds_count_across_reruns(env, monkeypatch):
     # Each round a Claude Code session's subagent runs ends that land; the next land keeps counting.
     from test_tools_session_hold import Session
+    ITEM, where = env.start_approved_task(STORY_DOC)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
-    ITEM, where = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(BLOCKER), CLEAN,
                 blocked(finding("P0", "Saving loses the reader name", "round-2.txt")), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
