@@ -104,7 +104,10 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "settled_areas": [
+    "_work() in src/forge/worker.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-19T19:54:33.365473+00:00",
@@ -118,9 +121,13 @@
   "stop": {
     "area": "_work() in src/forge/worker.py",
     "at": "2026-10-19T20:22:18.314158+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "_work() in src/forge/worker.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "a0473af7-5bf9-4998-9181-3a5c98601d96"
+    "reason": "Owner chose one normal round on 20 October 2026: merge main before reading settings or writing the brief, and on a conflict send the normal full brief with one line to finish the merge; no resolve-only round",
+    "wait_id": "a0473af7-5bf9-4998-9181-3a5c98601d96",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
