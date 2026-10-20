@@ -1,6 +1,13 @@
 {
   "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
   "branch": "fix/read-decisions",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a157d6-a4db-7170-a449-22f097b024ba",
+    "head": null,
+    "start": "2d33e89d91ca76edba098ea20e6b4109aff715b2"
+  },
   "done_when": "forge read <decision-slug> runs a cold read of a decision record the same way it reads a spec, on a new repo and on an earlier-adopted repo; the coordinator guide names it",
   "fix_kind": "backend",
   "kind": "fix",
