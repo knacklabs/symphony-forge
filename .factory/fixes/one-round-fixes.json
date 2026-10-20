@@ -39,8 +39,8 @@
     "id": "0df3a851-d073-4950-a051-44f9fae3f0b8",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T10:34:51.634070+00:00",
@@ -60,12 +60,10 @@
     }
   ],
   "stuck": {
-    "close": "597e4789-0b2b-48c4-aafb-ca570a4ac2bd",
-    "head": "9d4a34482fcf9cbf80e33b6eadf64edf5f373b0e",
-    "keys": {
-      "close's tests failing": 1
-    },
-    "round": 3
+    "close": "ca362b89-042a-4dbe-8f9e-cec5abeeca70",
+    "head": "d5bd732e5661c04b95bcc07884a99fbc877155d7",
+    "keys": {},
+    "round": 4
   },
   "why": "The owner wants a clear difference between a light fix and a story part: a fix gets one review round, a story part two. People also give ideas without knowing what a story, a part or a fix is, so the agent must never ask them to choose",
   "worker": "codex"
