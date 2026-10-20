@@ -13,7 +13,7 @@ import sys
 import pytest
 
 from conftest import ROOT, _install
-from test_close import CLEAN, blocked, env  # noqa: F401 (env is a fixture)
+from test_close import CLEAN, STORY_DOC, blocked, env  # noqa: F401 (env is a fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_setup import _fresh_client
 from test_stop_default_answer import follow_ups
@@ -77,8 +77,9 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         return
     if case == "narrowed":  # a follow-up fix's name and summary leave the score line out
         seed(env, "src/a.py")
-        item, where = env.start_fix()
-        # P0s still stop; the owner explicitly splits instead of waiting for a timeout.
+        # A fix now stops on its first P0. The story part retains this third-round
+        # stop and split contract, including score-free follow-up names.
+        item, where = env.start_approved_task(STORY_DOC)
         for number in (1, 2):
             env.commit(where, "src/a.py", f"pass  # repair {number}\n")
             env.reviews(blocked(_scored("P0", f"Round {number} defect",

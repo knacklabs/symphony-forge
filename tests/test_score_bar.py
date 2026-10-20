@@ -82,16 +82,21 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
                         {"priority": "P3", "title": "Saved advice", "body": "Evidence",
                          "file": "app.py", "line": 1}]}
     log = install_claude(repo)
-    item, where = env.start_fix(**({"review": old} if case != "init" else {}))
     if case != "init":
+        item, where = env.start_fix(review=old)
         assert repo.forge("work", item).returncode == 0
         brief = _findings_in(calls(log)[-1]["brief"])
         assert "Saved serious finding" in brief and "Saved advice" not in brief
-        # The bar below is a first-round contract; the saved review already counts as round one.
-        item, where = env.start("score-bar", "fix/score-bar", ".factory/fixes/score-bar.json",
-                                {"kind": "fix", "why": "Check the first-round bar",
-                                 "done_when": "The bar decides what holds work"},
-                                {"app.py": "print('hello')\n"})
+
+    # Fixes now follow up non-P0 findings in round one and stop on P0s for the
+    # owner. An approved story part keeps the first-round score-bar contract.
+    (shop / "plans/SHOP.md").write_text(STORY_DOC, encoding="utf-8")
+    _says(repo, "No findings.\n")
+    assert repo.forge("read", "SHOP").returncode == 0
+    where = _approve(env, STORY_DOC, f"core.hooksPath={tmp_path / 'no-hooks'}")
+    item = "SHOP/T1"
+    env.commit(where, "app.py", "print('hello')\n")
+    log = install_claude(repo)
 
     # Stop and fix-this-round scores hold, regardless of the reviewer's priority.
     held = [("Saving loses the note", 3, 2, 3),
@@ -267,9 +272,13 @@ SHOP = ("def save(basket):\n    total = 0\n    return total\n\n\nLIMIT = 5\n\n\n
 @pytest.mark.parametrize("loop", ["area", "read-below-bar-harm-3", "case-only-repeat"])
 def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, case, loop):
     _client_on_this_release(env, tmp_path, case)
-    item, where = env.start_fix()
-    # Round-two non-P0 follow-ups belong to test_two_round_limit.
-    # Retained area and identity checks use P0s, which still hold work.
+    if loop != "read-below-bar-harm-3":
+        # Fix P0s now stop after one review. Story parts retain the multi-round
+        # area and identity rules, including a worker repair after a narrow.
+        owner = tmp_path / "score-owner"
+        env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(owner))
+        env.repo.path = owner
+        item, where = env.start_approved_task(STORY_DOC)
     at_bar = lambda title, file, harm=4, line=1: {  # noqa: E731
         **_scored("P1", title, f"Gain 4, Work 2, Harm {harm}\nRaise: Functional", file),
         "code_location": {"file_path": file, "line": line}}

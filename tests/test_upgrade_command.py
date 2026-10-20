@@ -332,17 +332,19 @@ def _rerun_after_the_commit(up):
 
 
 def _close_refuses(up):
-    up.env.reviews(blocked(finding("P1", "The launcher pins the wrong release", ".forge/hooks.sh")))
+    # Minor fix findings now become follow-ups in round one. A P0 still proves
+    # that upgrade returns close's refusal and its actionable owner question.
+    up.env.reviews(blocked(finding("P0", "The launcher pins the wrong release", ".forge/hooks.sh")))
 
     done = up.run(RELEASE)
 
     assert done.returncode == 1  # close's own refusal code
     assert [line for line in done.stdout.splitlines() if line in ours(up)] == ours(up)
-    assert "1. P1 The launcher pins the wrong release (.forge/hooks.sh:1)" in done.stdout
+    assert "1. P0 The launcher pins the wrong release (.forge/hooks.sh:1)" in done.stdout
+    assert "This fix's review found an open P0." in done.stderr
+    assert "Ask the human" in done.stderr
     assert done.stderr.endswith(
-        "The review left serious findings open: finding 1 (The launcher pins the wrong release).\n"
-        f'Next: forge work {NAME}, or forge close {NAME} --dismiss <n> --because "<file:line> '
-        '<reason>"\n')
+        f'Next: forge close {NAME} --resolve <narrow|split|accept> --reason "<human\'s choice>"\n')
     assert up.uv()[-1]["args"] == release_run(RELEASE, "close", NAME)
 
 
