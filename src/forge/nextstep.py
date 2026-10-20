@@ -19,7 +19,8 @@ from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, machine, migration_warnings,
                    native, records, repo, review, spotted, story, score, task, time_records, upgrade)
-from forge.task import _started, developer, github_login, owner, stack_base, start_base, waits_for
+from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, waits_for
+from forge.task import rows as task_rows
 
 COMMANDS = [
     {
@@ -509,7 +510,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if ref != story.landed_ref(top):
         text = story._plan(top, key, history=history)
     states = {name: _task(top, key, name, trees, merged_prs, history, prs)
-              for name in task.rows(task.sections(text)) if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)}
+              for name in task_rows(sections(text)) if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)}
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={})
     if held := _native_round(top, key, title, "Grill"):

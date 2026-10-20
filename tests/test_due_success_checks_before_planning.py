@@ -55,6 +55,7 @@ def test_1_due_success_check_precedes_planning_when_every_roadmap_story_is_done(
 
     # Completed entries retain their links: next offers planning rather than discovery.
     # The crossing contract is that the due check precedes those next-step instructions.
-    assert _ok(repo.forge("next")).splitlines()[:6] == DUE + [
+    expected = DUE + [
         "No story or fix is in progress.",
         'Next: forge start "<idea>"']
+    assert _ok(repo.forge("next")).splitlines()[:len(expected)] == expected

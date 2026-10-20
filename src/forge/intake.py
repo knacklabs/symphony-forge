@@ -164,8 +164,8 @@ def story_drop(args: Any) -> None:
     state = story.json_of(story.show(top, ref, rel))
     if not state:
         raise repo.Refused(f"{key} has not started.", "forge next")
-    parts = repo.git("for-each-ref", "--format=%(refname)", f"refs/heads/task/{key}-",
-                     f"refs/remotes/origin/task/{key}-", cwd=top)
+    parts = repo.git("for-each-ref", "--format=%(refname)", f"refs/heads/task/{key}-*",
+                     f"refs/remotes/origin/task/{key}-*", cwd=top)
     records = repo.git("ls-tree", "-r", "--name-only", ref, "--", f".factory/stories/{key}/tasks/", cwd=top)
     if state.get("approval") or parts or records or state.get("status") not in ("planning", "dropped"):
         raise repo.Refused(f"{key} is approved or has started parts, so it can't be dropped.", "forge next")
@@ -189,7 +189,10 @@ def story_drop(args: Any) -> None:
     for pr in prs:
         close._gh(path, "pr", "close", str(pr["number"]), "--comment", args.because.strip())
     print(f"Dropped plan {key}. Its remote branch keeps the work.")
-    if path.resolve() != root:
+    ignored = repo.git("ls-files", "--others", "--ignored", "--exclude-standard", "-z", cwd=path)
+    if ignored:
+        print("Kept the worktree for ignored files.")
+    elif path.resolve() != root:
         repo.git("worktree", "remove", str(path), cwd=root)
         repo.git("branch", "-d", branch, cwd=root)
     (repo.forge_dir(root) / "prs-cache.json").unlink(missing_ok=True)

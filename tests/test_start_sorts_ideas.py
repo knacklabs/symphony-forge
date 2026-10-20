@@ -1,5 +1,7 @@
 """Ideas enter through the real start command and session handback on both repo ages.
 
+src/forge/intake.py owns the idea actions and planning-story drop command.
+
 The session is a real parent process. Only GitHub, models and Autoreview use the
 existing third-party stubs; they never choose the lane or create the Forge item.
 UI fixes retain src/forge/design.py's approved-design prerequisite.
@@ -341,10 +343,17 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         repo.git("clone", "-q", repo.git("remote", "get-url", "origin", cwd=top), str(peer), cwd=top)
         repo.git("fetch", "-q", "origin", cwd=peer)
         _visible(repo, peer, "WELCOME", fix)
+        # Promotion has already started SPEC while the story still plans.
+        # Dropping it must refuse even though no approval exists yet.
+        refused = repo.forge("story", "drop", "WELCOME", "--because", "Just fix it", cwd=top)
+        assert refused.returncode == 1
+        assert refused.stderr == ("WELCOME is approved or has started parts, so it can't be dropped.\n"
+                                  "Next: forge next\n")
     elif move == "fix":
         # A roadmap key on main exercises the board's backfill path.
         roadmap = top / "plans/roadmap.json"
-        data = json.loads(roadmap.read_text("utf-8"))
+        roadmap.parent.mkdir(parents=True, exist_ok=True)
+        data = json.loads(roadmap.read_text("utf-8")) if roadmap.exists() else {"items": []}
         data["items"].append({"key": "SAVE", "title": "Keep baskets for later"})
         roadmap.write_text(json.dumps(data), "utf-8")
         _land_setup(repo, top, "record-planned-story")
@@ -390,6 +399,21 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
         assert refused.returncode == 1
         assert refused.stderr == ("APPROVED is approved or has started parts, so it can't be dropped.\n"
                                   "Next: forge next\n")
+        # A clean Git status can hide the owner's ignored working files.
+        # Dropping the plan must retain those files as well as remote history.
+        _started(intake, "Keep private working notes", _plan("PRIVATE"))
+        private = _checkout(repo, top, "story/PRIVATE")
+        ignore = private / ".gitignore"
+        original = ignore.read_text("utf-8") if ignore.exists() else ""
+        ignore.write_text(original + "\nowner-note.txt\n", "utf-8")
+        repo.git("add", ".gitignore", cwd=private)
+        repo.git("commit", "-qm", "Keep local working notes private", cwd=private)
+        note = private / "owner-note.txt"
+        note.write_text("The owner needs these working notes.\n", "utf-8")
+        assert repo.git("status", "--porcelain", cwd=private) == ""
+        dropped = repo.forge("story", "drop", "PRIVATE", "--because", "Keep this for another day", cwd=top)
+        assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+        assert note.read_text("utf-8") == "The owner needs these working notes.\n"
     elif move == "later":
         dropped = repo.forge("fix", "drop", fix, "--because", "The owner wants it later", cwd=top)
         assert dropped.returncode == 0, dropped.stdout + dropped.stderr
@@ -428,14 +452,14 @@ def test_6_the_shipped_guide_sends_every_idea_through_start(intake):
     # Init and upgrade+sync must ship the same contract to both hosts.
     repo, top, _, _, age, _ = intake
     for host in (".claude", ".codex"):
-        guide = (top / host / "skills/forge/SKILL.md").read_text("utf-8")
+        guide = " ".join((top / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert 'forge start "<' in guide
         assert "Never ask the human whether it is a story or a fix" in guide
         for instruction in ("Make it a story", "Make it a fix", "Do it later", "Do it now"):
             assert instruction in guide
         assert "Plan a new story" not in guide
         assert "Fix this small thing" not in guide
-    agents = (top / "AGENTS.md").read_text("utf-8")
+    agents = " ".join((top / "AGENTS.md").read_text("utf-8").split())
     assert 'forge start "<' in agents
     assert "Never ask the human whether it is a story or a fix" in agents
     for instruction in ("Make it a story", "Make it a fix", "Do it later", "Do it now"):
