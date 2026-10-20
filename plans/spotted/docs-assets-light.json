@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/docskip.py\tDistinguish unrelated inputs that share a filename\tdocs-assets-light",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 31,
+      "text": "Distinguish unrelated inputs that share a filename",
+      "from": "blocking",
+      "item": "docs-assets-light",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/docskip.py\tInclude supported test consumers in the input-reference scan\tdocs-assets-light",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 25,
+      "text": "Include supported test consumers in the input-reference scan",
+      "from": "blocking",
+      "item": "docs-assets-light",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
