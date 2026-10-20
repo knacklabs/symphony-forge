@@ -58,7 +58,7 @@
       "gain": 3,
       "harm": 3,
       "line": 191,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -69,27 +69,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c035453c37d21d70b420b7e920ee1792f7776a0b781f5ba7bc67c95f36c640f4",
-    "changed": "dc2772ba3f4f0e2f3f5781e0743e80969865ca8ca128fc380a1c4059eb3fb301",
-    "commit": "c36b4b063a81a41160ce26bced6bae22cd06aef8",
+    "branch_diff": "10c5bc4e19fd2d673ec08b6b67e882683b0a550eb8b2909ae19207b711ae32da",
+    "changed": "fa037fc142da9627514d4026d0898134a727ad5415423ad06e38d71a01794d9b",
+    "commit": "d3e4f78d0b52fbc602300d8a5e1bbd28f6ac1507",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. The changed close gate permits a user-facing plan approved before this rule without a Design line, but no command test closes a task under that earlier approval. `test_24_pre_upgrade_user_facing_approval_still_starts` stops after task start and `forge next`; the close tests use plans with Design lines. If this close path began requiring a Design line again, the existing tests would still pass while those tasks could no longer close.",
-        "file": "src/forge/close.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 191,
-        "priority": "P1",
-        "title": "Gate: test closing a task with a pre-upgrade approval",
-        "work": 2
-      }
-    ],
-    "id": "2949eeeb-9d68-4cc4-898d-d1467563d710",
-    "status": "blocked"
+    "findings": [],
+    "id": "bca4dafc-b432-406e-b2ac-8d02a6206359",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-16T09:09:56.753834+00:00",
@@ -105,6 +94,10 @@
     },
     {
       "at": "2026-10-16T15:43:41.710553+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T12:21:25.756638+00:00",
       "step": "review"
     }
   ],
