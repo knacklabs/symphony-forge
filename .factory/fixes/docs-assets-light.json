@@ -77,7 +77,10 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "settled_areas": [
+    "only_docs() in src/forge/docskip.py"
+  ],
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T05:43:56.114060+00:00",
@@ -95,9 +98,13 @@
   "stop": {
     "area": "only_docs() in src/forge/docskip.py",
     "at": "2026-10-20T06:23:26.411879+00:00",
+    "by": "owner",
+    "choice": "narrow",
     "file": "only_docs() in src/forge/docskip.py",
     "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
-    "wait_id": "82241fa2-1337-427d-a13f-7af7da207c9b"
+    "reason": "Owner rule of 20 October 2026: at most two review rounds; a finding left after round two that is not a P0 becomes a follow-up. A test that builds an asset path from Path(__file__) joins is a rare case.",
+    "wait_id": "82241fa2-1337-427d-a13f-7af7da207c9b",
+    "worker_round": 2
   },
   "stuck": {
     "close": "16bbfc65-bffd-460d-bfd3-3d4b722fa0a9",
