@@ -47,7 +47,7 @@
     "id": "91d4fc1e-355d-4cb6-8a81-575ceb0c4427",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -60,10 +60,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8b48720969d158c830a01f0b9d6536d944eca969",
-    "keys": {},
-    "round": null
+    "close": "6c253b02-4bd7-43c4-bb22-cf7cce1ad793",
+    "head": "f1a655921782a95c5c2a9d2d8b7eb70612bae894",
+    "keys": {
+      "close's tests failing": 1,
+      "the review finding \"Keep follow-ups on newly added files visible in Known issues\" in src/forge/board.py": 1
+    },
+    "round": 1
   },
   "tests": "`uv run --frozen --python 3.11 forge test --pytest 756909ec34b5ff26e7b749f8abef2aa262d2c5ce` exited with status 1 on this machine.\nRelated tests: tests/test_board_skips_dropped_fixes.py, tests/test_failed_legacy_review_history.py, tests/test_fast_test_selects_explicit_module_references.py, tests/test_fix_lean_review_prompts.py, tests/test_item_time_history.py, tests/test_live_stage.py, tests/test_live_status.py, tests/test_review_loop_records_each_stop_choice.py, tests/test_reviews_converge_on_changed_lines.py, tests/test_steer_question.py, tests/test_two_round_limit.py\n            call = json.loads((env.repo.bin / \"claude-calls.jsonl\").read_text(\"utf-8\").splitlines()[-1])\n            prompt = call[\"prompt\"]\n        else:\n            entry = note(\"P0\" if case == \"declined p0\" else \"P1\", \"Saving loses quantities\")\n            if case == \"rare finding\":\n                entry[\"body\"] = (\"Gain 4, Work 1, Harm 4\\n\"\n                                 \"Case: rare - An operator edits the import file during saving.\")\n            env.reviews(blocked(entry))\n            item, where = env.start_fix()\n            first = env.close(item)\n            if case == \"rare finding\":\n                assert first.returncode == 0, first.stdout + first.stderr\n                assert entry[\"title\"] in published(env).split(\"Follow-ups:\", 1)[1]\n            else:\n                assert first.returncode == 1 and entry[\"title\"] in first.stderr, first.stdout + first.stderr\n                decline = \"Declined: Saving loses quantities (app.py): not worth the code - The repair costs more than this case.\"\n                env.repo.git(\"commit\", \"--allow-empty\", \"-q\", \"-m\", \"Keep the current save flow\", \"-m\", decline,\n                             cwd=where)\n                reused = env.close(item)\n                assert len(env.review_calls()) == 1, reused.stdout + reused.stderr\n                if case == \"declined p0\":\n                    assert reused.returncode == 1 and entry[\"title\"] in reused.stderr, reused.stdout + reused.stderr\n                    return\n                assert reused.returncode == 0 and \"Ready\" in reused.stdout, reused.stdout + reused.stderr\n>               assert known(env, where)[entry[\"title\"]][\"reason\"].startswith(\"Declined as not worth the code:\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE               KeyError: 'Saving loses quantities'\n\ntests/test_two_round_limit.py:164: KeyError\n7 failed, 95 passed in 267.57s (0:04:27)",
   "worker": "codex"
