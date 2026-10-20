@@ -77,8 +77,8 @@
     "id": "bca4dafc-b432-406e-b2ac-8d02a6206359",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-16T09:09:56.753834+00:00",
@@ -102,12 +102,10 @@
     }
   ],
   "stuck": {
-    "close": "db42e03e-a12b-422a-a859-c3908bec2c10",
-    "head": "e2cf84989dc0f993bba15b6b2186ef69efae47ad",
-    "keys": {
-      "the review finding \"Gate: test closing a task with a pre-upgrade approval\" in src/forge/close.py": 1
-    },
-    "round": 3
+    "close": "10076ca2-4e43-49a7-aefd-db66f9756a7f",
+    "head": "92cca5fe0ac277e114c8e0199341d05da551fb2e",
+    "keys": {},
+    "round": 4
   },
   "worker": "codex"
 }
