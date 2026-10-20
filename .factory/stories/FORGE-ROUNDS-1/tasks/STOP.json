@@ -2,12 +2,20 @@
   "base": "1e1e48286498821699c46da9cdc1ca4ebb3a26da",
   "branch": "task/FORGE-ROUNDS-1-STOP",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-INTAKE-1/SORT",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-20T10:34:36.550052+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e473569c64933b2de60e9c66536371c51d012372",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
