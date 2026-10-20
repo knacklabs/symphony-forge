@@ -256,6 +256,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     github = board_facts.prs(top)
     people_prs = board_facts.prs(top, people=True)
     past_people = backfill.people(top)
+    by_branch = {**{pr["headRefName"]: pr for pr in past_people}, **by_branch}
     people_branches = {}
     for pr in [*past_people, *(people_prs or {}).get("open", []), *board_facts.merged_prs(people_prs)]:
         if isinstance(branch := pr.get("headRefName"), str):

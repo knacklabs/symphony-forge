@@ -17,7 +17,7 @@ PAST_PEOPLE = """query PastPeople($owner: String!, $name: String!, $endCursor: S
   repository(owner: $owner, name: $name) {
     pullRequests(first: 100, states: MERGED, after: $endCursor) {
       pageInfo { hasNextPage endCursor }
-      nodes { number headRefName mergedAt
+      nodes { number headRefName mergedAt body
         author { login ... on User { name } }
         mergedBy { login ... on User { name } }
       }
@@ -36,7 +36,7 @@ def _past(top: Path) -> list[dict[str, Any]]:
 
     def fetch(_now: Any) -> list[dict[str, Any]]:
         done = repo.run("gh", "api", "graphql", "--paginate", "-F", "owner={owner}",
-                        "-F", "name={repo}", "-f", "query=" + PAST_PEOPLE,
+                        "-F", "name={repo}", "-f", "query=" + " ".join(PAST_PEOPLE.split()),
                         "--jq", ".data.repository.pullRequests.nodes[]", cwd=top)
         done.check_returncode()
         for line in done.stdout.splitlines():

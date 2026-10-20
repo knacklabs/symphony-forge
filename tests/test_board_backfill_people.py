@@ -54,6 +54,9 @@ def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, mon
     repo.git("tag", "v0.1.0")
     repo.git("push", "-q", "origin", "--tags")
     history.publish()
+    # gh.cmd cannot carry a literal line break in an argument. Enforce that
+    # external transport contract on every platform, through the real upgrade.
+    (repo.bin / "batch-launcher").touch()
     failure = repo.bin / "history-unreachable"
     if outage:
         failure.touch()
@@ -102,3 +105,30 @@ def test_6_upgrade_fills_past_people_owners_issues_and_releases(unsynced_up, mon
     for item in ("SHOP", "SHOP/T1", "SHOP/T2", "recent-people"):
         for field in ("started_by", "started_by_login", "developer", "developer_login", "released_in"):
             assert offline[item][field] == first[item][field]
+
+
+def test_15_upgrade_preserves_published_times_when_a_part_ages_out(unsynced_up, monkeypatch):
+    """The real first upgrade publishes CI history from GitHub's check times.
+    Later upgrades must retain it after the part leaves the recent PR window.
+    No local worker or check logs supply this part's recorded time.
+    """
+    history = History(unsynced_up, monkeypatch)
+    history.story()
+    history.item("older-part", 31, 21, task="T1")
+    history.publish()
+    up, repo = history.up, history.repo
+    first = up.run(RELEASE)
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert history.record(31), "The first upgrade must publish the original check history"
+    before = rows(board(repo))
+    assert before["SHOP/T1"]["waiting_seconds"] > 0
+    assert before["SHOP"]["waiting_seconds"] >= before["SHOP/T1"]["waiting_seconds"]
+    history.at(NOW + timedelta(days=70))
+    again = up.run(RELEASE)
+    assert again.returncode == 0, again.stdout + again.stderr
+    after = rows(board(repo))
+    assert after["SHOP/T1"]["started_by_login"] == "starter"
+    for item in ("SHOP", "SHOP/T1"):
+        for field in ("working_seconds", "waiting_seconds"):
+            assert after[item][field] == before[item][field], (item, field, before[item], after[item])
+    assert after["SHOP/T1"]["rounds"] == before["SHOP/T1"]["rounds"]

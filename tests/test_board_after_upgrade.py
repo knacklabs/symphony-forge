@@ -52,14 +52,18 @@ if args[:2] == ["api", "graphql"] and any("PastPeople" in arg for arg in args):
     # Both fields return Actor, which has login but no direct name field.
     # https://docs.github.com/en/graphql/reference/pulls#pullrequest
     query = next(arg for arg in args if arg.startswith("query="))
+    if (here / "batch-launcher").exists() and any("\\n" in arg or "\\r" in arg for arg in args):
+        sys.exit("A batch launcher splits arguments at line breaks")
     if re.search(r"(?:author|mergedBy)\\s*\\{\\s*login\\s+name\\b", query):
         sys.exit("Cannot query field name on type Actor")
     if (here / "history-unreachable").exists():
         sys.exit("GitHub is unreachable")
     for pr in prs:
         if pr["state"] == "MERGED":
-            print(json.dumps({field: pr.get(field) for field in (
-                "number", "headRefName", "mergedAt", "author", "mergedBy")}))
+            fields = ("number", "headRefName", "mergedAt", "author", "mergedBy")
+            if re.search(r"\\bbody\\b", query):
+                fields += ("body",)
+            print(json.dumps({field: pr.get(field) for field in fields}))
     sys.exit(0)
 if args[:2] == ["api", "graphql"]:
     # GitHub independently reports successful required checks at the PR's actual
