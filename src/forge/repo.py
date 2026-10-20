@@ -17,9 +17,10 @@ import sys
 import time
 import tomllib
 import uuid
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import RLock
 from typing import Any, NoReturn
 
 from forge import __version__
@@ -82,15 +83,18 @@ def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
 
 
 _command_cache: dict[tuple, Any] | None = None
+_blob_lock = RLock()
 
 
 @contextmanager
 def command_cache():
     """Repository facts and worker history live only for this command, never the next one."""
     global _command_cache
-    previous, _command_cache = _command_cache, {}
+    previous = _command_cache
     try:
-        yield
+        with ExitStack() as resources:
+            _command_cache = {("resources",): resources}
+            yield
     finally:
         _command_cache = previous
 
@@ -131,11 +135,62 @@ def blob_hash(text: str) -> str:
 
 
 def read_blob(top: Path, name: str) -> str | None:
-    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    """A blob's text or None; only object IDs can reuse text after a ref moves."""
     def read() -> str | None:
+        if _command_cache is not None and "\n" not in name and "\r" not in name:
+            return blob_texts(top, [name]).get(name)
         done = run("git", "cat-file", "blob", name, cwd=top)
         return done.stdout if done.returncode == 0 else None
-    return command_fact(("read blob", name), top, read)
+    return command_fact(("read blob", name), top, read) if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", name) else read()
+
+
+def blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
+    """Share one byte-framed Git reader across this command's file and history reads."""
+    if not specs:
+        return {}
+    if _command_cache is None:
+        with command_cache():
+            return blob_texts(top, specs)
+
+    def start():
+        process = _command_cache[("resources",)].enter_context(subprocess.Popen(
+            [shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+        _command_cache[("resources",)].callback(process.communicate)
+        return process
+
+    texts = {}
+    with _blob_lock:
+        process = command_fact("blob reader", top, start)
+        assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+        for spec in dict.fromkeys(specs):
+            if "\n" in spec or "\r" in spec:
+                continue  # These paths use the original Git command, outside the line protocol.
+            request = spec
+            if re.match(r"HEAD(?:[:~^]|$)", spec):
+                # HEAD belongs to a checkout, while this process serves all linked worktrees.
+                dot = root(top) / ".git"
+                if dot.is_file():
+                    gitdir = (dot.parent / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
+                    prefix = f"worktrees/{gitdir.name}"
+                else:
+                    prefix = "main-worktree"
+                request = prefix + "/" + spec
+            process.stdin.write((request + "\n").encode("utf-8"))
+            process.stdin.flush()
+            header = process.stdout.readline()
+            if header.endswith((b" missing\n", b" ambiguous\n")):
+                continue
+            if not header:
+                process.wait()
+                raise subprocess.CalledProcessError(process.returncode or 1, process.args,
+                                                    stderr=process.stderr.read().decode("utf-8", errors="replace"))
+            _, kind, size = header.split()
+            data = process.stdout.read(int(size))
+            process.stdout.read(1)
+            if kind == b"blob":
+                texts[spec] = data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    return texts
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
@@ -144,6 +199,16 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     exe = shutil.which(args[0])
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
+    if _command_cache is not None and env is None and input is None:
+        spec = (args[2] if len(args) == 3 and args[:2] == ("git", "show")
+                and ":" in args[2] and not args[2].startswith("-")
+                and re.fullmatch(r"[\w./-]+(?:[~^]\d*)*", args[2].split(":", 1)[0])
+                else args[3] if len(args) == 4 and args[:3] == ("git", "cat-file", "blob") else None)
+        if spec is not None:
+            text = blob_texts(Path(cwd or Path.cwd()), [spec]).get(spec)
+            if text is not None:
+                return subprocess.CompletedProcess([exe, *args[1:]], 0, text, "")
+            # Keep Git's exact diagnostics for a missing object, non-blob, or unusual path.
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
     # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
     # bounded pull request body past GitHub's limit and changes messages and hashes.

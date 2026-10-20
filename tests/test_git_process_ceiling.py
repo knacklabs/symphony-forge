@@ -11,6 +11,7 @@ import sys
 import pytest
 
 from conftest import _install
+from test_close import STORY_DOC
 from test_close import env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 
@@ -25,6 +26,9 @@ def test_1_commands_start_fewer_git_processes(env, monkeypatch, previous, comman
     # Real git and command dispatch own the answer; only external services are faked.
     # Removing command-local facts exceeds the ceiling. Close also changes worktrees.
     client(env, previous)
+    # A cold-read plan makes next read both current snapshots and the earlier document
+    # from its read record. Those reads must share the same batch process.
+    env.start_approved_task(STORY_DOC)
     item, where = env.start_fix()
     main_head = env.repo.git("rev-parse", "HEAD")
     worker_head = env.repo.git("rev-parse", "HEAD", cwd=where)
@@ -48,7 +52,11 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
     if os.name == "nt":
         calls = [event["argv"][1:] for event in calls
                  if event["event"] == "start" and "/" not in event["sid"]]
-    print(f"{command} {'adopted' if previous else 'new'}: {len(calls)} git processes")
+    batches = [args for args in calls if args[:2] == ["cat-file", "--batch"]]
+    individual = [args for args in calls if args[:2] == ["cat-file", "blob"]
+                  or (args[:1] == ["show"] and len(args) == 2 and ":" in args[1])]
+    print(f"{command} {'adopted' if previous else 'new'}: {len(calls)} git processes, "
+          f"{len(batches)} batches, {len(individual)} individual file reads")
     assert result.returncode == 0, result.stdout + result.stderr
     if command == "next":
         shown = json.loads(result.stdout)
@@ -74,6 +82,10 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
         for field in (".check_runs[]", ".statuses[]"):
             checks = [call for call in env.gh_calls("api") if field in call]
             assert checks and any(f"/commits/{final_head}/" in arg for arg in checks[-1])
+    # Historical file reads share one process, including across linked worktrees.
+    # Missing-file probes can use Git's original command to preserve its refusal.
+    assert len(batches) == 1, calls
+    assert not [args for args in calls if args[:2] == ["cat-file", "blob"]], calls
     roots = [args for args in calls if args == ["rev-parse", "--show-toplevel"]]
     assert len(roots) <= (2 if command == "close" else 1), calls
     assert len(calls) <= (100 if command == "close" else 24 if previous else 30), calls
