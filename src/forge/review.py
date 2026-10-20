@@ -42,6 +42,9 @@ SERIOUS = ("P0", "P1")
 BOOKKEEPING = (".factory/", "plans/")
 DOC_EXCLUDES = [f":(exclude,glob){path}**" for path in (*BOOKKEEPING, ".forge/", "docs/")]
 DOC_EXCLUDES += [":(exclude,glob,icase)**/*.md"]
+DOC_EXCLUDES += [f":(exclude,glob,icase)**/*.{suffix}" for suffix in
+                 ("png", "jpg", "jpeg", "gif", "svg", "webp", "avif", "ico", "bmp",
+                  "tif", "tiff", "icns", "woff", "woff2", "ttf", "otf", "eot")]
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
@@ -207,7 +210,9 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
 
 def blocking_level(top: Path, item: str, state: dict[str, Any], base: str,
                    commit: str = "HEAD") -> str:
-    """P0 for an unsigned client prototype fix, P1 for every other review."""
+    """Docs/assets and unsigned client prototype fixes get a light review."""
+    if docskip.only_docs(top, base, DOC_EXCLUDES, head=commit):
+        return "P0"
     if ("/" in item or state.get("kind") != "fix" or
             state.get("allow_large") != "Prototype before sign-off"):
         return "P1"
@@ -590,7 +595,7 @@ def docs_only(top: Path, base: str) -> bool:
                              allow_settings=not repo.config(top)["always_test"])
 
 
-DOCS_ONLY = ("This change touches only forge.toml, docs, plans, Markdown or Forge's records, so close "
+DOCS_ONLY = ("This change touches only forge.toml, docs, assets, plans, Markdown or Forge's records, so close "
              "did not run `{command}` (docs only: tests skipped).")
 SKIPPED = ("`{command}` already passed on this machine on these same committed files, so close did "
            "not run it again.")

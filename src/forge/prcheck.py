@@ -55,11 +55,28 @@ permissions:
   actions: read
 
 jobs:
-  tests:
+  docs-check:
     if: github.event_name == 'pull_request'
-    name: test group ${{ matrix.group }} of <groups>
+    runs-on: <runner>
     outputs:
-      docs-only: ${{ steps.parent-tests.outputs.docs-only }}
+      docs-only: ${{ steps.docs.outputs.docs-only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - id: docs
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_EXCLUDES: '<docs-excludes>'
+        run: python .forge/review-tests.py --docs-only
+
+  tests:
+    needs: docs-check
+    if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
+    name: test group ${{ matrix.group }} of <groups>
     strategy:
       fail-fast: false
       matrix:
@@ -90,15 +107,17 @@ jobs:
     # tests-passed and forge-pr-check. The skipped one takes another name, because a skipped
     # job would otherwise pass a required check of the same name; always() keeps a failed
     # group from skipping this one.
-    needs: tests
+    needs: [docs-check, tests]
     if: always() && github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: <runner>
     steps:
       - env:
           GROUPS: ${{ needs.tests.result }}
-        run: test "$GROUPS" = success
-      - if: needs.tests.outputs.docs-only == 'true'
+          DOCS_CHECK: ${{ needs.docs-check.result }}
+          DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
+        run: test "$DOCS_CHECK" = success && { test "$GROUPS" = success || { test "$DOCS_ONLY" = true && test "$GROUPS" = skipped; }; }
+      - if: needs.docs-check.outputs.docs-only == 'true'
         run: "echo 'docs only: tests skipped'"
 
   forge-pr-check:
@@ -245,7 +264,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
     if "tests" not in cfg.get("checks", []):
-        start = workflow.index("  tests:\n")
+        start = workflow.index("  docs-check:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,

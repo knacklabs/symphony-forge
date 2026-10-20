@@ -15,14 +15,15 @@ import subprocess
 from pathlib import Path
 
 
-def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False) -> bool:
-    """Generated files always need tests, even under a documentation exclusion."""
+def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False,
+              head: str = "HEAD") -> bool:
+    """Generated files and test inputs always need the full checks."""
     def git(*args: str, input: str | None = None) -> str:
         return subprocess.run([shutil.which("git") or "git", *args], cwd=top, input=input,
                               check=True, capture_output=True, text=True,
                               encoding="utf-8").stdout
 
-    diff = ("diff", "--name-only", "-z", "--no-renames", f"{base}...HEAD")
+    diff = ("diff", "--name-only", "-z", "--no-renames", f"{base}...{head}")
     remaining = git(*diff, "--", ".", *excludes).strip("\0")
     if remaining and not (allow_settings and remaining == "forge.toml"):
         return False
@@ -31,6 +32,18 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         attributes = git("check-attr", "-z", "--stdin", "linguist-generated", input=paths)
         values = attributes.strip("\0").split("\0")[2::3]
         if any(value.lower() not in {"unspecified", "unset", "false"} for value in values):
+            return False
+        tests = [":(glob)**/test*/**", ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
+                 ":(glob)**/test_*.py", ":(glob)**/*_test.py"]
+        if git(*diff, "--", *tests):
+            return False
+        # Check both sides: deleting an input still needs its consumer's tests.
+        patterns = sorted({name for path in paths.strip("\0").split("\0")
+                           for name in (path, Path(path).name)})
+        found = subprocess.run([shutil.which("git") or "git", "grep", "-I", "-l", "-F",
+                                *[arg for name in patterns for arg in ("-e", name)],
+                                base, head, "--", *tests], cwd=top, capture_output=True)
+        if found.returncode != 1:  # A match or an unreadable tree keeps the full checks.
             return False
     return True
 
@@ -89,12 +102,15 @@ def reuse() -> bool:
 
 docs_only = False
 records_only = "--records-only" in sys.argv[1:]
+classify_only = "--docs-only" in sys.argv[1:]
 try:
     # Sync copies close's classifier and supplies its Git path exclusions.
     if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
                               json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
-    if records_only:
+    if classify_only:
+        passed = docs_only
+    elif records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
         passed = docs_only or reuse()

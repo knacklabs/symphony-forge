@@ -65,12 +65,15 @@ def reuse() -> bool:
 
 docs_only = False
 records_only = "--records-only" in sys.argv[1:]
+classify_only = "--docs-only" in sys.argv[1:]
 try:
     # Sync copies close's classifier and supplies its Git path exclusions.
     if not records_only and os.environ.get("BASE_SHA") and os.environ.get("DOCS_ONLY_EXCLUDES"):
         docs_only = only_docs(Path.cwd(), os.environ["BASE_SHA"],
                               json.loads(os.environ["DOCS_ONLY_EXCLUDES"]))
-    if records_only:
+    if classify_only:
+        passed = docs_only
+    elif records_only:
         passed = os.environ.get("GITHUB_EVENT_NAME") in {"push", "pull_request"} and reuse()
     else:
         passed = docs_only or reuse()
