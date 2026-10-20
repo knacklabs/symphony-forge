@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 
 import pytest
@@ -45,8 +46,9 @@ def _rounds(env, case):
     script = env.tmp / "suite.py"
     script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")
     toml = env.repo.path / "forge.toml"
-    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-               + "test = " + json.dumps(f"{sys.executable} {script}") + "\n")
+    command = json.dumps(f'"{sys.executable}" "{script.as_posix()}"')
+    settings = re.sub(r"^test\s*=.*\n?", "", toml.read_text("utf-8"), flags=re.M)
+    env.commit(env.repo.path, "forge.toml", f"test = {command}\n" + settings)
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
     for number in range(2 if case == "fail pass fail" else 1):

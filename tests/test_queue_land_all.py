@@ -452,7 +452,7 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     # The obsolete timeout setting never answers even an older low-Harm stop.
     assert "default choice" not in done.stdout
     assert "late merged." not in lines and late.exists(), done.stdout
-    summary = next(n for n, line in enumerate(lines) if line.startswith("Merged (")))
+    summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
     assert lines[summary] == ("Merged (1): clean · Ready to merge (0): none · "
                               "Needs you (5): stuck, loop, worn, late, skip"), done.stdout
     tail = "\n".join(lines[summary + 1:])

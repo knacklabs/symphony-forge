@@ -50,17 +50,16 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     item, where = env.start_fix()
     found = lambda title, scores, number, who="": _scored(  # noqa: E731
         "P1", title, f"{scores}\nRaise: Functional.{who}", f"docs/{number}.md")
-    for number in (1, 2):
-        # P0s keep the staged three-round stop reachable; non-P0s now follow up at round two.
-        _round(env, item, where, number, found(f"Round {number} defect", "Gain 5, Work 2, Harm 4", number))
-    _round(env, item, where, 3,
+    _round(env, item, where, 1, found("Round 1 defect", "Gain 5, Work 2, Harm 4", 1))
+    # Gain 5 keeps one P0 open in round two; the same ranked table lists every open finding.
+    stop = _round(env, item, where, 2,
            found("Other shells", "Gain 3, Work 4, Harm 3", 3, " Fish users get no prompt."),
            found("Saving drops the basket", "Gain 3, Work 2, Harm 2", 4, " Returning shoppers lose it."),
            found("Checkout charges twice", "Gain 5, Work 3, Harm 1", 5, " Every buyer pays double."),
            found("The label is long", "Gain 2, Work 1, Harm 1", 6, " Readers squint."),
            found("Prices round down", "Gain 4, Work 1, Harm 2", 7, " Sellers lose cents."),
            found("Search skips accents", "Gain 3, Work 1, Harm 2", 8, " Shoppers abroad miss items."),
-           found("Coupons stack", "Gain 3, Work 2, Harm 3", 9, " Shops lose money."))
+           found("Coupons stack", "Gain 3, Work 2, Harm 3", 9, " Shops lose money.")).stderr
     rows = [*HEAD,
             "| 3 | Checkout charges twice: every buyer pays double. | 5 | 3 | 1 | fix now |",
             "| 7 | Coupons stack: shops lose money. | 3 | 2 | 3 | fix this round |",
@@ -69,11 +68,10 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
             "| 6 | Search skips accents: shoppers abroad miss items. | 3 | 1 | 2 | follow-up fix |",
             "| 2 | Saving drops the basket: returning shoppers lose it. | 3 | 2 | 2 | follow-up fix |",
             "| 4 | The label is long: readers squint. | 2 | 1 | 1 | live with |"]
-    stop = _round(env, item, where, 4).stderr
     assert _table(stop) == rows, stop
-    assert "Accept, narrow or split?" in stop.split(rows[-1], 1)[1]
-    # A Harm 3 note is open, so the owner decides.
-    assert ("Ask the human to narrow the part, split it, or accept the remaining findings, in these words:"
+    assert "One more round, split or accept?" in stop.split(rows[-1], 1)[1]
+    # The P0 still open in round two needs the owner's choice.
+    assert ("Ask the human to choose one more round, split or accept the remaining findings, in these words:"
             in stop and "settle it yourself" not in stop)
     assert "\n".join(rows) in repo.forge("next").stdout
 
@@ -89,7 +87,7 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
                "stop": {"file": "app.py", "at": datetime.now(timezone.utc).isoformat()}}, {"app.py": "x = 1\n"})
     said = repo.forge("next").stdout
     assert ("It still has these problems:\n- Saved serious finding: evidence\n"
-            "- Scored finding: evidence\nAccept") in said, said
+            "- Scored finding: evidence\nOne more round") in said, said
 
     # A read loop stops: its blocking notes in the same ranked table, numbered as the read notes number them.
     def read_three(key: str, last: str):
@@ -126,5 +124,5 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     # A read note without scores beside a scored one: the read stop lists every note as a plain line.
     _, stop = read_three("BAKE", note(2, "Totals drift", "Gain 5, Work 1, Harm 4"))
     assert ("It still has these problems:\n- Gap 3: builders guess the limit.\n"
-            "- Totals drift: shoppers notice.\nAccept") in stop, stop
+            "- Totals drift: shoppers notice.\nOne more round") in stop, stop
     assert not _table(stop)

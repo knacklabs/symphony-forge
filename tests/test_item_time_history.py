@@ -107,8 +107,13 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         env.commit(where, "app.py", f"print('round {number}')\n")
         if number == 3:
             # The owner grants one further review after the P0 stop in round two.
+            # Give this earlier choice no elapsed wait; the later stop below owns the 30 seconds.
+            first_wait = next(event for event in reversed(records(env.repo, "events.jsonl"))
+                              if event["event"] == "owner wait start" and event.get("reason") == "review loop")
+            monkeypatch.setenv("FORGE_NOW", first_wait["at"])
             chosen = env.close(item, "--resolve", "more", "--reason", "One more round")
             assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+            monkeypatch.delenv("FORGE_NOW")
         worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         title = "Basket disappears" if number < 3 else "Basket loses quantities"

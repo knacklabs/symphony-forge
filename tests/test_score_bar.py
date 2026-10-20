@@ -239,3 +239,19 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Saving drops the basket (app.py): accepted by the owner" in known
     assert "Label wording (app.py): known: below the bar (live with)" in known
+
+
+def _round(env, item, where, number, *findings, code=1):
+    env.commit(where, "app.py", f"print({number})\n")
+    # Every finding names this round's own edits, not a canned report over absent code.
+    for entry in findings:
+        location = entry["code_location"]
+        path, line = location["file_path"], location["line"]
+        lines = (where / path).read_text("utf-8").splitlines() if (where / path).exists() else []
+        lines.extend([""] * max(0, line - len(lines)))
+        lines[line - 1] += f"  # review round {number}"
+        env.commit(where, path, "\n".join(lines) + "\n")
+    env.reviews(blocked(*findings) if findings else CLEAN)
+    result = env.close(item)
+    assert result.returncode == code, result.stdout + result.stderr
+    return result

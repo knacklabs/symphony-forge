@@ -5,13 +5,14 @@ Exercises src/forge/close.py, src/forge/review.py, src/forge/score.py and src/fo
 """
 import json
 import re
+import shutil
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
 from test_story import DOC, READER, new_story
@@ -285,18 +286,41 @@ def test_6_a_user_facing_change_asks_for_one_live_run_and_refuses_nothing_withou
     assert started.returncode == 0, started.stdout + started.stderr
     listed = env.repo.git("worktree", "list", "--porcelain")
     where = Path(re.search(rf"^worktree (.+)\n[^\n]*\nbranch refs/heads/{branch}$", listed, re.M)[1])
-    worked = env.repo.forge("work", item)
+    if case == "continued-ui":
+        # The first real worker receives the saved pre-upgrade full brief. Keep its actual
+        # conversation record so the current command must supply the new request on resume.
+        earlier = env.tmp / "earlier-forge-src"
+        patient(lambda: shutil.copytree(ROOT / "src/forge", earlier / "forge", dirs_exist_ok=True,
+                                        ignore=shutil.ignore_patterns("__pycache__")))
+        patient(lambda: shutil.copy(ROOT / "tests/fixtures/worker-brief-before-delegation.md",
+                                    earlier / "forge/templates/brief.md"))
+        launcher = env.repo.bin / "forge"
+        current = launcher.read_text("utf-8")
+        try:
+            patient(lambda: launcher.write_text(FORGE_SHIM.format(
+                python=Path(sys.executable).as_posix(), src=earlier.as_posix()), "utf-8"))
+            worked = env.repo.forge("work", item)
+        finally:
+            patient(lambda: launcher.write_text(current, "utf-8"))
+    else:
+        worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[-1]["brief"].split())
     if case == "backend":
         assert "Live run:" not in brief
         return
     if case == "continued-ui":
-        # A continued chat must get this request even when it retains an earlier full brief.
+        assert "Live run:" not in brief
+    else:
+        assert LIVE_RUN in brief
+    if case in ("task", "continued-ui"):
+        # Both task and UI-fix continuations must carry the request in their shorter brief.
         worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
-        brief = " ".join(calls(log)[-1]["brief"].split())
+        resumed = calls(log)[-1]
+        brief = " ".join(resumed["brief"].split())
         assert "The earlier brief in this conversation still applies." in brief
+        assert resumed["options"].get("resume")
     assert LIVE_RUN in brief
     if case == "ui":
         env.commit(where, "app.py", "print('saved basket')\n",

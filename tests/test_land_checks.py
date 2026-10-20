@@ -21,7 +21,7 @@ RED = [run("tests", "failure"), run("forge-pr-check")]
 LINK = "https://github.com/acme/shop/actions/runs/5/job/{}"
 RERUN = ("Re-running {} once: its failure names none of this change's files and the tests "
          "passed here.")
-FIX_ROUND = "Fix round 1 of 3: the worker fixes the failing checks."
+FIX_ROUND = "Fix round 1 of 1: the worker fixes the failing checks."
 PASSING = 'merge = "agent"\ntest = "true"\nfast_test = "true"\n'  # close runs it, so this machine's tests pass
 
 
@@ -242,7 +242,7 @@ def test_5_same_run_under_either_host_and_workers(request, land, monkeypatch, ho
     done = _land(land)
     assert done.returncode == 0, done.stdout + done.stderr
     assert _steps(done) == [f"Closing {ITEM}.",
-                            "Fix round 1 of 3: the worker fixes the review's serious findings.",
+                            "Fix round 1 of 1: the worker fixes the review's serious findings.",
                             f"Closing {ITEM}.", f"Merging {ITEM}."]
     if workers == "codex":
         [turn] = _sent(land.repo.bin / "codex-app-server.jsonl", "turn/start")
