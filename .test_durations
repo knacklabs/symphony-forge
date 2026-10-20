@@ -2099,7 +2099,7 @@
     "tests/test_reads_wait_for_a_loop_choice.py::test_2_a_clean_read_restarts_the_three_blocked_round_count": 1.4633319589997882,
     "tests/test_reads_wait_for_a_loop_choice.py::test_4_fresh_and_resumed_workers_wait_for_both_read_and_review_choices": 1.0814905000002,
     "tests/test_records.py::test_41_records_ship_through_the_fix_lane": 5.508406461000504,
-    "tests/test_release_version.py::test_1_forge_version_is_1_2_16_everywhere_it_is_recorded": 1.2300461680001717,
+    "tests/test_release_version.py::test_1_forge_version_is_1_2_17_everywhere_it_is_recorded": 1.2300461680001717,
     "tests/test_required_check_rejects_outside_branches.py::test_1_required_check_rejects_outside_branch_with_fix_flow[adopted-v1.2.2]": 1.6516046679998908,
     "tests/test_required_check_rejects_outside_branches.py::test_1_required_check_rejects_outside_branch_with_fix_flow[new-client]": 1.3785370000000512,
     "tests/test_required_check_rejects_outside_branches.py::test_2_required_check_keeps_reviewed_generated_branches_passing[fix/forge-files-20261017-1200]": 1.2139197510005033,
