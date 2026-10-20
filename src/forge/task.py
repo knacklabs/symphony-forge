@@ -115,7 +115,7 @@ def restore_default_settings(item: str, top: Path, state: dict[str, Any], defaul
     pin = re.search(r"^version[ \t]*=.*$", head, re.M)[0]
     git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
     path = top / "forge.toml"
-    text = re.sub(r"^version[ \t]*=.*$", lambda _: pin, path.read_text(encoding="utf-8"),
+    text = re.sub(r"^version[ \t]*=[^\r\n]*", lambda _: pin, path.read_bytes().decode("utf-8"),
                   count=1, flags=re.M)
     path.write_bytes(text.encode("utf-8"))
     if repo.commit_state(f"Keep {default}'s settings", "forge.toml", top=top):
