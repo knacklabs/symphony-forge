@@ -1,6 +1,13 @@
 {
   "base": "db5c80463b3103f8de8574fb6e001fea90ce0598",
   "branch": "fix/windows-group-hang",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a158d7-d3a7-7893-86ad-8f55a7241d38",
+    "head": null,
+    "start": "6dfa5fe99ff09ac1a0788d143659825a5abc3ecb"
+  },
   "done_when": "A hung Windows test group fails within 30 minutes with the name and stack of the test that hung in its log, and the test that hung no longer hangs on windows-latest; Linux CI is unchanged",
   "fix_kind": "mechanical",
   "kind": "fix",
