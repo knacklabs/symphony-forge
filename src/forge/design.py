@@ -49,14 +49,15 @@ def snapshot(top: Path, folder: str, ref: str | None = None) -> tuple[str, list[
             return "", []
         with tempfile.TemporaryDirectory(dir=repo.forge_dir(top), prefix="design-") as temp:
             env = {**os.environ, "GIT_INDEX_FILE": str(Path(temp) / "index")}
-            repo.run("git", "read-tree", "--empty", cwd=top, env=env).check_returncode()
             repo.run("git", "add", "-f", "--all", "--", folder, cwd=top, env=env).check_returncode()
-            ref = repo.run("git", "write-tree", cwd=top, env=env).stdout.strip()
-    tree = repo.run("git", "rev-parse", "--verify", f"{ref}:{folder.rstrip('/')}", cwd=top)
+            tree = repo.run("git", "write-tree", f"--prefix={folder}", cwd=top, env=env)
+    else:
+        tree = repo.run("git", "rev-parse", "--verify", f"{ref}:{folder.rstrip('/')}", cwd=top)
     if tree.returncode:
         return "", []
-    files = repo.git("ls-tree", "-r", "--name-only", "-z", tree.stdout.strip(), cwd=top).strip("\0").split("\0")
-    return tree.stdout.strip(), files
+    digest = tree.stdout.strip()
+    files = repo.git("ls-tree", "-r", "--name-only", "-z", digest, cwd=top).strip("\0").split("\0")
+    return digest, files
 
 
 def require_prototype(top: Path, base: str) -> None:

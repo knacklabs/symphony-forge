@@ -157,6 +157,11 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
 
     if tool == "codex":
         # Handback from the main checkout finishes a spec in its original worktree.
+        def main_docs():
+            return {path.relative_to(repo.path).as_posix(): path.read_bytes()
+                    for path in (repo.path / "docs").rglob("*") if path.is_file()}
+
+        before_docs = main_docs()
         spec_checkout = tmp_path / "spec"
         repo.git("worktree", "add", "-q", "-b", "fix/native-spec", str(spec_checkout))
         (spec_checkout / "forge.toml").write_text(config.read_text("utf-8"), "utf-8")
@@ -178,8 +183,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         assert "passed: yes\n" in spec_notes.read_text("utf-8")
         assert repo.git("show", "HEAD:docs/specs/read-scope.read.md", cwd=spec_checkout) == (
             spec_notes.read_text("utf-8").strip())
-        assert not (repo.path / "docs/specs/read-scope.md").exists()
-        assert not (repo.path / "docs/specs/read-scope.read.md").exists()
+        assert main_docs() == before_docs
         unchanged_notes = spec_notes.read_bytes()
         spec_doc.write_text(spec_doc.read_text("utf-8") + "\nSaved baskets expire after thirty days.\n",
                             "utf-8")
@@ -192,7 +196,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         assert deleted_result.returncode == 1
         assert "A file changed during the cold read" in deleted_result.stderr
         assert spec_notes.read_bytes() == unchanged_notes
-        assert not (repo.path / "docs").exists()
+        assert main_docs() == before_docs
 
         # A one-tool choice replaces the recorded other-tool reader, starting fresh.
         config.write_text(config.read_text("utf-8").replace('tools = "codex"', 'tools = "claude"'),
