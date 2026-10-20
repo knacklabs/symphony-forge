@@ -30,7 +30,8 @@ PRELUDE = r"""
 import json, re, sys
 from playwright.sync_api import expect, sync_playwright
 url, expected = sys.argv[1], json.loads(sys.argv[2])
-COMMANDS = re.compile(r"\bforge\s+[a-z]|`|(^|\s)--[a-z]", re.I)
+# A title ending in Forge above a fix label is not a command.
+COMMANDS = re.compile(r"\bforge[ \t]+[a-z]|`|(^|\s)--[a-z]", re.I)
 
 def opened(browser, scheme, page_name):
     page = browser.new_page(viewport={'width': 1440, 'height': 900}, color_scheme=scheme)
