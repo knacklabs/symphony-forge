@@ -11,6 +11,7 @@ from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 STORY = "FIX-PR-CHECK-PENDING"
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="The trusted workflow runs in bash on Linux")
 @pytest.mark.parametrize("adopted,review", [(False, "missing"), (False, "clean"),
                                           (False, "stale"), (False, "blocked"),

@@ -23,6 +23,7 @@ def _signoff(repo, gh, tmp_path, monkeypatch, history):
     return repo, fix, answers, queue
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history, style", [
     ("new", "blank line"), ("new", "mixed whitespace"),
     ("new", "brief whitespace"), ("new", "no final newline"),

@@ -8,6 +8,7 @@ from test_windows_stdin_bytes import adopt_earlier_release, start_new_client
 STORY = "merge-enable-wording"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history,identities", [
     ("new", ("CODEX_THREAD_ID",)),
     ("new", ("CLAUDECODE",)),
