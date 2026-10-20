@@ -2,6 +2,7 @@
 
 The session is a real parent process. Only GitHub, models and Autoreview use the
 existing third-party stubs; they never choose the lane or create the Forge item.
+UI fixes retain src/forge/design.py's approved-design prerequisite.
 """
 import json
 import re
@@ -11,10 +12,11 @@ from pathlib import Path
 
 import pytest
 
-from conftest import GH_STUB, ROOT, _install
+from conftest import GH_STUB, ROOT, Repo, _install
 from test_close import GREEN, env  # noqa: F401
 from test_land import GH, URL, land  # noqa: F401
 from test_setup import _fresh_client
+from test_story import prototype_design
 from test_tools_session_hold import Session
 
 STORY = "FORGE-INTAKE-1"
@@ -154,7 +156,9 @@ def test_2_a_small_clear_idea_starts_a_fix_that_lands_as_the_merge_setting_allow
     text = re.sub(r'^workers = .*$', 'workers = "claude"', text, flags=re.M)
     text = re.sub(r'^test = .*$', 'test = "python -c \\\"print(123)\\\""', text, flags=re.M)
     config.write_text(text, "utf-8")
-    _land_setup(repo, top, "configure-worker", ("forge.toml",))
+    if age == "new":
+        prototype_design(Repo(top, repo.bin))
+    _land_setup(repo, top, "configure-worker")
     for kind in ("backend", "ui"):
         why = "Fix the welcome typo" if kind == "backend" else "Correct the button label"
         offered = _offer(intake, why)

@@ -178,7 +178,8 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         assert "passed: yes\n" in spec_notes.read_text("utf-8")
         assert repo.git("show", "HEAD:docs/specs/read-scope.read.md", cwd=spec_checkout) == (
             spec_notes.read_text("utf-8").strip())
-        assert not (repo.path / "docs").exists()
+        assert not (repo.path / "docs/specs/read-scope.md").exists()
+        assert not (repo.path / "docs/specs/read-scope.read.md").exists()
         unchanged_notes = spec_notes.read_bytes()
         spec_doc.write_text(spec_doc.read_text("utf-8") + "\nSaved baskets expire after thirty days.\n",
                             "utf-8")

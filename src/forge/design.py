@@ -29,7 +29,8 @@ def check(top: Path, text: str, ref: str | None = None, *, required: bool = True
     folder, expected = match.groups()
     if PurePosixPath(folder).name in {".", ".."}:
         repo.refuse(("The design folder must be inside docs/design/.", next_step))
-    actual, files = snapshot(top, folder, ref)
+    actual, files = repo.command_fact(("design snapshot", top.resolve(), folder, ref), top,
+                                     lambda: snapshot(top, folder, ref))
     if not any(PurePosixPath(name).suffix.lower() in IMAGES for name in files):
         repo.refuse(("The design folder has no screen images.", next_step))
     if actual != expected:

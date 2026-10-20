@@ -1,6 +1,7 @@
 """Per-command git facts keep next and close cheap without changing their answers.
 
 Includes the warning work in src/forge/migration_warnings.py for related-test selection.
+Also covers src/forge/design.py's passive approval checks.
 """
 
 import json
