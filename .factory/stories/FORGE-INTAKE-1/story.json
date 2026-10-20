@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-INTAKE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-20T07:32:47.442605+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Forge sorts every new idea into a fix, a plan, discovery or the idea list",
+  "touches": 0
+}
