@@ -69,9 +69,11 @@ jobs:
           python-version: '3.11'
       - id: docs
         env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '<docs-excludes>'
-        run: python .forge/review-tests.py --docs-only
+        run: python .forge/review-tests.py
 
   tests:
     needs: docs-check
