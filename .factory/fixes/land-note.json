@@ -23,8 +23,8 @@
     "id": "db2f1bd2-e14f-4177-802d-134aa8a5a4c4",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T05:59:00.845581+00:00",
@@ -44,10 +44,10 @@
     }
   ],
   "stuck": {
-    "close": "2c27aab8-6daa-47e3-9281-465a011d8d9a",
-    "head": "a82e5c540e0c48a98b892ed7a65888eb2c4bbf87",
+    "close": "9c0b9c84-7fd7-4297-8bb7-4261d831c576",
+    "head": "bc41d1b08de8b5d45ccb7ade069d51326b1648f8",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "A client coordinator wrote its own shell queues to run rounds one at a time, and parallel queues raced each other; forge land already builds, closes, runs fix rounds and merges with each round waiting for a machine place, but it takes no note for the first round, so coordinators chain forge work --note and forge land by hand (issue 968)",
   "worker": "codex"
