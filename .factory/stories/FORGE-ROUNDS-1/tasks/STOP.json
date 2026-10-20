@@ -12,17 +12,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "66d0fa24e350224f44a0af6b2f1fd35be369b619512c1a30c6f6f10f91b9b49a",
-    "changed": "6d64f7d7ae271013a0f37cf4da980a53b118f04996efc34a53ccd1a4b746cbea",
-    "commit": "eff9c6e9d7d2ee7c1064f3e803913a9238f700e1",
+    "branch_diff": "1bcb7b908547f68796f9b9fdd760b8d5ea4c086ac694f650255e78a803800590",
+    "changed": "9a05f51219ce432afef67edbd4f0f795b2b33746d8147aad5884c4343554a8f2",
+    "commit": "c8f5ffb03e7e3bd5dadaab8ee261b5089e34a034",
     "dismissals": [],
     "findings": [],
-    "id": "9b806e59-bfcb-4651-8174-17d3748d1a29",
+    "id": "2cec65a8-4d2c-4a2f-abb0-035945d6f23e",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-INTAKE-1/SORT",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T10:34:36.550052+00:00",
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-10-20T12:45:16.642191+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T13:16:53.218051+00:00",
       "step": "review"
     }
   ],
@@ -41,6 +45,5 @@
     },
     "round": 2
   },
-  "tests": "`uv run --frozen --python 3.11 forge test --pytest 3a4adf3d125ba7520db5034d3d4c5fb94305d3da` exited with status 1 on this machine.\nstdout_seq = [b'Starting aa.\\n', b'aa: Closing aa.\\n', b'Starting bb.\\n', b'bb: Closing bb.\\n', b\"aa: Warning: The changed files do.../acme/shop/pull/8731\\nbb: This machine is busy (load 2.0 per core), so this work round waits until it is under 1.5.\\n\"]\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\nstdout_seq = [b'Starting aa.\\n', b'aa: Closing aa.\\n', b'Starting bb.\\n', b'bb: Closing bb.\\n', b\"aa: Warning: The changed files do.../acme/shop/pull/8731\\nbb: This machine is busy (load 2.0 per core), so this work round waits until it is under 1.5.\\n\"]\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\nstdout_seq = [b'Starting aa.\\n', b'bb waits for aa: both change shared.py.\\n', b'aa: Closing aa.\\n', b'Starting cc.\\n', b'cc: Closi.../shop/pull/6666\\naa: This machine is busy (load 3.3 per core), so this work round waits until it is under 1.5.\\n\", ...]\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\nstdout_seq = [b'Starting aa.\\n', b'bb waits for aa: both change shared.py.\\nee waits for aa: both change shared.py.\\n', b'aa: Closi.../shop/pull/6666\\naa: This machine is busy (load 3.3 per core), so this work round waits until it is under 1.5.\\n\", ...]\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\nstdout_seq = [b'Starting aa.\\n', b'bb waits for aa: both change shared.py.\\n', b'aa: Closing aa.\\n', b'Starting cc.\\n', b'cc: Closi.../shop/pull/6666\\naa: This machine is busy (load 3.5 per core), so this work round waits until it is under 1.5.\\n\", ...]\nstderr_seq = [], skip_check_and_raise = False\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n            return\n        if skip_check_and_raise or _time() > endtime:\n    return subprocess.run([sys.executable, str(self.bin / \"forge\"), *args],\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:550: in run\n    stdout, stderr = process.communicate(input, timeout=timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1209: in communicate\n    stdout, stderr = self._communicate(input, endtime, timeout)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:2116: in _communicate\n    self._check_timeout(endtime, orig_timeout, stdout, stderr)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\n\nself = <Popen: returncode: -9 args: ['/Users/ravikiranvemula/Workdir/symphony-forge...>\nendtime = 286797.288790416, orig_timeout = 60\nstdout_seq = [b'Starting aa.\\n', b'bb waits for aa: both change shared.py.\\n', b'ee waits for aa: both change shared.py.\\n', b'aa: Closing aa.\\n', b'Starting cc.\\n', b'cc: Closing cc.\\n', ...]\nstderr_seq = [], skip_check_and_raise = False\n\n    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,\n                       skip_check_and_raise=False):\n        \"\"\"Convenience for checking if a timeout has expired.\"\"\"\n        if endtime is None:\n            return\n        if skip_check_and_raise or _time() > endtime:\n>           raise TimeoutExpired(\n                    self.args, orig_timeout,\n                    output=b''.join(stdout_seq) if stdout_seq else None,\n                    stderr=b''.join(stderr_seq) if stderr_seq else None)\nE           subprocess.TimeoutExpired: Command '['/Users/ravikiranvemula/Workdir/symphony-forge-FORGE-ROUNDS-1-STOP/.venv/bin/python', '/private/var/folders/58/zz_qsx_14850bcm1rxnxf7kc0000gn/T/pytest-of-ravikiranvemula/pytest-340/popen-gw2/test_2_a_change_sharing_a_file1/bin/forge', 'land', '--all']' timed out after 60 seconds\n\n../../.local/share/uv/python/cpython-3.11.11-macos-aarch64-none/lib/python3.11/subprocess.py:1253: TimeoutExpired\n8 failed, 287 passed, 6 errors in 934.68s (0:15:34)",
   "worker": "codex"
 }
