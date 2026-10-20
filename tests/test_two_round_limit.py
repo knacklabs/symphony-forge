@@ -1,6 +1,7 @@
 """Review rounds leave visible follow-ups and workers can decline minor repairs.
 
 Commands own the verdict and publication; only external tools supply fake replies.
+Exercises src/forge/close.py, src/forge/review.py, src/forge/score.py and src/forge/board.py.
 """
 import json
 import sys
@@ -59,7 +60,7 @@ def test_1_a_review_ends_after_round_two_and_leftovers_become_known_issues(env, 
     env.commit(where, "app.py", "save = True\n\nlegacy = True\n", "Repair saving")
     if case in ("past-round-two", "saved-unscored"):
         # This item already has two blocked reviews when the policy takes effect.
-        # The new rule applies on its next close too; no saved-state edits are needed.
+        # The new rule applies on its next close too.
         second = env.close(item)
         assert second.returncode == 1 and old["title"] in second.stderr, second.stdout + second.stderr
         if saved:
@@ -74,7 +75,7 @@ def test_1_a_review_ends_after_round_two_and_leftovers_become_known_issues(env, 
             env.commit(where, rel, json.dumps(state), "Retain an earlier unscored review")
         else:
             env.commit(where, "app.py", "save = 'quantity'\n\nlegacy = True\n", "Keep quantities")
-    new = note("P1", "Saving loses discounts", line=3)
+    new = note("P1", "Saving loses discounts", line=1 if case == "clean-first" else 3)
     leftovers = [old] if saved else [new] if case in ("clean-first", "past-round-two") else [old, new]
     env.reviews(blocked(*leftovers))
     closed = env.close(item)

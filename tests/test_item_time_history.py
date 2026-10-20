@@ -118,9 +118,8 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         monkeypatch.delenv("FORGE_NOW", raising=False)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         title = "Basket disappears" if number < 3 else "Basket loses quantities"
-        # Harm 3 in round 3 keeps the any-file hold by the bar.
-        env.reviews(blocked({**finding("P1", title, "app.py"),
-                             **({"body": "Gain 3, Work 2, Harm 3\nEvidence"} if number == 3 else {})}))
+        # P1s now follow up after round two; P0s retain this blocked-history contract.
+        env.reviews(blocked(finding("P0", title, "app.py")))
         if number == 1:
             queued_first_close(env, item, where)
         else:
@@ -141,14 +140,14 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         (1, 0), (0, 1), (1, 0)]
     assert [(round_["findings"][0]["title"], round_["findings"][0]["priority"],
              round_["findings"][0]["file"]) for round_ in held["rounds"]] == [
-        ("Basket disappears", "P1", "app.py"),
-        ("Basket disappears", "P1", "app.py"),
-        ("Basket loses quantities", "P1", "app.py")]
+        ("Basket disappears", "P0", "app.py"),
+        ("Basket disappears", "P0", "app.py"),
+        ("Basket loses quantities", "P0", "app.py")]
     reviews = [event for event in records(env.repo, "events.jsonl")
                if event["item"] == item and event["event"] == "review result"]
     assert [event["findings"][0]["title"] for event in reviews] == [
         "Basket disappears", "Basket disappears", "Basket loses quantities"]
-    assert all(event["findings"][0]["priority"] == "P1"
+    assert all(event["findings"][0]["priority"] == "P0"
                and event["findings"][0]["file"] == "app.py" for event in reviews)
     loop_wait = next(event for event in reversed(records(env.repo, "events.jsonl"))
                      if event["event"] == "owner wait start" and event.get("reason") == "review loop")
@@ -383,7 +382,8 @@ def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(
 
 def test_9_closes_without_another_worker_turn_keep_separate_review_rounds(env):
     item, where = env.start_fix(round=1)
-    env.reviews(blocked(finding("P1", "Basket disappears", "app.py")))
+    # Keep two blocked rounds without another worker; a round-two P1 would now pass.
+    env.reviews(blocked(finding("P0", "Basket disappears", "app.py")))
     first = env.close(item)
     assert first.returncode == 1, first.stderr
     env.commit(where, "app.py", "print('attempt to keep basket')\n")
