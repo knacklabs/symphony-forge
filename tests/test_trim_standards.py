@@ -2,10 +2,13 @@ STORY = "FORGE-TRIM-1"
 
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.platform
 def test_5_sync_places_standards_beside_both_forge_skills(repo):
     repo.git("checkout", "-q", "-b", "fix/standards")
     version = repo.forge("--version").stdout.split()[-1]

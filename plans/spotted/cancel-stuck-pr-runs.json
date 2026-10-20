@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/checks.py\t[P1] Bind cancellation to the pull request being checked\tcancel-stuck-pr-runs",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 242,
+      "text": "[P1] Bind cancellation to the pull request being checked",
+      "from": "blocking",
+      "item": "cancel-stuck-pr-runs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\t[P1] Recover blockers that ignore ordinary cancellation\tcancel-stuck-pr-runs",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 260,
+      "text": "[P1] Recover blockers that ignore ordinary cancellation",
+      "from": "blocking",
+      "item": "cancel-stuck-pr-runs",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/checks.py\t[P1] Verify concurrency membership before cancelling older runs\tcancel-stuck-pr-runs",
+      "kind": "bug",
+      "path": "src/forge/checks.py",
+      "line": 249,
+      "text": "[P1] Verify concurrency membership before cancelling older runs",
+      "from": "blocking",
+      "item": "cancel-stuck-pr-runs",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

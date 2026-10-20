@@ -19,6 +19,8 @@ from test_story import DOC, new_story, setup
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_live_adopt import ANSWERS
 
+pytestmark = pytest.mark.platform
+
 STORY = "codex-hook-trust"
 GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
          "grill.claude": {"model": "opus", "effort": "high"}}

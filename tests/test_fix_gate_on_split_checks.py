@@ -11,6 +11,8 @@ import pytest
 
 from test_setup import _fresh_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-GATE-ON-SPLIT-CHECKS"
 ROOT = Path(__file__).resolve().parents[1]
 SPLIT = " --splits 6 --group ${{ matrix.group }} --splitting-algorithm least_duration"

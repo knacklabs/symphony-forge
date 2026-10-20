@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: Codex fixer handout and land proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 208,
+      "text": "Not done: Codex fixer handout and land proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "windows-test-fixes"
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work in new and earlier-adopted client repos\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 40,
+      "text": "Not done: native work in new and earlier-adopted client repos",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "windows-test-fixes"
+    },
+    {
+      "key": "bug\ttests/test_tools_native_work.py\tNot done: native work's named handout and failure outcomes have proof\tFORGE-TOOLS-1/WORK",
+      "kind": "bug",
+      "path": "tests/test_tools_native_work.py",
+      "line": 68,
+      "text": "Not done: native work's named handout and failure outcomes have proof",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/WORK",
+      "status": "done",
+      "closed_by": "windows-test-fixes"
+    },
+    {
+      "key": "edge\tsrc/forge/close.py\tUnquoted caret tree expressions can also fail through a Windows Git batch launcher during follow-up replay.",
+      "kind": "edge",
+      "path": "src/forge/close.py",
+      "line": 725,
+      "text": "Unquoted caret tree expressions can also fail through a Windows Git batch launcher during follow-up replay.",
+      "from": "worker",
+      "item": "windows-test-fixes",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

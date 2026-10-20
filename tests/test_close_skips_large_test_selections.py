@@ -91,9 +91,10 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
         assert "Checks failed on the pull request: tests." in closed.stderr
     else:
         assert "Ready:" in closed.stdout, closed.stdout + closed.stderr
-    # Explicit worker runs keep the old contract, even for shared inputs or large selections.
+    # Workers now keep broad runs to the fix's touched test files; CI owns the rest.
+    for path in log.iterdir():
+        path.unlink()
     tested = env.repo.forge("test", cwd=where)
     assert tested.returncode == 0, tested.stdout + tested.stderr
-    expected = {f"test_case_{number}" for number in
-                range(6 if not fast or selection == "shared" else selection)}
+    expected = {f"test_case_{number}" for number in range(0 if selection == "shared" else selection)}
     assert {path.name for path in log.iterdir()} == expected

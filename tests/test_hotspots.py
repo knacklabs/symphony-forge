@@ -13,6 +13,8 @@ from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git
 from test_setup import _fresh_client
 from test_measure import SPEC, DUE
 
+pytestmark = pytest.mark.platform
+
 
 WHY = "Simplify app.py: problems keep turning up there"
 DONE = "app.py is simpler and none of these happen any more: Alpha; Beta; Gamma"

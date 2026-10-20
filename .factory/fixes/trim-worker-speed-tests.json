@@ -1,0 +1,52 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-worker-speed-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14dde-361d-7533-aeb5-7fd7fb554845",
+    "head": null,
+    "start": "d06e69b96e5444a8d8f78df810985c8cb9c27575"
+  },
+  "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8432beb72b13fe48c8f48c361011a539ee6cfc91e3f024552f54a25b4f185a95",
+    "changed": "273826cfbe3ea6b641d9a43a822793d103b964c132db34bfa87342c3d3213939",
+    "commit": "2bb55afbe440e028a14806c14a7431c9044b81e8",
+    "dismissals": [],
+    "findings": [],
+    "id": "36446c72-11cc-4078-8fa7-e2190cb62a98",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:34:45.125475+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:41:20.987372+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T10:01:26.929388+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "78216213-c3e7-4c7c-9337-9fb7157efcf4",
+    "head": "47da9b3686383d647efee3a3a6a77e70dbaa23ac",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 1
+  },
+  "why": "The worker speed, settings and stuck-worker tests replay shared code per tool and repeat adopted rows",
+  "worker": "codex"
+}

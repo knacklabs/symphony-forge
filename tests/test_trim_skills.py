@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = {
     ".claude/skills/forge/fde.md": ".codex/skills/forge/fde.md",
@@ -36,6 +38,7 @@ OLD_COPIES = (
 )
 
 
+@pytest.mark.platform
 def test_2_sync_ships_one_source_copy_in_wheel_sdist_and_editable(repo, tmp_path):
     assert all(not (ROOT / rel).exists() for rel in OLD_COPIES)
     # read_text normalizes CRLF checkouts, matching sync's read and LF byte write.

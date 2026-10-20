@@ -262,7 +262,7 @@ def _review_fails_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "codex: the model is unavailable.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _review_incomplete_twice(env):
@@ -270,7 +270,7 @@ def _review_incomplete_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "it reported the review as incomplete.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _open_serious_finding(env):
@@ -362,10 +362,8 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            # Recovery now points to the shipped recipe before committing the resolved merge.
-            "next": re.compile(r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
-                               r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
-                               r"then forge close tidy-readme")}
+            # The normal worker finishes the merge before it continues the item's work.
+            "next": "forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme"}
 
 
 def _bad_dismissal(env):

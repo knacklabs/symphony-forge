@@ -9,6 +9,8 @@ from conftest import ROOT, _install
 from test_codex_worker import _sent, sdk_data  # noqa: F401 (pytest fixture)
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 
+import pytest
+
 STORY = "a-fix-s-first-codex-round-runs-as-the-li"
 HELPERS = {"agents.default_subagent_model": "gpt-6-luna",
            "agents.default_subagent_reasoning_effort": "max"}
@@ -25,6 +27,7 @@ def test_1_forge_init_gives_lite_luna_max_helpers(repo, gh, tmp_path):
     assert lite["subagent_effort"] == "max"
 
 
+@pytest.mark.platform
 def test_2_first_fix_round_sends_a_codex_repos_lite_helpers(repo, monkeypatch, sdk_data, claude_session):
     _install(repo.bin, "codex-app-server",
              (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))

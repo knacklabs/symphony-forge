@@ -20,7 +20,7 @@ from test_lanes_tests import accepted, configure, reap, release_server  # noqa: 
 from test_story import worktree
 
 STORY = "lane-identity-env"
-pytestmark = pytest.mark.skipif(os.name == "nt", reason="POSIX ps timezone and locale contract")
+pytestmark = [pytest.mark.platform, pytest.mark.skipif(os.name == "nt", reason="POSIX ps timezone and locale contract")]
 
 
 def environment(monkeypatch, zone, locale):

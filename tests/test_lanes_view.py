@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install, machine_cores
+from conftest import IDLE_MACHINE, ROOT, _install, machine_cores
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start, person, lane_adapter  # noqa: F401
@@ -21,6 +21,8 @@ from test_codex_worker import _started, sdk_data  # noqa: F401
 from test_codex_record import _freeze
 from test_story import worktree
 from test_lanes_tests import release_server  # noqa: F401
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-LANES-1"
 
@@ -57,6 +59,8 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     # reach both commands, so null or constant placeholders cannot satisfy this proof.
     shim = repo.bin / "forge"
     original = shim.read_text("utf-8")
+    native_source = original.replace(IDLE_MACHINE,
+        "from forge import machine\nmachine.busy_runners = lambda: 0\n")
     for total, available, load in [(8192000, 2048000, (1.25, 2.5, 3.75)),
                                    (16384000, 4096000, (4.5, 5.25, 6.0))]:
         native = f"import os\nos.getloadavg = lambda: {load!r}\n"
@@ -67,13 +71,14 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
                        "if str(self) == '/proc/meminfo' else _real_read(self, *a, **kw)\n")
         elif sys.platform == "darwin":
             _install(repo.bin, "sysctl", f"#!{sys.executable}\nprint({total})\n")
-            stats = f"Mach Virtual Memory Statistics: (page size of 4096 bytes)\nPages free: {available // 4096}."
+            stats = (f"Mach Virtual Memory Statistics: (page size of 4096 bytes)\n"
+                     f"Pages free: {available // 4096}.\nPages inactive: 0.")
             _install(repo.bin, "vm_stat", f"#!{sys.executable}\nprint({stats!r})\n")
         else:
             native += ("import ctypes\ndef memory_status(pointer):\n"
                        f"    pointer._obj.total = {total}\n    pointer._obj.available = {available}\n"
                        "    return 1\nctypes.windll.kernel32.GlobalMemoryStatusEx = memory_status\n")
-        shim.write_text(original.replace("from forge.cli import main", native + "from forge.cli import main"), "utf-8")
+        shim.write_text(native_source.replace("from forge.cli import main", native + "from forge.cli import main"), "utf-8")
         for command in ("board", "next"):
             result = repo.forge(command, "--json")
             assert result.returncode == 0, result.stderr

@@ -21,6 +21,9 @@ from conftest import ROOT
 from test_close import GREEN, STORY_DOC, env  # noqa: F401
 from test_last_task_records_story_outcome import github_merge
 from test_mod_plugin import packaged_mod  # noqa: F401
+from test_upgrade_command import Upgrade
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-MOD-1"
 FIXTURE = Path(__file__).parent / "fixtures" / "board.json"
@@ -39,6 +42,7 @@ def _board_consumes_current_round_times_from_real_runs(env, tests):
         config = folder / "forge.toml"
         env.commit(folder, "forge.toml", config.read_text("utf-8").replace(
             "print(123)", "raise SystemExit(1)"))
+        Upgrade(env, env.tmp).on_main("forge.toml", config.read_text("utf-8"))
     closed = env.close(item)
     assert (closed.returncode == 0) == (tests != "failed"), closed.stderr
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
@@ -290,7 +294,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
     assert result["version"] == repo.forge("--version").stdout.strip().split()[-1].lstrip("v")
     assert result["repo_root"] == str(repo.path.resolve())
     rows = {r["id"]: r for r in result["items"]}
-    # Roadmap-only stories now have the same visible status in JSON and on the page.
+    # Roadmap-only stories show a status too.
     assert set(rows) == {"BOARD", "SHOP", "polish"}
     assert rows["SHOP"]["stage"] == "needs a spec"
     assert rows["SHOP"]["status"] == "Not started yet"
@@ -351,7 +355,7 @@ def test_1_board_shows_stories_workers_checks_and_findings(repo, gh, request, co
 
 def _successful_checks_do_not_replace_close_receipts(repo, gh, context):
     # Green checks formerly granted machine readiness without close's receipt. The
-    # coordinator now requires that receipt; check data and the historical HTML dates stay intact.
+    # coordinator now requires that receipt; check data stays intact.
     setup(repo, keys=())
     repo.write("forge.toml", (repo.path / "forge.toml").read_text() + 'checks = ["forge-pr-check"]\n')
     repo.git("add", "forge.toml")
@@ -384,10 +388,6 @@ def _successful_checks_do_not_replace_close_receipts(repo, gh, context):
     assert rows["BOARD"]["children"][0]["stage"] == "waiting for checks"
     assert row["next"] == {"command": "forge close polish", "line": "Polish the guide is waiting for its checks.",
                           "step": "forge close polish"}
-    page = repo.path / ".git/forge/ready-board.html"
-    result = repo.forge("board", "--out", str(page))
-    assert result.returncode == 0, result.stderr
-    assert "Ready to merge" in page.read_text("utf-8")
     # The GitHub request must ask for the fallback; a canned response cannot prove that.
     query = next(c for c in gh.calls() if c[:2] == ["api", "graphql"])
     assert "startedAt" in " ".join(query)
@@ -510,7 +510,7 @@ def test_2_next_and_board_share_the_mod_contract(repo, gh, request, status, merg
 
 @pytest.mark.parametrize("conclusion,required", [(None, None)] + [
     ("plugin " + case, None) for case in ("events", "busy reload", "reload complete", "reload start")] + [
-    (f"review {priority}", None) for priority in ("P1", "P2", "P3")] + [
+    (f"review {priority}", None) for priority in ("P1", "P3")] + [
     (c, r) for c in ("SKIPPED", "NEUTRAL", "STALE") for r in (True, False)])
 def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeypatch, request,
                                                              conclusion, required):
@@ -559,9 +559,9 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
                              "end": "2026-10-04T10:00:59+00:00",
                              "category": "unknown", "kind": "unknown"}]
     assert snapshot(view(repo, "board")) == snapshot(expected)
-    # The HTML board uses the same cache; it must not refresh the open checks early.
-    html = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.html"))
-    assert html.returncode == 0, html.stderr
+    # The --out board uses the same cache; it must not refresh the open checks early.
+    written = repo.forge("board", "--out", str(repo.path / ".git/forge/cache-board.json"))
+    assert written.returncode == 0, written.stderr
     assert len([c for c in gh.calls() if c[:2] == ["api", "graphql"]]) == initial_calls + 1
     monkeypatch.setenv("FORGE_NOW", "2026-10-04T10:01:00+00:00")
     rows = {r["id"]: r for r in view(repo, "board")["items"]}

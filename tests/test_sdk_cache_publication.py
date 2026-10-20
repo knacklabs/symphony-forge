@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import subprocess
 import threading
+from pathlib import Path
 
 import pytest
 
@@ -12,6 +13,7 @@ from test_codex_worker import PIN, sdk_data
 STORY = "sdk-cache-race"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("sdk", ["codex", "claude"])
 def test_1_concurrent_rebuilds_keep_one_ready_sdk(tmp_path, monkeypatch, pytestconfig, sdk):
     if sdk == "codex" and REAL_UV is None:
@@ -33,7 +35,7 @@ def test_1_concurrent_rebuilds_keep_one_ready_sdk(tmp_path, monkeypatch, pytestc
     run = subprocess.run
 
     def concurrent_install(command, *args, **kwargs):
-        if "venv" in command:
+        if "venv" in command and Path(command[-1]).parent == env.parent:  # this SDK's build
             # Both callers have found the same stale cache before either build finishes.
             position = installing.wait()
             if position == 1:

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import FORGE_SHIM, REAL_UV, ROOT, _install
+from conftest import FORGE_SHIM, IDLE_MACHINE, REAL_UV, ROOT, _install
 from test_close import CLEAN, blocked, body, env, finding  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
 from test_land import ITEM, URL, _fix, _workers, land  # noqa: F401
@@ -56,6 +56,7 @@ with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")
 os.environ["PATH"] = {json.dumps(selected_bin.as_posix())} + os.pathsep + os.environ["PATH"]
 sys.path.insert(0, {json.dumps((ROOT / 'src').as_posix())})
+{IDLE_MACHINE}
 if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
     program = args.index("python")
     assert args[program:program + 3] == ["python", "-I", "-c"], args
@@ -102,6 +103,7 @@ subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
 @pytest.mark.parametrize("stage", ["land-build", "land-fix", "close-merge", "land-merge",
                                    "land-guide-conflict", "close-guide-conflict"])
+@pytest.mark.platform
 def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         land, adoption, stage, monkeypatch):
     env = land

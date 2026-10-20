@@ -13,6 +13,8 @@ import pytest
 
 from test_close import CLEAN, FAILED, env  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-REVIEWS-LEAVE-THEIR-FORGE-REVIEW-TEMPORA"
 
 # Answers as the stub Autoreview does, after what $REVIEW_DO says: "hang" records its id and

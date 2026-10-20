@@ -12,6 +12,7 @@ from test_close_holds_after_three_blocked_reviews import client_item
 STORY = "review-current-head"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption"])
 @pytest.mark.parametrize("command", ["close", "land"])
 def test_1_close_and_land_review_the_repaired_head_before_reusing_blocking_findings(

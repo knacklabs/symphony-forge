@@ -11,6 +11,8 @@ current review, even if its number changes. Only the human chooses which finding
 
 After a merge of the default branch, close reviews only this change's own diff against the new
 merge base, keeping earlier findings and allowances from this item's records.
+If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call.
+If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 From the second review round, close checks the previous round's findings and the lines changed
 since that review. New findings on unchanged lines become visible follow-ups, except security
 or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
@@ -41,6 +43,8 @@ $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
 review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+A stop that asks the owner needs a recorded choice with `forge close --resolve`.
+A merge of the default branch or a clean review does not clear it. Close repeats the question.
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
@@ -62,10 +66,19 @@ moves its own changes onto the default branch after the base merges through Forg
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish
 and review it before you start a part on top of it.
 
+Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
+If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings
+- After a merge of the default branch, close keeps that branch's settings unless this item's
+  Done-when permits settings changes. It keeps this branch's version pin. The worker's settings
+  restore uses the incoming side while a merge is open. Workers can commit those incoming settings
+  unchanged. Initial migration and adoption keep their new settings until their first pull request merges.
 - A subagent never runs `forge handback`, `forge work` or `forge stop` itself.
+- A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
+  the board and `forge next` show the worker as stopped and give `forge work <item>` for an unfinished round.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
@@ -75,10 +88,14 @@ $delegation
   interactive coordinator session. Work only on this brief.
 - Commit your own work on this branch, with short plain-English messages. Never commit to the
   default branch, never skip the git hooks, never push and never merge: Forge and the human do that.
+- Never amend or rebase a commit that is already pushed.
 - `forge close` pushes the committed branch and runs CI on every platform. CI output reaches you
   in your next round. If you need CI evidence, commit and stop instead of asking the coordinator
   to push or run CI. CI is the merge gate. Commit your local proof in the `Proof list:` without
   waiting for CI results or timings.
+- Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
+- If close reports that the tests ran out of time, rerun the tests job or split the suite.
+  This timeout does not send the item to a worker. Node client tests get 30 minutes in CI.
 - Run tests in the foreground and wait for them to finish. Never end your turn while a command you
   started still runs in the background. Commit your work before your turn ends: the review reads
   only what is committed.
@@ -210,6 +227,10 @@ any fixes. CI runs the full suite.
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.
+When the pytest picker selects more than a third of the test files, bare `forge test` runs
+only the part's Tests column or the fix's touched test files, plus `always_test`, and says
+that CI runs the full suite. This includes shared-fixture changes. With no named tests it
+runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure
