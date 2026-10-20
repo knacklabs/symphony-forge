@@ -238,10 +238,15 @@ def decision_accept(args: argparse.Namespace) -> None:
     text = _text(top / rel)
     fields, body = _front(text)
     status = fields.get("status") or "proposed"
-    if status == "accepted":
+    prototype_tree = None
+    if Path(rel).stem.endswith("-prototype-design"):
+        from forge import design
+
+        prototype_tree = design.prototype_tree(top)
+    if status == "accepted" and (not prototype_tree or fields.get("design_tree") == prototype_tree):
         print(f"{rel} is already accepted.")
         return
-    if status != "proposed":
+    if status != "proposed" and not (prototype_tree and status == "accepted"):
         repo.refuse(REFUSALS["not_proposed"], rel=rel, status=status)
     sections = _sections(body)
     unfilled = [name for name in DECISION_SECTIONS
@@ -295,6 +300,8 @@ def decision_accept(args: argparse.Namespace) -> None:
                          "for sign-off. Record their reply in approved_via and approved_on, then "
                          f"{next_step}")
     changed = [rel]
+    if prototype_tree:
+        text = _set(text, design_tree=prototype_tree)
     old = fields.get("supersedes")
     if old:
         old_rel = _decision(top, old, f'forge decision accept {args.slug} --by "{by}"',

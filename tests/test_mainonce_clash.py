@@ -107,7 +107,7 @@ def _draft_clash(env, require_current):
     created = env.gh_calls("pr", "create")[-1]
     assert "--draft" in created
     _draft_pull_request(env, body(created), require_current)
-    resolved = env.close(item, "--resolve", "narrow", "--reason", "Repair the greeting before release")
+    resolved = env.close(item, "--resolve", "more", "--reason", "Repair the greeting before release")
     assert resolved.returncode == 0, resolved.stdout + resolved.stderr
     env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
     advanced = env.commit(env.repo.path, "NEWS.md", "New news from another change\n")

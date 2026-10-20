@@ -1,4 +1,4 @@
-"""Shipped output stays compatible while new owners need no collector edit."""
+"""Shipped output, including src/forge/story.py's renderer, needs no collector edit."""
 
 import json
 import shutil
@@ -30,6 +30,7 @@ SOURCES = {
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
     ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
+    ".forge/design/support.js": "src/forge/templates/design/support.js",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.

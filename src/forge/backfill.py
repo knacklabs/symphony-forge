@@ -1,6 +1,7 @@
 """Rebuild missing pull-request time stories from the item's own surviving evidence."""
 import json
 import re
+import shutil
 import subprocess
 import tomllib
 from datetime import timedelta
@@ -11,6 +12,51 @@ from forge import board_facts, repo, story, time_records
 
 UNREACHABLE = ("Couldn't reach GitHub, so older items' time stories weren't rebuilt; "
                "the next forge close on this machine tries again.")
+
+PAST_PEOPLE = """query PastPeople($owner: String!, $name: String!, $endCursor: String) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: 100, states: MERGED, after: $endCursor) {
+      pageInfo { hasNextPage endCursor }
+      nodes { number headRefName mergedAt body
+        author { login ... on User { name } }
+        mergedBy { login ... on User { name } }
+      }
+    }
+  }
+}"""
+
+
+def people(top: Path) -> list[dict[str, Any]]:
+    """Read only the upgrade's surviving identities, including during an outage."""
+    return board_facts._cached(top, "past-people", lambda _: None, stale=True) or []
+
+
+def _past(top: Path) -> list[dict[str, Any]]:
+    previous = {pr["headRefName"]: pr for pr in people(top)}
+
+    def fetch(_now: Any) -> list[dict[str, Any]]:
+        done = repo.run("gh", "api", "graphql", "--paginate", "-F", "owner={owner}",
+                        "-F", "name={repo}", "-f", "query=" + " ".join(PAST_PEOPLE.split()),
+                        "--jq", ".data.repository.pullRequests.nodes[]", cwd=top)
+        done.check_returncode()
+        for line in done.stdout.splitlines():
+            pr = json.loads(line)
+            branch = pr["headRefName"]
+            old = previous.get(branch, {})
+            # GitHub can omit a name it supplied before. Preserve that evidence.
+            for field in ("author", "mergedBy"):
+                actor = pr.get(field) or {}
+                before = old.get(field) or {}
+                if before.get("login") == actor.get("login") or not actor:
+                    actor = {**before, **{key: value for key, value in actor.items() if value}}
+                pr[field] = actor
+            previous[branch] = {**old, **pr}
+        return list(previous.values())
+
+    result = board_facts._cached(top, "past-people", fetch, seconds=0)
+    if result is None:
+        raise ValueError("The past pull requests could not be read")
+    return result
 
 
 def _json(top: Path, ref: str, path: str) -> dict[str, Any]:
@@ -166,11 +212,13 @@ def failed(top: Path) -> None:
 
 def run(top: Path) -> None:
     """A best-effort whole rebuild. Keep the retry until all reads and writes succeeded."""
-    from forge import close
+    from forge import board, close, known_issues
 
     pending = repo.forge_dir(top) / "backfill-pending"
     try:
         pending.touch()
+        if not shutil.which("gh"):
+            return  # Leave the retry in place, quietly, until GitHub is available.
         github = board_facts.prs(top, fresh=True)
         if github is None or not github["open_complete"] or not all(week["complete"] for week in github["weeks"]):
             raise ValueError("The pull requests could not all be read")
@@ -185,6 +233,15 @@ def run(top: Path) -> None:
                 continue
             key, state, record = rebuilt
             close._refresh_record(top, key, state, {**pr, "body": seed(pr.get("body") or "", record)})
+        known = []
+        for pr in _past(top):
+            if pr["headRefName"].startswith(("fix/", "task/", "story/")):
+                known.extend(known_issues._pull(top, pr))
+        board_facts._cached(top, "known-issues", lambda _: known, seconds=0)
+        fetched = repo.run("git", "fetch", "-q", "--tags", "origin", cwd=top)
+        fetched.check_returncode()
+        # The board already owns plan owners, kept problems and release membership.
+        board.machine_board(top)
         pending.unlink(missing_ok=True)
     except (repo.Refused, subprocess.CalledProcessError, OSError, ValueError, KeyError, TypeError) as error:
         if isinstance(error, repo.Refused) and error.entry is close.REFUSALS["publish"]:

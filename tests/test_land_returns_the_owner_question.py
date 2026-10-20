@@ -13,8 +13,8 @@ from test_land import GH, URL, _red_checks, land  # noqa: F401
 from test_tools_session_hold import Session
 
 
-@pytest.mark.parametrize("previous,harm", [(False, 1), (True, 3)])
-def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_path, previous, harm):
+@pytest.mark.parametrize("previous", [False, True])
+def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_path, previous):
     item, where = client_item(env, tmp_path, previous, part=True)
     if not previous:
         # Init's prototype merges automatically: reuse land's GitHub edge fake for that final step.
@@ -25,26 +25,24 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
         guide = " ".join((where / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "exits with status 3 (needs a choice)" in guide
         assert "Then run `forge land <item>` again." in guide
-    for number in (1, 2, 3):
+    for number in (1, 2):
         env.commit(where, "app.py", f"print({number})\n")
-        if number == 3:
-            env.commit(where, "README.md", "The owner requires a greeting on every page.\n")
-        # P1s become round-two follow-ups; Gain 5 keeps both low- and high-Harm stops open.
+        # P1s become round-two follow-ups; a normal-use P0 still stops for the owner.
         defect = finding("P0", f"Saving loses the greeting, case {number}")
-        defect["body"] = f"Gain 5, Work 2, Harm {harm}\nReturning readers lose their greeting."
+        defect["body"] = "Gain 5, Work 2, Harm 5\nReturning readers lose their greeting."
         env.reviews(blocked(defect))
         assert env.close(item).returncode == 1
     _red_checks(env)
-    # The old contract waited indefinitely, including when high harm prevented a default.
+    # The P0 stop returns the question without starting another round.
     stopped = env.repo.forge("land", item, timeout=40)
     assert stopped.returncode == 3, stopped.stdout + stopped.stderr
     output = stopped.stdout + stopped.stderr
-    assert "Accept, narrow or split?" in output
+    assert "One more round, split or accept?" in output
     assert "Returning readers lose their greeting" in output
     assert "AssertionError: no greeting in README" in output
     assert f"forge close {item} --resolve" in output
     assert f"then forge land {item}" in output
-    assert len(env.review_calls()) == 3
+    assert len(env.review_calls()) == 2
     env.gh.respond("pr", "checks", stdout="[]")
     env.gh.respond("pr", "view", "task/SHOP-T1", "--json", "url",
                    stdout='{"url": "https://github.com/acme/shop/pull/7"}')
@@ -52,7 +50,7 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
     assert resolved.returncode == 0, resolved.stdout + resolved.stderr
     resumed = env.repo.forge("land", item)
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr
-    assert len(env.review_calls()) == 3
+    assert len(env.review_calls()) == 2
 
 
 def test_2_round_handoffs_show_findings_and_check_logs(land, monkeypatch):

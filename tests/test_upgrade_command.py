@@ -130,6 +130,9 @@ class Upgrade:
 
 @pytest.fixture
 def unsynced_up(env, tmp_path, monkeypatch) -> Upgrade:
+    # Ordinary upgrade fixtures have no past merged pull requests. Historical
+    # fixtures replace gh with their paginated archive at the service edge.
+    env.gh.respond("api", "graphql", "--paginate", stdout="")
     conftest._install(env.repo.bin, "uv", UV.format(python=sys.executable, mark=MARK,
                                                     root=str(conftest.ROOT), idle_machine=conftest.IDLE_MACHINE))
     monkeypatch.setenv("PATH", f"{tmp_path / 'uvbin'}{os.pathsep}{os.environ['PATH']}")
@@ -344,7 +347,7 @@ def _close_refuses(up):
     assert "This fix's review found an open P0." in done.stderr
     assert "Ask the human" in done.stderr
     assert done.stderr.endswith(
-        f'Next: forge close {NAME} --resolve <narrow|split|accept> --reason "<human\'s choice>"\n')
+        f'Next: forge close {NAME} --resolve <more|split|accept> --reason "<human\'s choice>"\n')
     assert up.uv()[-1]["args"] == release_run(RELEASE, "close", NAME)
 
 

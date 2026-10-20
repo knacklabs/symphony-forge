@@ -1,21 +1,9 @@
 """Story docs: `story new` (and promotion from a fix), the cold read's rounds, `story done`, the
 doc's shape checks and the story-doc part of forge-pr-check.
 
-A story is `plans/<KEY>.md` on its own `story/<KEY>` branch and worktree. Each round of the cold
-read of a doc adds to its notes beside it (`plans/<KEY>.read.md`, `docs/specs/<slug>.read.md`), the
-same format RECORDS reads for `spec confirm`. The frontmatter is the latest round's:
-
-    ---
-    reader: <who read it>
-    read_at: <when>
-    read_hash: <git hash-object of the doc as read>
-    round, passed: <n>, and yes when that round has no blocking notes
-    doc_seen, spec_seen, notes_seen, answers_seen: <what its reader saw, kept by git hash-object -w>
-    ---
-    ## Round <n>
-
-    <n>. <finding, numbered after the earlier rounds'>
-       Disposition: cut | defer | keep <one-line reason>
+A story is `plans/<KEY>.md` on its own branch. Its cold-read notes beside it keep each
+round's reader, inputs, hashes, findings and dispositions. The approved text binds the
+named design folder's Git tree as well as the client-visible outcomes.
 
 A task is merged once its state file is on origin/<default>: its pull request carried it there.
 """
@@ -38,7 +26,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, native, repo, review, score, task, worker
+from forge import codex, design, machine, native, repo, review, score, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -98,6 +86,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 
     skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
     return {
+        ".forge/design/support.js": (TEMPLATES / "design/support.js").read_text(encoding="utf-8"),
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
         **{f"{host}/skills/forge/standards.md":
@@ -178,6 +167,7 @@ def read(args: Any) -> int:
     if choice or reason is not None:
         if not choice or not reason or not reason.strip() or blocked_rounds < 3:
             repo.refuse(REFUSALS["bad_choice"], target=target)
+        folder = design.check(top, _text(doc)) if choice == "accept" and is_story else None
         reason = " ".join(reason.split())
         record.update(loop_choice=choice, loop_reason=reason)
         if choice == "accept":
@@ -188,7 +178,8 @@ def read(args: Any) -> int:
                     findings = findings.replace(block, settled + f"\n   Disposition: keep - {reason}", 1)
             record["read_hash"] = _store(top, doc.read_bytes(), rel)
         _write(notes, _notes(record, findings))
-        repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes), top=top)
+        repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes),
+                          *([folder] if folder else []), top=top)
         print(f"Recorded the human's choice: {choice}. " + (
             "Next: forge next" if choice == "accept" else
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))
@@ -196,16 +187,18 @@ def read(args: Any) -> int:
     if blocked_rounds >= 3:
         repo.refuse(REFUSALS["read_loop"], target=target, question=read_question(_text(doc), old))
     later = bool(record.get("read_hash"))
+    if is_story:
+        parsed = _parsed(_text(doc), rel)
     doc_hash = repo.git("hash-object", "--", str(doc), cwd=top)
     if (later and is_story and doc_hash != record["read_hash"] and passed(record, findings)
             and not changed_since_read(record["read_hash"], doc_hash, _text(doc), top)):
         repo.refuse(REFUSALS["builders_only"], doc=rel)  # an edit that needs no new approval
     if is_story:
         text = _text(doc)
-        parsed = _parsed(text, rel)
         approval = (repo.read_state(target, top) or {}).get("approval") or {}
         if len(parsed["done"]) > 6 and approval.get("hash") != approval_hash(text):
             repo.refuse(REFUSALS["too_many_results"])
+        design.check(top, text)
     number = undisposed(findings) if later else ""
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
@@ -414,6 +407,9 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
               f"as it is, because {NAMES[recorded]} is no longer installed.")
     changed = [rel, _rel(top, notes)]
     if is_story:
+        folder = design.check(top, text.decode("utf-8"))
+        if folder:
+            changed.append(folder)
         state = repo.read_state(target, top) or {}
         if (state.get("approval") or {}).get("hash") != approval_hash(text.decode("utf-8")):
             state["status"] = "read"
@@ -669,9 +665,10 @@ def check_read(target: str, top: Path | None = None) -> None:
     Notes written before rounds count as round 1, which never passed."""
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
-    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
     if is_story:
         _parsed(_text(doc), rel)
+        design.check(top, _text(doc), required=False)
+    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
 
 
 def gate(target: str, rel: str, notes: str, doc_hash: str, text: str | None = None,

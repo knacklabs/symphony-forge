@@ -42,6 +42,11 @@ def test_1_dismissal_holds_until_its_cited_lines_change(env, case):
     assert again.returncode == 1, again.stdout + again.stderr
     assert "Saving skips the coupon" in again.stderr
 
+    # Reopening a P0 in review three also stops the loop. The owner permits its recheck.
+    assert "One more round, split or accept?" in again.stderr
+    chosen = env.close(item, "--resolve", "more", "--reason", "Recheck the changed coupon line")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+
     # Dismissed again with the same reason: it holds on later commits that leave the new line alone.
     redismissed = env.close(item, "--dismiss", "1", "--because", reason)
     assert redismissed.returncode == 0, redismissed.stdout + redismissed.stderr

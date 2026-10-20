@@ -102,17 +102,16 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         env.commit(where, "app.py", "print('upgraded client configuration')\n")
     for number in (1, 2, 3):
         env.commit(where, "app.py", f"print('round {number}')\n")
-        if number == 3:  # a frozen clock: the stuck stop below adds no owner wait
-            monkeypatch.setenv("FORGE_NOW", datetime.now(timezone.utc).isoformat())
-        worked = env.repo.forge("work", item)
-        if number == 3 and worked.returncode == 1:
-            # Two rounds left the same finding, so the worker is stuck; the owner keeps the tool for one
-            # more round at once.
-            assert "Two rounds in a row left the review finding" in worked.stderr, worked.stderr
-            chosen = env.close(item, "--resolve", "same", "--reason", "One more round")
+        if number == 3:
+            # The owner grants one further review after the P0 stop in round two.
+            # Give this earlier choice no elapsed wait; the later stop below owns the 30 seconds.
+            first_wait = next(event for event in reversed(records(env.repo, "events.jsonl"))
+                              if event["event"] == "owner wait start" and event.get("reason") == "review loop")
+            monkeypatch.setenv("FORGE_NOW", first_wait["at"])
+            chosen = env.close(item, "--resolve", "more", "--reason", "One more round")
             assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-            worked = env.repo.forge("work", item)
-        monkeypatch.delenv("FORGE_NOW", raising=False)
+            monkeypatch.delenv("FORGE_NOW")
+        worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         title = "Basket disappears" if number < 3 else "Basket loses quantities"
         # P1s now follow up after round two; P0s retain this blocked-history contract.
@@ -122,12 +121,12 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         else:
             closed = env.close(item)
             assert closed.returncode == 1, closed.stdout + closed.stderr
-    # app.py was introduced on this branch, so the separate any-file hold applies before round 4.
+    # The new P0 in the owner's extra round records another stop before review four.
     env.commit(where, "app.py", "print('attempt another review')\n")
     closed = env.close(item)
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert len(env.review_calls()) == 3
-    assert "narrow the part, split it, or accept" in closed.stderr
+    assert "One more round, split or accept?" in closed.stderr
     held = row(env.repo, item)
     assert set(held["time_breakdown"]) == CATEGORIES
     for category in ("building", "own_tests", "fixing_findings", "waiting_in_line", "waiting_for_owner"):

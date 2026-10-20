@@ -33,6 +33,6 @@ def test_1_dismissed_findings_keep_their_evidence_after_line_ending_changes(env,
     env.commit(where, "src/a.py", "raise RuntimeError('changed')\nprint('new work')\n")
     result = env.close(item)
     assert result.returncode == 1, result.stdout + result.stderr
-    assert "The review left serious findings open:" in result.stderr
+    assert "open P0" in result.stderr and "One more round, split or accept?" in result.stderr
     shown = body(env.gh_calls("pr", "edit")[-1])
     assert "Already proved safe (src/a.py:1): blocks the merge" in shown

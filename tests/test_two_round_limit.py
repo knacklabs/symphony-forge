@@ -4,16 +4,26 @@ Commands own the verdict and publication; only external tools supply fake replie
 Exercises src/forge/close.py, src/forge/review.py, src/forge/score.py and src/forge/board.py.
 """
 import json
+import re
+import shutil
 import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
 from test_story import DOC, READER, new_story
+from test_land import ITEM, _fix, _land, _red_checks, _steps, _workers, land  # noqa: F401
+from test_task import story
+from test_worker import calls, install_claude
 
 STORY = "FORGE-ROUNDS-1"
+
+LIVE_RUN = ("Before review round two, run the real flow once (not tests or stubs). "
+            "Add `Live run: <what you ran> - <what you saw>` to your `Functional check:` paragraph.")
 
 
 def client(env, adopted):
@@ -63,6 +73,8 @@ def test_1_a_review_ends_after_round_two_and_leftovers_become_known_issues(env, 
         # The new rule applies on its next close too.
         second = env.close(item)
         assert second.returncode == 1 and old["title"] in second.stderr, second.stdout + second.stderr
+        chosen = env.close(item, "--resolve", "more", "--reason", "Repair the remaining quantity loss")
+        assert chosen.returncode == 0, chosen.stdout + chosen.stderr
         if saved:
             # Earlier releases saved findings without scores. Keep the real
             # command's review commit and fingerprints so close must reuse it.
@@ -172,3 +184,150 @@ def test_5_rare_cases_and_declined_findings_do_not_block(env, adopted, case):
         prompt = env.prompt()
     assert "Review rules" in prompt and "recorded owner decision" in prompt
     assert "Decided:" in prompt and "Ruling:" in prompt
+
+
+@pytest.mark.parametrize("case", ["p0", "tests", "session"])
+def test_3_an_open_p0_after_round_two_asks_the_owner_and_land_starts_no_third_round(
+        land, monkeypatch, case):
+    if case == "tests":
+        # Run a real client test command. Its assertion checks the client's actual stdout;
+        # the worker's unrelated commit cannot repair the failed greeting by itself.
+        command = f'"{Path(sys.executable).as_posix()}" verify.py'
+        land.commit(land.repo.path, "verify.py", "import subprocess, sys\n"
+                    "actual = subprocess.run([sys.executable, 'app.py'], check=True, "
+                    "capture_output=True, text=True)\n"
+                    "assert actual.stdout == 'welcome\\n', 'client greeting missing'\n")
+        config = (land.repo.path / "forge.toml").read_text("utf-8")
+        land.commit(land.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+        land.repo.git("push", "-q", "origin", "main")
+    where = _fix(land, "working", worked=True)
+    if case == "p0":
+        land.reviews(blocked(note("P1", "Saving drops the greeting")), blocked({
+            **finding("P0", "Saving deletes the basket", "work-1.txt"),
+            "body": "Gain 5, Work 2, Harm 5\nCase: normal use - Saving a basket deletes its contents."}), CLEAN)
+        stopped = _land(land)
+        assert stopped.returncode == 3, stopped.stdout + stopped.stderr
+        assert "Saving deletes the basket" in stopped.stderr
+        assert "Forge stop" in stopped.stderr
+        assert "One more round, split or accept?" in stopped.stderr
+        assert [line.split(":")[0] for line in stopped.stderr.splitlines()
+                if line.startswith("- ")] == ["- One more round", "- Split", "- Accept"]
+        step = f'forge close {ITEM} --resolve <more|split|accept> --reason "<human\'s choice>"'
+        assert step in stopped.stderr
+        assert len(land.review_calls()) == 2 and len(_workers(land)) == 1
+        shown = land.repo.forge("next")
+        assert "One more round, split or accept?" in shown.stdout and step in shown.stdout
+        monkeypatch.setenv("FORGE_NOW", (datetime.now(timezone.utc) + timedelta(minutes=31)).isoformat())
+        waiting = land.close(ITEM)
+        assert waiting.returncode == 1 and "One more round, split or accept?" in waiting.stderr
+        assert len(land.review_calls()) == 2
+        assert land.repo.git("branch", "--list", "fix/*", "--format=%(refname:short)") == "fix/tidy-readme"
+        chosen = land.close(ITEM, "--resolve", "more", "--reason", "Repair the basket deletion")
+        assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+        assert f"Next: forge work {ITEM}" in chosen.stdout
+        land.commit(where, "work-1.txt", "Basket contents are retained\n", "Repair basket deletion")
+        ready = _land(land)
+        assert ready.returncode == 0 and f"Ready: {ITEM}" in ready.stdout, ready.stdout + ready.stderr
+        assert len(land.review_calls()) == 3 and len(_workers(land)) == 1
+        return
+
+    # The old three-repair contract becomes one repair for local tests and session CI checks.
+    from test_close import run
+    land.reviews(CLEAN)
+    if case == "session":
+        land.checks([run("tests", "failure"), run("forge-pr-check")])
+        _red_checks(land)
+    what = "the failing tests" if case == "tests" else "the failing checks"
+    expected = f"Stopped after one fix round: {ITEM} still has {what}."
+    if case == "tests":
+        stopped = _land(land)
+        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+        assert _steps(stopped) == [f"Closing {ITEM}.",
+                                  f"Fix round 1 of 1: the worker fixes {what}.",
+                                  f"Closing {ITEM}.", expected]
+        assert "client greeting missing" in stopped.stdout + stopped.stderr
+        assert "client greeting missing" in _workers(land)[0]["brief"]
+        assert len(_workers(land)) == 1 and len(land.review_calls()) == 2
+        return
+
+    from test_tools_session_hold import Session
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.setenv("CLAUDECODE", "1")
+    host = Session(land.repo, land.tmp / "host", "claude-session")
+    try:
+        first = host.forge("land", ITEM)
+        assert first.returncode == 0, first.stdout + first.stderr
+        assert _steps(first) == [f"Closing {ITEM}.",
+                                 "Fix round 1 of 1: the worker fixes the failing checks."]
+        land.commit(where, "round-1.txt", "Repaired tests\n", "Worker round")
+        number = re.search(r"--round (\d+)", first.stdout)[1]
+        handed = host.forge("handback", ITEM, "--round", number, "--subagent", "w1", input="Fixed.")
+        assert handed.returncode == 0, handed.stdout + handed.stderr
+        stopped = host.forge("land", ITEM)
+        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+        assert _steps(stopped) == [f"Closing {ITEM}.", expected]
+        assert len(land.review_calls()) == 2 and not _workers(land)
+    finally:
+        host.close()
+
+
+@pytest.mark.parametrize("case", ["task", "ui", "continued-ui", "backend"])
+def test_6_a_user_facing_change_asks_for_one_live_run_and_refuses_nothing_without_it(
+        env, case):
+    client(env, adopted=case != "task")
+    log = install_claude(env.repo)
+    if case == "task":
+        story(env.repo)
+        started = env.repo.forge("task", "start", "BOARD/PAGE")
+        item, branch = "BOARD/PAGE", "task/BOARD-PAGE"
+    else:
+        kind = "backend" if case == "backend" else "ui"
+        started = env.repo.forge("fix", "start", "Show the saved basket", "--done",
+                                 "A returning shopper sees their saved basket", "--kind", kind)
+        item, branch = "show-the-saved-basket", "fix/show-the-saved-basket"
+    assert started.returncode == 0, started.stdout + started.stderr
+    listed = env.repo.git("worktree", "list", "--porcelain")
+    where = Path(re.search(rf"^worktree (.+)\n[^\n]*\nbranch refs/heads/{branch}$", listed, re.M)[1])
+    if case == "continued-ui":
+        # The first real worker receives the saved pre-upgrade full brief. Keep its actual
+        # conversation record so the current command must supply the new request on resume.
+        earlier = env.tmp / "earlier-forge-src"
+        patient(lambda: shutil.copytree(ROOT / "src/forge", earlier / "forge", dirs_exist_ok=True,
+                                        ignore=shutil.ignore_patterns("__pycache__")))
+        patient(lambda: shutil.copy(ROOT / "tests/fixtures/worker-brief-before-delegation.md",
+                                    earlier / "forge/templates/brief.md"))
+        launcher = env.repo.bin / "forge"
+        current = launcher.read_text("utf-8")
+        try:
+            patient(lambda: launcher.write_text(FORGE_SHIM.format(
+                python=Path(sys.executable).as_posix(), src=earlier.as_posix()), "utf-8"))
+            worked = env.repo.forge("work", item)
+        finally:
+            patient(lambda: launcher.write_text(current, "utf-8"))
+    else:
+        worked = env.repo.forge("work", item)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    brief = " ".join(calls(log)[-1]["brief"].split())
+    if case == "backend":
+        assert "Live run:" not in brief
+        return
+    if case == "continued-ui":
+        assert "Live run:" not in brief
+    else:
+        assert LIVE_RUN in brief
+    if case in ("task", "continued-ui"):
+        # Both task and UI-fix continuations must carry the request in their shorter brief.
+        worked = env.repo.forge("work", item)
+        assert worked.returncode == 0, worked.stdout + worked.stderr
+        resumed = calls(log)[-1]
+        brief = " ".join(resumed["brief"].split())
+        assert "The earlier brief in this conversation still applies." in brief
+        assert resumed["options"].get("resume")
+    assert LIVE_RUN in brief
+    if case == "ui":
+        env.commit(where, "app.py", "print('saved basket')\n",
+                   "Show the saved basket\n\nFunctional check: Opened the basket and saw its saved contents.")
+        assert "Live run:" not in env.repo.git("log", "-1", "--format=%B", cwd=where)
+        closed = env.close(item)
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        assert len(env.review_calls()) == 1

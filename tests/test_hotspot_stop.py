@@ -39,11 +39,11 @@ def _other_blocked_reviews_keep_the_existing_refusal(env, paths, on_default):
     item, where = env.start_task()
     if not on_default:
         env.commit(where, paths[0], "pass\n")
-    # One finding that keeps coming back: three distinct ones in one file would stop by area.
+    # A repeated P0 now stops after two rounds on both existing and branch-only paths.
     result = rounds(env, item, where, paths, "Same defect" if len(set(paths)) == 1 else "")
-    assert "The review left serious findings open:" in result.stderr
-    assert saved(where, item)["status"] == "fixing"
-    assert "stop" not in saved(where, item)
+    assert "One more round, split or accept?" in result.stderr
+    assert saved(where, item)["status"] == "hotspot"
+    assert "stop" in saved(where, item)
 
 
 def _carried_dismissal_cannot_stop_the_third_review(env):
@@ -66,8 +66,8 @@ def _carried_dismissal_cannot_stop_the_third_review(env):
 @pytest.mark.parametrize("case,details", [
     *[(_other_blocked_reviews_keep_the_existing_refusal, details) for details in (
         (["src/a.py", "src/a.py"], True),
-        (["src/branch.py"] * 3, False),
-        (["src/$cache.py"] * 3, True))],
+        (["src/branch.py"] * 2, False),
+        (["src/$cache.py"] * 2, True))],
     (_carried_dismissal_cannot_stop_the_third_review, ()),
 ])
 def test_5_other_reviews_keep_the_existing_refusal(env, case, details):

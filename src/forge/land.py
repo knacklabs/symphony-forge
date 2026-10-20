@@ -18,7 +18,6 @@ from pathlib import Path
 
 from forge import board, checks, close, codex, machine, merge, nextstep, repo, review, score, spotted, story, task, worker
 
-ROUNDS = 3
 NEEDS_CHOICE = 3
 REFUSALS = {
     "rerun": ("GitHub has not started the re-run of {check}.", "forge land {item}"),
@@ -60,7 +59,7 @@ def land(args: argparse.Namespace) -> int:
     review_retry = False
     try:
         close.check_stop(item, state, top)
-        # A session round carries its count until ready or a recorded choice, including a default.
+        # A session round carries its count until ready or a recorded choice.
         saved = state.get("land") or {}
         rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0")) or (
             saved.get("rounds", 0) if state.get("status") != "ready" and saved.get("stop") == state.get("stop")
@@ -120,23 +119,12 @@ def land(args: argparse.Namespace) -> int:
                 if queued:  # forge land <item> runs this change's fix rounds
                     raise repo.Refused(str(error).split("\nNext: ")[0], f"forge land {item}",
                                        error.code, error.entry) from None
-                if rounds == ROUNDS:
+                if rounds >= 1:
                     rounds += 1  # this stop says why itself, so no stop line
-                    say(f"Stopped after {ROUNDS} fix rounds: {item} still has {what}.")
-                    if error.entry is close.REFUSALS["blocked"]:
-                        # Recorded as a review-loop stop, so forge next repeats the question and
-                        # forge close --resolve records the human's choice.
-                        state = repo.read_state(item, top) or {}
-                        serious = review.blocking(state.get("review") or {})
-                        state.update(stop={"file": serious[0][1]["file"], "round": rounds},
-                                     status="hotspot")
-                        state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start",
-                                                                     reason="review loop")
-                        close._save(top, item, state, f"{item} stopped after {ROUNDS} fix rounds")
-                        close.check_stop(item, state, top)  # its question, then close --resolve
+                    say(f"Stopped after one fix round: {item} still has {what}.")
                     raise
                 rounds += 1
-                say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")
+                say(f"Fix round {rounds} of 1: the worker fixes {what}.")
                 step.land_rounds = rounds
                 if _handed_out(step, top):
                     return 0
@@ -163,7 +151,7 @@ def land(args: argparse.Namespace) -> int:
                 conflict_retry = True
     except repo.Refused as error:
         _problems(top, item)
-        if rounds <= ROUNDS:
+        if rounds <= 1:
             say(f"Stopped: {item} needs you.")
         if error.entry in (close.REFUSALS["hotspot"], close.REFUSALS["fix_p0"]):
             problem, _, next_step = str(error).partition("\nNext: ")
@@ -314,7 +302,7 @@ def _queue(top: Path) -> int:
             continue
         age = (int(repo.git("log", "-1", "--diff-filter=A", "--format=%ct", "--",
                             repo.state_path(item), cwd=tree) or 0), item)
-        if state.get("stop"):  # close decides: the owner's choice, its 30-minute default, or a stop
+        if state.get("stop"):  # close decides whether the owner recorded a choice
             try:
                 close.check_stop(item, state, tree)
             except repo.Refused as error:
@@ -471,7 +459,7 @@ COMMANDS = [{
              (("--all",), {"action": "store_true",
                            "help": "close and merge every change in close, oldest first"})],
     "position": 165,
-    "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs fix rounds and merges a "
+    "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs at most one fix round and merges a "
                "task or fix where the repo allows agent merges; `--all` closes and merges every change "
                "in close, oldest first, several at a time; `--note \"<text>\"` guides one item's "
                "first round; run it in the background |",

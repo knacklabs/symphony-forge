@@ -202,7 +202,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     assert Path(dispatch["cwd"]) == where
 
 
-def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin(
+def test_2_land_keeps_its_one_fix_round_limit_after_the_worker_changes_the_pin(
         land, monkeypatch):
     env = land
     current = env.repo.forge("--version").stdout.split()[-1]
@@ -212,7 +212,7 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
     # Persistent CI failures still need repair rounds. P1s no longer block a fix, and P0s
-    # stop for the owner; clean reviews leave land's own three-round budget in charge.
+    # stop for the owner; clean reviews leave land's own one-round budget in charge.
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
     upgraded = original.replace('version = "v1.2.2"',
@@ -222,9 +222,9 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     done = env.repo.forge("land", ITEM, cwd=where)
     assert done.returncode == 1, done.stdout + done.stderr
-    assert len(_workers(env)) == 3, done.stdout + done.stderr
+    assert len(_workers(env)) == 1, done.stdout + done.stderr
     assert all("no greeting in README" in worker["brief"] for worker in _workers(env))
-    assert f"Stopped after 3 fix rounds: {ITEM} still has the failing checks." in done.stdout
+    assert f"Stopped after one fix round: {ITEM} still has the failing checks." in done.stdout
     notice = (f"Forge pin changed from v1.2.2 to {current}; "
               f"continuing forge land with {current}.")
     assert (done.stdout + done.stderr).splitlines().count(notice) == 1

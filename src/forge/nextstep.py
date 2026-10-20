@@ -860,18 +860,6 @@ def at_ref(top: Path, item: str, state: dict[str, Any], pr: dict[str, Any] | Non
     return {**there, "branch": branch} if there else state
 
 
-def default_due(top: Path, state: dict[str, Any]) -> bool:
-    """An unanswered review loop stop older than 30 minutes, in a repo whose stop_default is on."""
-    stop = state.get("stop") or {}
-    if (not stop or stop.get("choice") or stop.get("review_limit") or "question" in stop or repo.config(top)["stop_default"] == "off"
-            or any(f.get("harm", 1) > 2 for f in score.open_findings(state.get("review") or {}))):
-        return False
-    # Stops from earlier releases have no time of their own; their owner wait event has one.
-    since = time_records.when(stop.get("at") or next(
-        (e.get("at") for e in time_records.read(top, "events") if e.get("id") == stop.get("wait_id")), None))
-    return bool(since) and time_records.when(repo.now()) - since >= timedelta(minutes=30)
-
-
 def wait_records(top: Path, item: str, body: str = "") -> list[dict[str, Any]]:
     """The item's waits on a person, oldest first, from this machine's log and its pull request's
     record together, each marked `open` while nothing has ended it. Earlier workers answered
@@ -962,22 +950,15 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     status = status or "started"
     if statuses is not None:
         statuses[item] = "hotspot" if state.get("stop") and not state["stop"].get("choice") else status
-    advice = (review.loop_advice(path or top, item, review_ref(top, state["branch"], pr) or "HEAD")
-              if review.blocking(state.get("review") or {}) and status not in ("merged", "done", "ready") else [])
     if state.get("stop") and not state["stop"].get("choice"):
         stop = state["stop"]
         if "question" in stop:
             return [f"Forge stopped {label}. Ask the human:", stop["question"],
                     "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
-        if default_due(path or top, state):
-            return [f"Nobody answered the review loop stop on {label} in 30 minutes, so close "
-                    "records the repo's default choice: narrow.", f"Next: forge close {item}"]
-        reason = "its review found an open P0" if stop.get("review_limit") else f"{stop['file']} keeps breaking"
-        return advice[:-1] + [f"Close stopped {label}: {reason}.",
+        reason = "its review found an open P0" if stop.get("review_limit") else f"a P0 is still open in {stop['file']}"
+        return [f"Close stopped {label}: {reason}.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
-    if advice:
-        return [f"Close stopped on {label}:", *advice]
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
         starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
         return [f"{label} was started by {starter} and runs on their machine."]

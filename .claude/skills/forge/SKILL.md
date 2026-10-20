@@ -83,7 +83,7 @@ never leave it only in chat. Grill new directions one question at a time, with y
 recommendation first. Save the answer before moving to the next question.
 
 - Put a choice about an item in its plan's Notes or the recorded choice:
-  `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+  `forge close <item> --resolve <more|split|accept> --reason "<human's choice>"`.
 - Save a standing rule or direction with `forge decision new <slug>`. Batch decision
   docs into the next fix; do not open one pull request per decision.
   For a large decision, run `forge read <decision-slug>` before acceptance. Amend the decision
@@ -361,8 +361,8 @@ loop or stuck-worker choice), `worker question`, `conflict` (a merge conflict cl
 problem `forge next` reports in `detail`. Close and `forge work` publish
 these waits to the pull request, so every machine lists the same ones; answer a worker question
 with `forge work <item> --note` on any machine. `team.blocked` lists started parts and fixes
-idle 24 hours or more (`stalled`), reviews blocked three or more rounds in a row (`looping`) and
-the unfinished part the most unfinished parts wait on (`blocks the most`), longest first, each
+idle 24 hours or more (`stalled`) and the unfinished part the most unfinished parts wait on
+(`blocks the most`), longest first, each
 with `detail` and `seconds`. `team.sentence` counts both. Ask the human about each Needs you
 item as `forge next` words it.
 Active parts and fixes show recorded
@@ -1517,7 +1517,7 @@ changes, a failed parent run or missing proof produce `false`, so the workflow r
 For pull requests, the parent must also include the current base and its run must cover that base.
 Each job that uses the step skips only its guarded steps.
 
-When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
+When `forge land` stops after its one fix round or on a check it cannot fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is
 re-run once per pushed head instead of costing a fix round. When GitHub has not started that
@@ -1561,7 +1561,7 @@ the run starts that change again once and says so. It runs no fix rounds: a chan
 alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
 its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
-answers. Close's stop rule decides each stopped change, its 30-minute default included. A failed
+answers. Close waits for the owner's recorded choice. A failed
 check whose log names none of the change's files runs again once when the tests passed here; a
 second failure stops that change. Where a human merges, the run closes every change, holds none
 and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
@@ -1643,30 +1643,26 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-From the second blocked cold-read or review round on the same item, stop sending rounds and ask
+From the second blocked cold-read round on the same item, stop sending rounds and ask
 the owner to settle the missing rule, even when each round finds a new problem. Use the round
-table from `forge next` or close: list the findings, name the pattern, and ask the owner one
+table from `forge next`: list the findings, name the pattern, and ask the owner one
 question at a time with options and a recommendation until the missing rule is settled.
 Write that rule into the plan's builder details, then send one focused round. This owner question
 applies at every score. The coordinator asks. The owner decides. The coordinator records the choice.
-For a review's second-round question, commit the answer in the item's plan or builder guidance
-(`plans/`, `docs/`, or `README.md`) on its work branch. `forge next` then shows the work step again.
-Code-only changes and cold-read notes do not record an answer. A hard stop still needs its resolve choice.
-Keep the existing three-round hard stops below; record a resolve choice
-only after a command stops the loop.
+Record a resolve choice only after a command stops the loop.
 
-Close holds the fourth review after three blocked rounds only when a finding at the bar comes
-back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the
-third round.
-When close stops an item on either review-loop hold, run no more `forge work` on that item.
-Ask the owner to narrow the part, split it, or accept the remaining findings.
+Close runs at most two review rounds. After round two, open findings other than P0 become
+follow-ups in Known issues. An open P0 stops the item and asks the owner:
+"One more round, split or accept?" Forge waits for the recorded choice and never starts a third
+review by itself. An older release's unanswered stop also waits for the owner.
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice). It does not wait or send the worker back while the stop is unanswered.
 Record the choice with
-`forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+`forge close <item> --resolve <more|split|accept> --reason "<human's choice>"`.
 Then run `forge land <item>` again. Land also prints open findings and failing checks when it
 stops for another reason or hands a round to a session subagent.
-Narrow or split the part as agreed before building again. Split creates one follow-up fix with
+More gives the worker one more round. After that review, close asks again only if a P0 remains.
+Split creates one follow-up fix with
 every open finding's title and file:line in its why and Done-when. Close records the fix on the
 item, prints its name, and lets this item continue without those findings.
 Accept dismisses every remaining finding
@@ -1675,25 +1671,19 @@ the default branch changed since that review. Close still requires green checks;
 needs another review.
 A stop that asks the owner needs a recorded choice with `forge close --resolve`.
 A merge of the default branch or a clean review does not clear it. Close repeats the question.
-When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
-choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
-with that finding as its why. It does this only when every open finding has Harm 1 or 2; with
-Harm 3 or more open, it needs the owner's choice. A later close or land can record an overdue
-default; the worker's next round narrows the part.
-The owner can reverse it later with the same `forge close <item> --resolve` command. To always
-wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
-A recorded choice restarts the three-round count; a later stop needs a new choice.
+Land runs at most one fix round, including across session handbacks. If findings, tests or checks
+still need a worker, land stops.
 
-Close also stops at the third finding in one area (a Python function, else the file); its question
-proposes a structural move. The recorded choice settles the area: later findings there hold work
-only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
+For a user-facing change, before review round two, run the real flow once, without tests or stubs.
+Add `Live run: <what you ran> - <what you saw>` to the commit's `Functional check:` paragraph.
+Close copies that paragraph into the pull request and review. This request adds no check or refusal.
 
 The stop rule: the coordinator lists each round's findings and asks the owner, whatever the scores.
 The coordinator asks. The owner decides. The coordinator records the choice.
 When a cold read or review loop stops and you must ask, ask the human the question it printed, in
 its words, one item per question. It names the item and what it delivers, shows the open notes as one table ranked
 by score (number, the problem and who it hits, Gain, Work, Harm, and what is proposed), and says
-what accept, narrow and split each do; `forge next` prints it again for a stopped item. When a note
+what each choice does; `forge next` prints it again for a stopped item. When a note
 has no scores, as one saved before scores, the question lists the notes as plain lines instead.
 
 Every update to the owner that lists notes or findings uses the same table, in the same order.
@@ -1701,7 +1691,7 @@ The coordinator follows the bar's outcome and never re-scores a note: a fix roun
 bar, a disposition with the scores in its reason for one below it, and the stop rule above at a
 stop. Approval and merge steps stay the owner's.
 
-When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
+When two rounds in a row leave close's tests failing, `forge work` stops
 the item; close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
 choices. Ask the owner exactly that question. Record the choice with

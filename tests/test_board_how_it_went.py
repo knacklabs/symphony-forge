@@ -3,6 +3,7 @@
 Audit: existing time tests keep one machine's logs. These command tests protect
 cross-machine reconciliation, overlapping story time and human-readable rounding.
 Only GitHub and review reports are faked; no Forge helper is imported.
+New plan reads use src/forge/story.py before the approval and time history starts.
 """
 import json
 import re
@@ -129,11 +130,14 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     where = next(Path(block.splitlines()[0].removeprefix("worktree "))
                  for block in listing.split("\n\n") if f"branch refs/heads/fix/{item}" in block)
     env.commit(where, "app.py", "print('basket')\n")
-    # Fixes stop for an owner choice on P0s; keep data loss for this blocked history.
+    # P1s become follow-ups in round two; use data loss to retain this blocked history.
     env.reviews(blocked(finding("P0", "Basket disappears")))
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
+    published(env, item)
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
     machine_a = env.repo.path
     remote = env.repo.git("remote", "get-url", "origin")
@@ -143,15 +147,14 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     resumed = env.tmp / "resumed-basket"
     env.repo.git("worktree", "add", "-q", "-b", f"fix/{item}", str(resumed), f"origin/fix/{item}")
     assert not (machine_b / ".git/forge/events.jsonl").exists()
-    chosen = env.close(item, "--resolve", "narrow", "--reason", "Keep the basket repair in this fix")
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     env.commit(resumed, "app.py", "print('keep basket')\n")
     env.checks(GREEN)
     second = env.close(item)
     assert second.returncode == 1, second.stdout + second.stderr
     published(env, item)
-    chosen = env.close(item, "--resolve", "narrow", "--reason", "Finish the same basket repair")
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    published(env, item)
     env.commit(resumed, "app.py", "print('basket stays')\n")
     env.reviews(CLEAN)
     third = env.close(item)
@@ -379,8 +382,6 @@ def warm_checks_cache(env, monkeypatch):
     assert row(env.repo, item)["gates"]["review"]["status"] == "blocked"
     calls = len(env.gh_calls("api", "graphql"))
     env.repo.path = machine
-    chosen = env.close(item, "--resolve", "narrow", "--reason", "Repair basket retention in this fix")
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     env.commit(where, "app.py", "print('basket retained')\n")
     env.reviews(CLEAN)
     closed = env.close(item)
@@ -546,10 +547,12 @@ def conflict_wait(env, monkeypatch):
     # A later conflict keeps the pull request's earlier findings instead of a made-up result.
     env.commit(where, "app.py", "print('branch basket again')\n")
     env.reviews(blocked(finding("P0", "Basket disappears")))
-    assert env.close(item).returncode == 1
+    stopped = env.close(item)
+    assert stopped.returncode == 1 and "One more round, split or accept?" in stopped.stderr
     published(env, item)
-    chosen = env.close(item, "--resolve", "narrow", "--reason", "Keep the basket repair in this fix")
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    published(env, item)
     env.commit(env.repo.path, "app.py", "print('newer main basket')\n")
     env.repo.git("push", "-q", "origin", "main")
     conflicted = env.close(item)
