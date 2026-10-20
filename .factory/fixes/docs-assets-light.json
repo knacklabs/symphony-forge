@@ -4,12 +4,20 @@
   "done_when": "A change that touches only docs and asset files gets the light review and its pull request skips the test jobs, on a new repo and on an earlier-adopted repo; a docs or asset file that a test reads, or a linguist-generated file, does not count as docs-only; the coordinator guide says so",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-20T05:43:56.114060+00:00",
       "step": "start"
     }
   ],
-  "why": "Docs and brand-asset fixes still wait for the full review and every CI test job (issue 975)"
+  "stuck": {
+    "close": null,
+    "head": "2e967a558ce64c9c831c92f72c236094a624507c",
+    "keys": {},
+    "round": null
+  },
+  "why": "Docs and brand-asset fixes still wait for the full review and every CI test job (issue 975)",
+  "worker": "codex"
 }
