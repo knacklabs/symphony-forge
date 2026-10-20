@@ -28,7 +28,7 @@
       "gain": 4,
       "harm": 3,
       "line": 227,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,7 +41,7 @@
       "gain": 4,
       "harm": 3,
       "line": 243,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,7 +54,7 @@
       "gain": 3,
       "harm": 3,
       "line": 214,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -64,50 +64,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c8a1fdf244b6e0ed2898a094f7bdee875c9ca15761fb827644ab4496ee2f9640",
-    "changed": "31ffb3f1de90dc2eb2fab5e13d9879f283f0613cf1f98090ec87db9c2100acfc",
-    "commit": "d88d83d867929639dbbf68e030c25aeb41ba5896",
+    "branch_diff": "ff72123ec54f80d321b8ffd891a6fcb04efd0b297a78f779cfba1bda52e49cee",
+    "changed": "31b5e6767ca006b5e3c9f2e4838560654eb69721e173221d6d3dddb3ab309680",
+    "commit": "9e351b29141cf877e48c905455437037c1f7f277",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. When `forge work --note` answers a worker question and the default merge conflicts, this brief drops both `note` and `question`. The command already marks the question answered at worker.py:147\u2013149, and successful handback clears it at native.py:274\u2013276. The next normal round receives neither the answer nor its coordinator-note commit, because its change summary starts from the completed resolution round's HEAD. Automatically generated stop-choice guidance at worker.py:199\u2013209 is similarly consumed when the round counter advances. Preserve these deferred instructions and deliver them in the next normal build brief.",
-        "file": "src/forge/worker.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 227,
-        "priority": "P1",
-        "title": "Preserve coordinator answers through resolve-only rounds",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. If a fresh or replacement worker session starts with a conflict, its only initial brief is the resolve-only prompt. After resolution, the session remains resumable, so this call selects the continued brief. `_brief` at worker.py:552\u2013577 says the earlier brief still applies and omits the Done-when requirements and standards; for fixes it also omits the full task description. Consequently, the worker resumes building without ever receiving its build contract. Track whether the session has received a normal brief and send the full brief on its first normal round after resolution.",
-        "file": "src/forge/worker.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 243,
-        "priority": "P1",
-        "title": "Send the full build brief after a fresh resolve-only session",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. The refresh runs after `config`, worker family, routing, readiness and model selection have already been computed at worker.py:99\u2013141. When another settings fix changes workers or models on the default branch, the merge updates `forge.toml`, but native handouts and Claude SDK rounds still use the old selections. Native handouts explicitly override the updated role model with that stale selection at native.py:149. A removed worker can also fail readiness before the refresh is reached. Refresh before worker selection, or recompute configuration, routing and readiness after the merge.",
-        "file": "src/forge/worker.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 214,
-        "priority": "P1",
-        "title": "Select the worker using the settings brought in by the merge",
-        "work": 2
-      }
-    ],
-    "id": "db94d1a5-ded5-4caa-a3b4-5378e3d8dd07",
-    "status": "blocked"
+    "findings": [],
+    "id": "081fc685-3864-4907-8864-127f6c0400cd",
+    "status": "clean"
   },
   "round": 2,
   "settled_areas": [
     "_work() in src/forge/worker.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T19:54:33.365473+00:00",
@@ -115,6 +84,10 @@
     },
     {
       "at": "2026-10-19T20:22:18.279872+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T04:18:24.505953+00:00",
       "step": "review"
     }
   ],
