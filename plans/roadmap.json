@@ -312,6 +312,18 @@
       "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
       "status": "pending",
       "order": 87
+    },
+    {
+      "key": "FORGE-INTAKE-1",
+      "title": "Forge sorts every new idea into a fix, a plan, discovery or the idea list",
+      "status": "pending",
+      "order": 88
+    },
+    {
+      "key": "FORGE-ROUNDS-1",
+      "title": "Reads and reviews end after two rounds",
+      "status": "pending",
+      "order": 88
     }
   ],
   "epics": [

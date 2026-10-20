@@ -62,14 +62,15 @@ def _pull(top: Path, pr: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def collect(top: Path, states: dict[str, dict[str, Any]], landed: str) -> list[dict[str, Any]]:
-    """Default-branch lists win, including empty lists. Older items use their PR heads. A problem in
-    a file the default branch (`landed`) no longer has is left out; one with no file stays.
+def collect(top: Path, copies: dict[str, tuple[dict[str, Any], Path | str]], landed: str) -> list[dict[str, Any]]:
+    """The board selects default-branch lists first, including empty lists. Each saved list uses
+    its own branch or worktree's files; older merged items use the default branch's files.
+    A problem in a file that no longer exists is left out; one with no file stays.
 
     The paginated GitHub listing has no time cutoff: the board's six-week runway
     must not discard findings kept earlier in the repo's life.
     """
-    saved = {item: state["known"] for item, state in states.items() if "known" in state}
+    saved = {item: state["known"] for item, (state, _) in copies.items() if "known" in state}
 
     def historical(_now: Any) -> list[dict[str, Any]] | None:
         # A query-string ampersand becomes a command separator through gh.cmd on Windows.
@@ -87,7 +88,7 @@ def collect(top: Path, states: dict[str, dict[str, Any]], landed: str) -> list[d
             if not isinstance(pr, dict) or not str(pr.get("headRefName") or "").startswith(("fix/", "task/", "story/")):
                 continue
             # No fetch is needed for items whose current landed list is available.
-            if any(state.get("branch") == pr["headRefName"] for item, state in states.items() if item in saved):
+            if any(state.get("branch") == pr["headRefName"] for item, (state, _) in copies.items() if item in saved):
                 continue
             try:
                 rows.extend(_pull(top, pr))
@@ -98,6 +99,10 @@ def collect(top: Path, states: dict[str, dict[str, Any]], landed: str) -> list[d
     older = board_facts._cached(top, "known-issues", historical, stale=True, seconds=86400) or []
     rows = [row for row in older if row["item"] not in saved]
     rows.extend(row for item, known in saved.items() for row in _rows(item, known))
-    present = set(repo.git("ls-tree", "-r", "-z", "--name-only", landed, cwd=top).split("\0"))
-    rows = [row for row in rows if not row["file"] or row["file"] in present]
+    sources = {item: where for item, (_, where) in copies.items() if item in saved}
+    present = {source: set(repo.git("ls-tree", "-r", "-z", "--name-only",
+                                   "HEAD" if isinstance(source, Path) else source,
+                                   cwd=source if isinstance(source, Path) else top).split("\0"))
+               for source in {landed, *sources.values()}}
+    rows = [row for row in rows if not row["file"] or row["file"] in present[sources.get(row["item"], landed)]]
     return sorted(rows, key=lambda row: (row["item"], row["file"], row["line"], row["title"]))

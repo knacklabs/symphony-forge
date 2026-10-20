@@ -134,8 +134,13 @@ jobs:
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
       - run: >-
-          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '-m platform --reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
+          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '-p no:faulthandler --max-worker-restart=0 -m platform --reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
         if: steps.parent-tests.outputs.reuse != 'true'
+        timeout-minutes: ${{ matrix.os == 'windows-latest' && 30 || 20 }}
+        env:
+          # Disable pytest's per-test native timer above, so it cannot replace this
+          # session-wide watchdog. It also covers collection and controller cleanup.
+          PYTEST_SESSION_DEADLINE: ${{ matrix.os == 'windows-latest' && '1680' || '' }}
       # Each artifact contains only this group's measurements, ready to combine into
       # .test_durations_windows for the next dispatched run. The first run uses the Linux seed.
       - uses: actions/upload-artifact@v4

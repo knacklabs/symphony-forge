@@ -235,7 +235,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
     `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
     `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
-    from forge import known_issues, nextstep, time_records
+    from forge import known_issues, nextstep, releases, time_records
 
     trees = story.worktrees(top)
     history = history if history is not None else _machine_history(top)
@@ -302,8 +302,12 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     timings = time_records.read(top, "timings")
 
     refs = [line.split("\0") for line in repo.git(
-        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)%00%(objectname)",
-        "refs/heads", "refs/remotes/origin", cwd=top).splitlines()]
+        "for-each-ref", "--format=%(refname:short)%00%(committerdate:iso-strict)%00%(objectname)"
+        "%00%(objecttype)%00%(taggerdate:iso-strict)%00%(refname)",
+        "refs/heads", "refs/remotes/origin", "refs/tags", cwd=top).splitlines()]
+    tag_refs = [(ref.removeprefix("refs/tags/"), kind, at) for _, _, _, kind, at, ref in refs
+                if ref.startswith("refs/tags/")]
+    refs = [(name, date, tip) for name, date, tip, _, _, ref in refs if not ref.startswith("refs/tags/")]
     branch_dates = {name: date for name, date, _ in refs}
     tips = {name: tip for name, _, tip in refs}
     timing_dates: dict[str, list[str]] = {}
@@ -822,10 +826,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
     return {"version": __version__, "repo_root": repo_root(top),
+            **releases.collect(top, history, maps, items, tag_refs),
             "known_issues": known_issues.collect(top, {
-                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
-                for rel, state, where in history["copies"]
-                if where == landed and (match := STATE.fullmatch(rel))}, landed),
+                "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): (state, where)
+                for rel, state, where in (
+                    [(rel, state, where) for rel, (state, where) in best.items() if rel not in merged]
+                    + [(rel, state, where) for rel, state, where in history["copies"] if where == landed])
+                if (match := STATE.fullmatch(rel))}, landed),
             "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,

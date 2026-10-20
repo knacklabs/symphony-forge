@@ -559,7 +559,7 @@ def fix_start(args: argparse.Namespace) -> None:
     print(f"Started fix {name} on fix/{name} in {path}")
     if name != slug:
         print(f"Fix name {slug} is already taken; using {name}.")
-    print(f"Next: forge work {name}")
+    print(f"Next: forge {getattr(args, 'next', 'work')} {name}")
 
 
 def allow_large(args: argparse.Namespace) -> None:

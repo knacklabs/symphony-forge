@@ -1260,9 +1260,18 @@ restore after they fetch.
 
 ## Closing
 
-From the second review round, close checks the previous round's findings and the lines changed
-since that review. The reviewer says fixed or not fixed for each previous finding. New findings
-on unchanged lines become visible follow-ups, except security or data loss, which still block.
+From the second review round, close checks the previous round's findings and new P0s that
+happen in normal use. The reviewer says fixed or not fixed for each previous finding.
+A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Every other open
+finding becomes a follow-up in Known issues, whether its line changed or not, with the reason
+"Left open after round two". Only P0s still block; close goes on to checks and Ready otherwise.
+A `Case: rare` finding never blocks. A security hole or data loss that any user can reach is
+normal use. Reviewers and readers do not raise questions that Review rules or recorded owner
+decisions (`docs/decisions/`, `Decided:` or `Ruling:`) already settle.
+A worker can decline a finding in a commit body with
+`Declined: <title> (<file>): not worth the code - <reason>`, using its exact title and file.
+An empty commit is fine. Close applies it even to a reused review and keeps it as a follow-up.
+A P0 stays open. Later rounds receive the decline as settled. Only the human dismisses findings.
 `Not done` blocks only against a numbered owner-approved Done-when item (a fix uses its Done-when
 line). Builder details, Notes and implementation guidance never block as `Not done`.
 New repos get this guide on init; existing repos, including earlier adopted repos, get it on
@@ -1442,7 +1451,8 @@ even if Forge is killed. `forge stop <item>` ends a running test or removes a wa
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. The review's "What counts" list is the boundary, and the bar decides
 inside it: every finding at the bar (Proposed "fix now" or "fix this round") gets a fix round with
-`forge work <item>`, whatever its priority. A finding below the bar never holds the work; close
+`forge work <item>`, whatever its priority, unless the round-two boundary or a decline makes it
+a follow-up. A finding below the bar never holds the work; close
 lists it in the pull request as a follow-up or lived with. Harm 4 or 5, or Gain 5 stops the work.
 Otherwise, Gain 4, or Gain 3 with Harm 3, holds the work only with Work 1 or 2. Every other
 Gain 3 or 4 finding becomes a follow-up fix, even at Work 1 or 2 when Gain is 3 and Harm is 1 or 2.

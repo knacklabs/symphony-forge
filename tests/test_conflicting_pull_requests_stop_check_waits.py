@@ -56,7 +56,9 @@ def client(env, request, monkeypatch):
     folder = env.tmp / "clock"
     folder.mkdir()
     (folder / "sitecustomize.py").write_text(
-        "import time\nfrom pathlib import Path\n"
+        "import subprocess, time\nfrom pathlib import Path\nfrom types import SimpleNamespace\n"
+        "# Bind subprocess deadlines before faking Forge's clock; keep its polling real too.\n"
+        "subprocess.time = SimpleNamespace(sleep=time.sleep)\n"
         f"log = Path({json.dumps((folder / 'sleeps').as_posix())})\n"
         "real = time.monotonic\nelapsed = 0\n"
         "def sleep(seconds):\n"

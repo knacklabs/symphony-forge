@@ -283,6 +283,8 @@ def close(args: argparse.Namespace) -> int:
         finding = previous["findings"][number - 1]
         requested[score.identity(finding["file"], finding["title"])] = because
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
+    if fresh and round_number >= 2:
+        refreshed = review._bound_findings(top, item, state, previous, result["findings"]) or refreshed
     choice_round = 0
     if (state.get("stop") or {}).get("choice"):
         # Earlier stops omitted the round or stored the attempted next review.
@@ -330,13 +332,6 @@ def close(args: argparse.Namespace) -> int:
                                         light=light, tested="Tests are running alongside this review; close waits for "
                                         f"both results before continuing. Command: `{command}`.")
                 areas = _areas(top, result)
-                result["dismissals"] += [
-                    {"finding": number, "because": f"settled area: {where}"}
-                    for number, finding in enumerate(result["findings"], 1)
-                    if (where := areas[score.identity(finding["file"], finding["title"])])
-                    in _settled_areas(state) and number not in
-                    {d["finding"] for d in result["dismissals"]} and not (
-                        score.holds(finding, result.get("blocking_level")) and finding.get("harm", 5) >= 3)]
                 outcome = "blocked" if review.blocking(result) else "clean"
             finally:
                 if outcome == "failed":
@@ -378,10 +373,11 @@ def close(args: argparse.Namespace) -> int:
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
         result["dismissals"].append({"finding": number, "because": because,
                                      "from_base": from_base})
+    refreshed = review.declines(top, f"origin/{default}", result) or refreshed
     serious = review.blocking(result)
     stopped = None
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if not fresh or dismissals:
+    if not fresh or dismissals or refreshed:
         score.remember(_known(top, item, state, f"origin/{default}", previous), result, round_number,
                        {} if fresh else areas)
     if not fresh:
@@ -1119,10 +1115,10 @@ def _block(result: dict[str, Any], check: str) -> str:
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
                 else "blocks the merge" if score.holds(finding, result.get("blocking_level"))
-                else line if outcome in below
+                else line or finding.get("follow_up", "") if outcome in below
                 else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
         note += f"; {line}" if line and note != "blocks the merge" and note != line else ""
-        (blocking if note == "blocks the merge" else below[outcome] if note.startswith("Gain ")
+        (blocking if note == "blocks the merge" else below[outcome] if n not in because and outcome in below
          else rest).append(f"- Finding {n} ({finding['priority']}): {finding['title']} "
                            f"({finding['file']}:{finding['line']}): {note}")
     if result["status"] == "reviewing":

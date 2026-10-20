@@ -47,17 +47,18 @@ def question(stuck, tried="Worker round"):
 def _rounds(env, case):
     """Start the fix whose every close fails, then run work and close once (twice for fail pass
     fail)."""
+    # P1s become follow-ups in round two; P0s preserve these independent stuck/progress cases.
     if case in ("finding", "no change"):
-        env.reviews(blocked(finding("P1", "Saving drops the greeting")))
+        env.reviews(blocked(finding("P0", "Saving drops the greeting")))
     if case == "no change":  # a worker that commits nothing, so close reuses its review
         (env.repo.bin / "claude_agent_sdk" / "__init__.py").write_text(
             (ROOT / "tests/stubs/claude_agent_sdk.py").read_text("utf-8"), encoding="utf-8")
     if case == "finding then test":  # the worker fixes the finding, and a test then fails
-        env.reviews(blocked(finding("P1", "Saving drops the greeting")), CLEAN)
+        env.reviews(blocked(finding("P0", "Saving drops the greeting")), CLEAN)
     if case == "fail pass fail":  # a new finding each close keeps the closes failing
         # The SDK worker adds work-N.txt each round. Cite that round's new file so
         # these distinct findings exercise progress rather than unchanged-code advice.
-        env.reviews(*(blocked(finding("P1", f"Defect {n}",
+        env.reviews(*(blocked(finding("P0", f"Defect {n}",
                                      "app.py" if n == 1 else f"work-{n - 1}.txt"))
                       for n in (1, 2, 3)))
     if case not in ("finding", "no change"):

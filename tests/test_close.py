@@ -26,7 +26,7 @@ import json, pathlib, subprocess, sys
 args = sys.argv[1:]
 folder = args[args.index("-C") + 1]
 head = subprocess.run(["git", "-C", folder, "rev-parse", "HEAD"], capture_output=True,
-                      text=True).stdout.strip()
+                      text=True, stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
 log = pathlib.Path(__file__).resolve().parent / "codex-calls.jsonl"
 with open(log, "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"folder": folder, "head": head}}) + "\\n")
@@ -550,9 +550,9 @@ def test_18_close(env, kind):
     assert "waiting for the owner (ongoing)" in published
 
     # A new commit needs a new round. The old contract dropped every dismissal; now a matching
-    # file and title keeps it. A different finding still blocks and returns the PR to a draft.
+    # file and title keeps it. A new P0 still blocks in round two and returns the PR to a draft.
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
-    env.reviews(blocked(finding("P1", "Saving loses the basket"),
+    env.reviews(blocked(finding("P0", "Saving loses the basket"),
                         finding("P2", "Simpler: drop the cache → a dict")))
     env.commit(where, "app.py", "print('saved twice')\n")
     third = env.close(item)

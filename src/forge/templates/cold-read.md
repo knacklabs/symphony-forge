@@ -22,6 +22,12 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
+A note blocks only when it names a case that happens in normal use. Include
+`Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each note that would
+block. A rare case never blocks. A security hole or data loss that any user can reach is normal
+use. Do not raise a finding that this repo's Review rules or a recorded owner decision
+(a decision in `docs/decisions/`, a `Decided:` line or a `Ruling:` line) already settles.
+
 Your scores (see Scores below) decide: Harm 4 or 5, or Gain 5 holds the plan. Otherwise, Gain 4,
 or Gain 3 with Harm 3, holds the plan only with Work 1 or 2. Every other Gain 3 or 4 note is a
 follow-up, even a Gain 3 note with Harm 1 or 2 and Work 1 or 2. Gain 1 or 2 is lived with.
@@ -177,6 +183,11 @@ All earlier rounds' settled notes, each with its scores and its disposition:
 
 $dispositions
 
+Include `Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each note that
+would block. A rare case never blocks. A security hole or data loss that any user can reach is
+normal use. Do not raise a finding that this repo's Review rules or a recorded owner decision
+(a decision in `docs/decisions/`, a `Decided:` line or a `Ruling:` line) already settles.
+
 These are known and accepted. A settled note comes back only with new evidence of harm, as
 `Disputed keep <n>: <the new harm>`, where `<n>` is its number.
 
@@ -273,7 +284,8 @@ doc, then run `forge read <doc>` again until a round has no blocking notes. Note
 - `Disposition: keep <one-line reason>` otherwise.
 
 A finding inside What counts is cut or deferred. Keep one only when it falls outside that boundary
-or is factually wrong, and give as the reason the Leave out line, the missing Raise line, the
-cited fact that disproves it, or the human's `Decided:` line.
+or is factually wrong or not worth the change, and give as the reason the Leave out line, the
+missing Raise line, the cited fact that disproves it, why it is not worth the change, or the
+human's `Decided:` line.
 
 Only a genuine trade-off goes to the human, as a question with options.

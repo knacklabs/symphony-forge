@@ -5,6 +5,7 @@ human reads and the calls the stubs recorded (spec criterion 4).
 """
 from __future__ import annotations
 
+import faulthandler
 import json
 import os
 import re
@@ -28,6 +29,27 @@ import _pytest.tmpdir
 ROOT = Path(__file__).resolve().parents[1]
 REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+
+_deadline_log = None
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Windows CI needs a native deadline even outside the per-test timeout."""
+    global _deadline_log
+    seconds = float(os.environ.get("PYTEST_SESSION_DEADLINE") or "0")
+    if not seconds:
+        return
+    # Keep a descriptor outside pytest capture: a stuck capture flush must not hide
+    # the stacks or prevent the native watchdog from terminating the process.
+    _deadline_log = os.fdopen(os.dup(sys.stderr.fileno()), "w", encoding="utf-8")
+    if hasattr(config, "workerinput"):
+        seconds -= min(60, seconds / 2)  # Workers dump before the controller exits.
+    faulthandler.dump_traceback_later(seconds, file=_deadline_log, exit=True)
+
+
+def pytest_runtest_logstart(nodeid: str, location: tuple) -> None:
+    if _deadline_log is not None:
+        print(f"Test started: {nodeid}", file=_deadline_log, flush=True)
 
 IDLE_MACHINE = """from forge import machine
 machine.memory = lambda: dict(total_bytes=16_000_000_000, available_bytes=8_000_000_000)
@@ -74,7 +96,7 @@ import pathlib, subprocess, sys
 if sys.argv[1:] == {args!r}:
     sys.stdout.write({worker!r} * {reading})
 else:
-    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]]))
+    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]], timeout=60))
 ''')
 
 GH_STUB = """#!{python}
@@ -99,7 +121,8 @@ if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
     # Ordinary close fixtures have a mergeable pull request on the real pushed head.
     # Explicit responses above still own API errors and conflicting/unknown states.
     head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
-                                    "refs/heads/" + args[2]], text=True).split()[0]
+                                    "refs/heads/" + args[2]], text=True,
+                                   stdin=subprocess.DEVNULL, timeout=60).split()[0]
     sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head,
                                  "number": 7, "headRefName": args[2]}}))
     sys.exit(0)
@@ -167,7 +190,8 @@ def _claude_sdk_env(data: Path, pin: str = "0.2.161") -> None:
     env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
     with _cached_sdk(env, pin) as build:
         if build is not None:
-            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True)
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True,
+                           stdin=subprocess.DEVNULL, timeout=120)
 
 
 def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
@@ -287,7 +311,7 @@ class Repo:
     def git(self, *args: str, cwd: Path | None = None) -> str:
         try:
             return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
-                                  text=True, encoding="utf-8").stdout.strip()
+                                  text=True, encoding="utf-8", stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
         except subprocess.CalledProcessError as error:
             error.add_note(error.stdout + error.stderr)
             raise
@@ -485,8 +509,10 @@ elif args == ["plugin", "list", "--json"]:
     monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)
 
     remote, path = tmp_path / "remote.git", tmp_path / "repo"
-    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
-    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True)
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
     made = Repo(path, bin_dir)
     # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
     (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")

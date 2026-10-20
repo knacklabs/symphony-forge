@@ -88,7 +88,11 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
         assert "out of date" in stale.stderr
 
         strict = env.close(item)
-        assert strict.returncode == 1
+        # Sign-off still reruns the normal review; its round-two P1 now stays a follow-up.
+        assert strict.returncode == 0, strict.stdout + strict.stderr
+        assert "Ready:" in strict.stdout
+        follow_ups = body(env.gh_calls("pr", "edit")[-1]).split("Follow-ups:", 1)[1]
+        assert "Prototype review finding" in follow_ups
         assert len(env.review_calls()) == 2
         options = dict(zip(env.review_calls()[-1]["args"][::2],
                            env.review_calls()[-1]["args"][1::2]))
