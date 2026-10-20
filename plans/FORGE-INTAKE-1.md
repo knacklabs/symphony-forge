@@ -260,7 +260,9 @@ model's reply is the `--text` given to `forge handback`. `forge land` uses the s
      count does not change. `nextstep.py` and `board.py` read the `from_fix` names from the task
      states they already load, and they skip a fix with one of those names, in both the worktree
      loop and the remote-branch loop. The fix's remote branch and any commits on it stay, and its
-     open pull request stays open. Only the board and `forge next` stop showing the fix.
+     open pull request stays open. Only the board and `forge next` stop showing the fix. So that
+     every checkout sees the marker, `_promote` pushes the task branch after its commit, the same
+     publish call `story.new` already makes for the story branch.
    - The guide maps the owner's words to commands:
      - "Make it a story" (a fix): add the key to the fix's roadmap and commit it, then run
        `forge story new <KEY> --from-fix <fix>`.
@@ -282,7 +284,8 @@ model's reply is the `--text` given to `forge handback`. `forge land` uses the s
      not apply there, since the move starts from a plan).
      - story: the commands above give a `plans/<KEY>.md` whose Why and Done-when 1 are the fix's.
        `origin/fix/<fix>` still exists, and the task's state has `from_fix`. `forge next` and
-       `forge board --json` show one item, the story, and not the fix.
+       `forge board --json` show one item, the story, and not the fix, in this checkout and in a
+       second clone after `git fetch`.
      - fix: the story's key is also on the default branch's roadmap, so the backfill path runs.
        The fix has the plan's Problem and first Done line. `plans/<KEY>.md` stays on
        `origin/story/<KEY>`. `forge next` and `forge board --json` show the fix and not the story.
@@ -348,7 +351,7 @@ New moving parts: none
   - There is no Codex app-server or Claude SDK call: the sort always runs in the coordinating
     session, the way session reads run.
 - **Line ceilings.** `story.py` and `close.py` are at 1,200 lines. `close.py` does not change.
-  `story.py` gets only the `from_fix` field, at net zero lines, and all other new story code is in
+  `story.py` gets only the `from_fix` field and the task branch publish in `_promote`, and all other new story code is in
   `intake.py`. `board.py` is at 1,197 lines and must stay at or under 1,200.
 - **A builder must not:**
   - add a `forge start` option, a `forge.toml` setting, a stored lane record or a lane check at
@@ -358,7 +361,7 @@ New moving parts: none
   - add a model restriction or a new default model;
   - add `--undo` to `story drop`;
   - delete any remote branch;
-  - change `brief.md` or `close.py`, or change `story.py` beyond the `from_fix` field.
+  - change `brief.md` or `close.py`, or change `story.py` beyond the `from_fix` field and that publish.
 - `README.md`'s command table lists `forge ask`, which does not exist. MOVE adds the `forge start`
   row, leaves the `forge ask` row as it is, and reports it.
 - No client repo is named anywhere in this story's code, tests, texts or commits.

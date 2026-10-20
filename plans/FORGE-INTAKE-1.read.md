@@ -1,19 +1,19 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-20T08:06:50.369273+00:00
-seconds: 142.671
-read_hash: 538447156243bbb91450881c245f2d17e203e14d
-round: 3
+read_at: 2026-10-20T08:10:47.536480+00:00
+seconds: 100.888
+read_hash: c46eddaf4a339d5e5720c25d58c9bf69323d2ccf
+round: 4
 passed: no
-doc_seen: 538447156243bbb91450881c245f2d17e203e14d
+doc_seen: c46eddaf4a339d5e5720c25d58c9bf69323d2ccf
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 8d3f2f9de146086f6ec59825964171f655637df0
+notes_seen: ba32d8ab659ccc5eaec7db0e0e5e23189d058ff2
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a15844-e787-7e63-867e-480b27e36e5b
 session:
-blocked_rounds: 3
-loop_choice: narrow
-loop_reason: Owner: hide, never delete. Make it a story deletes no branch; the board and forge next hide a fix once a story was made from it. One more short round.
+blocked_rounds: 1
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -106,3 +106,10 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Test — [plan:291](/plans/FORGE-INTAKE-1.md:291) checks only that the entry disappears from the main checkout. The carry at [plan:215](/plans/FORGE-INTAKE-1.md:215) already copies that entry into the new branch and clears main. Omitting the guide’s subsequent removal from the new branch would still pass this test and merge the completed idea back into the idea list.
     Gain 3, Work 1, Harm 2
    Disposition: cut
+
+## Round 4
+
+15. Blocking: The new hiding marker is never published, so another checkout shows both items again.
+    Raise: Functional — [plan:259](/plans/FORGE-INTAKE-1.md:259) stores `from_fix` only in the promoted task’s state. [story.py:158](/src/forge/story.py:158) publishes the story before promotion, and [_promote:1140](/src/forge/story.py:1140) only commits locally. After fetching on another machine, neither reader has that task marker, while the retained remote fix remains active. Both items therefore appear again; the proposed test checks only the originating checkout.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut
