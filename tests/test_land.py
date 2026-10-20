@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, _install
-from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, env, finding, run  # noqa: F401
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
 from test_worker import calls
 
@@ -318,9 +318,9 @@ def _red_checks(env, bucket: str = "fail") -> None:
 
 def _blocked_once_then_clean(env):
     _agent(env)
-    _fix(env, "working", worked=True)
+    ITEM, _ = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(BLOCKER), CLEAN)
-    done = _land(env)
+    done = _land(env, ITEM)
     assert done.returncode == 0, done.stderr
     assert _steps(done) == [f"Closing {ITEM}.", f"Fix round 1 of 1: the worker fixes {FINDINGS_ROUND}.",
                             f"Closing {ITEM}.", f"Merging {ITEM}."]
@@ -353,12 +353,12 @@ def _red_without_a_failing_check_stops(env, conclusion, bucket):
 
 
 def _blocked_red_blocked_red(env):
-    _fix(env, "working", worked=True)
+    ITEM, _ = env.start_approved_task(STORY_DOC)
     # A clean second review leaves checks red; land spends no second fix round.
     env.reviews(blocked(BLOCKER), CLEAN)
     env.checks([run("tests", "failure"), run("forge-pr-check")])
     _red_checks(env)
-    done = _land(env)
+    done = _land(env, ITEM)
     assert done.returncode == 1
     assert _steps(done) == [f"Closing {ITEM}.",
                             f"Fix round 1 of 1: the worker fixes {FINDINGS_ROUND}.",
@@ -370,17 +370,17 @@ def _blocked_red_blocked_red(env):
 
 def _dismissed_before_land(env):
     _agent(env)
-    where = _fix(env, "working", worked=True)
+    ITEM, where = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(BLOCKER))
     assert env.close(ITEM).returncode == 1
     dismissed = env.close(ITEM, "--dismiss", "1", "--because", "app.py:1 it greets here")
     assert dismissed.returncode == 0, dismissed.stderr
     env.commit(where, "notes.md", "More\n", "Worker round")
-    done = _land(env)
+    done = _land(env, ITEM)
     assert done.returncode == 0, done.stderr
     assert _steps(done) == [f"Closing {ITEM}.", f"Merging {ITEM}."]
     assert not _workers(env)
-    record = json.loads(env.repo.git("show", f"origin/main:.factory/fixes/{ITEM}.json"))
+    record = json.loads(env.repo.git("show", "origin/main:.factory/stories/SHOP/tasks/T1.json"))
     assert [d["because"] for d in record["review"]["dismissals"]] == ["app.py:1 it greets here"]
 
 

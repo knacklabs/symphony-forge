@@ -1266,6 +1266,10 @@ restore after they fetch.
 
 ## Closing
 
+A fix gets one review round; a story part gets two. After a fix's first review, open findings
+below P0 become visible follow-ups and close goes on to checks and Ready. An open P0 stops
+for the owner's recorded choice. The follow-up reason is "Left open after round one".
+
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.
 A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Every other open

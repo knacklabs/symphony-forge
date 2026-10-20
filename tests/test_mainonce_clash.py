@@ -99,13 +99,16 @@ def _draft_clash(env, require_current):
     env.commit(env.repo.path, "NEWS.md", "Old news\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
-    env.reviews(blocked(finding("P1", "Greeting needs final text")), CLEAN)
+    # A fix stays blocked only for a P0; keep the draft-clash lifecycle under test.
+    env.reviews(blocked(finding("P0", "Greeting breaks the main path")), CLEAN)
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
-    assert "The review left serious findings open:" in first.stderr
+    assert "This fix's review found an open P0." in first.stderr
     created = env.gh_calls("pr", "create")[-1]
     assert "--draft" in created
     _draft_pull_request(env, body(created), require_current)
+    resolved = env.close(item, "--resolve", "more", "--reason", "Repair the greeting before release")
+    assert resolved.returncode == 0, resolved.stdout + resolved.stderr
     env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
     advanced = env.commit(env.repo.path, "NEWS.md", "New news from another change\n")
     env.repo.git("push", "-q", "origin", "main")
@@ -139,9 +142,12 @@ def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env
     env.reviews(blocked(finding("P1", "Greeting needs the final text")), CLEAN)
 
     first = env.close(item)
-    assert first.returncode == 1, first.stdout + first.stderr
-    assert "The review left serious findings open:" in first.stderr
-    _open_pr(env, body(env.gh_calls("pr", "create")[-1]))
+    # The P1 is now a follow-up; a later edit still needs review against its own diff.
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert "Ready:" in first.stdout
+    content = body((env.gh_calls("pr", "edit") or env.gh_calls("pr", "create"))[-1])
+    assert "Greeting needs the final text" in content.split("Follow-ups:", 1)[1]
+    _open_pr(env, content)
     env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
     env.commit(env.repo.path, "NEWS.md", "Another unrelated change landed\n")
     env.repo.git("push", "-q", "origin", "main")

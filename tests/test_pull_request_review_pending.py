@@ -19,7 +19,8 @@ STORY = "FIX-PR-CHECK-PENDING"
 def test_1_generated_gate_reports_review_state(env, tmp_path, adopted, review):
     # Real sync and pr-check decide the status. Only GitHub and Autoreview are faked.
     client(env, adopted)
-    item, where = env.start_fix()
+    item, where = env.start_task() if review == "blocked" else env.start_fix()
+    branch = "task/SHOP-T1" if review == "blocked" else "fix/tidy-readme"
     if review != "missing":
         if review == "blocked":
             env.reviews(blocked(finding("P1", "Greeting is missing")))
@@ -32,7 +33,7 @@ def test_1_generated_gate_reports_review_state(env, tmp_path, adopted, review):
     job = workflow.split("\n  forge-pr-check:\n", 1)[1]
     variables = {**os.environ, "BASE_SHA": repo.git("rev-parse", "main"),
                  "HEAD_SHA": repo.git("rev-parse", "HEAD", cwd=where),
-                 "HEAD_REF": "fix/tidy-readme", "GH_TOKEN": "test-token",
+                 "HEAD_REF": branch, "GH_TOKEN": "test-token",
                  "GITHUB_REPOSITORY": "example/client", "GITHUB_RUN_ID": "123",
                  "RUNNER_TEMP": str(tmp_path),
                  "GITHUB_OUTPUT": str(tmp_path / "outputs")}
@@ -62,8 +63,8 @@ def test_1_generated_gate_reports_review_state(env, tmp_path, adopted, review):
             # gh --log-failed sees only the failed reporter, since the gate allows failure.
             problem = ("out of date: the product files or what the change must do changed after it"
                        if review == "stale" else "blocked by serious findings no one fixed or dismissed")
-            assert (f"The committed review at the head of fix/tidy-readme is {problem}.\n"
-                    "Next: forge close tidy-readme\n") in reported.stdout + reported.stderr
+            assert (f"The committed review at the head of {branch} is {problem}.\n"
+                    f"Next: forge close {item}\n") in reported.stdout + reported.stderr
     calls = env.gh_calls("api", "--method", "POST", endpoint)
     assert len(calls) == 1, (checked.stdout, checked.stderr, calls)
     fields = dict(arg.split("=", 1) for arg in calls[0] if "=" in arg)

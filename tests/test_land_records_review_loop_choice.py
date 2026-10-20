@@ -2,20 +2,20 @@
 
 import pytest
 
-from test_close import CLEAN, blocked, env, finding  # noqa: F401
-from test_land import ITEM, _fix, _land, _workers, land  # noqa: F401
+from test_close import CLEAN, STORY_DOC, blocked, env, finding  # noqa: F401
+from test_land import _land, _workers, land  # noqa: F401
 
 STORY = "three-rounds-ask"
 
 
 @pytest.mark.parametrize("choice", ["more", "accept"])
 def test_3_land_records_the_humans_review_loop_choice(land, choice):
-    where = _fix(land, "working", worked=True)
+    ITEM, where = land.start_approved_task(STORY_DOC)
     # Round one gets one repair; a P0 in round two waits for the owner's choice.
     land.reviews(blocked(finding("P1", "Greeting is missing")),
                  blocked({**finding("P0", "Opening the page loses saved work", "work-1.txt"),
                           "body": "Gain 3, Work 2, Harm 5\nNormal page loads lose saved work."}))
-    stopped = _land(land)
+    stopped = _land(land, ITEM)
     assert stopped.returncode == 3, stopped.stdout + stopped.stderr
     assert "Ask the human" in stopped.stderr
     assert f"forge close {ITEM} --resolve <more|split|accept>" in stopped.stderr
@@ -26,7 +26,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
 
     # Repeating either entry point cannot run another worker or reviewer until
     # the coordinator records the human's choice.
-    for again, code in ((_land(land), 3), (land.close(ITEM), 1)):
+    for again, code in ((_land(land, ITEM), 3), (land.close(ITEM), 1)):
         assert again.returncode == code, again.stdout + again.stderr
         assert "Ask the human" in again.stderr
     assert len(land.review_calls()) == 2
@@ -43,7 +43,7 @@ def test_3_land_records_the_humans_review_loop_choice(land, choice):
         assert f"Next: forge work {ITEM}" in recorded.stdout
         land.commit(where, "app.py", "print('greeting')\n", "Make the agreed change")
         land.reviews(CLEAN)
-        continued = _land(land)
+        continued = _land(land, ITEM)
         assert continued.returncode == 0, continued.stdout + continued.stderr
         assert f"{ITEM} is ready; a human merges" in continued.stdout
         assert len(land.review_calls()) == 3

@@ -17,14 +17,15 @@ GUIDANCE = (
 )
 
 
-def stopped(env, kind="fix"):
+def stopped(env, kind="task"):
     seed(env, "src/a.py")
     # A task's plan row may hold markdown and paths; its question names it in plain words.
     doc = STORY_DOC.replace("Shoppers can save their basket with one click",
                             "Shoppers can **save** their basket at `app.py:3` with one click")
     item, where = env.start_approved_task(doc) if kind == "task" else env.start_fix()
-    # A P0 after the second review replaces the old third-round same-file stop.
-    for number in (1, 2):
+    # Fixes stop on a P0 after one review; story parts retain two reviews.
+    final_round = 2 if "/" in item else 1
+    for number in range(1, final_round + 1):
         env.reviews(blocked({**finding("P0", f"Round {number} defect", "src/a.py"),
                              "body": "Gain 5, Work 2, Harm 5\nNormal saves lose the basket."}))
         env.commit(where, "app.py", f"print({number})\n")
@@ -34,8 +35,11 @@ def stopped(env, kind="fix"):
     if kind == "task":
         assert ("Save a basket (part of Shoppers can save a basket): "
                 "Shoppers can save their basket with one click") in result.stderr
-    assert "Review round 2" in result.stderr
-    assert "Round 2 defect" in result.stderr and "Forge stopped" in result.stderr
+    if "/" in item:
+        assert f"Review round {final_round}" in result.stderr and "Forge stopped" in result.stderr
+    else:
+        assert "This fix's review found an open P0." in result.stderr
+    assert f"Round {final_round} defect" in result.stderr
     assert "One more round, split or accept?" in result.stderr
     assert (f'Next: forge close {item} --resolve <more|split|accept> '
             '--reason "<human\'s choice>"') in result.stderr
@@ -94,7 +98,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert "Ready:" in resumed.stdout
         assert len(env.review_calls()) == before
         checked = env.repo.forge("hook", "pr-check", "--base", "origin/main",
-                                 "--head", "HEAD", "--branch", "fix/tidy-readme", cwd=where)
+                                 "--head", "HEAD", "--branch", "task/SHOP-T1", cwd=where)
         assert checked.returncode == 0, checked.stderr
         # An upstream edit outside this branch's diff no longer gets merged by close, so its
         # accepted review stays valid until the worker changes the branch itself.
@@ -128,7 +132,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
 def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env):
     # Inspect the instructions delivered to the reviewer, not whether a canned response obeys them.
     seed(env, "src/a.py")
-    item, where = env.start_fix()
+    item, where = env.start_task()
     safe = finding("P1", "Proven safe", "src/a.py")
     env.reviews(blocked(safe))
     assert env.close(item).returncode == 1

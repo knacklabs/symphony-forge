@@ -133,13 +133,15 @@ def _board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priori
     assert repo.forge("work", item, "--note", "Yes").returncode == 0
     problem = finding(priority, "Parser drops input")
     env.reviews(blocked(problem) if priority == "P1" else {"exit": 0, "report": report(problem)})
-    assert (env.close(item).returncode != 0) == (priority == "P1")
+    # A fix's first P1 is now a visible follow-up, with the same review occurrence.
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
     result = [e for e in records(repo, "events.jsonl") if e["event"] == "review result"][-1]
     assert result["id"] in {o["id"] for o in row["occurrences"]}
     previous_review = result["id"]
     assert row["findings"]["count"] == 1
-    assert row["stage"] == ("fixing" if priority == "P1" else "ready")
+    assert row["stage"] == "ready"
     assert asked["id"] not in {o["id"] for o in row["occurrences"]}
     env.commit(folder, "app.py", "print('repaired')\n")
     env.reviews(CLEAN)

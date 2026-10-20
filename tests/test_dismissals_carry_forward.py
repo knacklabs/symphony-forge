@@ -6,16 +6,17 @@ fixture moved to this release. Only Autoreview, GitHub and CI are stubbed.
 import pytest
 
 from test_close import blocked, body, env, finding  # noqa: F401 (env is a fixture)
-from test_score_bar import CASES, _client_on_this_release
+from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_score_bar import CASES
 
 STORY = "FIX-DISMISSALS-CARRY-FORWARD"
 APP = "".join(f"line{n} = {n}\n" for n in range(1, 21))
 
 
 @pytest.mark.parametrize("case", CASES)
-def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
-    _client_on_this_release(env, tmp_path, case)
-    item, where = env.start_fix({"app.py": APP})
+def test_1_dismissal_holds_until_its_cited_lines_change(env, case):
+    client(env, case != "init")
+    item, where = env.start_task(changes={"app.py": APP})
     # A P0 still holds after round two, so changing cited lines must reactivate it.
     coupon = finding("P0", "Saving skips the coupon", line=3)
     env.reviews(blocked(coupon))

@@ -56,12 +56,12 @@ def _interface_path_by_base_config(env):
 
 
 def _review_blocked(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
-    item, where = env.start_fix()
+    env.reviews(blocked(finding("P1", "Not done: A shopper can save a basket")))
+    item, where = env.start_task()
     env.close(item)
-    return "fix/tidy-readme", where, (
-        "The committed review at the head of fix/tidy-readme is blocked by serious findings no one "
-        "fixed or dismissed.", "forge close tidy-readme")
+    return "task/SHOP-T1", where, (
+        "The committed review at the head of task/SHOP-T1 is blocked by serious findings no one "
+        "fixed or dismissed.", "forge close SHOP/T1")
 
 
 OUT_OF_DATE = "out of date: the product files or what the change must do changed after it."

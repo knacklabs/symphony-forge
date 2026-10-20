@@ -359,7 +359,8 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
 def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, older):
     env = client
     machine_cores(env.repo, 4)  # two agent places, as on CI: fewer places than changes
-    answer = CLEAN if older == "merges" else blocked(finding("P1", "Saving drops line one", "shared.py"))
+    # A fix's first P1 is now a follow-up; use an open P0 for the owner-needed stop.
+    answer = CLEAN if older == "merges" else blocked(finding("P0", "Saving drops line one", "shared.py"))
     _fix(env, monkeypatch, "aa", 1, {"shared.py": _edit(1, "first")}, answer=answer,
          message="Worker round\n\nSpotted: bug shared.py:4 line four repeats itself")
     _fix(env, monkeypatch, "bb", 2, {"shared.py": _edit(7, "last")})
@@ -379,7 +380,8 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
     assert "bb waits for aa: both change shared.py." in lines, done.stdout
     assert not any(line.startswith(("cc waits", "dd waits")) for line in lines), done.stdout
     assert _reviews(env, "bb") == 1, done.stdout
-    end = "aa merged." if older == "merges" else "aa stopped: The review left serious findings open: finding 1 (Saving drops line one)."
+    end = "aa merged." if older == "merges" else next(
+        line for line in lines if line.startswith("aa stopped: This fix's review found an open P0."))
     assert end in lines and lines.index(end) < lines.index("Starting bb."), done.stdout
     if older == "merges":
         assert done.returncode == 0, done.stdout + done.stderr
@@ -394,9 +396,11 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
         summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
         assert re.fullmatch(r"Merged \(2\): .+ · Ready to merge \(0\): none · Needs you \(2\): aa, ee",
                             lines[summary]), done.stdout
-        assert lines[summary + 1:summary + 3] == [
-            "- aa: The review left serious findings open: finding 1 (Saving drops line one).",
-            "  Next: forge land aa"]
+        tail = "\n".join(lines[summary + 1:])
+        assert tail.startswith("- aa: This fix's review found an open P0.")
+        assert "Saving drops line one" in tail and "One more round, split or accept?" in tail
+        assert ('  Next: forge close aa --resolve <more|split|accept> --reason '
+                '"<human\'s choice>", then forge land aa') in tail
 
 
 @pytest.mark.platform
@@ -429,7 +433,7 @@ def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monke
 def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     env = client
     _fix(env, monkeypatch, "stuck", 1, {"stuck.py": "x = 1\n"},
-         answer=blocked(finding("P1", "Saving drops the basket", "stuck.py")))
+         answer=blocked(finding("P0", "Saving drops the basket", "stuck.py")))
     _fix(env, monkeypatch, "clean", 2, {"clean.py": "x = 1\n"})
     held = _fix(env, monkeypatch, "loop", 3, {"loop.py": "x = 1\n"}, status="hotspot",
                 stop={"file": "loop.py", "round": 4, "at": datetime.now(timezone.utc).isoformat()},
@@ -460,8 +464,10 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     assert lines[summary] == ("Merged (1): clean · Ready to merge (0): none · "
                               "Needs you (5): stuck, loop, worn, late, skip"), done.stdout
     tail = "\n".join(lines[summary + 1:])
-    assert tail.startswith("- stuck: The review left serious findings open: finding 1 "
-                           "(Saving drops the basket).\n  Next: forge land stuck\n- loop: Review round ")
+    assert tail.startswith("- stuck: This fix's review found an open P0.")
+    assert "Saving drops the basket" in tail
+    assert ('  Next: forge close stuck --resolve <more|split|accept> --reason '
+            '"<human\'s choice>", then forge land stuck\n- loop: Review round ') in tail
     assert "Saving loses the name" in tail and "One more round, split or accept?" in tail
     assert '  Next: forge close loop --resolve <more|split|accept> --reason "<human\'s choice>"\n- worn: ' in tail
     assert ("Ask the human:\nWorn keeps failing the same test. Switch, same, narrow or split?\n"

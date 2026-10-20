@@ -82,10 +82,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     clock(monkeypatch, now)
     read_story(env.repo, "WAIT", ONE_PART)
     env.repo.git("push", "-q", "origin", "story/WAIT")
-    # A P0 still open after two closes stops the review loop for a person's choice.
+    # A fix's first P0 stops the review loop for a person's choice.
     clock(monkeypatch, now + timedelta(minutes=1))
     _, loop = env.start("loop", "fix/loop", ".factory/fixes/loop.json", {**FIX, "why": "Loop"}, {"loop.py": "x\n"})
-    rounds(env, "loop", loop, ["src/a.py"] * 2)
+    rounds(env, "loop", loop, ["src/a.py"])
     share(env, prs, "loop", 1)
     # A close ending ready in a repo where a human merges.
     clock(monkeypatch, now + timedelta(minutes=2))

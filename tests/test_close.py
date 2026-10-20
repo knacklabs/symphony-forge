@@ -284,9 +284,9 @@ def _review_incomplete_twice(env):
 
 def _open_serious_finding(env):
     env.reviews(blocked(finding("P0", "Saving drops the basket", line=2)))
-    return {"item": env.start_fix()[0],
+    return {"item": env.start_task()[0],
             "problem": "The review left serious findings open: finding 1 (Saving drops the basket).",
-            "next": 'forge work tidy-readme, or forge close tidy-readme --dismiss <n> '
+            "next": 'forge work SHOP/T1, or forge close SHOP/T1 --dismiss <n> '
                     '--because "<file:line> <reason>"'}
 
 
@@ -490,7 +490,7 @@ def test_18_close(env, kind):
     first = env.close(item)
 
     # An unrelated main move stays out of the branch; Autoreview still reads its actual head.
-    assert first.returncode == 1
+    assert first.returncode == (1 if kind == "task" else 0)
     [call] = env.review_calls()
     assert env.repo.git("merge-base", moved, call["head"]) != moved
     options = dict(zip(call["args"][::2], call["args"][1::2]))
@@ -519,6 +519,24 @@ def test_18_close(env, kind):
                      "`Not done: The readme opens with a greeting`"):
             assert line in prompt
     assert "## Test audit" in prompt and "`Simpler: <what to cut> → <what replaces it>`" in prompt
+    # Fixes now finish their single review with non-P0 findings as visible follow-ups.
+    # Story parts keep the blocked-review repair and dismissal flow below.
+    if kind == "fix":
+        [create] = env.gh_calls("pr", "create")
+        published = body(create)
+        # Close publishes a draft before review; the clean fix then becomes ready.
+        assert "--draft" in create
+        assert env.gh_calls("pr", "ready")
+        assert "Follow-ups:" in published
+        assert f"Finding 1 (P1): Not done: {owner_item} (app.py:1)" in published
+        assert "Simpler: drop the cache → a dict" in published
+        assert "blocks the merge" not in published
+        assert first.stdout.splitlines()[-1] == (
+            f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+        assert env.repo.git("status", "--porcelain", cwd=where) == ""
+        assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
+            "rev-parse", "HEAD", cwd=where)
+        return
     # A serious finding blocks, so the pull request opens as a draft; the advisory one is listed;
     # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")

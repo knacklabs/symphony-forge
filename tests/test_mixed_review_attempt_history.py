@@ -26,7 +26,9 @@ STORY = "FIX-WHERE-TIME-WENT"
 def test_23_timing_only_review_and_modern_result_in_one_worker_turn_keep_both_attempts(
         env, monkeypatch):
     began = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    item, _ = env.start_fix(round=1, steps=[{"step": "start", "at": began.isoformat()}])
+    item, _ = env.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json",
+                        {"round": 1, "steps": [{"step": "start", "at": began.isoformat()}]},
+                        {"app.py": "print('hello')\n"})
     # An earlier close recorded its observed duration and worker turn, but no result event.
     legacy = {"item": item, "round": 1, "step": "review", "start": began.isoformat(),
               "seconds": 10, "outcome": "clean"}

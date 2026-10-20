@@ -21,18 +21,17 @@ STORY = "second-stop-choice"
 @pytest.mark.timeout(600)
 def test_1_each_new_stop_waits_for_and_records_its_own_choice(
         env, tmp_path, previous, first, second):
-    item, where = client_item(env, tmp_path, previous, stop_default=True)
+    item, where = client_item(env, tmp_path, previous)
     number = 0
     for cycle, choice in enumerate((first, second)):
-        # After the first stop, a choice buys one further review, then a new P0 asks again.
-        for _ in range(2 if not cycle else 1):
-            number += 1
-            env.commit(where, "app.py", f"print('round {number}')\n")
-            env.reviews(blocked({**finding("P0", f"New defect {number}", "app.py"),
-                                 "body": "Gain 3, Work 2, Harm 5\nNormal saves lose work."}))
-            result = env.close(item)
-            assert result.returncode == 1, result.stdout + result.stderr
-            assert len(env.review_calls()) == number
+        # A fix stops on its first P0; each later new P0 needs a fresh choice too.
+        number += 1
+        env.commit(where, "app.py", f"print('round {number}')\n")
+        env.reviews(blocked({**finding("P0", f"New defect {number}", "app.py"),
+                             "body": "Gain 3, Work 2, Harm 5\nNormal saves lose work."}))
+        result = env.close(item)
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert len(env.review_calls()) == number
         assert "One more round, split or accept?" in result.stderr
         if cycle:
             assert row(env.repo, item)["status"] == "Needs your decision"

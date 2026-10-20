@@ -7,15 +7,15 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, _install
-from test_close import CLEAN, blocked, env, finding  # noqa: F401
+from test_close import CLEAN, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_close_holds_after_three_blocked_reviews import client_item
-from test_land import GH, ITEM, URL, _fix, _red_checks, land  # noqa: F401
+from test_land import GH, URL, _red_checks, land  # noqa: F401
 from test_tools_session_hold import Session
 
 
 @pytest.mark.parametrize("previous", [False, True])
 def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_path, previous):
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=True)
     if not previous:
         # Init's prototype merges automatically: reuse land's GitHub edge fake for that final step.
         remote = Path(env.repo.git("remote", "get-url", "origin")).as_posix()
@@ -44,7 +44,7 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
     assert f"then forge land {item}" in output
     assert len(env.review_calls()) == 2
     env.gh.respond("pr", "checks", stdout="[]")
-    env.gh.respond("pr", "view", f"fix/{item}", "--json", "url",
+    env.gh.respond("pr", "view", "task/SHOP-T1", "--json", "url",
                    stdout='{"url": "https://github.com/acme/shop/pull/7"}')
     resolved = env.close(item, "--resolve", "accept", "--reason", "The owner accepts the greeting limit")
     assert resolved.returncode == 0, resolved.stdout + resolved.stderr
@@ -54,14 +54,14 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
 
 
 def test_2_round_handoffs_show_findings_and_check_logs(land, monkeypatch):
-    _fix(land, "working", worked=True)
+    item, _ = land.start_approved_task(STORY_DOC)
     land.reviews(blocked(finding("P1", "Saving loses the greeting")), CLEAN)
     _red_checks(land)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
     host = Session(land.repo, land.tmp / "host", "claude-session")
     try:
-        done = host.forge("land", ITEM)
+        done = host.forge("land", item)
         assert done.returncode == 0, done.stdout + done.stderr
         # The worker brief is in a file; the console must carry the evidence itself.
         assert "Saving loses the greeting" in done.stdout

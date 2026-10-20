@@ -12,13 +12,13 @@ STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
 
 @pytest.mark.parametrize("review_clean", [True, False], ids=["clean", "blocked"])
 def test_1_close_pushes_and_opens_ci_before_review_and_ready_needs_both(env, review_clean):
-    item, where = env.start_fix()
+    item, where = env.start_task()
     env.reviews(CLEAN if review_clean else blocked(finding("P1", "Greeting is missing")))
     helper = Path(os.environ["AUTOREVIEW"])
     # Observe real Git and the GitHub edge at review launch; the observer does not decide
     # either outcome. Previously the remote branch and pull request did not exist here.
     observer = '''
-remote = subprocess.run(["git", "ls-remote", {origin!r}, "fix/tidy-readme"],
+remote = subprocess.run(["git", "ls-remote", {origin!r}, "task/SHOP-T1"],
                         capture_output=True, text=True).stdout.strip()
 gh_log = Path({gh_log!r})
 Path({observed!r}).write_text(json.dumps({{"remote": remote,
@@ -41,7 +41,7 @@ Path({observed!r}).write_text(json.dumps({{"remote": remote,
         body = Path(edits[-1][edits[-1].index("--body-file") + 1]).read_text()
         assert ("Review: clean" in body) == review_clean
         assert ("The review found serious problems." in body) == (not review_clean)
-        pushed = env.repo.git("ls-remote", "origin", "fix/tidy-readme").split()[0]
+        pushed = env.repo.git("ls-remote", "origin", "task/SHOP-T1").split()[0]
         assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
         if review_clean:
             assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])

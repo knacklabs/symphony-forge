@@ -7,7 +7,6 @@ GitHub and the clock are stubbed; the stubs write the scored findings and notes.
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -82,16 +81,21 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
                         {"priority": "P3", "title": "Saved advice", "body": "Evidence",
                          "file": "app.py", "line": 1}]}
     log = install_claude(repo)
-    item, where = env.start_fix(**({"review": old} if case != "init" else {}))
     if case != "init":
+        item, where = env.start_fix(review=old)
         assert repo.forge("work", item).returncode == 0
         brief = _findings_in(calls(log)[-1]["brief"])
         assert "Saved serious finding" in brief and "Saved advice" not in brief
-        # The bar below is a first-round contract; the saved review already counts as round one.
-        item, where = env.start("score-bar", "fix/score-bar", ".factory/fixes/score-bar.json",
-                                {"kind": "fix", "why": "Check the first-round bar",
-                                 "done_when": "The bar decides what holds work"},
-                                {"app.py": "print('hello')\n"})
+
+    # Fixes now follow up non-P0 findings in round one and stop on P0s for the
+    # owner. An approved story part keeps the first-round score-bar contract.
+    (shop / "plans/SHOP.md").write_text(STORY_DOC, encoding="utf-8")
+    _says(repo, "No findings.\n")
+    assert repo.forge("read", "SHOP").returncode == 0
+    where = _approve(env, STORY_DOC, f"core.hooksPath={tmp_path / 'no-hooks'}")
+    item = "SHOP/T1"
+    env.commit(where, "app.py", "print('hello')\n")
+    log = install_claude(repo)
 
     # Stop and fix-this-round scores hold, regardless of the reviewer's priority.
     held = [("Saving loses the note", 3, 2, 3),
@@ -199,7 +203,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Sign-in is out of scope" in known and "The title could be shorter" in known
 
-    # Three P0s in one area still stop the part; the owner accepts them.
+    # The part's second review still has P0s, so the owner accepts them.
     # Non-P0 findings now become follow-ups from round two.
     env.commit(where, "app.py", "print('saved twice')\n")
     env.reviews(blocked(*[_scored("P0", title, "Gain 5, Work 2, Harm 4\nRaise: Functional")

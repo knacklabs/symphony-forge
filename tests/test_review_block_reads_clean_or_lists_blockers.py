@@ -9,7 +9,7 @@ BEGIN = "<!-- forge:begin -->\n"
 
 
 def test_1_clean_review_opens_with_one_line_and_folds_the_rest(env):
-    item, _ = env.start_fix()
+    item, _ = env.start_task()
     env.reviews(blocked(finding("P1", "Greeting is missing"), finding("P2", "Simpler: drop the cache"),
                         finding("P3", "Simpler (existing): one helper")))
     assert env.close(item).returncode == 1
@@ -32,7 +32,7 @@ def test_1_clean_review_opens_with_one_line_and_folds_the_rest(env):
 
 @pytest.mark.platform
 def test_2_blocked_review_lists_open_blocking_findings_first(env):
-    item, _ = env.start_fix()
+    item, _ = env.start_task()
     env.reviews(blocked(finding("P2", "Simpler: drop the cache"), finding("P1", "Greeting is missing")))
     assert env.close(item).returncode == 1
     review = body(env.gh_calls("pr", "create")[-1]).split(BEGIN, 1)[1]

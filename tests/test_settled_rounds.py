@@ -51,7 +51,7 @@ def test_1_cold_read_keeps_all_answers_and_ignores_settled_repeats(
 def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):
     dismissed, fixed = "Saving requires an account", "Saving drops the basket"
     env.reviews(blocked(finding("P1", dismissed), finding("P1", fixed)))
-    item, where = env.start_fix()
+    item, where = env.start_task()
     assert env.close(item).returncode == 1
     reason = "app.py:1 the owner chose account-only saving"
     assert env.close(item, "--dismiss", "1", "--because", reason).returncode == 1

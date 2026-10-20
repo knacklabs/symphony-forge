@@ -1,0 +1,74 @@
+{
+  "base": "313e12fa94674f4bd34c5784e7e1748effe91425",
+  "branch": "fix/one-round-fixes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a158e1-1aca-7d11-9137-5750188957c2",
+    "head": null,
+    "start": "16e436a120f4cfedd678b94b8efe06482e8dd6db"
+  },
+  "done_when": "A fix's review runs one round: after round one, open findings that are not P0 become follow-ups and the fix goes on to merge, and an open P0 stops for the owner; a story part keeps two rounds; on a new repo and on an earlier-adopted repo. The shipped guide says the human never has to say story, part or fix and is never asked which, the agent picks the lane and says in one line what happens next (no approval needed, or a plan to approve), and if in doubt it starts a fix because the size check at close moves it to a story",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/review.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_bound_findings() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 1038,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the remaining tests that require blocked fix reviews",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "80dbf9dbdf5996e105e1fb9c3018256e2f5cfbfa7d53f0f2ba0f84f091fe8080",
+    "changed": "663174d86bd57729b046a0ca3ee8b385a28811d834762452614ac5d71807b243",
+    "commit": "4923456a05edc40fbc9e17dfc8695119774dcbc1",
+    "dismissals": [],
+    "findings": [],
+    "id": "e73e4dd8-7284-4f7b-9d90-ad5d85ce5e5a",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T10:34:51.634070+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T12:09:43.562681+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T13:33:40.892878+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T14:05:03.874709+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T19:06:31.521208+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ca362b89-042a-4dbe-8f9e-cec5abeeca70",
+    "head": "d5bd732e5661c04b95bcc07884a99fbc877155d7",
+    "keys": {},
+    "round": 4
+  },
+  "why": "The owner wants a clear difference between a light fix and a story part: a fix gets one review round, a story part two. People also give ideas without knowing what a story, a part or a fix is, so the agent must never ask them to choose",
+  "worker": "codex"
+}
