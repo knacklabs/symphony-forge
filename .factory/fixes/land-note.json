@@ -1,0 +1,15 @@
+{
+  "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
+  "branch": "fix/land-note",
+  "done_when": "forge land <item> --note \"<text>\" passes the note to the round it starts, the same way forge work --note does, on a new repo and on an earlier-adopted repo; the coordinator guide says to queue several items by running forge land for each in the background, because Forge admits their rounds by machine capacity",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-20T05:59:00.845581+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A client coordinator wrote its own shell queues to run rounds one at a time, and parallel queues raced each other; forge land already builds, closes, runs fix rounds and merges with each round waiting for a machine place, but it takes no note for the first round, so coordinators chain forge work --note and forge land by hand (issue 968)"
+}
