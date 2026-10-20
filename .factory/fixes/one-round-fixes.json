@@ -10,13 +10,56 @@
   },
   "done_when": "A fix's review runs one round: after round one, open findings that are not P0 become follow-ups and the fix goes on to merge, and an open P0 stops for the owner; a story part keeps two rounds; on a new repo and on an earlier-adopted repo. The shipped guide says the human never has to say story, part or fix and is never asked which, the agent picks the lane and says in one line what happens next (no approval needed, or a plan to approve), and if in doubt it starts a fix because the size check at close moves it to a story",
   "fix_kind": "backend",
+  "flagged": [
+    "src/forge/review.py"
+  ],
   "kind": "fix",
+  "known": [
+    {
+      "area": "_bound_findings() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 1038,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the remaining tests that require blocked fix reviews",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7e80208c5ad403b24e6e07d38e27a6d9c4c491105fe76231e9c233558e3f2fde",
+    "changed": "73101b5ff2203279898b6c78759ec88b4c01557bcf153a1f7332735e95beeb4d",
+    "commit": "b9c8117d4ba91206a0fa9e2651ea7d79625055e5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - Running the configured full test suite.\nSeveral retained tests still require the behavior this condition removes. `tests/test_mainonce_clash.py:101\u2013105,139\u2013143`, `tests/test_pull_request_body_limit.py:78\u2013100`, `tests/test_upgrade_command.py:334\u2013345`, and `tests/test_queue_land_all.py:354\u2013395,425\u2013468` expect a fix's first P1 finding to block; it now becomes a follow-up and proceeds toward Ready or merge. Separately, `tests/test_score_bar.py:270\u2013312` expects multiple fix reviews before an owner stop, but the new stop at `src/forge/close.py:389\u2013390` prevents those reviews. These assertions are incompatible with the new behavior and leave the required full suite failing. Adapt the remaining fixtures and expectations while preserving the contracts they test.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 1038,
+        "priority": "P1",
+        "title": "Update the remaining tests that require blocked fix reviews",
+        "work": 2
+      }
+    ],
+    "id": "f2c39879-c3cc-4849-ae3c-9e359df2f7ae",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T10:34:51.634070+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-20T12:09:43.562681+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
