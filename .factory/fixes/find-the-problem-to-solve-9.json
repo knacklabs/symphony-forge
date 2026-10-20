@@ -1,0 +1,16 @@
+{
+  "base": "4f6d26c1933bb980782773487f85da018563ca9e",
+  "branch": "fix/find-the-problem-to-solve-9",
+  "done_when": "The discovery notes hold a filled problem card and the brief names it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "stacked_on": "merge-main-each-round",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-20T05:00:48.906510+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Find the problem to solve"
+}
