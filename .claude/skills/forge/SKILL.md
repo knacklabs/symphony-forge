@@ -41,7 +41,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
-| "Let the agent merge" | The owner runs `forge merge enable` in their own terminal; never you |
+| "Let the agent merge" | The owner runs `forge merge enable` in a terminal outside Claude Code or Codex; never you |
 | "What should we build?" or "Find the real problem" | Discovery, below |
 | "Is it worth building?" | `forge spec payback --build-days <days> --day-rate <rate>` plus a value group |
 | "Save this spec" | `forge spec save <slug>` |
@@ -131,7 +131,7 @@ same waiting and doctor behaviour from the upgraded Forge commands.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
-in their own terminal; it opens the change for them to merge. If an interrupted switch's fix
+in a terminal outside Claude Code or Codex; it opens the change for them to merge. If an interrupted switch's fix
 contains only that setting and the default branch has moved, it rebuilds the same fix on the
 current default branch, preserving its other settings. It leaves remote work outside that fix
 alone and refuses to replace a remote branch that changes after its check. The owner still
@@ -807,6 +807,9 @@ it in `approved_via` and `approved_on`, then run `forge decision accept client-s
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
 records.
 
+The Answers check ignores trailing whitespace and line-ending differences. A refusal names the first
+different line in the Answers section, including its heading.
+
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
 it uses Codex when installed and Claude otherwise. Forge passes the selected tool's
@@ -1340,6 +1343,8 @@ which passes only when every group passes: six groups when `test` calls pytest d
 the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
 and syncing; branch protection keeps the same `tests` check.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
+Before the first committed review, this check stays pending. A stale or blocked review still
+fails. New repos get this rule at init. Existing repos get it after upgrade and sync.
 Redo the change with `forge fix start "<why>" --done "<done when>"` and copy the commits there.
 Forge's generated `forge/*` branches and doctor's dated `fix/forge-files-*` branches still use
 the normal check for a Forge record and a current review. New repos get this check at init;
