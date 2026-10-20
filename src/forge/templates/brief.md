@@ -13,10 +13,11 @@ After a merge of the default branch, close reviews only this change's own diff a
 merge base, keeping earlier findings and allowances from this item's records.
 If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call.
 If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
-From the second review round, close checks the previous round's findings and the lines changed
-since that review. New findings on unchanged lines become visible follow-ups, except security
-or data loss, which still block. `Not done` blocks only against an owner-approved Done-when
-item (the fix's Done-when line); builder details are guidance and never block as `Not done`.
+From the second review round, close checks the previous round's findings and new P0s that
+happen in normal use. A round-one fix that breaks the main path counts as a P0. Every other
+open finding becomes a visible follow-up, whether its line changed or not. `Not done` blocks
+only against an owner-approved Done-when item (the fix's Done-when line); builder details
+are guidance and never block as `Not done`.
 
 Forge records the "Prototype before sign-off" allowance. It covers any size and interface
 changes. Reviewers do not check this allowance against the diff. Other agent-recorded
@@ -278,6 +279,10 @@ so the coordinator can dismiss it. If it is right, fix every place the same rule
 the coordinator's note says the part was narrowed and follow-up fixes own these findings: then
 remove what goes beyond the Done-when lines instead of fixing them here. Add a test only where
 the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and make it fail without your fix; the review's test audit reports a test that proves nothing.
+If a finding is not worth the code, change nothing for it and write this line in a commit body,
+with its exact title and file: `Declined: <title> (<file>): not worth the code - <reason>`.
+An empty commit is fine. Close applies declines on every run, including a reused review, and
+records them as follow-ups. A P0 stays open. Only the human dismisses findings.
 Forge records findings below the bar as follow-ups or lived with; leave those alone.
 
 ### Open serious findings

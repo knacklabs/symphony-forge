@@ -825,8 +825,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     return {"version": __version__, "repo_root": repo_root(top),
             "known_issues": known_issues.collect(top, {
                 "/".join(filter(None, (match["key"] or match["fix"], match["task"]))): state
-                for rel, state, where in history["copies"]
-                if where == landed and (match := STATE.fullmatch(rel))}),
+                for rel, state in (
+                    [(rel, state) for rel, (state, _) in best.items() if rel not in merged]
+                    + [(rel, state) for rel, state, where in history["copies"] if where == landed])
+                if (match := STATE.fullmatch(rel))}),
             "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
