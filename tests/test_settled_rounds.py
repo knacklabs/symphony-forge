@@ -24,13 +24,13 @@ def test_1_cold_read_keeps_all_answers_and_ignores_settled_repeats(
     reader.dispose(first, "keep because the owner chose sign-in")
     reader.dispose(second, "cut because the date uses the browser locale")
     reader.ok(f"1. {third}\n")
-    reader.dispose(third, "defer because this slice excludes tax")
+    assert "Disposition: keep - Left open after round two" in reader.text()
 
     # Reworded evidence underneath the same settled note must not start another round.
     clean = reader.ok(f"1. {first}\n   Another shopper also needs an account.\n")
     prompt = reader.prompt()
     for answer in (first, second, third, "the owner chose sign-in",
-                   "the date uses the browser locale", "this slice excludes tax"):
+                   "the date uses the browser locale", "Left open after round two"):
         assert answer in prompt, answer
     assert "found nothing" in clean
     assert "Next: forge read SHOP" not in repo.forge("next").stdout
@@ -44,8 +44,8 @@ def test_1_cold_read_keeps_all_answers_and_ignores_settled_repeats(
         assert answer in reader.prompt(), answer
     assert "found nothing" not in new
     assert "Delivery charges are unclear." in reader.notes.read_text("utf-8")
-    refused = reader.read()
-    assert refused.returncode == 1 and "has no disposition" in refused.stderr
+    assert "passed with follow-ups" in new
+    assert "Disposition: keep - Left open after round two" in reader.text()
 
 
 def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):

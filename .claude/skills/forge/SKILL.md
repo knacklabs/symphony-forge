@@ -951,7 +951,9 @@ fix's folder:
 A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
 `Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
-findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
+findings block in round one. From round two, only an open P0 stops the read. Other open notes
+become follow-ups, and the plan goes on to approval or confirmation.
+New repos get this rule on init; existing repos get it on upgrade plus sync.
 
 Start with `forge start "<their words>"`. A spec is optional: when Forge chooses a plan, its branch adds
 its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
@@ -966,7 +968,7 @@ New repos get this guide at init; existing repos get it after upgrading Forge an
 
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
 accepts replies with at least one no-findings line when every numbered or bulleted item says
-there are no findings, ignoring other note lines. A numbered or bulleted blocking finding still
+there are no findings, ignoring other note lines. A numbered or bulleted blocking finding in round one still
 needs a disposition and another round.
 
 Handle cold-read rounds yourself: amend the plan and write dispositions.
@@ -985,10 +987,9 @@ Codex, show the same part, then ask the approval question `forge next` gives. A 
 "Done when", so tightening anything below `## For the builders` needs no new approval, while
 changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
 below `## For the builders` needs no new round either, and `forge read` refuses to run one; an
-edit above it does, and that round checks only the edit and the sections it touches. Unchanged
-text gets two rounds of notes: from round 3 on, a reader blocks only on what changed since its
-last round or on an earlier blocking finding that is not closed.
-This two-round limit applies only to story plans.
+edit above it does. From round two, for stories, specs and decisions alike, the reader checks
+whether each earlier finding is closed and raises anything new only for a P0 that happens in
+normal use. A round-one fix that breaks the main path counts as a P0.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
@@ -1645,14 +1646,6 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-From the second blocked cold-read round on the same item, stop sending rounds and ask
-the owner to settle the missing rule, even when each round finds a new problem. Use the round
-table from `forge next`: list the findings, name the pattern, and ask the owner one
-question at a time with options and a recommendation until the missing rule is settled.
-Write that rule into the plan's builder details, then send one focused round. This owner question
-applies at every score. The coordinator asks. The owner decides. The coordinator records the choice.
-Record a resolve choice only after a command stops the loop.
-
 Close runs at most two review rounds. After round two, open findings other than P0 become
 follow-ups in Known issues. An open P0 stops the item and asks the owner:
 "One more round, split or accept?" Forge waits for the recorded choice and never starts a third
@@ -1701,13 +1694,14 @@ choices. Ask the owner exactly that question. Record the choice with
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-Read also stops after three blocked cold-read rounds, for stories, specs and decisions alike, only when a
-note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Ask
-the owner to accept, narrow or split, by the stop rule; do not read again until the
-choice is recorded with `forge read <KEY or spec or decision> --resolve <accept|narrow|split> --reason "<human's choice>"`.
-Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
-the current document; later changes need another read. Narrow or split the part as agreed before
-reading again. A clean round or a recorded choice restarts the three-round count.
+A cold read runs at most two rounds, for stories, specs and decisions alike. After round two,
+open notes other than P0 become follow-ups and the plan goes on to approval or confirmation.
+An open P0 stops the read. Ask the owner: "One more round, split or accept?" Do not read again
+until the choice is recorded with
+`forge read <KEY or spec or decision> --resolve <accept|more|split> --reason "<human's choice>"`.
+More permits one more read round. Forge stops again only if that round leaves a P0 open.
+Accept keeps the notes with the owner's reason and permits approval or confirmation. Split
+the plan as agreed before reading again. Forge never starts a third round by itself.
 For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
 command as a close stop.
 

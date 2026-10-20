@@ -27,10 +27,9 @@ REVIEW_LOOP = (
     "Close stops after review round two only when a P0 remains open. Wait for the owner's recorded "
     "choice of one more round, split or accept. Otherwise, fix findings inside your Done-when "
     "in this round; do not ask for another choice unless close stops again. "
-    "Read also stops after three blocked cold-read rounds only when a note at the bar has no scores or is a "
-    "disputed keep, or a note with Harm 3 or more is open. At a stop where every open note has Harm 1 or 2, "
-    "the coordinator chooses accept or narrow itself and tells the owner after; otherwise the owner chooses. The coordinator "
-    "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
+    "A cold read stops after round two only when a P0 remains open. The owner chooses one more round, "
+    "split or accept. The coordinator records that choice with "
+    "forge read <target> --resolve <accept|more|split> --reason \"<human's choice>\".")
 LIVE_RUN = ("Before review round two, run the real flow once (not tests or stubs). "
             "Add `Live run: <what you ran> - <what you saw>` to your `Functional check:` paragraph.")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.

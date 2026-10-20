@@ -119,16 +119,6 @@ def note_holds(note: str) -> bool:
     return outcome in HOLD if outcome else not ADVISORY.match(note)
 
 
-def read_stops(notes: list[str]) -> bool:
-    """A third blocked read stops on an unscored or disputed-keep note at the bar, or any Harm 3+."""
-    for note in (re.sub(r"^\d+\.[ \t]+", "", note) for note in notes):
-        scores, held = parse(note), note_holds(note)  # a note below the bar is settled by its disposition
-        if held and (not scores or "disputed keep" in note.partition("\n")[0].casefold()) \
-                or scores and scores[2] >= 3 and (held or "Disposition:" not in note):
-            return True
-    return False
-
-
 def identity(file: Any, title: Any) -> tuple[str, str]:
     return " ".join(str(file).split()).casefold(), " ".join(str(title).split()).casefold()
 

@@ -42,7 +42,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 
 $review_loop
 
-Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
+Cold-read stops use `forge read <KEY or spec> --resolve <accept|more|split> --reason "<human's choice>"`;
 review stops from close or land use `forge close <item> --resolve <more|split|accept> --reason "<human's choice>"`.
 A stop that asks the owner needs a recorded choice with `forge close --resolve`.
 A merge of the default branch or a clean review does not clear it. Close repeats the question.

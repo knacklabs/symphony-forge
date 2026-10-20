@@ -391,16 +391,10 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader.dispose(FIRST, "keep because shoppers asked for it")
     notes = reader.text()
 
-    def fresh(why: str, says: str = "No findings.\n", held: bool = False) -> str:
+    def fresh(why: str, says: str = "No findings.\n") -> str:
         """A round that starts a new conversation with the first round's instructions, the whole
         doc and every earlier finding with its disposition, and says why."""
-        if held:
-            reader.say(says)
-            result = reader.read()
-            assert result.returncode == 1 and "Ask the human to accept, narrow or split" in result.stderr
-            out = result.stdout
-        else:
-            out = reader.ok(says)
+        out = reader.ok(says)
         assert FRESH[app].format(why) in out, out
         assert not reader.continued()
         prompt = reader.prompt()
@@ -409,14 +403,8 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
             assert sent in prompt, sent
         return prompt
 
-    def continued(says="No findings.\n", held=False):
-        if held:
-            reader.say(says)
-            result = reader.read()
-            assert result.returncode == 1 and "Ask the human to accept, narrow or split" in result.stderr
-            out = result.stdout
-        else:
-            out = reader.ok(says)
+    def continued(says="No findings.\n"):
+        out = reader.ok(says)
         assert "Starting a new" not in out
         assert reader.continued()
         return reader.prompt()
@@ -436,10 +424,8 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     prompt = continued("The totals are unclear.\n")
     assert "Round 2 of your cold read" in prompt and "a numbered list starting at 2" in _flat(prompt)
     assert "## Round 2\n\n2. The totals are unclear.\n" in reader.text()
-    assert "passed: no" in reader.text()
-    refused = reader.read()
-    assert refused.stderr.startswith("Finding 2 in plans/SHOP.read.md has no disposition")
-    reader.dispose("The totals are unclear.", "cut")
+    assert "passed: yes" in reader.text()
+    assert "Disposition: keep - Left open after round two" in reader.text()
 
     # A discarded round too.
     notes = reader.text()
@@ -450,19 +436,14 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.text() == notes
     reader.touch(None)
     (reader.shop / "scratch.txt").unlink()
-    continued("1. Nothing saves offline.\n", held=True)
-    assert "## Round 3\n\n3. Nothing saves offline.\n" in reader.text()
-    reader.dispose("Nothing saves offline.", "cut")
-    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing session recovery")
-    assert chosen.returncode == 0, chosen.stderr
 
     # The app lost the conversation.
     session = (json.loads((repo.path / ".git" / "forge" / "threads" / "read" / "SHOP.json")
                          .read_text("utf-8")).get("claude") or {}).get("id")
     reader.lose()
     fresh("Codex couldn't resume its conversation: no rollout found for thread id thr-stub-1" if app == "codex"
-          else f"Claude couldn't continue session {session}", "4. Totals need tax.\n")
-    reader.dispose("Totals need tax.", "cut")
+          else f"Claude couldn't continue session {session}", "3. Totals need tax.\n")
+    assert "Disposition: keep - Left open after round two" in reader.text()
 
     # Notes written before rounds: no round number and no copy of what was read. That is round 1,
     # and the next round starts fresh with no diff.
@@ -472,7 +453,7 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     prompt = continued()
     assert "Shoppers can save a basket and come back" in prompt
     assert "Round 2 of your cold read" in prompt and "(not available)" in prompt
-    assert "a numbered list starting at 5" in _flat(prompt)
+    assert "a numbered list starting at 4" in _flat(prompt)
     assert "round: 2\n" in reader.text() and "## Round 2\n\nNo findings.\n" in reader.text()
 
 

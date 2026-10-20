@@ -285,18 +285,22 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                 pinned += alert[:-1] + found
             else:
                 lines += found
-    for path in sorted(trees.values()):  # a spec read stopped on any work branch
+    for path in sorted(trees.values()):  # a spec's read or confirmation on any work branch
         for notes in sorted((path / "docs" / "specs").glob("*.read.md")):
             text = notes.read_text(encoding="utf-8")
             spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
             if spec.is_file():
-                advice = _read_advice(path, text)
-                stopped = story._blocked_reads(path, *story._record(text)) >= 3  # pyright: ignore[reportPrivateUsage]
-                if advice:
-                    title = spec.read_text(encoding="utf-8").splitlines()[0].lstrip("# ")
-                    lines += [f"Cold read of {review.plain(title)}:", *(advice[:-1] if stopped else advice)]
-                if stopped:
-                    lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
+                record, findings = story._record(text)  # pyright: ignore[reportPrivateUsage]
+                spec_text = spec.read_text(encoding="utf-8")
+                fields, body = story._record(spec_text)  # pyright: ignore[reportPrivateUsage]
+                if story.stopped(record, findings):
+                    lines += _read_loop(spec.stem, spec_text, text, path)
+                elif (fields.get("status") == "draft" and story.passed(record, findings)
+                      and record.get("read_hash") == repo.git("hash-object", "--", str(spec), cwd=path)):
+                    title = re.search(r"^# (.+)$", body, re.M)
+                    cd = f"cd {repo.quote(str(path))} && " if path != top else ""
+                    lines += [f"{review.plain(title[1]) if title else spec.stem} is ready for confirmation.",
+                              f'Next: {cd}forge spec confirm {spec.stem} --by "<name>"']
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
@@ -603,7 +607,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     waiting = (stack_waits if _report_config(top, refusals)["stack"] == "on" else
                [f"{key}/{task} waits for {', '.join(deps)} to merge first." for task, deps in waits.items()
                 if task in overlapping or any(not dep.startswith(f"{key}/") for dep in deps)])
-    reread = _next_round(top, key, notes, doc_hash, title, required, text)
+    reread = _next_round(key, notes, doc_hash, title, required, text)
     if readiness is not None:
         readiness["waits"] = waits
     if reread:  # a doc changed after approval gets a round before its next task starts
@@ -651,7 +655,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
               refusals: dict[Path, str], text: str, readiness: dict[str, Any] | None = None) -> list[str]:
     """Planning, read or waiting for approval: what's missing, or how to ask for approval."""
     notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
-    reread = _next_round(top, key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
+    reread = _next_round(key, notes, repo.git("hash-object", "--", f"plans/{key}.md", cwd=path), title,
                          story.rounds(notes), text)
     if reread:
         return reread
@@ -676,7 +680,7 @@ def _approval(top: Path, key: str, path: Path, title: str, digest: str,
             '"Request changes", "Stop"']
 
 
-def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
+def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, doc: str) -> list[str]:
     """The next round of a read in rounds (`required`) whose latest round had findings or whose doc
     changed above `## For the builders`: `text` is the notes, `doc_hash` and `doc` the doc's git
     hash and text."""
@@ -687,11 +691,8 @@ def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, requi
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    advice = _read_advice(top, text)
-    if story._blocked_reads(top, record, findings) >= 3:  # pyright: ignore[reportPrivateUsage]
-        return advice[:-1] + _read_loop(key, doc, text)
-    if advice:
-        return [f"Planning {title}:", *advice]
+    if story.stopped(record, findings):
+        return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
@@ -703,21 +704,12 @@ def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, requi
             f"forge read {key}"]
 
 
-def _read_advice(top: Path, notes: str) -> list[str]:
-    record, findings = story._record(notes)  # pyright: ignore[reportPrivateUsage]
-    if story._blocked_reads(top, record, findings) < 2:  # pyright: ignore[reportPrivateUsage]
-        return []
-    parts = re.split(r"^## Round (\d+)[ \t]*$", findings, flags=re.M)
-    return review.owner_advice([(number, [story.FINDING.sub("", block.splitlines()[0])
-                                         for block in story._findings(text).values()])  # pyright: ignore[reportPrivateUsage]
-                                for number, text in zip(parts[1::2], parts[2::2])])
-
-
 def _read_loop(target: str, doc: str, notes: str, where: Path | None = None) -> list[str]:
     """A stopped cold-read loop's lines: the stop, its ready-to-ask question and the next step,
     run in `where` for a spec, which forge read finds only in its own checkout."""
     cd = f"cd {repo.quote(str(where))} && " if where else ""
-    return [line.format(target=target, question=story.read_question(doc, notes)) for line in
+    record, _ = story._record(notes)  # pyright: ignore[reportPrivateUsage]
+    return [line.format(target=target, round=record["round"], question=story.read_question(doc, notes)) for line in
             (story.REFUSALS["read_loop"][0], "Next: " + cd + story.REFUSALS["read_loop"][1])]
 
 
