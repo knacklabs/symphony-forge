@@ -25,6 +25,7 @@ REFUSALS = {
     "one_or_all": ("Give one change or --all, not both and not neither.",
                    "forge land <item>, or forge land --all"),
     "one_run": ("A land run already works in this repo.", "wait for it to end, then forge land --all"),
+    "note_all": ("Give one change with --note.", 'forge land <item> --note "<text>"'),
 }
 # A child of forge land --all: fix rounds off, so a change that needs a worker or the owner stops.
 QUEUED = "FORGE_LAND_QUEUED"
@@ -37,6 +38,8 @@ def land(args: argparse.Namespace) -> int:
     if bool(args.item) == bool(getattr(args, "all", False)):
         repo.refuse(REFUSALS["one_or_all"])
     if args.item is None:
+        if getattr(args, "note", None) is not None:
+            repo.refuse(REFUSALS["note_all"])
         return _land_all()
     queued = os.environ.pop(QUEUED, "") == "1"
     item = args.item
@@ -48,7 +51,8 @@ def land(args: argparse.Namespace) -> int:
     top = close._worktree(item)
     pin = repo.config(top)["version"]
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
-    step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
+    step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True,
+                              note=getattr(args, "note", None))
     if queued:
         step.check_slot = _check_slot
     rounds = 0
@@ -73,7 +77,7 @@ def land(args: argparse.Namespace) -> int:
         # A completed session round handed back at this HEAD made no commit; it goes to close.
         handed = codex.record(top, item).get("native") or {}
         if not merged and state.get("kind") not in ("story-done", "migrate", "adopt") and (
-                status == "started" and head == start or
+                step.note is not None or status == "started" and head == start or
                 status == "working" and
                 repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working" and
                 (handed.get("head"), handed.get("outcome")) != (head, "completed")):
@@ -171,6 +175,7 @@ def land(args: argparse.Namespace) -> int:
 def _handed_out(step: argparse.Namespace, top: Path) -> bool:
     """Run a round; a round handed to the session's subagent stops land until its hand-back."""
     worker.work(step)
+    step.note = None
     if not _pending(top, step.item):
         return False
     _problems(top, step.item)
@@ -462,10 +467,12 @@ COMMANDS = [{
     "words": "land", "run": "land", "changes_state": True,
     "help": "Build, close, fix and merge a task or fix",
     "args": [(('item',), {"nargs": "?", "help": "the task or fix to land"}),
+             (("--note",), {"metavar": "TEXT", "help": "guide the first round this run starts"}),
              (("--all",), {"action": "store_true",
                            "help": "close and merge every change in close, oldest first"})],
     "position": 165,
     "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs fix rounds and merges a "
                "task or fix where the repo allows agent merges; `--all` closes and merges every change "
-               "in close, oldest first, several at a time; run it in the background |",
+               "in close, oldest first, several at a time; `--note \"<text>\"` guides one item's "
+               "first round; run it in the background |",
 }]

@@ -1509,7 +1509,9 @@ Closing section above, then run it again. Run it in the background and keep watc
 GitHub reads also retry unreadable answers and server errors three times, pausing for one,
 two and four seconds. If GitHub still does not answer, rerun the command. Not-found and
 permission refusals stop immediately; writes are never replayed by these read retries.
-If the branch already has commits after the item's start, land goes straight to close. Close
+If the branch already has commits after the item's start, land goes straight to close unless
+you give `--note "<text>"` to start a worker round with that guidance. The note applies only to
+the first round this run starts, not later fix rounds. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
 Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
@@ -1539,8 +1541,11 @@ in that order.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
-To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work` already queues work rounds across the machine, while reads and close reviews skip
+To guide a round and continue through close and merge, use `forge land <item> --note "<text>"`.
+To queue several items, run `forge land <item>` for each in the background, with `--note` when
+needed. Forge admits each worker round by machine capacity. Do not write shell queues or private
+slot loops. `--note` takes one item and cannot be used with `--all`.
+`forge work` queues work rounds across the machine, while reads and close reviews skip
 that line. All runs wait for high load to fall and memory to recover. Busy local CI jobs reserve
 cores from the budget until they finish. Close and worker tests share the separate test lane, except picker runs of five or fewer
 test files, with one place per four available cores
