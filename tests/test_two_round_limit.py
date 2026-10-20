@@ -119,6 +119,8 @@ def test_2_a_cold_read_ends_after_round_two(repo, gh, tmp_path, adopted, target,
     (where / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
     rel = "plans/SHOP.md" if target == "SHOP" else "docs/specs/invoices.md"
     doc = where / rel
+    if target == "SHOP" and case == "passed-first":
+        doc.write_text(DOC.replace("## Tasks", "## For the builders\n\n## Tasks"), encoding="utf-8")
     if target != "SHOP":
         doc.parent.mkdir(parents=True, exist_ok=True)
         doc.write_text(SPEC, encoding="utf-8")
