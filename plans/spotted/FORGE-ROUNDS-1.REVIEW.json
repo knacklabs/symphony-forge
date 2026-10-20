@@ -10,6 +10,17 @@
       "item": "FORGE-ROUNDS-1/REVIEW",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tWorker broad selection treats notes in a task's Tests cell as literal test paths and runs no tests.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 464,
+      "text": "Worker broad selection treats notes in a task's Tests cell as literal test paths and runs no tests.",
+      "from": "worker",
+      "item": "FORGE-ROUNDS-1/REVIEW",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
