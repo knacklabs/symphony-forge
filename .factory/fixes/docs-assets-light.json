@@ -73,7 +73,7 @@
     "id": "5efb9c69-4e40-4241-9ddc-703e50777af9",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -86,10 +86,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "2e967a558ce64c9c831c92f72c236094a624507c",
-    "keys": {},
-    "round": null
+    "close": "16bbfc65-bffd-460d-bfd3-3d4b722fa0a9",
+    "head": "a37819d6a482fdd372ee86964796ae1f8d32d074",
+    "keys": {
+      "the review finding \"Distinguish unrelated inputs that share a filename\" in src/forge/docskip.py": 1,
+      "the review finding \"Include supported test consumers in the input-reference scan\" in src/forge/docskip.py": 1
+    },
+    "round": 1
   },
   "why": "Docs and brand-asset fixes still wait for the full review and every CI test job (issue 975)",
   "worker": "codex"
