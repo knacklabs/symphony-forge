@@ -137,9 +137,12 @@ def blob_hash(text: str) -> str:
 def read_blob(top: Path, name: str) -> str | None:
     """A blob's text or None; only object IDs can reuse text after a ref moves."""
     def read() -> str | None:
-        if _command_cache is not None and "\n" not in name and "\r" not in name:
+        if ":" in name and not re.fullmatch(r"[\w./-]+(?:[~^]\d*)*", name.partition(":")[0]):
+            done = run("git", "show", name, cwd=top)
+        elif _command_cache is not None and "\n" not in name and "\r" not in name:
             return blob_texts(top, [name]).get(name)
-        done = run("git", "cat-file", "blob", name, cwd=top)
+        else:
+            done = run("git", "cat-file", "blob", name, cwd=top)
         return done.stdout if done.returncode == 0 else None
     return command_fact(("read blob", name), top, read) if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", name) else read()
 
