@@ -20,9 +20,9 @@
     "id": "2cec65a8-4d2c-4a2f-abb0-035945d6f23e",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-INTAKE-1/SORT",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T10:34:36.550052+00:00",
@@ -38,12 +38,10 @@
     }
   ],
   "stuck": {
-    "close": "78360be1-3712-4c77-b563-da82d7195734",
-    "head": "014812d7338a930038bb4dba4b38930ee046790a",
-    "keys": {
-      "close's tests failing": 1
-    },
-    "round": 2
+    "close": "c2c289a4-576f-4bdc-91d9-4ecd48b8fd5c",
+    "head": "dac5ac5fe5a3eeef7a809da226b73e65f7f60c66",
+    "keys": {},
+    "round": 3
   },
   "worker": "codex"
 }
