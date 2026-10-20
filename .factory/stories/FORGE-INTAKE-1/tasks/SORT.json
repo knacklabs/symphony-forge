@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-INTAKE-1-SORT",
+  "chat": {
+    "approval": "5f782b5309a654bcd05f60064fe0a2dbe51589ad1f48c4cab3e323ab42ab0b4a",
+    "claude": null,
+    "conversation": "01a1589f-c4f2-7891-a428-35e38cf94951",
+    "head": null,
+    "start": "bb41785fd837ed4ff9bbca32e8cd038af1e39370"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
