@@ -166,8 +166,10 @@ def story_drop(args: Any) -> None:
         raise repo.Refused(f"{key} has not started.", "forge next")
     parts = repo.git("for-each-ref", "--format=%(refname)", f"refs/heads/task/{key}-*",
                      f"refs/remotes/origin/task/{key}-*", cwd=top)
-    records = repo.git("ls-tree", "-r", "--name-only", ref, "--", f".factory/stories/{key}/tasks/", cwd=top)
-    if state.get("approval") or parts or records or state.get("status") not in ("planning", "dropped"):
+    records = any(repo.git("ls-tree", "-r", "--name-only", part, "--",
+                           f".factory/stories/{key}/tasks/", cwd=top)
+                  for part in (ref, *parts.splitlines()))
+    if state.get("approval") or records or state.get("status") not in ("planning", "dropped"):
         raise repo.Refused(f"{key} is approved or has started parts, so it can't be dropped.", "forge next")
     root = machine.main_checkout(top)
     path = story.worktrees(top).get(branch)

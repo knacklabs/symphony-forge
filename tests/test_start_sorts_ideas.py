@@ -269,8 +269,17 @@ def test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list(i
         _land_setup(repo, top, "record-earlier-idea")
     before = (repo.git("status", "--porcelain", cwd=top),
               repo.git("branch", "--list", cwd=top), repo.git("rev-parse", "HEAD", cwd=top))
-    discovery = _started(intake, "Make it wonderful", "Lane: discovery\n"
-                         "Reason: The problem is unclear.\nQuestion: What problem should this solve?")
+    offered = _offer(intake, "Make it wonderful")
+    # Lane replies fake the model edge; the delivered instructions own the policy.
+    prompt = " ".join(offered["prompt"].split())
+    for policy in ("If you can guess the problem, use your guess and state it in the reason.",
+                   "Ask one question through discovery only when you cannot guess the problem.",
+                   'Use the idea list only when the owner says "later".',
+                   "Never park an idea because of its size or importance."):
+        assert policy in prompt
+    discovery = _back(intake, offered, "Lane: discovery\nReason: The problem is unclear.\n"
+                      "Question: What problem should this solve?")
+    assert discovery.returncode == 0, discovery.stdout + discovery.stderr
     assert discovery.stdout.splitlines() == [
         "Forge chose discovery: The problem is unclear.",
         "Ask the human: What problem should this solve?",
@@ -324,30 +333,35 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
     if move == "story":
         roadmap = where / "plans/roadmap.json"
         data = json.loads(roadmap.read_text("utf-8"))
-        data["items"].append({"key": "WELCOME", "title": "Correct the welcome"})
+        data["items"].append({"key": "WELCOME-MOBILE", "title": "Correct the welcome"})
         roadmap.write_text(json.dumps(data), "utf-8")
         repo.git("add", "plans/roadmap.json", cwd=where)
         repo.git("commit", "-qm", "Plan the welcome change", cwd=where)
-        moved = repo.forge("story", "new", "WELCOME", "--from-fix", fix, cwd=top)
+        moved = repo.forge("story", "new", "WELCOME-MOBILE", "--from-fix", fix, cwd=top)
         assert moved.returncode == 0, moved.stdout + moved.stderr
-        doc = repo.git("show", "story/WELCOME:plans/WELCOME.md", cwd=top)
+        doc = repo.git("show", "story/WELCOME-MOBILE:plans/WELCOME-MOBILE.md", cwd=top)
         assert "## Why\n\nFix the welcome typo\n" in doc
         assert "1. **The welcome page says Welcome.**" in doc
         assert repo.git("ls-remote", "origin", "refs/heads/fix/" + fix, cwd=top)
-        task = json.loads(repo.git("show", "origin/task/WELCOME-SPEC:.factory/stories/WELCOME/tasks/SPEC.json",
+        task = json.loads(repo.git("show", "origin/task/WELCOME-MOBILE-SPEC:.factory/stories/WELCOME-MOBILE/tasks/SPEC.json",
                                    cwd=top))
         assert task["from_fix"] == fix
         assert json.loads(database.read_text("utf-8"))[0]["state"] == "OPEN"
-        _visible(repo, top, "WELCOME", fix)
+        _visible(repo, top, "WELCOME-MOBILE", fix)
         peer = top.parent / "intake-observer"
         repo.git("clone", "-q", repo.git("remote", "get-url", "origin", cwd=top), str(peer), cwd=top)
         repo.git("fetch", "-q", "origin", cwd=peer)
-        _visible(repo, peer, "WELCOME", fix)
+        _visible(repo, peer, "WELCOME-MOBILE", fix)
+        # Hyphenated keys share a branch prefix, but only the longer key owns SPEC.
+        _started(intake, "A separate welcome plan", _plan("WELCOME"))
+        dropped = repo.forge("story", "drop", "WELCOME", "--because", "Just fix it", cwd=top)
+        assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+        assert repo.git("show", "origin/story/WELCOME:plans/WELCOME.md", cwd=top)
         # Promotion has already started SPEC while the story still plans.
         # Dropping it must refuse even though no approval exists yet.
-        refused = repo.forge("story", "drop", "WELCOME", "--because", "Just fix it", cwd=top)
+        refused = repo.forge("story", "drop", "WELCOME-MOBILE", "--because", "Just fix it", cwd=top)
         assert refused.returncode == 1
-        assert refused.stderr == ("WELCOME is approved or has started parts, so it can't be dropped.\n"
+        assert refused.stderr == ("WELCOME-MOBILE is approved or has started parts, so it can't be dropped.\n"
                                   "Next: forge next\n")
     elif move == "fix":
         if age == "new":
