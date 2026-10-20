@@ -43,6 +43,8 @@ REFUSALS = {
                  'forge fix start "<why>" --done "<done when>" --slug <name>'),
     "amend_lines": ("A new done-when needs one line of text and a one-line reason.",
                     'forge fix amend {fix} --done "<done when>" --because "<why>"'),
+    "amend_choice": ("Use either --done to replace the Done-when or --append to add to it.",
+                     'forge fix amend {fix} --append "<text>" --because "<why>"'),
 }
 
 
@@ -577,18 +579,24 @@ def allow_large(args: argparse.Namespace) -> None:
 
 
 def amend(args: argparse.Namespace) -> None:
-    if not (_one_line(args.done) and _one_line(args.because)):
+    if (args.done is None) == (args.append is None):
+        refuse(REFUSALS["amend_choice"], fix=args.item)
+    text = args.done if args.done is not None else args.append
+    if not (_one_line(text) and _one_line(args.because)):
         refuse(REFUSALS["amend_lines"], fix=args.item)
     from forge import close  # close imports story, which imports this module
     top = close._worktree(args.item)
     state = repo.read_state(args.item, top) or {}
+    old = state.get("done_when", "")
+    new = text.strip() if args.done is not None else f"{old} {text.strip()}"
+    print(f"Old Done-when:\n{old}\nNew Done-when:\n{new}", flush=True)
     # The old text and the reason stay in the record; the next review reads only done_when.
     state.setdefault("amendments", []).append(
-        {"done_when": state.get("done_when", ""), "because": args.because.strip(), "at": repo.now()})
-    state["done_when"] = args.done.strip()
+        {"done_when": old, "because": args.because.strip(), "at": repo.now()})
+    state["done_when"] = new
     # The review reads Ruling: lines from the branch's commits, so it drops findings on the old text.
-    ruling = (f'Ruling: Done-when changed from "{state["amendments"][-1]["done_when"]}" to '
-              f'"{state["done_when"]}" because {args.because.strip()}; judge the new text.')
+    ruling = (f'Ruling: Done-when changed from "{old}" to '
+              f'"{new}" because {args.because.strip()}; judge the new text.')
     repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
                       repo.write_state(args.item, state, top), top=top)
     print(f"Fix {args.item} is now done when: {state['done_when']}")
@@ -741,10 +749,11 @@ COMMANDS = [
      "args": [(('reason',), {})], "position": 120,
      "listing": '| `forge fix allow-large "<reason>"` | Records the human\'s permission for a fix to go over the fix limit |'},
     {"words": "fix amend", "run": "amend", "changes_state": True,
-     "help": "Replace a fix's done-when, keeping the old text and the reason in its record",
-     "args": [(('item',), {"metavar": "FIX"}), (('--done',), {"required": True, "metavar": "DONE_WHEN"}),
+     "help": "Show the old and new Done-when, then replace it with --done or add text with --append",
+     "args": [(('item',), {"metavar": "FIX"}), (('--done',), {"metavar": "DONE_WHEN"}),
+              (('--append',), {"metavar": "TEXT"}),
               (('--because',), {"required": True, "metavar": "WHY"})], "position": 125,
-     "listing": '| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix\'s done-when; the old text and the reason stay in its record, and the next review judges the new text |'},
+     "listing": '| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Shows the old and new Done-when before it writes. Use --append "<text>" instead of --done to add text. The old text and reason stay in its record |'},
 ]
 
 GROUP_HELP = {
