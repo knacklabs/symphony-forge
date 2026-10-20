@@ -1,17 +1,20 @@
 """Release facts through the real board command, with real Git ancestry.
 
+Exercises src/forge/releases.py and src/forge/board.py.
+
 Audit: filtering tags, inventing lightweight dates or releasing a story early
 changes the public result. No existing test owns these facts. Only GitHub and
 the upgrade installer are faked; no production test seam supplies the result.
 """
 import json
 import shutil
+from datetime import datetime
 
 import pytest
 
 from conftest import ROOT
 from test_board_counts import board, rows
-from test_close import env  # noqa: F401
+from test_close import STORY_DOC, env  # noqa: F401
 from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 
 STORY = "FORGE-BOARD-3"
@@ -37,7 +40,7 @@ def test_5_board_lists_tagged_releases_and_each_items_first_release(unsynced_up,
         env.commit(repo.path, path, json.dumps({"kind": kind, "branch": branch, "status": "ready",
                    "why": "Clear help", "steps": [{"step": "start", "at": at}]}), "Write a part")
         if finished:
-            env.commit(repo.path, ".factory/stories/SHOP/story.json", json.dumps({
+            env.commit(repo.path, f".factory/stories/{item.split('/')[0]}/story.json", json.dumps({
                 "status": "done", "title": "Save a basket", "finished": at}), "Finish the story")
         repo.git("switch", "-q", "main")
         if kind == "fix":
@@ -47,9 +50,15 @@ def test_5_board_lists_tagged_releases_and_each_items_first_release(unsynced_up,
             repo.git("merge", "-q", "--no-ff", "-m", "Finish a part", branch)
         repo.git("branch", "-D", branch)
 
-    env.commit(repo.path, ".factory/stories/SHOP/story.json", json.dumps({
+    env.commit(repo.path, "plans/SHIP.md", STORY_DOC, "Plan the basket")
+    env.commit(repo.path, ".factory/stories/SHIP/story.json", json.dumps({
         "status": "approved", "title": "Save a basket", "approval": {"at": at}}), "Approve the basket")
-    land("SHOP/T1")
+    land("SHIP/T1")
+    env.commit(repo.path, "plans/OLD.md", STORY_DOC.split("| T2 |")[0] + "\nNew moving parts: none\n",
+               "Plan the first story")
+    env.commit(repo.path, ".factory/stories/OLD/story.json", json.dumps({
+        "status": "approved", "title": "An earlier basket"}), "Approve the first story")
+    land("OLD/T1", finished=True)
     land("old-help", "fix")
     repo.git("push", "-q", "origin", "main")
     empty = board(repo)
@@ -70,13 +79,18 @@ def test_5_board_lists_tagged_releases_and_each_items_first_release(unsynced_up,
         repo.git("tag", "v1.0.0")
     repo.git("push", "-q", "origin", "--tags")
     partial = board(repo)
-    assert rows(partial)["SHOP"]["released_in"] is None
-    assert rows(partial)["SHOP/T1"]["released_in"] == "v1.0.0"
-    land("SHOP/T2", finished=True)
+    assert rows(partial)["SHIP"]["released_in"] is None
+    assert rows(partial)["SHIP"]["plan_to_release_seconds"] is None
+    assert rows(partial)["SHIP/T1"]["released_in"] == "v1.0.0"
+    assert rows(partial)["OLD"]["released_in"] == "v1.0.0"
+    assert rows(partial)["OLD"]["plan_to_release_seconds"] == (3600 if annotated else None)
+    land("SHIP/T2", finished=True)
     repo.git("tag", "1.1.0-rc.1")
     land("next-help", "fix")
     repo.git("push", "-q", "origin", "main", "--tags")
-    env.gh.respond("api", "repos/{owner}/{repo}/releases", stdout=json.dumps([[{
+    publication = [{"tag_name": "v1.0.0", "published_at": "2026-10-19T14:00:00Z"}]
+    env.gh.respond("api", "repos/{owner}/{repo}/releases", stdout=json.dumps([
+        publication if history == "earlier-adoption" else [], [{
         "tag_name": "1.1.0-rc.1", "published_at": "2026-10-20T10:00:00Z",
         "created_at": "2026-10-18T10:00:00Z"}]]))
     monkeypatch.setenv("FORGE_NOW", "2026-10-20T12:00:00+00:00")
@@ -84,14 +98,23 @@ def test_5_board_lists_tagged_releases_and_each_items_first_release(unsynced_up,
         upgraded = up.run(RELEASE)
         assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     result = board(repo)
-    assert result["releases"] == [
-        {"tag": "v1.0.0", "date": "2026-10-19T13:00:00+00:00" if annotated else None,
-         "items": ["SHOP/T1", "old-help"]},
-        {"tag": "1.1.0-rc.1", "date": "2026-10-20T10:00:00Z", "items": ["SHOP", "SHOP/T2"]}]
+    normalized = [{**release, "date": datetime.fromisoformat(release["date"]).isoformat()
+                   if release["date"] else None} for release in result["releases"]]
+    first_date = ("2026-10-19T14:00:00+00:00" if history == "earlier-adoption" else
+                  "2026-10-19T13:00:00+00:00" if annotated else None)
+    assert normalized == [
+        {"tag": "v1.0.0", "date": first_date,
+         "items": ["OLD", "OLD/T1", "SHIP/T1", "old-help"]},
+        {"tag": "1.1.0-rc.1", "date": "2026-10-20T10:00:00+00:00", "items": ["SHIP", "SHIP/T2"]}]
     assert not result.get("release_note")
     found = rows(result)
-    assert found["SHOP"]["released_in"] == "1.1.0-rc.1"
-    assert found["SHOP/T1"]["released_in"] == "v1.0.0"
-    assert found["SHOP/T2"]["released_in"] == "1.1.0-rc.1"
+    assert found["SHIP"]["released_in"] == "1.1.0-rc.1"
+    assert found["SHIP"]["plan_to_release_seconds"] == 79200
+    assert found["OLD"]["plan_to_release_seconds"] == (7200 if history == "earlier-adoption" else
+                                                        3600 if annotated else None)
+    assert found["SHIP/T1"]["released_in"] == "v1.0.0"
+    assert found["SHIP/T2"]["released_in"] == "1.1.0-rc.1"
     assert found["old-help"]["released_in"] == "v1.0.0"
     assert found["next-help"]["released_in"] is None
+    monkeypatch.setenv("FORGE_NOW", "2027-01-20T12:00:00+00:00")
+    assert board(repo)["releases"] == result["releases"]

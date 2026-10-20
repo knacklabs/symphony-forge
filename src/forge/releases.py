@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from forge import board_facts, repo
+from forge import board_facts, repo, time_records
 
 VERSION = re.compile(r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z][0-9A-Za-z.+-]*)?")
 
@@ -70,7 +70,19 @@ def collect(top: Path, history: dict[str, Any], maps: list[dict[str, Any]],
                 released[plan["id"]] = max((released[part] for part in parts), key=positions.get)
         for entry in tags:
             entry["items"] = sorted(item for item, tag in released.items() if tag == entry["tag"])
+    plan_dates = {}
+    if released:
+        log = repo.git("log", "--first-parent", "--diff-filter=A", "--no-renames",
+                       "--format=%x00%cI%x00", "--name-only", landed, "--", "plans", cwd=top).split("\0")[1:]
+        for date, paths in zip(log[::2], log[1::2]):
+            for path in paths.splitlines():
+                plan_dates[path] = time_records.when(date)
+    release_dates = {entry["tag"]: time_records.when(entry["date"]) for entry in tags}
     for parent in items.values():
         for row in [parent, *parent["children"]]:
             row["released_in"] = released.get(row["id"])
+            if row["kind"] == "story":
+                start = plan_dates.get(f"plans/{row['id']}.md")
+                end = release_dates.get(row["released_in"])
+                row["plan_to_release_seconds"] = (end - start).total_seconds() if start and end and end >= start else None
     return {"releases": tags, "release_note": None if tags else "no releases tagged"}
