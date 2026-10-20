@@ -550,9 +550,9 @@ def test_18_close(env, kind):
     assert "waiting for the owner (ongoing)" in published
 
     # A new commit needs a new round. The old contract dropped every dismissal; now a matching
-    # file and title keeps it. A different finding still blocks and returns the PR to a draft.
+    # file and title keeps it. A new P0 still blocks in round two and returns the PR to a draft.
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
-    env.reviews(blocked(finding("P1", "Saving loses the basket"),
+    env.reviews(blocked(finding("P0", "Saving loses the basket"),
                         finding("P2", "Simpler: drop the cache → a dict")))
     env.commit(where, "app.py", "print('saved twice')\n")
     third = env.close(item)

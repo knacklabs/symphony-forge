@@ -129,7 +129,8 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     where = next(Path(block.splitlines()[0].removeprefix("worktree "))
                  for block in listing.split("\n\n") if f"branch refs/heads/fix/{item}" in block)
     env.commit(where, "app.py", "print('basket')\n")
-    env.reviews(blocked(finding("P1", "Basket disappears")))
+    # P1s become follow-ups in round two; use data loss to retain this blocked history.
+    env.reviews(blocked(finding("P0", "Basket disappears")))
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
@@ -348,7 +349,7 @@ def read_history_batching(env, monkeypatch):
 def warm_checks_cache(env, monkeypatch):
     github_list_fields(env)
     item, where = env.start_fix(round=1)
-    env.reviews(blocked(finding("P1", "Basket disappears")))
+    env.reviews(blocked(finding("P0", "Basket disappears")))
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
     old_body = published(env, item)
@@ -537,7 +538,7 @@ def conflict_wait(env, monkeypatch):
     assert datetime.fromisoformat(wait["end"]) == at + timedelta(seconds=30)
     # A later conflict keeps the pull request's earlier findings instead of a made-up result.
     env.commit(where, "app.py", "print('branch basket again')\n")
-    env.reviews(blocked(finding("P1", "Basket disappears")))
+    env.reviews(blocked(finding("P0", "Basket disappears")))
     assert env.close(item).returncode == 1
     published(env, item)
     env.commit(env.repo.path, "app.py", "print('newer main basket')\n")

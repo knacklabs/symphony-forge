@@ -16,8 +16,8 @@ from conftest import ROOT, _install
 from test_close import CLEAN, blocked, env  # noqa: F401 (env is a fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_setup import _fresh_client
-from test_stop_default_answer import follow_ups, later
-from test_hotspot_stop import rounds, seed
+from test_stop_default_answer import follow_ups
+from test_hotspot_stop import seed
 from test_story import DOC, READER, new_story
 
 STORY = "FORGE-SCORE-1"
@@ -78,14 +78,20 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
     if case == "narrowed":  # a follow-up fix's name and summary leave the score line out
         seed(env, "src/a.py")
         item, where = env.start_fix()
-        rounds(env, item, where, ["src/a.py"] * 2)
+        # P0s still stop; the owner explicitly narrows instead of waiting for a timeout.
+        for number in (1, 2):
+            env.commit(where, "src/a.py", f"pass  # repair {number}\n")
+            env.reviews(blocked(_scored("P0", f"Round {number} defect",
+                                        "Gain 5, Work 2, Harm 4\nMain path cannot finish.", "src/a.py")))
+            assert env.close(item).returncode == 1
         env.commit(where, "app.py", "print(3)\n")
         env.commit(where, "src/a.py", "pass  # third repair\n")
-        env.reviews(blocked(_scored("P1", "Round 3 defect",
-                                    "Gain 4, Work 2, Harm 1\nSaving drops the basket.", "src/a.py")))
-        env.close(item)
-        later(monkeypatch, 31)
-        env.close(item)
+        env.reviews(blocked(_scored("P0", "Round 3 defect",
+                                    "Gain 5, Work 2, Harm 4\nSaving drops the basket.", "src/a.py")))
+        stopped = env.close(item)
+        assert stopped.returncode == 1 and "Ask the human" in stopped.stderr
+        narrowed = env.close(item, "--resolve", "narrow", "--reason", "Follow up the repair separately")
+        assert narrowed.returncode == 0, narrowed.stdout + narrowed.stderr
         [branch] = follow_ups(env)
         subject = repo.git("log", "-1", "--format=%s", branch)
         assert "Round 3 defect" in subject
