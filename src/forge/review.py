@@ -227,21 +227,6 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
             (score.holds(f, result.get("blocking_level")) and n not in dismissed)]
 
 
-def blocked_rounds(top: Path, item: str, ref: str = "HEAD") -> tuple[int, str | None]:
-    """The latest consecutive blocked review results at ref, counted once per reviewed commit,
-    and the commit date of the first of them. Committed results include older releases and
-    later dismissals."""
-    seen, since, path = set(), None, repo.state_path(item)
-    for line in repo.git("log", "--first-parent", "--format=%H %cI", ref, "--", path, cwd=top).splitlines():
-        commit, date = line.split()
-        result = json.loads(repo.git("show", f"{commit}:{path}", cwd=top)).get("review") or {}
-        if not result or not blocking(result):
-            break
-        seen.add(result["commit"])
-        since = date
-    return len(seen), since
-
-
 def owner_advice(rounds: list[tuple[Any, list[str]]]) -> list[str]:
     """Show the history that lets the owner settle the rule behind repeated blocked rounds."""
     rows = [f"| {number} | " + ("; ".join(plain(title).replace("|", r"\|") for title in titles)
@@ -251,25 +236,6 @@ def owner_advice(rounds: list[tuple[Any, list[str]]]) -> list[str]:
             "| Round | Finding titles |", "|---|---|", *rows,
             "Next: list the findings, name the pattern, and ask one question at a time with options "
             "and a recommendation. Write the rule into the plan's builder details, then send one focused round."]
-
-
-def loop_advice(top: Path, item: str, ref: str = "HEAD") -> list[str]:
-    if blocked_rounds(top, item, ref)[0] < 2:
-        return []
-    state = json.loads(repo.git("show", f"{ref}:{repo.state_path(item)}", cwd=top))
-    if (state.get("stop") or {}).get("choice"):
-        return []  # The recorded rule governs further work until close stops the loop again.
-    if not state.get("stop") and any(
-            path.endswith(".md") and not path.endswith(".read.md") and
-            not path.startswith("plans/spotted/")
-            for path in repo.git("diff", "--name-only", "-z", state["review"]["commit"], ref,
-                                 "--", "plans/", "docs/", "README.md", cwd=top).split("\0")):
-        # A committed plan or builder-guidance edit answers the soft question.
-        # A new review resets this comparison; an unresolved hard stop still needs a choice.
-        return []
-    history = _history(top, item, f"origin/{repo.default_branch(top)}", {}, ref)
-    return owner_advice([(number, [f["title"] for f in result.get("findings", [])])
-                         for number, result in enumerate(history, 1)])
 
 
 def area(top: Path, commit: str, file: str, line: Any) -> str:
@@ -318,11 +284,11 @@ def question(name: str, delivers: str, flagged: list[str], who: str, accept: str
     """Who decides a stopped read or review loop, then its question, ready to ask as written."""
     return "\n".join([who, f"{name}: {delivers}" if delivers else name,
                       *(["It still has these problems:", *flagged] if flagged else []),
-                      "Accept, narrow or split?",
-                      f"- Accept: {accept}",
-                      f"- Narrow: drop these cases from its {parts}; they become follow-ups.",
+                      "One more round, split or accept?",
+                      f"- One more round: repair these cases in its {parts} and run one more round.",
                       "- Split: move these cases into a new story or fix of their own; this one goes on "
-                      "without them."])
+                      "without them.",
+                      f"- Accept: {accept}"])
 
 
 def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
@@ -346,15 +312,12 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
     opened = [id(finding) for finding in score.open_findings(result)]
     rows = [(n, plain(finding["title"], finding.get("body", "")), score.of(finding))
             for n, finding in enumerate(result.get("findings", []), 1) if id(finding) in opened]
-    stop = state.get("stop") or {}
-    said = question(name, delivers, score.table(rows), score.who(rows, (
-                        "Ask the human to narrow the part, split it, or accept the remaining findings, "
+    return question(name, delivers, score.table(rows), score.who(rows, (
+                        "Ask the human to choose one more round, split or accept the remaining findings, "
                         "in these words:")),
                                f"every finding in this review, the {len(rows)} listed, is dismissed with "
                                "your reason and recorded; close then goes on to the checks, and merging "
                                "is still a separate step.")
-    return said if not stop.get("area") else said.replace("It still has these problems:", (
-        f"Findings keep coming in {stop['area']}; proposed: {stop['proposed']}. It still has these problems:"), 1)
 
 
 # --- the instructions ------------------------------------------------------------------

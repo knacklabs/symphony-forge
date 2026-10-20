@@ -79,12 +79,12 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
                 "It still has these problems:\n"
                 "- Basket recovery is missing for case 3: a shopper who signs out loses the saved basket. "
                 "The doc never says when it comes back.\n"
-                "Accept, narrow or split?\n"
-                "- Accept: keep these problems as known and mark the read accepted; approving or "
-                "confirming the doc is still a separate step.\n"
-                f"- Narrow: drop these cases from its {parts}; they become follow-ups.\n"
+                "One more round, split or accept?\n"
+                f"- One more round: repair these cases in its {parts} and run one more round.\n"
                 "- Split: move these cases into a new story or fix of their own; this one goes on "
-                "without them.")
+                "without them.\n"
+                "- Accept: keep these problems as known and mark the read accepted; approving or "
+                "confirming the doc is still a separate step.")
     assert result.stderr == (
         f"Three consecutive cold-read rounds of {target} still have blocking notes. "
         "Ask the human to accept, narrow or split before reading again, in these words:\n"
@@ -108,7 +108,7 @@ def test_1_three_blocked_reads_wait_for_a_recordable_choice_on_new_and_upgraded_
     # Settled notes belong in the round history, not among the open decision cases.
     assert "A gap the owner cut" in result.stderr + said
     for output in (result.stderr, said):
-        open_notes = output.split("It still has these problems:", 1)[1].split("Accept, narrow or split?", 1)[0]
+        open_notes = output.split("It still has these problems:", 1)[1].split("One more round, split or accept?", 1)[0]
         assert "A gap the owner cut" not in open_notes
     assert len(calls.read_text("utf-8").splitlines()) == 3
     invalid = repo.forge("read", target, "--resolve", choice, "--reason", " ", cwd=where)

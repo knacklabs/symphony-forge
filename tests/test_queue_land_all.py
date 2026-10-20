@@ -429,8 +429,8 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     _fix(env, monkeypatch, "clean", 2, {"clean.py": "x = 1\n"})
     held = _fix(env, monkeypatch, "loop", 3, {"loop.py": "x = 1\n"}, status="hotspot",
                 stop={"file": "loop.py", "round": 4, "at": datetime.now(timezone.utc).isoformat()},
-                review={"findings": [finding("P1", "Saving loses the name", "loop.py")], "dismissals": []})
-    # A stuck worker's stop, and a review loop stop nobody answered for 31 minutes.
+                review={"findings": [finding("P0", "Saving loses the name", "loop.py")], "dismissals": []})
+    # Both a stuck worker and an older release's overdue stop still need an owner choice.
     _fix(env, monkeypatch, "worn", 4, {"worn.py": "x = 1\n"}, status="hotspot",
          stop={"question": "Worn keeps failing the same test. Switch, same, narrow or split?", "tool": "claude"})
     late = _fix(env, monkeypatch, "late", 5, {"late.py": "x = 1\n"}, status="hotspot",
@@ -449,21 +449,23 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     lines = done.stdout.splitlines()
     assert "clean merged." in lines, done.stdout
     assert "Starting loop." not in lines
-    # Close's own 30-minute default answered the overdue stop, so that change closed and merged.
-    assert lines[0].startswith("Nobody answered the review loop stop in 30 minutes, so Forge recorded "
-                               "the repo's default choice: narrow"), done.stdout
-    assert "late merged." in lines and not late.exists(), done.stdout
-    summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
-    assert re.fullmatch(r"Merged \(2\): (clean, late|late, clean) · Ready to merge \(0\): none · "
-                        r"Needs you \(4\): stuck, loop, worn, skip", lines[summary]), done.stdout
+    # The obsolete timeout setting never answers even an older low-Harm stop.
+    assert "default choice" not in done.stdout
+    assert "late merged." not in lines and late.exists(), done.stdout
+    summary = next(n for n, line in enumerate(lines) if line.startswith("Merged (")))
+    assert lines[summary] == ("Merged (1): clean · Ready to merge (0): none · "
+                              "Needs you (5): stuck, loop, worn, late, skip"), done.stdout
     tail = "\n".join(lines[summary + 1:])
     assert tail.startswith("- stuck: The review left serious findings open: finding 1 "
                            "(Saving drops the basket).\n  Next: forge land stuck\n- loop: Review round ")
-    assert "Saving loses the name" in tail and "Accept, narrow or split?" in tail
-    assert '  Next: forge close loop --resolve <narrow|split|accept> --reason "<human\'s choice>"\n- worn: ' in tail
-    assert tail.endswith("Ask the human:\nWorn keeps failing the same test. Switch, same, narrow or split?\n"
-                         '  Next: forge close worn --resolve <switch|same|narrow|split> --reason "<human\'s choice>"\n'
-                         "- skip: Checks failed on the pull request: tests.\n  Next: forge land skip"), done.stdout
+    assert "Saving loses the name" in tail and "One more round, split or accept?" in tail
+    assert '  Next: forge close loop --resolve <more|split|accept> --reason "<human\'s choice>"\n- worn: ' in tail
+    assert ("Ask the human:\nWorn keeps failing the same test. Switch, same, narrow or split?\n"
+            '  Next: forge close worn --resolve <switch|same|narrow|split> --reason "<human\'s choice>"\n'
+            "- late: ") in tail, done.stdout
+    assert 'forge close late --resolve <more|split|accept>' in tail
+    assert tail.endswith("- skip: Checks failed on the pull request: tests.\n"
+                         "  Next: forge land skip"), done.stdout
     assert not (env.repo.bin / "claude-calls.jsonl").exists()
     assert not env.gh_calls("pr", "merge", _number("fix/stuck"))
     assert (record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)) == before

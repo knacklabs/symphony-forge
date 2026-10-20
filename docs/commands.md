@@ -24,10 +24,10 @@
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
 | `forge fix amend <fix> --done "<done when>" --because "<why>"` | Shows the old and new Done-when before it writes. Use --append "<text>" instead of --done to add text. The old text and reason stay in its record |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
-| `forge close <item>` | Closes a task or fix; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |
+| `forge close <item>` | Closes a task or fix; a P0 after review round two waits for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"`; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |
 | `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |
-| `forge land <item>` / `forge land --all` | Builds, closes, runs fix rounds and merges a task or fix where the repo allows agent merges; `--all` closes and merges every change in close, oldest first, several at a time; `--note "<text>"` guides one item's first round; run it in the background |
+| `forge land <item>` / `forge land --all` | Builds, closes, runs at most one fix round and merges a task or fix where the repo allows agent merges; `--all` closes and merges every change in close, oldest first, several at a time; `--note "<text>"` guides one item's first round; run it in the background |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
 | `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |

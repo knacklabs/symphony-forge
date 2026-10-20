@@ -24,15 +24,15 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes "
-    "back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the third round. "
-    "Wait for a recorded choice only after close has stopped the review loop. "
-    "Otherwise, fix the findings inside your Done-when in this round, including new findings "
-    "after a recorded narrow or split; do not ask for another choice unless close stops the loop again. "
+    "Close stops after review round two only when a P0 remains open. Wait for the owner's recorded "
+    "choice of one more round, split or accept. Otherwise, fix findings inside your Done-when "
+    "in this round; do not ask for another choice unless close stops again. "
     "Read also stops after three blocked cold-read rounds only when a note at the bar has no scores or is a "
     "disputed keep, or a note with Harm 3 or more is open. At a stop where every open note has Harm 1 or 2, "
     "the coordinator chooses accept or narrow itself and tells the owner after; otherwise the owner chooses. The coordinator "
     "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
+LIVE_RUN = ("Before review round two, run the real flow once (not tests or stubs). "
+            "Add `Live run: <what you ran> - <what you saw>` to your `Functional check:` paragraph.")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
@@ -218,20 +218,11 @@ def _work(args: argparse.Namespace) -> bool:
         state = repo.read_state(item, top) or {}
         findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
-        if note is None and stop.get("by") == "default" and stop.get("worker_round") == state.get("round"):
-            note = ("Nobody answered the review loop stop in 30 minutes, so Forge recorded the repo's default "
-                    "choice: narrow this part to its Done-when lines. Follow-up fixes own the open findings ("
-                    + (", ".join(stop.get("fixes") or []) or "none") + "); remove what goes beyond the "
-                    "Done-when lines instead of fixing those findings here.")
-        elif note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
-            note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
-                    "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
-                    f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
-            if stop.get("area"):
-                note += f" Proposed for {stop['area']}: {stop['proposed']}."
+        if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
+            note = f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice."
         from forge import close  # close imports story, which imports this module
 
-        close.stuck_round(top, item, state, config, findings)
+        close.stuck_round(top, item, state, config)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -513,6 +504,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         "checkout": top.resolve().as_posix(),
         "start_here": START_HERE,
         "review_loop": REVIEW_LOOP,
+        "live_run": LIVE_RUN,
         "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
@@ -528,8 +520,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
         subject = row.get("Name", "")
         moving = re.search(r"^New moving parts:.*", doc.get("Tasks", ""), re.M | re.S)
-        on |= {"task"} | ({"user-facing"} if row.get("User-facing", "").lower() in ("yes", "true")
-                          else set())
+        on.add("task")
+        user_facing = row.get("User-facing", "").lower() in ("yes", "true")
         values.update(
             title=doc["#"], what=doc.get("What changes for you", ""), why=doc.get("Why", ""),
             done="\n".join(story.item(parsed, n, n in covers) for n in parsed["done"]),
@@ -541,11 +533,14 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             existing_tests=_existing_tests(top, task.cell_list(row.get("Scope", ""))))
     else:
         on.add("fix")
+        user_facing = state.get("fix_kind") == "ui"
         subject = state.get("why", "")
         values.update(why=subject, done=state.get("done_when", ""),
                       interfaces=", ".join(f"`{pattern}`" for pattern in
                                            repo.config(top)["interfaces"]) or "none",
                       allowance=state.get("allow_large") or "No recorded allowance")
+    if user_facing:
+        on.add("user-facing")
     values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
                          f"Build {subject} for {match['key']}." if match["task"] else
                          f"Fix: {subject}.")
@@ -569,6 +564,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"
+        if user_facing:
+            brief += "\n" + LIVE_RUN + "\n"
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
                   "then commit any fixes before you stop. "
                   "This replaces any earlier full-suite instruction; CI runs the full suite.\n")

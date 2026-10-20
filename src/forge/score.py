@@ -138,14 +138,6 @@ def open_findings(result: dict[str, Any]) -> list[dict[str, Any]]:
     return [f for n, f in enumerate(result.get("findings", []), 1) if n not in dismissed]
 
 
-def loop_stops(result: dict[str, Any], known: list[dict[str, Any]], round_number: int) -> bool:
-    """Close's three-round stop: an open Harm 3+, a repeat at the bar, or an unscored one that holds."""
-    earlier = {identity(e["file"], e["title"]) for e in known if e.get("round", 0) < round_number}
-    level = result.get("blocking_level")
-    return any(holds(f, level) and (not of(f) or identity(f["file"], f["title"]) in earlier)
-               or f.get("harm", 0) >= 3 for f in open_findings(result) if not f.get("follow_up"))
-
-
 def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: int,
              areas: dict[tuple[str, str], str]) -> list[dict[str, Any]]:
     """Add a round to the known findings, never removed; only open or owner-accepted entries change."""
@@ -170,23 +162,3 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
         if entry["outcome"] == "open" and key not in raised:
             entry["outcome"] = f"fixed in round {round_number}"
     return known
-
-
-def crowded(known: list[dict[str, Any]], result: dict[str, Any], settled: list[str],
-            areas: dict[tuple[str, str], str]) -> str:
-    """The unsettled area holding work this round with three distinct findings that held work."""
-    for f in open_findings(result):
-        area = areas.get(identity(f["file"], f["title"]), f["file"])
-        if holds(f, result.get("blocking_level")) and area not in settled and sum(
-                e.get("area") == area and e["outcome"] not in ("follow-up", "lived with") for e in known) >= 3:
-            return area
-    return ""
-
-
-def move(known: list[dict[str, Any]], area: str) -> str:
-    """The structural move a stopped area proposes; fail closed first after any security finding there."""
-    moves = ["cut the code that invites these findings", "replace the cases with one general rule",
-             "narrow that Done when item", "make it fail closed"]
-    if any(e.get("area") == area and e.get("security") for e in known):
-        moves.insert(0, moves.pop())
-    return "; or ".join(moves)

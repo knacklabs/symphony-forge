@@ -526,6 +526,7 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
+# ponytail: stop_default only loads settings from earlier releases; stops always wait for the owner.
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
@@ -534,6 +535,7 @@ DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "bot
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
             "models": {}}
+# ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
            "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off")}

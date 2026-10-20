@@ -48,9 +48,9 @@ def test_1_workers_fix_each_round_unless_close_has_stopped_the_review_loop(env, 
         command.write_text(current_command, encoding="utf-8")
     # The old unconditional wait made each finding look like a fresh choice.
     # This is a delivered prompt contract; the host stub only captures its input.
-    rule = ("Wait for a recorded choice only after close has stopped the review loop. "
-            "Otherwise, fix the findings inside your Done-when in this round, including new findings "
-            "after a recorded narrow or split; do not ask for another choice unless close stops the loop again.")
+    rule = ("Close stops after review round two only when a P0 remains open. Wait for the owner's recorded "
+            "choice of one more round, split or accept. Otherwise, fix findings inside your Done-when "
+            "in this round; do not ask for another choice unless close stops again.")
     first = calls(log)[-1]
     assert (rule in " ".join(first["brief"].split())) == (not previous)
     if previous:

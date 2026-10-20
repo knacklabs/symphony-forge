@@ -261,10 +261,8 @@ def needs_you(top: Path, rows: list[Item], readiness: dict[str, Item], person_wa
 
 
 def blocked(top: Path, rows: list[Item], best: dict[str, Any], maps: list[Item], now: datetime) -> list[Item]:
-    """Started work idle a day or more, reviews blocked three or more rounds in a row, and the
+    """Started work idle a day or more, and the
     unfinished part the most unfinished parts wait on, longest-standing first."""
-    from forge import nextstep, review  # both import this module
-
     found = []
     for row in rows:
         if row["kind"] == "story" or row.get("state") not in ("in progress", "ready to merge"):
@@ -272,11 +270,6 @@ def blocked(top: Path, rows: list[Item], best: dict[str, Any], maps: list[Item],
         if row["idle_seconds"] is not None and row["idle_seconds"] >= 86400:
             found.append({**_entry(row, "stalled", f"No activity for {time_records.plain(row['idle_seconds'])}",
                                    None, now), "seconds": row["idle_seconds"]})
-        if row["gates"]["review"]["status"] == "blocked":
-            ref = nextstep.review_ref(top, _branch(row, best.get(repo.state_path(row["id"]), ({}, None))[0]))
-            count, since = review.blocked_rounds(top, row["id"], ref) if ref else (0, None)
-            if count >= 3:
-                found.append(_entry(row, "looping", f"Review blocked {count} rounds in a row", since, now))
     states = {row["id"]: row.get("state") for row in rows}
     parts = [part for entry in maps if states.get(entry["id"]) in ("building", "approved, not started")
              for part in entry["parts"] if part["status"] != "Merged"]
