@@ -15,16 +15,16 @@
   "known": [],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3f578d9d83150d33c1184e4ed955bd430330403ce63624983a60f3c62cd44db3",
-    "changed": "3139886fa4ca43f54054c32e47b79c36a77c0b43e71b7d3803e2cfaafa2021dc",
-    "commit": "d44ff6d8643e8dacf14072aeb7ce7323b55990e6",
+    "branch_diff": "57f470ff60ca7596c0d1654dcec3e116f96f4974c34262e785b4b72587ae3ac3",
+    "changed": "5c104553b86b0e9a9cbdd8ee8b75a047432952d2206c1121fb7e82f61e836f55",
+    "commit": "e9e346d43dc935d37097a089d61b166af32c5f69",
     "dismissals": [],
     "findings": [],
-    "id": "955f1f9f-582d-4e94-ac19-d2acececd0cb",
+    "id": "7949a73f-3807-4ade-8fc4-3e1b3a7ceb7a",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T05:59:00.845581+00:00",
@@ -32,6 +32,10 @@
     },
     {
       "at": "2026-10-20T06:09:36.921292+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:27:54.441692+00:00",
       "step": "review"
     }
   ],
