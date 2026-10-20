@@ -1,0 +1,15 @@
+{
+  "base": "f66449f6a12d571de55a33cd5734007e5213bc2c",
+  "branch": "fix/release-1217",
+  "done_when": "Forge's version is 1.2.17 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-20T09:26:09.049216+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.17: a merge of main at the start of every round, decision cold reads, a light review for docs-only changes, forge land --note, Windows CI at about two times Linux, fewer git processes, and four small fixes"
+}
