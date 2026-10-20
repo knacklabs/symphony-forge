@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-20T06:26:46.580834+00:00
-seconds: 293.558
-read_hash: 1b4a1b70429e783f9ad7c025e12ca86bae94f7e9
-round: 1
+read_at: 2026-10-20T06:35:11.752560+00:00
+seconds: 149.556
+read_hash: d8e0face3f5aa7ea3bf54a985ad8b928f2b93f85
+round: 2
 passed: no
-doc_seen: 1b4a1b70429e783f9ad7c025e12ca86bae94f7e9
+doc_seen: d8e0face3f5aa7ea3bf54a985ad8b928f2b93f85
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 1c43c17ab5880cadd906bcdee02d96250dfad76c
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a157f9-3b04-79e0-a9a0-ca18f499be5d
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -62,3 +62,23 @@ Only a genuine trade-off goes to the human, as a question with options.
    The deletions assigned to REVIEW at `plans/FORGE-ROUNDS-1.md:278` already remove 375 test lines. Its estimated production deletions add roughly 150 more, before replacement tests, template changes and remaining test adaptations. This exceeds the requested roughly 400 changed-line task size.
    Gain 3, Work 2, Harm 2
    Disposition: keep - below the bar (follow-up)
+
+## Round 2
+
+6. Blocking: REVIEW deletes a helper whose caller remains until STOP.
+   Raise: Plan gap
+   `plans/FORGE-ROUNDS-1.md:276` assigns deletion of `_settled_areas` to REVIEW, but assigns deletion of the crowded-stop branch to STOP at line 280. That branch calls `_settled_areas(state)` whenever a fresh review has serious findings (`src/forge/close.py:392`). REVIEW’s own first-round refusal test therefore crashes with `NameError`, preventing REVIEW from passing before STOP can start.
+   Gain 4, Work 1, Harm 2
+   Disposition: cut
+
+7. Blocking: Unproven: item 6 omits resumed workers whose original brief predates the upgrade.
+   Raise: Test
+   `plans/FORGE-ROUNDS-1.md:237` puts live-run guidance only in the template’s user-facing block. Continued workers return a shortened brief before rendering that template (`src/forge/worker.py:536–561`). An existing user-facing task upgraded between build and repair therefore receives no live-run instruction before review round two. The planned test at `plans/FORGE-ROUNDS-1.md:247` exercises initial briefs only and would pass with this path broken.
+   Gain 3, Work 2, Harm 3
+   Disposition: cut
+
+8. Blocking: Deleting the default-answer test module breaks retained score-test imports.
+   Raise: Plan gap
+   `plans/FORGE-ROUNDS-1.md:336` deletes `tests/test_stop_default_answer.py`, but `tests/test_score_notes.py:19` and `tests/test_score_bar.py:21` import helpers from it. Neither import update is assigned. Moreover, the retained “narrowed” case in `tests/test_score_notes.py:78–92` still requires the deleted timeout behavior. The prescribed deletion leaves collection errors and an obsolete behavior case outside the listed test changes.
+   Gain 4, Work 2, Harm 2
+   Disposition: cut

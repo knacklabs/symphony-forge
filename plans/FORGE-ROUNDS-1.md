@@ -241,7 +241,9 @@ and the reader (`claude_payload` and `say` from `tests/test_readloop_gates.py`).
      the review prompt (`review.functional_check`), so the record lives in git and the pull
      request. Forge checks nothing and refuses nothing for it.
    - `worker.py` turns the `user-facing` block on for a task whose row says User-facing yes, as
-     today, and also for a fix whose kind is `ui`. That is one condition.
+     today, and also for a fix whose kind is `ui`. That is one condition. The shortened brief for a
+     continued worker (`worker.py` lines 536-561) adds the same live-run sentence under the same
+     condition, so a worker that started before the upgrade gets it in its fix round.
    - Normal-use cases: a user-facing task's build round and fix round; a `ui` fix; a backend fix,
      whose brief has no live-run line; a close on a commit with no `Live run:` line.
    - Test: `test_6_a_user_facing_change_asks_for_one_live_run_and_refuses_nothing_without_it`.
@@ -250,6 +252,8 @@ and the reader (`claude_payload` and `say` from `tests/test_readloop_gates.py`).
      - On the adopted fixture, a `ui` fix started after `client_item`'s setup: `forge work`'s brief
        has it. The last commit's `Functional check:` paragraph has no `Live run:` line, and
        `forge close` still runs the review (one Autoreview call) and exits 0.
+     - On the adopted fixture, a `ui` fix whose first round ran before the upgrade: its continued
+       fix round's brief has the live-run sentence.
      - A backend fix's brief has no live-run sentence.
 
 ## Tasks
@@ -273,11 +277,12 @@ New moving parts: none
   - REVIEW:
     - in `review._bound_findings`, the unchanged-lines hunk check and the `FLOORS[:2]`
       exemption;
-    - in close.py, settled areas (lines 138-139, 335-341, `_settled_areas`). They only served the
-      area stop. Round three now blocks only on a P0, so it needs no settled areas.
+    - nothing in close.py's settled areas: their last caller is the crowded branch, which STOP
+      deletes.
   - STOP, in close.py:
     - the choice-round count and the stop before the review (lines 287-305);
-    - the crowded, `loop_stops` and same-file branch, with `flagged` (lines 389-407);
+    - the crowded, `loop_stops` and same-file branch, with `flagged` (lines 389-407), and with it
+      the settled areas (lines 138-139, 335-341, `_settled_areas`), which only served that stop;
     - both `loop_advice` prints;
     - `_answer_by_default` and its call;
     - findings as a reason for `stuck_round`. The stuck stop keeps "close's tests failing". A
@@ -334,7 +339,10 @@ New moving parts: none
     - Deletes test_3 of `tests/test_reviews_converge_on_changed_lines.py`.
     - Deletes test_4 of `tests/test_score_bar.py`.
     - Deletes `tests/test_stop_default_answer.py`: its rule (the 30-minute default) is deleted, and
-      its third-round stop with P1s can no longer exist.
+      its third-round stop with P1s can no longer exist. Its helpers `follow_ups` and `later` go
+      with it: `tests/test_score_bar.py` uses them only in its deleted test_4, so its import line
+      goes; `tests/test_score_notes.py` uses them only in the `narrowed` case of its test, which
+      needs the deleted timeout, so that case and the import line go.
     - Changes test_2 of `tests/test_land.py`. It drops `_findings_after_three_rounds_ask_a_question`
       and `_default_stop_shows_the_question_and_exits`. It moves `_session_rounds_count_across_reruns`
       into test_3's "session" case. Its other cases expect one fix round.
