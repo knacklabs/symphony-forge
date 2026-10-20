@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release version bump repeats the last release's version lines across install scripts, manifests and tests",
   "base": "f66449f6a12d571de55a33cd5734007e5213bc2c",
   "branch": "fix/release-1217",
   "done_when": "Forge's version is 1.2.17 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
