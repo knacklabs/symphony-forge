@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 260,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 3,
       "line": 39,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -42,37 +42,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "7c400e035b8fb45a2038f2085bf6f1f39c5aebefd128491d8141f376ccc40f07",
-    "changed": "54c3d51fad983ac1974be239c9c6365c56912abfafa6054194f5b6016eb7d033",
-    "commit": "1177d0b670dba31f3f6adb9f20be24984c125455",
+    "branch_diff": "8f76e2f01f24e82208d6390c59263a11a0736c0677a349b81935db96aecc5966",
+    "changed": "ccbfe0e275295f8f966f3ba72c300c22673cc0f714fa758cd6456dabdd6464b1",
+    "commit": "80ba8488f4657c551964a9b2a4c37b25a279496b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - upgrading a checkout without local timing logs while an unfinished story has a part merged more than six weeks ago. Adding past PRs here puts their branches into `remembered`, removing those parts from `history[\"expired\"]` at board.py:278\u2013282. However, `by_branch` still receives only current-window PRs, so the restored row passes an empty PR body to `time_records.combined` at lines 658\u2013660. The part consequently bypasses the historical-body lookup at lines 720\u2013730, and previously published work and check timings disappear from the story totals. Preserve the historical PR body alongside its actors, or retain the historical-record lookup for these restored rows.",
-        "file": "src/forge/board.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 260,
-        "priority": "P1",
-        "title": "Preserve historical PR bodies when restoring older part rows",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - running upgrade with a Windows `gh.cmd` launcher, including the repository's Windows test harness. `PAST_PEOPLE` contains literal newlines, which this argument passes unchanged through `repo.run` (repo.py:199\u2013223). Batch launchers are interpreted by the Windows shell ([Python documentation](https://docs.python.org/3/library/subprocess.html#security-considerations)); the embedded line breaks split this invocation and prevent the historical query from completing. Backfill then stops before collecting known issues and releases, and subsequent closes repeat the failure. Flatten the query as the existing board query does at board.py:104\u2013105.",
-        "file": "src/forge/backfill.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 39,
-        "priority": "P1",
-        "title": "Flatten the GraphQL query before passing it through a batch launcher",
-        "work": 1
-      }
-    ],
-    "id": "2c16ee3f-340e-48e7-9eb0-682eccdffc0d",
-    "status": "blocked"
+    "findings": [],
+    "id": "571c501f-f5ed-45ef-b517-5c7d6b33eb4d",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T11:27:06.335873+00:00",
@@ -80,6 +59,10 @@
     },
     {
       "at": "2026-10-20T12:43:19.295466+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T13:20:03.575209+00:00",
       "step": "review"
     }
   ],
