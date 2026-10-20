@@ -1,0 +1,15 @@
+{
+  "base": "313e12fa94674f4bd34c5784e7e1748effe91425",
+  "branch": "fix/one-round-fixes",
+  "done_when": "A fix's review runs one round: after round one, open findings that are not P0 become follow-ups and the fix goes on to merge, and an open P0 stops for the owner; a story part keeps two rounds; on a new repo and on an earlier-adopted repo. The shipped guide says the human never has to say story, part or fix and is never asked which, the agent picks the lane and says in one line what happens next (no approval needed, or a plan to approve), and if in doubt it starts a fix because the size check at close moves it to a story",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-20T10:34:51.634070+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants a clear difference between a light fix and a story part: a fix gets one review round, a story part two. People also give ideas without knowing what a story, a part or a fix is, so the agent must never ask them to choose"
+}
