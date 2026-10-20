@@ -41,9 +41,11 @@ def test_1_synced_skill_explains_keeping_work_moving_and_close_names_it(env, tmp
         skill = client / host / "skills/forge/SKILL.md"
         section = skill.read_text(encoding="utf-8").split("## Keeping work moving\n", 1)[1]
         flat = " ".join(section.split("\n## ", 1)[0].split())
+        # Land now accepts guidance itself, replacing the work --note then land chain.
         for instruction in (
             "`forge land <item>`", "build, close, fix rounds and merge",
-            "`forge work <item> --note", "`forge task start <KEY>/<TASK>`",
+            '`forge land <item> --note "<text>"`', "for each in the background",
+            "Forge admits each worker round by machine capacity.", "`forge task start <KEY>/<TASK>`",
             "`forge fix start", "team-owned", "`forge.toml`", "pinned Forge",
             "`forge sync`", "approval", "cold-read", "stage only resolved paths",
             "overlapping work", "other ready work", "`forge next` after each merge",

@@ -1347,10 +1347,17 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+Docs and brand-asset changes get the light review, which blocks only on P0 findings.
 Close and the generated `forge.yml` skip the test command when every changed path is Markdown
 (case-insensitive), or under `docs/`, `plans/`, `.factory/` or `.forge/`. They compare against the
 base with the same rule as the part-size check. No setting is needed. The required `tests` check
-passes and says `docs only: tests skipped`. One code file runs tests as usual. New repos get
+passes and says `docs only: tests skipped`. Images and fonts also count as assets, wherever they
+live. Files marked `linguist-generated` and docs or assets referenced by tests keep the full
+review and tests. Forge resolves literal paths from the repository or test file's folder on
+both sides of the change, including literal path joins, `__tests__/` files and shared
+`conftest.py` fixtures.
+CI checks this once before the test groups and skips the group jobs for a docs-only change.
+One code file runs tests as usual. New repos get
 this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
 For other changes, the generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
 which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
@@ -1523,7 +1530,9 @@ Closing section above, then run it again. Run it in the background and keep watc
 GitHub reads also retry unreadable answers and server errors three times, pausing for one,
 two and four seconds. If GitHub still does not answer, rerun the command. Not-found and
 permission refusals stop immediately; writes are never replayed by these read retries.
-If the branch already has commits after the item's start, land goes straight to close. Close
+If the branch already has commits after the item's start, land goes straight to close unless
+you give `--note "<text>"` to start a worker round with that guidance. The note applies only to
+the first round this run starts, not later fix rounds. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
 Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
@@ -1553,8 +1562,11 @@ in that order.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
-To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work` already queues work rounds across the machine, while reads and close reviews skip
+To guide a round and continue through close and merge, use `forge land <item> --note "<text>"`.
+To queue several items, run `forge land <item>` for each in the background, with `--note` when
+needed. Forge admits each worker round by machine capacity. Do not write shell queues or private
+slot loops. `--note` takes one item and cannot be used with `--all`.
+`forge work` queues work rounds across the machine, while reads and close reviews skip
 that line. All runs wait for high load to fall and memory to recover. Busy local CI jobs reserve
 cores from the budget until they finish. Close and worker tests share the separate test lane, except picker runs of five or fewer
 test files, with one place per four available cores

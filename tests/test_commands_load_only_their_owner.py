@@ -17,11 +17,12 @@ HELP = {**HELP_GOLDEN,
         "test": "usage: forge test [-h] [--pytest BASE]\n\n"
                 "Run related tests in the machine test lane, or pick pytest tests with --pytest\n\n"
                 "options:\n  -h, --help     show this help message and exit\n  --pytest BASE\n",
-        "land": "usage: forge land [-h] [--all] [item]\n\n"
+        "land": "usage: forge land [-h] [--note TEXT] [--all] [item]\n\n"
                 "Build, close, fix and merge a task or fix\n\n"
-                "positional arguments:\n  item        the task or fix to land\n\n"
-                "options:\n  -h, --help  show this help message and exit\n"
-                "  --all       close and merge every change in close, oldest first\n",
+                "positional arguments:\n  item         the task or fix to land\n\n"
+                "options:\n  -h, --help   show this help message and exit\n"
+                "  --note TEXT  guide the first round this run starts\n"
+                "  --all        close and merge every change in close, oldest first\n",
         "hook handoff": "usage: forge hook handoff [-h]\n\n"
                         "Before compaction: save forge next beside the agent's decisions and lessons\n\n"
                         "options:\n  -h, --help  show this help message and exit\n",

@@ -862,8 +862,7 @@ def plan_behind(top: Path, key: str, ref: str, history: dict[str, Any] | None = 
 
 def show(top: Path, ref: str, path: str) -> str | None:
     """A file's text at a commit, or None when it isn't there."""
-    done = repo.run("git", "show", f"{ref}:{path}", cwd=top)
-    return done.stdout if done.returncode == 0 else None
+    return repo.read_blob(top, f"{ref}:{path}")
 
 
 def merged_at(top: Path, ref: str, path: str) -> str:
