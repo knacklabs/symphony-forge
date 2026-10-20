@@ -232,7 +232,9 @@ def test_5_same_run_under_either_host_and_workers(request, land, monkeypatch, ho
     # Kit workers run on the other tool; same-tool rounds belong to the native session flow.
     monkeypatch.delenv("CLAUDECODE", raising=False)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
-    approve_story(land.repo, STORY_DOC)
+    with monkeypatch.context() as coordinator:
+        coordinator.setenv("CODEX_THREAD_ID", "thr-test-approval")
+        approve_story(land.repo, STORY_DOC)
     land.repo.git("merge", "-q", "--ff-only", "story/SHOP")
     land.repo.git("push", "-q", "origin", "main")
     monkeypatch.setenv(host, "1" if host == "CLAUDECODE" else "thr-test-coordinator")
