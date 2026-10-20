@@ -131,13 +131,15 @@ def test_7_first_screen(env, monkeypatch, previous):
         assert started.returncode == 0, started.stderr
     monkeypatch.delenv("GIT_COMMITTER_DATE")
     clock(monkeypatch, now)
-    # Six fixes in progress; one has a blocked review round.
+    # Six fixes; the first P1 now becomes a follow-up and waits for the human merge.
     for n in range(6):
         started = env.repo.forge("fix", "start", f"Speed up page {n + 1}", "--done", "It is fast", "--slug", f"speed-{n}")
         assert started.returncode == 0, started.stderr
     tree = worktree(env.repo, "fix/speed-0")
     env.commit(tree, "speed.txt", "fast\n", "Speed up the page")
-    env.repo.forge("close", "speed-0", cwd=tree)
+    closed = env.repo.forge("close", "speed-0", cwd=tree)
+    assert closed.returncode == 0 and "Ready:" in closed.stdout, closed.stdout + closed.stderr
+    assert "Follow-ups that do not block the merge" in closed.stdout
     # Merged pull requests for the trends: one through Forge two weeks ago, one around it today.
     github(env, [pr(1, "task/OLD-T1", BEN, now - timedelta(days=14)),
                  pr(2, "quick-patch", ANA, now - timedelta(hours=1), "Patch the login page"),
@@ -147,21 +149,23 @@ def test_7_first_screen(env, monkeypatch, previous):
 
     data = board(env.repo)
     team = data["team"]
-    # Seven waits on a person, two blocked or slow fixes, and the rest building.
+    # Seven plan approvals and one human merge wait, two idle fixes, and the rest building.
     needs = {row["id"] for row in team["needs_you"] or []}
     stuck = {row["id"] for row in team["blocked"] or []}
     building = [row["title"] for row in data["items"] if row["id"] not in needs | stuck
                 and row["state"] in ("building", "in progress", "ready to merge")]
-    assert len(building) == (7 if team["blocked"] is not None else 9)
+    assert len(building) == (6 if team["blocked"] is not None else 8)
     if team["needs_you"] is not None:
-        assert len(team["needs_you"]) == 7
+        assert len(team["needs_you"]) == 8
+        assert ("speed-0", "merge") in {(row["id"], row["reason"]) for row in team["needs_you"]}
     if team["blocked"] is not None:
         assert len(team["blocked"]) == 2
 
     # Go-live, and a row's round lines and who started it.
     assert team["go_live"]["status"] == "not enough history"
     row = next(r for r in data["items"] if r["id"] == "speed-0")
-    assert row["rounds"], "The blocked close recorded a round"
+    assert row["state"] == "ready to merge"
+    assert row["rounds"], "The close recorded its round and follow-up"
     assert row["started_by"]
     # A building story holds its parts' round lines.
     story = next(r for r in data["items"] if r["id"] == "SHOP")

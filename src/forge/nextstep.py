@@ -947,7 +947,8 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if "question" in stop:
             return [f"Forge stopped {label}. Ask the human:", stop["question"],
                     "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
-        return [f"Close stopped {label}: a P0 is still open in {stop['file']}.",
+        reason = "its review found an open P0" if stop.get("review_limit") else f"a P0 is still open in {stop['file']}"
+        return [f"Close stopped {label}: {reason}.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine

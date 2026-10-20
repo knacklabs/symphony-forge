@@ -136,6 +136,9 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
     published(env, item)
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
+    published(env, item)
     machine_a = env.repo.path
     remote = env.repo.git("remote", "get-url", "origin")
     machine_b = env.tmp / "second-machine"
@@ -379,6 +382,8 @@ def warm_checks_cache(env, monkeypatch):
     assert row(env.repo, item)["gates"]["review"]["status"] == "blocked"
     calls = len(env.gh_calls("api", "graphql"))
     env.repo.path = machine
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     env.commit(where, "app.py", "print('basket retained')\n")
     env.reviews(CLEAN)
     closed = env.close(item)

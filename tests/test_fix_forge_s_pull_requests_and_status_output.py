@@ -2,7 +2,7 @@
 import json
 import re
 import pytest
-from test_close import CLEAN, blocked, body, env, finding  # noqa: F401 - command-level fixture
+from test_close import CLEAN, STORY_DOC, blocked, body, env, finding  # noqa: F401 - command-level fixture
 from test_story import setup
 
 STORY = "forge-s-pull-requests-and-status-output"
@@ -46,7 +46,7 @@ def test_2_fix_title_is_at_most_seventy_characters(env, why, expected):
 
 @pytest.mark.parametrize("blocked_review", [False, True])
 def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review):
-    item, where = env.start_fix()
+    item, where = env.start_task()
     reviewed = env.repo.git("rev-parse", "HEAD", cwd=where)
     env.reviews(blocked(finding("P1", "A greeting is missing")) if blocked_review else CLEAN)
     assert env.close(item).returncode == (1 if blocked_review else 0)
@@ -152,12 +152,12 @@ def test_7_next_names_pr_after_successful_close(env):
 
 
 def test_8_next_names_finding_after_close_stops(env):
-    item, _ = env.start_fix()
+    item, _ = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(finding("P1", "A greeting is missing")))
     assert env.close(item).returncode == 1
     result = env.repo.forge("next")
     assert result.returncode == 0, result.stderr
-    assert "Close stopped on The fix tidy-readme: A greeting is missing." in result.stdout
+    assert "Close stopped on SHOP/T1: A greeting is missing." in result.stdout
 
 
 def test_9_board_keeps_finished_fixes_with_their_pull_requests_beside_active_work(repo, gh, tmp_path):

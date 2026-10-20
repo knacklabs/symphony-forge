@@ -62,7 +62,9 @@ def test_2_review_convergence_not_done_blocks_only_an_owner_approved_item(env, a
     env.reviews(blocked(note))
     closed = env.close(item)
     assert len(env.review_calls()) == 1, closed.stdout + closed.stderr
-    if owner_item:
+    # A fix's first review keeps even owner-item P1s as follow-ups. Story
+    # parts still block on a missed owner item in their first round.
+    if owner_item and kind == "task":
         assert closed.returncode == 1 and note["title"].rstrip(".") in closed.stderr, closed.stdout + closed.stderr
     else:
         assert closed.returncode == 0, closed.stdout + closed.stderr

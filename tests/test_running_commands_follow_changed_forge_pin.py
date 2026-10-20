@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, IDLE_MACHINE, REAL_UV, ROOT, _install
-from test_close import CLEAN, blocked, body, env, finding  # noqa: F401
+from test_close import body, env, run  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
-from test_land import ITEM, URL, _fix, _workers, land  # noqa: F401
+from test_land import ITEM, URL, _fix, _red_checks, _workers, land  # noqa: F401
 
 
 def _earlier_release(env, *, real_uv=False):
@@ -125,6 +125,13 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     original = original.replace('workers = "codex"', 'workers = "claude"')
     original = original.replace('model = "gpt-6.1-sol"', 'model = "opus"')
     original = re.sub(r'^subagents = .*\n|^subagent_effort = .*\n', '', original, flags=re.M)
+    if stage == "land-fix":
+        # A fix's first P1 is now a follow-up. A real failed test still needs a repair round.
+        suite = env.tmp / "suite.py"
+        suite.write_text('import pathlib, sys\nsys.exit(not pathlib.Path("work-1.txt").exists())\n',
+                         "utf-8")
+        original = ("test = " + json.dumps(f'"{sys.executable}" "{suite}"') + "\n"
+                    + re.sub(r'^test = .*\n', '', original, flags=re.M))
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
     guide_conflict = stage.endswith("guide-conflict")
     guide = ".codex/skills/forge/SKILL.md"
@@ -151,8 +158,6 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
             env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
                            '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     else:
-        if stage == "land-fix":
-            env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN)
         _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
@@ -206,25 +211,26 @@ def test_2_land_keeps_its_one_fix_round_limit_after_the_worker_changes_the_pin(
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
-    # The upgraded process keeps land's one-fix budget while the local tests stay red.
-    suite = env.tmp / "suite.py"
-    suite.write_text('print("FAILED test_readme.py::test_greeting")\nraise SystemExit(1)\n', "utf-8")
-    failing_test = json.dumps(f'"{sys.executable}" "{suite}"')
+    # Persistent CI failures still need repair rounds. P1s no longer block a fix, and P0s
+    # stop for the owner; clean reviews leave land's own one-round budget in charge.
+    env.checks([run("tests", "failure"), run("forge-pr-check")])
+    _red_checks(env)
     upgraded = original.replace('version = "v1.2.2"',
-        f'version = "{current}"\nfast_test = {failing_test}\ntest = {failing_test}')
-    env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN)
+        f'version = "{current}"\nfast_test = ""')
     _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     done = env.repo.forge("land", ITEM, cwd=where)
     assert done.returncode == 1, done.stdout + done.stderr
     assert len(_workers(env)) == 1, done.stdout + done.stderr
-    assert f"Stopped after one fix round: {ITEM} still has the failing tests." in done.stdout
+    assert all("no greeting in README" in worker["brief"] for worker in _workers(env))
+    assert f"Stopped after one fix round: {ITEM} still has the failing checks." in done.stdout
     notice = (f"Forge pin changed from v1.2.2 to {current}; "
               f"continuing forge land with {current}.")
     assert (done.stdout + done.stderr).splitlines().count(notice) == 1
     assert "Ready:" not in done.stdout
-    assert not env.gh_calls("pr", "ready")
+    assert "Checks failed on the pull request: tests." in done.stderr
+    assert not env.gh_calls("pr", "merge")
     [dispatch] = [json.loads(line) for line in
                   (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
     assert dispatch["args"] == ["tool", "run", "--from",

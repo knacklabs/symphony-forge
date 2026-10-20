@@ -45,14 +45,12 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
         assert "never a dismissal for being unnecessary, rare or low value" not in guide
         assert "whatever files they were in" not in guide
 
-    # A review loop stops: every open finding, ranked by the bar, then Harm, then Gain, then Work,
-    # each with its own number; one below the bar is listed too.
+    # A fix now stops on its first P0 review. Its question still lists every open
+    # finding, ranked by the bar, then Harm, then Gain, then Work, below-bar ones too.
     item, where = env.start_fix()
     found = lambda title, scores, number, who="": _scored(  # noqa: E731
         "P1", title, f"{scores}\nRaise: Functional.{who}", f"docs/{number}.md")
-    _round(env, item, where, 1, found("Round 1 defect", "Gain 5, Work 2, Harm 4", 1))
-    # Gain 5 keeps one P0 open in round two; the same ranked table lists every open finding.
-    stop = _round(env, item, where, 2,
+    _round(env, item, where, 1,
            found("Other shells", "Gain 3, Work 4, Harm 3", 3, " Fish users get no prompt."),
            found("Saving drops the basket", "Gain 3, Work 2, Harm 2", 4, " Returning shoppers lose it."),
            found("Checkout charges twice", "Gain 5, Work 3, Harm 1", 5, " Every buyer pays double."),
@@ -68,9 +66,11 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
             "| 6 | Search skips accents: shoppers abroad miss items. | 3 | 1 | 2 | follow-up fix |",
             "| 2 | Saving drops the basket: returning shoppers lose it. | 3 | 2 | 2 | follow-up fix |",
             "| 4 | The label is long: readers squint. | 2 | 1 | 1 | live with |"]
+    # Repeating close holds the same owner question without another review round.
+    stop = env.close(item).stderr
     assert _table(stop) == rows, stop
     assert "One more round, split or accept?" in stop.split(rows[-1], 1)[1]
-    # The P0 still open in round two needs the owner's choice.
+    # The P0 still open after the fix's first review needs the owner's choice.
     assert ("Ask the human to choose one more round, split or accept the remaining findings, in these words:"
             in stop and "settle it yourself" not in stop)
     assert "\n".join(rows) in repo.forge("next").stdout

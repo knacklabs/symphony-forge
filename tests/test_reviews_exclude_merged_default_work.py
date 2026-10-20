@@ -29,7 +29,8 @@ def test_1_review_after_default_merge_covers_only_the_changes_own_work(env, prev
         + original, encoding="utf-8")
     own_title = "Greeting drops the reader's name"
     allowance = "The greeting needs two files"
-    item, where = env.start_fix({"app.py": "print('hello')\n"}, allow_large=allowance)
+    item, where = env.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json",
+                            {"allow_large": allowance}, {"app.py": "print('hello')\n"})
     env.reviews(blocked(finding("P1", own_title)))
     first = env.close(item)
     assert first.returncode == 1 and own_title in first.stderr, first.stdout + first.stderr

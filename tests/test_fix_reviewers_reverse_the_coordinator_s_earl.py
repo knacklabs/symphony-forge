@@ -10,7 +10,7 @@ DISMISSED = "app.py:1 the greeting is here"
 
 
 def test_1_rulings_and_dismissals_reach_the_second_review(env):
-    item, where = env.start_fix()
+    item, where = env.start_task()
     env.reviews(blocked(finding("P1", "Greeting is missing")),
                 # Only P0s remain blocked in round two and need an explicit dismissal.
                 blocked(finding("P0", "Saving corrupts the basket")), CLEAN)

@@ -15,7 +15,7 @@ def test_1_dismissal_follows_the_same_finding_after_main_merge(env, previous, sa
     base = "old\n" + "pass\n" * 20 + "tail\n"
     env.commit(env.repo.path, "app.py", base)
     env.repo.git("push", "-q", "origin", "main")
-    item, where = env.start_fix(changes={"app.py": base.replace("old", "new").replace("tail", "branch")})
+    item, where = env.start_task(changes={"app.py": base.replace("old", "new").replace("tail", "branch")})
     safe = finding("P1", "Already safe", line=22)
     env.reviews(blocked(safe))
     first = env.close(item)

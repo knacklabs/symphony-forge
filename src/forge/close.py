@@ -57,6 +57,8 @@ REFUSALS = {
                 '"<file:line> <reason>"'),
     "hotspot": ("Review round {round} of {item} still has an open P0 in {file}, so Forge stopped. {question}",
                 'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
+    "fix_p0": ("This fix's review found an open P0. {question}",
+               'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
@@ -283,7 +285,7 @@ def close(args: argparse.Namespace) -> int:
         finding = previous["findings"][number - 1]
         requested[score.identity(finding["file"], finding["title"])] = because
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if fresh and round_number >= 2:
+    if fresh and round_number >= (2 if "/" in item else 1):
         refreshed = review._bound_findings(top, item, state, previous, result["findings"]) or refreshed
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.proof_list(top, f"origin/{default}"))
@@ -362,9 +364,11 @@ def close(args: argparse.Namespace) -> int:
     if not fresh or dismissals or refreshed:
         score.remember(_known(top, item, state, f"origin/{default}", previous), result, round_number,
                        {} if fresh else areas)
-    if serious and round_number >= 2 and (not fresh or not state.get("stop")):
+    if serious and round_number >= (2 if "/" in item else 1) and (not fresh or not state.get("stop")):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
                    "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}
+        if "/" not in item:
+            stopped["review_limit"] = True
         state["stop"] = stopped
     noted = (spotted.own_path(item),) if not switch and spotted.record(
         top, item, state, f"origin/{default}", result) else ()
@@ -400,7 +404,7 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:
         if stopped:
-            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
+            repo.refuse(REFUSALS["fix_p0" if stopped.get("review_limit") else "hotspot"], item=item, round=round_number,
                         question=review.stop_question(top, item, state), **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
@@ -501,7 +505,7 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
         return
     if state.get("stop") and not state["stop"].get("choice"):
-        repo.refuse(REFUSALS["hotspot"], item=item,
+        repo.refuse(REFUSALS["fix_p0" if state["stop"].get("review_limit") else "hotspot"], item=item,
                     question=review.stop_question(top or _worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})
@@ -1113,5 +1117,5 @@ COMMANDS = [{
              (('--resolve',), {"choices": ["more", "narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The human's choice after a review loop stop"})],
     "position": 150,
-    "listing": "| `forge close <item>` | Closes a task or fix; a P0 after review round two waits for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
+    "listing": "| `forge close <item>` | Closes a task or fix; a fix gets one review round and a part two; an open P0 then waits for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
 }]
