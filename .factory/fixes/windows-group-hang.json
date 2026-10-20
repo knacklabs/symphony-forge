@@ -10,13 +10,55 @@
   },
   "done_when": "A hung Windows test group fails within 30 minutes with the name and stack of the test that hung in its log, and the test that hung no longer hangs on windows-latest; Linux CI is unchanged",
   "fix_kind": "mechanical",
+  "flagged": [],
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_a_hung_group_exits_with_the_test_name_and_stack() in tests/test_hung_test_groups_fail_with_stacks.py",
+      "file": "tests/test_hung_test_groups_fail_with_stacks.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 25,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the test that hung no longer hangs on windows-latest",
+      "work": 4
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "336268c49d635e450120a193df7ccd1650c1392b57b4f0adefffde4f3831ba55",
+    "changed": "4c606abbc3ac56764cb4937cacf1c1dc99c2a9b33622c81934b91529c0e5f0a0",
+    "commit": "aa4d36ab9db7e3420593316f5937a07efd0f75fa",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 4, Harm 2\nRaise: Not done. The change adds a watchdog and synthetic hangs, but does not identify or repair the original hanging test or fixture. This test deliberately creates a new Event.wait() hang; it cannot demonstrate that the reported Windows hang is fixed. The proof list explicitly marks that repair and verification as missing. The Done-when requires: \"A hung Windows test group fails within 30 minutes with the name and stack of the test that hung in its log, and the test that hung no longer hangs on windows-latest; Linux CI is unchanged\". Identify the original hang from Windows diagnostics, repair its cause, and verify that case on windows-latest.",
+        "file": "tests/test_hung_test_groups_fail_with_stacks.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 2,
+        "line": 25,
+        "priority": "P1",
+        "title": "Not done: the test that hung no longer hangs on windows-latest",
+        "work": 4
+      }
+    ],
+    "id": "4f8f0b26-a230-4e67-a551-fc7ab146de86",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-20T10:24:42.303727+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-20T10:34:07.940708+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
