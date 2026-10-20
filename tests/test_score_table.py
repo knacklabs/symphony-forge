@@ -45,15 +45,12 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
         assert "never a dismissal for being unnecessary, rare or low value" not in guide
         assert "whatever files they were in" not in guide
 
-    # A review loop stops: every open finding, ranked by the bar, then Harm, then Gain, then Work,
-    # each with its own number; one below the bar is listed too.
+    # A fix now stops on its first P0 review. Its question still lists every open
+    # finding, ranked by the bar, then Harm, then Gain, then Work, below-bar ones too.
     item, where = env.start_fix()
     found = lambda title, scores, number, who="": _scored(  # noqa: E731
         "P1", title, f"{scores}\nRaise: Functional.{who}", f"docs/{number}.md")
-    for number in (1, 2):
-        # P0s keep the staged three-round stop reachable; non-P0s now follow up at round two.
-        _round(env, item, where, number, found(f"Round {number} defect", "Gain 5, Work 2, Harm 4", number))
-    _round(env, item, where, 3,
+    _round(env, item, where, 1,
            found("Other shells", "Gain 3, Work 4, Harm 3", 3, " Fish users get no prompt."),
            found("Saving drops the basket", "Gain 3, Work 2, Harm 2", 4, " Returning shoppers lose it."),
            found("Checkout charges twice", "Gain 5, Work 3, Harm 1", 5, " Every buyer pays double."),
@@ -69,7 +66,8 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
             "| 6 | Search skips accents: shoppers abroad miss items. | 3 | 1 | 2 | follow-up fix |",
             "| 2 | Saving drops the basket: returning shoppers lose it. | 3 | 2 | 2 | follow-up fix |",
             "| 4 | The label is long: readers squint. | 2 | 1 | 1 | live with |"]
-    stop = _round(env, item, where, 4).stderr
+    # Repeating close holds the same owner question without another review round.
+    stop = env.close(item).stderr
     assert _table(stop) == rows, stop
     assert "Accept, narrow or split?" in stop.split(rows[-1], 1)[1]
     # A Harm 3 note is open, so the owner decides.

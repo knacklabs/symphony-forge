@@ -82,11 +82,11 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     clock(monkeypatch, now)
     read_story(env.repo, "WAIT", ONE_PART)
     env.repo.git("push", "-q", "origin", "story/WAIT")
-    # Three blocked closes stop the review loop for a person's choice.
+    # A story part can reach three blocked closes; a fix now stops at its first P0.
     clock(monkeypatch, now + timedelta(minutes=1))
-    _, loop = env.start("loop", "fix/loop", ".factory/fixes/loop.json", {**FIX, "why": "Loop"}, {"loop.py": "x\n"})
-    rounds(env, "loop", loop, ["src/a.py"] * 3)
-    share(env, prs, "loop", 1)
+    loop_item, loop = env.start_approved_task(STORY_DOC, changes={"loop.py": "x\n"})
+    rounds(env, loop_item, loop, ["src/a.py"] * 3)
+    share(env, prs, loop_item, 1, "task/SHOP-T1")
     # A close ending ready in a repo where a human merges.
     clock(monkeypatch, now + timedelta(minutes=2))
     env.reviews(CLEAN)
@@ -130,7 +130,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     older(env, prs, "legacy")
 
     clock(monkeypatch, now + timedelta(minutes=5))
-    order = [("WAIT", "approval"), ("loop", "review loop"), ("human", "merge"),
+    order = [("WAIT", "approval"), (loop_item, "review loop"), ("human", "merge"),
              ("asks", "worker question"), ("clash", "conflict"), ("legacy", "merge")]
     machine_a = env.repo.path
     machine_b = env.tmp / "needs-machine-b"
@@ -146,7 +146,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     # waits on a person until a choice is committed.
     env.repo.path = machine_a
     clock(monkeypatch, now + timedelta(minutes=40))
-    assert ("loop", "review loop") in needs(env.repo)
+    assert (loop_item, "review loop") in needs(env.repo)
     clock(monkeypatch, now + timedelta(minutes=5))
 
     # Each clears: the approval, a choice recorded on machine B, the merge, the answer given on
@@ -162,10 +162,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     assert env.close("clash").returncode == 0
     share(env, prs, "clash", 4)
     env.repo.path = machine_b
-    env.repo.git("worktree", "add", "-q", "-b", "fix/loop", str(env.tmp / "needs-loop-b"), "origin/fix/loop")
-    chosen = env.repo.forge("close", "loop", "--resolve", "narrow", "--reason", "Keep it small")
+    env.repo.git("worktree", "add", "-q", "-b", "task/SHOP-T1", str(env.tmp / "needs-loop-b"), "origin/task/SHOP-T1")
+    chosen = env.repo.forge("close", loop_item, "--resolve", "narrow", "--reason", "Keep it small")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-    share(env, prs, "loop", 1)
+    share(env, prs, loop_item, 1, "task/SHOP-T1")
     # B, who did not open the pull request, answers the question.
     resumed = env.tmp / "needs-asks-b"
     env.repo.git("worktree", "add", "-q", "-b", "fix/asks", str(resumed), "origin/fix/asks")

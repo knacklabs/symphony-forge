@@ -130,13 +130,19 @@ def test_7_first_screen(env, monkeypatch, previous):
         assert started.returncode == 0, started.stderr
     monkeypatch.delenv("GIT_COMMITTER_DATE")
     clock(monkeypatch, now)
-    # Six fixes in progress; one has a blocked review round.
-    for n in range(6):
+    # A second building story and five fixes in progress. Story parts retain a
+    # blocked first P1 review; a fix would now finish with a follow-up instead.
+    approve_story(env.repo, ONE_PART, key="SPEED")
+    started = env.repo.forge("task", "start", "SPEED/T1")
+    assert started.returncode == 0, started.stdout + started.stderr
+    tree = worktree(env.repo, "task/SPEED-T1")
+    env.commit(tree, "app.py", "print('fast')\n", "Speed up the page")
+    closed = env.close("SPEED/T1")
+    assert closed.returncode == 1, closed.stdout + closed.stderr
+    assert "The review left serious findings open" in closed.stderr, closed.stderr
+    for n in range(1, 6):
         started = env.repo.forge("fix", "start", f"Speed up page {n + 1}", "--done", "It is fast", "--slug", f"speed-{n}")
         assert started.returncode == 0, started.stderr
-    tree = worktree(env.repo, "fix/speed-0")
-    env.commit(tree, "speed.txt", "fast\n", "Speed up the page")
-    env.repo.forge("close", "speed-0", cwd=tree)
     # Merged pull requests for the trends: one through Forge two weeks ago, one around it today.
     github(env, [pr(1, "task/OLD-T1", BEN, now - timedelta(days=14)),
                  pr(2, "quick-patch", ANA, now - timedelta(hours=1), "Patch the login page"),
@@ -159,7 +165,8 @@ def test_7_first_screen(env, monkeypatch, previous):
 
     # Go-live, and a row's round lines and who started it.
     assert team["go_live"]["status"] == "not enough history"
-    row = next(r for r in data["items"] if r["id"] == "speed-0")
+    speed = next(r for r in data["items"] if r["id"] == "SPEED")
+    row = next(r for r in speed["children"] if r["id"] == "SPEED/T1")
     assert row["rounds"], "The blocked close recorded a round"
     assert row["started_by"]
     # A building story holds its parts' round lines.

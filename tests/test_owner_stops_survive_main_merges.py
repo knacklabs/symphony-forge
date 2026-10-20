@@ -9,6 +9,7 @@ from test_close_waits_for_review_loop_choice import stopped
 from test_hotspot_stop import saved
 from test_land import land  # noqa: F401
 from test_stuck_worker_asks import _rounds
+from test_story import worktree
 
 STORY = "stop-waits-for-owner"
 
@@ -31,7 +32,7 @@ def test_1_owner_stop_survives_main_merge_until_the_choice_is_recorded(land, pre
         item = _rounds(env, "finding")
         held = env.repo.forge("work", item)
         assert held.returncode == 1 and "Ask the human" in held.stderr
-        where = env.tmp / "fix-tidy-readme"
+        where = worktree(env.repo, f"task/{item.replace('/', '-')}")
     else:
         item, where = stopped(env)
         held = env.close(item)
@@ -51,7 +52,9 @@ def test_1_owner_stop_survives_main_merge_until_the_choice_is_recorded(land, pre
         # Reproduce that persisted input; the real close command must retain the question.
         state = saved(where, item)
         state["review"].update(status="clean", findings=[], dismissals=[])
-        env.commit(where, f".factory/fixes/{item}.json", json.dumps(state), "Later clean review")
+        record = (f".factory/stories/SHOP/tasks/{item.split('/')[-1]}.json" if "/" in item
+                  else f".factory/fixes/{item}.json")
+        env.commit(where, record, json.dumps(state), "Later clean review")
     env.reviews(CLEAN)
     before = len(env.review_calls())
     for _ in range(2):
