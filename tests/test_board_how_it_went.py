@@ -382,6 +382,8 @@ def warm_checks_cache(env, monkeypatch):
     assert row(env.repo, item)["gates"]["review"]["status"] == "blocked"
     calls = len(env.gh_calls("api", "graphql"))
     env.repo.path = machine
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     env.commit(where, "app.py", "print('basket retained')\n")
     env.reviews(CLEAN)
     closed = env.close(item)

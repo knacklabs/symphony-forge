@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install, patient
-from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
 from test_story import DOC, READER, new_story
 from test_land import ITEM, _fix, _land, _red_checks, _steps, _workers, land  # noqa: F401
@@ -200,37 +200,41 @@ def test_3_an_open_p0_after_round_two_asks_the_owner_and_land_starts_no_third_ro
         config = (land.repo.path / "forge.toml").read_text("utf-8")
         land.commit(land.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
         land.repo.git("push", "-q", "origin", "main")
-    where = _fix(land, "working", worked=True)
     if case == "p0":
+        # Fixes now finish non-P0 review in round one. An approved story part
+        # keeps the two-round path whose P0 stops land before a third review.
+        item, where = land.start_approved_task(STORY_DOC)
         land.reviews(blocked(note("P1", "Saving drops the greeting")), blocked({
             **finding("P0", "Saving deletes the basket", "work-1.txt"),
             "body": "Gain 5, Work 2, Harm 5\nCase: normal use - Saving a basket deletes its contents."}), CLEAN)
-        stopped = _land(land)
+        stopped = _land(land, item)
         assert stopped.returncode == 3, stopped.stdout + stopped.stderr
         assert "Saving deletes the basket" in stopped.stderr
         assert "Forge stop" in stopped.stderr
         assert "One more round, split or accept?" in stopped.stderr
         assert [line.split(":")[0] for line in stopped.stderr.splitlines()
                 if line.startswith("- ")] == ["- One more round", "- Split", "- Accept"]
-        step = f'forge close {ITEM} --resolve <more|split|accept> --reason "<human\'s choice>"'
+        step = f'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'
         assert step in stopped.stderr
         assert len(land.review_calls()) == 2 and len(_workers(land)) == 1
         shown = land.repo.forge("next")
         assert "One more round, split or accept?" in shown.stdout and step in shown.stdout
         monkeypatch.setenv("FORGE_NOW", (datetime.now(timezone.utc) + timedelta(minutes=31)).isoformat())
-        waiting = land.close(ITEM)
+        waiting = land.close(item)
         assert waiting.returncode == 1 and "One more round, split or accept?" in waiting.stderr
         assert len(land.review_calls()) == 2
-        assert land.repo.git("branch", "--list", "fix/*", "--format=%(refname:short)") == "fix/tidy-readme"
-        chosen = land.close(ITEM, "--resolve", "more", "--reason", "Repair the basket deletion")
+        assert land.repo.git("branch", "--list", "fix/*", "--format=%(refname:short)") == ""
+        assert land.repo.git("branch", "--list", "task/*", "--format=%(refname:short)") == "task/SHOP-T1"
+        chosen = land.close(item, "--resolve", "more", "--reason", "Repair the basket deletion")
         assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-        assert f"Next: forge work {ITEM}" in chosen.stdout
+        assert f"Next: forge work {item}" in chosen.stdout
         land.commit(where, "work-1.txt", "Basket contents are retained\n", "Repair basket deletion")
-        ready = _land(land)
-        assert ready.returncode == 0 and f"Ready: {ITEM}" in ready.stdout, ready.stdout + ready.stderr
+        ready = _land(land, item)
+        assert ready.returncode == 0 and f"Ready: {item}" in ready.stdout, ready.stdout + ready.stderr
         assert len(land.review_calls()) == 3 and len(_workers(land)) == 1
         return
 
+    where = _fix(land, "working", worked=True)
     # The old three-repair contract becomes one repair for local tests and session CI checks.
     from test_close import run
     land.reviews(CLEAN)

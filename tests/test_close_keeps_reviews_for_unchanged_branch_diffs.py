@@ -15,6 +15,7 @@ import pytest
 from conftest import FORGE_SHIM, ROOT
 from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env, finding  # noqa: F401
 from test_setup import _fresh_client
+from test_story import DESIGN_IMAGE
 
 STORY = "after-forge-close-merges-the-latest-defa"
 
@@ -49,6 +50,8 @@ def client(env, previous):
     env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(writer))
     env.repo.path = writer
     if not (writer / "plans/SHOP.md").exists():
+        # The current plan names this committed design; earlier-adopted plans keep theirs.
+        env.commit(writer, "docs/design/baskets/screen.svg", DESIGN_IMAGE)
         env.commit(writer, "plans/SHOP.md", STORY_DOC)
         env.repo.git("push", "-q", "origin", "main")
     # Init's generic GitHub API response must not mask the check responses.
