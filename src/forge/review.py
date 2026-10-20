@@ -197,12 +197,12 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     parts.append(functional_check(top, base, commit))
     if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
         parts.append(proof)
-    current_level = blocking_level(top, item, state, base, commit)
     saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
     if saved_level == "P0":
         parts.append("P0-only prototype review")
-    if saved_level != current_level:
-        parts.append("The recorded review level is no longer allowed")
+        # Full reviews remain sufficient; only a light review can lose its allowance.
+        if blocking_level(top, item, state, base, commit) != saved_level:
+            parts.append("The recorded review level is no longer allowed")
     for part in parts:
         digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
