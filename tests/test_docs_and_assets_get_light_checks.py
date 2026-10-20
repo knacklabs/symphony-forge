@@ -1,6 +1,7 @@
 """Docs and brand assets use light close and skip CI groups unless tests consume them."""
 import json
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -15,8 +16,11 @@ STORY = "FIX-DOCS-ASSETS-LIGHT"
 
 
 @pytest.mark.parametrize("history,case", [
-    ("new", case) for case in ("docs", "asset", "generated", "read-doc", "read-asset", "code")
-] + [("adopted-v1.2.2", "asset")])
+    ("new", case) for case in ("docs", "asset", "generated", "read-doc", "read-asset", "code",
+                              "read-jest", "read-conftest", "duplicate-basename", "longer-name",
+                              "read-relative", "read-joined", "read-node-joined",
+                              "duplicate-joined", "duplicate-root-joined")
+] + [("adopted-v1.2.2", case) for case in ("asset", "read-conftest", "duplicate-basename")])
 def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
         env, tmp_path, monkeypatch, history, case):
     # Audit: close owns the review level; the shipped workflow command and gate own CI.
@@ -27,16 +31,47 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
     env.repo.write(".factory/fixes/configure-docs-checks.json", json.dumps({
         "kind": "fix", "branch": "fix/configure-docs-checks", "status": "started",
         "why": "Configure docs checks", "done_when": "Docs checks are configured"}))
-    path = "docs/guide.txt" if case in {"docs", "read-doc"} else "brand/logo.svg"
+    path = ("README.md" if case == "duplicate-root-joined" else
+            "docs/README.md" if case in {"duplicate-basename", "longer-name", "duplicate-joined"} else
+            "docs/guide.txt" if case in {"docs", "read-doc", "read-relative"} else "brand/logo.svg")
     env.commit(env.repo.path, path, "Original\n")
     test = ("from pathlib import Path\ndef test_content():\n"
             f"    assert Path({json.dumps(path)}).read_text()\n"
-            if case.startswith("read-") else "def test_content():\n    assert True\n")
+            if case in {"read-doc", "read-asset"} else "def test_content():\n    assert True\n")
+    if case.startswith("duplicate-") or case == "longer-name":
+        unrelated = "docs/README.md.backup" if case == "longer-name" else "fixtures/README.md"
+        env.commit(env.repo.path, unrelated, "Unrelated fixture\n")
+        test = ("from pathlib import Path\ndef test_content():\n"
+                f"    assert Path({json.dumps(unrelated)}).read_text()\n")
+        if case.endswith("joined"):
+            test = ("from pathlib import Path\ndef test_content():\n"
+                    "    assert (Path('fixtures') / 'README.md').read_text()\n")
+    elif case == "read-relative":
+        test = ("from pathlib import Path\ndef test_content():\n"
+                "    assert (Path(__file__).parent / '../docs/guide.txt').read_text()\n")
+    elif case == "read-joined":
+        test = ("from pathlib import Path\ndef test_content():\n"
+                "    assert (Path('brand') / 'logo.svg').read_text()\n")
+    elif case == "read-conftest":
+        env.commit(env.repo.path, "conftest.py", "from pathlib import Path\n"
+                   f"def read_input():\n    return Path({json.dumps(path)}).read_text()\n")
+        test = ("import runpy\ndef test_content():\n"
+                "    assert runpy.run_path('conftest.py')['read_input']()\n")
     env.commit(env.repo.path, "tests/test_content.py", test)
     receipt = tmp_path / "suite-ran"
     suite = tmp_path / "suite.py"
-    suite.write_text("from pathlib import Path\nimport runpy\n"
-                     "runpy.run_path('tests/test_content.py')['test_content']()\n"
+    run_test = "import runpy\nrunpy.run_path('tests/test_content.py')['test_content']()\n"
+    if case in {"read-jest", "read-node-joined"}:
+        node = shutil.which("node")
+        assert node, "The JavaScript consumer regression requires Node."
+        reference = (json.dumps(path) if case == "read-jest" else
+                     "require('node:path').join(__dirname, '../brand', 'logo.svg')")
+        env.commit(env.repo.path, "__tests__/cart.js",
+                   "const fs = require('node:fs');\n"
+                   f"require('node:assert/strict').ok(fs.readFileSync({reference}, 'utf8'));\n")
+        run_test = ("import subprocess\n"
+                    f"subprocess.run([{json.dumps(Path(node).as_posix())}, '__tests__/cart.js'], check=True)\n")
+    suite.write_text("from pathlib import Path\n" + run_test +
                      f"Path({json.dumps(receipt.as_posix())}).touch()\nprint('1 passed')\n", "utf-8")
     command = f'"{Path(sys.executable).as_posix()}" "{suite.as_posix()}"'
     config = env.repo.path / "forge.toml"
@@ -58,7 +93,7 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
     if case == "code":
         changes["app.py"] = "value = 1\n"
     item, where = env.start_fix(changes)
-    light = case in {"docs", "asset"}
+    light = case in {"docs", "asset", "longer-name"} or case.startswith("duplicate-")
     env.reviews(blocked(finding("P1", "Docs review finding", path)))
     closed = env.close(item)
     # The same ordinary finding is advisory in a light review and blocks a full review.

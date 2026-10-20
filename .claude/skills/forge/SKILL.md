@@ -1340,7 +1340,9 @@ Close and the generated `forge.yml` skip the test command when every changed pat
 base with the same rule as the part-size check. No setting is needed. The required `tests` check
 passes and says `docs only: tests skipped`. Images and fonts also count as assets, wherever they
 live. Files marked `linguist-generated` and docs or assets referenced by tests keep the full
-review and tests. Forge checks test references to the path or filename on both sides of the change.
+review and tests. Forge resolves literal paths from the repository or test file's folder on
+both sides of the change, including literal path joins, `__tests__/` files and shared
+`conftest.py` fixtures.
 CI checks this once before the test groups and skips the group jobs for a docs-only change.
 One code file runs tests as usual. New repos get
 this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
