@@ -58,6 +58,8 @@ REFUSALS = {
     "hotspot": ("Review round {round} of {item} still finds serious problems in {file}, which an "
                 "earlier round flagged too, so Forge stops sending the worker back. {question}",
                 'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
+    "fix_p0": ("This fix's review found an open P0. {question}",
+               'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"'),
@@ -283,7 +285,7 @@ def close(args: argparse.Namespace) -> int:
         finding = previous["findings"][number - 1]
         requested[score.identity(finding["file"], finding["title"])] = because
     round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if fresh and round_number >= 2:
+    if fresh and round_number >= (2 if "/" in item else 1):
         refreshed = review._bound_findings(top, item, state, previous, result["findings"]) or refreshed
     choice_round = 0
     if (state.get("stop") or {}).get("choice"):
@@ -384,7 +386,9 @@ def close(args: argparse.Namespace) -> int:
         flagged = set(state.get("flagged", []))
         files = {finding["file"] for _, finding in serious}
         crowded = score.crowded(state["known"], result, _settled_areas(state), areas) if serious else ""
-        if crowded:
+        if "/" not in item and serious:
+            stopped = {"file": serious[0][1]["file"], "review_limit": True}
+        elif crowded:
             stopped = {"file": crowded, "area": crowded, "proposed": score.move(state["known"], crowded)}
         elif (serious and round_number - choice_round >= 3 and
                 score.loop_stops(result, state["known"], round_number)):
@@ -437,7 +441,7 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(refusal, command=command, item=item)
     if serious:
         if stopped:
-            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
+            repo.refuse(REFUSALS["fix_p0" if stopped.get("review_limit") else "hotspot"], item=item, round=round_number,
                         question=review.stop_question(top, item, state), **stopped)
         refusal = (REFUSALS["blocked"][0], advice[-1].removeprefix("Next: ")) if advice else REFUSALS["blocked"]
         repo.refuse(refusal, item=item, findings="; ".join(
@@ -570,12 +574,12 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
     if state.get("stop") and not state["stop"].get("choice"):
         top = top or _worktree(item)  # land passes no checkout
         from forge.nextstep import default_due  # nextstep imports close
-        if default_due(top, state):
+        if not state["stop"].get("review_limit") and default_due(top, state):
             _answer_by_default(top, item, state)
     if state.get("stop") and not state["stop"].get("choice"):
         if advice := review.loop_advice(top or _worktree(item), item):
             print("\n".join(advice[:-1]), file=sys.stderr)
-        repo.refuse(REFUSALS["hotspot"], item=item,
+        repo.refuse(REFUSALS["fix_p0" if state["stop"].get("review_limit") else "hotspot"], item=item,
                     question=review.stop_question(_worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})

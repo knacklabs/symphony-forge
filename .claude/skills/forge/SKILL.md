@@ -64,6 +64,10 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
+The human never has to say story, part or fix. Never ask which one they want.
+Pick the lane and say in one line what happens next: no approval needed, or a plan to approve.
+If in doubt, start a fix: the size check at close moves it to a story when it is too large.
+
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
 After sign-off, the default branch's `forge.toml` merge setting applies: the human merges by
@@ -1259,6 +1263,10 @@ A fix that was ready needs `forge close` again for its new commit. Teammates see
 restore after they fetch.
 
 ## Closing
+
+A fix gets one review round; a story part gets two. After a fix's first review, open findings
+below P0 become visible follow-ups and close goes on to checks and Ready. An open P0 stops
+for the owner's recorded choice. The follow-up reason is "Left open after round one".
 
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.

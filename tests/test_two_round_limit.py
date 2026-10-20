@@ -52,7 +52,7 @@ def test_1_a_review_ends_after_round_two_and_leftovers_become_known_issues(env, 
     old = note("P0" if case in ("past-round-two", "saved-unscored") else "P1",
                "Saving loses quantities")
     env.reviews(CLEAN if case == "clean-first" else blocked(old))
-    item, where = env.start_fix({"app.py": "save = False\n\nlegacy = True\n"})
+    item, where = env.start_task(changes={"app.py": "save = False\n\nlegacy = True\n"})
     first = env.close(item)
     assert first.returncode == (0 if case == "clean-first" else 1), first.stdout + first.stderr
     if case != "clean-first":
@@ -66,7 +66,7 @@ def test_1_a_review_ends_after_round_two_and_leftovers_become_known_issues(env, 
         if saved:
             # Earlier releases saved findings without scores. Keep the real
             # command's review commit and fingerprints so close must reuse it.
-            rel = f".factory/fixes/{item}.json"
+            rel = ".factory/stories/SHOP/tasks/T1.json"
             state = json.loads((where / rel).read_text("utf-8"))
             recorded = state["review"]["findings"][0]
             for field in ("gain", "work", "harm"):
@@ -94,7 +94,7 @@ def test_4_round_two_reviews_only_round_one_findings_and_p0s_that_happen_in_norm
     client(env, adopted)
     old = note("P1", "Saving loses quantities")
     env.reviews(blocked(old))
-    item, where = env.start_fix({"app.py": "save = False\n\nlegacy = True\n"})
+    item, where = env.start_task(changes={"app.py": "save = False\n\nlegacy = True\n"})
     reviewed = env.repo.git("rev-parse", "HEAD", cwd=where).strip()
     first = env.close(item)
     assert first.returncode == 1 and old["title"] in first.stderr, first.stdout + first.stderr
@@ -145,7 +145,9 @@ def test_5_rare_cases_and_declined_findings_do_not_block(env, adopted, case):
             entry["body"] = ("Gain 4, Work 1, Harm 4\n"
                              "Case: rare - An operator edits the import file during saving.")
         env.reviews(blocked(entry))
-        item, where = env.start_fix()
+        # Minor fix findings now become follow-ups in round one. A story part
+        # still blocks there, so it owns the worker-decline contract.
+        item, where = env.start_fix() if case == "rare finding" else env.start_task()
         first = env.close(item)
         if case == "rare finding":
             assert first.returncode == 0, first.stdout + first.stderr

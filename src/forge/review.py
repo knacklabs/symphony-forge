@@ -1035,8 +1035,8 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[
             reason = "Rare case outside normal use"
         elif missed and sentence(missed[1]) not in approved:
             reason = "Not done names no owner-approved Done-when item; builder details are guidance."
-        elif previous.get("commit") and score.holds(finding) and not score.holds(finding, "P0"):
-            reason = score.ROUND_TWO
+        elif ("/" not in item or previous.get("commit")) and score.holds(finding) and not score.holds(finding, "P0"):
+            reason = score.ROUND_TWO if "/" in item else "Left open after round one"
         if reason and finding.get("follow_up") != reason:
             finding["follow_up"] = reason
             changed = True
