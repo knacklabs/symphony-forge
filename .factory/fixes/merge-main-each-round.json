@@ -64,19 +64,19 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ff72123ec54f80d321b8ffd891a6fcb04efd0b297a78f779cfba1bda52e49cee",
-    "changed": "31b5e6767ca006b5e3c9f2e4838560654eb69721e173221d6d3dddb3ab309680",
-    "commit": "9e351b29141cf877e48c905455437037c1f7f277",
+    "branch_diff": "5b4014aa047c65852e76663004799131c661538ae3987ae2b0a44fa5f36ab4b0",
+    "changed": "0316fa802817eacbc79bbfd892319a353cccb980f10feb9739d835c4296b6438",
+    "commit": "f2433963299a9b7c5ddb96334acea2ec57640ad4",
     "dismissals": [],
     "findings": [],
-    "id": "081fc685-3864-4907-8864-127f6c0400cd",
+    "id": "bb5f884f-333b-42f2-846c-c80b5c0f751c",
     "status": "clean"
   },
   "round": 3,
   "settled_areas": [
     "_work() in src/forge/worker.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-19T19:54:33.365473+00:00",
@@ -88,6 +88,10 @@
     },
     {
       "at": "2026-10-20T04:18:24.505953+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T04:38:56.456417+00:00",
       "step": "review"
     }
   ],
