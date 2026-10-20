@@ -36,8 +36,8 @@
     "id": "1eb7e59e-4f6a-422c-9185-739bf10053af",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T06:41:15.723130+00:00",
@@ -53,13 +53,10 @@
     }
   ],
   "stuck": {
-    "close": "6c253b02-4bd7-43c4-bb22-cf7cce1ad793",
-    "head": "f1a655921782a95c5c2a9d2d8b7eb70612bae894",
-    "keys": {
-      "close's tests failing": 1,
-      "the review finding \"Keep follow-ups on newly added files visible in Known issues\" in src/forge/board.py": 1
-    },
-    "round": 1
+    "close": "4bfc7bb1-e33c-41bf-a848-190ce3eb0089",
+    "head": "78d4617b0f1119195cabdad3ac1a9e76ba807dd8",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
