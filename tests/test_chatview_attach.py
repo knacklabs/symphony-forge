@@ -63,6 +63,8 @@ def test_5_close_attaches_its_pull_request_once_to_the_recorded_chat(
     # A close that finds no pull request opens one, then links it in the recorded chat.
     gh.respond("pr", "list", stdout="[]")
     gh.respond("pr", "create", stdout=URL + "\n")
+    # Startup merges can refresh the review; close opens a draft before that review finishes.
+    gh.respond("pr", "ready", "12")
     closed = repo.forge("close", "BOARD/PAGE")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert f"Opened the pull request: {URL}" in closed.stdout
