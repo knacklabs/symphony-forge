@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-20T03:43:01.393016+00:00",
+      "because": "Owner chose one normal round on 20 October 2026: the resolve-only round dropped notes and answers, gave fresh workers no Done-when, and read settings before the merge",
+      "done_when": "forge work merges the default branch into the item's branch before every work round, and when close finds a merge conflict it offers a short resolve-only round instead of a full worker round; a test covers both on a new and an adopted repo"
+    }
+  ],
   "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
   "branch": "fix/merge-main-each-round",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "5bfe1e9db02752dbc8e925c6733bd04d96a6bf32"
   },
-  "done_when": "forge work merges the default branch into the item's branch before every work round, and when close finds a merge conflict it offers a short resolve-only round instead of a full worker round; a test covers both on a new and an adopted repo",
+  "done_when": "forge work merges the default branch into the item's branch first, before it reads any settings or writes the brief; on a merge conflict the worker gets its normal full brief (Done-when, notes and question answers included) with one added line to finish the merge first, and no separate resolve-only round exists; a test covers a clean merge, a conflict and a settings change merged from main, on a new and an adopted repo",
   "fix_kind": "backend",
   "flagged": [
     "src/forge/worker.py"
