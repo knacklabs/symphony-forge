@@ -21,6 +21,17 @@
       "item": "docs-assets-light",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/docskip.py\tPreserve full checks for file-relative path joins\tdocs-assets-light",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 44,
+      "text": "Preserve full checks for file-relative path joins",
+      "from": "blocking",
+      "item": "docs-assets-light",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

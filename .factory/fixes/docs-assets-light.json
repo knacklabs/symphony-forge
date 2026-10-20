@@ -21,7 +21,7 @@
       "gain": 4,
       "harm": 3,
       "line": 25,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -34,47 +34,50 @@
       "gain": 4,
       "harm": 1,
       "line": 31,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
       "title": "Distinguish unrelated inputs that share a filename",
       "work": 2
+    },
+    {
+      "area": "only_docs() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 44,
+      "outcome": "open",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Preserve full checks for file-relative path joins",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5425ebdb8fd47e09d0eeddf1814e6d8618f1f8018fca674c2f5b143104e45602",
-    "changed": "378d9bf25d2855c74eb563acb3abc9fcefdeffc360a50b10216b5649bf2de35a",
-    "commit": "9e2a49ad903451b5dcb61d41ce7975fe411d7f57",
+    "branch_diff": "68b35660a64d2e1711fef09ffdb46ef9753a25e9b237cb765a6c70b958573ef3",
+    "changed": "0431f19b297d724917c147afcf7617e25ef530396a3a7b12218ef4fbcae0213c",
+    "commit": "48527df5ebbcdd1cb10a6f1a406d834704e19de9",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 Test-read assets can incorrectly receive light review and skip every CI test group. These globs exclude `__tests__/cart.js` and root-level `conftest.py`. Consequently, an asset read only by either consumer produces no grep match and `only_docs()` returns true. Jest's default discovery includes `__tests__` ([contract](https://jestjs.io/docs/configuration#testmatch-arraystring)), and this repository already exercises that layout in tests/test_close_keeps_full_tests_in_ci.py:121. Shared pytest fixtures can likewise read inputs outside individual test files. Cover these consumers in the classifier and its generated .forge/review-tests.py copy; the new proof currently exercises only tests/test_content.py.",
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional \u2014 A test reading `(Path(__file__).parent / '../brand' / 'logo.svg').read_text()` is missed when `brand/logo.svg` changes. The join regex requires a quoted first argument, so it cannot fold `Path(__file__)`; the subsequent scan checks `../brand` and `logo.svg` separately, neither of which resolves to the changed file. Consequently, this test-read asset receives light review and skips every CI test group. Literal `.joinpath()` constructions have the same gap. The generated `.forge/review-tests.py:55` repeats the defect. The added relative-path test uses one complete path literal, so it does not catch this regression.",
         "file": "src/forge/docskip.py",
         "gain": 4,
         "harm": 3,
-        "line": 25,
+        "line": 44,
         "priority": "P1",
-        "title": "Include supported test consumers in the input-reference scan",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Functional \u2014 Ordinary documentation changes still receive full review and all test jobs when an unrelated test input shares their basename. For example, changing docs/README.md while a test reads fixtures/README.md adds the bare `README.md` search pattern, which matches that fixture reference and returns false. The changed documentation is never read by the test, so it should qualify for the promised light checks. Fixed substring matching also matches longer filenames. Resolve references to the changed file rather than treating every basename occurrence as its consumer, and cover duplicate basenames in the command-level proof. The generated .forge/review-tests.py has the same behavior.",
-        "file": "src/forge/docskip.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 31,
-        "priority": "P1",
-        "title": "Distinguish unrelated inputs that share a filename",
+        "title": "Preserve full checks for file-relative path joins",
         "work": 2
       }
     ],
-    "id": "5efb9c69-4e40-4241-9ddc-703e50777af9",
+    "id": "28744c0f-e086-44f3-9dd5-2e526e79ad69",
     "status": "blocked"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-20T05:43:56.114060+00:00",
@@ -83,8 +86,19 @@
     {
       "at": "2026-10-20T06:03:17.262023+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:23:26.411776+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "area": "only_docs() in src/forge/docskip.py",
+    "at": "2026-10-20T06:23:26.411879+00:00",
+    "file": "only_docs() in src/forge/docskip.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "wait_id": "82241fa2-1337-427d-a13f-7af7da207c9b"
+  },
   "stuck": {
     "close": "16bbfc65-bffd-460d-bfd3-3d4b722fa0a9",
     "head": "a37819d6a482fdd372ee86964796ae1f8d32d074",
