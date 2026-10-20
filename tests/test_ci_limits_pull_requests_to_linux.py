@@ -74,7 +74,11 @@ def test_2_pull_requests_keep_closes_named_checks():
     for name, event in (("tests", "pull_request"), ("forge-pr-check", "pull_request_target")):
         job = workflow.split(f"\n  {name}:\n", 1)[1].split("\n  forge-pr-check:", 1)[0]
         assert f"if: github.event_name == '{event}'" in job
-        assert f"&& '{name}' || '{name} (other event)'" in job
+        if name == "tests":
+            assert f"&& '{name}' || '{name} (other event)'" in job
+        else:
+            assert "name: Review pull request\n" in job
+            assert "-f context=forge-pr-check" in job
         assert 'runs-on: "ubuntu-latest"' in job
 
 
