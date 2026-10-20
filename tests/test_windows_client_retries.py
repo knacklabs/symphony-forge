@@ -14,6 +14,8 @@ import pytest
 from conftest import ROOT
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 
+pytestmark = pytest.mark.platform
+
 STORY = "windows-rerun-flakes"
 
 

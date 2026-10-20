@@ -6,11 +6,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 STORY = "FIX-APP-BASELINE"
 ROOT = Path(__file__).resolve().parents[1]
 BASELINE_SHA256 = "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6d42"
 
 
+@pytest.mark.platform
 def test_1_installed_sync_ships_app_baseline_to_both_agents(repo, tmp_path):
     # Pin the intended text so a shared source and package change cannot silently rewrite it.
     source = (ROOT / ".codex/skills/app-baseline/SKILL.md").read_text(

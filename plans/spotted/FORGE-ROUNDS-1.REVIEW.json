@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tKeep follow-ups on newly added files visible in Known issues\tFORGE-ROUNDS-1/REVIEW",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 829,
+      "text": "Keep follow-ups on newly added files visible in Known issues",
+      "from": "blocking",
+      "item": "FORGE-ROUNDS-1/REVIEW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tWorker broad selection treats notes in a task's Tests cell as literal test paths and runs no tests.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 464,
+      "text": "Worker broad selection treats notes in a task's Tests cell as literal test paths and runs no tests.",
+      "from": "worker",
+      "item": "FORGE-ROUNDS-1/REVIEW",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

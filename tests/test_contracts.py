@@ -27,6 +27,8 @@ from test_walkthrough import DOC as CART_DOC
 from test_walkthrough import walk, with_models
 from test_worker import calls, install_claude
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-NEXT-1"
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "forge"

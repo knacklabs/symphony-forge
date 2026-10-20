@@ -13,6 +13,7 @@ STORY = "lazy-forwarding-imports"
     (False, ["hook", "pre-push"]),
     (True, ["hook", "pre-push"]),
 ], ids=["new-command", "new-hook", "adopted-v1.2.2-hook"])
+@pytest.mark.platform
 def test_1_client_startup_skips_release_lookup(repo, monkeypatch, adopted, words):
     if adopted:
         # The current executable also serves clients with an earlier adoption's files.

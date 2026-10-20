@@ -16,7 +16,8 @@ APP = "".join(f"line{n} = {n}\n" for n in range(1, 21))
 def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
     _client_on_this_release(env, tmp_path, case)
     item, where = env.start_fix({"app.py": APP})
-    coupon = finding("P1", "Saving skips the coupon", line=3)
+    # A P0 still holds after round two, so changing cited lines must reactivate it.
+    coupon = finding("P0", "Saving skips the coupon", line=3)
     env.reviews(blocked(coupon))
     assert env.close(item).returncode == 1
     reason = "app.py:3 the coupon is applied at checkout"

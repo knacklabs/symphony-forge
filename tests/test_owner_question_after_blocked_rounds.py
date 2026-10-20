@@ -33,7 +33,7 @@ def review_round(env, item, where, number):
     env.commit(where, "app.py", f"print('round {number}')\n")
     path = f"docs/round-{number}.md"
     env.commit(where, path, f"Round {number} repair\n")
-    env.reviews(blocked(finding("P1", TITLES[number - 1], path)))
+    env.reviews(blocked(finding("P0", TITLES[number - 1], path)))
     result = env.close(item)
     assert result.returncode == 1, result.stdout + result.stderr
     assert len(env.review_calls()) == number
@@ -123,8 +123,8 @@ def test_3_hard_stop_keeps_the_owner_question_and_resolution_step(env, tmp_path,
     for number, title in enumerate(titles, 1):
         env.commit(where, "app.py", f"print('round {number}')\n")
         env.commit(where, "README.md", f"Round {number} repair\n")
-        # Three distinct low-Harm findings in one area still need the owner's choice.
-        env.reviews(blocked(finding("P1", title, "README.md")))
+        # Later rounds hold only P0s; distinct P0s retain the existing same-area stop.
+        env.reviews(blocked(finding("P0", title, "README.md")))
         stopped = env.close(item)
         assert stopped.returncode == 1, stopped.stdout + stopped.stderr
     resolution = f'forge close {item} --resolve <narrow|split|accept>'

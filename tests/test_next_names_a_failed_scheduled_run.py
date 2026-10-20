@@ -18,6 +18,8 @@ from conftest import ROOT
 from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git
 from test_setup import _fresh_client, _version
 
+pytestmark = pytest.mark.platform
+
 RUNS = ("api", "repos/{owner}/{repo}/actions/runs")
 
 

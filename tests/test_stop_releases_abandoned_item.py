@@ -21,6 +21,7 @@ from test_tools_session_hold import Session
 STORY = "FIX-STOP-CLEARS-LOCK"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted"])
 @pytest.mark.parametrize("identity", ["session", "reused", "unverified"])
 def test_1_stop_releases_an_item_whose_run_ended(repo, gh, monkeypatch, tmp_path, person, history, identity):
@@ -88,6 +89,7 @@ def test_1_stop_releases_an_item_whose_run_ended(repo, gh, monkeypatch, tmp_path
         host.close()
 
 
+@pytest.mark.platform
 def test_2_stop_keeps_a_live_older_work_lock_without_a_queue_entry(env, tmp_path, person):
     repo = env.repo
     item, name = make_work(repo, "Correct the words")

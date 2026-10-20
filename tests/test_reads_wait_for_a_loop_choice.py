@@ -17,6 +17,8 @@ from test_records import SPEC
 from test_story import DOC, READER, claude_plan, hook, new_story, setup, worktree
 from test_worker import calls, install_claude
 
+pytestmark = pytest.mark.platform
+
 
 # Accept also settles dispositions and enables approval/confirmation; keep both targets.
 # Narrow and split share the resolution path; narrow retains the adopted spec case.

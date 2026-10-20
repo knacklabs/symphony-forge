@@ -648,6 +648,7 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     assert _reader_chat(reader, resumed=True) == first
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
 @pytest.mark.parametrize("change", ["rename", "delete"])
 def test_16_sync_skips_stale_spec_reader_in_registered_worktree(

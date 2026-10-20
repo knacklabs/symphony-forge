@@ -16,6 +16,8 @@ from test_merge_enable import (FIX, OWNER_MERGES, enable, owner, raw,
                                worktree)  # noqa: F401
 from test_setup import _fresh_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "enable-no-review"
 REFUSED = ("The merge switch must change only forge.toml's top-level merge setting to agent; "
            "it contains another change.\n"

@@ -13,6 +13,8 @@ from test_worker import install_claude
 from test_upgrade_command import Upgrade, unsynced_up  # noqa: F401
 from test_story import DOC, new_story, setup
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-MOD-1-RUNS"
 
 

@@ -6,6 +6,10 @@ Native runner speed remains a dispatched-run check.
 import re
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-WINDOWS-CI-SPEED"
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.yml"
 

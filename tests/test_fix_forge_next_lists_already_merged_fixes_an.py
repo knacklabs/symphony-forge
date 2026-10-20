@@ -6,6 +6,10 @@ import shlex
 
 from test_story import DOC, setup
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "forge-next-lists-already-merged-fixes-an"
 
 

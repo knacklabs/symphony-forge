@@ -21,6 +21,7 @@ from test_close import body, env  # noqa: F401
 STORY = "skipped-next"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("merge", ["human", "agent"])
 def test_8_ready_pull_request_without_worktree_follows_the_merge_policy(env, merge):
     # Real close publishes readiness, then another checkout has only the remote branch.

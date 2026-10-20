@@ -11,6 +11,8 @@ import pytest
 from test_close import GREEN, env, run  # noqa: F401
 from test_merge_command import _merge_at_github, _ready
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-MERGESWITCH-1"
 FIX = "let-the-agent-merge"
 BRANCH = f"fix/{FIX}"
@@ -21,8 +23,8 @@ OWNER_MERGES = (f"{FIX} changes the merge setting in forge.toml, so only the rep
                 "pull request.\nNext: the repo owner merges its pull request, then forge next\n")
 TAKEN = ("The fix let-the-agent-merge holds other work, so Forge left it alone.\n"
          "Next: finish or remove that fix, then forge merge enable\n")
-OWNER_ONLY = ("Only the repo owner switches on agent merges, on main, from their own terminal.\n"
-              "Next: the repo owner runs forge merge enable on main in their own terminal\n")
+OWNER_ONLY = ("Only the repo owner switches on agent merges, on main, from a terminal outside Claude Code or Codex.\n"
+              "Next: the repo owner runs forge merge enable on main in a terminal outside Claude Code or Codex\n")
 # Interruptions at the git and GitHub edges: a failing commit, push or pull request, red checks.
 FAIL_ANY_COMMIT = "#!/bin/sh\nexit 1\n"
 FAIL_SETTING_COMMIT = "#!/bin/sh\ngit diff --cached --name-only | grep -qx forge.toml && exit 1\nexit 0\n"
@@ -273,14 +275,6 @@ def _refusal(env, case):
 
 
 def _agent_refused(env, agent):
-    before = branches(env)
-
-    refused = enable(env)
-
-    assert refused.returncode != 0
-    assert refused.stderr == OWNER_ONLY
-    unchanged(env, before)
-
     # With agent merges off, forge merge names the owner's command.
     denied = env.repo.forge("merge", "tidy-readme")
     assert denied.returncode != 0
@@ -296,7 +290,7 @@ def _synced_skill(env, _):
         skill = " ".join((env.repo.path / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "The `merge` setting is the owner's" in skill
         assert 'never change it to `"agent"` or run `forge merge enable`' in skill
-        assert "tell them to run `forge merge enable` in their own terminal" in skill
+        assert "tell them to run `forge merge enable` in a terminal outside Claude Code or Codex" in skill
         assert "edit `forge.toml` (never its `merge` setting)" in skill
         assert '| "Let the agent merge" | The owner runs `forge merge enable`' in skill
 

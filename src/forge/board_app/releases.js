@@ -6,6 +6,8 @@ const TOKEN = location.search;
 const FINISHED = ['merged', 'done'];
 const STORY = /^[A-Z][A-Z0-9-]*$/;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const FILES = 10; // files in the known issues rail, then "and N more"
+let everyFile = false; // the known issues rail shows every file
 let asked = 0; // the newest page read; an older answer that comes later is dropped
 
 export function h(tag, attrs = {}, ...children) {
@@ -131,8 +133,20 @@ function past(view) {
       h('td', { class: 'num' }, count(release.items, 'story')), h('td', { class: 'num' }, count(release.items, 'fix')))))));
 }
 
+// One file's row: Enter opens its kept problems and Escape closes them.
+function file([name, titles], most) {
+  return h('li', {}, h('details', {},
+    h('summary', {}, h('span', { class: 'file' }, name,
+      h('span', { class: 'meter', 'aria-hidden': 'true' }, h('span', { '--w': `${(titles.length / most) * 100}%` }))),
+      h('span', { class: 'count' }, titles.length)),
+    h('ul', { class: 'titles' }, titles.map((title) => h('li', {}, title)))));
+}
+
+// The rail shows the files with the most kept problems; "and N more" opens all of them in its place,
+// as the Now screen does, and Escape or Close gives it back with focus on the button.
 function known(view) {
   const body = [];
+  let sorted = [];
   if (!Array.isArray(view.known_issues)) {
     body.push(h('p', {}, 'Known issues: unknown. The board could not read the kept review findings.'));
   } else if (!view.known_issues.length) {
@@ -140,24 +154,41 @@ function known(view) {
   } else {
     const files = new Map();
     for (const issue of view.known_issues) {
-      const file = issue.file || 'No file named';
-      files.set(file, [...(files.get(file) || []), plain(issue.title) || 'A problem with no title']);
+      const name = issue.file || 'No file named';
+      files.set(name, [...(files.get(name) || []), plain(issue.title) || 'A problem with no title']);
     }
-    const sorted = [...files].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
-    const most = sorted[0][1].length;
-    // Each file opens with Enter to list its kept problems and closes with Escape.
-    body.push(h('ul', {}, sorted.map(([file, titles]) => h('li', {}, h('details', {},
-      h('summary', {}, h('span', { class: 'file' }, file,
-        h('span', { class: 'meter', 'aria-hidden': 'true' }, h('span', { '--w': `${(titles.length / most) * 100}%` }))),
-        h('span', { class: 'count' }, titles.length)),
-      h('ul', { class: 'titles' }, titles.map((title) => h('li', {}, title))))))));
+    sorted = [...files].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
   }
-  const section = region('known-issues', 'known', 'Known issues by file', ...body);
+  const most = sorted[0]?.[1].length;
+  let section;
+  const swap = (all, focus) => {
+    everyFile = all;
+    const next = known(view);
+    section.replaceWith(next);
+    next.querySelector(focus).focus();
+  };
+  if (everyFile && sorted.length > FILES) {
+    section = h('section', { class: 'panel known list', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': 'known-issues' },
+      h('header', {}, h('h2', { id: 'known-issues', tabindex: '-1' }, `Known issues by file, all ${sorted.length}`),
+        h('button', { type: 'button', class: 'close' }, 'Close')),
+      h('ul', {}, sorted.map((entry) => file(entry, most))));
+    section.querySelector('.close').addEventListener('click', () => swap(false, '.more'));
+  } else {
+    if (sorted.length) body.push(h('ul', {}, sorted.slice(0, FILES).map((entry) => file(entry, most))));
+    if (sorted.length > FILES) {
+      const more = h('button', { type: 'button', class: 'more', 'aria-haspopup': 'dialog' }, `and ${sorted.length - FILES} more`);
+      more.addEventListener('click', () => swap(true, 'h2'));
+      body.push(more);
+    }
+    section = region('known-issues', 'known', 'Known issues by file', ...body);
+  }
   section.addEventListener('keydown', (event) => {
-    const open = event.key === 'Escape' && event.target.closest('details[open]');
-    if (!open) return;
-    open.open = false;
-    open.querySelector('summary').focus();
+    if (event.key !== 'Escape') return;
+    const open = event.target.closest('details[open]');
+    if (open) {
+      open.open = false;
+      open.querySelector('summary').focus();
+    } else if (section.matches('.list')) swap(false, '.more');
   });
   return section;
 }

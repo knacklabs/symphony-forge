@@ -7,6 +7,10 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 
 STORY = "A-DEVELOPER-WHO-CLONES-SYMPHONY-FORGE-TO"
 ROOT = Path(__file__).resolve().parents[1]

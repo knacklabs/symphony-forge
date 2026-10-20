@@ -8,6 +8,10 @@ import shutil
 import sys
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-PROTO-1"
 PIN = "ce14dcca09b3affb922ddcca11465619e67f5114"
 SOL_HIGH = "model: gpt-6.1-sol\nthinking: high\nautoreview done"

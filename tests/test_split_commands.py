@@ -18,6 +18,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # forge upgrade joins after migrate (FORGE-UPGRADECMD-1).
 # Test adds the lane and picker; stop adds cancellation; FORGE-BOARD-3 adds assign.
 # Dropping and restoring a fix adds a fix subcommand, with no new top-level command.
+# Amend now offers --append alongside --done and describes the preview of both texts.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
@@ -49,7 +50,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      "    lanes               Show this release's machine-wide runs\n"
      '    stop                Stop a running or waiting run (only a person)\n'
      '    story               Start a story, or record its outcome\n'
-     '    read                Run a round of the cold read of a story doc or spec\n'
+     '    read                Run a round of the cold read of a story doc, spec or\n'
+     '                        decision\n'
      '    assign              Give a story or part to a developer by GitHub username\n'
      '    task                Start a task\n'
      '    fix                 Start a fix, let it go over the fix limit, or change\n'
@@ -90,8 +92,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
         '    drop                Drop a fix with a reason, or restore it with --undo\n'
         "    allow-large         Record the human's permission for this fix to go over\n"
         '                        the fix limit\n'
-        "    amend               Replace a fix's done-when, keeping the old text and\n"
-        '                        the reason in its record\n',
+        '    amend               Show the old and new Done-when, then replace it with\n'
+        '                        --done or add text with --append\n',
  'hook': 'usage: forge hook [-h]\n'
          '                  {context,handoff,approval,deny,pre-commit,pre-push,merge-roadmap,pr-check}\n'
          '                  ...\n'
@@ -248,10 +250,10 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
  'read': 'usage: forge read [-h] [--resolve {accept,narrow,split}] [--reason REASON]\n'
          '                  target\n'
          '\n'
-         'Run a round of the cold read of a story doc or spec\n'
+         'Run a round of the cold read of a story doc, spec or decision\n'
          '\n'
          'positional arguments:\n'
-         '  target                a story key or a spec slug\n'
+         '  target                a story key, spec slug or decision slug\n'
          '\n'
          'options:\n'
          '  -h, --help            show this help message and exit\n'
@@ -311,9 +313,11 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                     '\n'
                     'options:\n'
                     '  -h, --help  show this help message and exit\n',
- 'fix amend': 'usage: forge fix amend [-h] --done DONE_WHEN --because WHY FIX\n'
+ 'fix amend': 'usage: forge fix amend [-h] [--done DONE_WHEN] [--append TEXT] --because WHY\n'
+              '                       FIX\n'
               '\n'
-              "Replace a fix's done-when, keeping the old text and the reason in its record\n"
+              'Show the old and new Done-when, then replace it with --done or add text with\n'
+              '--append\n'
               '\n'
               'positional arguments:\n'
               '  FIX\n'
@@ -321,6 +325,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
               'options:\n'
               '  -h, --help        show this help message and exit\n'
               '  --done DONE_WHEN\n'
+              '  --append TEXT\n'
               '  --because WHY\n',
  'work': 'usage: forge work [-h] [--note TEXT] item\n'
          '\n'

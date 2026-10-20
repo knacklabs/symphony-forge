@@ -18,13 +18,23 @@ GUIDANCE = (
 )
 
 
-def stopped(env, kind="fix"):
+def stopped(env, kind="fix", *, low_harm=False):
     seed(env, "src/a.py")
     # A task's plan row may hold markdown and paths; its question names it in plain words.
     doc = STORY_DOC.replace("Shoppers can save their basket with one click",
                             "Shoppers can **save** their basket at `app.py:3` with one click")
     item, where = env.start_approved_task(doc) if kind == "task" else env.start_fix()
-    result = rounds(env, item, where, ["src/a.py"] * 3)
+    if low_harm:
+        # Gain 5 still blocks after round one; low Harm exercises the retained timed default.
+        for number in range(1, 4):
+            env.reviews(blocked({**finding("P0", f"Round {number} defect", "src/a.py"),
+                                 "body": "Gain 5, Work 2, Harm 1\nEvidence"}))
+            env.commit(where, "app.py", f"print({number})\n")
+            env.commit(where, "src/a.py", f"pass  # review round {number}\n")
+            result = env.close(item)
+            assert result.returncode == 1, result.stdout + result.stderr
+    else:
+        result = rounds(env, item, where, ["src/a.py"] * 3)
     lines = result.stderr.splitlines()
     if kind == "task":
         assert lines[-10] == ("Save a basket (part of Shoppers can save a basket): "
@@ -96,7 +106,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         # accepted review stays valid until the worker changes the branch itself.
         env.commit(env.repo.path, "NEWS.md", "Unrelated upstream change\n")
         env.repo.git("push", "-q", "origin", "main")
-        env.reviews(blocked(finding("P1", "Round 3 defect", "src/a.py")))
+        env.reviews(blocked(finding("P0", "Round 3 defect", "src/a.py")))
         changed_base = env.close(item)
         assert changed_base.returncode == 0, changed_base.stdout + changed_base.stderr
         assert len(env.review_calls()) == before
@@ -113,8 +123,8 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
     env.commit(where, "src/a.py", "pass  # human choice implemented\n")
     # An accepted finding comes back only as a disputed keep with new evidence of harm.
     title = "Disputed keep 1: Round 3 defect loses saved baskets" if choice == "accept" else "A new defect"
-    # The choice settled src/a.py's area, where only Harm 3 or more at the bar still holds work.
-    env.reviews(blocked({**finding("P1", title, "src/a.py"), "body": "Gain 3, Work 2, Harm 3\nEvidence"}))
+    # The choice settled src/a.py's area; only a new P0 can hold the later round.
+    env.reviews(blocked({**finding("P0", title, "src/a.py"), "body": "Gain 3, Work 2, Harm 4\nEvidence"}))
     resumed = env.close(item)
     assert resumed.returncode == 1
     assert title in resumed.stderr
@@ -130,7 +140,7 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     assert env.close(item).returncode == 1
     evidence = "src/a.py:1 Proven harmless"
     assert env.close(item, "--dismiss", "1", "--because", evidence).returncode == 0
-    defect = finding("P1", "Unfixed defect", "src/a.py", line=2)
+    defect = finding("P0", "Unfixed defect", "src/a.py", line=2)
     for number in (2, 3):
         env.commit(where, "app.py", f"print({number})\n")
         if number == 2:
@@ -149,7 +159,7 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     assert reviewed.returncode == 0, reviewed.stderr
     assert len(env.review_calls()) == before + 1
     prompt = env.prompt()
-    assert "Unfixed defect (src/a.py:2): Gain 4, Work 2, Harm 1\nEvidence for: Unfixed defect" in prompt
+    assert "Unfixed defect (src/a.py:2): Gain 5, Work 2, Harm 4\nEvidence for: Unfixed defect" in prompt
     # The owner's acceptance reaches the reviewer as known and accepted, not as a ruling.
     known = prompt.split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert f"Unfixed defect (src/a.py): accepted by the owner: Human accepted the remaining finding: {reason}" in known

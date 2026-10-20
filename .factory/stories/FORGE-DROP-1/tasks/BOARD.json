@@ -1,0 +1,44 @@
+{
+  "base": "04a9083591c2e2dab5fb77a42fbacd0935e3daa3",
+  "branch": "task/FORGE-DROP-1-BOARD",
+  "chat": {
+    "approval": "c0edd03485b1f9611b484bcd48553d07d81d64dfbee8c9b0a3cf6169e3e393c5",
+    "claude": null,
+    "conversation": "01a14b9c-1046-7613-872a-ed1045b0c182",
+    "head": null,
+    "start": "0767569bef9a7fe19f5f910117238a19bdcde749"
+  },
+  "flagged": [],
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "branch_diff": "0d2f662b244c48fc61a0157b6d522e56cc579f6dcb70b41b6682d5e7ea389486",
+    "changed": "3b1d1b1290025bb3e94661ad3197d2c78d248cc50962d9285fdb8bea9cdcce51",
+    "commit": "ced31edc8c4e7d533e9cc8c0961d4a34ec297108",
+    "dismissals": [],
+    "findings": [],
+    "id": "222ca520-af85-46a1-9047-1b0f543cc72a",
+    "mechanical": true,
+    "status": "clean"
+  },
+  "round": 1,
+  "stacked_on": "FORGE-BOARD-4/SERVER",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T20:41:19.516274+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T07:28:53.370097+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "84d1c0d247302473038b81a8f1ae8636eefb64ba",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}

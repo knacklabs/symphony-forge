@@ -152,6 +152,7 @@ def test_1_only_known_harmless_manifest_lines_keep_tests_related(repo, change, f
     assert ("2 passed" if full else "1 passed") in result.stdout, result.stdout
     assert ("Shared test inputs changed" in result.stdout) == full
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", ["success", "failed-tests", "missing-lock"])
 def test_2_uv_setup_and_test_runs_keep_an_older_worktrees_lock_unchanged(repo, monkeypatch, case):
     monkeypatch.setenv("UV_FROZEN", "0")  # Forge's policy wins over the caller's environment.

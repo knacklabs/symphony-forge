@@ -28,6 +28,7 @@ def _invitation(brief):
         assert invitation in guidance
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
 def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
         repo, gh, tmp_path, monkeypatch, sdk_data, previous, request):

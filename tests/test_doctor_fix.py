@@ -20,6 +20,8 @@ from test_codex_setup import PIN as SDK_PIN
 from test_codex_setup import UV_STUB as SDK_UV
 from test_setup import _version
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-DOCTORFIX-1"
 NEWER = "9.0.0"
 INSTALL = f"uv tool install git+https://github.com/knacklabs/symphony-forge@v{NEWER}"

@@ -12,6 +12,7 @@ from test_codex_worker import PIN
 STORY = "FIX-APPEND-ONLY-EVENTS"
 
 
+@pytest.mark.platform
 def test_2_cached_sdk_survives_temporary_client_python_cleanup(tmp_path):
     if REAL_UV is None:
         pytest.skip("uv is missing, so the Codex SDK test environment cannot be built")

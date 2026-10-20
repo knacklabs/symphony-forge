@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/worker.py\tPreserve coordinator answers through resolve-only rounds\tmerge-main-each-round",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 227,
+      "text": "Preserve coordinator answers through resolve-only rounds",
+      "from": "blocking",
+      "item": "merge-main-each-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tSelect the worker using the settings brought in by the merge\tmerge-main-each-round",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 214,
+      "text": "Select the worker using the settings brought in by the merge",
+      "from": "blocking",
+      "item": "merge-main-each-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tSend the full build brief after a fresh resolve-only session\tmerge-main-each-round",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 243,
+      "text": "Send the full build brief after a fresh resolve-only session",
+      "from": "blocking",
+      "item": "merge-main-each-round",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/worker.py\tA round selects its worker before it merges new default settings.",
+      "kind": "edge",
+      "path": "src/forge/worker.py",
+      "line": 213,
+      "text": "A round selects its worker before it merges new default settings.",
+      "from": "worker",
+      "item": "merge-main-each-round",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
