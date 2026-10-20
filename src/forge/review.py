@@ -804,7 +804,9 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
                           key=lambda word: {"error": 2, "failed": 1}.get(word, 0))
     ran = [(outcome, node) for node, outcome in worst.items()]
 
-    ran_none = not command or docs_only(top, base)  # close runs no tests for this change
+    proof = commit_paragraph(top, base, "Proof list:")
+    # Classifying the diff cannot change a proof list that names no tests.
+    ran_none = bool(TEST_NAME.search(proof)) and (not command or docs_only(top, base))
 
     def result(found: re.Match) -> str:  # the worker's words stay; a name gains its result
         name = found[0].rstrip(".:)")
@@ -832,7 +834,7 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
         return said + found[0][len(name):]
 
     lines = []
-    for number, line in enumerate(commit_paragraph(top, base, "Proof list:").splitlines()):
+    for number, line in enumerate(proof.splitlines()):
         if not TEST_NAME.search(line):  # close cannot match a line without pytest names to its run
             lines.append(line if number == 0 or not line.strip() else f"{line} (not checked)")
             continue
