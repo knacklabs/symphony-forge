@@ -147,6 +147,7 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     env.checks(GREEN)
     second = env.close(item)
     assert second.returncode == 1, second.stdout + second.stderr
+    published(env, item)
     chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
@@ -544,6 +545,7 @@ def conflict_wait(env, monkeypatch):
     env.reviews(blocked(finding("P0", "Basket disappears")))
     stopped = env.close(item)
     assert stopped.returncode == 1 and "One more round, split or accept?" in stopped.stderr
+    published(env, item)
     chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
