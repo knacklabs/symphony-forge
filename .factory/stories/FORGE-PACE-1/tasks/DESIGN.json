@@ -77,7 +77,7 @@
     "id": "9e2a1ee7-42b1-4216-ac57-a871ae440ac0",
     "status": "clean"
   },
-  "round": 7,
+  "round": 8,
   "status": "fixing",
   "steps": [
     {
@@ -110,10 +110,10 @@
     }
   ],
   "stuck": {
-    "close": "233a0876-dee9-4d9f-886d-c199124c5d8b",
-    "head": "2c13cf85d45995b3db9a8328280033609dba7027",
+    "close": "5ef4c743-4026-4720-ba67-009751c3747c",
+    "head": "6b495ddff30703bf9df9da1b09e2a2469fcd88ba",
     "keys": {},
-    "round": 6
+    "round": 7
   },
   "worker": "codex"
 }
