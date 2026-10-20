@@ -16,7 +16,7 @@
 | `forge stop <item>` | Person only: stops the item's runs in this repo (`--repo <root>` or `--id <id>`) |
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
 | `forge story done <KEY> "<outcome>"` | Corrects a finished story's outcome on an existing work branch; opens no separate pull request |
-| `forge read <KEY or spec or decision>` | Runs the next round of the cold read of a story doc, spec or decision, until a round finds nothing |
+| `forge read <KEY or spec or decision>` | Runs at most two cold-read rounds of a story doc, spec or decision. Open notes after round two become follow-ups. A P0 waits for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"` |
 | `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a developer and publishes the plan |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |

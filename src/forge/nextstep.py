@@ -287,12 +287,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
             text = notes.read_text(encoding="utf-8")
             spec = notes.with_name(notes.name.removesuffix(".read.md") + ".md")
             if spec.is_file():
-                advice = _read_advice(path, text)
-                stopped = story._blocked_reads(path, *story._record(text)) >= 3  # pyright: ignore[reportPrivateUsage]
-                if advice:
-                    title = spec.read_text(encoding="utf-8").splitlines()[0].lstrip("# ")
-                    lines += [f"Cold read of {review.plain(title)}:", *(advice[:-1] if stopped else advice)]
-                if stopped:
+                if story.stopped(*story._record(text)):  # pyright: ignore[reportPrivateUsage]
                     lines += _read_loop(spec.stem, spec.read_text(encoding="utf-8"), text, path)
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
@@ -699,11 +694,8 @@ def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, requi
         return []
     if not record.get("round"):
         return [f"Planning {title}: {notes} has no round of cold read.", f"Next: forge read {key}"]
-    advice = _read_advice(top, text)
-    if story._blocked_reads(top, record, findings) >= 3:  # pyright: ignore[reportPrivateUsage]
-        return advice[:-1] + _read_loop(key, doc, text)
-    if advice:
-        return [f"Planning {title}:", *advice]
+    if story.stopped(record, findings):
+        return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
@@ -715,21 +707,12 @@ def _next_round(top: Path, key: str, text: str, doc_hash: str, title: str, requi
             f"forge read {key}"]
 
 
-def _read_advice(top: Path, notes: str) -> list[str]:
-    record, findings = story._record(notes)  # pyright: ignore[reportPrivateUsage]
-    if story._blocked_reads(top, record, findings) < 2:  # pyright: ignore[reportPrivateUsage]
-        return []
-    parts = re.split(r"^## Round (\d+)[ \t]*$", findings, flags=re.M)
-    return review.owner_advice([(number, [story.FINDING.sub("", block.splitlines()[0])
-                                         for block in story._findings(text).values()])  # pyright: ignore[reportPrivateUsage]
-                                for number, text in zip(parts[1::2], parts[2::2])])
-
-
 def _read_loop(target: str, doc: str, notes: str, where: Path | None = None) -> list[str]:
     """A stopped cold-read loop's lines: the stop, its ready-to-ask question and the next step,
     run in `where` for a spec, which forge read finds only in its own checkout."""
     cd = f"cd {repo.quote(str(where))} && " if where else ""
-    return [line.format(target=target, question=story.read_question(doc, notes)) for line in
+    record, _ = story._record(notes)  # pyright: ignore[reportPrivateUsage]
+    return [line.format(target=target, round=record["round"], question=story.read_question(doc, notes)) for line in
             (story.REFUSALS["read_loop"][0], "Next: " + cd + story.REFUSALS["read_loop"][1])]
 
 

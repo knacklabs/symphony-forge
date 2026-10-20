@@ -227,17 +227,6 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
             (score.holds(f, result.get("blocking_level")) and n not in dismissed)]
 
 
-def owner_advice(rounds: list[tuple[Any, list[str]]]) -> list[str]:
-    """Show the history that lets the owner settle the rule behind repeated blocked rounds."""
-    rows = [f"| {number} | " + ("; ".join(plain(title).replace("|", r"\|") for title in titles)
-                               or "No findings.") + " |" for number, titles in rounds]
-    return ["Stop sending rounds and ask the owner to settle the missing rule. "
-            "The coordinator asks. The owner decides. The coordinator records the choice.",
-            "| Round | Finding titles |", "|---|---|", *rows,
-            "Next: list the findings, name the pattern, and ask one question at a time with options "
-            "and a recommendation. Write the rule into the plan's builder details, then send one focused round."]
-
-
 def area(top: Path, commit: str, file: str, line: Any) -> str:
     """A finding's area: the qualified name of the innermost Python def holding its line at the
     commit, else (another language, no parse, a line outside every def) the file."""

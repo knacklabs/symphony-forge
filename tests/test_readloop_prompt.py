@@ -88,7 +88,7 @@ def test_3_kept_findings_are_settled_not_argued(repo, gh, tmp_path):
                  "Raise a kept finding again only with new evidence of a distinct defect, as "
                  "`Disputed keep <n>: <why>`",
                  "Never raise again a finding whose disposition cites a `Decided:` line",
-                 "Look for new gaps anywhere in the doc",
+                 "P0", "normal use",
                  "a numbered list starting at $next",
                  "write exactly `No findings.` and nothing else"):
         assert rule in round_part, rule

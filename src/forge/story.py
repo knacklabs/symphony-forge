@@ -54,10 +54,10 @@ REFUSALS = {
     "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
-    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. {question}",
-                  'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
+    "read_loop": ("Round {round} of the cold read of {target} still has a P0 note open. {question}",
+                  'forge read {target} --resolve <accept|more|split> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
-                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
+                   'forge read {target} --resolve <accept|more|split> --reason "<human\'s choice>"'),
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
@@ -70,7 +70,7 @@ KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
 RECORD = ("reader", "read_at", "seconds", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
-          "answers_seen", "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
+          "answers_seen", "conversation", "session", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
@@ -162,10 +162,9 @@ def read(args: Any) -> int:
         repo.route(config, config["tools"], command="read", item=target)
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
-    blocked_rounds = _blocked_reads(top, record, findings)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     if choice or reason is not None:
-        if not choice or not reason or not reason.strip() or blocked_rounds < 3:
+        if not choice or not reason or not reason.strip() or not stopped(record, findings):
             repo.refuse(REFUSALS["bad_choice"], target=target)
         folder = design.check(top, _text(doc)) if choice == "accept" and is_story else None
         reason = " ".join(reason.split())
@@ -182,10 +181,12 @@ def read(args: Any) -> int:
                           *([folder] if folder else []), top=top)
         print(f"Recorded the human's choice: {choice}. " + (
             "Next: forge next" if choice == "accept" else
+            f"Next: forge read {target}" if choice == "more" else
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))
         return 0
-    if blocked_rounds >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target, question=read_question(_text(doc), old))
+    if stopped(record, findings):
+        repo.refuse(REFUSALS["read_loop"], target=target, round=record["round"],
+                    question=read_question(_text(doc), old))
     later = bool(record.get("read_hash"))
     if is_story:
         parsed = _parsed(_text(doc), rel)
@@ -226,8 +227,8 @@ def read(args: Any) -> int:
     if gone:
         codex._record(codex._item_file(top, target, ".json", "Grill"),
                       **{"conversation" if recorded == "codex" else "claude": None})
-    first, again, edit, look, cap, head = re.split(r"<!-- forge:(?:round|edit|look|cap|notes) -->\n",
-                                                   (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
+    first, again, head = re.split(r"<!-- forge:(?:round|notes) -->\n",
+                                 (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
 
     def remember_reader(chat: str) -> None:
@@ -263,15 +264,7 @@ def read(args: Any) -> int:
                                 _diff(saw_answers.stdout, answers, "docs/product/BRIEF.md"))
         if any(done.returncode for done in seen.values()):
             diff = spec_diff = "(not available)"
-        old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
-        touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
-                   if old_sections.get(name) != new_sections.get(name)]
-        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1,
-                    touched="(not available)" if diff == "(not available)" else
-                    ", ".join(touched) or "the title")
-        # Only story plans cap notes on unchanged text; specs still get a full read.
-        again = edit if passed(record, findings) else again.replace(
-            "${look}", cap if is_story and round_number >= 3 else look)
+        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1)
         blocking = {n: block for n, block in blocks.items() if DISPOSITION.search(block)}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
         prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()) or "None.")
@@ -292,7 +285,7 @@ def read(args: Any) -> int:
               "answers_seen": _store(top, answers.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8")), "head": head,
               "reader": reader, "left": left,
-              "blocked_rounds": blocked_rounds, "native": is_native,
+              "native": is_native,
               "model": repo.models(config, "grill", reader).get("model", "its own default model"),
               "reason": f"forge.toml's tools is {reader}" if config["tools"] != "both" else
                         "the reader is this session's tool"}
@@ -351,7 +344,7 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
     blocks, later = _findings(findings), bool(record.get("read_hash"))
     before, read_hash, round_number = result["before"], result["read_hash"], result["round"]
     reader, left, head = result["reader"], result["left"], result["head"]
-    recorded, blocked_rounds = record.get("reader", "").split(" ")[0], result["blocked_rounds"]
+    recorded = record.get("reader", "").split(" ")[0]
     ran = ran or {}
     said = _repo_root_paths(said, {str(top), str(top.resolve())})
     if _snapshot(top) != before or failed or not said:
@@ -393,13 +386,21 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
               # A session subagent's read has no measured time, so it records none.
               "read_at": repo.now(), "seconds": str(result.get("seconds", "")), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
-              "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
               "answers_seen": result.get("answers_seen", ""),
               "notes_seen": _store(top, old.encode("utf-8")),
               "conversation": ran["conversation"] if reader == "codex" and not result["native"] else "",
               "session": codex.record(top, target, "Grill")["claude"]["id"]
                          if reader == "claude" and not result["native"] else ""}
+    follow_ups = not clean and round_number >= 2 and not stopped(
+        record, f"## Round {round_number}\n\n{said}")
+    if follow_ups:
+        for block in _findings(said).values():
+            if score.note_holds(FINDING.sub("", block, count=1)) and not DISPOSITION.search(block):
+                said = said.replace(block, block + f"\n   Disposition: keep - {score.ROUND_TWO}", 1)
+        record.update(loop_choice="accept", loop_reason="Round two left no P0; its notes are follow-ups",
+                      passed="yes")
+        clean = True
     kept = findings.rstrip("\n") if later else head.strip()
     _write(notes, _notes(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"))
     if clean and left:
@@ -415,11 +416,12 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
             state["status"] = "read"
         changed.append(repo.write_state(target, repo.add_step(state, "read"), top))
     if clean:  # a passing round is committed, so tasks and pull requests carry what passed
-        outcome = "found nothing" if said == "No findings." else "had no blocking notes"
+        outcome = ("passed with follow-ups" if follow_ups else
+                   "found nothing" if said == "No findings." else "had no blocking notes")
         repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
-    if not clean and blocked_rounds + 1 >= 3 and score.read_stops(list(_findings(said).values())):
-        repo.refuse(REFUSALS["read_loop"], target=target,
+    if stopped(record, f"## Round {round_number}\n\n{said}"):
+        repo.refuse(REFUSALS["read_loop"], target=target, round=round_number,
                     question=read_question(text.decode("utf-8"), _text(notes)))
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
@@ -719,20 +721,13 @@ def passed(record: dict[str, str], findings: str) -> bool:
             and not any(score.note_holds(body) for body in parts[2::2]))
 
 
-def _blocked_reads(top: Path, record: dict[str, str], findings: str) -> int:
-    """Earlier releases' snapshots supply the streak until the first new read records it."""
-    count = _streak(top, record, findings)
-    return 2 if count >= 3 and not score.read_stops(list(_latest(record, findings).values())) else count
-
-
-def _streak(top: Path, record: dict[str, str], findings: str) -> int:
-    count = 0
-    while count < 3 and record.get("round") and not passed(record, findings) and not record.get("loop_choice"):
-        if record.get("blocked_rounds"):
-            return min(3, count + int(record["blocked_rounds"]))
-        count += 1
-        record, findings = _record(repo.read_blob(top, record.get("notes_seen") or "-") or "")
-    return count
+def stopped(record: dict[str, str], findings: str) -> bool:
+    """Only an open P0 after round two needs the owner's choice before another read."""
+    return (int(record.get("round") or 0) >= 2 and not passed(record, findings)
+            and not record.get("loop_choice")
+            and any(score.note_holds(FINDING.sub("", block, count=1))
+                    and score.bar(score.parse(block)) == "block"
+                    for block in _latest(record, findings).values()))
 
 
 def rounds(notes: str | None, state: str | None = None) -> bool:
@@ -1030,8 +1025,8 @@ def read_question(doc: str, notes: str) -> str:
     found = sections(doc)
     gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
     return review.question(review.plain(title[1]) if title else "", gives, score.table(flagged),
-                           score.who(flagged, "Ask the human to accept, narrow or split before reading "
-                                              "again, in these words:"),
+                           "Ask the human to choose one more round, split or accept before another read, "
+                           "in these words:",
                          "keep these problems as known and mark the read accepted; approving or "
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else
@@ -1187,10 +1182,10 @@ COMMANDS = [
     {"words": "read", "run": "read", "changes_state": True,
      "help": "Run a round of the cold read of a story doc, spec or decision",
      "args": [(('target',), {"help": "a story key, spec slug or decision slug"}),
-              (('--resolve',), {"choices": ["accept", "narrow", "split"]}),
+              (('--resolve',), {"choices": ["accept", "more", "split"]}),
               (('--reason',), {})],
      "position": 90,
-     "listing": '| `forge read <KEY or spec or decision>` | Runs the next round of the cold read of a story doc, spec or decision, until a round finds nothing |'},
+     "listing": '| `forge read <KEY or spec or decision>` | Runs at most two cold-read rounds of a story doc, spec or decision. Open notes after round two become follow-ups. A P0 waits for `--resolve more`, `split` or `accept` with `--reason "<human\'s choice>"` |'},
 ]
 
 GROUP_HELP = {"story": "Start a story, or record its outcome"}

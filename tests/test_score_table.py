@@ -90,30 +90,31 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
             "- Scored finding: evidence\nOne more round") in said, said
 
     # A read loop stops: its blocking notes in the same ranked table, numbered as the read notes number them.
-    def read_three(key: str, last: str):
+    def read_two(key: str, last: str):
         shop = new_story(repo, key)
         (shop / "plans" / f"{key}.md").write_text(DOC, encoding="utf-8")
-        for number in (1, 2, 3):
+        # A P0 now stops the second read; this test still owns the open-note table.
+        for number in (1, 2):
             _says(repo, f"1. Blocking: Gap {number}.\n   Raise: Not done. Builders guess the limit.\n"
-                  + ("   Gain 4, Work 1, Harm 1\n" if key == "SHOP" else "") + (last if number == 3 else ""))
+                  + ("   Gain 4, Work 1, Harm 1\n" if key == "SHOP" else "") + (last if number == 2 else ""))
             read = repo.forge("read", key)
-            if number < 3:
+            if number < 2:
                 notes = shop / "plans" / f"{key}.read.md"
                 notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - fine\n", encoding="utf-8")
         assert read.returncode == 1, read.stdout + read.stderr
         return shop, read.stderr
 
     note = lambda n, title, scores: f"{n}. Blocking: {title}.\n   Raise: Not done. Shoppers notice.\n   {scores}\n"  # noqa: E731
-    shop, stop = read_three("SHOP", note(2, "Saved baskets vanish", "Gain 4, Work 2, Harm 4")
+    shop, stop = read_two("SHOP", note(2, "Saved baskets vanish", "Gain 4, Work 2, Harm 4")
                             + note(3, "Totals drift", "Gain 5, Work 1, Harm 1")
                             + note(4, "Sorting is random", "Gain 3, Work 1, Harm 2")
                             + note(5, "Names are cut", "Gain 4, Work 2, Harm 1")
                             + note(6, "Dates are local", "Gain 3, Work 2, Harm 1"))
     rows = [*HEAD,
-            "| 4 | Saved baskets vanish: shoppers notice. | 4 | 2 | 4 | fix now |",
-            "| 5 | Totals drift: shoppers notice. | 5 | 1 | 1 | fix now |",
-            "| 3 | Gap 3: builders guess the limit. | 4 | 1 | 1 | fix this round |",
-            "| 7 | Names are cut: shoppers notice. | 4 | 2 | 1 | fix this round |"]
+            "| 3 | Saved baskets vanish: shoppers notice. | 4 | 2 | 4 | fix now |",
+            "| 4 | Totals drift: shoppers notice. | 5 | 1 | 1 | fix now |",
+            "| 2 | Gap 2: builders guess the limit. | 4 | 1 | 1 | fix this round |",
+            "| 6 | Names are cut: shoppers notice. | 4 | 2 | 1 | fix this round |"]
     assert _table(stop) == rows, stop
     assert "\n".join(rows) in repo.forge("next", cwd=shop).stdout
     # Low-Harm Gain 3 notes now settle as follow-ups, so they leave the open-note table.
@@ -122,7 +123,7 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     assert notes.count("Disposition: keep - below the bar (follow-up)") == 2
 
     # A read note without scores beside a scored one: the read stop lists every note as a plain line.
-    _, stop = read_three("BAKE", note(2, "Totals drift", "Gain 5, Work 1, Harm 4"))
-    assert ("It still has these problems:\n- Gap 3: builders guess the limit.\n"
+    _, stop = read_two("BAKE", note(2, "Totals drift", "Gain 5, Work 1, Harm 4"))
+    assert ("It still has these problems:\n- Gap 2: builders guess the limit.\n"
             "- Totals drift: shoppers notice.\nOne more round") in stop, stop
     assert not _table(stop)
