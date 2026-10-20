@@ -1,6 +1,13 @@
 {
   "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
   "branch": "fix/land-note",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a157e4-8db3-78c0-b533-e15d83fd8a94",
+    "head": null,
+    "start": "702230d47d52f88a4dfab18abcd64912b1c753ca"
+  },
   "done_when": "forge land <item> --note \"<text>\" passes the note to the round it starts, the same way forge work --note does, on a new repo and on an earlier-adopted repo; the coordinator guide says to queue several items by running forge land for each in the background, because Forge admits their rounds by machine capacity",
   "fix_kind": "backend",
   "kind": "fix",
