@@ -25,7 +25,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "What now?" | `forge next` |
 | "Show me progress" | `forge board` |
 | "Plan a new story" | `forge story new <KEY> "<title>"` |
-| "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec |
+| "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec or decision |
 | "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
 | "Give this story or part to a developer" | `forge assign <KEY or KEY/TASK> <login>` |
@@ -82,6 +82,10 @@ recommendation first. Save the answer before moving to the next question.
   `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
 - Save a standing rule or direction with `forge decision new <slug>`. Batch decision
   docs into the next fix; do not open one pull request per decision.
+  For a large decision, run `forge read <decision-slug>` before acceptance. Amend the decision
+  and answer findings between rounds, as for a spec. Notes stay beside the numbered decision
+  record. Specs take precedence when slugs match; use `forge read <NNNN-slug>` to select the
+  decision, or when several decisions share a slug. A cold read does not accept the decision.
 - Park an idea not yet chosen in `plans/ideas.md`, a short dated list you keep.
   Create it on first use. Remove an entry when it becomes a spec, story or fix.
 
@@ -1675,10 +1679,10 @@ choices. Ask the owner exactly that question. Record the choice with
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-Read also stops after three blocked cold-read rounds, for stories and specs alike, only when a
+Read also stops after three blocked cold-read rounds, for stories, specs and decisions alike, only when a
 note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Ask
 the owner to accept, narrow or split, by the stop rule; do not read again until the
-choice is recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
+choice is recorded with `forge read <KEY or spec or decision> --resolve <accept|narrow|split> --reason "<human's choice>"`.
 Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
 the current document; later changes need another read. Narrow or split the part as agreed before
 reading again. A clean round or a recorded choice restarts the three-round count.

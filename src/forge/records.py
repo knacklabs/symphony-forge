@@ -430,6 +430,18 @@ def _roadmap_items(slug: str, body: str) -> dict[str, str]:
     return items
 
 
+def read_path(top: Path, target: str) -> Path:
+    """Specs keep precedence; numbered decision names select a decision with the same slug."""
+    spec = top / "docs" / "specs" / f"{target}.md"
+    if SLUG.fullmatch(target):
+        if spec.is_file():
+            return spec
+        decision = _decision(top, target, "forge read <NNNN-slug>")
+        if decision:
+            return top / decision
+    repo.refuse(story.REFUSALS["no_spec"], slug=target)
+
+
 def _decision(top: Path, name: str, next_step: str, called: str = "") -> str:
     """The one decision named NNNN-slug (that exact file) or slug, or "" when there is none."""
     folder = top / "docs" / "decisions"
