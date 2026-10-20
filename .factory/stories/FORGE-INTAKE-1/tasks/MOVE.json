@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-INTAKE-1-MOVE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-20T17:15:07.809453+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8f1bd9f115181a74337d0ff9f8eb83009d222355",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
