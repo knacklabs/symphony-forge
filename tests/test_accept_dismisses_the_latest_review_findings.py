@@ -19,13 +19,12 @@ def _stop_with_remaining_findings(env):
     env.reviews(blocked(safe))
     assert env.close(item).returncode == 1
     assert env.close(item, "--dismiss", "1", "--because", "src/a.py:1 Proven safe").returncode == 0
-    for number in (2, 3):
-        env.commit(where, "app.py", f"print({number})\n")
-        # A new P0 keeps the stop reachable after round two; the dismissal line stays intact.
-        env.commit(where, "src/a.py", f"pass\nprint({number})\n")
-        env.reviews(blocked(safe, finding("P0", "Remaining defect", "src/a.py", line=2),
-                            finding("P2", "Remaining advice", "src/a.py")))
-        assert env.close(item).returncode == 1
+    env.commit(where, "app.py", "print(2)\n")
+    # A P0 stops review two; the dismissal's cited line stays intact.
+    env.commit(where, "src/a.py", "pass\nprint(2)\n")
+    env.reviews(blocked(safe, finding("P0", "Remaining defect", "src/a.py", line=2),
+                        finding("P2", "Remaining advice", "src/a.py")))
+    assert env.close(item).returncode == 1
     assert saved(where, item)["status"] == "hotspot"
     return item, where
 
@@ -55,9 +54,9 @@ def test_1_owner_accept_dismisses_every_remaining_finding_and_carries_on(env, pr
     assert "Already proved safe" in shown and "dismissed because src/a.py:1 Proven safe" in shown
     line = next(line for line in shown.splitlines() if "Remaining defect" in line)
     assert "dismissed because" in line and reason in line
-    # The advice below the bar was already known from the earlier round, so it stays lived with.
+    # Advice in this last review is accepted too; only prior evidence keeps its original reason.
     line = next(line for line in shown.splitlines() if "Remaining advice" in line)
-    assert "dismissed because known: below the bar (live with)" in line
+    assert "dismissed because Human accepted the remaining finding: " + reason in line
     checked = env.repo.forge("hook", "pr-check", "--base", "origin/main", "--head", "HEAD",
                              "--branch", "fix/tidy-readme", cwd=where)
     assert checked.returncode == 0, checked.stdout + checked.stderr

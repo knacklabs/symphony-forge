@@ -3,6 +3,7 @@
 Audit: existing time tests keep one machine's logs. These command tests protect
 cross-machine reconciliation, overlapping story time and human-readable rounding.
 Only GitHub and review reports are faked; no Forge helper is imported.
+New plan reads use src/forge/story.py before the approval and time history starts.
 """
 import json
 import re
@@ -147,6 +148,9 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     env.checks(GREEN)
     second = env.close(item)
     assert second.returncode == 1, second.stdout + second.stderr
+    published(env, item)
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
     env.commit(resumed, "app.py", "print('basket stays')\n")
     env.reviews(CLEAN)
@@ -540,7 +544,11 @@ def conflict_wait(env, monkeypatch):
     # A later conflict keeps the pull request's earlier findings instead of a made-up result.
     env.commit(where, "app.py", "print('branch basket again')\n")
     env.reviews(blocked(finding("P0", "Basket disappears")))
-    assert env.close(item).returncode == 1
+    stopped = env.close(item)
+    assert stopped.returncode == 1 and "One more round, split or accept?" in stopped.stderr
+    published(env, item)
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
     env.commit(env.repo.path, "app.py", "print('newer main basket')\n")
     env.repo.git("push", "-q", "origin", "main")

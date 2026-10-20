@@ -137,24 +137,22 @@ Review rules and recorded owner decisions settle a question for later readers an
 
 ### When a loop stops
 
-Forge stops a change after three rounds only in two conditions:
+A code review runs at most two rounds. After round two, open findings other than P0 become
+follow-ups in Known issues. An open P0 stops the change. A P0 is a security hole, data loss or a
+broken main path.
 
-1. A note at the bar comes back.
-2. A note with Harm 3 or more is open.
+Forge asks: "One more round, split or accept?" It shows the open findings and waits for your
+choice. It never starts a third review by itself. One more round gives the worker one more
+attempt. Split moves the open findings to a follow-up fix. Accept records your reason and
+dismisses them. A merge of the default branch or a clean review does not clear an unanswered stop.
 
-Then Forge asks you a question. The question shows the open notes in one table, in the order of
-their scores. A note that an earlier release saved has no scores; then the question shows
-the notes as plain lines. It tells you the result of accept, of narrow, and of split.
+`forge land` runs at most one fix round, including across session handbacks. If findings, tests
+or checks still need a worker, land stops. A review stop exits with status 3 and prints the
+question. Record the choice with `forge close <item> --resolve <more|split|accept> --reason
+"<human's choice>"`, then run land again.
 
-If you do not answer a code review stop in 30 minutes, Forge can narrow the change. Forge does
-this only when each open note has Harm 1 or 2. A repo can set `stop_default = "off"` in
-`forge.toml`. Then Forge always waits for you.
-
-The code review also stops at the third note in one area. An area is one function, or one
-file when the note is outside a function. The question names the area and proposes one
-structural change: cut the code, use one general rule, narrow that "Done when" item, or make the
-code fail closed. After your answer, a new note in that area stops the work only when it is at
-the bar and has Harm 3 or more.
+A cold read still stops after three blocked rounds when a note at the bar has no scores, is a
+disputed keep, or has Harm 3 or more. Its question offers accept, narrow or split.
 
 A note from an earlier release of Forge has no scores. Forge judges that note as before, until
 the next read or review gives new scores.
@@ -228,7 +226,7 @@ where things are in one sentence and gives the exact next step.
 ### Install
 
 ```sh
-uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.16"
+uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.17"
 ```
 
 Check it worked with `forge --version`. Each project pins the Forge version it uses, and Forge

@@ -24,6 +24,9 @@ def test_1_rulings_and_dismissals_reach_the_second_review(env):
     assert f"Greeting is missing (app.py): dismissed because {DISMISSED}" in prompt
     assert "only with new evidence" in prompt
 
+    # The P0 stops round two. A recorded extra round permits its evidence dismissal.
+    chosen = env.close(item, "--resolve", "more", "--reason", "Check the basket evidence")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     # The third review's findings don't repeat the dismissed one; its reason still reaches it.
     assert env.close(item, "--dismiss", "1", "--because", "app.py:1 The basket is intact").returncode == 0
     env.commit(where, "app.py", "print('hello once more')\n")

@@ -1,16 +1,17 @@
-"""When a worker can't get past the same failing test or finding, Forge stops the item and prints
+"""When a worker can't get past the same failing test, Forge stops the item and prints
 a ready-to-ask question; the owner's choice, such as switching the item to the other tool, is
 recorded and the next round follows it. Both client hosts get the guide paragraph."""
 from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 
 import pytest
 
 from conftest import _install
-from test_close import CLEAN, ROOT, blocked, env, finding  # noqa: F401
+from test_close import ROOT, env  # noqa: F401
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
 from test_land import _workers, land  # noqa: F401
 from test_setup import _fresh_client
@@ -19,21 +20,16 @@ from test_upgrade_command import _repo_adopted_on_the_previous_release, unsynced
 
 STORY = "stuck-worker-asks"
 
-# The repo's test commands: failing every run, failing once the worker has built, and failing on
-# the first and third runs only.
+# The repo's test commands fail every run, or fail only on the first and third runs.
 SUITES = {
     "failing": 'print("FAILED test_readme.py::test_greeting - AssertionError")\nraise SystemExit(1)\n',
-    "finding then test": ('import pathlib, sys\nif pathlib.Path("work-1.txt").exists():\n'
-                          '    print("FAILED test_readme.py::test_greeting")\n    sys.exit(1)\n'),
     "fail pass fail": ('import pathlib, sys\nrun = pathlib.Path("{runs}")\n'
                        'run.write_text(run.read_text() + "x" if run.exists() else "x")\n'
                        'sys.exit(len(run.read_text()) != 2)\n'),
 }
 SUITES["work twice"] = SUITES["failing"]
 TESTS = "close's tests failing"
-STUCK = {"failing": TESTS, "work twice": TESTS,
-         "finding": 'the review finding "Saving drops the greeting" in app.py',
-         "no change": 'the review finding "Saving drops the greeting" in app.py'}
+STUCK = {"failing": TESTS, "work twice": TESTS}
 NEXT = 'Next: forge close tidy-readme --resolve <switch|same|narrow|split> --reason "<human\'s choice>"'
 
 
@@ -47,30 +43,17 @@ def question(stuck, tried="Worker round"):
 def _rounds(env, case):
     """Start the fix whose every close fails, then run work and close once (twice for fail pass
     fail)."""
-    # P1s become follow-ups in round two; P0s preserve these independent stuck/progress cases.
-    if case in ("finding", "no change"):
-        env.reviews(blocked(finding("P0", "Saving drops the greeting")))
-    if case == "no change":  # a worker that commits nothing, so close reuses its review
-        (env.repo.bin / "claude_agent_sdk" / "__init__.py").write_text(
-            (ROOT / "tests/stubs/claude_agent_sdk.py").read_text("utf-8"), encoding="utf-8")
-    if case == "finding then test":  # the worker fixes the finding, and a test then fails
-        env.reviews(blocked(finding("P0", "Saving drops the greeting")), CLEAN)
-    if case == "fail pass fail":  # a new finding each close keeps the closes failing
-        # The SDK worker adds work-N.txt each round. Cite that round's new file so
-        # these distinct findings exercise progress rather than unchanged-code advice.
-        env.reviews(*(blocked(finding("P0", f"Defect {n}",
-                                     "app.py" if n == 1 else f"work-{n - 1}.txt"))
-                      for n in (1, 2, 3)))
-    if case not in ("finding", "no change"):
-        script = env.tmp / "suite.py"
-        script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")
-        toml = env.repo.path / "forge.toml"
-        env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-                   + "test = " + json.dumps(f"{sys.executable} {script}") + "\n")
-        env.repo.git("push", "-q", "origin", "main")
+    script = env.tmp / "suite.py"
+    script.write_text(SUITES[case].format(runs=(env.tmp / "runs").as_posix()), "utf-8")
+    toml = env.repo.path / "forge.toml"
+    command = json.dumps(f'"{sys.executable}" "{script.as_posix()}"')
+    settings = re.sub(r"^test\s*=.*\n?", "", toml.read_text("utf-8"), flags=re.M)
+    env.commit(env.repo.path, "forge.toml", f"test = {command}\n" + settings)
+    env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
-    for _ in range(2 if case == "fail pass fail" else 1):
-        assert env.close(item).returncode == 1
+    for number in range(2 if case == "fail pass fail" else 1):
+        expected = 0 if case == "fail pass fail" and number == 1 else 1
+        assert env.close(item).returncode == expected
         # A second round with no close between has no new result, so it counts nothing.
         for _ in range(2 if case == "work twice" else 1):
             worked = env.repo.forge("work", item)
@@ -79,17 +62,16 @@ def _rounds(env, case):
     return item
 
 
-@pytest.mark.parametrize("case", ["failing", "work twice", "fail pass fail", "finding", "finding then test",
-                                  "no change"])
+@pytest.mark.parametrize("case", ["failing", "work twice", "fail pass fail"])
 def test_1_two_rounds_leaving_the_same_failure_stop_with_a_question(land, case):
     env = land
     item = _rounds(env, case)
     stuck = env.repo.forge("work", item)
-    # A passing round between failing ones, or a fixed finding followed by failing tests, is progress.
-    if case in ("fail pass fail", "finding then test"):
+    # A passing test round between failing ones is progress.
+    if case == "fail pass fail":
         assert stuck.returncode == 0, stuck.stdout + stuck.stderr
         return
-    asked = question(STUCK[case], "no new commits" if case == "no change" else "Worker round")
+    asked = question(STUCK[case])
     assert stuck.returncode == 1, stuck.stdout + stuck.stderr
     assert ("The worker can't get past the same problem, so Forge stopped sending it back. "
             "Ask the human:\n") in stuck.stderr
@@ -159,7 +141,7 @@ def test_4_clients_receive_the_stuck_worker_guidance(unsynced_up, adoption):
         client = up.folder
     for host in (".codex", ".claude"):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        assert "When two rounds in a row leave close's tests failing or the same finding open" in guide
+        assert "When two rounds in a row leave close's tests failing" in guide
         assert ('`forge close <item> --resolve <switch|same|narrow|split> --reason '
                 '"<human\'s choice>"`') in guide
 

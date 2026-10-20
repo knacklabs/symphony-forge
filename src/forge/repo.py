@@ -227,6 +227,8 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
+    if args == ("git", "worktree", "list", "--porcelain") and env is None and input is None:
+        return command_fact("worktree listing", cwd, execute)
     if args == ("git", "rev-parse", "--show-toplevel") and env is None and _command_cache is not None:
         # A linked worktree has its own root, even though command_fact shares its git directory.
         key = ("checkout root", Path(cwd or Path.cwd()).absolute())
@@ -262,6 +264,7 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and (args[1] in ("switch", "checkout", "worktree", "branch"))):
         _command_cache.pop(("worktrees", _common_path(cwd)), None)  # a checkout's branch or folder changed
+        _command_cache.pop(("worktree listing", _common_path(cwd)), None)
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and args[1] in ("fetch", "merge", "switch", "checkout")):
         common = _common_path(cwd)
@@ -526,6 +529,7 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
+# ponytail: stop_default only loads settings from earlier releases; stops always wait for the owner.
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
@@ -534,6 +538,7 @@ DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "bot
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
             "models": {}}
+# ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
            "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off")}
@@ -624,14 +629,21 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
     def wanted(name: str) -> bool:
         return name == pinned if pinned else name.endswith("client-signoff.md")
 
-    texts = [] if refs else [path.read_text(encoding="utf-8")
-                             for path in top.glob("docs/decisions/*.md")
-                             if wanted(path.relative_to(top).as_posix())]
-    for ref in refs or (story.landed_ref(top),):
-        names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-        texts += [story.show(top, ref, name) or "" for name in names if wanted(name)]
+    local_names = [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")
+                   if wanted(path.relative_to(top).as_posix())]
+
+    def texts():
+        if not refs:
+            yield from ((top / name).read_text(encoding="utf-8") for name in local_names)
+        for ref in refs or (story.landed_ref(top),):
+            # Probe known names on the requested ref; local acceptance never stands in for it.
+            yield from (story.show(top, ref, name) or "" for name in local_names)
+            names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+            yield from (story.show(top, ref, name) or "" for name in names
+                        if name not in local_names and wanted(name))
+
     return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-                   for text in texts if text.startswith("---"))
+                   for text in texts() if text.startswith("---"))
 
 
 def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:

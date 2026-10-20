@@ -3,13 +3,15 @@ from __future__ import annotations
 
 import json
 
-from test_story import claude_plan, hook, ready, setup, worktree
+from test_story import DESIGN_TREE, claude_plan, hook, ready, setup, worktree
 
 DOC = """# Shoppers can save a basket
 
 ## What changes for you
 
 Shoppers can save a basket and come back to it later.
+
+Design: docs/design/baskets/ (<design tree>)
 
 ## Why
 
@@ -37,6 +39,7 @@ Risks: none
 
 ## Notes
 """
+DOC = DOC.replace("<design tree>", DESIGN_TREE)
 
 
 def facts(path) -> dict:

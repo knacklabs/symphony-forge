@@ -197,7 +197,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     assert Path(dispatch["cwd"]) == where
 
 
-def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin(
+def test_2_land_keeps_its_one_fix_round_limit_after_the_worker_changes_the_pin(
         land, monkeypatch):
     env = land
     current = env.repo.forge("--version").stdout.split()[-1]
@@ -206,24 +206,20 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
-    # The tests pass once, after the second fix round, whose review finds something new, so no two
-    # rounds in a row leave the same problem for the stuck rule; land's own limit still stops it.
+    # The upgraded process keeps land's one-fix budget while the local tests stay red.
     suite = env.tmp / "suite.py"
-    suite.write_text('import pathlib, sys\nsys.exit(not pathlib.Path("work-2.txt").exists() '
-                     'or pathlib.Path("work-3.txt").exists())\n', "utf-8")
+    suite.write_text('print("FAILED test_readme.py::test_greeting")\nraise SystemExit(1)\n', "utf-8")
     failing_test = json.dumps(f'"{sys.executable}" "{suite}"')
     upgraded = original.replace('version = "v1.2.2"',
         f'version = "{current}"\nfast_test = {failing_test}\ntest = {failing_test}')
-    env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN,
-                # A P0 keeps the later repair needed after P1s become round-two follow-ups.
-                blocked(finding("P0", "The greeting is too long", "work-2.txt")), CLEAN)
+    env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN)
     _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     done = env.repo.forge("land", ITEM, cwd=where)
     assert done.returncode == 1, done.stdout + done.stderr
-    assert len(_workers(env)) == 3, done.stdout + done.stderr
-    assert f"Stopped after 3 fix rounds: {ITEM} still has the failing tests." in done.stdout
+    assert len(_workers(env)) == 1, done.stdout + done.stderr
+    assert f"Stopped after one fix round: {ITEM} still has the failing tests." in done.stdout
     notice = (f"Forge pin changed from v1.2.2 to {current}; "
               f"continuing forge land with {current}.")
     assert (done.stdout + done.stderr).splitlines().count(notice) == 1

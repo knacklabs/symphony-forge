@@ -1,4 +1,4 @@
-"""Close lists added PNG screenshots by name; the helper's Python still has Pillow available."""
+"""src/forge/close.py lists PNG screenshots; the helper's Python still has Pillow available."""
 import os
 import struct
 import zlib
@@ -46,7 +46,7 @@ def test_1_close_reviews_a_change_that_adds_a_png_screenshot(env, adopted):
     helper = Path(os.environ["AUTOREVIEW"])
     helper.write_text(IMAGE_REVIEW + (ROOT / "tests/stubs/autoreview").read_text("utf-8"), "utf-8")
     item, where = env.start_fix()
-    (where / "docs").mkdir()
+    (where / "docs").mkdir(exist_ok=True)
     (where / "docs/screen.png").write_bytes(png())
     env.repo.git("add", "docs", cwd=where)
     env.repo.git("commit", "-q", "-m", "Add a screenshot", cwd=where)

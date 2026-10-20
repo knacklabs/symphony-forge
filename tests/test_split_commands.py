@@ -21,7 +21,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # Amend now offers --append alongside --done and describes the preview of both texts.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,start,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
      '             ...\n'
      '\n'
      'Forge takes a story from approval to a merged pull request.\n'
@@ -32,7 +32,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '\n'
      'commands:\n'
      '  '
-     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
+     '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,start,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
      '    init                Set up a new repo: forge.toml, the docs skeleton, the\n'
      '                        first commit, then sync\n'
      '    sync                Write the generated adapter files and git hooks for\n'
@@ -49,6 +49,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    board               Open the live board page on this computer\n'
      "    lanes               Show this release's machine-wide runs\n"
      '    stop                Stop a running or waiting run (only a person)\n'
+     '    start               Choose how an idea starts\n'
      '    story               Start a story, or record its outcome\n'
      '    read                Run a round of the cold read of a story doc, spec or\n'
      '                        decision\n'
@@ -352,7 +353,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
              '  --round ROUND\n'
              '  --subagent SUBAGENT\n',
  'close': 'usage: forge close [-h] [--dismiss N] [--because FILE:LINE_REASON]\n'
-          '                   [--resolve {narrow,split,accept,switch,same}]\n'
+          '                   [--resolve {more,narrow,split,accept,switch,same}]\n'
           '                   [--reason REASON]\n'
           '                   item\n'
           '\n'
@@ -365,7 +366,7 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
           '  -h, --help            show this help message and exit\n'
           '  --dismiss N\n'
           '  --because FILE:LINE_REASON\n'
-          '  --resolve {narrow,split,accept,switch,same}\n'
+          '  --resolve {more,narrow,split,accept,switch,same}\n'
           "  --reason REASON       The human's choice after a review loop stop\n",
  'merge': 'usage: forge merge [-h] [--outcome OUTCOME] item\n'
           '\n'
@@ -505,6 +506,12 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                   '\n'
                   'options:\n'
                   '  -h, --help  show this help message and exit\n'}
+
+
+HELP_GOLDEN["start"] = (
+    "usage: forge start [-h] idea\n\nChoose how an idea starts\n\n"
+    "positional arguments:\n  idea\n\noptions:\n  -h, --help  show this help message and exit\n"
+)
 
 
 def _copy_forge(repo, tmp_path):

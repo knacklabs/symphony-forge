@@ -1,5 +1,6 @@
 """The board's facts: every story and fix with its state, finished work older than a week kept by
-`forge board --out` and left out of `--json`, and the first-screen team lists."""
+`forge board --out` and left out of `--json`, and the first-screen team lists.
+New plan reads use src/forge/story.py before those plans appear on the board."""
 import json
 import sys
 from datetime import datetime, timedelta, timezone

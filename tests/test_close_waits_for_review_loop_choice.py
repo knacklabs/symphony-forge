@@ -9,48 +9,42 @@ import pytest
 
 from test_close import CLEAN, ROOT, STORY_DOC, blocked, env, finding  # noqa: F401
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
-from test_hotspot_stop import rounds, saved, seed
+from test_hotspot_stop import saved, seed
 from test_setup import _fresh_client
 
 GUIDANCE = (
-    "Ask the owner to narrow the part, split it, or accept the remaining findings. "
     "Land prints the owner's question, open findings and failing checks, then exits with status 3 (needs a choice)."
 )
 
 
-def stopped(env, kind="fix", *, low_harm=False):
+def stopped(env, kind="fix"):
     seed(env, "src/a.py")
     # A task's plan row may hold markdown and paths; its question names it in plain words.
     doc = STORY_DOC.replace("Shoppers can save their basket with one click",
                             "Shoppers can **save** their basket at `app.py:3` with one click")
     item, where = env.start_approved_task(doc) if kind == "task" else env.start_fix()
-    if low_harm:
-        # Gain 5 still blocks after round one; low Harm exercises the retained timed default.
-        for number in range(1, 4):
-            env.reviews(blocked({**finding("P0", f"Round {number} defect", "src/a.py"),
-                                 "body": "Gain 5, Work 2, Harm 1\nEvidence"}))
-            env.commit(where, "app.py", f"print({number})\n")
-            env.commit(where, "src/a.py", f"pass  # review round {number}\n")
-            result = env.close(item)
-            assert result.returncode == 1, result.stdout + result.stderr
-    else:
-        result = rounds(env, item, where, ["src/a.py"] * 3)
-    lines = result.stderr.splitlines()
+    # A P0 after the second review replaces the old third-round same-file stop.
+    for number in (1, 2):
+        env.reviews(blocked({**finding("P0", f"Round {number} defect", "src/a.py"),
+                             "body": "Gain 5, Work 2, Harm 5\nNormal saves lose the basket."}))
+        env.commit(where, "app.py", f"print({number})\n")
+        env.commit(where, "src/a.py", f"pass  # review round {number}\n")
+        result = env.close(item)
+        assert result.returncode == 1, result.stdout + result.stderr
     if kind == "task":
-        assert lines[-10] == ("Save a basket (part of Shoppers can save a basket): "
-                             "Shoppers can save their basket with one click")
-    assert [lines[-11], lines[-1]] == [
-        f"Review round 3 of {item} still finds serious problems in src/a.py, which an earlier "
-        "round flagged too, so Forge stops sending the worker back. Ask the human to narrow the part, "
-        "split it, or accept the remaining findings, in these words:",
-        f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"',
-    ]
+        assert ("Save a basket (part of Shoppers can save a basket): "
+                "Shoppers can save their basket with one click") in result.stderr
+    assert "Review round 2" in result.stderr
+    assert "Round 2 defect" in result.stderr and "Forge stopped" in result.stderr
+    assert "One more round, split or accept?" in result.stderr
+    assert (f'Next: forge close {item} --resolve <more|split|accept> '
+            '--reason "<human\'s choice>"') in result.stderr
     return item, where
 
 
 @pytest.mark.parametrize("kind", ["fix", "task", "fix-claude"])
 def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, kind):
-    # Human-only waiting is now opt-in; the default keeps land alive for a timed answer.
+    # The legacy setting still loads, but every review stop waits for the owner.
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + 'stop_default = "off"\n')
     env.repo.git("push", "-q", "origin", "main")
@@ -77,7 +71,7 @@ def test_1_close_and_land_wait_for_the_human_choice(env, tmp_path, monkeypatch, 
     assert "--resolve" in result.stdout
 
 
-@pytest.mark.parametrize("choice", ["narrow", "split", "accept"])
+@pytest.mark.parametrize("choice", ["more", "split", "accept"])
 def test_2_recorded_choice_unlocks_the_item(env, choice):
     item, where = stopped(env)
     before = len(env.review_calls())
@@ -86,7 +80,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
     assert no_reason.stderr == (
         "Record the human's choice only on a stopped review loop, with a non-empty "
         "--reason and no finding dismissals.\n"
-        f'Next: forge close {item} --resolve <narrow|split|accept> --reason "<human\'s choice>"\n'
+        f'Next: forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"\n'
     )
     reason = "The human chose this after reading the remaining findings"
     result = env.close(item, "--resolve", choice, "--reason", reason)
@@ -110,7 +104,7 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         changed_base = env.close(item)
         assert changed_base.returncode == 0, changed_base.stdout + changed_base.stderr
         assert len(env.review_calls()) == before
-        assert (where / "src/a.py").read_text("utf-8") == "pass  # review round 3\n"
+        assert (where / "src/a.py").read_text("utf-8") == "pass  # review round 2\n"
     elif choice == "split":
         # Split now transfers the open findings to a follow-up, so the item can continue.
         resumed = env.close(item)
@@ -122,8 +116,8 @@ def test_2_recorded_choice_unlocks_the_item(env, choice):
         assert "The review left serious findings open" in resumed.stderr
     env.commit(where, "src/a.py", "pass  # human choice implemented\n")
     # An accepted finding comes back only as a disputed keep with new evidence of harm.
-    title = "Disputed keep 1: Round 3 defect loses saved baskets" if choice == "accept" else "A new defect"
-    # The choice settled src/a.py's area; only a new P0 can hold the later round.
+    title = "Disputed keep 1: Round 2 defect loses saved baskets" if choice == "accept" else "A new defect"
+    # A new P0 can stop the next review after an owner choice.
     env.reviews(blocked({**finding("P0", title, "src/a.py"), "body": "Gain 3, Work 2, Harm 4\nEvidence"}))
     resumed = env.close(item)
     assert resumed.returncode == 1
@@ -141,12 +135,10 @@ def test_5_later_review_instructions_keep_acceptance_and_evidence_dismissals(env
     evidence = "src/a.py:1 Proven harmless"
     assert env.close(item, "--dismiss", "1", "--because", evidence).returncode == 0
     defect = finding("P0", "Unfixed defect", "src/a.py", line=2)
-    for number in (2, 3):
-        env.commit(where, "app.py", f"print({number})\n")
-        if number == 2:
-            env.commit(where, "src/a.py", "pass\npass  # unfixed defect\n")
-        env.reviews(blocked(safe, defect))
-        assert env.close(item).returncode == 1
+    env.commit(where, "app.py", "print(2)\n")
+    env.commit(where, "src/a.py", "pass\npass  # unfixed defect\n")
+    env.reviews(blocked(safe, defect))
+    assert env.close(item).returncode == 1
     reason = "The human accepts this risk for this version"
     accepted = env.close(item, "--resolve", "accept", "--reason", reason)
     assert accepted.returncode == 0, accepted.stderr
@@ -223,4 +215,4 @@ def test_4_clients_receive_the_human_choice_instructions(repo, gh, tmp_path, pre
     for host in (".codex", ".claude"):
         text = (client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
         assert GUIDANCE in " ".join(text.split())
-        assert '--resolve <narrow|split|accept> --reason "<human\'s choice>"' in text
+        assert '--resolve <more|split|accept> --reason "<human\'s choice>"' in text

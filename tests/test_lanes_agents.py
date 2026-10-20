@@ -1,6 +1,6 @@
 """CPU budget and FIFO admission through work, read, close and stop.
 
-Only the model providers wait at their edge; Forge owns admission and cancellation.
+Only the model providers wait at their edge; src/forge/story.py owns the plan read.
 """
 import os
 import json

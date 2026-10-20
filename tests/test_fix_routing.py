@@ -14,6 +14,7 @@ from test_worker import calls, install_claude
 from test_next_names_a_failed_scheduled_run import RUNS, LOG, runs
 from test_spotted import entry, LIST
 from test_measure import SPEC
+from test_story import prototype_design
 
 pytestmark = pytest.mark.platform
 
@@ -56,6 +57,7 @@ def test_2_fix_kind_selects_the_same_worker_on_every_round(repo, gh, tmp_path, m
     config.write_text(head, encoding="utf-8")
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
+    prototype_design(repo)
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Set distinct worker models")
     _publish_default(repo, repo.git("remote", "get-url", "origin"))
@@ -176,6 +178,7 @@ def test_23_prototype_next_fix_commands_run_as_printed(repo, gh, tmp_path, monke
             {"key": "INV-1", "spec": "docs/specs/invoices.md"}]}))
         repo.write(".factory/stories/INV-1/story.json", json.dumps({"status": "done"}))
     monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-09-01T10:00:00+00:00")
+    prototype_design(repo)
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Prepare guidance inputs")
     monkeypatch.delenv("GIT_COMMITTER_DATE")

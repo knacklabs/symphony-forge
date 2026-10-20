@@ -243,7 +243,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
 
 def _round(env, item, where, number, *findings, code=1):
     env.commit(where, "app.py", f"print({number})\n")
-    # The score/area rules own these cases; each new defect is in this round's edits.
+    # Every finding names this round's own edits, not a canned report over absent code.
     for entry in findings:
         location = entry["code_location"]
         path, line = location["file_path"], location["line"]
@@ -255,58 +255,3 @@ def _round(env, item, where, number, *findings, code=1):
     result = env.close(item)
     assert result.returncode == code, result.stdout + result.stderr
     return result
-
-
-SHOP = ("def save(basket):\n    total = 0\n    return total\n\n\nLIMIT = 5\n\n\n"
-        "def load(\n        basket,\n        user):\n    return basket\n\n\n"
-        "class A:\n    def __init__(self):\n        self.x = 1\n\n\n"
-        "class B:\n    def __init__(self):\n        self.y = 2\n")
-
-
-@pytest.mark.parametrize("case", CASES)
-@pytest.mark.parametrize("loop", ["area", "read-below-bar-harm-3", "case-only-repeat"])
-def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, case, loop):
-    _client_on_this_release(env, tmp_path, case)
-    item, where = env.start_fix()
-    # Round-two non-P0 follow-ups belong to test_two_round_limit.
-    # Retained area and identity checks use P0s, which still hold work.
-    at_bar = lambda title, file, harm=4, line=1: {  # noqa: E731
-        **_scored("P1", title, f"Gain 4, Work 2, Harm {harm}\nRaise: Functional", file),
-        "code_location": {"file_path": file, "line": line}}
-    if loop == "case-only-repeat":  # one P0 whatever its case: a third round still holds it
-        for number, title in enumerate(("Saving drops the basket", "saving drops the basket", "Saving drops the basket"), 1):
-            held = _round(env, item, where, number, at_bar(title, "docs/1.md"))
-        assert "The review left serious findings open" in held.stderr
-    elif loop == "read-below-bar-harm-3":  # a disposed below-bar note never stops the read loop
-        shop = new_story(env.repo, "SHOP")
-        (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
-        for number in (1, 2, 3):
-            _says(env.repo, f"1. Blocking: Gap {number}.\n   Raise: Plan gap\n   Gain 4, Work 1, Harm 1\n"
-                  + ("2. Advisory: Wording.\n   Raise: Plan gap\n   Gain 2, Work 1, Harm 3\n" if number == 3 else ""))
-            read = env.repo.forge("read", "SHOP")
-            assert read.returncode == 0 and "Three consecutive" not in read.stderr, read.stdout + read.stderr
-            notes = shop / "plans/SHOP.read.md"
-            notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - fine\n", encoding="utf-8")
-    else:
-        env.commit(where, "src/shop.py", SHOP)
-        shop = "src/shop.py"
-        _round(env, item, where, 1, {**at_bar("Save trusts any user", shop, line=2),
-                                     "body": "Gain 3, Work 2, Harm 4\nRaise: Security"},
-               at_bar("The limit is too low", shop, line=6), at_bar("Load ignores the user", shop, line=10),
-               at_bar("A starts without a name", shop, line=17))
-        # One finding raised twice counts once; module-level code, load(), A.__init__ and
-        # B.__init__ are areas of their own.
-        second = _round(env, item, where, 2, at_bar("Save trusts any user", shop, line=2),
-                        at_bar("Save returns early", shop, line=3),
-                        at_bar("B starts empty", shop, line=21), at_bar("B keeps a stale y", shop, line=22))
-        assert "The review left serious findings open" in second.stderr
-        # An earlier round's security finding there, already scored Harm 4, puts fail closed first.
-        third = _round(env, item, where, 3, at_bar("Save rounds down", shop, line=2))
-        assert "still finds serious problems in save() in src/shop.py" in third.stderr
-        assert re.search(r"Findings keep coming in save\(\) in src/shop.py; proposed: make it fail closed", third.stderr)
-        narrow = env.close(item, "--resolve", "narrow", "--reason", "Cut the rounding")
-        assert narrow.returncode == 0, narrow.stdout + narrow.stderr
-        assert "Ready:" in _round(env, item, where, 4, at_bar("Save adds tax twice", shop, harm=2, line=2),
-                                  code=0).stdout
-        held = _round(env, item, where, 5, at_bar("Save loses the basket", shop, line=2))
-        assert "The review left serious findings open: finding 1 (Save loses the basket)." in held.stderr

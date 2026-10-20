@@ -209,7 +209,7 @@ def test_2_accepting_findings_still_refuses_failed_tests(env):
 
     command = f'"{Path(sys.executable).as_posix()}" verify.py'
     env.commit(env.repo.path, "verify.py", "from pathlib import Path\n"
-               "assert Path('app.py').read_text() != 'print(3)\\n', 'client test failed'\n")
+               "assert Path('app.py').read_text() != 'print(2)\\n', 'client test failed'\n")
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
     env.repo.git("push", "-q", "origin", "main")

@@ -3,6 +3,7 @@
 The former covers size and interfaces; the latter still needs a diff check.
 The regression reaches the reviewer prompt through real init/sync, fix start and close.
 Only GitHub and the external reviewer are faked, not the allowance or prompt.
+src/forge/design.py owns the design prerequisite for these UI fixes.
 """
 import json
 import shutil
@@ -13,7 +14,7 @@ import pytest
 import conftest
 from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
-from test_story import worktree
+from test_story import prototype_design, worktree
 
 STORY = "prototype-allowance-review"
 
@@ -38,6 +39,7 @@ def test_1_prototype_allowance_covers_size_and_interfaces_without_diff_check(env
     repo.write("forge.toml", config)
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
+    prototype_design(repo)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Refresh the client")
     repo.git("push", "-q", "origin", "HEAD:refs/heads/refreshed")

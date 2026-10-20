@@ -43,7 +43,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`;
-review stops from close or land use `forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
+review stops from close or land use `forge close <item> --resolve <more|split|accept> --reason "<human's choice>"`.
 A stop that asks the owner needs a recorded choice with `forge close --resolve`.
 A merge of the default branch or a clean review does not clear it. Close repeats the question.
 Land prints the owner's question, open findings and failing checks, then exits with status 3
@@ -250,6 +250,8 @@ Add every test your task's Tests column names, even when the change is documenta
 
 <!-- if user-facing -->
 ## Functional check
+
+$live_run
 
 This task is user-facing. Walk each Done-when item it covers the way the client's user would. On
 that path, check keyboard access, labels and readable contrast, and trigger one likely failure to

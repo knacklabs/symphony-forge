@@ -1,4 +1,5 @@
-"""Planned prerequisites get the machine's next agent place before ordinary work."""
+"""Planned prerequisites get the machine's next agent place before ordinary work.
+New plan reads use src/forge/story.py before their parts enter the agent lane."""
 import json
 import shutil
 import sys

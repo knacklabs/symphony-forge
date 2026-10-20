@@ -28,7 +28,7 @@ def test_1_owner_stop_survives_main_merge_until_the_choice_is_recorded(land, pre
         config = (env.repo.path / "forge.toml").read_text("utf-8")
         env.commit(env.repo.path, "forge.toml", config.replace('workers = "split"', 'workers = "claude"'))
         env.repo.git("push", "-q", "origin", "main")
-        item = _rounds(env, "finding")
+        item = _rounds(env, "failing")
         held = env.repo.forge("work", item)
         assert held.returncode == 1 and "Ask the human" in held.stderr
         where = env.tmp / "fix-tidy-readme"
@@ -62,7 +62,7 @@ def test_1_owner_stop_survives_main_merge_until_the_choice_is_recorded(land, pre
             assert waiting.stderr == question
         assert len(env.review_calls()) == before
     reason = "The owner chooses one more focused round"
-    chosen = env.close(item, "--resolve", "narrow" if kind == "loop" else "same", "--reason", reason)
+    chosen = env.close(item, "--resolve", "more" if kind == "loop" else "same", "--reason", reason)
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     assert "Recorded the human's choice" in chosen.stdout
     assert saved(where, item)["stop"]["reason"] == reason

@@ -82,10 +82,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     clock(monkeypatch, now)
     read_story(env.repo, "WAIT", ONE_PART)
     env.repo.git("push", "-q", "origin", "story/WAIT")
-    # Three blocked closes stop the review loop for a person's choice.
+    # A P0 still open after two closes stops the review loop for a person's choice.
     clock(monkeypatch, now + timedelta(minutes=1))
     _, loop = env.start("loop", "fix/loop", ".factory/fixes/loop.json", {**FIX, "why": "Loop"}, {"loop.py": "x\n"})
-    rounds(env, "loop", loop, ["src/a.py"] * 3)
+    rounds(env, "loop", loop, ["src/a.py"] * 2)
     share(env, prs, "loop", 1)
     # A close ending ready in a repo where a human merges.
     clock(monkeypatch, now + timedelta(minutes=2))
@@ -142,8 +142,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         assert [entry["waited_seconds"] for entry in team["needs_you"]] == [300, 240, 180, 120, 60, None], where
         assert team["needs_you"][-1]["since"] is None
         assert "6 need you" in team["sentence"]
-    # Past the 30 minutes after which close records the repo's default choice, the stop still
-    # waits on a person until a choice is committed.
+    # The stop still waits on a person after 30 minutes, until a choice is committed.
     env.repo.path = machine_a
     clock(monkeypatch, now + timedelta(minutes=40))
     assert ("loop", "review loop") in needs(env.repo)
@@ -163,7 +162,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     share(env, prs, "clash", 4)
     env.repo.path = machine_b
     env.repo.git("worktree", "add", "-q", "-b", "fix/loop", str(env.tmp / "needs-loop-b"), "origin/fix/loop")
-    chosen = env.repo.forge("close", "loop", "--resolve", "narrow", "--reason", "Keep it small")
+    chosen = env.repo.forge("close", "loop", "--resolve", "more", "--reason", "Repair the open P0")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     share(env, prs, "loop", 1)
     # B, who did not open the pull request, answers the question.

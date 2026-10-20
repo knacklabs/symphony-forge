@@ -45,12 +45,12 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     seed(env, "src/safe.py")
     item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
     safe = finding("P1", "Proven safe", "src/safe.py")
-    for number in range(1, 4):
+    for number in range(1, 3):
         env.commit(where, "src/a.py", f"pass  # round {number}\n")
         env.commit(where, "app.py", f"print({number})\n")
         # P1s no longer reach this stop after round two; retain open P0s for the split.
         defects = [finding("P0", f"Round {number} defect", "src/a.py")]
-        if number == 3:
+        if number == 2:
             defects.append(finding("P0", "Second split defect", "app.py"))
         env.reviews(blocked(*defects, safe))
         held = env.close(item)
@@ -69,7 +69,7 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     name = branch.removeprefix("fix/")
     follow_up = json.loads(env.repo.git("show", f"{branch}:.factory/fixes/{name}.json"))
     for field in ("why", "done_when"):
-        for title, location in (("Round 3 defect", "src/a.py:1"),
+        for title, location in (("Round 2 defect", "src/a.py:1"),
                                 ("Second split defect", "app.py:1")):
             assert title in follow_up[field] and location in follow_up[field]
         assert "Proven safe" not in follow_up[field]
