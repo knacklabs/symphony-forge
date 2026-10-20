@@ -191,7 +191,7 @@ model's reply is the `--text` given to `forge handback`. `forge land` uses the s
      It commits that with `repo.commit_state`. `story.new`'s own
      `Next: write plans/<KEY>.md there, then forge read <KEY>` stays the next step: the coordinator
      fills the builders' half, and the usual cold read and approval follow.
-   - In a prototype repo the plan lane is not offered (Words). `story.py` does not change.
+   - In a prototype repo the plan lane is not offered (Words). SORT does not change `story.py`.
    - Normal-use cases: a new key; a key already taken (`story.new`'s existing refusal); a prototype
      repo.
    - Test: `test_3_a_big_idea_starts_a_story_with_a_first_plan`, on the signed-off new repo and on
@@ -250,33 +250,47 @@ model's reply is the `--text` given to `forge handback`. `forge land` uses the s
        clean worktree and local branch, and its remote branch keeps the doc.
      - It has no `--undo`.
    - `nextstep.py` skips a story whose state is `dropped`, both in the story worktrees and on
-     remote story branches (the loops at lines 482 and 488). `board.py` already leaves out every
-     dropped state (line 289); test_5 proves that it does.
+     remote story branches (the loops at lines 482 and 488).
+   - `board.py` already leaves out every dropped state (line 289). Its roadmap backfill (line 695)
+     still adds a missing story for every roadmap key, so it also skips a key whose story state is
+     `dropped`. To do that, collect the dropped story keys before the line 289 filter.
+   - `story new --from-fix`: after `_promote` renames the fix branch to the task branch, it pushes
+     the task branch and deletes `origin/fix/<fix>` in one push:
+     `git push -q --set-upstream origin task/<KEY>-SPEC :fix/<fix>`. The fix's own pull request
+     closes with its branch. The work lives on the task branch and on the fix's `forge-start` tag.
+     `story.py` stays at 1,200 lines: the builder removes one line elsewhere in `_promote` or
+     `new`, with no change in behaviour.
    - The guide maps the owner's words to commands:
-     - "Make it a story" (a fix): add the key to the fix's roadmap and commit it, run
-       `forge story new <KEY> --from-fix <fix>`, then run
-       `forge fix drop <fix> --because "Moved to the plan <KEY>"`. The last step stops the
-       pushed fix branch from showing as a second item.
+     - "Make it a story" (a fix): add the key to the fix's roadmap and commit it, then run
+       `forge story new <KEY> --from-fix <fix>`.
      - "Make it a fix" or "Just fix it" (a plan in planning): run
        `forge fix start "<its Problem>" --done "<its first Done-when>"`, then
        `forge story drop <KEY> --because "Moved to the fix <fix>"`.
      - "Do it later" (a fix): run `forge fix drop <fix> --because "The owner wants it later"`, then
        `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings the
        fix back.
-     - "Do it now" (an idea-list entry): run `forge start "<the entry>"`, and remove the entry in
-       the new item's branch, as the guide already says.
+     - "Do it now" (an idea-list entry): run
+       `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for
+       example `forge start "Do it now: add dark mode"`. The sort never sees the old "later", so
+       it cannot park the idea again. Then remove the entry: from the main checkout's file while
+       the entry is still waiting, or else in the new item's branch.
    - Normal-use cases: each of the four moves, on an item that `forge start` made.
    - Test: `test_5_one_short_instruction_moves_an_idea_and_leaves_one_item`, with the parameter
-     `move` in ("story", "fix", "later"). It runs on the new repo for every move (signed off for
-     "story" and "fix"), and on the adopted fixture for "fix" (`client_item` does not apply there,
-     since the move starts from a plan).
+     `move` in ("story", "fix", "later", "now"). It runs on the new repo for every move, signed
+     off for "story" and "fix". It also runs on the adopted fixture for "fix" (`client_item` does
+     not apply there, since the move starts from a plan).
      - story: the commands above give a `plans/<KEY>.md` whose Why and Done-when 1 are the fix's.
-       `forge next` and `forge board --json` show the story and not the fix.
-     - fix: the fix has the plan's Problem and first Done line. `plans/<KEY>.md` stays on
+       `origin/fix/<fix>` is gone, and `origin/task/<KEY>-SPEC` exists. `forge next` and
+       `forge board --json` show the story and not the fix.
+     - fix: the story's key is also on the default branch's roadmap, so the backfill path runs.
+       The fix has the plan's Problem and first Done line. `plans/<KEY>.md` stays on
        `origin/story/<KEY>`. `forge next` and `forge board --json` show the fix and not the story.
        `forge story drop` on an approved story refuses with the text above.
      - later: `origin/fix/<fix>` stays, the dated line is added, and the fix is gone from
        `forge next` and the board.
+     - now: after a later entry "Do this later: add dark mode", the guide's command hands out a
+       prompt with "add dark mode" and no "later". A fix reply starts the fix, and the entry is
+       gone from the main checkout's `plans/ideas.md`.
 6. The shipped guide (MOVE).
    - `skill.md`'s command table:
      - The rows "Plan a new story" and "Fix this small thing" become one row: `"I have an idea",
@@ -308,7 +322,7 @@ model's reply is the `--text` given to `forge handback`. `forge land` uses the s
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | SORT | One way in | `forge start` hands the idea to the session's explorer on the explore model and reads the strict reply. It asks once more on a malformed reply, then refuses. It prints the one line, then starts a fix (next step: land) or, where stories are allowed, a story with a first owner-half draft. The command ceiling moves to 25. | 1, 2, 3 | `src/forge/intake.py` (new), `src/forge/cli.py`, `src/forge/native.py`, `src/forge/task.py`, `src/forge/templates/start.md` (new), `tests/test_rules.py`, `docs/commands.md` (regenerated by `forge sync`) | `tests/test_start_sorts_ideas.py` (`test_1`, `test_2`, `test_3`); `tests/test_rules.py` test_5 ceiling to 25 | | no | |
-| MOVE | Discovery, later, moves and the guide | The discovery and idea-list lanes, the carry of waiting ideas into the next item, `forge story drop`, the move mapping, the single idle step in `forge next`, and the shipped guide and AGENTS block. | 4, 5, 6 | `src/forge/intake.py`, `src/forge/cli.py`, `src/forge/nextstep.py`, `src/forge/templates/start.md`, `src/forge/templates/skill.md`, `src/forge/templates/adapters/AGENTS.md`, `AGENTS.md`, `README.md`, `docs/commands.md`, `.claude/skills/forge/`, `.codex/skills/forge/` (the last four regenerated by `forge sync`) | `tests/test_start_sorts_ideas.py` (`test_4`, `test_5`, `test_6`); guide and next tests that quote the replaced rows or the idle steps (search the tests for "Plan a new story", "Fix this small thing" and "No story or fix is in progress") | SORT | no | |
+| MOVE | Discovery, later, moves and the guide | The discovery and idea-list lanes, the carry of waiting ideas into the next item, `forge story drop`, the removal of the promoted fix's remote branch, the board's skip of dropped stories in the roadmap backfill, the move mapping, the single idle step in `forge next`, and the shipped guide and AGENTS block. | 4, 5, 6 | `src/forge/intake.py`, `src/forge/cli.py`, `src/forge/nextstep.py`, `src/forge/board.py`, `src/forge/story.py` (the one push in `new --from-fix`, net zero lines), `src/forge/templates/start.md`, `src/forge/templates/skill.md`, `src/forge/templates/adapters/AGENTS.md`, `AGENTS.md`, `README.md`, `docs/commands.md`, `.claude/skills/forge/`, `.codex/skills/forge/` (the last four regenerated by `forge sync`) | `tests/test_start_sorts_ideas.py` (`test_4`, `test_5`, `test_6`); guide and next tests that quote the replaced rows or the idle steps (search the tests for "Plan a new story", "Fix this small thing" and "No story or fix is in progress") | SORT | no | |
 
 New moving parts: none
 
@@ -331,8 +345,9 @@ New moving parts: none
   - `forge sync` for the generated files.
   - There is no Codex app-server or Claude SDK call: the sort always runs in the coordinating
     session, the way session reads run.
-- **Line ceilings.** `story.py` and `close.py` are at 1,200 lines, and this story changes neither.
-  All new story code is in `intake.py`.
+- **Line ceilings.** `story.py` and `close.py` are at 1,200 lines. `close.py` does not change.
+  `story.py` gets only the one push, at net zero lines, and all other new story code is in
+  `intake.py`. `board.py` is at 1,197 lines and must stay at or under 1,200.
 - **A builder must not:**
   - add a `forge start` option, a `forge.toml` setting, a stored lane record or a lane check at
     close;
@@ -340,7 +355,7 @@ New moving parts: none
   - commit on the default branch (waiting ideas stay uncommitted until the next start);
   - add a model restriction or a new default model;
   - add `--undo` to `story drop`;
-  - change `brief.md`, `story.py` or `close.py`.
+  - change `brief.md` or `close.py`, or change `story.py` beyond the one push.
 - `README.md`'s command table lists `forge ask`, which does not exist. MOVE adds the `forge start`
   row, leaves the `forge ask` row as it is, and reports it.
 - No client repo is named anywhere in this story's code, tests, texts or commits.

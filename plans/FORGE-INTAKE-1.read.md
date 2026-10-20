@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-20T07:52:42.069603+00:00
-seconds: 489.212
-read_hash: ff43d7b773ab927254d78e1a48ef914fe83d08be
-round: 1
+read_at: 2026-10-20T08:02:19.726941+00:00
+seconds: 241.136
+read_hash: a1a8052fc1879c316002e57e4004d43a3b3a6a88
+round: 2
 passed: no
-doc_seen: ff43d7b773ab927254d78e1a48ef914fe83d08be
+doc_seen: a1a8052fc1879c316002e57e4004d43a3b3a6a88
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: ae4143cb32bdedcc15b07d968ec9c0416859f7f4
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a15844-e787-7e63-867e-480b27e36e5b
 session:
-blocked_rounds: 1
+blocked_rounds: 2
 loop_choice:
 loop_reason:
 ---
@@ -77,3 +77,20 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Not done — [plan:20](plans/FORGE-INTAKE-1.md#L20) promises never to use the most expensive models, but the selection at line 78 uses `worker_models`. [repo.py:611](src/forge/repo.py#L611) returns configured models without restriction, and [repo.py:698](src/forge/repo.py#L698) accepts arbitrary model strings. Existing explore or fallback-lite overrides can therefore select models the plan excludes; the proposed test checks only fixture defaults.
    Gain 3, Work 2, Harm 2
    Disposition: cut
+
+## Round 2
+
+10. Blocking: The new promotion sequence cannot drop the old fix.
+    Raise: Functional — [plan:256](/plans/FORGE-INTAKE-1.md:256) adds `fix drop` after promotion. [story.py:1135](/src/forge/story.py:1135) renames the fix branch into a task but keeps its worktree folder. With no fix worktree remaining, [task.py:655](/src/forge/task.py:655) tries to recreate the old fix in that occupied folder. The documented move therefore fails.
+    Gain 4, Work 2, Harm 3
+    Disposition: cut
+
+11. Blocking: The board recreates dropped stories that have an existing roadmap entry.
+    Raise: Functional — [plan:253](/plans/FORGE-INTAKE-1.md:253) assumes the existing dropped-state filter suffices. However, after that filter, [board.py:695](/src/forge/board.py:695) recreates missing stories from the roadmap. Moving a planning story whose key already appears on the default branch’s roadmap leaves both the replacement fix and the old story visible. MOVE includes no board change for this path.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut
+
+12. Blocking: “Do it now” resubmits the original instruction to defer.
+    Raise: Functional — [plan:209](/plans/FORGE-INTAKE-1.md:209) stores the original words, including “Do this later.” The new mapping at [plan:266](/plans/FORGE-INTAKE-1.md:266) passes that entry unchanged to `forge start`, without the owner’s new instruction. The sorting prompt therefore still receives an explicit deferral. Test 5 omits this fourth move, so it cannot detect the repeated parking.
+    Gain 3, Work 2, Harm 3
+    Disposition: cut
