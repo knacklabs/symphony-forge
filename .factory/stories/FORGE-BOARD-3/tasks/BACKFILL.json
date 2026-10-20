@@ -50,8 +50,8 @@
     "id": "571c501f-f5ed-45ef-b517-5c7d6b33eb4d",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-20T11:27:06.335873+00:00",
@@ -67,13 +67,10 @@
     }
   ],
   "stuck": {
-    "close": "6d5c2e6f-b102-4de5-88a6-4775f66450cf",
-    "head": "db687549aa270a4a8a4aef2accd4f405e281e8b8",
-    "keys": {
-      "the review finding \"Flatten the GraphQL query before passing it through a batch launcher\" in src/forge/backfill.py": 1,
-      "the review finding \"Preserve historical PR bodies when restoring older part rows\" in src/forge/board.py": 1
-    },
-    "round": 1
+    "close": "7d89ecfe-f05a-430d-8c2f-17bc21b0c729",
+    "head": "3305bd666ccf03bcf5417919c1a2f3ce596c50f8",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
