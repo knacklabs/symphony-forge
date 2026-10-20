@@ -109,7 +109,9 @@ def test_2_conflicts_keep_the_full_brief_and_coordinator_answers(rounds, continu
         "First, finish the merge of origin/main: run git merge origin/main, resolve conflicts, "
         "and commit it before other work.")
     assert "The item keeps its work" in brief
-    assert "## Standards" in brief and "## Functional check" in brief
+    # A non-UI fix's full brief includes standards; Functional check is for user-facing tasks.
+    assert "## Standards" in brief
+    assert "Every Done-when item needs an end-to-end test" in brief
     assert "Keep the item's text and add the default's text." in brief
     if continued:
         assert "Should I keep the item's text?" in brief
@@ -138,8 +140,8 @@ def test_3_merge_precedes_settings_validation_and_worker_model_selection(rounds)
         old_default = repo.git("commit-tree", repo.git("write-tree", cwd=folder),
                                *parents, "-m", "Earlier release settings", cwd=folder)
         repo.git("update-ref", "HEAD", old_default, cwd=folder)
-    incoming = config.replace('model = "opus"', 'model = "sonnet"').replace(
-        'effort = "high"', 'effort = "medium"')
+    # This mechanical fix uses Lite, so the incoming model must configure that actual phase.
+    incoming = config + 'models.lite = { model = "sonnet", effort = "medium" }\n'
     moved = _advance(environment, remote, "forge.toml", incoming)
     given = host.forge("work", ITEM, cwd=where)
     assert given.returncode == 0, given.stdout + given.stderr
