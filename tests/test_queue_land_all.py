@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import GH_STUB, ROOT, _install, machine_cores
+from conftest import GH_STUB, ROOT, _install, machine_cores, patient
 from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_setup import _fresh_client
@@ -158,6 +158,10 @@ SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 @pytest.fixture(params=["new", "adopted"])
 def client(env, request):
     repo = env.repo
+    # Land's direct Python children bypass the command shim's idle-machine override.
+    patient(lambda: (repo.bin / "sitecustomize.py").write_text(
+        "import os\nif hasattr(os, 'getloadavg'):\n"
+        "    os.getloadavg = lambda: (0.0, 0.0, 0.0)\n", encoding="utf-8"))
     config = (repo.path / "forge.toml").read_text("utf-8") + 'merge = "agent"\n'
     if request.param == "new":
         path, made = _fresh_client(repo, env.gh, env.tmp)

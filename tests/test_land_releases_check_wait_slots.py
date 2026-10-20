@@ -61,10 +61,6 @@ if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
 def test_1_a_check_wait_admits_independent_close_but_keeps_order_and_backpressure(client, monkeypatch):
     env = client
     machine_cores(env.repo, 2)  # one place, so a waiting child would fill the queue
-    # Land's direct Python children bypass the command shim's host-load override.
-    (env.repo.bin / "sitecustomize.py").write_text(
-        "import os\nif hasattr(os, 'getloadavg'):\n"
-        "    os.getloadavg = lambda: (0.0, 0.0, 0.0)\n", encoding="utf-8")
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "45")
     base = _fix(env, monkeypatch, "base", 1, {"shared.py": _edit(1, "base")})
     main = env.repo.path
