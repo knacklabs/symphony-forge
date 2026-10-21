@@ -245,9 +245,8 @@ def _hooks(top: Path, rel: str, events: dict[str, tuple[str | None, str]],
     return json.dumps(data, indent=2) + "\n"
 
 
-def _codex_config(top: Path) -> str:
-    """.codex/config.toml with full access, no model pin (subagent defaults included) and Codex's
-    project hooks on; every other setting stays as it is."""
+def _codex_config(top: Path, cfg: dict[str, Any]) -> str:
+    """Set full access, hooks, shipped roles and the subagent budget; keep team settings."""
     rel = ".codex/config.toml"
     text = read(top / rel)
     try:
@@ -263,10 +262,14 @@ def _codex_config(top: Path) -> str:
     agents = wanted.setdefault("agents", {})
     if not isinstance(agents, dict):
         repo.refuse(REFUSALS["cant_merge"], path=rel, problem="agents must be a TOML table")
-    reader = agents.setdefault("reader", {"config_file": "agents/reader.toml"})
-    if not isinstance(reader, dict) or reader.get("config_file") != "agents/reader.toml":
-        repo.refuse(REFUSALS["cant_merge"], path=rel,
-                    problem="the reader role uses another config; rename it, then sync again")
+    if budget := roles.subagent_defaults(cfg):
+        agents.update(dict(zip(AGENT_PINS, (budget["model"], budget["effort"]))))
+    for name, (_, description, _) in roles.ROLES.items():
+        role = agents.setdefault(name, {})
+        if not isinstance(role, dict) or role.get("config_file", f"agents/{name}.toml") != f"agents/{name}.toml":
+            repo.refuse(REFUSALS["cant_merge"], path=rel,
+                        problem=f"the {name} role uses another config; rename it, then sync again")
+        agents[name] = {**role, "config_file": f"agents/{name}.toml", "description": description}
     # == alone takes hooks = 1 for true, so hooks must be the boolean itself.
     exact = lambda parsed: parsed == wanted and parsed["features"]["hooks"] is True  # noqa: E731
     first = TABLE.search(text)
@@ -295,7 +298,12 @@ def _codex_config(top: Path) -> str:
         table = text[header.end():end]
         for key in AGENT_PINS:
             table = re.sub(rf"^[ \t]*{key}[ \t]*=.*\n?", "", table, count=1, flags=re.M)
+        table = "\n" + "".join(f"{key} = {json.dumps(agents[key])}\n"
+                                  for key in AGENT_PINS if key in agents) + table.removeprefix("\n")
         text = text[:header.end()] + table + text[end:]
+    elif budget:
+        text = f'{text.rstrip()}\n\n[agents]\n' + "".join(
+            f"{key} = {json.dumps(agents[key])}\n" for key in AGENT_PINS)
     merged, header = "", FEATURES.search(text)
     if isinstance(features, dict) and features.get("hooks") is True:
         merged = text
@@ -309,8 +317,19 @@ def _codex_config(top: Path) -> str:
         table = (table[:line.start()] + "hooks = true" + table[line.end():] if line
                  else "\nhooks = true" + table)
         merged = text[:header.end()] + table + text[end:]
-    if "reader" not in data.get("agents", {}):
-        merged = f'{merged.rstrip()}\n\n[agents.reader]\nconfig_file = "agents/reader.toml"\n'
+    for name in roles.ROLES:
+        header = re.search(rf"^[ \t]*\[agents\.{name}\][ \t]*(?:#.*)?$", merged, re.M)
+        fields = {key: agents[name][key] for key in ("config_file", "description")}
+        lines = "".join(f"{key} = {json.dumps(value)}\n" for key, value in fields.items())
+        if header:
+            after = TABLE.search(merged, header.end())
+            end = after.start() if after else len(merged)
+            table = merged[header.end():end]
+            for key in fields:
+                table = re.sub(rf"^[ \t]*{key}[ \t]*=.*\n?", "", table, count=1, flags=re.M)
+            merged = merged[:header.end()] + "\n" + lines + table.removeprefix("\n") + merged[end:]
+        elif name not in data.get("agents", {}):
+            merged = f'{merged.rstrip()}\n\n[agents.{name}]\n{lines}'
     try:
         safe = bool(merged) and exact(tomllib.loads(merged))
     except tomllib.TOMLDecodeError:

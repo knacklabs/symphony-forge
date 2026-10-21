@@ -1147,6 +1147,12 @@ Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses
 Claude workers use model and effort
 and ignore the Codex-only subagents and subagent_effort keys.
 
+After `forge sync`, Codex sessions opened in the repo can use every shipped role, including
+`fixer`. Sync keeps the team's other registered roles. The default subagent model and effort
+come from build's Codex `subagents` and `subagent_effort`, falling back to lite's pair when
+build has none. With neither pair, sync leaves the defaults unset. Hands-on Codex roles use
+that same pair when set, so their worker model does not override the subagent budget.
+
 Claude implementation (build, fix, lite and design, including frontend) defaults to
 `claude-sonnet-5-5` at `xhigh` effort. Claude plan reads (grill) default to
 `claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.

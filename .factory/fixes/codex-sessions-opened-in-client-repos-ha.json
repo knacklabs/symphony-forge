@@ -1,0 +1,68 @@
+{
+  "allow_large": "The owner allowed it on 21 Oct: the extra files are the role and settings files that forge sync writes; only three are hand-written code",
+  "base": "927d50b3bb2923bfc17fccac4082e82a86886c18",
+  "branch": "fix/codex-sessions-opened-in-client-repos-ha",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15f28-ca28-75c0-adce-a3481bb3265f",
+    "head": null,
+    "start": "d7fa651d43ad70d91c16f230ad5584ee649c6ff2"
+  },
+  "done_when": "After a sync, .codex/config.toml registers every role file sync writes with its description, and sets the default subagent model and effort from forge.toml's build subagents entry when it has one, while roles the team registered by hand stay.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_codex_config() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 272,
+      "outcome": "follow-up",
+      "reason": "Left open after round one",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_28_sync expects the obsolete role registry",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "515b043d3bc26afabf010bc872de6c643aeddec55f9160c452aee31742b6ce7d",
+    "changed": "ff541ecf810b4cebed19342d8eb726f4c9ef3cc3a836d1cd67213ac1c868db0f",
+    "commit": "449372f17ceea44852f04555052d5e944a64262c",
+    "dismissals": [],
+    "findings": [],
+    "id": "d4a1ce2c-1822-416e-a192-6f3f28e0c528",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-21T15:50:55.986579+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-21T15:58:59.814969+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-21T16:05:57.413202+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-21T16:21:46.903428+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a59280dd-be97-4d42-9d36-a052cc88367a",
+    "head": "287aed1a653aa62464bd806119eb52d7168f674e",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Codex sessions opened in client repos have no registered subagent roles and no default subagent model, so their subagents run on the session's expensive model and spend tokens.",
+  "worker": "codex"
+}

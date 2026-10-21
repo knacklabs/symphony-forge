@@ -212,8 +212,14 @@ def test_6_codex_roles_without_a_model_are_not_pinned_by_old_subagent_defaults(r
     assert _synced(repo).returncode == 0
 
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
-    assert config["agents"] == {"max_depth": 1,
-                                "worker": {"config_file": "agents/worker.toml"},
-                                "reader": {"config_file": "agents/reader.toml"}}
+    # With no configured subagent pair, stale defaults still go; sync now also registers
+    # all shipped roles and their descriptions instead of only the reader.
+    assert config["agents"]["max_depth"] == 1
+    assert "default_subagent_model" not in config["agents"]
+    assert "default_subagent_reasoning_effort" not in config["agents"]
+    for name in ROLES:
+        assert config["agents"][name] == {
+            "config_file": f"agents/{name}.toml",
+            "description": _codex(repo.path, name)["description"]}
     assert _settings(repo.path, "worker")[0] == ("gpt-6.1-sol", "medium")  # forge work's built-in
     assert repo.forge("sync").stdout.startswith("Nothing to change")
