@@ -55,10 +55,8 @@ REFUSALS = {
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
-    "hotspot": ("Review round {round} of {item} still has an open P0 in {file}, so Forge stopped. {question}",
+    "hotspot": ("Review round {round} of {item} reached the round limit with open findings, so Forge stopped. {question}",
                 'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
-    "fix_p0": ("This fix's review found an open P0. {question}",
-               'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped review loop, with a non-empty "
                    "--reason and no finding dismissals.",
                    'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'),
@@ -284,9 +282,6 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
         finding = previous["findings"][number - 1]
         requested[score.identity(finding["file"], finding["title"])] = because
-    round_number = sum(step["step"] == "review" for step in state.get("steps", []))
-    if fresh and round_number >= (2 if "/" in item else 1):
-        refreshed = review._bound_findings(top, item, state, previous, result["findings"]) or refreshed
     evidence = (review.functional_check(top, f"origin/{default}"),
                 review.proof_list(top, f"origin/{default}"))
     repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
@@ -364,11 +359,10 @@ def close(args: argparse.Namespace) -> int:
     if not fresh or dismissals or refreshed:
         score.remember(_known(top, item, state, f"origin/{default}", previous), result, round_number,
                        {} if fresh else areas)
-    if serious and round_number >= (2 if "/" in item else 1) and (not fresh or not state.get("stop")):
+    if (serious and round_number >= (2 if "/" in item else 1) and
+            not any(score.holds(f, "P0") for _, f in serious) and (not fresh or not state.get("stop"))):
         stopped = {"file": serious[0][1]["file"], "at": repo.now(),
                    "wait_id": repo.record_event(top, item, "owner wait start", reason="review loop")}
-        if "/" not in item:
-            stopped["review_limit"] = True
         state["stop"] = stopped
     noted = (spotted.own_path(item),) if not switch and spotted.record(
         top, item, state, f"origin/{default}", result) else ()
@@ -378,7 +372,7 @@ def close(args: argparse.Namespace) -> int:
                      "fixing" if serious or failed else "waiting for checks")
         message = f"Review of {item}: {result['status']}"
         if stopped:
-            message += "; Forge stopped on an open P0"
+            message += "; Forge stopped at the round limit with open findings"
         _save(top, item, state, message, *noted)
     elif noted:  # a reused clean review still records what the worker spotted
         _save(top, item, state, f"Review of {item}: {result['status']}", *noted)
@@ -404,7 +398,7 @@ def close(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:
         if stopped:
-            repo.refuse(REFUSALS["fix_p0" if stopped.get("review_limit") else "hotspot"], item=item, round=round_number,
+            repo.refuse(REFUSALS["hotspot"], item=item, round=round_number,
                         question=review.stop_question(top, item, state), **stopped)
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
@@ -505,18 +499,21 @@ def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> Non
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
         return
     if state.get("stop") and not state["stop"].get("choice"):
-        repo.refuse(REFUSALS["fix_p0" if state["stop"].get("review_limit") else "hotspot"], item=item,
+        repo.refuse(REFUSALS["hotspot"], item=item,
                     question=review.stop_question(top or _worktree(item), item, state),
                     **{"round": sum(step["step"] == "review" for step in state.get("steps", [])),
                        **state["stop"]})
 
 
 def stuck_round(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any]) -> None:
-    """Stop when the last two rounds left close's tests failing; a choice buys one more round."""
+    """Stop after two rounds leave the same test failure or P0; a choice buys one more round."""
+    check_stop(item, state, top)
     stop = state.get("stop") or {}
-    if "question" in stop and not stop.get("choice"):
-        repo.refuse(REFUSALS["stuck"], item=item, question=stop["question"])
     keys = ["close's tests failing"] if state.get("tests") else []
+    for _, finding in review.blocking(state.get("review") or {}):
+        if score.holds(finding, "P0"):
+            file, title = score.identity(finding["file"], finding["title"])
+            keys.append(f"the open P0 {title} in {file}")
     # Each failure counts the rounds in a row that left it; a cleared one drops out. It counts only
     # with both a new close and a worker round since the last count, so reruns count once.
     # ponytail: close events live on this machine; a round on another machine counts once more.
@@ -1117,5 +1114,5 @@ COMMANDS = [{
              (('--resolve',), {"choices": ["more", "narrow", "split", "accept", "switch", "same"]}),
              (('--reason',), {"help": "The human's choice after a review loop stop"})],
     "position": 150,
-    "listing": "| `forge close <item>` | Closes a task or fix; a fix gets one review round and a part two; an open P0 then waits for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
+    "listing": "| `forge close <item>` | Closes a task or fix; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason \"<human's choice>\"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |",
 }]

@@ -20,9 +20,9 @@ def saved(where, item):
 
 
 def rounds(env, item, where, paths, title=""):
-    # Only P0s still block from round two; keep these stop scenarios genuinely blocked.
+    # P1s at the bar now stop for the owner at the review limit.
     for number, path in enumerate(paths, 1):
-        env.reviews(blocked(finding("P0", title or f"Round {number} defect", path)))
+        env.reviews(blocked({**finding("P1", title or f"Round {number} defect", path), "body": "Gain 4, Work 1, Harm 2\nEvidence for the open defect."}))
         env.commit(where, "app.py", f"print({number})\n")
         env.commit(where, path, f"pass  # review round {number}\n")
         result = env.close(item)
@@ -39,7 +39,7 @@ def _other_blocked_reviews_keep_the_existing_refusal(env, paths, on_default):
     item, where = env.start_task()
     if not on_default:
         env.commit(where, paths[0], "pass\n")
-    # A repeated P0 now stops after two rounds on both existing and branch-only paths.
+    # A repeated P1 now stops after two rounds on both existing and branch-only paths.
     result = rounds(env, item, where, paths, "Same defect" if len(set(paths)) == 1 else "")
     assert "One more round, split or accept?" in result.stderr
     assert saved(where, item)["status"] == "hotspot"

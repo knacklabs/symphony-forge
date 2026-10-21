@@ -1,4 +1,4 @@
-"""Each new P0 review stop needs its own owner decision.
+"""Each new P1 review stop needs its own owner decision.
 
 An old choice must not bypass a later stop or prevent its new decision.
 Real close, next and board commands guard the choice lifecycle; only the
@@ -24,11 +24,11 @@ def test_1_each_new_stop_waits_for_and_records_its_own_choice(
     item, where = client_item(env, tmp_path, previous)
     number = 0
     for cycle, choice in enumerate((first, second)):
-        # A fix stops on its first P0; each later new P0 needs a fresh choice too.
+        # A fix stops on its first P1 at the bar; each later new P1 needs a fresh choice too.
         number += 1
         env.commit(where, "app.py", f"print('round {number}')\n")
-        env.reviews(blocked({**finding("P0", f"New defect {number}", "app.py"),
-                             "body": "Gain 3, Work 2, Harm 5\nNormal saves lose work."}))
+        env.reviews(blocked({**finding("P1", f"New defect {number}", "app.py"),
+                             "body": "Gain 4, Work 1, Harm 2\nNormal saves lose work."}))
         result = env.close(item)
         assert result.returncode == 1, result.stdout + result.stderr
         assert len(env.review_calls()) == number

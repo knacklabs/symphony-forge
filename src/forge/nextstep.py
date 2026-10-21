@@ -935,7 +935,7 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
         if "question" in stop:
             return [f"Forge stopped {label}. Ask the human:", stop["question"],
                     "Next: " + close.REFUSALS["stuck"][1].format(item=item)]
-        reason = "its review found an open P0" if stop.get("review_limit") else f"a P0 is still open in {stop['file']}"
+        reason = "its review reached the round limit with open findings"
         return [f"Close stopped {label}: {reason}.",
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]

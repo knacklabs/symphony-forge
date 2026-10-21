@@ -132,12 +132,14 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
              areas: dict[tuple[str, str], str]) -> list[dict[str, Any]]:
     """Add a round to the known findings, never removed; only open or owner-accepted entries change."""
     because = {d["finding"]: d["because"] for d in result.get("dismissals", [])}
+    accepted = {d["finding"] for d in result.get("dismissals", []) if d.get("accepted")}
     by = {identity(e["file"], e["title"]): e for e in known}
     raised = set()
     for n, f in enumerate(result.get("findings", []), 1):
         raised.add(key := identity(f["file"], f["title"]))
         reason = because.get(n, f.get("follow_up", ""))
-        outcome = ("lived with" if reason.startswith("settled area") else "accepted" if n in because
+        outcome = ("follow-up" if n in accepted else
+                   "lived with" if reason.startswith("settled area") else "accepted" if n in because
                    else "open" if holds(f, result.get("blocking_level"))
                    else "follow-up" if f.get("follow_up") or RARE.search(f.get("body", ""))
                    or bar(of(f)) == "follow-up" else "lived with")

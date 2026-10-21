@@ -86,9 +86,9 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
         message_file = env.tmp / "proof-message.txt"
         message_file.write_text(message, "utf-8")
         env.repo.git("commit", "-q", "--amend", "--file", str(message_file), cwd=where)
-    # A fix's first P1 is now a follow-up. Use a P0 for the blocked-to-repaired
-    # publication lifecycle; the story part retains its first-round P1 blocker.
-    blocker = finding("P1" if "/" in item else "P0", "Basket quantities disappear")
+    # A P1 at the bar preserves the blocked-to-repaired publication lifecycle.
+    blocker = {**finding("P1", "Basket quantities disappear"),
+               "body": "Gain 4, Work 1, Harm 2\nBasket quantities disappear during saving."}
     diagnostics = []
     if oversized == "diagnostics-and-history":
         diagnostics = [finding("P2", f"Basket diagnostic {n}: " + "Recorded quantity detail. " * 80)
@@ -100,7 +100,7 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
     refusal = ("The review left serious findings open" if "/" in item
-               else "This fix's review found an open P0.")
+               else "reached the round limit with open findings, so Forge stopped.")
     assert refusal in first.stderr, first.stderr
     text = latest_body(env)
     assert "Basket quantities disappear" in text

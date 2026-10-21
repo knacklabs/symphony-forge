@@ -7,13 +7,12 @@ import json
 import re
 import shutil
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install, patient
-from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
 from test_story import DOC, READER, new_story
 from test_fix_plan_reads_capped import _client as read_client
@@ -54,54 +53,6 @@ def known(env, where):
     shown = env.repo.forge("board", "--json", cwd=where)
     assert shown.returncode == 0, shown.stdout + shown.stderr
     return {row["title"]: row for row in json.loads(shown.stdout)["known_issues"]}
-
-
-@pytest.mark.parametrize("adopted,case", [(False, "leftovers"), (True, "leftovers"),
-                                         (False, "clean-first"), (False, "past-round-two"),
-                                         (False, "saved-unscored")])
-def test_1_a_review_ends_after_round_two_and_leftovers_become_known_issues(env, adopted, case):
-    client(env, adopted)
-    saved = case == "saved-unscored"
-    old = note("P0" if case in ("past-round-two", "saved-unscored") else "P1",
-               "Saving loses quantities")
-    env.reviews(CLEAN if case == "clean-first" else blocked(old))
-    item, where = env.start_task(changes={"app.py": "save = False\n\nlegacy = True\n"})
-    first = env.close(item)
-    assert first.returncode == (0 if case == "clean-first" else 1), first.stdout + first.stderr
-    if case != "clean-first":
-        assert old["title"] in first.stderr
-    env.commit(where, "app.py", "save = True\n\nlegacy = True\n", "Repair saving")
-    if case in ("past-round-two", "saved-unscored"):
-        # This item already has two blocked reviews when the policy takes effect.
-        # The new rule applies on its next close too.
-        second = env.close(item)
-        assert second.returncode == 1 and old["title"] in second.stderr, second.stdout + second.stderr
-        chosen = env.close(item, "--resolve", "more", "--reason", "Repair the remaining quantity loss")
-        assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-        if saved:
-            # Earlier releases saved findings without scores. Keep the real
-            # command's review commit and fingerprints so close must reuse it.
-            rel = ".factory/stories/SHOP/tasks/T1.json"
-            state = json.loads((where / rel).read_text("utf-8"))
-            recorded = state["review"]["findings"][0]
-            for field in ("gain", "work", "harm"):
-                recorded.pop(field, None)
-            recorded.update(priority="P1", body="Saving an ordinary basket loses its quantity.")
-            env.commit(where, rel, json.dumps(state), "Retain an earlier unscored review")
-        else:
-            env.commit(where, "app.py", "save = 'quantity'\n\nlegacy = True\n", "Keep quantities")
-    new = note("P1", "Saving loses discounts", line=1 if case == "clean-first" else 3)
-    leftovers = [old] if saved else [new] if case in ("clean-first", "past-round-two") else [old, new]
-    env.reviews(blocked(*leftovers))
-    closed = env.close(item)
-    assert closed.returncode == 0 and "Ready" in closed.stdout, closed.stdout + closed.stderr
-    assert len(env.review_calls()) == (3 if case == "past-round-two" else 2)
-    shown = published(env)
-    assert "Follow-ups:" in shown
-    issues = known(env, where)
-    for entry in leftovers:
-        assert entry["title"] in shown.split("Follow-ups:", 1)[1]
-        assert issues[entry["title"]]["reason"] == "Left open after round two"
 
 
 @pytest.mark.parametrize("adopted,target,case", [
@@ -218,8 +169,9 @@ def test_4_round_two_reviews_only_round_one_findings_and_p0s_that_happen_in_norm
     if case == "p0":
         assert closed.returncode == 1 and new["title"] in closed.stderr, closed.stdout + closed.stderr
     else:
-        assert closed.returncode == 0, closed.stdout + closed.stderr
-        assert new["title"] in published(env).split("Follow-ups:", 1)[1]
+        assert closed.returncode == 1, closed.stdout + closed.stderr
+        assert "reached the round limit with open findings" in closed.stderr
+        assert new["title"] in closed.stderr
     assert len(env.review_calls()) == 2
     prompt = " ".join(env.prompt().split())
     assert old["title"] in prompt
@@ -257,8 +209,7 @@ def test_5_rare_cases_and_declined_findings_do_not_block(env, adopted, case):
             entry["body"] = ("Gain 4, Work 1, Harm 4\n"
                              "Case: rare - An operator edits the import file during saving.")
         env.reviews(blocked(entry))
-        # Minor fix findings now become follow-ups in round one. A story part
-        # still blocks there, so it owns the worker-decline contract.
+        # A story part permits the worker-decline flow before the review limit.
         item, where = env.start_fix() if case == "rare finding" else env.start_task()
         first = env.close(item)
         if case == "rare finding":
@@ -286,8 +237,8 @@ def test_5_rare_cases_and_declined_findings_do_not_block(env, adopted, case):
     assert "Decided:" in prompt and "Ruling:" in prompt
 
 
-@pytest.mark.parametrize("case", ["p0", "tests", "session"])
-def test_3_an_open_p0_after_round_two_asks_the_owner_and_land_starts_no_third_round(
+@pytest.mark.parametrize("case", ["tests", "session"])
+def test_3_land_runs_at_most_one_fix_round(
         land, monkeypatch, case):
     if case == "tests":
         # Run a real client test command. Its assertion checks the client's actual stdout;
@@ -300,40 +251,6 @@ def test_3_an_open_p0_after_round_two_asks_the_owner_and_land_starts_no_third_ro
         config = (land.repo.path / "forge.toml").read_text("utf-8")
         land.commit(land.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
         land.repo.git("push", "-q", "origin", "main")
-    if case == "p0":
-        # Fixes now finish non-P0 review in round one. An approved story part
-        # keeps the two-round path whose P0 stops land before a third review.
-        item, where = land.start_approved_task(STORY_DOC)
-        land.reviews(blocked(note("P1", "Saving drops the greeting")), blocked({
-            **finding("P0", "Saving deletes the basket", "work-1.txt"),
-            "body": "Gain 5, Work 2, Harm 5\nCase: normal use - Saving a basket deletes its contents."}), CLEAN)
-        stopped = _land(land, item)
-        assert stopped.returncode == 3, stopped.stdout + stopped.stderr
-        assert "Saving deletes the basket" in stopped.stderr
-        assert "Forge stop" in stopped.stderr
-        assert "One more round, split or accept?" in stopped.stderr
-        assert [line.split(":")[0] for line in stopped.stderr.splitlines()
-                if line.startswith("- ")] == ["- One more round", "- Split", "- Accept"]
-        step = f'forge close {item} --resolve <more|split|accept> --reason "<human\'s choice>"'
-        assert step in stopped.stderr
-        assert len(land.review_calls()) == 2 and len(_workers(land)) == 1
-        shown = land.repo.forge("next")
-        assert "One more round, split or accept?" in shown.stdout and step in shown.stdout
-        monkeypatch.setenv("FORGE_NOW", (datetime.now(timezone.utc) + timedelta(minutes=31)).isoformat())
-        waiting = land.close(item)
-        assert waiting.returncode == 1 and "One more round, split or accept?" in waiting.stderr
-        assert len(land.review_calls()) == 2
-        assert land.repo.git("branch", "--list", "fix/*", "--format=%(refname:short)") == ""
-        assert land.repo.git("branch", "--list", "task/*", "--format=%(refname:short)") == "task/SHOP-T1"
-        chosen = land.close(item, "--resolve", "more", "--reason", "Repair the basket deletion")
-        assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-        assert f"Next: forge work {item}" in chosen.stdout
-        land.commit(where, "work-1.txt", "Basket contents are retained\n", "Repair basket deletion")
-        ready = _land(land, item)
-        assert ready.returncode == 0 and f"Ready: {item}" in ready.stdout, ready.stdout + ready.stderr
-        assert len(land.review_calls()) == 3 and len(_workers(land)) == 1
-        return
-
     where = _fix(land, "working", worked=True)
     # The old three-repair contract becomes one repair for local tests and session CI checks.
     from test_close import run

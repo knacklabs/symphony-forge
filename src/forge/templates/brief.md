@@ -14,8 +14,8 @@ merge base, keeping earlier findings and allowances from this item's records.
 If that diff contains only records under `.factory/` and `plans/`, close records a clean review without a model call.
 If unreadable Autoreview output stops close, the refusal shows the saved output path, even if the retry writes no report.
 From the second review round, close checks the previous round's findings and new P0s that
-happen in normal use. A round-one fix that breaks the main path counts as a P0. Every other
-open finding becomes a visible follow-up, whether its line changed or not. `Not done` blocks
+happen in normal use. A round-one fix that breaks the main path counts as a P0. At the round
+limit, open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
 only against an owner-approved Done-when item (the fix's Done-when line); builder details
 are guidance and never block as `Not done`.
 

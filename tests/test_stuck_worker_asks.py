@@ -141,7 +141,7 @@ def test_4_clients_receive_the_stuck_worker_guidance(unsynced_up, adoption):
         client = up.folder
     for host in (".codex", ".claude"):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        assert "When two rounds in a row leave close's tests failing" in guide
+        assert "When two worker rounds in a row leave close's tests failing or the same P0 open" in guide
         assert ('`forge close <item> --resolve <switch|same|narrow|split> --reason '
                 '"<human\'s choice>"`') in guide
 

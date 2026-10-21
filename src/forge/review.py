@@ -304,8 +304,8 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
     return question(name, delivers, score.table(rows), score.who(rows, (
                         "Ask the human to choose one more round, split or accept the remaining findings, "
                         "in these words:")),
-                               f"every finding in this review, the {len(rows)} listed, is dismissed with "
-                               "your reason and recorded; close then goes on to the checks, and merging "
+                               f"the {len(rows)} findings listed become follow-ups in Known issues with "
+                               "your reason; close then goes on to the checks, and merging "
                                "is still a separate step.")
 
 
@@ -931,7 +931,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
-            _bound_findings(top, item, state, previous, findings)
+            _bound_findings(top, item, state, findings)
             result.update(findings=findings, dismissals=[
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
@@ -962,7 +962,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
 
 
-def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[str, Any],
+def _bound_findings(top: Path, item: str, state: dict[str, Any],
                     findings: list[dict[str, Any]]) -> bool:
     """Keep advice visible without letting a fresh review widen the approved work."""
     from forge import story
@@ -987,8 +987,6 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any], previous: dict[
             reason = "Rare case outside normal use"
         elif missed and sentence(missed[1]) not in approved:
             reason = "Not done names no owner-approved Done-when item; builder details are guidance."
-        elif ("/" not in item or previous.get("commit")) and score.holds(finding) and not score.holds(finding, "P0"):
-            reason = score.ROUND_TWO if "/" in item else "Left open after round one"
         if reason and finding.get("follow_up") != reason:
             finding["follow_up"] = reason
             changed = True

@@ -24,9 +24,10 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "Close stops after review round two only when a P0 remains open. Wait for the owner's recorded "
-    "choice of one more round, split or accept. Otherwise, fix findings inside your Done-when "
-    "in this round; do not ask for another choice unless close stops again. "
+    "At the round limit (review round two for a story part, round one for a fix), close stops when "
+    "findings below P0 are still open. Wait for the owner's recorded choice of one more round, "
+    "split or accept. An open P0 never stops for the owner: fix it in this round. "
+    "When the same P0 stays open two rounds in a row, Forge stops and asks the owner. "
     "A cold read stops after round two only when a P0 remains open. The owner chooses one more round, "
     "split or accept. The coordinator records that choice with "
     "forge read <target> --resolve <accept|more|split> --reason \"<human's choice>\".")

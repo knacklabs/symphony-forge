@@ -490,7 +490,7 @@ def test_18_close(env, kind):
     first = env.close(item)
 
     # An unrelated main move stays out of the branch; Autoreview still reads its actual head.
-    assert first.returncode == (1 if kind == "task" else 0)
+    assert first.returncode == 1, first.stdout + first.stderr
     [call] = env.review_calls()
     assert env.repo.git("merge-base", moved, call["head"]) != moved
     options = dict(zip(call["args"][::2], call["args"][1::2]))
@@ -519,11 +519,13 @@ def test_18_close(env, kind):
                      "`Not done: The readme opens with a greeting`"):
             assert line in prompt
     assert "## Test audit" in prompt and "`Simpler: <what to cut> → <what replaces it>`" in prompt
-    # Fixes now finish their single review with non-P0 findings as visible follow-ups.
-    # Story parts keep the blocked-review repair and dismissal flow below.
+    # The owner accepts a fix at its review limit. Story parts retain one repair round.
     if kind == "fix":
+        assert "reached the round limit with open findings" in first.stderr
+        accepted = env.close(item, "--resolve", "accept", "--reason", "Keep this greeting for now")
+        assert accepted.returncode == 0, accepted.stdout + accepted.stderr
         [create] = env.gh_calls("pr", "create")
-        published = body(create)
+        published = body(env.gh_calls("pr", "edit")[-1])
         # Close publishes a draft before review; the clean fix then becomes ready.
         assert "--draft" in create
         assert env.gh_calls("pr", "ready")
@@ -531,7 +533,7 @@ def test_18_close(env, kind):
         assert f"Finding 1 (P1): Not done: {owner_item} (app.py:1)" in published
         assert "Simpler: drop the cache → a dict" in published
         assert "blocks the merge" not in published
-        assert first.stdout.splitlines()[-1] == (
+        assert accepted.stdout.splitlines()[-1] == (
             f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
         assert env.repo.git("status", "--porcelain", cwd=where) == ""
         assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
@@ -577,9 +579,10 @@ def test_18_close(env, kind):
     assert "waiting for the owner (ongoing)" in published
 
     # A new commit needs a new round. The old contract dropped every dismissal; now a matching
-    # file and title keeps it. A new P0 still blocks in round two and returns the PR to a draft.
+    # file and title keeps it. A new P1 at the bar stops in round two and returns the PR to a draft.
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
-    env.reviews(blocked(finding("P0", "Saving loses the basket"),
+    env.reviews(blocked({**finding("P1", "Saving loses the basket"),
+                         "body": "Gain 4, Work 1, Harm 2\nSaving loses the basket."},
                         finding("P2", "Simpler: drop the cache → a dict")))
     env.commit(where, "app.py", "print('saved twice')\n")
     third = env.close(item)
@@ -592,8 +595,8 @@ def test_18_close(env, kind):
         "below the bar (live with); Gain 2, Work 1, Harm 1"]
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
 
-    # Round two holds the P0 for the owner before another close can publish it.
-    assert f"Review round 2 of {item} still has an open P0 in app.py, so Forge stopped." in third.stderr
+    # Round two holds the P1 for the owner before another close can publish it.
+    assert f"Review round 2 of {item} reached the round limit with open findings, so Forge stopped." in third.stderr
     chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
 

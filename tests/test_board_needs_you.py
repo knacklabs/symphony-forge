@@ -82,7 +82,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     clock(monkeypatch, now)
     read_story(env.repo, "WAIT", ONE_PART)
     env.repo.git("push", "-q", "origin", "story/WAIT")
-    # A fix's first P0 stops the review loop for a person's choice.
+    # A fix's first P1 at the bar stops the review loop for a person's choice.
     clock(monkeypatch, now + timedelta(minutes=1))
     _, loop = env.start("loop", "fix/loop", ".factory/fixes/loop.json", {**FIX, "why": "Loop"}, {"loop.py": "x\n"})
     rounds(env, "loop", loop, ["src/a.py"])
@@ -162,7 +162,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     share(env, prs, "clash", 4)
     env.repo.path = machine_b
     env.repo.git("worktree", "add", "-q", "-b", "fix/loop", str(env.tmp / "needs-loop-b"), "origin/fix/loop")
-    chosen = env.repo.forge("close", "loop", "--resolve", "more", "--reason", "Repair the open P0")
+    chosen = env.repo.forge("close", "loop", "--resolve", "more", "--reason", "Repair the open P1")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     share(env, prs, "loop", 1)
     # B, who did not open the pull request, answers the question.

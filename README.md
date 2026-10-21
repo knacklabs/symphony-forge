@@ -104,10 +104,9 @@ Harm 3 with Work 1 or 2.
 A note with `Case: rare` never stops the work, whatever its scores. A note that stops work
 must name a case in normal use. A security hole or data loss that any user can reach is normal use.
 
-From code review round two, only P0 findings stop the change. The review checks each earlier
-finding and raises new findings only for P0s in normal use. A fix that breaks the main path is a P0.
-Forge records all other open findings in Known issues with the reason "Left open after round two".
-The change continues to its checks and can become ready to merge.
+From code review round two, the review checks each earlier finding and raises new findings only for P0s in normal use.
+A fix that breaks the main path is a P0. At the round limit, open findings below P0 need your choice.
+Accept puts them in Known issues as follow-ups with your reason.
 
 A worker can decline a finding as "not worth the code" with a reason in a commit message.
 Forge records it as a follow-up, even if no code changed. A P0 stays open.
@@ -137,14 +136,16 @@ Review rules and recorded owner decisions settle a question for later readers an
 
 ### When a loop stops
 
-A code review runs at most two rounds. After round two, open findings other than P0 become
-follow-ups in Known issues. An open P0 stops the change. A P0 is a security hole, data loss or a
-broken main path.
+A fix gets one review round. A story part gets two. At the limit, open findings below P0 stop the change.
+Forge asks: "One more round, split or accept?" Close, land and work show the same question until you answer.
 
-Forge asks: "One more round, split or accept?" It shows the open findings and waits for your
-choice. It never starts a third review by itself. One more round gives the worker one more
-attempt. Split moves the open findings to a follow-up fix. Accept records your reason and
-dismisses them. A merge of the default branch or a clean review does not clear an unanswered stop.
+One more round gives the worker one more attempt. Split moves the open findings to a follow-up fix.
+Accept puts them in Known issues as follow-ups with your reason.
+A merge of the default branch or a clean review does not clear an unanswered stop.
+
+An open P0 returns to the worker. A P0 is a security hole, data loss or a broken main path.
+If the same P0 stays open for two worker rounds in a row, Forge stops with the stuck question.
+Work waits for your recorded choice of switch, same, narrow or split.
 
 `forge land` runs at most one fix round, including across session handbacks. If findings, tests
 or checks still need a worker, land stops. A review stop exits with status 3 and prints the

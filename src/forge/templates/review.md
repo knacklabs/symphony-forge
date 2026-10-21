@@ -310,8 +310,7 @@ Read unchanged code as context. Do not start a fresh review of the whole branch 
 
 Raise a new finding only when it is a P0 that happens in normal use, on any line.
 A round-one fix that breaks the main path counts as a P0; score it Harm 4 or more.
-Every finding below P0 becomes a follow-up from round two, whether its line changed or not.
-Forge keeps its original scores and records the reason "Left open after round two".
+Forge asks the owner about each finding below P0 that is still open at the round limit.
 
 Previous round's findings and answers:
 $findings

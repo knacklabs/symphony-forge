@@ -61,11 +61,8 @@ def test_1_brief_answers_worker_questions_and_ends_with_the_reviewers_checklist(
             "search the rest of the repo only for what they call or what calls them.") in text
     assert "`src/api/**`" in text and "`tests/test_api.py`" in text
     assert "`tests/test_existing_api.py`" in text
-    # P0s after round two now wait for a recorded choice; other findings remain in scope.
-    assert ("Close stops after review round two only when a P0 remains open. Wait for the owner's "
-            "recorded choice of one more round, split or accept.") in text
-    assert ("Otherwise, fix findings inside your Done-when in this round; "
-            "do not ask for another choice unless close stops again.") in text
+    # Review limits wait on findings below P0; repeated P0s use the stuck-worker stop.
+    assert "At the round limit (review round two for a story part, round one for a fix), close stops when findings below P0 are still open. Wait for the owner's recorded choice of one more round, split or accept. An open P0 never stops for the owner: fix it in this round. When the same P0 stays open two rounds in a row, Forge stops and asks the owner." in text
     assert "Otherwise, fix the findings in this round" not in text
     assert ("Never ask whether a problem needs a separate fix: a problem outside your Done-when "
             "is a `Spotted:` line.") in text

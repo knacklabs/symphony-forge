@@ -1267,15 +1267,15 @@ restore after they fetch.
 
 ## Closing
 
-A fix gets one review round; a story part gets two. After a fix's first review, open findings
-below P0 become visible follow-ups and close goes on to checks and Ready. An open P0 stops
-for the owner's recorded choice. The follow-up reason is "Left open after round one".
+A fix gets one review round; a story part gets two. At the limit, open findings below P0 stop
+for the owner's recorded choice of one more round, split or accept. Accept puts them in Known
+issues as follow-ups with the owner's reason. An open P0 returns to the worker. When the same
+P0 stays open two worker rounds in a row, Forge stops with the stuck question.
 
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.
-A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Every other open
-finding becomes a follow-up in Known issues, whether its line changed or not, with the reason
-"Left open after round two". Only P0s still block; close goes on to checks and Ready otherwise.
+A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Open findings below
+P0 need the owner's choice at the limit, whether their lines changed or not.
 A `Case: rare` finding never blocks. A security hole or data loss that any user can reach is
 normal use. Reviewers and readers do not raise questions that Review rules or recorded owner
 decisions (`docs/decisions/`, `Decided:` or `Ruling:`) already settle.
@@ -1462,8 +1462,8 @@ even if Forge is killed. `forge stop <item>` ends a running test or removes a wa
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. The review's "What counts" list is the boundary, and the bar decides
 inside it: every finding at the bar (Proposed "fix now" or "fix this round") gets a fix round with
-`forge work <item>`, whatever its priority, unless the round-two boundary or a decline makes it
-a follow-up. A finding below the bar never holds the work; close
+`forge work <item>`, whatever its priority, unless close waits for the owner's choice or a decline
+makes it a follow-up. A finding below the bar never holds the work; close
 lists it in the pull request as a follow-up or lived with. Harm 4 or 5, or Gain 5 stops the work.
 Otherwise, Gain 4, or Gain 3 with Harm 3, holds the work only with Work 1 or 2. Every other
 Gain 3 or 4 finding becomes a follow-up fix, even at Work 1 or 2 when Gain is 3 and Harm is 1 or 2.
@@ -1646,24 +1646,24 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-Close runs at most two review rounds. After round two, open findings other than P0 become
-follow-ups in Known issues. An open P0 stops the item and asks the owner:
-"One more round, split or accept?" Forge waits for the recorded choice and never starts a third
-review by itself. An older release's unanswered stop also waits for the owner.
+Close stops at review round two for a story part or round one for a fix when findings below P0
+remain open. It asks the owner: "One more round, split or accept?" Close, land and work show
+the same question until the owner records a choice. An open P0 returns to the worker.
+An older release's unanswered stop also waits for the owner.
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice). It does not wait or send the worker back while the stop is unanswered.
 Record the choice with
 `forge close <item> --resolve <more|split|accept> --reason "<human's choice>"`.
 Then run `forge land <item>` again. Land also prints open findings and failing checks when it
 stops for another reason or hands a round to a session subagent.
-More gives the worker one more round. After that review, close asks again only if a P0 remains.
+More gives the worker one more round. After that review, close asks again if findings below P0
+remain open and no P0 is open.
 Split creates one follow-up fix with
 every open finding's title and file:line in its why and Done-when. Close records the fix on the
 item, prints its name, and lets this item continue without those findings.
-Accept dismisses every remaining finding
-of the latest review with the owner's reason and carries on without checking whether code or
-the default branch changed since that review. Close still requires green checks; later work
-needs another review.
+Accept puts every remaining finding of the latest review in Known issues as a follow-up with
+the owner's reason. Close carries on without checking whether code or the default branch changed
+since that review. Close still requires green checks; later work needs another review.
 A stop that asks the owner needs a recorded choice with `forge close --resolve`.
 A merge of the default branch or a clean review does not clear it. Close repeats the question.
 Land runs at most one fix round, including across session handbacks. If findings, tests or checks
@@ -1686,8 +1686,8 @@ The coordinator follows the bar's outcome and never re-scores a note: a fix roun
 bar, a disposition with the scores in its reason for one below it, and the stop rule above at a
 stop. Approval and merge steps stay the owner's.
 
-When two rounds in a row leave close's tests failing, `forge work` stops
-the item; close also stops a story part that grows past its line limit. Either prints a
+When two worker rounds in a row leave close's tests failing or the same P0 open, `forge work`
+stops the item. Close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
 choices. Ask the owner exactly that question. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then

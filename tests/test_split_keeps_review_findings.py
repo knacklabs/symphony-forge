@@ -45,15 +45,15 @@ def test_1_split_moves_every_open_finding_to_one_linked_fix(env, tmp_path, previ
     seed(env, "src/safe.py")
     item, where = env.start_approved_task(STORY_DOC) if kind == "task" else env.start_fix()
     safe = finding("P1", "Proven safe", "src/safe.py")
-    # A fix's first P0 asks the owner; a part stops after two rounds and keeps its prior dismissal.
+    # A fix's first P1 at the bar asks the owner; a part stops after two rounds and keeps its prior dismissal.
     last_round = 2 if kind == "task" else 1
     for number in range(1, last_round + 1):
         env.commit(where, "src/a.py", f"pass  # round {number}\n")
         env.commit(where, "app.py", f"print({number})\n")
-        # P1s no longer reach this stop after round two; retain open P0s for the split.
-        defects = [finding("P0", f"Round {number} defect", "src/a.py")]
+        # Keep both split findings at the P1 bar.
+        defects = [{**finding("P1", f"Round {number} defect", "src/a.py"), "body": "Gain 4, Work 1, Harm 2\nEvidence for the open defect."}]
         if number == last_round:
-            defects.append(finding("P0", "Second split defect", "app.py"))
+            defects.append({**finding("P1", "Second split defect", "app.py"), "body": "Gain 4, Work 1, Harm 2\nEvidence for the second defect."})
         env.reviews(blocked(*defects, *([safe] if kind == "task" else [])))
         held = env.close(item)
         assert held.returncode == 1, held.stdout + held.stderr

@@ -11,10 +11,10 @@ STORY = "three-rounds-ask"
 @pytest.mark.parametrize("choice", ["more", "accept"])
 def test_3_land_records_the_humans_review_loop_choice(land, choice):
     ITEM, where = land.start_approved_task(STORY_DOC)
-    # Round one gets one repair; a P0 in round two waits for the owner's choice.
+    # Round one gets one repair; a P1 at the bar in round two waits for the owner's choice.
     land.reviews(blocked(finding("P1", "Greeting is missing")),
-                 blocked({**finding("P0", "Opening the page loses saved work", "work-1.txt"),
-                          "body": "Gain 3, Work 2, Harm 5\nNormal page loads lose saved work."}))
+                 blocked({**finding("P1", "Opening the page loses saved work", "work-1.txt"),
+                          "body": "Gain 4, Work 1, Harm 2\nNormal page loads lose saved work."}))
     stopped = _land(land, ITEM)
     assert stopped.returncode == 3, stopped.stdout + stopped.stderr
     assert "Ask the human" in stopped.stderr

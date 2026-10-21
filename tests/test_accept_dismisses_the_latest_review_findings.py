@@ -22,9 +22,9 @@ def _stop_with_remaining_findings(env):
     assert env.close(item).returncode == 1
     assert env.close(item, "--dismiss", "1", "--because", "src/a.py:1 Proven safe").returncode == 0
     env.commit(where, "app.py", "print(2)\n")
-    # A P0 stops review two; the dismissal's cited line stays intact.
+    # A P1 at the bar stops review two; the dismissal's cited line stays intact.
     env.commit(where, "src/a.py", "pass\nprint(2)\n")
-    env.reviews(blocked(safe, finding("P0", "Remaining defect", "src/a.py", line=2),
+    env.reviews(blocked(safe, {**finding("P1", "Remaining defect", "src/a.py", line=2), "body": "Gain 4, Work 1, Harm 2\nEvidence for the remaining defect."},
                         finding("P2", "Remaining advice", "src/a.py")))
     assert env.close(item).returncode == 1
     assert saved(where, item)["status"] == "hotspot"

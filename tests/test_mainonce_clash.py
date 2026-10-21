@@ -99,11 +99,11 @@ def _draft_clash(env, require_current):
     env.commit(env.repo.path, "NEWS.md", "Old news\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
-    # A fix stays blocked only for a P0; keep the draft-clash lifecycle under test.
-    env.reviews(blocked(finding("P0", "Greeting breaks the main path")), CLEAN)
+    # A fix's P1 at the bar stops for the owner's repair choice.
+    env.reviews(blocked({**finding("P1", "Greeting breaks the main path"), "body": "Gain 4, Work 1, Harm 2\nThe greeting is incomplete."}), CLEAN)
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
-    assert "This fix's review found an open P0." in first.stderr
+    assert "reached the round limit with open findings, so Forge stopped." in first.stderr
     created = env.gh_calls("pr", "create")[-1]
     assert "--draft" in created
     _draft_pull_request(env, body(created), require_current)
@@ -142,9 +142,11 @@ def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env
     env.reviews(blocked(finding("P1", "Greeting needs the final text")), CLEAN)
 
     first = env.close(item)
-    # The P1 is now a follow-up; a later edit still needs review against its own diff.
-    assert first.returncode == 0, first.stdout + first.stderr
-    assert "Ready:" in first.stdout
+    # The owner accepts the finding; a later edit still needs review against its own diff.
+    assert first.returncode == 1, first.stdout + first.stderr
+    accepted = env.close(item, "--resolve", "accept", "--reason", "Keep the greeting for this version")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "Ready:" in accepted.stdout
     content = body((env.gh_calls("pr", "edit") or env.gh_calls("pr", "create"))[-1])
     assert "Greeting needs the final text" in content.split("Follow-ups:", 1)[1]
     _open_pr(env, content)

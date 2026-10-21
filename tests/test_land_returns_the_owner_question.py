@@ -27,13 +27,13 @@ def test_1_owner_choice_exits_with_findings_and_checks_then_resumes(env, tmp_pat
         assert "Then run `forge land <item>` again." in guide
     for number in (1, 2):
         env.commit(where, "app.py", f"print({number})\n")
-        # P1s become round-two follow-ups; a normal-use P0 still stops for the owner.
-        defect = finding("P0", f"Saving loses the greeting, case {number}")
-        defect["body"] = "Gain 5, Work 2, Harm 5\nReturning readers lose their greeting."
+        # A P1 at the bar stops for the owner at round two.
+        defect = finding("P1", f"Saving loses the greeting, case {number}")
+        defect["body"] = "Gain 4, Work 1, Harm 2\nReturning readers lose their greeting."
         env.reviews(blocked(defect))
         assert env.close(item).returncode == 1
     _red_checks(env)
-    # The P0 stop returns the question without starting another round.
+    # The review stop returns the question without starting another round.
     stopped = env.repo.forge("land", item, timeout=40)
     assert stopped.returncode == 3, stopped.stdout + stopped.stderr
     output = stopped.stdout + stopped.stderr
