@@ -1,0 +1,15 @@
+{
+  "base": "927d50b3bb2923bfc17fccac4082e82a86886c18",
+  "branch": "fix/codex-sessions-opened-in-client-repos-ha",
+  "done_when": "After a sync, .codex/config.toml registers every role file sync writes with its description, and sets the default subagent model and effort from forge.toml's build subagents entry when it has one, while roles the team registered by hand stay.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-21T15:50:55.986579+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Codex sessions opened in client repos have no registered subagent roles and no default subagent model, so their subagents run on the session's expensive model and spend tokens."
+}
