@@ -1,6 +1,13 @@
 {
   "base": "927d50b3bb2923bfc17fccac4082e82a86886c18",
   "branch": "fix/codex-sessions-opened-in-client-repos-ha",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15f28-ca28-75c0-adce-a3481bb3265f",
+    "head": null,
+    "start": "d7fa651d43ad70d91c16f230ad5584ee649c6ff2"
+  },
   "done_when": "After a sync, .codex/config.toml registers every role file sync writes with its description, and sets the default subagent model and effort from forge.toml's build subagents entry when it has one, while roles the team registered by hand stay.",
   "fix_kind": "backend",
   "kind": "fix",
