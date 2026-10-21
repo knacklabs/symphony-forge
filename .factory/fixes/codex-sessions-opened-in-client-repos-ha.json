@@ -48,8 +48,8 @@
     "id": "82034761-d21f-4c3f-929b-7cf0fe29f930",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-21T15:50:55.986579+00:00",
@@ -61,10 +61,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7fb8161bac7b787d656b2be562d44f193412897c",
+    "close": "08d5c132-abb7-479e-a3d3-7046b04128d6",
+    "head": "ae43e8bf2ae5202ff79209d98bb18bd7d927cc73",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Codex sessions opened in client repos have no registered subagent roles and no default subagent model, so their subagents run on the session's expensive model and spend tokens.",
   "worker": "codex"
