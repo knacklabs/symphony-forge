@@ -45,9 +45,10 @@ a review stop waits for the owner.
 - **Existing repos** (on upgrade to this release): the rule applies from the next close or read,
   after `forge sync`. Findings and notes that an earlier release already moved to follow-ups stay
   follow-ups. They keep their reason "Left open after round two" or "Left open after round one",
-  and plan notes keep their keep line. A stop that an earlier release recorded for a P0 still
-  waits for the owner's choice. Tested on the adopted earlier-release fixture moved to this
-  release.
+  and plan notes keep their keep line. A review stop that an earlier release recorded for a P0
+  still waits for the owner's choice. A cold read that an earlier release stopped for its first
+  P0 round does not wait: the coordinator fixes the P0 and reads again, as the new rule says.
+  Tested on the adopted earlier-release fixture moved to this release.
 
 ## Risks
 
@@ -181,10 +182,17 @@ the reader (`say` and `dispose_all` in `tests/test_readloop_gates.py`, `read_cli
 3. Read stop (READ).
    - `story.read_result` loses the `follow_ups` block (it wrote `Disposition: keep - Left open
      after round two` and recorded `loop_choice: accept`) and the "passed with follow-ups"
-     outcome. Its last `stopped(...)` check stays and refuses with `read_loop`.
+     outcome. Its last `stopped(...)` check stays and refuses with `read_loop`. That check now
+     gets the whole notes body that `_write` writes (`f"{kept}\n\n## Round {round_number}\n\n
+     {said}\n"`), not only the new round, so `stopped` can see the round before.
    - `story.stopped(record, findings)` is true when the latest round is 2 or more, did not pass,
      has no `loop_choice`, and either holds no P0 note or the round before it also held a P0 note.
-     The round before is `_latest({"round": str(int(record["round"]) - 1)}, findings)`. A P0 note
+     `_latest` returns every note from a round's heading to the end, so the round before is
+     `_latest` of the previous round number without the latest round's note numbers:
+     `{n: b for n, b in _latest({"round": str(int(record["round"]) - 1)}, findings).items() if n
+     not in latest}`. Note numbers go on across rounds, so this holds exactly that round's notes.
+     `forge read`'s start refusal, `--resolve` and `forge next` already pass the whole notes body.
+     A P0 note
      keeps counting after the coordinator gives it a disposition. Reads count P0 rounds and not
      the same note: a later round never repeats a disposed note's title (`read_result` drops it as
      settled), so the same note cannot come back. The reads' P0 rounds count as close's
@@ -204,7 +212,7 @@ the reader (`say` and `dispose_all` in `tests/test_readloop_gates.py`, `read_cli
      after a round 1 with none; P0 notes in rounds 1 and 2; `accept` and `more`.
    - Test: `test_3_from_round_two_a_cold_read_with_an_open_note_below_p0_stops_for_the_owner`,
      with the parameters `adopted`, `target` in ("SHOP", "invoices") and `case` in ("below p0",
-     "p0 once", "p0 twice"). "below p0" runs on both repos; the other cases run on a new repo.
+     "p0 once", "p0 twice"). "below p0" and "p0 once" run on both repos; "p0 twice" runs on a new repo.
      - below p0: round 1 has a held note (Gain 4, Work 1, Harm 2), which gets a cut disposition.
        Round 2 has a new held note with the same scores. The read exits 1 with `Round 2 of the
        cold read of <target> stopped with open notes, so Forge asks the owner.`, "One more round,
@@ -214,7 +222,8 @@ the reader (`say` and `dispose_all` in `tests/test_readloop_gates.py`, `read_cli
        `--resolve accept --reason "<reason>"` writes `Disposition: keep - <reason>`, and `forge
        next` names Plan Mode (a story) or `forge spec confirm invoices` (a spec).
      - p0 once: round 1 has a Harm 2 note and round 2 a Harm 5 note. The read exits 0 with "Wrote
-       round 2", and its output has no question.
+       round 2", and its output has no question. `forge next` has no question either. After
+       `dispose_all`, the next `forge read` runs the reader a third time.
      - p0 twice: rounds 1 and 2 each have a Harm 5 note with different titles. The read exits 1
        with the stop. `--resolve more` prints `Next: forge read <target>`. After `dispose_all`, a
        round 3 with "No findings." passes.
