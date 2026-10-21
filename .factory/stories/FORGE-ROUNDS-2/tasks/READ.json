@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-ROUNDS-2-READ",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-21T18:22:00.520828+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "cd9ed590297d59ef141e401363699cce7d662b5b",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
