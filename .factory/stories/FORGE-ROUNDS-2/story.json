@@ -9,6 +9,10 @@
     {
       "at": "2026-10-21T16:16:06.148998+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-21T16:19:12.231482+00:00",
+      "step": "read"
     }
   ],
   "title": "Owner decides before open findings drop at the round limit",
