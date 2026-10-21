@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-21T16:22:44.737575+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01Xi1Zp95gb1Hz6TAMGUsiAk",
+    "hash": "df03d4e9f6aca258c4472e837c7076c204c1d1a8ee770393522a0d4273893bb3",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-ROUNDS-2.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-21T15:59:08.446637+00:00",
@@ -13,8 +23,12 @@
     {
       "at": "2026-10-21T16:19:12.231482+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-21T16:22:44.737963+00:00",
+      "step": "approved"
     }
   ],
   "title": "Owner decides before open findings drop at the round limit",
-  "touches": 0
+  "touches": 1
 }
