@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/sync.py\tGate: test_28_sync expects the obsolete role registry",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 272,
+      "text": "Gate: test_28_sync expects the obsolete role registry",
+      "from": "review",
+      "item": "codex-sessions-opened-in-client-repos-ha",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

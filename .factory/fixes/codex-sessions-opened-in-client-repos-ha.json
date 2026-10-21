@@ -11,12 +11,53 @@
   "done_when": "After a sync, .codex/config.toml registers every role file sync writes with its description, and sets the default subagent model and effort from forge.toml's build subagents entry when it has one, while roles the team registered by hand stay.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_codex_config() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 272,
+      "outcome": "follow-up",
+      "reason": "Left open after round one",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_28_sync expects the obsolete role registry",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "223227eb938a1f9749fa14cdd120779d362f16126d2af19b2ffbf2fc1a47a025",
+    "changed": "c244344f6b815844dc5970abf9a452db9b197bf3722c02c33f1596b5f9f9917b",
+    "commit": "261585fa405ed7b85fe4b50262dbe210481de49b",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - running the configured full test suite in CI.\nThis change always registers every shipped role with its description, but tests/test_setup.py:167\u2013169 still asserts exact equality with a config containing only agents.reader and no description. Consequently, tests/test_setup.py::test_28_sync fails after a successful sync, blocking the tests check. Update that assertion to accommodate the expanded registry while retaining its checks for preserved client settings.",
+        "file": "src/forge/sync.py",
+        "follow_up": "Left open after round one",
+        "gain": 3,
+        "harm": 3,
+        "line": 272,
+        "priority": "P1",
+        "title": "Gate: test_28_sync expects the obsolete role registry",
+        "work": 1
+      }
+    ],
+    "id": "82034761-d21f-4c3f-929b-7cf0fe29f930",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-21T15:50:55.986579+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-21T15:58:59.814969+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
