@@ -64,8 +64,8 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     shop = new_story(repo, "SHOP")
     doc, notes = shop / "plans" / "SHOP.md", shop / "plans" / "SHOP.read.md"
     doc.write_text(DOC, encoding="utf-8")
-    # Substantive P0 notes still fail and number on; non-P0 leftovers now pass in
-    # round two, which test_two_round_limit owns. Keep formatting and gate proof here.
+    # Consecutive P0 rounds stop for the owner's choice. Keep formatting and gate
+    # proof here; test_owner_decides_at_the_round_limit owns the read-stop outcomes.
     for number, near in enumerate(["No findings, except missing recovery.",
                                    "No issues? The time has no time zone.",
                                    "**Finding:** required proof is missing.",
@@ -441,10 +441,14 @@ def _passing_reader_keeps_its_chat(repo, claude_payload, monkeypatch, tmp_path,
     conversation = _sent(reader.log, "turn/start")[-1]["threadId"]
     monkeypatch.delenv("STUB_CODEX_NO_ARCHIVE")
 
-    # A round with findings keeps its conversation for the next round.
+    # A stopped round keeps its conversation for the owner's next read round.
     reader.doc.write_text(TASKS, encoding="utf-8")
     archived = len(_sent(reader.log, "thread/archive"))
-    reader.ok(f"1. {FIRST}\n")
+    reader.say(f"1. {FIRST}\n")
+    stopped = reader.read()
+    assert stopped.returncode == 1 and "One more round, split or accept?" in stopped.stderr
+    chosen = reader.resolve("more", "The owner wants to repair the sign-in note")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     assert len(_sent(reader.log, "thread/archive")) == archived
     assert reader.continued()
     assert _sent(reader.log, "thread/resume")[-1]["threadId"] == conversation
