@@ -2,13 +2,23 @@
   "base": "927d50b3bb2923bfc17fccac4082e82a86886c18",
   "branch": "fix/forge-work-starts-another-worker-round-o",
   "done_when": "forge work refuses an item with an unanswered review stop and shows the same owner question and resolve step that close prints.",
+  "drop": {
+    "at": "2026-10-21T15:56:24.228329+00:00",
+    "because": "The owner changed the round-limit rule; this check moves into that change",
+    "by": "vrknetha <vrknetha@gmail.com> 1792598184 +0530",
+    "status": "started"
+  },
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-21T15:54:54.762553+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-21T15:56:24.228854+00:00",
+      "step": "drop"
     }
   ],
   "why": "forge work starts another worker round on an item whose review stopped on an open P0 at the round limit, so the round's tokens are spent before close refuses the result."
