@@ -29,28 +29,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "223227eb938a1f9749fa14cdd120779d362f16126d2af19b2ffbf2fc1a47a025",
-    "changed": "c244344f6b815844dc5970abf9a452db9b197bf3722c02c33f1596b5f9f9917b",
-    "commit": "261585fa405ed7b85fe4b50262dbe210481de49b",
+    "branch_diff": "06f90f0039734032c6e5361b5e8c663b18340ee6c9f2ad2727a47d058dbde213",
+    "changed": "ef442c9d1b73a2c5c7e6c98dafb7fccac354bea7685c39fb8d69773f30c482c3",
+    "commit": "cf145a18f3b925df5c7309d9059b6f821e068787",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional\nCase: normal use - running the configured full test suite in CI.\nThis change always registers every shipped role with its description, but tests/test_setup.py:167\u2013169 still asserts exact equality with a config containing only agents.reader and no description. Consequently, tests/test_setup.py::test_28_sync fails after a successful sync, blocking the tests check. Update that assertion to accommodate the expanded registry while retaining its checks for preserved client settings.",
-        "file": "src/forge/sync.py",
-        "follow_up": "Left open after round one",
-        "gain": 3,
-        "harm": 3,
-        "line": 272,
-        "priority": "P1",
-        "title": "Gate: test_28_sync expects the obsolete role registry",
-        "work": 1
-      }
-    ],
-    "id": "82034761-d21f-4c3f-929b-7cf0fe29f930",
+    "findings": [],
+    "id": "4a5f5657-8c8e-4a04-9fc1-9813aee65634",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-21T15:50:55.986579+00:00",
@@ -58,6 +46,10 @@
     },
     {
       "at": "2026-10-21T15:58:59.814969+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-21T16:05:57.413202+00:00",
       "step": "review"
     }
   ],

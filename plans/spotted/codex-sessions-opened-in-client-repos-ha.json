@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/prcheck.py\tThe trusted size check counts output from a changed sync renderer as code while the local hook exempts it.",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 362,
+      "text": "The trusted size check counts output from a changed sync renderer as code while the local hook exempts it.",
+      "from": "worker",
+      "item": "codex-sessions-opened-in-client-repos-ha",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/sync.py\tGate: test_28_sync expects the obsolete role registry",
       "kind": "edge",
       "path": "src/forge/sync.py",
