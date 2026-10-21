@@ -4,30 +4,20 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- At the round limit, an open finding that is not P0 stops the item and asks the owner to choose one more round, split, or accept as follow-ups. Nothing moves to follow-ups without the owner's answer.
+- An open P0 never stops the item at the limit. The worker keeps fixing it until the review or read is clean.
+- forge work refuses an item that has an unanswered stop and shows the same question that close shows.
+- The guide, the worker brief and the release notes state the new rule. New repos get it at init; existing repos get it on upgrade and sync.
 
 ## Why
 
-Owner decides before open findings drop at the round limit
+Today a cold read moves every open note that is not P0 into follow-ups at round two without asking the owner. A code review at the limit stops for any blocking finding and for a P0 too, although the owner wants a P0 kept in the worker's hands. forge work does not check for a waiting stop, so a worker round can run on an item the owner has not answered. With no owner stop on a P0, nothing in the rule caps a P0 the worker cannot fix.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **At the limit, a read or review with an open non-P0 finding stops and asks; with an open P0 it does not stop, and the worker fixes it.**
+2. **forge work refuses while a stop waits, showing the same question close gives.**
+3. **The guide, the worker brief and the release notes state the rule, and init, upgrade and sync each deliver it.**
 
 ## Risks
 
