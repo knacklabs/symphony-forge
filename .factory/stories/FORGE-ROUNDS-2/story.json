@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-ROUNDS-2.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-21T15:59:08.446637+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Owner decides before open findings drop at the round limit",
+  "touches": 0
+}

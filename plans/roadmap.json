@@ -324,6 +324,12 @@
       "title": "Reads and reviews end after two rounds",
       "status": "pending",
       "order": 88
+    },
+    {
+      "key": "FORGE-ROUNDS-2",
+      "title": "Owner decides before open findings drop at the round limit",
+      "status": "pending",
+      "order": 89
     }
   ],
   "epics": [
