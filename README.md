@@ -152,8 +152,8 @@ or checks still need a worker, land stops. A review stop exits with status 3 and
 question. Record the choice with `forge close <item> --resolve <more|split|accept> --reason
 "<human's choice>"`, then run land again.
 
-A cold read runs at most two rounds. After round two, open notes other than P0 become follow-ups.
-The plan goes on to approval or confirmation. An open P0 stops the read and asks: "One more round, split or accept?"
+A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
+in two rounds in a row. Forge asks: "One more round, split or accept?"
 Forge waits for your choice and never starts a third round by itself. Record your choice with
 `forge read <KEY or spec or decision> --resolve <accept|more|split> --reason "<human's choice>"`.
 

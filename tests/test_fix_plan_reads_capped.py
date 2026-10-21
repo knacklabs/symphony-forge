@@ -44,10 +44,12 @@ def _client(repo, gh, tmp_path, previous):
     _install(repo.bin, "claude", READER.format(python=sys.executable))
 
 
-def _round(repo, reply):
+def _round(repo, reply, expected=0):
     (repo.bin / "claude-says.md").write_text(reply, encoding="utf-8")
     read = repo.forge("read", "SHOP")
-    assert read.returncode == 0, read.stdout + read.stderr
+    assert read.returncode == expected, read.stdout + read.stderr
+    if expected:
+        assert "Round 2 of the cold read of SHOP stopped with open notes" in read.stderr
     return json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
 
 
@@ -63,7 +65,7 @@ def test_1_unchanged_text_gets_two_rounds_and_builders_edits_no_read(repo, gh, t
     prompts = []
     for reply, edit in [("1. Blocking: Sign-in is out of scope.\n", "shows when it was saved."),
                        ("2. Blocking: The basket has no size limit.\n", None)]:
-        prompts.append(_round(repo, reply))
+        prompts.append(_round(repo, reply, expected=0 if edit else 1))
         if edit:
             notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - out of scope\n",
                              encoding="utf-8")
@@ -75,8 +77,11 @@ def test_1_unchanged_text_gets_two_rounds_and_builders_edits_no_read(repo, gh, t
     assert "P0" in prompts[1] and "normal use" in prompts[1]
     assert "Is each of those findings closed?" in prompts[1]
     assert "+- Baskets last a month." in prompts[1]
-    assert "passed: yes\n" in notes.read_text("utf-8")
-    assert "Disposition: keep - Left open after round two" in notes.read_text("utf-8")
+    assert "Disposition: keep - Left open after round two" not in notes.read_text("utf-8")
+    accepted = repo.forge("read", "SHOP", "--resolve", "accept", "--reason",
+                          "the owner accepts the remaining note")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "Disposition: keep - the owner accepts the remaining note" in notes.read_text("utf-8")
     # After the pass, an edit only below For the builders: forge read refuses and runs no reader.
     calls = (repo.bin / "claude-calls.jsonl").read_text("utf-8")
     doc.write_text(doc.read_text("utf-8").replace("kept in the database.", "kept, one per shopper."),

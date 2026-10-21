@@ -55,101 +55,46 @@ def known(env, where):
     return {row["title"]: row for row in json.loads(shown.stdout)["known_issues"]}
 
 
-@pytest.mark.parametrize("adopted,target,case", [
-    (adopted, target, case)
-    for adopted in (False, True)
-    for target in ("SHOP", "invoices")
-    for case in ("follow-ups", "passed-first", "more")
-] + [(False, target, choice) for target in ("SHOP", "invoices")
-     for choice in ("accept", "split")])
-def test_2_a_cold_read_ends_after_round_two(repo, gh, tmp_path, adopted, target, case):
-    # The old contract allowed three blocked rounds. Round two now keeps non-P0
-    # notes, or waits for an explicit choice before spending another read.
-    read_client(repo, gh, tmp_path, adopted)
+@pytest.mark.parametrize("target", ["SHOP", "invoices"])
+def test_2_round_two_prompts_only_for_new_p0_gaps(repo, gh, tmp_path, target):
+    # The read-stop outcomes belong to test_3. Keep one walk for each target here
+    # to check the round-two prompt and its treatment of earlier notes.
+    read_client(repo, gh, tmp_path, False)
     where = new_story(repo, "SHOP")
     (where / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
     rel = "plans/SHOP.md" if target == "SHOP" else "docs/specs/invoices.md"
     doc = where / rel
-    if target == "SHOP" and case == "passed-first":
-        doc.write_text(DOC.replace("## Tasks", "## For the builders\n\n## Tasks"), encoding="utf-8")
     if target != "SHOP":
         doc.parent.mkdir(parents=True, exist_ok=True)
         doc.write_text(SPEC, encoding="utf-8")
         saved = repo.forge("spec", "save", target, cwd=where)
         assert saved.returncode == 0, saved.stdout + saved.stderr
     notes = doc.with_suffix(".read.md")
-    first = "Blocking: Saving has no recovery rule."
-    say(repo, "No findings.\n" if case == "passed-first" else
-        f"1. {first}\n   Case: normal use - A shopper reopens a saved basket.\n"
+    first = "Saving has no recovery rule."
+    say(repo, f"1. Blocking: {first}\n   Case: normal use - A shopper reopens a saved basket.\n"
         "   Gain 4, Work 1, Harm 2\n")
-    read = repo.forge("read", target, cwd=where)
-    assert read.returncode == 0, read.stdout + read.stderr
-    if case == "passed-first":
-        # Owner-facing edits after a pass still count as round two.
-        doc.write_text(doc.read_text("utf-8").replace("come back to it later", "reopen it tomorrow")
-                       .replace("Each invoice is emailed as a PDF", "Each invoice is emailed as a PDF attachment"),
-                       encoding="utf-8")
-    else:
-        dispose_all(notes)
-    p0 = case in ("more", "accept", "split")
-    title = "Saving deletes the basket" if p0 else "Recovery loses saved quantities"
-    say(repo, f"1. Blocking: {title}.\n"
-        "   Case: normal use - A shopper reopens a saved basket and its contents are lost.\n"
-        f"   Gain 4, Work 1, Harm {5 if p0 else 2}\n")
-    read = repo.forge("read", target, cwd=where)
-    assert read.returncode == (1 if p0 else 0), read.stdout + read.stderr
+    first_read = repo.forge("read", target, cwd=where)
+    assert first_read.returncode == 0, first_read.stdout + first_read.stderr
+    dispose_all(notes)
+    say(repo, "No findings.\n")
+    second = repo.forge("read", target, cwd=where)
+    assert second.returncode == 0, second.stdout + second.stderr
+    assert "found nothing" in second.stdout
     calls = repo.bin / "claude-calls.jsonl"
     prompts = [json.loads(line)["prompt"] for line in calls.read_text("utf-8").splitlines()]
     assert len(prompts) == 2
     prompt = " ".join(prompts[-1].split())
     assert "P0" in prompt and "normal use" in prompt and "only" in prompt
     assert "Look for new gaps anywhere in the doc" not in prompt
-    if case != "passed-first":
-        assert first in prompts[-1] and "Disposition: cut" in prompts[-1]
-        assert "Is each of those findings closed?" in prompt
+    assert first in prompts[-1] and "Disposition: cut" in prompts[-1]
+    assert "Is each of those findings closed?" in prompt
     text = notes.read_text("utf-8")
-    assert title in text
-    if not p0:
-        assert f"Round 2 of the cold read of {rel} passed with follow-ups.\nNext: forge next" in read.stdout
-        assert "Disposition: keep - Left open after round two" in text
-        # The passing read is committed, and next reaches approval or confirmation.
-        assert "Left open after round two" in repo.git("show", f"HEAD:{notes.relative_to(where).as_posix()}", cwd=where)
-        next_step = repo.forge("next", cwd=where)
-        assert next_step.returncode == 0, next_step.stdout + next_step.stderr
-        assert ("Plan Mode" if target == "SHOP" else "forge spec confirm invoices") in next_step.stdout
-        assert f"Next: forge read {target}" not in next_step.stdout
-        return
-    resolution = f'forge read {target} --resolve <accept|more|split> --reason "<human\'s choice>"'
-    assert f"Round 2 of the cold read of {target} still has a P0 note open." in read.stderr
-    assert "One more round, split or accept?" in read.stderr and title in read.stderr
-    assert resolution in read.stderr
-    held = repo.forge("read", target, cwd=where)
-    assert held.returncode == 1 and resolution in held.stderr
+    assert "passed: yes\n" in text
+    assert "Left open after round two" not in text
     next_step = repo.forge("next", cwd=where)
-    assert resolution in next_step.stdout and title in next_step.stdout
-    assert len(calls.read_text("utf-8").splitlines()) == 2
-    invalid = repo.forge("read", target, "--resolve", case, "--reason", " ", cwd=where)
-    assert invalid.returncode == 1
-    assert ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason."
-            in invalid.stderr)
-    assert len(calls.read_text("utf-8").splitlines()) == 2
-    chosen = repo.forge("read", target, "--resolve", case, "--reason",
-                        "The owner chose this after reading the remaining basket loss", cwd=where)
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-    assert "The owner chose this after reading the remaining basket loss" in repo.git(
-        "show", f"HEAD:{notes.relative_to(where).as_posix()}", cwd=where)
-    if case == "accept":
-        next_step = repo.forge("next", cwd=where)
-        assert ("Plan Mode" if target == "SHOP" else "forge spec confirm invoices") in next_step.stdout
-    else:
-        if case == "more":
-            assert f"Next: forge read {target}" in chosen.stdout
-        dispose_all(notes)
-        say(repo, "No findings.\n")
-        resumed = repo.forge("read", target, cwd=where)
-        assert resumed.returncode == 0, resumed.stdout + resumed.stderr
-        assert "Round 3" in resumed.stdout
-        assert len(calls.read_text("utf-8").splitlines()) == 3
+    assert next_step.returncode == 0, next_step.stdout + next_step.stderr
+    assert ("Plan Mode" if target == "SHOP" else "forge spec confirm invoices") in next_step.stdout
+    assert f"Next: forge read {target}" not in next_step.stdout
 
 
 @pytest.mark.parametrize("adopted,case", [(False, "p0"), (False, "p1"), (True, "p0")])

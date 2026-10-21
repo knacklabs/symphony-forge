@@ -16,7 +16,6 @@ FLOORS = ((re.compile(r"^[ \t]*Raise:[ \t]*Security\b", re.I | re.M), "security"
           (re.compile(r"\bmigrations?\b", re.I), "migration"))
 ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
 RARE = re.compile(r"^[ \t]*Case:[ \t]*rare\b", re.I | re.M)
-ROUND_TWO = "Left open after round two"
 DECLINED = "Declined as not worth the code: "
 HOLD = ("block", "fix now")
 Scores = tuple[int, int, int]

@@ -35,10 +35,13 @@ def story_history_lists_read_rounds(repo, gh, tmp_path, claude_payload, history)
     _answer(notes, 3, "defer")
     amended = DOC.replace("come back to it later", "come back to it on another day")
     doc.write_text(amended, encoding="utf-8")
-    # Round two now passes with a visible follow-up; the board keeps its automatic answer.
+    # Round two stops for an owner choice; the board keeps the owner's answer.
     says.write_text("4. The empty basket message is missing.\n", encoding="utf-8")
     read = repo.forge("read", "SHOP")
-    assert read.returncode == 0 and "passed with follow-ups" in read.stdout, read.stdout + read.stderr
+    assert read.returncode == 1 and "asks the owner" in read.stderr, read.stdout + read.stderr
+    accepted = repo.forge("read", "SHOP", "--resolve", "accept", "--reason",
+                          "the owner accepts the missing message note")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     approved = hook(repo, claude_plan(claude_payload, amended, cwd=shop))
     assert approved.returncode == 0, approved.stderr
     # One part built and merged after the approval.
@@ -62,7 +65,7 @@ def story_history_lists_read_rounds(repo, gh, tmp_path, claude_payload, history)
         {"title": "Saved baskets have no expiry rule.", "disposition": "defer", "reason": None}]
     assert rounds[1]["findings"] == [
         {"title": "The empty basket message is missing.", "disposition": "keep",
-         "reason": "Left open after round two"}]
+         "reason": "the owner accepts the missing message note"}]
     # Only the latest round is dated.
     assert rounds[0]["read_at"] is None and rounds[1]["read_at"]
 

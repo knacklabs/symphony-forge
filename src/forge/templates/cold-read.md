@@ -213,7 +213,7 @@ Check:
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
 2. Block on anything new only for a P0 that happens in normal use: a security hole, data loss or
    a broken main path. A fix for an earlier finding that breaks the main path counts as a P0.
-   Score a P0 with Harm 4 or 5, or Gain 5. Every other open note becomes a follow-up after round two.
+   Score a P0 with Harm 4 or 5, or Gain 5. Forge asks the owner about every other open note after round two.
 
 This includes the diff, the spec and Answers diffs, and known traps: $traps
 

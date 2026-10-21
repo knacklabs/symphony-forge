@@ -180,11 +180,15 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     assert "passed: no\n" in text
     notes.write_text(text.replace("Harm 1\n2.", "Harm 1\n   Disposition: keep - sign-in is out of scope\n2.", 1),
                      encoding="utf-8")
-    # Round two keeps a non-P0 note automatically; later reads retain that answer too.
+    # Round two stops for the owner's answer; later reads retain that answer too.
     (repo.bin / "claude-says.md").write_text(
         "3. Blocking: Saving needs a button.\n   Raise: Plan gap\n   Gain 4, Work 1, Harm 1\n", encoding="utf-8")
-    assert repo.forge("read", "SHOP").returncode == 0
-    assert "Disposition: keep - Left open after round two" in notes.read_text("utf-8")
+    stopped = repo.forge("read", "SHOP")
+    assert stopped.returncode == 1 and "asks the owner" in stopped.stderr, stopped.stdout + stopped.stderr
+    accepted = repo.forge("read", "SHOP", "--resolve", "accept", "--reason",
+                          "the owner accepts the missing save button")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "Disposition: keep - the owner accepts the missing save button" in notes.read_text("utf-8")
     (repo.bin / "claude-says.md").write_text("No findings.\n", encoding="utf-8")
     assert repo.forge("read", "SHOP").returncode == 0
     settled = _read_prompt(repo).split("each with its scores and its disposition:", 1)[1].split("For a story,", 1)[0]

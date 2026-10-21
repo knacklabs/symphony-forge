@@ -23,14 +23,18 @@ def test_1_cold_read_keeps_all_answers_and_ignores_settled_repeats(
     reader.ok(f"1. {first}\n2. {second}\n")
     reader.dispose(first, "keep because the owner chose sign-in")
     reader.dispose(second, "cut because the date uses the browser locale")
-    reader.ok(f"1. {third}\n")
-    assert "Disposition: keep - Left open after round two" in reader.text()
+    reader.say(f"1. {third}\n")
+    stopped = reader.read()
+    assert stopped.returncode == 1 and "asks the owner" in stopped.stderr, stopped.stdout + stopped.stderr
+    accepted = reader.accept("the owner accepts the tax note")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "Disposition: keep - the owner accepts the tax note" in reader.text()
 
     # Reworded evidence underneath the same settled note must not start another round.
     clean = reader.ok(f"1. {first}\n   Another shopper also needs an account.\n")
     prompt = reader.prompt()
     for answer in (first, second, third, "the owner chose sign-in",
-                   "the date uses the browser locale", "Left open after round two"):
+                   "the date uses the browser locale", "the owner accepts the tax note"):
         assert answer in prompt, answer
     assert "found nothing" in clean
     assert "Next: forge read SHOP" not in repo.forge("next").stdout
@@ -39,13 +43,15 @@ def test_1_cold_read_keeps_all_answers_and_ignores_settled_repeats(
     reader.doc.write_text(reader.doc.read_text("utf-8") + "\nThe basket includes delivery.\n",
                           encoding="utf-8")
     notes = ["1. Delivery charges are unclear.\n", f"1. {first}\n"]
-    new = reader.ok("".join(reversed(notes) if repeat_first else notes))
+    reader.say("".join(reversed(notes) if repeat_first else notes))
+    stopped = reader.read()
+    assert stopped.returncode == 1 and "asks the owner" in stopped.stderr, stopped.stdout + stopped.stderr
     for answer in (first, second, third, "the owner chose sign-in"):
         assert answer in reader.prompt(), answer
-    assert "found nothing" not in new
     assert "Delivery charges are unclear." in reader.notes.read_text("utf-8")
-    assert "passed with follow-ups" in new
-    assert "Disposition: keep - Left open after round two" in reader.text()
+    accepted = reader.accept("the owner accepts the delivery note")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "Disposition: keep - the owner accepts the delivery note" in reader.text()
 
 
 def test_2_review_keeps_all_settlements_and_blocks_only_new_findings(env):

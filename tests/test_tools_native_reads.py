@@ -111,20 +111,24 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     assert not notes.exists()
     findings_offer = handout()
     findings = handback("1. Missing saved basket ownership.\n2. Missing save failure behavior.")
-    assert findings.returncode == 0, findings.stdout + findings.stderr
+    assert findings.returncode == 1 and "asks the owner" in findings.stderr, findings.stdout + findings.stderr
     written = notes.read_text("utf-8")
     assert f"reader: {tool} ({model}), a subagent of this " in written
     assert f"because forge.toml's tools is {tool}" in written
     # Failed handouts consume rounds too. This result arrives after round two,
-    # so unscored non-P0 notes now pass as automatically kept follow-ups.
-    assert f"round: {findings_offer['round']}\n" in written and "passed: yes\n" in written
-    assert "passed with follow-ups." in findings.stdout
+    # so unscored notes stop for the owner's choice.
+    assert f"round: {findings_offer['round']}\n" in written
+    assert "Disposition: keep - Left open after round two" not in written
+    accepted = repo.forge("read", "SHOP", "--resolve", "accept", "--reason",
+                          "the owner accepts the two missing details")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    written = notes.read_text("utf-8")
     for finding in ("1. Missing saved basket ownership.", "2. Missing save failure behavior."):
-        assert finding + "\n   Disposition: keep - Left open after round two" in written
+        assert finding + "\n   Disposition: keep - the owner accepts the two missing details" in written
     assert repo.git("show", "HEAD:plans/SHOP.read.md", cwd=shop) == written.strip()
     doc.write_text(DOC + "\nSaved baskets belong to their shopper; failures leave the basket intact.\n", "utf-8")
     second = handout()
-    assert "Disposition: keep - Left open after round two" in second["fresh_prompt"]
+    assert "Disposition: keep - the owner accepts the two missing details" in second["fresh_prompt"]
     assert second["subagent"] == "reader-chat"
     result = handback("1. Advisory: State how long baskets are kept.")
     assert result.returncode == 0, result.stdout + result.stderr

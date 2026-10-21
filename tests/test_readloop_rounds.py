@@ -199,6 +199,10 @@ class Reader:
     def read(self):
         return (self.native if self.coordinator == self.app else self.repo.forge)("read", "SHOP")
 
+    def accept(self, reason: str):
+        return (self.native if self.coordinator == self.app else self.repo.forge)(
+            "read", "SHOP", "--resolve", "accept", "--reason", reason)
+
     def ok(self, text: str = "No findings.\n") -> str:
         self.say(text)
         done = self.read()
@@ -394,7 +398,12 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     def fresh(why: str, says: str = "No findings.\n") -> str:
         """A round that starts a new conversation with the first round's instructions, the whole
         doc and every earlier finding with its disposition, and says why."""
-        out = reader.ok(says)
+        reader.say(says)
+        stopped = reader.read()
+        assert stopped.returncode == 1 and "asks the owner" in stopped.stderr, stopped.stdout + stopped.stderr
+        out = stopped.stdout + stopped.stderr
+        accepted = reader.accept("the owner accepts the tax note")
+        assert accepted.returncode == 0, accepted.stdout + accepted.stderr
         assert FRESH[app].format(why) in out, out
         assert not reader.continued()
         prompt = reader.prompt()
@@ -403,8 +412,16 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
             assert sent in prompt, sent
         return prompt
 
-    def continued(says="No findings.\n"):
-        out = reader.ok(says)
+    def continued(says="No findings.\n", accept_reason=None):
+        if accept_reason is None:
+            out = reader.ok(says)
+        else:
+            reader.say(says)
+            stopped = reader.read()
+            assert stopped.returncode == 1 and "asks the owner" in stopped.stderr, stopped.stdout + stopped.stderr
+            out = stopped.stdout + stopped.stderr
+            accepted = reader.accept(accept_reason)
+            assert accepted.returncode == 0, accepted.stdout + accepted.stderr
         assert "Starting a new" not in out
         assert reader.continued()
         return reader.prompt()
@@ -421,11 +438,10 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert reader.text() == notes
     reader.fail(False)
     # A reply with no numbered finding becomes one, numbered after the earlier rounds'.
-    prompt = continued("The totals are unclear.\n")
+    prompt = continued("The totals are unclear.\n", "the owner accepts the unclear totals")
     assert "Round 2 of your cold read" in prompt and "a numbered list starting at 2" in _flat(prompt)
     assert "## Round 2\n\n2. The totals are unclear.\n" in reader.text()
-    assert "passed: yes" in reader.text()
-    assert "Disposition: keep - Left open after round two" in reader.text()
+    assert "Disposition: keep - the owner accepts the unclear totals" in reader.text()
 
     # A discarded round too.
     notes = reader.text()
@@ -443,7 +459,7 @@ def _starts_fresh(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     reader.lose()
     fresh("Codex couldn't resume its conversation: no rollout found for thread id thr-stub-1" if app == "codex"
           else f"Claude couldn't continue session {session}", "3. Totals need tax.\n")
-    assert "Disposition: keep - Left open after round two" in reader.text()
+    assert "Disposition: keep - the owner accepts the tax note" in reader.text()
 
     # Notes written before rounds: no round number and no copy of what was read. That is round 1,
     # and the next round starts fresh with no diff.

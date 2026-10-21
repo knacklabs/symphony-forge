@@ -951,8 +951,8 @@ fix's folder:
 A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
 `Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
-findings block in round one. From round two, only an open P0 stops the read. Other open notes
-become follow-ups, and the plan goes on to approval or confirmation.
+findings block in round one. A cold read stops after round two when notes below P0 are still
+open, or when P0 notes are open in two rounds in a row.
 New repos get this rule on init; existing repos get it on upgrade plus sync.
 
 Start with `forge start "<their words>"`. A spec is optional: when Forge chooses a plan, its branch adds
@@ -1273,10 +1273,11 @@ restore after they fetch.
 
 ## Closing
 
-A fix gets one review round; a story part gets two. At the limit, open findings below P0 stop
-for the owner's recorded choice of one more round, split or accept. Accept puts them in Known
-issues as follow-ups with the owner's reason. An open P0 returns to the worker. When the same
-P0 stays open two worker rounds in a row, Forge stops with the stuck question.
+A fix gets one review round; a story part gets two. At the round limit, open findings below P0
+stop the item and ask the owner: one more round, split or accept.
+Accept makes the open findings follow-ups in Known issues with the owner's reason.
+An open P0 never stops for the owner; the worker keeps fixing it. When the same P0 stays open
+two worker rounds in a row, Forge stops with the stuck question.
 
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.
@@ -1692,7 +1693,7 @@ The coordinator follows the bar's outcome and never re-scores a note: a fix roun
 bar, a disposition with the scores in its reason for one below it, and the stop rule above at a
 stop. Approval and merge steps stay the owner's.
 
-When two worker rounds in a row leave close's tests failing or the same P0 open, `forge work`
+When two rounds in a row leave close's tests failing or the same P0 open, `forge work`
 stops the item. Close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
 choices. Ask the owner exactly that question. Record the choice with
@@ -1700,12 +1701,12 @@ choices. Ask the owner exactly that question. Record the choice with
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-A cold read runs at most two rounds, for stories, specs and decisions alike. After round two,
-open notes other than P0 become follow-ups and the plan goes on to approval or confirmation.
-An open P0 stops the read. Ask the owner: "One more round, split or accept?" Do not read again
+A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
+in two rounds in a row. This applies to stories, specs and decisions alike.
+Ask the owner: "One more round, split or accept?" Do not read again
 until the choice is recorded with
 `forge read <KEY or spec or decision> --resolve <accept|more|split> --reason "<human's choice>"`.
-More permits one more read round. Forge stops again only if that round leaves a P0 open.
+More permits one more read round. The same stop rule applies to that round.
 Accept keeps the notes with the owner's reason and permits approval or confirmation. Split
 the plan as agreed before reading again. Forge never starts a third round by itself.
 For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
