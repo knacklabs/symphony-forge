@@ -102,7 +102,7 @@ def ships(top: Path, cfg: dict[str, Any], *, husky: str | None = None) -> dict[s
         **({"CLAUDE.md": ""} if (top / "CLAUDE.md").exists() or (top / "CLAUDE.md").is_symlink()
            else {}),  # a dangling link counts too
         **{rel: sync._hooks(top, rel, events, ALLOW.get(rel, [])) for rel, events in HOSTS.items()},
-        ".codex/config.toml": sync._codex_config(top),
+        ".codex/config.toml": sync._codex_config(top, cfg),
     }
 
 REFUSALS = {
