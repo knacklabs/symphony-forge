@@ -45,7 +45,7 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
         assert "never a dismissal for being unnecessary, rare or low value" not in guide
         assert "whatever files they were in" not in guide
 
-    # A fix now stops on its first P0 review. Its question still lists every open
+    # A fix stops on its first review with P1s at the bar. Its question lists every open
     # finding, ranked by the bar, then Harm, then Gain, then Work, below-bar ones too.
     item, where = env.start_fix()
     found = lambda title, scores, number, who="": _scored(  # noqa: E731
@@ -53,13 +53,13 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     _round(env, item, where, 1,
            found("Other shells", "Gain 3, Work 4, Harm 3", 3, " Fish users get no prompt."),
            found("Saving drops the basket", "Gain 3, Work 2, Harm 2", 4, " Returning shoppers lose it."),
-           found("Checkout charges twice", "Gain 5, Work 3, Harm 1", 5, " Every buyer pays double."),
+           found("Checkout hides receipts", "Gain 4, Work 2, Harm 3", 5, " Buyers cannot find receipts."),
            found("The label is long", "Gain 2, Work 1, Harm 1", 6, " Readers squint."),
            found("Prices round down", "Gain 4, Work 1, Harm 2", 7, " Sellers lose cents."),
            found("Search skips accents", "Gain 3, Work 1, Harm 2", 8, " Shoppers abroad miss items."),
            found("Coupons stack", "Gain 3, Work 2, Harm 3", 9, " Shops lose money.")).stderr
     rows = [*HEAD,
-            "| 3 | Checkout charges twice: every buyer pays double. | 5 | 3 | 1 | fix now |",
+            "| 3 | Checkout hides receipts: buyers cannot find receipts. | 4 | 2 | 3 | fix this round |",
             "| 7 | Coupons stack: shops lose money. | 3 | 2 | 3 | fix this round |",
             "| 5 | Prices round down: sellers lose cents. | 4 | 1 | 2 | fix this round |",
             "| 1 | Other shells: fish users get no prompt. | 3 | 4 | 3 | follow-up fix |",
@@ -70,7 +70,7 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     stop = env.close(item).stderr
     assert _table(stop) == rows, stop
     assert "One more round, split or accept?" in stop.split(rows[-1], 1)[1]
-    # The P0 still open after the fix's first review needs the owner's choice.
+    # The P1s still open after the fix's first review need the owner's choice.
     assert ("Ask the human to choose one more round, split or accept the remaining findings, in these words:"
             in stop and "settle it yourself" not in stop)
     assert "\n".join(rows) in repo.forge("next").stdout

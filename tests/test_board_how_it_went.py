@@ -52,6 +52,12 @@ def github_list_fields(env):
         sys.stdout.write(output)'''), "utf-8")
 
 
+def p1_at_bar(title):
+    entry = finding("P1", title)
+    entry["body"] = "Gain 4, Work 1, Harm 2\nCase: normal use - The basket disappears."
+    return entry
+
+
 @pytest.mark.parametrize("case,previous", [("shared-fix", False), ("shared-fix", True),
                                           ("story-runway", False), ("rebuilt-history", False),
                                           ("question-wait", False), ("conflict-wait", False),
@@ -130,8 +136,8 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     where = next(Path(block.splitlines()[0].removeprefix("worktree "))
                  for block in listing.split("\n\n") if f"branch refs/heads/fix/{item}" in block)
     env.commit(where, "app.py", "print('basket')\n")
-    # P1s become follow-ups in round two; use data loss to retain this blocked history.
-    env.reviews(blocked(finding("P0", "Basket disappears")))
+    # An open P1 stops for the owner at the round limit and remains across machines.
+    env.reviews(blocked(p1_at_bar("Basket disappears")))
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
@@ -357,7 +363,7 @@ def read_history_batching(env, monkeypatch):
 def warm_checks_cache(env, monkeypatch):
     github_list_fields(env)
     item, where = env.start_fix(round=1)
-    env.reviews(blocked(finding("P0", "Basket disappears")))
+    env.reviews(blocked(p1_at_bar("Basket disappears")))
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
     old_body = published(env, item)
@@ -548,7 +554,7 @@ def conflict_wait(env, monkeypatch):
     assert datetime.fromisoformat(wait["end"]) == at + timedelta(seconds=30)
     # A later conflict keeps the pull request's earlier findings instead of a made-up result.
     env.commit(where, "app.py", "print('branch basket again')\n")
-    env.reviews(blocked(finding("P0", "Basket disappears")))
+    env.reviews(blocked(p1_at_bar("Basket disappears")))
     stopped = env.close(item)
     assert stopped.returncode == 1 and "One more round, split or accept?" in stopped.stderr
     published(env, item)

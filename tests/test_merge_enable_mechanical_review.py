@@ -138,8 +138,10 @@ def test_3_other_fix_with_the_same_purpose_still_runs_model_review(owner):
                               done_when='The default branch\'s forge.toml sets merge = "agent".')
     owner.reviews(blocked(finding("P1", "Keep the normal review")))
     closed = owner.close(item)
-    # An ordinary fix still invokes the model, but its first non-P0 finding
-    # is now a follow-up rather than a reason for another round.
-    assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert "Keep the normal review" in body(owner.gh_calls("pr", "edit")[-1]).split("Follow-ups:", 1)[1]
+    # An ordinary fix still invokes the model; its P1 stops at the review limit.
+    assert closed.returncode == 1, closed.stdout + closed.stderr
+    assert "reached the round limit with open findings" in closed.stderr
+    assert "Keep the normal review" in closed.stderr
+    assert "Keep the normal review" in body(owner.gh_calls("pr", "edit")[-1])
+    assert "blocks the merge" in body(owner.gh_calls("pr", "edit")[-1])
     assert len(owner.review_calls()) == 1
