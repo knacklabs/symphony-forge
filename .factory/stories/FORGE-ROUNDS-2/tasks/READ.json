@@ -7,13 +7,53 @@
     "head": null,
     "start": "0e72d407c9dcaaa2f20e40e990c1dbe91c73563f"
   },
+  "known": [
+    {
+      "area": "stopped() in src/forge/story.py",
+      "file": "src/forge/story.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 722,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_a_story_passes_only_on_no_findings",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "edcc1bbd51e8ed4b9754169dc0456d67bf5d290488294480faab3d6f0772d629",
+    "changed": "7c78f9dd013fb19a773b6cbedc224617f68b3b09a4ce2d518f73083c69493c4f",
+    "commit": "82936fa3b8a949babff261b405c972cd0c00f091",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Test\nCase: normal use - running the repository's full test suite.\nThe existing `gates_wait_for_a_pass` walk in `tests/test_readloop_gates.py` passes round two with no findings, then introduces its first P0 in round three (lines 141\u2013167). This new predicate correctly allows that isolated P0 round, but line 167 still requires exit 1 and the owner's question. The walk remains collected at lines 470\u2013482, so the full-suite gate fails. Update its setup and expectations for the consecutive-P0 rule while preserving its approval and task-start checks.",
+        "file": "src/forge/story.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 722,
+        "priority": "P1",
+        "title": "Gate: test_2_a_story_passes_only_on_no_findings",
+        "work": 1
+      }
+    ],
+    "id": "06a522d8-8fc6-48b4-8468-9b07c8cae2c5",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-21T18:22:00.520828+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-21T18:50:33.748522+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
