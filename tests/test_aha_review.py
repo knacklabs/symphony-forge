@@ -74,7 +74,8 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     # The PR now starts as a draft before review, and only both gates make it ready.
     assert "--draft" in create
     assert bool(env.gh_calls("pr", "ready")) is ready
-    assert ("advisory" in body(create)) is (ready and not accepted_normal)
+    # Match the finding's disposition, not the shared "Dismissed and advisory" heading.
+    assert ("advisory:" in body(create)) is (ready and not accepted_normal)
     if accepted_normal:
         assert "dismissed because Human accepted the remaining finding: Keep this prototype for now" in body(
             env.gh_calls("pr", "edit")[-1])
