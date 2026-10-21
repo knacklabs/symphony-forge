@@ -182,8 +182,8 @@ with socket.create_connection({address!r}) as connection:
                 left = _end_left(env.tmp)
                 assert not left, f"Close left processes running: {left}"
         assert roles == {b"tests", b"review"}, f"Started: {roles!r}\n" + output + errors
-    # A fix's first P1 is now a follow-up; P0 and failed tests still hold it.
-    blocked_review = priority == "P0"
+    # Both P1 and P0 hold the fix; a P1 reaches the owner review stop.
+    blocked_review = priority in ("P1", "P0")
     assert process.returncode == (1 if red or blocked_review else 0), output + errors
     assert ("Ready:" in output) == (not red and not blocked_review)
     assert ("client test failed" if red else "client tests passed") in output + errors

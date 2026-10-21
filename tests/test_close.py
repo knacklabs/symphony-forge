@@ -376,7 +376,7 @@ def _merge_conflict(env):
 
 
 def _bad_dismissal(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")))
     item = env.start_fix()[0]
     env.close(item)
     return {"item": item, "args": ["--dismiss", "1", "--because", "it is fine"],
@@ -387,8 +387,8 @@ def _bad_dismissal(env):
 
 def _dismissal_of_replaced_finding(env):
     # A changed branch no longer invalidates a dismissal. A different title still does.
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")),
-                blocked(finding("P1", "A different defect")))
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")),
+                blocked(finding("P0", "A different defect")))
     item, where = env.start_fix()
     env.close(item)
     env.commit(where, "app.py", "print('hello again')\n")
@@ -399,7 +399,7 @@ def _dismissal_of_replaced_finding(env):
 
 
 def _dismissal_cites_no_such_line(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")))
     item = env.start_fix()[0]  # app.py has one line
     env.close(item)
     return {"item": item, "args": ["--dismiss", "1", "--because", "app.py:3 it greets here"],
@@ -409,7 +409,7 @@ def _dismissal_cites_no_such_line(env):
 
 
 def _dismissal_cites_no_such_file(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")))
     item = env.start_fix()[0]
     env.close(item)
     return {"item": item, "args": ["--dismiss", "1", "--because", "greet.py:1 it greets here"],
@@ -522,6 +522,7 @@ def test_18_close(env, kind):
     # The owner accepts a fix at its review limit. Story parts retain one repair round.
     if kind == "fix":
         assert "reached the round limit with open findings" in first.stderr
+        env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
         accepted = env.close(item, "--resolve", "accept", "--reason", "Keep this greeting for now")
         assert accepted.returncode == 0, accepted.stdout + accepted.stderr
         [create] = env.gh_calls("pr", "create")
@@ -529,7 +530,7 @@ def test_18_close(env, kind):
         # Close publishes a draft before review; the clean fix then becomes ready.
         assert "--draft" in create
         assert env.gh_calls("pr", "ready")
-        assert "Follow-ups:" in published
+        assert "dismissed because Human accepted the remaining finding: Keep this greeting for now" in published
         assert f"Finding 1 (P1): Not done: {owner_item} (app.py:1)" in published
         assert "Simpler: drop the cache → a dict" in published
         assert "blocks the merge" not in published

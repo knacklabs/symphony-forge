@@ -12,8 +12,9 @@ DISMISSED = "app.py:1 the greeting is here"
 def test_1_rulings_and_dismissals_reach_the_second_review(env):
     item, where = env.start_task()
     env.reviews(blocked(finding("P1", "Greeting is missing")),
-                # Only P0s remain blocked in round two and need an explicit dismissal.
-                blocked(finding("P0", "Saving corrupts the basket")), CLEAN)
+                # A P1 at the bar stops round two and needs an explicit dismissal.
+                blocked({**finding("P1", "Saving corrupts the basket"),
+                         "body": "Gain 4, Work 1, Harm 2\nSaving corrupts the basket."}), CLEAN)
     assert env.close(item).returncode == 1
     assert env.close(item, "--dismiss", "1", "--because", DISMISSED).returncode == 0
     env.commit(where, "app.py", "print('hello again')\n",
@@ -24,7 +25,7 @@ def test_1_rulings_and_dismissals_reach_the_second_review(env):
     assert f"Greeting is missing (app.py): dismissed because {DISMISSED}" in prompt
     assert "only with new evidence" in prompt
 
-    # The P0 stops round two. A recorded extra round permits its evidence dismissal.
+    # The P1 stops round two. A recorded extra round permits its evidence dismissal.
     chosen = env.close(item, "--resolve", "more", "--reason", "Check the basket evidence")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     # The third review's findings don't repeat the dismissed one; its reason still reaches it.

@@ -87,8 +87,7 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
         brief = _findings_in(calls(log)[-1]["brief"])
         assert "Saved serious finding" in brief and "Saved advice" not in brief
 
-    # Fixes now follow up non-P0 findings in round one and stop on P0s for the
-    # owner. An approved story part keeps the first-round score-bar contract.
+    # A story part keeps one repair round before its owner review stop.
     (shop / "plans/SHOP.md").write_text(STORY_DOC, encoding="utf-8")
     _says(repo, "No findings.\n")
     assert repo.forge("read", "SHOP").returncode == 0
@@ -202,10 +201,9 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Sign-in is out of scope" in known and "The title could be shorter" in known
 
-    # The part's second review still has P0s, so the owner accepts them.
-    # Non-P0 findings now become follow-ups from round two.
+    # The part's second review has P1s at the bar; the owner accepts them as follow-ups.
     env.commit(where, "app.py", "print('saved twice')\n")
-    env.reviews(blocked(*[_scored("P0", title, "Gain 5, Work 2, Harm 4\nRaise: Functional")
+    env.reviews(blocked(*[_scored("P1", title, "Gain 4, Work 1, Harm 2\nRaise: Functional")
                           for title in ("Saving drops the basket", "Saving skips the coupon",
                                         "Saving forgets the address")],
                         _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))

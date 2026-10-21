@@ -5,7 +5,7 @@ rounds, stops, recorded choices and Known issues on new and upgraded clients.
 """
 import pytest
 
-from test_close import CLEAN, blocked, env  # noqa: F401
+from test_close import CLEAN, STORY_DOC, blocked, env  # noqa: F401
 from test_tools_session_hold import Session
 from test_two_round_limit import client, known, note
 from test_worker import calls, install_claude
@@ -21,7 +21,7 @@ def test_1_at_the_round_limit_an_open_finding_below_p0_stops_for_the_owner(env, 
     log = install_claude(env.repo)
     entry = note("P1", "Saving loses quantities")
     env.reviews(blocked(entry))
-    item, where = env.start_task() if case == "part" else env.start_fix()
+    item, where = env.start_approved_task(STORY_DOC) if case == "part" else env.start_fix()
     if case == "part":
         first = env.close(item)
         assert first.returncode == 1, first.stdout + first.stderr
@@ -89,7 +89,7 @@ def test_2_an_open_p0_goes_back_to_the_worker_until_it_is_stuck_two_rounds(env, 
     # and only leaving the same P0 in two worker rounds asks for a choice.
     client(env, case == "adopted fix")
     log = install_claude(env.repo)
-    item, where = env.start_task() if case == "part" else env.start_fix()
+    item, where = env.start_approved_task(STORY_DOC) if case == "part" else env.start_fix()
     first_work = env.repo.forge("work", item)
     assert first_work.returncode == 0, first_work.stdout + first_work.stderr
     first_p0 = note("P0", "Saving deletes the basket")

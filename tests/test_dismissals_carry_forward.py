@@ -17,8 +17,9 @@ APP = "".join(f"line{n} = {n}\n" for n in range(1, 21))
 def test_1_dismissal_holds_until_its_cited_lines_change(env, case):
     client(env, case != "init")
     item, where = env.start_task(changes={"app.py": APP})
-    # A P0 still holds after round two, so changing cited lines must reactivate it.
-    coupon = finding("P0", "Saving skips the coupon", line=3)
+    # A P1 at the bar still holds after round two; changed cited lines reactivate it.
+    coupon = {**finding("P1", "Saving skips the coupon", line=3),
+              "body": "Gain 4, Work 1, Harm 2\nSaving skips the coupon."}
     env.reviews(blocked(coupon))
     assert env.close(item).returncode == 1
     reason = "app.py:3 the coupon is applied at checkout"
@@ -42,7 +43,7 @@ def test_1_dismissal_holds_until_its_cited_lines_change(env, case):
     assert again.returncode == 1, again.stdout + again.stderr
     assert "Saving skips the coupon" in again.stderr
 
-    # Reopening a P0 in review three also stops the loop. The owner permits its recheck.
+    # Reopening a P1 at the bar in review three also stops the loop. The owner permits its recheck.
     assert "One more round, split or accept?" in again.stderr
     chosen = env.close(item, "--resolve", "more", "--reason", "Recheck the changed coupon line")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr

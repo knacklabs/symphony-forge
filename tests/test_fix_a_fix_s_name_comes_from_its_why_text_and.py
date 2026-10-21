@@ -39,10 +39,7 @@ def test_2_fix_amend_replaces_done_when_and_the_next_review_judges_it(env):
     assert env.close("greet-readers").returncode == 1
     assert f"Done when: {old}" in env.prompt()
 
-    # A fix's first P0 now needs the owner's choice before work continues.
-    chosen = env.close("greet-readers", "--resolve", "more", "--reason", "The owner moves the greeting to docs")
-    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-
+    # An open P0 goes straight back to repair; no owner review-stop choice is needed.
     amended = env.repo.forge("fix", "amend", "greet-readers", "--done", new, "--because", because)
 
     assert amended.returncode == 0, amended.stderr

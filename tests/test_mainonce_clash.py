@@ -144,11 +144,13 @@ def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env
     first = env.close(item)
     # The owner accepts the finding; a later edit still needs review against its own diff.
     assert first.returncode == 1, first.stdout + first.stderr
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
     accepted = env.close(item, "--resolve", "accept", "--reason", "Keep the greeting for this version")
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     assert "Ready:" in accepted.stdout
     content = body((env.gh_calls("pr", "edit") or env.gh_calls("pr", "create"))[-1])
-    assert "Greeting needs the final text" in content.split("Follow-ups:", 1)[1]
+    assert "Greeting needs the final text" in content
+    assert "dismissed because Human accepted the remaining finding: Keep the greeting for this version" in content
     _open_pr(env, content)
     env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
     env.commit(env.repo.path, "NEWS.md", "Another unrelated change landed\n")

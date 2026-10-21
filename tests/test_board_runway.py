@@ -131,15 +131,17 @@ def test_7_first_screen(env, monkeypatch, previous):
         assert started.returncode == 0, started.stderr
     monkeypatch.delenv("GIT_COMMITTER_DATE")
     clock(monkeypatch, now)
-    # Six fixes; the first P1 now becomes a follow-up and waits for the human merge.
+    # Six fixes; the owner accepts the first P1 before the human merge wait.
     for n in range(6):
         started = env.repo.forge("fix", "start", f"Speed up page {n + 1}", "--done", "It is fast", "--slug", f"speed-{n}")
         assert started.returncode == 0, started.stderr
     tree = worktree(env.repo, "fix/speed-0")
     env.commit(tree, "speed.txt", "fast\n", "Speed up the page")
     closed = env.repo.forge("close", "speed-0", cwd=tree)
-    assert closed.returncode == 0 and "Ready:" in closed.stdout, closed.stdout + closed.stderr
-    assert "Follow-ups that do not block the merge" in closed.stdout
+    assert closed.returncode == 1 and "reached the round limit" in closed.stderr, closed.stdout + closed.stderr
+    accepted = env.repo.forge("close", "speed-0", "--resolve", "accept", "--reason",
+                              "Keep the current page speed for this version", cwd=tree)
+    assert accepted.returncode == 0 and "Ready:" in accepted.stdout, accepted.stdout + accepted.stderr
     # Merged pull requests for the trends: one through Forge two weeks ago, one around it today.
     github(env, [pr(1, "task/OLD-T1", BEN, now - timedelta(days=14)),
                  pr(2, "quick-patch", ANA, now - timedelta(hours=1), "Patch the login page"),

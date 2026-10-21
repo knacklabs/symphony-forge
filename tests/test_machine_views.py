@@ -133,8 +133,11 @@ def _board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priori
     assert repo.forge("work", item, "--note", "Yes").returncode == 0
     problem = finding(priority, "Parser drops input")
     env.reviews(blocked(problem) if priority == "P1" else {"exit": 0, "report": report(problem)})
-    # A fix's first P1 is now a visible follow-up, with the same review occurrence.
+    # The owner accepts the first P1; acceptance keeps the same review occurrence.
     closed = env.close(item)
+    if priority == "P1":
+        assert closed.returncode == 1 and "reached the round limit" in closed.stderr
+        closed = env.close(item, "--resolve", "accept", "--reason", "Keep this parser for now")
     assert closed.returncode == 0, closed.stdout + closed.stderr
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
     result = [e for e in records(repo, "events.jsonl") if e["event"] == "review result"][-1]

@@ -12,7 +12,7 @@ STORY = "FORGE-AHA-1"
 LIGHT = (False, "Prototype before sign-off", "P1")
 
 
-# A fix's first P1 is now a follow-up in either review mode. P0s and red CI still stop close.
+# Light review keeps P1 advisory; normal review requires the owner's acceptance at the limit.
 @pytest.mark.parametrize("signed_off,allowance,priority,ready,checks,problem", [
     (*LIGHT, True, GREEN, None),
     (False, "Prototype before sign-off", "P0", False, GREEN, None),
@@ -62,13 +62,22 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
         env.checks(GREEN)
         assert env.close(item).returncode == 0
         return
+    accepted_normal = ready and (signed_off or allowance != "Prototype before sign-off")
+    if accepted_normal:
+        assert result.returncode == 1 and "reached the round limit" in result.stderr
+        env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+        result = env.close(item, "--resolve", "accept", "--reason", "Keep this prototype for now")
+        assert result.returncode == 0, result.stdout + result.stderr
     assert (result.returncode == 0) is ready, result.stderr
     assert ("Prototype review finding" in result.stderr) is not ready
     [create] = env.gh_calls("pr", "create")
     # The PR now starts as a draft before review, and only both gates make it ready.
     assert "--draft" in create
     assert bool(env.gh_calls("pr", "ready")) is ready
-    assert ("advisory" in body(create)) is ready
+    assert ("advisory" in body(create)) is (ready and not accepted_normal)
+    if accepted_normal:
+        assert "dismissed because Human accepted the remaining finding: Keep this prototype for now" in body(
+            env.gh_calls("pr", "edit")[-1])
     if ready:  # first-round fix findings stay visible with their scores in either mode
         assert "Gain 4, Work 2, Harm 1" in body(env.gh_calls("pr", "edit")[-1])
     branch = "fix/tidy-readme"
@@ -92,13 +101,18 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
             # rather than asking a reviewer to reopen the settled first-round one.
             env.reviews(blocked(finding("P1", "After sign-off review finding")))
 
+        env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
         strict = env.close(item)
         # Sign-off reruns a light review; a normal review remains sufficient.
-        # Both now publish a fix's non-P0 findings as follow-ups.
+        # A fresh normal review stops on P1; the owner accepts before it becomes ready.
+        if light:
+            assert strict.returncode == 1 and "reached the round limit" in strict.stderr
+            strict = env.close(item, "--resolve", "accept", "--reason", "Keep this signed-off version")
         assert strict.returncode == 0, strict.stdout + strict.stderr
         assert "Ready:" in strict.stdout
-        follow_ups = body(env.gh_calls("pr", "edit")[-1]).split("Follow-ups:", 1)[1]
-        assert ("After sign-off review finding" if light else "Prototype review finding") in follow_ups
+        published = body(env.gh_calls("pr", "edit")[-1])
+        assert ("After sign-off review finding" if light else "Prototype review finding") in published
+        assert "dismissed because Human accepted the remaining finding:" in published
         assert len(env.review_calls()) == (2 if light else 1)
         options = dict(zip(env.review_calls()[-1]["args"][::2],
                            env.review_calls()[-1]["args"][1::2]))
