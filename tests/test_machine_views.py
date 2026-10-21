@@ -133,17 +133,24 @@ def _board_exposes_produced_questions_reviews_run_ends_and_readiness(env, priori
     assert repo.forge("work", item, "--note", "Yes").returncode == 0
     problem = finding(priority, "Parser drops input")
     env.reviews(blocked(problem) if priority == "P1" else {"exit": 0, "report": report(problem)})
-    # The owner accepts the first P1; acceptance keeps the same review occurrence.
+    # A finding has a review occurrence until the owner accepts it.
     closed = env.close(item)
-    if priority == "P1":
-        assert closed.returncode == 1 and "reached the round limit" in closed.stderr
-        closed = env.close(item, "--resolve", "accept", "--reason", "Keep this parser for now")
-    assert closed.returncode == 0, closed.stdout + closed.stderr
     row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
     result = [e for e in records(repo, "events.jsonl") if e["event"] == "review result"][-1]
     assert result["id"] in {o["id"] for o in row["occurrences"]}
     previous_review = result["id"]
     assert row["findings"]["count"] == 1
+    if priority == "P1":
+        assert closed.returncode == 1 and "reached the round limit" in closed.stderr
+        closed = env.close(item, "--resolve", "accept", "--reason", "Keep this parser for now")
+        row = next(r for r in view(repo, "board")["items"] if r["id"] == item)
+        # Acceptance clears the finding and exposes readiness for the same review.
+        assert row["findings"]["count"] == 0
+        assert result["id"] not in {o["id"] for o in row["occurrences"]}
+        ready = next(o for o in row["occurrences"] if o["kind"] == "ready_to_merge")
+        assert ready["id"] == result["id"] + ":" + repo.git("rev-parse", "HEAD", cwd=folder)
+        previous_review = ready["id"]
+    assert closed.returncode == 0, closed.stdout + closed.stderr
     assert row["stage"] == "ready"
     assert asked["id"] not in {o["id"] for o in row["occurrences"]}
     env.commit(folder, "app.py", "print('repaired')\n")
