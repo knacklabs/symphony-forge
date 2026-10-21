@@ -1,0 +1,15 @@
+{
+  "base": "75c448b57f0a689bd99f4e62036a9e44c34b3871",
+  "branch": "fix/release-1218",
+  "done_when": "Forge's version is 1.2.18 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-21T03:08:25.049484+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.18: at most two read and review rounds with an owner stop, one review round for a fix, forge start that sorts every new idea, design first for prototypes, past board history filled in on upgrade, and a Windows CI hang fix"
+}
