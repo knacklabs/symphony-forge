@@ -199,9 +199,12 @@ class Reader:
     def read(self):
         return (self.native if self.coordinator == self.app else self.repo.forge)("read", "SHOP")
 
-    def accept(self, reason: str):
+    def resolve(self, choice: str, reason: str):
         return (self.native if self.coordinator == self.app else self.repo.forge)(
-            "read", "SHOP", "--resolve", "accept", "--reason", reason)
+            "read", "SHOP", "--resolve", choice, "--reason", reason)
+
+    def accept(self, reason: str):
+        return self.resolve("accept", reason)
 
     def ok(self, text: str = "No findings.\n") -> str:
         self.say(text)
@@ -334,7 +337,11 @@ def _continues(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     brief.write_text("# Brief\n\n## Answers\n\n- Hosting: the client's own servers\n", encoding="utf-8")
 
     # The reader restarts its numbering at 1; Forge numbers it after round 1's findings.
-    reader.ok("1. Disputed keep 1: shoppers without an account lose baskets too.\n")
+    reader.say("1. Disputed keep 1: shoppers without an account lose baskets too.\n")
+    stopped = reader.read()
+    assert stopped.returncode == 1 and "asks the owner" in stopped.stderr, stopped.stdout + stopped.stderr
+    resolved = reader.resolve("more", "the owner wants one more read")
+    assert resolved.returncode == 0, resolved.stdout + resolved.stderr
     assert reader.continued()
     prompt = reader.prompt()
     flat = _flat(prompt)
@@ -509,14 +516,19 @@ def _stays_pinned(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in reader.text()
 
 
-def _native_round(reader, text="No findings."):
+def _native_round(reader, text="No findings.", resolve=None):
     offered = reader.native("read", "SHOP")
     assert offered.returncode == 0, offered.stdout + offered.stderr
     native = json.loads(offered.stdout)
     assert native["role"] == "reader" and native["tool"] == reader.app
     finished = reader.native("handback", "SHOP", "--round", str(native["round"]),
                              "--subagent", "readloop-reader", "--text", text)
-    assert finished.returncode == 0, finished.stdout + finished.stderr
+    if resolve is None:
+        assert finished.returncode == 0, finished.stdout + finished.stderr
+    else:
+        assert finished.returncode == 1 and "asks the owner" in finished.stderr, finished.stdout + finished.stderr
+        resolved = reader.resolve(*resolve)
+        assert resolved.returncode == 0, resolved.stdout + resolved.stderr
     return native
 
 
@@ -539,7 +551,7 @@ def _one_app(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     codex = Reader(repo, monkeypatch, "codex")
     codex.coordinate("codex")
     codex.notes.unlink()
-    _native_round(codex, f"1. {FIRST}\n")
+    _native_round(codex, f"1. {FIRST}\n", ("more", "the owner wants one more read"))
     assert "reader: codex (gpt-6-sol), a subagent of this Codex session" in codex.text()
     codex.dispose(FIRST, "cut")
     native = _native_round(codex)
@@ -576,16 +588,22 @@ def _spec_diff(repo, monkeypatch, tmp_path, sdk_data, app):  # noqa: F811
     (repo.bin / "claude-says.md").write_text(f"1. {FIRST}\n", encoding="utf-8")
     assert repo.forge("read", "BASKET").returncode == 0
 
-    def next_round(finding: str) -> str:
+    def next_round(finding: str, resolve=None) -> str:
         text = notes.read_text("utf-8")
         notes.write_text(text.replace(finding, f"{finding}\n   Disposition: cut"), encoding="utf-8")
         read = repo.forge("read", "BASKET")
-        assert read.returncode == 0, read.stdout + read.stderr
+        if resolve is None:
+            assert read.returncode == 0, read.stdout + read.stderr
+        else:
+            assert read.returncode == 1 and "asks the owner" in read.stderr, read.stdout + read.stderr
+            choice, reason = resolve
+            resolved = repo.forge("read", "BASKET", "--resolve", choice, "--reason", reason)
+            assert resolved.returncode == 0, resolved.stdout + resolved.stderr
         return json.loads(calls.read_text("utf-8").splitlines()[-1])["prompt"]
 
     confirm("A saved basket gets lost, and shoppers leave.")
     (repo.bin / "claude-says.md").write_text("2. Leaving is not measured.\n", encoding="utf-8")
-    prompt = next_round(FIRST)
+    prompt = next_round(FIRST, ("more", "the owner wants one more read"))
     assert "-A saved basket gets lost.\n+A saved basket gets lost, and shoppers leave." in prompt
     assert "- BASKET: Recover baskets" not in prompt  # the diff, not the whole spec
     # Unchanged since the last round: an empty spec diff.

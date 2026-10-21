@@ -3,6 +3,8 @@
 Only Autoreview and the worker's model are faked. Real Forge commands own the
 rounds, stops, recorded choices and Known issues on new and upgraded clients.
 """
+import json
+
 import pytest
 
 from test_close import CLEAN, STORY_DOC, blocked, env  # noqa: F401
