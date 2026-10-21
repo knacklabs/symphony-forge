@@ -164,9 +164,16 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert OLD_FORGE_HOOK not in commands and "Stop" not in settings["hooks"]
     # The repo's own Codex settings stay; Codex gets full access and hooks, and the old model pin goes.
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    # Sync now registers every shipped role with its description, rather than only reader.
+    registered = config.pop("agents")
     assert config == {"sandbox_mode": "danger-full-access", "approval_policy": "never",
-                      "features": {"web_search": True, "hooks": True},
-                      "agents": {"reader": {"config_file": "agents/reader.toml"}}}
+                      "features": {"web_search": True, "hooks": True}}
+    codex_roles = [Path(rel) for rel in ROLE_FILES if rel.startswith(".codex/")]
+    assert set(registered) == {path.stem for path in codex_roles}
+    for path in codex_roles:
+        role = tomllib.loads((repo.path / path).read_text(encoding="utf-8"))
+        assert registered[path.stem] == {"config_file": f"agents/{path.name}",
+                                         "description": role["description"]}
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
