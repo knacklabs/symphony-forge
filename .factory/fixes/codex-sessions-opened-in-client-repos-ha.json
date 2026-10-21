@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed it on 21 Oct: the extra files are the role and settings files that forge sync writes; only three are hand-written code",
   "base": "927d50b3bb2923bfc17fccac4082e82a86886c18",
   "branch": "fix/codex-sessions-opened-in-client-repos-ha",
   "chat": {
