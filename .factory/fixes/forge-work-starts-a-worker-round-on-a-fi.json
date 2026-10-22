@@ -11,12 +11,27 @@
   "done_when": "forge work refuses an item whose pull request already merged, says it is merged, and points to forge fix start for a follow-up",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9d6d22870c8426551bfc9c25a04b546fab2f01861cc8e97a62edadb7b1d3dcd2",
+    "changed": "3c1830341b6f0f9fdf8309ab6f13af6354da69d1ba8da66fa4cc42789ee74028",
+    "commit": "d6b9d9f36e1f12f9bcbe68dc2c8c77ad0c8caea7",
+    "dismissals": [],
+    "findings": [],
+    "id": "975bda10-2930-4a6e-86b8-c57be51659c7",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-22T06:51:12.357182+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-22T06:56:56.651362+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
