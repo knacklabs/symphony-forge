@@ -4,30 +4,21 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- When Forge sets up a new app or adopts a live one, the agent interviews the person in plain words. It always asks the five questions with no safe default (what the app is for, who uses it, what it tracks with each thing's fields, the options of each choice list, and whether any data is private or regulated). For the other questions it shows safe defaults in one message that the person can change.
+- The agent makes the architecture choices from the answers and Forge's stack, each in one plain line with its reason. It writes docs/product/CONSTITUTION.md plus one accepted decision record per choice, and the owner approves the constitution once.
+- No story or fix starts in a new app until the constitution is approved. This conflicts with decision 0095 (docs/decisions/0095-prototype-before-stories.md), which lets prototype fixes run before customer sign-off, so the plan must settle that order.
+- New client repos get the interview on init. Existing client repos get it on upgrade and sync, and are asked only what the code cannot answer.
 
 ## Why
 
-Setup interview and app constitution for client repos
+A new or adopted app starts with its product facts and stack choices unrecorded, so later stories rest on guesses and the non-technical owner has no single place to confirm them. This is a guess from the idea and the research checklist at /Users/ravikiranvemula/Workdir/app-checklist-research.md, which lists 26 questions with defaults.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client repo, after the interview, has an approved docs/product/CONSTITUTION.md and one accepted decision record per architecture choice.**
+2. **Forge refuses to start a story or fix in an app whose constitution is not approved, and the message names the next action.**
+3. **A cold read or review that finds work against the constitution reports it as P1.**
+4. **An existing client repo adopted on an earlier release gets the interview only for answers the code cannot give, on upgrade and sync.**
 
 ## Risks
 
