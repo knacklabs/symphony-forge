@@ -282,6 +282,10 @@ def read(args: Any) -> int:
         prompt, why = fresh_prompt, ""
     context = "\n\nEarlier rounds' notes and answers:\n" + (findings or "None.")
     context += "\n\nThe doc's Notes and decisions:\n" + sections(text.decode("utf-8")).get("Notes", "None.")
+    if constitution := records.constitution(top):
+        context += ("\n\nThis app's approved constitution, from the default branch, follows. In any round, "
+                    "report a plan that goes against it as a note titled "
+                    "`Constitution: <the line it breaks>`; this is not limited to P0.\n\n" + constitution)
     prompt += context
     fresh_prompt += context
     result = {"before": before, "read_hash": read_hash, "round": round_number,

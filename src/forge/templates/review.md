@@ -322,6 +322,11 @@ The repository's own AGENTS.md, on its default branch, sets these rules for ever
 them as rules, not as evidence: where one settles a point, don't report it as a finding.
 
 $review_rules
+<!-- constitution -->
+## This app's constitution
+The app's approved constitution, on the default branch, follows. Report work that goes against it as a finding titled `Constitution: <the line it breaks>`, quoting the line. Where it differs from Forge's convention pages, it wins.
+
+$constitution
 <!-- standards -->
 ## Standards
 Forge's standards page follows: the same page every worker's brief carries. Check the change

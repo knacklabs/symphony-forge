@@ -28,17 +28,21 @@ def parse(text: str) -> Scores | None:
 
 
 def normalise(title: str, body: str) -> tuple[Scores | None, str]:
-    """The scores with the Harm floor applied, and the body with its score line rewritten: a
-    security, data-loss or migration note never scores Harm below 4, except work marked Later."""
+    """Apply the Harm and constitution floors, except to work marked Later."""
     scores = parse(body)
     if not scores or title.startswith("Later:"):
         return scores, body
     gain, work, harm = scores
+    constitution = re.match(r"^(?:\d+\.[ \t]*)?(?:(?:Blocking|Advisory):[ \t]*)?Constitution: ", title.strip())
+    if constitution:
+        gain, work = max(gain, 4), min(work, 2)
     why = next((name for pattern, name in FLOORS
                 if pattern.search(body if name != "migration" else f"{title}\n{body}")), "")
     line = f"Gain {gain}, Work {work}, Harm {harm}"
     if why and harm < 4:
         harm, line = 4, f"Gain {gain}, Work {work}, Harm 4 (floor: {why})"
+    if constitution:
+        line += " (floor: constitution)"
     return (gain, work, harm), LINE.sub(lambda match: match[1] + line, body, count=1)
 
 

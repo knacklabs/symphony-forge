@@ -25,7 +25,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import autoreview, docskip, machine, repo, score, spotted
+from forge import autoreview, docskip, machine, records, repo, score, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -863,6 +863,9 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
     if rules := story.agents_section(top, "Review rules"):
         own = block.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
         prompt += "\n\n" + string.Template(own.strip()).substitute(review_rules=rules)
+    if constitution := records.constitution(top):
+        own = block.split("<!-- constitution -->\n", 1)[1].split("\n<!-- ", 1)[0]
+        prompt += "\n\n" + string.Template(own.strip()).substitute(constitution=constitution)
     head = repo.git("rev-parse", "HEAD", cwd=top)
     product = ([name for name in repo.git("ls-files", "-z", f"--with-tree={head}", cwd=top).split("\0")
                 if name and not name.startswith((*BOOKKEEPING, "docs/decisions/"))]

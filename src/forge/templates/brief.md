@@ -6,6 +6,7 @@ Settled findings stay settled. Each reader and reviewer gets earlier rounds' not
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
 Forge ignores settled repeats, so they cannot block or start another round.
+When docs/product/CONSTITUTION.md is approved, follow it. A review holds work that goes against it.
 After a merge of main, close applies a requested dismissal to the same title and file in the
 current review, even if its number changes. Only the human chooses which findings to dismiss.
 
