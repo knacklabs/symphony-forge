@@ -4,30 +4,23 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A new client React app starts from a runnable Nx workspace with React (Vite, React Router) and NestJS on Postgres, with sign-in, one example entity carried end to end, tests and CI, and an app shell built from shadcn blocks.
+- The stack page changes from npm workspaces to Nx for new apps.
+- A close check refuses a second UI library and hand-made copies of shadcn components, and review reports a custom UI piece as P1 unless the change says why shadcn cannot do it.
+- An existing client app keeps its own stack and code on upgrade; the new check and review rule apply to its later changes, and an app that already has a second UI library is not blocked for it.
 
 ## Why
 
-Starter app for new client React apps
+Each new client app starts with no code, so sign-in, the app shell and the test and CI setup are rebuilt by hand, and the stack page still says npm workspaces while the skill already says Nx.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client React app runs locally after setup, and its tests and CI pass on the first commit.**
+2. **The app has sign-in, one example entity from the database to the screen, and a shell with a collapsible sidebar, a top bar with Cmd+K search, auth pages, settings and a 404 page.**
+3. **The stack page names Nx for new apps, and the stack default in the skill matches it.**
+4. **A close check on a client app fails when it adds a second UI library or a hand-made copy of a shadcn component.**
+5. **Review reports a custom UI piece as P1 unless the change says why shadcn cannot do it.**
+6. **A new repo and an existing client repo adopted on an earlier release each get a test for these rules.**
 
 ## Risks
 
