@@ -407,6 +407,7 @@ def test_4_clients_get_the_constitution_guide(repo, gh, tmp_path, adoption):
         assert "## Things it keeps track of" in brief
 
 
+@pytest.mark.platform
 def test_5_cleanup_defers_the_constitution_reminder_until_the_worktree_is_removed(env):
     item, where = _ready(env)
     env.gh.respond("pr", "view", stdout=json.dumps({
