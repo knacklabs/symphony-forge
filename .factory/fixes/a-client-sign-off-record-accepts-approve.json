@@ -4,12 +4,20 @@
   "done_when": "forge decision accept takes a client sign-off whose approved_via is chat, as it takes email or call, and the shipped guide and sign-off template name chat as a choice",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-22T05:30:27.761451+00:00",
       "step": "start"
     }
   ],
-  "why": "A client sign-off record accepts approved_via only as email or call (src/forge/records.py), so a client who approved the prototype in the engineering chat cannot be recorded truthfully (issue #1022). The owner decided on 22 Oct that chat counts."
+  "stuck": {
+    "close": null,
+    "head": "6f2b56e7ddfa86cce6ad9427a45c2a1720db9602",
+    "keys": {},
+    "round": null
+  },
+  "why": "A client sign-off record accepts approved_via only as email or call (src/forge/records.py), so a client who approved the prototype in the engineering chat cannot be recorded truthfully (issue #1022). The owner decided on 22 Oct that chat counts.",
+  "worker": "codex"
 }
