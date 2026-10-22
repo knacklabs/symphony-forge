@@ -41,7 +41,7 @@
     "id": "1c1415ca-b34d-481f-ba59-80dea3764271",
     "status": "blocked"
   },
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-22T06:10:44.146322+00:00",
@@ -54,8 +54,12 @@
   ],
   "stop": {
     "at": "2026-10-22T06:13:15.716243+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "README.md",
-    "wait_id": "c8d577a5-3e3f-43c8-b23e-f29434302c36"
+    "reason": "The owner chose one more round on 22 Oct: point docs/guide.md's install line at v1.2.19",
+    "wait_id": "c8d577a5-3e3f-43c8-b23e-f29434302c36",
+    "worker_round": null
   },
   "why": "Clients need v1.2.19: chat sign-off, the owner's round-limit rule and registered Codex roles"
 }
