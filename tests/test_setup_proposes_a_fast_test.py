@@ -17,7 +17,8 @@ def test_1_the_synced_skill_carries_the_fast_test_setup_step(repo, gh, tmp_path)
     for host in (".claude", ".codex"):
         skill = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         assert "`forge init`, then propose a `fast_test`" in skill, host
-        assert ("8. Propose a `fast_test` for the repo: its own test command, keeping its "
+        # The constitution interview is the first adoption step; fast-test setup now comes ninth.
+        assert ("9. Propose a `fast_test` for the repo: its own test command, keeping its "
                 "configuration and setup") in skill, host
         assert "Forge writes no `fast_test` by itself." in skill, host
         assert "pytest" in skill and "forge test --pytest {base}" in skill, host

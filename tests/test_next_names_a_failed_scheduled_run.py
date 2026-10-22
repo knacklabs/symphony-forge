@@ -17,6 +17,7 @@ import pytest
 from conftest import ROOT
 from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git
 from test_setup import _fresh_client, _version
+from test_story import approved_constitution
 
 pytestmark = pytest.mark.platform
 
@@ -66,6 +67,7 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "fix/upgrade-client")
         assert _git(repo, "push", "-q", "origin", "main").returncode == 0
+        approved_constitution(repo)
     assert made.returncode == 0, made.stdout + made.stderr
     monkeypatch.setenv("FORGE_NOW", "2030-01-01T10:00:00+00:00")
 
