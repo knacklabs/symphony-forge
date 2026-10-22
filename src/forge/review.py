@@ -322,7 +322,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     blocks = {parts[i]: string.Template(parts[i + 1].strip()) for i in range(1, len(parts), 2)}
     changed = repo.git("diff", "--name-only", f"{base}...HEAD", cwd=top).splitlines()
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
-    history = _history(top, item, base, previous, state)
+    history = _history(top, item, base, previous, state=state)
     settled = _settled(history)
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "allowance": state.get("allow_large") or "No recorded allowance",
@@ -615,8 +615,8 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
     return _bullets(found)
 
 
-def _history(top: Path, item: str, base: str, previous: dict[str, Any], state: dict[str, Any],
-             ref: str = "HEAD") -> list[dict[str, Any]]:
+def _history(top: Path, item: str, base: str, previous: dict[str, Any],
+             ref: str = "HEAD", *, state: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """Git owns earlier reviews; later dismissals replace that round's original result."""
     path = repo.state_path(item)
     rounds = {}
@@ -624,10 +624,12 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any], state: d
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
         if result.get("commit"):  # one per round: two rounds at one commit differ in their findings
-            bound_review(top, item, state, result)
+            if state is not None:
+                bound_review(top, item, state, result)
             rounds[result["commit"], str(result.get("findings"))] = result
     if previous.get("commit"):
-        bound_review(top, item, state, previous)
+        if state is not None:
+            bound_review(top, item, state, previous)
         rounds[previous["commit"], str(previous.get("findings"))] = previous
     return list(rounds.values())
 
@@ -932,7 +934,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt:
-            history = _history(top, item, base, previous, state)
+            history = _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]

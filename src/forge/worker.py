@@ -120,7 +120,7 @@ def _work(args: argparse.Namespace) -> bool:
     repo.command_fact("prepared work", top, dict).pop(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
-    from forge import close, nextstep, time_records  # close imports story, which imports this module
+    from forge import close, nextstep, review, time_records  # close imports story, which imports this module
     # GitHub is read only when this round answers or ends a wait on a person, never just to queue.
     asking = note is not None or codex.record(top, item).get("question") or time_records.pending_merge_wait(top, item)
     pr = close.branch_pr(top, state) if asking else None
@@ -216,7 +216,8 @@ def _work(args: argparse.Namespace) -> bool:
             elif not on_codex and previous:
                 fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
-        findings, failing = _fix_round(top, item, state)
+        review.bound_review(top, item, state, state.get("review") or {})
+        findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
         if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
             note = f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice."
@@ -465,7 +466,7 @@ def _changes(top: Path, start: str) -> str:
             f"```diff\n{diff}```\n")
 
 
-def _fix_round(top: Path, item: str, state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
+def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     """The open findings at the bar and the failing checks, close's own test run among them, once
     close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
@@ -474,7 +475,6 @@ def _fix_round(top: Path, item: str, state: dict[str, Any]) -> tuple[list[dict[s
         return [], tests
     from forge import review
 
-    review.bound_review(top, item, state, result)
     findings = [finding for _, finding in review.blocking(result)]
     return findings, tests + _failing(state.get("branch", ""))
 

@@ -477,7 +477,7 @@ def _known(top: Path, item: str, state: dict[str, Any], base: str, previous: dic
     """The item's known findings; an item reviewed before the list gets its saved rounds first."""
     if "known" not in state:
         state["known"] = []
-        for number, old in enumerate(review._history(top, item, base, previous, state), 1):  # pyright: ignore[reportPrivateUsage]
+        for number, old in enumerate(review._history(top, item, base, previous, state=state), 1):  # pyright: ignore[reportPrivateUsage]
             score.remember(state["known"], old, number, _areas(top, old))
     return state["known"]
 
