@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install
-from test_close import STORY_DOC, blocked, env  # noqa: F401
+from test_close import CLEAN, GREEN, blocked, env  # noqa: F401
 from test_merge_command import _merge_at_github, _ready
 from test_proto_signoff import _decision
 from test_setup import _fresh_client
@@ -383,6 +383,7 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
     # Commands own prompt selection and verdicts; only external readers are faked.
     # Previously low model scores let constitution violations pass.
     setup_client(env, tmp_path, adopted)
+    env.checks(GREEN)  # Init's branch-protection replies are not CI check results.
     repo = env.repo
     constitution = (repo.path / "docs/product/CONSTITUTION.md").read_text("utf-8")
     record = next(repo.path.glob("docs/decisions/*-app-constitution.md"))
@@ -421,7 +422,9 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
             f"{number + 1}. Advisory: Constitution: A rare storage path adds MySQL\n"
             "   Case: rare\n   Gain 2, Work 1, Harm 1\n", encoding="utf-8")
         read = repo.forge("read", "SHOP")
-        assert read.returncode == 0, read.stdout + read.stderr
+        assert read.returncode == (1 if case == "read later" else 0), read.stdout + read.stderr
+        if case == "read later":
+            assert "Round 2 of the cold read of SHOP stopped with open notes" in read.stderr
         prompt = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
         assert ("This app's approved constitution, from the default branch, follows. In any round, "
                 "report a plan that goes against it as a note titled "
@@ -433,7 +436,7 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
         assert "Gain 4, Work 1, Harm 1 (floor: constitution)" in held
         assert "below the bar" not in held
         assert "Disposition: keep - below the bar (follow-up)" in notes
-        assert f"finding {number}" in repo.forge("next").stdout.lower()
+        assert "Constitution: The plan adds MySQL" in repo.forge("next").stdout
         return
 
     if case in {"proposed", "absent"}:
@@ -445,17 +448,20 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
             _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
     path = "docs/storage.md" if case == "documents" else "app.py"
     if case == "part":
-        item, where = env.start_approved_task(STORY_DOC)
+        item, where = env.start_task()
     else:
         item, where = env.start_fix(changes={path: "Use MySQL instead of Postgres.\n"})
     if case == "fix":
         env.commit(where, "docs/product/CONSTITUTION.md", "# Branch-only constitution: use MySQL\n")
     env.reviews(blocked(_scored("P1", "Constitution: The app uses Postgres",
                                "Gain 3, Work 4, Harm 1\nThe change uses MySQL.", path)))
+    if case in {"proposed", "absent"}:
+        env.reviews(CLEAN)
     closed = env.close(item)
     prompt = env.prompt()
     if case in {"proposed", "absent"}:
         assert "## This app's constitution" not in prompt
+        assert closed.returncode == 0, closed.stdout + closed.stderr
         return
     assert "## This app's constitution" in prompt
     assert ("The app's approved constitution, on the default branch, follows. Report work that goes "
@@ -468,7 +474,11 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
         assert closed.returncode == 0, closed.stdout + closed.stderr
     else:
         assert closed.returncode == 1, closed.stdout + closed.stderr
-        assert "The review left serious findings open" in closed.stderr
+        if case == "part":
+            assert "The review left serious findings open" in closed.stderr
+        else:
+            assert "reached the round limit with open findings" in closed.stderr
+            assert "Constitution: The app uses Postgres" in closed.stderr
 
 
 @pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])
