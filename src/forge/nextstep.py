@@ -319,6 +319,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
+            and not any(line.startswith("Next: git worktree remove ") for line in lines)
             and not repo.is_prototype(top, cfg) and not records.constitution(top)):
         lines += ["Before its next story, this app needs its approved constitution.",
                   "Next: " + story.REFUSALS["constitution"][1]]

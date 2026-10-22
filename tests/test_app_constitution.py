@@ -10,6 +10,8 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install
+from test_close import env  # noqa: F401
+from test_merge_command import _merge_at_github, _ready
 from test_proto_signoff import _decision
 from test_setup import _fresh_client
 from test_story import DOC, setup, worktree
@@ -252,6 +254,7 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
     missing_constitution = repo.forge("decision", "accept", "app-constitution", "--by", "Ravi",
                                      cwd=fix)
     assert missing_constitution.returncode == 1
+    assert "The app constitution can't be approved yet:" in missing_constitution.stderr
     assert "docs/product/CONSTITUTION.md" in missing_constitution.stderr
     assert "status: proposed" in app_record.read_text("utf-8")
 
@@ -402,3 +405,29 @@ def test_4_clients_get_the_constitution_guide(repo, gh, tmp_path, adoption):
     if adoption == "new init":
         brief = (top / "docs/product/BRIEF.md").read_text("utf-8")
         assert "## Things it keeps track of" in brief
+
+
+def test_5_cleanup_defers_the_constitution_reminder_until_the_worktree_is_removed(env):
+    item, where = _ready(env)
+    env.gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "isDraft": False,
+        "headRefName": f"fix/{item}", "headRefOid": env.repo.git("rev-parse", "HEAD", cwd=where),
+        "title": "Tidy readme"}))
+    (where / "unsaved.txt").write_text("Keep this work\n", encoding="utf-8")
+    _merge_at_github(env)
+    merged = env.repo.forge("merge", item)
+    assert merged.returncode == 0, merged.stdout + merged.stderr
+    env.gh.respond("pr", "list", "--state", "merged",
+                   stdout=json.dumps([{"headRefName": f"fix/{item}"}]))
+    # An earlier merge left no local cleanup receipt, while the dirty worktree survived.
+    (env.repo.path / ".git/forge/ready" / f"{item}.json").unlink()
+    waiting = env.repo.forge("next")
+    assert waiting.returncode == 0, waiting.stdout + waiting.stderr
+    assert "Next: git worktree remove " in waiting.stdout
+    assert "constitution" not in waiting.stdout.lower()
+    (where / "unsaved.txt").unlink()
+    env.repo.git("worktree", "remove", str(where))
+    after = env.repo.forge("next")
+    assert after.returncode == 0, after.stdout + after.stderr
+    assert "Before its next story, this app needs its approved constitution." in after.stdout
+    assert CONSTITUTION_STEP in after.stdout

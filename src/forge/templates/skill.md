@@ -885,7 +885,8 @@ If it is not ready, fill in the missing answers, defaults or decisions, then run
 again.
 
 No new story starts until the owner approves the constitution. Existing stories, parts and fixes
-continue, and prototype work is not held. If the constitution is missing, start the constitution
+continue, and prototype work is not held. When `forge next` has a worktree cleanup step, finish
+cleanup first. The constitution reminder returns after cleanup. If the constitution is missing, start the constitution
 fix Forge names with `forge fix start "Write the app constitution" --done "The owner approved
 docs/product/CONSTITUTION.md"`, then complete it before starting a story. A review or cold read in an app with an
 approved constitution checks work against its text; a conflict is a P1 finding or note. A change
