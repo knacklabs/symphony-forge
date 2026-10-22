@@ -8,10 +8,15 @@
   `forge init --starter`, and the first commit holds the whole stack: an Nx workspace with a
   React app (Vite, React Router), a NestJS API with sign-in, Postgres, one example record type
   from the database to the screen, its tests, and CI that runs them.
-- The starter's screens come from shadcn/ui blocks: a sidebar that collapses to icons, with a
-  toggle button and Cmd/Ctrl+B; a top bar with Cmd/Ctrl+K search and a user menu; sign-in,
-  sign-up, forgot-password, settings and 404 pages. The code uses feature folders with example
-  hooks, so the prototype grows in the same shape.
+- The starter is structure only. Its app shell layout is built from shadcn/ui components: a
+  sidebar that collapses to icons, with a toggle button and Cmd/Ctrl+B; a top bar with
+  Cmd/Ctrl+K search and a user menu; and the sign-in, settings and 404 routes. The code uses
+  feature folders with example hooks, so the prototype grows in the same shape.
+- The starter has no look of its own. It uses shadcn/ui's neutral theme tokens, and it sets no
+  brand look and no fixed screen design. Each app gets its own design (theme tokens, type,
+  colours and its own screens) in the next story: a design canvas per app, made from its
+  interview with impeccable and emil-design-eng. That story's build applies the design to the
+  starter.
 - Forge's stack pages change from npm workspaces to Nx, and from TanStack Router to React
   Router. A Python backend (FastAPI) is used only when the person asks for it, and it has no
   starter yet.
@@ -38,7 +43,7 @@ app on every machine, and Forge's tests can check it without the network.
 ## Done when
 
 1. **`forge init --starter` on a new repo writes a runnable starter app in the first commit: an Nx workspace with a React app (Vite, React Router), a NestJS API with sign-in on Postgres, one example record type carried from the database to the screen, and its tests. forge.toml's test command runs lint, type checks, API tests on a real database and browser tests, and they pass. In a folder that already has an app, it refuses and names the file it found.**
-2. **The starter's screens come from shadcn/ui blocks: a sidebar that collapses to icons, with a toggle button and Cmd/Ctrl+B; a top bar with Cmd/Ctrl+K search and a user menu; sign-in, sign-up, forgot-password, settings and 404 pages; and feature folders with example hooks. Its browser tests walk each of these.**
+2. **The starter's app shell layout is built from shadcn/ui components with shadcn/ui's neutral theme tokens and no brand look: a sidebar that collapses to icons, with a toggle button and Cmd/Ctrl+B; a top bar with Cmd/Ctrl+K search and a user menu; sign-in, sign-up, forgot-password, settings and 404 routes; and feature folders with example hooks. Its browser tests walk each of these.**
 3. **Forge's stack, deploy, frontend, backend and testing pages name the Nx layout (`apps/web`, `apps/api`, `libs/shared`) and React Router in place of npm workspaces and TanStack Router. The Dockerfile builds and starts the app through the root `build` and `start:prod` scripts. The guide tells the agent to use the starter for a new React app.**
 4. **In a client app with shadcn/ui set up, `forge close` refuses a change that adds a second UI component library, or a new file outside `components/ui/` named like a shadcn/ui component, and says what to do. What the default branch already has is never refused.**
 5. **In such an app, the review reports a new hand-built UI component as P1, unless a `Not shadcn:` comment in the code says why shadcn/ui cannot do it, and Forge holds that finding until it is fixed. The worker brief states the rule.**
@@ -154,7 +159,11 @@ workflow itself, with `timeout-minutes: 20`. Forge's main CI stays under 5 minut
        has commits`. After upgrade and `forge sync`, no starter file exists, and the Dockerfile
        and the test command are unchanged.
 2. The shell (STARTER).
-   - From shadcn/ui blocks at the pinned version, copied as source with shadcn's MIT notice in
+   - Structure only. The theme is shadcn/ui's neutral tokens as `npx shadcn init` writes them at
+     the pinned version (the `neutral` base colour, the default radius and the system font
+     stack). No brand colour, logo, custom font, illustration or styling beyond the shadcn/ui
+     components and the layout. The next story's design replaces the tokens and the screens.
+   - From shadcn/ui components and blocks at the pinned version, copied as source with shadcn's MIT notice in
      `src/forge/templates/starter/NOTICE.md`: `SidebarProvider`, `Sidebar collapsible="icon"`,
      `SidebarInset`, `SidebarTrigger` in the top bar and `SidebarRail` on the edge, and
      Cmd/Ctrl+B from the block; the sheet on mobile; the open state kept as the block keeps it.
@@ -175,7 +184,9 @@ workflow itself, with `timeout-minutes: 20`. Forge's main CI stays under 5 minut
      test 1 shows these Playwright tests passed: sign up, then sign in; Ctrl+B collapses and
      expands the sidebar; Ctrl+K opens search and goes to Projects; create, edit and delete a
      project; the theme changes in settings; an unknown address shows the 404 page; axe finds
-     no serious problem on the shell. Adopted: no starter file exists after upgrade and sync.
+     no serious problem on the shell. Fast half also: the theme file's colour tokens are the
+     neutral values that the pinned `shadcn init` writes, kept in the test as one fixed list.
+     Adopted: no starter file exists after upgrade and sync.
 3. Pages and Dockerfile (STARTER).
    - `conventions/stack.md`: the Workspace row says Nx ("one build tool for the web app and the
      API; no Nx Cloud"); the Frontend row says React with Vite and React Router; the layout and
@@ -253,7 +264,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| STARTER | Starter app and Nx stack pages | `forge init --starter`, the starter tree with its shell, API, example record type and tests, the new Dockerfile, the stack pages, the guide lines, and the live starter workflow. | 1, 2, 3 | `src/forge/templates/starter/**` (new), `src/forge/init.py`, `src/forge/templates/skeleton/Dockerfile`, `src/forge/templates/conventions/stack.md`, `src/forge/templates/conventions/deploy.md`, `src/forge/templates/conventions/frontend.md`, `src/forge/templates/conventions/backend.md`, `src/forge/templates/conventions/testing.md`, `src/forge/templates/conventions/demo-data.md`, `src/forge/standards.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `pyproject.toml` (only if the wheel misses starter files), `.github/workflows/starter-smoke.yml` (new), and the existing tests in Notes | `tests/test_starter_app.py` (`test_1`, `test_2`, `test_3`) | | yes | |
+| STARTER | Starter app and Nx stack pages | `forge init --starter`, the starter tree with its shell, API, example record type and tests, the new Dockerfile, the stack pages, the guide lines, and the live starter workflow. | 1, 2, 3 | `src/forge/templates/starter/**` (new), `src/forge/init.py`, `src/forge/templates/skeleton/Dockerfile`, `src/forge/templates/conventions/stack.md`, `src/forge/templates/conventions/deploy.md`, `src/forge/templates/conventions/frontend.md`, `src/forge/templates/conventions/backend.md`, `src/forge/templates/conventions/testing.md`, `src/forge/templates/conventions/demo-data.md`, `src/forge/standards.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `pyproject.toml` (only if the wheel misses starter files), `.github/workflows/starter-smoke.yml` (new), and the existing tests in Notes | `tests/test_starter_app.py` (`test_1`, `test_2`, `test_3`) | | no | |
 | GUARD | shadcn-only check and review rule | The close check on a second UI library and shadcn/ui copies, the review rule with its score floor, and the brief line. | 4, 5 | `src/forge/app_baseline.py`, `src/forge/close.py`, `src/forge/templates/review.md`, `src/forge/score.py`, `src/forge/templates/brief.md` | `tests/test_shadcn_only.py` (`test_4`, `test_5`) | | no | |
 
 New moving parts: Nx, as the build tool of new client apps (items 1, 3); the optional starter-smoke workflow in Forge's own CI, which keeps the starter's live run out of the main CI (item 1).
@@ -281,8 +292,11 @@ New moving parts: Nx, as the build tool of new client apps (items 1, 3); the opt
   Run every test that runs `forge init`; plain `forge init` must give the same files as today,
   except the Dockerfile.
 - **Not in this story.**
-  - The design canvas flow, the Opus completeness check of the prototype, and the impeccable
-    and emil-design-eng gate on it: the next story.
+  - Each app's own design: its theme tokens, type, colours and its own screens. The next story
+    makes it on a design canvas per app, from the app's interview, with impeccable and
+    emil-design-eng, and that story's build applies it to the starter. The next story also has
+    the Opus completeness check of the prototype and the impeccable and emil-design-eng gate.
+    STARTER is not user-facing, so this story has no design folder.
   - A FastAPI starter for a Python backend: a later story, when a client asks for Python. Until
     then the agent builds it in a fix, as the guide says today.
   - A starter for an existing repo that was set up on an earlier release and has no app yet.
