@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install
-from test_close import CLEAN, GREEN, blocked, env  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, env  # noqa: F401
 from test_merge_command import _merge_at_github, _ready
 from test_proto_signoff import _decision
 from test_setup import _fresh_client
@@ -436,7 +436,9 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
         assert "Gain 4, Work 1, Harm 1 (floor: constitution)" in held
         assert "below the bar" not in held
         assert "Disposition: keep - below the bar (follow-up)" in notes
-        assert "Constitution: The plan adds MySQL" in repo.forge("next").stdout
+        next_step = repo.forge("next").stdout
+        assert ("Constitution: The plan adds MySQL" if case == "read later"
+                else f"give finding {number}") in next_step
         return
 
     if case in {"proposed", "absent"}:
@@ -448,6 +450,10 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
             _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
     path = "docs/storage.md" if case == "documents" else "app.py"
     if case == "part":
+        repo.write("plans/SHOP.md", STORY_DOC)
+        repo.git("add", "plans/SHOP.md")
+        _fixture_git(repo, tmp_path, "commit", "-qm", "Record the existing story")
+        _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
         item, where = env.start_task()
     else:
         item, where = env.start_fix(changes={path: "Use MySQL instead of Postgres.\n"})
@@ -458,6 +464,7 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
     if case in {"proposed", "absent"}:
         env.reviews(CLEAN)
     closed = env.close(item)
+    assert env.review_calls(), closed.stdout + closed.stderr
     prompt = env.prompt()
     if case in {"proposed", "absent"}:
         assert "## This app's constitution" not in prompt
