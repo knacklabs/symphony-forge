@@ -248,6 +248,7 @@ def close(args: argparse.Namespace) -> int:
     _warn_fix_kind(top, state, f"origin/{default}")
     light = review.blocking_level(top, item, state, f"origin/{default}") == "P0"
     result = previous
+    classified = review.bound_review(top, item, state, result)
     head = repo.resolve_commit(top, "HEAD")
     base = repo.resolve_commit(top, f"origin/{default}")
     changed = review.fingerprint(head, item, top, state, base)
@@ -266,8 +267,8 @@ def close(args: argparse.Namespace) -> int:
     if choice != "accept" and (review.blocking(result) or
                                any(d.get("accepted") for d in result.get("dismissals", []))):
         fresh = fresh and result.get("changed") == changed
-    refreshed = fresh and (result.get("changed") != changed or
-                           result.get("branch_diff") != branch_diff)
+    refreshed = classified or fresh and (result.get("changed") != changed or
+                                         result.get("branch_diff") != branch_diff)
     if fresh:
         result.update(changed=changed, branch_diff=branch_diff)
         # Keep the historical review commit unless replay removed it from this branch.
@@ -476,7 +477,7 @@ def _known(top: Path, item: str, state: dict[str, Any], base: str, previous: dic
     """The item's known findings; an item reviewed before the list gets its saved rounds first."""
     if "known" not in state:
         state["known"] = []
-        for number, old in enumerate(review._history(top, item, base, previous), 1):  # pyright: ignore[reportPrivateUsage]
+        for number, old in enumerate(review._history(top, item, base, previous, state), 1):  # pyright: ignore[reportPrivateUsage]
             score.remember(state["known"], old, number, _areas(top, old))
     return state["known"]
 

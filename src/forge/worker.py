@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, doctor, machine, native, repo, score, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -216,7 +216,7 @@ def _work(args: argparse.Namespace) -> bool:
             elif not on_codex and previous:
                 fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
-        findings, failing = _fix_round(state)
+        findings, failing = _fix_round(top, item, state)
         stop = state.get("stop") or {}
         if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
             note = f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice."
@@ -465,15 +465,17 @@ def _changes(top: Path, start: str) -> str:
             f"```diff\n{diff}```\n")
 
 
-def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
+def _fix_round(top: Path, item: str, state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[str, str]]]:
     """The open findings at the bar and the failing checks, close's own test run among them, once
     close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
-    review = state.get("review")
-    if not review:  # no review yet: no pull request to read checks from
+    result = state.get("review")
+    if not result:  # no review yet: no pull request to read checks from
         return [], tests
-    findings = [finding for finding in score.open_findings(review)
-                if score.holds(finding, review.get("blocking_level"))]
+    from forge import review
+
+    review.bound_review(top, item, state, result)
+    findings = [finding for _, finding in review.blocking(result)]
     return findings, tests + _failing(state.get("branch", ""))
 
 
