@@ -14,7 +14,7 @@ from test_fix_reviews_and_reads_record_their_cost import CODEX, CLAUDE, HELPER, 
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
 from test_read_only_model_selection import _sdk
 from test_run_records import configure
-from test_story import DOC, new_story, setup, worktree
+from test_story import DOC, approved_constitution, new_story, setup, worktree
 from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_release,
                                   unsynced_up)  # noqa: F401
 
@@ -93,6 +93,7 @@ def test_1_round_records_total_input_cached_output_and_reasoning_tokens(
             repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}',
                      'merge', '-q', '--ff-only', f'fix/{NAME}')
             repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}', 'push', '-q', 'origin', 'main')
+            approved_constitution(repo)
         request.getfixturevalue('claude_session')
         if kind.startswith('worker'):
             _codex_repo(repo, monkeypatch, request.getfixturevalue('sdk_data'))

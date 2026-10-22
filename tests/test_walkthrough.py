@@ -12,7 +12,7 @@ from pathlib import Path
 
 import conftest
 from test_close import body, env  # noqa: F401 (env is a fixture)
-from test_story import READER, claude_plan, hook, worktree
+from test_story import READER, approved_constitution, claude_plan, hook, worktree
 
 STORY = "FORGE-NEXT-1"
 DOC = """# Shoppers can share a cart
@@ -70,6 +70,7 @@ def walk(env, claude_payload, monkeypatch) -> dict:
                json.dumps({"items": [{"key": "CART", "title": "Shoppers can share a cart"}]}))
     env.commit(repo.path, "docs/decisions/0001-client-signoff.md", SIGNOFF)
     repo.git("push", "-q", "origin", "main")
+    approved_constitution(repo)
     # One stub claude reads the story doc ("No findings.") and stands in for the worker.
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     seen: dict = {}
