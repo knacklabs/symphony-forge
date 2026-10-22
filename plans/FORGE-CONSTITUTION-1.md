@@ -21,7 +21,8 @@
   next. Stories, parts and fixes that already started go on. Prototype work and Forge's own repo
   are never stopped.
 - A code review or a cold read in an app with an approved constitution gets its text. Work
-  against it is a serious finding that holds the work.
+  against it is a serious finding that holds the work. A change to documents only keeps its
+  light review, which holds only the most serious findings.
 - A live app that joins Forge gets both halves of the interview together. The agent asks only
   what the code cannot answer, and records the stack that the code already uses.
 - New repos get the guide and the brief's new section at init. Existing repos get the guide on
@@ -40,7 +41,7 @@ questions and their defaults.
 
 1. **In a client app past the prototype, `forge story new` and `forge start` refuse to start a story until the app's constitution is approved, and the refusal and `forge next` name the next step. Stories, parts and fixes that already started go on, and prototype work is never stopped.**
 2. **The owner's approval of the constitution is accepted only when the constitution has its defaults and architecture choices, each choice links an accepted decision record, and the brief answers what the app is for, who uses it, what it keeps track of and whether data is private or regulated.**
-3. **A code review or cold read in an app with an approved constitution gets the constitution's text, and Forge holds a finding or note against it as P1.**
+3. **A code review or cold read in an app with an approved constitution gets the constitution's text, and Forge holds a finding or note against it as P1. A change to documents only keeps its light review, which holds only P0 findings.**
 4. **The guide tells the agent how to run both halves of the interview and the live-app version, and the reference page lists the defaulted questions. New repos get the guide and the brief's new section at init, and existing repos get the guide on upgrade and sync.**
 
 ## New and existing repos
@@ -137,7 +138,7 @@ as test_4 of `tests/test_stuck_worker_asks.py` does.
      `Before its next story, this app needs its approved constitution.` and the same Next line,
      after the other lines, so `machine_next` keeps the first Next line of the work in progress.
    - `story.py` is at 1,185 lines and must stay under 1,200: the refusal and the check take at
-     most 5 lines there, and REVIEW adds one more. The ref reading lives in
+     most 5 lines there, and REVIEW adds at most 3 more. The ref reading lives in
      `records.constitution`.
    - Normal-use cases: a new repo after sign-off; a new repo before sign-off (the prototype
      refusal is unchanged and fixes of every kind start); an adopted live repo; a story started
@@ -195,10 +196,17 @@ as test_4 of `tests/test_stuck_worker_asks.py` does.
      it as a finding titled `Constitution: <the line it breaks>`, quoting the line. Where it
      differs from Forge's convention pages, it wins.` / `$constitution`. A branch's own edit of
      the constitution never reaches the prompt.
-   - The cold read's first block (`cold-read.md`, before `## What counts`) gets: `This app's
-     approved constitution, from the default branch, follows. Report a plan that goes against it
-     as a note titled `Constitution: <the line it breaks>`:` / `$constitution`. `story.py` fills
-     `constitution` with `records.constitution(top) or "None."`.
+   - Every cold-read round gets the constitution, so a constitution approved between rounds
+     reaches the next round. `story.py` adds it to `context`, the text it appends to every
+     round's prompt (next to "The doc's Notes and decisions"), only when
+     `records.constitution(top)` is not empty: `This app's approved constitution, from the
+     default branch, follows. In any round, report a plan that goes against it as a note titled
+     `Constitution: <the line it breaks>`; this is not limited to P0.` and then the text. No
+     `cold-read.md` change. A round-two note gets the floor below because `score.notes` scores
+     the notes of every round.
+   - A change to documents only keeps its light review (`review.blocking_level` returns P0 for
+     it), so a `Constitution:` finding on it does not hold the merge. Plans, specs and decisions
+     get the cold read, which holds such a note.
    - `score.normalise` gets a floor next to the Harm floor: a finding or note titled
      `Constitution: ` scores Gain 4 or more and Work 2 or less, and its score line is marked
      `(floor: constitution)`. That puts it at "fix now" (P1) whatever the model scored, both for
@@ -207,11 +215,13 @@ as test_4 of `tests/test_stuck_worker_asks.py` does.
      `Case: rare` note stays a follow-up, as today.
    - The worker brief (`brief.md`) gets: `When docs/product/CONSTITUTION.md is approved, follow
      it. A review holds work that goes against it.`
-   - Normal-use cases: a fix review; a story part's review; a story's cold read; an app without
-     an approved constitution.
+   - Normal-use cases: a fix review; a story part's review; a story's cold read; a cold read
+     that continues after the constitution lands; a change to documents only; an app without an
+     approved constitution.
    - Test: `test_3_reviews_and_reads_hold_work_against_the_constitution`, with the parameter
      `adopted` (`setup_client(env, adopted)`).
-     - An approved constitution is on main. A fix that also edits the constitution closes. The
+     - An approved constitution is on main. A fix that changes `app.py` and also edits the
+       constitution closes. The
        review prompt (`env.prompt()`) has `## This app's constitution`, the rule sentence and the
        main branch's text, and not the branch's edit. Autoreview returns a P1 finding titled
        `Constitution: The app uses Postgres` with `Gain 3, Work 4, Harm 1`. Close exits 1 with
@@ -222,6 +232,10 @@ as test_4 of `tests/test_stuck_worker_asks.py` does.
        sentence and the constitution's text. A reader note `Blocking: Constitution: The plan adds
        MySQL` scored `Gain 2, Work 1, Harm 1` holds the read: the notes show `(floor:
        constitution)` and no below-the-bar disposition, and `forge read` reports it as open.
+     - A story whose round 1 ran with no approved constitution: the constitution then lands on
+       main. Round 2's prompt has the rule sentence and the text, and a round-2 note
+       `Advisory: Constitution: The plan adds MySQL` scored `Gain 2, Work 1, Harm 1` holds the
+       read the same way.
 4. The guide (GATE).
    - `skill.md`: a new `## App constitution` section after `## Prototype`. The Prototype
      section's order becomes "... obtain the customer's named sign-off; then write the app
@@ -275,7 +289,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | GATE | Story gate, approval and guide | `records.constitution`, the story gate in `forge story new` and `forge start`, the `forge next` line, the approval check on `app-constitution`, the guide's App constitution section, the reference page's defaults and the brief's new section. | 1, 2, 4 | `src/forge/records.py`, `src/forge/story.py`, `src/forge/nextstep.py`, `src/forge/templates/skill.md`, `src/forge/templates/skeleton/docs/product/BRIEF.md`, `.codex/skills/forge/fde.md`, `.claude/skills/forge/fde.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md` (the last three rewritten by `forge sync`), `tests/test_story.py` and the existing tests in Notes | `tests/test_app_constitution.py` (`test_1`, `test_2`, `test_4`), plus GATE's changes in Notes | | no | |
-| REVIEW | Reviews and reads hold the constitution | The review and cold-read prompts carry the approved constitution, Forge holds a `Constitution:` finding or note at P1 through a score floor, and the worker brief says to follow the constitution. | 3 | `src/forge/review.py`, `src/forge/templates/review.md`, `src/forge/story.py`, `src/forge/templates/cold-read.md`, `src/forge/score.py`, `src/forge/templates/brief.md` | `tests/test_app_constitution.py` (`test_3`) | GATE | no | |
+| REVIEW | Reviews and reads hold the constitution | The review and cold-read prompts carry the approved constitution, Forge holds a `Constitution:` finding or note at P1 through a score floor, and the worker brief says to follow the constitution. | 3 | `src/forge/review.py`, `src/forge/templates/review.md`, `src/forge/story.py`, `src/forge/score.py`, `src/forge/templates/brief.md` | `tests/test_app_constitution.py` (`test_3`) | GATE | no | |
 
 New moving parts: none
 

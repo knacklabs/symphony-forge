@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-CONSTITUTION-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-22T06:52:26.002056+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-22T07:11:43.942812+00:00",
+      "step": "read"
     }
   ],
   "title": "Setup interview and app constitution for client repos",
