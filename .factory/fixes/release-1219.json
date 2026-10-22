@@ -2,6 +2,13 @@
   "allow_large": "A release's version bump changes the pinned version in every file that names it; no behaviour changes",
   "base": "ecf68826c902d901f5432bb5ec0e5b9fb24e5492",
   "branch": "fix/release-1219",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1623f-27df-7dc2-b448-a723c785031b",
+    "head": null,
+    "start": "6e61a246d36f77e873050521a20f0a2304c617b7"
+  },
   "done_when": "forge.toml, the package and every pinned reference say v1.2.19",
   "fix_kind": "mechanical",
   "kind": "fix",
