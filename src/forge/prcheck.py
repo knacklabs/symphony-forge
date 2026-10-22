@@ -307,6 +307,8 @@ def pr_check(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
     _check_specs(top, head, changed)
     result = state.get("review")
+    if isinstance(result, dict) and isinstance(result.get("findings"), list):
+        review.bound_review(top, item, state, result, head)
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):
         # Keep the command's refusal, but let the trusted workflow distinguish the first push.

@@ -125,16 +125,16 @@ def moving_parts(text: str) -> str:
     return found[0].strip() if found else "New moving parts: (the story doc has no such line)"
 
 
-def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
-    """A task's story doc text, its sections and the task's row; refused when the row is missing."""
+def task(top: Path, item: str, commit: str | None = None) -> tuple[str, dict[str, str], dict[str, str]]:
+    """A task's story doc, sections and row, from the given commit or its live plan."""
     from forge import story  # story imports review indirectly
     key, _, name = item.partition("/")
     path = top / "plans" / f"{key}.md"
     # Like forge task start: the story branch's copy while it exists, so a plan edit made there
     # after approval reaches the review; else this checkout's, which close merged from the default.
-    text = story.show(top, f"story/{key}", f"plans/{key}.md")
+    text = story.show(top, commit or f"story/{key}", f"plans/{key}.md")
     if text is None:
-        text = path.read_text(encoding="utf-8") if path.is_file() else ""
+        text = path.read_text(encoding="utf-8") if commit is None and path.is_file() else ""
     doc = sections(text)
     row = next((r for r in rows(doc.get("Tasks", "")) if r.get("id", "").strip("`") == name), None)
     if row is None:
@@ -224,7 +224,8 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     return [(n, f) for n, f in enumerate(result.get("findings", []), 1)
             if not isinstance(f, dict) or
-            (score.holds(f, result.get("blocking_level")) and n not in dismissed)]
+            ((f.get("required_done_when") or score.holds(f, result.get("blocking_level")))
+             and n not in dismissed)]
 
 
 def area(top: Path, commit: str, file: str, line: Any) -> str:
@@ -321,7 +322,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     blocks = {parts[i]: string.Template(parts[i + 1].strip()) for i in range(1, len(parts), 2)}
     changed = repo.git("diff", "--name-only", f"{base}...HEAD", cwd=top).splitlines()
     changed = [path for path in changed if not path.startswith(BOOKKEEPING)]
-    history = _history(top, item, base, previous)
+    history = _history(top, item, base, previous, state=state)
     settled = _settled(history)
     values = {"why": state.get("why", ""), "done_when": state.get("done_when", ""),
               "allowance": state.get("allow_large") or "No recorded allowance",
@@ -615,7 +616,7 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
 
 
 def _history(top: Path, item: str, base: str, previous: dict[str, Any],
-             ref: str = "HEAD") -> list[dict[str, Any]]:
+             ref: str = "HEAD", *, state: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """Git owns earlier reviews; later dismissals replace that round's original result."""
     path = repo.state_path(item)
     rounds = {}
@@ -623,8 +624,12 @@ def _history(top: Path, item: str, base: str, previous: dict[str, Any],
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
         if result.get("commit"):  # one per round: two rounds at one commit differ in their findings
+            if state is not None:
+                bound_review(top, item, state, result)
             rounds[result["commit"], str(result.get("findings"))] = result
     if previous.get("commit"):
+        if state is not None:
+            bound_review(top, item, state, previous)
         rounds[previous["commit"], str(previous.get("findings"))] = previous
     return list(rounds.values())
 
@@ -638,6 +643,8 @@ def _settled(history: list[dict[str, Any]]) -> dict[tuple[str, str], str]:
         for key in earlier - current:
             settled.setdefault(key, "fixed: absent from a later review")
         for finding in score.open_findings(result):
+            if finding.get("required_done_when"):
+                continue
             if (outcome := score.bar(score.of(finding))) in ("follow-up", "live with"):
                 settled.setdefault(score.identity(finding["file"], finding["title"]), f"known: below the bar ({outcome})")
             if finding.get("follow_up"):
@@ -927,16 +934,16 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt:
-            history = _history(top, item, base, previous)
+            history = _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
-            _bound_findings(top, item, state, findings)
             result.update(findings=findings, dismissals=[
                 {"finding": number, "because": settlement.removeprefix("dismissed because "), "carried": True}
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
                 and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
+            bound_review(top, item, state, result)
         serious = blocking(result)
         identity = repo.record_event(top, item, "review result", commit=head,
             review_round=round_number(top, item, state),
@@ -962,17 +969,21 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                                 branch_diff=key == "branch_diff") for key in ("changed", "branch_diff")}}
 
 
-def _bound_findings(top: Path, item: str, state: dict[str, Any],
-                    findings: list[dict[str, Any]]) -> bool:
-    """Keep advice visible without letting a fresh review widen the approved work."""
+def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, Any],
+                 commit: str | None = None) -> bool:
+    """Classify new and saved findings against the item's approved work."""
     from forge import story
+
+    findings = result.get("findings", [])
+    if not findings:
+        return False
 
     def sentence(text: str) -> str:
         text = re.sub(r"^\d+[.)]\s*", "", text.replace("**", "").replace("`", "").strip())
-        return " ".join(text.casefold().split()).rstrip(".")
+        return " ".join(text.casefold().split()).rstrip(".").strip('"\u201c\u201d\u2018\u2019\'').rstrip(".")
 
     if "/" in item:
-        text, _, row = task(top, item)
+        text, _, row = task(top, item, commit)
         doc = story.parse(text)
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         approved = {sentence(doc["done"][n]) for n in covers if n in doc["done"]}
@@ -982,6 +993,14 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any],
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
+        if missed and sentence(missed[1]) in approved:
+            if not finding.get("required_done_when") or finding.get("follow_up"):
+                finding["required_done_when"] = True
+                finding.pop("follow_up", None)
+                changed = True
+            continue
+        if finding.pop("required_done_when", False):
+            changed = True
         reason = ""
         if score.RARE.search(finding["body"]):
             reason = "Rare case outside normal use"
@@ -990,6 +1009,12 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any],
         if reason and finding.get("follow_up") != reason:
             finding["follow_up"] = reason
             changed = True
+    kept = [d for d in result.get("dismissals", []) if not (
+        not d.get("accepted") and d["because"].startswith("known:")
+        and findings[d["finding"] - 1].get("required_done_when"))]
+    if kept != result.get("dismissals", []):
+        result["dismissals"] = kept
+        changed = True
     return changed
 
 
@@ -1002,7 +1027,8 @@ def declines(top: Path, base: str, result: dict[str, Any]) -> bool:
     changed = False
     for finding in result.get("findings", []):
         reason = reasons.get(score.identity(finding["file"], finding["title"]))
-        if reason and not score.holds(finding, "P0") and finding.get("follow_up") != score.DECLINED + reason:
+        if (reason and not finding.get("required_done_when") and not score.holds(finding, "P0")
+                and finding.get("follow_up") != score.DECLINED + reason):
             finding["follow_up"] = score.DECLINED + reason
             changed = True
     return changed

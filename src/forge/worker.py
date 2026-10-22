@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, doctor, machine, native, repo, score, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -51,6 +51,8 @@ COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review ca
                 "your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
+    "merged": ("The pull request for {item} is already merged. Start a new fix for follow-up work.",
+               'forge fix start "<why>" --done "<done when>"'),
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
     "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
               "forge work {item}"),
@@ -76,6 +78,11 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
     branches = [f"task/{match['key']}-{match['task']}"] if match["task"] else [f"fix/{item}", f"forge/{item}"]
+    top = repo.root()
+    default = repo.default_branch(top)
+    git("fetch", "-q", "origin", default, cwd=top)
+    if task._merged(f"origin/{default}", item, top):
+        refuse(REFUSALS["merged"], item=item)
     trees = story.worktrees(Path.cwd())
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
@@ -98,7 +105,6 @@ def prepare(item: str) -> tuple[re.Match[str], Path, str]:
         default = repo.default_branch(top)
         first = ""
         with codex.hold(top, item, "Build"):
-            git("fetch", "-q", "origin", default, cwd=top)
             merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
             if merged.returncode:
                 if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
@@ -120,7 +126,7 @@ def _work(args: argparse.Namespace) -> bool:
     repo.command_fact("prepared work", top, dict).pop(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
-    from forge import close, nextstep, time_records  # close imports story, which imports this module
+    from forge import close, nextstep, review, time_records  # close imports story, which imports this module
     # GitHub is read only when this round answers or ends a wait on a person, never just to queue.
     asking = note is not None or codex.record(top, item).get("question") or time_records.pending_merge_wait(top, item)
     pr = close.branch_pr(top, state) if asking else None
@@ -216,6 +222,7 @@ def _work(args: argparse.Namespace) -> bool:
             elif not on_codex and previous:
                 fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
+        review.bound_review(top, item, state, state.get("review") or {})
         findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
         if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
@@ -469,11 +476,12 @@ def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[
     """The open findings at the bar and the failing checks, close's own test run among them, once
     close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
-    review = state.get("review")
-    if not review:  # no review yet: no pull request to read checks from
+    result = state.get("review")
+    if not result:  # no review yet: no pull request to read checks from
         return [], tests
-    findings = [finding for finding in score.open_findings(review)
-                if score.holds(finding, review.get("blocking_level"))]
+    from forge import review
+
+    findings = [finding for _, finding in review.blocking(result)]
     return findings, tests + _failing(state.get("branch", ""))
 
 

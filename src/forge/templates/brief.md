@@ -18,6 +18,8 @@ happen in normal use. A round-one fix that breaks the main path counts as a P0. 
 limit, open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
 only against an owner-approved Done-when item (the fix's Done-when line); builder details
 are guidance and never block as `Not done`.
+Close blocks a `Not done` on the item's own Done-when even below the score bar or in a light
+review. Clean reviews explain why their listed findings do not block.
 
 Forge records the "Prototype before sign-off" allowance. It covers any size and interface
 changes. Reviewers do not check this allowance against the diff. Other agent-recorded
@@ -69,6 +71,7 @@ and review it before you start a part on top of it.
 
 Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
+`forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
 
 $delegation
 - Edit files only inside this checkout.
@@ -287,7 +290,8 @@ the finding is a behaviour bug (not for a `Simpler:` or `Promote:` finding), and
 If a finding is not worth the code, change nothing for it and write this line in a commit body,
 with its exact title and file: `Declined: <title> (<file>): not worth the code - <reason>`.
 An empty commit is fine. Close applies declines on every run, including a reused review, and
-records them as follow-ups. A P0 stays open. Only the human dismisses findings.
+records them as follow-ups. A P0 or `Not done` on this item's own Done-when stays open.
+Only the human dismisses findings.
 Forge records findings below the bar as follow-ups or lived with; leave those alone.
 
 ### Open serious findings
