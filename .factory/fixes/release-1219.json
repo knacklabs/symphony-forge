@@ -1,0 +1,15 @@
+{
+  "base": "ecf68826c902d901f5432bb5ec0e5b9fb24e5492",
+  "branch": "fix/release-1219",
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.19",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-22T06:10:44.146322+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.19: chat sign-off, the owner's round-limit rule and registered Codex roles"
+}
