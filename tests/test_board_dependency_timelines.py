@@ -3,6 +3,7 @@ import json
 import re
 import shutil
 import sys
+import tomllib
 
 import pytest
 
@@ -49,6 +50,8 @@ def _client(repo, gh, tmp_path, history):
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "fix/upgrade-client")
         _land_fixture(repo)
+        if tomllib.loads((repo.path / "forge.toml").read_text("utf-8")).get("stage", "live") != "prototype":
+            approved_constitution(repo)
 
 
 def _configured(repo, gh, tmp_path, history, keys):
@@ -68,7 +71,8 @@ def _configured(repo, gh, tmp_path, history, keys):
     repo.path = main
     repo.git("merge", "-q", "--ff-only", "fix/configure-client")
     _land_fixture(repo)
-    approved_constitution(repo)
+    if not (repo.path / "docs/product/CONSTITUTION.md").exists():
+        approved_constitution(repo)
 
 
 # ponytail: about 25 forge commands; on a loaded Windows runner they need more than the 300 s CI default.

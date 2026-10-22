@@ -12,7 +12,7 @@ from test_board_dependency_timelines import _client, _land_fixture
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import finish, hold_agents, make_work, start
-from test_story import GRILL, READER, claude_plan, hook, ready, worktree
+from test_story import GRILL, READER, approved_constitution, claude_plan, hook, ready, worktree
 from test_upgrade_command import unsynced_up  # noqa: F401
 
 STORY = "unblockers-first"
@@ -56,6 +56,8 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
     repo.path = main
     repo.git("merge", "-q", "--ff-only", "fix/configure-client")
     _land_fixture(repo)
+    if not (repo.path / "docs/product/CONSTITUTION.md").exists():
+        approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     doc = DOC.replace("`tests/test_page.py` | SAVE | yes |",
                       "`tests/test_page.py` | none | yes |").replace(
@@ -125,6 +127,7 @@ def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Plan the unfinished story")
     _land_fixture(repo)
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     # Neither of these runs unblocks a part, so admission must finish inspecting the plans.
     doc = DOC.replace("| SAVE | yes |", "| none | yes |")

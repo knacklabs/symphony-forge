@@ -9,12 +9,13 @@ import os
 import re
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 
 import conftest
-from test_story import DESIGN_IMAGE, DESIGN_TREE, READER
+from test_story import DESIGN_IMAGE, DESIGN_TREE, READER, approved_constitution
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = re.search(r'AUTOREVIEW_PIN = "(\w+)"',
@@ -109,6 +110,7 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
         image.parent.mkdir(parents=True, exist_ok=True)
         image.write_text(DESIGN_IMAGE, encoding="utf-8")
     toml = top / "forge.toml"
+    settings = tomllib.loads(toml.read_text("utf-8"))
     if "models.grill" not in toml.read_text("utf-8"):
         toml.write_text(toml.read_text("utf-8") + 'models.grill.claude = { model = "opus", effort = "high" }\n',
                         encoding="utf-8")
@@ -123,6 +125,9 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
     repo.git("add", "-A", cwd=top)
     repo.git("commit", "-q", "-m", "Sign-off and roadmap", cwd=top)
     repo.git("push", "-q", "origin", "main", cwd=top)
+    if (settings.get("repo", "client") == "client"
+            and not (top / "docs/product/CONSTITUTION.md").exists()):
+        approved_constitution(repo, where=top)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     made = repo.forge("story", "new", key, "Shoppers can save a basket", cwd=top)
     assert made.returncode == 0, made.stderr

@@ -12,7 +12,7 @@ import pytest
 from conftest import _install
 from test_board import DOC, pr
 from test_board_dependency_timelines import _client, _land_fixture
-from test_story import GRILL, READER, claude_plan, hook, ready, worktree
+from test_story import GRILL, READER, approved_constitution, claude_plan, hook, ready, worktree
 
 STORY = "FIX-BOARD-DATA-TRUTH"
 NOW = "2026-10-09T12:00:00+00:00"
@@ -176,6 +176,8 @@ def test_11_story_idle_time_tracks_its_parts(
     client.git("commit", "-qm", "Configure basket work", cwd=configured)
     client.git("merge", "-q", "--ff-only", "fix/correct-state")
     _land_fixture(client)
+    if not (client.path / "docs/product/CONSTITUTION.md").exists():
+        approved_constitution(client)
     _install(client.bin, "claude", READER.format(python=sys.executable))
     with monkeypatch.context() as earlier:
         earlier.setenv("FORGE_NOW", OLD)
@@ -382,6 +384,8 @@ def test_6_live_plan_read_is_planning_then_clean_read_waits_for_approval(client,
     client.git("commit", "-qm", "Configure the plan reader", cwd=configured)
     client.git("merge", "-q", "--ff-only", "fix/correct-state")
     _land_fixture(client)
+    if not (client.path / "docs/product/CONSTITUTION.md").exists():
+        approved_constitution(client)
     _install(client.bin, "claude", READER.format(python=sys.executable))
     ready(client, "SHOP", DOC)
     _records(client, "events.jsonl", [{"event": "run start", "id": "plan-read",
@@ -454,6 +458,8 @@ def test_9_one_person_has_one_display_name_across_approval_history(
     client.git("commit", "-qm", "Configure plan reads", cwd=configured)
     client.git("merge", "-q", "--ff-only", "fix/correct-state")
     _land_fixture(client)
+    if not (client.path / "docs/product/CONSTITUTION.md").exists():
+        approved_constitution(client)
     _install(client.bin, "claude", READER.format(python=sys.executable))
     for key, name, at in (("FIRST", "Sam Alias", "2026-10-08T10:00:00+00:00"),
                           ("SECOND", "Sam Reader", "2026-10-09T10:00:00+00:00")):

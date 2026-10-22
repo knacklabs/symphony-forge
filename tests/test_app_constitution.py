@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
 import sys
@@ -11,8 +10,9 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, ROOT, _install
+from test_proto_signoff import _decision
 from test_setup import _fresh_client
-from test_story import DOC, setup
+from test_story import DOC, setup, worktree
 from test_tools_session_hold import Session
 
 STORY = "FORGE-CONSTITUTION-1"
@@ -53,13 +53,6 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
         top, initialized = _fresh_client(repo, gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         repo.path = top
-        config = top / "forge.toml"
-        settings = config.read_text("utf-8")
-        settings = re.sub(r'(?m)^stage = .*$', 'stage = "prototype"', settings)
-        if 'stage = "prototype"' not in settings:
-            settings = settings.replace('repo = "client"\n',
-                                        'repo = "client"\nstage = "prototype"\n', 1)
-        config.write_text(settings, encoding="utf-8")
         if case == "new prototype":
             started = repo.forge("fix", "start", "Build storage", "--done", "Storage works",
                                  "--kind", "backend")
@@ -67,15 +60,15 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
             assert "constitution" not in (started.stdout + started.stderr).lower()
             return
 
-        repo.git("add", "-A")
-        _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Prepare the prototype")
-        repo.write("docs/decisions/0001-client-signoff.md",
-                   '---\nstatus: accepted\nconfirmed_by: "Sam Lee, director"\n---\n'
-                   "\n# Client sign-off\n")
+        signoff = _decision(repo.path, "## Answers\n")
+        signoff.write_text(signoff.read_text("utf-8").replace("status: proposed", "status: accepted"),
+                           encoding="utf-8")
         repo.git("add", "docs/decisions/0001-client-signoff.md")
         _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Record client sign-off")
         _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
     elif case == "adopted story already started":
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
+                        dirs_exist_ok=True)
         setup(repo, kind="client")
         for path in ((repo.path / "docs/product/CONSTITUTION.md"),
                      *repo.path.glob("docs/decisions/*-app-constitution.md"),
@@ -90,12 +83,12 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
         for name in ("story.py", "approval.py"):
             shutil.copyfile(ROOT / "tests/fixtures/forge-v1.2.2/src/forge" / name,
                             earlier / "forge" / name)
-        _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(earlier)))
+        _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=earlier.as_posix()))
         started = repo.forge("story", "new", "SHOP", "Shoppers can save a basket")
         assert started.returncode == 0, started.stdout + started.stderr
-        story = Path(re.search(r" in (.+)\n", started.stdout)[1])
+        story = worktree(repo, "story/SHOP")
         (story / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
-        _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
+        _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=(ROOT / "src").as_posix()))
         read = repo.forge("read", "SHOP")
         assert read.returncode == 0, read.stdout + read.stderr
         assert "constitution" not in read.stderr.lower()
@@ -156,6 +149,7 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
     assert CONSTITUTION_STEP in promoted.stderr
 
     brief = fix / "docs/product/BRIEF.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
     brief.write_text(
         "# Product brief\n\n## Summary\nShoppers save baskets for later.\n\n"
         "## Users\nShoppers use the app.\n\n## Things it keeps track of\n"
@@ -205,7 +199,8 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
     assert created.returncode == 0, created.stdout + created.stderr
     next_step = repo.forge("next")
     assert next_step.returncode == 0, next_step.stdout + next_step.stderr
-    assert "constitution" not in next_step.stdout.lower()
+    assert "Before its next story, this app needs its approved constitution." not in next_step.stdout
+    assert CONSTITUTION_STEP not in next_step.stdout
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
@@ -225,18 +220,9 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
         top, initialized = _fresh_client(repo, gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         repo.path = top
-        config = top / "forge.toml"
-        settings = config.read_text("utf-8")
-        settings = re.sub(r'(?m)^stage = .*$', 'stage = "prototype"', settings)
-        if 'stage = "prototype"' not in settings:
-            settings = settings.replace('repo = "client"\n',
-                                        'repo = "client"\nstage = "prototype"\n', 1)
-        config.write_text(settings, encoding="utf-8")
-        repo.git("add", "-A")
-        _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Prepare the prototype")
-        repo.write("docs/decisions/0001-client-signoff.md",
-                   '---\nstatus: accepted\nconfirmed_by: "Sam Lee, director"\n---\n'
-                   "\n# Client sign-off\n")
+        signoff = _decision(repo.path, "## Answers\n")
+        signoff.write_text(signoff.read_text("utf-8").replace("status: proposed", "status: accepted"),
+                           encoding="utf-8")
         repo.git("add", "docs/decisions/0001-client-signoff.md")
         _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Record client sign-off")
         _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
