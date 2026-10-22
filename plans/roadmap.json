@@ -336,6 +336,12 @@
       "title": "Setup interview and app constitution for client repos",
       "status": "pending",
       "order": 90
+    },
+    {
+      "key": "FORGE-STARTER-1",
+      "title": "Starter app for new client React apps",
+      "status": "pending",
+      "order": 91
     }
   ],
   "epics": [

@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-STARTER-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-22T17:05:17.257874+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Starter app for new client React apps",
+  "touches": 0
+}
