@@ -1,45 +1,241 @@
 # Starter app for new client React apps
 
-<n> parts · Risks: ... · New moving parts: ...
+2 parts · Risks: none one-way · New moving parts: Nx in new client apps; a starter check in Forge's own CI
 
 ## What changes for you
 
-- A new client React app starts from a runnable Nx workspace with React (Vite, React Router) and NestJS on Postgres, with sign-in, one example entity carried end to end, tests and CI, and an app shell built from shadcn blocks.
-- The stack page changes from npm workspaces to Nx for new apps.
-- A close check refuses a second UI library and hand-made copies of shadcn components, and review reports a custom UI piece as P1 unless the change says why shadcn cannot do it.
-- An existing client app keeps its own stack and code on upgrade; the new check and review rule apply to its later changes, and an app that already has a second UI library is not blocked for it.
+- A new client React app starts from a runnable starter app. The agent sets up the repo with
+  `forge init --starter`, and the first commit holds the whole stack: an Nx workspace with a
+  React app (Vite, React Router), a NestJS API with sign-in, Postgres, one example record type
+  from the database to the screen, its tests, and CI that runs them.
+- The starter's screens come from shadcn/ui blocks: a sidebar that collapses to icons, with a
+  toggle button and Cmd/Ctrl+B; a top bar with Cmd/Ctrl+K search and a user menu; sign-in,
+  sign-up, forgot-password, settings and 404 pages. The code uses feature folders with example
+  hooks, so the prototype grows in the same shape.
+- Forge's stack pages change from npm workspaces to Nx, and from TanStack Router to React
+  Router. A Python backend (FastAPI) is used only when the person asks for it, and it has no
+  starter yet.
+- In a client app that uses shadcn/ui, `forge close` refuses a change that adds a second UI
+  component library, or a hand-made copy of a shadcn/ui component. The review reports any other
+  hand-built UI component as a serious finding, unless the change says why shadcn/ui cannot do
+  it.
+- An existing client app keeps its own stack and code on upgrade. The check and the review rule
+  apply only to what later changes add, so a library the app already has is never refused.
 
 ## Why
 
-Each new client app starts with no code, so sign-in, the app shell and the test and CI setup are rebuilt by hand, and the stack page still says npm workspaces while the skill already says Nx.
+Each new client app starts empty, so the agent rebuilds sign-in, the app shell, the test set-up
+and CI by hand for every client, and each copy differs. Forge's stack page still says npm
+workspaces, while the guide already says Nx. Without a check, an agent can add a second component
+library or hand-build a dialog, and the look and accessibility drift. The owner chose these
+defaults on 22 October 2026, from section 2 of the research checklist
+(`/Users/ravikiranvemula/Workdir/app-checklist-research.md`).
+
+Forge ships the starter as a fixed set of files with exact versions and a lockfile, and does not
+run the Nx and shadcn tools at set-up. Set-up then takes seconds, works offline, gives the same
+app on every machine, and Forge's tests can check it without the network.
 
 ## Done when
 
-1. **A new client React app runs locally after setup, and its tests and CI pass on the first commit.**
-2. **The app has sign-in, one example entity from the database to the screen, and a shell with a collapsible sidebar, a top bar with Cmd+K search, auth pages, settings and a 404 page.**
-3. **The stack page names Nx for new apps, and the stack default in the skill matches it.**
-4. **A close check on a client app fails when it adds a second UI library or a hand-made copy of a shadcn component.**
-5. **Review reports a custom UI piece as P1 unless the change says why shadcn cannot do it.**
-6. **A new repo and an existing client repo adopted on an earlier release each get a test for these rules.**
+1. **`forge init --starter` on a new repo writes a runnable starter app in the first commit: an Nx workspace with a React app (Vite, React Router), a NestJS API with sign-in on Postgres, one example record type carried from the database to the screen, and its tests. forge.toml's test command runs lint, type checks, API tests on a real database and browser tests, and they pass. In a folder that already has an app, it refuses and names the file it found.**
+2. **The starter's screens come from shadcn/ui blocks: a sidebar that collapses to icons, with a toggle button and Cmd/Ctrl+B; a top bar with Cmd/Ctrl+K search and a user menu; sign-in, sign-up, forgot-password, settings and 404 pages; and feature folders with example hooks. Its browser tests walk each of these.**
+3. **Forge's stack, deploy, frontend, backend and testing pages name the Nx layout (`apps/web`, `apps/api`, `libs/shared`) and React Router in place of npm workspaces and TanStack Router. The Dockerfile builds and starts the app through the root `build` and `start:prod` scripts. The guide tells the agent to use the starter for a new React app.**
+4. **In a client app with shadcn/ui set up, `forge close` refuses a change that adds a second UI component library, or a new file outside `components/ui/` named like a shadcn/ui component, and says what to do. What the default branch already has is never refused.**
+5. **In such an app, the review reports a new hand-built UI component as P1, unless a `Not shadcn:` comment in the code says why shadcn/ui cannot do it, and Forge holds that finding until it is fixed. The worker brief states the rule.**
+
+## New and existing repos
+
+- **New repos** (init): the guide tells the agent to run `forge init --starter` for a new React
+  app. The first commit holds the starter, the new Dockerfile and a forge.toml whose test command
+  runs the starter's tests. The shadcn check and the review rule apply from the first fix. Plain
+  `forge init` works as before, with the new Dockerfile.
+- **Existing repos** (on upgrade to this release, after `forge sync`): no app file changes. The
+  repo keeps its Dockerfile, its test command and its stack, and gets no starter. The new stack
+  pages arrive with the release and say that an app on npm workspaces keeps them. The check and
+  the review rule apply only in an app that has shadcn/ui's `components.json`, and only to what a
+  change adds. Tested on the adopted earlier-release fixture moved to this release.
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request, and a client app owns its copy of
+the starter after set-up.
 
-Risks: none
+Trade-off: the starter's versions age. Forge refreshes them in its own releases; a client app
+updates its copy like any other dependency.
+
+Trade-off: the starter part is far over the 400-line part limit, so Forge asks the owner once to
+allow it.
+
+Trade-off: the close check matches file names. A file named like a shadcn/ui component for
+another reason (for example `features/billing/card.tsx`) is refused, and the agent renames it.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Every Done-when item has exactly one test function, `test_<n>_...`. STARTER's tests (1, 2, 3)
+are in `tests/test_starter_app.py`; GUARD's tests (4, 5) are in `tests/test_shadcn_only.py`.
+Each file starts with `STORY = "FORGE-STARTER-1"`. Each test runs the forge command and never
+imports forge, and each runs on a new repo (`_fresh_client` in `tests/test_setup.py`, with
+`--starter` where the item needs it) and on `tests/fixtures/adopted-v1.2.2` moved to this
+release (`_repo_adopted_on_the_previous_release` in `tests/test_upgrade_command.py`). Only the
+existing stubs are faked: Autoreview and GitHub (`env`, `finding`, `blocked`, `CLEAN` in
+`tests/test_close.py`, and `client as setup_client` from
+`tests/test_close_keeps_reviews_for_unchanged_branch_diffs.py`).
+
+**No network in the main CI.** The fast half of tests 1 to 3 copies files and reads JSON only.
+The live half (npm install, Postgres, Playwright, the Docker build) runs only when
+`FORGE_LIVE_STARTER=1`, read at collection time like `LINUX_CONTAINERS` in
+`tests/test_proto_deploy.py` (conftest removes `FORGE_*` variables later). A new workflow,
+`.github/workflows/starter-smoke.yml`, copies the shape of `codex-smoke.yml`: optional, never a
+required check, run by hand or on pull requests that change `src/forge/templates/starter/**`,
+`src/forge/templates/skeleton/**`, `src/forge/init.py`, `tests/test_starter_app.py` or the
+workflow itself, with `timeout-minutes: 20`. Forge's main CI stays under 5 minutes.
+
+**Words this story pins.**
+- The option is `forge init --starter` (a flag, no value). It adds the starter only on the
+  new-repo path of `init.init`. Refusal `REFUSALS["starter"]`: `"The starter app goes only into
+  a new repo with no app: {why}."`, next step `forge init without --starter`. `{why}` is
+  `{marker} is already here` (`package.json`, `pyproject.toml` or `go.mod` in the folder) or
+  `this repo already has commits` (the adoption path). It refuses before anything is written.
+- The starter lives in `src/forge/templates/starter/`. Init copies it as it copies `skeleton/`,
+  never over a file that is already there, into the one first commit. The skeleton keeps the
+  Dockerfile and `.dockerignore`; the starter has none.
+- Layout: one root `package.json` (exact versions only, no `workspaces` field), its
+  `package-lock.json`, `nx.json`, `tsconfig.base.json`, `apps/web/` (React, Vite, React Router;
+  `components.json`; `src/components/ui/` holds shadcn/ui files only; `src/components/` holds
+  shared composites; `src/features/<name>/{components,hooks,api,schemas,routes}`), `apps/api/`
+  (NestJS; `prisma/schema.prisma` and its first migration), `libs/shared/` (types and zod
+  validators both apps use), `e2e/` (Playwright), `compose.test.yml`, `docker-compose.yml`,
+  `.env.example` and `README.md`.
+- Root scripts: `build` builds both apps; `start:prod` starts the API, which serves the web
+  build at `/` and answers `GET /health`; `test` runs lint, typecheck and unit tests for every
+  project through Nx, then `playwright test`. The root `package.json` names the Prisma schema, so
+  `npx prisma migrate deploy` runs from `/app`.
+- With `--starter`, forge.toml's `test` is the command in `conventions/testing.md` ("npm ci &&
+  npx playwright install --with-deps chromium && docker compose ... && npm test"). Without it,
+  `NODE_TEST` is unchanged.
+- The UI library list and the shadcn/ui component name list are two constants in
+  `src/forge/app_baseline.py`. The libraries: `@mui/material`, `@mui/joy`, `antd`,
+  `@chakra-ui/react`, `@mantine/core`, `react-bootstrap`, `bootstrap`, `primereact`,
+  `semantic-ui-react`, `@nextui-org/react`, `@heroui/react`, `flowbite-react`,
+  `@blueprintjs/core`, `@fluentui/react-components`, `@radix-ui/themes`, `daisyui`,
+  `@headlessui/react`, `react-aria-components`, `@ark-ui/react`, `rsuite`, `grommet`. The
+  component names are the shadcn/ui component names at the pinned shadcn version (`button`,
+  `dialog`, `dropdown-menu`, `sidebar`, `table`, and the rest), compared after a PascalCase file
+  stem is turned to kebab-case.
+- A review finding against the rule has a title that starts `shadcn: `. `score.normalise` gives
+  it the constitution floor (Gain 4 or more, Work 2 or less) and marks it `(floor: shadcn)`.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
-
-1. <Evidence, edge cases and the tests that prove item 1.>
+1. Set-up writes the starter (STARTER).
+   - The API: sign-up, sign-in and sign-out with a server session in Postgres and an httpOnly
+     `SameSite=Lax` cookie; passwords hashed with Node's `crypto.scrypt` (no new library);
+     forgot and reset password through a mail provider that writes the reset link to the log,
+     until a story names an email service. One example record type, `Project` (name; status
+     `active` or `archived`; the audit fields of `conventions/database.md`), with list, create,
+     edit and delete under `/api/v1/projects`. Another account's project answers 404. Follow
+     `conventions/backend.md`, `api.md` and `security.md`.
+   - The starter's own tests: Supertest API tests against the running API and a fresh database
+     for sign-in and each project action; Vitest for the hooks; lint and typecheck.
+   - Test: `test_1_init_writes_a_runnable_starter`, with the parameter `case` in ("new",
+     "pyproject", "package.json", "adopted").
+     - new: `forge init --starter` exits 0. The first commit has the layout above. Every
+       version in `package.json` is exact (digits and dots only), and `package-lock.json`'s
+       root entry has the same dependencies. forge.toml's `test` is the testing page's command.
+       With `FORGE_LIVE_STARTER=1`, the test also runs that command in the new repo, which must
+       exit 0, and keeps Playwright's JSON report for test 2. One module-scoped fixture does
+       the install and the run once.
+     - pyproject and package.json: the marker file is in the folder before init. Init exits 1
+       with the refusal line naming it, and writes nothing.
+     - adopted: `forge init --starter` in the adopted fixture exits 1 with `this repo already
+       has commits`. After upgrade and `forge sync`, no starter file exists, and the Dockerfile
+       and the test command are unchanged.
+2. The shell (STARTER).
+   - From shadcn/ui blocks at the pinned version, copied as source with shadcn's MIT notice in
+     `src/forge/templates/starter/NOTICE.md`: `SidebarProvider`, `Sidebar collapsible="icon"`,
+     `SidebarInset`, `SidebarTrigger` in the top bar and `SidebarRail` on the edge, and
+     Cmd/Ctrl+B from the block; the sheet on mobile; the open state kept as the block keeps it.
+     The top bar: trigger, breadcrumbs, a search box that opens `CommandDialog` on Cmd/Ctrl+K
+     (wired by the starter), and a user menu with profile, settings, theme (light, dark, system)
+     and sign out. Pages: sign in, sign up, forgot password, reset password, settings (profile,
+     password, appearance), the projects list (data table with sort and pagination in the URL,
+     a create and edit dialog with react-hook-form and the shared zod schema, an `AlertDialog`
+     before delete, Sonner toasts) and 404. A skip link and one `<main>`.
+   - Example hooks in `apps/web/src/features/projects/hooks/`: `useProjects`, `useProject`,
+     `useCreateProject`, `useUpdateProject`, `useDeleteProject` over TanStack Query.
+     Components never call fetch.
+   - Test: `test_2_the_starter_shell_comes_from_shadcn_blocks`, with the parameter `adopted`.
+     Fast half on a new repo: the shell file has `collapsible="icon"`, `SidebarTrigger` and
+     `SidebarRail`; the router has the paths `/sign-in`, `/sign-up`, `/forgot-password`,
+     `/reset-password`, `/settings`, `/projects` and `*`; no `.tsx` file outside
+     `apps/web/src/components/ui/` has the stem of a file inside it. Live half: the report from
+     test 1 shows these Playwright tests passed: sign up, then sign in; Ctrl+B collapses and
+     expands the sidebar; Ctrl+K opens search and goes to Projects; create, edit and delete a
+     project; the theme changes in settings; an unknown address shows the 404 page; axe finds
+     no serious problem on the shell. Adopted: no starter file exists after upgrade and sync.
+3. Pages and Dockerfile (STARTER).
+   - `conventions/stack.md`: the Workspace row says Nx ("one build tool for the web app and the
+     API; no Nx Cloud"); the Frontend row says React with Vite and React Router; the layout and
+     the deploy contract above; one line: "An app set up before Nx keeps its npm workspaces and
+     its Dockerfile."
+   - `deploy.md`, `frontend.md` (`apps/web/src/`, React Router), `backend.md` (`apps/api/src/`),
+     `testing.md` (the root test script through Nx), `demo-data.md` (`apps/api/src/demo/`), and
+     the client stack paragraph of `src/forge/standards.md` say the same.
+   - `skeleton/Dockerfile`: `RUN npm ci && npm run build`, `WORKDIR /app`, and the CMD keeps
+     the migration line, then `exec npm run start:prod`.
+   - `skill.md`: the "Set up a new repo" row says `forge init --starter` for a new React app and
+     plain `forge init` for any other stack; the Prototype section says to build the prototype
+     on the starter and rename or remove `Project`; the stack-default line says the FastAPI
+     backend has no starter yet.
+   - Test: `test_3_stack_pages_name_the_nx_layout`, with the parameter `adoption` in ("new
+     init", "previous release upgrade and sync"). The conventions folder that the worker brief
+     names (found as `client_templates` in `tests/test_client_setup_matches_stack.py` does)
+     has `Nx` and `apps/web` in `stack.md` and `React Router` in `frontend.md`, and no page says
+     `npm workspaces` except the keep line. `.claude` and `.codex` `skills/forge/SKILL.md` have
+     `forge init --starter`. On a new init the Dockerfile has `npm run build` and
+     `npm run start:prod` and no `--workspace`. On the adopted repo the Dockerfile is unchanged.
+4. Close check (GUARD).
+   - `app_baseline.check(top, cfg, base)`, called by `close.close` next to `spotted.check`
+     (one line in `close.py`, which stays under 1,200 lines). It runs only when
+     `cfg["repo"] == "client"` and a tracked file named `components.json` is at `HEAD`. It
+     reads files through git only.
+   - A library problem: a listed library that a `package.json` at `HEAD` names under
+     `dependencies` or `devDependencies`, and that no `package.json` at the merge base names.
+   - A copy problem: a file added since the merge base (`--diff-filter=A`), ending `.tsx` or
+     `.jsx`, with no `components/ui` folder in its path, whose stem is a shadcn/ui component
+     name.
+   - One refusal, `REFUSALS["shadcn"]`: `"This app uses shadcn/ui only, and this change adds
+     {problems}."`, next step `use the shadcn/ui component (npx shadcn add <name>) and remove
+     the copy or the library, then forge close {item}`. `{problems}` names each library and
+     each file, joined by "; ".
+   - Test: `test_4_close_refuses_a_second_ui_library_and_shadcn_copies`, with the parameter
+     `adopted`. On main first: `components.json` and `apps/web/src/components/ui/button.tsx`
+     (adopted: also `antd` in `package.json`). A fix that adds `@mui/material` exits 1 naming
+     it. A fix that adds `apps/web/src/features/orders/Button.tsx` exits 1 naming the file. A
+     fix that adds `apps/web/src/components/ui/dialog.tsx` and an `orders-table.tsx` goes on
+     to review. Adopted: a fix that changes the `antd` version goes on to review. A repo with
+     no `components.json` that adds `@mui/material` goes on to review.
+5. Review rule (GUARD).
+   - `review.md`, Build simple, after the impeccable paragraph: "In an app with shadcn/ui set up
+     (a `components.json`), report a new UI component that hand-builds what a shadcn/ui
+     component or block already does as a P1 finding titled `shadcn: <the component>`, unless a
+     `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite
+     built from shadcn/ui components is not a finding, and neither is a library or component the
+     default branch already has."
+   - `score.normalise`: the constitution floor also matches a title that starts `shadcn: `,
+     marked `(floor: shadcn)`.
+   - `brief.md`: "In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new
+     UI component library and a new file outside components/ui/ named like a shadcn/ui
+     component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment
+     says why."
+   - Test: `test_5_review_holds_a_hand_built_component`, with the parameter `adopted`. A fix
+     with `components.json` on main changes a screen and closes. The review prompt has the rule
+     sentence. Autoreview returns a P1 finding titled `shadcn: DatePicker` scored `Gain 2, Work
+     3, Harm 1`; close exits 1 with "The review left serious findings open", and the finding
+     shows `(floor: shadcn)`. The worker brief that `forge work` sends has the brief sentence.
 
 ## Tasks
 
@@ -57,7 +253,44 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| STARTER | Starter app and Nx stack pages | `forge init --starter`, the starter tree with its shell, API, example record type and tests, the new Dockerfile, the stack pages, the guide lines, and the live starter workflow. | 1, 2, 3 | `src/forge/templates/starter/**` (new), `src/forge/init.py`, `src/forge/templates/skeleton/Dockerfile`, `src/forge/templates/conventions/stack.md`, `src/forge/templates/conventions/deploy.md`, `src/forge/templates/conventions/frontend.md`, `src/forge/templates/conventions/backend.md`, `src/forge/templates/conventions/testing.md`, `src/forge/templates/conventions/demo-data.md`, `src/forge/standards.md`, `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `pyproject.toml` (only if the wheel misses starter files), `.github/workflows/starter-smoke.yml` (new), and the existing tests in Notes | `tests/test_starter_app.py` (`test_1`, `test_2`, `test_3`) | | yes | |
+| GUARD | shadcn-only check and review rule | The close check on a second UI library and shadcn/ui copies, the review rule with its score floor, and the brief line. | 4, 5 | `src/forge/app_baseline.py`, `src/forge/close.py`, `src/forge/templates/review.md`, `src/forge/score.py`, `src/forge/templates/brief.md` | `tests/test_shadcn_only.py` (`test_4`, `test_5`) | | no | |
 
-New moving parts: none
+New moving parts: Nx, as the build tool of new client apps (items 1, 3); the optional starter-smoke workflow in Forge's own CI, which keeps the starter's live run out of the main CI (item 1).
 
 ## Notes
+
+- **Order.** STARTER and GUARD share no file and run in parallel. Test 2 has its own small
+  check (no `.tsx` outside `components/ui/` with the name of a file inside it), so STARTER does
+  not wait for GUARD, and the starter never trips GUARD's check.
+- **Why files, not tools.** Running `create-nx-workspace` and `npx shadcn add` at set-up needs
+  the network, takes minutes, asks questions, and gives a different app when either tool
+  releases. A fixed tree with exact versions and a lockfile follows principle 7 and lets the
+  fast tests run offline. The STARTER builder makes the tree once with the pinned tools, then
+  commits the result. A later Forge release refreshes it.
+- **Why a flag.** About 90 test files run `forge init`. A starter by default would put a
+  Docker test command and a large tree into each of them. The flag keeps plain `forge init` as
+  it is, and the guide gives the agent the flag for a new React app.
+- **Packaging.** The wheel must carry dotfiles in `templates/starter/` (`.env.example`,
+  `.gitignore`). The fast half of test 1 proves they arrive. If hatch drops a dotfile, store it
+  without the dot and let init rename it.
+- **Existing tests (STARTER).** `tests/test_proto_deploy.py` test_10 keeps its checks; its fake
+  app moves to root `build` and `start:prod` scripts, `apps/web` and `apps/api`, with no
+  `workspaces` field. `tests/test_fix_forge_says_end_to_end_tests_come_first_b.py` checks the
+  new root test script line. `tests/test_client_setup_matches_stack.py` test_1 stays as it is.
+  Run every test that runs `forge init`; plain `forge init` must give the same files as today,
+  except the Dockerfile.
+- **Not in this story.**
+  - The design canvas flow, the Opus completeness check of the prototype, and the impeccable
+    and emil-design-eng gate on it: the next story.
+  - A FastAPI starter for a Python backend: a later story, when a client asks for Python. Until
+    then the agent builds it in a fix, as the guide says today.
+  - A starter for an existing repo that was set up on an earlier release and has no app yet.
+  - Email sending, OIDC sign-in, notifications, CSV export and the other checklist items, each
+    with the story that needs it.
+- **Not to do.**
+  - No new command and no `forge.toml` setting. The one new option is `--starter`.
+  - No Nx Cloud, remote cache or telemetry in the starter.
+  - No change to an existing repo's app files, Dockerfile or test command on upgrade or sync.
+  - No escape option on the close check; the review rule has the `Not shadcn:` comment.
+- No client repo is named anywhere in this story's code, tests, texts or commits.
