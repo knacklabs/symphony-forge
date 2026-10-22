@@ -4,12 +4,20 @@
   "done_when": "When a review is clean but lists findings, close says in one plain line that they do not block and why, and a Not done that names one of the item's own Done-when lines blocks the merge",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-22T06:51:16.988830+00:00",
       "step": "start"
     }
   ],
-  "why": "Close lists P1 findings, including a Not done on the fix's own Done-when, and then says Review: clean without saying that these findings do not block, so the agent merges unmet work without knowing (issue #927)."
+  "stuck": {
+    "close": null,
+    "head": "0105585be6bc0ced0a0a017d2587d94867d37490",
+    "keys": {},
+    "round": null
+  },
+  "why": "Close lists P1 findings, including a Not done on the fix's own Done-when, and then says Review: clean without saying that these findings do not block, so the agent merges unmet work without knowing (issue #927).",
+  "worker": "codex"
 }
