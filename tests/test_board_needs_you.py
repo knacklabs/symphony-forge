@@ -15,7 +15,7 @@ from test_board_counts import ONE_PART, board, clock, configure, github, read_st
 from test_close import CLEAN, STORY_DOC, approve_story, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_hotspot_stop import rounds, seed
-from test_story import READER, worktree
+from test_story import READER, approved_constitution, worktree
 from test_worker import install_claude
 
 STORY = "FORGE-BOARD-2"
@@ -75,6 +75,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         size_choice(env)
         return
     seed(env, "src/a.py")
+    approved_constitution(env.repo)
     now = datetime.now(timezone.utc).replace(microsecond=0)
     prs = {}
 

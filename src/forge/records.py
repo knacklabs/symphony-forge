@@ -330,7 +330,8 @@ def constitution(top: Path) -> str:
     text = story.show(top, ref, "docs/product/CONSTITUTION.md")
     if text is None:
         return ""
-    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
+    # Share next's default-branch listing through the command's git snapshot cache.
+    names = repo.git("ls-tree", "-r", "--name-only", ref, cwd=top)
     for name in names.splitlines():
         if re.fullmatch(r"docs/decisions/\d{4}-app-constitution\.md", name):
             fields, _ = _front(story.show(top, ref, name) or "")
