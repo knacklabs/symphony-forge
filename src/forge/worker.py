@@ -73,16 +73,16 @@ REFUSALS = {
 
 def checkout(item: str) -> tuple[re.Match[str], Path]:
     """Find a work checkout and refuse its unfinished merge before parsing any settings."""
-    from forge import close
-
     task.require_active(item)
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
     branches = [f"task/{match['key']}-{match['task']}"] if match["task"] else [f"fix/{item}", f"forge/{item}"]
-    for branch in branches:
-        if (close._pull_request(repo.root(), branch) or {}).get("state") == "MERGED":
-            refuse(REFUSALS["merged"], item=item)
+    top = repo.root()
+    default = repo.default_branch(top)
+    git("fetch", "-q", "origin", default, cwd=top)
+    if task._merged(f"origin/{default}", item, top):
+        refuse(REFUSALS["merged"], item=item)
     trees = story.worktrees(Path.cwd())
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
@@ -105,7 +105,6 @@ def prepare(item: str) -> tuple[re.Match[str], Path, str]:
         default = repo.default_branch(top)
         first = ""
         with codex.hold(top, item, "Build"):
-            git("fetch", "-q", "origin", default, cwd=top)
             merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
             if merged.returncode:
                 if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
