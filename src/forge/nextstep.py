@@ -441,7 +441,8 @@ def _refresh(top: Path, trees: dict[str, Path]) -> list[str]:
     if any(re.fullmatch(rf"fix/{REFRESH}(-\d+)?", branch) for branch in trees):
         return []
     ref = story.landed_ref(top)
-    names = repo.git("ls-tree", "-r", "--name-only", ref, cwd=top).splitlines()
+    names = repo.command_fact(("default file names", ref), top,
+                             lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top)).splitlines()
     locks = [name for name in names if Path(name).name in LOCKFILES]
     if not locks:
         return []
