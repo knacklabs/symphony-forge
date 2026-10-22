@@ -93,7 +93,7 @@
     "id": "4110a9fb-b70c-412a-9886-8292b6a1a308",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -115,10 +115,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "0105585be6bc0ced0a0a017d2587d94867d37490",
+    "close": "fd335dec-5bb5-437b-99d6-fa709a3b78c8",
+    "head": "97c1c6fff1fdd015fb63eb65f4f24524633ff124",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Close lists P1 findings, including a Not done on the fix's own Done-when, and then says Review: clean without saying that these findings do not block, so the agent merges unmet work without knowing (issue #927).",
   "worker": "codex"
