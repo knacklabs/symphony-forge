@@ -22,8 +22,8 @@
     "id": "3c09e08c-af81-40ad-be3f-8e7188ed1a62",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-22T05:30:27.761451+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "6f2b56e7ddfa86cce6ad9427a45c2a1720db9602",
+    "close": "7d62739a-36a7-4e75-96e2-cc1f17831465",
+    "head": "ecc81f7f138687acb763143ae3c79aabe0c59e79",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A client sign-off record accepts approved_via only as email or call (src/forge/records.py), so a client who approved the prototype in the engineering chat cannot be recorded truthfully (issue #1022). The owner decided on 22 Oct that chat counts.",
   "worker": "codex"
