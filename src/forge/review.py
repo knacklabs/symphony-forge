@@ -888,8 +888,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                                 "-m", "Product snapshot for sign-off", cwd=tree)
             repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
         else:
+            # A replay can leave the recorded review commit outside every advertised ref.
             repo.git("fetch", "-q", str(top),
-                     f"+refs/remotes/{base}:refs/remotes/{base}", cwd=tree)
+                     f"+refs/remotes/{base}:refs/remotes/{base}",
+                     *([previous["commit"]] if previous.get("commit") else []), cwd=tree)
             review_base = previous.get("commit") or repo.git("rev-parse", base, cwd=tree)
             if previous.get("commit"):
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
