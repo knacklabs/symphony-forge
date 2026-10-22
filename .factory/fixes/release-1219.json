@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release's version bump changes the pinned version in every file that names it; no behaviour changes",
   "base": "ecf68826c902d901f5432bb5ec0e5b9fb24e5492",
   "branch": "fix/release-1219",
   "done_when": "forge.toml, the package and every pinned reference say v1.2.19",
