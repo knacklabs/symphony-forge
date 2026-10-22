@@ -1,6 +1,13 @@
 {
   "base": "134b1a984cee88334d4c96083aeb2a260e7f075b",
   "branch": "fix/a-client-sign-off-record-accepts-approve",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16217-15d2-7383-8952-9d34c475ee4b",
+    "head": null,
+    "start": "329082006888839d0c024cc1fd582428680223d6"
+  },
   "done_when": "forge decision accept takes a client sign-off whose approved_via is chat, as it takes email or call, and the shipped guide and sign-off template name chat as a choice",
   "fix_kind": "backend",
   "kind": "fix",
