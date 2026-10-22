@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-CONSTITUTION-1-GATE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-22T07:31:06.664397+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "6c26b04a341f372429fa4a6dda93c9325cf31453",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
