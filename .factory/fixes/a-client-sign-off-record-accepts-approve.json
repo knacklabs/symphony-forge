@@ -11,12 +11,27 @@
   "done_when": "forge decision accept takes a client sign-off whose approved_via is chat, as it takes email or call, and the shipped guide and sign-off template name chat as a choice",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e3da2526d5bf507f70027bfefdf9f8077279c1ba7791e0f98e2856a904a128e7",
+    "changed": "8fa571ffccaf8f120cc17c54b2c0fe59cd0a3ebdce000fba0c84d211b68f0f44",
+    "commit": "4dd6fefb1ef805ff2cb5cf68bd4e85f6033a2a59",
+    "dismissals": [],
+    "findings": [],
+    "id": "3c09e08c-af81-40ad-be3f-8e7188ed1a62",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-22T05:30:27.761451+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-22T05:33:57.656895+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
