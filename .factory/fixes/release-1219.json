@@ -5,12 +5,57 @@
   "done_when": "forge.toml, the package and every pinned reference say v1.2.19",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "README.md",
+      "file": "README.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 232,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge.toml, the package and every pinned reference say v1.2.19",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fa34e0e3417cb0e613d59d70d0fd4a8e4ea1783db8935c32c0eb8f4f18a063c1",
+    "changed": "f908d5f2aee64c0dda9054cbd9d3de6eee6f363c6f455ec525332cc846648dd7",
+    "commit": "7ba4e47550bd2a7b96e6ae2b32f2ee4f82c2b28d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Case: normal use - a client follows the Forge guide linked from README.md:302. This release updates the README installation command, but docs/guide.md:19 still pins its installation command to v1.0.0. That active guide therefore installs the old release, leaving the promised \"every pinned reference\" requirement unmet. Update that installation pin and include it in the release-version check.",
+        "file": "README.md",
+        "gain": 3,
+        "harm": 3,
+        "line": 232,
+        "priority": "P1",
+        "title": "Not done: forge.toml, the package and every pinned reference say v1.2.19",
+        "work": 2
+      }
+    ],
+    "id": "1c1415ca-b34d-481f-ba59-80dea3764271",
+    "status": "blocked"
+  },
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-22T06:10:44.146322+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-22T06:13:15.707416+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-22T06:13:15.716243+00:00",
+    "file": "README.md",
+    "wait_id": "c8d577a5-3e3f-43c8-b23e-f29434302c36"
+  },
   "why": "Clients need v1.2.19: chat sign-off, the owner's round-limit rule and registered Codex roles"
 }

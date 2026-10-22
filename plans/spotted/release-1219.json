@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tREADME.md\tNot done: forge.toml, the package and every pinned reference say v1.2.19\trelease-1219",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 232,
+      "text": "Not done: forge.toml, the package and every pinned reference say v1.2.19",
+      "from": "blocking",
+      "item": "release-1219",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
