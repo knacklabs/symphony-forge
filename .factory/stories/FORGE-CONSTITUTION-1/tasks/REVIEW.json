@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-CONSTITUTION-1-REVIEW",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-22T10:46:05.825561+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "3d4411e2e5de0d28c73a0f359ff7ea7c846d2efe",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
