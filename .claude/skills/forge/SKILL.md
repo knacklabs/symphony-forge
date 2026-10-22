@@ -816,7 +816,7 @@ repo's tool and `[models.review]` settings, with Autoreview's defaults for unset
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
-records.
+records. Set `approved_via` to `email`, `call` or `chat` and `approved_on` to the reply date.
 
 The Answers check ignores trailing whitespace and line-ending differences. A refusal names the first
 different line in the Answers section, including its heading.
