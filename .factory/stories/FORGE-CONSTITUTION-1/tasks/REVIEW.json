@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-CONSTITUTION-1-REVIEW",
+  "chat": {
+    "approval": "e9fa083a6fb277d0646d5688922f8a85d27238324e80e1a17c783908d6536ea6",
+    "claude": null,
+    "conversation": "01a16338-04df-7c21-9539-73711383a5df",
+    "head": null,
+    "start": "09b023a7ebb5beb77e55209248f6f58746d30041"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
