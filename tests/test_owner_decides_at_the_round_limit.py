@@ -214,6 +214,13 @@ def test_3_from_round_two_a_cold_read_with_an_open_note_below_p0_stops_for_the_o
     assert len(calls_log.read_text("utf-8").splitlines()) == 2
 
     if case == "below p0":
+        if not adopted and target == "SHOP":
+            invalid = repo.forge("read", target, "--resolve", "accept", "--reason", " ", cwd=where)
+            assert invalid.returncode == 1, invalid.stdout + invalid.stderr
+            assert invalid.stderr == (
+                "Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.\n"
+                f"Next: {resolution}\n")
+            assert len(calls_log.read_text("utf-8").splitlines()) == 2
         reason = "The owner accepts the remaining recovery note"
         chosen = repo.forge("read", target, "--resolve", "accept", "--reason", reason, cwd=where)
         assert chosen.returncode == 0, chosen.stdout + chosen.stderr

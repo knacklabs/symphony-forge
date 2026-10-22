@@ -93,10 +93,12 @@ def test_5_stop_questions_rank_open_notes_in_one_table(env, tmp_path, case):
     def read_two(key: str, last: str):
         shop = new_story(repo, key)
         (shop / "plans" / f"{key}.md").write_text(DOC, encoding="utf-8")
-        # A P0 now stops the second read; this test still owns the open-note table.
+        # Consecutive P0 rounds reach the stop; the previous disposition still counts.
         for number in (1, 2):
+            scores = ("   Gain 4, Work 1, Harm 4\n" if number == 1 else
+                      "   Gain 4, Work 1, Harm 1\n" if key == "SHOP" else "")
             _says(repo, f"1. Blocking: Gap {number}.\n   Raise: Not done. Builders guess the limit.\n"
-                  + ("   Gain 4, Work 1, Harm 1\n" if key == "SHOP" else "") + (last if number == 2 else ""))
+                  + scores + (last if number == 2 else ""))
             read = repo.forge("read", key)
             if number < 2:
                 notes = shop / "plans" / f"{key}.read.md"
