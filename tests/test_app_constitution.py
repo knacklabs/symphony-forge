@@ -15,7 +15,7 @@ from test_merge_command import _merge_at_github, _ready
 from test_proto_signoff import _decision
 from test_setup import _fresh_client
 from test_score_notes import _client_repo as setup_client, _scored
-from test_story import DOC, READER, new_story, setup, worktree
+from test_story import DESIGN_IMAGE, DOC, READER, new_story, setup, worktree
 from test_tools_session_hold import Session
 
 STORY = "FORGE-CONSTITUTION-1"
@@ -451,7 +451,8 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
     path = "docs/storage.md" if case == "documents" else "app.py"
     if case == "part":
         repo.write("plans/SHOP.md", STORY_DOC)
-        repo.git("add", "plans/SHOP.md")
+        repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
+        repo.git("add", "plans/SHOP.md", "docs/design/baskets/screen.svg")
         _fixture_git(repo, tmp_path, "commit", "-qm", "Record the existing story")
         _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
         item, where = env.start_task()
