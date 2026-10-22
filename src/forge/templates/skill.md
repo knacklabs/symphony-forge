@@ -734,7 +734,8 @@ In a new client repo, follow the FDE route: start with discovery of the customer
 workaround, cost, people, frequency and evidence; build the smallest working prototype that tests
 the riskiest part of that problem; demo it; review the whole prototype and answers; obtain the
 customer's named sign-off;
-then create stories. Use prototype fixes before sign-off. The salesperson can be the FDE at first;
+then write the app's constitution; then create stories. Use prototype fixes before sign-off. The
+salesperson can be the FDE at first;
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
 call script. Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
@@ -834,35 +835,93 @@ Ask that one question, put the answer in the finding's disposition and the story
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
 Until the decision, use a fake provider for an external service.
 
+## App constitution
+
+During both halves of the interview, ask one question at a time in plain words for a person who
+may not be technical.
+
+Before the prototype, ask only the product questions: what the app is for, who uses it, what it
+keeps track of with each thing's fields, and the options of each choice list. Write the answers in
+docs/product/BRIEF.md under ## Summary, ## Users and ## Things it keeps track of. Record
+the options for each choice list with the thing it belongs to. The prototype uses these answers.
+
+After the customer's sign-off and before the first story, write the app's constitution in
+docs/product/CONSTITUTION.md. Show every default in one message, and let the person change any
+of them. Use the defaults in [Constitution defaults](fde.md#constitution-defaults), except where
+`## Answers` in the brief already gives a settled answer. Skip a defaulted question that `## Answers`
+already answers. Check the brief's `Personal data` answer; ask whether any data is private or
+regulated only when that answer is missing, then record the answer in `## Answers`.
+
+Use this outline, and do not copy product facts from the brief into the constitution:
+
+```markdown
+# <App name> constitution
+
+The product facts are in docs/product/BRIEF.md.
+
+## Defaults
+- <the question in plain words>: <the default or the person's answer>
+
+## Architecture choices
+- <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
+```
+
+Make each architecture choice yourself, from the answers and the code, and write it as one plain
+line with its reason and its decision record. Record the stack that the code already uses. For
+parts with no code, use the stack default: an Nx workspace with React (Vite and React Router),
+NestJS and Postgres. Use a FastAPI backend only when the person asks for it.
+Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
+
+A live app answers both halves at adoption: ask only what the code cannot answer. Record the stack
+the code already uses.
+
+Create and accept a decision record for each architecture choice with
+`forge decision new <slug>` and `forge decision accept <slug> --by "<name>"`. Create the
+constitution approval record with `forge decision new app-constitution`. When the brief answers
+what the app is for, who uses it, what it keeps track of and whether its data is private or
+regulated, and the constitution has its defaults and accepted architecture records, run
+`forge decision accept app-constitution --by "<owner>"`. The owner approves the constitution once.
+If it is not ready, fill in the missing answers, defaults or decisions, then run the accept command
+again.
+
+No new story starts until the owner approves the constitution. Existing stories, parts and fixes
+continue, and prototype work is not held. If the constitution is missing, start the constitution
+fix Forge names with `forge fix start "Write the app constitution" --done "The owner approved
+docs/product/CONSTITUTION.md"`, then complete it before starting a story. A review or cold read in an app with an
+approved constitution checks work against its text; a conflict is a P1 finding or note. A change
+to documents only keeps its light review, which holds only P0 findings.
+
 ## Adopt a live app
 
 An app already in production joins Forge through one fix and one pull request the human merges.
 Adopting changes no app code.
 
-1. Write the codebase report in `docs/context/codebase.md`: the stack and how to run it; the tests
+1. Follow [App constitution](#app-constitution) for both interview halves together. Ask only what
+   the code cannot answer, and record the stack the code already uses.
+2. Write the codebase report in `docs/context/codebase.md`: the stack and how to run it; the tests
    and the areas they don't cover; the CI workflows and the checks branch protection requires; what
    a merge triggers; branch rules and reviewers; the hook tools already in use; secret files and
    variables by name only, never their values; where personal data lives; the migration tool; and
    the danger zones.
-2. Mark as danger zones the most-changed, most-reverted and most-hotfixed files in git history. A
+3. Mark as danger zones the most-changed, most-reverted and most-hotfixed files in git history. A
    story that touches one names it under Risks.
-3. List the open pull requests and branches in the report, so a story's plan avoids colliding with
+4. List the open pull requests and branches in the report, so a story's plan avoids colliding with
    a teammate's work.
-4. Link or import the repo's existing decision records and design docs as Forge decisions:
+5. Link or import the repo's existing decision records and design docs as Forge decisions:
    `forge decision new <slug>`, the original linked or copied unchanged under the line
    `Imported from <path>.` Don't rewrite them.
-5. Read the review comments of about the last 100 merged pull requests. Each rule reviewers enforce
+6. Read the review comments of about the last 100 merged pull requests. Each rule reviewers enforce
    repeatedly becomes a House rule citing the pull requests it came from.
-6. Ask the human three questions, one at a time, with options: who approves stories, who merges,
+7. Ask the human three questions, one at a time, with options: who approves stories, who merges,
    and what must never be touched.
-7. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
+8. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
    block. The repo's own rules win where they differ from Forge's default-stack conventions.
    A rule every review must follow, such as which tests a kind of change needs, goes under
    `## Review rules` in AGENTS.md, outside Forge's block: every review reads that section from the
    default branch and follows it.
    A repo keeps its rules in AGENTS.md only: forge sync moves a CLAUDE.md's own lines into
    AGENTS.md, outside Forge's block, and deletes CLAUDE.md, since Claude Code reads AGENTS.md itself.
-8. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
+9. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
    with the test tool's built-in changed-only option and `{base}` (for example
    `vitest --changed {base}` or `jest --changedSince {base}`). Once the human agrees, set it in
    `forge.toml` through a fix. For pytest repos, propose

@@ -11,7 +11,7 @@ from pathlib import Path
 from test_close import STORY_DOC, env, finding, report  # noqa: F401 (env is a fixture)
 from test_githooks import commit
 from test_setup import _fresh_client
-from test_story import DOC, new_story, setup
+from test_story import DOC, approved_constitution, new_story, setup
 from test_worker import calls, install_claude
 
 import pytest
@@ -31,6 +31,7 @@ def test_33_new_moving_parts_line(env):
     env.commit(repo.path, "docs/decisions/0001-client-signoff.md",
                "---\nstatus: accepted\n---\n")
     repo.git("push", "-q", "origin", "main")
+    approved_constitution(repo)
     made = repo.forge("story", "new", "CART", "Shoppers share a cart")
     assert made.returncode == 0, made.stderr
     tasks = repo.git("show", "story/CART:plans/CART.md").split("\n## Tasks\n")[1].split("\n## ")[0]

@@ -63,6 +63,8 @@ REFUSALS = {
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
     "prototype": ("Stories wait for the customer's sign-off. Build and demo the prototype first.",
                   "forge next"),
+    "constitution": ("New stories wait for this app's approved constitution in docs/product/CONSTITUTION.md.",
+                     'forge fix start "Write the app constitution" --done "The owner approved docs/product/CONSTITUTION.md"'),
 }
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -110,6 +112,9 @@ def new(args: Any) -> int:
         repo.refuse(REFUSALS["bad_key"], key=key)
     if (top / "forge.toml").is_file() and repo.is_prototype(top):
         repo.refuse(REFUSALS["prototype"])
+    from forge import records
+    if (top / "forge.toml").is_file() and repo.config(top)["repo"] == "client" and not records.constitution(top):
+        repo.refuse(REFUSALS["constitution"])
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
     done = "Something anyone can observe once this is done."
     if fix:

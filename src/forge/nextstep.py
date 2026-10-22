@@ -318,6 +318,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     if history is None and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
+    if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
+            and not repo.is_prototype(top, cfg) and not records.constitution(top)):
+        lines += ["Before its next story, this app needs its approved constitution.",
+                  "Next: " + story.REFUSALS["constitution"][1]]
     return (_due(top, history) + pinned + [line for alert in alerts.values() for line in alert]
             + _hotspots(top, trees) + lines), states
 

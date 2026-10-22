@@ -73,6 +73,8 @@ REFUSALS = {
     "not_proposed": ("{rel} is {status}, so it cannot be accepted.", "forge decision new <new-slug>"),
     "unfilled": ("{rel} has only the template's comments in {sections}; fill them in first.",
                  'forge decision accept {slug} --by "{by}"'),
+    "constitution": ("The app constitution can't be approved yet: {missing}.",
+                     'fill them in, then forge decision accept app-constitution --by "{by}"'),
     "no_superseded": ("{rel} supersedes {old}, but there is no such decision.",
                       'forge decision accept {slug} --by "{by}"'),
     "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).",
@@ -249,6 +251,10 @@ def decision_accept(args: argparse.Namespace) -> None:
         return
     if status != "proposed" and not (prototype_tree and status == "accepted"):
         repo.refuse(REFUSALS["not_proposed"], rel=rel, status=status)
+    if Path(rel).stem.endswith("-app-constitution"):
+        missing = _constitution_gaps(top, by)
+        if missing:
+            repo.refuse(REFUSALS["constitution"], missing="; ".join(missing), by=by)
     sections = _sections(body)
     unfilled = [name for name in DECISION_SECTIONS
                 if not re.sub(r"<!--.*?-->", "", sections.get(name, ""), flags=re.S).strip()]
@@ -316,6 +322,50 @@ def decision_accept(args: argparse.Namespace) -> None:
     repo.commit_state(f"Accept the {args.slug} decision", *changed, top=top)
     also = f"; {changed[1]} is now superseded" if old else ""
     print(f"Accepted {rel}, confirmed by {by}{also}.")
+
+
+def constitution(top: Path) -> str:
+    """The approved constitution on the default branch as last fetched, or no text."""
+    ref = story.landed_ref(top)
+    text = story.show(top, ref, "docs/product/CONSTITUTION.md")
+    if text is None:
+        return ""
+    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
+    for name in names.splitlines():
+        if re.fullmatch(r"docs/decisions/\d{4}-app-constitution\.md", name):
+            fields, _ = _front(story.show(top, ref, name) or "")
+            if fields.get("status") == "accepted":
+                return text
+    return ""
+
+
+def _constitution_gaps(top: Path, by: str) -> list[str]:
+    from forge import nextstep
+
+    page = top / "docs/product/CONSTITUTION.md"
+    missing = [] if page.is_file() else ["docs/product/CONSTITUTION.md is missing"]
+    sections = _sections(re.sub(r"<!--.*?-->", "", _text(page), flags=re.S))
+    for name in ("Defaults", "Architecture choices"):
+        if not sections.get(name, "").strip():
+            missing.append(f"## {name} has no text")
+    for line in sections.get("Architecture choices", "").splitlines():
+        if not line.strip():
+            continue
+        names = re.findall(r"\bdocs/decisions/\d{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md\b", line)
+        if not names:
+            missing.append(f'architecture choice "{line.strip()}" names no decision record')
+        for name in names:
+            fields, _ = _front(_text(top / name))
+            if not (top / name).is_file() or fields.get("status") != "accepted":
+                slug = Path(name).stem[5:]
+                missing.append(f'{name} needs forge decision accept {slug} --by "{by}"')
+    brief = _sections(re.sub(r"<!--.*?-->", "", _text(top / "docs/product/BRIEF.md"), flags=re.S))
+    for name in ("Summary", "Users", "Things it keeps track of"):
+        if not brief.get(name, "").strip():
+            missing.append(f"docs/product/BRIEF.md needs ## {name}")
+    if "Personal data" in nextstep.open_must_answer_topics(top):
+        missing.append("Personal data needs a settled answer in docs/product/BRIEF.md")
+    return missing
 
 
 # --- the roadmap -----------------------------------------------------------------------

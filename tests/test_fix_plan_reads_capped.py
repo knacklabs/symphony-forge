@@ -11,7 +11,7 @@ import pytest
 
 from conftest import ROOT, _install
 from test_setup import _fresh_client
-from test_story import DOC, READER, new_story
+from test_story import DOC, READER, approved_constitution, new_story
 
 STORY = "FIX-PLAN-READS-CAPPED"
 
@@ -41,6 +41,7 @@ def _client(repo, gh, tmp_path, previous):
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/upgrade")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
 
 

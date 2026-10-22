@@ -18,7 +18,7 @@ from conftest import GH_STUB, ROOT, Repo, _install
 from test_close import GREEN, env  # noqa: F401
 from test_land import GH, URL, land  # noqa: F401
 from test_setup import _fresh_client
-from test_story import prototype_design
+from test_story import approved_constitution, prototype_design
 from test_tools_session_hold import Session
 
 STORY = "FORGE-INTAKE-1"
@@ -206,6 +206,7 @@ def test_3_a_big_idea_starts_a_story_with_a_first_plan(intake):
         finished = _back(intake, offered, _fix("Build the basket prototype"))
         assert finished.returncode == 0, finished.stdout + finished.stderr
     _signed_off(intake)
+    approved_constitution(repo, where=top)
     offered = _offer(intake, "Let shoppers keep baskets")
     done = _back(intake, offered, reply)
     assert done.returncode == 0, done.stdout + done.stderr
@@ -262,6 +263,7 @@ def test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list(i
     # ideas into a work branch without a default-branch commit.
     repo, top, _, _, age, _ = intake
     _signed_off(intake)
+    approved_constitution(repo, where=top)
     earlier = "- 2025-01-01: Keep the existing idea\n" if age == "adopted" else ""
     ideas = top / "plans/ideas.md"
     if earlier:
@@ -320,6 +322,7 @@ def test_5_one_short_instruction_moves_an_idea_and_leaves_one_item(intake, move,
     from test_fix_drop import _github
     from test_story import DOC, claude_plan
     _signed_off(intake)
+    approved_constitution(repo, where=top)
     database = _github(repo)
     fix = "fix-the-welcome-typo"
     if move in ("story", "later"):

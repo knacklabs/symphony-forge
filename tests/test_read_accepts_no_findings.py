@@ -12,7 +12,7 @@ import pytest
 
 from conftest import ROOT, _install
 from test_setup import _fresh_client
-from test_story import DOC, READER, new_story
+from test_story import DOC, READER, approved_constitution, new_story
 
 pytestmark = pytest.mark.platform
 
@@ -96,6 +96,7 @@ def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/reader-guidance")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     for key, (reply, clean) in zip(keys, replies):
         (repo.bin / "claude-says.md").write_text(reply, encoding="utf-8")

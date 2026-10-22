@@ -16,7 +16,7 @@ from conftest import ROOT, _install
 from test_close import CLEAN, blocked, env  # noqa: F401 (env is a fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_setup import _fresh_client
-from test_story import DOC, READER, new_story
+from test_story import DOC, READER, approved_constitution, new_story
 
 STORY = "FORGE-SCORE-1"
 
@@ -49,6 +49,7 @@ def _client_repo(env, tmp_path, previous: bool) -> None:
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/upgrade")
     repo.git("-c", no_hooks, "push", "-q", "origin", "main")
+    approved_constitution(repo)
 
 
 @pytest.mark.parametrize("case", ["init", "earlier-adoption-upgrade-sync", "sign-off"])

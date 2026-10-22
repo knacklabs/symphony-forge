@@ -8,7 +8,7 @@ import pytest
 from conftest import ROOT, FORGE_SHIM, _install
 from test_setup import _fresh_client
 from test_readloop_gates import dispose_all
-from test_story import DOC, GRILL, READER, claude_plan, hook, new_story, setup
+from test_story import DOC, GRILL, READER, approved_constitution, claude_plan, hook, new_story, setup
 
 STORY = "FIX-PLAN-SIX-DONE-WHENS"
 MESSAGE = "This story has more than six Done when items; split it into smaller stories.\n"
@@ -41,6 +41,7 @@ def test_1_read_refuses_more_than_six_results_in_new_and_upgraded_clients(
     repo.git("add", "-A")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qm", "Upgrade the client")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     repo.git("switch", "-qc", "fix/plan-guidance")
     synced = repo.forge("sync")

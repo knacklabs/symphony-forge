@@ -93,12 +93,55 @@ sys.stdout.write(text)
 GRILL = 'models.grill.claude = { model = "opus", effort = "high" }\n'
 
 
+def approved_constitution(repo, where=None):
+    """Seed the complete, accepted constitution that ordinary client tests need."""
+    top = Path(where) if where is not None else repo.path
+    decisions = top / "docs/decisions"
+    decisions.mkdir(parents=True, exist_ok=True)
+    used = {int(match.group(1)) for path in decisions.glob("[0-9][0-9][0-9][0-9]-*.md")
+            if (match := re.match(r"(\d{4})-", path.name))}
+    choice_number = 1
+    while choice_number in used:
+        choice_number += 1
+    constitution_number = choice_number + 1
+    while constitution_number in used:
+        constitution_number += 1
+    choice = f"{choice_number:04d}-postgres-storage.md"
+    constitution = top / "docs/product/CONSTITUTION.md"
+    constitution.parent.mkdir(parents=True, exist_ok=True)
+    constitution.write_text(
+        "# App constitution\n\n## Defaults\nUse the secure defaults listed in the guide.\n\n"
+        "## Architecture choices\n"
+        f"- Store app data in Postgres: docs/decisions/{choice}.\n",
+        encoding="utf-8")
+    (decisions / choice).write_text(
+        '---\nstatus: accepted\nconfirmed_by: "Ravi"\n---\n\n'
+        "# Store app data in Postgres\n",
+        encoding="utf-8")
+    (decisions / f"{constitution_number:04d}-app-constitution.md").write_text(
+        '---\nstatus: accepted\nconfirmed_by: "Ravi"\n---\n\n'
+        "# App constitution\n",
+        encoding="utf-8")
+    repo.git("add", "docs/product/CONSTITUTION.md", f"docs/decisions/{choice}",
+             f"docs/decisions/{constitution_number:04d}-app-constitution.md", cwd=top)
+    if repo.git("branch", "--show-current", cwd=top) == "main":
+        no_hooks = top.parent / "fixture-no-hooks"
+        no_hooks.mkdir(exist_ok=True)
+        repo.git("-c", f"core.hooksPath={no_hooks}", "commit", "-q", "-m",
+                 "Approve a complete app constitution", cwd=top)
+        repo.git("-c", f"core.hooksPath={no_hooks}", "push", "-q", "origin", "main", cwd=top)
+    else:
+        repo.git("commit", "-q", "-m", "Approve a complete app constitution", cwd=top)
+
+
 def setup(repo, kind="forge-source", keys=("SHOP",)):
     """forge.toml pinned to this Forge with the grill kind's models, a roadmap with these keys, and
     a stub claude reader."""
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "{kind}"\n{GRILL}')
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
+    if kind == "client":
+        approved_constitution(repo)
     # These user-facing plans need screens under the new design-first contract.
     repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")

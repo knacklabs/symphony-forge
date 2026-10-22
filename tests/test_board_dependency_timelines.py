@@ -9,7 +9,7 @@ import pytest
 from conftest import ROOT, _install
 from test_board import DOC
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
-from test_story import GRILL, READER, claude_plan, hook, new_story, ready, worktree
+from test_story import GRILL, READER, approved_constitution, claude_plan, hook, new_story, ready, worktree
 
 STORY = "FIX-BOARD-VISUALS"
 
@@ -68,6 +68,7 @@ def _configured(repo, gh, tmp_path, history, keys):
     repo.path = main
     repo.git("merge", "-q", "--ff-only", "fix/configure-client")
     _land_fixture(repo)
+    approved_constitution(repo)
 
 
 # ponytail: about 25 forge commands; on a loaded Windows runner they need more than the 300 s CI default.
