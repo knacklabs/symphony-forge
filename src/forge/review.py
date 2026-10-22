@@ -25,7 +25,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-from forge import autoreview, docskip, machine, records, repo, score, spotted
+from forge import autoreview, docskip, machine, repo, score, spotted
 from forge.task import branch_item, sections
 
 # The helper Forge runs: the upstream commit its installer stamps in the skill's .upstream-sha.
@@ -127,7 +127,7 @@ def moving_parts(text: str) -> str:
 
 def task(top: Path, item: str, commit: str | None = None) -> tuple[str, dict[str, str], dict[str, str]]:
     """A task's story doc, sections and row, from the given commit or its live plan."""
-    from forge import story  # story imports review indirectly
+    from forge import records, story  # story imports review indirectly
     key, _, name = item.partition("/")
     path = top / "plans" / f"{key}.md"
     # Like forge task start: the story branch's copy while it exists, so a plan edit made there
