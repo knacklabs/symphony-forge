@@ -41,6 +41,7 @@
     "id": "1c1415ca-b34d-481f-ba59-80dea3764271",
     "status": "blocked"
   },
+  "round": 1,
   "status": "fixing",
   "steps": [
     {
@@ -61,5 +62,12 @@
     "wait_id": "c8d577a5-3e3f-43c8-b23e-f29434302c36",
     "worker_round": null
   },
-  "why": "Clients need v1.2.19: chat sign-off, the owner's round-limit rule and registered Codex roles"
+  "stuck": {
+    "close": "bde64e1e-cfc0-40b3-93f1-f59e954be356",
+    "head": "9397e45e738ce1373897e057a79bb6caf66f7e80",
+    "keys": {},
+    "round": null
+  },
+  "why": "Clients need v1.2.19: chat sign-off, the owner's round-limit rule and registered Codex roles",
+  "worker": "codex"
 }
