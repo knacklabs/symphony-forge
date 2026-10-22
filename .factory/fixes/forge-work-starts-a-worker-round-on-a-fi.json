@@ -1,6 +1,13 @@
 {
   "base": "7d789873bacbf732fb1e6f95ad08e497f1f2eff4",
   "branch": "fix/forge-work-starts-a-worker-round-on-a-fi",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16261-1b0d-7941-9216-3586672eee91",
+    "head": null,
+    "start": "4b89d076ea6c00c9a5b6647cc45de822a69bca45"
+  },
   "done_when": "forge work refuses an item whose pull request already merged, says it is merged, and points to forge fix start for a follow-up",
   "fix_kind": "backend",
   "kind": "fix",
