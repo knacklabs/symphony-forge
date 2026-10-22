@@ -94,7 +94,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-22T06:51:16.988830+00:00",
@@ -107,8 +107,12 @@
   ],
   "stop": {
     "at": "2026-10-22T07:05:55.444784+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/review.py",
-    "wait_id": "8e1008b3-9c3d-4c54-8b8a-5de6f7c7b281"
+    "reason": "The owner chose one more round on 22 Oct: close all three gaps",
+    "wait_id": "8e1008b3-9c3d-4c54-8b8a-5de6f7c7b281",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
