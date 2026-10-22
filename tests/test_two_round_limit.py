@@ -14,7 +14,7 @@ import pytest
 from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client as setup_client
-from test_story import DOC, READER, new_story
+from test_story import DOC, READER, approved_constitution, new_story
 from test_fix_plan_reads_capped import _client as read_client
 from test_readloop_gates import dispose_all, say
 from test_records import SPEC
@@ -140,6 +140,7 @@ def test_5_rare_cases_and_declined_findings_do_not_block(env, adopted, case):
             "   Case: rare - An operator edits the import file during saving.\n", encoding="utf-8")
         env.commit(env.repo.path, "plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}]}))
         env.repo.git("push", "-q", "origin", "main")
+        approved_constitution(env.repo)
         where = new_story(env.repo, "SHOP")
         (where / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
         read = env.repo.forge("read", "SHOP")
