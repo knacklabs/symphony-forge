@@ -222,7 +222,8 @@ def decision_new(args: argparse.Namespace) -> None:
     if args.slug.endswith("client-signoff"):
         text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
                             "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
-        text += "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n"
+        text += ("\n<!-- Set approved_via to email, call or chat when the customer replies. -->\n"
+                 "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n")
     _write(top / rel, text)
     repo.commit_state(f"Propose the {args.slug} decision", rel, top=top)
     print(f"Wrote {rel}; no branch has a higher decision number. Fill it in, then once the human "
@@ -261,7 +262,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         replied = fields.get("approved_via") or fields.get("approved_on")  # none: review only
         invalid = [name for name, valid in {
             "customer": re.fullmatch(r"\S[^,]*,\s*\S.*", fields.get("customer", "")),
-            "approved_via": not replied or fields.get("approved_via", "").lower() in ("email", "call"),
+            "approved_via": not replied or fields.get("approved_via", "").lower() in ("email", "call", "chat"),
             "demo": re.fullmatch(r"https?://[^\s/]+(?:/\S*)?", fields.get("demo", "")),
         }.items() if not valid]
         if invalid:

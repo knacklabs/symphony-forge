@@ -85,8 +85,9 @@ prototype and answers strictly reviewed before the customer is asked: write the 
 `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
 `forge decision accept`, which runs the review and either names the gaps or says you can now ask
 the customer's named person for sign-off.
-The customer's named person approves the demo and the quoted answers; fill in their reply and run
-`forge decision accept` again to record it.
+The customer's named person approves the demo and the quoted answers. Set `approved_via` to
+`email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
+to record it.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
 use `forge roadmap add` when planning from a confirmed spec. Promotion from a fix keeps its
