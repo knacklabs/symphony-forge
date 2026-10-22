@@ -158,6 +158,7 @@ def new(args: Any) -> int:
 
 
 def read(args: Any) -> int:
+    from forge import records  # records imports story
     target = args.target
     top, doc, notes, is_story = _paths(target)
     # ponytail: CORE's branch rule, so a read never writes on the default branch.

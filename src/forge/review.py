@@ -127,7 +127,7 @@ def moving_parts(text: str) -> str:
 
 def task(top: Path, item: str, commit: str | None = None) -> tuple[str, dict[str, str], dict[str, str]]:
     """A task's story doc, sections and row, from the given commit or its live plan."""
-    from forge import records, story  # story imports review indirectly
+    from forge import story  # story imports review indirectly
     key, _, name = item.partition("/")
     path = top / "plans" / f"{key}.md"
     # Like forge task start: the story branch's copy while it exists, so a plan edit made there
@@ -858,7 +858,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         signoff_prompt: str = "", light: bool = False, tested: str = "") -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous, tested)
-    from forge import story  # story imports review indirectly
+    from forge import records, story  # story imports review indirectly
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     if rules := story.agents_section(top, "Review rules"):
         own = block.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
