@@ -1,0 +1,15 @@
+{
+  "base": "164ee39fcd21c7867cff071993dae0676341c5be",
+  "branch": "fix/release-1220",
+  "done_when": "Forge's version, pins, installers and release tests name v1.2.20",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-22T17:03:18.550463+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.20: the constitution gate and review, forge work refuses merged items, and a required Not done blocks close"
+}
