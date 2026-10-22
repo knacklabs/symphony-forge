@@ -69,6 +69,7 @@ and review it before you start a part on top of it.
 
 Before every work round, Forge fetches and merges the default branch before it reads settings or writes the brief.
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
+`forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
 
 $delegation
 - Edit files only inside this checkout.
