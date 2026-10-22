@@ -22,8 +22,8 @@
     "id": "975bda10-2930-4a6e-86b8-c57be51659c7",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-22T06:51:12.357182+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "416bed33c665c748e893cc98f9e969d667e65188",
+    "close": "fb278b78-8641-406c-8676-47bc7a5753ad",
+    "head": "f72a1a220858f28d2249e1a9e1cafc2ef1e3b00d",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "forge work starts a worker round on a fix or task whose pull request already merged, recreating its worktree on a branch that can never land again (issue #1025).",
   "worker": "codex"
