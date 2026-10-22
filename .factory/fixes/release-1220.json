@@ -5,11 +5,26 @@
   "done_when": "Forge's version, pins, installers and release tests name v1.2.20",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "154f8fa098aea6c1321480eaef484e4a5cf2bb6cc4d4c71a2e0d69495afac11a",
+    "changed": "3f4f960aea1e98dd14adee24c58d78af679598628275febd4d4fc598fc6649ff",
+    "commit": "ccc80e92d0d3bda70efe99b8f4d20b36f38a8afa",
+    "dismissals": [],
+    "findings": [],
+    "id": "9f856bef-ba5f-49a4-84ea-72572ea3ba04",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-22T17:03:18.550463+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-22T17:19:59.078991+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients need v1.2.20: the constitution gate and review, forge work refuses merged items, and a required Not done blocks close"
