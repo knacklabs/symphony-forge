@@ -44,7 +44,7 @@ def test_1_picker_narrows_old_and_new_pytest_without_installing_forge(repo, vers
 def _assert_external_setup(client):
     for host in (".codex", ".claude"):
         skill = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        setup = skill.split("8. Propose a `fast_test`", 1)[1].split("On a live app", 1)[0]
+        setup = skill.split("9. Propose a `fast_test`", 1)[1].split("On a live app", 1)[0]
         assert "forge test --pytest {base}" in setup
         assert "Forge installed" not in setup
         assert "repo's Python runner" in setup
