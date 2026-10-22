@@ -831,7 +831,10 @@ def _sweep() -> None:
     for folder in Path(tempfile.gettempdir()).glob("forge-review-*"):
         with contextlib.suppress(OSError):
             if folder.is_dir() and folder.stat().st_mtime < day_ago:
-                shutil.rmtree(folder, ignore_errors=True)
+                # tempfile's cleanup also handles read-only Git objects on Windows.
+                with tempfile.TemporaryDirectory(prefix="forge-review-", dir=folder.parent,
+                                                 ignore_cleanup_errors=True) as trash:
+                    folder.rename(Path(trash) / "leftover")
 
 
 def round_number(top: Path, item: str, state: dict[str, Any]) -> int | None:

@@ -137,6 +137,10 @@ def test_4_the_next_review_removes_a_leftover_folder_older_than_a_day(env, temp)
     for folder in (old, recent):
         (folder / "tree").mkdir(parents=True)
         (folder / "tree" / "file").write_text("left behind\n", "utf-8")
+    # Git pack files are read-only on Windows. A read-only parent also makes
+    # the same cleanup error observable on POSIX, where unlink ignores file mode.
+    os.chmod(old / "tree" / "file", stat.S_IREAD)
+    os.chmod(old / "tree", stat.S_IREAD | stat.S_IEXEC)
     two_days_ago = time.time() - 2 * 24 * 3600
     os.utime(old, (two_days_ago, two_days_ago))
 
