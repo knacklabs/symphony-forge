@@ -224,7 +224,8 @@ def blocking(result: dict[str, Any]) -> list[tuple[int, dict[str, Any]]]:
     dismissed = {d.get("finding") for d in result.get("dismissals", []) if isinstance(d, dict)}
     return [(n, f) for n, f in enumerate(result.get("findings", []), 1)
             if not isinstance(f, dict) or
-            (score.holds(f, result.get("blocking_level")) and n not in dismissed)]
+            ((f.get("required_done_when") or score.holds(f, result.get("blocking_level")))
+             and n not in dismissed)]
 
 
 def area(top: Path, commit: str, file: str, line: Any) -> str:
@@ -969,7 +970,7 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any],
 
     def sentence(text: str) -> str:
         text = re.sub(r"^\d+[.)]\s*", "", text.replace("**", "").replace("`", "").strip())
-        return " ".join(text.casefold().split()).rstrip(".")
+        return " ".join(text.casefold().split()).rstrip(".").strip('"\u201c\u201d\u2018\u2019\'').rstrip(".")
 
     if "/" in item:
         text, _, row = task(top, item)
@@ -982,6 +983,10 @@ def _bound_findings(top: Path, item: str, state: dict[str, Any],
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
+        if missed and sentence(missed[1]) in approved:
+            finding["required_done_when"] = True
+            changed = True
+            continue
         reason = ""
         if score.RARE.search(finding["body"]):
             reason = "Rare case outside normal use"
@@ -1002,7 +1007,8 @@ def declines(top: Path, base: str, result: dict[str, Any]) -> bool:
     changed = False
     for finding in result.get("findings", []):
         reason = reasons.get(score.identity(finding["file"], finding["title"]))
-        if reason and not score.holds(finding, "P0") and finding.get("follow_up") != score.DECLINED + reason:
+        if (reason and not finding.get("required_done_when") and not score.holds(finding, "P0")
+                and finding.get("follow_up") != score.DECLINED + reason):
             finding["follow_up"] = score.DECLINED + reason
             changed = True
     return changed

@@ -139,7 +139,7 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
         reason = because.get(n, f.get("follow_up", ""))
         outcome = ("follow-up" if n in accepted else
                    "lived with" if reason.startswith("settled area") else "accepted" if n in because
-                   else "open" if holds(f, result.get("blocking_level"))
+                   else "open" if f.get("required_done_when") or holds(f, result.get("blocking_level"))
                    else "follow-up" if f.get("follow_up") or RARE.search(f.get("body", ""))
                    or bar(of(f)) == "follow-up" else "lived with")
         if key not in by:

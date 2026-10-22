@@ -173,6 +173,8 @@ on the changed code still blocks under its own Raise line.
 Only the numbered owner-approved Done-when sentences above (or the fix's Done-when line)
 can block as `Not done`. Builder details, Notes and implementation guidance cannot. Forge keeps
 a `Not done` finding that names none of those items as a follow-up, with its original scores.
+A `Not done` that names one of this item's own Done-when lines blocks regardless of its scores,
+rare-case label or light review. Only the owner's recorded choice can accept that unmet work.
 
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.

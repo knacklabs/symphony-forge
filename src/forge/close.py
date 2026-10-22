@@ -386,8 +386,14 @@ def close(args: argparse.Namespace) -> int:
         print(f"{number}. {finding['priority']} {finding['title']} "
               f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
     advice = [(n, f) for n, f in enumerate(result["findings"], 1)
-              if not score.holds(f, result.get("blocking_level"))]
+              if not f.get("required_done_when") and not score.holds(f, result.get("blocking_level"))]
     if advice:
+        if not serious:
+            reasons = dict.fromkeys(f.get("follow_up") or
+                                    ("Rare case outside normal use" if score.RARE.search(f["body"])
+                                     else "Below the review bar") for _, f in advice)
+            print("These findings do not block: " + "; ".join(reason.rstrip(".") for reason in reasons)
+                  + ". See the pull request.")
         print("Advice that does not block the merge:" if serious else
               "Follow-ups that do not block the merge (recorded in the pull request):")
         for number, finding in advice:
@@ -1038,7 +1044,7 @@ def _block(result: dict[str, Any], check: str) -> str:
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
-                else "blocks the merge" if score.holds(finding, result.get("blocking_level"))
+                else "blocks the merge" if finding.get("required_done_when") or score.holds(finding, result.get("blocking_level"))
                 else line or finding.get("follow_up", "") if outcome in below
                 else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
         note += f"; {line}" if line and note != "blocks the merge" and note != line else ""
