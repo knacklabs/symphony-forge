@@ -379,7 +379,7 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
     (False, "fix"), (True, "fix"), (False, "part"), (False, "documents"),
     (False, "proposed"), (False, "absent"), (False, "read"), (False, "read later"),
 ])
-def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, adopted, case):
+def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, monkeypatch, adopted, case):
     # Commands own prompt selection and verdicts; only external readers are faked.
     # Previously low model scores let constitution violations pass.
     setup_client(env, tmp_path, adopted)
@@ -464,8 +464,15 @@ def test_3_reviews_and_reads_hold_work_against_the_constitution(env, tmp_path, a
                                "Gain 3, Work 4, Harm 1\nThe change uses MySQL.", path)))
     if case in {"proposed", "absent"}:
         env.reviews(CLEAN)
-    closed = env.close(item)
+    trace = tmp_path / "review-git-packets.txt"
+    with monkeypatch.context() as tracing:
+        tracing.setenv("GIT_TRACE_PACKET", trace.as_posix())
+        closed = env.close(item)
     assert env.review_calls(), closed.stdout + closed.stderr
+    if case == "fix":
+        # The review snapshot must use Git's transport while sibling work can
+        # repack the source object store. A local filesystem copy races that work.
+        assert re.search(r"\bclone>\s+want [0-9a-f]+", trace.read_text("utf-8"))
     prompt = env.prompt()
     if case in {"proposed", "absent"}:
         assert "## This app's constitution" not in prompt

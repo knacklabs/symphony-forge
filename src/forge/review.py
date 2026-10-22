@@ -876,8 +876,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         tree, out = tmp / "tree", tmp / "review.json"
         saved = repo.forge_dir(top) / f"review-{item.replace('/', '-')}.json"
         saved.unlink(missing_ok=True)
-        # A local clone keeps Git history inside the reviewer's read-only sandbox.
-        repo.git("clone", "-q", "--no-hardlinks", "--no-checkout", str(top), str(tree), cwd=top)
+        # Git's transport avoids copying an object store while another close changes it.
+        repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
             repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
