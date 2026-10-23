@@ -193,7 +193,7 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert calls.read_text(encoding="utf-8") == forge_calls
 
 
-def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedProcess[str]]:
+def _fresh_client(repo, gh, tmp_path: Path, *init_args: str) -> tuple[Path, subprocess.CompletedProcess[str]]:
     """A repo with no commits and an empty origin, set up with forge init."""
     client, remote = tmp_path / "client", tmp_path / "client.git"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
@@ -203,7 +203,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     # What GitHub answers for a branch with no protection yet.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", *init_args, cwd=client)
     if initialized.returncode == 0:
         # Init has installed the required checks; later commands see that protection.
         gh.respond("api", "repos/{owner}/{repo}/branches/main/protection",

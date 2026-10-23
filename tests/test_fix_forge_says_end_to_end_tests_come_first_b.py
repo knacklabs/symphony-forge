@@ -38,8 +38,9 @@ def test_3_one_check_starts_app_and_runs_all_tests():
     testing = guidance("templates/conventions/testing.md")
     assert "the one `tests` check" in testing
     assert "playwright install --with-deps chromium" in testing
-    assert "compose.test.yml up -d --build --wait && npm test" in testing
-    assert "npm run test --workspaces --if-present && playwright test" in testing
+    # Nx uses the starter's root runner, which owns setup, tests and cleanup.
+    assert "node scripts/test.mjs" in testing
+    assert "npm run lint && npm run typecheck && npm run test:api && npm run test:hooks && npm run test:browser" in testing
 
 
 def test_4_test_data_comes_through_running_api():

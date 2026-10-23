@@ -4,3 +4,4 @@ dist/
 .env
 test-results/
 playwright-report/
+forge.local.toml

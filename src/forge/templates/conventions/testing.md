@@ -5,19 +5,21 @@ changes how they run.
 
 ## The one test command
 
-The root `package.json` runs everything CI needs:
+The root `package.json` runs the lint, type-check, API, hook and browser tests:
 
 ```json
-{ "scripts": { "test": "npm run lint --workspaces --if-present && npm run typecheck --workspaces --if-present && npm run test --workspaces --if-present && playwright test" } }
+{ "scripts": { "test": "npm run lint && npm run typecheck && npm run test:api && npm run test:hooks && npm run test:browser" } }
 ```
 
-Once the app has a database, use a test-only Compose project that starts a fresh database and
-the running API and web app. Set forge.toml's `test` to install dependencies and Playwright's
-browser, start the app, and run the whole root test script. Then run `forge sync` to write this
-into the one `tests` check:
+Nx builds and type-checks `apps/web` and `apps/api`. The API tests use a real Postgres database.
+The browser tests use Playwright against the running web app.
+
+Set forge.toml's `test` to `node scripts/test.mjs`. This script installs dependencies and builds
+the apps. It runs `npx playwright install --with-deps chromium`. It starts a fresh test database
+and app, then runs root `npm test`. Run `forge sync` to write this into the one `tests` check:
 
 ```toml
-test = "npm ci && npx playwright install --with-deps chromium && docker compose -p forge-tests -f compose.test.yml down --volumes && docker compose -p forge-tests -f compose.test.yml up -d --build --wait && npm test"
+test = "node scripts/test.mjs"
 ```
 
 ## End-to-end tests

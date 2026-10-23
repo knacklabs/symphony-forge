@@ -16,7 +16,9 @@ COMMANDS = [{
     # False: init checks the pin itself, after adoption lists a forge.toml Forge didn't write.
     "words": "init", "run": "init", "changes_state": False,
     "help": "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync",
-    "args": [(("--test",), {"help": "a repo with history: the test command CI runs"}),
+    "args": [(("--starter",), {"action": "store_true",
+                                 "help": "start a new React app with the Nx starter"}),
+             (("--test",), {"help": "a repo with history: the test command CI runs"}),
              (("--runner",), {"default": "ubuntu-latest",
                               "help": "GitHub Actions runner label (default: ubuntu-latest)"}),
              (("--checks",), {"action": "append", "metavar": "CHECK",
@@ -32,6 +34,10 @@ COMMANDS = [{
 }]
 
 REFUSALS = {
+    "starter_history": ("This repo already has commits, so forge init --starter cannot set it up.",
+                        "use a new repo for the starter"),
+    "starter_app": ("forge init --starter found an existing app file: {path}.",
+                    "use a new folder for the starter, or forge init to keep this app"),
     "answers": ("This repo already has commits, so forge init adopts it on a fix branch, and it "
                 "needs the answers you confirmed: {missing}.",
                 'forge init --test "<command>" --checks <check> --interfaces "<glob>" '
@@ -135,16 +141,21 @@ def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
             f"interfaces = {json.dumps(interfaces)}\n{MODELS}")
 
 
-def _scaffold(top: Path, runner: str = "ubuntu-latest") -> dict[str, str]:
+def _scaffold(top: Path, runner: str = "ubuntu-latest", starter: bool = False) -> dict[str, str]:
     """forge.toml, the docs skeleton and an empty roadmap: repo-relative path -> text."""
     skeleton = sync.TEMPLATES / "skeleton"
-    test = next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST)
+    test = ("node scripts/test.mjs" if starter else
+            next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST))
     return {
         "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES,
                                 runner=runner),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()
-           and (test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
+           and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
+        **({path.relative_to(sync.TEMPLATES / "starter").as_posix():
+            path.read_bytes().decode("utf-8")
+            for path in sorted((sync.TEMPLATES / "starter").rglob("*")) if path.is_file()}
+           if starter else {}),
         "plans/roadmap.json": ROADMAP,
     }
 
@@ -274,15 +285,26 @@ def _stronger(current: dict[str, Any], checks: list[str], removed: set[str]) -> 
 
 def init(args: argparse.Namespace) -> None:
     top = repo.root()
+    history = repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0
+    if args.starter:
+        if history:
+            repo.refuse(REFUSALS["starter_history"])
+        for marker in ("package.json", "pyproject.toml", "go.mod"):
+            if (top / marker).exists():
+                repo.refuse(REFUSALS["starter_app"], path=marker)
+        for path in sorted((sync.TEMPLATES / "starter").rglob("*")):
+            rel = path.relative_to(sync.TEMPLATES / "starter").as_posix()
+            if path.is_file() and (top / rel).exists():
+                repo.refuse(REFUSALS["starter_app"], path=rel)
     if repo.run("git", "remote", "get-url", "origin", cwd=top).returncode:
         repo.refuse(REFUSALS["no_origin"])
     if not shutil.which("gh"):
         repo.refuse(repo.REFUSALS["missing_tool"], tool="gh")
-    if repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0:
+    if history:
         return _adopt(top, args)
     repo.check_pin(top)
     branch = repo.current_branch(top)
-    scaffold = _scaffold(top, args.runner)
+    scaffold = _scaffold(top, args.runner, args.starter)
     for rel, text in scaffold.items():
         if not (top / rel).exists():  # init never overwrites a file that is already there
             sync.write_file(top, rel, text)
