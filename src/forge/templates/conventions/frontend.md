@@ -19,6 +19,8 @@ apps/web/src/
 ```
 
 Error codes and their user messages live in `libs/shared`.
+Use one fetch wrapper for the base URL and auth header. It unwraps the response envelope,
+throws errors, and sends an `x-correlation-id` header.
 
 Start with React Router for the app shell, sign-in, protected routes, and 404/403
 pages.
