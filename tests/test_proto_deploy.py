@@ -90,7 +90,8 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
     (client / ".nx" / "local-cache.txt").write_text("host-build-cache-marker\n")
     (client / "apps" / "web").mkdir()
     (client / "prisma" / "migrations" / "20260928000000_init").mkdir(parents=True)
-    # Deploy now uses root scripts and the Nx layout; the lifecycle checks stay the same.
+    # This fake app proves the root-script, migration, and image-exclusion contract.
+    # test_starter_tree owns the real Nx, API, and browser proof.
     (client / "package.json").write_text(json.dumps({
         "private": True,
         "scripts": {"build": "node build.js", "start:prod": "node apps/api/server.js"},

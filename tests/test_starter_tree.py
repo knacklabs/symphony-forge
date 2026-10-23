@@ -233,6 +233,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
+    assert "workspaces" not in package, "the starter uses Nx project targets"
     lock = _json(STARTER / "package-lock.json")
     assert "nx" in package.get("devDependencies", {})
     assert package.get("scripts", {}).get("build")
