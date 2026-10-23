@@ -1,6 +1,13 @@
 {
   "base": "0937aaa81b8f66492a028bce09df884b1c1bf94b",
   "branch": "fix/root-cause-and-no-test-gaming",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16a0d-4aa3-7820-b2bd-1309feaf1832",
+    "head": null,
+    "start": "1134f8e869603dd1e102ba3271628950f2714a1d"
+  },
   "done_when": "The worker brief and the review that Forge ships state both rules, and the review reports a symptom-only fix or test-gaming code as a finding; new repos get them at init and existing repos on sync",
   "fix_kind": "mechanical",
   "kind": "fix",
