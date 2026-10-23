@@ -4,12 +4,20 @@
   "done_when": "The worker brief and the review that Forge ships state both rules, and the review reports a symptom-only fix or test-gaming code as a finding; new repos get them at init and existing repos on sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T18:36:29.228421+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's shipped worker brief and review miss two rules that catch real defects: fix a bug at its root cause where every caller goes through, not only the path the ticket names; and never write code that only passes the tests (hard-coded expected values, test-only branches, silent defaults that hide a broken rule)"
+  "stuck": {
+    "close": null,
+    "head": "54c216f8f113a5fa03b6a690b82485650528942d",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's shipped worker brief and review miss two rules that catch real defects: fix a bug at its root cause where every caller goes through, not only the path the ticket names; and never write code that only passes the tests (hard-coded expected values, test-only branches, silent defaults that hide a broken rule)",
+  "worker": "codex"
 }
