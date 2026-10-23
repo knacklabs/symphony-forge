@@ -33,6 +33,7 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
     resolver: zodResolver(projectSchema),
     defaultValues: { name: '', status: 'active' },
   });
+  const { isDirty } = form.formState;
 
   useEffect(() => {
     if (open) {
@@ -55,7 +56,7 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
   }
 
   function requestOpenChange(nextOpen: boolean) {
-    if (!nextOpen && form.formState.isDirty && !form.formState.isSubmitting) {
+    if (!nextOpen && isDirty && !form.formState.isSubmitting) {
       setConfirmDiscard(true);
       return;
     }

@@ -44,7 +44,7 @@ export function App() {
   } as Record<string, string>)[location.pathname] ?? 'Page not found';
   return (
     <>
-      <title>{title} | Starter app</title>
+      <title>{`${title} | Starter app`}</title>
       <a className="sr-only fixed left-4 top-4 z-50 rounded-md bg-background p-3 text-foreground focus:not-sr-only focus:ring-2 focus:ring-ring" href="#main-content">
         Skip to content
       </a>

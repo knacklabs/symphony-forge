@@ -145,7 +145,8 @@ test('switching accounts does not show the previous account projects', async ({ 
 
   let releaseProjects!: () => void;
   const projectsHeld = new Promise<void>((resolve) => { releaseProjects = resolve; });
-  await page.route('**/api/v1/projects?*', async (route) => {
+  const projectsRoute = '**/api/v1/projects?*';
+  await page.route(projectsRoute, async (route) => {
     if (route.request().method() === 'GET') {
       await projectsHeld;
     }
@@ -163,7 +164,7 @@ test('switching accounts does not show the previous account projects', async ({ 
     await expect(page.getByRole('row', { name: /Account A private project/ })).toHaveCount(0);
   } finally {
     releaseProjects();
-    await page.unroute('**/api/v1/projects?*');
+    await page.unrouteAll({ behavior: 'wait' });
   }
   await expect(page.getByText('No projects yet.')).toBeVisible();
 });
@@ -186,6 +187,7 @@ test('unknown address shows the 404 page', async ({ page }) => {
 
 test('axe finds no serious problem on the shell', async ({ page }) => {
   await signUp(page);
+  await expect(page).toHaveTitle('Projects | Starter app');
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
   expect(results.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')).toEqual([]);
 });
