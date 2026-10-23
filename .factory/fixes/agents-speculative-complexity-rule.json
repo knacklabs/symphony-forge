@@ -4,12 +4,20 @@
   "done_when": "The AGENTS.md block that Forge writes has the owner's rule under Rules, word for word; new repos get it at init and existing repos on forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T18:35:58.955399+00:00",
       "step": "start"
     }
   ],
-  "why": "The owner wants every repo's AGENTS.md to tell agents not to add complexity for speculative race or security edge cases without the user's buy-in"
+  "stuck": {
+    "close": null,
+    "head": "12fef74a2984606a756fedb5b8f32837c60b0f57",
+    "keys": {},
+    "round": null
+  },
+  "why": "The owner wants every repo's AGENTS.md to tell agents not to add complexity for speculative race or security edge cases without the user's buy-in",
+  "worker": "codex"
 }
