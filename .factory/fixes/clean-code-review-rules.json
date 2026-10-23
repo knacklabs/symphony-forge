@@ -4,12 +4,20 @@
   "done_when": "The shipped review and standards tell reviewers to report a one-caller wrapper or a pass-through layer as a finding, with the 30-second reader test, and state the test-behaviour-not-internals rule plainly; new repos get them at init and existing repos on sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T18:07:57.019055+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge's shipped review and standards miss two clean-code checks: code that is hard to trace (a wrapper with one caller, a layer that only passes calls through, state the reader must keep in mind) and tests that check internals instead of behaviour need a clearer rule"
+  "stuck": {
+    "close": null,
+    "head": "d0e026e85b05d173ee4eae3f9f31b302c30136ff",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's shipped review and standards miss two clean-code checks: code that is hard to trace (a wrapper with one caller, a layer that only passes calls through, state the reader must keep in mind) and tests that check internals instead of behaviour need a clearer rule",
+  "worker": "codex"
 }
