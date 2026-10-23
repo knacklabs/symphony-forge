@@ -49,8 +49,11 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
         (tmp_path / "sign-off").mkdir()
         fix, answers, queue = _client(repo, tmp_path / "sign-off", monkeypatch)
         _decision(fix, answers)
-        queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P2", "The demo loses its basket", "Gain 5, Work 1, Harm 1\nRaise: Functional")]}}]))
+        clean_check = {"say": SOL_HIGH, "report": {
+            "review_status": "scoped-clean", "findings": []}}
+        p2_finding = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
+            _scored("P2", "The demo loses its basket", "Gain 5, Work 1, Harm 1\nRaise: Functional")]}}
+        queue.write_text(json.dumps([clean_check, p2_finding]))
         refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert refused.returncode == 1
         assert "found a blocking issue: The demo loses its basket" in refused.stderr

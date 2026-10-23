@@ -327,6 +327,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         if fields.get("design_checked") != tree or fields.get("brief_checked") != brief_hash:
             prompt = (Path(__file__).parent / "templates/design-check.md").read_text(encoding="utf-8")
             prompt += "\n\n" + design_brief + "\n\n## Screen list\n" + _text(top / "docs/design/prototype/SCREENS.md")
+            prompt += f"\n\n## Sign-off record: {rel}\n{text}"
             review.design_check(top, prompt)
             text = _set(text, design_checked=tree, brief_checked=brief_hash)
             _write(top / rel, text)

@@ -1,14 +1,18 @@
 """Canvas sign-off checks the complete signed design before it accepts it.
 
 Test audit:
-1. Protect the command-visible design records, changed-canvas refusal and completeness gate.
-2. Missing client records or a P1 canvas finding could otherwise still permit sign-off.
-3. Existing sign-off tests cover product review, not canvas records or completeness review.
+1. Protect design admission and the checker's sign-off record, score protocol and screen images.
+2. Missing records, an unreadable finding or an omitted screen image can defeat completeness review.
+3. Existing prompt-name assertions did not prove image contents in the external review snapshot.
 4. Drive the real decision commands and replace only Autoreview at its command boundary.
 """
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -31,7 +35,35 @@ def test_signoff_pins_the_completeness_check_and_records_what_it_checked(
     make_client = _adopted_client if adopted else _client
     fix, answers, queue = make_client(repo, tmp_path, monkeypatch,
                                      design_model=("client-choice", "low"))
+    attributes = fix / ".gitattributes"
+    with attributes.open("a", encoding="utf-8") as out:
+        out.write("\ndocs/design/prototype/*.svg linguist-generated\n")
+    repo.git("add", ".gitattributes", cwd=fix)
+    repo.git("commit", "-qm", "Mark screen images as generated", cwd=fix)
     page = _decision(fix, answers)
+    confirmation = "The owner confirms Order, Open | Submitted, and the Order list screen."
+    page.write_text(page.read_text("utf-8") + "\n## Owner confirmation\n" + confirmation + "\n", encoding="utf-8")
+    image = fix / "docs/design/prototype/order-list.svg"
+    expected_image = image.read_text("utf-8")
+    # Observe the reviewer's actual checkout, including a generated screen image.
+    # Prompt filenames alone cannot prove that the engine can inspect the canvas.
+    helper = Path(os.environ["AUTOREVIEW"])
+    original = helper.with_name("original-autoreview")
+    shutil.copyfile(helper, original)
+    helper.write_text(f'''#!{sys.executable}
+import json, os, runpy, subprocess, sys
+from pathlib import Path
+args = sys.argv[1:]
+prompt = Path(args[args.index("--prompt-file") + 1]).read_text("utf-8")
+if "# Canvas completeness check" in prompt:
+    image = Path("docs/design/prototype/order-list.svg")
+    snapshot = subprocess.run(["git", "show", "HEAD:docs/design/prototype/order-list.svg"],
+                              capture_output=True, text=True, encoding="utf-8")
+    Path(os.environ["AUTOREVIEW_STUB"]).with_suffix(".canvas.json").write_text(
+        json.dumps({{"image": image.read_text("utf-8") if image.is_file() else None,
+                    "snapshot image": snapshot.stdout if snapshot.returncode == 0 else None}}), encoding="utf-8")
+runpy.run_path({str(original)!r}, run_name="__main__")
+''', encoding="utf-8")
 
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 
@@ -48,6 +80,14 @@ def test_signoff_pins_the_completeness_check_and_records_what_it_checked(
     for text in ("## Summary", "## Users", "## Things it keeps track of", "## Key flows",
                  "SCREENS.md", "Order list", "order-list.svg"):
         assert text in prompt
+    canvas = json.loads(queue.with_suffix(".canvas.json").read_text("utf-8"))
+    assert {
+        "screen image": canvas["image"],
+        "snapshot image": canvas["snapshot image"],
+        "owner confirmation": confirmation in prompt,
+        "score protocol": "Gain <g>, Work <w>, Harm <h>" in prompt,
+    } == {"screen image": expected_image, "snapshot image": expected_image,
+          "owner confirmation": True, "score protocol": True}
 
 
 @pytest.mark.parametrize(("gap", "named_gap"), [

@@ -70,11 +70,13 @@ def test_4_the_client_sign_off_review_gets_the_repo_s_review_rules(repo, tmp_pat
     repo.git("commit", "-q", "-m", "Write the review rules")
     repo.git("push", "-q", "origin", "main")
     _decision(fix, answers, via="", on="")
-    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "scoped-clean",
-                                                              "findings": []}}]))
+    clean = {"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}
+    queue.write_text(json.dumps([clean, clean]))
     reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert reviewed.returncode == 0, reviewed.stderr
-    [call] = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    [call] = [call for call in calls if "## Client prototype sign-off review" in
+              "\n".join(call["prompt_files"].values())]
     prompt = "\n\n".join(call["prompt_files"].values())
     assert "## Client prototype sign-off review" in prompt
     rules = _rules_in(prompt)

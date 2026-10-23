@@ -11,6 +11,13 @@ skill result. Apply each checklist item to the app's stated scope and explain an
 Use the strict review report format with review_status and findings, including an empty findings
 list when the whole check passes. This check must finish before sign-off.
 
+## Finding scores
+
+Start every finding's body with exactly `Gain <g>, Work <w>, Harm <h>`.
+Replace each placeholder with one integer from 1 to 5. Gain measures the benefit of the repair.
+Work measures the effort. Harm measures the effect of the defect.
+The scores are your judgement, not measurement. Put the evidence after this score line.
+
 ## Entities and fields
 
 - Show each entity from the interview in a list, detail screen, create form and edit form.

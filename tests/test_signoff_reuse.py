@@ -1,10 +1,11 @@
 """Sign-off reuses its review and completeness result while their inputs stay unchanged.
 
 Test audit:
-1. Protect the command-visible reuse and invalidation rules for prototype sign-off.
+1. Protect the command-visible reuse and invalidation rules for prototype sign-off on new and
+   earlier-adopted clients.
 2. A lost saved result repeats expensive checks, while a stale result can accept changed work.
-3. Existing sign-off tests cover review and acceptance separately, but not reuse across them or
-   changes to each saved input.
+3. Existing sign-off tests cover review and acceptance separately, but not reuse across them,
+   unchanged canvas acceptance, or changes to each saved input.
 4. Drive `forge decision accept`; replace only Autoreview at its external command boundary.
 """
 
@@ -15,7 +16,7 @@ import re
 
 import pytest
 
-from test_proto_signoff import _client, _decision, _request_build
+from test_proto_signoff import _adopted_client, _client, _decision, _request_build
 
 STORY = "FORGE-PACE-1/SIGNOFF"
 
@@ -116,8 +117,16 @@ def test_2_working_signoff_repeats_review_when_a_saved_input_changes(
     assert _count_engine(queue, "claude") == 1
 
 
-def test_3_canvas_signoff_rechecks_when_a_brief_field_changes(repo, tmp_path, monkeypatch):
-    fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
+@pytest.mark.parametrize(
+    ("adopted", "changed_brief"),
+    [(False, False), (False, True), (True, False)],
+    ids=["unchanged", "changed-brief", "earlier-adopted"],
+)
+def test_3_canvas_signoff_reuses_or_rechecks_completeness(
+        repo, tmp_path, monkeypatch, adopted, changed_brief):
+    client = _adopted_client if adopted else _client
+    kwargs = {} if adopted else {"working_build": False}
+    fix, answers, queue = client(repo, tmp_path, monkeypatch, **kwargs)
     page = _decision(fix, answers, via="", on="")
 
     checked = _accept(repo, fix)
@@ -126,16 +135,17 @@ def test_3_canvas_signoff_rechecks_when_a_brief_field_changes(repo, tmp_path, mo
     assert _count_engine(queue, "claude") == 1
     assert _count_engine(queue, "codex") == 0
 
-    brief = fix / "docs/product/BRIEF.md"
-    brief.write_text(brief.read_text("utf-8").replace(
-        "Salespeople keep track of customer orders.",
-        "Salespeople keep track of customer orders and their status."), encoding="utf-8")
-    repo.git("add", "docs/product/BRIEF.md", cwd=fix)
-    repo.git("commit", "-q", "-m", "Clarify the order brief", cwd=fix)
+    if changed_brief:
+        brief = fix / "docs/product/BRIEF.md"
+        brief.write_text(brief.read_text("utf-8").replace(
+            "Salespeople keep track of customer orders.",
+            "Salespeople keep track of customer orders and their status."), encoding="utf-8")
+        repo.git("add", "docs/product/BRIEF.md", cwd=fix)
+        repo.git("commit", "-q", "-m", "Clarify the order brief", cwd=fix)
     _reply(page)
 
     accepted = _accept(repo, fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert _count_engine(queue, "claude") == 2
+    assert _count_engine(queue, "claude") == (2 if changed_brief else 1)
     assert _count_engine(queue, "codex") == 0

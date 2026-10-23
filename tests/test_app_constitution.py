@@ -12,7 +12,6 @@ import pytest
 from conftest import FORGE_SHIM, ROOT, _install
 from test_close import CLEAN, GREEN, STORY_DOC, blocked, env  # noqa: F401
 from test_merge_command import _merge_at_github, _ready
-from test_proto_signoff import _decision
 from test_setup import _fresh_client
 from test_score_notes import _client_repo as setup_client, _scored
 from test_story import DESIGN_IMAGE, DOC, READER, new_story, setup, worktree
@@ -63,9 +62,10 @@ def test_1_a_new_story_waits_for_the_approved_constitution(repo, gh, tmp_path, m
             assert "constitution" not in (started.stdout + started.stderr).lower()
             return
 
-        signoff = _decision(repo.path, "## Answers\n")
-        signoff.write_text(signoff.read_text("utf-8").replace("status: proposed", "status: accepted"),
-                           encoding="utf-8")
+        # This gate reads an earlier accepted sign-off; it does not test canvas acceptance.
+        signoff = repo.path / "docs/decisions/0001-client-signoff.md"
+        signoff.parent.mkdir(parents=True, exist_ok=True)
+        signoff.write_text("---\nstatus: accepted\n---\n\n# Client sign-off\n", encoding="utf-8")
         repo.git("add", "docs/decisions/0001-client-signoff.md")
         _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Record client sign-off")
         _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
@@ -223,9 +223,7 @@ def test_2_the_constitution_is_approved_only_when_complete(repo, tmp_path, gh, a
         top, initialized = _fresh_client(repo, gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         repo.path = top
-        signoff = _decision(repo.path, "## Answers\n")
-        signoff.write_text(signoff.read_text("utf-8").replace("status: proposed", "status: accepted"),
-                           encoding="utf-8")
+        repo.write("docs/decisions/0001-client-signoff.md", "---\nstatus: accepted\n---\n")
         repo.git("add", "docs/decisions/0001-client-signoff.md")
         _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Record client sign-off")
         _fixture_git(repo, tmp_path, "push", "-q", "origin", "main")
