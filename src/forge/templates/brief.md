@@ -324,6 +324,13 @@ $checks
 <!-- end -->
 ## Build simple
 
+Reproduce the bug before you change the code. Find the first place the code goes wrong.
+Fix it in the shared function that every affected caller uses. Check sibling callers for the
+same fault. A guard is a fix only when it handles a valid state.
+
+Do not hard-code expected values to make tests pass. Do not add a branch that detects a test.
+Do not add a silent default that hides a broken rule.
+
 In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new UI component library and a new file outside components/ui/ named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 A plan's cold read passes when no note is at the bar. A note is at the bar when the plan is wrong,

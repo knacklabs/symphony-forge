@@ -64,6 +64,9 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
   end-to-end test at the boundary the user touches, and a settings, docs, deletion or test-only item
   is proven by the check the item names; a bug becomes a test that fails before the fix. Then make
   them pass.
+- **Fix the root cause.** Reproduce the bug before you change the code. Find the first place the
+  code goes wrong. Fix it in the shared function that every affected caller uses. Check sibling
+  callers for the same fault. A guard is a fix only when it handles a valid state.
 - **Compatibility is a requirement, not a reflex.** Unless the story names live users, API
   consumers or production data, a replacement deletes the old path: no shims, aliases, fallbacks
   or versioned migrations for data nobody has. When consumers are live, the story says so.

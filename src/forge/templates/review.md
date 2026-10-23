@@ -192,6 +192,12 @@ rare-case label or light review. Only the owner's recorded choice can accept tha
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
 
+Report a fix that hides a symptom and leaves the root cause in place. Check the first place the
+code goes wrong, the shared function, and sibling callers with the same fault.
+A guard is a fix only when it handles a valid state.
+Report code that only makes tests pass: hard-coded expected values, a branch that detects a test,
+or a silent default that hides a broken rule.
+
 When a Done-when item's named proof is a pull request check that has not finished yet, do not
 report it as `Not done` if the check is configured to run on the pull request. Close's checks
 gate holds the merge until that check passes. A failed check or a proof with no check behind
