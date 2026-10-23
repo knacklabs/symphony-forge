@@ -4,12 +4,20 @@
   "done_when": "Once the owner allows a story part past its line limit, closing that part no longer stops with the size question.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T04:08:15.920033+00:00",
       "step": "start"
     }
   ],
-  "why": "After the owner allows a story part past its line limit, close still stops that part with the stuck question, and the only way past is a switch, same, narrow or split answer followed by a worker round."
+  "stuck": {
+    "close": null,
+    "head": "0de3fbaa2e57a2b319d67455cb13d5fb320237c3",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the owner allows a story part past its line limit, close still stops that part with the stuck question, and the only way past is a switch, same, narrow or split answer followed by a worker round.",
+  "worker": "codex"
 }
