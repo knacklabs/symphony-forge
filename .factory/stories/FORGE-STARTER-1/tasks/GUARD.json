@@ -38,39 +38,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ea74407dcb71f4ad9bdd45e123393757efbee47d61ebdb9523fd9961346193b1",
-    "changed": "689772f740e196b873816db81771ad250358666fc314922ae0e50b82989ae44c",
-    "commit": "fa76045e5b73eb1d4bc920f842e4cad0510daa62",
+    "branch_diff": "86b2fe52a38c4a2c9a43770058625d9409d615f2d24f53fe0ec0933d55938c87",
+    "changed": "a16fd16fbfcba54ebe9ae951af91dee6ae14e5b288a06b3e0f8a84d0328c5bcd",
+    "commit": "366b97b18804ec5ead43a4ef1a28e43576e8aad8",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done. Item 5 requires: \u201cIn such an app, the review reports a new hand-built UI component as P1, unless a `Not shadcn:` comment in the code says why shadcn/ui cannot do it, and Forge holds that finding until it is fixed. The worker brief states the rule.\u201d\nCase: normal use - a worker adds a hand-built component while building an unsigned client prototype. The new floor produces Gain 4, Work 2, Harm 1, but `score.holds` returns false for those scores at blocking level P0 (`src/forge/score.py:110-117`). Prototype fixes select that level (`src/forge/review.py:211-219`), so close permits the unresolved finding. The same gap lets a worker's `Declined:` commit turn it into a follow-up even during full review (`src/forge/review.py:1029-1040`). Preserve the ruled Gain/Work floor while ensuring this finding remains held through both paths. The added test exercises an approved task, so neither bypass is covered.",
-        "file": "src/forge/score.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 2,
-        "line": 39,
-        "priority": "P1",
-        "title": "Not done: Forge holds a hand-built UI component finding until it is fixed",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done. Item 4 requires close to refuse \u201ca change that adds a second UI component library\u201d.\nCase: normal use - a configured shadcn client adds `@radix-ui/themes`, `react-aria-components`, or `@ark-ui/react` to dependencies or devDependencies. All three appear in the plan's fixed library inventory (`plans/FORGE-STARTER-1.md:140-145`), but none appears in this constant. Since `libraries()` intersects dependencies with this set at line 48, these additions produce no library problem and pass the close guard. This concerns omissions from the specified fixed inventory, rather than the settled decision to use a fixed list. Include these entries and cover their refusal in the command-level proof.",
-        "file": "src/forge/app_baseline.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 2,
-        "line": 21,
-        "priority": "P1",
-        "title": "Not done: `forge close` refuses a second UI component library",
-        "work": 2
-      }
-    ],
-    "id": "8b2a48a7-ddf2-44ad-a41c-429d6f02d08d",
+    "findings": [],
+    "id": "2e15539f-152d-40dd-aba5-71a106b4a64d",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T03:22:37.917036+00:00",
@@ -78,6 +55,10 @@
     },
     {
       "at": "2026-10-23T03:39:34.873241+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T04:00:17.392610+00:00",
       "step": "review"
     }
   ],
