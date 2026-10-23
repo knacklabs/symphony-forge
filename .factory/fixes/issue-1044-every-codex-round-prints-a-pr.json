@@ -28,28 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ec9c8ecffeb14be3135fa1734cf249c6fa832ea50106155cf9ed31a1fadc8215",
-    "changed": "a356fedf2f3199b97efc1f4f68de33ac8f87e9ac89a22a38a74e17964de9cfe6",
-    "commit": "f8b3d5b3fb01f1a90e60fa8bf583af0b46463a12",
+    "branch_diff": "b913f092d11f08640e347910d7e84a90c19e432db0506f949a5fb17732ef6c4c",
+    "changed": "219721541685522c8f3b24295747b41bcb87bf12a2b97954493b879dcd051e56",
+    "commit": "7c8f78625dfd1903b646d5e3c73fd648cbe58cdb",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done. Case: normal use - a new conversation whose first turn is still running startup or prompt hooks. New evidence beyond the coordinator note: [pinned Codex's turn-input implementation](https://raw.githubusercontent.com/openai/codex/rust-v0.159.2/codex-rs/core/src/session/turn_input.rs) explicitly returns before rollout persistence. Consequently, returning from thread.turn() does not establish the prerequisite for this metadata update. It can still fail with 'no rollout found', print project_skipped, and never assign the project after persistence finishes because assignment is attempted only once. The new proof misses this ordering: tests/test_codex_resume.py:128\u2013141 saves the stub's turn before acknowledging turn/start. Defer assignment until persistence is established, and make the command test cover acknowledgement before rollout creation.",
-        "file": "src/forge/codex_turn.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 303,
-        "priority": "P1",
-        "title": "Not done: A Codex round on a new conversation prints no project_skipped error, and the chat project is still set once the thread has a rollo",
-        "work": 2
-      }
-    ],
-    "id": "e5def9c5-c7d9-4aa6-995d-6164b6568868",
+    "findings": [],
+    "id": "180f459e-335e-409e-b098-0a8c291278b6",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T16:46:45.914436+00:00",
@@ -57,6 +45,10 @@
     },
     {
       "at": "2026-10-23T16:54:27.823132+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T17:15:30.084628+00:00",
       "step": "review"
     }
   ],
