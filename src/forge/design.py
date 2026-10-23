@@ -11,6 +11,34 @@ from forge import repo
 IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
 
 
+def handoff(top: Path) -> dict[str, str]:
+    """Seed each production plan from the accepted sign-off on its starting branch."""
+    from forge import records, story
+
+    result = {"proven": "", "design": "Design: docs/design/<KEY>/ (<tree id>)"}
+    if not (top / "forge.toml").is_file() or repo.config(top)["repo"] != "client":
+        return result
+    pinned = repo.config(top)["signoff"]
+    for path in sorted((top / "docs/decisions").glob("*.md"), reverse=True):
+        name = path.relative_to(top).as_posix()
+        if (pinned and name != pinned) or (not pinned and not repo.SIGNOFF.fullmatch(name)):
+            continue
+        text = path.read_text(encoding="utf-8")
+        front = story.FRONTMATTER.match(text)
+        if not front or not re.search(r"^status:\s*[\"']?accepted[\"']?\s*$", front[1], re.M):
+            continue
+        sections = story.sections(text)
+        evidence = [f"### {heading}\n\n{sections[heading].strip()}"
+                    for heading in records.SIGNOFF_SECTIONS if sections.get(heading, "").strip()]
+        if evidence:
+            result["proven"] = "## Proven by the prototype\n\n" + "\n\n".join(evidence)
+        signed = sections.get("Signed design", "").strip()
+        if re.fullmatch(r"docs/design/[^/\s]+/ \(([0-9a-f]{40}|[0-9a-f]{64})\)", signed):
+            result["design"] = f"Design: {signed}"
+        return result  # Older sign-offs may have none of these sections; invent no evidence.
+    return result
+
+
 def has_app_code(top: Path, ref: str, base: str = "") -> bool:
     """App changes exclude the canvas, records and files Forge itself writes.
 
@@ -66,6 +94,12 @@ def check(top: Path, text: str, ref: str | None = None, *, required: bool = True
     if not any(row["User-facing"].lower() in ("yes", "true") for row in story.parse(text)["tasks"]):
         return None
     line = body.splitlines()[-1] if body else ""
+    if line.startswith("Design: none"):
+        if (re.fullmatch(r"Design: none \(\S(?:[^\n]*\S)?\)", line)
+                and len(re.findall(r"^Design:", body, re.M)) == 1):
+            return None
+        repo.refuse(("A story with no canvas needs a reason for its small screen changes.",
+                     "end What changes for you with Design: none (<why>), then forge read <KEY>"))
     match = re.fullmatch(r"Design: (docs/design/[^/\s]+/) \(([0-9a-f]{40}|[0-9a-f]{64})\)", line)
     next_step = ('save the screens and images in docs/design/<KEY>/, add '
                  'Design: docs/design/<KEY>/ (<tree id>) at the end of What changes for you, '

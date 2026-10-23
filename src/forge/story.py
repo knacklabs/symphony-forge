@@ -142,7 +142,7 @@ def new(args: Any) -> int:
     path = add_worktree(top, f"story/{key}", repo.default_branch(top))
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
-    _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
+    _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row, **design.handoff(path)))
     changed = [doc]
     if not fix and key not in {item["key"] for item in repo.roadmap(path)}:
         changed += add_to_roadmap(path, [{"key": key, "title": title}])

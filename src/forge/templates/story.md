@@ -10,16 +10,20 @@
 in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
 Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
 the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. Remove this comment and omit
+id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
+screens that add no screen and change no flow, use Design: none (<why>) instead.
+Remove this comment and omit
 the Design line for a backend-only story. Cold read follows the design; one plan approval binds
 these exact files. A folder edit needs its new tree id and a new plan approval.
 The rule starts with the next plan read and approval. Plans approved without a Design line
 before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+$design
 
 ## Why
 
 $why
+
+$proven
 
 ## Done when
 

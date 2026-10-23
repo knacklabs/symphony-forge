@@ -18,6 +18,34 @@ ROOT = Path(__file__).resolve().parents[1]
 SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"><text x="20" y="40">Basket</text></svg>\n'
 
 
+@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
+def test_1_small_screen_changes_need_a_reason_instead_of_a_canvas(repo, tmp_path, claude_payload, adopted):
+    # Test audit: read/approval/task admission owns this new small-UI contract.
+    # Missing reasons must refuse before a reader runs; canvas tests require images.
+    # Only the third-party reader is fake. No production seam is needed.
+    if adopted:
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
+    setup(repo)
+    folder = new_story(repo, "SHOP")
+    doc = folder / "plans/SHOP.md"
+    small = re.sub(r"Design: .*", "Design: none", DOC)
+    doc.write_text(small, encoding="utf-8")
+    refused = repo.forge("read", "SHOP")
+    assert refused.returncode == 1, refused.stdout + refused.stderr
+    assert "reason" in refused.stderr and "Next:" in refused.stderr
+    small = small.replace("Design: none", "Design: none (only a label changes)")
+    doc.write_text(small, encoding="utf-8")
+    read = repo.forge("read", "SHOP")
+    assert read.returncode == 0, read.stdout + read.stderr
+    prompt = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
+    assert "P1" in prompt and "adds a screen or changes a flow" in prompt
+    assert "Design: none" in prompt
+    approved = hook(repo, claude_plan(claude_payload, small))
+    assert approved.returncode == 0, approved.stdout + approved.stderr
+    started = repo.forge("task", "start", "SHOP/SAVE")
+    assert started.returncode == 0, started.stdout + started.stderr
+
+
 def test_24_pre_upgrade_user_facing_approval_still_starts(repo, tmp_path, claude_payload, env):
     # An actual earlier reader and approval hook own this historical approval. Task admission
     # must retain it without silently applying the new design contract to existing work.
