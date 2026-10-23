@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner approved this part over the line limit in the story's Risks: most lines are the lockfile and copied shadcn/ui files",
   "branch": "task/FORGE-STARTER-1-APP",
   "chat": {
     "approval": "2ab63e9bd28c419dfc01b6af0e59de34a4dd087e64bb1bb9ff6ccee472160da9",
