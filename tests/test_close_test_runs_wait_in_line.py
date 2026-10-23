@@ -7,7 +7,6 @@ import json
 import subprocess
 import sys
 import time
-from itertools import groupby
 from pathlib import Path
 
 import pytest
@@ -90,10 +89,7 @@ class Close:
     def places(self) -> list[str]:
         # With four cores the review lane can also queue. This case owns the
         # test lane's FIFO messages, not admission to the separate agent lane.
-        # Main also announces holder changes at the same position. This test owns the
-        # sequence of position changes; holder names have their own command-level test.
-        updates = [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
-        return [line for line, _ in groupby(updates)]
+        return [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
 
 
 # Workers share close's queue; waiting messages name holders and count places in the lane.
