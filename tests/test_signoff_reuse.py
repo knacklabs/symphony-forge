@@ -15,7 +15,7 @@ import re
 
 import pytest
 
-from test_proto_signoff import _client, _decision
+from test_proto_signoff import _client, _decision, _request_build
 
 STORY = "FORGE-PACE-1/SIGNOFF"
 
@@ -47,13 +47,7 @@ def test_1_working_signoff_reuses_review_and_check_after_customer_reply(
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=not requested_build)
     page = _decision(fix, answers, via="", on="")
     if requested_build:
-        created = repo.forge("decision", "new", "prototype-build", cwd=fix)
-        assert created.returncode == 0, created.stderr
-        request = next((fix / "docs/decisions").glob("*-prototype-build.md"))
-        request.write_text(re.sub(r"<!--.*?-->", "The canvas cannot prove real data speed.",
-                                  request.read_text("utf-8"), flags=re.S), encoding="utf-8")
-        allowed = repo.forge("decision", "accept", "prototype-build", "--by", "Ravi", cwd=fix)
-        assert allowed.returncode == 0, allowed.stderr
+        _request_build(repo, fix)
         (fix / "app.py").write_text("print('requested working prototype')\n", encoding="utf-8")
         repo.git("add", "app.py", cwd=fix)
         repo.git("commit", "-qm", "Build the requested prototype", cwd=fix)

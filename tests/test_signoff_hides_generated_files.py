@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, _install
-from test_proto_signoff import MUST, _decision, _design_records
+from test_proto_signoff import MUST, _decision, _design_records, _request_build
 from test_setup import _autoreview, _fresh_client
 
 STORY = "signoff-hide-generated"
@@ -89,6 +89,9 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
     _install(repo.bin, "codex", f"#!{sys.executable}\nimport sys\nsys.stdin.read()\n")
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / ("codex.cmd" if os.name == "nt" else "codex")))
     page = _decision(fix, answers)
+    # This fixture builds app code on its branch, so the new canvas gate needs
+    # the owner's accepted working-build request before it can review the product.
+    _request_build(repo, fix)
 
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 

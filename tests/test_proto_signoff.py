@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -124,7 +125,8 @@ def _adopted_client(repo, tmp_path, monkeypatch, *, old_signoff=False, design_mo
     config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
                       encoding="utf-8")
     if design_model:
-        config.write_text(config.read_text("utf-8") + '\n[models.design.claude]\n'
+        text = re.sub(r"(?ms)^\[models\.design\.claude\]\n.*?(?=^\[|\Z)", "", config.read_text("utf-8"))
+        config.write_text(text + '\n[models.design.claude]\n'
                           f'model = {json.dumps(design_model[0])}\neffort = {json.dumps(design_model[1])}\n',
                           encoding="utf-8")
     sources = {"Demo workflow": "salesperson", "Users and roles": "developer"}
@@ -150,6 +152,16 @@ def _adopted_client(repo, tmp_path, monkeypatch, *, old_signoff=False, design_mo
     fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
     queue = _review_tools(repo, tmp_path, monkeypatch)
     return fix, answers, queue
+
+
+def _request_build(repo, fix):
+    created = repo.forge("decision", "new", "prototype-build", cwd=fix)
+    assert created.returncode == 0, created.stderr
+    request = next((fix / "docs/decisions").glob("*-prototype-build.md"))
+    request.write_text(re.sub(r"<!--.*?-->", "The canvas cannot prove real data speed.",
+                              request.read_text("utf-8"), flags=re.S), encoding="utf-8")
+    allowed = repo.forge("decision", "accept", "prototype-build", "--by", "Ravi", cwd=fix)
+    assert allowed.returncode == 0, allowed.stderr
 
 
 def _decision(fix, answers, *, customer="Sam Lee, director", via="email",
@@ -325,7 +337,8 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert accepted.returncode == 0, accepted.stderr
     assert f"reviewed_commit: {reviewed}" in page.read_text()
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
-    assert len(calls) == 13
+    # Uncommitted product changes now stop before either external check.
+    assert len(calls) == 11
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options
