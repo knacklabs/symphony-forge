@@ -11,12 +11,27 @@
   "done_when": "A run waiting in line names each item holding a place, with forge handback or forge stop as the command that frees it, and a place whose owning process has exited is freed.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "714ead0fd6f77d7a27340c41477341c19c57caf8ff0df80817410da20641c047",
+    "changed": "79dde8aaf0997f11b01d4934215adb9d83f60717933eb6eb4fc9023d11ad5cb8",
+    "commit": "461c690b9d95f92b4fa4d7536b9108b0b46744ff",
+    "dismissals": [],
+    "findings": [],
+    "id": "a6d12bac-ade4-4fe9-9ad7-f9f0c0bd3709",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T14:24:02.807192+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T14:35:03.560461+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
