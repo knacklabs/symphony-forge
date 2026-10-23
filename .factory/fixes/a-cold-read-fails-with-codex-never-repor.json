@@ -22,8 +22,8 @@
     "id": "53e4b0e0-d740-4c8d-9549-48d6fcb0bb95",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-23T15:21:17.043459+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "196436c9dea155c9a21c69dab9458b13ebd50a22",
+    "close": "360c65b2-a74c-4bc8-9d74-602d8c73d729",
+    "head": "c4992b361bdcae12fbc0c7da1912ecc2d9b518b2",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A cold read fails with 'Codex never reported the turn's end' when another program, such as the Codex desktop app, still holds its earlier Codex conversation open, and a work round in the same case gives the same misleading line.",
   "worker": "codex"
