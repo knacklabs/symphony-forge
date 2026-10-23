@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-23T03:22:33.849803+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Starter app for new client React apps: The starter app tree is stuck. It should deliver: The starter tree with its API, sign-in, example record type, shell and tests, the Dockerfile that builds and starts it, and the live starter workflow. The one part allowed over the line limit (see Risks).\nIt changes 22644 lines outside tests, over its limit of 400.\nThe worker tried: Keep the starter test boundaries explicit; Add the runnable React starter tree.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "c2145f0c-ac5b-425f-81c7-1a0092b2ced9"
+  },
   "stuck": {
     "close": null,
     "head": "e1103a9af5af9e4818066fdea915fdc95c21f61d",
