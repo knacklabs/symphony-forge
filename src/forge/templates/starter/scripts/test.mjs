@@ -30,6 +30,7 @@ environment.DATABASE_URL = 'postgresql://postgres:test-password@127.0.0.1:5432/s
 const compose = ['compose', '-f', 'compose.test.yml'];
 try {
   run(npm, ['ci']);
+  run(process.execPath, ['scripts/test-build.mjs']);
   run(npx, ['playwright', 'install', '--with-deps', 'chromium']);
   run('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '180']);
   run(npm, ['test']);

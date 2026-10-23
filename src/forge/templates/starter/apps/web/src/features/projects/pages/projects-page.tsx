@@ -198,45 +198,53 @@ export function ProjectsPage() {
       )}
       {projects.data && projects.data.items.length === 0 && (
         <div className="rounded-md border p-6">
-          <p className="font-medium">No projects yet.</p>
-          <p className="mt-1 text-sm text-muted-foreground">Create a project to keep its status in one place.</p>
+          <p className="font-medium">{projects.data.pagination.totalItems === 0 && query.page === 1 ? 'No projects yet.' : 'No projects on this page.'}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {projects.data.pagination.totalItems === 0 && query.page === 1
+              ? 'Create a project to keep its status in one place.'
+              : 'Use Previous to view the remaining projects.'}
+          </p>
         </div>
       )}
       {projects.data && projects.data.items.length > 0 && (
-        <>
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      const sorted = header.column.getIsSorted();
-                      return (
-                        <TableHead key={header.id} aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}>
-                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const sorted = header.column.getIsSorted();
+                    return (
+                      <TableHead key={header.id} aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none'}>
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      {projects.data && (projects.data.pagination.totalItems > 0 || query.page > 1) && (
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <p className="text-muted-foreground">
+            {projects.data.items.length === 0
+              ? `${projects.data.pagination.totalItems} projects · Page ${query.page} is empty`
+              : `${projects.data.pagination.totalItems} project${projects.data.pagination.totalItems === 1 ? '' : 's'} · Page ${query.page} of ${Math.max(projects.data.pagination.totalPages, 1)}`}
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>Next</Button>
           </div>
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <p className="text-muted-foreground">{projects.data.pagination.totalItems} project{projects.data.pagination.totalItems === 1 ? '' : 's'} · Page {query.page} of {Math.max(projects.data.pagination.totalPages, 1)}</p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={!table.getCanPreviousPage()} onClick={() => table.previousPage()}>Previous</Button>
-              <Button variant="outline" size="sm" disabled={!table.getCanNextPage()} onClick={() => table.nextPage()}>Next</Button>
-            </div>
-          </div>
-        </>
+        </div>
       )}
 
       <ProjectFormDialog

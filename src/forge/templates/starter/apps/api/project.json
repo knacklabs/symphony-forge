@@ -6,7 +6,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": { "command": "tsc -p apps/api/tsconfig.json" },
-      "outputs": ["{workspaceRoot}/dist/apps/api"]
+      "outputs": ["{workspaceRoot}/dist/apps/api", "{workspaceRoot}/dist/libs/shared"]
     },
     "typecheck": {
       "executor": "nx:run-commands",

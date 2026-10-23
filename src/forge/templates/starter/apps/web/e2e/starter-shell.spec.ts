@@ -115,11 +115,21 @@ test('create, edit, and delete a project', async ({ page }) => {
   await editDialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByRole('row', { name: /Migration review updated/ })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Delete Migration review updated' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page).toHaveURL(/page=2/);
+  await expect(page.getByRole('row', { name: /Pagination project 19/ })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Pagination project/ })).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Delete Pagination project 19' }).click();
   const confirmation = page.getByRole('alertdialog');
   await expect(confirmation).toContainText('This action cannot be undone');
   await confirmation.getByRole('button', { name: 'Delete project' }).click();
-  await expect(page.getByRole('row', { name: /Migration review updated/ })).toHaveCount(0);
+  await expect(page.getByText('No projects on this page.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Previous' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Previous' }).click();
+  await expect(page).toHaveURL(/page=1/);
+  await expect(page.getByRole('row', { name: /Migration review updated/ })).toBeVisible();
+  await expect(page.getByText('20 projects · Page 1 of 1')).toBeVisible();
 });
 
 test('switching accounts does not show the previous account projects', async ({ page }) => {
