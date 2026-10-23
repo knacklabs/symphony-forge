@@ -7,13 +7,76 @@
     "head": null,
     "start": "d9ea1b1f26fe31e49ef899d37b99e86c9eed37f1"
   },
+  "known": [
+    {
+      "area": "has_app_code() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 22,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve scaffold exclusions when the app adds a stack marker",
+      "work": 2
+    },
+    {
+      "area": "signoff() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1099,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Supply passing-test evidence to the sign-off reviewer",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ddecb3719ba711571a869c29e12e0d3998cde529a91ff0e3220eda3c23916f25",
+    "changed": "11054bfea385ff7247284030d6f18bec4e3ce105d7583b444f77f92f378b7d14",
+    "commit": "6976eb1021027be94cfd803dbab7ced3c9957dbd",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - the first application branch in a fresh prototype adds pyproject.toml or go.mod. `_scaffold(top)` derives its paths from the current checkout and omits Dockerfile and .dockerignore for these stacks (src/forge/init.py:147\u2013154). Those files were written by the original empty-repo init, but now disappear from `managed`. Consequently, `has_app_code(top, base)` counts their initial commit as an existing working build, and close permits the first application without an accepted prototype-build request. Keep the scaffold exclusions stable across stack-marker changes. This preserves the approved app-code definition; it does not widen it.",
+        "file": "src/forge/design.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 22,
+        "priority": "P1",
+        "title": "Preserve scaffold exclusions when the app adds a stack marker",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - the worker runs `forge test`, then fills Proof with demo steps and their test names, as the new template requests. This prompt requires evidence that each test passes, but forwards only the decision's Proof text. Test outcomes live outside tracked files in `.git/forge/` (src/forge/review.py:745\u2013749); the sign-off review receives a fresh clone (src/forge/review.py:899), without those outcomes. Its read-only reviewer therefore cannot verify the passing tests, even after a successful local run. Include results tied to the reviewed product alongside the proof mapping. The new sign-off test misses this because its fake reviewer returns clean and its assertions check only the mapping and instruction text.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 1099,
+        "priority": "P1",
+        "title": "Supply passing-test evidence to the sign-off reviewer",
+        "work": 2
+      }
+    ],
+    "id": "ddecd397-9bde-4c9d-a0bd-dd632bd4cf96",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-23T17:46:23.072801+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:34:34.654016+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
