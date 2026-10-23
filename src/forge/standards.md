@@ -55,6 +55,11 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
   mention unrelated dead code instead of deleting it. Remove what your own change left unused.
   Every changed line should trace to the task, so the reviewer can judge it against the story.
 - Joining lines or removing blank lines never counts as a reduction.
+- **Keep reader load low.** Avoid a wrapper or adapter with one caller, a layer that repeats the
+  next layer's methods and arguments, or module or global state where a local variable or return
+  value works. A new reader can answer "where does X come from?" and "what can change X?" in about
+  30 seconds. Keep structure a real concern requires below. Review reports reader load under its
+  Simpler rule and normal Gain/Work/Harm bar, not as a P1 Standard finding on its own.
 - **Turn the task into checks first.** A Done-when item that changes runtime behaviour becomes one
   end-to-end test at the boundary the user touches, and a settings, docs, deletion or test-only item
   is proven by the check the item names; a bug becomes a test that fails before the fix. Then make
@@ -240,8 +245,9 @@ Windows checklist:
   adding a fixed sleep.
 - New and changed flows get browser tests now; an untouched old flow gets one when a story first
   changes it, with no backfill.
-- Test behaviour, not markup or internals. There is no coverage target: a number invites tests
-  that prove nothing, and the review's test audit judges each test instead.
+- Tests check behaviour at the boundary the user touches, never markup, internal record formats
+  or private calls. A behaviour-preserving refactor must not break a test. There is no coverage
+  target: a number invites tests that prove nothing, and the review's test audit judges each test.
 - forge.toml's `test` command runs everything CI needs (install, lint, typecheck, all tests), so a
   green run locally means a green `tests` check.
 

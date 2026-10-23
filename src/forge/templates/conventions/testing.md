@@ -3,6 +3,9 @@
 How the standards page's test rules look on this stack. Read it when your task adds tests or
 changes how they run.
 
+Tests check behaviour at the boundary the user touches, never internal record formats or private
+calls. A behaviour-preserving refactor must not break a test; use the owning boundary instead.
+
 ## The one test command
 
 The root `package.json` runs the lint, type-check, API, hook and browser tests:
