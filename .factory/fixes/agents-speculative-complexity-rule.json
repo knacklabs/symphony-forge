@@ -1,6 +1,13 @@
 {
   "base": "0937aaa81b8f66492a028bce09df884b1c1bf94b",
   "branch": "fix/agents-speculative-complexity-rule",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16a0c-e04f-7793-ab8e-8fe0d9e4a8e1",
+    "head": null,
+    "start": "2cf68c71a8dc7805b80fc62c3093589e72e0e671"
+  },
   "done_when": "The AGENTS.md block that Forge writes has the owner's rule under Rules, word for word; new repos get it at init and existing repos on forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
