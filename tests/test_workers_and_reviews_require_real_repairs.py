@@ -44,15 +44,19 @@ def test_1_workers_and_reviews_receive_real_repair_rules(
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
 
-    env.commit(client, "forge.toml", f'version = "{version}"\nworkers = "claude"\n'
-               'test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n'
-               'models.lite = { model = "sonnet", effort = "medium" }\n')
-    repo.git("push", "-q", "origin", "main", cwd=client)
+    config = (f'version = "{version}"\nworkers = "claude"\n'
+              'test = "echo ok"\nchecks = ["tests", "forge-pr-check"]\n'
+              'models.lite = { model = "sonnet", effort = "medium" }\n')
+    if adopted:
+        env.commit(client, "forge.toml", config, "Use the current release")
+        repo.git("push", "-q", "origin", "main", cwd=client)
 
     started = repo.forge("fix", "start", "Repair the greeting", "--done",
                          "The greeting works", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     where = client.parent / f"{client.name}-fix-repair-the-greeting"
+    if not adopted:
+        env.commit(where, "forge.toml", config, "Configure the test client")
     if adopted:
         synced = repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stdout + synced.stderr
