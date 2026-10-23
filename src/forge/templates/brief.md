@@ -19,10 +19,10 @@ If unreadable Autoreview output stops close, the refusal shows the saved output 
 From the second review round, close checks the previous round's findings and new P0s that
 happen in normal use. A round-one fix that breaks the main path counts as a P0. At the round
 limit, open findings below P0 need the owner's choice before they become follow-ups. `Not done` blocks
-only against an owner-approved Done-when item (the fix's Done-when line); builder details
+only against an owner-approved Done-when item (the fix's whole Done-when line or any sentence in it); builder details
 are guidance and never block as `Not done`.
 Close blocks a `Not done` on the item's own Done-when even below the score bar or in a light
-review. Clean reviews explain why their listed findings do not block.
+review. Each non-blocking finding close lists shows its own reason with its Gain, Work and Harm scores.
 
 Forge records the "Prototype before sign-off" allowance. It covers any size and interface
 changes. Reviewers do not check this allowance against the diff. Other agent-recorded

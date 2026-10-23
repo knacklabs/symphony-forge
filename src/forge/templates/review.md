@@ -204,6 +204,10 @@ nothing the change does, is skipped, or always passes), as a P1 finding titled
 `Gate: <the test>`. The test-audit skill (`.codex/skills/test-audit/SKILL.md`) has the full
 checklist.
 
+Tests check behaviour at the boundary the user touches, never internal record formats or private
+calls. If a behaviour-preserving refactor breaks a test, report it under this test audit and ask
+for a check at the owning boundary.
+
 Documentation-only changes still need every test named in the task's Tests column; check claims,
 commands and links.
 
@@ -228,6 +232,12 @@ Complexity the diff adds that no Done-when item needs is a defect, not a style p
   "simpler": a missing one is its own P1 finding;
 - complexity the diff didn't add, in a file the branch changes, is an advisory P3 titled
   `Simpler (existing): <what>`.
+
+Report reader load under this Simpler rule: a wrapper or adapter with one caller, a layer that
+repeats the next layer's methods and arguments, or module or global state where a local variable
+or return value works. Can a new reader answer "where does X come from?" and "what can change X?"
+in about 30 seconds? Score the finding with the normal Gain/Work/Harm bar; reader load alone does
+not make it P1. Keep structure that the standards require for a real concern.
 
 impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
 visual design (layout, type, colour, states and copy) and its checking pass: shape before building,

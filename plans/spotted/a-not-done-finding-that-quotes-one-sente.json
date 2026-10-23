@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: A Not done that quotes any one sentence of the fix's Done-when blocks close",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 1000,
+      "text": "Not done: A Not done that quotes any one sentence of the fix's Done-when blocks close",
+      "from": "review",
+      "item": "a-not-done-finding-that-quotes-one-sente",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
