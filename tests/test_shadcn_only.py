@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from test_close import CLEAN, blocked, env, finding
+from test_close import CLEAN, GREEN, blocked, env, finding
 from test_close import STORY_DOC
 from test_score_notes import _client_repo as setup_client
 from test_setup import _fresh_client
@@ -45,6 +45,7 @@ def _shadcn_client(env, tmp_path, adopted):
         (repo.path / "package.json").write_text(
             json.dumps({"dependencies": {"antd": "^5.0.0"}}), encoding="utf-8")
     _commit_main(repo, tmp_path, "Set up shadcn/ui")
+    env.checks(GREEN)
     return repo
 
 
@@ -94,9 +95,13 @@ def test_4_close_refuses_a_second_ui_library_and_shadcn_copies(env, tmp_path, ad
     no_config_root.mkdir()
     no_config, made = _fresh_client(repo, env.gh, no_config_root)
     assert made.returncode == 0, made.stdout + made.stderr
+    client_config = (repo.path / "forge.toml").read_text(encoding="utf-8")
+    (no_config / "forge.toml").write_text(client_config, encoding="utf-8")
     original = repo.path
     repo.path = no_config
     try:
+        _commit_main(repo, tmp_path, "Use the test configuration")
+        env.checks(GREEN)
         no_config_item, _ = _fix(env, "unconfigured-ui", {
             "package.json": json.dumps({"devDependencies": {"@mui/material": "^7.0.0"}}),
         })
@@ -109,7 +114,7 @@ def test_4_close_refuses_a_second_ui_library_and_shadcn_copies(env, tmp_path, ad
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_5_review_holds_a_hand_built_component(env, tmp_path, adopted):
+def test_5_review_holds_a_hand_built_component(env, tmp_path, monkeypatch, adopted):
     repo = _shadcn_client(env, tmp_path, adopted)
     screen = repo.path / "apps/web/src/features/home.tsx"
     screen.parent.mkdir(parents=True, exist_ok=True)
@@ -123,9 +128,20 @@ def test_5_review_holds_a_hand_built_component(env, tmp_path, adopted):
            .replace("`app.py`", "`apps/web/src/features/home.tsx`")
            .replace("Save a basket | Shoppers can save their basket with one click",
                     "Change the screen | The home screen uses shadcn/ui components"))
-    item, where = env.start_approved_task(doc, changes={
-        "apps/web/src/features/home.tsx": "export function Home() { return <main>Started</main>; }\n"
-    })
+    no_hooks = tmp_path / "fixture-no-hooks"
+    no_hooks.mkdir(exist_ok=True)
+    git = repo.git
+
+    def fixture_git(*args, cwd=None):
+        if args and args[0] in {"commit", "push"}:
+            args = ("-c", f"core.hooksPath={no_hooks}", *args)
+        return git(*args, cwd=cwd)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(repo, "git", fixture_git)
+        item, where = env.start_approved_task(doc, changes={
+            "apps/web/src/features/home.tsx": "export function Home() { return <main>Started</main>; }\n"
+        })
 
     log = install_claude(repo)
     worked = repo.forge("work", item)
