@@ -60,8 +60,8 @@
     "id": "eed6a1cb-63a0-4961-8563-98cec6ed8ce3",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-23T03:22:33.849803+00:00",
@@ -77,12 +77,10 @@
     }
   ],
   "stuck": {
-    "close": "4c2a85bb-d8b2-41cd-8c55-ec237607a6b1",
-    "head": "6f1059c64b42eef790a90be51755bfa79108c8fa",
-    "keys": {
-      "the open P0 exclude nested web build output from lint in src/forge/templates/starter/eslint.config.mjs": 1
-    },
-    "round": 1
+    "close": "c827dde7-2e5f-4721-b91f-490853ee2e66",
+    "head": "557199d15428b16cad93509a050917ac091223f0",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
