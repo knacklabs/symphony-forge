@@ -31,6 +31,7 @@ def test_36_working_build_signoff_requires_and_reviews_demo_proof(repo, tmp_path
     # The positive proof names a real demo test, run through Forge, not a fabricated receipt.
     tests = fix / "tests"
     tests.mkdir(exist_ok=True)
+    (fix / ".gitignore").write_text("__pycache__/\n*.pyc\n.pytest_cache/\n", encoding="utf-8")
     (tests / "test_demo.py").write_text(
         "import subprocess, sys\n\ndef test_open():\n"
         "    result = subprocess.run([sys.executable, 'app.py'], capture_output=True, "
@@ -47,11 +48,16 @@ def test_36_working_build_signoff_requires_and_reviews_demo_proof(repo, tmp_path
     assert "1 passed" in tested.stdout
     proof = "## Proof\n- Open the prototype: tests/test_demo.py::test_open\n"
     page.write_text(page.read_text("utf-8") + "\n" + proof, encoding="utf-8")
-    queue.write_text(json.dumps([{"say": SOL_HIGH,
-                                  "report": {"review_status": "scoped-clean", "findings": []}}]))
+    clean = {"report": {"review_status": "scoped-clean", "findings": []}}
+    queue.write_text(json.dumps([
+        {**clean, "say": "model: claude-opus-5-5\nthinking: high\nautoreview done"},
+        {**clean, "say": SOL_HIGH},
+    ]))
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
-    [call] = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    [call] = [call for call in calls if "Test results for this product" in
+              "\n".join(call["prompt_files"].values())]
     prompt = "\n".join(call["prompt_files"].values())
     assert "Open the prototype: tests/test_demo.py::test_open" in prompt
     assert "every demo workflow step" in prompt
@@ -65,9 +71,12 @@ def test_36_working_build_signoff_requires_and_reviews_demo_proof(repo, tmp_path
     repo.git("add", "app.py", cwd=fix)
     repo.git("commit", "-qm", "Revise the demo", cwd=fix)
     _decision(fix, answers, proof="- Open the prototype: tests/test_demo.py::test_open")
+    queue.write_text(json.dumps([clean | {"say": SOL_HIGH}]))
     reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert reviewed.returncode == 0, reviewed.stdout + reviewed.stderr
-    call = json.loads(queue.with_suffix(".calls.jsonl").read_text().splitlines()[-1])
+    calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    [call] = [call for call in calls if "No test results match this product" in
+              "\n".join(call["prompt_files"].values())]
     prompt = "\n".join(call["prompt_files"].values())
     assert "No test results match this product" in prompt
     assert "passed tests/test_demo.py::test_open" not in prompt

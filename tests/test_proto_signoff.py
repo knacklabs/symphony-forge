@@ -166,7 +166,7 @@ def _request_build(repo, fix):
 
 def _decision(fix, answers, *, customer="Sam Lee, director", via="email",
               on="2026-09-28", demo="https://demo.example.test", quote=None,
-              proof="- Demo workflow: tests/test_demo.py::test_demo"):
+              proof="The design shows the key order flow."):
     design_tree = subprocess.check_output(
         ["git", "rev-parse", "HEAD:docs/design/prototype"], cwd=fix, text=True).strip()
     page = fix / "docs/decisions/0001-client-signoff.md"

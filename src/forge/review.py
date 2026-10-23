@@ -450,7 +450,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if not always and docs_only(top, base):
             said = DOCS_ONLY.format(command=command)
             return 0, said
-        from forge import codex  # imports review indirectly
+        from forge import codex, records  # import review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
@@ -490,7 +490,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 env["FORGE_WORKER_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
                 # Worker tests establish the product; close keeps that binding if it still fits.
-                product = (tested_product(top, clean=True) if not closing else
+                product = (records.tested_product(top, clean=True) if not closing else
                            receipt.get("product", "") if isinstance(receipt, dict) else "")
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
                 entry.update(output_path=log.as_posix(), test_cpus=int(workers))
@@ -544,7 +544,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                             process.wait()
                         raise
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
-            if product and product == tested_product(top):
+            if product and product == records.tested_product(top):
                 evidence = results.read_text("utf-8") if results.is_file() else done.stdout
                 results.write_text("# " + json.dumps({"product": product, "exit": done.returncode})
                                    + "\n" + evidence, "utf-8")
@@ -1114,36 +1114,10 @@ def _hide_generated(tree: Path, start: str, head: str) -> str:
                        for path in generated))
 
 
-def tested_product(top: Path, *, clean: bool = False) -> str:
-    """Identify the committed product that sign-off reviews, excluding its decision records."""
-    excluded = (*BOOKKEEPING, "docs/decisions/")
-    # Generated test output is untracked; only the start must also be free of test inputs
-    # that the review clone cannot see.
-    if repo.git("status", "--porcelain", *([] if clean else ["--untracked-files=no"]), "--", ".",
-                *(f":(exclude){name}" for name in excluded), cwd=top):
-        return ""
-    entries = repo.git("ls-tree", "-r", "-z", "--full-tree", "HEAD", cwd=top).split("\0")
-    files = [entry for entry in entries if not entry.partition("\t")[2].startswith(excluded)]
-    return hashlib.sha256("\0".join(files).encode("utf-8")).hexdigest()
-
-
-def signoff_results(top: Path) -> str:
-    """Carry actual test outcomes into the review clone only for the product they tested."""
-    path = results_path(top)
-    saved = path.read_text("utf-8") if path.is_file() else ""
-    header, _, evidence = saved.partition("\n")
-    try:
-        receipt = json.loads(header.removeprefix("# "))
-    except ValueError:
-        receipt = {}
-    product = tested_product(top)
-    if not isinstance(receipt, dict) or not product or receipt.get("product") != product:
-        return "No test results match this product. Run forge test on the finished product."
-    return f"The test command exited with status {receipt.get('exit')}.\n{evidence}"
-
-
 def signoff(top: Path, answers: str, evidence: str = "") -> str:
     """Review every tracked product file once, against an empty root, before client acceptance."""
+    from forge import records
+
     skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
     table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
@@ -1153,7 +1127,7 @@ def signoff(top: Path, answers: str, evidence: str = "") -> str:
         prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
                    "Each step must name a passing test. Refuse a missing step, a missing test, "
                    "or a test without evidence that it passes. The full production proof is due now."
-                   "\n\n## Test results for this product\n" + signoff_results(top))
+                   "\n\n## Test results for this product\n" + records.signoff_results(top))
     cfg = repo.config(top)
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 

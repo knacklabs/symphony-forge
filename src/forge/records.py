@@ -365,6 +365,38 @@ def decision_accept(args: argparse.Namespace) -> None:
     print(f"Accepted {rel}, confirmed by {by}{also}.")
 
 
+def tested_product(top: Path, *, clean: bool = False) -> str:
+    """Identify the committed product that sign-off reviews, excluding its decision records."""
+    from forge import review
+
+    excluded = (*review.BOOKKEEPING, "docs/decisions/")
+    # Generated test output is untracked; only the start must also be free of test inputs
+    # that the review clone cannot see.
+    if repo.git("status", "--porcelain", *([] if clean else ["--untracked-files=no"]), "--", ".",
+                *(f":(exclude){name}" for name in excluded), cwd=top):
+        return ""
+    entries = repo.git("ls-tree", "-r", "-z", "--full-tree", "HEAD", cwd=top).split("\0")
+    files = [entry for entry in entries if not entry.partition("\t")[2].startswith(excluded)]
+    return hashlib.sha256("\0".join(files).encode("utf-8")).hexdigest()
+
+
+def signoff_results(top: Path) -> str:
+    """Carry actual test outcomes into the review clone only for the product they tested."""
+    from forge import review
+
+    path = review.results_path(top)
+    saved = path.read_text("utf-8") if path.is_file() else ""
+    header, _, evidence = saved.partition("\n")
+    try:
+        receipt = json.loads(header.removeprefix("# "))
+    except ValueError:
+        receipt = {}
+    product = tested_product(top)
+    if not isinstance(receipt, dict) or not product or receipt.get("product") != product:
+        return "No test results match this product. Run forge test on the finished product."
+    return f"The test command exited with status {receipt.get('exit')}.\n{evidence}"
+
+
 def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]:
     from forge import init, sync
 
