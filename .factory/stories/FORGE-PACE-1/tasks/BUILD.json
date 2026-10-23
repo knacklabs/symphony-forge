@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-PACE-1-BUILD",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T17:46:23.072801+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "6603631885594acca718fc92a610ab31eb319463",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
