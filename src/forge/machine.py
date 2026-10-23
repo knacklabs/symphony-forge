@@ -155,6 +155,18 @@ def _admitted(run: dict[str, Any]) -> bool:
     return bool(run.get("admitted") or run.get("started_at") or run.get("legacy"))
 
 
+def _holder(run: dict[str, Any]) -> str:
+    name = run.get("title") or run.get("item") or run["kind"]
+    if run.get("native"):
+        action = (f"In its session at {run['checkout_root']}, use forge handback {run['item']} "
+                  f"--round {run['round']} --subagent <id> with its result on stdin.")
+    else:
+        command = (f"--repo {repo.quote(run['repo_root'])} {run['item']}" if run.get("item")
+                   else f"--id {run['id']}")
+        action = f"To free this place, ask the operator to run forge stop {command}."
+    return f"Held by {name} ({run['repo_name']}, {run['kind']}). {action}"
+
+
 def _place(run: dict[str, Any], lane: list[dict[str, Any]], size: int) -> int:
     """Running rounds retain capacity, but do not become waiters when the budget shrinks."""
     if run.get("free") or _admitted(run) or lane.index(run) < size:
@@ -201,7 +213,7 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
         runs.append(entry)
     _lane_event(entry, "lane joined", at=entry["joined_at"])
     try:
-        said: int | str = 0
+        said: int | str | tuple = 0
         while True:
             runners = busy_runners()
             size = test_slots(runners) if kind == "test" else half_cores(runners)
@@ -216,7 +228,9 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                 lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")
                         and not run.get("free")]
                 place = _place(mine, lane, size)
-                occupied = sum(_admitted(run) for run in lane)
+                holders = [run for run in lane if _admitted(run)]
+                occupied = len(holders)
+                waiting = (place, tuple(run["id"] for run in holders))
                 busy = None
                 # External jobs also drive load, even when no Forge run has started.
                 # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
@@ -240,11 +254,12 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                     print(f"This machine is busy (load {busy:.1f} per core), so this work round waits "
                           f"until it is under {LOAD_LIMIT}.", flush=True)
                     said = "busy"
-            elif place != said:
+            elif waiting != said:
                 print(f"{max(size, occupied)} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
                       f"its turn: it is number {place} in line."
-                      + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""), flush=True)
-                said = place
+                      + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else "")
+                      + "".join(f"\n{_holder(run)}" for run in holders), flush=True)
+                said = waiting
             time.sleep(0.5)
     except BaseException:
         leave(entry)

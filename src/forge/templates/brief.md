@@ -88,6 +88,9 @@ $delegation
 - A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
   the board and `forge next` show the worker as stopped and give `forge work <item>` for an unfinished round.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
+- A run in line names each holder and the command that frees its place. Return a finished
+  native round with `forge handback` in its own session. Ask the operator to use `forge stop`
+  for other holders. A place no longer counts after its owning process exits.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.
