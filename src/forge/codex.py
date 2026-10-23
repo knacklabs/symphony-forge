@@ -92,6 +92,8 @@ REFUSALS = {
              "again.", ""),
     "handler": ("Forge couldn't put in its handler that declines every Codex request, so it "
                 "started no conversation.", "forge doctor --fix"),
+    "writer": ("Another program holds this Codex conversation. Close it in that program, "
+               "then run forge {command} {item} again.", ""),
     "start": ("Codex didn't start within two minutes, so Forge stopped it; its log is {log}.",
               "forge {command} {item}"),
     "driver": ("Forge can't read the start time and command of its Codex driver, process {pid}, "
@@ -568,7 +570,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                           {**settings(config, kind),
                            **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
-               "thread": thread, "read": read, "archive": archive_thread,
+               "thread": thread, "read": read, "archive": archive_thread, "kind": kind,
                "hooks": FORGE_HOOKS}
     if not (read or archive_thread or attach_request):
         request["fast"] = fast_needed(checkout, item, kind, config)

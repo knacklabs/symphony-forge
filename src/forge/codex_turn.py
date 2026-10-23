@@ -252,7 +252,12 @@ def main() -> int:
                     except JsonRpcError as retry_error:
                         reason = retry_error.message
                 if resumed is None:
-                    if reason == (f"session {request['thread']} is archived. Run "
+                    if "already has an active writer" in reason:
+                        if request["kind"] != "Grill":
+                            emit(refused="writer")
+                            return 3
+                        emit(fresh="another program holds the earlier conversation")
+                    elif reason == (f"session {request['thread']} is archived. Run "
                                   f"`codex unarchive {request['thread']}` to unarchive it first."):
                         emit(fresh="the earlier Codex conversation was archived")
                     else:
