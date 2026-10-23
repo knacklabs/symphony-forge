@@ -216,6 +216,7 @@ def _require_cases(cases, expected):
             f"test report did not show a passing case named {name!r}; cases: {cases}")
 
 
+@pytest.mark.platform
 @pytest.mark.timeout(1800)
 def test_1_the_starter_is_a_runnable_stack(request):
     required_files = (
@@ -272,6 +273,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         _require_cases(request.getfixturevalue("live_starter")["api"], API_SECURITY_TESTS)
 
 
+@pytest.mark.platform
 @pytest.mark.timeout(1800)
 def test_2_the_starter_shell_comes_from_shadcn_components(request):
     web = STARTER / "apps" / "web" / "src"
