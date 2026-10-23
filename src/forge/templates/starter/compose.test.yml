@@ -1,0 +1,45 @@
+services:
+  database:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test-password
+      POSTGRES_DB: starter_test
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d starter_test"]
+      interval: 1s
+      timeout: 5s
+      retries: 60
+    tmpfs: /var/lib/postgresql/data
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:test-password@database:5432/starter_test
+      APP_ENV: test
+      APP_ORIGIN: http://127.0.0.1:${APP_TEST_PORT:-3000}
+      PORT: "3000"
+    ports: ["127.0.0.1:${APP_TEST_PORT:-3000}:3000"]
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
+      interval: 1s
+      timeout: 5s
+      retries: 90
+  production-api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:test-password@database:5432/starter_test
+      APP_ENV: production
+      APP_ORIGIN: http://127.0.0.1:${PRODUCTION_TEST_PORT:-3001}
+      PORT: "3000"
+    ports: ["127.0.0.1:${PRODUCTION_TEST_PORT:-3001}:3000"]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
+      interval: 1s
+      timeout: 5s
+      retries: 90

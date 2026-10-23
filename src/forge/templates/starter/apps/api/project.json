@@ -1,0 +1,18 @@
+{
+  "name": "api",
+  "projectType": "application",
+  "sourceRoot": "apps/api/src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": { "command": "tsc -p apps/api/tsconfig.json" },
+      "outputs": ["{workspaceRoot}/dist/apps/api"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit -p apps/api/tsconfig.json && tsc --noEmit -p apps/api/tsconfig.test.json"
+      }
+    }
+  }
+}
