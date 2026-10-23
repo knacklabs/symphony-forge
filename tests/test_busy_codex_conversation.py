@@ -25,7 +25,7 @@ BUSY_READER = CODEX.replace(
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
-def test_cold_read_starts_fresh_after_busy_conversation_retry(
+def test_1_cold_read_starts_fresh_after_busy_conversation_retry(
         repo, monkeypatch, tmp_path, sdk_data, adopted):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, "codex", adopted)
     _install(repo.bin, "codex-app-server", f"#!{sys.executable}\n{BUSY_READER}")
@@ -44,7 +44,7 @@ def test_cold_read_starts_fresh_after_busy_conversation_retry(
     assert "No findings." in reader.notes.read_text("utf-8")
 
 
-def test_work_on_earlier_adopted_repo_explains_how_to_free_busy_conversation(
+def test_2_work_on_earlier_adopted_repo_explains_how_to_free_busy_conversation(
         repo, monkeypatch, sdk_data, claude_session):
     _adopted(repo)
     _, calls, _ = _ready(repo, monkeypatch, sdk_data)
