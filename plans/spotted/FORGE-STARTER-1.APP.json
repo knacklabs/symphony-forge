@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tTask test notes become test paths and stop the worker's test command before any test runs.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 464,
+      "text": "Task test notes become test paths and stop the worker's test command before any test runs.",
+      "from": "worker",
+      "item": "FORGE-STARTER-1/APP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/api/project.json\tCache the shared JavaScript emitted by the API build\tFORGE-STARTER-1/APP",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/api/project.json",
+      "line": 9,
+      "text": "Cache the shared JavaScript emitted by the API build",
+      "from": "blocking",
+      "item": "FORGE-STARTER-1/APP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx\tKeep pagination reachable when the current page becomes empty\tFORGE-STARTER-1/APP",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "line": 205,
+      "text": "Keep pagination reachable when the current page becomes empty",
+      "from": "blocking",
+      "item": "FORGE-STARTER-1/APP",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/eslint.config.mjs\tExclude nested web build output from lint\tFORGE-STARTER-1/APP",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/eslint.config.mjs",
+      "line": 6,
+      "text": "Exclude nested web build output from lint",
+      "from": "blocking",
+      "item": "FORGE-STARTER-1/APP",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
