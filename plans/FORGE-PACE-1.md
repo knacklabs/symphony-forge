@@ -99,7 +99,7 @@ runs before any sign-off of a working prototype, so the lighter prototype rounds
 production unchecked. A canvas sign-off ships no code: production stories build and review it.
 
 Trade-off: each design that goes to sign-off costs one completeness check on Opus. On a machine
-without Claude, the check runs on the design model's Codex entry, and Forge says so.
+without Claude, the check runs on Codex with gpt-6.1-sol at high, and Forge says so.
 
 ## For the builders
 
@@ -134,8 +134,8 @@ without Claude, the check runs on the design model's Codex entry, and Forge says
    task. (DESIGN merged all of the above.)
    Small changes (HANDOFF): a plan with a user-facing part may end `## What changes for you` with
    `Design: none (<why>)` in place of a folder, when its parts add no screen and change no flow.
-   `design.check` accepts that line, which the approval covers like any other, and the task's
-   brief then carries the signed prototype folder when one exists. The cold read prompt tells the
+   `design.check` accepts that line, which the approval covers like any other. The task's brief
+   carries the signed prototype folder's `SCREENS.md` as context only (see item 4). The cold read prompt tells the
    reader to report as P1 a `Design: none` story whose parts add a screen or change a flow. The
    guide says to write the canvas from the brief's `## Summary`, `## Users` and
    `## Things it keeps track of`, with impeccable and emil-design-eng, so each app has its own
@@ -151,7 +151,10 @@ without Claude, the check runs on the design model's Codex entry, and Forge says
    line, or a newer design approved with its plan.
    Design records. Before any review or check, `forge decision accept client-signoff` (canvas or
    working build) refuses, naming each gap and the next step, unless all of these are in the
-   signed tree or, for the two root files, on the sign-off branch:
+   signed tree or, for the root files, on the sign-off branch:
+   - `docs/product/BRIEF.md` with a `## Things it keeps track of` section that is not empty once
+     its comments are removed. Main's shipped brief has this section, and the setup interview
+     fills it. The refusal names the section.
    - `PRODUCT.md` and `DESIGN.md` at the repo root, each not empty (impeccable's init writes
      PRODUCT.md; impeccable writes DESIGN.md with the app's theme tokens, type and colours).
    - `docs/design/prototype/SCREENS.md`: one `## <screen>` section for each screen image, each
@@ -162,25 +165,30 @@ without Claude, the check runs on the design model's Codex entry, and Forge says
    - `docs/design/prototype/CHECKS.md` with `## Critique`, `## Polish` and `## Emil checklist`,
      each with its notes and a `Result: passed` line.
    Completeness check. Then accept runs the check through the same engine as the strict sign-off
-   review, on Claude with `[models.design.claude]` (Opus 5.5 at high by default), with the
-   shipped prompt `src/forge/templates/design-check.md`. The prompt holds the checklist below and
-   gives the reviewer `SCREENS.md`, the screen images and the brief's `## Summary`, `## Users` and
-   `## Things it keeps track of`. Any P0 or P1 finding (a missing screen, field or choice-list
-   option, or any other checklist gap) refuses sign-off, lists each finding, and names the next
+   review, on Claude with `claude-opus-5-5` at high effort. Forge pins that model as the check's
+   own default, as it pins the grill default, and the check does not read `[models.design]`. It
+   uses the shipped prompt `src/forge/templates/design-check.md`. The prompt holds the checklist
+   below and gives the reviewer `SCREENS.md`, the screen images and the brief's `## Summary`,
+   `## Users`, `## Things it keeps track of` and `## Key flows`. The reviewer reports each key
+   flow that no screen in `SCREENS.md` carries. Any P0 or P1 finding (a missing screen, field,
+   choice-list option or flow, or any other checklist gap) refuses sign-off, lists each finding, and names the next
    step: change the canvas, approve it again with `forge decision accept prototype-design`, then
-   accept sign-off again. When the `claude` command is missing, the check runs on
-   `[models.design.codex]` and Forge prints that it fell back. A passed check writes
-   `design_checked: <tree id>` and `brief_checked: <hash of those three brief sections>` in the
+   accept sign-off again. When the `claude` command is missing, the check runs on Codex with
+   `gpt-6.1-sol` at high effort and Forge prints that it fell back. No other model runs it. A passed check writes
+   `design_checked: <tree id>` and `brief_checked: <hash of those four brief sections>` in the
    sign-off decision's front matter. The check runs on a canvas-only sign-off too; it is not a code
    review. A repo whose sign-off was accepted before this release is never asked for these.
    Tests: sign-off accepts a matching canvas with no app code; sign-off is refused when its own
    branch changes app code; a changed folder after sign-off is refused as the signed design; the
    first story after sign-off starts from the signed folder; a canvas with no `SCREENS.md`, or an
-   image with no section, is refused and the refusal names it; `CHECKS.md` with no passed Emil
+   image with no section, is refused and the refusal names it; a brief whose
+   `## Things it keeps track of` is missing or holds only its comment is refused and the refusal
+   names the section; `CHECKS.md` with no passed Emil
    line is refused; a missing `DESIGN.md` is refused; a fake reviewer that reports a missing
-   field refuses sign-off and shows the finding; a clean fake reviewer lets sign-off go on, and
-   the run used the design model on Claude; with no `claude` command the run used the Codex entry
-   and printed the fall-back; an adopted earlier-release repo already signed off starts its next
+   field refuses sign-off and shows the finding; a fake reviewer that reports a key flow with no
+   screen refuses sign-off; a clean fake reviewer lets sign-off go on, and the run used
+   `claude-opus-5-5` at high even when `[models.design.claude]` names another model; with no
+   `claude` command the run used `gpt-6.1-sol` at high and printed the fall-back; an adopted earlier-release repo already signed off starts its next
    story with no check.
 3. Working build. `forge decision new prototype-build` records the FDE's reason the canvas cannot
    prove something; `forge decision accept prototype-build --by <owner>` approves it. While the
@@ -205,14 +213,18 @@ without Claude, the check runs on the design model's Codex entry, and Forge says
    (paths and images), its `SCREENS.md`, the root `DESIGN.md` and `PRODUCT.md`, and short excerpts
    of the skills the part needs (impeccable, emil-design-eng and the frontend role for
    user-facing work, test-audit for test changes), the same on Codex and Claude. The folder is the
-   story's `Design:` folder, else the signed `docs/design/prototype/` when it exists. For a
+   story's `Design:` folder; for a prototype fix, `docs/design/prototype/`; for a `Design: none`
+   story, the signed `docs/design/prototype/` when it exists, as context only. For a
    user-facing item, the brief tells the worker to apply DESIGN.md's theme tokens, type and
    colours to the app's theme file (in a starter app, the shadcn variables in
    `apps/web/src/index.css`; in an app without the starter, its own theme file) and to build each
-   screen it touches with the components and fields that `SCREENS.md` lists for it. The review
+   screen it touches with the components and fields that its own approved folder's `SCREENS.md`
+   lists for it. The review
    prompt reports as P1 a built screen that lacks a component or field its `SCREENS.md` section
-   lists, and a starter app that still has the starter's neutral tokens when DESIGN.md sets
-   others. A fix's
+   lists, only for screens that the item's own approved design folder lists: the story's
+   `Design:` folder, or `docs/design/prototype/` for an unsigned prototype's fix. It reports no
+   such P1 for a `Design: none` story. It also reports as P1 a starter app that still has the
+   starter's neutral tokens when DESIGN.md sets others. A fix's
    kind is named at start: `forge fix start ... --kind ui|backend|mechanical` (stories use the
    task row's User-facing column); ui goes to the design worker, backend to the backend worker,
    mechanical to the lite worker. `--kind` is required for prototype fixes, which no longer force
@@ -222,7 +234,9 @@ without Claude, the check runs on the design model's Codex entry, and Forge says
    on Codex and on Claude (ROUTING merged these); the brief and the review input name the design
    folder and carry `SCREENS.md` and DESIGN.md on Codex and on Claude; a starter app's ui brief
    names `apps/web/src/index.css`, and an adopted app without the starter gets the theme-file line
-   without that path; the review prompt names the P1 rule.
+   without that path; the review prompt names the P1 rule; a `Design: none` story's brief
+   carries the signed `SCREENS.md` as context only, and its review input has no P1 rule for
+   listed components or fields.
 5. Sign-off reuse. For a working prototype, the strict sign-off review run before the customer
    reply saves its result with the product commit, a hash of the answers page, a hash of the
    sign-off decision's `## Signed design`, `## Proof` and `## Decisions` sections, and the review
@@ -248,7 +262,8 @@ without Claude, the check runs on the design model's Codex entry, and Forge says
 SIGNOFF copies this list into `src/forge/templates/design-check.md` as the check's checklist, in
 plain words. It is section 3 of the owner's research checklist of 21 October 2026. The check also
 confirms that every thing, field and choice-list option in the brief's
-`## Things it keeps track of` appears on a screen in `SCREENS.md`.
+`## Things it keeps track of` appears on a screen in `SCREENS.md`, and that every flow in the
+brief's `## Key flows` has its screens.
 
 Entities and fields
 - Every entity from the interview appears in: list, detail, create form, edit form.

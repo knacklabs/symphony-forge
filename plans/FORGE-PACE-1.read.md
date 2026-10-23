@@ -1,17 +1,17 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-16T18:43:38.017012+00:00
-seconds: 28.469
-read_hash: 62e387d3838de63b9a2f6f88be7c309bd909e480
-round: 8
-passed: yes
-doc_seen: 62e387d3838de63b9a2f6f88be7c309bd909e480
+read_at: 2026-10-23T14:41:37.300256+00:00
+seconds: 608.531
+read_hash: f60fac629e52226503dd7c0bb1e6525709320a8c
+round: 9
+passed: no
+doc_seen: f60fac629e52226503dd7c0bb1e6525709320a8c
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 288eb6045d5c3130d02fb9c759b7343c7e10f6f3
+notes_seen: 7b2cdaf64ece596209296c741c673c6c07614ebd
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a13ef6-7126-7692-8ac4-4f759a6cdc3a
 session:
-blocked_rounds: 0
+blocked_rounds: 1
 loop_choice:
 loop_reason:
 ---
@@ -159,3 +159,25 @@ No findings.
 ## Round 8
 
 No findings.
+
+## Round 9
+
+21. Blocking: The promised Opus check selects a setting that defaults to Sonnet.
+    Raise: Plan gap. `plans/FORGE-PACE-1.md:165` specifies `[models.design.claude]` as Opus at high, but new repos receive Sonnet at xhigh (`src/forge/init.py:108–110`), and older repos default to the same (`src/forge/repo.py:473`, `663`). No task owns changing those defaults. The test at plan line 182 verifies selection of the design setting, so it passes while the required Opus check runs on Sonnet.
+    Gain 4, Work 2, Harm 3
+   Disposition: cut - the completeness check pins Claude Opus 5.5 (claude-opus-5-5) at high as its own Forge default, as Forge pins the grill default, and does not read [models.design]; with no claude command it runs on gpt-6.1-sol at high and says so; no other model runs it (details 2 and its tests).
+
+22. Blocking: The completeness check relies on an entity inventory that the shipped brief does not collect.
+    Raise: Plan gap. `plans/FORGE-PACE-1.md:167–168` requires `## Things it keeps track of` as the source of entities, fields and options. The shipped brief has Summary, Users, Key flows and Constraints, but no such inventory (`src/forge/templates/skeleton/docs/product/BRIEF.md:5–27`). Neither the new collection instructions nor the refusal rules require that section to be populated. A client following the existing brief can therefore reach the check without the field inventory needed to detect omissions.
+    Gain 4, Work 2, Harm 3
+   Disposition: keep - main's shipped docs/product/BRIEF.md already has `## Things it keeps track of`, which the setup interview fills; the plan now also has sign-off refuse, naming the section, when that section is missing or empty (details 2 and its test).
+
+23. Blocking: The completeness check omits the brief’s explicit screen-flow requirements.
+    Raise: Not done. The inputs prescribed at `plans/FORGE-PACE-1.md:167–168` exclude `## Key flows`, where the shipped brief records user journeys (`src/forge/templates/skeleton/docs/product/BRIEF.md:19–23`). A canvas can contain every entity and field yet omit a required import wizard or checkout flow. The checker receives neither requirement, so the new contract cannot establish the promised absence of missing screens against the brief.
+    Gain 4, Work 2, Harm 3
+   Disposition: cut - the check also reads the brief's `## Key flows` and reports each flow that no screen carries; the brief hash covers that section (details 2, its test, and the checklist lead).
+
+24. Blocking: Small-change stories can be blocked by superseded prototype requirements.
+    Raise: Functional. `plans/FORGE-PACE-1.md:135–138` sends `Design: none` stories the original signed prototype folder, while lines 212–214 require every touched screen to retain its listed fields and components. After an approved production story removes a prototype field, a subsequent label-only story receives the obsolete list and incurs a P1 for that intentional removal. Brief generation currently reads the current story (`src/forge/worker.py:496–513`); the new rule supplies no resolution of intervening approved designs, and its label-only test covers no such preceding change.
+    Gain 4, Work 2, Harm 3
+   Disposition: cut - a `Design: none` story gets the signed screen list as context only; the review holds a missing listed component or field only on screens that the item's own approved design folder lists (details 1 and 4, and a test in item 4).
