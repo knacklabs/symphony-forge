@@ -26,6 +26,7 @@ BROWSER_FLOWS = (
     "Ctrl+B collapses and expands the sidebar",
     "Ctrl+K opens search and goes to Projects",
     "create, edit, and delete a project",
+    "switching accounts does not show the previous account projects",
     "theme changes in settings",
     "unknown address shows the 404 page",
     "axe finds no serious problem on the shell",
