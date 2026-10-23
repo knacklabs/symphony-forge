@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+STORY = "FORGE-STARTER-1"
+
 ROOT = Path(__file__).resolve().parents[1]
 STARTER = ROOT / "src" / "forge" / "templates" / "starter"
 PIN = re.compile(r"[0-9]+(?:\.[0-9]+)*\Z")
