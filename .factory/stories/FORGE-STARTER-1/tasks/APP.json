@@ -91,7 +91,7 @@
     "id": "1b9d9251-637d-4297-8e58-7abc8a108fed",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -104,10 +104,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "e1103a9af5af9e4818066fdea915fdc95c21f61d",
-    "keys": {},
-    "round": null
+    "close": "4c2a85bb-d8b2-41cd-8c55-ec237607a6b1",
+    "head": "6f1059c64b42eef790a90be51755bfa79108c8fa",
+    "keys": {
+      "the open P0 exclude nested web build output from lint in src/forge/templates/starter/eslint.config.mjs": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
