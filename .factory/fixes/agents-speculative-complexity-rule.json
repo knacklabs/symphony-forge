@@ -11,12 +11,27 @@
   "done_when": "The AGENTS.md block that Forge writes has the owner's rule under Rules, word for word; new repos get it at init and existing repos on forge sync",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "be1596729833460b3cfeff979b4d446ece6b4031c780ba1d61e2880cbb580d23",
+    "changed": "269a361e84221f4e98878e1c32cd8693e171595378fde669721a9e8d8dcbcf9f",
+    "commit": "800db9466aa0db17465de45f171b48b9a5595da7",
+    "dismissals": [],
+    "findings": [],
+    "id": "570dfda8-8dde-46bc-84f1-a0b065c6af7a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T18:35:58.955399+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:40:25.368140+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
