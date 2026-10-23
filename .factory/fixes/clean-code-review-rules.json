@@ -1,6 +1,13 @@
 {
   "base": "e6f40594a0b0e1c2c16d2b5660896a9f488428ed",
   "branch": "fix/clean-code-review-rules",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169f2-f3c3-78e0-9875-3108f4c87b02",
+    "head": null,
+    "start": "82a9cdd92ce4c4652e2c964aae3c53f87b00b91a"
+  },
   "done_when": "The shipped review and standards tell reviewers to report a one-caller wrapper or a pass-through layer as a finding, with the 30-second reader test, and state the test-behaviour-not-internals rule plainly; new repos get them at init and existing repos on sync",
   "fix_kind": "mechanical",
   "kind": "fix",
