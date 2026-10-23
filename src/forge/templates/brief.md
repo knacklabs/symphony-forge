@@ -5,6 +5,8 @@ $summary
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
+The `Not fixed:` prefix does not change a title match. A change to the dismissal's cited lines
+ends that dismissal.
 Forge ignores settled repeats, so they cannot block or start another round.
 When docs/product/CONSTITUTION.md is approved, follow it. A review holds work that goes against it.
 After a merge of main, close applies a requested dismissal to the same title and file in the

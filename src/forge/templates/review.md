@@ -297,7 +297,8 @@ $rulings
 Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
 weigh, and name that evidence in the finding's body and a distinct title. Settled findings stay
 settled: Forge ignores a finding with the same title and file as a fixed or dismissed finding,
-even if its line or evidence changes, and so does a finding the human accepted.
+or a finding the human accepted. The `Not fixed:` prefix does not change a title match.
+A dismissal ends if its cited lines change.
 
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.
