@@ -1,6 +1,13 @@
 {
   "base": "3101b66a9a3b2d8a1dfda70871ba98f56b619b3a",
   "branch": "fix/a-not-done-finding-that-quotes-one-sente",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169c9-7ede-72b3-aeff-d1af35bd3309",
+    "head": null,
+    "start": "e95cbf5d46be51476319ffa47f6e23544ac337cd"
+  },
   "done_when": "A Not done that quotes any one sentence of the fix's Done-when blocks close, and each non-blocking finding close lists shows its own reason with its scores",
   "fix_kind": "backend",
   "kind": "fix",
