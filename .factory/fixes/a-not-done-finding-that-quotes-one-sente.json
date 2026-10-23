@@ -1,0 +1,15 @@
+{
+  "base": "3101b66a9a3b2d8a1dfda70871ba98f56b619b3a",
+  "branch": "fix/a-not-done-finding-that-quotes-one-sente",
+  "done_when": "A Not done that quotes any one sentence of the fix's Done-when blocks close, and each non-blocking finding close lists shows its own reason with its scores",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-23T17:22:31.767934+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A Not done finding that quotes one sentence of a fix's longer Done-when is treated as naming no owner-approved Done-when item, so it does not block and close prints a wrong reason; and close says the review is clean while listing such findings without saying why each one does not block"
+}
