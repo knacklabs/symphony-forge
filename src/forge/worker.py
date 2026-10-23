@@ -549,6 +549,13 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                       interfaces=", ".join(f"`{pattern}`" for pattern in
                                            repo.config(top)["interfaces"]) or "none",
                       allowance=state.get("allow_large") or "No recorded allowance")
+    values["prototype_proof"] = ""
+    if not match["task"] and repo.is_prototype(top):
+        from forge import design
+
+        if design.working_build(top, story.landed_ref(top)):
+            values["prototype_proof"] = (HERE / "templates" / "brief.md").read_text(
+                encoding="utf-8").split("<!-- prototype-proof -->\n", 1)[1].strip()
     if user_facing:
         on.add("user-facing")
     values["design_context"], owned_design = design_context(top, design_text, user_facing)
@@ -602,11 +609,12 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         if findings or failing:
             brief += (f"\n## Fix round\n\n### Open serious findings\n\n{values['findings']}\n"
                       f"\n### Failing checks\n\n{values['checks']}\n")
-        return brief + changes + "\n" + values["handover"] + "\n", subject
+        return brief + changes + "\n" + values["handover"] + "\n" + values["prototype_proof"] + "\n", subject
     on.add("standards")
     values["standards"] = (HERE / "standards.md").read_text(encoding="utf-8").strip()
     values["conventions"] = str(CONVENTIONS)
     text = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
+    text = text.split("<!-- prototype-proof -->\n", 1)[0]
     text = re.sub(r"<!-- if ([\w-]+) -->\n(.*?)<!-- end -->\n",
                   lambda block: block[2] if block[1] in on else "", text, flags=re.S)
     return Template(text).safe_substitute(values), subject

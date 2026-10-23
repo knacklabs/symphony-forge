@@ -314,7 +314,7 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
 
 
 def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
-                 base: str, previous: dict[str, Any], tested: str) -> str:
+                 base: str, previous: dict[str, Any], tested: str, prototype: bool = False) -> str:
     """The plain review instructions for this task or fix, from templates/review.md."""
     from forge import story, worker  # story imports review indirectly
     design_text = ""
@@ -369,7 +369,9 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     if user_facing:
         values["theme_file"] = " (`apps/web/src/index.css`)" if (top / "apps/web/src/index.css").is_file() else ""
         chosen.append("design-theme")
-    prompt = "\n\n".join(blocks[name].substitute(values) for name in chosen)
+    prompt = (string.Template((Path(__file__).parent / "templates" / "review-light.md").read_text(
+        encoding="utf-8")).substitute(values) if prototype else
+        "\n\n".join(blocks[name].substitute(values) for name in chosen))
     if previous.get("commit"):
         prompt += "\n\n" + blocks["repair-review"].substitute(
             reviewed=previous["commit"], findings=_previous(previous))
@@ -872,8 +874,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
         signoff_prompt: str = "", light: bool = False, tested: str = "") -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
-    prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous, tested)
-    from forge import records, story  # story imports review indirectly
+    from forge import design, records, story  # story imports review indirectly
+    prototype = (light and not signoff_prompt and state.get("kind") == "fix"
+                 and repo.is_prototype(top, cfg, (base, "HEAD")) and design.working_build(top, base))
+    prompt = signoff_prompt or instructions(top, item, state, cfg, base, previous, tested, prototype)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     if rules := story.agents_section(top, "Review rules"):
         own = block.split("<!-- review-rules -->\n", 1)[1].split("\n<!-- ", 1)[0]
@@ -919,8 +923,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         # then create the file afresh ("x" refuses anything still there).
         repo.git("rm", "-r", "-f", "-q", "--ignore-unmatch", "--", STANDARDS, cwd=tree)
         with (tree / STANDARDS).open("x", encoding="utf-8") as page:
-            page.write(prompt + "\n\n" + string.Template(rules).substitute(standards=(
-                Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
+            page.write(prompt if prototype else prompt + "\n\n" + string.Template(rules).substitute(
+                standards=(Path(__file__).parent / "standards.md").read_text(encoding="utf-8").strip()))
         engine = cfg["tools"]
         if engine == "both":
             engine = "codex" if shutil.which(os.environ.get("CODEX_BIN") or "codex") else "claude"
@@ -929,10 +933,14 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 "--max-priority", "P3",  # the P0-only level applies after scoring
                 "--prompt-file", STANDARDS,
                 "--json-output", str(out)]
-        if model := repo.models(cfg, "review", engine):
+        model = repo.models(cfg, "review", engine)
+        if prototype:
+            chosen = repo.models(cfg, "light_review", engine)
+            model = {**model, **chosen, "effort": chosen.get("effort") or "medium"}
+        if model.get("model"):
             argv += ["--model", f"{engine}={model['model']}"]
-            if effort := model.get("effort"):
-                argv += ["--thinking", f"{engine}={effort}"]
+        if effort := model.get("effort"):
+            argv += ["--thinking", f"{engine}={effort}"]
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
@@ -1078,13 +1086,17 @@ def _hide_generated(tree: Path, start: str, head: str) -> str:
                        for path in generated))
 
 
-def signoff(top: Path, answers: str) -> str:
+def signoff(top: Path, answers: str, proof: str = "") -> str:
     """Review every tracked product file once, against an empty root, before client acceptance."""
     skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
     table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
+    if proof:
+        prompt += ("\n\n## Proof\n" + proof + "\n\nCheck every demo workflow step against the brief. "
+                   "Each step must name a passing test. Refuse a missing step, a missing test, "
+                   "or a test without evidence that it passes. The full production proof is due now.")
     cfg = repo.config(top)
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 

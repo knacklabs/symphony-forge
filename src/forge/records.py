@@ -225,6 +225,7 @@ def decision_new(args: argparse.Namespace) -> None:
         text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
                             "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
         text += ("\n<!-- Set approved_via to email, call or chat when the customer replies. -->\n"
+                 "\n## Proof\n<!-- For a working build, list every demo workflow step and its passing test. -->\n"
                  "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n")
     _write(top / rel, text)
     repo.commit_state(f"Propose the {args.slug} decision", rel, top=top)
@@ -301,7 +302,13 @@ def decision_accept(args: argparse.Namespace) -> None:
         if fields["customer"] != answers["Sign-off person"][0][0]:
             repo.refuse((f"{rel}'s customer must match the Sign-off person answer.",
                          f"correct {rel}, then {next_step}"))
-        text = _set(text, reviewed_commit=review.signoff(top, quote))
+        from forge import design
+
+        proof = re.sub(r"<!--.*?-->", "", sections.get("Proof", ""), flags=re.S).strip()
+        if design.has_app_code(top, "HEAD") and not proof:
+            repo.refuse(("This working prototype needs a Proof section with each demo step and its test.",
+                         f"fill in {rel}'s Proof section, then {next_step}"))
+        text = _set(text, reviewed_commit=review.signoff(top, quote, proof))
         if not replied:  # so the customer is only asked to approve a reviewed version
             return print("The sign-off review passed; you can now ask the customer's named person "
                          "for sign-off. Record their reply in approved_via and approved_on, then "

@@ -11,6 +11,48 @@ from forge import repo
 IMAGES = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
 
 
+def has_app_code(top: Path, ref: str, base: str = "") -> bool:
+    """App changes exclude the canvas, records and files Forge itself writes.
+
+    Without a base, inspect history: deleting an old app does not undo its working build.
+    """
+    from forge import init, sync
+
+    managed = repo.command_fact(("prototype managed paths",), top,
+        lambda: {*init._scaffold(top), *sync.files(top, repo.config(top), check_syntax=False)})
+    excluded = [f":(exclude,literal){name}" for name in managed]
+    excluded += [f":(exclude,glob){name}**" for name in
+                 ("docs/", "plans/", ".factory/", ".forge/", ".github/", ".claude/", ".codex/")]
+    excluded.append(":(exclude,glob,icase)**/*.md")
+    args = (("diff", "--name-only", "--no-renames", f"{base}...{ref}") if base else
+            ("log", "--first-parent", "--diff-merges=first-parent", "--format=", "--name-only", ref))
+    return bool(repo.git(*args, "--", ".", *excluded, cwd=top))
+
+
+def working_build(top: Path, base: str) -> bool:
+    from forge import story
+
+    def find() -> bool:
+        for ref in ("HEAD", base):
+            names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
+            for name in names.splitlines():
+                if not re.fullmatch(r"docs/decisions/\d{4,}-prototype-build\.md", name):
+                    continue
+                front = story.FRONTMATTER.match(story.show(top, ref, name) or "")
+                if front and re.search(r"^status:\s*[\"']?accepted[\"']?\s*$", front[1], re.M):
+                    return True
+        return has_app_code(top, base)
+
+    return repo.command_fact(("prototype working build", base), top, find)
+
+
+def require_working_build(top: Path, base: str) -> None:
+    if (repo.is_prototype(top, refs=(base, "HEAD")) and has_app_code(top, "HEAD", base)
+            and not working_build(top, base)):
+        repo.refuse(("This prototype needs the owner's accepted request before app code can merge.",
+                     "forge decision new prototype-build"))
+
+
 def check(top: Path, text: str, ref: str | None = None, *, required: bool = True) -> str | None:
     from forge import story
 

@@ -551,7 +551,7 @@ VERSION = re.compile(r"v?[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?")
 # effort is optional); build, fix, lite and explore may add their subagents' model and effort,
 # as a pair.
 # The cold read and design work have one entry per family.
-KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review")
+KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review", "light_review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 # A worker's models when forge.toml has no entry for its family, so Forge always names them.
@@ -780,7 +780,7 @@ def _models_problem(table: Any) -> str:
                     return f"models.{name} can't set {key}"
                 if not isinstance(value, str):
                     return f"models.{name}.{key} must be a string"
-            for key in ("model",) if kind == "review" else ("model", "effort"):
+            for key in ("model",) if kind in ("review", "light_review") else ("model", "effort"):
                 if key not in entry:
                     return f"models.{name} has no {key}"
             if (SUBAGENTS[0] in entry) != (SUBAGENTS[1] in entry):

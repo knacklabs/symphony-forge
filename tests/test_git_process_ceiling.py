@@ -16,6 +16,7 @@ from conftest import _install
 from test_close import STORY_DOC
 from test_close import env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_prototype_build import _accept_build_decision
 
 pytestmark = pytest.mark.platform
 
@@ -29,6 +30,9 @@ def test_1_commands_start_fewer_git_processes(env, monkeypatch, previous, histor
     # Real git and command dispatch own the answer; only external services are faked.
     # Removing command-local facts exceeds the ceiling. Close also changes worktrees.
     client(env, previous)
+    if command == "close" and not previous and not history:
+        # New clients start as unsigned prototypes; close needs the owner's accepted build request.
+        _accept_build_decision(env.repo)
     # A cold-read plan makes next read both current snapshots and the earlier document
     # from its read record. Those reads must share the same batch process.
     if history:

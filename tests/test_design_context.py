@@ -147,5 +147,7 @@ def test_2_unsigned_prototype_fix_receives_its_own_screen_requirements(env, monk
     assert closed.returncode == 0, closed.stdout + closed.stderr
     prompt = env.prompt()
     context(prompt, "docs/design/prototype/")
-    assert "Report as P1 a built screen" in prompt
+    # Working prototype rounds use design references to find demo breakage. The strict
+    # design-completeness requirement remains at sign-off rather than every demo round.
+    assert "Use the screen list to assess demo breakage" in prompt
     assert "docs/design/prototype/SCREENS.md" in prompt

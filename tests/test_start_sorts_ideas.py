@@ -18,6 +18,7 @@ from conftest import GH_STUB, ROOT, Repo, _install
 from test_close import GREEN, env  # noqa: F401
 from test_land import GH, URL, land  # noqa: F401
 from test_setup import _fresh_client
+from test_prototype_build import _accept_build_decision
 from test_story import approved_constitution, prototype_design
 from test_tools_session_hold import Session
 
@@ -161,6 +162,9 @@ def test_2_a_small_clear_idea_starts_a_fix_that_lands_as_the_merge_setting_allow
     if age == "new":
         prototype_design(Repo(top, repo.bin))
     _land_setup(repo, top, "configure-worker")
+    if age == "new":
+        # The new prototype gate needs an owner decision before the backend fix reaches land.
+        _accept_build_decision(Repo(top, repo.bin))
     for kind in ("backend", "ui"):
         why = "Fix the welcome typo" if kind == "backend" else "Correct the button label"
         offered = _offer(intake, why)

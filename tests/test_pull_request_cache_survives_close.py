@@ -16,6 +16,7 @@ from conftest import _install
 from test_board_github_once import lists, row
 from test_close import body, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_prototype_build import _accept_build_decision
 
 pytestmark = pytest.mark.platform
 
@@ -39,6 +40,9 @@ sys.exit(subprocess.run([{json.dumps(real)}, *sys.argv[1:]]).returncode)
 def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env, monkeypatch, previous):
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
     client(env, previous)
+    if not previous:
+        # The fresh client is an unsigned prototype, so its app change needs an accepted build request.
+        _accept_build_decision(env.repo)
     item, where = env.start_fix()
     git_calls = count_git(env.repo)
     warmed = env.repo.forge("next", "--json")
@@ -85,6 +89,9 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
 def test_2_next_fetches_default_settings_once_and_fetches_again_on_the_next_run(env, monkeypatch, previous):
     client(env, previous)
+    if not previous:
+        # Keep the fixture within the new-client prototype gate before closing its app change.
+        _accept_build_decision(env.repo)
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
     # Both ready-to-merge advice and the demo check read the default branch's settings.
     env.commit(env.repo.path, "Dockerfile", "FROM scratch\n")

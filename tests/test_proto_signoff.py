@@ -58,7 +58,8 @@ def _client(repo, tmp_path, monkeypatch):
 
 
 def _decision(fix, answers, *, customer="Sam Lee, director", via="email",
-              on="2026-09-28", demo="https://demo.example.test", quote=None):
+              on="2026-09-28", demo="https://demo.example.test", quote=None,
+              proof="- Demo workflow: tests/test_demo.py::test_demo"):
     page = fix / "docs/decisions/0001-client-signoff.md"
     page.parent.mkdir(parents=True, exist_ok=True)
     page.write_text(f"---\nstatus: proposed\ncustomer: {customer}\napproved_via: {via}\n"
@@ -66,6 +67,7 @@ def _decision(fix, answers, *, customer="Sam Lee, director", via="email",
                     "## Context\nThe customer saw the prototype.\n\n"
                     "## Decision\nThe customer approved.\n\n"
                     "## Consequences\nStories may start.\n\n"
+                    + ("\n## Proof\n" + proof + "\n\n" if proof else "")
                     + (answers if quote is None else quote), encoding="utf-8")
     return page
 

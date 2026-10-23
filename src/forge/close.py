@@ -241,6 +241,7 @@ def close(args: argparse.Namespace) -> int:
                   file=sys.stderr)
             return 1
     spotted.check(top, item)
+    design.require_working_build(top, f"origin/{default}")
     app_baseline.check(top, cfg, repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top))
     if not migrating:
         _synced(top, item)
