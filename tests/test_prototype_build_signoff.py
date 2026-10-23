@@ -1,8 +1,9 @@
 """Working-build proof reaches the strict sign-off reviewer.
 
-Contract: sign-off needs a proof map, then gives it to the whole-product review.
-Regression: accepting a decision silently drops Proof, as the old path did.
-Existing sign-off tests cover answers and customer approval, not demo proof.
+Contract: sign-off gives the review a proof map and test results for its product.
+Regression: the isolated reviewer sees test names but cannot verify their outcomes,
+or receives stale passing results after the product changes. Existing sign-off
+tests cover answers and customer approval, not the test-run transport and binding.
 No production seam: invoke the decision commands; fake only the reviewer.
 """
 import json
@@ -52,3 +53,18 @@ def test_3_working_build_signoff_requires_and_reviews_demo_proof(repo, tmp_path,
     assert "Open the prototype: tests/test_demo.py::test_open" in prompt
     assert "every demo workflow step" in prompt
     assert "passing test" in prompt
+    assert "Test results for this product" in prompt
+    assert "passed tests/test_demo.py::test_open" in prompt
+
+    # A new product commit needs its own results, even when the old test would still pass.
+    app = fix / "app.py"
+    app.write_text(app.read_text("utf-8") + "# A new product revision.\n", encoding="utf-8")
+    repo.git("add", "app.py", cwd=fix)
+    repo.git("commit", "-qm", "Revise the demo", cwd=fix)
+    _decision(fix, answers, proof="- Open the prototype: tests/test_demo.py::test_open")
+    reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert reviewed.returncode == 0, reviewed.stdout + reviewed.stderr
+    call = json.loads(queue.with_suffix(".calls.jsonl").read_text().splitlines()[-1])
+    prompt = "\n".join(call["prompt_files"].values())
+    assert "No test results match this product" in prompt
+    assert "passed tests/test_demo.py::test_open" not in prompt

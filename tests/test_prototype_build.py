@@ -49,8 +49,9 @@ def _prototype(env, *, adopted: bool = False, design: bool = False,
     else:
         config += top_level
     repo.write("forge.toml", config)
-    # The starter Dockerfile is setup, not a merged app build.
+    # These are init's empty-repo scaffold, not a merged app build.
     repo.write("Dockerfile", "FROM python:3.11-slim\n")
+    repo.write(".dockerignore", "__pycache__/\n")
     if design:
         prototype_design(repo)
     if existing_app:
@@ -109,12 +110,18 @@ def _accept_build_decision(repo) -> Path:
 
 
 def _start_fix(env, *, kind: str = "backend", path: str = "app.py",
-               demo_steps: bool = False) -> tuple[str, Path]:
+               demo_steps: bool = False, stack_marker: str | None = None) -> tuple[str, Path]:
     repo = env.repo
     started = repo.forge("fix", "start", "Build the demo workflow", "--done", "The demo works",
                          "--kind", kind)
     assert started.returncode == 0, started.stdout + started.stderr
     where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+    if stack_marker:
+        contents = {
+            "pyproject.toml": '[project]\nname = "prototype-demo"\nversion = "0.1.0"\n',
+            "go.mod": "module example.com/prototype-demo\n\ngo 1.22\n",
+        }[stack_marker]
+        env.commit(where, stack_marker, contents, "Choose the app stack")
     app = ("import sys\nfrom pathlib import Path\n"
            "basket = Path(sys.argv[2])\n"
            "if sys.argv[1] == 'save':\n"
@@ -139,9 +146,11 @@ def _start_fix(env, *, kind: str = "backend", path: str = "app.py",
     return "build-the-demo-workflow", where
 
 
-def test_3_close_refuses_prototype_app_changes_until_the_owner_accepts_the_build(env):
+@pytest.mark.parametrize("stack_marker", [None, "pyproject.toml", "go.mod"],
+                         ids=["without-stack-marker", "python-stack", "go-stack"])
+def test_3_close_refuses_prototype_app_changes_until_the_owner_accepts_the_build(env, stack_marker):
     _prototype(env)
-    item, _ = _start_fix(env)
+    item, _ = _start_fix(env, stack_marker=stack_marker)
 
     refused = env.close(item)
     assert refused.returncode == 1, refused.stdout + refused.stderr

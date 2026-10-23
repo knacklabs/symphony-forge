@@ -16,10 +16,14 @@ def has_app_code(top: Path, ref: str, base: str = "") -> bool:
 
     Without a base, inspect history: deleting an old app does not undo its working build.
     """
-    from forge import init, sync
+    from forge import sync
 
+    skeleton = sync.TEMPLATES / "skeleton"
+    scaffold = {"forge.toml", "plans/roadmap.json"}
+    scaffold.update(path.relative_to(skeleton).as_posix()
+                    for path in skeleton.rglob("*") if path.is_file())
     managed = repo.command_fact(("prototype managed paths",), top,
-        lambda: {*init._scaffold(top), *sync.files(top, repo.config(top), check_syntax=False)})
+        lambda: {*scaffold, *sync.files(top, repo.config(top), check_syntax=False)})
     excluded = [f":(exclude,literal){name}" for name in managed]
     excluded += [f":(exclude,glob){name}**" for name in
                  ("docs/", "plans/", ".factory/", ".forge/", ".github/", ".claude/", ".codex/")]
