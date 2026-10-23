@@ -1,0 +1,15 @@
+{
+  "base": "6199416464e87e74326e1f066100bdcec2af4a24",
+  "branch": "fix/issue-1043-a-dismissed-finding-comes-bac",
+  "done_when": "A finding the next review raises again as Not fixed on the same file, with the dismissal's cited lines unchanged, stays dismissed, and close reaches Ready when nothing else blocks",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-23T16:46:41.993990+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Issue #1043: a dismissed finding comes back when the next review raises the same issue in the same file as Not fixed: <title>, because a dismissal carries only on an exact file and title match"
+}
