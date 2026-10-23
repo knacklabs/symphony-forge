@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/records.py\tProvide the sign-off record to the completeness reviewer\tFORGE-PACE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "src/forge/records.py",
+      "line": 329,
+      "text": "Provide the sign-off record to the completeness reviewer",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/design-check.md\tSpecify the finding scores required by the completeness parser\tFORGE-PACE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "src/forge/templates/design-check.md",
+      "line": 11,
+      "text": "Specify the finding scores required by the completeness parser",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_proto_signoff.py\tGate: update the remaining sign-off fixture consumers\tFORGE-PACE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "tests/test_proto_signoff.py",
+      "line": 102,
+      "text": "Gate: update the remaining sign-off fixture consumers",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_signoff_design.py\tGate: prove the completeness reviewer receives the screen images\tFORGE-PACE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "tests/test_signoff_design.py",
+      "line": 48,
+      "text": "Gate: prove the completeness reviewer receives the screen images",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_signoff_reuse.py\tGate: unchanged-canvas and earlier-adopted sign-off reuse\tFORGE-PACE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "tests/test_signoff_reuse.py",
+      "line": 129,
+      "text": "Gate: unchanged-canvas and earlier-adopted sign-off reuse",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/SIGNOFF",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

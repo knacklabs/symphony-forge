@@ -7,13 +7,145 @@
     "head": null,
     "start": "41fb8487ef00dbf3709ad1dea3747f0dd39cc48f"
   },
+  "known": [
+    {
+      "area": "decision_accept() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 329,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Provide the sign-off record to the completeness reviewer",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design-check.md",
+      "file": "src/forge/templates/design-check.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 11,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Specify the finding scores required by the completeness parser",
+      "work": 2
+    },
+    {
+      "area": "_client() in tests/test_proto_signoff.py",
+      "file": "tests/test_proto_signoff.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 102,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the remaining sign-off fixture consumers",
+      "work": 2
+    },
+    {
+      "area": "test_3_canvas_signoff_rechecks_when_a_brief_field_changes() in tests/test_signoff_reuse.py",
+      "file": "tests/test_signoff_reuse.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 129,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unchanged-canvas and earlier-adopted sign-off reuse",
+      "work": 2
+    },
+    {
+      "area": "test_signoff_pins_the_completeness_check_and_records_what_it_checked() in tests/test_signoff_design.py",
+      "file": "tests/test_signoff_design.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 48,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: prove the completeness reviewer receives the screen images",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dab34220530c8d8a7ed130b81e0466f55373abda40756e41461670c8c0c2e14f",
+    "changed": "41037a6cbb0b551300eeb51bffc3536cefe3b6dd77c952b75c78087e4239409c",
+    "commit": "beb9f15f118fa12c75e204a6f85f534dd25f5dc2",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - checking a complete canvas before customer sign-off. The checklist requires verifying the owner's entities, dropdown lists and screen list in the sign-off record (design-check.md:71), but this prompt includes only the brief and SCREENS.md. review.py:898\u2013903 also removes every decision from the review checkout. The reviewer therefore cannot verify that required checklist item, even when the decision contains all the evidence. Include the relevant decision text in the completeness input.",
+        "file": "src/forge/records.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 329,
+        "priority": "P1",
+        "title": "Provide the sign-off record to the completeness reviewer",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - Opus reports a missing field or flow. This prompt never requests the `Gain <g>, Work <w>, Harm <h>` body line, whereas autoreview.py:80\u201382 rejects every finding without it. The appended standards block supplies no scoring instructions either; the existing sign-off prompt supplies them separately. A finding conforming to this new prompt is consequently discarded as unreadable instead of displaying the missing field or flow. The fake findings conceal this mismatch by inserting scores themselves.",
+        "file": "src/forge/templates/design-check.md",
+        "gain": 4,
+        "harm": 3,
+        "line": 11,
+        "priority": "P1",
+        "title": "Specify the finding scores required by the completeness parser",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Gate. Case: normal use - running the repository test suite. Adding design records here makes existing `_client` consumers run completeness before product review, but several consumers still assume one run. tests/test_reviews_use_repository_tool.py:49 and tests/test_fix_a_repo_s_own_review_rules_such_as_which.py:77 unpack two recorded calls into `[call]`. tests/test_score_notes.py:68\u201375 feeds its product finding to completeness and expects the product-review message; tests/test_run_records.py:379\u2013388 likewise expects the first blocked event to belong to client-signoff. Update these callers to distinguish the completeness and product reviews while preserving their assertions.",
+        "file": "tests/test_proto_signoff.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 102,
+        "priority": "P1",
+        "title": "Gate: update the remaining sign-off fixture consumers",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - accepting an unchanged canvas after the customer replies. The only canvas reuse test changes the brief before its second acceptance, so it never proves that an unchanged canvas runs completeness exactly once. A regression that always reruns completeness for canvas-only sign-off would pass every reuse test. This file also uses only `_client`; no earlier-adopted case exercises saved-result reuse, as the supplied repository rule requires. Add command-level coverage for unchanged canvas acceptance and one earlier-adopted reuse case.",
+        "file": "tests/test_signoff_reuse.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 129,
+        "priority": "P1",
+        "title": "Gate: unchanged-canvas and earlier-adopted sign-off reuse",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - completeness checks the saved canvas images. These assertions inspect prompt text for image filenames, but neither this test nor the other completeness tests verifies the image files in the checkout handed to Autoreview. Removing the image-preserving exclusion in review.py:902 would leave these tests passing: SCREENS.md is separately embedded in the prompt, and the fake reviewer returns a predetermined result. Assert at the external command boundary that the actual screen images remain available, including when marked generated.",
+        "file": "tests/test_signoff_design.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 48,
+        "priority": "P1",
+        "title": "Gate: prove the completeness reviewer receives the screen images",
+        "work": 2
+      }
+    ],
+    "id": "d6426e2f-7ebb-4017-bb70-6f4b4d2d4337",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-23T17:46:27.359084+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:13:41.362735+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
