@@ -11,12 +11,27 @@
   "done_when": "Once the owner allows a story part past its line limit, closing that part no longer stops with the size question.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e19618604bc4059914c1182121d14f7ea38272d952c39c242c1fbe42aaa44ff3",
+    "changed": "aa00ac224ea6d149add3b994bec5df5c4c6210cce88606159ca93e0e056af69c",
+    "commit": "d463cf3e41ce512966b68f51216a2566813f15a3",
+    "dismissals": [],
+    "findings": [],
+    "id": "c4337de9-20a1-454f-8a64-81aa7ccf4b54",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T04:08:15.920033+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T04:17:31.587863+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
