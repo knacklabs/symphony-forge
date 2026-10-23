@@ -1,0 +1,15 @@
+{
+  "base": "0937aaa81b8f66492a028bce09df884b1c1bf94b",
+  "branch": "fix/agents-speculative-complexity-rule",
+  "done_when": "The AGENTS.md block that Forge writes has the owner's rule under Rules, word for word; new repos get it at init and existing repos on forge sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-23T18:35:58.955399+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants every repo's AGENTS.md to tell agents not to add complexity for speculative race or security edge cases without the user's buy-in"
+}
