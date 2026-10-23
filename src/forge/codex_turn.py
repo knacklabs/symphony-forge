@@ -3,7 +3,7 @@
 Forge sends one JSON request after recording this driver's process id. The driver records the
 app-server and thread ids with Forge before it acts, emits progress as JSON lines, and stops the
 app-server if Forge closes stdin. A read, archive or attachment request runs no turn. A worker or
-cold-read turn may assign its chat to the main checkout's Codex project after its first turn starts.
+cold-read turn may assign its chat to the main checkout's Codex project after its first turn ends.
 A turn Codex ends as failed because the model is at capacity is sent again, up to three times,
 waiting twice as long each time, once Forge has the next turn on record as pending.
 """
@@ -278,8 +278,31 @@ def main() -> int:
             turn = thread.turn(prompt, approval_mode=ApprovalMode.deny_all, sandbox=sandbox)
             emit(turn=turn.id, requested_tier=tier, tier=client.received_tier,
                  model=selection["model"], fast_wanted=selection["fast_wanted"])
+            usage, items, busy = None, [], False
+            for event in turn.stream():
+                payload = event.payload
+                # warnings=False: the SDK's own models warn about their own union and enum fields.
+                params = (payload.params if isinstance(payload, UnknownNotification) else
+                          payload.model_dump(mode="json", by_alias=True, exclude_none=True,
+                                             warnings=False))
+                emit(event=event.method, params=params)
+                if isinstance(payload, ItemCompletedNotification):
+                    items.append(payload.item)
+                elif isinstance(payload, ThreadTokenUsageUpdatedNotification):
+                    before = client.usage_before_turn[(thread.id, turn.id)]
+                    usage = {key: count - before.get(key, 0)
+                             for key, count in params["tokenUsage"]["total"].items()}
+                elif isinstance(payload, TurnCompletedNotification):
+                    error = payload.turn.error
+                    busy = payload.turn.status.value == "failed" and overloaded(
+                        params["turn"].get("error") or {})
+                    emit(speed={**selection, "turn": turn.id, "requested_tier": tier,
+                                "tier": client.received_tier})
+                    # The same final text as the SDK's TurnResult.final_response.
+                    emit(status=payload.turn.status.value, error=error and error.message,
+                         text=_final_assistant_response_from_items(items), usage=usage)
             if attempt == 0:
-                # Starting a turn creates the rollout required for thread metadata updates.
+                # Drain turn events before another request so live progress cannot wait on it.
                 try:
                     matches = set()
                     cursor = None
@@ -309,29 +332,6 @@ def main() -> int:
                 except Exception as error:
                     emit(project_skipped=f"Codex could not update the chat project: {error}. "
                          "Check Codex and try again")
-            usage, items, busy = None, [], False
-            for event in turn.stream():
-                payload = event.payload
-                # warnings=False: the SDK's own models warn about their own union and enum fields.
-                params = (payload.params if isinstance(payload, UnknownNotification) else
-                          payload.model_dump(mode="json", by_alias=True, exclude_none=True,
-                                             warnings=False))
-                emit(event=event.method, params=params)
-                if isinstance(payload, ItemCompletedNotification):
-                    items.append(payload.item)
-                elif isinstance(payload, ThreadTokenUsageUpdatedNotification):
-                    before = client.usage_before_turn[(thread.id, turn.id)]
-                    usage = {key: count - before.get(key, 0)
-                             for key, count in params["tokenUsage"]["total"].items()}
-                elif isinstance(payload, TurnCompletedNotification):
-                    error = payload.turn.error
-                    busy = payload.turn.status.value == "failed" and overloaded(
-                        params["turn"].get("error") or {})
-                    emit(speed={**selection, "turn": turn.id, "requested_tier": tier,
-                                "tier": client.received_tier})
-                    # The same final text as the SDK's TurnResult.final_response.
-                    emit(status=payload.turn.status.value, error=error and error.message,
-                         text=_final_assistant_response_from_items(items), usage=usage)
             if not busy or attempt == RETRIES:
                 break
             wait = RETRY_WAIT * 2 ** attempt
