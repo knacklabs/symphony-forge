@@ -1,6 +1,13 @@
 {
   "base": "3101b66a9a3b2d8a1dfda70871ba98f56b619b3a",
   "branch": "fix/waiting-line-test-flaky",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169ca-d36e-7691-8bf1-03cc8c0de3d6",
+    "head": null,
+    "start": "d837a995bc4b8251a7b3075afc4cdabcef8ec9f0"
+  },
   "done_when": "The waiting-line test passes on every run, and a waiting close says each place in line correctly",
   "fix_kind": "backend",
   "kind": "fix",
