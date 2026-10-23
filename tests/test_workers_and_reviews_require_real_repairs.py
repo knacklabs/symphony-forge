@@ -75,7 +75,9 @@ def test_1_workers_and_reviews_receive_real_repair_rules(
             for phrase in worker_phrases:
                 assert phrase in standards, (host, phrase)
 
-    env.commit(where, "app.py", "print('hello')\n", "Repair the greeting")
+    # This contract distributes full-review guidance. A readme repair reaches it without
+    # requesting a working prototype, whose narrow demo review has its own prompt contract.
+    env.commit(where, "README.md", "Hello, readers.\n", "Repair the greeting")
     env.checks(GREEN)  # Init configures protection through the same external GitHub stub.
     closed = repo.forge("close", "repair-the-greeting", cwd=where)
     assert closed.returncode == 0, closed.stdout + closed.stderr

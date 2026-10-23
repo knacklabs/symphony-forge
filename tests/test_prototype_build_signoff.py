@@ -13,7 +13,10 @@ from pathlib import Path
 from test_proto_signoff import SOL_HIGH, _client, _decision
 
 
-def test_3_working_build_signoff_requires_and_reviews_demo_proof(repo, tmp_path, monkeypatch):
+STORY = "FORGE-PACE-1"
+
+
+def test_36_working_build_signoff_requires_and_reviews_demo_proof(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     created = repo.forge("decision", "new", "client-signoff", cwd=fix)
     assert created.returncode == 0, created.stderr

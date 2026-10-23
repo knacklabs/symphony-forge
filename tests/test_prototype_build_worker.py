@@ -13,8 +13,11 @@ from test_design_context import prepare
 from test_worker import calls, install_claude
 
 
+STORY = "FORGE-PACE-1"
+
+
 @pytest.mark.parametrize("family", ["claude", "codex"])
-def test_3_prototype_rounds_prove_only_demo_steps_and_boundaries(env, monkeypatch, sdk_data, family):
+def test_35_prototype_rounds_prove_only_demo_steps_and_boundaries(env, monkeypatch, sdk_data, family):
     repo = env.repo
     codex_log = prepare(env, monkeypatch, sdk_data, family, prototype=True)
     item, where = env.start_fix(fix_kind="backend", allow_large="Prototype before sign-off")

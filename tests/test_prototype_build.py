@@ -164,7 +164,7 @@ def test_3_close_refuses_prototype_app_changes_until_the_owner_accepts_the_build
     assert closed.returncode == 0, closed.stdout + closed.stderr
 
 
-def test_3_canvas_only_ui_fix_closes_without_a_build_decision(env):
+def test_31_canvas_only_ui_fix_closes_without_a_build_decision(env):
     _prototype(env, design=True)
     item, _ = _start_fix(env, kind="ui", path="docs/design/prototype/notes.md")
 
@@ -173,7 +173,7 @@ def test_3_canvas_only_ui_fix_closes_without_a_build_decision(env):
     assert not list((env.repo.path / "docs/decisions").glob("*prototype-build.md"))
 
 
-def test_3_adopted_prototype_with_merged_app_code_closes_without_a_new_decision(env):
+def test_32_adopted_prototype_with_merged_app_code_closes_without_a_new_decision(env):
     _prototype(env, adopted=True, existing_app=True)
     item, _ = _start_fix(env, path="app.py")
 
@@ -189,7 +189,7 @@ def test_3_adopted_prototype_with_merged_app_code_closes_without_a_new_decision(
     ('models.light_review.codex = { model = "gpt-6-compact", effort = "low"}',
      "gpt-6-compact", "low"),
 ], ids=["review-model-at-medium", "light-review-setting", "light-model-at-medium", "codex-entry"])
-def test_3_light_review_checks_only_demo_risks_and_uses_light_review_settings(
+def test_33_light_review_checks_only_demo_risks_and_uses_light_review_settings(
         env, setting: str, model: str, effort: str):
     demo_steps = model == "gpt-6.1-sol"
     test_command = (f'{json.dumps(Path(sys.executable).as_posix())} -m pytest -q tests/test_demo_steps.py'
@@ -216,7 +216,7 @@ def test_3_light_review_checks_only_demo_risks_and_uses_light_review_settings(
     assert "per-function" not in prompts
 
 
-def test_3_security_finding_blocks_a_light_prototype_review(env):
+def test_34_security_finding_blocks_a_light_prototype_review(env):
     _prototype(env, existing_app=True)
     _accept_build_decision(env.repo)
     item, _ = _start_fix(env)
