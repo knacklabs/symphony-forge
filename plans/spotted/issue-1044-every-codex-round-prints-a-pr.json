@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\ttests/test_close_runs_only_related_tests.py\tCI timed out in the nested test command and reported leftover processes; the case passed alone locally.",
+      "kind": "bug",
+      "path": "tests/test_close_runs_only_related_tests.py",
+      "line": 79,
+      "text": "CI timed out in the nested test command and reported leftover processes; the case passed alone locally.",
+      "from": "worker",
+      "item": "issue-1044-every-codex-round-prints-a-pr",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/codex_turn.py\tNot done: A Codex round on a new conversation prints no project_skipped error, and the chat project is still set once the thread has a rollo",
       "kind": "edge",
       "path": "src/forge/codex_turn.py",
