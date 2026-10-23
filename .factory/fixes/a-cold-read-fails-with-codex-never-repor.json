@@ -4,12 +4,20 @@
   "done_when": "When Codex still reports an active writer after the one retry, a cold read starts a new Codex conversation and prints one plain line saying why, and a work round refuses with a line that says another program holds the conversation and how to free it.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T15:21:17.043459+00:00",
       "step": "start"
     }
   ],
-  "why": "A cold read fails with 'Codex never reported the turn's end' when another program, such as the Codex desktop app, still holds its earlier Codex conversation open, and a work round in the same case gives the same misleading line."
+  "stuck": {
+    "close": null,
+    "head": "196436c9dea155c9a21c69dab9458b13ebd50a22",
+    "keys": {},
+    "round": null
+  },
+  "why": "A cold read fails with 'Codex never reported the turn's end' when another program, such as the Codex desktop app, still holds its earlier Codex conversation open, and a work round in the same case gives the same misleading line.",
+  "worker": "codex"
 }
