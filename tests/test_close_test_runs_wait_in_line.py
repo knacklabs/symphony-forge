@@ -7,6 +7,7 @@ import json
 import subprocess
 import sys
 import time
+from itertools import groupby
 from pathlib import Path
 
 import pytest
@@ -89,10 +90,13 @@ class Close:
     def places(self) -> list[str]:
         # With four cores the review lane can also queue. This case owns the
         # test lane's FIFO messages, not admission to the separate agent lane.
-        return [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
+        # Main also announces holder changes at the same position. This test owns the
+        # sequence of position changes; holder names have their own command-level test.
+        updates = [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
+        return [line for line, _ in groupby(updates)]
 
 
-# Workers now share close's queue; the message counts places in the shared lane.
+# Workers share close's queue; waiting messages name holders and count places in the lane.
 ONE = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 1 in line."
 TWO = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 2 in line."
 THREE = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 3 in line."

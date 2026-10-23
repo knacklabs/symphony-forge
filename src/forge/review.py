@@ -316,7 +316,9 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
 def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                  base: str, previous: dict[str, Any], tested: str) -> str:
     """The plain review instructions for this task or fix, from templates/review.md."""
-    from forge import story  # story imports review indirectly
+    from forge import story, worker  # story imports review indirectly
+    design_text = ""
+    user_facing = state.get("fix_kind") == "ui"
     text = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     parts = re.split(r"^<!-- ([a-z-]+) -->\r?\n", text, flags=re.M)
     blocks = {parts[i]: string.Template(parts[i + 1].strip()) for i in range(1, len(parts), 2)}
@@ -336,6 +338,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "proof_list": proof_list(top, base) or "missing"}
     if "/" in item:
         doc_text, doc, row = task(top, item)
+        design_text = doc_text
+        user_facing = row.get("user-facing", "").lower() in ("yes", "true")
         parsed = story.parse(doc_text)
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
@@ -357,6 +361,14 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["fix", "proof-list", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
+    values["design_context"], owned_design = worker.design_context(top, design_text, user_facing)
+    chosen.append("design-context")
+    if owned_design:
+        values["design_folder"] = owned_design
+        chosen.append("design-screens")
+    if user_facing:
+        values["theme_file"] = " (`apps/web/src/index.css`)" if (top / "apps/web/src/index.css").is_file() else ""
+        chosen.append("design-theme")
     prompt = "\n\n".join(blocks[name].substitute(values) for name in chosen)
     if previous.get("commit"):
         prompt += "\n\n" + blocks["repair-review"].substitute(

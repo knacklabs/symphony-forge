@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from conftest import FORGE_SHIM, ROOT, _install
+from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_task import story
 from test_worker import calls, install_claude
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
@@ -27,6 +27,8 @@ def brief(client, request, tmp_path):
         old_src = tmp_path / "before-worker-guidance"
         shutil.copytree(ROOT / "src/forge", old_src / "forge",
                         ignore=shutil.ignore_patterns("__pycache__"))
+        patient(lambda: shutil.copytree(ROOT / ".codex/skills/test-audit",
+                                        old_src / "forge/templates/skills/test-audit", dirs_exist_ok=True))
         shutil.copyfile(ROOT / "tests/fixtures/worker-brief-before-delegation.md",
                         old_src / "forge/templates/brief.md")
         _install(client.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old_src)))
