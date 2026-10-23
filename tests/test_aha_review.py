@@ -51,7 +51,9 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == "codex"
     assert options["--model"] == "codex=gpt-6-astra"
-    assert options["--thinking"] == "codex=high"
+    # Working-prototype review now defaults to medium; signed-off/full review keeps its effort.
+    light = not signed_off and allowance == "Prototype before sign-off"
+    assert options["--thinking"] == ("codex=medium" if light else "codex=high")
     # Every review asks for every priority; the light review's P0-only level applies after scoring.
     assert options["--max-priority"] == "P3"
     if problem:

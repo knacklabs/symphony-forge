@@ -30,6 +30,9 @@ def test_6_close_uses_repository_tool_with_its_model_and_effort(env, family, lig
     assert options["--engine"] == family
     assert options["--max-priority"] == "P3"  # the light review's level applies after scoring
     model, effort = (("gpt-6-astra", "xhigh") if family == "codex" else ("custom-claude", "low"))
+    # The working-prototype contract keeps the review model but defaults its effort to medium.
+    if light:
+        effort = "medium"
     assert options["--model"] == f"{family}={model}"
     assert options["--thinking"] == f"{family}={effort}"
 

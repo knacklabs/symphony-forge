@@ -195,6 +195,20 @@ class Forge:
               changes: dict[str, str]) -> tuple[str, Path]:
         """What `forge task start` and `forge fix start` (WORK) do, until they land: a branch in its
         own worktree with the item's state, then the worker's commit."""
+        # General close cases start after the owner requested a working build. The gate's
+        # tests use the real fix-start command instead and keep their unsigned canvas strict.
+        settings = tomllib.loads((self.repo.path / "forge.toml").read_text("utf-8"))
+        approval = "docs/decisions/0000-prototype-build.md"
+        if settings.get("stage") == "prototype" and not (self.repo.path / approval).exists():
+            # Seed the owner's accepted request through another clone, as a merged decision.
+            writer = self.tmp / "working-build-writer"
+            self.repo.git("clone", "-q", self.repo.git("remote", "get-url", "origin"), str(writer))
+            self.commit(writer, approval,
+                        '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n'
+                        '# Build the demo to check its data boundary\n', "Request the working build")
+            self.repo.git("push", "-q", "origin", "main", cwd=writer)
+            self.repo.git("fetch", "-q", "origin")
+            self.repo.git("merge", "-q", "--no-edit", "origin/main")
         where = self.tmp / branch.replace("/", "-")
         self.repo.git("worktree", "add", "-q", "-b", branch, str(where))
         self.commit(where, rel, json.dumps({"branch": branch, "status": "working", **state}), "Start")
