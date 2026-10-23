@@ -11,12 +11,27 @@
   "done_when": "A finding the next review raises again as Not fixed on the same file, with the dismissal's cited lines unchanged, stays dismissed, and close reaches Ready when nothing else blocks",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b20f533c64f6ac6dc2c0a378b7d28787e387f481019f9cbd4c326930d97920c4",
+    "changed": "2ed1f3f777bbcb54a965204baf0b2b1df25c407d10ca282c87cc6e4981991d13",
+    "commit": "7eaa3c7f0174d5262ef326900448257c8484f1b4",
+    "dismissals": [],
+    "findings": [],
+    "id": "2f292fe8-ead4-4b42-ada5-a6d4822217f6",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T16:46:41.993990+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T16:53:24.627462+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
