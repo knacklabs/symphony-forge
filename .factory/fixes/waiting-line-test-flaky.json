@@ -11,12 +11,27 @@
   "done_when": "The waiting-line test passes on every run, and a waiting close says each place in line correctly",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "512830ac61b6eb2a689c35d04bb2739c6bca43c12121ef69ffed1b38ac4d31b9",
+    "changed": "030ae5de36cf4e803261227af3dec2ed41ba4a61927f21ef0b415991f544e997",
+    "commit": "a4adc3ae459efde278d42cd3828e9d8a453f8574",
+    "dismissals": [],
+    "findings": [],
+    "id": "e6232992-3721-42cf-b8d5-1f2e4754febb",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T17:24:03.757719+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T17:39:46.574122+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
