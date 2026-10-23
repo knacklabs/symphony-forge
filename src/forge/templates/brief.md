@@ -306,6 +306,8 @@ $checks
 <!-- end -->
 ## Build simple
 
+In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new UI component library and a new file outside components/ui/ named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
+
 A plan's cold read passes when no note is at the bar. A note is at the bar when the plan is wrong,
 contradicts itself, or a builder could not act on it. Notes below the bar, or unscored and marked
 `Advisory:`, need no disposition or another round; only notes at the bar need the coordinator to amend

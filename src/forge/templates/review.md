@@ -224,6 +224,8 @@ never bare. It owns interaction feel (press feedback, easing, durations, popover
 and when not to animate). Report a missing impeccable pass on a UI change or a failed
 emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
+In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
+
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a

@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -241,6 +241,7 @@ def close(args: argparse.Namespace) -> int:
                   file=sys.stderr)
             return 1
     spotted.check(top, item)
+    app_baseline.check(top, cfg, repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top))
     if not migrating:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.
