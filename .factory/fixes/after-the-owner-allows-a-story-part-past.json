@@ -1,6 +1,13 @@
 {
   "base": "c03d3f6d9531a450b06f74c7daec2c616bcce2d4",
   "branch": "fix/after-the-owner-allows-a-story-part-past",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a166f2-26c3-7021-9b8d-3ba5ceffa125",
+    "head": null,
+    "start": "9f43fb392c1c9f94c7fd84079bb67d30fdc59829"
+  },
   "done_when": "Once the owner allows a story part past its line limit, closing that part no longer stops with the size question.",
   "fix_kind": "backend",
   "kind": "fix",
