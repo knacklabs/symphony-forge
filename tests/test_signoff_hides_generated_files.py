@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, _install
-from test_proto_signoff import MUST, _decision
+from test_proto_signoff import MUST, _decision, _design_records
 from test_setup import _autoreview, _fresh_client
 
 STORY = "signoff-hide-generated"
@@ -68,7 +68,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
         f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
         f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
     (fix / "docs/product").mkdir(parents=True, exist_ok=True)
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers, encoding="utf-8")
+    _design_records(fix, answers)
     (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
     with (fix / ".gitattributes").open("a", encoding="utf-8") as out:
         out.write("\nmedia/** linguist-generated\n")
@@ -100,7 +100,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
     assert "BINARY-FILM-BYTES" not in diff
     assert "media/film.mp4" not in diff
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
-    assert len(calls) == 1
-    prompt = "\n\n".join(calls[0]["prompt_files"].values())
+    assert len(calls) == 2
+    prompt = "\n\n".join(calls[-1]["prompt_files"].values())
     assert "media/film.mp4: 1 added, 0 removed" in prompt
     assert "BINARY-FILM-BYTES" not in prompt

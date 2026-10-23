@@ -26,5 +26,5 @@ def test_1_client_signoff_accepts_chat(repo, gh, tmp_path, monkeypatch, history)
     assert "approved_on: 2026-10-22" in record
     assert 'confirmed_by: "Ravi"' in record
     assert "reviewed_commit:" in record
-    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 1
+    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 2
     assert "email, call or chat" in template
