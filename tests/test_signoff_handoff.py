@@ -20,6 +20,8 @@ from test_story import DESIGN_TREE, DOC, READER, approved_constitution, worktree
 
 pytestmark = pytest.mark.platform
 
+STORY = "FORGE-PACE-1/HANDOFF"
+
 PROOF = "The approved canvas proves the order list flow."
 DESIGN_CHOICE = "The approved canvas is the source for production stories."
 

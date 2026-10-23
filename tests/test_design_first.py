@@ -21,7 +21,7 @@ SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"><text x
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_1_small_screen_changes_need_a_reason_instead_of_a_canvas(repo, gh, tmp_path, claude_payload, adopted):
+def test_25_small_screen_changes_need_a_reason_instead_of_a_canvas(repo, gh, tmp_path, claude_payload, adopted):
     # Test audit: read/approval/task admission owns this new small-UI contract.
     # Missing reasons must refuse before a reader runs; canvas tests require images.
     # Keep real init/adopted client settings: a forge-source fixture bypasses client admission.
