@@ -42,8 +42,7 @@ def _accept(repo, fix):
     return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 
 
-@pytest.mark.parametrize("requested_build", [False, True], ids=["merged-app", "accepted-build-request"])
-def test_1_working_signoff_reuses_review_and_check_after_customer_reply(
+def _working_signoff_reuses_review_and_check_after_customer_reply(
         repo, tmp_path, monkeypatch, requested_build):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=not requested_build)
     page = _decision(fix, answers, via="", on="")
@@ -67,9 +66,7 @@ def test_1_working_signoff_reuses_review_and_check_after_customer_reply(
     assert _count_engine(queue, "claude") == 1
 
 
-@pytest.mark.parametrize("changed_input", [
-    "answers", "product", "proof", "decisions", "signed design"])
-def test_2_working_signoff_repeats_review_when_a_saved_input_changes(
+def _working_signoff_repeats_review_when_a_saved_input_changes(
         repo, tmp_path, monkeypatch, changed_input):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     page = _decision(fix, answers, via="", on="")
@@ -117,12 +114,7 @@ def test_2_working_signoff_repeats_review_when_a_saved_input_changes(
     assert _count_engine(queue, "claude") == 1
 
 
-@pytest.mark.parametrize(
-    ("adopted", "changed_brief"),
-    [(False, False), (False, True), (True, False)],
-    ids=["unchanged", "changed-brief", "earlier-adopted"],
-)
-def test_3_canvas_signoff_reuses_or_rechecks_completeness(
+def _canvas_signoff_reuses_or_rechecks_completeness(
         repo, tmp_path, monkeypatch, adopted, changed_brief):
     client = _adopted_client if adopted else _client
     kwargs = {} if adopted else {"working_build": False}
@@ -149,3 +141,22 @@ def test_3_canvas_signoff_reuses_or_rechecks_completeness(
     assert "status: accepted" in page.read_text("utf-8")
     assert _count_engine(queue, "claude") == (2 if changed_brief else 1)
     assert _count_engine(queue, "codex") == 0
+
+
+@pytest.mark.parametrize(("check", "args"), [
+    pytest.param(_working_signoff_reuses_review_and_check_after_customer_reply,
+                 (False,), id="merged-app"),
+    pytest.param(_working_signoff_reuses_review_and_check_after_customer_reply,
+                 (True,), id="accepted-build-request"),
+    *(pytest.param(_working_signoff_repeats_review_when_a_saved_input_changes,
+                   (changed,), id=changed)
+      for changed in ("answers", "product", "proof", "decisions", "signed design")),
+    pytest.param(_canvas_signoff_reuses_or_rechecks_completeness,
+                 (False, False), id="unchanged"),
+    pytest.param(_canvas_signoff_reuses_or_rechecks_completeness,
+                 (False, True), id="changed-brief"),
+    pytest.param(_canvas_signoff_reuses_or_rechecks_completeness,
+                 (True, False), id="earlier-adopted"),
+])
+def test_5_signoff_reuses_results_until_their_inputs_change(repo, tmp_path, monkeypatch, check, args):
+    check(repo, tmp_path, monkeypatch, *args)

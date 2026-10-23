@@ -18,6 +18,8 @@ import pytest
 
 from test_proto_signoff import _adopted_client, _client, _decision
 
+STORY = "FORGE-PACE-1/SIGNOFF"
+
 
 def _calls(queue):
     path = queue.with_suffix(".calls.jsonl")
@@ -29,8 +31,7 @@ def _tool_call(queue, engine):
                 if call["args"][call["args"].index("--engine") + 1] == engine)
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_signoff_pins_the_completeness_check_and_records_what_it_checked(
+def _pins_the_completeness_check_and_records_what_it_checked(
         repo, tmp_path, monkeypatch, adopted):
     make_client = _adopted_client if adopted else _client
     fix, answers, queue = make_client(repo, tmp_path, monkeypatch,
@@ -90,20 +91,7 @@ runpy.run_path({str(original)!r}, run_name="__main__")
           "owner confirmation": True, "score protocol": True}
 
 
-@pytest.mark.parametrize(("gap", "named_gap"), [
-    ("missing-brief-things", "Things it keeps track of"),
-    ("empty-brief-things", "Things it keeps track of"),
-    ("missing-product", "PRODUCT.md"),
-    ("missing-design", "DESIGN.md"),
-    ("missing-screens", "SCREENS.md"),
-    ("image-no-section", "SCREENS.md"),
-    ("missing-components", "Components"),
-    ("missing-fields", "Fields"),
-    ("critique", "Critique"),
-    ("polish", "Polish"),
-    ("emil", "Emil checklist"),
-])
-def test_signoff_names_each_missing_design_record(repo, tmp_path, monkeypatch, gap, named_gap):
+def _names_each_missing_design_record(repo, tmp_path, monkeypatch, gap, named_gap):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, design_gap=gap)
     page = _decision(fix, answers)
 
@@ -116,11 +104,22 @@ def test_signoff_names_each_missing_design_record(repo, tmp_path, monkeypatch, g
     assert not _calls(queue)
 
 
-@pytest.mark.parametrize(("title", "detail"), [
-    ("Missing field", "The order screen omits the customer field."),
-    ("Missing flow", "No screen shows how a salesperson submits an order."),
-])
-def test_signoff_holds_canvas_gaps_reported_by_completeness_check(
+DESIGN_GAPS = [
+    ("missing-brief-things", "Things it keeps track of"),
+    ("empty-brief-things", "Things it keeps track of"),
+    ("missing-product", "PRODUCT.md"),
+    ("missing-design", "DESIGN.md"),
+    ("missing-screens", "SCREENS.md"),
+    ("image-no-section", "SCREENS.md"),
+    ("missing-components", "Components"),
+    ("missing-fields", "Fields"),
+    ("critique", "Critique"),
+    ("polish", "Polish"),
+    ("emil", "Emil checklist"),
+]
+
+
+def _holds_canvas_gaps_reported_by_completeness_check(
         repo, tmp_path, monkeypatch, title, detail):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     page = _decision(fix, answers)
@@ -145,8 +144,7 @@ def test_signoff_holds_canvas_gaps_reported_by_completeness_check(
         assert text in prompt
 
 
-@pytest.mark.parametrize("starter", [False, True], ids=["new-code", "starter-screen"])
-def test_canvas_signoff_refuses_app_code_until_a_build_is_requested(repo, tmp_path, monkeypatch, starter):
+def _refuses_app_code_until_a_build_is_requested(repo, tmp_path, monkeypatch, starter):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False, seed_starter=starter)
     page = _decision(fix, answers)
     name = "apps/web/src/app.tsx" if starter else "app.py"
@@ -162,7 +160,7 @@ def test_canvas_signoff_refuses_app_code_until_a_build_is_requested(repo, tmp_pa
     assert not _calls(queue)
 
 
-def test_canvas_signoff_refuses_a_changed_signed_design(repo, tmp_path, monkeypatch):
+def _refuses_a_changed_signed_design(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     page = _decision(fix, answers)
     image = fix / "docs/design/prototype/order-list.svg"
@@ -179,7 +177,7 @@ def test_canvas_signoff_refuses_a_changed_signed_design(repo, tmp_path, monkeypa
     assert not _calls(queue)
 
 
-def test_design_check_falls_back_to_codex_when_claude_is_missing(repo, tmp_path, monkeypatch):
+def _falls_back_to_codex_when_claude_is_missing(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     page = _decision(fix, answers)
     monkeypatch.setenv("CLAUDE_BIN", str(tmp_path / "missing-claude"))
@@ -195,7 +193,7 @@ def test_design_check_falls_back_to_codex_when_claude_is_missing(repo, tmp_path,
     assert "design_checked: " in page.read_text("utf-8")
 
 
-def test_old_accepted_signoff_needs_no_new_design_check(repo, tmp_path, monkeypatch):
+def _old_accepted_signoff_needs_no_new_design_check(repo, tmp_path, monkeypatch):
     fix, _, queue = _adopted_client(repo, tmp_path, monkeypatch, old_signoff=True)
 
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -205,7 +203,7 @@ def test_old_accepted_signoff_needs_no_new_design_check(repo, tmp_path, monkeypa
     assert not _calls(queue)
 
 
-def test_new_signoff_decision_names_the_pinned_sections(repo, tmp_path, monkeypatch):
+def _new_signoff_decision_names_the_pinned_sections(repo, tmp_path, monkeypatch):
     fix, _, _ = _client(repo, tmp_path, monkeypatch, working_build=False)
 
     created = repo.forge("decision", "new", "client-signoff", cwd=fix)
@@ -214,3 +212,23 @@ def test_new_signoff_decision_names_the_pinned_sections(repo, tmp_path, monkeypa
     template = next((fix / "docs/decisions").glob("*-client-signoff.md")).read_text("utf-8")
     for section in ("## Signed design", "## Proof", "## Decisions"):
         assert section in template
+
+
+@pytest.mark.parametrize(("check", "args"), [
+    pytest.param(_pins_the_completeness_check_and_records_what_it_checked, (False,), id="new-client"),
+    pytest.param(_pins_the_completeness_check_and_records_what_it_checked, (True,), id="earlier-release"),
+    *(pytest.param(_names_each_missing_design_record, (gap, name), id=gap)
+      for gap, name in DESIGN_GAPS),
+    pytest.param(_holds_canvas_gaps_reported_by_completeness_check,
+                 ("Missing field", "The order screen omits the customer field."), id="missing-field"),
+    pytest.param(_holds_canvas_gaps_reported_by_completeness_check,
+                 ("Missing flow", "No screen shows how a salesperson submits an order."), id="missing-flow"),
+    pytest.param(_refuses_app_code_until_a_build_is_requested, (False,), id="new-code"),
+    pytest.param(_refuses_app_code_until_a_build_is_requested, (True,), id="starter-screen"),
+    pytest.param(_refuses_a_changed_signed_design, (), id="changed-design"),
+    pytest.param(_falls_back_to_codex_when_claude_is_missing, (), id="codex-fallback"),
+    pytest.param(_old_accepted_signoff_needs_no_new_design_check, (), id="old-signoff"),
+    pytest.param(_new_signoff_decision_names_the_pinned_sections, (), id="decision-sections"),
+])
+def test_2_client_signoff_requires_a_complete_canvas(repo, tmp_path, monkeypatch, check, args):
+    check(repo, tmp_path, monkeypatch, *args)
