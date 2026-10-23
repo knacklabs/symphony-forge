@@ -26,6 +26,9 @@ Forge records the "Prototype before sign-off" allowance. It covers any size and 
 changes. Reviewers do not check this allowance against the diff. Other agent-recorded
 allowances still need the check that their reason matches the whole diff.
 
+An allowance for a story part's size also releases an earlier size stop.
+Close then continues without a separate choice or another worker round.
+
 You are the worker. Build exactly what this brief asks, in the checkout at `$checkout`, and
 nothing more.
 

@@ -500,7 +500,9 @@ def _start_follow_up(top: Path, state: dict[str, Any], why: str, done: str) -> s
 
 
 def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
-    """A recorded choice releases a stop; a clean review does not answer its question."""
+    """A recorded choice or size allowance releases a stop; a clean review does not."""
+    if (state.get("stop") or {}).get("size") and state.get("allow_large"):
+        return
     if state.get("stop") and "question" in state["stop"]:
         if not state["stop"].get("choice"):
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])
