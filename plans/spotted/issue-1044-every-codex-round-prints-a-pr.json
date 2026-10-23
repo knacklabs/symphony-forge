@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/codex_turn.py\tNot done: A Codex round on a new conversation prints no project_skipped error, and the chat project is still set once the thread has a rollo",
+      "kind": "edge",
+      "path": "src/forge/codex_turn.py",
+      "line": 303,
+      "text": "Not done: A Codex round on a new conversation prints no project_skipped error, and the chat project is still set once the thread has a rollo",
+      "from": "review",
+      "item": "issue-1044-every-codex-round-prints-a-pr",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
