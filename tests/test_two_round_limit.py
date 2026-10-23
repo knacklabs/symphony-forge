@@ -261,6 +261,9 @@ def test_6_a_user_facing_change_asks_for_one_live_run_and_refuses_nothing_withou
         earlier = env.tmp / "earlier-forge-src"
         patient(lambda: shutil.copytree(ROOT / "src/forge", earlier / "forge", dirs_exist_ok=True,
                                         ignore=shutil.ignore_patterns("__pycache__")))
+        # Match the wheel's bundled authoring guidance when copying current worker code.
+        patient(lambda: shutil.copytree(ROOT / ".codex/skills/test-audit",
+                                        earlier / "forge/templates/skills/test-audit", dirs_exist_ok=True))
         patient(lambda: shutil.copy(ROOT / "tests/fixtures/worker-brief-before-delegation.md",
                                     earlier / "forge/templates/brief.md"))
         launcher = env.repo.bin / "forge"

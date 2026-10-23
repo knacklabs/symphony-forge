@@ -34,6 +34,16 @@ nothing more.
 
 $start_here
 
+$design_context
+
+<!-- if user-facing -->
+Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
+<!-- end -->
+<!-- if screen-design -->
+Build each screen you touch with the components and fields its section of
+`${design_folder}SCREENS.md` lists.
+<!-- end -->
+
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.
 Use Mainline Deploy only when the user explicitly requests deployment. First check whether it is
