@@ -255,10 +255,15 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                           f"until it is under {LOAD_LIMIT}.", flush=True)
                     said = "busy"
             elif waiting != said:
-                print(f"{max(size, occupied)} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
-                      f"its turn: it is number {place} in line."
-                      + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else "")
-                      + "".join(f"\n{_holder(run)}" for run in holders), flush=True)
+                lines = []
+                # A holder handover can precede admission of the next run without moving us.
+                if not isinstance(said, tuple) or said[0] != place:
+                    lines.append(f"{max(size, occupied)} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
+                                 f"its turn: it is number {place} in line."
+                                 + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""))
+                lines.extend(_holder(run) for run in holders)
+                if lines:
+                    print("\n".join(lines), flush=True)
                 said = waiting
             time.sleep(0.5)
     except BaseException:
