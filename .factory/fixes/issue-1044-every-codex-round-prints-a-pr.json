@@ -1,6 +1,13 @@
 {
   "base": "6199416464e87e74326e1f066100bdcec2af4a24",
   "branch": "fix/issue-1044-every-codex-round-prints-a-pr",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169a8-be80-7ea0-a196-41cf84496686",
+    "head": null,
+    "start": "f0d20be56de329008a34a114a2801d8a2c7e5fa9"
+  },
   "done_when": "A Codex round on a new conversation prints no project_skipped error, and the chat project is still set once the thread has a rollout",
   "fix_kind": "backend",
   "kind": "fix",
