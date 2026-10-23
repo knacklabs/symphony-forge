@@ -115,6 +115,7 @@ def _agent(env, extra: str = 'merge = "agent"\n') -> None:
 def _fix(env, status: str = "started", worked: bool = False, changes: dict | None = None,
          **state: str) -> Path:
     """A fix as forge fix start leaves it; worked: as a finished forge work leaves it."""
+    env.approve_working_build()
     where = env.tmp / "repo-fix-tidy-readme"
     env.repo.git("worktree", "add", "-q", "-b", BRANCH, str(where))
     lines = {"branch": BRANCH, "status": status, "kind": "fix", "why": "Readme greets new readers",

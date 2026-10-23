@@ -53,6 +53,7 @@ def test_1_land_closes_a_hand_committed_fix_without_a_worker(land, history):
         repo.git("remote", "set-url", "origin", str(env.tmp / "remote.git"))
         repo.git("push", "-q", "origin", "main")
     env.checks(GREEN)
+    env.approve_working_build()
     started = repo.forge("fix", "start", "Bump the package version", "--done",
                          "The package version is updated", "--slug", "bump-version", "--kind", "mechanical")
     assert started.returncode == 0, started.stderr

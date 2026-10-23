@@ -191,10 +191,8 @@ class Forge:
         self.repo.git("commit", "-q", "-m", message, cwd=where)
         return self.repo.git("rev-parse", "HEAD", cwd=where)
 
-    def start(self, item: str, branch: str, rel: str, state: dict,
-              changes: dict[str, str]) -> tuple[str, Path]:
-        """What `forge task start` and `forge fix start` (WORK) do, until they land: a branch in its
-        own worktree with the item's state, then the worker's commit."""
+    def approve_working_build(self) -> None:
+        """The owner's accepted build request for general close and land fixtures."""
         # General close cases start after the owner requested a working build. The gate's
         # tests use the real fix-start command instead and keep their unsigned canvas strict.
         settings = tomllib.loads((self.repo.path / "forge.toml").read_text("utf-8"))
@@ -209,6 +207,12 @@ class Forge:
             self.repo.git("push", "-q", "origin", "main", cwd=writer)
             self.repo.git("fetch", "-q", "origin")
             self.repo.git("merge", "-q", "--no-edit", "origin/main")
+
+    def start(self, item: str, branch: str, rel: str, state: dict,
+              changes: dict[str, str]) -> tuple[str, Path]:
+        """What `forge task start` and `forge fix start` (WORK) do, until they land: a branch in its
+        own worktree with the item's state, then the worker's commit."""
+        self.approve_working_build()
         where = self.tmp / branch.replace("/", "-")
         self.repo.git("worktree", "add", "-q", "-b", branch, str(where))
         self.commit(where, rel, json.dumps({"branch": branch, "status": "working", **state}), "Start")
