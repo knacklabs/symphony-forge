@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-PACE-1-SIGNOFF",
+  "chat": {
+    "approval": "51e0f4e4a6720442fc4ec33ec41947f91aa0f2983eb5a8744faa23abc39aaeb4",
+    "claude": null,
+    "conversation": "01a169df-5162-7331-88da-a15a4ffa3aa9",
+    "head": null,
+    "start": "41fb8487ef00dbf3709ad1dea3747f0dd39cc48f"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
