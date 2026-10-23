@@ -7,11 +7,19 @@ from test_close_explains_findings_and_requires_done_when import setup_client
 STORY = "a-not-done-finding-that-quotes-one-sente"
 
 
-@pytest.mark.parametrize("adopted,missing", [(False, 0), (False, 1), (True, 1)],
-                         ids=["new-first-sentence", "new-second-sentence", "earlier-adopted"])
-def test_1_any_done_when_sentence_blocks_close(env, adopted, missing):
+@pytest.mark.parametrize("adopted,missing,ending", [
+    (False, 0, "plain"), (False, 1, "plain"),
+    (False, 0, "quoted"), (False, 1, "quoted"), (True, 1, "quoted"),
+    (False, 0, "bold"), (False, 1, "bold"),
+    (False, 0, "code"), (False, 1, "code"),
+])
+def test_1_any_done_when_sentence_blocks_close(env, adopted, missing, ending):
     setup_client(env, adopted)
     sentences = ["The readme opens with a greeting.", "The greeting includes the reader's name."]
+    if ending != "plain":
+        greeting = {"quoted": '"Hello readers."', "bold": "**Hello readers.**",
+                    "code": "`Hello readers.`"}[ending]
+        sentences[0] = f"The greeting says {greeting}"
     item, _ = env.start_fix(done_when=" ".join(sentences))
     note = finding("P2", f'Not done: "{sentences[missing]}"')
     note["body"] = "Gain 2, Work 4, Harm 1\nThe promised greeting is absent."
@@ -26,6 +34,7 @@ def test_1_any_done_when_sentence_blocks_close(env, adopted, missing):
     assert "Ready:" not in closed.stdout
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
 def test_2_each_non_blocking_finding_has_its_reason_and_scores(env, adopted):
     setup_client(env, adopted)
