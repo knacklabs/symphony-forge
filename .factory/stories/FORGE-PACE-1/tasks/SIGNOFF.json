@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-PACE-1-SIGNOFF",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T17:46:27.359084+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "209e90e50238704ccfa4d0d4d25f0bc49647b94a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
