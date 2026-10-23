@@ -4,12 +4,20 @@
   "done_when": "A Not done that quotes any one sentence of the fix's Done-when blocks close, and each non-blocking finding close lists shows its own reason with its scores",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T17:22:31.767934+00:00",
       "step": "start"
     }
   ],
-  "why": "A Not done finding that quotes one sentence of a fix's longer Done-when is treated as naming no owner-approved Done-when item, so it does not block and close prints a wrong reason; and close says the review is clean while listing such findings without saying why each one does not block"
+  "stuck": {
+    "close": null,
+    "head": "273b08a3a89c0e9f1c7a42c823bf3c42e6ebc213",
+    "keys": {},
+    "round": null
+  },
+  "why": "A Not done finding that quotes one sentence of a fix's longer Done-when is treated as naming no owner-approved Done-when item, so it does not block and close prints a wrong reason; and close says the review is clean while listing such findings without saying why each one does not block",
+  "worker": "codex"
 }
