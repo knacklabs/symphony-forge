@@ -514,7 +514,8 @@ def test_18_close(env, kind):
     if kind == "task":
         scope, rest = prompt.split("outside that scope")
         outside, rest = rest.split("## Done when")
-        covered, context = rest.split("context only")
+        # The later design guidance can also describe a folder as context only.
+        covered, context = rest.split("context only", 1)
         assert "- app.py" in scope and "- other.py" in outside and "app.py" not in outside
         assert "- 1. A shopper can save a basket." in covered and "Not done: <the item>" in covered
         assert "- 2. A saved basket comes back after sign-in." in context

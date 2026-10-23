@@ -5,6 +5,8 @@ $summary
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
+The `Not fixed:` prefix does not change a title match. A change to the dismissal's cited lines
+ends that dismissal.
 Forge ignores settled repeats, so they cannot block or start another round.
 When docs/product/CONSTITUTION.md is approved, follow it. A review holds work that goes against it.
 After a merge of main, close applies a requested dismissal to the same title and file in the
@@ -33,6 +35,16 @@ You are the worker. Build exactly what this brief asks, in the checkout at `$che
 nothing more.
 
 $start_here
+
+$design_context
+
+<!-- if user-facing -->
+Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
+<!-- end -->
+<!-- if screen-design -->
+Build each screen you touch with the components and fields its section of
+`${design_folder}SCREENS.md` lists.
+<!-- end -->
 
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.

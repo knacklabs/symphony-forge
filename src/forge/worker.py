@@ -507,6 +507,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
+    design_text = ""
     values: dict[str, str] = {
         "settings": SETTINGS,
         "checkout": top.resolve().as_posix(),
@@ -523,6 +524,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         values.update(question=question, answer=note or "")
     if match["task"]:
         text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
+        design_text = text
         doc, parsed = task.sections(text), story.parse(text)
         row = task.rows(doc).get(match["task"], {})
         covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
@@ -549,6 +551,11 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
                       allowance=state.get("allow_large") or "No recorded allowance")
     if user_facing:
         on.add("user-facing")
+    values["design_context"], owned_design = design_context(top, design_text, user_facing)
+    values["theme_file"] = " (`apps/web/src/index.css`)" if (top / "apps/web/src/index.css").is_file() else ""
+    if owned_design:
+        on.add("screen-design")
+        values["design_folder"] = owned_design
     values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
                          f"Build {subject} for {match['key']}." if match["task"] else
                          f"Fix: {subject}.")
@@ -565,6 +572,13 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += f"Work in the checkout at `{values['checkout']}`.\n"
         brief += "\n" + START_HERE + "\n"
+        brief += "\n" + values["design_context"] + "\n"
+        if user_facing:
+            brief += ("\nApply DESIGN.md's theme tokens, type and colours to the app's theme file"
+                      + values["theme_file"] + ".\n")
+            if owned_design:
+                brief += (f"Build each screen you touch with the components and fields its section of "
+                          f"`{owned_design}SCREENS.md` lists.\n")
         if match["task"]:
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
                       f"Existing related tests: {values['existing_tests']}.\n")
@@ -596,6 +610,40 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     text = re.sub(r"<!-- if ([\w-]+) -->\n(.*?)<!-- end -->\n",
                   lambda block: block[2] if block[1] in on else "", text, flags=re.S)
     return Template(text).safe_substitute(values), subject
+
+
+def design_context(top: Path, text: str, user_facing: bool) -> tuple[str, str]:
+    """The same design and short skill guidance on both hosts; only an owned canvas sets a gate."""
+    from forge import roles, sync
+
+    body = task.sections(text).get("What changes for you", "")
+    named = re.search(r"^Design: (docs/design/[^/\s]+/) \(", body, re.M)
+    folder = owned = named[1] if named else ""
+    if not text and repo.config(top)["stage"] == "prototype":
+        folder = "docs/design/prototype/"
+        owned = folder if repo.is_prototype(top) else ""
+    elif re.search(r"^Design: none \(", body, re.M):
+        folder = "docs/design/prototype/" if (top / "docs/design/prototype").is_dir() else ""
+    parts = ["## Design context"]
+    if folder:
+        parts.append(("Approved design: " if owned else "Design context only: ") + folder)
+        if not owned:
+            parts.append("Use this signed canvas as context only; its listed components and fields add no requirement.")
+        files = sorted(path.relative_to(top).as_posix() for path in (top / folder).rglob("*") if path.is_file())
+        parts.append("Screens, images and design files (open the images when checking screens):\n"
+                     + "\n".join(f"- `{path}`" for path in files))
+    for name in ["PRODUCT.md", "DESIGN.md", *([folder + "SCREENS.md"] if folder else [])]:
+        path = top / name
+        parts.append(f"### {name}\n\n" + (path.read_text(encoding="utf-8").strip() if path.is_file() else "Missing."))
+    if user_facing:
+        parts += ["### impeccable and emil-design-eng\n\n"
+                  "impeccable owns layout, type, colour, states and copy: shape before building, then audit and polish. "
+                  "Run emil-design-eng's checklist inside one batched inspection, with at most one more round. "
+                  "Invoke it with a specific interaction task; preserve press feedback, deliberate easing and restraint.",
+                  "### frontend\n\n" + roles.ROLES["frontend"][2].removeprefix(roles.BUILD).strip()]
+    audit = sync._synced_text(".codex/skills/test-audit/SKILL.md", "skills/test-audit/SKILL.md")
+    parts.append("### test-audit\n\n" + audit.split("## Authoring gate\n", 1)[1].split("## Junk patterns", 1)[0].strip())
+    return "\n\n".join(parts), owned
 
 
 def _existing_tests(top: Path, scope: list[str]) -> str:

@@ -59,6 +59,19 @@ For other agent-recorded allowances to correct one kind of problem everywhere wi
 an interface, check the reason against the whole diff. Report as P1 an allowance whose reason
 doesn't match the diff: more than one kind of problem, or an interface change.
 
+<!-- design-context -->
+$design_context
+
+<!-- design-screens -->
+Report as P1 a built screen that lacks a component or field its section of
+`${design_folder}SCREENS.md` lists. Check only screens listed in this item's own approved
+design folder. Other design folders are context only.
+
+<!-- design-theme -->
+Check that the worker follows this instruction:
+Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
+Report as P1 a starter app that still has the starter's neutral tokens when DESIGN.md sets others.
+
 <!-- functional-check -->
 ## Functional check
 This part is user-facing. The worker walks each Done-when item it covers the way the client's
@@ -297,7 +310,8 @@ $rulings
 Raise a ruled or dismissed point again only with new evidence the ruling or dismissal didn't
 weigh, and name that evidence in the finding's body and a distinct title. Settled findings stay
 settled: Forge ignores a finding with the same title and file as a fixed or dismissed finding,
-even if its line or evidence changes, and so does a finding the human accepted.
+or a finding the human accepted. The `Not fixed:` prefix does not change a title match.
+A dismissal ends if its cited lines change.
 
 Your working folder is a read-only checkout of the branch head, so the repository's unchanged
 files are there to read; the standard note that the sandbox is empty does not apply to this run.

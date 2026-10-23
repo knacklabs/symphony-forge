@@ -478,7 +478,6 @@
     "tests/test_close_sync_conflicts.py::test_1_close_merges_sync_output_and_stops_on_code_conflicts[source CRLF]": 7.628841586999897,
     "tests/test_close_sync_conflicts.py::test_1_close_merges_sync_output_and_stops_on_code_conflicts[source code conflict]": 5.273822002000543,
     "tests/test_close_sync_conflicts.py::test_1_close_merges_sync_output_and_stops_on_code_conflicts[source]": 7.731123503999697,
-    "tests/test_close_test_runs_wait_in_line.py::test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place": 3.918194711000069,
     "tests/test_close_test_runs_wait_in_line.py::test_2_a_close_that_dies_while_waiting_leaves_no_place": 2.9752070849999654,
     "tests/test_close_test_state_reuses_parent_ci.py::test_3_close_test_state_change_reuses_parent_ci[existing-new]": 2.2236412920001385,
     "tests/test_close_test_state_reuses_parent_ci.py::test_3_close_test_state_change_reuses_parent_ci[existing-previous]": 2.307428209000136,
