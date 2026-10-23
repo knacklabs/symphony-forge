@@ -1,6 +1,13 @@
 {
   "base": "6199416464e87e74326e1f066100bdcec2af4a24",
   "branch": "fix/issue-1043-a-dismissed-finding-comes-bac",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169a8-bd43-75e1-aea4-8082fe0ff400",
+    "head": null,
+    "start": "a3e994acaacb3cc547aae1ccbc88c7be666f0794"
+  },
   "done_when": "A finding the next review raises again as Not fixed on the same file, with the dismissal's cited lines unchanged, stays dismissed, and close reaches Ready when nothing else blocks",
   "fix_kind": "backend",
   "kind": "fix",
