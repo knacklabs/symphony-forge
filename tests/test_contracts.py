@@ -128,6 +128,21 @@ def _init_without_origin(repo, gh, tmp_path, monkeypatch, request):
             "default branch.\nNext: gh repo create <name> --private --source . --remote origin\n")
 
 
+def _init_starter_with_commits(repo, gh, tmp_path, monkeypatch, request):
+    return (("init", "--starter"), None, "",
+            "This repo already has commits, so forge init --starter cannot set it up.\n"
+            "Next: use a new repo for the starter\n")
+
+
+def _init_starter_with_app(repo, gh, tmp_path, monkeypatch, request):
+    fresh = tmp_path / "fresh"
+    repo.git("init", "-q", "-b", "main", str(fresh))
+    (fresh / "package.json").write_text("{}\n", encoding="utf-8")
+    return (("init", "--starter"), fresh, "",
+            "forge init --starter found an existing app file: package.json.\n"
+            "Next: use a new folder for the starter, or forge init to keep this app\n")
+
+
 def _protection_fails(repo, gh, tmp_path, monkeypatch, request):
     client, remote = tmp_path / "client", tmp_path / "client.git"
     repo.git("init", "-q", "--bare", "-b", "main", str(remote))
@@ -299,7 +314,8 @@ def _two_own_hooks(repo, gh, tmp_path, monkeypatch, request):
 LINKS = pytest.mark.skipif(os.name == "nt", reason="making a symlink needs extra rights on Windows")
 TRIGGERS = [_bad_hook_input, _approval_outside_the_contract, _approval_with_no_session,
             _codex_sdk_install_fails, _codex_handler_moved, _init_with_commits,
-            _init_without_origin, _protection_fails, _not_a_repo, _unknown_setting, _roadmap_without_items, _not_an_item, _unreadable_state,
+            _init_without_origin, _init_starter_with_commits, _init_starter_with_app,
+            _protection_fails, _not_a_repo, _unknown_setting, _roadmap_without_items, _not_an_item, _unreadable_state,
             _lower_case_key, _no_title, _no_story, _no_spec, _reader_fails, _story_not_finished,
             pytest.param(_adapter_linked_outside, marks=LINKS), _unreadable_settings,
             _broken_block, pytest.param(_hook_linked_outside, marks=LINKS), _two_own_hooks]
