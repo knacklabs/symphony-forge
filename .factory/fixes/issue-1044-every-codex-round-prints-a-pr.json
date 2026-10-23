@@ -36,8 +36,8 @@
     "id": "180f459e-335e-409e-b098-0a8c291278b6",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-23T16:46:45.914436+00:00",
@@ -53,10 +53,10 @@
     }
   ],
   "stuck": {
-    "close": "af87a787-ce24-4a53-a365-148a550e38a3",
-    "head": "4718a6a746d853702983a2a73db71369b6ff8778",
+    "close": "fdbfc3b2-ebd2-4834-80dc-346785e9fc7a",
+    "head": "e45511b21cae826565bc8dd9218002f3ee4e599c",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Issue #1044: every Codex round prints a project_skipped chat project error because Forge updates the thread metadata before the new thread has a rollout",
   "worker": "codex"
