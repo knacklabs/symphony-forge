@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-PACE-1-CONTEXT",
+  "chat": {
+    "approval": "51e0f4e4a6720442fc4ec33ec41947f91aa0f2983eb5a8744faa23abc39aaeb4",
+    "claude": null,
+    "conversation": "01a16986-f1f9-7c50-8893-2ce5a258113e",
+    "head": null,
+    "start": "c2d99cb9468a1361a82da4b9e0a0803c0c55bfb4"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
