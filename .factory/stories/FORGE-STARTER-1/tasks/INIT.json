@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-STARTER-1-INIT",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T06:32:24.936109+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c5a7bf937118c989d95fe41385f0a13e8340c17e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
