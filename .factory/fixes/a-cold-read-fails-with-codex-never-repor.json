@@ -11,12 +11,27 @@
   "done_when": "When Codex still reports an active writer after the one retry, a cold read starts a new Codex conversation and prints one plain line saying why, and a work round refuses with a line that says another program holds the conversation and how to free it.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "86f4fba9970b410324463c1f06314414d5c8711d3e4b83757f988678dc28f120",
+    "changed": "441ca472346c2e9d17a768d27af62363aa6412dfd021942db4f876cfad89291d",
+    "commit": "268602218453b56b6c5642ed7ab9d60c12638d70",
+    "dismissals": [],
+    "findings": [],
+    "id": "53e4b0e0-d740-4c8d-9549-48d6fcb0bb95",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T15:21:17.043459+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T15:28:05.161081+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
