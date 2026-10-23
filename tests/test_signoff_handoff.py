@@ -18,6 +18,8 @@ import pytest
 from test_proto_signoff import _adopted_client, _client, _decision
 from test_story import DESIGN_TREE, DOC, READER, approved_constitution, worktree
 
+pytestmark = pytest.mark.platform
+
 PROOF = "The approved canvas proves the order list flow."
 DESIGN_CHOICE = "The approved canvas is the source for production stories."
 

@@ -852,7 +852,9 @@ The check uses Claude's `claude-opus-5-5` at high effort, independent of `[model
 Without Claude it uses Codex's `gpt-6.1-sol` at high and says it fell back.
 Fix gaps, approve the changed canvas again, then retry sign-off.
 A canvas-only sign-off needs no working build. A working build also gets one strict whole-product review.
-Forge reuses both passed results while what they checked stays unchanged. Autoreview uses the
+Forge reuses both passed results while what they checked stays unchanged.
+Before the customer's reply, the command runs these checks and stops without accepting sign-off.
+Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
