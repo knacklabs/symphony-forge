@@ -24,11 +24,11 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
     # The real init owns copying; the wheel owns package inclusion, including dotfiles.
     paths = subprocess.run(
         ["git", "ls-files", "-z", "src/forge/templates/starter"], cwd=ROOT,
-        capture_output=True, text=True, check=True).stdout.rstrip("\0").split("\0")
+        capture_output=True, text=True, encoding="utf-8", check=True).stdout.rstrip("\0").split("\0")
     starter = [Path(path).relative_to("src/forge/templates/starter") for path in paths]
     if case == "wheel":
         built = subprocess.run(["uv", "build", "--wheel", "--out-dir", str(tmp_path / "dist")],
-                               cwd=ROOT, capture_output=True, text=True, timeout=120)
+                               cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=120)
         assert built.returncode == 0, built.stdout + built.stderr
         with zipfile.ZipFile(next((tmp_path / "dist").glob("*.whl"))) as wheel:
             for path in starter:
@@ -56,7 +56,7 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
             copied = subprocess.run(["git", "show", f"{first}:{path.as_posix()}"], cwd=client,
                                     capture_output=True, check=True).stdout
             assert copied == (STARTER / path).read_bytes(), path
-        assert tomllib.loads((client / "forge.toml").read_text())["test"] == COMMAND
+        assert tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["test"] == COMMAND
     else:
         # Earlier adoption has app-owned deploy and test settings before the upgrade.
         shutil.copytree(ROOT / "tests/fixtures/doctor-v1.2.2", repo.path, dirs_exist_ok=True)
@@ -71,23 +71,23 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
         client = repo.path
         repo.git("push", "-q", "origin", "main")
         _land(repo, client, "Upgrade Forge", lambda folder: _set(
-            folder, "forge.toml", _pin((folder / "forge.toml").read_text(), _version(repo))))
+            folder, "forge.toml", _pin((folder / "forge.toml").read_text(encoding="utf-8"), _version(repo))))
         gh.respond("api", stdout="{}")
     client = _start_fix(repo, client, "Check starter guidance")
     settings = client / "forge.toml"
-    settings.write_text(re.sub(r'workers = "[^"]+"', 'workers = "claude"', settings.read_text()),
+    settings.write_text(re.sub(r'workers = "[^"]+"', 'workers = "claude"', settings.read_text(encoding="utf-8")),
                         encoding="utf-8")
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     if case == "adopted":
-        assert (client / "Dockerfile").read_text() == "FROM node:24\n# Existing app\n"
-        assert tomllib.loads((client / "forge.toml").read_text())["test"] == "npm test"
+        assert (client / "Dockerfile").read_text(encoding="utf-8") == "FROM node:24\n# Existing app\n"
+        assert tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["test"] == "npm test"
         for path in starter:
             if path.parts[0] in ("apps", "libs", "scripts") or path.name in (
                     "nx.json", "package.json", "package-lock.json", ".env.example"):
                 assert not (client / path).exists(), path
     for host in (".claude", ".codex"):
-        assert "forge init --starter" in (client / host / "skills/forge/SKILL.md").read_text()
+        assert "forge init --starter" in (client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
     repo.git("add", "-A", cwd=client)
     repo.git("commit", "--allow-empty", "-qm", "Current guidance", cwd=client)
     log = install_claude(repo)
@@ -97,11 +97,11 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
     match = re.search(r"how-to.*?is in `([^`]+)`", brief, re.S)
     assert match, brief
     conventions = Path(match[1])
-    stack = (conventions / "stack.md").read_text()
+    stack = (conventions / "stack.md").read_text(encoding="utf-8")
     assert "Nx" in stack and "apps/web" in stack
-    assert "React Router" in (conventions / "frontend.md").read_text()
+    assert "React Router" in (conventions / "frontend.md").read_text(encoding="utf-8")
     keep = "An app set up before Nx keeps its npm workspaces and its Dockerfile."
     assert keep in stack
     for page in conventions.glob("*.md"):
-        assert "npm workspaces" not in page.read_text().replace(keep, ""), page
-    assert COMMAND in (conventions / "testing.md").read_text()
+        assert "npm workspaces" not in page.read_text(encoding="utf-8").replace(keep, ""), page
+    assert COMMAND in (conventions / "testing.md").read_text(encoding="utf-8")
