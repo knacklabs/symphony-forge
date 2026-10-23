@@ -11,12 +11,27 @@
   "done_when": "The worker brief and the review that Forge ships state both rules, and the review reports a symptom-only fix or test-gaming code as a finding; new repos get them at init and existing repos on sync",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "03d6e246664174a412040e157aa2accfe24931d358ecf44bd0b2a8d75d6373b0",
+    "changed": "39128c2c393b67e0e01552bbdd54d17e11d64cbcf6bc536da1a7ec270aa07124",
+    "commit": "82d5a1a8ddf5b7cbed92722cb89b786e1677d606",
+    "dismissals": [],
+    "findings": [],
+    "id": "8d59cbda-5a96-41ff-bc62-789e35357fec",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T18:36:29.228421+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:45:05.185965+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
