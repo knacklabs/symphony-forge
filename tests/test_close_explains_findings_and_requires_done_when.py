@@ -28,8 +28,10 @@ def test_1_clean_close_explains_why_findings_do_not_block(env, adopted):
                         finding("P2", "Simpler: shorten the greeting")))
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert ("These findings do not block: Not done names no owner-approved Done-when item; "
-            "builder details are guidance; Below the review bar. See the pull request.") in closed.stdout
+    # Close now attaches each reason to its finding instead of one shared summary.
+    assert ("Does not block: Not done names no owner-approved Done-when item; "
+            "builder details are guidance.\nGain 4, Work 2, Harm 1") in closed.stdout
+    assert "Does not block: Below the review bar.\nGain 2, Work 1, Harm 1" in closed.stdout
 
 
 @pytest.mark.parametrize("adopted,case", [(False, "quoted"), (False, "below-bar"),
