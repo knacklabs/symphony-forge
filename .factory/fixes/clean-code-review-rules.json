@@ -11,12 +11,27 @@
   "done_when": "The shipped review and standards tell reviewers to report a one-caller wrapper or a pass-through layer as a finding, with the 30-second reader test, and state the test-behaviour-not-internals rule plainly; new repos get them at init and existing repos on sync",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "14f4c7619086d8c912a8222858acceea5c8be90841fbc272ca3b164d23eaadd8",
+    "changed": "a12b13f1b78a595a68756b64ce7959646d8ace4096a56d95d311cb054d799628",
+    "commit": "4c04bc790c9b895714e91581783f1d06e4bacb43",
+    "dismissals": [],
+    "findings": [],
+    "id": "1ab0ecd0-5f45-4070-b89f-8724358cbeb1",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T18:07:57.019055+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:11:45.274465+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
