@@ -28,28 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "699923e31b539111ccb13eda93131dbfd14a2c2b884b119aa4cb5218d8b079a3",
-    "changed": "d56ffce2b4d0931ae2ce142ae2826326235636147fd187238ab8bd906b5618b7",
-    "commit": "6996994d1fca483269349a3f7ecf42dc0effa0c9",
+    "branch_diff": "05e2ca2eeac8b65d054b0d4356ee0332ac204ee94e4e399f0380bba5b5fec5ef",
+    "changed": "a6d2b0618a7bedf42dcab87680d21d624ef973f54e4d2780e4e52880c094f6f7",
+    "commit": "70565af06485e7626f322f2c0644cacebabdb571",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done. Case: normal use - acceptance criteria describe quoted command output. For example, `The error says \"Try again.\" The command exits with status 1.` contains two sentences, but this regex recognizes neither boundary because the period precedes a closing quote. A finding quoting either sentence therefore receives the follow-up reason at review.py:1016-1017, and `score.holds` returns false for follow-ups, allowing close to proceed. Sentence-ending Markdown markers have the same problem. The added tests cover only punctuation immediately followed by whitespace, leaving this promised case broken.",
-        "file": "src/forge/review.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 1000,
-        "priority": "P1",
-        "title": "Not done: A Not done that quotes any one sentence of the fix's Done-when blocks close",
-        "work": 2
-      }
-    ],
-    "id": "e33fad02-26d5-4294-90e1-66b942e0167a",
+    "findings": [],
+    "id": "510dc507-7a33-496b-940f-9511701cd213",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-23T17:22:31.767934+00:00",
@@ -57,6 +45,10 @@
     },
     {
       "at": "2026-10-23T17:33:54.694665+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T18:00:20.390833+00:00",
       "step": "review"
     }
   ],
