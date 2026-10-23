@@ -12,6 +12,8 @@ from test_setup import _fresh_client
 from test_worker import calls, install_claude
 
 
+STORY = "FORGE-STARTER-1"
+
 REVIEW_RULE = (
     "In an app with shadcn/ui set up (a `components.json`), report a new UI component that "
     "hand-builds what a shadcn/ui component or block already does as a P1 finding titled "
