@@ -10,6 +10,7 @@ import pytest
 from test_close import DESIGN_TREE, STORY_DOC, env  # noqa: F401
 from test_codex_worker import ROOT, _codex_repo, _sent, sdk_data  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
+from test_prototype_build import _accept_build_decision
 from test_task import story as task_story
 from test_worker import calls, install_claude
 
@@ -138,6 +139,7 @@ def test_1_workers_and_reviewers_receive_the_apps_design(env, monkeypatch, sdk_d
 def test_2_unsigned_prototype_fix_receives_its_own_screen_requirements(env, monkeypatch, sdk_data):
     repo = env.repo
     prepare(env, monkeypatch, sdk_data, "claude", prototype=True)
+    _accept_build_decision(repo)
     item, _ = env.start_fix(fix_kind="ui", allow_large="Prototype before sign-off")
     log = install_claude(repo)
     worked = repo.forge("work", item)
