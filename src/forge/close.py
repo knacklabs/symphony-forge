@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from forge import __version__, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
+from forge import __version__, app_baseline, checks, codex, design, githooks, init, migration_warnings, repo, review, score, spotted, story, sync, task, time_records
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
@@ -241,6 +241,7 @@ def close(args: argparse.Namespace) -> int:
                   file=sys.stderr)
             return 1
     spotted.check(top, item)
+    app_baseline.check(top, cfg, repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top))
     if not migrating:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.
@@ -500,7 +501,9 @@ def _start_follow_up(top: Path, state: dict[str, Any], why: str, done: str) -> s
 
 
 def check_stop(item: str, state: dict[str, Any], top: Path | None = None) -> None:
-    """A recorded choice releases a stop; a clean review does not answer its question."""
+    """A recorded choice or size allowance releases a stop; a clean review does not."""
+    if (state.get("stop") or {}).get("size") and state.get("allow_large"):
+        return
     if state.get("stop") and "question" in state["stop"]:
         if not state["stop"].get("choice"):
             repo.refuse(REFUSALS["stuck"], item=item, question=state["stop"]["question"])

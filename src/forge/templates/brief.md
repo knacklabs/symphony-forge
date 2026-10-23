@@ -26,6 +26,9 @@ Forge records the "Prototype before sign-off" allowance. It covers any size and 
 changes. Reviewers do not check this allowance against the diff. Other agent-recorded
 allowances still need the check that their reason matches the whole diff.
 
+An allowance for a story part's size also releases an earlier size stop.
+Close then continues without a separate choice or another worker round.
+
 You are the worker. Build exactly what this brief asks, in the checkout at `$checkout`, and
 nothing more.
 
@@ -305,6 +308,8 @@ $checks
 
 <!-- end -->
 ## Build simple
+
+In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new UI component library and a new file outside components/ui/ named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 A plan's cold read passes when no note is at the bar. A note is at the bar when the plan is wrong,
 contradicts itself, or a builder could not act on it. Notes below the bar, or unscored and marked
