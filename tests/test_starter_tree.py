@@ -194,6 +194,7 @@ def live_starter(tmp_path_factory):
             output, _ = _stop_process_group(process)
             pytest.fail(f"starter smoke command timed out after 1800 seconds\n{output}")
         assert process.returncode == 0, output
+        assert "Cached API build and lint after web build passed" in output, output
         assert "GET /health returned 200" in output, output
         return {
             "api": _junit_cases(copy / "test-results" / "api.xml"),
@@ -219,7 +220,8 @@ def _require_cases(cases, expected):
 def test_1_the_starter_is_a_runnable_stack(request):
     required_files = (
         Path(".env.example"), Path("package.json"), Path("package-lock.json"), Path("nx.json"),
-        Path("compose.test.yml"), Path("scripts") / "test.mjs", Path("README.md"),
+        Path("compose.test.yml"), Path("scripts") / "test.mjs",
+        Path("scripts") / "test-build.mjs", Path("README.md"),
         Path("apps") / "api" / "prisma" / "schema.prisma",
         Path("apps") / "api" / "test" / "api.e2e-spec.ts",
         Path("apps") / "api" / "vitest.config.ts",
@@ -251,6 +253,10 @@ def test_1_the_starter_is_a_runnable_stack(request):
     for name, version in PINNED_PACKAGES.items():
         lock_path = (Path("node_modules") / name).as_posix()
         assert lock["packages"][lock_path]["version"] == version
+    # Axe's peer must use the same Page type and browser protocol as the test runner.
+    for path, entry in lock["packages"].items():
+        if path.endswith("/playwright-core"):
+            assert entry["version"] == dependencies["@playwright/test"]
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
     assert command in (STARTER / "README.md").read_text(encoding="utf-8")
