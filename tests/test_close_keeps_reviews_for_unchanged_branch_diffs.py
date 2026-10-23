@@ -1,6 +1,6 @@
 """Close keeps clean review decisions across an unchanged branch diff.
 
-Open findings also require unchanged reviewed files before numbered dismissals can be used.
+Open findings require another review when reviewed files change. Dismissals follow the finding.
 
 The real close command owns review reuse and dismissals; only Autoreview and GitHub are faked.
 """
@@ -13,8 +13,9 @@ from pathlib import Path
 import pytest
 
 from conftest import FORGE_SHIM, ROOT
-from test_close import CLEAN, GREEN, blocked, body, env, finding  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env, finding  # noqa: F401
 from test_setup import _fresh_client
+from test_story import DESIGN_IMAGE
 
 STORY = "after-forge-close-merges-the-latest-defa"
 
@@ -48,6 +49,11 @@ def client(env, previous):
     writer = env.tmp / "main-writer"
     env.repo.git("clone", "-q", env.repo.git("remote", "get-url", "origin"), str(writer))
     env.repo.path = writer
+    if not (writer / "plans/SHOP.md").exists():
+        # The current plan names this committed design; earlier-adopted plans keep theirs.
+        env.commit(writer, "docs/design/baskets/screen.svg", DESIGN_IMAGE)
+        env.commit(writer, "plans/SHOP.md", STORY_DOC)
+        env.repo.git("push", "-q", "origin", "main")
     # Init's generic GitHub API response must not mask the check responses.
     env.checks(GREEN)
 
@@ -58,7 +64,7 @@ def test_1_close_keeps_review_and_dismissals_when_main_moves(env, previous, dism
     client(env, previous)
     env.commit(env.repo.path, "NEWS.md", "Old news\n")
     env.repo.git("push", "-q", "origin", "main")
-    item, where = env.start_fix()
+    item, where = env.start_task()
     env.reviews(blocked(finding("P1", "Greeting is missing", "NEWS.md")))
     first = env.close(item)
     assert first.returncode == 1, first.stderr
@@ -78,19 +84,8 @@ def test_1_close_keeps_review_and_dismissals_when_main_moves(env, previous, dism
     env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
                    '"body":"","isDraft":false,"mergeStateStatus":"BEHIND"}]')
     closed = env.close(item, *(() if dismiss_before_merge else dismissal))
-    if not dismiss_before_merge:
-        # The old contract reused open findings despite changes to their cited file. Close now
-        # reviews that file first; dismissals already saved on a clean review still survive.
-        assert closed.returncode == 1, closed.stdout + closed.stderr
-        assert closed.stderr.splitlines() == [
-            "The branch changed since the review those finding numbers came from.",
-            f"Next: forge close {item}",
-        ]
-        assert len(env.review_calls()) == 1
-        refreshed = env.close(item)
-        assert refreshed.returncode == 1, refreshed.stdout + refreshed.stderr
-        assert "The review left serious findings open:" in refreshed.stderr
-        closed = env.close(item, *dismissal)
+    # The old contract refused a pending dismissal after main changed a reviewed file.
+    # Close now reviews again and applies that dismissal to the matching finding.
     assert closed.returncode == 0, closed.stdout + closed.stderr
     env.repo.git("merge-base", "--is-ancestor", moved, "HEAD", cwd=where)
     assert env.repo.git("diff", "--raw", "--no-abbrev", "-z", "origin/main...HEAD",
@@ -147,7 +142,7 @@ def test_3_default_branch_checker_accepts_new_and_reused_reviews(env, review_bef
     close = (lambda item, *args: base_forge("close", item, *args)) if review_before_fix else env.close
     env.commit(env.repo.path, "NEWS.md", "Old news\n")
     env.repo.git("push", "-q", "origin", "main")
-    item, where = env.start_fix()
+    item, where = env.start_task()
     env.reviews(blocked(finding("P1", "Greeting is missing", "NEWS.md")))
     assert close(item).returncode == 1
     dismissed = close(item, "--dismiss", "1", "--because", "app.py:1 the greeting is here")
@@ -162,13 +157,13 @@ def test_3_default_branch_checker_accepts_new_and_reused_reviews(env, review_bef
         checked = base_forge(
              "hook", "pr-check", "--base",
              env.repo.git("rev-parse", "HEAD"), "--head",
-             env.repo.git("rev-parse", "HEAD", cwd=where), "--branch", "fix/tidy-readme")
+             env.repo.git("rev-parse", "HEAD", cwd=where), "--branch", "task/SHOP-T1")
         assert checked.returncode == 0, checked.stdout + checked.stderr
-        assert "forge-pr-check passed for fix/tidy-readme." in checked.stdout
+        assert "forge-pr-check passed for task/SHOP-T1." in checked.stdout
 
 
 def test_4_diff_order_preferences_do_not_invalidate_same_command_dismissals(env):
-    item, where = env.start_fix(changes={"app.py": "print('hello')\n", "other.py": "pass\n"})
+    item, where = env.start_task(changes={"app.py": "print('hello')\n", "other.py": "pass\n"})
     env.reviews(blocked(finding("P1", "Greeting is missing")))
     assert env.close(item).returncode == 1
     env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)

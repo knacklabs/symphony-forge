@@ -24,15 +24,19 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 |---|---|
 | "What now?" | `forge next` |
 | "Show me progress" | `forge board` |
-| "Plan a new story" | `forge story new <KEY> "<title>"` |
-| "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec |
+| "I have an idea", "Fix this" or "Plan this" | `forge start "<their words>"` |
+| "Read the plan cold" | `forge read <KEY>`, or `forge read <slug>` for a spec or decision |
 | "I've amended it" | `forge read <KEY>` again, for the next round |
 | "Start this task" | `forge task start <KEY>/<TASK>` |
 | "Give this story or part to a developer" | `forge assign <KEY or KEY/TASK> <login>` |
-| "Fix this small thing" | `forge fix start "<why>" --done "<done when>"` |
 | "Name this fix" | `forge fix start "<why>" --done "<done when>" --slug <name>` |
 | "Change this fix's Done-when" | `forge fix amend <fix> --done "<done when>" --because "<why>"` |
+| "Add to this fix's Done-when" | `forge fix amend <fix> --append "<text>" --because "<why>"` |
 | "This fix is too big" | `forge story new <KEY> --from-fix <fix>` |
+| "Make it a story" (a fix) | Add the key to the fix's roadmap and commit it, then `forge story new <KEY> --from-fix <fix>` |
+| "Make it a fix" or "Just fix it" (a plan in planning) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
+| "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
+| "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
 | "Let this fix go over the limit" | `forge fix allow-large "<reason>"` |
 | "Build it" | `forge work <item>` |
 | "Tell the worker this round" | `forge work <item> --note "<text>"` |
@@ -41,7 +45,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Land it" | `forge land <item>`, run in the background and watched like `forge work` |
 | "Land everything that's ready" | `forge land --all`, run in the background; never a hand-made merge lane |
 | "Merge this ready item" | `forge merge <item>` when the default branch allows agent merges |
-| "Let the agent merge" | The owner runs `forge merge enable` in their own terminal; never you |
+| "Let the agent merge" | The owner runs `forge merge enable` in a terminal outside Claude Code or Codex; never you |
 | "What should we build?" or "Find the real problem" | Discovery, below |
 | "Is it worth building?" | `forge spec payback --build-days <days> --day-rate <rate>` plus a value group |
 | "Save this spec" | `forge spec save <slug>` |
@@ -53,7 +57,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again. In AGENTS.md, only hand edits inside the `forge:begin` and `forge:end` lines hold the file; your rules outside them stay as written when doctor refreshes Forge's block |
-| "Set up a new repo" | `forge init`, then propose a `fast_test` as in step 8 of Adopt a live app, below |
+| "Set up a new repo" | Use `forge init --starter` for a new React app. Use `forge init` for any other stack, then propose a `fast_test` as in step 9 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
 | "Run everything in Claude" | Ask, then in a fix: set `tools = "claude"`, `workers = "claude"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
@@ -63,6 +67,9 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
+Send every new idea through `forge start "<their words>"`. Never ask the human whether it is a
+story or a fix. When the answer is a fix, run its `forge land <fix>` in the background and watch it.
+
 The human approves stories and chooses between options. In a client repo before the default
 branch has an accepted sign-off, the agent runs `forge merge <item>` once `forge close` says Ready.
 After sign-off, the default branch's `forge.toml` merge setting applies: the human merges by
@@ -70,6 +77,25 @@ default (`merge = "human"`), or the agent runs `forge merge <item>` for `merge =
 Forge's own repo follows its setting throughout. Never run `gh pr merge`; the agent merges only
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
+
+## Save decisions and ideas
+
+Understand each human decision, direction and idea. Save each in the same turn;
+never leave it only in chat. Grill new directions one question at a time, with your
+recommendation first. Save the answer before moving to the next question.
+
+- Put a choice about an item in its plan's Notes or the recorded choice:
+  `forge close <item> --resolve <more|split|accept> --reason "<human's choice>"`.
+- Save a standing rule or direction with `forge decision new <slug>`. Batch decision
+  docs into the next fix; do not open one pull request per decision.
+  For a large decision, run `forge read <decision-slug>` before acceptance. Amend the decision
+  and answer findings between rounds, as for a spec. Notes stay beside the numbered decision
+  record. Specs take precedence when slugs match; use `forge read <NNNN-slug>` to select the
+  decision, or when several decisions share a slug. A cold read does not accept the decision.
+- `forge start` keeps `plans/ideas.md`, a short dated list, only when the owner says later, and carries waiting entries into the next fix or story.
+  Remove an entry when the owner says to do it now, as the command table explains.
+
+## Merges and settings
 
 Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
 the item's merge base with its head, so an older branch can merge after the owner enables agent
@@ -116,7 +142,7 @@ same waiting and doctor behaviour from the upgraded Forge commands.
 The `merge` setting is the owner's, because it is a gate on your own work: never change it to
 `"agent"` or run `forge merge enable`, even when the owner asks, and never merge a change to it.
 When agent merges are off and the owner wants you to merge, tell them to run `forge merge enable`
-in their own terminal; it opens the change for them to merge. If an interrupted switch's fix
+in a terminal outside Claude Code or Codex; it opens the change for them to merge. If an interrupted switch's fix
 contains only that setting and the default branch has moved, it rebuilds the same fix on the
 current default branch, preserving its other settings. It leaves remote work outside that fix
 alone and refuses to replace a remote branch that changes after its check. The owner still
@@ -140,8 +166,8 @@ When a round's tool is the coordinator's, its route is native: that session's ow
 even with both tools. The other tool runs through its kit: the Codex app server or the Claude
 Agent SDK. No coordinating session open in a one-tool repo means work waits for the session.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
-otherwise Claude. Autoreview uses its own default model and effort for normal, light and
-sign-off reviews. Existing review model entries are ignored; doctor explains this in a note.
+otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
+Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
 
 **Running a handed-out round.** When Forge prints a subagent instruction, run that instruction
 as a background subagent of the named role. Keep the item's chat while the session is open;
@@ -228,17 +254,22 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 ## Machine views
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds
-share a line. Plan reads and close reviews wait on the model's service, not this machine, so they
-start at once and take no place. A work round also waits while the machine's
-one-minute load per core is 1.5 or more, unless no other agent runs; where the OS reports no load
-(Windows) only the half-cores rule applies. Waiting items that other planned work waits on go
+share a line. Plan reads and close reviews take no place in that line. Every run, including
+tests, reviews and plan reads, waits while the machine's
+one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
+(Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. A run of Forge's pytest picker that selects five or fewer test files starts at once
-and takes no place when the whole command is the picker, optionally run through `uv run`.
+one on four. A run of Forge's pytest picker that selects five or fewer test files takes no
+place when the whole command is the picker, optionally run through `uv run`. It still waits for load and memory.
 Compound commands, including the picker's underlying `test` command, keep their place.
 Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
-and the per-test budget.
+and the per-test budget, free memory and its floor, test processes in use, and busy runners.
+Every run waits when free memory is below 1.5 GB or ten percent of RAM, whichever is larger.
+An unreadable memory source does not block work. Each busy local `Runner.Worker` reserves one core
+from Forge's half-core budget, with at least one core left for Forge. Waiting runs check memory
+and runner use again on each pass and start when capacity returns. On Mac and Linux, doctor warns when a GitHub Actions self-hosted runner
+runs on this machine: its CPUs count against Forge's load limit.
 
 `forge board --json` includes both machine-wide lanes, their sizes and entries in queue order,
 alongside OS load and memory. Each entry has an `id`, `kind`, `repo_root`, `repo_name`, `item`,
@@ -251,6 +282,8 @@ Only a person runs `forge stop <item>` (optionally `--repo <root>`) to stop that
 both lanes, or `forge stop --id <id>` to stop one entry. The host asks for confirmation first.
 Workers never run it. A waiting run leaves the line; a running run's verified process tree ends
 before its place is freed. An unverifiable identity refuses without terminating anything.
+Stopping an item also clears its abandoned item lock when no live run holds it, so the next
+round can start even when the coordinating session stays open.
 This applies to runs Forge launched. A handed-out native run has no process tree, so
 `forge stop` frees its hold and the coordinator stops the subagent in its session.
 
@@ -268,37 +301,33 @@ are left out of its rows. New repos receive the mod on setup; existing repos rec
 upgrade and `forge sync`. An unreadable output or a failed refresh is explained in the pane;
 failed refreshes keep the last rows. The mod adds no background work or dependencies.
 
+`forge board` opens the board as a live page on this computer: a server on 127.0.0.1 at a free
+port, with a per-run token in the page address that every request must carry, so no other computer
+and no old link can open it. The page refreshes by itself when the work changes, and the server
+stops when the command ends (Ctrl-C). It rebuilds only the rows whose inputs changed and fetches
+from GitHub at most once a minute. `--out <path>` writes every item's facts as JSON instead,
+finished ones included.
+
 `forge board --json` and `forge next --json` print JSON for the Claude Code mod and
-other readers. The usual commands still print text or open the HTML board. Both views
+other readers. The usual commands still print text. Both views
 include `version` (the running Forge release) and `repo_root` (the resolved main
 worktree path, shared by the repo's worktrees).
 `forge next --json` uses the same 60-second GitHub cache as `forge board --json`, while text
 `forge next` reads GitHub live.
+Pull request creates, edits and draft changes keep this shared cache. They show within a minute.
+Merges clear it at once. Each command fetches the default branch's settings at most once.
+After close, a matching receipt still shows "ready to merge" while the cached list lacks the pull request's link.
 
 Both views' `items` has one row per story and fix, with tasks in the story's `children`.
-Finished stories, tasks and fixes older than seven days are left out of JSON;
-the HTML board keeps them. The page is drawn from the same rows, so each state and time on it
-matches the JSON. A bar pinned to the top jumps to Overview, Roadmap, Stories and Fixes, and
-each section folds; Stories and Fixes start folded when they hold more than 20 rows. Each section
-sorts its rows needs you, blocked, in progress, planned, no plan yet, then done in one closed
-fold, and the Roadmap has a one-line key to the map's shapes and the words part, fix and plan.
-Each story shows its key small beside its title, the one ID on the board. Story rows carry
+Finished stories, tasks and fixes older than seven days are left out of `--json`;
+`--out` keeps them. The live page reads the same rows, so each state and time on it matches the
+JSON. Each story shows its key small beside its title, the one ID on the board. Story rows carry
 `read_rounds`: each cold-read round of the plan with its number, its findings' first lines and
 their dispositions (`cut`, `defer` or `keep` with its `reason`), and `read_at` on the latest round
-only; a story's history on the page lists them before its approval and merged parts. It uses the full window, has light and dark themes and stacks to one column below
-720px. Each call reads current state without a history cache.
-The page's first screen answers what is in progress, what needs a person, what is stuck and when
-the work can go live, on one time axis with a today line: the team sentence, the labelled totals,
-then Needs you (an amber bar for each wait), In progress (each story or fix as a runway, solid
-where working, thin where waiting, dotted where unknown) and Blocked or slow, five rows each with
-"and N more" opening the rest, then Pace with go-live as a date band. Every row opens in place to
-its time split, round lines and who started, approved and merged it. Below it, the team and
-each person show merged pull requests per week, through and around Forge, in alphabetical order,
-beside the pull requests merged around Forge in the last 7 days.
+only. Each call reads current state without a history cache.
 Assigned merged parts stay omitted rather than appearing as unstarted. Backticks around
-task IDs in the plan are ignored by both boards.
-The HTML page also draws one inline dependency graph of every roadmap story and stage timelines, without scripts or
-external assets. `forge board --json` supplies `dependency_maps`: one entry per roadmap story
+task IDs in the plan are ignored by the board.
+`forge board --json` supplies `dependency_maps`: one entry per roadmap story
 with `planned` (false for a story with no plan yet, which has no parts), `done` (its finished
 parts) and its full planned parts, plain titles, labelled states and `waits_for` item references,
 including old merged dependencies omitted from active rows. Each unfinished part has `column`:
@@ -306,11 +335,7 @@ including old merged dependencies omitted from active rows. Each unfinished part
 stories, so parts in one column can run at the same time; parts that wait on each other share a
 column and say so in `note`. Finished parts have a null `column`. When fixes are open, an entry
 with `kind: "fixes"` lists them in column 0 with `running` and `started_on` (the story part a
-stacked fix was started on). The graph draws the Fixes row first, then a row per story with
-parts placed by column and arrows to the waiting part, finished parts folded into "N done",
-finished stories and stories with no plan as small boxes. It keeps its own size and fills a
-laptop-wide window; a narrow window scrolls it sideways inside its box. Shapes and labels
-distinguish running, waiting, can start now and not started. Startability and scope
+stacked fix was started on). Startability and scope
 blockers come from the same rules as `forge next`, including approval and required rereads.
 Both views add `team`: `sentence`, `counts`, `needs_you`, `in_progress`, `blocked`, `pace`,
 `go_live`, `trends` and `around_forge`; a key not worked out yet is null. Every story, part and
@@ -318,7 +343,7 @@ fix row has one `state`, and `team.counts` counts each kind apart, finished ones
 `stories` (done, building, approved but not started, waiting for approval, planning, no plan yet),
 `parts` of approved stories and `fixes` (done, ready to merge, in progress, to do), and
 `finished_last_7_days`. A story is building only once one of its parts has started. Rows also
-carry `merged_at`, and `approved_by` is a name or null. The page prints the same totals.
+carry `merged_at`, and `approved_by` is a name or null.
 GitHub's pull request lists are read at most once a minute: the open ones and one search per
 week for the last six full weeks and this one.
 `team.pace` counts parts and fixes merged on the default branch per full week (Monday to Monday
@@ -326,7 +351,7 @@ UTC) for six weeks. `team.go_live` gives a date range for the parts of approved 
 merge, from the last three and six weeks' pace: `range`, `about` when the two agree, `not enough
 history` when the oldest merged part is under three weeks old or the last three weeks merged none,
 or `done`; it counts the stories with no plan yet as the unknown, and `team.sentence` says the
-same in a count, not names. `team.in_progress` lists the stories and fixes the page shows under In
+same in a count, not names. `team.in_progress` lists the stories and fixes in
 progress (`id`, `title`, `kind`, `state`). `team.trends` counts merged pull requests per week for the team and each person
 (alphabetical, no totals or ranking), split into through Forge (a `story/`, `task/` or `fix/`
 branch) and around it; `team.around_forge` lists the ones merged around Forge in the last 7 days.
@@ -338,8 +363,8 @@ loop or stuck-worker choice), `worker question`, `conflict` (a merge conflict cl
 problem `forge next` reports in `detail`. Close and `forge work` publish
 these waits to the pull request, so every machine lists the same ones; answer a worker question
 with `forge work <item> --note` on any machine. `team.blocked` lists started parts and fixes
-idle 24 hours or more (`stalled`), reviews blocked three or more rounds in a row (`looping`) and
-the unfinished part the most unfinished parts wait on (`blocks the most`), longest first, each
+idle 24 hours or more (`stalled`) and the unfinished part the most unfinished parts wait on
+(`blocks the most`), longest first, each
 with `detail` and `seconds`. `team.sentence` counts both. Ask the human about each Needs you
 item as `forge next` words it.
 Active parts and fixes show recorded
@@ -490,7 +515,8 @@ in `tests/test_machine_views.py` checks both views against it.
 The Claude Code mod reads Forge's machine views, runs `forge` commands and draws;
 it never edits repo files or replaces the commands' approval and merge rules.
 All its consumers share one snapshot. On load, then every 10 seconds, one refresh
-runs `forge board --json`, `forge next --json` and `forge lanes --json` together.
+runs `forge next --json` and `forge lanes --json` together. The next output also
+supplies the board rows, so the pane reads them once per refresh.
 If that Forge has no lanes command, lane data is absent. A due refresh is skipped
 while the previous one runs, rather than queued. There is no extra fetch on `/forge`.
 Drawing ticks advance live timers every second without fetching state.
@@ -547,10 +573,10 @@ The pane's Board tab, on the terminal and the Desktop app's Code tab alike, open
 with one summary line, such as `3 in progress · 1 needs you · 2 stuck · go-live Oct 20`.
 Each part shows only when the board's `team` fact behind it is known and not zero; when
 none of them applies, the line counts the rows the tab shows in its own group words instead,
-such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board page's
+such as `1 moving · 2 ready to merge · 3 waiting`; an empty board says only `Nothing in progress.`. An older Forge with no `team` shows no summary line. Below it come the board's
 own sentence (`team.sentence`) and its labelled totals, one line per kind, such as
-`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, word for word as the page shows
-them. Groups follow in this order, each only when it has items, and each in the board's own
+`Fixes — Done: 0; Ready to merge: 0; In progress: 1; To do: 0`, words built from
+`team.counts`. Groups follow in this order, each only when it has items, and each in the board's own
 order: NEEDS YOU (one row per `team.needs_you` entry, oldest first, with how long it has waited,
 such as `waiting 3h`), STUCK (one row per `team.blocked` entry with its reason in words and its
 age, such as `1 unfinished part waits on it · 2d`, and the longest stall in days), MOVING (the board's In progress, `team.in_progress`, except what is ready to merge;
@@ -562,7 +588,7 @@ beside it, one line of state in words and, where there is something to do, its n
 (`next.step`) after `→`. At most five rows show per group, then `and N more · forge board for all`.
 An older Forge without the `team` lists draws the same groups from each row's `needs_person`,
 stalled, running and ready flags, and shows no sentence or totals.
-Outside the totals copied from the page, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
+Outside those totals, the pane never shows zero counts, unknown times, raw timestamps, priority codes or
 dismissed counts; findings read `Review found 3 problems`. Dates are short (`Oct 5`) or
 relative (`12 min`, `8 days`), and every time rounds as the board's do (`2m`, never `1m 30s`). Stage chains, round lines and the time breakdown stay on
 the board page. An empty board says `Nothing in progress.` `/forge` always returns the
@@ -606,7 +632,8 @@ work only when allowed. Answer a worker question with
 Do not build another polling or watcher loop for an interactive mod session.
 
 Forge's occurrence ids distinguish events, never their text: review results, run
-ends and questions get fresh ids; failed check runs use GitHub's id and completion time,
+ends and questions get fresh ids; CI completions use the workflow id and head commit.
+Failed checks outside a workflow use GitHub's id and completion time,
 failed commit statuses use their own id, and readiness uses the review id and head commit.
 The same question in another round or a check failing again after a later completion
 therefore gets another turn, even if its wording is unchanged. A run that starts
@@ -616,6 +643,9 @@ Seen ids are stored for the repo root and session id together, so two sessions
 consume events independently. At session start or reload the current ids become
 seen without starting a turn. Several changes, including those found while Claude
 is busy, are combined in one turn after the current turn ends, one line per event.
+At delivery, each line uses the item's current next command. Events for items that
+have since merged are dropped. A CI completion names the workflow and its result,
+once per workflow and commit.
 A failed submission leaves them unseen for the next refresh to retry; a successful
 one is not repeated. Only interactive sessions on terminal or Desktop receive
 event turns, and only for their own repo. Forge-started workers, readers and
@@ -704,9 +734,11 @@ In a new client repo, follow the FDE route: start with discovery of the customer
 workaround, cost, people, frequency and evidence; build the smallest working prototype that tests
 the riskiest part of that problem; demo it; review the whole prototype and answers; obtain the
 customer's named sign-off;
-then create stories. Use prototype fixes before sign-off. The salesperson can be the FDE at first;
+then write the app's constitution; then create stories. Use prototype fixes before sign-off. The
+salesperson can be the FDE at first;
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
-call script. Push back when a requested feature does not serve the problem card: explain why and
+call script. Build the prototype on the starter app. Rename or remove the `Project` placeholder.
+Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
 Always build the demo-data loader in the first version, so the customer sees their own kind of
@@ -782,16 +814,21 @@ run the strict sign-off review before anyone asks for sign-off: write `forge dec
 client-signoff` (customer, demo address, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded; it runs the strict review alone and stops. Autoreview uses the
-repo's tool and its own model and effort defaults. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
+repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
 "<name>"` again to accept. The customer's reply is the approval evidence the sign-off decision
-records.
+records. Set `approved_via` to `email`, `call` or `chat` and `approved_on` to the reply date.
+
+The Answers check ignores trailing whitespace and line-ending differences. A refusal names the first
+different line in the Answers section, including its heading.
 
 Every normal, light and sign-off review runs through the external Autoreview program:
 Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "both"`,
-it uses Codex when installed and Claude otherwise. Forge pins no review model or effort,
-including when an older `forge.toml` still has `[models.review]` entries. A prototype fix
+it uses Codex when installed and Claude otherwise. Forge passes the selected tool's
+`[models.review]` model and optional effort to Autoreview; without an entry, it uses
+Autoreview's defaults. New and earlier-adopted repos get this behaviour on the current release.
+A prototype fix
 before sign-off gets a light review that blocks only on P0 findings.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
@@ -799,35 +836,95 @@ Ask that one question, put the answer in the finding's disposition and the story
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the first task update the answers page.
 Until the decision, use a fake provider for an external service.
 
+## App constitution
+
+During both halves of the interview, ask one question at a time in plain words for a person who
+may not be technical.
+
+Before the prototype, ask only the product questions: what the app is for, who uses it, what it
+keeps track of with each thing's fields, and the options of each choice list. Write the answers in
+docs/product/BRIEF.md under ## Summary, ## Users and ## Things it keeps track of. Record
+the options for each choice list with the thing it belongs to. The prototype uses these answers.
+
+After the customer's sign-off and before the first story, write the app's constitution in
+docs/product/CONSTITUTION.md. Show every default in one message, and let the person change any
+of them. Use the defaults in [Constitution defaults](fde.md#constitution-defaults), except where
+`## Answers` in the brief already gives a settled answer. Skip a defaulted question that `## Answers`
+already answers. Check the brief's `Personal data` answer; ask whether any data is private or
+regulated only when that answer is missing, then record the answer in `## Answers`.
+
+Use this outline, and do not copy product facts from the brief into the constitution:
+
+```markdown
+# <App name> constitution
+
+The product facts are in docs/product/BRIEF.md.
+
+## Defaults
+- <the question in plain words>: <the default or the person's answer>
+
+## Architecture choices
+- <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
+```
+
+Make each architecture choice yourself, from the answers and the code, and write it as one plain
+line with its reason and its decision record. Record the stack that the code already uses. For
+parts with no code, use the stack default: an Nx workspace with React (Vite and React Router),
+NestJS and Postgres. Use a FastAPI backend only when the person asks for it. A FastAPI backend has
+no starter yet.
+Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
+
+A live app answers both halves at adoption: ask only what the code cannot answer. Record the stack
+the code already uses.
+
+Create and accept a decision record for each architecture choice with
+`forge decision new <slug>` and `forge decision accept <slug> --by "<name>"`. Create the
+constitution approval record with `forge decision new app-constitution`. When the brief answers
+what the app is for, who uses it, what it keeps track of and whether its data is private or
+regulated, and the constitution has its defaults and accepted architecture records, run
+`forge decision accept app-constitution --by "<owner>"`. The owner approves the constitution once.
+If it is not ready, fill in the missing answers, defaults or decisions, then run the accept command
+again.
+
+No new story starts until the owner approves the constitution. Existing stories, parts and fixes
+continue, and prototype work is not held. When `forge next` has a worktree cleanup step, finish
+cleanup first. The constitution reminder returns after cleanup. If the constitution is missing, start the constitution
+fix Forge names with `forge fix start "Write the app constitution" --done "The owner approved
+docs/product/CONSTITUTION.md"`, then complete it before starting a story. A review or cold read in an app with an
+approved constitution checks work against its text; a conflict is a P1 finding or note. A change
+to documents only keeps its light review, which holds only P0 findings.
+
 ## Adopt a live app
 
 An app already in production joins Forge through one fix and one pull request the human merges.
 Adopting changes no app code.
 
-1. Write the codebase report in `docs/context/codebase.md`: the stack and how to run it; the tests
+1. Follow [App constitution](#app-constitution) for both interview halves together. Ask only what
+   the code cannot answer, and record the stack the code already uses.
+2. Write the codebase report in `docs/context/codebase.md`: the stack and how to run it; the tests
    and the areas they don't cover; the CI workflows and the checks branch protection requires; what
    a merge triggers; branch rules and reviewers; the hook tools already in use; secret files and
    variables by name only, never their values; where personal data lives; the migration tool; and
    the danger zones.
-2. Mark as danger zones the most-changed, most-reverted and most-hotfixed files in git history. A
+3. Mark as danger zones the most-changed, most-reverted and most-hotfixed files in git history. A
    story that touches one names it under Risks.
-3. List the open pull requests and branches in the report, so a story's plan avoids colliding with
+4. List the open pull requests and branches in the report, so a story's plan avoids colliding with
    a teammate's work.
-4. Link or import the repo's existing decision records and design docs as Forge decisions:
+5. Link or import the repo's existing decision records and design docs as Forge decisions:
    `forge decision new <slug>`, the original linked or copied unchanged under the line
    `Imported from <path>.` Don't rewrite them.
-5. Read the review comments of about the last 100 merged pull requests. Each rule reviewers enforce
+6. Read the review comments of about the last 100 merged pull requests. Each rule reviewers enforce
    repeatedly becomes a House rule citing the pull requests it came from.
-6. Ask the human three questions, one at a time, with options: who approves stories, who merges,
+7. Ask the human three questions, one at a time, with options: who approves stories, who merges,
    and what must never be touched.
-7. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
+8. Write the answers and the reviewers' rules under `## House rules` in AGENTS.md, outside Forge's
    block. The repo's own rules win where they differ from Forge's default-stack conventions.
    A rule every review must follow, such as which tests a kind of change needs, goes under
    `## Review rules` in AGENTS.md, outside Forge's block: every review reads that section from the
    default branch and follows it.
    A repo keeps its rules in AGENTS.md only: forge sync moves a CLAUDE.md's own lines into
    AGENTS.md, outside Forge's block, and deletes CLAUDE.md, since Claude Code reads AGENTS.md itself.
-8. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
+9. Propose a `fast_test` for the repo: its own test command, keeping its configuration and setup,
    with the test tool's built-in changed-only option and `{base}` (for example
    `vitest --changed {base}` or `jest --changedSince {base}`). Once the human agrees, set it in
    `forge.toml` through a fix. For pytest repos, propose
@@ -916,9 +1013,11 @@ fix's folder:
 A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
 `Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
-findings block. New repos get this rule on init; existing repos get it on upgrade plus sync.
+findings block in round one. A cold read stops after round two when notes below P0 are still
+open, or when P0 notes are open in two rounds in a row.
+New repos get this rule on init; existing repos get it on upgrade plus sync.
 
-Start with `forge story new <KEY> "<title>"`. A spec is optional: the story's own branch adds
+Start with `forge start "<their words>"`. A spec is optional: when Forge chooses a plan, its branch adds
 its missing roadmap entry, so no separate roadmap fix, spec read or spec confirmation is needed.
 The entry travels with its tasks to the default branch, including tasks waiting on another story.
 Write the problem, today's workaround and its cost in the plan's Why; the title seeds that
@@ -931,8 +1030,14 @@ New repos get this guide at init; existing repos get it after upgrading Forge an
 
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
 accepts replies with at least one no-findings line when every numbered or bulleted item says
-there are no findings, ignoring other note lines. A numbered or bulleted blocking finding still
+there are no findings, ignoring other note lines. A numbered or bulleted blocking finding in round one still
 needs a disposition and another round.
+
+Handle cold-read rounds yourself: amend the plan and write dispositions.
+Once a read is clean, before Plan Mode approval, list the choices you made alone answering
+notes in all rounds: each amendment that picked a behaviour, a limit, a refusal or a scope cut.
+Grill the human one question at a time, with your recommendation first.
+Record each answer in the plan, then ask for approval. Plain factual corrections need no question.
 
 Use one framing line before showing a story in Plan Mode:
 `Approving: <title>, <n> parts, <risks>`.
@@ -944,10 +1049,9 @@ Codex, show the same part, then ask the approval question `forge next` gives. A 
 "Done when", so tightening anything below `## For the builders` needs no new approval, while
 changing a result or "What changes for you" does. Once a round of cold read has passed, an edit only
 below `## For the builders` needs no new round either, and `forge read` refuses to run one; an
-edit above it does, and that round checks only the edit and the sections it touches. Unchanged
-text gets two rounds of notes: from round 3 on, a reader blocks only on what changed since its
-last round or on an earlier blocking finding that is not closed.
-This two-round limit applies only to story plans.
+edit above it does. From round two, for stories, specs and decisions alike, the reader checks
+whether each earlier finding is closed and raises anything new only for a P0 that happens in
+normal use. A round-one fix that breaks the main path counts as a P0.
 Blank question replies count as unanswered. The approval hook's pin notice appears only after
 recording succeeds; if the repo pins a newer release, install that pinned release.
 
@@ -970,7 +1074,8 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
 - The Tests column names one end-to-end case per Done-when item that changes runtime behaviour,
   and none for settings, docs, deletions or test-only items: the check the item names proves those.
 - Keep tasks small: at most three Done-when items and about 400 changed lines each, counting
-  additions and removals outside tests. Close stops a part over 400 lines before review;
+  additions and removals outside tests, Markdown files, docs/, plans/ and .factory/.
+  Close stops a part over 400 lines before review;
   split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
   in the part's folder, the same way fixes work. Stories approved before this limit keep working.
 - Keep each part's builder notes to its goal, files and one test per rule.
@@ -994,8 +1099,9 @@ when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
 finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. A work round also waits while load per
-core is 1.5 or more and another agent runs. Items that other planned work waits on go
+reviews), across all its repos; the rest wait in line. Every run also waits while load per
+core is 1.5 or more, including when external jobs cause the load, or free memory is below its floor.
+Busy local CI jobs reduce the available budget until they finish. Items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
 each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
@@ -1103,6 +1209,12 @@ Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses
 Claude workers use model and effort
 and ignore the Codex-only subagents and subagent_effort keys.
 
+After `forge sync`, Codex sessions opened in the repo can use every shipped role, including
+`fixer`. Sync keeps the team's other registered roles. The default subagent model and effort
+come from build's Codex `subagents` and `subagent_effort`, falling back to lite's pair when
+build has none. With neither pair, sync leaves the defaults unset. Hands-on Codex roles use
+that same pair when set, so their worker model does not override the subagent budget.
+
 Claude implementation (build, fix, lite and design, including frontend) defaults to
 `claude-sonnet-5-5` at `xhigh` effort. Claude plan reads (grill) default to
 `claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.
@@ -1204,11 +1316,42 @@ tool or folder layout, is a P2 `Follow-up: <the case>` finding that Forge record
 doesn't wait for, even when the case is realistic; a functional, security or data-loss defect
 on the changed code still blocks under its own Raise line.
 
+## Dropping a fix
+
+Only the human decides to drop a fix. Ask first and run `forge fix drop <fix> --because
+"<reason>"` only on a clear yes. Forge pushes the fix branch, records the reason, who and when
+on that branch, and closes its pull request with the reason. The fix leaves the board,
+`forge next` and the merge queue. Its name stays reserved and its remote branch keeps the work.
+
+Forge removes the clean worktree and local branch unless ignored files outside rebuildable
+folders keep it. It lists those paths and keeps their data. Commit uncommitted changes first;
+wait for local Forge runs to finish and drop or finish any open fixes stacked on this fix.
+A merged fix cannot be dropped.
+
+Run `forge fix drop <fix> --undo` to bring it back. Forge restores the worktree or reuses the
+kept one after a fast-forward, records the restore and reopens a pull request the drop closed.
+A fix that was ready needs `forge close` again for its new commit. Teammates see a drop or
+restore after they fetch.
+
 ## Closing
 
-From the second review round, close checks the previous round's findings and the lines changed
-since that review. The reviewer says fixed or not fixed for each previous finding. New findings
-on unchanged lines become visible follow-ups, except security or data loss, which still block.
+A fix gets one review round; a story part gets two. At the round limit, open findings below P0
+stop the item and ask the owner: one more round, split or accept.
+Accept makes the open findings follow-ups in Known issues with the owner's reason.
+An open P0 never stops for the owner; the worker keeps fixing it. When the same P0 stays open
+two worker rounds in a row, Forge stops with the stuck question.
+
+From the second review round, close checks the previous round's findings and new P0s that
+happen in normal use. The reviewer says fixed or not fixed for each previous finding.
+A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Open findings below
+P0 need the owner's choice at the limit, whether their lines changed or not.
+A `Case: rare` finding never blocks. A security hole or data loss that any user can reach is
+normal use. Reviewers and readers do not raise questions that Review rules or recorded owner
+decisions (`docs/decisions/`, `Decided:` or `Ruling:`) already settle.
+A worker can decline a finding in a commit body with
+`Declined: <title> (<file>): not worth the code - <reason>`, using its exact title and file.
+An empty commit is fine. Close applies it even to a reused review and keeps it as a follow-up.
+A P0 stays open. Later rounds receive the decline as settled. Only the human dismisses findings.
 `Not done` blocks only against a numbered owner-approved Done-when item (a fix uses its Done-when
 line). Builder details, Notes and implementation guidance never block as `Not done`.
 New repos get this guide on init; existing repos, including earlier adopted repos, get it on
@@ -1223,7 +1366,10 @@ before editing beyond the limit. Anything else needs the human's allowance or a 
 
 For a follow-up to an unmerged item's findings, run `forge fix start` in that item's checkout.
 The fix starts there, and its size and interface checks count only its own changes, including
-after the underlying item lands. Once it lands, close replays only the follow-up's own commits
+after the underlying item lands. Close first tries a plain merge of the current default branch
+without changing the checkout. If it is clean, close keeps the branch's commits and merges when
+the pull request needs it. A clean merge needs no force-push. If the merge conflicts after the
+underlying item lands, close replays only the follow-up's own commits from its recorded start
 onto the current default branch and publishes with a lease. It preserves earlier merge edits,
 leaves unknown remote commits alone, and stops with a replay command if the fix's own changes
 conflict. Follow the printed replay and leased publication commands before closing again.
@@ -1261,6 +1407,10 @@ Generated-conflict sync and the merge commit check use the new pin too, so the m
 before the original land or close command continues.
 The board and next use failed pull request checks only when they belong to that pull request's
 current head, including branches that exist only on the remote or are ahead of the local branch.
+Close and `forge next` warn when this item and another open branch add the same migration
+number under a `migrations` folder. The warning names both items and the number. It does not
+stop work or need a setting. Forge refreshes origin once and reads its branch snapshot without
+a checkout. Completed items do not cause warnings, even when their branches remain on origin.
 Close brings in the current default branch before it tests or reviews. If only files `forge sync` writes
 conflict, close takes the default branch's copies, runs sync and commits the merge. A conflict in
 any other file stops close for the worker to resolve. While waiting for checks, close stops at once
@@ -1277,13 +1427,36 @@ When the pull request's `tests` check runs the full suite, close avoids repeatin
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
 `--changedSince <base>` (including `__tests__` files). CI runs the full suite.
-The generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
+Docs and brand-asset changes get the light review, which blocks only on P0 findings.
+Close and the generated `forge.yml` skip the test command when every changed path is Markdown
+(case-insensitive), or under `docs/`, `plans/`, `.factory/` or `.forge/`. They compare against the
+base with the same rule as the part-size check. No setting is needed. The required `tests` check
+passes and says `docs only: tests skipped`. Images and fonts also count as assets, wherever they
+live. Files marked `linguist-generated` and docs or assets referenced by tests keep the full
+review and tests. Forge resolves literal paths from the repository or test file's folder on
+both sides of the change, including literal path joins, `__tests__/` files and shared
+`conftest.py` fixtures.
+CI checks this once before the test groups and skips the group jobs for a docs-only change.
+One code file runs tests as usual. New repos get
+this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
+For other changes, the generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
 which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
 the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
 and syncing; branch protection keeps the same `tests` check.
+The required `forge-pr-check` fails a pull request from a branch Forge did not start.
+Before the first committed review, this check stays pending. A stale or blocked review still
+fails. New repos get this rule at init. Existing repos get it after upgrade and sync.
+Redo the change with `forge fix start "<why>" --done "<done when>"` and copy the commits there.
+Forge's generated `forge/*` branches and doctor's dated `fix/forge-files-*` branches still use
+the normal check for a Forge record and a current review. New repos get this check at init;
+existing repos get it after upgrading Forge. Sync refreshes these instructions for both.
 When the pytest selection would cover more than a third of the Python test files (shared
 test inputs select them all), close skips the local run, says so in one line, and relies on
-the pull request's required checks. `forge test` still runs its tests.
+the pull request's required checks. Bare `forge test` runs only the part's Tests column or
+the fix's touched test files, plus `always_test`, and says that CI runs the full suite.
+With no named tests it runs only `always_test`. An explicit `forge test --pytest <base>`
+keeps the full selection. New repos get this bound at init; existing repos get it after upgrade
+and sync.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
 Forge's initial optional-package Node command uses the same selection once an app adds
 `package.json`; with no package it still runs nothing.
@@ -1297,7 +1470,8 @@ Tests that check the whole repo, such as rules over every test file, name no cha
 the pytest picker never picks them and they fail only in CI. List them in `always_test` in
 `forge.toml` (in a fix), as test files or pytest node IDs such as
 `tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
-them on every change, beside the tests it picks, even when it leaves a large selection to CI.
+them on every change that includes code or settings, beside the tests it picks, even when it
+leaves a large selection to CI. Docs-only changes skip these tests too.
 Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
 entry that runs no test, for example because `-k` deselects it, fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
@@ -1310,7 +1484,7 @@ that run the program from outside miss it locally and GitHub's checks cover it. 
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
 full command when `conftest.py`, requirements or lock files change, except for close's
-large-selection skip above.
+large-selection skip and bare `forge test`'s bound above.
 For `pyproject.toml`, every change triggers the full command unless all changed lines are
 known-harmless: `project.version` and `project.description`, or Hatch's packaged-file
 `include`, `exclude` and `force-include` settings under `tool.hatch.build` and its `wheel`
@@ -1332,19 +1506,33 @@ in the project: it loads a temporary pytest hook to exclude unrelated files, inc
 before 8.2. Test launchers must preserve `PYTHONPATH`, forward pytest arguments and expose xdist
 options in the command or pytest configuration.
 Workers run tests only through bare `forge test`. It runs `fast_test`, or `test` when none is
-set, with `{base}` as the merge base with `origin/<default branch>`, in the same fair machine-wide
-test lane as close. It prints the report close keeps and always runs, including docs-only and
+set (using pytest selection when supported), with `{base}` as the merge base with
+`origin/<default branch>`, in the same fair machine-wide test lane as close.
+It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
 and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
 a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
-its test command is capped with `--maxprocesses`. `pytest -n auto` honours
+its test command is capped with `--maxprocesses`, also outside a worker session.
+Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
+This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
+Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
+Forge does not change npm, pnpm or yarn scripts to set their worker budget.
+Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
+with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
+for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap
+in the Vitest config. A config cap can leave projects with different `maxWorkers` but the
+same `sequence.groupOrder`, which Vitest refuses. Other runners stay as written.
+Direct `forge test --pytest <base>` runs join the test lane and obey its memory floor and budget.
+A picker inside close or bare `forge test` shares that run's single lane entry.
+`pytest -n auto` honours
 the first; other runners may read the second. The lane stays taken until the test command ends,
 even if Forge is killed. `forge stop <item>` ends a running test or removes a waiting one.
 When `forge close` stops on a finding, open the line it cites, and the code that line calls,
 before anything else. The review's "What counts" list is the boundary, and the bar decides
 inside it: every finding at the bar (Proposed "fix now" or "fix this round") gets a fix round with
-`forge work <item>`, whatever its priority. A finding below the bar never holds the work; close
+`forge work <item>`, whatever its priority, unless close waits for the owner's choice or a decline
+makes it a follow-up. A finding below the bar never holds the work; close
 lists it in the pull request as a follow-up or lived with. Harm 4 or 5, or Gain 5 stops the work.
 Otherwise, Gain 4, or Gain 3 with Harm 3, holds the work only with Work 1 or 2. Every other
 Gain 3 or 4 finding becomes a follow-up fix, even at Work 1 or 2 when Gain is 3 and Harm is 1 or 2.
@@ -1364,7 +1552,10 @@ diff stayed the same. Land uses the same check through close.
 Close pushes and opens the pull request before a new review, so CI runs alongside it, then
 updates the pull request's review block when the review finishes. Ready still needs a clean
 review and green checks on the final pushed head. After `forge fix amend`, close also updates
-the pull request's Done when line. Upgrade close leaves the repo's local git hooks alone,
+the pull request's Done when line. Use `--append "<text>"` to add text with a space between
+the old and new text. `--done "<done when>"` replaces the whole Done-when. Both options show
+the old and new text before writing, and need `--because "<why>"`.
+Upgrade close leaves the repo's local git hooks alone,
 including when it regenerates conflicted Forge files with the newly pinned release.
 If conflicted-merge handling fails, close aborts the merge and reports the error before retrying.
 After upgrading, run `forge sync` to receive
@@ -1373,7 +1564,32 @@ commit changes Forge's review or test-state record and its accompanying state un
 change or missing passing parent result runs the suite on the pull request merged into its
 current base. Reuse also requires the parent to include that base; a parent pull request run
 must have tested that same base. A changed base or missing proof runs the suite again.
-When `forge land` stops on findings, after its three fix rounds or on a check it can't fix, judge
+Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
+After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.
+Give the job `contents: read` and `actions: read` permissions, and fetch the full history.
+The runner needs Python, Bash and the GitHub CLI, as GitHub-hosted runners provide.
+Add the condition below to each later step that can skip the records commit:
+
+```yaml
+permissions:
+  contents: read
+  actions: read
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0
+  - {id: forge-records, uses: ./.forge/records-only}
+  - if: steps.forge-records.outputs.records_only != 'true'
+    run: your-build-command
+```
+
+The output is `records_only=true` only for a push or pull request whose parent passed this
+same workflow. The step uses Forge's existing close-record rule. Code changes, documentation
+changes, a failed parent run or missing proof produce `false`, so the workflow runs normally.
+For pull requests, the parent must also include the current base and its run must cover that base.
+Each job that uses the step skips only its guarded steps.
+
+When `forge land` stops after its one fix round or on a check it cannot fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
 A failed check whose log names none of the change's files, after this machine's tests passed, is
 re-run once per pushed head instead of costing a fix round. When GitHub has not started that
@@ -1394,13 +1610,22 @@ Closing section above, then run it again. Run it in the background and keep watc
 GitHub reads also retry unreadable answers and server errors three times, pausing for one,
 two and four seconds. If GitHub still does not answer, rerun the command. Not-found and
 permission refusals stop immediately; writes are never replayed by these read retries.
-If the branch already has commits after the item's start, land goes straight to close. Close
+If the branch already has commits after the item's start, land goes straight to close unless
+you give `--note "<text>"` to start a worker round with that guidance. The note applies only to
+the first round this run starts, not later fix rounds. Close
 still stops for a pending question and gives open findings or failing tests a worker fix round.
 
 Use `forge land --all` in place of a hand-made merge lane. It takes every task and fix whose
 status is reviewing, fixing, waiting for checks or ready, and leaves out, by name, one still with
 its builder, one already merged and one another command works on. It starts them oldest first,
-several at a time up to this machine's agent places, and merges each one when it passes. A change
+several at a time up to this machine's agent places, and merges each one when it passes.
+A child that waits only for GitHub checks releases its place so another close can start.
+It takes a place again before it continues. Queued checks keep their place to limit new CI work.
+A stacked
+fix follows its base even when its start date is earlier. Where Forge merges, it waits for its
+base to merge, including a base whose builder or another command still works on it. If the base
+stops, the stacked fix stops with it. A base outside the run must merge before the stacked fix
+can enter close. Among changes whose bases are ready, the oldest starts first. A change
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
@@ -1408,17 +1633,22 @@ the run starts that change again once and says so. It runs no fix rounds: a chan
 alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
 its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
-answers. Close's stop rule decides each stopped change, its 30-minute default included. A failed
+answers. Close waits for the owner's recorded choice. A failed
 check whose log names none of the change's files runs again once when the tests passed here; a
 second failure stops that change. Where a human merges, the run closes every change, holds none
-and merges none, and lists the ready ones oldest first with their pull request links: merge them
+and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
+with their pull request links: merge them
 in that order.
 
 Start a part with `forge task start <KEY>/<TASK>`, or a named fix with
 `forge fix start "<why>" --done "<done when>" --slug <name>`, then `forge land <item>`.
-To steer another round, use `forge work <item> --note "<text>"`, then `forge land <item>`.
-`forge work` already queues work rounds across the machine, while reads and close reviews start
-at once; close and worker tests share the separate test lane, except picker runs of five or fewer
+To guide a round and continue through close and merge, use `forge land <item> --note "<text>"`.
+To queue several items, run `forge land <item>` for each in the background, with `--note` when
+needed. Forge admits each worker round by machine capacity. Do not write shell queues or private
+slot loops. `--note` takes one item and cannot be used with `--all`.
+`forge work` queues work rounds across the machine, while reads and close reviews skip
+that line. All runs wait for high load to fall and memory to recover. Busy local CI jobs reserve
+cores from the budget until they finish. Close and worker tests share the separate test lane, except picker runs of five or fewer
 test files, with one place per four available cores
 (at least one), so no private slot loop is needed.
 
@@ -1485,53 +1715,39 @@ When `forge next` says the latest scheduled run of the default branch failed, it
 failed jobs and tests; start its fix command the same way, or follow the step it gives for the
 fix already started.
 
-From the second blocked cold-read or review round on the same item, stop sending rounds and ask
-the owner to settle the missing rule, even when each round finds a new problem. Use the round
-table from `forge next` or close: list the findings, name the pattern, and ask the owner one
-question at a time with options and a recommendation until the missing rule is settled.
-Write that rule into the plan's builder details, then send one focused round. This owner question
-applies at every score. The coordinator asks. The owner decides. The coordinator records the choice.
-For a review's second-round question, commit the answer in the item's plan or builder guidance
-(`plans/`, `docs/`, or `README.md`) on its work branch. `forge next` then shows the work step again.
-Code-only changes and cold-read notes do not record an answer. A hard stop still needs its resolve choice.
-Keep the existing three-round hard stops below; record a resolve choice
-only after a command stops the loop.
-
-Close holds the fourth review after three blocked rounds only when a finding at the bar comes
-back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the
-third round.
-When close stops an item on either review-loop hold, run no more `forge work` on that item.
-Ask the owner to narrow the part, split it, or accept the remaining findings.
-Run `forge land <item>` in the background after a close stop, or keep the current land running.
-With the default enabled, land waits for a recorded choice and resumes after 30 minutes with the repo's
-default; it does not send the worker back while the stop is unanswered.
+Close stops at review round two for a story part or round one for a fix when findings below P0
+remain open. It asks the owner: "One more round, split or accept?" Close, land and work show
+the same question until the owner records a choice. An open P0 returns to the worker.
+An older release's unanswered stop also waits for the owner.
+Land prints the owner's question, open findings and failing checks, then exits with status 3
+(needs a choice). It does not wait or send the worker back while the stop is unanswered.
 Record the choice with
-`forge close <item> --resolve <narrow|split|accept> --reason "<human's choice>"`.
-Narrow or split the part as agreed before building again. Accept dismisses every remaining finding
-of the latest review with the owner's reason and carries on without checking whether code or
-the default branch changed since that review. Close still requires green checks; later work
-needs another review.
-A clean review clears an unanswered review-loop stop.
-When nobody answers a review-loop stop in 30 minutes, close or land records the repo's default
-choice: narrow the part to its Done-when lines and start a follow-up fix for each open finding,
-with that finding as its why. It does this only when every open finding has Harm 1 or 2; with
-Harm 3 or more open, it waits for the owner. The running land records it and carries on without
-another command; the worker's next round narrows the part. A later close can also record an
-overdue default.
-The owner can reverse it later with the same `forge close <item> --resolve` command. To always
-wait for the owner, set `stop_default = "off"` in `forge.toml`, in a fix, after asking.
-A recorded choice restarts the three-round count; a later stop needs a new choice.
+`forge close <item> --resolve <more|split|accept> --reason "<human's choice>"`.
+Then run `forge land <item>` again. Land also prints open findings and failing checks when it
+stops for another reason or hands a round to a session subagent.
+More gives the worker one more round. After that review, close asks again if findings below P0
+remain open and no P0 is open.
+Split creates one follow-up fix with
+every open finding's title and file:line in its why and Done-when. Close records the fix on the
+item, prints its name, and lets this item continue without those findings.
+Accept puts every remaining finding of the latest review in Known issues as a follow-up with
+the owner's reason. Close carries on without checking whether code or the default branch changed
+since that review. Close still requires green checks; later work needs another review.
+A stop that asks the owner needs a recorded choice with `forge close --resolve`.
+A merge of the default branch or a clean review does not clear it. Close repeats the question.
+Land runs at most one fix round, including across session handbacks. If findings, tests or checks
+still need a worker, land stops.
 
-Close also stops at the third finding in one area (a Python function, else the file); its question
-proposes a structural move. The recorded choice settles the area: later findings there hold work
-only at the bar with Harm 3 or more. Settled notes reach every later read and review as known.
+For a user-facing change, before review round two, run the real flow once, without tests or stubs.
+Add `Live run: <what you ran> - <what you saw>` to the commit's `Functional check:` paragraph.
+Close copies that paragraph into the pull request and review. This request adds no check or refusal.
 
 The stop rule: the coordinator lists each round's findings and asks the owner, whatever the scores.
 The coordinator asks. The owner decides. The coordinator records the choice.
 When a cold read or review loop stops and you must ask, ask the human the question it printed, in
 its words, one item per question. It names the item and what it delivers, shows the open notes as one table ranked
 by score (number, the problem and who it hits, Gain, Work, Harm, and what is proposed), and says
-what accept, narrow and split each do; `forge next` prints it again for a stopped item. When a note
+what each choice does; `forge next` prints it again for a stopped item. When a note
 has no scores, as one saved before scores, the question lists the notes as plain lines instead.
 
 Every update to the owner that lists notes or findings uses the same table, in the same order.
@@ -1539,21 +1755,22 @@ The coordinator follows the bar's outcome and never re-scores a note: a fix roun
 bar, a disposition with the scores in its reason for one below it, and the stop rule above at a
 stop. Approval and merge steps stay the owner's.
 
-When two rounds in a row leave close's tests failing or the same finding open, `forge work` stops
-the item; close also stops a story part that grows past its line limit. Either prints a
+When two rounds in a row leave close's tests failing or the same P0 open, `forge work`
+stops the item. Close also stops a story part that grows past its line limit. Either prints a
 ready-to-ask question: what the item delivers, what is stuck, what the worker tried, and the
 choices. Ask the owner exactly that question. Record the choice with
 `forge close <item> --resolve <switch|same|narrow|split> --reason "<human's choice>"`, then
 `forge work <item>`. Switch runs this item's next rounds on the other tool, as `forge next` shows;
 every choice buys one more round before Forge asks again.
 
-Read also stops after three blocked cold-read rounds, for stories and specs alike, only when a
-note at the bar has no scores or is a disputed keep, or a note with Harm 3 or more is open. Ask
-the owner to accept, narrow or split, by the stop rule; do not read again until the
-choice is recorded with `forge read <KEY or spec> --resolve <accept|narrow|split> --reason "<human's choice>"`.
-Accept keeps the findings and records the owner's reason, allowing approval or confirmation of
-the current document; later changes need another read. Narrow or split the part as agreed before
-reading again. A clean round or a recorded choice restarts the three-round count.
+A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
+in two rounds in a row. This applies to stories, specs and decisions alike.
+Ask the owner: "One more round, split or accept?" Do not read again
+until the choice is recorded with
+`forge read <KEY or spec or decision> --resolve <accept|more|split> --reason "<human's choice>"`.
+More permits one more read round. The same stop rule applies to that round.
+Accept keeps the notes with the owner's reason and permits approval or confirmation. Split
+the plan as agreed before reading again. Forge never starts a third round by itself.
 For a review loop stopped by `forge land`, record the choice with the same `forge close --resolve`
 command as a close stop.
 

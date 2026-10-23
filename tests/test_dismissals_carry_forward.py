@@ -6,17 +6,20 @@ fixture moved to this release. Only Autoreview, GitHub and CI are stubbed.
 import pytest
 
 from test_close import blocked, body, env, finding  # noqa: F401 (env is a fixture)
-from test_score_bar import CASES, _client_on_this_release
+from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_score_bar import CASES
 
 STORY = "FIX-DISMISSALS-CARRY-FORWARD"
 APP = "".join(f"line{n} = {n}\n" for n in range(1, 21))
 
 
 @pytest.mark.parametrize("case", CASES)
-def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
-    _client_on_this_release(env, tmp_path, case)
-    item, where = env.start_fix({"app.py": APP})
-    coupon = finding("P1", "Saving skips the coupon", line=3)
+def test_1_dismissal_holds_until_its_cited_lines_change(env, case):
+    client(env, case != "init")
+    item, where = env.start_task(changes={"app.py": APP})
+    # A P1 at the bar still holds after round two; changed cited lines reactivate it.
+    coupon = {**finding("P1", "Saving skips the coupon", line=3),
+              "body": "Gain 4, Work 1, Harm 2\nSaving skips the coupon."}
     env.reviews(blocked(coupon))
     assert env.close(item).returncode == 1
     reason = "app.py:3 the coupon is applied at checkout"
@@ -39,6 +42,11 @@ def test_1_dismissal_holds_until_its_cited_lines_change(env, tmp_path, case):
     again = env.close(item)
     assert again.returncode == 1, again.stdout + again.stderr
     assert "Saving skips the coupon" in again.stderr
+
+    # Reopening a P1 at the bar in review three also stops the loop. The owner permits its recheck.
+    assert "One more round, split or accept?" in again.stderr
+    chosen = env.close(item, "--resolve", "more", "--reason", "Recheck the changed coupon line")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
 
     # Dismissed again with the same reason: it holds on later commits that leave the new line alone.
     redismissed = env.close(item, "--dismiss", "1", "--because", reason)

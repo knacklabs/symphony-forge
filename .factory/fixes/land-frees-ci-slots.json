@@ -1,0 +1,80 @@
+{
+  "base": "8c9b59b387e92c9a6cc39f43556fb31da45ed85b",
+  "branch": "fix/land-frees-ci-slots",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e9c-7a3f-73f3-9d47-40679827e13e",
+    "head": null,
+    "start": "36948c650ef28d5a72c912406dcaf5d2fee672bd"
+  },
+  "done_when": "While a child close waits only for checks, land --all releases its slot so another item can start, keeping stack and shared-file order, and a test shows a waiting child does not block a new close",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/merge.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 89,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Forward the check-slot callback through the behind-base retry",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bc17f80eeee719680507ab7a55f35a61300c7e1549483043dfad34c9bc919870",
+    "changed": "f3254fc7cde0cfa59da94171cdb17d7d49bb48c1badedc7886697b2d2e849fb9",
+    "commit": "348d6fa6b2d124952ca4178aeccb42f044ccde47",
+    "dismissals": [],
+    "findings": [],
+    "id": "0b204e81-1c25-4200-a53a-5762d4167d8d",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T10:43:53.558893+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T11:11:42.428561+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T12:14:34.786149+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T14:02:09.047764+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T14:35:44.756259+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T15:03:05.453283+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "4ed57790-1a8c-4cc4-bc62-f7b7d699c929",
+    "head": "7b1f755545e649f1d9a0d6d837d354d2d1345cbc",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 3
+  },
+  "why": "forge land --all holds its slots while its child closes only wait for GitHub checks, so other items cannot start closing",
+  "worker": "codex"
+}

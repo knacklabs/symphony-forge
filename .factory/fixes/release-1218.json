@@ -1,0 +1,31 @@
+{
+  "allow_large": "A release bump changes the version in every place it is recorded; no behaviour changes",
+  "base": "75c448b57f0a689bd99f4e62036a9e44c34b3871",
+  "branch": "fix/release-1218",
+  "done_when": "Forge's version is 1.2.18 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c6c479d6f777f47b1dad2b81f38cd1dda01bbcb82613ee87dbeb295497e8581f",
+    "changed": "8860c4c1f05aab4557a325d2b6aa470d2d0431c227567b236f8404ccc8d5ecd1",
+    "commit": "394105b3a2e287f32cd213b41449d3f94ef7bbc3",
+    "dismissals": [],
+    "findings": [],
+    "id": "7506d026-43bd-45ea-81f8-429b544fd74d",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-21T03:08:25.049484+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-21T03:11:15.547744+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients need v1.2.18: at most two read and review rounds with an owner stop, one review round for a fix, forge start that sorts every new idea, design first for prototypes, past board history filled in on upgrade, and a Windows CI hang fix"
+}

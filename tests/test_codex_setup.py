@@ -16,6 +16,10 @@ from conftest import _install
 from test_close import STORY_DOC, approve_story
 from test_setup import _autoreview, _fresh_client, _stub_forge
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-WARM-1"
 PIN = "0.159.2"
 UNTRUSTED = "- Codex doesn't trust this project"

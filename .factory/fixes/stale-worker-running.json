@@ -1,0 +1,75 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-18T16:38:10.910770+00:00",
+      "because": "Issue 922 (a native round's lock keeps the live coordinator's pid after hand-back) is the root of one of issue 937's cases; same lock and running-state code",
+      "done_when": "An item whose recorded worker run has no live process (checked by process identity, as the lanes do) and no live lock shows as stopped with its forge work next step on the board and in forge next, on new and adopted repos"
+    }
+  ],
+  "base": "9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd",
+  "branch": "fix/stale-worker-running",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe0-c6b5-7ad0-b7ec-f6d8bc46b2af",
+    "head": null,
+    "start": "71c82943c33a839af103033c3924619a5bac3714"
+  },
+  "done_when": "A successful hand-back releases the item's lock, and an item whose recorded worker run has no live process (checked by process identity, as the lanes do) and no live lock shows as stopped with its forge work next step on the board and in forge next, on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_lock_alive() in src/forge/codex.py",
+      "file": "src/forge/codex.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1060,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: module ceilings fail in board.py and codex.py",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3ab26de19785be4f55565125215e565db72d6631bed16f9cd3bb56748fca3981",
+    "changed": "3722e54de1a353fa693617e3332d77392629a58549aa2635e9d22a7d4945df7e",
+    "commit": "fdc003b48c6e84a97f58e8793e2cf221d6a31bd9",
+    "dismissals": [],
+    "findings": [],
+    "id": "11c33f2c-75c2-4cb9-8867-e4ccc255ce8a",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:37:39.291311+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:00:52.465978+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T12:46:42.545739+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T13:12:10.440801+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e5ff6da7-f539-49d9-bea5-7e23c2361e37",
+    "head": "b18ab73e570364c49977b7515a44cade07bacd8c",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The board and forge next show 'Worker running' for an item whose worker process or session is gone and whose lock is missing or stale, so a coordinator waits for ever",
+  "worker": "codex"
+}

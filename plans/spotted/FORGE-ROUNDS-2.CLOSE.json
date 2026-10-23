@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_forge_records_no_timings_so_nobody_can_t.py\tThe timing test delays the Claude CLI but measures an SDK worker, so its minimum duration can fail.",
+      "kind": "bug",
+      "path": "tests/test_fix_forge_records_no_timings_so_nobody_can_t.py",
+      "line": 96,
+      "text": "The timing test delays the Claude CLI but measures an SDK worker, so its minimum duration can fail.",
+      "from": "worker",
+      "item": "FORGE-ROUNDS-2/CLOSE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

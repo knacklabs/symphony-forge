@@ -54,28 +54,21 @@ def flat(text):
     return " ".join(text.split())
 
 
-def test_1_brief_names_the_plan_files_and_skips_the_coordinator_guide(brief):
+def test_1_brief_answers_worker_questions_and_ends_with_the_reviewers_checklist(brief):
     text = flat(brief)
     assert ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
             "everything a worker needs. Start from the files and tests this brief names, and "
             "search the rest of the repo only for what they call or what calls them.") in text
     assert "`src/api/**`" in text and "`tests/test_api.py`" in text
     assert "`tests/test_existing_api.py`" in text
-
-
-def test_2_brief_answers_separate_fix_and_narrow_choice_in_advance(brief):
-    text = flat(brief)
-    assert ("Otherwise, fix the findings inside your Done-when in this round, including new "
-            "findings after a recorded narrow or split;") in text
+    # Review limits wait on findings below P0; repeated P0s use the stuck-worker stop.
+    assert "At the round limit (review round two for a story part, round one for a fix), close stops when findings below P0 are still open. Wait for the owner's recorded choice of one more round, split or accept. An open P0 never stops for the owner: fix it in this round. When the same P0 stays open two rounds in a row, Forge stops and asks the owner." in text
     assert "Otherwise, fix the findings in this round" not in text
     assert ("Never ask whether a problem needs a separate fix: a problem outside your Done-when "
             "is a `Spotted:` line.") in text
     assert ("Never ask to record a narrow choice: fix only the review findings inside your "
             "Done-when, and list each other finding in the `Proof list:` as "
             "`Outside Done-when: <finding> - <why>`.") in text
-
-
-def test_3_brief_ends_with_the_reviewers_checklist(brief):
     last = brief.rsplit("\n## ", 1)[1]
     assert last.startswith("Before you hand over\n")
     for check in ("Every Done-when item you cover", "fails without your change",

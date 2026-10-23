@@ -12,14 +12,14 @@ STORY = "FORGE-AHA-1"
 LIGHT = (False, "Prototype before sign-off", "P1")
 
 
-# The last three cases pass the light review with a P1 finding, so only tests and CI can stop close.
+# Light review keeps P1 advisory; normal review requires the owner's acceptance at the limit.
 @pytest.mark.parametrize("signed_off,allowance,priority,ready,checks,problem", [
     (*LIGHT, True, GREEN, None),
     (False, "Prototype before sign-off", "P0", False, GREEN, None),
     # A P1 scored Harm 4 reaches Forge, and blocks even the light review.
     (False, "Prototype before sign-off", "P1 Harm 4", False, GREEN, None),
-    (False, "Another allowance", "P1", False, GREEN, None),
-    (True, "Prototype before sign-off", "P1", False, GREEN, None),
+    (False, "Another allowance", "P1", True, GREEN, None),
+    (True, "Prototype before sign-off", "P1", True, GREEN, None),
     (*LIGHT, False, [run("tests", "failure"), run("forge-pr-check")],
      "Checks failed on the pull request: tests."),
     (*LIGHT, False, [run("tests"), run("forge-pr-check", "failure")],
@@ -50,7 +50,8 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
     [call] = env.review_calls()
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == "codex"
-    assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "codex=gpt-6-astra"
+    assert options["--thinking"] == "codex=high"
     # Every review asks for every priority; the light review's P0-only level applies after scoring.
     assert options["--max-priority"] == "P3"
     if problem:
@@ -61,14 +62,24 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
         env.checks(GREEN)
         assert env.close(item).returncode == 0
         return
+    accepted_normal = ready and (signed_off or allowance != "Prototype before sign-off")
+    if accepted_normal:
+        assert result.returncode == 1 and "reached the round limit" in result.stderr
+        env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+        result = env.close(item, "--resolve", "accept", "--reason", "Keep this prototype for now")
+        assert result.returncode == 0, result.stdout + result.stderr
     assert (result.returncode == 0) is ready, result.stderr
     assert ("Prototype review finding" in result.stderr) is not ready
     [create] = env.gh_calls("pr", "create")
     # The PR now starts as a draft before review, and only both gates make it ready.
     assert "--draft" in create
     assert bool(env.gh_calls("pr", "ready")) is ready
-    assert ("advisory" in body(create)) is ready
-    if ready:  # the light review's fix-now finding passes, still shown with its scores
+    # Match the finding's disposition, not the shared "Dismissed and advisory" heading.
+    assert ("advisory:" in body(create)) is (ready and not accepted_normal)
+    if accepted_normal:
+        assert "dismissed because Human accepted the remaining finding: Keep this prototype for now" in body(
+            env.gh_calls("pr", "edit")[-1])
+    if ready:  # first-round fix findings stay visible with their scores in either mode
         assert "Gain 4, Work 2, Harm 1" in body(env.gh_calls("pr", "edit")[-1])
     branch = "fix/tidy-readme"
     head = env.repo.git("rev-parse", "HEAD", cwd=env.tmp / "fix-tidy-readme")
@@ -76,21 +87,37 @@ def test_7_prototype_fix_close_uses_light_review_only_before_signoff(
                              env.repo.git("rev-parse", "HEAD"), "--head", head,
                              "--branch", branch)
     assert (checked.returncode == 0) is ready, checked.stderr
-    if ready:
+    if ready and not signed_off:
         env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                    '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n', "Accept client sign-off")
         env.repo.git("push", "-q", "origin", "main")
         stale = env.repo.forge("hook", "pr-check", "--base",
                                env.repo.git("rev-parse", "HEAD"), "--head", head,
                                "--branch", branch)
-        assert stale.returncode == 1
-        assert "out of date" in stale.stderr
+        light = allowance == "Prototype before sign-off"
+        assert stale.returncode == (1 if light else 0), stale.stdout + stale.stderr
+        if light:
+            assert "out of date" in stale.stderr
+            # Supply a distinct finding so this checks normal-review publication,
+            # rather than asking a reviewer to reopen the settled first-round one.
+            env.reviews(blocked(finding("P1", "After sign-off review finding")))
 
+        env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
         strict = env.close(item)
-        assert strict.returncode == 1
-        assert len(env.review_calls()) == 2
+        # Sign-off reruns a light review; a normal review remains sufficient.
+        # A fresh normal review stops on P1; the owner accepts before it becomes ready.
+        if light:
+            assert strict.returncode == 1 and "reached the round limit" in strict.stderr
+            strict = env.close(item, "--resolve", "accept", "--reason", "Keep this signed-off version")
+        assert strict.returncode == 0, strict.stdout + strict.stderr
+        assert "Ready:" in strict.stdout
+        published = body(env.gh_calls("pr", "edit")[-1])
+        assert ("After sign-off review finding" if light else "Prototype review finding") in published
+        assert "dismissed because Human accepted the remaining finding:" in published
+        assert len(env.review_calls()) == (2 if light else 1)
         options = dict(zip(env.review_calls()[-1]["args"][::2],
                            env.review_calls()[-1]["args"][1::2]))
         assert options["--engine"] == "codex"
         assert options["--max-priority"] == "P3"
-        assert "--model" not in options and "--thinking" not in options
+        assert options["--model"] == "codex=gpt-6-astra"
+        assert options["--thinking"] == "codex=high"

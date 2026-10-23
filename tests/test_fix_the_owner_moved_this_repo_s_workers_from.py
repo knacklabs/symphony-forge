@@ -11,6 +11,10 @@ from test_codex_worker import QUIET, _sent, sdk_data  # noqa: F401 (fixture)
 from test_setup import _autoreview, _stub_forge
 from test_subagent_roles import _settings
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "the-owner-moved-this-repo-s-workers-from"
 SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
 OPUS = {"model": "claude-opus-5-5", "effort": "medium"}
@@ -75,11 +79,12 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
     repo.git("checkout", "-q", "-b", "fix/doctor")  # sync refuses on main
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    # A sync that silently drops both nested entries must not make doctor appear healthy.
-    for name in ("worker", "coder", "frontend", "tester", "refactorer"):
+    # Hands-on Codex roles now use lite's subagent budget when build has no pair.
+    # Claude keeps its own nested model entry; sync must not drop either host's routing.
+    for name in ("worker", "fixer", "coder", "frontend", "tester", "refactorer"):
         assert _settings(repo.path, name) == (
-            ("gpt-6.1-sol", "high" if name == "frontend" else "medium"),
-            ("claude-opus-5-5", "medium")), name  # frontend builds on the design entry
+            ("gpt-6-luna", "max"),
+            ("claude-opus-5-5", "medium")), name
     # Explorer now uses read-only explore settings; implementation roles still use Opus medium.
     assert _settings(repo.path, "explorer") == (
         ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))

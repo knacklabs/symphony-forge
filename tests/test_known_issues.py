@@ -80,6 +80,7 @@ def kept_history(unsynced_up, monkeypatch, request):
         {"file": "reader.py", "line": 12, "title": "An ordinary dismissal", "gain": 2,
          "work": 2, "harm": 1, "outcome": "accepted", "reason": "The report was incorrect"}]
     saved = {**state, "branch": "fix/current-help", "known": known}
+    env.commit(repo.path, "reader.py", "print('read')\n", "Add the reader")  # the board leaves out deleted files
     env.commit(repo.path, ".factory/fixes/current-help.json", json.dumps(saved), "Keep help review decisions")
     repo.git("push", "-q", "origin", "main")
     repo.git("switch", "-q", "-c", "fix/unmerged-help")
@@ -128,12 +129,13 @@ def test_4_board_lists_kept_review_problems_since_adoption(kept_history):
         assert row["reason"], row
 
 
-def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch, tmp_path):
+def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch, tmp_path, request):
     # A minute-cache regression would preserve the JSON but repeat every network
     # fetch. Trace real Git to observe that distinct board-refresh contract.
     repo, _, _ = kept_history
+    previous = request.node.callspec.params["kept_history"]
     fetches = []
-    for seconds in (0, 61):
+    for seconds in (0, 86401):
         trace = tmp_path / f"git-{seconds}.jsonl"
         monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=seconds)).isoformat())
         monkeypatch.setenv("GIT_TRACE2_EVENT", trace.as_posix())
@@ -143,5 +145,8 @@ def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch,
         fetches.append([event["argv"] for event in events if event.get("event") == "start"
                         and "fetch" in event.get("argv", [])
                         and "refs/pull/11/head" in event["argv"]])
-    assert len(fetches[0]) == 1, fetches
+    # Upgrade now fills the adopted repo before its first board read. A new
+    # repo still fetches on demand. Expiring the aggregate must never refetch
+    # either repo's immutable pull-request evidence.
+    assert len(fetches[0]) == (0 if previous else 1), fetches
     assert fetches[1] == [], fetches

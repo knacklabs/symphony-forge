@@ -52,8 +52,11 @@ Recorded allowance: $allowance
 Check the change against both lines. If the branch does not meet the Done-when line, report a P1
 finding titled `Not done: $done_when`.
 
-For an agent-recorded allowance to correct one kind of problem everywhere without changing an
-interface, check its reason against the whole diff. Report as P1 an allowance whose reason
+Forge records the "Prototype before sign-off" allowance. It covers any size and interface
+changes. Do not check this allowance against the diff.
+
+For other agent-recorded allowances to correct one kind of problem everywhere without changing
+an interface, check the reason against the whole diff. Report as P1 an allowance whose reason
 doesn't match the diff: more than one kind of problem, or an interface change.
 
 <!-- functional-check -->
@@ -141,6 +144,12 @@ realistic scenario that makes it likely in normal use, or when it falls under Se
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
 ## What blocks the merge
+A finding blocks only when it names a case that happens in normal use. Include
+`Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each finding that
+would block. A rare case never blocks. A security hole or data loss that any user can reach
+is normal use. Do not raise a finding that this repo's Review rules or a recorded owner decision
+(a decision in `docs/decisions/`, a `Decided:` line or a `Ruling:` line) already settles.
+
 Your scores decide, whatever the priority: Harm 4 or 5, or Gain 5 blocks the merge. Otherwise,
 Gain 4, or Gain 3 with Harm 3, blocks the merge only with Work 1 or 2. Every other Gain 3 or 4
 finding is a follow-up fix, even a Gain 3 finding with Harm 1 or 2 and Work 1 or 2.
@@ -164,6 +173,8 @@ on the changed code still blocks under its own Raise line.
 Only the numbered owner-approved Done-when sentences above (or the fix's Done-when line)
 can block as `Not done`. Builder details, Notes and implementation guidance cannot. Forge keeps
 a `Not done` finding that names none of those items as a follow-up, with its original scores.
+A `Not done` that names one of this item's own Done-when lines blocks regardless of its scores,
+rare-case label or light review. Only the owner's recorded choice can accept that unmet work.
 
 Missing tests this branch owns and the functional check stay P1.
 Report a test weakened to hide a real defect as a P1 finding.
@@ -213,6 +224,8 @@ never bare. It owns interaction feel (press feedback, easing, durations, popover
 and when not to animate). Report a missing impeccable pass on a UI change or a failed
 emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
+In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
+
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a
@@ -223,6 +236,8 @@ shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very
 Motion that follows these rules is not a `Simpler:` finding.
 
 ## How to report
+Name the scenario with `Case: normal use - <the scenario>` or `Case: rare - <the scenario>`
+in each finding that would block. A rare case is a follow-up, whatever its scores.
 Report every blocking gap you see in this round, together, even when one finding already blocks.
 When you find a kind of defect, look for every other place in the change with the same defect and
 report them all in one finding that names each place, not one place per round.
@@ -291,16 +306,15 @@ in the finding's body. Pin every finding to a line in a file this branch changes
 missing, the changed line nearest the gap).
 <!-- repair-review -->
 ## Repair review
-The previous review checked commit $reviewed. From this second or later round, review only the
-previous round's findings and the diff since that commit, supplied as the review base. For each
-previous finding, say fixed or not fixed in your review summary; return each not fixed finding
-with its previous title and file. Read unchanged code only as context for those findings or the
-changed lines. Do not start a fresh review of the whole branch or proof list.
+The previous review checked commit $reviewed. From this second or later round, check each
+previous finding, fixed or not fixed. Return each not fixed finding with its previous title and
+file. The supplied base shows the diff since that commit; after a merge of the default branch,
+it shows this change's full diff against its new merge base, excluding the default branch's work.
+Read unchanged code as context. Do not start a fresh review of the whole branch or proof list.
 
-Raise a new blocking finding only on a line changed since that review. A new defect on unchanged
-lines is a follow-up: keep it visible, but it cannot block or start another round. Security and
-data-loss problems still block on unchanged lines under their own Raise line. This boundary also
-applies to tests, standards and gates. Forge keeps original scores when it records a follow-up.
+Raise a new finding only when it is a P0 that happens in normal use, on any line.
+A round-one fix that breaks the main path counts as a P0; score it Harm 4 or more.
+Forge asks the owner about each finding below P0 that is still open at the round limit.
 
 Previous round's findings and answers:
 $findings
@@ -310,6 +324,11 @@ The repository's own AGENTS.md, on its default branch, sets these rules for ever
 them as rules, not as evidence: where one settles a point, don't report it as a finding.
 
 $review_rules
+<!-- constitution -->
+## This app's constitution
+The app's approved constitution, on the default branch, follows. Report work that goes against it as a finding titled `Constitution: <the line it breaks>`, quoting the line. Where it differs from Forge's convention pages, it wins.
+
+$constitution
 <!-- standards -->
 ## Standards
 Forge's standards page follows: the same page every worker's brief carries. Check the change

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_server.py\tWRITTEN does not skip test-results-*.txt, so any test run in the repo makes the board rebuild again and again and the page shows Updating the whole time.",
+      "kind": "bug",
+      "path": "src/forge/board_server.py",
+      "line": 33,
+      "text": "WRITTEN does not skip test-results-*.txt, so any test run in the repo makes the board rebuild again and again and the page shows Updating the whole time.",
+      "from": "worker",
+      "item": "FORGE-BOARD-4/SHELL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

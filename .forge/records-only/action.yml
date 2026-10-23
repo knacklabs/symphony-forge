@@ -1,0 +1,16 @@
+name: Skip Forge close records
+description: Reuse this workflow's successful parent run when only Forge close records change.
+outputs:
+  records_only:
+    description: True when the remaining work can skip this commit.
+    value: ${{ steps.records.outputs.records_only }}
+runs:
+  using: composite
+  steps:
+    - id: records
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: python .forge/review-tests.py --records-only

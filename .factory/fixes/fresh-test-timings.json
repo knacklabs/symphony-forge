@@ -1,0 +1,54 @@
+{
+  "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
+  "branch": "fix/fresh-test-timings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14eb6-0f1c-7ca2-b77c-2999b40c13e2",
+    "head": null,
+    "start": "bfeae896692e2acaa0d41ba0bb939c65a526a83d"
+  },
+  "done_when": "CI splits by fresh test timings that name only existing tests, and the suite uses whichever xdist scheduling measured faster on the same run",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bf6a7514451b0bdcc3645508277fc1d79b3466db03450128513e59d48502d6eb",
+    "changed": "1caddb93f5a58a586a44b3854ffeca5a748ed7c9306427a552845d654fafb0ed",
+    "commit": "6e6530e4e870d9303da0248d15aa89d8a3976049",
+    "dismissals": [],
+    "findings": [],
+    "id": "f7dc5fad-3252-45c2-a5ec-b65b1a6146a6",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T11:11:50.314164+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T12:56:32.587406+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T14:28:56.983497+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T14:40:23.151214+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a70fe9f9-2d0f-49c3-ad3a-4c5d4496fa43",
+    "head": "d2f9bb670c0966f9b0586c5c8755ac1ab175c64e",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The CI test groups are split by test timings from 12 October that name about 100 tests that no longer exist, and pytest-xdist uses its default scheduling",
+  "worker": "codex"
+}

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tQueued CI failures are lost if the pane session restarts during the freshness wait\tpane-rerun-cache-window",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 109,
+      "text": "Queued CI failures are lost if the pane session restarts during the freshness wait",
+      "from": "blocking",
+      "item": "pane-rerun-cache-window",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

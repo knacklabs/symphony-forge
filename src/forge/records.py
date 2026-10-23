@@ -31,6 +31,7 @@ import hashlib
 import json
 import re
 from datetime import date
+from itertools import zip_longest
 from pathlib import Path
 
 from forge import repo, story
@@ -72,6 +73,8 @@ REFUSALS = {
     "not_proposed": ("{rel} is {status}, so it cannot be accepted.", "forge decision new <new-slug>"),
     "unfilled": ("{rel} has only the template's comments in {sections}; fill them in first.",
                  'forge decision accept {slug} --by "{by}"'),
+    "constitution": ("The app constitution can't be approved yet: {missing}.",
+                     'fill them in, then forge decision accept app-constitution --by "{by}"'),
     "no_superseded": ("{rel} supersedes {old}, but there is no such decision.",
                       'forge decision accept {slug} --by "{by}"'),
     "not_on_roadmap": ("{key} is not on the roadmap (plans/roadmap.json).",
@@ -221,7 +224,8 @@ def decision_new(args: argparse.Namespace) -> None:
     if args.slug.endswith("client-signoff"):
         text = text.replace("supersedes: \"\"\n", "supersedes: \"\"\ncustomer: \"\"\n"
                             "approved_via: \"\"\napproved_on: \"\"\ndemo: \"\"\n")
-        text += "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n"
+        text += ("\n<!-- Set approved_via to email, call or chat when the customer replies. -->\n"
+                 "\n## Answers\n<!-- Quote docs/product/BRIEF.md's ## Answers section word for word. -->\n")
     _write(top / rel, text)
     repo.commit_state(f"Propose the {args.slug} decision", rel, top=top)
     print(f"Wrote {rel}; no branch has a higher decision number. Fill it in, then once the human "
@@ -237,11 +241,20 @@ def decision_accept(args: argparse.Namespace) -> None:
     text = _text(top / rel)
     fields, body = _front(text)
     status = fields.get("status") or "proposed"
-    if status == "accepted":
+    prototype_tree = None
+    if Path(rel).stem.endswith("-prototype-design"):
+        from forge import design
+
+        prototype_tree = design.prototype_tree(top)
+    if status == "accepted" and (not prototype_tree or fields.get("design_tree") == prototype_tree):
         print(f"{rel} is already accepted.")
         return
-    if status != "proposed":
+    if status != "proposed" and not (prototype_tree and status == "accepted"):
         repo.refuse(REFUSALS["not_proposed"], rel=rel, status=status)
+    if Path(rel).stem.endswith("-app-constitution"):
+        missing = _constitution_gaps(top, by)
+        if missing:
+            repo.refuse(REFUSALS["constitution"], missing="; ".join(missing), by=by)
     sections = _sections(body)
     unfilled = [name for name in DECISION_SECTIONS
                 if not re.sub(r"<!--.*?-->", "", sections.get(name, ""), flags=re.S).strip()]
@@ -255,7 +268,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         replied = fields.get("approved_via") or fields.get("approved_on")  # none: review only
         invalid = [name for name, valid in {
             "customer": re.fullmatch(r"\S[^,]*,\s*\S.*", fields.get("customer", "")),
-            "approved_via": not replied or fields.get("approved_via", "").lower() in ("email", "call"),
+            "approved_via": not replied or fields.get("approved_via", "").lower() in ("email", "call", "chat"),
             "demo": re.fullmatch(r"https?://[^\s/]+(?:/\S*)?", fields.get("demo", "")),
         }.items() if not valid]
         if invalid:
@@ -268,8 +281,13 @@ def decision_accept(args: argparse.Namespace) -> None:
                          f"correct {rel}, then {next_step}"))
         brief = _text(top / "docs/product/BRIEF.md")
         quote = _answer_section(body)
-        if not brief or not quote or quote != _answer_section(brief):
-            repo.refuse((f"{rel}'s Answers must quote docs/product/BRIEF.md word for word.",
+        expected = _answer_section(brief)
+        if not brief or not quote or quote != expected:
+            line = next((number for number, (actual, wanted) in enumerate(
+                zip_longest(quote.splitlines(), expected.splitlines()), 1)
+                if actual != wanted), 1)
+            repo.refuse((f"{rel}'s Answers first differ at line {line} of the Answers section "
+                         "from docs/product/BRIEF.md. Copy its words exactly.",
                          f"copy its Answers section, then {next_step}"))
         open_topics = nextstep.open_must_answer_topics(top)
         answers = nextstep.parse_answers(top)
@@ -289,6 +307,8 @@ def decision_accept(args: argparse.Namespace) -> None:
                          "for sign-off. Record their reply in approved_via and approved_on, then "
                          f"{next_step}")
     changed = [rel]
+    if prototype_tree:
+        text = _set(text, design_tree=prototype_tree)
     old = fields.get("supersedes")
     if old:
         old_rel = _decision(top, old, f'forge decision accept {args.slug} --by "{by}"',
@@ -302,6 +322,52 @@ def decision_accept(args: argparse.Namespace) -> None:
     repo.commit_state(f"Accept the {args.slug} decision", *changed, top=top)
     also = f"; {changed[1]} is now superseded" if old else ""
     print(f"Accepted {rel}, confirmed by {by}{also}.")
+
+
+def constitution(top: Path) -> str:
+    """The approved constitution on the default branch as last fetched, or no text."""
+    ref = story.landed_ref(top)
+    text = story.show(top, ref, "docs/product/CONSTITUTION.md")
+    if text is None:
+        return ""
+    # Next already lists the default branch while checking dependency refreshes.
+    names = repo.command_fact(("default file names", ref), top,
+                             lambda: repo.git("ls-tree", "-r", "--name-only", ref, cwd=top))
+    for name in names.splitlines():
+        if re.fullmatch(r"docs/decisions/\d{4}-app-constitution\.md", name):
+            fields, _ = _front(story.show(top, ref, name) or "")
+            if fields.get("status") == "accepted":
+                return text
+    return ""
+
+
+def _constitution_gaps(top: Path, by: str) -> list[str]:
+    from forge import nextstep
+
+    page = top / "docs/product/CONSTITUTION.md"
+    missing = [] if page.is_file() else ["docs/product/CONSTITUTION.md is missing"]
+    sections = _sections(re.sub(r"<!--.*?-->", "", _text(page), flags=re.S))
+    for name in ("Defaults", "Architecture choices"):
+        if not sections.get(name, "").strip():
+            missing.append(f"## {name} has no text")
+    for line in sections.get("Architecture choices", "").splitlines():
+        if not line.strip():
+            continue
+        names = re.findall(r"\bdocs/decisions/\d{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md\b", line)
+        if not names:
+            missing.append(f'architecture choice "{line.strip()}" names no decision record')
+        for name in names:
+            fields, _ = _front(_text(top / name))
+            if not (top / name).is_file() or fields.get("status") != "accepted":
+                slug = Path(name).stem[5:]
+                missing.append(f'{name} needs forge decision accept {slug} --by "{by}"')
+    brief = _sections(re.sub(r"<!--.*?-->", "", _text(top / "docs/product/BRIEF.md"), flags=re.S))
+    for name in ("Summary", "Users", "Things it keeps track of"):
+        if not brief.get(name, "").strip():
+            missing.append(f"docs/product/BRIEF.md needs ## {name}")
+    if "Personal data" in nextstep.open_must_answer_topics(top):
+        missing.append("Personal data needs a settled answer in docs/product/BRIEF.md")
+    return missing
 
 
 # --- the roadmap -----------------------------------------------------------------------
@@ -424,6 +490,18 @@ def _roadmap_items(slug: str, body: str) -> dict[str, str]:
     return items
 
 
+def read_path(top: Path, target: str) -> Path:
+    """Specs keep precedence; numbered decision names select a decision with the same slug."""
+    spec = top / "docs" / "specs" / f"{target}.md"
+    if SLUG.fullmatch(target):
+        if spec.is_file():
+            return spec
+        decision = _decision(top, target, "forge read <NNNN-slug>")
+        if decision:
+            return top / decision
+    repo.refuse(story.REFUSALS["no_spec"], slug=target)
+
+
 def _decision(top: Path, name: str, next_step: str, called: str = "") -> str:
     """The one decision named NNNN-slug (that exact file) or slug, or "" when there is none."""
     folder = top / "docs" / "decisions"
@@ -471,8 +549,8 @@ def _sections(body: str) -> dict[str, str]:
 
 
 def _answer_section(body: str) -> str:
-    match = re.search(r"(?ms)^## Answers\r?\n.*?(?=^## |\Z)", body)
-    return match[0] if match else ""
+    match = re.search(r"(?ms)^## Answers[ \t]*\r?\n.*?(?=^## |\Z)", body)
+    return "\n".join(line.rstrip() for line in match[0].splitlines()).rstrip() if match else ""
 
 
 COMMANDS = [

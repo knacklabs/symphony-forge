@@ -1,0 +1,52 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-read-loop-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14db2-22f3-7042-918a-476610070e08",
+    "head": null,
+    "start": "5cb25c48bf5bb023e8765dac9128b00eb87dece4"
+  },
+  "done_when": "The read-loop and suggestion tests share one repo per setup where cases don't interfere, keep one adopted case per rule, and still cover every wording and suggestion row",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "166012878210a136cd7662d8641bc1738413d7ae71dbc5880fb3834fadcf7d26",
+    "changed": "ed77ee460f5e35f349c2304beb25e197e688b2f7ca548f8cd8104be52ade020b",
+    "commit": "cbd2ec84c95b1d78367ead5f8171d560616e17ae",
+    "dismissals": [],
+    "findings": [],
+    "id": "331d9ff0-9b75-44fa-baeb-2cbb42abffde",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:26:48.412234+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T06:55:25.413891+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T10:01:59.510826+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ca715d69-f500-4ebb-b578-9fa8d831c057",
+    "head": "c36f1057194616c916db7c9981b8386366bf949d",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 1
+  },
+  "why": "The read-loop and test-suggestion tests build a fresh repo for every case and repeat adopted rows on the same paths",
+  "worker": "codex"
+}

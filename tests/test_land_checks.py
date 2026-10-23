@@ -10,16 +10,18 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, _install
-from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
+from test_close import CLEAN, GREEN, STORY_DOC, approve_story, blocked, env, finding, run  # noqa: F401
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_land import (ITEM, RUNS, _agent, _fix, _land, _queue, _refusal, _runs, _steps,
                        _workers, land)  # noqa: F401
+
+pytestmark = pytest.mark.platform
 
 RED = [run("tests", "failure"), run("forge-pr-check")]
 LINK = "https://github.com/acme/shop/actions/runs/5/job/{}"
 RERUN = ("Re-running {} once: its failure names none of this change's files and the tests "
          "passed here.")
-FIX_ROUND = "Fix round 1 of 3: the worker fixes the failing checks."
+FIX_ROUND = "Fix round 1 of 1: the worker fixes the failing checks."
 PASSING = 'merge = "agent"\ntest = "true"\nfast_test = "true"\n'  # close runs it, so this machine's tests pass
 
 
@@ -230,17 +232,22 @@ def test_5_same_run_under_either_host_and_workers(request, land, monkeypatch, ho
     # Kit workers run on the other tool; same-tool rounds belong to the native session flow.
     monkeypatch.delenv("CLAUDECODE", raising=False)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    with monkeypatch.context() as coordinator:
+        coordinator.setenv("CODEX_THREAD_ID", "thr-test-approval")
+        approve_story(land.repo, STORY_DOC)
+    land.repo.git("merge", "-q", "--ff-only", "story/SHOP")
+    land.repo.git("push", "-q", "origin", "main")
     monkeypatch.setenv(host, "1" if host == "CLAUDECODE" else "thr-test-coordinator")
     if workers == "codex":
         request.getfixturevalue("claude_session")
         _codex_workers(land, monkeypatch, request.getfixturevalue("sdk_data"))
     _agent(land)
-    _fix(land, "working", worked=True)
+    ITEM, _ = land.start_task()
     land.reviews(blocked(BLOCKER), CLEAN)
-    done = _land(land)
+    done = _land(land, ITEM)
     assert done.returncode == 0, done.stdout + done.stderr
     assert _steps(done) == [f"Closing {ITEM}.",
-                            "Fix round 1 of 3: the worker fixes the review's serious findings.",
+                            "Fix round 1 of 1: the worker fixes the review's serious findings.",
                             f"Closing {ITEM}.", f"Merging {ITEM}."]
     if workers == "codex":
         [turn] = _sent(land.repo.bin / "codex-app-server.jsonl", "turn/start")

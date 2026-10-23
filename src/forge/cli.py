@@ -1,12 +1,12 @@
 """The forge command. Each command is declared by its owning module."""
 import argparse
 import ast
-import importlib.metadata
+import functools
+import importlib
 import json
 import os
 import subprocess
 import sys
-import urllib.request
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -24,8 +24,8 @@ REFUSALS = {
 ROUTES = {
     "init": "init", "sync": "sync", "doctor": "doctor", "test": "fasttest",
     "migrate": "migrate", "upgrade": "upgrade", "next": "nextstep", "board": "board", "lanes": "machine", "stop": "machine",
-    "story new": "story", "story done": "story", "read": "story", "assign": "task",
-    "task start": "task", "fix start": "task", "fix allow-large": "task", "fix amend": "task",
+    "start": "intake", "story drop": "intake", "story new": "story", "story done": "story", "read": "story", "assign": "task",
+    "task start": "task", "fix start": "task", "fix drop": "task", "fix allow-large": "task", "fix amend": "task",
     "work": "worker", "handback": "native", "close": "close", "merge": "merge", "land": "land",
     "spec save": "records", "spec confirm": "records", "spec measure": "records",
     "spec payback": "payback", "decision new": "records", "decision accept": "records",
@@ -90,6 +90,7 @@ class _Parser(argparse.ArgumentParser):
         repo.refuse(REFUSALS["usage"], problem=f"{self.prog}: {message}", prog=self.prog)
 
 
+@functools.cache
 def _parser() -> _Parser:
     parser = _Parser(prog="forge",
                      description="Forge takes a story from approval to a merged pull request.")
@@ -114,16 +115,20 @@ def _parser() -> _Parser:
 def _run(argv: list[str] | None) -> int:
     # A forge installed from this repo runs its old code, so run this checkout's; never another repo's.
     top = repo.run("git", "rev-parse", "--show-toplevel").stdout.strip()
-    url = json.loads(next((d.read_text("direct_url.json") or "{}" for d in importlib.metadata.distributions(name="symphony-forge")), "{}")).get("url") or ""
-    made = urllib.request.url2pathname(urllib.parse.urlparse(url).path) if url.startswith("file:") else ""
-    src = str(Path(top, "src"))
-    forwarding = (top and made and os.environ.get("FORGE_FROM_CHECKOUT") != src
-                  and Path(forge.__file__).resolve().parent != Path(src, "forge"))
-    # Read the folders directly: a hook's GIT_DIR must not answer for both of them.
-    if forwarding and repo._common_path(top) == repo._common_path(made):
-        print(f"Running this checkout's code in {Path(src, 'forge')}, not the installed Forge.", file=sys.stderr)
-        return subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())", *(argv or sys.argv[1:])],
-                              env={**os.environ, "PYTHONPATH": src, "FORGE_FROM_CHECKOUT": src}).returncode
+    if top and Path(top, "src", "forge").is_dir():
+        from importlib import metadata
+        import urllib.request
+
+        url = json.loads(next((d.read_text("direct_url.json") or "{}" for d in metadata.distributions(name="symphony-forge")), "{}")).get("url") or ""
+        made = urllib.request.url2pathname(urllib.parse.urlparse(url).path) if url.startswith("file:") else ""
+        src = str(Path(top, "src"))
+        forwarding = (made and os.environ.get("FORGE_FROM_CHECKOUT") != src
+                      and Path(forge.__file__).resolve().parent != Path(src, "forge"))
+        # Read the folders directly: a hook's GIT_DIR must not answer for both of them.
+        if forwarding and repo._common_path(top) == repo._common_path(made):
+            print(f"Running this checkout's code in {Path(src, 'forge')}, not the installed Forge.", file=sys.stderr)
+            return subprocess.run([sys.executable, "-c", "from forge.cli import main; raise SystemExit(main())", *(argv or sys.argv[1:])],
+                                  env={**os.environ, "PYTHONPATH": src, "FORGE_FROM_CHECKOUT": src}).returncode
     args, extra = _parser().parse_known_args(argv)
     if extra and not args.words.startswith("hook "):
         repo.refuse(REFUSALS["usage"],

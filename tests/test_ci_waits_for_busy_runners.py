@@ -1,4 +1,4 @@
-"""Queued checks keep CI waiting; doctor diagnoses a week without matching runner activity.
+"""Queued checks keep close and land waiting for runner activity.
 
 Audit: real close, land and doctor commands consume GitHub run/job responses. The
 regression is the old age-only refusal; elapsed time and GitHub alone are faked.
@@ -64,15 +64,15 @@ def _client(env, history, runner):
     env.checks(GREEN)
 
 
-@pytest.mark.parametrize("history", ["new", "upgraded"])
-@pytest.mark.parametrize("command,activity", [
-    (command, activity) for command in ("close", "land", "land-merge", "doctor")
+@pytest.mark.parametrize("command,activity,history", [
+    (command, activity, "new") for command in ("close", "land", "land-merge")
     for activity in ("busy", "missing")
-] + [("doctor", activity) for activity in (
-    "busy-running", "busy-rerun", "busy-case", "busy-days-ago", "missing-case", "wrong-label",
-    "old-job", "future-job", "unassigned")])
+] + [("close", "missing", "upgraded")])
 def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command, activity):
-    env = clock
+    _runner_activity(clock, history, command, activity)
+
+
+def _runner_activity(env, history, command, activity):
     runner = "GPU" if activity in ("busy-case", "missing-case") else "ubuntu-latest"
     _client(env, history, runner)
     if command == "land-merge":

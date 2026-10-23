@@ -108,7 +108,7 @@ CARRIED_OVER_RULES = {
                "error-code list", "path and query param"],
     "backend.md": ["and local and dev too", "idempotent", "CreateXDto", "*.handler.ts", "never whole objects",
                    "4xx at debug", "implements LoggerService"],
-    "frontend.md": ["packages/shared", "x-correlation-id"],
+    "frontend.md": ["libs/shared", "x-correlation-id"],
     "testing.md": ["idempotency test", "failure test"],
     "stack.md": ["ESLint", "Prettier", "Terraform"],
 }

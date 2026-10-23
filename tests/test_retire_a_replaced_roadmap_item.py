@@ -7,7 +7,7 @@ import subprocess
 
 STORY = "roadmap-items-a-new-spec-replaces-can-on"
 
-DISCOVER = "No story or fix is in progress and the roadmap is empty, so start with discovery, as "
+IDLE = 'No story or fix is in progress.\nNext: forge start "<idea>"\n'
 
 
 def _item(key: str, status: str, order: int, **more: str) -> dict:
@@ -47,16 +47,17 @@ def _fix(repo) -> None:
     repo.git("commit", "-q", "-m", "Start the fix")
 
 
-def _board(repo) -> str:
-    out = repo.path.parent / "board.html"
+def _board(repo) -> dict[str, str]:
+    """The written board's rows, as id to title."""
+    out = repo.path.parent / "board.json"
     _ok(repo.forge("board", "--out", str(out)))
-    return out.read_text(encoding="utf-8")
+    return {row["id"]: row["title"] for row in json.loads(out.read_text(encoding="utf-8"))["items"]}
 
 
 def test_1_retiring_a_pending_item_marks_it_superseded_by_the_new_spec(repo):
     _on_main(repo, [_item("OLD-1", "pending", 1), _item("KEEP-1", "pending", 2)])
     _fix(repo)
-    assert "The OLD-1 story" in _board(repo)
+    assert _board(repo)["OLD-1"] == "The OLD-1 story"
 
     assert _ok(repo.forge("roadmap", "retire", "OLD-1", "--by", "new-way")) == (
         "OLD-1 is retired on plans/roadmap.json, superseded by docs/specs/new-way.md.\n")
@@ -68,7 +69,7 @@ def test_1_retiring_a_pending_item_marks_it_superseded_by_the_new_spec(repo):
     assert repo.git("show", "--name-only", "--format=", "HEAD") == "plans/roadmap.json"
     assert repo.git("status", "--porcelain") == ""
     board = _board(repo)
-    assert "The OLD-1 story" not in board and "The KEEP-1 story" in board
+    assert "OLD-1" not in board and board["KEEP-1"] == "The KEEP-1 story"
 
 
 def test_2_retiring_refuses_an_unknown_key_a_started_or_done_item_and_a_missing_spec(repo):
@@ -96,7 +97,7 @@ def test_3_forge_next_no_longer_offers_a_retired_item(repo):
     _on_main(repo, [_item("OLD-1", "pending", 1)])
     assert _ok(repo.forge("next")).splitlines()[:2] == [
         "No story or fix is in progress.",
-        'Next: forge story new <KEY> "<title>"']
+        'Next: forge start "<idea>"']
 
     _fix(repo)
     _ok(repo.forge("roadmap", "retire", "OLD-1", "--by", "new-way"))
@@ -107,7 +108,7 @@ def test_3_forge_next_no_longer_offers_a_retired_item(repo):
     repo.git("push", "-q", "origin", "main")
     repo.git("branch", "-q", "-D", "fix/new-way")
 
-    assert _ok(repo.forge("next")).startswith(DISCOVER)
+    assert _ok(repo.forge("next")).startswith(IDLE)
 
 
 def _git(repo, *args: str) -> subprocess.CompletedProcess[str]:

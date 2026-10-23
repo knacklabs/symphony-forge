@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tBaseline upgrade proof and changed-pin hook tests time out while close waits on machine load.",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 229,
+      "text": "Baseline upgrade proof and changed-pin hook tests time out while close waits on machine load.",
+      "from": "worker",
+      "item": "trim-doctor-upgrade-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -41,6 +41,7 @@ def test_1_close_refuses_an_added_binary_test_fixture_before_review(env):
 
 
 @pytest.mark.parametrize("existing", [False, True], ids=["new-repo", "previous-release-repo"])
+@pytest.mark.platform
 def test_2_sync_and_work_deliver_plain_text_fixture_guidance(env, existing):
     item, where = env.start_fix()
     log = install_claude(env.repo)

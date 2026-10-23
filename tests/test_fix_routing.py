@@ -14,6 +14,10 @@ from test_worker import calls, install_claude
 from test_next_names_a_failed_scheduled_run import RUNS, LOG, runs
 from test_spotted import entry, LIST
 from test_measure import SPEC
+from test_story import prototype_design, worktree
+from test_tools_session_hold import Session
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-PACE-1"
 
@@ -54,6 +58,7 @@ def test_2_fix_kind_selects_the_same_worker_on_every_round(repo, gh, tmp_path, m
     config.write_text(head, encoding="utf-8")
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
+    prototype_design(repo)
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Set distinct worker models")
     _publish_default(repo, repo.git("remote", "get-url", "origin"))
@@ -128,8 +133,8 @@ def test_22_prototype_fixes_require_a_kind_before_a_checkout_exists(repo):
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["init", "earlier-adoption"])
 @pytest.mark.parametrize("case,path,kind,match", [
-    ("idle", None, "mechanical", '"Find the problem to solve"'),
-    ("roadmap", None, "mechanical", '"<why>"'),
+    ("idle", None, "mechanical", '"<idea>"'),
+    ("roadmap", None, "mechanical", '"<idea>"'),
     ("schedule", None, "mechanical", '"The scheduled'),
     ("hotspot", "src/server.py", "backend", '"Simplify src/server.py:'),
     ("hotspot", "web/page.html", "ui", '"Simplify web/page.html:'),
@@ -174,6 +179,7 @@ def test_23_prototype_next_fix_commands_run_as_printed(repo, gh, tmp_path, monke
             {"key": "INV-1", "spec": "docs/specs/invoices.md"}]}))
         repo.write(".factory/stories/INV-1/story.json", json.dumps({"status": "done"}))
     monkeypatch.setenv("GIT_COMMITTER_DATE", "2026-09-01T10:00:00+00:00")
+    prototype_design(repo)
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Prepare guidance inputs")
     monkeypatch.delenv("GIT_COMMITTER_DATE")
@@ -183,9 +189,30 @@ def test_23_prototype_next_fix_commands_run_as_printed(repo, gh, tmp_path, monke
     monkeypatch.setenv("FORGE_NOW", "2030-02-01T10:00:00+00:00")
     shown = repo.forge("next")
     assert shown.returncode == 0, shown.stdout + shown.stderr
+    # New ideas now enter through intake; maintenance fixes keep their typed command.
+    prefix = "Next: forge start " if case in ("idle", "roadmap") else "Next: forge fix start "
     command = next(line for line in shown.stdout.splitlines()
-                   if line.startswith("Next: forge fix start ") and match in line)
+                   if line.startswith(prefix) and match in line)
     words = shlex.split(command.removeprefix("Next: forge "))
+    if words[0] == "start":
+        owner = Session(repo, tmp_path / "intake-host", "codex-next-guidance")
+        try:
+            offered = owner.forge(*words)
+            assert offered.returncode == 0, offered.stdout + offered.stderr
+            pending = json.loads(offered.stdout)
+            assert pending["role"] == "explorer" and words[1] in pending["prompt"]
+            started = owner.forge("handback", pending["target"], "--round", str(pending["round"]),
+                                  "--subagent", "idea-explorer", "--text",
+                                  "Lane: fix\nReason: The change is small and clear.\n"
+                                  "Why: Prepare the next change\nDone: The change is ready.\nKind: mechanical")
+            assert started.returncode == 0, started.stdout + started.stderr
+            checkout = worktree(repo, "fix/prepare-the-next-change")
+            state = json.loads((checkout / ".factory/fixes/prepare-the-next-change.json").read_text("utf-8"))
+            assert state["fix_kind"] == kind
+            assert checkout.is_dir()
+        finally:
+            owner.close()
+        return
     started = repo.forge(*words)
     assert started.returncode == 0, started.stdout + started.stderr
     assert words[words.index("--kind") + 1] == kind

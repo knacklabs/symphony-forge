@@ -7,11 +7,13 @@ import sys
 import conftest
 from test_close import CLEAN, blocked, env, finding
 
+import pytest
+
 STORY = "FIX-AUTOREVIEW-BRIEF"
 
 
 def test_1_previous_findings_and_dismissal_reasons_reach_next_review(env):
-    item, where = env.start_fix()
+    item, where = env.start_task()
     env.reviews(blocked(finding("P1", "Greeting is missing"),
                         finding("P2", "Simpler: remove the extra step")), CLEAN)
     assert env.close(item).returncode == 1
@@ -48,6 +50,7 @@ def test_3_non_user_items_use_their_named_test(env):
     assert "runtime behaviour" in prompt
 
 
+@pytest.mark.platform
 def test_4_edge_case_advice_is_next_to_blocking_rules(env):
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0
@@ -73,6 +76,7 @@ def test_6_reviewer_can_read_git_history(env):
     settings = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", settings.read_text("utf-8").replace(
         'workers = "claude"', 'workers = "codex"'))
+    env.repo.git("push", "-q", "origin", "main")
     probe = '''#!{python}
 import json, pathlib, subprocess, sys
 folder = pathlib.Path(sys.argv[sys.argv.index("-C") + 1])
@@ -94,6 +98,7 @@ def test_7_review_base_is_fetched_remote_commit_when_local_main_lags(env):
     settings = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "forge.toml", settings.read_text("utf-8").replace(
         'workers = "claude"', 'workers = "codex"'))
+    env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix()
     other = env.tmp / "other-clone"
     remote = env.repo.git("config", "--get", "remote.origin.url")

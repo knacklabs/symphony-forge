@@ -6,7 +6,7 @@ module, the config, logging or error handling.
 ## Layout
 
 ```
-backend/src/
+apps/api/src/
   main.ts               start-up: validation, the exception filter, security, Swagger, JSON logs
   app.module.ts
   config/               the one place that reads environment variables

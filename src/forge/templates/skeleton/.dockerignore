@@ -12,4 +12,5 @@
 **/*.p12
 **/*.pfx
 **/node_modules
+**/.nx
 **/dist

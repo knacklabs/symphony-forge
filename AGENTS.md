@@ -10,8 +10,9 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 
 ### The flow
 
-1. A story starts as one short doc: `forge story new <KEY> "<title>"`.
-2. It gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
+1. Every idea starts with `forge start "<idea>"`. Forge picks a fix, a plan, discovery or the idea list.
+   Never ask the human whether it is a story or a fix.
+2. A plan gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
    approval from the human.
 3. Each task runs in its own branch and worktree: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`.
@@ -23,9 +24,20 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 
 ### The lanes
 
+Send every idea through `forge start "<idea>"`. Forge picks the lane.
+
 - **Story:** anything that changes an interface or needs more than five code files.
-- **Fix:** a small change, started with `forge fix start "<why>" --done "<done when>"`.
+- **Fix:** a small change with at most five code files and no interface change.
   Specs, decisions, the roadmap and discovery notes ship as fixes.
+- **Discovery:** one question when Forge cannot guess the problem.
+- **Idea list:** only when the owner says later. Forge keeps the idea in `plans/ideas.md`.
+
+| The human says | Run |
+|---|---|
+| "Make it a story" (a fix) | Add the key to the fix's roadmap and commit it, then `forge story new <KEY> --from-fix <fix>` |
+| "Make it a fix" or "Just fix it" (a plan in planning) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
+| "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
+| "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
 
 ### Who builds
 
@@ -91,9 +103,12 @@ change is dogfooded on Forge itself before clients get it.
 ## Review rules
 
 - A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
-  upgrade to the new release) each get, and its tests cover both, including an existing repo adopted
-  on an earlier release. Report a change that covers only one side, or only Forge's own repo, as
-  P1. A release's version bump changes no behaviour and needs no new upgrade test.
+  upgrade to the new release) each get. Each rule keeps its full cases on a new repo plus at least
+  one case on an existing repo adopted on an earlier release. Keep more existing-repo cases only
+  where Forge takes a different path for it. Report a change that covers only one side, or only
+  Forge's own repo, as P1. Report extra existing-repo cases that repeat the new-repo path as a
+  deletion candidate, not a gap. A release's version bump changes no behaviour and needs no new
+  upgrade test.
 - A change to what a coordinator or worker should do or can use (a command, an option, a setting,
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
@@ -118,9 +133,11 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
 
 ### Tests for Forge
 
+- Each rule keeps its full cases on a new repo plus at least one earlier-adopted repo case.
+  Keep more adopted-repo cases only where Forge takes a different path for it. In a test audit,
+  report extra adopted-repo cases that repeat the new-repo path as deletion candidates, not gaps.
 - Tests run the forge command and never import forge.
 - A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow
   sets it); don't set it in local runs.
 - A general process rule (how to plan, build, test, review, merge or release) added only to this
   repo's files instead of what Forge ships is P1: it belongs in `src/forge/templates` or a command.
-

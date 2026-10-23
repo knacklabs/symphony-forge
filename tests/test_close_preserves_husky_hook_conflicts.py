@@ -3,6 +3,8 @@ import pytest
 
 from test_close import env  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-HUSKY-HOOKS"
 
 

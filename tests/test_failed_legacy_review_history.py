@@ -81,11 +81,18 @@ def test_25_failed_earlier_review_keeps_retry_ordinal_and_unseen_findings_unknow
     monkeypatch.setenv("FORGE_NOW", (began + timedelta(seconds=30)).isoformat())
     env.reviews(CLEAN if mechanical else blocked(finding("P1", "Greeting disappears")))
     retried = env.close(item)
-    assert retried.returncode == (0 if mechanical else 1), retried.stdout + retried.stderr
+    # The failed legacy attempt has no completed review. The modern first fix
+    # review stops on a P1 until the owner accepts it as a follow-up.
     if not mechanical:
-        assert "serious findings" in retried.stderr
-    else:
-        assert "Ready:" in retried.stdout
+        assert retried.returncode == 1, retried.stdout + retried.stderr
+        assert "reached the round limit with open findings" in retried.stderr
+        env.open_pr(body(env.gh_calls("pr", "edit")[-1]), draft=True)
+        retried = env.close(item, "--resolve", "accept", "--reason", "Keep the greeting for now")
+        published = body(env.gh_calls("pr", "edit")[-1])
+        assert "Greeting disappears" in published
+        assert "Human accepted the remaining finding: Keep the greeting for now" in published
+    assert retried.returncode == 0, retried.stdout + retried.stderr
+    assert "Ready:" in retried.stdout
     history = row(env.repo, item)["rounds"]
     assert len(history) == 2, history
     legacy, current = history

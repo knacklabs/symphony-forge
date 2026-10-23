@@ -1,6 +1,6 @@
 """After a plan's latest round of cold read passed, an edit only below `## For the builders` needs
-no new round, as it needs no new approval; an edit above it still does, and that round asks the
-reader to check only the diff and the sections it touches. Everything runs the real forge command;
+no new round, as it needs no new approval; an edit above it still does, and that round checks
+earlier findings and new P0s in normal use. Everything runs the real forge command;
 the reader is the stub `claude` from test_story.
 """
 
@@ -59,13 +59,12 @@ def test_2_a_top_part_edit_after_a_pass_needs_a_round_on_the_diff(repo, claude_p
     assert read.returncode == 0, read.stdout + read.stderr
     prompt = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
     for part in ("Round 2 of your cold read of `plans/SHOP.md`",
-                 "Your last round passed, and the doc changed since.",
                  "-Shoppers can save a basket and come back to it later.",
                  "+Shoppers can save a basket and come back to it within a week.",
-                 "It touches these sections: `## What changes for you`.",
-                 "Check only this diff and the sections it touches"):
+                 "Is each of those findings closed?",
+                 "Block on anything new only for a P0 that happens in normal use"):
         assert part in prompt, part
-    assert "read the whole doc again" not in prompt
+    assert "Check only this diff and the sections it touches" not in prompt
 
 
 def test_3_the_pull_request_check_accepts_only_a_builders_only_edit_after_a_pass(repo, claude_payload):

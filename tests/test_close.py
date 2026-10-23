@@ -9,12 +9,13 @@ import os
 import re
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 
 import conftest
-from test_story import READER
+from test_story import DESIGN_IMAGE, DESIGN_TREE, READER, approved_constitution
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = re.search(r'AUTOREVIEW_PIN = "(\w+)"',
@@ -26,7 +27,7 @@ import json, pathlib, subprocess, sys
 args = sys.argv[1:]
 folder = args[args.index("-C") + 1]
 head = subprocess.run(["git", "-C", folder, "rev-parse", "HEAD"], capture_output=True,
-                      text=True).stdout.strip()
+                      text=True, stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
 log = pathlib.Path(__file__).resolve().parent / "codex-calls.jsonl"
 with open(log, "a", encoding="utf-8") as calls:
     calls.write(json.dumps({{"folder": folder, "head": head}}) + "\\n")
@@ -36,6 +37,8 @@ STORY_DOC = """# Shoppers can save a basket
 
 ## What changes for you
 Shoppers can save a basket and come back to it.
+
+Design: docs/design/baskets/ (<design tree>)
 
 ## Why
 Shoppers lose their basket when they leave.
@@ -56,6 +59,8 @@ New moving parts: none
 Risks: none
 """
 
+
+STORY_DOC = STORY_DOC.replace("<design tree>", DESIGN_TREE)
 
 # A default score line per priority that keeps each finding's outcome under today's rule.
 SCORES = {"P0": "Gain 5, Work 2, Harm 4", "P1": "Gain 4, Work 2, Harm 1"}
@@ -100,7 +105,12 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
     branch (with a stub reader and the client's accepted sign-off), then send the hook a completed
     ExitPlanMode showing that doc."""
     top = cwd or repo.path
+    if f"Design: docs/design/baskets/ ({DESIGN_TREE})" in key_doc:
+        image = top / "docs/design/baskets/screen.svg"
+        image.parent.mkdir(parents=True, exist_ok=True)
+        image.write_text(DESIGN_IMAGE, encoding="utf-8")
     toml = top / "forge.toml"
+    settings = tomllib.loads(toml.read_text("utf-8"))
     if "models.grill" not in toml.read_text("utf-8"):
         toml.write_text(toml.read_text("utf-8") + 'models.grill.claude = { model = "opus", effort = "high" }\n',
                         encoding="utf-8")
@@ -115,6 +125,9 @@ def approve_story(repo: conftest.Repo, key_doc: str, key: str = "SHOP", cwd: Pat
     repo.git("add", "-A", cwd=top)
     repo.git("commit", "-q", "-m", "Sign-off and roadmap", cwd=top)
     repo.git("push", "-q", "origin", "main", cwd=top)
+    if (settings.get("repo", "client") == "client"
+            and not (top / "docs/product/CONSTITUTION.md").exists()):
+        approved_constitution(repo, where=top)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     made = repo.forge("story", "new", key, "Shoppers can save a basket", cwd=top)
     assert made.returncode == 0, made.stderr
@@ -242,6 +255,7 @@ def env(repo, gh, tmp_path, monkeypatch) -> Forge:
                              'interfaces = ["**/routes/**"]\n'
                              'models.build = { model = "opus", effort = "high" }\n')
     repo.write("plans/SHOP.md", STORY_DOC)
+    repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Run on Forge")
     repo.git("push", "-q", "origin", "main")
@@ -262,7 +276,7 @@ def _review_fails_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "codex: the model is unavailable.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _review_incomplete_twice(env):
@@ -270,14 +284,14 @@ def _review_incomplete_twice(env):
     return {"item": env.start_fix()[0], "reviews": 2,
             "problem": "Autoreview did not finish a review twice in a row: "
                        "it reported the review as incomplete.",
-            "next": "forge doctor, then forge close tidy-readme"}
+            "next": "check Autoreview's output above, then forge close tidy-readme"}
 
 
 def _open_serious_finding(env):
     env.reviews(blocked(finding("P0", "Saving drops the basket", line=2)))
-    return {"item": env.start_fix()[0],
+    return {"item": env.start_task()[0],
             "problem": "The review left serious findings open: finding 1 (Saving drops the basket).",
-            "next": 'forge work tidy-readme, or forge close tidy-readme --dismiss <n> '
+            "next": 'forge work SHOP/T1, or forge close SHOP/T1 --dismiss <n> '
                     '--because "<file:line> <reason>"'}
 
 
@@ -362,14 +376,12 @@ def _merge_conflict(env):
     env.repo.git("push", "-q", "origin", "main")
     return {"item": item, "clean": where,
             "problem": "Merging main into fix/tidy-readme conflicts in README.md.",
-            # Recovery now points to the shipped recipe before committing the resolved merge.
-            "next": re.compile(r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
-                               r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
-                               r"then forge close tidy-readme")}
+            # The normal worker finishes the merge before it continues the item's work.
+            "next": "forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme"}
 
 
 def _bad_dismissal(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")))
     item = env.start_fix()[0]
     env.close(item)
     return {"item": item, "args": ["--dismiss", "1", "--because", "it is fine"],
@@ -378,18 +390,21 @@ def _bad_dismissal(env):
             "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
 
 
-def _stale_dismissal(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+def _dismissal_of_replaced_finding(env):
+    # A changed branch no longer invalidates a dismissal. A different title still does.
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")),
+                blocked(finding("P0", "A different defect")))
     item, where = env.start_fix()
     env.close(item)
     env.commit(where, "app.py", "print('hello again')\n")
     return {"item": item, "args": ["--dismiss", "1", "--because", "app.py:1 it greets here"],
-            "problem": "The branch changed since the review those finding numbers came from.",
-            "next": "forge close tidy-readme"}
+            "problem": "Each --dismiss needs a finding number from the latest review and its own "
+                       "--because that starts with the file:line proving that finding wrong.",
+            "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
 
 
 def _dismissal_cites_no_such_line(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")))
     item = env.start_fix()[0]  # app.py has one line
     env.close(item)
     return {"item": item, "args": ["--dismiss", "1", "--because", "app.py:3 it greets here"],
@@ -399,7 +414,7 @@ def _dismissal_cites_no_such_line(env):
 
 
 def _dismissal_cites_no_such_file(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    env.reviews(blocked(finding("P0", "Not done: The readme opens with a greeting")))
     item = env.start_fix()[0]
     env.close(item)
     return {"item": item, "args": ["--dismiss", "1", "--because", "greet.py:1 it greets here"],
@@ -426,7 +441,7 @@ def _task_row_missing(env):
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
          _red_check_not_named, _skipped_named_check, _pending_check_not_named, _pending_check,
          _missing_required_check, _github_api_error, _no_checks_named,
-         _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal,
+         _not_started, _merge_conflict, _bad_dismissal, _dismissal_of_replaced_finding,
          _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]
 
@@ -466,7 +481,7 @@ def test_18_close(env, kind):
     env.commit(env.repo.path, "docs/decisions/0001-client-signoff.md",
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n')
     env.repo.git("push", "-q", "origin", "main")
-    toml = env.repo.path / "forge.toml"  # legacy pins remain valid but Autoreview owns selection
+    toml = env.repo.path / "forge.toml"  # configured review pins override Autoreview defaults
     env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
                + '\n[models.review]\nmodel = "gpt-6-astra"\neffort = "high"\n')
     item, where = env.start_task() if kind == "task" else env.start_fix()
@@ -480,7 +495,7 @@ def test_18_close(env, kind):
     first = env.close(item)
 
     # An unrelated main move stays out of the branch; Autoreview still reads its actual head.
-    assert first.returncode == 1
+    assert first.returncode == 1, first.stdout + first.stderr
     [call] = env.review_calls()
     assert env.repo.git("merge-base", moved, call["head"]) != moved
     options = dict(zip(call["args"][::2], call["args"][1::2]))
@@ -489,7 +504,8 @@ def test_18_close(env, kind):
     assert {name: options[name] for name in ("--mode", "--base", "--engine", "--max-priority")} == {
         "--mode": "branch", "--base": env.repo.git("rev-parse", "origin/main"),
         "--engine": "codex", "--max-priority": "P3"}
-    assert "--model" not in options and "--thinking" not in options
+    assert options["--model"] == "codex=gpt-6-astra"
+    assert options["--thinking"] == "codex=high"
     assert "--json-output" in options
     assert [codex["head"] for codex in env.codex_calls()] == [call["head"]]  # it read that tree
     # The instructions: scope and what's outside it, the Done-when items (only covered ones
@@ -508,6 +524,27 @@ def test_18_close(env, kind):
                      "`Not done: The readme opens with a greeting`"):
             assert line in prompt
     assert "## Test audit" in prompt and "`Simpler: <what to cut> → <what replaces it>`" in prompt
+    # The owner accepts a fix at its review limit. Story parts retain one repair round.
+    if kind == "fix":
+        assert "reached the round limit with open findings" in first.stderr
+        env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+        accepted = env.close(item, "--resolve", "accept", "--reason", "Keep this greeting for now")
+        assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+        [create] = env.gh_calls("pr", "create")
+        published = body(env.gh_calls("pr", "edit")[-1])
+        # Close publishes a draft before review; the clean fix then becomes ready.
+        assert "--draft" in create
+        assert env.gh_calls("pr", "ready")
+        assert "dismissed because Human accepted the remaining finding: Keep this greeting for now" in published
+        assert f"Finding 1 (P1): Not done: {owner_item} (app.py:1)" in published
+        assert "Simpler: drop the cache → a dict" in published
+        assert "blocks the merge" not in published
+        assert accepted.stdout.splitlines()[-1] == (
+            f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+        assert env.repo.git("status", "--porcelain", cwd=where) == ""
+        assert env.repo.git("ls-remote", "origin", branch).split()[0] == env.repo.git(
+            "rev-parse", "HEAD", cwd=where)
+        return
     # A serious finding blocks, so the pull request opens as a draft; the advisory one is listed;
     # the result is committed and pushed.
     [create] = env.gh_calls("pr", "create")
@@ -548,9 +585,10 @@ def test_18_close(env, kind):
     assert "waiting for the owner (ongoing)" in published
 
     # A new commit needs a new round. The old contract dropped every dismissal; now a matching
-    # file and title keeps it. A different finding still blocks and returns the PR to a draft.
+    # file and title keeps it. A new P1 at the bar stops in round two and returns the PR to a draft.
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
-    env.reviews(blocked(finding("P1", "Saving loses the basket"),
+    env.reviews(blocked({**finding("P1", "Saving loses the basket"),
+                         "body": "Gain 4, Work 1, Harm 2\nSaving loses the basket."},
                         finding("P2", "Simpler: drop the cache → a dict")))
     env.commit(where, "app.py", "print('saved twice')\n")
     third = env.close(item)
@@ -562,6 +600,11 @@ def test_18_close(env, kind):
         "- Finding 2 (P2): Simpler: drop the cache → a dict (app.py:1): dismissed because known: "
         "below the bar (live with); Gain 2, Work 1, Harm 1"]
     assert env.gh_calls("pr", "ready") == [["pr", "ready", "7"], ["pr", "ready", "7", "--undo"]]
+
+    # Round two holds the P1 for the owner before another close can publish it.
+    assert f"Review round 2 of {item} reached the round limit with open findings, so Forge stopped." in third.stderr
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
 
     # A repo that allows no drafts (a private one on GitHub's free plan): the pull request opens,
     # and stays, ready for review, and forge-pr-check still blocks its merge.

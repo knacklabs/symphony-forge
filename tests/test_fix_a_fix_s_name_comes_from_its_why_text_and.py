@@ -34,10 +34,12 @@ def test_2_fix_amend_replaces_done_when_and_the_next_review_judges_it(env):
     because = "the greeting moved to the docs fix"
     _, where = _start(env, "--slug", "greet-readers")
     env.commit(where, "README.md", "Install with uv.\n")
-    env.reviews(blocked(finding("P1", f"Not done: {old}", "README.md")), CLEAN)
+    # Docs-only reviews now treat P1 as advisory; P0 still blocks until the contract changes.
+    env.reviews(blocked(finding("P0", f"Not done: {old}", "README.md")), CLEAN)
     assert env.close("greet-readers").returncode == 1
     assert f"Done when: {old}" in env.prompt()
 
+    # An open P0 goes straight back to repair; no owner review-stop choice is needed.
     amended = env.repo.forge("fix", "amend", "greet-readers", "--done", new, "--because", because)
 
     assert amended.returncode == 0, amended.stderr

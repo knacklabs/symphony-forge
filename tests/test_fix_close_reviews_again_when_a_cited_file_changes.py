@@ -8,7 +8,7 @@ STORY = "FIX-CLOSE-REUSES-AN-EARLIER-REVIEW-AFTER-A-N"
 
 
 def test_1_close_reviews_again_after_a_commit_changes_a_file_a_finding_cites(env):
-    item, where = env.start_fix()
+    item, where = env.start_task()
     env.commit(where, "plans/roadmap.json", '{"items": [{"key": "SHOP", "title": "Old"}]}\n')
     env.reviews(blocked(finding("P1", "Roadmap names the wrong title", "plans/roadmap.json")), CLEAN)
     first = env.close(item)

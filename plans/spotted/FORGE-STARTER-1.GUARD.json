@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/app_baseline.py\tNot done: `forge close` refuses a second UI component library",
+      "kind": "edge",
+      "path": "src/forge/app_baseline.py",
+      "line": 21,
+      "text": "Not done: `forge close` refuses a second UI component library",
+      "from": "review",
+      "item": "FORGE-STARTER-1/GUARD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/score.py\tNot done: Forge holds a hand-built UI component finding until it is fixed",
+      "kind": "edge",
+      "path": "src/forge/score.py",
+      "line": 39,
+      "text": "Not done: Forge holds a hand-built UI component finding until it is fixed",
+      "from": "review",
+      "item": "FORGE-STARTER-1/GUARD",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

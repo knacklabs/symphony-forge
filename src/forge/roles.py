@@ -99,6 +99,15 @@ def _chosen(cfg: dict[str, Any], kind: str, family: str, building: bool = False)
     return (model if model and (per_family or _family(model) == family) else ""), effort
 
 
+def subagent_defaults(cfg: dict[str, Any]) -> dict[str, str]:
+    """The Codex build subagent budget, falling back to lite when build leaves it out."""
+    for kind in ("build", "lite"):
+        entry = repo.models(cfg, kind, "codex")
+        if entry.get("subagents"):
+            return {"model": entry["subagents"], "effort": entry["subagent_effort"]}
+    return {}
+
+
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     wanted = {}
     for name, (kind, description, instructions) in ROLES.items():
@@ -106,6 +115,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         model, effort = _chosen(cfg, kind, "codex", building)
         if name in ("worker", "fixer") and not model:  # the built-in model forge work names
             model, effort = repo.worker_models(cfg, kind, "codex").values()
+        if building and (budget := subagent_defaults(cfg)):
+            model, effort = budget["model"], budget["effort"]
         wanted[f".codex/agents/{name}.toml"] = "".join([
             f"# {MARK}\n", f"name = {json.dumps(name)}\n", f"description = {json.dumps(description)}\n",
             f"model = {json.dumps(model)}\n" * bool(model),

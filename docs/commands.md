@@ -2,6 +2,7 @@
 
 | Command | What it does |
 |---|---|
+| `forge start "<idea>"` | Choose a fix, a plan, discovery or the idea list |
 | `forge init` | Sets up a new repo: `forge.toml`, the docs skeleton, the first commit, then `forge sync` |
 | `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
 | `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |
@@ -10,22 +11,24 @@
 | `forge migrate` | Moves a client from the copied-in Forge in one pull request |
 | `forge upgrade [release]` | Upgrades Forge to the release, or the newest: installs it, has it refresh Forge's files in a fix, and closes that fix |
 | `forge next` | Says where things stand and gives the exact next command |
-| `forge board` | Writes the plain-English board page and opens it (`--out <path>` to write it elsewhere) |
+| `forge board` | Opens the live board page on this computer until Ctrl-C (`--out <path>` writes every item's facts as JSON instead) |
 | `forge lanes --json` | Runs on this machine from repos on this Forge release |
 | `forge stop <item>` | Person only: stops the item's runs in this repo (`--repo <root>` or `--id <id>`) |
 | `forge story new <KEY> "<title>"` | Starts a story's branch, worktree and doc (`--from-fix <fix>` promotes a fix) |
+| `forge story drop <KEY> --because "<reason>"` | Drops a plan and keeps its remote branch |
 | `forge story done <KEY> "<outcome>"` | Corrects a finished story's outcome on an existing work branch; opens no separate pull request |
-| `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |
+| `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. After round two, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"` |
 | `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a developer and publishes the plan |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |
+| `forge fix drop <fix> --because "<reason>"` / `--undo` | Drops a fix with your reason, or brings it back, keeping its remote branch |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
-| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix's done-when; the old text and the reason stay in its record, and the next review judges the new text |
+| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Shows the old and new Done-when before it writes. Use --append "<text>" instead of --done to add text. The old text and reason stay in its record |
 | `forge work <item>` | Runs the worker on a task or fix: the first build, or a fix round (`--note "<text>"` guides that round) |
-| `forge close <item>` | Closes a task or fix by the close rule |
+| `forge close <item>` | Closes a task or fix; a fix gets one review round and a part two; open findings below P0 at the limit wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"`; an open P0 returns to the worker, and the same P0 after two worker rounds stops for the owner; docs-only changes skip local and generated CI tests, and the required tests check passes with a docs-only note |
 | `forge merge <item>` | Merges a ready item when the default branch allows agent merges; the story's last task records it done (`--outcome <sentence>` overrides its title) |
 | `forge merge enable` | Run by the repo owner in their own terminal: opens the change that lets the agent merge ready pull requests, for the owner to merge |
-| `forge land <item>` / `forge land --all` | Builds, closes, runs fix rounds and merges a task or fix where the repo allows agent merges; `--all` closes and merges every change in close, oldest first, several at a time; run it in the background |
+| `forge land <item>` / `forge land --all` | Builds, closes, runs at most one fix round and merges a task or fix where the repo allows agent merges; `--all` closes and merges every change in close, oldest first, several at a time; `--note "<text>"` guides one item's first round; run it in the background |
 | `forge spec save <slug>` | Saves a spec as a draft |
 | `forge spec confirm <slug> --by "<name>"` | Marks a spec confirmed after the human confirms it in chat |
 | `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |

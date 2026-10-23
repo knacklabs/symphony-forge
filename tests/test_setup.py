@@ -28,7 +28,7 @@ ROLE_FILES = {f"{folder}/{name}{suffix}" for name in (
 # The bundled plain English skill's files, the same in both hosts.
 PLAIN_ENGLISH = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.md",
                  "references/substitutions.md", "examples/before-after.md", "scripts/ste_check.py")
-LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
+LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".forge/records-only/action.yml", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
@@ -38,6 +38,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
             for name in ("SKILL.md", "NOTICE.md")),
           *(f"{host}/skills/simplified-technical-english/{name}" for host in (".claude", ".codex")
             for name in PLAIN_ENGLISH), *ROLE_FILES}
+LISTED.add(".forge/design/support.js")
 # The old first commit had only Forge docs and config; it now includes deploy files.
 SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
@@ -97,6 +98,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
     return log
 
 
+@pytest.mark.platform
 def test_28_sync(repo, tmp_path, monkeypatch):
     """Repos without Husky keep local shims and commit only the generated adapters."""
     _on_a_branch_with_forge_toml(repo)
@@ -162,9 +164,16 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert OLD_FORGE_HOOK not in commands and "Stop" not in settings["hooks"]
     # The repo's own Codex settings stay; Codex gets full access and hooks, and the old model pin goes.
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    # Sync now registers every shipped role with its description, rather than only reader.
+    registered = config.pop("agents")
     assert config == {"sandbox_mode": "danger-full-access", "approval_policy": "never",
-                      "features": {"web_search": True, "hooks": True},
-                      "agents": {"reader": {"config_file": "agents/reader.toml"}}}
+                      "features": {"web_search": True, "hooks": True}}
+    codex_roles = [Path(rel) for rel in ROLE_FILES if rel.startswith(".codex/")]
+    assert set(registered) == {path.stem for path in codex_roles}
+    for path in codex_roles:
+        role = tomllib.loads((repo.path / path).read_text(encoding="utf-8"))
+        assert registered[path.stem] == {"config_file": f"agents/{path.name}",
+                                         "description": role["description"]}
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
@@ -184,7 +193,7 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert calls.read_text(encoding="utf-8") == forge_calls
 
 
-def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedProcess[str]]:
+def _fresh_client(repo, gh, tmp_path: Path, *init_args: str) -> tuple[Path, subprocess.CompletedProcess[str]]:
     """A repo with no commits and an empty origin, set up with forge init."""
     client, remote = tmp_path / "client", tmp_path / "client.git"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
@@ -194,7 +203,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     # What GitHub answers for a branch with no protection yet.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", *init_args, cwd=client)
     if initialized.returncode == 0:
         # Init has installed the required checks; later commands see that protection.
         gh.respond("api", "repos/{owner}/{repo}/branches/main/protection",
@@ -203,6 +212,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     return client, initialized
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case, rows", [
     ("fresh", ()),
     # Claude's mod is optional: absence is advice, rather than a failed doctor check.
@@ -371,6 +381,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
             assert log.read_text(encoding="utf-8").count("hook deny\n") == 1
 
 
+@pytest.mark.platform
 def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path):
     _on_a_branch_with_forge_toml(repo)
     assert repo.forge("sync").returncode == 0

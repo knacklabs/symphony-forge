@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, doctor, machine, native, repo, score, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -24,15 +24,15 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes "
-    "back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the third round. "
-    "Wait for a recorded choice only after close has stopped the review loop. "
-    "Otherwise, fix the findings inside your Done-when in this round, including new findings "
-    "after a recorded narrow or split; do not ask for another choice unless close stops the loop again. "
-    "Read also stops after three blocked cold-read rounds only when a note at the bar has no scores or is a "
-    "disputed keep, or a note with Harm 3 or more is open. At a stop where every open note has Harm 1 or 2, "
-    "the coordinator chooses accept or narrow itself and tells the owner after; otherwise the owner chooses. The coordinator "
-    "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
+    "At the round limit (review round two for a story part, round one for a fix), close stops when "
+    "findings below P0 are still open. Wait for the owner's recorded choice of one more round, "
+    "split or accept. An open P0 never stops for the owner: fix it in this round. "
+    "When the same P0 stays open two rounds in a row, Forge stops and asks the owner. "
+    "A cold read stops after round two when notes below P0 are still open, or when P0 notes are "
+    "open in two rounds in a row. The coordinator records the owner's choice with "
+    "forge read <target> --resolve <accept|more|split> --reason \"<human's choice>\".")
+LIVE_RUN = ("Before review round two, run the real flow once (not tests or stubs). "
+            "Add `Live run: <what you ran> - <what you saw>` to your `Functional check:` paragraph.")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
@@ -51,6 +51,8 @@ COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review ca
                 "your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
+    "merged": ("The pull request for {item} is already merged. Start a new fix for follow-up work.",
+               'forge fix start "<why>" --done "<done when>"'),
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
     "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
               "forge work {item}"),
@@ -71,10 +73,16 @@ REFUSALS = {
 
 def checkout(item: str) -> tuple[re.Match[str], Path]:
     """Find a work checkout and refuse its unfinished merge before parsing any settings."""
+    task.require_active(item)
     match = repo.ITEM.fullmatch(item)
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
     branches = [f"task/{match['key']}-{match['task']}"] if match["task"] else [f"fix/{item}", f"forge/{item}"]
+    top = repo.root()
+    default = repo.default_branch(top)
+    git("fetch", "-q", "origin", default, cwd=top)
+    if task._merged(f"origin/{default}", item, top):
+        refuse(REFUSALS["merged"], item=item)
     trees = story.worktrees(Path.cwd())
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
@@ -89,15 +97,36 @@ def work(args: argparse.Namespace) -> None:
         _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
 
 
+def prepare(item: str) -> tuple[re.Match[str], Path, str]:
+    """Merge before even the pin check reads settings; work consumes this one-shot result."""
+    pending = repo.command_fact("prepared work", Path.cwd(), dict)
+    if item not in pending:
+        match, top = checkout(item)
+        default = repo.default_branch(top)
+        first = ""
+        with codex.hold(top, item, "Build"):
+            merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
+            if merged.returncode:
+                if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
+                    merged.check_returncode()
+                # Round records cannot commit during an unfinished merge. The full brief retries it.
+                git("merge", "--abort", cwd=top)
+                first = (f"First, finish the merge of origin/{default}: run git merge origin/{default}, "
+                         "resolve conflicts, and commit it before other work.\n\n")
+        pending[item] = match, top, first
+    return pending[item]
+
+
 def _work(args: argparse.Namespace) -> bool:
     item = args.item
     note = getattr(args, "note", None)
     if note is not None and not note.strip():
         refuse(REFUSALS["empty_note"], item=item)
-    match, top = checkout(item)
+    match, top, merge_first = prepare(item)
+    repo.command_fact("prepared work", top, dict).pop(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
-    from forge import close, nextstep, time_records  # close imports story, which imports this module
+    from forge import close, nextstep, review, time_records  # close imports story, which imports this module
     # GitHub is read only when this round answers or ends a wait on a person, never just to queue.
     asking = note is not None or codex.record(top, item).get("question") or time_records.pending_merge_wait(top, item)
     pr = close.branch_pr(top, state) if asking else None
@@ -134,7 +163,7 @@ def _work(args: argparse.Namespace) -> bool:
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     if not match["task"] and state.get("fix_kind"):
         kind = "Build" if state["fix_kind"] == "backend" else "Lite"
-    # Every check refuses before the status commit, so a refused call changes nothing.
+    # Readiness checks run before the round's status commit.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
@@ -193,22 +222,14 @@ def _work(args: argparse.Namespace) -> bool:
             elif not on_codex and previous:
                 fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
+        review.bound_review(top, item, state, state.get("review") or {})
         findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
-        if note is None and stop.get("by") == "default" and stop.get("worker_round") == state.get("round"):
-            note = ("Nobody answered the review loop stop in 30 minutes, so Forge recorded the repo's default "
-                    "choice: narrow this part to its Done-when lines. Follow-up fixes own the open findings ("
-                    + (", ".join(stop.get("fixes") or []) or "none") + "); remove what goes beyond the "
-                    "Done-when lines instead of fixing those findings here.")
-        elif note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
-            note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
-                    "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
-                    f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
-            if stop.get("area"):
-                note += f" Proposed for {stop['area']}: {stop['proposed']}."
+        if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
+            note = f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice."
         from forge import close  # close imports story, which imports this module
 
-        close.stuck_round(top, item, state, config, findings)
+        close.stuck_round(top, item, state, config)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -223,11 +244,14 @@ def _work(args: argparse.Namespace) -> bool:
             saved = session_record if is_native else session or codex.record(top, item)
             changes = _changes(top, saved.get("head") or saved["start"])
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
-                                continued=bool(thread), changes=changes)
+                                continued=bool(thread) and not merge_first, changes=changes)
         fresh_brief = None
         if thread:
             fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
                                    round_number)
+        brief = merge_first + brief
+        if fresh_brief:
+            fresh_brief = merge_first + fresh_brief
         state["status"] = "fixing" if findings or failing else "working"
         state["worker"] = family
         state["round"] = round_number
@@ -295,7 +319,7 @@ def _work(args: argparse.Namespace) -> bool:
                     repo.commit_state(f"{item} fell back to Codex",
                                       repo.write_state(item, state, top), top=top)
                     brief, fresh_brief = fresh_brief or brief, None
-                    if thread:
+                    if thread and not merge_first:
                         saved = codex.record(top, item)
                         fresh_brief = brief
                         brief, _ = _brief(match, top, state, findings, failing, note, question,
@@ -367,8 +391,10 @@ def questions(*answers: str) -> str:
 def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
     if (git("status", "--porcelain", "--", "forge.toml", cwd=top)
             and not task.settings_allowed(item, top, state)):
-        git("restore", "--source=HEAD", "--staged", "--worktree", "--", "forge.toml", cwd=top)
-        print("Restored uncommitted forge.toml changes from this branch; settings change in their own fix.",
+        merging = repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode == 0
+        source, name = ("MERGE_HEAD", "the incoming merge") if merging else ("HEAD", "this branch")
+        git("restore", f"--source={source}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+        print(f"Restored uncommitted forge.toml changes from {name}; settings change in their own fix.",
               flush=True)
 
 
@@ -385,7 +411,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
                   (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
                                                                           "claude"))
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
-    problem = None if native else codex.sdk_problem()  # native sessions need no driver SDK
+    problem = None if native else codex.sdk_problem(reuse=True)  # native sessions need no driver SDK
     if problem:
         refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
@@ -450,11 +476,12 @@ def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[
     """The open findings at the bar and the failing checks, close's own test run among them, once
     close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
-    review = state.get("review")
-    if not review:  # no review yet: no pull request to read checks from
+    result = state.get("review")
+    if not result:  # no review yet: no pull request to read checks from
         return [], tests
-    findings = [finding for finding in score.open_findings(review)
-                if score.holds(finding, review.get("blocking_level"))]
+    from forge import review
+
+    findings = [finding for _, finding in review.blocking(result)]
     return findings, tests + _failing(state.get("branch", ""))
 
 
@@ -485,6 +512,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         "checkout": top.resolve().as_posix(),
         "start_here": START_HERE,
         "review_loop": REVIEW_LOOP,
+        "live_run": LIVE_RUN,
         "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
@@ -500,8 +528,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
         subject = row.get("Name", "")
         moving = re.search(r"^New moving parts:.*", doc.get("Tasks", ""), re.M | re.S)
-        on |= {"task"} | ({"user-facing"} if row.get("User-facing", "").lower() in ("yes", "true")
-                          else set())
+        on.add("task")
+        user_facing = row.get("User-facing", "").lower() in ("yes", "true")
         values.update(
             title=doc["#"], what=doc.get("What changes for you", ""), why=doc.get("Why", ""),
             done="\n".join(story.item(parsed, n, n in covers) for n in parsed["done"]),
@@ -513,11 +541,14 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             existing_tests=_existing_tests(top, task.cell_list(row.get("Scope", ""))))
     else:
         on.add("fix")
+        user_facing = state.get("fix_kind") == "ui"
         subject = state.get("why", "")
         values.update(why=subject, done=state.get("done_when", ""),
                       interfaces=", ".join(f"`{pattern}`" for pattern in
                                            repo.config(top)["interfaces"]) or "none",
                       allowance=state.get("allow_large") or "No recorded allowance")
+    if user_facing:
+        on.add("user-facing")
     values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
                          f"Build {subject} for {match['key']}." if match["task"] else
                          f"Fix: {subject}.")
@@ -541,6 +572,8 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"
+        if user_facing:
+            brief += "\n" + LIVE_RUN + "\n"
         brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
                   "then commit any fixes before you stop. "
                   "This replaces any earlier full-suite instruction; CI runs the full suite.\n")

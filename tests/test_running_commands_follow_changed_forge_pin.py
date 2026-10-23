@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from conftest import FORGE_SHIM, REAL_UV, ROOT, _install
-from test_close import CLEAN, blocked, body, env, finding  # noqa: F401
+from conftest import FORGE_SHIM, IDLE_MACHINE, REAL_UV, ROOT, _install
+from test_close import body, env, run  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
-from test_land import ITEM, URL, _fix, _workers, land  # noqa: F401
+from test_land import ITEM, URL, _fix, _red_checks, _workers, land  # noqa: F401
 
 
 def _earlier_release(env, *, real_uv=False):
@@ -47,12 +47,16 @@ def _earlier_release(env, *, real_uv=False):
     # its actual close, tests, review and GitHub checks decide whether this command succeeds.
     _install(env.repo.bin, "uv", f'''#!{sys.executable}
 import json, os, pathlib, subprocess, sys
+# Match FORGE_SHIM's idle machine when the selected release runs in this process.
+if hasattr(os, "getloadavg"):
+    os.getloadavg = lambda: (0.0, 0.0, 0.0)
 args = sys.argv[1:]
 here = pathlib.Path(__file__).resolve().parent
 with open(here / "uv-calls.jsonl", "a", encoding="utf-8") as log:
     log.write(json.dumps({{"args": args, "cwd": os.getcwd()}}) + "\\n")
 os.environ["PATH"] = {json.dumps(selected_bin.as_posix())} + os.pathsep + os.environ["PATH"]
 sys.path.insert(0, {json.dumps((ROOT / 'src').as_posix())})
+{IDLE_MACHINE}
 if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
     program = args.index("python")
     assert args[program:program + 3] == ["python", "-I", "-c"], args
@@ -61,7 +65,7 @@ if args[:4] == ["run", "--isolated", "--no-project", "--with"]:
         bootstrap = "import sys; sys.path.insert(0, " + repr({json.dumps((ROOT / 'src').as_posix())}) + "); "
         command = [{json.dumps(REAL_UV)}, *args[:3], "--offline", "--no-python-downloads",
                    *args[5:program], *args[program:program + 3], bootstrap + args[program + 3]]
-        sys.exit(subprocess.run(command).returncode)
+        sys.exit(subprocess.run(command, timeout=180).returncode)
     exec(args[program + 3])
     sys.exit(0)
 assert args[:3] == ["tool", "run", "--from"], args
@@ -87,9 +91,12 @@ if (root / "forge.toml").read_text("utf-8") != {json.dumps(upgraded)}:
     (root / "forge.toml").write_text({json.dumps(upgraded)}, encoding="utf-8")
     for args in (["add", "forge.toml"], ["commit", "-q", "-m", "Upgrade Forge"],
                  ["push", "-q", "origin", "main"]):
-        subprocess.run(["git", "-C", str(root), *args], check=True)
-subprocess.run(["git", "fetch", "-q", "origin"], check=True)
-subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
+        subprocess.run(["git", "-C", str(root), *args], check=True,
+                       stdin=subprocess.DEVNULL, timeout=60)
+subprocess.run(["git", "fetch", "-q", "origin"], check=True,
+               stdin=subprocess.DEVNULL, timeout=60)
+subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True,
+               stdin=subprocess.DEVNULL, timeout=60)
 '''
     upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
     module.write_text(worker.replace('    if not int(os.environ.get(',
@@ -99,6 +106,7 @@ subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True)
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
 @pytest.mark.parametrize("stage", ["land-build", "land-fix", "close-merge", "land-merge",
                                    "land-guide-conflict", "close-guide-conflict"])
+@pytest.mark.platform
 def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         land, adoption, stage, monkeypatch):
     env = land
@@ -117,6 +125,13 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     original = original.replace('workers = "codex"', 'workers = "claude"')
     original = original.replace('model = "gpt-6.1-sol"', 'model = "opus"')
     original = re.sub(r'^subagents = .*\n|^subagent_effort = .*\n', '', original, flags=re.M)
+    if stage == "land-fix":
+        # A fix's first P1 is now a follow-up. A real failed test still needs a repair round.
+        suite = env.tmp / "suite.py"
+        suite.write_text('import pathlib, sys\nsys.exit(not pathlib.Path("work-1.txt").exists())\n',
+                         "utf-8")
+        original = ("test = " + json.dumps(f'"{sys.executable}" "{suite}"') + "\n"
+                    + re.sub(r'^test = .*\n', '', original, flags=re.M))
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
     guide_conflict = stage.endswith("guide-conflict")
     guide = ".codex/skills/forge/SKILL.md"
@@ -143,8 +158,6 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
             env.gh.respond("pr", "list", "--head", stdout='[{"number":7,"state":"OPEN",'
                            '"body":"","isDraft":true,"mergeStateStatus":"BEHIND"}]')
     else:
-        if stage == "land-fix":
-            env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN)
         _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
@@ -189,7 +202,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     assert Path(dispatch["cwd"]) == where
 
 
-def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin(
+def test_2_land_keeps_its_one_fix_round_limit_after_the_worker_changes_the_pin(
         land, monkeypatch):
     env = land
     current = env.repo.forge("--version").stdout.split()[-1]
@@ -198,28 +211,26 @@ def test_2_land_keeps_its_three_fix_round_limit_after_the_worker_changes_the_pin
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")
     env.repo.git("push", "-q", "origin", "main")
     where = _fix(env, "working", worked=True)
-    # The tests pass once, after the second fix round, whose review finds something new, so no two
-    # rounds in a row leave the same problem for the stuck rule; land's own limit still stops it.
-    suite = env.tmp / "suite.py"
-    suite.write_text('import pathlib, sys\nsys.exit(not pathlib.Path("work-2.txt").exists() '
-                     'or pathlib.Path("work-3.txt").exists())\n', "utf-8")
-    failing_test = json.dumps(f'"{sys.executable}" "{suite}"')
+    # Persistent CI failures still need repair rounds. P1s no longer block a fix, and P0s
+    # stop for the owner; clean reviews leave land's own one-round budget in charge.
+    env.checks([run("tests", "failure"), run("forge-pr-check")])
+    _red_checks(env)
     upgraded = original.replace('version = "v1.2.2"',
-        f'version = "{current}"\nfast_test = {failing_test}\ntest = {failing_test}')
-    env.reviews(blocked(finding("P1", "The greeting needs fixing")), CLEAN,
-                blocked(finding("P1", "The greeting is too long", "work-2.txt")), CLEAN)
+        f'version = "{current}"\nfast_test = ""')
     _worker_merges_upgrade(env, upgraded)
     _earlier_release(env)
     monkeypatch.setenv("FORGE_PINNED_RUN", "v1.2.2")
     done = env.repo.forge("land", ITEM, cwd=where)
     assert done.returncode == 1, done.stdout + done.stderr
-    assert len(_workers(env)) == 3, done.stdout + done.stderr
-    assert f"Stopped after 3 fix rounds: {ITEM} still has the failing tests." in done.stdout
+    assert len(_workers(env)) == 1, done.stdout + done.stderr
+    assert all("no greeting in README" in worker["brief"] for worker in _workers(env))
+    assert f"Stopped after one fix round: {ITEM} still has the failing checks." in done.stdout
     notice = (f"Forge pin changed from v1.2.2 to {current}; "
               f"continuing forge land with {current}.")
     assert (done.stdout + done.stderr).splitlines().count(notice) == 1
     assert "Ready:" not in done.stdout
-    assert not env.gh_calls("pr", "ready")
+    assert "Checks failed on the pull request: tests." in done.stderr
+    assert not env.gh_calls("pr", "merge")
     [dispatch] = [json.loads(line) for line in
                   (env.repo.bin / "uv-calls.jsonl").read_text("utf-8").splitlines()]
     assert dispatch["args"] == ["tool", "run", "--from",

@@ -16,7 +16,7 @@ or the coordinating session's `reader` subagent when the other tool is unavailab
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.0.0
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.20
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -85,8 +85,9 @@ prototype and answers strictly reviewed before the customer is asked: write the 
 `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
 `forge decision accept`, which runs the review and either names the gaps or says you can now ask
 the customer's named person for sign-off.
-The customer's named person approves the demo and the quoted answers; fill in their reply and run
-`forge decision accept` again to record it.
+The customer's named person approves the demo and the quoted answers. Set `approved_via` to
+`email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
+to record it.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
 use `forge roadmap add` when planning from a confirmed spec. Promotion from a fix keeps its
@@ -101,6 +102,11 @@ Forge's own repo keeps its existing story flow. For the full sign-off contract, 
 See the [command list](commands.md) for every Forge command.
 
 You never run the hook commands yourself: git, the host hooks and CI call them.
+
+`forge board` opens the board as a live page on this computer. It serves the page on 127.0.0.1
+with a per-run token in the address, so only this computer can open it, and the page refreshes by
+itself when the work changes. Press Ctrl-C to stop it. `forge board --json` prints the current
+work as JSON, and `--out <path>` writes every item's facts, finished ones included, as JSON.
 
 ## How a story runs
 
@@ -292,6 +298,31 @@ When the pytest selection would cover more than a third of the repo's Python tes
 (shared test inputs select them all), close skips the local run, says so in one line, and
 relies on the pull request's required checks. `forge test` still runs its tests. New repos
 get this from init; existing repos get it on upgrade.
+
+Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
+After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.
+Give the job `contents: read` and `actions: read` permissions, and fetch the full history.
+The runner needs Python, Bash and the GitHub CLI, as GitHub-hosted runners provide.
+Add the condition below to each later step that can skip the records commit:
+
+```yaml
+permissions:
+  contents: read
+  actions: read
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0
+  - {id: forge-records, uses: ./.forge/records-only}
+  - if: steps.forge-records.outputs.records_only != 'true'
+    run: your-build-command
+```
+
+The output is `records_only=true` only for a push or pull request whose parent passed this
+same workflow. The step uses Forge's existing close-record rule. Code changes, documentation
+changes, a failed parent run or missing proof produce `false`, so the workflow runs normally.
+For pull requests, the parent must also include the current base and its run must cover that base.
+Each job that uses the step skips only its guarded steps.
 
 ## Parts that build on reviewed work
 

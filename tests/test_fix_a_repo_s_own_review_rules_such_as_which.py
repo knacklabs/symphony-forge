@@ -46,7 +46,8 @@ def test_1_every_review_gets_the_repo_s_review_rules_from_the_default_branch(env
 def test_2_a_repo_without_review_rules_gets_no_extra_text(env):
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0
-    assert "review rules" not in env.prompt().lower()
+    # Generic guidance names Review rules; only the optional repository section is absent.
+    assert "## This repository's review rules" not in env.prompt()
 
 
 def test_3_the_skill_and_agents_template_tell_clients_the_section_exists(env):

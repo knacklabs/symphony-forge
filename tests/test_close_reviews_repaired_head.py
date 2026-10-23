@@ -12,11 +12,12 @@ from test_close_holds_after_three_blocked_reviews import client_item
 STORY = "review-current-head"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "earlier-adoption"])
 @pytest.mark.parametrize("command", ["close", "land"])
 def test_1_close_and_land_review_the_repaired_head_before_reusing_blocking_findings(
         env, tmp_path, monkeypatch, previous, command):
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=True)
     path = "docs/product/BRIEF.md"
     env.repo.git("checkout", "-q", "-b", "fix/default-greeting")
     env.commit(env.repo.path, ".factory/fixes/default-greeting.json", json.dumps({

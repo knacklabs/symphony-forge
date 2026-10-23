@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/conftest.py\tProcess leak reports can print inherited secrets from the process environment.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 386,
+      "text": "Process leak reports can print inherited secrets from the process environment.",
+      "from": "worker",
+      "item": "FORGE-ROUNDS-1/STOP",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -99,13 +99,16 @@ def _draft_clash(env, require_current):
     env.commit(env.repo.path, "NEWS.md", "Old news\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
-    env.reviews(blocked(finding("P1", "Greeting needs final text")), CLEAN)
+    # A fix's P1 at the bar stops for the owner's repair choice.
+    env.reviews(blocked({**finding("P1", "Greeting breaks the main path"), "body": "Gain 4, Work 1, Harm 2\nThe greeting is incomplete."}), CLEAN)
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
-    assert "The review left serious findings open:" in first.stderr
+    assert "reached the round limit with open findings, so Forge stopped." in first.stderr
     created = env.gh_calls("pr", "create")[-1]
     assert "--draft" in created
     _draft_pull_request(env, body(created), require_current)
+    resolved = env.close(item, "--resolve", "more", "--reason", "Repair the greeting before release")
+    assert resolved.returncode == 0, resolved.stdout + resolved.stderr
     env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
     advanced = env.commit(env.repo.path, "NEWS.md", "New news from another change\n")
     env.repo.git("push", "-q", "origin", "main")
@@ -139,9 +142,16 @@ def test_1_close_rounds_leave_unrelated_main_changes_out_of_the_pull_request(env
     env.reviews(blocked(finding("P1", "Greeting needs the final text")), CLEAN)
 
     first = env.close(item)
+    # The owner accepts the finding; a later edit still needs review against its own diff.
     assert first.returncode == 1, first.stdout + first.stderr
-    assert "The review left serious findings open:" in first.stderr
-    _open_pr(env, body(env.gh_calls("pr", "create")[-1]))
+    env.open_pr(body(env.gh_calls("pr", "create")[-1]), draft=True)
+    accepted = env.close(item, "--resolve", "accept", "--reason", "Keep the greeting for this version")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "Ready:" in accepted.stdout
+    content = body((env.gh_calls("pr", "edit") or env.gh_calls("pr", "create"))[-1])
+    assert "Greeting needs the final text" in content
+    assert "dismissed because Human accepted the remaining finding: Keep the greeting for this version" in content
+    _open_pr(env, content)
     env.commit(where, "app.py", "print('hello')\n", "Finish the greeting")
     env.commit(env.repo.path, "NEWS.md", "Another unrelated change landed\n")
     env.repo.git("push", "-q", "origin", "main")

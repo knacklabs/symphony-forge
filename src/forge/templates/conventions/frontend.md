@@ -6,17 +6,23 @@ changes a screen.
 ## Layout
 
 ```
-frontend/src/
+apps/web/src/
+  app.tsx           React Router routes
   main.tsx
-  api.ts            one fetch wrapper: base URL, auth header, unwraps the envelope, throws errors, sends an x-correlation-id
-  pages/            one file per screen
+  features/
+    <feature>/
+      hooks/
+      pages/        screens for the feature
   components/ui/    shadcn/ui components (generated; change them through shadcn)
-  components/       the app's own components, grouped by domain
+  components/       shared app components
+  lib/              API client and utilities
 ```
 
-Error codes and their user messages live in `packages/shared`.
+Error codes and their user messages live in `libs/shared`.
+Use one fetch wrapper for the base URL and auth header. It unwraps the response envelope,
+throws errors, and sends an `x-correlation-id` header.
 
-Start with a router (TanStack Router) for the app shell, sign-in, protected routes, and 404/403
+Start with React Router for the app shell, sign-in, protected routes, and 404/403
 pages.
 
 ## Server data

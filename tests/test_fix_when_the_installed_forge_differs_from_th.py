@@ -11,6 +11,10 @@ from pathlib import Path
 from conftest import _install
 from test_upgrade_pending import OLD, _pin_old, _refused_as_today, _upgrade
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "when-the-installed-forge-differs-from-th"
 
 # uv stands in at its edge: it records each call, then answers as the release it would run.

@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +43,8 @@ REFUSALS = {
                  'forge fix start "<why>" --done "<done when>" --slug <name>'),
     "amend_lines": ("A new done-when needs one line of text and a one-line reason.",
                     'forge fix amend {fix} --done "<done when>" --because "<why>"'),
+    "amend_choice": ("Use either --done to replace the Done-when or --append to add to it.",
+                     'forge fix amend {fix} --append "<text>" --because "<why>"'),
 }
 
 
@@ -99,6 +102,28 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
     return None
 
 
+def restore_default_settings(item: str, top: Path, state: dict[str, Any], default: str) -> None:
+    """Close keeps the default branch's settings unless this item's Done-when permits edits."""
+    if state.get("kind") in ("migrate", "adopt") or settings_allowed(item, top, state) or not git(
+            "diff", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top):
+        return
+    head = git("show", "HEAD:forge.toml", cwd=top)
+    current = tomllib.loads(head)
+    incoming = tomllib.loads(git("show", f"origin/{default}:forge.toml", cwd=top))
+    current.pop("version", None)
+    incoming.pop("version", None)
+    if current == incoming:
+        return
+    pin = re.search(r"^version[ \t]*=.*$", head, re.M)[0]
+    git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+    path = top / "forge.toml"
+    text = re.sub(r"^version[ \t]*=[^\r\n]*", lambda _: pin, path.read_bytes().decode("utf-8"),
+                  count=1, flags=re.M)
+    path.write_bytes(text.encode("utf-8"))
+    if repo.commit_state(f"Keep {default}'s settings", "forge.toml", top=top):
+        print(f"Kept {default}'s settings in forge.toml and this branch's version pin.", flush=True)
+
+
 def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
     """Only this item's own Done-when can permit forge.toml edits."""
     done = state.get("done_when", "")
@@ -108,7 +133,10 @@ def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
         text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
         row = rows(sections(text)).get(match["task"], {})
         covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
-        parsed = story.parse(text)
+        try:
+            parsed = story.parse(text)
+        except ValueError as exc:
+            refuse(story.REFUSALS["bad_doc"], doc=f"plans/{match['key']}.md", problem=exc)
         done = "\n".join(story.item(parsed, n, True) for n in parsed["done"] if n in covers)
     return "forge.toml" in done
 
@@ -266,7 +294,7 @@ def start(args: argparse.Namespace) -> None:
     if not match or not match["task"]:
         refuse(REFUSALS["bad_task"], item=item)
     key, task = match["key"], match["task"]
-    from forge import story  # story imports this module's helpers
+    from forge import design, story  # story imports this module's helpers
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
     published = story.plan_ref(top, key)
@@ -294,6 +322,7 @@ def start(args: argparse.Namespace) -> None:
         story.parse(text, repo.root(), key=key)
     except ValueError as exc:
         refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
+    design_folder = design.check(top, text, source, required=False)
     notes = show(source, notes_rel)
     if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)
@@ -371,7 +400,7 @@ def start(args: argparse.Namespace) -> None:
     if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
         print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
     base = stacked or start_base(main, key, tasks[task])
-    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
+    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel, design_folder) if rel and show(source, rel) is not None]
              ) if source != base else None
     # Earlier approvals keep their agreed parts, including ones not started yet.
     state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
@@ -491,8 +520,11 @@ def _one_line(text: str) -> bool:
     return bool(text.strip()) and "\n" not in text.strip()
 
 
-def require_prototype_design(top: Path) -> None:
-    """Unsigned-prototype UI gate: DESIGN fills this hook with the approved-design check."""
+def require_prototype_design(top: Path, base: str = "HEAD") -> None:
+    """Unsigned-prototype UI fixes wait for the accepted design decision."""
+    from forge import design
+
+    design.require_prototype(top, base)
 
 
 def fix_start(args: argparse.Namespace) -> None:
@@ -515,10 +547,12 @@ def fix_start(args: argparse.Namespace) -> None:
     fix_kind = args.kind
     if prototype and fix_kind is None:
         refuse(REFUSALS["fix_kind"])
-    if prototype and fix_kind == "ui":
-        require_prototype_design(top)
     parent = branch_item(repo.current_branch(top), top)
+    if parent:
+        require_active(parent[0], top)
     base = "HEAD" if parent and not _merged(main, parent[0]) else main
+    if prototype and fix_kind == "ui":
+        require_prototype_design(top, base)
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),
              "fix_kind": fix_kind or "mechanical"}
     if base == "HEAD":
@@ -529,7 +563,7 @@ def fix_start(args: argparse.Namespace) -> None:
     print(f"Started fix {name} on fix/{name} in {path}")
     if name != slug:
         print(f"Fix name {slug} is already taken; using {name}.")
-    print(f"Next: forge work {name}")
+    print(f"Next: forge {getattr(args, 'next', 'work')} {name}")
 
 
 def allow_large(args: argparse.Namespace) -> None:
@@ -549,22 +583,147 @@ def allow_large(args: argparse.Namespace) -> None:
 
 
 def amend(args: argparse.Namespace) -> None:
-    if not (_one_line(args.done) and _one_line(args.because)):
+    if (args.done is None) == (args.append is None):
+        refuse(REFUSALS["amend_choice"], fix=args.item)
+    text = args.done if args.done is not None else args.append
+    if not (_one_line(text) and _one_line(args.because)):
         refuse(REFUSALS["amend_lines"], fix=args.item)
     from forge import close  # close imports story, which imports this module
     top = close._worktree(args.item)
     state = repo.read_state(args.item, top) or {}
+    old = state.get("done_when", "")
+    new = text.strip() if args.done is not None else f"{old} {text.strip()}"
+    print(f"Old Done-when:\n{old}\nNew Done-when:\n{new}", flush=True)
     # The old text and the reason stay in the record; the next review reads only done_when.
     state.setdefault("amendments", []).append(
-        {"done_when": state.get("done_when", ""), "because": args.because.strip(), "at": repo.now()})
-    state["done_when"] = args.done.strip()
+        {"done_when": old, "because": args.because.strip(), "at": repo.now()})
+    state["done_when"] = new
     # The review reads Ruling: lines from the branch's commits, so it drops findings on the old text.
-    ruling = (f'Ruling: Done-when changed from "{state["amendments"][-1]["done_when"]}" to '
-              f'"{state["done_when"]}" because {args.because.strip()}; judge the new text.')
+    ruling = (f'Ruling: Done-when changed from "{old}" to '
+              f'"{new}" because {args.because.strip()}; judge the new text.')
     repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
                       repo.write_state(args.item, state, top), top=top)
     print(f"Fix {args.item} is now done when: {state['done_when']}")
     print(f"Next: forge close {args.item}")
+
+
+def require_active(item: str, top: Path | None = None) -> None:
+    """A retained checkout cannot resume a dropped fix without an explicit restore."""
+    from forge import nextstep
+
+    if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", item):
+        top = top or repo.root()
+        for branch in (f"fix/{item}", f"forge/{item}"):
+            if nextstep.remote_state(top, item, branch).get("status") == "dropped":
+                raise repo.Refused(f"Fix {item} is dropped.", f"forge fix drop {item} --undo")
+
+
+def fix_drop(args: argparse.Namespace) -> None:
+    from forge import close, codex, machine, story
+
+    item = args.item
+    command = f'forge fix drop {item} --undo' if args.undo else f'forge fix drop {item} --because "<reason>"'
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", item):
+        raise repo.Refused("Give the name of a fix to drop or restore.", "forge next")
+    if bool(args.undo) == bool(args.because) or (args.because is not None and not _one_line(args.because)):
+        raise repo.Refused("Give one reason with --because, or use --undo to restore the fix.", command)
+    top = repo.root()
+    main = main_ref()
+    branch, rel = f"fix/{item}", repo.state_path(item)
+    remote = f"origin/{branch}"
+    trees = story.worktrees(top)
+    path = trees.get(branch)
+    local = show(branch, rel, top)
+    published = show(remote, rel, top)
+    state = json.loads((local if local else published) or "{}")
+    if not state or state.get("branch") != branch or state.get("kind") != "fix":
+        raise repo.Refused(f"Fix {item} has not started.", "forge next")
+    if path and git("status", "--porcelain", "--untracked-files=all", cwd=path):
+        raise repo.Refused(f"Fix {item} has uncommitted changes. Commit or set them aside first.", command)
+    root = machine.main_checkout(top)
+    held = any(entry.get("item") == item and entry.get("repo_root") == root.as_posix()
+               for entry in machine.entries())
+    lock = codex._item_file(top, item, ".lock", "Build")
+    if held or lock.exists() and codex._alive(codex._json(lock)) is not False:
+        raise repo.Refused(f"A Forge run on this machine holds fix {item}. Wait for it to finish.", command)
+    prs = json.loads(close._gh(top, "pr", "list", "--head", branch, "--state", "all",
+                             "--json", "number,state"))
+    if _merged(main, item, top) or any(pr.get("state") == "MERGED" for pr in prs):
+        raise repo.Refused(f"Fix {item} is already merged. Start a new fix instead.",
+                           'forge fix start "<why>" --done "<done when>"')
+    if not args.undo:
+        dependents = set()
+        refs = git("for-each-ref", "--format=%(refname)", "refs/heads/fix/",
+                   "refs/remotes/origin/fix/", cwd=top).splitlines()
+        for ref in refs:
+            name = ref.split("/fix/", 1)[1]
+            # The published record wins over a stale local checkout after another machine drops it.
+            text = show(f"origin/fix/{name}", repo.state_path(name), top) or show(ref, repo.state_path(name), top)
+            other = json.loads(text or "{}")
+            if (other.get("stacked_on") == item and other.get("status") != "dropped"
+                    and not _merged(main, name, top)):
+                dependents.add(name)
+        if dependents:
+            raise repo.Refused(f"Open fixes stacked on {item}: {', '.join(sorted(dependents))}. "
+                               "Drop or finish them first.", "forge next")
+    # Reconcile before writing the record; fast-forward only, so local work is never overwritten.
+    if published and local and run("git", "merge-base", "--is-ancestor", remote, branch, cwd=top).returncode:
+        if run("git", "merge-base", "--is-ancestor", branch, remote, cwd=top).returncode:
+            raise repo.Refused(f"Local and remote work for {item} differ. Reconcile the branch first.", command)
+    if args.undo and (json.loads(published or local or "{}").get("status") != "dropped"):
+        raise repo.Refused(f"Fix {item} is not dropped.", "forge next")
+    if path is None:
+        path = _folder(f"fix-{item}")
+        if local:
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+        else:
+            git("worktree", "add", "-q", "-b", branch, str(path), remote, cwd=top)
+    if published:
+        git("merge", "--ff-only", "--no-overwrite-ignore", remote, cwd=path)
+    state = repo.read_state(item, path) or {}
+    if args.undo:
+        dropped = state["drop"]
+        if number := dropped.get("pull_request"):
+            if any(pr.get("number") == number and pr.get("state") == "CLOSED" for pr in prs):
+                close._gh(path, "pr", "reopen", str(number))
+        previous = dropped["status"]
+        state["status"] = "waiting for checks" if previous == "ready" else previous
+        dropped["restored_at"] = repo.now()
+        repo.add_step(state, "restore")
+        repo.commit_state(f"Restore the fix: {state['why']}", repo.write_state(item, state, path), top=path)
+        git("push", "-q", "--set-upstream", "origin", branch, cwd=path)
+        print(f"Restored fix {item} in {path}.")
+        next_command = "close" if previous in ("ready", "waiting for checks", "reviewing") else "work"
+        print(f"Next: forge {next_command} {item}")
+    else:
+        git("push", "-q", "--set-upstream", "origin", branch, cwd=path)
+        pr = next((pr for pr in prs if pr.get("state") == "OPEN"), None)
+        if state.get("status") != "dropped":
+            state["drop"] = {"because": args.because.strip(), "by": git("var", "GIT_AUTHOR_IDENT", cwd=path),
+                             "at": repo.now(), "status": state.get("status", "started")}
+            if pr:
+                state["drop"]["pull_request"] = pr["number"]
+            state["status"] = "dropped"
+            repo.add_step(state, "drop")
+            repo.commit_state(f"Drop the fix: {state['why']}", repo.write_state(item, state, path), top=path)
+            git("push", "-q", "origin", branch, cwd=path)
+        if pr:
+            close._gh(path, "pr", "close", str(pr["number"]), "--comment", state["drop"]["because"])
+        ignored = git("ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z", cwd=path)
+        rebuildable = {".venv", "node_modules", ".pytest_cache", "__pycache__", "dist", "build"}
+        kept = [name for name in ignored.split("\0") if name and not any(
+            part in rebuildable and path.joinpath(*Path(name).parts[:index + 1]).is_dir()
+            and not path.joinpath(*Path(name).parts[:index + 1]).is_symlink()
+            for index, part in enumerate(Path(name).parts))]
+        print(f"Dropped fix {item}. Its remote branch keeps the work.")
+        if kept:
+            print(f"Kept the worktree for ignored paths: {', '.join(kept)}")
+        elif path.resolve() == root:
+            print("Kept the main checkout. Its fix is still dropped.")
+        else:
+            git("worktree", "remove", "--force", str(path), cwd=root)
+            git("branch", "-d", branch, cwd=root)
+    (repo.forge_dir(top if top.exists() else root) / "prs-cache.json").unlink(missing_ok=True)
 
 
 COMMANDS = [
@@ -584,15 +743,21 @@ COMMANDS = [
               (('--slug',), {"metavar": "NAME", "help": "the fix's name, instead of one cut from the why"})],
      "position": 110,
      "listing": '| `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |'},
+    {"words": "fix drop", "run": "fix_drop", "changes_state": True,
+     "help": "Drop a fix with a reason, or restore it with --undo",
+     "args": [(("item",), {"metavar": "FIX"}), (("--because",), {"metavar": "REASON"}),
+              (("--undo",), {"action": "store_true"})], "position": 115,
+     "listing": '| `forge fix drop <fix> --because "<reason>"` / `--undo` | Drops a fix with your reason, or brings it back, keeping its remote branch |'},
     {"words": "fix allow-large", "run": "allow_large", "changes_state": True,
      "help": "Record the human's permission for this fix to go over the fix limit",
      "args": [(('reason',), {})], "position": 120,
      "listing": '| `forge fix allow-large "<reason>"` | Records the human\'s permission for a fix to go over the fix limit |'},
     {"words": "fix amend", "run": "amend", "changes_state": True,
-     "help": "Replace a fix's done-when, keeping the old text and the reason in its record",
-     "args": [(('item',), {"metavar": "FIX"}), (('--done',), {"required": True, "metavar": "DONE_WHEN"}),
+     "help": "Show the old and new Done-when, then replace it with --done or add text with --append",
+     "args": [(('item',), {"metavar": "FIX"}), (('--done',), {"metavar": "DONE_WHEN"}),
+              (('--append',), {"metavar": "TEXT"}),
               (('--because',), {"required": True, "metavar": "WHY"})], "position": 125,
-     "listing": '| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix\'s done-when; the old text and the reason stay in its record, and the next review judges the new text |'},
+     "listing": '| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Shows the old and new Done-when before it writes. Use --append "<text>" instead of --done to add text. The old text and reason stay in its record |'},
 ]
 
 GROUP_HELP = {
