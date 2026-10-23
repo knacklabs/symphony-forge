@@ -59,6 +59,10 @@
     {
       "at": "2026-10-23T14:41:37.316273+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-23T16:03:27.997674+00:00",
+      "step": "read"
     }
   ],
   "title": "Prototypes start from an approved design and reach sign-off faster, and signed-off work ships without redoing it",
