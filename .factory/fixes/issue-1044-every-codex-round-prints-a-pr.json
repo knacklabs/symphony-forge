@@ -1,0 +1,15 @@
+{
+  "base": "6199416464e87e74326e1f066100bdcec2af4a24",
+  "branch": "fix/issue-1044-every-codex-round-prints-a-pr",
+  "done_when": "A Codex round on a new conversation prints no project_skipped error, and the chat project is still set once the thread has a rollout",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-23T16:46:45.914436+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Issue #1044: every Codex round prints a project_skipped chat project error because Forge updates the thread metadata before the new thread has a rollout"
+}
