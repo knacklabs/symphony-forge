@@ -4,12 +4,20 @@
   "done_when": "A run waiting in line names each item holding a place, with forge handback or forge stop as the command that frees it, and a place whose owning process has exited is freed.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-23T14:24:02.807192+00:00",
       "step": "start"
     }
   ],
-  "why": "Waiting runs sit for hours behind places held by native rounds that were never handed back, and the waiting line gives no name or freeing command; a close whose process has exited must also stop holding a place."
+  "stuck": {
+    "close": null,
+    "head": "3e5427cd8902b961f64df0785cd0e2fbf661432b",
+    "keys": {},
+    "round": null
+  },
+  "why": "Waiting runs sit for hours behind places held by native rounds that were never handed back, and the waiting line gives no name or freeing command; a close whose process has exited must also stop holding a place.",
+  "worker": "codex"
 }
