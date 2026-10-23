@@ -841,7 +841,7 @@ marked later. Settle every open must-answer topic in that call: `forge next` lis
 missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
 our default or the agent, so record each as the client, salesperson or developer answered it. Then
 write `forge decision new
-client-signoff` (customer, demo address, and the answers page copied word for word, leaving
+client-signoff` (customer, demo address for a working build, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded. Put `docs/design/prototype/ (<tree id>)` under `## Signed design`,
 demo outcomes and their tests under `## Proof` for a working build, and settled choices under `## Decisions`.

@@ -107,7 +107,7 @@ prototype and answers strictly reviewed before the customer is asked: write the 
 `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
 `forge decision accept`, which runs the review and either names the gaps or says you can now ask
 the customer's named person for sign-off.
-The customer's named person approves the demo and the quoted answers. Set `approved_via` to
+The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
 `email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
 to record it. Put the folder and tree id under `## Signed design`, demo outcomes and their tests
 under `## Proof` for a working build, and settled choices under `## Decisions`.
@@ -145,7 +145,8 @@ work as JSON, and `--out <path>` writes every item's facts, finished ones includ
 
 ## How a story runs
 
-In a client repo, finish the prototype review and customer sign-off above before starting here.
+In a client repo, finish the canvas checks and customer sign-off above before starting here.
+A working prototype also needs its strict whole-product review.
 
 1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
    add its stories with `forge roadmap add <spec>` as before.

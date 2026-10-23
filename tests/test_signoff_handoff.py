@@ -52,6 +52,9 @@ def test_1_first_and_second_stories_keep_signed_off_evidence(
         repo, tmp_path, monkeypatch, working_build):
     fix, answers, _ = _client(repo, tmp_path, monkeypatch, working_build=working_build)
     page = _decision(fix, answers, proof=PROOF if working_build else "")
+    # A coordinator can keep the sign-off template's comment beside the signed folder.
+    page.write_text(page.read_text("utf-8").replace(
+        "## Signed design\n", "## Signed design\n<!-- The approved canvas follows. -->\n"), encoding="utf-8")
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
     tree = repo.git("rev-parse", "HEAD:docs/design/prototype", cwd=fix)

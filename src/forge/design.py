@@ -32,9 +32,10 @@ def handoff(top: Path) -> dict[str, str]:
                     for heading in records.SIGNOFF_SECTIONS if sections.get(heading, "").strip()]
         if evidence:
             result["proven"] = "## Proven by the prototype\n\n" + "\n\n".join(evidence)
-        signed = sections.get("Signed design", "").strip()
-        if re.fullmatch(r"docs/design/[^/\s]+/ \(([0-9a-f]{40}|[0-9a-f]{64})\)", signed):
-            result["design"] = f"Design: {signed}"
+        signed = re.search(r"^docs/design/[^/\s]+/ \((?:[0-9a-f]{40}|[0-9a-f]{64})\)[ \t]*$",
+                           sections.get("Signed design", ""), re.M)
+        if signed:
+            result["design"] = f"Design: {signed[0].strip()}"
         return result  # Older sign-offs may have none of these sections; invent no evidence.
     return result
 
