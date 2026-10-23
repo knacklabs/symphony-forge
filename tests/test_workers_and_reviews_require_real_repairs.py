@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from test_close import env  # noqa: F401
+from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
 from test_worker import calls, install_claude
 
@@ -76,6 +76,7 @@ def test_1_workers_and_reviews_receive_real_repair_rules(
                 assert phrase in standards, (host, phrase)
 
     env.commit(where, "app.py", "print('hello')\n", "Repair the greeting")
+    env.checks(GREEN)  # Init configures protection through the same external GitHub stub.
     closed = repo.forge("close", "repair-the-greeting", cwd=where)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     review = " ".join(env.prompt().split())
