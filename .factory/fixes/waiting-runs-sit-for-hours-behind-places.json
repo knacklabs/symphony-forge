@@ -1,6 +1,13 @@
 {
   "base": "caf2319987b44e920530f4db7dde8019c9f0b20a",
   "branch": "fix/waiting-runs-sit-for-hours-behind-places",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16925-f5fc-7da0-bc41-6208492f984b",
+    "head": null,
+    "start": "2fd310858c878ed224d7496830f8762fd3bd24df"
+  },
   "done_when": "A run waiting in line names each item holding a place, with forge handback or forge stop as the command that frees it, and a place whose owning process has exited is freed.",
   "fix_kind": "backend",
   "kind": "fix",
