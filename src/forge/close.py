@@ -391,18 +391,17 @@ def close(args: argparse.Namespace) -> int:
     advice = [(n, f) for n, f in enumerate(result["findings"], 1)
               if not f.get("required_done_when") and not score.holds(f, result.get("blocking_level"))]
     if advice:
-        if not serious:
-            reasons = dict.fromkeys(f.get("follow_up") or
-                                    ("Rare case outside normal use" if score.RARE.search(f["body"])
-                                     else "Below the review bar") for _, f in advice)
-            print("These findings do not block: " + "; ".join(reason.rstrip(".") for reason in reasons)
-                  + ". See the pull request.")
         print("Advice that does not block the merge:" if serious else
               "Follow-ups that do not block the merge (recorded in the pull request):")
         for number, finding in advice:
             priority = f"{finding['priority']} " if serious else ""
+            reason = finding.get("follow_up") or (
+                "Rare case outside normal use" if score.RARE.search(finding["body"]) else
+                "Light review holds only P0 findings" if result.get("blocking_level") == "P0"
+                and score.holds(finding) else "Below the review bar")
             print(f"{number}. {priority}{finding['title']} "
-                  f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
+                  f"({finding['file']}:{finding['line']})\n"
+                  f"Does not block: {reason.rstrip('.')}.\n{finding['body']}\n")
     if failed and not stopped:
         repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:

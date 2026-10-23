@@ -1016,7 +1016,10 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
         covers = {int(n) for n in re.findall(r"\d+", row.get("covers", ""))}
         approved = {sentence(doc["done"][n]) for n in covers if n in doc["done"]}
     else:
-        approved = {sentence(str(state.get("done_when", "")))}
+        done_when = str(state.get("done_when", ""))
+        # Keep closing quotes and Markdown markers with the sentence they end.
+        parts = re.findall(r""".+?[.!?]["”’'`*_]*(?=\s|$)|.+$""", done_when, re.S)
+        approved = {sentence(done_when), *(sentence(part) for part in parts)}
     changed = False
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])

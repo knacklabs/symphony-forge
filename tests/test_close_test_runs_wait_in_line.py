@@ -1,5 +1,5 @@
 """forge close's test runs on one machine go first come, first served, and a waiting close says
-its place in line when it starts waiting and each time the place changes. A close that dies
+its place in line once when it starts waiting and once each time the place changes. A close that dies
 while waiting leaves no place behind."""
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import json
 import subprocess
 import sys
 import time
-from itertools import groupby
 from pathlib import Path
 
 import pytest
@@ -15,6 +14,7 @@ import pytest
 from conftest import machine_cores
 from test_close import env  # noqa: F401
 from test_fix_close_reruns_the_full_test_command_even import _close, _runs
+from test_runs_wait_for_machine_load import client
 
 STORY = "FIX-ABOUT-TWENTY-CLOSES-SHARE-THE-MACHINE-S"
 
@@ -41,8 +41,8 @@ def _with_test_command(env) -> Path:
     script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
     toml = env.repo.path / "forge.toml"
     command = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}"'
-    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
-               + "fast_test = " + json.dumps(command) + "\n")
+    env.commit(env.repo.path, "forge.toml", "fast_test = " + json.dumps(command) + "\n"
+               + toml.read_text("utf-8"))
     env.repo.git("push", "-q", "origin", "main")
     return env.tmp / "runs.log"
 
@@ -89,10 +89,7 @@ class Close:
     def places(self) -> list[str]:
         # With four cores the review lane can also queue. This case owns the
         # test lane's FIFO messages, not admission to the separate agent lane.
-        # Main also announces holder changes at the same position. This test owns the
-        # sequence of position changes; holder names have their own command-level test.
-        updates = [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
-        return [line for line, _ in groupby(updates)]
+        return [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
 
 
 # Workers share close's queue; waiting messages name holders and count places in the lane.
@@ -101,7 +98,11 @@ TWO = "1 Forge test runs already run on this machine, so this one waits its turn
 THREE = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 3 in line."
 
 
-def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place(env):
+@pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
+def test_1_waiting_closes_run_their_tests_in_arrival_order_and_say_each_place(env, tmp_path, adopted):
+    # This command-level owner catches repeated place announcements during holder handover.
+    # Keep its exact FIFO assertions for both new and upgraded clients.
+    client(env, tmp_path, adopted)
     log = _with_test_command(env)
     # Prepare the worktrees before holding the line; their setup is not part of queue arrival.
     for name in ("held", "first", "second", "third"):
