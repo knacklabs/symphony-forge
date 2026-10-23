@@ -1,0 +1,45 @@
+{
+  "base": "e6f40594a0b0e1c2c16d2b5660896a9f488428ed",
+  "branch": "fix/clean-code-review-rules",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169f2-f3c3-78e0-9875-3108f4c87b02",
+    "head": null,
+    "start": "82a9cdd92ce4c4652e2c964aae3c53f87b00b91a"
+  },
+  "done_when": "The shipped review and standards tell reviewers to report a one-caller wrapper or a pass-through layer as a finding, with the 30-second reader test, and state the test-behaviour-not-internals rule plainly; new repos get them at init and existing repos on sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "14f4c7619086d8c912a8222858acceea5c8be90841fbc272ca3b164d23eaadd8",
+    "changed": "a12b13f1b78a595a68756b64ce7959646d8ace4096a56d95d311cb054d799628",
+    "commit": "4c04bc790c9b895714e91581783f1d06e4bacb43",
+    "dismissals": [],
+    "findings": [],
+    "id": "1ab0ecd0-5f45-4070-b89f-8724358cbeb1",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-23T18:07:57.019055+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:11:45.274465+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d0e026e85b05d173ee4eae3f9f31b302c30136ff",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's shipped review and standards miss two clean-code checks: code that is hard to trace (a wrapper with one caller, a layer that only passes calls through, state the reader must keep in mind) and tests that check internals instead of behaviour need a clearer rule",
+  "worker": "codex"
+}
