@@ -1,0 +1,115 @@
+{
+  "branch": "task/FORGE-PACE-1-SIGNOFF",
+  "chat": {
+    "approval": "51e0f4e4a6720442fc4ec33ec41947f91aa0f2983eb5a8744faa23abc39aaeb4",
+    "claude": null,
+    "conversation": "01a169df-5162-7331-88da-a15a4ffa3aa9",
+    "head": null,
+    "start": "41fb8487ef00dbf3709ad1dea3747f0dd39cc48f"
+  },
+  "known": [
+    {
+      "area": "decision_accept() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 329,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Provide the sign-off record to the completeness reviewer",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/design-check.md",
+      "file": "src/forge/templates/design-check.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 11,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Specify the finding scores required by the completeness parser",
+      "work": 2
+    },
+    {
+      "area": "_client() in tests/test_proto_signoff.py",
+      "file": "tests/test_proto_signoff.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 102,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the remaining sign-off fixture consumers",
+      "work": 2
+    },
+    {
+      "area": "test_3_canvas_signoff_rechecks_when_a_brief_field_changes() in tests/test_signoff_reuse.py",
+      "file": "tests/test_signoff_reuse.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 129,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unchanged-canvas and earlier-adopted sign-off reuse",
+      "work": 2
+    },
+    {
+      "area": "test_signoff_pins_the_completeness_check_and_records_what_it_checked() in tests/test_signoff_design.py",
+      "file": "tests/test_signoff_design.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 48,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: prove the completeness reviewer receives the screen images",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fea30e2a907139e359e00a264977e1fa13e079276391794060332544953267f0",
+    "changed": "72aad88c41fb1439c1fed45fae61f0b71648c6b97bb1a72568eee644cbba3094",
+    "commit": "bf550f0f3bd3efc9e1d514e6d38c8196d31f7a5e",
+    "dismissals": [],
+    "findings": [],
+    "id": "1754bdf5-b5a7-40e1-b87f-c94647dd7ae7",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-23T17:46:27.359084+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:13:41.362735+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T18:38:38.623055+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T19:24:50.033827+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "cbe1db3f-6fc2-4252-91be-f7169fa18d06",
+    "head": "3b395698e8ad0add7b0261b392cf69fdd530f756",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

@@ -116,7 +116,8 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
     fix, answers, queue = signoff
     for topic, source in examples.items():
         answers = re.sub(rf"(- {topic}: .+) \([^,()]+, ", rf"\1 ({source}, ", answers)
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
+    brief = fix / "docs/product/BRIEF.md"
+    brief.write_text(brief.read_text("utf-8").split("## Answers", 1)[0] + answers, encoding="utf-8")
     repo.git("commit", "-qam", "Record the recap reply", cwd=fix)
     _decision(fix, answers, via="", on="")
     queue.write_text(json.dumps(

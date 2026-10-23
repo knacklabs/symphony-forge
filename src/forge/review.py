@@ -914,6 +914,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
                      ".factory", "plans", "docs/decisions", cwd=tree)
+            if item == "design-check":
+                repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", ".",
+                         ":(exclude)docs/design/prototype/**", ":(exclude)docs/product/BRIEF.md",
+                         ":(exclude)PRODUCT.md", ":(exclude)DESIGN.md", cwd=tree)
             review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
                                    cwd=tree)
             snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", review_base,
@@ -929,7 +933,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
-        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+        if item != "design-check":  # The completeness reviewer must see the actual screen images.
+            prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
@@ -986,6 +991,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
             bound_review(top, item, state, result)
         serious = blocking(result)
+        if item == "design-check":
+            serious = [(n, f) for n, f in enumerate(findings, 1) if f["priority"] in SERIOUS]
         identity = repo.record_event(top, item, "review result", commit=head,
             review_round=round_number(top, item, state),
             outcome="failed" if reason else "blocked" if serious else "clean",
@@ -1003,6 +1010,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 problem, action = "The prototype differs from the reviewed commit.", "commit the changes"
             else:
                 return {"commit": head}
+            if item == "design-check" and (reason or serious):
+                problem = ("The canvas completeness check did not finish: " + reason + "." if reason else
+                           "The canvas completeness check found gaps: " + "; ".join(
+                               f["title"] + ": " + f["body"] for _, f in serious) + ".")
+                action = "change the canvas and approve it again with forge decision accept prototype-design"
             repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
     base = repo.resolve_commit(top, base)
     return {"id": identity, "commit": head, **result,
@@ -1130,20 +1142,30 @@ def signoff_results(top: Path) -> str:
     return f"The test command exited with status {receipt.get('exit')}.\n{evidence}"
 
 
-def signoff(top: Path, answers: str, proof: str = "") -> str:
+def signoff(top: Path, answers: str, evidence: str = "") -> str:
     """Review every tracked product file once, against an empty root, before client acceptance."""
     skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
     table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
-    if proof:
-        prompt += ("\n\n## Proof\n" + proof + "\n\nCheck every demo workflow step against the brief. "
+    if evidence:
+        prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
                    "Each step must name a passing test. Refuse a missing step, a missing test, "
                    "or a test without evidence that it passes. The full production proof is due now."
                    "\n\n## Test results for this product\n" + signoff_results(top))
     cfg = repo.config(top)
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
+
+
+def design_check(top: Path, prompt: str) -> None:
+    """Check the canvas with its own pinned model through the strict review engine."""
+    engine = "claude" if shutil.which(os.environ.get("CLAUDE_BIN") or "claude") else "codex"
+    if engine == "codex":
+        print("Claude is unavailable. The completeness check fell back to Codex with gpt-6.1-sol at high effort.")
+    cfg = {**repo.config(top), "tools": engine, "models": {"review": {
+        "model": "claude-opus-5-5" if engine == "claude" else "gpt-6.1-sol", "effort": "high"}}}
+    run(top, "design-check", {}, cfg, "", {}, {}, signoff_prompt=prompt)
 
 
 def _spent(path: Path) -> dict[str, Any]:

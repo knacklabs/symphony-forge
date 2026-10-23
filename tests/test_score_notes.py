@@ -59,18 +59,24 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         (tmp_path / "sign-off").mkdir()
         fix, answers, queue = _client(repo, tmp_path / "sign-off", monkeypatch)
         _decision(fix, answers)
+        clean_check = {"say": SOL_HIGH, "report": {
+            "review_status": "scoped-clean", "findings": []}}
         # A score that is not one whole number from 1 to 5 makes the finding unreadable.
-        queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P1", "Prototype fails", "Gain 3, Work 2, Harm 1.5\nDemo cannot finish")]}}]))
+        invalid_score = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
+            _scored("P1", "Prototype fails", "Gain 3, Work 2, Harm 1.5\nDemo cannot finish")]}}
+        queue.write_text(json.dumps([clean_check, invalid_score]))
         unreadable = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert unreadable.returncode == 1
         assert "it wrote findings Forge cannot read" in unreadable.stderr
-        queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P1", "Prototype fails", "Gain 5, Work 2, Harm 1\nDemo cannot finish")]}}]))
+        valid_score = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
+            _scored("P1", "Prototype fails", "Gain 5, Work 2, Harm 1\nDemo cannot finish")]}}
+        queue.write_text(json.dumps([valid_score]))
         refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert refused.returncode == 1
         assert "found a blocking issue: Prototype fails" in refused.stderr
-        call = json.loads(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()[-1])
+        calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
+        call = [call for call in calls if "## Client prototype sign-off review" in
+                "\n".join(call["prompt_files"].values())][-1]
         prompt = "\n\n".join(call["prompt_files"].values())
         assert "Gain <g>, Work <w>, Harm <h>" in prompt and "judgement, not measurement" in prompt
         return

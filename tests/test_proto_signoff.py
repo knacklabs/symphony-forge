@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -19,21 +21,50 @@ MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems
         "Sign-in", "Personal data", "Production host")
 
 
-def _client(repo, tmp_path, monkeypatch):
-    version = repo.forge("--version").stdout.split()[-1]
-    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n')
-    sources = {"Demo workflow": "salesperson", "Users and roles": "developer"}
-    answers = "## Answers\n" + "".join(
-        f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
-        f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
-    repo.write("docs/product/BRIEF.md", "# Brief\n\n" + answers)
-    repo.write("app.py", "print('prototype')\n")
-    repo.git("add", "-A")
-    repo.git("commit", "-q", "-m", "Build prototype")
-    repo.git("push", "-q", "origin", "main")
-    started = repo.forge("fix", "start", "Record client approval", "--done", "Sign-off recorded")
-    assert started.returncode == 0, started.stderr
-    fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
+def _brief_text(answers, design_gap=None):
+    things = ("" if design_gap == "missing-brief-things" else
+              "## Things it keeps track of\n" +
+              ("<!-- Add the records here. -->\n\n" if design_gap == "empty-brief-things" else
+               "- Order: name and status.\n\n"))
+    return ("# Brief\n\n## Summary\nSalespeople keep track of customer orders.\n\n"
+            "## Users\n- Salespeople review submitted orders.\n\n" + things +
+            "## Key flows\n- Create an order, then review its status.\n\n" + answers)
+
+
+def _design_records(top, answers, gap=None):
+    (top / "docs/product").mkdir(parents=True, exist_ok=True)
+    (top / "docs/product/BRIEF.md").write_text(_brief_text(answers, gap), encoding="utf-8")
+    (top / "DESIGN.md").write_text("# Design\n\nUse a calm, clear order list.\n", encoding="utf-8")
+    if gap != "missing-product":
+        (top / "PRODUCT.md").write_text(
+            "# Order book\n\nSalespeople track customer orders.\n", encoding="utf-8")
+    else:
+        (top / "PRODUCT.md").unlink(missing_ok=True)
+    if gap == "missing-design":
+        (top / "DESIGN.md").unlink(missing_ok=True)
+    folder = top / "docs/design/prototype"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "order-list.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg"><text>Orders</text></svg>\n', encoding="utf-8")
+    screens = ("## Order list\nImage: order-list.svg\n" +
+               ("" if gap == "missing-components" else "Components: Card, Badge, Button\n") +
+               ("" if gap == "missing-fields" else
+                "Fields:\n- order name: text, required\n- status: choice, required, options: Open | Submitted\n"))
+    if gap != "missing-screens":
+        (folder / "SCREENS.md").write_text(
+            "# Screens\n\n" + ("" if gap == "image-no-section" else screens), encoding="utf-8")
+    checks = {
+        "Critique": "## Critique\nNotes: The order list is clear.\nResult: passed\n",
+        "Polish": "## Polish\nNotes: The layout is consistent.\nResult: passed\n",
+        "Emil checklist": "## Emil checklist\nNotes: Buttons have clear feedback.\nResult: passed\n",
+    }
+    if gap in ("critique", "polish", "emil"):
+        section = {"critique": "Critique", "polish": "Polish", "emil": "Emil checklist"}[gap]
+        checks[section] = checks[section].replace("Result: passed", "Result: needs work")
+    (folder / "CHECKS.md").write_text("\n".join(checks.values()), encoding="utf-8")
+
+
+def _review_tools(repo, tmp_path, monkeypatch):
     helper = tmp_path / "autoreview"
     (helper / "scripts").mkdir(parents=True)
     shutil.copy(Path(__file__).parent / "stubs/autoreview", helper / "scripts/autoreview")
@@ -54,20 +85,104 @@ def _client(repo, tmp_path, monkeypatch):
         codex = launcher
     monkeypatch.setenv("CODEX_BIN", str(codex))
     monkeypatch.setenv("SIGNOFF_DIFF", str(tmp_path / "reviewed-files.txt"))
+    return queue
+
+
+def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_gap=None,
+            design_model=None, seed_starter=False):
+    version = repo.forge("--version").stdout.split()[-1]
+    stage = "" if working_build else 'stage = "prototype"\n'
+    model = (f'\n[models.design.claude]\nmodel = {json.dumps(design_model[0])}\n'
+             f'effort = {json.dumps(design_model[1])}\n' if design_model else "")
+    repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{stage}{model}')
+    sources = {"Demo workflow": "salesperson", "Users and roles": "developer"}
+    answers = "## Answers\n" + "".join(
+        f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
+        f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
+    _design_records(repo.path, answers, design_gap)
+    if working_build:
+        repo.write("app.py", "print('prototype')\n")
+    if seed_starter:
+        source = Path(__file__).parents[1] / "src/forge/templates/starter/apps/web/src/app.tsx"
+        repo.write("apps/web/src/app.tsx", source.read_text("utf-8"))
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Build prototype")
+    repo.git("push", "-q", "origin", "main")
+    kind = [] if working_build else ["--kind", "mechanical"]
+    started = repo.forge("fix", "start", "Record client approval", "--done", "Sign-off recorded",
+                         *kind)
+    assert started.returncode == 0, started.stderr
+    fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
+    queue = _review_tools(repo, tmp_path, monkeypatch)
     return fix, answers, queue
+
+
+def _adopted_client(repo, tmp_path, monkeypatch, *, old_signoff=False, design_model=None):
+    fixture = Path(__file__).parent / "fixtures/adopted-v1.2.2/client"
+    shutil.copytree(fixture, repo.path, dirs_exist_ok=True)
+    version = repo.forge("--version").stdout.split()[-1]
+    config = repo.path / "forge.toml"
+    config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
+                      encoding="utf-8")
+    if design_model:
+        text = re.sub(r"(?ms)^\[models\.design\.claude\]\n.*?(?=^\[|\Z)", "", config.read_text("utf-8"))
+        config.write_text(text + '\n[models.design.claude]\n'
+                          f'model = {json.dumps(design_model[0])}\neffort = {json.dumps(design_model[1])}\n',
+                          encoding="utf-8")
+    sources = {"Demo workflow": "salesperson", "Users and roles": "developer"}
+    answers = "## Answers\n" + "".join(
+        f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
+        f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
+    if not old_signoff:
+        _design_records(repo.path, answers)
+    if old_signoff:
+        (repo.path / "docs/decisions").mkdir(parents=True, exist_ok=True)
+        (repo.path / "docs/decisions/0001-client-signoff.md").write_text(
+            "---\nstatus: accepted\ncustomer: Sam Lee, director\napproved_via: email\n"
+            "approved_on: 2026-09-28\ndemo: https://demo.example.test\n---\n\n"
+            "# Client sign-off\n\n## Context\nThe customer saw the prototype.\n\n"
+            "## Decision\nThe customer approved.\n\n## Consequences\nStories may start.\n\n"
+            + answers, encoding="utf-8")
+    repo.git("add", "-A")
+    repo.git("commit", "-q", "-m", "Upgrade the adopted client")
+    repo.git("push", "-q", "-u", "origin", "main")
+    started = repo.forge("fix", "start", "Record client approval", "--done", "Sign-off recorded",
+                         "--kind", "mechanical")
+    assert started.returncode == 0, started.stdout + started.stderr
+    fix = Path(started.stdout.split(" in ")[1].splitlines()[0])
+    queue = _review_tools(repo, tmp_path, monkeypatch)
+    return fix, answers, queue
+
+
+def _request_build(repo, fix):
+    created = repo.forge("decision", "new", "prototype-build", cwd=fix)
+    assert created.returncode == 0, created.stderr
+    request = next((fix / "docs/decisions").glob("*-prototype-build.md"))
+    request.write_text(re.sub(r"<!--.*?-->", "The canvas cannot prove real data speed.",
+                              request.read_text("utf-8"), flags=re.S), encoding="utf-8")
+    allowed = repo.forge("decision", "accept", "prototype-build", "--by", "Ravi", cwd=fix)
+    assert allowed.returncode == 0, allowed.stderr
 
 
 def _decision(fix, answers, *, customer="Sam Lee, director", via="email",
               on="2026-09-28", demo="https://demo.example.test", quote=None,
               proof="- Demo workflow: tests/test_demo.py::test_demo"):
+    design_tree = subprocess.check_output(
+        ["git", "rev-parse", "HEAD:docs/design/prototype"], cwd=fix, text=True).strip()
     page = fix / "docs/decisions/0001-client-signoff.md"
     page.parent.mkdir(parents=True, exist_ok=True)
+    cached = [line for line in page.read_text("utf-8").splitlines()
+              if line.startswith(("design_checked:", "brief_checked:"))] if page.exists() else []
+    metadata = "".join(f"{line}\n" for line in cached)
     page.write_text(f"---\nstatus: proposed\ncustomer: {customer}\napproved_via: {via}\n"
-                    f"approved_on: {on}\ndemo: {demo}\n---\n\n# Client sign-off\n\n"
+                    f"approved_on: {on}\ndemo: {demo}\n{metadata}---\n\n# Client sign-off\n\n"
                     "## Context\nThe customer saw the prototype.\n\n"
                     "## Decision\nThe customer approved.\n\n"
                     "## Consequences\nStories may start.\n\n"
-                    + ("\n## Proof\n" + proof + "\n\n" if proof else "")
+                    "## Signed design\n"
+                    f"docs/design/prototype/ ({design_tree})\n\n"
+                    + ("## Proof\n" + proof + "\n\n" if proof else "")
+                    + "## Decisions\nThe approved canvas is the source for production stories.\n\n"
                     + (answers if quote is None else quote), encoding="utf-8")
     return page
 
@@ -76,14 +191,17 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     page = _decision(fix, answers)
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
-    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
-        "priority": "P1", "title": "Prototype fails", "body": "Gain 5, Work 2, Harm 1\nDemo cannot finish",
-        "code_location": {"file_path": "app.py", "line": 1}}]}}]))
+    queue.write_text(json.dumps([
+        {"say": "model: claude-opus-5-5\nthinking: high\nautoreview done",
+         "report": {"review_status": "scoped-clean", "findings": []}},
+        {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
+            "priority": "P1", "title": "Prototype fails", "body": "Gain 5, Work 2, Harm 1\nDemo cannot finish",
+            "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     blocked = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert blocked.returncode == 1
     assert "Prototype fails" in blocked.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
         "priority": "P0", "title": "Prototype exposes data", "body": "Gain 5, Work 2, Harm 4\nDemo leaks records",
@@ -93,29 +211,29 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "Prototype exposes data" in critical.stderr
     assert "Next: fix the prototype" in critical.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
 
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (our default ")
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+    (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
     _decision(fix, changed)
     default = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert default.returncode == 1
     assert "Sign-in" in default.stderr
     assert "forge next" in default.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
 
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (agent")
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+    (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
     _decision(fix, changed)
     agent = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert agent.returncode == 1
     assert "Sign-in" in agent.stderr
     assert "forge next" in agent.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
 
     changed = answers.replace("Sign-in: agreed (client", "Sign-in: agreed (agent + our default")
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+    (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
     _decision(fix, changed)
     combined = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert combined.returncode == 1
@@ -123,23 +241,23 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "client, salesperson, or developer" in combined.stderr
     assert "forge next" in combined.stderr
     assert "status: proposed" in page.read_text()
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
 
     open_answer = answers.replace("Sign-in: agreed (client, 2026-09-28)",
                                   "Sign-in: ask the client (Ravi, 2026-09-28)")
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + open_answer)
+    (fix / "docs/product/BRIEF.md").write_text(_brief_text(open_answer), encoding="utf-8")
     _decision(fix, open_answer)
     open_topic = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert open_topic.returncode == 1
     assert "Sign-in" in open_topic.stderr
     assert "forge next" in open_topic.stderr
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
 
     queue.write_text(json.dumps([{"say": SOL_HIGH,
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     changed = answers.replace("Demo workflow: agreed (client", "Demo workflow: revised (client")
     repo.git("rm", "--cached", "docs/product/BRIEF.md", cwd=fix)
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+    (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
     _decision(fix, changed)
     unreviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert unreviewed.returncode == 1
@@ -147,7 +265,7 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "commit the changes" in unreviewed.stderr
     assert "status: proposed" in page.read_text()
 
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
+    (fix / "docs/product/BRIEF.md").write_text(_brief_text(answers), encoding="utf-8")
     repo.git("add", "docs/product/BRIEF.md", cwd=fix)
     page = _decision(fix, answers)
 
@@ -220,7 +338,8 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert accepted.returncode == 0, accepted.stderr
     assert f"reviewed_commit: {reviewed}" in page.read_text()
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
-    assert len(calls) == 12
+    # Uncommitted product changes now stop before either external check.
+    assert len(calls) == 11
     options = dict(zip(calls[-1]["args"][::2], calls[-1]["args"][1::2]))
     assert options["--engine"] == "codex"
     assert "--model" not in options and "--thinking" not in options
@@ -230,7 +349,9 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "| Topic | Question | Options (default first) | Before sign-off |" in prompt
     assert "| Data import | Does data need to come in from today's tools?" in prompt
     assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {
-        "README.md", "forge.toml", "app.py", "docs/product/BRIEF.md"}
+        "README.md", "forge.toml", "app.py", "PRODUCT.md", "DESIGN.md",
+        "docs/product/BRIEF.md", "docs/design/prototype/CHECKS.md",
+        "docs/design/prototype/SCREENS.md", "docs/design/prototype/order-list.svg"}
 
 
 def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, monkeypatch):
@@ -239,7 +360,7 @@ def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, 
     assert created.returncode == 0, created.stderr
     template = (fix / "docs/decisions/0001-client-signoff.md").read_text()
     for field in ("customer: \"\"", "approved_via: \"\"", "approved_on: \"\"",
-                  "demo: \"\"", "## Answers"):
+                  "demo: \"\"", "## Answers", "## Signed design", "## Proof", "## Decisions"):
         assert field in template
     page = _decision(fix, answers, customer="")
     missing = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
@@ -261,14 +382,14 @@ def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, 
 
     for customer in ("Sam Lee", ", director"):
         changed = answers.replace("Sam Lee, director", customer)
-        (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + changed)
+        (fix / "docs/product/BRIEF.md").write_text(_brief_text(changed), encoding="utf-8")
         page = _decision(fix, changed, customer=customer)
         no_identity = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert no_identity.returncode == 1
         assert "customer" in no_identity.stderr.lower()
         assert "status: proposed" in page.read_text()
         assert not queue.with_suffix(".calls.jsonl").exists()
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
+    (fix / "docs/product/BRIEF.md").write_text(_brief_text(answers), encoding="utf-8")
 
     for field in ("approved_via", "approved_on", "demo"):
         _decision(fix, answers)
@@ -293,4 +414,4 @@ def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, 
     assert "approved_on: 2026-09-28" in record
     assert "demo: https://demo.example.test" in record
     assert answers in record
-    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 1
+    assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 2

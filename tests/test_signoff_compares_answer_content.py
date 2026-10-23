@@ -13,13 +13,17 @@ def _signoff(repo, gh, tmp_path, monkeypatch, history):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     if history == "adopted":
         current_config = (fix / "forge.toml").read_text("utf-8")
+        current_brief = (fix / "docs/product/BRIEF.md").read_text("utf-8")
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", fix,
                         dirs_exist_ok=True)
         assert 'version = "v1.2.2"' in (fix / "forge.toml").read_text("utf-8")
         (fix / "forge.toml").write_text(current_config, "utf-8")
-        (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers, "utf-8")
+        (fix / "docs/product/BRIEF.md").write_text(current_brief, "utf-8")
     synced = repo.forge("sync", cwd=fix)
     assert synced.returncode == 0, synced.stderr
+    repo.git("add", "-A", cwd=fix)
+    if repo.git("diff", "--cached", "--name-only", cwd=fix):
+        repo.git("commit", "-qm", "Commit the sign-off records and synced files", cwd=fix)
     return repo, fix, answers, queue
 
 
@@ -40,7 +44,8 @@ def test_1_signoff_ignores_trailing_whitespace_and_line_endings(
         quote = "\r\n".join(line + " \t" for line in answers.splitlines()) + "\r\n \t\r\n\r\n"
     elif style == "brief whitespace":
         (fix / "docs/product/BRIEF.md").write_bytes(
-            ("# Brief\r\n\r\n" + answers.replace("\n", " \t\r\n") + "\r\n\r\n").encode())
+            ((fix / "docs/product/BRIEF.md").read_text("utf-8").split("## Answers", 1)[0] +
+             answers.replace("\n", " \t\r\n") + "\r\n\r\n").encode())
         repo.git("add", "docs/product/BRIEF.md", cwd=fix)
         repo.git("commit", "-qm", "Format the source answers", cwd=fix)
     else:
@@ -51,7 +56,7 @@ def test_1_signoff_ignores_trailing_whitespace_and_line_endings(
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 1
+    assert len(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()) == 2
 
 
 @pytest.mark.parametrize("history, change, line", [

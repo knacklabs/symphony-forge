@@ -376,14 +376,16 @@ def _signoff_review_results_have_fresh_ids(repo, tmp_path, monkeypatch):
     from test_close import finding, report, FAILED
     fix, answers, queue = _client(repo, tmp_path / 'signoff', monkeypatch)
     _decision(fix, answers)
-    for outcome, reply in [('blocked', {'say': SOL_HIGH, 'report': report(
+    clean_check = {'say': SOL_HIGH, 'report': report()}
+    for index, (outcome, reply) in enumerate([('blocked', {'say': SOL_HIGH, 'report': report(
             finding('P1', 'Prototype fails'))}), ('failed', FAILED),
-            ('clean', {'say': SOL_HIGH, 'report': report()})]:
-        queue.write_text(json.dumps([reply]), 'utf-8')
+            ('clean', {'say': SOL_HIGH, 'report': report()})]):
+        answers_for_run = [clean_check, reply] if index == 0 else [reply]
+        queue.write_text(json.dumps(answers_for_run), 'utf-8')
         done = repo.forge('decision', 'accept', 'client-signoff', '--by', 'Ravi', cwd=fix)
         assert (done.returncode == 0) == (outcome == 'clean'), done.stdout + done.stderr
         results = [row for row in records(repo, 'events.jsonl')
-                   if row['event'] == 'review result']
+                   if row['event'] == 'review result' and row['item'] == 'client-signoff']
         assert results[-1]['outcome'] == outcome
         assert results[-1]['item'] == 'client-signoff'
     assert len(results) == 3 and len({row['id'] for row in results}) == 3
