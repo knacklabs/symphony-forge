@@ -737,7 +737,7 @@ workaround, cost, people, frequency and evidence. Start with a canvas, as descri
 The customer can sign off on the canvas alone. Build a working prototype only when the FDE
 requests one to prove something the canvas cannot, such as real data or speed. Record that
 request with `forge decision new prototype-build`; the owner accepts it with
-`forge decision accept prototype-build --by "<name>"`. Then build the smallest demo that proves
+`forge decision accept prototype-build --by "<name>"`. Then build the smallest working demo that proves
 the request, demo it, review the whole prototype and answers, and obtain the customer's named sign-off;
 then write the app's constitution; then create stories. Use prototype fixes before sign-off. The
 salesperson can be the FDE at first;
@@ -871,6 +871,8 @@ it uses Codex when installed and Claude otherwise. Forge passes the selected too
 Autoreview's defaults. New and earlier-adopted repos get this behaviour on the current release.
 A requested working prototype proves the demo steps and its security and data boundaries.
 Its light review checks demo breakage, security and data loss, using `[models.light_review]`.
+A requested working prototype gets a light review that blocks only on P0 findings.
+A `Not done` against the item's own approved Done-when still blocks at any priority.
 Full proof is due at sign-off.
 
 After sign-off, every new story copies Signed design, Proof and Decisions into
