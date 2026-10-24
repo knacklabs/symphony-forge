@@ -1,6 +1,13 @@
 {
   "base": "bd97bba40826ea2c792caa398c6fcff5ca098ba3",
   "branch": "task/FORGE-DEFAULTS-1-ORGSPY",
+  "chat": {
+    "approval": "243290d63c20635ccb12255ffe4d18e627b2f609c9cf16680931584c7da8986e",
+    "claude": null,
+    "conversation": "01a16e9d-ea0b-7460-b5b9-223f5795c470",
+    "head": null,
+    "start": "b852a925510b9537069c2704f6d689d4e5f97476"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-DEFAULTS-1/SOFTDELETE",
