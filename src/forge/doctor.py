@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tomllib
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +84,25 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
                 line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in repo.CACHES)
                 for line in status.stdout.splitlines()): found.append((path, branch, state))
     return found
+def _unbuilt(top: Path) -> list[tuple[str, str]]:
+    rows = []
+    landed = story.landed_ref(top)
+    now = datetime.fromisoformat(repo.now())
+    for branch, path in story.worktrees(top).items():
+        if not branch.startswith("fix/"): continue
+        item = task.branch_item(branch, path)
+        if not item: continue
+        name, state = item
+        if state.get("status") != "started": continue
+        started = next((step["at"] for step in state.get("steps", []) if step["step"] == "start"), None)
+        if not started or now - datetime.fromisoformat(started) <= timedelta(days=7): continue
+        # The start record is a commit. Inherited work and merges of main are not this fix's work.
+        commits = repo.git("rev-list", "--count", "--no-merges", branch, "--not",
+                           state["base"], landed, cwd=top)
+        if commits == "1":
+            rows.append((f"Fix {name} started more than seven days ago and has no work commits.",
+                         f'forge fix drop {name} --because "<reason>"'))
+    return rows
 def _contents(top: Path, specs: list[str]) -> dict[str, str]:
     if not specs: return {}
     done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
@@ -357,6 +377,7 @@ def doctor(args: argparse.Namespace) -> int:
                 problem, _, fix = str(refused).partition("\nNext: ")
                 add(problem, fix)
     main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).resolve().parent
+    rows += _unbuilt(top)
     finished = _finished(top, main)
     if finished and not args.fix: add(f"{len(finished)} folders hold finished work: " f"{', '.join(str(path) for path, _, _ in finished)}.")
     for path, branch, state in finished if args.fix else []:
