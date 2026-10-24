@@ -22,7 +22,7 @@ For local work, copy `.env.example` to `.env`. Set the database URL and app orig
 
 ```sh
 COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm install --frozen-lockfile
-COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy
+COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec node --env-file=.env node_modules/prisma/build/index.js migrate deploy
 COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run build
 COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run start:prod
 ```
