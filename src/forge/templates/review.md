@@ -86,6 +86,16 @@ labels or readable contrast is its own P1; a screen, field or step the job didn'
 advisory `Simpler:`; and the one likely failure it triggers must show a message that says in
 plain words what to do next.
 
+For production stories, also check the following on the paths this part covers. Apply the app's
+scope and constitution, and accept explicit exceptions that explain why an item does not apply:
+
+- An offline state, including a clear message for an online-only app.
+- Tablet widths for the shell, a table and a form.
+- The keyboard path: tab order, Cmd+K, Cmd+B and Esc to close dialogs, where those controls exist.
+- Each row-level object has an extended detail screen, with tabs for related data, activity and files.
+
+Report a missing applicable item as P1. These checks belong to the production story, not canvas sign-off.
+
 <!-- promote -->
 ## Promote
 This repo lists no interface paths. Report any change to an interface (an API route, a database

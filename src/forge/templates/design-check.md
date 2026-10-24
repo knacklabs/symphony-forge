@@ -25,9 +25,9 @@ The scores are your judgement, not measurement. Put the evidence after this scor
 - Give each field a label, type, required or optional state, sample value and validation rule.
   Add help text where its meaning is unclear.
 - Choose list columns on purpose. Make other fields reachable through detail or column visibility.
+- State each list's sort options, search behavior, default order and filters, including when none apply.
 - Mark read-only and system fields, such as id, created by, created at and updated at.
 - Link lists and details to related entities. Let forms select related records.
-- Give every row-level object an extended detail screen, with tabs for related data, activity and files.
 
 ## Dropdowns and choice lists
 
@@ -41,7 +41,7 @@ The scores are your judgement, not measurement. Put the evidence after this scor
 - Show empty states for first use and filtered results, loading skeletons, errors with retry,
   success toasts and partial or slow results.
 - Show permission denied for each role. Explain hidden or disabled controls.
-- Show offline and expired-session states.
+- Show expired-session states.
 - Show that long text, long names and large numbers fit the layout.
 - Show pagination or scroll for many rows, with zero, one and many examples.
 
@@ -70,8 +70,9 @@ The scores are your judgement, not measurement. Put the evidence after this scor
 ## Cross-cutting
 
 - Show light and dark themes for at least the shell and one form.
-- Show phone, tablet and desktop widths for the shell, a table and a form.
-- Show the keyboard path: tab order, Cmd+K, Cmd+B and Esc to close dialogs.
+- Show phone and desktop widths for the shell, a table and a form.
+- State date, time zone, currency and number formats, with sample values.
+  Cite the app's constitution or the Constitution defaults in the Forge guide's `fde.md`.
 - Use only shadcn/ui components. List each custom piece and its reason.
 - Include notification, settings, profile and sign-in screens.
 - Check the copy: no jargon, and verbs on buttons, such as "Save client".

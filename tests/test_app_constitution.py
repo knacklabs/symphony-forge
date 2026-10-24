@@ -27,13 +27,8 @@ CONSTITUTION_STEP = (
     '"The owner approved docs/product/CONSTITUTION.md"'
 )
 GUIDE_SENTENCES = (
-    "Before the prototype, ask only the product questions: what the app is for, who uses it, "
-    "what it keeps track of with each thing's fields, and the options of each choice list.",
     "Write the answers in docs/product/BRIEF.md under ## Summary, ## Users and ## Things it "
     "keeps track of.",
-    "After the customer's sign-off and before the first story, write the app's constitution in "
-    "docs/product/CONSTITUTION.md.",
-    "Show every default in one message, and let the person change any of them.",
     "Make each architecture choice yourself, from the answers and the code, and write it as one "
     "plain line with its reason and its decision record.",
     "A live app answers both halves at adoption: ask only what the code cannot answer.",

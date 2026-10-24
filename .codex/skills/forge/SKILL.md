@@ -700,8 +700,16 @@ your recommendation first. Add a one-line `Why I ask:` to each question until th
 they know why. Ask at most two questions for a fix and eight for a story, then write what is
 still unanswered as `unknown`.
 
-**A new project.** On a new project, run this discovery
-with the story limit. Before the first meeting, draft a one-page pre-meeting brief in
+**A new project.** On a new app, the FDE puts every client note in docs/context/. Read all of them
+before you ask anything. Fill docs/product/BRIEF.md and the problem cards in
+docs/product/DISCOVERY.md from the notes, and list each contradiction and gap for the FDE.
+Ask the FDE one question at a time, and only about a point that changes a screen, a field or a
+flow. A new app has no fixed number of questions. Give every other open point a default, mark it
+(assumed) where you write it, and list these assumptions in one message for the FDE to change.
+Put each question the FDE cannot answer on the recap's Still to find out list, and build the
+prototype without waiting for the answer.
+
+Before the first meeting, draft a one-page pre-meeting brief in
 `docs/context/` from the prospect's website: their likely jobs, two or three guessed problem cards
 each marked `(guess)`, their terms, and the first five questions to ask. During discovery, keep
 the customer's own words in `## Words they use` in `docs/product/DISCOVERY.md`, one
@@ -889,14 +897,20 @@ Until the decision, use a fake provider for an external service.
 During both halves of the interview, ask one question at a time in plain words for a person who
 may not be technical.
 
-Before the prototype, ask only the product questions: what the app is for, who uses it, what it
-keeps track of with each thing's fields, and the options of each choice list. Write the answers in
-docs/product/BRIEF.md under ## Summary, ## Users and ## Things it keeps track of. Record
+Before the prototype, take the product answers from the client notes: what the app is for, who
+uses it, what it keeps track of with each thing's fields, and the options of each choice list.
+Write the answers in docs/product/BRIEF.md under ## Summary, ## Users and ## Things it keeps track of. Record
 the options for each choice list with the thing it belongs to. The prototype uses these answers.
 
-After the customer's sign-off and before the first story, write the app's constitution in
-docs/product/CONSTITUTION.md. Show every default in one message, and let the person change any
-of them. Use the defaults in [Constitution defaults](fde.md#constitution-defaults), except where
+At the start, write docs/product/CONSTITUTION.md with every default from Constitution defaults
+filled in, and raise a default with the FDE only when the notes contradict it.
+In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
+constitution's ## Fixed rules section, and ask nothing about them. In any other app, record the
+stack, package manager and folder layout that the app already uses, and leave out ## Fixed rules.
+
+After the customer's sign-off and before the first story, finish the app's constitution in
+docs/product/CONSTITUTION.md. Use the defaults in
+[Constitution defaults](fde.md#constitution-defaults), except where
 `## Answers` in the brief already gives a settled answer. Skip a defaulted question that `## Answers`
 already answers. Check the brief's `Personal data` answer; ask whether any data is private or
 regulated only when that answer is missing, then record the answer in `## Answers`.
@@ -910,6 +924,12 @@ The product facts are in docs/product/BRIEF.md.
 
 ## Defaults
 - <the question in plain words>: <the default or the person's answer>
+
+## Fixed rules
+- One app on pnpm and Prisma, split into modules.
+- Each module owns its tables, in its own schema file.
+- A module uses another module only through its public service, never through its tables.
+- The tests run Nx's module-boundary lint, so an import across modules fails them.
 
 ## Architecture choices
 - <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
