@@ -68,7 +68,7 @@
     "id": "465efc93-1fa7-4884-89c4-d5d6d5f932cb",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-REACTDEFAULTS-1/RULES",
   "status": "fixing",
   "steps": [
@@ -82,10 +82,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "43c9ddafc12464a70c68a9777dde5ab4bfb215eb",
+    "close": "46b772e0-fc36-43f6-a4c8-f48af75738a6",
+    "head": "e98354fc4ab3bd74c099b771e2f76ad6ea989652",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
