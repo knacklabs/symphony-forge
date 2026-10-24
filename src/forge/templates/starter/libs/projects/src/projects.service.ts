@@ -42,6 +42,15 @@ export class ProjectsService {
     };
   }
 
+  /** Every project the account can see, newest first, for the CSV export; it ignores the screen's sort and page. */
+  async listAll(account: AccountPrincipal) {
+    const projects = await this.prisma.project.findMany({
+      where: { accountId: account.id, deletedAtUtc: null },
+      orderBy: [{ createdAtUtc: 'desc' }, { id: 'asc' }],
+    });
+    return projects.map(toProjectResponse);
+  }
+
   async get(account: AccountPrincipal, id: string) {
     const project = await this.prisma.project.findFirst({ where: { id, accountId: account.id, deletedAtUtc: null } });
     if (!project) throw this.notFound();

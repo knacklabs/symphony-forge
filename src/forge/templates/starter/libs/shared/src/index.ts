@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export { formatDate, formatDateTime, formatMoney, formatNumber, formatTime } from './format';
+
 export const projectStatusSchema = z.enum(['active', 'archived']);
 export const projectSchema = z.object({
   name: z.string().trim().min(1).max(120).meta({ description: 'The project name.', example: 'Migration plan' }),
@@ -35,6 +37,11 @@ export const resetPasswordSchema = z.object({
     .meta({ description: 'The new account password.', example: 'new-correct-horse-battery-staple' }),
 }).strict();
 
+export const errorReportSchema = z.object({
+  name: z.string().max(200).meta({ description: 'The class name of the error.', example: 'TypeError' }),
+  path: z.string().max(2000).meta({ description: 'The page path where the error happened, without its query.', example: '/projects' }),
+}).strict();
+
 export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 export type ProjectInput = z.infer<typeof projectSchema>;
 export type ProjectListQuery = z.infer<typeof projectListQuerySchema>;
@@ -48,4 +55,5 @@ export type Project = ProjectInput & {
 export type AuthCredentials = z.infer<typeof signInSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ErrorReportInput = z.infer<typeof errorReportSchema>;
 export type Account = { id: string; email: string };

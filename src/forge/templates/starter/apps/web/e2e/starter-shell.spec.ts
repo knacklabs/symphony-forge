@@ -1,40 +1,14 @@
-import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-
-const password = 'CorrectHorse9!';
-
-function newEmail() {
-  return `starter-${randomUUID()}@example.com`;
-}
-
-async function signUp(page: import('@playwright/test').Page, email = newEmail()) {
-  await page.goto('/sign-up');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Create account' }).click();
-  await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
-  return email;
-}
-
-async function signIn(page: import('@playwright/test').Page, email: string) {
-  await page.goto('/sign-in');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
-}
+import { csrfToken, newEmail, password, signIn, signUp } from './helpers';
 
 async function addPaginationProjects(page: import('@playwright/test').Page, count: number) {
-  const cookies = await page.context().cookies();
-  const csrfToken = cookies.find((cookie) => cookie.name === 'starter_csrf')?.value;
-  expect(csrfToken).toBeTruthy();
-  if (!csrfToken) throw new Error('The signed-in session has no CSRF cookie.');
+  const token = await csrfToken(page);
   const projectUrl = new URL('/api/v1/projects', page.url()).toString();
   for (let index = 0; index < count; index += 1) {
     const response = await page.context().request.post(projectUrl, {
       data: { name: `Pagination project ${String(index).padStart(2, '0')}`, status: 'active' },
-      headers: { 'x-csrf-token': csrfToken },
+      headers: { 'x-csrf-token': token },
     });
     expect(response.ok()).toBeTruthy();
   }

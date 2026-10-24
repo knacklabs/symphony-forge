@@ -1,10 +1,25 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ApiEnvelope, ApiErrors, ApiZodBody, ApiZodQuery, ZodValidationPipe } from '@app/core';
+import type { Response } from 'express';
+import { ApiEnvelope, ApiErrors, ApiZodBody, ApiZodQuery, sendCsv, ZodValidationPipe, type CsvColumn } from '@app/core';
 import { CurrentAccount, type AccountPrincipal } from '@app/auth';
 import { ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
 import { ProjectsService } from './projects.service';
-import { projectListQuerySchema, projectSchema, type ProjectInput, type ProjectListQuery } from '@app/shared';
+import {
+  formatDateTime,
+  projectListQuerySchema,
+  projectSchema,
+  type Project,
+  type ProjectInput,
+  type ProjectListQuery,
+} from '@app/shared';
+
+const PROJECT_CSV_COLUMNS: CsvColumn<Project>[] = [
+  { header: 'Name', value: (project) => project.name },
+  { header: 'Status', value: (project) => project.status },
+  { header: 'Created (UTC)', value: (project) => formatDateTime(project.createdAtUtc, 'UTC') },
+  { header: 'Updated (UTC)', value: (project) => formatDateTime(project.updatedAtUtc, 'UTC') },
+];
 
 @ApiTags('Projects')
 @ApiCookieAuth('session')
@@ -28,6 +43,15 @@ export class ProjectsController {
   @ApiErrors(400, 401, 403)
   create(@CurrentAccount() account: AccountPrincipal, @Body(new ZodValidationPipe(projectSchema)) input: ProjectInput) {
     return this.projects.create(account, input);
+  }
+
+  // Declared before ':id', so 'export' is not read as a project identifier.
+  @Get('export')
+  @ApiOperation({ summary: 'Download every project of the signed-in account as a CSV file, newest first.' })
+  @ApiResponse({ status: 200, description: 'The projects.csv file: Name, Status, Created (UTC) and Updated (UTC).' })
+  @ApiErrors(401)
+  async export(@CurrentAccount() account: AccountPrincipal, @Res() response: Response): Promise<void> {
+    sendCsv(response, 'projects.csv', PROJECT_CSV_COLUMNS, await this.projects.listAll(account));
   }
 
   @Get(':id')

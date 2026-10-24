@@ -266,15 +266,26 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
         assert cleanup.returncode == 0, cleanup.stdout + cleanup.stderr
 
 
+_LIVE_RUNS = {}
+
+
+def live_run(tmp_path_factory):
+    """Run the starter stack once per pytest session; the run cleans up before it returns."""
+    # ponytail: functools.cache cannot key on pytest's unhashable tmp_path_factory, so one dict entry.
+    if "starter" not in _LIVE_RUNS:
+        _LIVE_RUNS["starter"] = _run_live_starter(
+            tmp_path_factory,
+            ((STARTER, Path(".")),
+             (ROOT / "src" / "forge" / "templates" / "skeleton" / ".dockerignore",
+              Path(".dockerignore"))),
+            ("Cached API build and lint after web build passed", "GET /health returned 200"),
+        )
+    return _LIVE_RUNS["starter"]
+
+
 @pytest.fixture(scope="module")
 def live_starter(tmp_path_factory):
-    return _run_live_starter(
-        tmp_path_factory,
-        ((STARTER, Path(".")),
-         (ROOT / "src" / "forge" / "templates" / "skeleton" / ".dockerignore",
-          Path(".dockerignore"))),
-        ("Cached API build and lint after web build passed", "GET /health returned 200"),
-    )
+    return live_run(tmp_path_factory)
 
 
 def _require_cases(cases, expected):

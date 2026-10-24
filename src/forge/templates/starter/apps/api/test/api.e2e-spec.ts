@@ -2,20 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-
-const apiBaseUrl = process.env.API_TEST_URL ?? 'http://127.0.0.1:3000';
-const productionApiBaseUrl = process.env.PRODUCTION_API_TEST_URL ?? 'http://127.0.0.1:3001';
-
-function credentials() {
-  return { email: `starter-${randomUUID()}@example.test`, password: 'correct-horse-battery-staple' };
-}
-
-function csrfToken(response: request.Response): string {
-  const cookies = response.get('Set-Cookie') ?? [];
-  const cookie = cookies.find((value) => value.startsWith('starter_csrf='));
-  if (!cookie) throw new Error('The API did not set its CSRF cookie.');
-  return cookie.slice('starter_csrf='.length).split(';', 1)[0];
-}
+import { apiBaseUrl, credentials, csrfToken, logEvents, productionApiBaseUrl } from './helpers';
 
 function requestBodySchema(response: request.Response, path: string, method: 'post' | 'put') {
   const schema = response.body.paths[path][method].requestBody.content['application/json'].schema;
@@ -25,17 +12,9 @@ function requestBodySchema(response: request.Response, path: string, method: 'po
 }
 
 function latestResetToken(service: 'api' | 'production-api'): string {
-  const logs = execFileSync('docker', ['compose', '-f', 'compose.test.yml', 'logs', '--no-color', service], { encoding: 'utf8' });
-  const line = logs.split(/\r?\n/).reverse().find((value) => value.includes('"resetUrl"'));
-  if (!line) throw new Error(`The ${service} service did not log a test reset link.`);
-  const jsonStart = line.indexOf('{');
-  const event: unknown = JSON.parse(line.slice(jsonStart));
-  if (typeof event !== 'object' || event === null || !('context' in event)) throw new Error('The reset mail log has an invalid shape.');
-  const context: unknown = event.context;
-  if (typeof context !== 'object' || context === null || !('resetUrl' in context) || typeof context.resetUrl !== 'string') {
-    throw new Error('The reset mail log has no reset URL.');
-  }
-  const token = new URL(context.resetUrl).searchParams.get('token');
+  const event = logEvents(service).reverse().find(({ context }) => typeof context?.resetUrl === 'string');
+  if (!event) throw new Error(`The ${service} service did not log a test reset link.`);
+  const token = new URL(String(event.context?.resetUrl)).searchParams.get('token');
   if (!token) throw new Error('The reset mail log has no reset token.');
   return token;
 }

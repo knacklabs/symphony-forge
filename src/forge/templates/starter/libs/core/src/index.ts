@@ -3,6 +3,7 @@ export { ApiEnvelope, ApiErrors } from './common/api-envelope.decorator';
 export { ApiZodBody, ApiZodQuery } from './common/api-zod.decorator';
 export { CommonModule } from './common/common.module';
 export { correlationMiddleware } from './common/correlation.middleware';
+export { sendCsv, type CsvColumn } from './common/csv';
 export { CsrfGuard } from './common/csrf.guard';
 export { EnvelopeInterceptor } from './common/envelope.interceptor';
 export { JsonLogger } from './common/json-logger';

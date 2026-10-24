@@ -8,9 +8,9 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Project, ProjectInput } from '@app/shared';
+import { formatDate, type Project, type ProjectInput } from '@app/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -59,10 +59,6 @@ function SortLabel({ label, sorted }: { label: string; sorted: false | 'asc' | '
   return <>{label}<Icon aria-hidden="true" className="size-3.5" /></>;
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
-}
-
 // flexRender mounts these renderers as components, so they live outside ProjectsPage: a new
 // function on each render would remount the header buttons and drop keyboard focus.
 // React Compiler skips ProjectsPage because of useReactTable, so it cannot keep them stable.
@@ -94,7 +90,7 @@ const columns: ColumnDef<Project>[] = [
         <SortLabel label="Created" sorted={column.getIsSorted()} />
       </Button>
     ),
-    cell: ({ row }) => <div><time dateTime={row.original.createdAtUtc}>{formatDate(row.original.createdAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
+    cell: ({ row }) => <time dateTime={row.original.createdAtUtc}>{formatDate(row.original.createdAtUtc)}</time>,
   },
   {
     accessorKey: 'updatedAtUtc',
@@ -103,7 +99,7 @@ const columns: ColumnDef<Project>[] = [
         <SortLabel label="Updated" sorted={column.getIsSorted()} />
       </Button>
     ),
-    cell: ({ row }) => <div><time dateTime={row.original.updatedAtUtc}>{formatDate(row.original.updatedAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
+    cell: ({ row }) => <time dateTime={row.original.updatedAtUtc}>{formatDate(row.original.updatedAtUtc)}</time>,
   },
   {
     id: 'actions',
@@ -199,7 +195,10 @@ export function ProjectsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
           <p className="mt-1 text-sm text-muted-foreground">Create and manage your projects.</p>
         </div>
-        <Button onClick={openCreate}><Plus aria-hidden="true" />Create project</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild><a href="/api/v1/projects/export" download><Download aria-hidden="true" />Export CSV</a></Button>
+          <Button onClick={openCreate}><Plus aria-hidden="true" />Create project</Button>
+        </div>
       </div>
 
       {projects.isPending && <p role="status" className="text-sm text-muted-foreground">Loading projects…</p>}
