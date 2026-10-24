@@ -5,6 +5,7 @@ counting the start record as build work, or ignoring age makes this fail.
 Finished-work cleanup tests cover PRs, not unpublished build work. Only GitHub
 is fake; real fix starts, commits and worktrees supply the evidence. No seam.
 """
+from test_doctor_fix_files import _land
 from test_started_branches_claim_the_work import client  # noqa: F401
 from test_story import worktree
 
@@ -34,15 +35,8 @@ def test_1_doctor_lists_each_started_empty_fix_older_than_seven_days(client, mon
 
     if not adopted:
         # A newer default branch merged into an empty fix does not count as its work.
-        started = repo.forge("fix", "start", "Publish the news", "--done",
-                             "Readers see the news", "--slug", "update-default")
-        assert started.returncode == 0, started.stdout + started.stderr
-        folder = worktree(repo, "fix/update-default")
-        (folder / "news.txt").write_text("News from another change\n", encoding="utf-8")
-        repo.git("add", "news.txt", cwd=folder)
-        repo.git("commit", "-qm", "Publish the news", cwd=folder)
-        repo.git("merge", "-q", "--ff-only", "fix/update-default")
-        repo.git("push", "-q", "origin", "main")
+        _land(repo, repo.path, "Publish the news", lambda folder:
+              (folder / "news.txt").write_text("News from another change\n", encoding="utf-8"))
         repo.git("merge", "-q", "--no-edit", "main", cwd=worktree(repo, "fix/old-start"))
 
     monkeypatch.setenv("FORGE_NOW", "2026-10-10T12:00:00+00:00")
