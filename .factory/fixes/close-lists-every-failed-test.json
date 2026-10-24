@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "aa5b030bcf6abd84e2ceb270a67b2dfc2bab2ba574857b24e9f60557a3b4f20b",
-    "changed": "7fc3c0c100f769b28de13f92082e824d175d99f9acdbb0c72307fc7271c765e1",
-    "commit": "14d2548e1fc7e4298bf1bf65572a9fa88b2d22aa",
+    "branch_diff": "99db8f9db4cc12fba22774ea011c96c6f06f0ebb496d386c9e72055e709eb0e4",
+    "changed": "64bc4181c0e006b0e634c3210229a28f882913a2f9a1f17d23ec531746771a00",
+    "commit": "3c968427777b7fc4e2e12f060abdb7c400927355",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 2, Work 3, Harm 1\nCase: normal use - close runs a supported Vitest or Jest suite with many failures. The footer reads only the results file populated by the pytest hook (`review.py:480\u2013484`). Native Node runners execute without writing that file (`fasttest.py:273\u2013286`), so their footer says test names are unavailable; earlier failure names remain lost outside the bounded output tail. All three new proof cases run pytest, leaving this supported runner case uncovered.",
-        "file": "src/forge/review.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 565,
-        "priority": "P2",
-        "title": "Follow-up: Include Vitest and Jest failures in the footer",
-        "work": 3
-      }
-    ],
-    "id": "5e7a4ac2-8484-4058-9aff-543e9348fbdd",
+    "findings": [],
+    "id": "a0391a5a-79fa-4ebf-8cc9-ee537af0275d",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T17:34:15.091881+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-10-24T18:21:06.371786+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T18:48:55.430728+00:00",
       "step": "review"
     }
   ],
