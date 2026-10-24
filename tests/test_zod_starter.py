@@ -3,6 +3,7 @@ import json
 import re
 from pathlib import Path
 
+STORY = "FORGE-ZOD-1"
 
 STARTER = Path(__file__).resolve().parents[1] / "src" / "forge" / "templates" / "starter"
 
