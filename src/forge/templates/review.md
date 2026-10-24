@@ -272,6 +272,13 @@ code writes. Other modules reach those tables only through its public service. A
 default branch already has is not a finding, and neither is app code outside the modules, such
 as the demo-data loader.
 
+In a TypeScript app with `zod` in a `package.json`, report a request body or query that this
+change adds and that no zod schema checks as a P1 finding titled `Zod: <the endpoint>`. Request
+input has one zod schema in the app's shared package, which the web form and the API both use,
+and the API documentation comes from that schema. A class-validator rule or an `@ApiProperty`
+on request input that this change adds is a finding. Input the default branch already has is
+not a finding, and neither is a path parameter that a Nest parse pipe checks.
+
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a

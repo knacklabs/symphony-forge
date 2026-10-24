@@ -106,7 +106,7 @@ CARRIED_OVER_RULES = {
                      "static text", "logs, temporary tables", "mailing-list", "Terraform", "TFSec"],
     "api.md": ["1-4 line description", "one PascalCase tag", "never `Misc`", "ErrorResponseDto",
                "error-code list", "path and query param"],
-    "backend.md": ["and local and dev too", "idempotent", "CreateXDto", "*.handler.ts", "never whole objects",
+    "backend.md": ["and local and dev too", "idempotent", "createXSchema", "*.handler.ts", "never whole objects",
                    "4xx at debug", "implements LoggerService"],
     "frontend.md": ["libs/shared", "x-correlation-id"],
     "testing.md": ["idempotency test", "failure test"],

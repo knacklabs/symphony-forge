@@ -7,7 +7,6 @@ endpoint.
 
 ```ts
 app.setGlobalPrefix('api/v1');
-app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
 app.useGlobalFilters(new AllExceptionsFilter(logger));
 app.useGlobalInterceptors(new EnvelopeInterceptor());
 SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, swaggerConfig));
@@ -53,8 +52,12 @@ export class OrderController {
 
 - One controller per resource. It reads parameters, lets the pipe validate, calls one service
   method and returns a response DTO.
-- Request DTOs carry class-validator rules and `@ApiProperty({ description, example })` on every
-  field, with a maximum length on every string.
+- Request input is a zod schema in `@app/shared`: one for each body and one for each list query,
+  and the web form uses the same schema. Check it with `@Body(new ZodValidationPipe(schema))` or
+  `@Query(new ZodValidationPipe(schema))`, and document it with `@ApiZodBody(schema)` or
+  `@ApiZodQuery(schema)`. Each schema is `.strict()`, gives every string a maximum length, and
+  gives every field `.meta({ description, example })`. A request schema has no `.transform()`,
+  because the documentation cannot show one.
 - Response DTOs have a static `from(record)` that picks the fields the caller may see.
 - Status codes: 200 read, update or delete (a delete answers `{ success: true, data: null,
   error: null }`, never a bodiless 204), 201 create, 400 invalid input, 401 not signed in,
@@ -64,12 +67,19 @@ export class OrderController {
 ## Lists
 
 ```ts
-export class ListQueryDto {
-  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
-  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
-  @IsOptional() @IsString() sortBy?: string;
-  @IsOptional() @IsIn(['asc', 'desc']) sortOrder: 'asc' | 'desc' = 'desc';
-}
+import { z } from 'zod';
+
+// In @app/shared; name the allowed sort fields for each resource.
+export const listQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1)
+    .meta({ description: 'The one-based page number.', example: 1 }),
+  limit: z.coerce.number().int().min(1).max(100).default(20)
+    .meta({ description: 'The number of projects per page, up to 100.', example: 20 }),
+  sortBy: z.enum(['name', 'status', 'createdAtUtc', 'updatedAtUtc']).default('createdAtUtc')
+    .meta({ description: 'The project field used to sort the list.', example: 'createdAtUtc' }),
+  sortOrder: z.enum(['asc', 'desc']).default('desc')
+    .meta({ description: 'The sort direction.', example: 'desc' }),
+}).strict();
 ```
 
 A list returns `{ items, pagination: { page, limit, totalItems, totalPages } }` as its `data`.
@@ -78,10 +88,44 @@ Allow `sortBy` only on the columns the endpoint names, since any other value rea
 ## Swagger
 
 The spec is generated from the decorators, so it can't drift from the code. Every endpoint has a
-summary, its success type inside the envelope (`@ApiEnvelope`) and its error responses; every DTO
-field has a description and an example; protected routes carry `@ApiBearerAuth()`.
+summary, its success type inside the envelope (`@ApiEnvelope`) and its error responses; every
+request schema field and response DTO field has a description and an example; protected routes
+carry `@ApiBearerAuth()`.
+
+Request documentation comes from the same schema the pipe checks. If the app does not have the
+decorators, copy this into `libs/core/src/common/api-zod.decorator.ts` and export them from
+`@app/core`:
+
+```ts
+import { applyDecorators } from '@nestjs/common';
+import { ApiBody, ApiQuery } from '@nestjs/swagger';
+import type { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { z } from 'zod';
+
+export function ApiZodBody(schema: z.ZodType): MethodDecorator {
+  const document = z.toJSONSchema(schema, { io: 'input', target: 'openapi-3.0' });
+  return ApiBody({ schema: document as SchemaObject });
+}
+
+export function ApiZodQuery(schema: z.ZodObject): MethodDecorator {
+  const document = z.toJSONSchema(schema, { io: 'input', target: 'openapi-3.0' });
+  return applyDecorators(...Object.entries(document.properties ?? {}).map(([name, field]) =>
+    ApiQuery({
+      name,
+      required: document.required?.includes(name) ?? false,
+      schema: field as SchemaObject,
+    }),
+  ));
+}
+```
 
 - Give each endpoint a 1-4 line description besides its summary.
 - Use one PascalCase tag per module, never `Misc` or `General`.
 - Document every path and query param with its type and whether it is required.
 - Type error responses with an `ErrorResponseDto`, and keep every error code in one error-code list.
+
+## In an app set up before this release
+
+An app's current request DTOs and its global ValidationPipe stay as they are, and the review does
+not flag them. In an app with zod, new request input follows this page. An app without zod keeps
+its own validation for new code too.
