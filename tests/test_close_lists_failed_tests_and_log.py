@@ -26,7 +26,7 @@ def test_failed_close_ends_with_all_failed_test_files_names_and_full_log(env, ad
         'version = "v1.2.2"', f'version = "{version}"')
     kept = [line for line in config.splitlines()
             if line.partition("=")[0].strip() not in ("test", "fast_test")]
-    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q --tb=no -p no:cacheprovider'
+    command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q -ra --tb=no -p no:cacheprovider'
     env.commit(repo.path, "forge.toml", f"test = {json.dumps(command)}\n"
                f"fast_test = {json.dumps(command)}\n" + "\n".join(kept) + "\n")
     repo.git("push", "-q", "origin", "main")
