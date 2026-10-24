@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+STORY = "FORGE-MODULAR-1"
+
 ROOT = Path(__file__).resolve().parents[1]
 STARTER = ROOT / "src" / "forge" / "templates" / "starter"
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
