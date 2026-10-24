@@ -24,10 +24,13 @@ pytestmark = pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
 def test_upgrade_names_runs_in_both_machine_lanes_before_install(up, tmp_path, adopted):
     if adopted:
+        up.repo.git("switch", "-q", "-c", "adoption")
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path,
                         dirs_exist_ok=True)
         up.repo.git("add", "-A")
         up.repo.git("commit", "-qm", "Use the earlier adoption")
+        up.repo.git("switch", "-q", "main")
+        up.repo.git("merge", "-q", "--ff-only", "adoption")
         up.repo.git("push", "-q", "origin", "main")
 
     other = _other_repo(tmp_path, up.repo.bin)
