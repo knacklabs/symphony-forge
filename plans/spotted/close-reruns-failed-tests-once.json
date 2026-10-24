@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tKeep retry file selection specific to its pytest invocation\tclose-reruns-failed-tests-once",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 418,
+      "text": "Keep retry file selection specific to its pytest invocation",
+      "from": "blocking",
+      "item": "close-reruns-failed-tests-once",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tAllow successful retries when passing always_test files are omitted\tclose-reruns-failed-tests-once",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 513,
+      "text": "Allow successful retries when passing always_test files are omitted",
+      "from": "blocking",
+      "item": "close-reruns-failed-tests-once",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -11,14 +11,82 @@
   "done_when": "When a close's local test run fails, close reruns only the failed test files once; if they pass, close notes them as flaky in its output and goes on, and if they fail again, close fails as before",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 418,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep retry file selection specific to its pytest invocation",
+      "work": 2
+    },
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 513,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allow successful retries when passing always_test files are omitted",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "72147855323fe7ad479d60f3e95475782c8b6f18f473bbc1c76889b84b43eeff",
+    "changed": "04c5b1b858da79cd382316c4cb6b67b659a3ba60e591d2f1202991f14027f66a",
+    "commit": "f1c833ed823fffc192da0fa604fc5be7784c8e96",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - a client's test command runs `pytest tests/unit && pytest tests/integration`. If unit tests fail initially and pass on retry, both pytest processes in the retried command receive the same FORGE_RETRY_FILES value. This assignment replaces both processes' collection roots, so the integration command executes the failed unit files again and never runs integration tests. Close can consequently report success despite failing integration tests. review.py:499 reruns the complete command, while review.py:513 supplies one file list to every invocation. [Pytest collects from config.args](https://github.com/pytest-dev/pytest/blob/8.4.2/src/_pytest/main.py#L718). Preserve each invocation's scope and ensure later, previously unexecuted commands still run their intended tests.",
+        "file": "src/forge/fasttest.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 418,
+        "priority": "P1",
+        "title": "Keep retry file selection specific to its pytest invocation",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - close's pytest picker runs a flaky related file alongside a passing file listed in always_test. The retry collects only the failed file, but pytest_tests still installs the original ALWAYS list (fasttest.py:551-554). SELECTION's pytest_sessionfinish then marks the retry failed because the already-passing always_test file did not run again (fasttest.py:396-400). Close rejects the item even though every retried test passed, defeating the promised recovery for this documented setting. Make the retry's always_test validation account for files successfully exercised on the first attempt. The new command-level test removes the `tests` check and exercises direct pytest, so it cannot detect this picker-path failure.",
+        "file": "src/forge/review.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 513,
+        "priority": "P1",
+        "title": "Allow successful retries when passing always_test files are omitted",
+        "work": 2
+      }
+    ],
+    "id": "2502e702-faa3-4b66-b4a0-0b5b4509c588",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-24T17:34:10.962169+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T17:48:38.898810+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-24T17:48:38.907782+00:00",
+    "file": "src/forge/fasttest.py",
+    "wait_id": "d7018819-59a1-4c61-8356-391dc6101400"
+  },
   "stuck": {
     "close": null,
     "head": "aed4bb950a3b5a507375566bd5f847f28eb3087f",
