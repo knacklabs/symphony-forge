@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-FASTAPI-1-GUIDE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T11:01:35.986064+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "dbf1c80af17d63623984816344af54a3219ddc66",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
