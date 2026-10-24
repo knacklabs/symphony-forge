@@ -124,13 +124,13 @@ part under After.
   `@app/shared`, and FORMATS already owns that file's lines before ERRORS and ORGS run side by
   side.
 - CSV (FORMATS), `libs/core/src/common/csv.ts`, exported from `@app/core`:
-  - A cell whose text starts with `=`, `+`, `-` or `@` is written with a leading `'` (the owner's formula guard); the exports API case checks one such cell.
   `type CsvColumn<T> = { header: string; value: (row: T) => string | number | null }` and
   `sendCsv<T>(response: Response, filename: string, columns: CsvColumn<T>[], rows: T[]): void`.
   It sends `Content-Type: text/csv; charset=utf-8` and `Content-Disposition: attachment;
   filename="<filename>"`, a header row, CRLF line ends, and quotes a field that has `"`, `,`, CR
   or LF, with its quotes doubled. A date column uses `formatDateTime(value, 'UTC')`, and its
   header ends ` (UTC)`.
+  Formula guard: a cell whose text starts with `=`, `+`, `-` or `@` gets a leading `'` (the owner's choice); the exports API case checks one such cell.
 - Export routes, each declared before any `:id` route of its controller and scoped like the list:
   `GET /api/v1/projects/export` gives `projects.csv` with `Name,Status,Created (UTC),Updated
   (UTC)` (FORMATS); `GET /api/v1/members/export` gives `members.csv` with `Email,Role,Joined
