@@ -8,21 +8,55 @@
     "head": null,
     "start": "39624d01a09829ab84fe62a90892ae36a7582bb7"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/starter/README.md",
+      "file": "src/forge/templates/starter/README.md",
+      "gain": 3,
+      "harm": 4,
+      "line": 25,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Load the local .env before running Prisma migrations",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "afc27568c47bde1303b681e4b735286db12aed6317eaf1bdd9f79d93f03ce03c",
+    "changed": "ab273077e32456105d3f47456c6e873d77613d8c1ababf32db08ee6bd39ee7c5",
+    "commit": "fa5b8c1849d7b9383c4847c648f3f969dcf63b09",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "chunk 1/3:\n\nGain 3, Work 1, Harm 4 (floor: migration)\nRaise: Functional\nCase: normal use - a developer follows the README, stores DATABASE_URL in .env, and runs the local setup commands.\nThis replacement removes the previous `node --env-file=.env` invocation. The starter's `prisma.config.ts:3` reads only `process.env.DATABASE_URL` and omits the datasource URL when it is unset. [Prisma 7 does not automatically load .env](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7), so the documented migration command fails before the developer can start the app. Preserve explicit environment loading in this command or load .env in the Prisma configuration.",
+        "file": "src/forge/templates/starter/README.md",
+        "gain": 3,
+        "harm": 4,
+        "line": 25,
+        "priority": "P1",
+        "title": "Load the local .env before running Prisma migrations",
+        "work": 1
+      }
+    ],
+    "id": "c220ff88-30b9-4384-923a-c72d6f23b20a",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T07:16:48.671558+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T07:36:49.608489+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "question": "New client apps start from the client notes and a fixed modular stack: The modular starter on pnpm is stuck. It should deliver: The starter as pnpm workspace packages, with sign-in and the example records as modules, one schema file per module, the module-boundary lint with tags, its own pnpm Dockerfile, the convention pages and the live workflow. New repos get it from `forge init --starter`; existing repos keep their files. The one part allowed over the line limit (see Risks).\nIt changes 30743 lines outside tests, over its limit of 400.\nThe worker tried: Build the module graph before lint; Export the public business services; Start new apps with pnpm and business modules.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "f78d42a5-a05e-4f20-94e5-3086aebc99f2"
-  },
   "stuck": {
     "close": null,
     "head": "a466904e4abb373dd32de474e2696e51384feea5",
