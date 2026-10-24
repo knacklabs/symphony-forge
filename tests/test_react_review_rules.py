@@ -16,8 +16,8 @@ from test_score_notes import _client_repo as setup_client
 from test_shadcn_only import _commit_main
 from test_worker import calls, install_claude
 
-STORY = "FORGE-REACTDEFAULTS-1"
 
+STORY = "FORGE-REACTDEFAULTS-1"
 
 MEMO_RULE = (
     "In a React app with React Compiler turned on (`babel-plugin-react-compiler` in a "
@@ -111,7 +111,9 @@ def test_6_an_existing_app_keeps_its_code_and_only_new_code_is_checked(env, tmp_
         b"  const title = useMemo(() => 'Home', []);\n"
         b"  return compact ? <span>{title}</span> : <main>{title}</main>;\n}\n"
     )
-    env.repo.write(path, original.decode("utf-8"))
+    screen = env.repo.path / path
+    screen.parent.mkdir(parents=True, exist_ok=True)
+    screen.write_bytes(original)
     setup_client(env, tmp_path, True)
     assert (env.repo.path / path).read_bytes() == original
     env.checks(GREEN)
