@@ -13,10 +13,30 @@ model Organisation {
   deletedByAccountId  String?      @db.Uuid
   memberships         Membership[]
   projects            Project[]
+  invites             Invite[]
 
   @@index([createdByAccountId], map: "idx_Organisation_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Organisation_modifiedByAccountId")
   @@index([deletedByAccountId], map: "idx_Organisation_deletedByAccountId")
+}
+
+// Invites are temporary, single-use credentials and are removed when claimed.
+model Invite {
+  id                  String       @id @default(uuid()) @db.Uuid
+  organisationId      String       @db.Uuid
+  email               String
+  tokenHash           String       @unique
+  expiresAtUtc        DateTime
+  createdAtUtc        DateTime     @default(now())
+  updatedAtUtc        DateTime     @updatedAt
+  createdByAccountId  String       @db.Uuid
+  modifiedByAccountId String       @db.Uuid
+  organisation        Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+
+  @@unique([organisationId, email])
+  @@index([expiresAtUtc], map: "idx_Invite_expiresAtUtc")
+  @@index([createdByAccountId], map: "idx_Invite_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_Invite_modifiedByAccountId")
 }
 
 model Membership {

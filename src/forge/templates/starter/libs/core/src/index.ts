@@ -1,4 +1,5 @@
 export { AllExceptionsFilter } from './common/all-exceptions.filter';
+export { AdminOnly } from './common/admin-only.decorator';
 export type { AccountPrincipal } from './common/account-principal';
 export { CurrentAccount } from './common/current-account.decorator';
 export { ApiEnvelope, ApiErrors } from './common/api-envelope.decorator';
@@ -13,5 +14,7 @@ export { PUBLIC_ROUTE, Public } from './common/public.decorator';
 export { ZodValidationPipe } from './common/zod-validation.pipe';
 export type { AuthenticatedRequest } from './common/authenticated-request';
 export { validateEnvironment } from './config/environment';
+export { MAIL_PROVIDER, type MailProvider } from './mail/mail.provider';
+export { MailModule } from './mail/mail.module';
 export { PrismaModule } from './prisma/prisma.module';
 export { PrismaService } from './prisma/prisma.service';

@@ -2,10 +2,9 @@ import { randomBytes, randomUUID, createHash, scrypt, timingSafeEqual } from 'no
 import { Inject, Injectable, Optional, BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
-import { PrismaService } from '@app/core';
+import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core';
 import { OrganisationsService } from '@app/organisations';
 import type { Account as AccountResponse } from '@app/shared';
-import { MAIL_PROVIDER, type MailProvider } from './mail.provider';
 
 const PASSWORD_KEY_BYTES = 64;
 const PASSWORD_SALT_BYTES = 16;
@@ -60,6 +59,32 @@ export class AuthService {
   ) {}
 
   async signUp(email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
+    const account = await this.createAccount(email, password);
+    // ponytail: account and organisation creation are two module calls; add recovery if sign-up needs retries across failures.
+    const membership = await this.organisations.createForAccount(account);
+    return { account: accountResponse(account, membership.role), cookies: await this.createSession(account.id) };
+  }
+
+  async invite(email: string, account: AccountPrincipal): Promise<{ message: string }> {
+    if (await this.prisma.account.findUnique({ where: { email }, select: { id: true } })) {
+      throw new ConflictException({ code: 'EMAIL_ALREADY_REGISTERED', message: 'That person already has an account.', details: null });
+    }
+    await this.organisations.invite(email, account);
+    return { message: 'Invite sent.' };
+  }
+
+  async acceptInvite(token: string, email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
+    const invite = await this.organisations.openInvite(token);
+    if (invite.email !== email) {
+      throw new BadRequestException({ code: 'INVITE_INVALID', message: 'This invite link is not valid. Ask an admin for a new one.', details: null });
+    }
+    const account = await this.createAccount(email, password, 'An account already uses that email, so it cannot join this organisation.');
+    // ponytail: a failure between these module calls leaves an account with no membership and 401; support must remove it before another attempt.
+    const membership = await this.organisations.joinFromInvite(invite, account);
+    return { account: accountResponse(account, membership.role), cookies: await this.createSession(account.id) };
+  }
+
+  private async createAccount(email: string, password: string, conflictMessage = 'An account already uses that email.'): Promise<Account> {
     const passwordHash = await hashPassword(password);
     const id = randomUUID();
     let account: Account;
@@ -69,13 +94,11 @@ export class AuthService {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException({ code: 'EMAIL_ALREADY_REGISTERED', message: 'An account already uses that email.', details: null });
+        throw new ConflictException({ code: 'EMAIL_ALREADY_REGISTERED', message: conflictMessage, details: null });
       }
       throw error;
     }
-    // ponytail: account and organisation creation are two module calls; add recovery if sign-up needs retries across failures.
-    const membership = await this.organisations.createForAccount(account);
-    return { account: accountResponse(account, membership.role), cookies: await this.createSession(account.id) };
+    return account;
   }
 
   async signIn(email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
