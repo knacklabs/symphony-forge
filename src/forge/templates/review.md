@@ -255,6 +255,13 @@ emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 
+In an app with a database, report a query that this change adds in one module on a table another
+module owns as a P1 finding titled `Module tables: <the query>`. A module owns the tables in its
+own schema file; in an app without one schema file per module, it owns the tables that only its
+code writes. Other modules reach those tables only through its public service. A query the
+default branch already has is not a finding, and neither is app code outside the modules, such
+as the demo-data loader.
+
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a
@@ -376,6 +383,9 @@ working prototype as a whole: the demo workflow, data handling, sign-in, integra
 security, accessibility, and whether the implementation matches the answers. Report every
 blocking mismatch or missing working path as a P0 or P1 finding. Do not accept a sign-off on
 the strength of a template or a test stub alone. Give concrete file and line evidence.
+
+Report a query in one module on a table another module owns as a P1 finding titled
+`Module tables: <the query>`.
 
 ## Scores
 Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your
