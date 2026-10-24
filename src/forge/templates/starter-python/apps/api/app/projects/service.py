@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
@@ -58,6 +59,18 @@ class ProjectService:
                 total_pages=(total_items + query.limit - 1) // query.limit,
             ),
         )
+
+    def list_all(self, account: AccountPrincipal) -> Sequence[Project]:
+        """Every project the account can see, newest first, for the CSV export."""
+        projects = self.db.scalars(
+            select(ProjectModel)
+            .where(
+                ProjectModel.account_id == account.id,
+                ProjectModel.deleted_at_utc.is_(None),
+            )
+            .order_by(ProjectModel.created_at_utc.desc(), ProjectModel.id.asc())
+        ).all()
+        return [Project.model_validate(project) for project in projects]
 
     def get(self, account: AccountPrincipal, project_id: UUID) -> Project:
         project = self.db.scalar(

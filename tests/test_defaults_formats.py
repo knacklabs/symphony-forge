@@ -30,6 +30,7 @@ HAND_FORMAT_CASES = {
     ),
 }
 FORMAT_HELPERS = STARTER / "libs" / "shared" / "src" / "format.ts"
+PYTHON_STARTER = STARTER.parent / "starter-python"
 CSV_WRITER = STARTER / "libs" / "core" / "src" / "common" / "csv.ts"
 
 
@@ -44,6 +45,9 @@ def _app_sources():
 @pytest.mark.timeout(1800)
 def test_3_dates_times_and_money_come_from_the_shared_helpers(tmp_path_factory, lint_starter):
     assert FORMAT_HELPERS.is_file(), "the starter has no shared format helpers"
+    # The Python starter builds the same web app, so its shared package holds the same helpers.
+    python_helpers = PYTHON_STARTER / "libs" / "shared" / "src" / "format.ts"
+    assert python_helpers.read_bytes() == FORMAT_HELPERS.read_bytes()
     assert LINT_MESSAGE in (STARTER / "eslint.config.mjs").read_text(encoding="utf-8")
     for path in _app_sources():
         if path == FORMAT_HELPERS:

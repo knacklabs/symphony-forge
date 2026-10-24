@@ -8,6 +8,7 @@ test-only production seam or database fixtures.
 """
 
 import json
+import re
 import subprocess
 from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
@@ -282,3 +283,43 @@ def test_production_forgot_password_does_not_log_a_reset_link(
     logs = compose_logs("production-api")
     assert "/reset-password" not in logs
     assert token not in logs
+
+
+def test_projects_export_as_csv(client: httpx.Client) -> None:
+    _, csrf = sign_up(client)
+    for name in ('Plan, "draft"', "=1+1", "Deleted project"):
+        created = client.post(
+            "/api/v1/projects",
+            json={"name": name, "status": "active"},
+            headers={"x-csrf-token": csrf},
+        )
+        assert created.status_code == 201, created.text
+    deleted = created.json()["data"]["id"]
+    removed = client.delete(
+        f"/api/v1/projects/{deleted}", headers={"x-csrf-token": csrf}
+    )
+    assert removed.status_code == 200, removed.text
+
+    response = client.get("/api/v1/projects/export")
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"] == "text/csv; charset=utf-8"
+    assert (
+        response.headers["content-disposition"] == 'attachment; filename="projects.csv"'
+    )
+    date_time = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}"
+    lines = response.text.split("\r\n")
+    assert len(lines) == 4, response.text
+    assert lines[0] == "Name,Status,Created (UTC),Updated (UTC)"
+    # Newest first, whatever order the screen sorts by.
+    assert re.fullmatch(rf"'=1\+1,active,{date_time},{date_time}", lines[1])
+    assert re.fullmatch(rf'"Plan, ""draft""",active,{date_time},{date_time}', lines[2])
+    assert lines[3] == ""
+    assert "Deleted project" not in response.text
+
+    with httpx.Client(base_url=client.base_url, timeout=15) as other:
+        sign_up(other)
+        assert other.get("/api/v1/projects/export").text == (
+            "Name,Status,Created (UTC),Updated (UTC)\r\n"
+        )
+    with httpx.Client(base_url=client.base_url, timeout=15) as anonymous:
+        assert anonymous.get("/api/v1/projects/export").status_code == 401

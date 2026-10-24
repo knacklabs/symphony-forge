@@ -517,6 +517,30 @@
         }
       }
     },
+    "/api/v1/projects/export": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Download every project of the signed-in account as a CSV file.",
+        "operationId": "export_projects_api_v1_projects_export_get",
+        "responses": {
+          "200": {
+            "description": "The projects.csv file, newest first."
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{project_id}": {
       "get": {
         "tags": [

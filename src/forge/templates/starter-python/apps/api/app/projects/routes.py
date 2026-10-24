@@ -1,11 +1,18 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session as DbSession
 
 from app.auth import AccountPrincipal, current_account, require_csrf
-from app.core import ErrorEnvelope, SuccessEnvelope, get_db
+from app.core import (
+    CsvColumn,
+    ErrorEnvelope,
+    SuccessEnvelope,
+    csv_response,
+    get_db,
+    utc_date_time,
+)
 from app.projects.schema import (
     Project,
     ProjectInput,
@@ -15,6 +22,13 @@ from app.projects.schema import (
 from app.projects.service import ProjectService
 
 router = APIRouter(prefix="/api/v1/projects", tags=["Projects"])
+
+PROJECT_CSV_COLUMNS: tuple[CsvColumn[Project], ...] = (
+    ("Name", lambda project: project.name),
+    ("Status", lambda project: project.status.value),
+    ("Created (UTC)", lambda project: utc_date_time(project.created_at_utc)),
+    ("Updated (UTC)", lambda project: utc_date_time(project.updated_at_utc)),
+)
 
 
 @router.get(
@@ -49,6 +63,25 @@ def create_project(
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
     return SuccessEnvelope(data=ProjectService(db).create(account, input_data))
+
+
+# Declared before "/{project_id}", so "export" is not read as a project identifier.
+@router.get(
+    "/export",
+    response_class=Response,
+    responses={
+        200: {"description": "The projects.csv file, newest first."},
+        401: {"model": ErrorEnvelope},
+    },
+    summary="Download every project of the signed-in account as a CSV file.",
+)
+def export_projects(
+    account: Annotated[AccountPrincipal, Depends(current_account)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> Response:
+    return csv_response(
+        "projects.csv", PROJECT_CSV_COLUMNS, ProjectService(db).list_all(account)
+    )
 
 
 @router.get(

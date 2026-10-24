@@ -8,6 +8,19 @@ export default ts.config(
   js.configs.recommended,
   ...ts.configs.recommended,
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
+  // One date, time, number and money format: only the shared helpers may format them by hand.
+  {
+    files: ['apps/*/src/**/*.{ts,tsx}', 'libs/*/src/**/*.ts'],
+    ignores: ['libs/shared/src/format.ts'],
+    rules: {
+      'no-restricted-syntax': ['error', ...[
+        "NewExpression[callee.object.name='Intl']",
+        "CallExpression[callee.object.name='Intl']",
+        'CallExpression[callee.property.name=/^toLocale(Date|Time)?String$/]',
+        "CallExpression[callee.property.name='toFixed']",
+      ].map((selector) => ({ selector, message: 'Format dates, times, numbers and money with the helpers in @app/shared.' }))],
+    },
+  },
   // React Compiler memoizes, so the hooks rules check the app's own code; shadcn/ui copies stay as shipped.
   { ...reactHooks.configs.flat.recommended, files: ['apps/web/src/**/*.{ts,tsx}'], ignores: ['apps/web/src/components/ui/**'] },
   // shadcn/ui's copied source uses optional callbacks and exports alongside components.
