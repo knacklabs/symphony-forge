@@ -26,6 +26,14 @@ def test_4_a_worker_in_a_python_app_reads_the_python_page(
     # standards tests do not exercise a real worker brief; the Claude stub replaces only delivery.
     # No production seam is needed: this checks shipped prompt and document contracts.
     log = install_claude(repo)
+    if adoption == "new init":
+        started = repo.forge("fix", "start", "Read the Python guide", "--done",
+                             "The worker reads the Python page", "--kind", "mechanical", cwd=client)
+        assert started.returncode == 0, started.stdout + started.stderr
+        client = Path(re.search(r" in (.+)\n", started.stdout)[1])
+        item = "read-the-python-guide"
+    else:
+        item = "sync-the-discovery-guide"
     config = client / "forge.toml"
     settings = re.sub(r'^workers = ".*"$', 'workers = "claude"',
                       config.read_text("utf-8"), flags=re.M)
@@ -33,13 +41,6 @@ def test_4_a_worker_in_a_python_app_reads_the_python_page(
     repo.git("add", "-A", cwd=client)
     repo.git("commit", "-q", "--allow-empty", "-m", "Use Claude for the worker check", cwd=client)
 
-    if adoption == "new init":
-        started = repo.forge("fix", "start", "Read the Python guide", "--done",
-                             "The worker reads the Python page", "--kind", "mechanical", cwd=client)
-        assert started.returncode == 0, started.stdout + started.stderr
-        item = "read-the-python-guide"
-    else:
-        item = "sync-the-discovery-guide"
     worked = repo.forge("work", item, cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     call = calls(log)[-1]
