@@ -4,12 +4,20 @@
   "done_when": "A new client app and an existing app that upgrades both get the call-or-event rule on the backend page, and reviews hold only new code against it.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T09:02:19.173132+00:00",
       "step": "start"
     }
   ],
-  "why": "The backend convention page names event files but never says when a module calls another module's public service or sends an event. The standards page covers only part of it, and the stack page already says to add a queue only when a story's New moving parts names one, so the fix adds just the answer-now versus react-after split."
+  "stuck": {
+    "close": null,
+    "head": "88ffb88c08ac2714d6b95f6ac1d54318df99a066",
+    "keys": {},
+    "round": null
+  },
+  "why": "The backend convention page names event files but never says when a module calls another module's public service or sends an event. The standards page covers only part of it, and the stack page already says to add a queue only when a story's New moving parts names one, so the fix adds just the answer-now versus react-after split.",
+  "worker": "codex"
 }
