@@ -35,12 +35,10 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
   });
   const { isDirty } = form.formState;
 
+  // The parent keeps the edited project fixed while the dialog is open, so this resets only on open.
   useEffect(() => {
-    if (open) {
-      setError('');
-      form.reset({ name: project?.name ?? '', status: project?.status ?? 'active' });
-    }
-  }, [form, open, project?.id]);
+    if (open) form.reset({ name: project?.name ?? '', status: project?.status ?? 'active' });
+  }, [form, open, project?.id, project?.name, project?.status]);
 
   async function submit(input: ProjectInput) {
     setError('');
@@ -60,6 +58,7 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
       setConfirmDiscard(true);
       return;
     }
+    if (!nextOpen) setError('');
     onOpenChange(nextOpen);
   }
 
@@ -117,6 +116,7 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
           <AlertDialogAction onClick={(event) => {
             event.preventDefault();
             setConfirmDiscard(false);
+            setError('');
             form.reset({ name: project?.name ?? '', status: project?.status ?? 'active' });
             onOpenChange(false);
           }}>Discard changes</AlertDialogAction>

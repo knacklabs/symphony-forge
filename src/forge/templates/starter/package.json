@@ -55,6 +55,7 @@
     "typescript": "5.9.3",
     "vite": "7.1.12",
     "@vitejs/plugin-react": "5.0.4",
+    "babel-plugin-react-compiler": "1.0.0",
     "vitest": "3.2.4",
     "@playwright/test": "1.56.1",
     "@axe-core/playwright": "4.10.2",

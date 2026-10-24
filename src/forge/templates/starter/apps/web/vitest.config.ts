@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
-  plugins: [react()],
+  plugins: [react({ babel: { plugins: ['babel-plugin-react-compiler'] } })],
   resolve: {
     conditions: ['@app/source', 'module', 'browser', 'development|production'],
     alias: {

@@ -354,6 +354,18 @@
       "title": "New client apps start with the constitution's built-in defaults",
       "status": "pending",
       "order": 93
+    },
+    {
+      "key": "FORGE-REACTDEFAULTS-1",
+      "title": "Four frontend defaults for new client React apps",
+      "status": "pending",
+      "order": 92
+    },
+    {
+      "key": "FORGE-ZOD-1",
+      "title": "One zod schema checks every client app input",
+      "status": "pending",
+      "order": 93
     }
   ],
   "epics": [

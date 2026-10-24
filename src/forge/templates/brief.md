@@ -349,6 +349,11 @@ a new query on another module's tables.
 For new module calls and events, follow backend.md's "Call a service or send an event" rule.
 Existing code needs no conversion.
 
+In a TypeScript app with zod in a package.json, check each request body and query that you add
+with a zod schema in the shared package, through ZodValidationPipe, and document it from the
+same schema, as the API convention says. Do not add class-validator rules or @ApiProperty to
+request input. Review flags new request input that no zod schema checks.
+
 A plan's cold read passes when no note is at the bar. A note is at the bar when the plan is wrong,
 contradicts itself, or a builder could not act on it. Notes below the bar, or unscored and marked
 `Advisory:`, need no disposition or another round; only notes at the bar need the coordinator to amend
@@ -358,6 +363,12 @@ Take the first rung that holds: don't build it; reuse what the repo has; the sta
 platform; an installed dependency; one line; then the least code that works. Never simplify away
 validation, security, data-loss protection or accessibility.
 Joining lines or removing blank lines never counts as a reduction.
+
+In a React app with React Compiler turned on, do not add useMemo, useCallback or React.memo; the
+compiler memoizes. Compose components as the frontend convention says: children for layout,
+compound components for parts that share state, custom hooks for logic with no markup, and no
+boolean prop that switches a component between modes. Review flags new code that breaks either
+rule.
 
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
