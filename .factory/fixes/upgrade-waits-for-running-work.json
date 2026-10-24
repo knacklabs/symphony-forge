@@ -4,12 +4,20 @@
   "done_when": "The guide's upgrade steps say to wait until no Forge runs are in progress, and forge upgrade warns and names the running items when the machine's lanes still have runs",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T17:34:19.447447+00:00",
       "step": "start"
     }
   ],
-  "why": "forge upgrade and the guide's Upgrade Forge steps do not say to let running Forge work finish first, and replacing the installed Forge during a close can mix two releases"
+  "stuck": {
+    "close": null,
+    "head": "607e85cd51393569e17f8ce346374c7aacf38821",
+    "keys": {},
+    "round": null
+  },
+  "why": "forge upgrade and the guide's Upgrade Forge steps do not say to let running Forge work finish first, and replacing the installed Forge during a close can mix two releases",
+  "worker": "codex"
 }
