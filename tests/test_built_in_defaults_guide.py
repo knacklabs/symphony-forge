@@ -57,6 +57,9 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         for rel, contents in app_files.items():
             assert (top / rel).read_bytes() == contents
         assert not (top / "libs/organisations").exists()
+        # The worker receives a clean branch, not a reminder to commit sync's output.
+        _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
+        _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=top)
 
     outline_sentence = (
         "In an app that has libs/organisations, also copy the built-in lines into ## Fixed rules, "
