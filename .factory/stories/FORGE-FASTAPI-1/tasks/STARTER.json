@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner approved this part's allowance in the FORGE-FASTAPI-1 story: two lockfiles and the API code that matches the TypeScript starter",
   "branch": "task/FORGE-FASTAPI-1-STARTER",
   "part_line_limit": 400,
   "status": "started",
