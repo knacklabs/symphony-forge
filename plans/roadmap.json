@@ -360,6 +360,12 @@
       "title": "One zod schema checks every client app input",
       "status": "pending",
       "order": 93
+    },
+    {
+      "key": "FORGE-FASTAPI-1",
+      "title": "FastAPI starter for Python backends",
+      "status": "pending",
+      "order": 94
     }
   ],
   "epics": [
