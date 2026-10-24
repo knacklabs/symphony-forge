@@ -45,6 +45,31 @@ export const useCancelOrder = () => {
 Never fetch in `useEffect`, and never copy server data into component state: TanStack Query
 already caches it and tracks loading and errors.
 
+## Components
+
+- React Compiler is on (`babel-plugin-react-compiler` in the Vite config) and memoizes. Do not add
+  `useMemo`, `useCallback` or `React.memo`. The shadcn/ui copies in `components/ui/` keep theirs.
+- Pass layout content as `children`.
+- Build parts that share state as a compound component: one parent holds the state in a context,
+  and its parts (`<Filters>`, `<Filters.Status>`) read it.
+- Put logic that renders no markup in a custom hook.
+- Do not add a boolean prop that switches a component between modes (`<Card compact>`,
+  `isEditing`). Make two components, or a compound component.
+
+## Web address
+
+Keep filters, tabs, sort order and the page number of a list in the web address. Read them through
+React Router's `useSearchParams`, and update the query parameters when the view changes. Reloading
+the page or sharing its link must show the same view. Keep local state only for values a shared
+link does not need to reproduce.
+
+## Route error pages
+
+Use React Router's data router (`createBrowserRouter` and `RouterProvider`). Give each route its
+own `errorElement`, so a crash on one screen shows that route's error page and the other screens
+keep working. The error page says what happened and how to try again or open another screen.
+Keep each screen's data-loading error state too.
+
 ## Screens
 
 - Each screen that loads data renders its loading, error and empty states. The error message comes
@@ -96,3 +121,9 @@ const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Age
 - Every control works with the keyboard and shows visible focus, every input has a label, every
   image has alt text, contrast meets WCAG AA, and anything clickable is a `<button>` or a link.
   shadcn/ui components handle most of this; don't override their accessibility attributes.
+
+## In an app set up before this release
+
+These rules apply to code that a change adds. The app's current code stays as it is, and the
+review does not flag it. An app without React Compiler keeps its own memoization, and an app on
+<BrowserRouter> keeps it.

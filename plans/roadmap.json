@@ -344,16 +344,16 @@
       "order": 91
     },
     {
-      "key": "FORGE-MODULAR-1",
-      "title": "New client apps start from the client notes and a fixed modular stack",
+      "key": "FORGE-REACTDEFAULTS-1",
+      "title": "Four frontend defaults for new client React apps",
       "status": "pending",
       "order": 92
     },
     {
-      "key": "FORGE-REACTDEFAULTS-1",
-      "title": "Four frontend defaults for new client React apps",
+      "key": "FORGE-MODULAR-1",
+      "title": "New client apps start from the client notes and a fixed modular stack",
       "status": "pending",
-      "order": 93
+      "order": 92
     }
   ],
   "epics": [

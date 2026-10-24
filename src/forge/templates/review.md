@@ -281,6 +281,18 @@ use impeccable's Operate mode and Emil's restraint. Popovers scale from their tr
 shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very frequent actions.
 Motion that follows these rules is not a `Simpler:` finding.
 
+In a React app with React Compiler turned on (`babel-plugin-react-compiler` in a `package.json`),
+report a `useMemo`, `useCallback` or `React.memo` that this change adds as a P1 finding titled
+`Memo: <the component>`. The compiler memoizes. Code under `components/ui/` (the shadcn/ui copies)
+is not a finding, and neither is code the default branch already has.
+
+In a React app, report a component or prop that this change adds and that breaks the frontend
+convention's composition rule as a P1 finding titled `Composition: <the component>`: layout
+passes content as `children`; parts that share state are a compound component that shares it
+through context; logic with no markup is a custom hook; and no boolean prop switches a component
+between modes. Code under `components/ui/` is not a finding, and neither is code the default
+branch already has.
+
 ## How to report
 Name the scenario with `Case: normal use - <the scenario>` or `Case: rare - <the scenario>`
 in each finding that would block. A rare case is a follow-up, whatever its scores.
