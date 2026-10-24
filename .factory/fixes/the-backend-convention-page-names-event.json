@@ -1,6 +1,13 @@
 {
   "base": "1879dd44e6a8cb4ad7a899276039b2d5e1507a8b",
   "branch": "fix/the-backend-convention-page-names-event",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16d25-beda-7671-9575-7405d6545963",
+    "head": null,
+    "start": "d58e58d1686972900ca97691d597a36f4f1b7eb3"
+  },
   "done_when": "A new client app and an existing app that upgrades both get the call-or-event rule on the backend page, and reviews hold only new code against it.",
   "fix_kind": "mechanical",
   "kind": "fix",
