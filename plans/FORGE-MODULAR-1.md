@@ -4,30 +4,20 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- The agent reads the FDE's client notes and asks only the questions that change a screen, field or flow, one at a time. Other open points get a listed default. Anything the FDE cannot answer goes to an "ask the client" list in the recap, and the prototype does not wait.
+- Every new app is a modular monolith on pnpm and Prisma. Modules call each other only through public services, never through another module's tables. The starter turns on Nx's module-boundary lint, so a cross-module import fails the tests, and reviews hold a direct query on another module's tables.
+- The constitution fills in the 21 product defaults at the start and raises one only when the notes contradict it. The owner still approves it once after sign-off.
+- Existing apps keep their package manager and structure. Reviews hold only new cross-module queries, and the constitution records the stack the app already uses.
 
 ## Why
 
-New client apps start from the client notes and a fixed modular stack
+The module rule exists only as prose in the shipped backend conventions, and the starter has no lint rule that enforces it. The starter ships an npm lockfile, not pnpm. The FDE also answers many product questions one by one before the prototype, and the constitution asks the defaulted ones again later.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client app's starter fails its tests when one module imports another module's tables.**
+2. **A new client app's constitution arrives with the 21 defaults filled in, and the FDE sees a list of contradictions and gaps instead of a full question list.**
+3. **An existing app keeps its package manager and folder layout after upgrading, and its reviews check only new cross-module queries.**
 
 ## Risks
 
