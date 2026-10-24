@@ -1,6 +1,13 @@
 {
   "base": "a474c8635ced7801f9df00e753d6e5c1b954644e",
   "branch": "fix/close-reruns-failed-tests-once",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16efa-a94b-7af3-bdf8-0de10878eca8",
+    "head": null,
+    "start": "91eb3e821926bd38f10864b5491abe5a3bf09d28"
+  },
   "done_when": "When a close's local test run fails, close reruns only the failed test files once; if they pass, close notes them as flaky in its output and goes on, and if they fail again, close fails as before",
   "fix_kind": "backend",
   "kind": "fix",
