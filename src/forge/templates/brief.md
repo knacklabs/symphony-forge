@@ -346,6 +346,8 @@ In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new U
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds
 a new query on another module's tables.
+For new module calls and events, follow backend.md's "Call a service or send an event" rule.
+Existing code needs no conversion.
 
 A plan's cold read passes when no note is at the bar. A note is at the bar when the plan is wrong,
 contradicts itself, or a builder could not act on it. Notes below the bar, or unscored and marked

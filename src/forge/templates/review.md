@@ -378,6 +378,12 @@ The app's approved constitution, on the default branch, follows. Report work tha
 $constitution
 <!-- standards -->
 ## Standards
+For new code, check the call-or-event rule: call another module's public service and await its
+result when the current action needs that answer to continue. Use an in-process event when other
+modules react after an action succeeds and the current action needs no answer from them.
+Events still need the story's `New moving parts` entry. Do not require conversion of existing code
+or add a queue requirement.
+
 Forge's standards page follows: the same page every worker's brief carries. Check the change
 against each of its rules that applies to a concern the change has. Report every rule the change
 breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A
