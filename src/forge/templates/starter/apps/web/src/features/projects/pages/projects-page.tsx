@@ -10,7 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Project, ProjectInput } from '@shared/index';
+import type { Project, ProjectInput } from '@app/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

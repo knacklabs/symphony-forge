@@ -5,9 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 process.chdir(fileURLToPath(new URL('..', import.meta.url)));
 const environment = { ...process.env, COMPOSE_PROJECT_NAME: process.env.COMPOSE_PROJECT_NAME || `starter-test-${randomUUID().slice(0, 8)}`,
-  NX_DAEMON: 'false', NX_NO_CLOUD: 'true' };
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: '0', NX_DAEMON: 'false', NX_NO_CLOUD: 'true' };
+const corepack = process.platform === 'win32' ? 'corepack.cmd' : 'corepack';
 function run(command, args) {
   const result = spawnSync(command, args, { env: environment, stdio: 'inherit', shell: process.platform === 'win32' });
   if (result.error) throw result.error;
@@ -29,11 +28,11 @@ environment.PRODUCTION_API_TEST_URL = `http://127.0.0.1:${environment.PRODUCTION
 environment.DATABASE_URL = 'postgresql://postgres:test-password@127.0.0.1:5432/starter_test';
 const compose = ['compose', '-f', 'compose.test.yml'];
 try {
-  run(npm, ['ci']);
+  run(corepack, ['pnpm', 'install', '--frozen-lockfile']);
   run(process.execPath, ['scripts/test-build.mjs']);
-  run(npx, ['playwright', 'install', '--with-deps', 'chromium']);
+  run(corepack, ['pnpm', 'exec', 'playwright', 'install', '--with-deps', 'chromium']);
   run('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '180']);
-  run(npm, ['test']);
+  run(corepack, ['pnpm', 'test']);
   const response = await fetch(`${environment.API_TEST_URL}/health`);
   if (response.status !== 200) throw new Error('The built image did not answer GET /health with 200');
   process.stdout.write('GET /health returned 200\n');

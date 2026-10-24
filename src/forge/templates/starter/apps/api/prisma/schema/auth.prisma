@@ -1,16 +1,3 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-}
-
-enum ProjectStatus {
-  active
-  archived
-}
-
 model Account {
   id                  String   @id @db.Uuid
   email               String   @unique
@@ -58,27 +45,4 @@ model PasswordResetToken {
 
   @@index([accountId], map: "idx_PasswordResetToken_accountId")
   @@index([expiresAtUtc], map: "idx_PasswordResetToken_expiresAtUtc")
-}
-
-model Project {
-  id                  String        @id @default(uuid()) @db.Uuid
-  accountId           String        @db.Uuid
-  name                String        @db.VarChar(120)
-  status              ProjectStatus @default(active)
-  createdAtUtc        DateTime      @default(now())
-  updatedAtUtc        DateTime      @updatedAt
-  createdByAccountId  String        @db.Uuid
-  modifiedByAccountId String        @db.Uuid
-  deletedAtUtc        DateTime?
-  deletedByAccountId  String?       @db.Uuid
-
-  account             Account  @relation("ProjectOwner", fields: [accountId], references: [id], onDelete: Restrict)
-  createdByAccount    Account  @relation("ProjectCreatedBy", fields: [createdByAccountId], references: [id], onDelete: Restrict)
-  modifiedByAccount   Account  @relation("ProjectModifiedBy", fields: [modifiedByAccountId], references: [id], onDelete: Restrict)
-  deletedByAccount    Account? @relation("ProjectDeletedBy", fields: [deletedByAccountId], references: [id], onDelete: Restrict)
-
-  @@index([accountId], map: "idx_Project_accountId")
-  @@index([createdByAccountId], map: "idx_Project_createdByAccountId")
-  @@index([modifiedByAccountId], map: "idx_Project_modifiedByAccountId")
-  @@index([deletedByAccountId], map: "idx_Project_deletedByAccountId")
 }

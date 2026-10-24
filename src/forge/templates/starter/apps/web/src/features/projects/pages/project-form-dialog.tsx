@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { projectSchema, type Project, type ProjectInput } from '@shared/index';
+import { projectSchema, type Project, type ProjectInput } from '@app/shared';
 import {
   AlertDialog,
   AlertDialogAction,

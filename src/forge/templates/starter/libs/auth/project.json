@@ -1,0 +1,8 @@
+{
+  "name": "@app/auth",
+  "projectType": "library",
+  "sourceRoot": "libs/auth/src",
+  "tags": [
+    "type:module"
+  ]
+}

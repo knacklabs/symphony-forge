@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger } from '@app/core';
 
 export const MAIL_PROVIDER = Symbol('MAIL_PROVIDER');
 

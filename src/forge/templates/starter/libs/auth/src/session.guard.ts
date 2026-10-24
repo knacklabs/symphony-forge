@@ -1,9 +1,7 @@
 import { createHash } from 'node:crypto';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../prisma/prisma.service';
-import { PUBLIC_ROUTE } from './public.decorator';
-import type { AuthenticatedRequest } from './authenticated-request';
+import { PrismaService, PUBLIC_ROUTE, type AuthenticatedRequest } from '@app/core';
 
 const SESSION_COOKIE = 'starter_session';
 

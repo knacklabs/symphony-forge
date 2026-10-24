@@ -11,15 +11,18 @@ calls. A behaviour-preserving refactor must not break a test; use the owning bou
 The root `package.json` runs the lint, type-check, API, hook and browser tests:
 
 ```json
-{ "scripts": { "test": "npm run lint && npm run typecheck && npm run test:api && npm run test:hooks && npm run test:browser" } }
+{ "scripts": { "test": "corepack pnpm run lint && corepack pnpm run typecheck && corepack pnpm run test:api && corepack pnpm run test:hooks && corepack pnpm run test:browser" } }
 ```
 
 Nx builds and type-checks `apps/web` and `apps/api`. The API tests use a real Postgres database.
 The browser tests use Playwright against the running web app.
 
-Set forge.toml's `test` to `node scripts/test.mjs`. This script installs dependencies and builds
-the apps. It runs `npx playwright install --with-deps chromium`. It starts a fresh test database
-and app, then runs root `npm test`. Run `forge sync` to write this into the one `tests` check:
+Run `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm test` for lint, type checks and the API, hook
+and browser tests. Set forge.toml's `test` to `node scripts/test.mjs`. This script installs
+dependencies and builds the apps. It runs
+`COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec playwright install --with-deps chromium`.
+It starts a fresh test database and app, then runs the root test script. Run `forge sync` to write
+this into the one `tests` check:
 
 ```toml
 test = "node scripts/test.mjs"

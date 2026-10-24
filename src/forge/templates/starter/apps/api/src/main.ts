@@ -7,8 +7,7 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { join } from 'node:path';
 import { AppModule } from './app.module';
-import { correlationMiddleware } from './common/correlation.middleware';
-import { JsonLogger } from './common/json-logger';
+import { correlationMiddleware, JsonLogger } from '@app/core';
 
 async function bootstrap(): Promise<void> {
   const logger = new JsonLogger();

@@ -2,16 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { AllExceptionsFilter } from './common/all-exceptions.filter';
-import { CommonModule } from './common/common.module';
-import { CsrfGuard } from './common/csrf.guard';
-import { EnvelopeInterceptor } from './common/envelope.interceptor';
-import { SessionGuard } from './common/session.guard';
-import { validateEnvironment } from './config/environment';
-import { AuthModule } from './auth/auth.module';
+import { AllExceptionsFilter, CommonModule, CsrfGuard, EnvelopeInterceptor, PrismaModule, validateEnvironment } from '@app/core';
+import { AuthModule, SessionGuard } from '@app/auth';
 import { HealthModule } from './health/health.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { ProjectsModule } from './projects/projects.module';
+import { ProjectsModule } from '@app/projects';
 
 @Module({
   imports: [

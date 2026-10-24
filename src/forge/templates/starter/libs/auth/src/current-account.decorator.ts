@@ -1,5 +1,6 @@
 import { createParamDecorator, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import type { AuthenticatedRequest, AccountPrincipal } from './authenticated-request';
+import type { AuthenticatedRequest } from '@app/core';
+import type { AccountPrincipal } from './account-principal';
 
 export const CurrentAccount = createParamDecorator((_data: unknown, context: ExecutionContext): AccountPrincipal => {
   const request = context.switchToHttp().getRequest<AuthenticatedRequest>();

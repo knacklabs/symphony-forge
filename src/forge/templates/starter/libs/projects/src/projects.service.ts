@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Project } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import type { AccountPrincipal } from '../common/authenticated-request';
-import type { ProjectInput } from '../../../../libs/shared/src';
+import { PrismaService } from '@app/core';
+import type { AccountPrincipal } from '@app/auth';
+import type { ProjectInput } from '@app/shared';
 import type { ProjectListQueryDto } from './projects.dto';
 
 function toProjectResponse(project: Project) {

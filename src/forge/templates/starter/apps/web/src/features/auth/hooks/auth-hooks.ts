@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import type { Account, AuthCredentials } from '@shared/index';
+import type { Account, AuthCredentials } from '@app/shared';
 import { ApiError, apiRequest } from '@/lib/api-client';
 
 const accountKey = ['account'] as const;

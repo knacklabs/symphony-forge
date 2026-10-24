@@ -7,6 +7,7 @@ on:
       - src/forge/templates/starter/**
       - src/forge/templates/skeleton/Dockerfile
       - tests/test_starter_tree.py
+      - tests/test_modular_starter.py
       - .github/workflows/starter-smoke.yml
 
 permissions:
@@ -25,4 +26,4 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_modular_starter.py -q -n 0 --timeout=1800

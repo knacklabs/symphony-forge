@@ -6,10 +6,28 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@shared/*": ["../../libs/shared/src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
-    "types": ["vite/client", "react", "node"]
+    "types": [
+      "vite/client",
+      "react",
+      "node"
+    ],
+    "noEmit": true,
+    "composite": false
   },
-  "include": ["src", "e2e", "vite.config.ts", "playwright.config.ts", "vitest.config.ts"]
+  "include": [
+    "src",
+    "e2e",
+    "vite.config.ts",
+    "playwright.config.ts",
+    "vitest.config.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/shared"
+    }
+  ]
 }

@@ -2,17 +2,18 @@
   "name": "starter",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=24" },
-  "overrides": { "playwright-core": "1.56.1" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "prisma generate && nx run-many -t build --parallel=2",
-    "start:prod": "node dist/apps/api/src/main.js",
-    "lint": "eslint .",
-    "typecheck": "prisma generate && nx run-many -t typecheck --parallel=2",
+    "start:prod": "node apps/api/dist/main.js",
+    "lint": "nx show projects && eslint .",
+    "typecheck": "prisma generate && tsc -b apps/api/tsconfig.json && nx run-many -t typecheck --parallel=2",
     "test:api": "vitest run --config apps/api/vitest.config.ts",
     "test:hooks": "vitest run --config apps/web/vitest.config.ts",
     "test:browser": "playwright test --config apps/web/playwright.config.ts",
-    "test": "npm run lint && npm run typecheck && npm run test:api && npm run test:hooks && npm run test:browser",
+    "test": "corepack pnpm run lint && corepack pnpm run typecheck && corepack pnpm run test:api && corepack pnpm run test:hooks && corepack pnpm run test:browser",
     "test:stack": "node scripts/test.mjs"
   },
   "dependencies": {
@@ -77,6 +78,19 @@
     "typescript-eslint": "8.46.2",
     "eslint-plugin-react-hooks": "7.0.1",
     "globals": "16.4.0",
-    "prettier": "3.6.2"
+    "prettier": "3.6.2",
+    "@nx/eslint-plugin": "22.0.1"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "pnpm": {
+    "overrides": {
+      "playwright-core": "1.56.1"
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "esbuild",
+      "nx",
+      "prisma"
+    ]
   }
 }

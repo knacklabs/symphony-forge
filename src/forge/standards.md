@@ -111,10 +111,11 @@ Structure earns its place by solving a problem the code has today. These rules s
 
 ## The client stack
 
-A new client app starts on the smallest stack that runs its first story: NestJS, Prisma and
-Postgres behind a React app built with Vite and React Router. Nx builds `apps/web` and `apps/api`,
-and shared types and validators live in `libs/shared`. Forge's `tests` check runs the test command.
-A repo that already runs another stack keeps it. Anything else arrives only
+A new client app starts on the smallest stack that runs its first story: a pnpm workspace with
+NestJS, Prisma and Postgres behind a React app built with Vite and React Router. Nx builds
+`apps/web` and `apps/api`; `libs/auth`, `libs/projects`, `libs/core` and `libs/shared` hold the
+modules and shared code. Forge's `tests` check runs the test command. An existing app keeps its
+package manager, lockfile, Dockerfile, test command and folder layout. Anything else arrives only
 when a story's `New moving parts` line names it, and that includes Redis and job queues, Terraform,
 OIDC sign-in and a monitoring stack.
 

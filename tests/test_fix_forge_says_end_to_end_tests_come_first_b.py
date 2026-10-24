@@ -40,7 +40,10 @@ def test_3_one_check_starts_app_and_runs_all_tests():
     assert "playwright install --with-deps chromium" in testing
     # Nx uses the starter's root runner, which owns setup, tests and cleanup.
     assert "node scripts/test.mjs" in testing
-    assert "npm run lint && npm run typecheck && npm run test:api && npm run test:hooks && npm run test:browser" in testing
+    # New apps use Corepack and pnpm; all five checks still run in this order.
+    assert ("corepack pnpm run lint && corepack pnpm run typecheck && "
+            "corepack pnpm run test:api && corepack pnpm run test:hooks && "
+            "corepack pnpm run test:browser") in testing
 
 
 def test_4_test_data_comes_through_running_api():

@@ -5,6 +5,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "composite": true,
+    "declaration": true,
+    "customConditions": [
+      "@app/source"
+    ]
   }
 }
