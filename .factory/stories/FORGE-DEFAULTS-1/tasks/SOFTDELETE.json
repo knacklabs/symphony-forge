@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-SOFTDELETE",
+  "chat": {
+    "approval": "243290d63c20635ccb12255ffe4d18e627b2f609c9cf16680931584c7da8986e",
+    "claude": null,
+    "conversation": "01a16e78-a133-7dc3-bd11-fe6087d9dbf9",
+    "head": null,
+    "start": "1e36b00bdc4811354286d0cc12e31a613e469f6b"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
