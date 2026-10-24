@@ -160,6 +160,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/error-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record a web error report.
+         * @description Logs the error kind and page path without error text or a query string.
+         */
+        post: operations["create_error_report_api_v1_error_reports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -227,6 +247,31 @@ export interface components {
             /** Data */
             data?: null;
             error: components["schemas"]["ApiErrorBody"];
+        };
+        /** ErrorReportInput */
+        ErrorReportInput: {
+            /**
+             * Name
+             * @description The class name of the error.
+             * @example TypeError
+             */
+            name: string;
+            /**
+             * Path
+             * @description The page path where it happened.
+             * @example /projects
+             */
+            path: string;
+        };
+        /** ErrorReportResponse */
+        ErrorReportResponse: {
+            /**
+             * Errorid
+             * Format: uuid
+             * @description The reference for this error report.
+             * @example d49fe9c4-a93b-4e3d-a20a-1afc37f4d1c0
+             */
+            errorId: string;
         };
         /** FieldError */
         FieldError: {
@@ -330,6 +375,18 @@ export interface components {
              */
             success: true;
             data: components["schemas"]["Account"] | null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[ErrorReportResponse] */
+        SuccessEnvelope_ErrorReportResponse_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["ErrorReportResponse"] | null;
             /** Error */
             error?: null;
         };
@@ -1027,6 +1084,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_error_report_api_v1_error_reports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErrorReportInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_ErrorReportResponse_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

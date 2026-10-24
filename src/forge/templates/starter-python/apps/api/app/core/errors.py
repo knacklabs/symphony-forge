@@ -6,7 +6,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.logging import LogLevel, log_event
+from app.core.error_report import report_error
+from app.core.logging import log_event
 
 
 class ApiError(Exception):
@@ -29,21 +30,32 @@ def _error_response(
     code: str,
     message: str,
     details: Mapping[str, object] | None,
+    exception: Exception | None = None,
 ) -> JSONResponse:
     error_id = uuid4()
-    level: LogLevel = "error" if status_code >= 500 else "debug"
-    log_event(
-        request,
-        level,
-        "API request failed" if status_code >= 500 else "API request rejected",
-        "app.core.errors",
-        {
-            "errorId": str(error_id),
-            "status": status_code,
-            "method": request.method,
-            "path": request.url.path,
-        },
-    )
+    if status_code >= 500:
+        report_error(
+            request,
+            source="api",
+            name=type(exception).__name__ if exception is not None else "Exception",
+            path=request.url.path,
+            error_id=error_id,
+            method=request.method,
+            status=status_code,
+        )
+    else:
+        log_event(
+            request,
+            "debug",
+            "API request rejected",
+            "app.core.errors",
+            {
+                "errorId": str(error_id),
+                "status": status_code,
+                "method": request.method,
+                "path": request.url.path,
+            },
+        )
     error: dict[str, object] = {
         "code": code,
         "message": "Something went wrong. Try again."
@@ -85,7 +97,12 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def api_error_handler(request: Request, error: ApiError) -> JSONResponse:
         return _error_response(
-            request, error.status_code, error.code, error.message, error.details
+            request,
+            error.status_code,
+            error.code,
+            error.message,
+            error.details,
+            exception=error,
         )
 
     @app.exception_handler(RequestValidationError)
@@ -118,11 +135,13 @@ def install_error_handlers(app: FastAPI) -> None:
             error.status_code,
             ("INTERNAL_SERVER_ERROR", "Something went wrong. Try again."),
         )
-        return _error_response(request, error.status_code, code, message, None)
+        return _error_response(
+            request, error.status_code, code, message, None, exception=error
+        )
 
     @app.exception_handler(Exception)
     async def unhandled_error_handler(
-        request: Request, _error: Exception
+        request: Request, error: Exception
     ) -> JSONResponse:
         return _error_response(
             request,
@@ -130,4 +149,5 @@ def install_error_handlers(app: FastAPI) -> None:
             "INTERNAL_SERVER_ERROR",
             "Something went wrong. Try again.",
             None,
+            exception=error,
         )

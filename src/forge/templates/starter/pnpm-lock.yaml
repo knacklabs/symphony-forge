@@ -220,7 +220,11 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
-  libs/core: {}
+  libs/core:
+    dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   libs/projects:
     dependencies:
