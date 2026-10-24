@@ -12,7 +12,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as DbSession
 
 from app.auth.models import Account, PasswordResetToken, Session
-from app.auth.schema import Account as AccountResponse
 from app.auth.schema import (
     AcceptInviteInput,
     CredentialsInput,
@@ -20,6 +19,7 @@ from app.auth.schema import (
     ResetPasswordInput,
     SessionData,
 )
+from app.auth.schema import Account as AccountResponse
 from app.core import AccountPrincipal, ApiError, MailProvider, Settings
 
 if TYPE_CHECKING:

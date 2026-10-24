@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session as DbSession
 from app.auth.models import Account as AccountModel
 from app.auth.models import Session as SessionModel
 from app.auth.schema import (
-    Account,
     AcceptInviteInput,
+    Account,
     CredentialsInput,
     ForgotPasswordInput,
     MessageResponse,
