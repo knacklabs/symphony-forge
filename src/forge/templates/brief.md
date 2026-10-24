@@ -357,6 +357,12 @@ platform; an installed dependency; one line; then the least code that works. Nev
 validation, security, data-loss protection or accessibility.
 Joining lines or removing blank lines never counts as a reduction.
 
+In a React app with React Compiler turned on, do not add useMemo, useCallback or React.memo; the
+compiler memoizes. Compose components as the frontend convention says: children for layout,
+compound components for parts that share state, custom hooks for logic with no markup, and no
+boolean prop that switches a component between modes. Review flags new code that breaks either
+rule.
+
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
 Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
