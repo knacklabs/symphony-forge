@@ -22,7 +22,7 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-def test_upgrade_names_runs_in_both_machine_lanes_before_install(unsynced_up, tmp_path, adopted, request):
+def test_1_upgrade_names_runs_in_both_machine_lanes_before_install(unsynced_up, tmp_path, adopted, request):
     up = unsynced_up if adopted else request.getfixturevalue("up")
     if adopted:
         up.repo.git("switch", "-q", "-c", "adoption")
@@ -63,11 +63,12 @@ def test_upgrade_names_runs_in_both_machine_lanes_before_install(unsynced_up, tm
         result = up.run(RELEASE)
 
         assert result.returncode == 1, result.stdout + result.stderr
-        assert "Wait until no Forge runs are in progress" in result.stderr
-        assert "other: SHOP (read)" in result.stderr
-        assert "other: main (test)" in result.stderr
-        assert "two releases" in result.stderr
-        assert f"then forge upgrade {RELEASE}" in result.stderr
+        assert result.stderr == (
+            "Forge runs are still in progress on this machine:\n"
+            "- other: SHOP (read)\n"
+            "- other: main (test)\n"
+            "An install during a run can mix two releases.\n"
+            f"Next: Wait until no Forge runs are in progress, then forge upgrade {RELEASE}\n")
         assert up.snapshot() == before
     finally:
         (other.path / "test-go").touch()
