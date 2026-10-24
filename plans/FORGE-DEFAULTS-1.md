@@ -4,34 +4,22 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- New client apps get the constitution's built-in defaults from the first commit: organisation-scoped data, admin and member roles, email invites, shared date, time and money helpers, a CSV export for each table, change history for admin actions with soft delete as a shared rule, and one error report for UI and API crashes.
+- Existing apps keep their code. On upgrade they get the guide and the rules text only.
+- It builds after the React defaults and zod starter parts merge.
 
 ## Why
 
-New client apps start with the constitution's built-in defaults
-
-
+The constitution's defaults promise these things, but the starter builds none of them. Each new app's agent therefore decides and builds its own version. Today the starter scopes data to one account, not an organisation; it has no roles, invites, CSV export, money helper, or web error report; and date text comes from a local formatting function in the projects page, not a shared helper.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client app's organisation data is scoped so one organisation's records are never returned to another.**
+2. **Admins can invite people by email, and members cannot change roles or invite people.**
+3. **Date, time and money display come only from shared helpers, and a lint rule fails hand-written formatting in API and web.**
+4. **Each table has a CSV export from one shared code path, and admin actions write change history.**
+5. **A UI crash and an API crash each write one error report to the logs.**
+6. **The starter's tests pass, and an existing app's code is unchanged after upgrade.**
 
 ## Risks
 
