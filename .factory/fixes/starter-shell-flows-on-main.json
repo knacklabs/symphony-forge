@@ -2,14 +2,24 @@
   "base": "a474c8635ced7801f9df00e753d6e5c1b954644e",
   "branch": "fix/starter-shell-flows-on-main",
   "done_when": "The TypeScript starter's live run (starter-smoke) passes on main with all browser flows",
+  "drop": {
+    "at": "2026-10-24T17:19:00.197165+00:00",
+    "because": "Main already passes: the failed run checked an older commit, and the invites part fixed the sign-up limit in the test run",
+    "by": "vrknetha <vrknetha@gmail.com> 1792862340 +0530",
+    "status": "working"
+  },
   "fix_kind": "ui",
   "kind": "fix",
   "round": 1,
-  "status": "working",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-24T16:56:42.045399+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T17:19:00.197440+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
