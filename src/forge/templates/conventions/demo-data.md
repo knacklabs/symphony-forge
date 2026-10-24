@@ -45,7 +45,7 @@ export class DemoDataService {
 
 ## Start-up
 
-The API's start command runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` before `node dist/main.js`, so the tables
+The API's start command runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` before `corepack pnpm run start:prod`, so the tables
 exist first. Then `main.ts` calls the loader once, before it starts listening:
 
 ```ts
