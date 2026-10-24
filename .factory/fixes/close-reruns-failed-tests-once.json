@@ -4,12 +4,20 @@
   "done_when": "When a close's local test run fails, close reruns only the failed test files once; if they pass, close notes them as flaky in its output and goes on, and if they fail again, close fails as before",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T17:34:10.962169+00:00",
       "step": "start"
     }
   ],
-  "why": "When close's local test run fails, it fails the item at once, so one flaky test that passes alone sends the item back and costs a whole new queued run"
+  "stuck": {
+    "close": null,
+    "head": "aed4bb950a3b5a507375566bd5f847f28eb3087f",
+    "keys": {},
+    "round": null
+  },
+  "why": "When close's local test run fails, it fails the item at once, so one flaky test that passes alone sends the item back and costs a whole new queued run",
+  "worker": "codex"
 }
