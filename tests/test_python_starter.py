@@ -17,6 +17,8 @@ pytest_plugins = ("test_notes_first_discovery",)
 from test_setup import _fresh_client
 from test_starter_tree import BROWSER_FLOWS, _pnpm_root_importer, _require_cases, _run_live_starter
 
+STORY = "FORGE-FASTAPI-1"
+
 ROOT = Path(__file__).resolve().parents[1]
 REACT_STARTER = ROOT / "src/forge/templates/starter"
 PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
