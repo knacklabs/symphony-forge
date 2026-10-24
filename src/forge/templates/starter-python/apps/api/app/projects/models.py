@@ -11,15 +11,15 @@ from app.projects.schema import ProjectStatus
 class Project(Base):
     __tablename__ = "project"
     __table_args__ = (
-        Index("idx_project_account_id", "account_id"),
+        Index("idx_project_organisation_id", "organisation_id"),
         Index("idx_project_created_by_account_id", "created_by_account_id"),
         Index("idx_project_modified_by_account_id", "modified_by_account_id"),
         Index("idx_project_deleted_by_account_id", "deleted_by_account_id"),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="RESTRICT"), nullable=False
+    organisation_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organisation.id", ondelete="RESTRICT"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     status: Mapped[ProjectStatus] = mapped_column(

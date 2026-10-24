@@ -4,8 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth import AccountPrincipal, current_account, require_csrf
+from app.auth import current_account, require_csrf
 from app.core import (
+    AccountPrincipal,
     CsvColumn,
     ErrorEnvelope,
     SuccessEnvelope,
@@ -35,7 +36,7 @@ PROJECT_CSV_COLUMNS: tuple[CsvColumn[Project], ...] = (
     "",
     response_model=SuccessEnvelope[ProjectListResponse],
     responses={400: {"model": ErrorEnvelope}, 401: {"model": ErrorEnvelope}},
-    summary="List the signed-in account’s projects.",
+    summary="List your organisation’s projects.",
 )
 def list_projects(
     account: Annotated[AccountPrincipal, Depends(current_account)],
@@ -54,7 +55,7 @@ def list_projects(
         401: {"model": ErrorEnvelope},
         403: {"model": ErrorEnvelope},
     },
-    summary="Create a project for the signed-in account.",
+    summary="Create a project for your organisation.",
 )
 def create_project(
     input_data: ProjectInput,
@@ -73,7 +74,7 @@ def create_project(
         200: {"description": "The projects.csv file, newest first."},
         401: {"model": ErrorEnvelope},
     },
-    summary="Download every project of the signed-in account as a CSV file.",
+    summary="Download every project of your organisation as a CSV file.",
 )
 def export_projects(
     account: Annotated[AccountPrincipal, Depends(current_account)],
@@ -92,7 +93,7 @@ def export_projects(
         401: {"model": ErrorEnvelope},
         404: {"model": ErrorEnvelope},
     },
-    summary="Read one project owned by the signed-in account.",
+    summary="Read one project in your organisation.",
 )
 def get_project(
     project_id: UUID,
@@ -111,7 +112,7 @@ def get_project(
         403: {"model": ErrorEnvelope},
         404: {"model": ErrorEnvelope},
     },
-    summary="Replace a project owned by the signed-in account.",
+    summary="Replace a project in your organisation.",
 )
 def update_project(
     project_id: UUID,
@@ -133,7 +134,7 @@ def update_project(
         403: {"model": ErrorEnvelope},
         404: {"model": ErrorEnvelope},
     },
-    summary="Soft-delete a project owned by the signed-in account.",
+    summary="Soft-delete a project in your organisation.",
 )
 def delete_project(
     project_id: UUID,
