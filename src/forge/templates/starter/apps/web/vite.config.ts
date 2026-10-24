@@ -9,9 +9,9 @@ export default defineConfig({
   root: appDirectory,
   plugins: [react(), tailwindcss()],
   resolve: {
+    conditions: ['@app/source', 'module', 'browser', 'development|production'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@shared': fileURLToPath(new URL('../../libs/shared/src', import.meta.url)),
     },
   },
   server: { host: '0.0.0.0', port: 3000, strictPort: true },

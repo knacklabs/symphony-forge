@@ -3,15 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { ApiBody, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { CurrentAccount } from '../common/current-account.decorator';
-import type { AccountPrincipal } from '../common/authenticated-request';
-import { ApiEnvelope, ApiErrors } from '../common/api-envelope.decorator';
-import { Public } from '../common/public.decorator';
-import { sessionOptions } from '../common/session.guard';
-import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { ApiEnvelope, ApiErrors, Public, ZodValidationPipe } from '@app/core';
+import { CurrentAccount } from './current-account.decorator';
+import type { AccountPrincipal } from './account-principal';
+import { sessionOptions } from './session.guard';
 import { AuthService, type SessionCookies } from './auth.service';
 import { AccountResponseDto, CredentialsDto, ForgotPasswordDto, MessageResponseDto, ResetPasswordDto } from './auth.dto';
-import { forgotPasswordSchema, resetPasswordSchema, signInSchema, signUpSchema, type AuthCredentials, type ForgotPasswordInput, type ResetPasswordInput } from '../../../../libs/shared/src';
+import { forgotPasswordSchema, resetPasswordSchema, signInSchema, signUpSchema, type AuthCredentials, type ForgotPasswordInput, type ResetPasswordInput } from '@app/shared';
 
 @ApiTags('Auth')
 @Controller('auth')

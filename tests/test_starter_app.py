@@ -61,6 +61,16 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
         # Earlier adoption has app-owned deploy and test settings before the upgrade.
         shutil.copytree(ROOT / "tests/fixtures/doctor-v1.2.2", repo.path, dirs_exist_ok=True)
         repo.write("Dockerfile", "FROM node:24\n# Existing app\n")
+        package_json = (
+            b'{\n  "name": "existing-client",\n  "private": true,\n'
+            b'  "packageManager": "npm@10.8.2",\n  "scripts": {"test": "vitest run"}\n}\n'
+        )
+        package_lock = (
+            b'{\n  "name": "existing-client",\n  "lockfileVersion": 3,\n'
+            b'  "requires": true,\n  "packages": {"": {"name": "existing-client"}}\n}\n'
+        )
+        (repo.path / "package.json").write_bytes(package_json)
+        (repo.path / "package-lock.json").write_bytes(package_lock)
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Earlier adoption")
         before = repo.git("status", "--porcelain", "--ignored", "-uall")
@@ -81,10 +91,15 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
     assert synced.returncode == 0, synced.stdout + synced.stderr
     if case == "adopted":
         assert (client / "Dockerfile").read_text(encoding="utf-8") == "FROM node:24\n# Existing app\n"
+        assert (client / "package.json").read_bytes() == package_json
+        assert (client / "package-lock.json").read_bytes() == package_lock
         assert tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["test"] == "npm test"
+        assert not (client / "pnpm-lock.yaml").exists()
+        assert not (client / "pnpm-workspace.yaml").exists()
+        assert not (client / "libs").exists()
         for path in starter:
             if path.parts[0] in ("apps", "libs", "scripts") or path.name in (
-                    "nx.json", "package.json", "package-lock.json", ".env.example"):
+                    "nx.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".env.example"):
                 assert not (client / path).exists(), path
     for host in (".claude", ".codex"):
         assert "forge init --starter" in (client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")

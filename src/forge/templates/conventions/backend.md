@@ -8,22 +8,28 @@ module, the config, logging or error handling.
 ```
 apps/api/src/
   main.ts               start-up: validation, the exception filter, security, Swagger, JSON logs
-  app.module.ts
-  config/               the one place that reads environment variables
-  common/               the exception filter, the response envelope, the correlation id
+  app.module.ts          wires the API and its modules
   health/               GET /health, after migrations have succeeded at start-up
-  <domain>/             one folder per business domain
-    <domain>.module.ts
-    <domain>.controller.ts
-    <domain>.service.ts
-    dto/
-    <vendor>.provider.ts    only when the domain calls an external system
+libs/
+  auth/src/              sign-in module
+  projects/src/          example records module
+  core/src/              config, common code and Prisma service
+  shared/src/            shared types and validators
 ```
 
 ## Modules
 
-- A module's `exports` list holds its service and nothing else. Another module imports the module
-  and calls that service; it never reaches into the folder's other files or its tables.
+- Each library's public entry is `src/index.ts`, imported by its package name: `@app/auth`,
+  `@app/projects`, `@app/core` or `@app/shared`. The package's `exports` has only `.`. A module
+  entry exports its Nest module, service and public types or decorators that other modules use.
+- Nx tags are `type:module` for auth and projects, `type:core` for core, and `type:shared` for
+  shared. The app projects use `type:api` and `type:web`.
+- `@nx/enforce-module-boundaries` in `eslint.config.mjs` enforces these tags. A module can import
+  another module only through its public package entry; the web app cannot import a backend module.
+- `apps/api/prisma/schema/base.prisma` holds the generator and datasource. The auth module owns
+  `auth.prisma` for accounts, sessions and reset tokens; the projects module owns `projects.prisma`
+  for projects and their status. Keep each module's models in its schema file, even when a relation
+  points to a table owned by another module.
 - Services query through `PrismaService`. Move a query into `<domain>.repository.ts` when a second
   service needs it or it is raw SQL.
 - Name DTOs `CreateXDto`, `UpdateXDto` and `XResponseDto`.

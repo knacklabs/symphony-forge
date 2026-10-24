@@ -3,6 +3,10 @@
 How the standards page's data rules look in Prisma. Read it when your task adds or changes a table,
 a migration or a query.
 
+Each business module owns one schema file under `apps/api/prisma/schema/`. Keep its models in that
+file. `base.prisma` holds the generator and datasource; Prisma reads the directory to generate one
+client for the app.
+
 ## Schema
 
 Prisma model and field names become the table and column names, so write them as the standards
@@ -43,7 +47,7 @@ model Order {
 ## Migrations
 
 ```
-npx prisma migrate dev --name add_paymentStatus_to_Order
+COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate dev --name add_paymentStatus_to_Order
 ```
 
 Prisma puts the timestamp in front of the name. Commit the generated SQL, never edit a migration
@@ -52,6 +56,6 @@ data goes under the story's Risks, with how to recover.
 
 ## Tests
 
-Tests run against a real Postgres from `docker-compose.yml`. The test setup creates a database with
-a unique name, runs `npx prisma migrate deploy` against it and drops it afterwards, so two
+Tests run against a real Postgres from `compose.test.yml`. The test setup creates a database with
+a unique name, runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` against it and drops it afterwards, so two
 checkouts can run their tests at the same time without sharing rows.

@@ -35,6 +35,7 @@ BROWSER_FLOWS = (
 )
 PINNED_PACKAGES = {
     "@nestjs/core": "11.2.7",
+    "@nx/eslint-plugin": "22.0.1",
     "@playwright/test": "1.56.1",
     "@prisma/client": "7.10.1",
     "@tanstack/react-query": "5.90.5",
@@ -87,6 +88,43 @@ def _json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _pnpm_root_importer(lock_text):
+    lines = lock_text.splitlines()
+    importer = {}
+    group = package = None
+    current = None
+    in_root = False
+    for line in lines:
+        if line == "importers:":
+            in_root = True
+            continue
+        if not in_root:
+            continue
+        if line == "  .:":
+            continue
+        if line and line.startswith("  ") and not line.startswith("    "):
+            break
+        if line and not line.startswith(" "):
+            break
+        if re.fullmatch(r"    [A-Za-z][A-Za-z0-9_-]*:", line):
+            if current is not None:
+                importer[group][package] = current
+            group = line.strip()[:-1]
+            importer[group] = {}
+            package = current = None
+        elif re.fullmatch(r"      .+:", line):
+            if current is not None:
+                importer[group][package] = current
+            package = line.strip()[:-1].strip("'\"")
+            current = {}
+        elif line.startswith("        specifier: ") or line.startswith("        version: "):
+            key, value = line.strip().split(": ", 1)
+            current[key] = value.strip("'\"")
+    if current is not None:
+        importer[group][package] = current
+    return importer
+
+
 def _junit_cases(path: Path):
     assert path.is_file(), f"missing test report: {path}"
     root = ET.parse(path).getroot()
@@ -124,8 +162,14 @@ def _stop_process_group(process):
 
 @pytest.fixture(scope="module")
 def live_starter(tmp_path_factory):
-    if not shutil.which("node"):
-        pytest.skip("Node.js is required for the starter smoke run")
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js 24 is required for the starter smoke run")
+    version = subprocess.run([node, "--version"], capture_output=True, text=True, timeout=30)
+    if version.returncode or not version.stdout.strip().startswith("v24."):
+        pytest.skip("Node.js 24 is required for the starter smoke run")
+    if not shutil.which("corepack"):
+        pytest.skip("Corepack is required for the starter smoke run")
     if not shutil.which("docker"):
         pytest.skip("Docker is required for the starter smoke run")
     if sys.platform == "win32":
@@ -144,10 +188,8 @@ def live_starter(tmp_path_factory):
         pytest.skip("A Docker daemon is required for the starter smoke run")
 
     host_config = tmp_path_factory.mktemp("starter-host-config")
-    npm_userconfig = host_config / "npmrc"
-    npm_userconfig.write_text("", encoding="utf-8")
-    npm_cache = host_config / "npm-cache"
-    npm_cache.mkdir()
+    user_home = host_config / "home"
+    user_home.mkdir()
     docker_config = host_config / "docker-config"
     docker_config.mkdir()
     (docker_config / "config.json").write_text("{}", encoding="utf-8")
@@ -163,8 +205,11 @@ def live_starter(tmp_path_factory):
         if name.lower().startswith(("npm_config_", "docker_")):
             env.pop(name)
     env.update({
-        "NPM_CONFIG_USERCONFIG": str(npm_userconfig),
-        "NPM_CONFIG_CACHE": str(npm_cache),
+        "HOME": str(user_home),
+        "COREPACK_HOME": str(host_config / "corepack"),
+        "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+        "PNPM_CONFIG_STORE_DIR": str(host_config / "pnpm-store"),
+        "XDG_CONFIG_HOME": str(host_config / "xdg-config"),
         "PLAYWRIGHT_BROWSERS_PATH": str(host_config / "browsers"),
         "DOCKER_CONFIG": str(docker_config),
         "DOCKER_HOST": context.stdout.strip(),
@@ -180,8 +225,6 @@ def live_starter(tmp_path_factory):
         ignore=shutil.ignore_patterns("node_modules", "dist", ".nx", "reports",
                                       "test-results", "playwright-report", "coverage"),
     )
-    shutil.copyfile(ROOT / "src" / "forge" / "templates" / "skeleton" / "Dockerfile",
-                    copy / "Dockerfile")
     shutil.copyfile(ROOT / "src" / "forge" / "templates" / "skeleton" / ".dockerignore",
                     copy / ".dockerignore")
     project = "starter-smoke-" + uuid.uuid4().hex[:12]
@@ -223,10 +266,13 @@ def _require_cases(cases, expected):
 @pytest.mark.timeout(1800)
 def test_1_the_starter_is_a_runnable_stack(request):
     required_files = (
-        Path(".env.example"), Path("package.json"), Path("package-lock.json"), Path("nx.json"),
+        Path(".env.example"), Path("package.json"), Path("pnpm-lock.yaml"),
+        Path("pnpm-workspace.yaml"), Path("Dockerfile"), Path("nx.json"),
         Path("compose.test.yml"), Path("scripts") / "test.mjs",
         Path("scripts") / "test-build.mjs", Path("README.md"),
-        Path("apps") / "api" / "prisma" / "schema.prisma",
+        Path("apps") / "api" / "prisma" / "schema" / "base.prisma",
+        Path("apps") / "api" / "prisma" / "schema" / "auth.prisma",
+        Path("apps") / "api" / "prisma" / "schema" / "projects.prisma",
         Path("apps") / "api" / "test" / "api.e2e-spec.ts",
         Path("apps") / "api" / "vitest.config.ts",
         Path("apps") / "web" / "e2e" / "starter-shell.spec.ts",
@@ -235,12 +281,13 @@ def test_1_the_starter_is_a_runnable_stack(request):
     )
     for rel in required_files:
         assert (STARTER / rel).is_file(), rel
-    for rel in (Path("apps") / "web", Path("apps") / "api", Path("libs") / "shared"):
+    assert not (STARTER / "package-lock.json").exists(), "the starter still uses npm's lockfile"
+    for rel in (Path("apps") / "web", Path("apps") / "api", *(Path("libs") / name for name in
+                                                               ("auth", "core", "projects", "shared"))):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
-    assert "workspaces" not in package, "the starter uses Nx project targets"
-    lock = _json(STARTER / "package-lock.json")
+    assert re.fullmatch(r"pnpm@" + PIN.pattern, package.get("packageManager", "")), package.get("packageManager")
     assert "nx" in package.get("devDependencies", {})
     assert package.get("scripts", {}).get("build")
     assert package.get("scripts", {}).get("start:prod")
@@ -251,26 +298,48 @@ def test_1_the_starter_is_a_runnable_stack(request):
     dependencies = package.get("dependencies", {}) | package.get("devDependencies", {})
     for name, version in PINNED_PACKAGES.items():
         assert dependencies.get(name) == version, (name, dependencies.get(name), version)
-    lock_root = lock["packages"][""]
+    lock_text = (STARTER / "pnpm-lock.yaml").read_text(encoding="utf-8")
+    lock_importer = _pnpm_root_importer(lock_text)
     for group in ("dependencies", "devDependencies", "optionalDependencies"):
-        assert lock_root.get(group, {}) == package.get(group, {})
+        manifest_dependencies = package.get(group, {})
+        importer_dependencies = lock_importer.get(group, {})
+        assert set(importer_dependencies) == set(manifest_dependencies), group
+        for name, version in manifest_dependencies.items():
+            assert importer_dependencies[name]["specifier"] == version, (name, group)
     for name, version in PINNED_PACKAGES.items():
-        lock_path = (Path("node_modules") / name).as_posix()
-        assert lock["packages"][lock_path]["version"] == version
-    # Axe's peer must use the same Page type and browser protocol as the test runner.
-    for path, entry in lock["packages"].items():
-        if path.endswith("/playwright-core"):
-            assert entry["version"] == dependencies["@playwright/test"]
+        locked = next(lock_importer[group][name]["version"] for group in
+                      ("dependencies", "devDependencies", "optionalDependencies")
+                      if name in lock_importer.get(group, {}))
+        assert locked == version or locked.startswith(version + "("), (name, locked, version)
+    assert re.search(r"(?m)^\s+['\"]?playwright-core@" +
+                     re.escape(dependencies["@playwright/test"]) + r"(?:\(|:|['\"]?:)",
+                     lock_text), "playwright-core is not pinned to @playwright/test's version"
+
+    workspace = (STARTER / "pnpm-workspace.yaml").read_text(encoding="utf-8")
+    for project in ("apps/*", "libs/*"):
+        assert project in workspace, project
+    for name in ("auth", "core", "projects", "shared"):
+        project = _json(STARTER / "libs" / name / "project.json")
+        tags = project.get("tags", [])
+        type_tags = [tag for tag in tags if tag.startswith("type:")]
+        assert len(type_tags) == 1, (name, tags)
+
+    schemas = {path.name for path in (STARTER / "apps" / "api" / "prisma" / "schema").glob("*.prisma")}
+    assert schemas == {"base.prisma", "auth.prisma", "projects.prisma"}, schemas
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
     assert command in (STARTER / "README.md").read_text(encoding="utf-8")
-    dockerfile = (ROOT / "src" / "forge" / "templates" / "skeleton" / "Dockerfile").read_text(
-        encoding="utf-8")
-    assert "RUN npm ci && npm run build" in dockerfile
+    dockerfile = (STARTER / "Dockerfile").read_text(encoding="utf-8")
+    assert "RUN corepack enable" in dockerfile
+    assert "corepack pnpm install --frozen-lockfile && corepack pnpm run build" in dockerfile
     assert "WORKDIR /app" in dockerfile
-    assert "npx prisma migrate deploy" in dockerfile
-    assert "exec npm run start:prod" in dockerfile
-    assert "--workspace" not in dockerfile
+    assert "corepack pnpm exec prisma migrate deploy" in dockerfile
+    assert "exec corepack pnpm run start:prod" in dockerfile
+    skeleton_dockerfile = (ROOT / "src" / "forge" / "templates" / "skeleton" / "Dockerfile").read_text(
+        encoding="utf-8")
+    assert "RUN npm ci && npm run build" in skeleton_dockerfile
+    assert "npx prisma migrate deploy" in skeleton_dockerfile
+    assert "exec npm run start:prod" in skeleton_dockerfile
 
     if LIVE:
         _require_cases(request.getfixturevalue("live_starter")["api"], API_SECURITY_TESTS)

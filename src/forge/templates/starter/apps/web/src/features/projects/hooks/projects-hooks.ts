@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Project, ProjectInput } from '@shared/index';
+import type { Project, ProjectInput } from '@app/shared';
 import { apiRequest } from '@/lib/api-client';
 
 export type ProjectSortBy = 'name' | 'status' | 'createdAtUtc' | 'updatedAtUtc';

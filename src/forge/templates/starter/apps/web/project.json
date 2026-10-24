@@ -15,5 +15,9 @@
         "command": "tsc --noEmit -p apps/web/tsconfig.json"
       }
     }
-  }
+  },
+  "tags": [
+    "type:web"
+  ],
+  "sourceRoot": "apps/web/src"
 }

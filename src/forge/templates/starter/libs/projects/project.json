@@ -1,0 +1,8 @@
+{
+  "name": "@app/projects",
+  "projectType": "library",
+  "sourceRoot": "libs/projects/src",
+  "tags": [
+    "type:module"
+  ]
+}

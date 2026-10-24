@@ -1,12 +1,10 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBody, ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ApiEnvelope, ApiErrors } from '../common/api-envelope.decorator';
-import { CurrentAccount } from '../common/current-account.decorator';
-import type { AccountPrincipal } from '../common/authenticated-request';
-import { ZodValidationPipe } from '../common/zod-validation.pipe';
+import { ApiEnvelope, ApiErrors, ZodValidationPipe } from '@app/core';
+import { CurrentAccount, type AccountPrincipal } from '@app/auth';
 import { ProjectInputDto, ProjectListQueryDto, ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
 import { ProjectsService } from './projects.service';
-import { projectSchema, type ProjectInput } from '../../../../libs/shared/src';
+import { projectSchema, type ProjectInput } from '@app/shared';
 
 @ApiTags('Projects')
 @ApiCookieAuth('session')

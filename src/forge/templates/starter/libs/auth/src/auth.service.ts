@@ -2,7 +2,7 @@ import { randomBytes, randomUUID, createHash, scrypt, timingSafeEqual } from 'no
 import { Inject, Injectable, Optional, BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@app/core';
 import { MAIL_PROVIDER, type MailProvider } from './mail.provider';
 
 const PASSWORD_KEY_BYTES = 64;

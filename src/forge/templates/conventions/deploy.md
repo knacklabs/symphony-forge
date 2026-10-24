@@ -18,15 +18,16 @@ GitHub repository and choose its subdomain.
 The platform routes traffic to container port 3000 and checks `GET /health` for HTTP 200. Keep
 one instance running while migrations are made.
 
-The root `package.json` and committed `package-lock.json` hold the app scripts and dependencies.
-The Dockerfile installs from the lockfile, runs `npm run build`, then runs `npm run start:prod`.
+The root `package.json` and committed `pnpm-lock.yaml` hold the app scripts and dependencies.
+The Dockerfile installs from the lockfile, runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run build`,
+then runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run start:prod`.
 The build uses Nx for `apps/web` and `apps/api`. The API serves the built web app at `/` and
 answers `GET /health` with HTTP 200 when ready. `start:prod` starts the API. The starter provides
 these scripts when `forge init --starter` creates a new repo.
 The generated `.dockerignore` keeps local environment files, keys and credential files out of
 the image; keep deployment secrets in the platform's secret store.
 
-At every container start, `npx prisma migrate deploy` runs before the backend listens. If it
+At every container start, `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` runs before the backend listens. If it
 fails, the container exits without serving traffic. Check `DATABASE_URL` and the failed migration
 in the platform logs, fix the cause, and redeploy; the previous healthy version should keep
 serving. Keep migrations additive so restarting a container cannot remove production data.

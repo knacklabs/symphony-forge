@@ -1,0 +1,10 @@
+{
+  "name": "@app/api",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@app/core": "workspace:*",
+    "@app/auth": "workspace:*",
+    "@app/projects": "workspace:*"
+  }
+}

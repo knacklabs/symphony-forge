@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { signInSchema, type AuthCredentials } from '@shared/index';
+import { signInSchema, type AuthCredentials } from '@app/shared';
 import { AuthPageFrame } from '@/components/auth-page-frame';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';

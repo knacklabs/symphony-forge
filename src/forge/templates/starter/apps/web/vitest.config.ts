@@ -6,9 +6,9 @@ export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [react()],
   resolve: {
+    conditions: ['@app/source', 'module', 'browser', 'development|production'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@shared': fileURLToPath(new URL('../../libs/shared/src', import.meta.url)),
     },
   },
   test: {

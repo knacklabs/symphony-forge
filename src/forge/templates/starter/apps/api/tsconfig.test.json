@@ -1,9 +1,16 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "noEmit": true,
-    "rootDir": "../..",
-    "types": ["node", "vitest/globals"]
+    "composite": false,
+    "types": [
+      "node",
+      "vitest/globals"
+    ]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "../../libs/shared/src/**/*.ts"]
+  "include": [
+    "test/**/*.ts"
+  ]
 }

@@ -5,7 +5,8 @@ builds the prototype's first version or changes its demo data.
 
 ## What it holds
 
-- The loader lives in the app, in `apps/api/src/demo/`. Forge ships this page, not the code.
+- The loader in `apps/api/src/demo/` is app code, not a module, and may read every table. Forge
+  ships this page, not the code.
 - Its records are shaped from the column headers of the spreadsheet or form the client uses today,
   and every label comes from the "Words they use" list in `docs/product/DISCOVERY.md`.
 - The values are made up but look like theirs. It holds no real personal data: no real names,
@@ -44,7 +45,7 @@ export class DemoDataService {
 
 ## Start-up
 
-The API's start command runs `npx prisma migrate deploy` before `node dist/main.js`, so the tables
+The API's start command runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` before `node dist/main.js`, so the tables
 exist first. Then `main.ts` calls the loader once, before it starts listening:
 
 ```ts

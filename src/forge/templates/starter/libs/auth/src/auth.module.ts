@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger } from '@app/core';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LogMailProvider, MAIL_PROVIDER, type MailProvider } from './mail.provider';
