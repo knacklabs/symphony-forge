@@ -12,6 +12,8 @@ from conftest import ROOT
 from test_app_constitution import _fixture_git
 from test_setup import _fresh_client
 
+STORY = "FORGE-MODULAR-1"
+
 
 @pytest.fixture
 def client(repo, gh, tmp_path, adoption):
