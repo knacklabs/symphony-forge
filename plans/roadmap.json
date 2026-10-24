@@ -348,6 +348,12 @@
       "title": "New client apps start from the client notes and a fixed modular stack",
       "status": "pending",
       "order": 92
+    },
+    {
+      "key": "FORGE-FASTAPI-1",
+      "title": "FastAPI starter for Python backends",
+      "status": "pending",
+      "order": 93
     }
   ],
   "epics": [
