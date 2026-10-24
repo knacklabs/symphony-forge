@@ -67,6 +67,11 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
+`forge doctor` lists started fixes with no work commits after more than seven days.
+Each row gives `forge fix drop <fix> --because "<reason>"`. Only drop a fix after
+the owner agrees. `forge doctor --fix` does not drop these fixes. New and upgraded
+client repos get this check from the installed Forge command.
+
 Send every new idea through `forge start "<their words>"`. Never ask the human whether it is a
 story or a fix. When the answer is a fix, run its `forge land <fix>` in the background and watch it.
 
