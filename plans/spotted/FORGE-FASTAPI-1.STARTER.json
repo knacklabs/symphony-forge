@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tpyproject.toml\t[P1] Restrict collection in the active pytest configuration\tFORGE-FASTAPI-1/STARTER",
+      "kind": "bug",
+      "path": "pyproject.toml",
+      "line": 20,
+      "text": "[P1] Restrict collection in the active pytest configuration",
+      "from": "blocking",
+      "item": "FORGE-FASTAPI-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/fasttest.py\tA task's test description becomes invalid file paths during broad worker test selection; reported in issue 1071.",
       "kind": "bug",
       "path": "src/forge/fasttest.py",
