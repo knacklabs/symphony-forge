@@ -16,8 +16,8 @@ COMMANDS = [{
     # False: init checks the pin itself, after adoption lists a forge.toml Forge didn't write.
     "words": "init", "run": "init", "changes_state": False,
     "help": "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync",
-    "args": [(("--starter",), {"action": "store_true",
-                                 "help": "start a new React app with the Nx starter"}),
+    "args": [(("--starter",), {"nargs": "?", "const": "react", "choices": ["react", "python"],
+                                 "help": "start a new app from a starter: react (the default) or python (a FastAPI backend)"}),
              (("--test",), {"help": "a repo with history: the test command CI runs"}),
              (("--runner",), {"default": "ubuntu-latest",
                               "help": "GitHub Actions runner label (default: ubuntu-latest)"}),
@@ -141,7 +141,23 @@ def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
             f"interfaces = {json.dumps(interfaces)}\n{MODELS}")
 
 
-def _scaffold(top: Path, runner: str = "ubuntu-latest", starter: bool = False) -> dict[str, str]:
+def _starter_files(starter: str) -> dict[str, Path]:
+    """The selected starter's source files, keyed by their client-relative paths."""
+    react = sync.TEMPLATES / "starter"
+    if starter == "python":
+        sources = {path.relative_to(react).as_posix(): path
+                   for path in sorted((react / "apps/web").rglob("*")) if path.is_file()}
+        sources.update({name: react / name for name in ("tsconfig.base.json", ".npmrc")})
+        root = sync.TEMPLATES / "starter-python"
+    else:
+        sources = {}
+        root = react
+    sources.update({path.relative_to(root).as_posix(): path
+                    for path in sorted(root.rglob("*")) if path.is_file()})
+    return sources
+
+
+def _scaffold(top: Path, runner: str = "ubuntu-latest", starter: str | None = None) -> dict[str, str]:
     """forge.toml, the docs skeleton and an empty roadmap: repo-relative path -> text."""
     skeleton = sync.TEMPLATES / "skeleton"
     test = ("node scripts/test.mjs" if starter else
@@ -152,9 +168,8 @@ def _scaffold(top: Path, runner: str = "ubuntu-latest", starter: bool = False) -
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()
            and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
-        **({path.relative_to(sync.TEMPLATES / "starter").as_posix():
-            path.read_bytes().decode("utf-8")
-            for path in sorted((sync.TEMPLATES / "starter").rglob("*")) if path.is_file()}
+        **({rel: path.read_bytes().decode("utf-8")
+            for rel, path in _starter_files(starter).items()}
            if starter else {}),
         "plans/roadmap.json": ROADMAP,
     }
@@ -292,9 +307,8 @@ def init(args: argparse.Namespace) -> None:
         for marker in ("package.json", "pyproject.toml", "go.mod"):
             if (top / marker).exists():
                 repo.refuse(REFUSALS["starter_app"], path=marker)
-        for path in sorted((sync.TEMPLATES / "starter").rglob("*")):
-            rel = path.relative_to(sync.TEMPLATES / "starter").as_posix()
-            if path.is_file() and (top / rel).exists():
+        for rel in _starter_files(args.starter):
+            if (top / rel).exists():
                 repo.refuse(REFUSALS["starter_app"], path=rel)
     if repo.run("git", "remote", "get-url", "origin", cwd=top).returncode:
         repo.refuse(REFUSALS["no_origin"])

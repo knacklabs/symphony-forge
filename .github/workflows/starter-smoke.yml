@@ -5,8 +5,12 @@ on:
   pull_request:
     paths:
       - src/forge/templates/starter/**
+      - src/forge/templates/starter-python/**
+      - src/forge/templates/skeleton/.dockerignore
       - src/forge/templates/skeleton/Dockerfile
+      - src/forge/init.py
       - tests/test_starter_tree.py
+      - tests/test_python_starter.py
       - tests/test_modular_starter.py
       - .github/workflows/starter-smoke.yml
 
@@ -27,3 +31,17 @@ jobs:
         env:
           FORGE_STARTER_LIVE: '1'
         run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_modular_starter.py -q -n 0 --timeout=1800
+
+  python-starter-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run the Python starter stack and browser flows
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py -q -n 0 --timeout=1800
