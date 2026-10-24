@@ -342,6 +342,12 @@
       "title": "Starter app for new client React apps",
       "status": "pending",
       "order": 91
+    },
+    {
+      "key": "FORGE-REACTDEFAULTS-1",
+      "title": "Four frontend defaults for new client React apps",
+      "status": "pending",
+      "order": 92
     }
   ],
   "epics": [

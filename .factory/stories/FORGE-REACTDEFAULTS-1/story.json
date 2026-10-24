@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-REACTDEFAULTS-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-24T07:28:15.913343+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Four frontend defaults for new client React apps",
+  "touches": 0
+}
