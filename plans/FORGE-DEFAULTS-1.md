@@ -124,6 +124,7 @@ part under After.
   `@app/shared`, and FORMATS already owns that file's lines before ERRORS and ORGS run side by
   side.
 - CSV (FORMATS), `libs/core/src/common/csv.ts`, exported from `@app/core`:
+  - A cell whose text starts with `=`, `+`, `-` or `@` is written with a leading `'` (the owner's formula guard); the exports API case checks one such cell.
   `type CsvColumn<T> = { header: string; value: (row: T) => string | number | null }` and
   `sendCsv<T>(response: Response, filename: string, columns: CsvColumn<T>[], rows: T[]): void`.
   It sends `Content-Type: text/csv; charset=utf-8` and `Content-Disposition: attachment;
@@ -494,7 +495,7 @@ New moving parts: `soft_delete_only()`, a Postgres trigger function in the start
   a list of pending invites (inviting again sends a new link); paging on the change history (the
   screen shows the newest 100, and the export has all); one transaction across two modules (the
   two places are marked with ponytail comments); a guard that keeps change history rows from
-  changing; a stored time zone for each person; a CSV formula guard (the question in Risks).
+  changing; a stored time zone for each person.
 - **Changes no flow.** No command, option, `forge.toml` setting or stored state changes. The
   worker side is the brief paragraph and the convention pages; the coordinator side is the
   constitution guide in `skill.md`.
