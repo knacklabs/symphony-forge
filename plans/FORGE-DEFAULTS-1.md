@@ -224,6 +224,75 @@ part under After.
   `apps/web/src/lib/error-report.ts` with `reportError(error: unknown): void`, which sends
   `location.pathname` only, never the query string.
 
+### Python API side
+
+`forge init --starter python` writes `src/forge/templates/starter-python` (FastAPI, SQLAlchemy,
+Alembic, import-linter, uv) and copies the TypeScript starter's `apps/web` into it. Every
+Playwright flow therefore runs against both APIs, so each Python part serves exactly the HTTP
+contract that its TypeScript twin pins above: the same paths, JSON field names (camelCase, as
+the Python schemas already alias them), status codes, error codes and messages, CSV headers and
+log lines. A Python module is `apps/api/app/<module>/` with `__init__.py` (its public service and
+router only), `models.py`, `schema.py`, `service.py` and `routes.py`, as `app.projects` is. A new
+module gets a `protected` contract `<module> internals` in `apps/api/pyproject.toml`, its name in
+the module and contract lists of `tests/test_python_starter.py`, its models imported in
+`migrations/env.py`, and its router included in `app/main.py`. Each schema change is one Alembic
+revision in `apps/api/migrations/versions/`, chained by `down_revision`. Each Python part
+regenerates `libs/shared/openapi.json` and `libs/shared/src/api-types.ts` with `corepack pnpm run
+api-types`, and adds to the Python `libs/shared/src/index.ts` every shared name that the web app
+imports (types from `components['schemas']`, and copies of the zod form schemas), so the same
+`apps/web` type-checks against both copies. Python HTTP cases live in `apps/api/tests/test_*.py`
+and run against the composed stack, as `tests/test_api.py` does. Each one is named `test_` plus
+the TypeScript case name with every run of other characters turned into `_`
+(`re.sub(r"[^a-z0-9]+", "_", name.casefold()).strip("_")`), and the part's pytest wrapper
+requires those names from the Python live run as it requires the TypeScript names.
+
+FORMATS's Python side (in its current round) pins the Python names that later parts use: its CSV
+response helper in `app.core`, the Python test helpers for log events and `psql`, the cached
+Python live run next to `live_run`, and the Python copy of `errorReportSchema`. Later parts follow
+the names in the merged tree.
+
+- ERRORS: `app/core/error_report.py` holds `report_error(...)`, which writes the same one
+  `Error report` line (module `ErrorReporter`, context `{ errorId, source, name, path, status?,
+  method? }`, no exception text, no stack), and a router with `POST /api/v1/error-reports`
+  (pydantic body with `extra="forbid"`, the same limits; `201 { errorId }`), included in
+  `main.py`. `_error_response` in `app/core/errors.py` calls `report_error` for a status of 500 or
+  more in place of its `API request failed` line; the unhandled-exception handler passes
+  `type(error).__name__`. `/api/v1/error-reports` joins `_RATE_LIMITED_PATHS`. Case
+  `test_an_api_crash_writes_one_error_report` adds the same check constraint on `"account"`.
+- SOFTDELETE: revision `0002_soft_delete_only` (down `0001_initial`) runs the same function and
+  trigger SQL on the `project` table, with `deleted_at_utc` in the message. Case
+  `test_the_database_refuses_a_hard_delete_of_a_project`.
+- ORGSPY: `app.organisations` with `Organisation`, `Membership` and `MemberRole`, and
+  `OrganisationsService(db)` with `create_for_account`, `membership_for` and `list_members`.
+  The Python graph has the same cycle as the TypeScript one, so `AccountPrincipal` (with
+  `organisation_id` and `role`), `current_account` and `require_csrf` move into
+  `app/core/principal.py`. Core's `current_account` raises `401 UNAUTHENTICATED`; `main.py` sets
+  `app.dependency_overrides[current_account] = session_account`, where auth's `session_account`
+  loads the session as `current_account` does today and adds the membership through
+  `OrganisationsService`. A ponytail comment says why the override exists: core cannot import
+  auth. `app.projects` then imports from `app.core` only. Sign-up adds the organisation and the
+  admin membership in the same database session and commit. Projects use `organisation_id`;
+  revision `0003_organisations` (down `0002_soft_delete_only`) mirrors the Prisma migration.
+  `GET /api/v1/members` and its export use FORMATS's Python CSV helper. `test_api.py` loses its
+  account isolation case, and `API_SECURITY_TESTS` in `tests/test_python_starter.py` loses
+  `account_isolation`; `test_organisations.py` holds the item 1 cases and the members export
+  case.
+- INVITESPY: `app/core/mail.py` (moved from `app/auth/mail.py`, with `send_invite`, which logs
+  `Invite link created for local mail` with `{ inviteUrl }` in development and test) and
+  `app/core/admin.py` with an `admin_only` dependency (`403 ADMIN_ONLY`). `Invite` in
+  `app.organisations`, revision `0004_invites`, the invite, role change and accept-invite routes
+  with the same codes, including `422 MAIL_NOT_CONFIGURED` in production and `404
+  MEMBER_NOT_FOUND` for another organisation's account. `/api/v1/auth/accept-invite` joins
+  `_RATE_LIMITED_PATHS`. The Python `libs/shared` copy gets `Member`, `MemberRole`,
+  `memberRoleSchema`, `inviteSchema`, `acceptInviteSchema` and `roleChangeSchema`.
+  `test_invites.py` holds the item 2 cases.
+- MEMBERS and JOIN: no Python API code. Their flows run in both live runs, and each wrapper
+  requires its flow from both.
+- HISTORYPY: `app.history` with `ChangeRecord`, `HistoryService.record` and `list`, revision
+  `0005_history`, `GET /api/v1/history` and its export (admin only), and the two record calls in
+  the Python organisations service. `test_history.py` holds the change history cases.
+- HISTORYUI: no Python API code; its flow runs in both live runs.
+
 ### Done-when details
 
 1. Organisation-scoped data (ORGS).
@@ -434,7 +503,8 @@ part under After.
 
 ### New and existing repos
 
-- **New repos** (`forge init --starter`): the starter has the organisations and history modules,
+- **New repos** (`forge init --starter`, and `forge init --starter python` with the same HTTP
+  contract from the Python API): the starter has the organisations and history modules,
   the invite and role screens, the format helpers and their lint rule, the CSV exports, the soft
   delete rule and the error report. The constitution guide, the defaults, the brief paragraph,
   the convention pages and the README arrive with setup. Plain `forge init` gets the text and no
@@ -464,30 +534,49 @@ All paths under `starter/` mean `src/forge/templates/starter/`.
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | FORMATS | Shared formats and CSV export | The date, time, number and money helpers, the lint rule, the projects page on the helpers, `sendCsv`, the projects export and its button, the shared error report schema, the shared test helpers, and the cached live run. | 3, 4 | `starter/libs/shared/src/format.ts` (new), `starter/libs/shared/src/index.ts`, `starter/libs/core/src/common/csv.ts` (new), `starter/libs/core/src/index.ts`, `starter/libs/projects/src/projects.controller.ts`, `starter/libs/projects/src/projects.service.ts`, `starter/apps/web/src/features/projects/pages/projects-page.tsx`, `starter/apps/web/src/lib/format.test.ts` (new), `starter/eslint.config.mjs`, `starter/apps/api/test/helpers.ts` (new), `starter/apps/api/test/api.e2e-spec.ts` (helper imports only), `starter/apps/api/test/exports.e2e-spec.ts` (new), `starter/apps/web/e2e/helpers.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts` (helper imports only), `starter/apps/web/e2e/formats.spec.ts` (new), `tests/test_starter_tree.py` (`live_run` only), `.github/workflows/starter-smoke.yml` | `tests/test_defaults_formats.py` (`test_3`, `test_4`, new); the format unit test; the API case and the two flows of items 3 and 4 | FORGE-REACTDEFAULTS-1/STARTER, FORGE-ZOD-1/STARTER | yes | |
-| ERRORS | One error report for crashes | `ErrorReporter`, the report endpoint, the filter's one report per API crash, and the route error page's one report per UI crash. | 5 | `starter/libs/core/src/common/error-report.ts` (new), `starter/libs/core/package.json`, `starter/libs/core/tsconfig.json`, `starter/libs/core/src/common/common.module.ts`, `starter/libs/core/src/common/all-exceptions.filter.ts`, `starter/apps/web/src/lib/error-report.ts` (new), `starter/apps/web/src/components/route-error-page.tsx`, `starter/apps/api/test/error-reports.e2e-spec.ts` (new), `starter/apps/web/e2e/error-reports.spec.ts` (new) | `tests/test_defaults_errors.py` (`test_5`, new); the API case and the flow of item 5 | FORMATS | no | |
+| ERRORS | One error report for crashes | `ErrorReporter`, the report endpoint, the filter's one report per API crash, and the route error page's one report per UI crash. | 5 | `starter/libs/core/src/common/error-report.ts` (new), `starter/libs/core/package.json`, `starter/libs/core/tsconfig.json`, `starter/libs/core/src/common/common.module.ts`, `starter/libs/core/src/common/all-exceptions.filter.ts`, `starter/apps/web/src/lib/error-report.ts` (new), `starter/apps/web/src/components/route-error-page.tsx`, `starter/apps/api/test/error-reports.e2e-spec.ts` (new), `starter/apps/web/e2e/error-reports.spec.ts` (new), `starter-python/apps/api/app/core/error_report.py` (new), `starter-python/apps/api/app/core/errors.py`, `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/core/security.py` (rate-limited paths), `starter-python/apps/api/app/main.py`, `starter-python/apps/api/tests/test_error_reports.py` (new), `starter-python/libs/shared/src/index.ts` (the `errorReportSchema` copy, if FORMATS's Python side has not added it), `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated) | `tests/test_defaults_errors.py` (`test_5`, new); the API case and the flow of item 5; the Python HTTP case `test_an_api_crash_writes_one_error_report` | FORMATS | no | |
 | ORGS | Organisations and scoped data | The organisations module, an organisation and admin role at sign-up, the principal with its organisation and role, projects scoped to the organisation, the member list and its export. | 1, 4 | `starter/libs/organisations/**` (new), `starter/apps/api/prisma/schema/organisations.prisma` (new), `starter/apps/api/prisma/schema/auth.prisma`, `starter/apps/api/prisma/schema/projects.prisma`, `starter/apps/api/prisma/migrations/20261025000000_organisations/` (new), `starter/libs/core/src/common/account-principal.ts` and `current-account.decorator.ts` (moved from `libs/auth/src`), `starter/libs/core/src/common/authenticated-request.ts`, `starter/libs/core/src/index.ts`, `starter/libs/auth/**`, `starter/libs/projects/**`, `starter/libs/shared/src/index.ts`, `starter/apps/api/src/app.module.ts`, `starter/apps/api/package.json`, `starter/apps/api/tsconfig.json`, `starter/pnpm-lock.yaml`, `starter/scripts/test-build.mjs`, `starter/apps/api/test/api.e2e-spec.ts` (isolation case out), `starter/apps/api/test/organisations.e2e-spec.ts` (new), `starter/apps/api/test/exports.e2e-spec.ts` (members case), `tests/test_starter_tree.py` (libs list, schema set, `API_SECURITY_TESTS`), `tests/test_defaults_formats.py` (`CSV_API_CASES` only) | `tests/test_defaults_organisations.py` (`test_1`, new); `tests/test_starter_tree.py` (`test_1`); the API cases of item 1 and the members export case | FORMATS | no | |
+| ORGSPY | Organisations and scoped data in the Python API | The same HTTP contract as ORGS in the Python starter: the organisations module, an organisation and admin role at sign-up, the principal with its organisation and role, projects scoped to the organisation, and the member list and its export. | 1, 4 | `starter-python/apps/api/app/organisations/**` (new), `starter-python/apps/api/app/core/principal.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/auth/**`, `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/app/main.py`, `starter-python/apps/api/migrations/env.py` (model import only), `starter-python/apps/api/migrations/versions/0003_organisations.py` (new), `starter-python/apps/api/pyproject.toml` (`organisations internals` contract), `starter-python/apps/api/tests/test_api.py` (isolation case out), `starter-python/apps/api/tests/test_organisations.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `tests/test_python_starter.py` (`API_SECURITY_TESTS`, module and contract lists), `tests/test_defaults_organisations.py` (`test_1` Python names only), `tests/test_defaults_formats.py` (Python CSV names only) | the Python HTTP cases of item 1 and the members export, required by `test_1` and `test_4`; `tests/test_python_starter.py` (`test_1`, `test_2`) | ORGS, SOFTDELETE, ERRORS | no | |
 | INVITES | Invites and roles in the API | The admin guard, invites by email through the mail provider moved into core, joining from an invite, role changes, and refusals for members. | 2 | `starter/libs/organisations/**`, `starter/apps/api/prisma/schema/organisations.prisma`, `starter/apps/api/prisma/migrations/20261025000100_invites/` (new), `starter/libs/core/src/common/admin-only.decorator.ts` (new), `starter/libs/core/src/mail/**` (new, moved from `libs/auth/src/mail.provider.ts`), `starter/libs/core/src/index.ts`, `starter/libs/auth/**`, `starter/libs/shared/src/index.ts`, `starter/apps/api/src/app.module.ts`, `starter/apps/api/test/invites.e2e-spec.ts` (new) | `tests/test_defaults_organisations.py` (`test_2`, new); the API cases of item 2 | ORGS | no | |
-| MEMBERS | Members screen and invite dialog | The Members screen with the role menu and Export CSV, the invite dialog, the sidebar and Ctrl+K items, and a full query cache clear on each account change, as `SCREENS.md` shows them. | 2 | `starter/apps/web/src/features/members/**` (new), `starter/apps/web/src/features/auth/hooks/auth-hooks.ts`, `starter/apps/web/src/app.tsx`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/web/e2e/members.spec.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts` (the account-switch flow only), `tests/test_defaults_organisations.py` (`test_2` flow name only) | the flow `only an admin sees the invite and role controls`, required by `test_2`; the Members check in `switching accounts does not show the previous account projects` | INVITES | yes | |
-| JOIN | Join from an invite link | The Join your team page for an invite link, its accept-invite hook and its public route. | 2 | `starter/apps/web/src/features/auth/pages/accept-invite-page.tsx` (new), `starter/apps/web/src/features/auth/hooks/auth-hooks.ts`, `starter/apps/web/src/app.tsx`, `starter/apps/web/e2e/join.spec.ts` (new), `tests/test_defaults_organisations.py` (`test_2` flow name only) | the flow `an admin invites a person who joins and sees the same projects`, required by `test_2` | MEMBERS | yes | |
-| HISTORY | Change history | The history module, records for invites and role changes, and the admin-only Change history screen and its export. | 4 | `starter/libs/history/**` (new), `starter/apps/api/prisma/schema/history.prisma` (new), `starter/apps/api/prisma/migrations/20261025000200_history/` (new), `starter/libs/organisations/**`, `starter/libs/shared/src/index.ts`, `starter/apps/api/package.json`, `starter/apps/api/tsconfig.json`, `starter/pnpm-lock.yaml`, `starter/scripts/test-build.mjs`, `starter/apps/web/src/features/history/**` (new), `starter/apps/web/src/app.tsx`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/api/test/history.e2e-spec.ts` (new), `starter/apps/api/test/exports.e2e-spec.ts` (history case), `starter/apps/web/e2e/history.spec.ts` (new), `tests/test_starter_tree.py` (libs list, schema set), `tests/test_defaults_formats.py` (`CSV_API_CASES` only) | `tests/test_defaults_history.py` (`test_4`, new); `tests/test_starter_tree.py` (`test_1`); the change history API case and flow of item 4 | JOIN | yes | |
-| SOFTDELETE | The database refuses a hard delete | The `soft_delete_only()` function and its trigger on projects, in one migration, with the API case that proves it. | 4 | `starter/apps/api/prisma/migrations/20261025000300_soft_delete_only/` (new), `starter/apps/api/test/soft-delete.e2e-spec.ts` (new) | `tests/test_defaults_soft_delete.py` (`test_4`, new); the API case `the database refuses a hard delete of a project` | FORMATS | no | |
+| INVITESPY | Invites and roles in the Python API | The same HTTP contract as INVITES in the Python starter: the admin-only dependency, invites by email through the mail provider moved into core, joining from an invite, role changes, and refusals for members. | 2 | `starter-python/apps/api/app/organisations/**`, `starter-python/apps/api/app/core/admin.py` (new), `starter-python/apps/api/app/core/mail.py` (new, moved from `app/auth/mail.py`), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/core/security.py` (rate-limited paths), `starter-python/apps/api/app/auth/**`, `starter-python/apps/api/migrations/versions/0004_invites.py` (new), `starter-python/apps/api/tests/test_invites.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `tests/test_defaults_organisations.py` (`test_2` Python names only) | the Python HTTP cases of item 2, required by `test_2` | INVITES, ORGSPY | no | |
+| MEMBERS | Members screen and invite dialog | The Members screen with the role menu and Export CSV, the invite dialog, the sidebar and Ctrl+K items, and a full query cache clear on each account change, as `SCREENS.md` shows them. | 2 | `starter/apps/web/src/features/members/**` (new), `starter/apps/web/src/features/auth/hooks/auth-hooks.ts`, `starter/apps/web/src/app.tsx`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/web/e2e/members.spec.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts` (the account-switch flow only), `tests/test_defaults_organisations.py` (`test_2` flow name only), `starter-python/libs/shared/src/index.ts` (only a shared name the screens import that INVITESPY did not copy) | the flow `only an admin sees the invite and role controls`, required by `test_2`; the Members check in `switching accounts does not show the previous account projects`; both flows also pass in the Python starter's live run | INVITES, INVITESPY | yes | |
+| JOIN | Join from an invite link | The Join your team page for an invite link, its accept-invite hook and its public route. | 2 | `starter/apps/web/src/features/auth/pages/accept-invite-page.tsx` (new), `starter/apps/web/src/features/auth/hooks/auth-hooks.ts`, `starter/apps/web/src/app.tsx`, `starter/apps/web/e2e/join.spec.ts` (new), `tests/test_defaults_organisations.py` (`test_2` flow name only), `starter-python/libs/shared/src/index.ts` (only a shared name the page imports that INVITESPY did not copy) | the flow `an admin invites a person who joins and sees the same projects`, required by `test_2`; the flow also passes in the Python starter's live run | MEMBERS | yes | |
+| HISTORY | Change history in the API | The history module, records for invites and role changes, and the admin-only history list and its export, in the TypeScript API. | 4 | `starter/libs/history/**` (new), `starter/apps/api/prisma/schema/history.prisma` (new), `starter/apps/api/prisma/migrations/20261025000200_history/` (new), `starter/libs/organisations/**`, `starter/libs/shared/src/index.ts`, `starter/apps/api/package.json`, `starter/apps/api/tsconfig.json`, `starter/pnpm-lock.yaml`, `starter/scripts/test-build.mjs`, `starter/apps/api/test/history.e2e-spec.ts` (new), `starter/apps/api/test/exports.e2e-spec.ts` (history case), `tests/test_starter_tree.py` (libs list, schema set), `tests/test_defaults_formats.py` (`CSV_API_CASES` only) | `tests/test_defaults_history.py` (`test_4`, new); `tests/test_starter_tree.py` (`test_1`); the change history API cases of item 4 | INVITES, ORGSPY | no | |
+| HISTORYPY | Change history in the Python API | The same HTTP contract as HISTORY in the Python starter: the history module, records for invites and role changes, and the admin-only history list and its export. | 4 | `starter-python/apps/api/app/history/**` (new), `starter-python/apps/api/app/organisations/**`, `starter-python/apps/api/app/main.py`, `starter-python/apps/api/migrations/env.py` (model import only), `starter-python/apps/api/migrations/versions/0005_history.py` (new), `starter-python/apps/api/pyproject.toml` (`history internals` contract), `starter-python/apps/api/tests/test_history.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `tests/test_python_starter.py` (module and contract lists), `tests/test_defaults_history.py` (Python names only), `tests/test_defaults_formats.py` (Python CSV names only) | the Python HTTP cases of item 4's change history, required by `test_4` | HISTORY, INVITESPY | no | |
+| HISTORYUI | Change history screen | The admin-only Change history screen with Export CSV, and its sidebar and Ctrl+K items for admins, as `SCREENS.md` shows it. | 4 | `starter/apps/web/src/features/history/**` (new), `starter/apps/web/src/app.tsx`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/web/e2e/history.spec.ts` (new), `tests/test_defaults_history.py` (flow name only), `starter-python/libs/shared/src/index.ts` (only a shared name the screen imports that HISTORYPY did not copy) | the flow `an admin sees who changed what and exports it`, required by `test_4` from both live runs | JOIN, HISTORY, HISTORYPY | yes | |
+| SOFTDELETE | The database refuses a hard delete | The `soft_delete_only()` function and its trigger on projects, in one Prisma migration and one Alembic migration, with the API case on each API that proves it. | 4 | `starter/apps/api/prisma/migrations/20261025000300_soft_delete_only/` (new), `starter/apps/api/test/soft-delete.e2e-spec.ts` (new), `starter-python/apps/api/migrations/versions/0002_soft_delete_only.py` (new), `starter-python/apps/api/tests/test_soft_delete.py` (new) | `tests/test_defaults_soft_delete.py` (`test_4`, new); the API case `the database refuses a hard delete of a project`; the Python HTTP case `test_the_database_refuses_a_hard_delete_of_a_project` | FORMATS | no | |
 | GUIDE | Constitution, conventions and brief | The built-in lines in the constitution guide and the defaults, the worker brief paragraph, the convention pages, the standards page and the starter's README, on new and existing repos. | 6 | `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `.codex/skills/forge/fde.md`, `.claude/skills/forge/fde.md`, `src/forge/templates/brief.md`, `src/forge/templates/conventions/security.md`, `database.md`, `frontend.md`, `backend.md`, `api.md`, `stack.md`, `src/forge/standards.md` and its synced copies, `starter/README.md` | `tests/test_built_in_defaults_guide.py` (`test_6`, new) | FORGE-REACTDEFAULTS-1/RULES, FORGE-ZOD-1/STARTER | no | |
 
 New moving parts: `soft_delete_only()`, a Postgres trigger function in the starter's migrations that refuses a hard delete of a soft-deleted table's rows (item 4). No new package: the lint rule is ESLint's core `no-restricted-syntax`, and the helpers use the runtime's `Intl`.
 
 ## Notes
 
-- **Order.** FORMATS, then ORGS, INVITES, MEMBERS, JOIN and HISTORY in a line: each one changes
-  files that the one before it wrote (the projects service, the organisations service, the auth
-  hooks, the routes and the sidebar). ERRORS and SOFTDELETE start after FORMATS and run beside
-  that line; they share no file with it or with each other. GUIDE shares no file with any part
-  and starts at once, after the two in-flight parts that also change the convention pages and
-  the brief. All nine ship in one release.
+- **Order.** FORMATS first. ERRORS and SOFTDELETE run after it, beside the rest; they share no
+  file with it or with each other. ORGS then INVITES for the TypeScript API; ORGSPY then
+  INVITESPY for the Python API, each after its TypeScript twin, which pins the HTTP contract and
+  the test file it adds Python names to. ORGSPY also waits for SOFTDELETE, because Alembic
+  migrations form one chain (0002 soft delete, 0003 organisations, 0004 invites, 0005 history),
+  and for ERRORS, because both change the Python core entry, `main.py` and the generated API
+  types.
+  MEMBERS waits for both invite parts, because its flows run against both APIs; then JOIN.
+  HISTORY runs after INVITES and ORGSPY (both add names to the CSV test), beside MEMBERS and JOIN; HISTORYPY after HISTORY and INVITESPY;
+  HISTORYUI last, after JOIN and both history parts. GUIDE shares no file with any part and
+  starts at once, after the two in-flight parts that also change the convention pages and the
+  brief. All parts ship in one release.
+- **Why the web parts wait for both APIs.** `forge init --starter python` copies the TypeScript
+  starter's `apps/web`, and the Python live run runs every Playwright spec in it against the
+  Python API. So a part that adds a web flow merges only when both APIs serve its HTTP contract.
+  An API-only part changes no web code, so the other starter's live run keeps passing.
 - **The zod part's name.** The zod story has no task table yet. FORMATS and GUIDE wait for its
   part that changes the starter and the API and backend convention pages; if that part has
   another name than `STARTER`, use its name.
-- **Part sizes.** Each part is planned under 400 lines. A moved file counts once, as the move.
-- **Design.** MEMBERS, JOIN and HISTORY build the screens in `docs/design/FORGE-DEFAULTS-1/`, with the
+- **Part sizes.** Each part is planned under 400 hand-written lines; a moved file counts once, as
+  the move. Each Python API part also regenerates `libs/shared/openapi.json` and
+  `libs/shared/src/api-types.ts` with `corepack pnpm run api-types`; those generated lines come on
+  top and are checked by the Python starter's type check, not read line by line. The TypeScript
+  and Python halves of ORGS, INVITES and HISTORY are separate parts because together each is
+  about 700 lines.
+- **Design.** MEMBERS, JOIN and HISTORYUI build the screens in `docs/design/FORGE-DEFAULTS-1/`, with the
   starter's neutral shadcn/ui theme and no new look. FORMATS adds one button to the projects
   list, also in that folder. ERRORS changes no screen.
 - **Simplest version, by the owner's rule.** Not in this story: one person in more than one
