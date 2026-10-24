@@ -10,7 +10,7 @@ app.use(helmet());
 app.enableCors({ origin: config.corsOrigins, credentials: true });  // a named list, never '*'
 ```
 
-- The global `ValidationPipe` from api.md strips and rejects unknown fields.
+- Each request schema is `.strict()`, so `ZodValidationPipe` from api.md rejects unknown fields.
 - `@nestjs/throttler` limits sign-in, password reset and other sensitive routes (for example 10
   requests a minute); `/health` skips it.
 - Production serves HTTPS only.

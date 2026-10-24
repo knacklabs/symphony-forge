@@ -272,6 +272,13 @@ code writes. Other modules reach those tables only through its public service. A
 default branch already has is not a finding, and neither is app code outside the modules, such
 as the demo-data loader.
 
+In a TypeScript app with `zod` in a `package.json`, report a request body or query that this
+change adds and that no zod schema checks as a P1 finding titled `Zod: <the endpoint>`. Request
+input has one zod schema in the app's shared package, which the web form and the API both use,
+and the API documentation comes from that schema. A class-validator rule or an `@ApiProperty`
+on request input that this change adds is a finding. Input the default branch already has is
+not a finding, and neither is a path parameter that a Nest parse pipe checks.
+
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
 keep content visible by default and enter with `@starting-style` or transitions, never wait for a
@@ -280,6 +287,18 @@ the Web Animations API first and Motion only when a Done-when item needs springs
 use impeccable's Operate mode and Emil's restraint. Popovers scale from their trigger with
 shadcn/Radix's transform-origin variable. Do not animate keyboard-driven or very frequent actions.
 Motion that follows these rules is not a `Simpler:` finding.
+
+In a React app with React Compiler turned on (`babel-plugin-react-compiler` in a `package.json`),
+report a `useMemo`, `useCallback` or `React.memo` that this change adds as a P1 finding titled
+`Memo: <the component>`. The compiler memoizes. Code under `components/ui/` (the shadcn/ui copies)
+is not a finding, and neither is code the default branch already has.
+
+In a React app, report a component or prop that this change adds and that breaks the frontend
+convention's composition rule as a P1 finding titled `Composition: <the component>`: layout
+passes content as `children`; parts that share state are a compound component that shares it
+through context; logic with no markup is a custom hook; and no boolean prop switches a component
+between modes. Code under `components/ui/` is not a finding, and neither is code the default
+branch already has.
 
 ## How to report
 Name the scenario with `Case: normal use - <the scenario>` or `Case: rare - <the scenario>`
@@ -378,6 +397,12 @@ The app's approved constitution, on the default branch, follows. Report work tha
 $constitution
 <!-- standards -->
 ## Standards
+For new code, check the call-or-event rule: call another module's public service and await its
+result when the current action needs that answer to continue. Use an in-process event when other
+modules react after an action succeeds and the current action needs no answer from them.
+Events still need the story's `New moving parts` entry. Do not require conversion of existing code
+or add a queue requirement.
+
 Forge's standards page follows: the same page every worker's brief carries. Check the change
 against each of its rules that applies to a concern the change has. Report every rule the change
 breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A

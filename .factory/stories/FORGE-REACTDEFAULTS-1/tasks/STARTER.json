@@ -1,0 +1,69 @@
+{
+  "branch": "task/FORGE-REACTDEFAULTS-1-STARTER",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 109,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve table renderer identities for keyboard sorting",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/src/components/route-error-page.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/components/route-error-page.tsx",
+      "gain": 2,
+      "harm": 1,
+      "line": 7,
+      "outcome": "follow-up",
+      "reason": "Rare case outside normal use",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Preserve the skip target on public-route error pages",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8f5c1935c226fc2d07bf2610d1cae57915216f3a794fbab5ad5391ff0f35487a",
+    "changed": "3193f4e577a662154c0fdbc0f7fcb12a251740ae8055386a9bd90dd4b9830f10",
+    "commit": "e6505c2014aa426e68de1cdd4d5b68e4af2d79a1",
+    "dismissals": [],
+    "findings": [],
+    "id": "77e3a4fb-9733-4c1d-820b-7c3283065742",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T08:57:04.465381+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:50:18.277635+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T10:38:18.975887+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "4f836e52-0594-4b4b-8ba8-9a1ba788e079",
+    "head": "dc85cf836f9e302753f538ff57fb10f914f96881",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

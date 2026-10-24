@@ -7,17 +7,20 @@ module, the config, logging or error handling.
 
 ```
 apps/api/src/
-  main.ts               start-up: validation, the exception filter, security, Swagger, JSON logs
+  main.ts               start-up: the exception filter, security, Swagger, JSON logs
   app.module.ts          wires the API and its modules
   health/               GET /health, after migrations have succeeded at start-up
 libs/
   auth/src/              sign-in module
   projects/src/          example records module
   core/src/              config, common code and Prisma service
-  shared/src/            shared types and validators
+  shared/src/            zod schemas for request input, and shared types
 ```
 
 ## Modules
+
+Request input is checked by zod schemas from `@app/shared`, as api.md says; the app has no global
+ValidationPipe.
 
 - Each library's public entry is `src/index.ts`, imported by its package name: `@app/auth`,
   `@app/projects`, `@app/core` or `@app/shared`. The package's `exports` has only `.`. A module
@@ -32,9 +35,21 @@ libs/
   points to a table owned by another module.
 - Services query through `PrismaService`. Move a query into `<domain>.repository.ts` when a second
   service needs it or it is raw SQL.
-- Name DTOs `CreateXDto`, `UpdateXDto` and `XResponseDto`.
+- Name request schemas `createXSchema` and `updateXSchema` (one `xSchema` when both are the same)
+  and list queries `xListQuerySchema`, in `@app/shared`; name response DTOs `XResponseDto`.
 - Name event files `*.event.ts` and `*.handler.ts`.
 - Inject dependencies through constructors; never `new` a service yourself, so tests can swap it.
+
+## Call a service or send an event
+
+- If the current action needs another module's answer to continue, call that module's public
+  service and await the result.
+- If other modules react after an action succeeds and the current action needs no answer from
+  them, send an in-process event. The sender does not need to know which modules react.
+  Add events only when the story's `New moving parts` names them.
+
+Reviews apply this call-or-event rule only to new code. Existing code needs no conversion.
+For work that must outlive a request, follow [stack.md](stack.md).
 
 ## Config
 
