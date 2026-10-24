@@ -61,7 +61,7 @@ def test_upgrade_names_runs_in_both_machine_lanes_before_install(up, tmp_path, a
         assert result.returncode == 1, result.stdout + result.stderr
         assert "Wait until no Forge runs are in progress" in result.stderr
         assert "other: SHOP (read)" in result.stderr
-        assert "other: test command (test)" in result.stderr
+        assert "other: main (test)" in result.stderr
         assert "two releases" in result.stderr
         assert f"then forge upgrade {RELEASE}" in result.stderr
         assert up.snapshot() == before
