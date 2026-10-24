@@ -8,21 +8,30 @@
     "head": null,
     "start": "f989f6ead268c47fe0beb1727792f5f5a99d2206"
   },
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cc90f096404b7b72b2d8fe55e3d916c700e3f813e99a63392348847f525a0b32",
+    "changed": "e3cadc8e6406f22dfe5041cb92ce8d023f4b8e6bd0cf249a29167903e720ebd7",
+    "commit": "63ab5c2d4ffb2f433d92cb77369d763ae7738f59",
+    "dismissals": [],
+    "findings": [],
+    "id": "3136d8f6-6799-41a7-a33e-006edc1405c3",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T15:11:55.751399+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T15:29:27.179735+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "question": "New client apps start with the constitution's built-in defaults: One error report for crashes is stuck. It should deliver: `ErrorReporter`, the report endpoint, the filter's one report per API crash, and the route error page's one report per UI crash.\nIt changes 497 lines outside tests, over its limit of 400.\nThe worker tried: Report UI and API crashes once.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "801e5f2f-48b1-427c-ba29-1164799122b9"
-  },
   "stuck": {
     "close": null,
     "head": "026add2e980ff3a5b1879887a04ebff49e39f15a",
