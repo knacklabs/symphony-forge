@@ -22,6 +22,10 @@ API_SECURITY_TESTS = (
     "account isolation",
     "production forgot-password does not log a reset link",
 )
+API_ZOD_CASES = (
+    "rejects a bad list query with the same field errors as a bad body",
+    "documents the list query and request bodies from the shared zod schemas",
+)
 BROWSER_FLOWS = (
     "sign up then sign in",
     "forgot-password request confirms delivery",
@@ -345,7 +349,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
     assert "exec npm run start:prod" in skeleton_dockerfile
 
     if LIVE:
-        _require_cases(request.getfixturevalue("live_starter")["api"], API_SECURITY_TESTS)
+        _require_cases(request.getfixturevalue("live_starter")["api"], API_SECURITY_TESTS + API_ZOD_CASES)
 
 
 @pytest.mark.platform

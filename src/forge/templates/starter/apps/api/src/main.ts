@@ -1,4 +1,4 @@
-import { ValidationPipe, BadRequestException, RequestMethod } from '@nestjs/common';
+import { RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -29,23 +29,6 @@ async function bootstrap(): Promise<void> {
     return response.sendFile(join(webRoot, 'index.html'));
   });
   app.setGlobalPrefix('api/v1', { exclude: [{ path: 'health', method: RequestMethod.GET }] });
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      exceptionFactory: (errors) =>
-        new BadRequestException({
-          code: 'VALIDATION_ERROR',
-          message: 'Check the fields and try again.',
-          details: {
-            fieldErrors: errors.flatMap((error) =>
-              Object.values(error.constraints ?? {}).map((reason) => ({ field: error.property, reason })),
-            ),
-          },
-        }),
-    }),
-  );
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Starter API')
     .setDescription('Account sign-in and project management API.')
