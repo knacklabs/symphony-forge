@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tomllib
 import zipfile
 from pathlib import Path
@@ -228,6 +229,44 @@ def test_1_a_python_backend_app_starts_from_the_fastapi_starter(
                 relative = tracked.relative_to(Path("src/forge/templates/starter-python")).as_posix()
                 packaged = f"forge/templates/starter-python/{relative}"
                 assert wheel.read(packaged) == source.read_bytes(), packaged
+
+        # Audit: pip compiles the template Python files during an ordinary wheel install.
+        # ZIP checks cannot detect init decoding those generated files as template text.
+        # Run the installed entry point with only GitHub stubbed, without a production seam.
+        environment = tmp_path / "installed"
+        subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True,
+                       capture_output=True, timeout=120)
+        scripts = environment / ("Scripts" if os.name == "nt" else "bin")
+        python = scripts / ("python.exe" if os.name == "nt" else "python")
+        installed = subprocess.run(
+            [str(python), "-m", "pip", "install", "--no-deps", "--no-index",
+             str(next((tmp_path / "dist").glob("*.whl")))],
+            capture_output=True, text=True, encoding="utf-8", timeout=120,
+        )
+        assert installed.returncode == 0, installed.stdout + installed.stderr
+        [templates] = [directory / "forge/templates/starter-python"
+                       for directory in environment.rglob("site-packages")
+                       if (directory / "forge/templates/starter-python").is_dir()]
+        assert list(templates.rglob("*.pyc")), "pip did not compile the Python templates"
+
+        client, remote = tmp_path / "wheel-client", tmp_path / "wheel-client.git"
+        subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
+        subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)
+        repo.git("remote", "add", "origin", str(remote), cwd=client)
+        gh.respond("api", stdout="{}")
+        gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
+                   stdout='{"message":"Branch not protected","status":"404"}')
+        env = {**os.environ, "PATH": str(scripts) + os.pathsep + os.environ["PATH"]}
+        command = scripts / ("forge.exe" if os.name == "nt" else "forge")
+        initialized = subprocess.run(
+            [str(command), "init", "--starter", "python"], cwd=client, env=env,
+            capture_output=True, text=True, encoding="utf-8", timeout=240,
+        )
+        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+        _assert_python_tree(client)
+        committed = repo.git("ls-files", cwd=client).splitlines()
+        assert not any("__pycache__" in Path(path).parts
+                       or Path(path).suffix in {".pyc", ".pyo"} for path in committed)
         return
 
     if case == "adopted":

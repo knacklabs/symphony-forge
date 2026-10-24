@@ -154,7 +154,9 @@ def _starter_files(starter: str) -> dict[str, Path]:
         root = react
     sources.update({path.relative_to(root).as_posix(): path
                     for path in sorted(root.rglob("*")) if path.is_file()})
-    return sources
+    caches = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".import_linter_cache"}
+    return {rel: path for rel, path in sources.items()
+            if path.suffix not in {".pyc", ".pyo"} and not caches.intersection(Path(rel).parts)}
 
 
 def _scaffold(top: Path, runner: str = "ubuntu-latest", starter: str | None = None) -> dict[str, str]:
