@@ -13,6 +13,8 @@ from test_app_constitution import _fixture_git
 from test_setup import _fresh_client
 from test_worker import calls, install_claude
 
+STORY = "FORGE-DEFAULTS-1"
+
 
 @pytest.mark.platform
 @pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])
