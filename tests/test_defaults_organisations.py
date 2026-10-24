@@ -8,6 +8,10 @@ ORGANISATION_API_CASES = (
     "organisation isolation: another organisation gets 404 and the project stays unchanged",
     "a new account is the only admin of its own organisation",
 )
+PYTHON_ORGANISATION_API_CASES = (
+    "test_organisation_isolation_returns_404_and_leaves_the_project_unchanged",
+    "test_a_new_account_is_the_only_admin_of_its_organisation",
+)
 INVITE_API_CASES = (
     "an admin invites a person by email who joins the organisation",
     "a member cannot invite people or change roles",

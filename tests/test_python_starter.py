@@ -15,7 +15,8 @@ import pytest
 pytest_plugins = ("test_notes_first_discovery",)
 
 from test_setup import _fresh_client
-from test_defaults_formats import DOWNLOAD_FLOW, FORMAT_FLOW
+from test_defaults_formats import DOWNLOAD_FLOW, FORMAT_FLOW, PYTHON_CSV_API_CASES
+from test_defaults_organisations import PYTHON_ORGANISATION_API_CASES
 from test_starter_tree import BROWSER_FLOWS, _pnpm_root_importer, _require_cases, _run_live_starter
 
 STORY = "FORGE-FASTAPI-1"
@@ -26,11 +27,8 @@ PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
 REACT_PATHS = (Path("apps/web"), Path("tsconfig.base.json"), Path(".npmrc"))
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 API_SECURITY_TESTS = (
-    "account_isolation",
     "production_forgot_password_does_not_log_a_reset_link",
 )
-# The shared web app's format and export flows run against the Python API too.
-PYTHON_CSV_API_CASES = ("projects_export_as_csv",)
 PYTHON_PACKAGES = {
     "fastapi", "pydantic", "sqlalchemy", "alembic", "uvicorn", "psycopg",
     "pytest", "httpx", "import-linter", "ruff", "mypy",
@@ -142,7 +140,7 @@ def _assert_python_tree(client: Path):
             assert locked["version"] == version or locked["version"].startswith(version + "("), (group, name)
 
     assert (api / ".python-version").read_text(encoding="utf-8").strip() == "3.14"
-    for module in ("auth", "projects"):
+    for module in ("auth", "projects", "organisations"):
         assert (api / "app" / module / "models.py").is_file()
     assert (api / "migrations/versions/0001_initial.py").is_file()
     scripts = package["scripts"]
@@ -287,13 +285,16 @@ def test_1_a_python_backend_app_starts_from_the_fastapi_starter(
     )
     if LIVE:
         live = request.getfixturevalue("live_python_starter")
-        _require_cases(live["api"], API_SECURITY_TESTS + PYTHON_CSV_API_CASES)
+        _require_cases(
+            live["api"],
+            API_SECURITY_TESTS + PYTHON_ORGANISATION_API_CASES + PYTHON_CSV_API_CASES,
+        )
         _require_cases(live["browser"], BROWSER_FLOWS + (FORMAT_FLOW, DOWNLOAD_FLOW))
 
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("case", ["clean", "reach into a module"])
+@pytest.mark.parametrize("case", ["clean", "reach into a module", "reach into organisations"])
 def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request):
     # Audit: the import-linter contract protects the public-service module boundary at its CLI.
     # A removed or misconfigured contract lets a real cross-module import pass. Existing tests
@@ -307,7 +308,7 @@ def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request)
         "A module uses another module only through its public service in its __init__.py, "
         "never through its internal files."
     )
-    for module in ("core", "auth", "projects"):
+    for module in ("core", "auth", "projects", "organisations"):
         contract = contracts[f"{module} internals"]
         assert contract["protected_modules"] == [f"app.{module}.*"]
         assert contract["allowed_importers"] == [f"app.{module}"]
@@ -319,9 +320,11 @@ def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request)
         return
     folder = request.getfixturevalue("live_python_starter")["folder"]
     injected = folder / "apps/api/app/projects/reach_in.py"
-    if case == "reach into a module":
+    module = "organisations" if case == "reach into organisations" else "auth"
+    service = "OrganisationsService" if module == "organisations" else "AuthService"
+    if case != "clean":
         injected.write_text(
-            "from app.auth.service import AuthService\n\nREACHED_SERVICE = AuthService\n",
+            f"from app.{module}.service import {service}\n\nREACHED_SERVICE = {service}\n",
             encoding="utf-8",
         )
     try:
@@ -334,7 +337,7 @@ def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request)
         else:
             output = result.stdout + result.stderr
             assert result.returncode != 0, output
-            assert "auth internals" in output
+            assert f"{module} internals" in output
             assert "only through its public service" in output
     finally:
         if injected.exists():

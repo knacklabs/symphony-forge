@@ -44,6 +44,13 @@ protected_modules = ["app.projects.*"]
 allowed_importers = ["app.projects"]
 broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
 
+[[tool.importlinter.contracts]]
+name = "organisations internals"
+type = "protected"
+protected_modules = ["app.organisations.*"]
+allowed_importers = ["app.organisations"]
+broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
+
 [tool.mypy]
 strict = true
 plugins = ["pydantic.mypy"]

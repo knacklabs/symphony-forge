@@ -17,6 +17,7 @@ from app.core import (
     install_security_middleware,
     load_settings,
 )
+from app.organisations import router as organisations_router
 from app.projects import router as projects_router
 
 
@@ -42,6 +43,7 @@ app = FastAPI(
 )
 app.include_router(auth_router)
 app.include_router(projects_router)
+app.include_router(organisations_router)
 app.include_router(error_report_router)
 install_error_handlers(app)
 install_security_middleware(app)

@@ -5,6 +5,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
+from app.core import Role
+
 
 class AuthSchema(BaseModel):
     model_config = ConfigDict(
@@ -45,6 +47,7 @@ class ResetPasswordInput(AuthSchema):
 class Account(AuthSchema):
     id: UUID
     email: Email
+    role: Role
 
 
 class MessageResponse(AuthSchema):

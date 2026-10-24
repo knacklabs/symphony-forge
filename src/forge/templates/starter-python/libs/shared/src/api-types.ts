@@ -113,10 +113,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List the signed-in account’s projects. */
+        /** List your organisation’s projects. */
         get: operations["list_projects_api_v1_projects_get"];
         put?: never;
-        /** Create a project for the signed-in account. */
+        /** Create a project for your organisation. */
         post: operations["create_project_api_v1_projects_post"];
         delete?: never;
         options?: never;
@@ -131,7 +131,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Download every project of the signed-in account as a CSV file. */
+        /** Download every project of your organisation as a CSV file. */
         get: operations["export_projects_api_v1_projects_export_get"];
         put?: never;
         post?: never;
@@ -148,13 +148,47 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Read one project owned by the signed-in account. */
+        /** Read one project in your organisation. */
         get: operations["get_project_api_v1_projects__project_id__get"];
-        /** Replace a project owned by the signed-in account. */
+        /** Replace a project in your organisation. */
         put: operations["update_project_api_v1_projects__project_id__put"];
         post?: never;
-        /** Soft-delete a project owned by the signed-in account. */
+        /** Soft-delete a project in your organisation. */
         delete: operations["delete_project_api_v1_projects__project_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List your organisation’s members, oldest first. */
+        get: operations["list_members_api_v1_members_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/members/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download every member of your organisation, oldest first. */
+        get: operations["export_members_api_v1_members_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -210,6 +244,7 @@ export interface components {
             id: string;
             /** Email */
             email: string;
+            role: components["schemas"]["Role"];
         };
         /** ApiErrorBody */
         ApiErrorBody: {
@@ -295,6 +330,47 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** Member */
+        Member: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Accountid
+             * Format: uuid
+             */
+            accountId: string;
+            /**
+             * Email
+             * @example ada@example.com
+             */
+            email: string;
+            role: components["schemas"]["Role"];
+            /**
+             * Createdatutc
+             * Format: date-time
+             */
+            createdAtUtc: string;
+        };
+        /** MemberListResponse */
+        MemberListResponse: {
+            /** Items */
+            items: components["schemas"]["Member"][];
+            pagination: components["schemas"]["MemberPagination"];
+        };
+        /** MemberPagination */
+        MemberPagination: {
+            /** Page */
+            page: number;
+            /** Limit */
+            limit: number;
+            /** Totalitems */
+            totalItems: number;
+            /** Totalpages */
+            totalPages: number;
+        };
         /** MessageResponse */
         MessageResponse: {
             /** Message */
@@ -366,6 +442,8 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** @enum {string} */
+        Role: "admin" | "member";
         /** SuccessEnvelope[Account] */
         SuccessEnvelope_Account_: {
             /**
@@ -399,6 +477,18 @@ export interface components {
              */
             success: true;
             data: components["schemas"]["HealthResponse"] | null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[MemberListResponse] */
+        SuccessEnvelope_MemberListResponse_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["MemberListResponse"] | null;
             /** Error */
             error?: null;
         };
@@ -1084,6 +1174,85 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_members_api_v1_members_get: {
+        parameters: {
+            query?: {
+                /** @description The one-based page number. */
+                page?: number;
+                /** @description Members per page, up to 100. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_MemberListResponse_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_members_api_v1_members_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The members.csv file: Email, Role and Joined (UTC). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
