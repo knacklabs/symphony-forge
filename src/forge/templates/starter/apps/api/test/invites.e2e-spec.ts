@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiBaseUrl, credentials, csrfToken, invite, logEvents, productionApiBaseUrl, psql } from './helpers';
+import { apiBaseUrl, credentials, csrfToken, invite, productionApiBaseUrl, psql } from './helpers';
 
 describe('organisation invites and roles', () => {
   it('an admin invites a person by email who joins the organisation', async () => {
