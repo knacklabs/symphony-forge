@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-MODULAR-1-GUIDE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T07:16:56.847562+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "05ab85b5b27c8362dcca96d305fac1906a5c3c5e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
