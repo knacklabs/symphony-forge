@@ -40,6 +40,17 @@ ValidationPipe.
 - Name event files `*.event.ts` and `*.handler.ts`.
 - Inject dependencies through constructors; never `new` a service yourself, so tests can swap it.
 
+## Call a service or send an event
+
+- If the current action needs another module's answer to continue, call that module's public
+  service and await the result.
+- If other modules react after an action succeeds and the current action needs no answer from
+  them, send an in-process event. The sender does not need to know which modules react.
+  Add events only when the story's `New moving parts` names them.
+
+Reviews apply this call-or-event rule only to new code. Existing code needs no conversion.
+For work that must outlive a request, follow [stack.md](stack.md).
+
 ## Config
 
 Use `@nestjs/config` with a `validate` function, so a missing or malformed variable stops the app
