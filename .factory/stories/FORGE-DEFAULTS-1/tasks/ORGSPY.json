@@ -1,0 +1,13 @@
+{
+  "base": "bd97bba40826ea2c792caa398c6fcff5ca098ba3",
+  "branch": "task/FORGE-DEFAULTS-1-ORGSPY",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-DEFAULTS-1/SOFTDELETE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-24T15:53:10.451990+00:00",
+      "step": "start"
+    }
+  ]
+}
