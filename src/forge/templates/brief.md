@@ -372,6 +372,9 @@ rule.
 
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
+In an app with a FastAPI backend, open python.md there for the backend, API, database,
+security, test and deploy concerns. The rules of the other pages apply to it, and their NestJS
+and Prisma code does not.
 Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
 conventions apply only to a repo on the default stack.
 

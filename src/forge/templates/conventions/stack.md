@@ -43,6 +43,9 @@ the module boundaries.
 An app set up before Nx keeps its npm workspaces and its Dockerfile.
 An app set up before this release keeps its package manager, lockfile and folder layout.
 
+A new app whose owner asks for a Python backend starts from forge init --starter python: a FastAPI
+API in apps/api next to the same web app. See python.md.
+
 ## Deploy contract
 
 The root `package.json` has `build` and `start:prod` scripts. `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run build` uses Nx to

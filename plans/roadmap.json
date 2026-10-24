@@ -344,14 +344,20 @@
       "order": 91
     },
     {
-      "key": "FORGE-REACTDEFAULTS-1",
-      "title": "Four frontend defaults for new client React apps",
+      "key": "FORGE-MODULAR-1",
+      "title": "New client apps start from the client notes and a fixed modular stack",
       "status": "pending",
       "order": 92
     },
     {
-      "key": "FORGE-MODULAR-1",
-      "title": "New client apps start from the client notes and a fixed modular stack",
+      "key": "FORGE-FASTAPI-1",
+      "title": "FastAPI starter for Python backends",
+      "status": "pending",
+      "order": 93
+    },
+    {
+      "key": "FORGE-REACTDEFAULTS-1",
+      "title": "Four frontend defaults for new client React apps",
       "status": "pending",
       "order": 92
     },
@@ -360,12 +366,6 @@
       "title": "One zod schema checks every client app input",
       "status": "pending",
       "order": 93
-    },
-    {
-      "key": "FORGE-FASTAPI-1",
-      "title": "FastAPI starter for Python backends",
-      "status": "pending",
-      "order": 94
     }
   ],
   "epics": [
