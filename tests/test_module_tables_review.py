@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from test_close import CLEAN, GREEN, blocked, body, env  # noqa: F401 (fixture)
+from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env  # noqa: F401 (fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_score_bar import _read_prompt, _says
 from test_score_notes import _client_repo as setup_client, _scored
@@ -45,7 +45,20 @@ def test_3_reviews_and_reads_hold_a_query_on_another_modules_tables(env, tmp_pat
     setup_client(env, tmp_path, adopted)
     env.checks(GREEN)
     repo = env.repo
-    item, where = env.start_fix()
+    # A part's first review returns the serious-finding message. A fix instead reaches
+    # its one-round owner-choice stop; that policy has its own command coverage.
+    no_hooks = tmp_path / "fixture-no-hooks"
+    no_hooks.mkdir(exist_ok=True)
+    git = repo.git
+
+    def fixture_git(*args, cwd=None):
+        if args and args[0] in {"commit", "push"}:
+            args = ("-c", f"core.hooksPath={no_hooks}", *args)
+        return git(*args, cwd=cwd)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(repo, "git", fixture_git)
+        item, where = env.start_approved_task(STORY_DOC)
     log = install_claude(repo)
     worked = repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
