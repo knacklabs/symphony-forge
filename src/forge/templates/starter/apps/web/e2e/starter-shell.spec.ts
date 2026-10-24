@@ -163,6 +163,25 @@ test('a reloaded or shared list link shows the same view', async ({ page }) => {
   await expectSecondPageByName(shared);
 });
 
+test('keyboard sorting a cached order keeps focus on the header', async ({ page }) => {
+  await signUp(page);
+  await addPaginationProjects(page, 2);
+  await page.reload();
+  const nameHeader = page.getByRole('button', { name: 'Name' });
+  await nameHeader.click();
+  await expect(page).toHaveURL(/sortOrder=asc/);
+  await nameHeader.click();
+  await expect(page).toHaveURL(/sortOrder=desc/);
+  await expect(page.getByRole('row', { name: /Pagination project 01/ })).toBeVisible();
+
+  // Ascending is cached now, so the table stays on screen and the same button must keep focus.
+  await nameHeader.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/sortOrder=asc/);
+  await expect(page.locator('th', { has: nameHeader })).toHaveAttribute('aria-sort', 'ascending');
+  await expect(nameHeader).toBeFocused();
+});
+
 test('a crash on one screen shows its error page and the other screens still work', async ({ page }) => {
   await signUp(page);
   const projectsRoute = '**/api/v1/projects?*';

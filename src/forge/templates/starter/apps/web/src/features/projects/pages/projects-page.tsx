@@ -63,6 +63,64 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
 }
 
+// flexRender mounts these renderers as components, so they live outside ProjectsPage: a new
+// function on each render would remount the header buttons and drop keyboard focus.
+// React Compiler skips ProjectsPage because of useReactTable, so it cannot keep them stable.
+type RowActions = { edit: (project: Project) => void; remove: (project: Project) => void; deleting: boolean };
+
+const columns: ColumnDef<Project>[] = [
+  {
+    accessorKey: 'name',
+    header: ({ column }) => (
+      <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        <SortLabel label="Name" sorted={column.getIsSorted()} />
+      </Button>
+    ),
+    cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+  },
+  {
+    accessorKey: 'status',
+    header: ({ column }) => (
+      <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        <SortLabel label="Status" sorted={column.getIsSorted()} />
+      </Button>
+    ),
+    cell: ({ row }) => <Badge variant="outline">{row.original.status}</Badge>,
+  },
+  {
+    accessorKey: 'createdAtUtc',
+    header: ({ column }) => (
+      <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        <SortLabel label="Created" sorted={column.getIsSorted()} />
+      </Button>
+    ),
+    cell: ({ row }) => <div><time dateTime={row.original.createdAtUtc}>{formatDate(row.original.createdAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
+  },
+  {
+    accessorKey: 'updatedAtUtc',
+    header: ({ column }) => (
+      <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        <SortLabel label="Updated" sorted={column.getIsSorted()} />
+      </Button>
+    ),
+    cell: ({ row }) => <div><time dateTime={row.original.updatedAtUtc}>{formatDate(row.original.updatedAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
+  },
+  {
+    id: 'actions',
+    header: () => <span className="sr-only">Actions</span>,
+    enableSorting: false,
+    cell: ({ row, table }) => {
+      const actions = table.options.meta as RowActions;
+      return (
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="icon" aria-label={`Edit ${row.original.name}`} onClick={() => actions.edit(row.original)}><Pencil aria-hidden="true" /></Button>
+          <Button variant="ghost" size="icon" aria-label={`Delete ${row.original.name}`} disabled={actions.deleting} onClick={() => actions.remove(row.original)}><Trash2 aria-hidden="true" /></Button>
+        </div>
+      );
+    },
+  },
+];
+
 export function ProjectsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = readListQuery(searchParams);
@@ -106,62 +164,17 @@ export function ProjectsPage() {
     setFormOpen(true);
   }
 
-  const columns: ColumnDef<Project>[] = [
-    {
-      accessorKey: 'name',
-      header: ({ column }) => (
-        <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Name" sorted={column.getIsSorted()} />
-        </Button>
-      ),
-      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
-    },
-    {
-      accessorKey: 'status',
-      header: ({ column }) => (
-        <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Status" sorted={column.getIsSorted()} />
-        </Button>
-      ),
-      cell: ({ row }) => <Badge variant="outline">{row.original.status}</Badge>,
-    },
-    {
-      accessorKey: 'createdAtUtc',
-      header: ({ column }) => (
-        <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Created" sorted={column.getIsSorted()} />
-        </Button>
-      ),
-      cell: ({ row }) => <div><time dateTime={row.original.createdAtUtc}>{formatDate(row.original.createdAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
-    },
-    {
-      accessorKey: 'updatedAtUtc',
-      header: ({ column }) => (
-        <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Updated" sorted={column.getIsSorted()} />
-        </Button>
-      ),
-      cell: ({ row }) => <div><time dateTime={row.original.updatedAtUtc}>{formatDate(row.original.updatedAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
-    },
-    {
-      id: 'actions',
-      header: () => <span className="sr-only">Actions</span>,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" aria-label={`Edit ${row.original.name}`} onClick={() => { setEditing(row.original); setFormOpen(true); }}><Pencil aria-hidden="true" /></Button>
-          <Button variant="ghost" size="icon" aria-label={`Delete ${row.original.name}`} disabled={deleteProject.isPending} onClick={() => setDeleting(row.original)}><Trash2 aria-hidden="true" /></Button>
-        </div>
-      ),
-    },
-  ];
-
   const currentSorting: SortingState = [{ id: query.sortBy, desc: query.sortOrder === 'desc' }];
   const currentPagination: PaginationState = { pageIndex: query.page - 1, pageSize: PAGE_SIZE };
   const table = useReactTable({
     data: projects.data?.items ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+    meta: {
+      edit: (project) => { setEditing(project); setFormOpen(true); },
+      remove: setDeleting,
+      deleting: deleteProject.isPending,
+    } satisfies RowActions,
     manualSorting: true,
     manualPagination: true,
     pageCount: projects.data?.pagination.totalPages ?? 1,
