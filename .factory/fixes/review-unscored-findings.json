@@ -22,8 +22,8 @@
     "id": "238eb27a-2236-48d4-bca6-cfeded2b7405",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T02:41:50.257415+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "ecd267f7f3df3504fff0df35dfd55f7fc74dca7f",
+    "close": "a910bb6e-70ed-4dbf-8199-36f81f281eb8",
+    "head": "6fdfe57ed700a117b3208b4be131124629c45cb5",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Issue #979: Forge drops every Autoreview finding when one finding has no Gain/Work/Harm score line, so a chunked review with two unscored P1 findings fails twice and close stops with no findings shown",
   "worker": "codex"
