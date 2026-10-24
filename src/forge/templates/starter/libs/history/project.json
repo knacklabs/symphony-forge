@@ -1,0 +1,8 @@
+{
+  "name": "@app/history",
+  "projectType": "library",
+  "sourceRoot": "libs/history/src",
+  "tags": [
+    "type:module"
+  ]
+}

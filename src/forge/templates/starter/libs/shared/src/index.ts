@@ -77,3 +77,5 @@ export const changeRoleSchema = z.object({
 export type InviteInput = z.infer<typeof inviteSchema>;
 export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
 export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;
+
+export type HistoryEntry = { id: string; actorEmail: string; summary: string; createdAtUtc: string };

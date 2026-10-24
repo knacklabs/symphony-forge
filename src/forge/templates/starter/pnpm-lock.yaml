@@ -201,6 +201,9 @@ importers:
       '@app/core':
         specifier: workspace:*
         version: link:../../libs/core
+      '@app/history':
+        specifier: workspace:*
+        version: link:../../libs/history
       '@app/organisations':
         specifier: workspace:*
         version: link:../../libs/organisations
@@ -232,11 +235,23 @@ importers:
         specifier: workspace:*
         version: link:../shared
 
+  libs/history:
+    dependencies:
+      '@app/core':
+        specifier: workspace:*
+        version: link:../core
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
+
   libs/organisations:
     dependencies:
       '@app/core':
         specifier: workspace:*
         version: link:../core
+      '@app/history':
+        specifier: workspace:*
+        version: link:../history
       '@app/shared':
         specifier: workspace:*
         version: link:../shared

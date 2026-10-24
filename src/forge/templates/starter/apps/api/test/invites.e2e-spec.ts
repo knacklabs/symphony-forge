@@ -1,25 +1,7 @@
 import { createHash } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiBaseUrl, credentials, csrfToken, logEvents, productionApiBaseUrl, psql } from './helpers';
-
-type ApiClient = ReturnType<typeof request.agent>;
-
-async function invite(client: ApiClient, csrf: string, email: string): Promise<string> {
-  const previousLogCount = logEvents('api').length;
-  await client
-    .post('/api/v1/invites')
-    .set('x-csrf-token', csrf)
-    .send({ email })
-    .expect(201);
-
-  const event = logEvents('api').slice(previousLogCount).reverse()
-    .find(({ context }) => typeof context?.inviteUrl === 'string');
-  if (!event) throw new Error('The API did not log a test invite link.');
-  const token = new URL(String(event.context?.inviteUrl)).searchParams.get('token');
-  if (!token) throw new Error('The invite link has no token.');
-  return token;
-}
+import { apiBaseUrl, credentials, csrfToken, invite, logEvents, productionApiBaseUrl, psql } from './helpers';
 
 describe('organisation invites and roles', () => {
   it('an admin invites a person by email who joins the organisation', async () => {
