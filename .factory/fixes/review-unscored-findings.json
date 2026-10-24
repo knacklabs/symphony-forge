@@ -1,0 +1,49 @@
+{
+  "base": "a9e7461797209ac6e7feb9c468791d3dd8efcfe8",
+  "branch": "fix/review-unscored-findings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16bc9-6a73-7931-8515-7e2ee9c8cac9",
+    "head": null,
+    "start": "aca3f2c7a282f42717824326426fb309cc5e0031"
+  },
+  "done_when": "A review run keeps every readable finding; a finding with no score line is judged by its priority and close names each such finding; a finding with no code_location or an unknown priority still makes the run unreadable, and that message names the saved raw output's path",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f13ca16ca8bf3a8554c68dd3e1f575ecc33d77e59ab6459b4bb92ab06e1942d1",
+    "changed": "b3a4b427fd750a9e0697315b38237ebbe3f610bcdb9ddaee1280bbd3136090fb",
+    "commit": "78d187bc680e406a63bcd578f4b04c8f61b53638",
+    "dismissals": [],
+    "findings": [],
+    "id": "b6e1303d-fbd5-4876-8c9d-90315234d4ee",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T02:41:50.257415+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T02:46:56.846116+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T03:00:49.442506+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a910bb6e-70ed-4dbf-8199-36f81f281eb8",
+    "head": "6fdfe57ed700a117b3208b4be131124629c45cb5",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Issue #979: Forge drops every Autoreview finding when one finding has no Gain/Work/Harm score line, so a chunked review with two unscored P1 findings fails twice and close stops with no findings shown",
+  "worker": "codex"
+}

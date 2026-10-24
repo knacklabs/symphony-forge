@@ -3,19 +3,73 @@ import json
 import re
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 
 import pytest
 
 from conftest import FORGE_SHIM, _install
 from test_close import env
-from test_story import DOC, claude_plan, hook, new_story, setup
+from test_story import DOC, approved_constitution, claude_plan, hook, new_story, setup
+from test_signoff_handoff import _install_reader
 from test_setup import _fresh_client
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 
 STORY = "FORGE-PACE-1"
 ROOT = Path(__file__).resolve().parents[1]
 SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"><text x="20" y="40">Basket</text></svg>\n'
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
+def test_25_small_screen_changes_need_a_reason_instead_of_a_canvas(repo, gh, tmp_path, claude_payload, adopted):
+    # Test audit: read/approval/task admission owns this new small-UI contract.
+    # Missing reasons must refuse before a reader runs; canvas tests require images.
+    # Keep real init/adopted client settings: a forge-source fixture bypasses client admission.
+    # Only the third-party reader is fake. No production seam is needed.
+    if adopted:
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
+    else:
+        client, made = _fresh_client(repo, gh, tmp_path)
+        assert made.returncode == 0, made.stdout + made.stderr
+        repo.path = client
+    repo.git("switch", "-qc", "fix/small-screen-setup")
+    repo.write(".factory/fixes/small-screen-setup.json", json.dumps({
+        "kind": "fix", "branch": "fix/small-screen-setup", "why": "Prepare a signed client",
+        "done_when": "The client can plan production stories"}))
+    settings = (repo.path / "forge.toml").read_text("utf-8")
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", re.sub(r'(?m)^version = .*$', f'version = "{version}"', settings))
+    repo.write("docs/decisions/0001-client-signoff.md", "---\nstatus: accepted\n---\n\n# Client sign-off\n")
+    approved_constitution(repo)
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Prepare the client for a small screen change")
+    _publish_default(repo, repo.git("remote", "get-url", "origin"))
+    repo.git("switch", "-q", "main")
+    repo.git("merge", "-q", "--ff-only", "fix/small-screen-setup")
+    _install_reader(repo)
+    assert tomllib.loads((repo.path / "forge.toml").read_text("utf-8"))["repo"] == "client"
+    folder = new_story(repo, "SHOP")
+    doc = folder / "plans/SHOP.md"
+    small = re.sub(r"Design: .*", "Design: none", DOC).replace("| none | no |", "| none | yes |")
+    doc.write_text(small, encoding="utf-8")
+    refused = repo.forge("read", "SHOP")
+    assert refused.returncode == 1, refused.stdout + refused.stderr
+    assert "reason" in refused.stderr and "Next:" in refused.stderr
+    small = small.replace("Design: none", "Design: none (only a label changes)")
+    doc.write_text(small, encoding="utf-8")
+    read = repo.forge("read", "SHOP")
+    assert read.returncode == 0, read.stdout + read.stderr
+    prompt = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
+    assert "P1" in prompt and "adds a screen or changes a flow" in prompt
+    assert "Design: none" in prompt
+    approved = hook(repo, claude_plan(claude_payload, small))
+    assert approved.returncode == 0, approved.stdout + approved.stderr
+    started = repo.forge("task", "start", "SHOP/SAVE")
+    assert started.returncode == 0, started.stdout + started.stderr
+    task_folder = Path(re.search(r" in (.+)\n", started.stdout)[1])
+    assert tomllib.loads((task_folder / "forge.toml").read_text("utf-8"))["repo"] == "client"
 
 
 def test_24_pre_upgrade_user_facing_approval_still_starts(repo, tmp_path, claude_payload, env):

@@ -85,19 +85,26 @@ def test_5_reactions_are_kept_after_each_demo(skill):
 
 
 def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
-    # Old contract: the agent drafted a sign-off email and the review ran only at accept, after
-    # the reply. New contract (owner, 2026-09-29): read-back call, then accept before any reply
-    # (the strict review alone), then the salesperson asks in their own way, then record and accept.
+    # Canvas-first replaces the old strict-review-only instruction with a completeness check
+    # and a whole-product review only for a working build. Both still precede the customer's reply.
+    # Test audit: protect the shipped pre-reply sequence, which could otherwise ask for approval
+    # too soon. Existing runtime sign-off tests do not check the guide delivered by init/sync.
+    # Keep this owner-boundary guide check and real accept command; add no seam or duplicate test.
     section = _prototype(skill)
     steps = (
         "Before anyone asks for sign-off, hold one read-back call",
         "goes through every answer on the answers page: our defaults, the agent's guesses and "
         "the topics marked later",
         "Settle every open must-answer topic in that call",
-        "Then run the strict sign-off review before anyone asks for sign-off:",
+        "Then write",
         "`forge decision new client-signoff`",
         'run `forge decision accept client-signoff --by "<name>"` before any reply is recorded',
-        "it runs the strict review alone and stops",
+        "Sign-off checks the design records above",
+        "It runs one completeness check",
+        "A canvas-only sign-off needs no working build.",
+        "A working build also gets one strict whole-product review.",
+        "Forge reuses both passed results while what they checked stays unchanged.",
+        "the command runs these checks and stops without accepting sign-off.",
         "Once it passes, tell the salesperson to ask the customer's named person for sign-off "
         "their own way.",
         "When they bring the reply back, record it in `approved_via` and `approved_on`",

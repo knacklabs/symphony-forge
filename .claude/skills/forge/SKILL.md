@@ -730,10 +730,15 @@ choice and one line of why into the story's Why, or the spec's Behaviour when us
 
 ## Prototype
 
+New clients get these steps at init; existing clients get the same guide after upgrade and sync.
+
 In a new client repo, follow the FDE route: start with discovery of the customer's job,
-workaround, cost, people, frequency and evidence; build the smallest working prototype that tests
-the riskiest part of that problem; demo it; review the whole prototype and answers; obtain the
-customer's named sign-off;
+workaround, cost, people, frequency and evidence. Start with a canvas, as described below.
+The customer can sign off on the canvas alone. Build a working prototype only when the FDE
+requests one to prove something the canvas cannot, such as real data or speed. Record that
+request with `forge decision new prototype-build`; the owner accepts it with
+`forge decision accept prototype-build --by "<name>"`. Then build the smallest working demo that proves
+the request, demo it, review the whole prototype and answers, and obtain the customer's named sign-off;
 then write the app's constitution; then create stories. Use prototype fixes before sign-off. The
 salesperson can be the FDE at first;
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
@@ -741,7 +746,7 @@ call script. Build the prototype on the starter app. Rename or remove the `Proje
 Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
-Always build the demo-data loader in the first version, so the customer sees their own kind of
+For a requested working prototype, build the demo-data loader in the first version, so the customer sees their own kind of
 work instead of empty screens (see demo-data.md). Use the customer's words
 from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell the salesperson
 they can point at the screen: click an element in the demo build, write what's wrong and paste the
@@ -805,15 +810,51 @@ default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
 client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
 
+**Canvas and app design.** Make each app's own design from `docs/product/BRIEF.md`:
+`## Summary`, `## Users` and `## Things it keeps track of`, including every field and choice-list
+option. Use impeccable and emil-design-eng. Run impeccable's init when PRODUCT.md is missing.
+Write the app's theme tokens, type and colours in root DESIGN.md. The starter has no look of its own.
+Make the screens in a Claude Design artifact with a shadcn design system and named shadcn components.
+On a Codex-only host without an artifact tool, make HTML artboards in the repo.
+Save the artboards and images in `docs/design/prototype/` in a mechanical fix.
+Copy `.forge/design/support.js` beside the HTML and run it for a 1440 by 900 PNG per screen.
+Write SCREENS.md there: one `## <screen>` per image with `Image: <file>`, `Components: <shadcn names>`
+and `Fields:`. List each field as `- <field>: <type>, required|optional`, with
+`, options: <a> | <b>` for choice lists. Use `Fields: none` for a screen without fields.
+Run impeccable's critique and polish and the emil-design-eng checklist before sign-off.
+Record notes and `Result: passed` under `## Critique`, `## Polish` and `## Emil checklist` in CHECKS.md.
+Commit the folder, then run `forge decision new prototype-design` and record the owner's or FDE's
+approval with `forge decision accept prototype-design --by "<name>"`.
+
+For each story that adds a screen or changes a flow, use this design process before its cold read.
+Save the folder under `docs/design/<KEY>/`. End `## What changes for you` with
+`Design: docs/design/<KEY>/ (<tree id>)`, using `git rev-parse HEAD:docs/design/<KEY>`.
+One plan approval covers that exact folder. A changed folder needs a new tree id and approval.
+For small changes to existing screens that add no screen and change no flow, use
+`Design: none (<why>)` instead. Backend-only stories need no canvas. Earlier approved stories keep working.
+The build applies the app's DESIGN.md theme, type and colours to the starter and maps each screen's
+components and fields from SCREENS.md. Workers and reviewers receive that design context.
+
 **Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
 goes through every answer on the answers page: our defaults, the agent's guesses and the topics
 marked later. Settle every open must-answer topic in that call: `forge next` lists those still
 missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
 our default or the agent, so record each as the client, salesperson or developer answered it. Then
-run the strict sign-off review before anyone asks for sign-off: write `forge decision new
-client-signoff` (customer, demo address, and the answers page copied word for word, leaving
+write `forge decision new
+client-signoff` (customer, demo address for a working build, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded; it runs the strict review alone and stops. Autoreview uses the
+before any reply is recorded. Put `docs/design/prototype/ (<tree id>)` under `## Signed design`,
+demo outcomes and their tests under `## Proof` for a working build, and settled choices under `## Decisions`.
+Sign-off checks the design records above and the brief's nonempty `## Things it keeps track of`.
+It runs one completeness check against the brief's Summary, Users, Things it keeps track of and Key flows,
+with SCREENS.md and the images. Missing screens, fields, options or flows hold sign-off.
+The check uses Claude's `claude-opus-5-5` at high effort, independent of `[models.design]`.
+Without Claude it uses Codex's `gpt-6.1-sol` at high and says it fell back.
+Fix gaps, approve the changed canvas again, then retry sign-off.
+A canvas-only sign-off needs no working build. A working build also gets one strict whole-product review.
+Forge reuses both passed results while what they checked stays unchanged.
+Before the customer's reply, the command runs these checks and stops without accepting sign-off.
+Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
 customer's named person for sign-off their own way. Draft no sign-off email; Forge sends nothing. When they bring the reply back, record
 it in `approved_via` and `approved_on`, then run `forge decision accept client-signoff --by
@@ -828,8 +869,15 @@ Claude when `tools = "claude"`, Codex when `tools = "codex"`. With `tools = "bot
 it uses Codex when installed and Claude otherwise. Forge passes the selected tool's
 `[models.review]` model and optional effort to Autoreview; without an entry, it uses
 Autoreview's defaults. New and earlier-adopted repos get this behaviour on the current release.
-A prototype fix
-before sign-off gets a light review that blocks only on P0 findings.
+A requested working prototype proves the demo steps and its security and data boundaries.
+Its light review checks demo breakage, security and data loss, using `[models.light_review]`.
+A requested working prototype gets a light review that blocks only on P0 findings.
+A `Not done` against the item's own approved Done-when still blocks at any priority.
+Full proof is due at sign-off.
+
+After sign-off, every new story copies Signed design, Proof and Decisions into
+`## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work
+or production risks. Start from the signed canvas or a newer design approved with the plan.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as

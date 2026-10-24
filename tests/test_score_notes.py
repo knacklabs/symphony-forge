@@ -1,4 +1,4 @@
-"""Every review finding and cold-read note carries Gain, Work and Harm, with the Harm floor.
+"""Scored review findings and cold-read notes retain scores and the Harm floor.
 
 Runs the real close, read and sign-off commands on a repo made by forge init and on the
 earlier-release adopted fixture moved to this release. Only Autoreview, the cold reader and
@@ -61,13 +61,15 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         _decision(fix, answers)
         clean_check = {"say": SOL_HIGH, "report": {
             "review_status": "scoped-clean", "findings": []}}
-        # A score that is not one whole number from 1 to 5 makes the finding unreadable.
+        # A line outside the score range is unscored. The finding now holds by priority,
+        # rather than making the report unreadable.
         invalid_score = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
             _scored("P1", "Prototype fails", "Gain 3, Work 2, Harm 1.5\nDemo cannot finish")]}}
         queue.write_text(json.dumps([clean_check, invalid_score]))
-        unreadable = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-        assert unreadable.returncode == 1
-        assert "it wrote findings Forge cannot read" in unreadable.stderr
+        unscored = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        assert unscored.returncode == 1
+        assert "found a blocking issue: Prototype fails" in unscored.stderr
+        assert "it wrote findings Forge cannot read" not in unscored.stderr
         valid_score = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
             _scored("P1", "Prototype fails", "Gain 5, Work 2, Harm 1\nDemo cannot finish")]}}
         queue.write_text(json.dumps([valid_score]))
@@ -82,9 +84,9 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
         return
     _client_repo(env, tmp_path, case != "init")
 
-    # A review whose finding has no score line is not read; close's second attempt is.
-    env.reviews(blocked(_scored("P1", "Saving drops the basket", "Evidence: app.py:1")),
-                blocked(_scored("P1", "Saving drops the basket",
+    # Unscored retention has its owner in test_reviews_keep_unscored_findings.
+    # This case retains its independent contract: score display and Harm floors.
+    env.reviews(blocked(_scored("P1", "Saving drops the basket",
                                 "Gain 3, Work 2, Harm 1\nRaise: Functional\nEvidence: app.py:1"),
                         _scored("P1", "Basket ids are guessable",
                                 "Gain 3, Work 1, Harm 2\nRaise: Security\nAnyone can read a basket."),
@@ -95,8 +97,8 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
     item, _ = env.start_fix()
     closed = env.close(item)
     out = closed.stdout + closed.stderr
-    assert "it wrote findings Forge cannot read" in out
-    assert len(env.review_calls()) == 2
+    assert "it wrote findings Forge cannot read" not in out
+    assert len(env.review_calls()) == 1
     assert "Gain 3, Work 2, Harm 1\n" in closed.stdout
     assert "Gain 3, Work 1, Harm 4 (floor: security)" in closed.stdout
     assert "Gain 4, Work 3, Harm 4 (floor: migration)" in closed.stdout
