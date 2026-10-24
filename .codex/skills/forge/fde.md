@@ -145,8 +145,8 @@ Ask what happened before asking what the customer wants built.
 ## Constitution defaults
 
 - How do people sign in?: Email and password, with social sign-in through a hosted provider.
-- Can people see each other's information, or only their own?: Each person sees only their organisation's information; roles are admin and member.
-- Who can add people and change what they can do?: Admins invite people by email.
+- Can people see each other's information, or only their own?: Each person sees only their organisation's information; roles are admin and member. Built in when the app has libs/organisations.
+- Who can add people and change what they can do?: Admins invite people by email. Built in when the app has libs/organisations.
 - How many people will use it, and how many at the same time?: Up to 100 users, with 10 at once, on managed hosting with managed Postgres.
 - How much information will it hold in a year (rows, files)?: Postgres, server-side pages, and object storage for files.
 - Does anything you enter today live in a spreadsheet or old system? Should we bring it in?: No import; add CSV import later if needed.
@@ -154,10 +154,10 @@ Ask what happened before asking what the customer wants built.
 - What devices: phones, tablets, desktop? Which matters most?: Desktop first, fully responsive down to phone.
 - Do people need to pay in the app (one time, subscription, invoices)?: No payments; choose a provider in a later story if payments are needed.
 - Should the app send messages (email, text, push, in-app)? About what?: Transactional email and in-app notices; no text or push messages.
-- Which languages and currencies, date formats, time zones?: English and a message catalogue. Dates use YYYY-MM-DD and times use 24-hour format in the user's time zone. Currency uses USD with the currency code (USD 1,234.56). Numbers use comma thousands separators and a decimal point (1,234.56).
+- Which languages and currencies, date formats, time zones?: English and a message catalogue. Dates use YYYY-MM-DD and times use 24-hour format in the user's time zone. Currency uses USD with the currency code (USD 1,234.56). Numbers use comma thousands separators and a decimal point (1,234.56). The date, time, number and money formats are built in when the app has libs/organisations.
 - Does it need to connect to other tools (calendar, accounting, CRM, maps, email)?: None by default; add integrations as later stories.
-- What happens if someone deletes something by mistake? Do you need history of who changed what?: Soft delete with a confirm step; keep change history for admin actions.
-- Do you need reports, charts or exports (PDF, Excel)?: CSV export from each table and a summary dashboard.
+- What happens if someone deletes something by mistake? Do you need history of who changed what?: Soft delete with a confirm step; keep change history for admin actions. Built in when the app has libs/organisations.
+- Do you need reports, charts or exports (PDF, Excel)?: CSV export from each table and a summary dashboard. The CSV export is built in when the app has libs/organisations.
 - Should the public see any part of it (a landing page, a public form)?: Keep everything behind sign-in; add a simple public page later if needed.
 - Do you have a logo, colours or a style you must match?: shadcn neutral theme, light and dark.
 - Do you need to upload files or images? How large?: No uploads; if a story needs them, set a 10 MB limit and use S3-compatible storage.

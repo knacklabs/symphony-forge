@@ -69,6 +69,8 @@ Use React Router's data router (`createBrowserRouter` and `RouterProvider`). Giv
 own `errorElement`, so a crash on one screen shows that route's error page and the other screens
 keep working. The error page says what happened and how to try again or open another screen.
 Keep each screen's data-loading error state too.
+In an app that has `libs/organisations`, the route error page reports the crash once. Let the
+crash reach that page instead of reporting it again in the component.
 
 ## Screens
 
@@ -79,6 +81,10 @@ Keep each screen's data-loading error state too.
   field errors next to their fields.
 - Style with Tailwind and the theme's tokens (`bg-primary`, not a raw colour), so the look changes
   in one place.
+
+In an app that has `libs/organisations`, format dates, times, numbers and money only with the
+helpers in `@app/shared`. Show dates and times in the person's time zone, from their browser.
+Each table has an `Export CSV` link to its `GET /<list>/export` route; use the shared export path.
 
 ## Pointing at the screen in a demo
 

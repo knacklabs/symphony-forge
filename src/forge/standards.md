@@ -113,10 +113,11 @@ Structure earns its place by solving a problem the code has today. These rules s
 
 A new client app starts on the smallest stack that runs its first story: a pnpm workspace with
 NestJS, Prisma and Postgres behind a React app built with Vite and React Router. Nx builds
-`apps/web` and `apps/api`; `libs/auth`, `libs/projects`, `libs/core` and `libs/shared` hold the
-modules and shared code. Forge's `tests` check runs the test command. An existing app keeps its
-package manager, lockfile, Dockerfile, test command and folder layout. Anything else arrives only
-when a story's `New moving parts` line names it, and that includes Redis and job queues, Terraform,
+`apps/web` and `apps/api`; `libs/auth`, `libs/projects`, `libs/organisations`, `libs/history`,
+`libs/core` and `libs/shared` hold the modules and shared code. Forge's `tests` check runs the test
+command. An existing app keeps its package manager, lockfile, Dockerfile, test command and folder
+layout. Anything else arrives only when a story's `New moving parts` line names it, and that
+includes Redis and job queues, Terraform,
 OIDC sign-in and a monitoring stack.
 
 Forge's package ships a short how-to per concern for this stack in `forge/templates/conventions/`:

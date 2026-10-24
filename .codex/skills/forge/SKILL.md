@@ -906,6 +906,7 @@ At the start, write docs/product/CONSTITUTION.md with every default from Constit
 filled in, and raise a default with the FDE only when the notes contradict it.
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
 constitution's ## Fixed rules section, and ask nothing about them.
+In an app that has libs/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
 In an app made from the Python starter, whose tests run import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing about them:
 
 - One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
@@ -938,6 +939,11 @@ The product facts are in docs/product/BRIEF.md.
 - Each module owns its tables, in its own schema file.
 - A module uses another module only through its public service, never through its tables.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
+- Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
+- Built in: admins invite people by email; members cannot invite people or change roles.
+- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored in cents; the helpers in @app/shared format them.
+- Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
+- Built in: each UI or API crash writes one error report to the logs.
 
 ## Architecture choices
 - <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)

@@ -13,6 +13,8 @@ apps/api/src/
 libs/
   auth/src/              sign-in module
   projects/src/          example records module
+  organisations/src/     organisations, roles and invites module
+  history/src/           admin change history module
   core/src/              config, common code and Prisma service
   shared/src/            zod schemas for request input, and shared types
 ```
@@ -23,10 +25,11 @@ Request input is checked by zod schemas from `@app/shared`, as api.md says; the 
 ValidationPipe.
 
 - Each library's public entry is `src/index.ts`, imported by its package name: `@app/auth`,
-  `@app/projects`, `@app/core` or `@app/shared`. The package's `exports` has only `.`. A module
-  entry exports its Nest module, service and public types or decorators that other modules use.
-- Nx tags are `type:module` for auth and projects, `type:core` for core, and `type:shared` for
-  shared. The app projects use `type:api` and `type:web`.
+  `@app/projects`, `@app/organisations`, `@app/history`, `@app/core` or `@app/shared`. The package's
+  `exports` has only `.`. A module entry exports its Nest module, service and public types or
+  decorators that other modules use.
+- Nx tags are `type:module` for auth, projects, organisations and history, `type:core` for core,
+  and `type:shared` for shared. The app projects use `type:api` and `type:web`.
 - `@nx/enforce-module-boundaries` in `eslint.config.mjs` enforces these tags. A module can import
   another module only through its public package entry; the web app cannot import a backend module.
 - `apps/api/prisma/schema/base.prisma` holds the generator and datasource. The auth module owns
@@ -39,6 +42,10 @@ ValidationPipe.
   and list queries `xListQuerySchema`, in `@app/shared`; name response DTOs `XResponseDto`.
 - Name event files `*.event.ts` and `*.handler.ts`.
 - Inject dependencies through constructors; never `new` a service yourself, so tests can swap it.
+
+In an app that has `libs/organisations`, that module owns organisations, roles and invites;
+`libs/history` owns change history. Record admin actions with its public `HistoryService.record`.
+Export a table only with `sendCsv` from `@app/core`; it writes formula-like cells as plain text.
 
 ## Call a service or send an event
 
@@ -92,7 +99,10 @@ this.logger.log('Invoice paid', 'InvoiceService', { invoiceId });
 
 - One global `AllExceptionsFilter` in `common/` catches everything. It logs the error with a new
   `errorId` and the correlation id, then returns the envelope from api.md. For a 500 it returns a
-  fixed message; the stack trace goes to the log only. It logs 4xx at debug and 5xx at error.
+  fixed message. It logs 4xx at debug and 5xx at error.
+- In an app that has `libs/organisations`, the filter writes one error report per crash, with
+  only the error kind, page path and reference number. Keep error text, stack traces, query
+  strings and form data out of the report; let crashes reach the filter without reporting twice.
 - Throw Nest's HTTP exceptions (`NotFoundException`, `ConflictException`) with a body of
   `{ code, message, details }`, so the filter can pass the code through.
 - A provider catches its vendor's errors and throws our own, with our code (`PAYMENT_DECLINED`),

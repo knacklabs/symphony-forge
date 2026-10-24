@@ -42,7 +42,21 @@ internal files or query the other module's tables. `libs/core` holds shared Nest
 
 Zod schemas in `libs/shared` check every request body and query, and the API documentation comes from the same schemas.
 
-`apps/api` wires the modules and serves the app. Passwords use scrypt. Postgres holds server sessions, reset tokens, accounts, and projects. Every project query checks the account. Delete keeps the audit record.
+`libs/organisations` owns organisations, admin and member roles, and email invites. Each account
+belongs to one organisation, and every query checks that organisation. Admins invite people and
+change roles; members cannot. `libs/history` records these admin actions for the change history.
+In local and test runs, invite links go to the log. Production refuses invites until the app
+has a real mail provider.
+
+The helpers in `@app/shared` format dates, times, numbers and money. Dates and times are stored in
+UTC and shown in the person's browser time zone; money is stored in cents. Each table has an
+Export CSV button, and `sendCsv` from `@app/core` writes formula-like cells as plain text.
+Deletes keep records with `deletedAtUtc`; the database's `soft_delete_only()` trigger refuses
+a hard delete. Each UI or API crash writes one error report to the logs, with only its kind,
+page path and reference number.
+
+`apps/api` wires the modules and serves the app. Passwords use scrypt. Postgres holds server
+sessions, reset tokens, accounts, organisations, invites, projects and change history.
 
 Forgot password always gives the same reply. Only `APP_ENV=development` or `APP_ENV=test` writes a reset link to the log. Other environments send no email and log no link or token. Add a real mail provider in the story that needs it.
 
