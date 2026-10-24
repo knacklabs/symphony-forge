@@ -34,11 +34,13 @@ def test_1_doctor_lists_each_started_empty_fix_older_than_seven_days(client, mon
 
     if not adopted:
         # A newer default branch merged into an empty fix does not count as its work.
-        repo.git("switch", "-qc", "fix/update-default")
-        repo.write("news.txt", "News from another change\n")
-        repo.git("add", "news.txt")
-        repo.git("commit", "-qm", "Publish the news")
-        repo.git("switch", "-q", "main")
+        started = repo.forge("fix", "start", "Publish the news", "--done",
+                             "Readers see the news", "--slug", "update-default")
+        assert started.returncode == 0, started.stdout + started.stderr
+        folder = worktree(repo, "fix/update-default")
+        (folder / "news.txt").write_text("News from another change\n", encoding="utf-8")
+        repo.git("add", "news.txt", cwd=folder)
+        repo.git("commit", "-qm", "Publish the news", cwd=folder)
         repo.git("merge", "-q", "--ff-only", "fix/update-default")
         repo.git("push", "-q", "origin", "main")
         repo.git("merge", "-q", "--no-edit", "main", cwd=worktree(repo, "fix/old-start"))
