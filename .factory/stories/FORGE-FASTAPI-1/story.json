@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-24T09:30:32.470833+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01Md1s57PqZAbiXN1FHTCzJx",
+    "hash": "ca857e6d40f2da4c83513535eb7145561a7f9418b152e1b82b699292d8ce10e2",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-FASTAPI-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-24T08:58:52.342935+00:00",
@@ -13,8 +23,12 @@
     {
       "at": "2026-10-24T09:27:51.905942+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-24T09:30:32.471103+00:00",
+      "step": "approved"
     }
   ],
   "title": "FastAPI starter for Python backends",
-  "touches": 0
+  "touches": 1
 }
