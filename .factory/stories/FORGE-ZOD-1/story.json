@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-ZOD-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-24T09:01:19.240639+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "One zod schema checks every client app input",
+  "touches": 0
+}
