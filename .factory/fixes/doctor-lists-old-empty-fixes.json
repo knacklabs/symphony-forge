@@ -11,12 +11,27 @@
   "done_when": "forge doctor lists each started fix with no commits of its own that is older than seven days and gives the forge fix drop command for it",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "396c6c9a2433687c76e7f1b2fb419a361c498a6d2ff68ca497ed8b97802547ae",
+    "changed": "441c6d1aaff5f4880967d9e50b8d63d99ff6e1c3d074c8b96ce2d31f50f15e7b",
+    "commit": "afa4f6fb66d879c6094bdc38504b803f7b28d099",
+    "dismissals": [],
+    "findings": [],
+    "id": "4369787e-a7a6-4cbe-8cae-f22e433fd83f",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T17:34:23.899186+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T18:37:48.869761+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
