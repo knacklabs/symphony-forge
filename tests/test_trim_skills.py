@@ -23,10 +23,10 @@ SOURCES = {
 }
 # SHA-256 of the four package copies before the trim, with LF endings as sync writes.
 # The test-audit pin includes commit-first related tests run through the shared test lane.
-# The FDE pin includes the approved app constitution defaults.
+# The FDE pin includes the app constitution's date, time zone, currency and number defaults.
 # Current-source equality alone would miss a shared change across all three installs.
 PRE_TRIM_SHA256 = {
-    ".codex/skills/forge/fde.md": "de6eee460042ab4e6a3890ee901da4333afe37509df372da2ff74412e86782b4",
+    ".codex/skills/forge/fde.md": "a168b523230865700a16696b090b243a2fcef18b13f47f6109ee983e9f646ced",
     ".codex/skills/test-audit/SKILL.md": "7a9817915071f48d4348f30d9d54b80adc0a52835105e8a855948a2a2c76d83c",
     ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
     ".claude/skills/remote-approval/SKILL.md": "f3d334b989b73b65f6255d874592c052db96089df476dd1f0c9efa1d95ce8e01",

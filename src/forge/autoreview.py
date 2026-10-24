@@ -78,8 +78,6 @@ def _finding(raw: Any) -> dict[str, Any] | None:
             name == category and pattern.search(body) for pattern, name in score.FLOORS[:2]):
         body += f"\nRaise: {category.capitalize()}"
     scores, body = score.normalise(title, body)
-    if not scores:  # a new finding must carry its score line
-        return None
     return {"priority": raw["priority"], "title": title, "body": body,
-            "gain": scores[0], "work": scores[1], "harm": scores[2],
+            **(dict(zip(("gain", "work", "harm"), scores)) if scores else {}),
             "file": str(where.get("file_path", "")), "line": where.get("line", 0)}

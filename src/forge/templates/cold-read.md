@@ -22,6 +22,13 @@ page. Do not call a deferred topic open when no Done-when item needs it.
 
 A story with no linked confirmed spec is not a finding.
 
+Treat `## Proven by the prototype` as settled evidence from the accepted sign-off. Read only
+the rest for new work and production risks. Do not ask the plan to prove those outcomes again.
+Its parts list only new work or production risks.
+
+Report as P1 a `Design: none (<why>)` story if a part adds a screen or changes a flow.
+That choice covers only small changes to existing screens.
+
 A note blocks only when it names a case that happens in normal use. Include
 `Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each note that would
 block. A rare case never blocks. A security hole or data loss that any user can reach is normal
@@ -77,6 +84,9 @@ realistic scenario that makes it likely in normal use, or when it falls under Se
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
 Prefer one blunt fail-closed rule with one test over listing every case.
+
+In a client app, report a plan whose part has one module query a table another module owns as a
+note titled `Module tables: <the part>`.
 
 Check:
 
@@ -178,6 +188,9 @@ change any file. This read is discarded if any file in the repository changes. O
 whole doc again yourself. Its diff since your last round:
 
 $diff
+
+Keep `## Proven by the prototype` settled. Read only the rest for new work and production risks.
+The P1 rule for `Design: none (<why>)` still applies when a part adds a screen or changes a flow.
 
 All earlier rounds' settled notes, each with its scores and its disposition:
 
