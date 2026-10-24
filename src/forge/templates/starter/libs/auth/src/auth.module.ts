@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { LogMailProvider, MAIL_PROVIDER, type MailProvider } from './mail.provider';
 
 @Module({
+  exports: [AuthService],
   controllers: [AuthController],
   providers: [
     AuthService,
