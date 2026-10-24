@@ -15,6 +15,10 @@
       "work": 3
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
@@ -37,7 +41,7 @@
     "id": "2a380dbc-c0a9-4fca-89df-17bf2daf9f9d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -50,10 +54,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "02a1e0ac2108e94703a5e678d9e54488cad63b50",
-    "keys": {},
-    "round": null
+    "close": "4aac364c-4cad-4205-8c7c-44517f74f119",
+    "head": "551a39f8c4af07aec6a44ab9f1c64a9f8e3fe229",
+    "keys": {
+      "the open P0 preserve python starter compatibility in the shared web app in src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx": 1
+    },
+    "round": 1
   },
   "worker": "claude"
 }
