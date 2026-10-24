@@ -1054,12 +1054,15 @@ An open upgrade or local work still refuses and stays in place. Ignored configur
 also stay in place; only recognized cache directories may be discarded.
 
 1. Ask which release to move to, recommending the newest.
-2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
+2. Wait until no Forge runs are in progress anywhere on the machine. Let workers, plan reads,
+   tests and close finish first. An install during a close can mix two releases.
+   `forge upgrade` names the items in the machine's lanes and asks you to wait if any remain.
+3. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
    Its commit includes the upgrade's proof list; close reports tests and review results together.
    It changes only the version in `forge.toml`.
-3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
-4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
+4. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
+5. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 
 Close runs the time-story backfill as part of the upgrade, with nothing extra to type. It
 rebuilds open items and items merged in the last six weeks from git and GitHub, marks them
