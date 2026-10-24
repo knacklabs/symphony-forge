@@ -126,19 +126,23 @@ def test_5_review_flags_new_request_input_that_zod_does_not_check(env, tmp_path,
 
 
 def test_6_an_existing_app_keeps_its_current_validation(env, tmp_path):
+    # Supply exact bytes: text writes translate LF to CRLF on Windows before adoption.
+    # This keeps the existing byte-preservation contract independent of host newlines.
     originals = {
         "package.json": json.dumps({"dependencies": {
-            "class-validator": "0.14.2", "class-transformer": "0.5.1", "zod": "4.1.12"}}),
-        "apps/api/src/main.ts": "app.useGlobalPipes(new ValidationPipe());\n",
+            "class-validator": "0.14.2", "class-transformer": "0.5.1", "zod": "4.1.12"}}).encode("utf-8"),
+        "apps/api/src/main.ts": b"app.useGlobalPipes(new ValidationPipe());\n",
         "libs/projects/src/projects.dto.ts":
-            "import { IsInt } from 'class-validator';\n"
-            "export class ProjectListQueryDto { @IsInt() page = 1; }\n",
+            b"import { IsInt } from 'class-validator';\n"
+            b"export class ProjectListQueryDto { @IsInt() page = 1; }\n",
     }
     for path, content in originals.items():
-        env.repo.write(path, content)
+        target = env.repo.path / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
     setup_client(env, tmp_path, True)
     for path, content in originals.items():
-        assert (env.repo.path / path).read_bytes() == content.encode("utf-8")
+        assert (env.repo.path / path).read_bytes() == content
     env.checks(GREEN)
     item, where = _fix(env, "keep-validation", {"app.py": "print('updated')\n"})
     pages = _conventions(_worker_brief(env, item))
@@ -150,5 +154,5 @@ def test_6_an_existing_app_keeps_its_current_validation(env, tmp_path):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert REVIEW_RULE in " ".join(env.prompt().split())
     for path, content in originals.items():
-        assert (env.repo.path / path).read_bytes() == content.encode("utf-8")
-        assert (where / path).read_bytes() == content.encode("utf-8")
+        assert (env.repo.path / path).read_bytes() == content
+        assert (where / path).read_bytes() == content
