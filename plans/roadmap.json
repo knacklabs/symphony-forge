@@ -354,6 +354,12 @@
       "title": "New client apps start from the client notes and a fixed modular stack",
       "status": "pending",
       "order": 92
+    },
+    {
+      "key": "FORGE-ZOD-1",
+      "title": "One zod schema checks every client app input",
+      "status": "pending",
+      "order": 93
     }
   ],
   "epics": [
