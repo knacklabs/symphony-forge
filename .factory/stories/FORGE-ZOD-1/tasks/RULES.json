@@ -39,17 +39,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "85e2fa7e8c68dd10b9f108eb93b3a5f5e356f59c503a6e36ff183b8b3ef99437",
-    "changed": "4aa644c568c217b158269ee8c841bad317ac9e6f54aac1d17b8fb044fade76db",
-    "commit": "efe8535dfb405db639b850a569265760dda2e177",
+    "branch_diff": "c81b82e7b7ee84212075990d520f6df984fc65230be96e2e27f0eda52977269f",
+    "changed": "8d951ce0394b8da24e3e3fc50cb369e3408791b0d55733a1745ad1a005e0fcd1",
+    "commit": "60c31d3006d73ceb68639514dd2eebaaad4b9932",
     "dismissals": [],
     "findings": [],
-    "id": "849f1aab-319c-4746-b3ca-2dc0d6e232ca",
+    "id": "2498843c-8d88-4110-99e1-e699c46e6b34",
     "status": "clean"
   },
   "round": 4,
   "stacked_on": "FORGE-REACTDEFAULTS-1/RULES",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T09:21:38.688732+00:00",
@@ -65,6 +65,10 @@
     },
     {
       "at": "2026-10-24T09:52:28.951003+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T10:38:27.589861+00:00",
       "step": "review"
     }
   ],
