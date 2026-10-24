@@ -4,12 +4,20 @@
   "done_when": "The TypeScript starter's live run (starter-smoke) passes on main with all browser flows",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T16:56:42.045399+00:00",
       "step": "start"
     }
   ],
-  "why": "On main the TypeScript starter's live run fails three browser flows in apps/web/e2e/starter-shell.spec.ts (unknown address shows the 404 page; switching accounts does not show the previous account projects; axe finds no serious problem on the shell): the Projects heading never appears. Each built-in defaults part (organisations, error report, soft delete, invites) passed alone, so their combination on main broke the starter shell"
+  "stuck": {
+    "close": null,
+    "head": "63983988d35c6482f532e217d3c9788a661eed65",
+    "keys": {},
+    "round": null
+  },
+  "why": "On main the TypeScript starter's live run fails three browser flows in apps/web/e2e/starter-shell.spec.ts (unknown address shows the 404 page; switching accounts does not show the previous account projects; axe finds no serious problem on the shell): the Projects heading never appears. Each built-in defaults part (organisations, error report, soft delete, invites) passed alone, so their combination on main broke the starter shell",
+  "worker": "claude"
 }
