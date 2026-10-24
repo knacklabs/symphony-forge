@@ -1,6 +1,13 @@
 {
   "base": "d09873d744a6abb4225c1b58a7f3045e4f25f081",
   "branch": "fix/design-none-accepted",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16cd9-fdc1-7191-9a1e-d964bf95ca47",
+    "head": null,
+    "start": "2113b0e32d4685abefff40f96b6bdaa4c1629f85"
+  },
   "done_when": "forge read accepts a user-facing story whose What changes for you ends with one Design: none (<why>) line with a non-empty reason, and still refuses one with no Design line",
   "fix_kind": "backend",
   "kind": "fix",
