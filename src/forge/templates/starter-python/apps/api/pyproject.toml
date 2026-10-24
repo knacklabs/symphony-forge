@@ -1,0 +1,57 @@
+[project]
+name = "starter-api"
+version = "1.0.0"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic==1.20.0",
+    "fastapi==0.143.0",
+    "psycopg[binary]==3.3.6",
+    "pydantic==2.14.0",
+    "sqlalchemy==2.1.4",
+    "uvicorn==0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx==0.28.1",
+    "import-linter==2.15",
+    "mypy==2.4.0",
+    "pytest==9.1.1",
+    "ruff==0.17.0",
+]
+
+[tool.importlinter]
+root_package = "app"
+
+[[tool.importlinter.contracts]]
+name = "core internals"
+type = "protected"
+protected_modules = ["app.core.*"]
+allowed_importers = ["app.core"]
+broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
+
+[[tool.importlinter.contracts]]
+name = "auth internals"
+type = "protected"
+protected_modules = ["app.auth.*"]
+allowed_importers = ["app.auth"]
+broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
+
+[[tool.importlinter.contracts]]
+name = "projects internals"
+type = "protected"
+protected_modules = ["app.projects.*"]
+allowed_importers = ["app.projects"]
+broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["app", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py314"

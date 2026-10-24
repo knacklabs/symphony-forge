@@ -350,8 +350,8 @@
       "order": 92
     },
     {
-      "key": "FORGE-DEFAULTS-1",
-      "title": "New client apps start with the constitution's built-in defaults",
+      "key": "FORGE-FASTAPI-1",
+      "title": "FastAPI starter for Python backends",
       "status": "pending",
       "order": 93
     },
@@ -366,6 +366,12 @@
       "title": "One zod schema checks every client app input",
       "status": "pending",
       "order": 93
+    },
+    {
+      "key": "FORGE-DEFAULTS-1",
+      "title": "New client apps start with the constitution's built-in defaults",
+      "status": "pending",
+      "order": 94
     }
   ],
   "epics": [

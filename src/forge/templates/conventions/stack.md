@@ -25,6 +25,8 @@ apps/api/src/                 NestJS app entry, module wiring and health route (
 apps/web/src/                 React app (see frontend.md)
 libs/auth/src/                sign-in module, exported as @app/auth
 libs/projects/src/            example records module, exported as @app/projects
+libs/organisations/src/       organisations, roles and invites, exported as @app/organisations
+libs/history/src/             admin change history, exported as @app/history
 libs/core/src/                shared NestJS code
 libs/shared/src/              types and validators both apps use
 apps/api/prisma/schema/       base.prisma plus one schema file per business module
@@ -42,6 +44,10 @@ the module boundaries.
 
 An app set up before Nx keeps its npm workspaces and its Dockerfile.
 An app set up before this release keeps its package manager, lockfile and folder layout.
+An app set up before this release keeps its own organisation, date, export, history and error code.
+
+A new app whose owner asks for a Python backend starts from forge init --starter python: a FastAPI
+API in apps/api next to the same web app. See python.md.
 
 ## Deploy contract
 

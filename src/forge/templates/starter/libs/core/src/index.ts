@@ -1,5 +1,6 @@
 export { AllExceptionsFilter } from './common/all-exceptions.filter';
 export { ApiEnvelope, ApiErrors } from './common/api-envelope.decorator';
+export { ApiZodBody, ApiZodQuery } from './common/api-zod.decorator';
 export { CommonModule } from './common/common.module';
 export { correlationMiddleware } from './common/correlation.middleware';
 export { CsrfGuard } from './common/csrf.guard';

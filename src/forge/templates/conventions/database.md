@@ -29,6 +29,7 @@ model Order {
 }
 ```
 
+- Store dates and times in UTC.
 - Money is an integer in the smallest unit (`totalInCents`), never a float.
 - A boolean has a default, so it never has a third, empty state.
 - Add `createdByAccountId`, `modifiedByAccountId` and `deletedByAccountId` once the app has
@@ -45,6 +46,10 @@ model Order {
 - Search starts with Postgres full-text search (a `tsvector` column with a GIN index) in raw SQL.
 
 ## Migrations
+
+In an app that has `libs/organisations`, each table with `deletedAtUtc` has a
+`soft_delete_only()` trigger that refuses a hard delete. Record admin actions through
+`HistoryService.record`, never by writing directly to the history table.
 
 ```
 COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate dev --name add_paymentStatus_to_Order

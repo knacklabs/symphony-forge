@@ -57,7 +57,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again. In AGENTS.md, only hand edits inside the `forge:begin` and `forge:end` lines hold the file; your rules outside them stay as written when doctor refreshes Forge's block |
-| "Set up a new repo" | Use `forge init --starter` for a new React app. Use `forge init` for any other stack, then propose a `fast_test` as in step 9 of Adopt a live app, below |
+| "Set up a new repo" | Use `forge init --starter` for a new React app, and `forge init --starter python` for a new app whose owner asks for a Python backend. Use `forge init` for any other stack, then propose a `fast_test` as in step 9 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
 | "Run everything in Claude" | Ask, then in a fix: set `tools = "claude"`, `workers = "claude"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
@@ -905,7 +905,16 @@ the options for each choice list with the thing it belongs to. The prototype use
 At the start, write docs/product/CONSTITUTION.md with every default from Constitution defaults
 filled in, and raise a default with the FDE only when the notes contradict it.
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
-constitution's ## Fixed rules section, and ask nothing about them. In any other app, record the
+constitution's ## Fixed rules section, and ask nothing about them.
+In an app that has libs/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
+In an app made from the Python starter, whose tests run import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing about them:
+
+- One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
+- Each module owns its tables, in its own models file.
+- A module uses another module only through its public service, never through its tables.
+- The tests run import-linter, so an import of another module's internal files fails them.
+
+In any other app, record the
 stack, package manager and folder layout that the app already uses, and leave out ## Fixed rules.
 
 After the customer's sign-off and before the first story, finish the app's constitution in
@@ -930,6 +939,11 @@ The product facts are in docs/product/BRIEF.md.
 - Each module owns its tables, in its own schema file.
 - A module uses another module only through its public service, never through its tables.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
+- Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
+- Built in: admins invite people by email; members cannot invite people or change roles.
+- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored in cents; the helpers in @app/shared format them.
+- Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
+- Built in: each UI or API crash writes one error report to the logs.
 
 ## Architecture choices
 - <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
@@ -938,8 +952,8 @@ The product facts are in docs/product/BRIEF.md.
 Make each architecture choice yourself, from the answers and the code, and write it as one plain
 line with its reason and its decision record. Record the stack that the code already uses. For
 parts with no code, use the stack default: an Nx workspace with React (Vite and React Router),
-NestJS and Postgres. Use a FastAPI backend only when the person asks for it. A FastAPI backend has
-no starter yet.
+NestJS and Postgres. Use a FastAPI backend only when the person asks for it. A FastAPI backend starts from
+forge init --starter python.
 Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
 
 A live app answers both halves at adoption: ask only what the code cannot answer. Record the stack

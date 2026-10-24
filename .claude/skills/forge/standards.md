@@ -111,15 +111,18 @@ Structure earns its place by solving a problem the code has today. These rules s
 
 ## The client stack
 
-A new client app starts on the smallest stack that runs its first story: NestJS, Prisma and
-Postgres behind a React app built with Vite and React Router. Nx builds `apps/web` and `apps/api`,
-and shared types and validators live in `libs/shared`. Forge's `tests` check runs the test command.
-A repo that already runs another stack keeps it. Anything else arrives only
-when a story's `New moving parts` line names it, and that includes Redis and job queues, Terraform,
+A new client app starts on the smallest stack that runs its first story: a pnpm workspace with
+NestJS, Prisma and Postgres behind a React app built with Vite and React Router. Nx builds
+`apps/web` and `apps/api`; `libs/auth`, `libs/projects`, `libs/organisations`, `libs/history`,
+`libs/core` and `libs/shared` hold the modules and shared code. Forge's `tests` check runs the test
+command. An existing app keeps its package manager, lockfile, Dockerfile, test command and folder
+layout. Anything else arrives only when a story's `New moving parts` line names it, and that
+includes Redis and job queues, Terraform,
 OIDC sign-in and a monitoring stack.
 
 Forge's package ships a short how-to per concern for this stack in `forge/templates/conventions/`:
-`stack.md`, `backend.md`, `api.md`, `database.md`, `frontend.md`, `testing.md` and `security.md`.
+`stack.md`, `backend.md`, `api.md`, `database.md`, `frontend.md`, `testing.md` and `security.md`,
+plus `python.md` (the same rules for a FastAPI backend).
 Open one only when your task touches its concern; the rules on this page apply either way.
 The repo's own rules, its AGENTS.md House rules and conventions, win where they differ from these
 default-stack conventions, which apply only to a repo on the default stack.
@@ -166,6 +169,8 @@ default-stack conventions, which apply only to a repo on the default stack.
   has only the ones it uses. Logs go to the console locally and to the host's log service elsewhere.
 
 ## Data
+
+A Python app writes these names in snake_case (payment_transaction, created_at_utc); see python.md.
 
 - Postgres through Prisma. Tables are PascalCase and singular (`PaymentTransaction`); columns are
   camelCase and don't repeat the table's name (`Order.id`, not `Order.orderId`).

@@ -349,6 +349,12 @@ a new query on another module's tables.
 For new module calls and events, follow backend.md's "Call a service or send an event" rule.
 Existing code needs no conversion.
 
+In an app that has libs/organisations, scope every query to the caller's organisation
+(organisationId on the principal), guard admin actions with @AdminOnly() and record them
+with HistoryService.record, format dates, times, numbers and money only with the helpers
+in @app/shared, export a table only with sendCsv from @app/core, and let crashes reach
+the one error report. An app without libs/organisations keeps the code it has.
+
 In a TypeScript app with zod in a package.json, check each request body and query that you add
 with a zod schema in the shared package, through ZodValidationPipe, and document it from the
 same schema, as the API convention says. Do not add class-validator rules or @ApiProperty to
@@ -372,6 +378,9 @@ rule.
 
 Forge's how-to for each concern of the default client stack is in `$conventions`. Open a file there
 only when your task touches its concern.
+In an app with a FastAPI backend, open python.md there for the backend, API, database,
+security, test and deploy concerns. The rules of the other pages apply to it, and their NestJS
+and Prisma code does not.
 Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
 conventions apply only to a repo on the default stack.
 

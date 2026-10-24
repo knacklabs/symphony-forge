@@ -2,8 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Project } from '@prisma/client';
 import { PrismaService } from '@app/core';
 import type { AccountPrincipal } from '@app/auth';
-import type { ProjectInput } from '@app/shared';
-import type { ProjectListQueryDto } from './projects.dto';
+import type { ProjectInput, ProjectListQuery } from '@app/shared';
 
 function toProjectResponse(project: Project) {
   return {
@@ -21,7 +20,7 @@ function toProjectResponse(project: Project) {
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(account: AccountPrincipal, query: ProjectListQueryDto) {
+  async list(account: AccountPrincipal, query: ProjectListQuery) {
     const where = { accountId: account.id, deletedAtUtc: null };
     const [projects, totalItems] = await Promise.all([
       this.prisma.project.findMany({

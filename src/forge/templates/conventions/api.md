@@ -85,6 +85,10 @@ export const listQuerySchema = z.object({
 A list returns `{ items, pagination: { page, limit, totalItems, totalPages } }` as its `data`.
 Allow `sortBy` only on the columns the endpoint names, since any other value reaches the query.
 
+In an app that has `libs/organisations`, each list has a `GET /<list>/export` route. It uses
+`sendCsv` from `@app/core` to export every matching row in the caller's organisation, with the
+same permissions as the list. The response is a CSV download, rather than the JSON envelope.
+
 ## Swagger
 
 The spec is generated from the decorators, so it can't drift from the code. Every endpoint has a

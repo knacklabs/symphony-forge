@@ -1,14 +1,14 @@
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiBody, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { ApiEnvelope, ApiErrors, Public, ZodValidationPipe } from '@app/core';
+import { ApiEnvelope, ApiErrors, ApiZodBody, Public, ZodValidationPipe } from '@app/core';
 import { CurrentAccount } from './current-account.decorator';
 import type { AccountPrincipal } from './account-principal';
 import { sessionOptions } from './session.guard';
 import { AuthService, type SessionCookies } from './auth.service';
-import { AccountResponseDto, CredentialsDto, ForgotPasswordDto, MessageResponseDto, ResetPasswordDto } from './auth.dto';
+import { AccountResponseDto, MessageResponseDto } from './auth.dto';
 import { forgotPasswordSchema, resetPasswordSchema, signInSchema, signUpSchema, type AuthCredentials, type ForgotPasswordInput, type ResetPasswordInput } from '@app/shared';
 
 @ApiTags('Auth')
@@ -19,7 +19,7 @@ export class AuthController {
   @Public()
   @Post('sign-up')
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
-  @ApiBody({ type: CredentialsDto })
+  @ApiZodBody(signUpSchema)
   @ApiOperation({ summary: 'Create an account and start a session.' })
   @ApiEnvelope(AccountResponseDto, 201)
   @ApiErrors(400, 409, 429)
@@ -36,7 +36,7 @@ export class AuthController {
   @Post('sign-in')
   @HttpCode(200)
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
-  @ApiBody({ type: CredentialsDto })
+  @ApiZodBody(signInSchema)
   @ApiOperation({ summary: 'Sign in and start a server session.' })
   @ApiEnvelope(AccountResponseDto, 200)
   @ApiErrors(400, 401, 429)
@@ -81,7 +81,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(200)
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
-  @ApiBody({ type: ForgotPasswordDto })
+  @ApiZodBody(forgotPasswordSchema)
   @ApiOperation({ summary: 'Request a password reset link.' })
   @ApiEnvelope(MessageResponseDto, 200)
   @ApiErrors(400, 429)
@@ -93,7 +93,7 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(200)
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
-  @ApiBody({ type: ResetPasswordDto })
+  @ApiZodBody(resetPasswordSchema)
   @ApiOperation({ summary: 'Set a new password with a single-use reset link.' })
   @ApiEnvelope(MessageResponseDto, 200)
   @ApiErrors(400, 429)

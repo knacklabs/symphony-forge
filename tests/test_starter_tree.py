@@ -22,6 +22,10 @@ API_SECURITY_TESTS = (
     "account isolation",
     "production forgot-password does not log a reset link",
 )
+API_ZOD_CASES = (
+    "rejects a bad list query with the same field errors as a bad body",
+    "documents the list query and request bodies from the shared zod schemas",
+)
 BROWSER_FLOWS = (
     "sign up then sign in",
     "forgot-password request confirms delivery",
@@ -163,8 +167,8 @@ def _stop_process_group(process):
         return process.communicate()
 
 
-@pytest.fixture(scope="module")
-def live_starter(tmp_path_factory):
+def _run_live_starter(tmp_path_factory, sources, required_output=()):
+    """Run one starter tree with the isolated Node and Docker setup shared by both starters."""
     node = shutil.which("node")
     if not node:
         pytest.skip("Node.js 24 is required for the starter smoke run")
@@ -223,13 +227,15 @@ def live_starter(tmp_path_factory):
         pytest.skip("A Docker daemon is required for the starter smoke run")
 
     copy = tmp_path_factory.mktemp("starter-smoke")
-    shutil.copytree(
-        STARTER, copy, dirs_exist_ok=True,
-        ignore=shutil.ignore_patterns("node_modules", "dist", ".nx", "reports",
-                                      "test-results", "playwright-report", "coverage"),
-    )
-    shutil.copyfile(ROOT / "src" / "forge" / "templates" / "skeleton" / ".dockerignore",
-                    copy / ".dockerignore")
+    ignore = shutil.ignore_patterns("node_modules", "dist", ".nx", "reports", "test-results",
+                                    "playwright-report", "coverage")
+    for source, target in sources:
+        destination = copy / target
+        if source.is_dir():
+            shutil.copytree(source, destination, dirs_exist_ok=True, ignore=ignore)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
     project = "starter-smoke-" + uuid.uuid4().hex[:12]
     env.update({"PWD": str(copy), "FORGE_STARTER_LIVE": "1", "COMPOSE_PROJECT_NAME": project})
     process = None
@@ -243,9 +249,10 @@ def live_starter(tmp_path_factory):
             output, _ = _stop_process_group(process)
             pytest.fail(f"starter smoke command timed out after 1800 seconds\n{output}")
         assert process.returncode == 0, output
-        assert "Cached API build and lint after web build passed" in output, output
-        assert "GET /health returned 200" in output, output
+        for message in required_output:
+            assert message in output, output
         return {
+            "folder": copy,
             "api": _junit_cases(copy / "test-results" / "api.xml"),
             "browser": _junit_cases(copy / "test-results" / "browser.xml"),
         }
@@ -257,6 +264,17 @@ def live_starter(tmp_path_factory):
              "--remove-orphans"], cwd=copy, env=env, capture_output=True, text=True,
             timeout=180)
         assert cleanup.returncode == 0, cleanup.stdout + cleanup.stderr
+
+
+@pytest.fixture(scope="module")
+def live_starter(tmp_path_factory):
+    return _run_live_starter(
+        tmp_path_factory,
+        ((STARTER, Path(".")),
+         (ROOT / "src" / "forge" / "templates" / "skeleton" / ".dockerignore",
+          Path(".dockerignore"))),
+        ("Cached API build and lint after web build passed", "GET /health returned 200"),
+    )
 
 
 def _require_cases(cases, expected):
@@ -345,7 +363,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
     assert "exec npm run start:prod" in skeleton_dockerfile
 
     if LIVE:
-        _require_cases(request.getfixturevalue("live_starter")["api"], API_SECURITY_TESTS)
+        _require_cases(request.getfixturevalue("live_starter")["api"], API_SECURITY_TESTS + API_ZOD_CASES)
 
 
 @pytest.mark.platform
