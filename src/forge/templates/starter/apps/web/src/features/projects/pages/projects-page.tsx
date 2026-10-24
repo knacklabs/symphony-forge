@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   flexRender,
@@ -54,9 +54,9 @@ function readListQuery(params: URLSearchParams): ProjectListQuery {
   };
 }
 
-function SortLabel({ label, active, order }: { label: string; active: boolean; order: 'asc' | 'desc' }) {
-  if (!active) return <>{label}<ArrowUpDown aria-hidden="true" className="size-3.5" /></>;
-  return <>{label}{order === 'asc' ? <ArrowUp aria-hidden="true" className="size-3.5" /> : <ArrowDown aria-hidden="true" className="size-3.5" />}</>;
+function SortLabel({ label, sorted }: { label: string; sorted: false | 'asc' | 'desc' }) {
+  const Icon = sorted === 'asc' ? ArrowUp : sorted === 'desc' ? ArrowDown : ArrowUpDown;
+  return <>{label}<Icon aria-hidden="true" className="size-3.5" /></>;
 }
 
 function formatDate(value: string) {
@@ -65,7 +65,7 @@ function formatDate(value: string) {
 
 export function ProjectsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = useMemo(() => readListQuery(searchParams), [searchParams]);
+  const query = readListQuery(searchParams);
   const projects = useProjects(query);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
@@ -106,12 +106,12 @@ export function ProjectsPage() {
     setFormOpen(true);
   }
 
-  const columns = useMemo<ColumnDef<Project>[]>(() => [
+  const columns: ColumnDef<Project>[] = [
     {
       accessorKey: 'name',
       header: ({ column }) => (
         <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Name" active={column.getIsSorted() !== false} order={column.getIsSorted() === 'asc' ? 'asc' : 'desc'} />
+          <SortLabel label="Name" sorted={column.getIsSorted()} />
         </Button>
       ),
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
@@ -120,7 +120,7 @@ export function ProjectsPage() {
       accessorKey: 'status',
       header: ({ column }) => (
         <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Status" active={column.getIsSorted() !== false} order={column.getIsSorted() === 'asc' ? 'asc' : 'desc'} />
+          <SortLabel label="Status" sorted={column.getIsSorted()} />
         </Button>
       ),
       cell: ({ row }) => <Badge variant="outline">{row.original.status}</Badge>,
@@ -129,7 +129,7 @@ export function ProjectsPage() {
       accessorKey: 'createdAtUtc',
       header: ({ column }) => (
         <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Created" active={column.getIsSorted() !== false} order={column.getIsSorted() === 'asc' ? 'asc' : 'desc'} />
+          <SortLabel label="Created" sorted={column.getIsSorted()} />
         </Button>
       ),
       cell: ({ row }) => <div><time dateTime={row.original.createdAtUtc}>{formatDate(row.original.createdAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
@@ -138,7 +138,7 @@ export function ProjectsPage() {
       accessorKey: 'updatedAtUtc',
       header: ({ column }) => (
         <Button variant="ghost" size="sm" className="-ml-3 h-8 gap-2" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          <SortLabel label="Updated" active={column.getIsSorted() !== false} order={column.getIsSorted() === 'asc' ? 'asc' : 'desc'} />
+          <SortLabel label="Updated" sorted={column.getIsSorted()} />
         </Button>
       ),
       cell: ({ row }) => <div><time dateTime={row.original.updatedAtUtc}>{formatDate(row.original.updatedAtUtc)}</time><span className="block text-xs text-muted-foreground">by you</span></div>,
@@ -154,7 +154,7 @@ export function ProjectsPage() {
         </div>
       ),
     },
-  ], [deleteProject.isPending]);
+  ];
 
   const currentSorting: SortingState = [{ id: query.sortBy, desc: query.sortOrder === 'desc' }];
   const currentPagination: PaginationState = { pageIndex: query.page - 1, pageSize: PAGE_SIZE };

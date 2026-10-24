@@ -8,7 +8,7 @@ already runs a different stack keeps its own.
 |---|---|---|
 | Backend | NestJS (TypeScript) | Widely known; modules, dependency injection and validation built in |
 | Database | Postgres through Prisma | One boring database; typed queries and migrations |
-| Frontend | React with Vite and React Router | Widely known; fast builds with almost no config |
+| Frontend | React with Vite, React Router and React Compiler | Widely known; fast builds with almost no config |
 | Server data | TanStack Query | Caching, loading and error states without hand-written effects |
 | UI | Tailwind with shadcn/ui | Accessible components you own as code |
 | Lint | ESLint and Prettier | The usual pair; both run in the one `test` script |

@@ -32,7 +32,9 @@ The app serves the web app and API at port 3000. `/health` checks readiness. `/a
 ## How it works
 
 `apps/web` holds routes and feature folders. Project hooks use TanStack Query and the typed API
-client. Components use the hooks, without direct HTTP calls. `libs/auth` owns sign-in and account
+client. Components use the hooks, without direct HTTP calls. React Compiler memoizes components, so the code has
+no `useMemo`, `useCallback` or `React.memo` outside `components/ui`. Each route has an error page,
+so a crash on one screen leaves the other screens working. `libs/auth` owns sign-in and account
 tables. `libs/projects` owns example records and project tables. Each exports a public service from
 its package entry. A module uses another module only through that service; it does not import
 internal files or query the other module's tables. `libs/core` holds shared NestJS code, and

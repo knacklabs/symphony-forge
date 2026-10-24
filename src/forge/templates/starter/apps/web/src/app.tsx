@@ -1,5 +1,6 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, useLocation } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
+import { RouteErrorPage } from '@/components/route-error-page';
 import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page';
 import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
 import { SignInPage } from '@/features/auth/pages/sign-in-page';
@@ -48,18 +49,22 @@ export function App() {
       <a className="sr-only fixed left-4 top-4 z-50 rounded-md bg-background p-3 text-foreground focus:not-sr-only focus:ring-2 focus:ring-ring" href="#main-content">
         Skip to content
       </a>
-      <Routes>
-        <Route path="/" element={<Navigate to="/projects" replace />} />
-        <Route path="/sign-in" element={<SignInPage />} />
-        <Route path="/sign-up" element={<SignUpPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route element={<ProtectedLayout />}>
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <Outlet />
     </>
   );
 }
+
+export const router = createBrowserRouter(createRoutesFromElements(
+  <Route element={<App />} errorElement={<RouteErrorPage />}>
+    <Route path="/" element={<Navigate to="/projects" replace />} errorElement={<RouteErrorPage />} />
+    <Route path="/sign-in" element={<SignInPage />} errorElement={<RouteErrorPage />} />
+    <Route path="/sign-up" element={<SignUpPage />} errorElement={<RouteErrorPage />} />
+    <Route path="/forgot-password" element={<ForgotPasswordPage />} errorElement={<RouteErrorPage />} />
+    <Route path="/reset-password" element={<ResetPasswordPage />} errorElement={<RouteErrorPage />} />
+    <Route element={<ProtectedLayout />} errorElement={<RouteErrorPage />}>
+      <Route path="/projects" element={<ProjectsPage />} errorElement={<RouteErrorPage />} />
+      <Route path="/settings" element={<SettingsPage />} errorElement={<RouteErrorPage />} />
+    </Route>
+    <Route path="*" element={<NotFoundPage />} errorElement={<RouteErrorPage />} />
+  </Route>,
+));

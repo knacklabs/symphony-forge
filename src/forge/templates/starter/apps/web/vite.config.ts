@@ -7,7 +7,7 @@ const appDirectory = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   root: appDirectory,
-  plugins: [react(), tailwindcss()],
+  plugins: [react({ babel: { plugins: ['babel-plugin-react-compiler'] } }), tailwindcss()],
   resolve: {
     conditions: ['@app/source', 'module', 'browser', 'development|production'],
     alias: {

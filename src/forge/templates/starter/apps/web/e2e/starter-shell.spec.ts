@@ -25,6 +25,21 @@ async function signIn(page: import('@playwright/test').Page, email: string) {
   await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
 }
 
+async function addPaginationProjects(page: import('@playwright/test').Page, count: number) {
+  const cookies = await page.context().cookies();
+  const csrfToken = cookies.find((cookie) => cookie.name === 'starter_csrf')?.value;
+  expect(csrfToken).toBeTruthy();
+  if (!csrfToken) throw new Error('The signed-in session has no CSRF cookie.');
+  const projectUrl = new URL('/api/v1/projects', page.url()).toString();
+  for (let index = 0; index < count; index += 1) {
+    const response = await page.context().request.post(projectUrl, {
+      data: { name: `Pagination project ${String(index).padStart(2, '0')}`, status: 'active' },
+      headers: { 'x-csrf-token': csrfToken },
+    });
+    expect(response.ok()).toBeTruthy();
+  }
+}
+
 test('sign up then sign in', async ({ page }) => {
   const email = await signUp(page);
   await page.getByRole('button', { name: 'Open user menu' }).click();
@@ -88,18 +103,7 @@ test('create, edit, and delete a project', async ({ page }) => {
   await newProjectDialog.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('row', { name: /Migration review/ })).toBeVisible();
 
-  const cookies = await page.context().cookies();
-  const csrfToken = cookies.find((cookie) => cookie.name === 'starter_csrf')?.value;
-  expect(csrfToken).toBeTruthy();
-  if (!csrfToken) throw new Error('The signed-in session has no CSRF cookie.');
-  const projectUrl = new URL('/api/v1/projects', page.url()).toString();
-  for (let index = 0; index < 20; index += 1) {
-    const response = await page.context().request.post(projectUrl, {
-      data: { name: `Pagination project ${String(index).padStart(2, '0')}`, status: 'active' },
-      headers: { 'x-csrf-token': csrfToken },
-    });
-    expect(response.ok()).toBeTruthy();
-  }
+  await addPaginationProjects(page, 20);
   await page.getByRole('button', { name: 'Name' }).click();
   await expect(page).toHaveURL(/sortBy=name/);
   await expect(page).toHaveURL(/sortOrder=asc/);
@@ -130,6 +134,52 @@ test('create, edit, and delete a project', async ({ page }) => {
   await expect(page).toHaveURL(/page=1/);
   await expect(page.getByRole('row', { name: /Migration review updated/ })).toBeVisible();
   await expect(page.getByText('20 projects · Page 1 of 1')).toBeVisible();
+});
+
+test('a reloaded or shared list link shows the same view', async ({ page }) => {
+  await signUp(page);
+  await addPaginationProjects(page, 21);
+  await page.reload();
+  await page.getByRole('button', { name: 'Name' }).click();
+  await expect(page).toHaveURL(/sortBy=name/);
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page).toHaveURL(/page=2/);
+
+  async function expectSecondPageByName(view: import('@playwright/test').Page) {
+    await expect(view).toHaveURL(/page=2/);
+    await expect(view).toHaveURL(/sortBy=name/);
+    await expect(view).toHaveURL(/sortOrder=asc/);
+    await expect(view.getByRole('row', { name: /Pagination project 20/ })).toBeVisible();
+    await expect(view.getByText('Page 2 of 2')).toBeVisible();
+    // Playwright reads a th without scope as a cell, so find the Name header by its sort button.
+    await expect(view.locator('th', { has: view.getByRole('button', { name: 'Name' }) })).toHaveAttribute('aria-sort', 'ascending');
+  }
+
+  await page.reload();
+  await expectSecondPageByName(page);
+
+  const shared = await page.context().newPage();
+  await shared.goto(page.url());
+  await expectSecondPageByName(shared);
+});
+
+test('a crash on one screen shows its error page and the other screens still work', async ({ page }) => {
+  await signUp(page);
+  const projectsRoute = '**/api/v1/projects?*';
+  await page.route(projectsRoute, (route) => route.fulfill({
+    json: { success: true, data: { items: null, pagination: { page: 1, limit: 20, totalItems: 0, totalPages: 1 } }, error: null },
+  }));
+  await page.goto('/projects');
+  await expect(page.getByRole('heading', { name: 'This page could not load' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+
+  await page.unroute(projectsRoute);
+  await page.goto('/projects');
+  await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
+  await expect(page.getByText('No projects yet.')).toBeVisible();
 });
 
 test('switching accounts does not show the previous account projects', async ({ page }) => {

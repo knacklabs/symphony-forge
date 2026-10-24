@@ -32,6 +32,8 @@ BROWSER_FLOWS = (
     "theme changes in settings",
     "unknown address shows the 404 page",
     "axe finds no serious problem on the shell",
+    "a reloaded or shared list link shows the same view",
+    "a crash on one screen shows its error page and the other screens still work",
 )
 PINNED_PACKAGES = {
     "@nestjs/core": "11.2.7",
