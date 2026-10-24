@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@app/core": "workspace:*",
+    "@app/history": "workspace:*",
     "@app/auth": "workspace:*",
     "@app/organisations": "workspace:*",
     "@app/projects": "workspace:*"

@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Invite, Membership } from '@prisma/client';
 import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core';
 import type { Member, MemberListQuery } from '@app/shared';
+import { HistoryService } from '@app/history';
 
 function memberResponse(member: Membership): Member {
   return { id: member.id, accountId: member.accountId, email: member.email, role: member.role, createdAtUtc: member.createdAtUtc.toISOString() };
@@ -20,6 +21,7 @@ export class OrganisationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly history: HistoryService,
     @Optional() @Inject(MAIL_PROVIDER) private readonly mailProvider: MailProvider | null = null,
   ) {}
 
@@ -34,6 +36,8 @@ export class OrganisationsService {
       create: { organisationId: account.organisationId, email, createdByAccountId: account.id, ...credentials },
       update: credentials,
     });
+    // ponytail: saving the invite and its history are two calls; use a shared transaction if atomic history becomes required.
+    await this.history.record(account, 'member.invited', `Invited ${email}`);
     const inviteUrl = new URL('/accept-invite', this.config.getOrThrow<string>('APP_ORIGIN'));
     inviteUrl.searchParams.set('token', token);
     await this.mailProvider.sendInvite(email, inviteUrl.toString());
@@ -60,6 +64,10 @@ export class OrganisationsService {
     if (accountId === account.id) {
       throw new ForbiddenException({ code: 'CANNOT_CHANGE_OWN_ROLE', message: 'You cannot change your own role.', details: null });
     }
+    const member = await this.prisma.membership.findFirst({ where: { accountId, organisationId: account.organisationId, deletedAtUtc: null } });
+    if (!member) {
+      throw new NotFoundException({ code: 'MEMBER_NOT_FOUND', message: 'This member was not found.', details: null });
+    }
     const changed = await this.prisma.membership.updateMany({
       where: { accountId, organisationId: account.organisationId, deletedAtUtc: null },
       data: { role, modifiedByAccountId: account.id },
@@ -67,8 +75,9 @@ export class OrganisationsService {
     if (changed.count !== 1) {
       throw new NotFoundException({ code: 'MEMBER_NOT_FOUND', message: 'This member was not found.', details: null });
     }
-    const member = await this.prisma.membership.findFirstOrThrow({ where: { accountId, organisationId: account.organisationId, deletedAtUtc: null } });
-    return memberResponse(member);
+    // ponytail: changing the role and its history are two calls; use a shared transaction if atomic history becomes required.
+    await this.history.record(account, 'member.role_changed', `Changed ${member.email} from ${member.role} to ${role}`);
+    return memberResponse({ ...member, role });
   }
 
   async createForAccount(account: { id: string; email: string }) {
