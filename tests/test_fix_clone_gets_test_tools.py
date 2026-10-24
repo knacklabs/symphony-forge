@@ -17,7 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
-    for name in ("pyproject.toml", "uv.lock", "README.md"):
+    # Preserve the active pytest config: omitting it hides collection regressions in a clone.
+    # This command-level test owns discovery; no extra test or production seam is needed.
+    for name in ("pyproject.toml", "pytest.ini", "uv.lock", "README.md"):
         shutil.copy2(ROOT / name, tmp_path / name)
     shutil.copytree(ROOT / "src", tmp_path / "src")
     for name in (

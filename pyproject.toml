@@ -15,10 +15,6 @@ dev = ["pytest", "pytest-xdist", "pytest-split", "pytest-timeout", "pytest-rerun
 [project.scripts]
 forge = "forge.cli:main"
 
-# The shipped starter tests run in their generated apps, outside Forge's own suite.
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-
 [tool.hatch.version]
 path = "src/forge/__init__.py"
 
