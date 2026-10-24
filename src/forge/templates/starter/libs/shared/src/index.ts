@@ -56,4 +56,13 @@ export type AuthCredentials = z.infer<typeof signInSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ErrorReportInput = z.infer<typeof errorReportSchema>;
-export type Account = { id: string; email: string };
+export type Account = { id: string; email: string; role: 'admin' | 'member' };
+
+export const memberListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1)
+    .meta({ description: 'The one-based page number.', example: 1 }),
+  limit: z.coerce.number().int().min(1).max(100).default(20)
+    .meta({ description: 'The number of members per page, up to 100.', example: 20 }),
+}).strict();
+export type MemberListQuery = z.infer<typeof memberListQuerySchema>;
+export type Member = { id: string; accountId: string; email: string; role: Account['role']; createdAtUtc: string };

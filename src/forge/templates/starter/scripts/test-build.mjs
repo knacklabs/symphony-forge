@@ -17,7 +17,7 @@ function run(script) {
 
 run('build');
 // Keep Nx's cache while removing the compiler output, as a clean checkout does.
-for (const path of ['apps/api/dist', 'libs/auth/dist', 'libs/core/dist', 'libs/projects/dist', 'libs/shared/dist']) {
+for (const path of ['apps/api/dist', 'libs/auth/dist', 'libs/core/dist', 'libs/organisations/dist', 'libs/projects/dist', 'libs/shared/dist']) {
   rmSync(path, { recursive: true, force: true });
 }
 run('build');

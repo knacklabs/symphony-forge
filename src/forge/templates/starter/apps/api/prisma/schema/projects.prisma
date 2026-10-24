@@ -5,7 +5,7 @@ enum ProjectStatus {
 
 model Project {
   id                  String        @id @default(uuid()) @db.Uuid
-  accountId           String        @db.Uuid
+  organisationId      String        @db.Uuid
   name                String        @db.VarChar(120)
   status              ProjectStatus @default(active)
   createdAtUtc        DateTime      @default(now())
@@ -15,12 +15,12 @@ model Project {
   deletedAtUtc        DateTime?
   deletedByAccountId  String?       @db.Uuid
 
-  account             Account  @relation("ProjectOwner", fields: [accountId], references: [id], onDelete: Restrict)
+  organisation        Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
   createdByAccount    Account  @relation("ProjectCreatedBy", fields: [createdByAccountId], references: [id], onDelete: Restrict)
   modifiedByAccount   Account  @relation("ProjectModifiedBy", fields: [modifiedByAccountId], references: [id], onDelete: Restrict)
   deletedByAccount    Account? @relation("ProjectDeletedBy", fields: [deletedByAccountId], references: [id], onDelete: Restrict)
 
-  @@index([accountId], map: "idx_Project_accountId")
+  @@index([organisationId], map: "idx_Project_organisationId")
   @@index([createdByAccountId], map: "idx_Project_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Project_modifiedByAccountId")
   @@index([deletedByAccountId], map: "idx_Project_deletedByAccountId")

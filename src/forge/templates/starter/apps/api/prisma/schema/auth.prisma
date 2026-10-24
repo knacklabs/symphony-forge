@@ -13,7 +13,7 @@ model Account {
   accountsModified  Account[] @relation("AccountModifiedBy")
   sessions          Session[]
   passwordResetTokens PasswordResetToken[]
-  projects          Project[] @relation("ProjectOwner")
+  membership        Membership?
   createdProjects   Project[] @relation("ProjectCreatedBy")
   modifiedProjects  Project[] @relation("ProjectModifiedBy")
   deletedProjects   Project[] @relation("ProjectDeletedBy")

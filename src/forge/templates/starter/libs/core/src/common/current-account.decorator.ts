@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import type { AuthenticatedRequest } from '@app/core';
+import type { AuthenticatedRequest } from './authenticated-request';
 import type { AccountPrincipal } from './account-principal';
 
 export const CurrentAccount = createParamDecorator((_data: unknown, context: ExecutionContext): AccountPrincipal => {

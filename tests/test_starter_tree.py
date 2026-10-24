@@ -19,7 +19,6 @@ STARTER = ROOT / "src" / "forge" / "templates" / "starter"
 PIN = re.compile(r"[0-9]+(?:\.[0-9]+)*\Z")
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 API_SECURITY_TESTS = (
-    "account isolation",
     "production forgot-password does not log a reset link",
 )
 API_ZOD_CASES = (
@@ -304,8 +303,10 @@ def test_1_the_starter_is_a_runnable_stack(request):
         Path("scripts") / "test-build.mjs", Path("README.md"),
         Path("apps") / "api" / "prisma" / "schema" / "base.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "auth.prisma",
+        Path("apps") / "api" / "prisma" / "schema" / "organisations.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "projects.prisma",
         Path("apps") / "api" / "test" / "api.e2e-spec.ts",
+        Path("apps") / "api" / "test" / "organisations.e2e-spec.ts",
         Path("apps") / "api" / "vitest.config.ts",
         Path("apps") / "web" / "e2e" / "starter-shell.spec.ts",
         Path("apps") / "web" / "playwright.config.ts",
@@ -315,7 +316,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert (STARTER / rel).is_file(), rel
     assert not (STARTER / "package-lock.json").exists(), "the starter still uses npm's lockfile"
     for rel in (Path("apps") / "web", Path("apps") / "api", *(Path("libs") / name for name in
-                                                               ("auth", "core", "projects", "shared"))):
+                                                               ("auth", "core", "organisations", "projects", "shared"))):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
@@ -350,14 +351,14 @@ def test_1_the_starter_is_a_runnable_stack(request):
     workspace = (STARTER / "pnpm-workspace.yaml").read_text(encoding="utf-8")
     for project in ("apps/*", "libs/*"):
         assert project in workspace, project
-    for name in ("auth", "core", "projects", "shared"):
+    for name in ("auth", "core", "organisations", "projects", "shared"):
         project = _json(STARTER / "libs" / name / "project.json")
         tags = project.get("tags", [])
         type_tags = [tag for tag in tags if tag.startswith("type:")]
         assert len(type_tags) == 1, (name, tags)
 
     schemas = {path.name for path in (STARTER / "apps" / "api" / "prisma" / "schema").glob("*.prisma")}
-    assert schemas == {"base.prisma", "auth.prisma", "projects.prisma"}, schemas
+    assert schemas == {"base.prisma", "auth.prisma", "organisations.prisma", "projects.prisma"}, schemas
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
     assert command in (STARTER / "README.md").read_text(encoding="utf-8")

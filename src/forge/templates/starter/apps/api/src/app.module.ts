@@ -6,6 +6,7 @@ import { AllExceptionsFilter, CommonModule, CsrfGuard, EnvelopeInterceptor, Pris
 import { AuthModule, SessionGuard } from '@app/auth';
 import { HealthModule } from './health/health.module';
 import { ProjectsModule } from '@app/projects';
+import { OrganisationsModule } from '@app/organisations';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ProjectsModule } from '@app/projects';
     PrismaModule,
     AuthModule,
     ProjectsModule,
+    OrganisationsModule,
     HealthModule,
   ],
   providers: [

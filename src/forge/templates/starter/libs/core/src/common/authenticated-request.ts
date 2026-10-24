@@ -1,6 +1,7 @@
 import type { Request } from 'express';
+import type { AccountPrincipal } from './account-principal';
 
 export type AuthenticatedRequest = Request & {
-  principal?: { id: string; email: string };
+  principal?: AccountPrincipal;
   csrfTokenHash?: string;
 };

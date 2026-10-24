@@ -4,8 +4,7 @@ import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { ApiEnvelope, ApiErrors, ApiZodBody, Public, ZodValidationPipe } from '@app/core';
-import { CurrentAccount } from './current-account.decorator';
-import type { AccountPrincipal } from './account-principal';
+import { CurrentAccount, type AccountPrincipal } from '@app/core';
 import { sessionOptions } from './session.guard';
 import { AuthService, type SessionCookies } from './auth.service';
 import { AccountResponseDto, MessageResponseDto } from './auth.dto';
@@ -55,7 +54,7 @@ export class AuthController {
   @ApiEnvelope(AccountResponseDto, 200)
   @ApiErrors(401)
   currentAccount(@CurrentAccount() account: AccountPrincipal): AccountResponseDto {
-    return { id: account.id, email: account.email };
+    return { id: account.id, email: account.email, role: account.role };
   }
 
   @Post('sign-out')

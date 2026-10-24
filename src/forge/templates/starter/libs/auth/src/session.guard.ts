@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService, PUBLIC_ROUTE, type AuthenticatedRequest } from '@app/core';
+import { OrganisationsService } from '@app/organisations';
 
 const SESSION_COOKIE = 'starter_session';
 
@@ -10,6 +11,7 @@ export class SessionGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly prisma: PrismaService,
+    private readonly organisations: OrganisationsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -29,7 +31,9 @@ export class SessionGuard implements CanActivate {
       throw this.unauthorized();
     }
 
-    request.principal = session.account;
+    const membership = await this.organisations.membershipFor(session.account.id);
+    if (!membership) throw this.unauthorized();
+    request.principal = { ...session.account, organisationId: membership.organisationId, role: membership.role };
     request.csrfTokenHash = session.csrfTokenHash;
     return true;
   }

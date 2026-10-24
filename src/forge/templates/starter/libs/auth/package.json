@@ -13,6 +13,7 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@app/core": "workspace:*",
+    "@app/organisations": "workspace:*",
     "@app/shared": "workspace:*"
   }
 }

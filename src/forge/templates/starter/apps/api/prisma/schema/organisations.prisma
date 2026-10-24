@@ -1,0 +1,41 @@
+enum MembershipRole {
+  admin
+  member
+}
+
+model Organisation {
+  id                  String       @id @default(uuid()) @db.Uuid
+  createdAtUtc        DateTime     @default(now())
+  updatedAtUtc        DateTime     @updatedAt
+  createdByAccountId  String       @db.Uuid
+  modifiedByAccountId String       @db.Uuid
+  deletedAtUtc        DateTime?
+  deletedByAccountId  String?      @db.Uuid
+  memberships         Membership[]
+  projects            Project[]
+
+  @@index([createdByAccountId], map: "idx_Organisation_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_Organisation_modifiedByAccountId")
+  @@index([deletedByAccountId], map: "idx_Organisation_deletedByAccountId")
+}
+
+model Membership {
+  id                  String         @id @default(uuid()) @db.Uuid
+  accountId           String         @unique @db.Uuid
+  organisationId      String         @db.Uuid
+  email               String
+  role                MembershipRole
+  createdAtUtc        DateTime       @default(now())
+  updatedAtUtc        DateTime       @updatedAt
+  createdByAccountId  String         @db.Uuid
+  modifiedByAccountId String         @db.Uuid
+  deletedAtUtc        DateTime?
+  deletedByAccountId  String?        @db.Uuid
+  account             Account        @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  organisation        Organisation   @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+
+  @@index([organisationId], map: "idx_Membership_organisationId")
+  @@index([createdByAccountId], map: "idx_Membership_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_Membership_modifiedByAccountId")
+  @@index([deletedByAccountId], map: "idx_Membership_deletedByAccountId")
+}

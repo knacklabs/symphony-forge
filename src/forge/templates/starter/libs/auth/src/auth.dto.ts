@@ -6,6 +6,9 @@ export class AccountResponseDto {
 
   @ApiProperty({ description: 'The account email address.', example: 'ada@example.com' })
   email!: string;
+
+  @ApiProperty({ description: 'The role in the account’s organisation.', enum: ['admin', 'member'], example: 'admin' })
+  role!: 'admin' | 'member';
 }
 
 export class MessageResponseDto {

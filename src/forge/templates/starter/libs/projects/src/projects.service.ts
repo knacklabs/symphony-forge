@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Project } from '@prisma/client';
 import { PrismaService } from '@app/core';
-import type { AccountPrincipal } from '@app/auth';
+import type { AccountPrincipal } from '@app/core';
 import type { ProjectInput, ProjectListQuery } from '@app/shared';
 
 function toProjectResponse(project: Project) {
@@ -21,7 +21,7 @@ export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(account: AccountPrincipal, query: ProjectListQuery) {
-    const where = { accountId: account.id, deletedAtUtc: null };
+    const where = { organisationId: account.organisationId, deletedAtUtc: null };
     const [projects, totalItems] = await Promise.all([
       this.prisma.project.findMany({
         where,
@@ -42,17 +42,17 @@ export class ProjectsService {
     };
   }
 
-  /** Every project the account can see, newest first, for the CSV export; it ignores the screen's sort and page. */
+  /** Every project in the organisation, newest first, for the CSV export; it ignores the screen's sort and page. */
   async listAll(account: AccountPrincipal) {
     const projects = await this.prisma.project.findMany({
-      where: { accountId: account.id, deletedAtUtc: null },
+      where: { organisationId: account.organisationId, deletedAtUtc: null },
       orderBy: [{ createdAtUtc: 'desc' }, { id: 'asc' }],
     });
     return projects.map(toProjectResponse);
   }
 
   async get(account: AccountPrincipal, id: string) {
-    const project = await this.prisma.project.findFirst({ where: { id, accountId: account.id, deletedAtUtc: null } });
+    const project = await this.prisma.project.findFirst({ where: { id, organisationId: account.organisationId, deletedAtUtc: null } });
     if (!project) throw this.notFound();
     return toProjectResponse(project);
   }
@@ -60,7 +60,7 @@ export class ProjectsService {
   async create(account: AccountPrincipal, input: ProjectInput) {
     const project = await this.prisma.project.create({
       data: {
-        accountId: account.id,
+        organisationId: account.organisationId,
         name: input.name,
         status: input.status,
         createdByAccountId: account.id,
@@ -72,7 +72,7 @@ export class ProjectsService {
 
   async update(account: AccountPrincipal, id: string, input: ProjectInput) {
     const result = await this.prisma.project.updateMany({
-      where: { id, accountId: account.id, deletedAtUtc: null },
+      where: { id, organisationId: account.organisationId, deletedAtUtc: null },
       data: { name: input.name, status: input.status, modifiedByAccountId: account.id },
     });
     if (result.count === 0) throw this.notFound();
@@ -81,7 +81,7 @@ export class ProjectsService {
 
   async delete(account: AccountPrincipal, id: string): Promise<void> {
     const result = await this.prisma.project.updateMany({
-      where: { id, accountId: account.id, deletedAtUtc: null },
+      where: { id, organisationId: account.organisationId, deletedAtUtc: null },
       data: { deletedAtUtc: new Date(), deletedByAccountId: account.id, modifiedByAccountId: account.id },
     });
     if (result.count === 0) throw this.notFound();
