@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-ERRORS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T15:11:55.751399+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "026add2e980ff3a5b1879887a04ebff49e39f15a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
