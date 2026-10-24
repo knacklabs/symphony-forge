@@ -372,6 +372,12 @@
       "title": "New client apps start with the constitution's built-in defaults",
       "status": "pending",
       "order": 94
+    },
+    {
+      "key": "FORGE-TESTPLACE-1",
+      "title": "Tests run once per change, in one place per repo, and CI is optional",
+      "status": "pending",
+      "order": 95
     }
   ],
   "epics": [
