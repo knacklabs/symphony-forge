@@ -1,6 +1,13 @@
 {
   "allow_large": "The owner approved this part's allowance in the FORGE-FASTAPI-1 story: two lockfiles and the API code that matches the TypeScript starter",
   "branch": "task/FORGE-FASTAPI-1-STARTER",
+  "chat": {
+    "approval": "ca857e6d40f2da4c83513535eb7145561a7f9418b152e1b82b699292d8ce10e2",
+    "claude": null,
+    "conversation": "01a16d92-a3d8-7030-a4cc-00364d3d87a7",
+    "head": null,
+    "start": "c4b92f4dd03b6baf8cd3166e2ee23869c621db69"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
