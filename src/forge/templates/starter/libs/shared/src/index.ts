@@ -69,7 +69,7 @@ export type Member = { id: string; accountId: string; email: string; role: Accou
 
 export const inviteSchema = forgotPasswordSchema;
 export const acceptInviteSchema = signUpSchema.extend({
-  token: resetPasswordSchema.shape.token,
+  token: resetPasswordSchema.shape.token.meta({ description: 'The single-use token from the invite link.', example: 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG' }),
 }).strict();
 export const changeRoleSchema = z.object({
   role: z.enum(['admin', 'member']).meta({ description: 'The member’s new role.', example: 'member' }),
