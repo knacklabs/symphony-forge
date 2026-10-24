@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-ZOD-1-STARTER",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T11:00:49.363057+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "788bbad2f282f3fa56547b9f79db5312796f2550",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
