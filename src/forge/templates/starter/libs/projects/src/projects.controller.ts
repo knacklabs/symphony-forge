@@ -1,10 +1,10 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
-import { ApiBody, ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ApiEnvelope, ApiErrors, ZodValidationPipe } from '@app/core';
+import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiEnvelope, ApiErrors, ApiZodBody, ApiZodQuery, ZodValidationPipe } from '@app/core';
 import { CurrentAccount, type AccountPrincipal } from '@app/auth';
-import { ProjectInputDto, ProjectListQueryDto, ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
+import { ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
 import { ProjectsService } from './projects.service';
-import { projectSchema, type ProjectInput } from '@app/shared';
+import { projectListQuerySchema, projectSchema, type ProjectInput, type ProjectListQuery } from '@app/shared';
 
 @ApiTags('Projects')
 @ApiCookieAuth('session')
@@ -13,15 +13,16 @@ export class ProjectsController {
   constructor(private readonly projects: ProjectsService) {}
 
   @Get()
+  @ApiZodQuery(projectListQuerySchema)
   @ApiOperation({ summary: 'List the signed-in account’s projects.' })
   @ApiEnvelope(ProjectListResponseDto, 200)
   @ApiErrors(400, 401)
-  list(@CurrentAccount() account: AccountPrincipal, @Query() query: ProjectListQueryDto) {
+  list(@CurrentAccount() account: AccountPrincipal, @Query(new ZodValidationPipe(projectListQuerySchema)) query: ProjectListQuery) {
     return this.projects.list(account, query);
   }
 
   @Post()
-  @ApiBody({ type: ProjectInputDto })
+  @ApiZodBody(projectSchema)
   @ApiOperation({ summary: 'Create a project for the signed-in account.' })
   @ApiEnvelope(ProjectResponseDto, 201)
   @ApiErrors(400, 401, 403)
@@ -40,7 +41,7 @@ export class ProjectsController {
 
   @Put(':id')
   @ApiParam({ name: 'id', description: 'The project identifier.', example: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7' })
-  @ApiBody({ type: ProjectInputDto })
+  @ApiZodBody(projectSchema)
   @ApiOperation({ summary: 'Replace a project owned by the signed-in account.' })
   @ApiEnvelope(ProjectResponseDto, 200)
   @ApiErrors(400, 401, 403, 404)

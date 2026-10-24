@@ -40,6 +40,8 @@ its package entry. A module uses another module only through that service; it do
 internal files or query the other module's tables. `libs/core` holds shared NestJS code, and
 `libs/shared` holds the schemas and types used across the app.
 
+Zod schemas in `libs/shared` check every request body and query, and the API documentation comes from the same schemas.
+
 `apps/api` wires the modules and serves the app. Passwords use scrypt. Postgres holds server sessions, reset tokens, accounts, and projects. Every project query checks the account. Delete keeps the audit record.
 
 Forgot password always gives the same reply. Only `APP_ENV=development` or `APP_ENV=test` writes a reset link to the log. Other environments send no email and log no link or token. Add a real mail provider in the story that needs it.

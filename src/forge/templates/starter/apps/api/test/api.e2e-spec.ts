@@ -17,6 +17,13 @@ function csrfToken(response: request.Response): string {
   return cookie.slice('starter_csrf='.length).split(';', 1)[0];
 }
 
+function requestBodySchema(response: request.Response, path: string, method: 'post' | 'put') {
+  const schema = response.body.paths[path][method].requestBody.content['application/json'].schema;
+  if (!schema.$ref) return schema;
+  const name = schema.$ref.split('/').at(-1);
+  return response.body.components.schemas[name];
+}
+
 function latestResetToken(service: 'api' | 'production-api'): string {
   const logs = execFileSync('docker', ['compose', '-f', 'compose.test.yml', 'logs', '--no-color', service], { encoding: 'utf8' });
   const line = logs.split(/\r?\n/).reverse().find((value) => value.includes('"resetUrl"'));
@@ -165,6 +172,133 @@ describe('starter API', () => {
       expect.objectContaining({ field: 'password' }),
       expect.objectContaining({ field: 'unexpected' }),
     ]));
+  });
+
+  it('rejects a bad list query with the same field errors as a bad body', async () => {
+    const client = request.agent(apiBaseUrl);
+    const signUp = await client.post('/api/v1/auth/sign-up').send(credentials()).expect(201);
+
+    const query = await client
+      .get('/api/v1/projects?page=0&limit=500&sortBy=password&unexpected=true')
+      .expect(400);
+    const body = await client
+      .post('/api/v1/projects')
+      .set('x-csrf-token', csrfToken(signUp))
+      .send({ name: '', status: 'gone', unexpected: true })
+      .expect(400);
+
+    for (const response of [query, body]) {
+      expect(response.body).toMatchObject({
+        success: false,
+        data: null,
+        error: { code: 'VALIDATION_ERROR', message: 'Check the fields and try again.' },
+      });
+    }
+    expect(query.body.error.details.fieldErrors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: 'page' }),
+      expect.objectContaining({ field: 'limit' }),
+      expect.objectContaining({ field: 'sortBy' }),
+      expect.objectContaining({ field: 'unexpected', reason: 'Remove this field.' }),
+    ]));
+    expect(body.body.error.details.fieldErrors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: 'name' }),
+      expect.objectContaining({ field: 'status' }),
+      expect.objectContaining({ field: 'unexpected', reason: 'Remove this field.' }),
+    ]));
+
+    for (const malformedPage of ['?page=1&page=2', '?page=']) {
+      const invalidPage = await client.get(`/api/v1/projects${malformedPage}`).expect(400);
+      expect(invalidPage.body.error.code).toBe('VALIDATION_ERROR');
+      expect(invalidPage.body.error.details.fieldErrors).toEqual(expect.arrayContaining([
+        expect.objectContaining({ field: 'page' }),
+      ]));
+    }
+
+    const valid = await client.get('/api/v1/projects?page=2&limit=5').expect(200);
+    expect(valid.body.data.pagination).toMatchObject({ page: 2, limit: 5 });
+  });
+
+  it('documents the list query and request bodies from the shared zod schemas', async () => {
+    const response = await request(apiBaseUrl).get('/api/docs-json').expect(200);
+    const projectsList = response.body.paths['/api/v1/projects'].get;
+    const parameters = projectsList.parameters;
+
+    expect(parameters).toHaveLength(4);
+    expect(parameters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: 'page',
+        in: 'query',
+        required: false,
+        description: 'The one-based page number.',
+      }),
+      expect.objectContaining({
+        name: 'limit',
+        in: 'query',
+        required: false,
+        schema: expect.objectContaining({ maximum: 100, default: 20 }),
+      }),
+      expect.objectContaining({
+        name: 'sortBy',
+        in: 'query',
+        required: false,
+        schema: expect.objectContaining({ enum: ['name', 'status', 'createdAtUtc', 'updatedAtUtc'] }),
+      }),
+      expect.objectContaining({
+        name: 'sortOrder',
+        in: 'query',
+        required: false,
+        schema: expect.objectContaining({ enum: ['asc', 'desc'] }),
+      }),
+    ]));
+
+    for (const [path, method] of [
+      ['/api/v1/projects', 'post'],
+      ['/api/v1/projects/{id}', 'put'],
+    ] as const) {
+      const schema = requestBodySchema(response, path, method);
+      expect(schema.properties.name).toMatchObject({
+        description: 'The project name.',
+        example: 'Migration plan',
+        maxLength: 120,
+      });
+      expect(schema.properties.status).toMatchObject({
+        description: 'The project status.',
+        example: 'active',
+        enum: ['active', 'archived'],
+      });
+    }
+
+    for (const path of ['/api/v1/auth/sign-up', '/api/v1/auth/sign-in']) {
+      const schema = requestBodySchema(response, path, 'post');
+      expect(schema.properties.password).toMatchObject({
+        description: 'The account password.',
+        example: 'correct-horse-battery-staple',
+        minLength: 12,
+        maxLength: 128,
+      });
+    }
+
+    const forgotPassword = requestBodySchema(response, '/api/v1/auth/forgot-password', 'post');
+    expect(forgotPassword.properties.email).toMatchObject({
+      description: 'The email address for the account.',
+      example: 'ada@example.com',
+      maxLength: 254,
+      format: 'email',
+    });
+
+    const resetPassword = requestBodySchema(response, '/api/v1/auth/reset-password', 'post');
+    expect(resetPassword.properties.token).toMatchObject({
+      description: 'The single-use token from the reset link.',
+      example: 'a-43-character-token-value',
+      minLength: 32,
+      maxLength: 256,
+    });
+    expect(resetPassword.properties.password).toMatchObject({
+      description: 'The new account password.',
+      example: 'new-correct-horse-battery-staple',
+      minLength: 12,
+      maxLength: 128,
+    });
   });
 
   it('rejects a whitespace-only project name after trimming input', async () => {
