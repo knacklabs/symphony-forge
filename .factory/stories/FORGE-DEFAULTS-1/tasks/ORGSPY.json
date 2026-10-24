@@ -13,17 +13,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fbd420df979d61ffc39c4e6d825d862b37055240d5ab0a24fc2a2fa9a1a233bf",
-    "changed": "63ffeb93bd0966af0a36a8e4f8776caf8d43a7c9bc58c4deccbda9aeaccb425e",
-    "commit": "752cb50ff9b80afa64a19db6681f47ade965e472",
+    "branch_diff": "e69ab2b478134814093ca3b90c8275e63617848c5b45d9ca46c3ba461634969a",
+    "changed": "b6a2475786ced457cc7e5e4185e4787f8324e4f2d7f57a112c147776de6432f6",
+    "commit": "b90ed49722fe1698a00a10cd929d8ea26e3c7482",
     "dismissals": [],
     "findings": [],
-    "id": "29f5496a-c765-451f-a687-6f9374eae245",
+    "id": "c3ce5b72-2ec6-4db8-a940-af81d41e4272",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-DEFAULTS-1/SOFTDELETE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T15:53:10.451990+00:00",
@@ -35,6 +35,10 @@
     },
     {
       "at": "2026-10-24T16:30:47.016372+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T17:22:50.420014+00:00",
       "step": "review"
     }
   ],
