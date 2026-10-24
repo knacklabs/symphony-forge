@@ -45,7 +45,7 @@ libs/
   Add events only when the story's `New moving parts` names them.
 
 Reviews apply this call-or-event rule only to new code. Existing code needs no conversion.
-An in-process event does not require a queue. The queue rule in [stack.md](stack.md) still applies.
+For work that must outlive a request, follow [stack.md](stack.md).
 
 ## Config
 
