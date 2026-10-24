@@ -8,7 +8,7 @@ import { CurrentAccount, type AccountPrincipal } from '@app/core';
 import { sessionOptions } from './session.guard';
 import { AuthService, type SessionCookies } from './auth.service';
 import { AccountResponseDto, MessageResponseDto } from './auth.dto';
-import { forgotPasswordSchema, resetPasswordSchema, signInSchema, signUpSchema, type AuthCredentials, type ForgotPasswordInput, type ResetPasswordInput } from '@app/shared';
+import { acceptInviteSchema, forgotPasswordSchema, resetPasswordSchema, signInSchema, signUpSchema, type AcceptInviteInput, type AuthCredentials, type ForgotPasswordInput, type ResetPasswordInput } from '@app/shared';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -27,6 +27,22 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<AccountResponseDto> {
     const result = await this.auth.signUp(input.email, input.password);
+    this.setSessionCookies(response, result.cookies);
+    return result.account;
+  }
+
+  @Public()
+  @Post('accept-invite')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @ApiZodBody(acceptInviteSchema)
+  @ApiOperation({ summary: 'Join an organisation with an email invite.', description: 'The seven-day invite must match the email and can be used only once. Creates an account and starts a session.' })
+  @ApiEnvelope(AccountResponseDto, 201)
+  @ApiErrors(400, 409, 429)
+  async acceptInvite(
+    @Body(new ZodValidationPipe(acceptInviteSchema)) input: AcceptInviteInput,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AccountResponseDto> {
+    const result = await this.auth.acceptInvite(input.token, input.email, input.password);
     this.setSessionCookies(response, result.cookies);
     return result.account;
   }

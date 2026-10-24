@@ -32,7 +32,12 @@ try {
   run(process.execPath, ['scripts/test-build.mjs']);
   run(corepack, ['pnpm', 'exec', 'playwright', 'install', '--with-deps', 'chromium']);
   run('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '180']);
-  run(corepack, ['pnpm', 'test']);
+  for (const suite of ['lint', 'typecheck', 'test:api', 'test:hooks']) {
+    run(corepack, ['pnpm', 'run', suite]);
+  }
+  // API fixtures must not consume the browser suite's real sign-up rate limit.
+  run('docker', [...compose, 'up', '-d', '--no-deps', '--force-recreate', '--wait', '--wait-timeout', '180', 'api']);
+  run(corepack, ['pnpm', 'run', 'test:browser']);
   const response = await fetch(`${environment.API_TEST_URL}/health`);
   if (response.status !== 200) throw new Error('The built image did not answer GET /health with 200');
   process.stdout.write('GET /health returned 200\n');

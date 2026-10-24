@@ -66,3 +66,14 @@ export const memberListQuerySchema = z.object({
 }).strict();
 export type MemberListQuery = z.infer<typeof memberListQuerySchema>;
 export type Member = { id: string; accountId: string; email: string; role: Account['role']; createdAtUtc: string };
+
+export const inviteSchema = forgotPasswordSchema;
+export const acceptInviteSchema = signUpSchema.extend({
+  token: resetPasswordSchema.shape.token.meta({ description: 'The single-use token from the invite link.', example: 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG' }),
+}).strict();
+export const changeRoleSchema = z.object({
+  role: z.enum(['admin', 'member']).meta({ description: 'The member’s new role.', example: 'member' }),
+}).strict();
+export type InviteInput = z.infer<typeof inviteSchema>;
+export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
+export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;

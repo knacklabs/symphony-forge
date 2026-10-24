@@ -1,10 +1,10 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query, Res } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { ApiEnvelope, ApiErrors, ApiZodQuery, CurrentAccount, sendCsv, ZodValidationPipe, type AccountPrincipal, type CsvColumn } from '@app/core';
-import { formatDateTime, memberListQuerySchema, type Member, type MemberListQuery } from '@app/shared';
+import { AdminOnly, ApiEnvelope, ApiErrors, ApiZodBody, ApiZodQuery, CurrentAccount, sendCsv, ZodValidationPipe, type AccountPrincipal, type CsvColumn } from '@app/core';
+import { changeRoleSchema, formatDateTime, memberListQuerySchema, type ChangeRoleInput, type Member, type MemberListQuery } from '@app/shared';
 import { OrganisationsService } from './organisations.service';
-import { MemberListResponseDto } from './organisations.dto';
+import { MemberListResponseDto, MemberResponseDto } from './organisations.dto';
 
 const MEMBER_CSV_COLUMNS: CsvColumn<Member>[] = [
   { header: 'Email', value: (member) => member.email },
@@ -17,6 +17,17 @@ const MEMBER_CSV_COLUMNS: CsvColumn<Member>[] = [
 @Controller('members')
 export class OrganisationsController {
   constructor(private readonly organisations: OrganisationsService) {}
+
+  @Patch(':accountId')
+  @AdminOnly()
+  @ApiZodBody(changeRoleSchema)
+  @ApiParam({ name: 'accountId', type: String, format: 'uuid', example: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7', description: 'The account of another member in your organisation.' })
+  @ApiOperation({ summary: 'Change another member’s role.', description: 'Only admins can change roles. Your own role cannot change, and the target must belong to your organisation.' })
+  @ApiEnvelope(MemberResponseDto, 200)
+  @ApiErrors(400, 401, 403, 404)
+  changeRole(@CurrentAccount() account: AccountPrincipal, @Param('accountId', ParseUUIDPipe) accountId: string, @Body(new ZodValidationPipe(changeRoleSchema)) input: ChangeRoleInput): Promise<MemberResponseDto> {
+    return this.organisations.changeRole(account, accountId, input.role);
+  }
 
   @Get()
   @ApiZodQuery(memberListQuerySchema)
