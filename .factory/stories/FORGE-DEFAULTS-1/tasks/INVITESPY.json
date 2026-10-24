@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-24T17:45:41.712984+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "New client apps start with the constitution's built-in defaults: Invites and roles in the Python API is stuck. It should deliver: The same HTTP contract as INVITES in the Python starter: the admin-only dependency, invites by email through the mail provider moved into core, joining from an invite, role changes, and refusals for members.\nIt changes 1087 lines outside tests, over its limit of 400.\nThe worker tried: Sort the Python auth imports; Add invites and role changes to the Python starter.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "0f475483-961e-4feb-ac43-9c6aea5dc47e"
+  },
   "stuck": {
     "close": null,
     "head": "dd9933ea8645f02ede836bd0edff65bdbf4a0e25",
