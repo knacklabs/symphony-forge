@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-MODULAR-1-REVIEW",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T07:16:52.951301+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "998a17a7b3603f7935dfa2df2e016bdb8aedfaad",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
