@@ -342,6 +342,12 @@
       "title": "Starter app for new client React apps",
       "status": "pending",
       "order": 91
+    },
+    {
+      "key": "FORGE-MODULAR-1",
+      "title": "New client apps start from the client notes and a fixed modular stack",
+      "status": "pending",
+      "order": 92
     }
   ],
   "epics": [

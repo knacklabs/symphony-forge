@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MODULAR-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-24T05:40:48.546585+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "New client apps start from the client notes and a fixed modular stack",
+  "touches": 0
+}
