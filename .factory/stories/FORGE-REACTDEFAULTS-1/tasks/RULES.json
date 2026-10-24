@@ -7,13 +7,53 @@
     "head": null,
     "start": "abbaceb261b06a595faf3ff168c12fdb60a738a1"
   },
+  "known": [
+    {
+      "area": "test_6_an_existing_app_keeps_its_code_and_only_new_code_is_checked() in tests/test_react_review_rules.py",
+      "file": "tests/test_react_review_rules.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 112,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: write the preservation fixture as bytes on Windows",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7f8d1718f8cc3404d36ffe76f0b8bb0c4f38a8fe30dffae321a1049f9199e558",
+    "changed": "e4e2d88c03415ed5421dbb63db0cf14caa2fbcfd5291bfc16525aa1c2e829d2f",
+    "commit": "8ee45818db786e9d80d85b82d98c6e89a36d6576",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 2, Work 1, Harm 1\nCase: normal use - running the full test suite on Windows. `env.repo.write` calls `Path.write_text` without specifying newline handling (`tests/conftest.py:328-331`). Python therefore [translates LF to the platform line separator](https://docs.python.org/3.11/library/functions.html#open), producing CRLF bytes on Windows. The assertion at line 114 compares those bytes against the LF-only `original`, so this test fails even when upgrade preserves the file correctly. Create the fixture with `write_bytes(original)` so the preservation assertions compare against the bytes actually supplied.",
+        "file": "tests/test_react_review_rules.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 112,
+        "priority": "P2",
+        "title": "Follow-up: write the preservation fixture as bytes on Windows",
+        "work": 1
+      }
+    ],
+    "id": "2498f740-b9d6-4137-889c-698a4ae9e66a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T08:57:00.339378+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:05:15.833709+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
