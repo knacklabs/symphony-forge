@@ -10,7 +10,8 @@ from test_python_starter import live_python_starter  # noqa: F401 - shared live 
 from test_setup import _fresh_client
 from test_starter_tree import LIVE, STARTER, _require_cases, live_run
 
-STORY = "FORGE-DEFAULTS-1"
+# Criterion 4 has separate CSV, history and soft-delete parts with distinct contracts.
+STORY = "FORGE-DEFAULTS-1/SOFTDELETE"
 MIGRATIONS = {
     "react": Path("apps/api/prisma/migrations/20261025000300_soft_delete_only/migration.sql"),
     "python": Path("apps/api/migrations/versions/0002_soft_delete_only.py"),
