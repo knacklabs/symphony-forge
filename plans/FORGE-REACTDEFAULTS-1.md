@@ -102,9 +102,9 @@ differs from the merged tree, follow the merged tree.
      boolean `active` that switches it between two renderings. Replace `active` and `order` with
      one prop `sorted: false | 'asc' | 'desc'`, the value of `column.getIsSorted()`, so each
      header passes `sorted={column.getIsSorted()}`.
-   - `scripts/test-build.mjs`: after the build, read the web build's JavaScript under
-     `apps/web/dist/assets/` and fail unless one file contains `react.memo_cache_sentinel`, the
-     marker the compiler's output uses. The live starter run then fails if the compiler is off.
+   - No build-output marker check: `react.memo_cache_sentinel` is also in React DOM's own
+     runtime, so its presence in the bundle proves nothing. Vite fails the build if the plugin
+     cannot load, so the static check below plus the live build are the proof.
    - `stack.md`: the Frontend row becomes `React with Vite, React Router and React Compiler`.
      `README.md` "How it works": one sentence that React Compiler memoizes, so the code has no
      `useMemo`, `useCallback` or `React.memo` outside `components/ui`, and one that each route
@@ -114,8 +114,7 @@ differs from the merged tree, follow the merged tree.
      `apps/web/vite.config.ts` names `babel-plugin-react-compiler`; `eslint.config.mjs` names
      `reactHooks.configs.flat.recommended`; no `.ts` or `.tsx` file under `apps/web/src` outside
      `components/ui` contains `useMemo`, `useCallback` or `memo(`. No platform marker: it only
-     reads files. The live proof is the `test-build.mjs` check above, which the `starter-smoke`
-     run executes.
+     reads files. The `starter-smoke` run builds the app with the plugin loaded.
    - Existing repo: the starter is written only by `forge init --starter`;
      `tests/test_starter_app.py::test_3` (adopted case) already shows that upgrade and sync write
      no starter file. Item 6's test covers the review side.
@@ -178,9 +177,11 @@ differs from the merged tree, follow the merged tree.
      a default for a missing or wrong value, as `readListQuery` in the starter's projects page
      does; keep only short-lived state, such as an open dialog, in `useState`.
    - Playwright flow `a reloaded or shared list link shows the same view`: sign up, add 21
-     projects through the API as the `create, edit, and delete a project` flow does (move that
-     loop into a helper both flows call), sort by Name, go to page 2. Reload: the URL keeps
-     `page=2`, `sortBy=name` and `sortOrder=asc`, the `Pagination project 19` row shows, the text
+     projects through the API with the `create, edit, and delete a project` flow's naming loop
+     (move that loop into a helper both flows call, taking the count), so they are `Pagination
+     project 00` to `Pagination project 20` and no other project exists. Sort by Name, go to page
+     2. Reload: the URL keeps `page=2`, `sortBy=name` and `sortOrder=asc`, the `Pagination project
+     20` row shows, the text
      `Page 2 of 2` shows, and the Name header has `aria-sort="ascending"`. Then open the same
      URL in a new page of the same browser context (the same signed-in person): the same three
      checks pass.
@@ -208,8 +209,11 @@ differs from the merged tree, follow the merged tree.
      totalPages: 1 } }, error: null }`, so the projects page throws while it renders
      (`projects.data.items.length`). Go to `/projects`: the `This page could not load` heading
      shows, and the sidebar's Settings link shows. Click Settings: the Settings heading shows.
-     Remove the route, click Projects: the Projects heading and `No projects yet.` show. The flow
-     changes no app code to cause the crash.
+     Remove the route, then load `/projects` again with `page.goto` (a full page load, which
+     drops TanStack Query's in-memory cache of the bad response; clicking Projects would render
+     the cached `items: null` and crash again): the Projects heading and `No projects yet.` show.
+     The flow changes no app code to cause the crash. For the same reason, the error page's `Try
+     again` button does a full reload (`window.location.reload()`), not a router navigation.
    - UI: the error page uses the 404 page's shadcn/ui parts and theme tokens. The impeccable pass
      and the emil-design-eng checklist apply to it as to any UI change.
 6. An existing app keeps its code, and only new code is checked (RULES).
