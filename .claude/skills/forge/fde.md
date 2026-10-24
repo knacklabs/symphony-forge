@@ -154,7 +154,7 @@ Ask what happened before asking what the customer wants built.
 - What devices: phones, tablets, desktop? Which matters most?: Desktop first, fully responsive down to phone.
 - Do people need to pay in the app (one time, subscription, invoices)?: No payments; choose a provider in a later story if payments are needed.
 - Should the app send messages (email, text, push, in-app)? About what?: Transactional email and in-app notices; no text or push messages.
-- Which languages and currencies, date formats, time zones?: English, a message catalogue, and dates in the user's time zone.
+- Which languages and currencies, date formats, time zones?: English and a message catalogue. Dates use YYYY-MM-DD and times use 24-hour format in the user's time zone. Currency uses USD with the currency code (USD 1,234.56). Numbers use comma thousands separators and a decimal point (1,234.56).
 - Does it need to connect to other tools (calendar, accounting, CRM, maps, email)?: None by default; add integrations as later stories.
 - What happens if someone deletes something by mistake? Do you need history of who changed what?: Soft delete with a confirm step; keep change history for admin actions.
 - Do you need reports, charts or exports (PDF, Excel)?: CSV export from each table and a summary dashboard.

@@ -283,6 +283,16 @@ Forge copies it into the pull request, and the reviewer reads it there. Close re
 commit's paragraph, so in every round, fix rounds included, it walks every Done-when item this
 part covers, not only what the round changed.
 
+For production stories, check these items on the paths this part covers. Apply the app's scope
+and constitution, and explain any explicit exception:
+
+- Show an offline state, including a clear message for an online-only app.
+- Check tablet widths for the shell, a table and a form.
+- Check the keyboard path: tab order, Cmd+K, Cmd+B and Esc to close dialogs, where those controls exist.
+- Give each row-level object an extended detail screen, with tabs for related data, activity and files.
+
+These checks belong to the production story, not canvas sign-off.
+
 impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
 visual design (layout, type, colour, states and copy): shape before building, then audit and polish
 before a demo. Run emil-design-eng's review checklist inside impeccable's one batched inspection,
