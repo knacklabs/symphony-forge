@@ -52,3 +52,4 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - run the planned shared-link browser flow.  
    `plans/FORGE-REACTDEFAULTS-1.md:180-184` creates 21 projects through the existing naming loop and expects `Pagination project 19` on page 2. That loop at `src/forge/templates/starter/apps/web/e2e/starter-shell.spec.ts:96-102` numbers from zero. With 21 such projects and ascending Name order, page 2 contains project 20. The existing test’s project-19 expectation depends on its separately created `Migration review` record at lines 83-89.
    Gain 2, Work 1, Harm 4 (floor: migration)
+   Disposition: cut The pagination flow now creates Pagination project 00 to 20 with no other project and expects project 20 on page 2.
