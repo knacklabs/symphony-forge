@@ -496,7 +496,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 entry.update(output_path=log.as_posix(), test_cpus=int(workers))
                 history, flaky = [], []
                 for attempt in range(2):
-                    done = _test_process(top, item, command, capped, env, entry, ran, log)
+                    done = fasttest.test_process(top, item, capped, env, entry, ran, log)
                     history.append(done.stdout)
                     if not closing or attempt or done.returncode == 0:
                         break
@@ -540,62 +540,6 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         raise
     finally:
         repo.record_timing(top, item, "test run", start, clock, outcome)
-
-
-def _test_process(top, item, command, capped, env, entry, ran, log):
-    """Stream one attempt's progress and stop its process group on interruption."""
-    from forge import codex
-
-    with log.open("a", encoding="utf-8") as sink, subprocess.Popen(
-            capped, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-            encoding="utf-8", errors="replace", **codex.GROUP) as process:
-        try:
-            machine.started(entry, process.pid)
-            output, total, completed, finished = [], None, 0, set()
-            for line in process.stdout:
-                sink.write(line)
-                sink.flush()
-                output.append(line)
-                found = re.search(r"collected (\d+) items?(.*)|\[(\d+) items?\]", line)
-                if found:
-                    selected = re.search(r" / (\d+) selected", found[2] or "")
-                    total = int(selected[1] if selected else found[1] or found[3])
-                    completed = 0
-                    finished.clear()
-                marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
-                result = re.search(r"(\S+::.*?)\s+(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b.*\[\s*\d+%\]", line)
-                if not result and re.search(r"\[\s*\d+%\]", line):
-                    result = re.search(r"\b(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\s+(\S+::.*?)\s*$", line)
-                tap = re.match(r"(?:ok|not ok) (\d+)\b|1\.\.(\d+)", line)
-                if tap and tap[2]:
-                    total = int(tap[2])
-                if result:
-                    finished.add(result[1])  # teardown errors repeat the same test's id
-                    completed = len(finished)
-                elif tap and tap[1]:
-                    completed = int(tap[1])
-                elif marks:
-                    # A quiet error can be setup or a second report for teardown.
-                    # Keep done unknown until a percentage gives an exact count.
-                    completed = completed + len(marks[1]) if completed is not None and "E" not in marks[1] else None
-                    if completed is None and total is not None:
-                        percent = int(re.search(r"(\d+)%", line)[1])
-                        lower, upper = (percent * total + 99) // 100, min(total, ((percent + 1) * total + 99) // 100 - 1)
-                        completed = lower if lower == upper else None
-                if found or marks or result or tap:
-                    repo.record_progress(top, item, ran["run_id"], done=completed, total=total)
-                    with machine._queue() as runs:
-                        for run in runs:
-                            if run["id"] == entry["id"]:
-                                run["progress"] = {"done": completed, "total": total}
-            done = subprocess.CompletedProcess(command, process.wait(), "".join(output))
-        except BaseException:
-            if process.poll() is None:
-                codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
-                process.wait()
-            raise
-    return done
 
 
 def docs_only(top: Path, base: str) -> bool:
