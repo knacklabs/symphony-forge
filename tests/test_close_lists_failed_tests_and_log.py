@@ -17,7 +17,7 @@ STORY = "FIX-CLOSE-LISTS-EVERY-FAILED-TEST"
 # Real pytest decides the failures; no production seam or fake test runner is needed.
 @pytest.mark.parametrize("adopted,collection", [(False, False), (True, False), (False, True)],
                          ids=["new-client", "earlier-adoption", "collection-error"])
-def test_failed_close_ends_with_all_failed_test_files_names_and_full_log(env, adopted, collection):
+def test_1_failed_close_ends_with_all_failed_test_files_names_and_full_log(env, adopted, collection):
     repo = env.repo
     if adopted:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path, dirs_exist_ok=True)
