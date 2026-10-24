@@ -1,0 +1,15 @@
+{
+  "base": "a474c8635ced7801f9df00e753d6e5c1b954644e",
+  "branch": "fix/close-lists-every-failed-test",
+  "done_when": "A failed close's output ends with the full list of failed test files and test names and the path of the full test log",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-24T17:34:15.091881+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A failed close prints only a bounded tail of the test output, so people rerun whole suites to find which tests failed"
+}
