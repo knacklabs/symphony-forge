@@ -11,7 +11,8 @@
   history screen.
 - The app shows all dates, times and money in one format, in the person's time zone, from shared
   code. The tests fail when new code formats them in a different way.
-- Each list in the app has an Export CSV button, and all exports use the same code.
+- Each list in the app has an Export CSV button, and all exports use the same code. The export
+  writes a cell that a spreadsheet can run as a formula as plain text.
 - The database keeps deleted records and marks them as deleted. It refuses to remove a record
   completely.
 - When a screen or the server crashes, the app writes one error report to its logs. A later story
@@ -67,9 +68,9 @@ Trade-off: the error report keeps only the kind of error, the page path and a re
 keeps no error text, no code lines, no query string and no form data, so it cannot hold personal
 data or tokens.
 
-Question for you: a CSV cell that starts with `=`, `+`, `-` or `@` can run as a formula when the
-file opens in a spreadsheet. The starter does not change such cells. A guard is about three lines
-in the shared export code. Say so if you want it.
+Trade-off: a CSV cell that starts with `=`, `+`, `-` or `@` can run as a formula when the file
+opens in a spreadsheet. The shared export puts a `'` before such a cell, so the spreadsheet shows
+it as text. The owner chose this guard on 24 October 2026.
 
 ## For the builders
 
