@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Members</title><style>
+:root{--radius:0.625rem;--background:oklch(1 0 0);--foreground:oklch(0.145 0 0);--card:oklch(1 0 0);--popover:oklch(1 0 0);--primary:oklch(0.205 0 0);--primary-foreground:oklch(0.985 0 0);--secondary:oklch(0.97 0 0);--muted:oklch(0.97 0 0);--muted-foreground:oklch(0.556 0 0);--accent:oklch(0.97 0 0);--accent-foreground:oklch(0.205 0 0);--destructive:oklch(0.577 0.245 27.325);--border:oklch(0.922 0 0);--input:oklch(0.922 0 0);--ring:oklch(0.708 0 0);--sidebar:oklch(0.985 0 0);--sidebar-foreground:oklch(0.145 0 0);--sidebar-accent:oklch(0.97 0 0);--sidebar-accent-foreground:oklch(0.205 0 0);--sidebar-border:oklch(0.922 0 0)}
+*{box-sizing:border-box;margin:0;border-color:var(--border)}
+html,body{height:100%}
+body{background:var(--background);color:var(--foreground);font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.43}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app{display:flex;height:100vh}
+.sb{width:256px;flex:none;background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:8px}
+.sb .lbl{height:32px;display:flex;align-items:center;padding:0 8px;font-size:12px;font-weight:500;color:oklch(0.145 0 0 / 70%);margin-top:8px}
+.sb a{display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;border-radius:calc(var(--radius) * 0.8);color:inherit;text-decoration:none}
+.sb a.on{background:var(--sidebar-accent);color:var(--sidebar-accent-foreground);font-weight:500}
+.inset{flex:1;min-width:0;display:flex;flex-direction:column}
+header{height:56px;flex:none;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);padding:0 16px}
+.vsep{width:1px;height:20px;background:var(--border)}
+.crumb{color:var(--foreground)}
+.hr{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn.o.search{width:208px;justify-content:space-between;color:var(--muted-foreground);font-weight:400}
+kbd{font-family:inherit;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:0 6px}
+main{flex:1;padding:24px}
+.page{max-width:1152px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.ph{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+h1{font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.025em}
+.sub{margin-top:4px;color:var(--muted-foreground)}
+.acts{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;border-radius:calc(var(--radius) * 0.8);font:inherit;font-weight:500;border:1px solid transparent;background:var(--primary);color:var(--primary-foreground);white-space:nowrap;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.btn.o{background:var(--background);color:var(--foreground);border-color:var(--border)}
+.btn.g{background:transparent;color:var(--foreground);box-shadow:none}
+.btn.ic{width:36px;padding:0}
+.btn.sm{height:32px;padding:0 12px}
+.tw{border:1px solid var(--border);border-radius:calc(var(--radius) * 0.8);overflow-x:auto}
+table{width:100%;border-collapse:collapse;caption-side:bottom}
+th{height:40px;padding:0 8px;text-align:left;font-weight:500;white-space:nowrap}
+td{padding:8px;vertical-align:middle;white-space:nowrap}
+tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:0}
+th .sort{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;margin-left:-12px;border-radius:calc(var(--radius) * 0.8)}
+th .sort svg{width:14px;height:14px}
+.wrap{white-space:normal;overflow-wrap:anywhere}
+.badge{display:inline-flex;align-items:center;border-radius:calc(var(--radius) * 0.6);padding:2px 8px;font-size:12px;font-weight:500;border:1px solid transparent;background:var(--secondary);color:var(--accent-foreground)}
+.badge.o{background:transparent;border-color:var(--border);color:var(--foreground)}
+.you{margin-left:8px;color:var(--muted-foreground);font-size:12px}
+.sel{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;width:128px;height:36px;padding:0 12px;border:1px solid var(--input);border-radius:calc(var(--radius) * 0.8);background:transparent;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.sel svg{opacity:.5}
+.muted{color:var(--muted-foreground)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.end{display:flex;justify-content:flex-end;gap:4px}
+.overlay{position:fixed;inset:0;background:rgb(0 0 0 / .5)}
+.dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:512px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:grid;gap:16px;box-shadow:0 10px 15px -3px rgb(0 0 0 / .1),0 4px 6px -4px rgb(0 0 0 / .1)}
+.dlg h2{font-size:18px;line-height:1;font-weight:600}
+.dlg .x{position:absolute;right:16px;top:16px;opacity:.7}
+.dfoot{display:flex;justify-content:flex-end;gap:8px}
+.field{display:grid;gap:8px}
+label{font-weight:500;line-height:1}
+.input{height:36px;width:100%;border:1px solid var(--input);border-radius:calc(var(--radius) * 0.8);padding:4px 12px;font:inherit;background:transparent;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05);display:flex;align-items:center}
+.input.focus{border-color:var(--ring);box-shadow:0 0 0 3px oklch(0.708 0 0 / 50%)}
+.authm{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+.authm section{width:100%;max-width:384px;display:grid;gap:24px}
+form{display:grid;gap:16px}
+.w{width:100%}
+a.u{color:inherit;text-decoration:underline;text-underline-offset:4px}
+</style></head><body><div class="app"><nav class="sb" aria-label="Workspace navigation"><div class="lbl">Workspace</div><a href="#" class=""><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/></svg><span>Projects</span></a><a href="#" class="on" aria-current=page><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Members</span></a><a href="#" class=""><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>Change history</span></a><a href="#" class=""><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span>Settings</span></a></nav>
+<div class="inset"><header><button class="btn g ic" aria-label="Toggle Sidebar"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button><div class="vsep"></div><span class="crumb">Members</span>
+<div class="hr"><button class="btn o search" aria-label="Search"><span style="display:flex;align-items:center;gap:8px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search</span><kbd>⌘/Ctrl K</kbd></button><button class="btn g ic" aria-label="Open user menu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></button></div></header>
+<main id="main-content"><div class="page"><div class="ph"><div><h1>Members</h1><p class="sub">People in your organisation.</p></div><div class="acts"><button class="btn o"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button><button class="btn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Invite person</button></div></div><div class="tw"><table><thead><tr><th>Email</th><th>Role</th><th>Joined</th></tr></thead><tbody><tr><td class="wrap" style="max-width:520px">ada@example.com</td><td><span class="badge">Admin</span><span class="you">You</span></td><td><time>2026-09-02</time></td></tr><tr><td class="wrap" style="max-width:520px">grace@example.com</td><td><button class="sel" role="combobox" aria-label="Role for grace@example.com"><span>Member</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></td><td><time>2026-10-24</time></td></tr><tr><td class="wrap" style="max-width:520px">linus.torvalds.operations.lead@verylongcompanyname-international.example.com</td><td><button class="sel" role="combobox" aria-label="Role for linus.torvalds.operations.lead@verylongcompanyname-international.example.com"><span>Member</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></td><td><time>2026-10-11</time></td></tr><tr><td class="wrap" style="max-width:520px">margaret@example.com</td><td><button class="sel" role="combobox" aria-label="Role for margaret@example.com"><span>Admin</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></td><td><time>2026-09-15</time></td></tr><tr><td class="wrap" style="max-width:520px">alan@example.com</td><td><button class="sel" role="combobox" aria-label="Role for alan@example.com"><span>Member</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></td><td><time>2026-10-03</time></td></tr><tr><td class="wrap" style="max-width:520px">katherine@example.com</td><td><button class="sel" role="combobox" aria-label="Role for katherine@example.com"><span>Member</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></td><td><time>2026-10-20</time></td></tr></tbody></table></div></div></main></div></div></body></html>
