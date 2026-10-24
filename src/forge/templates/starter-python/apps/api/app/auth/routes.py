@@ -1,7 +1,6 @@
 import hashlib
 from datetime import UTC, datetime
-from typing import Annotated, NamedTuple, cast
-from uuid import UUID
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import select
@@ -19,6 +18,7 @@ from app.auth.schema import (
 )
 from app.auth.service import AuthService
 from app.core import (
+    AccountPrincipal,
     ApiError,
     ErrorEnvelope,
     Settings,
@@ -26,12 +26,6 @@ from app.core import (
     get_db,
     verify_csrf,
 )
-
-
-class AccountPrincipal(NamedTuple):
-    id: UUID
-    email: str
-
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
@@ -41,14 +35,21 @@ def _settings(request: Request) -> Settings:
 
 
 def _service(request: Request, db: DbSession) -> AuthService:
+    # Import at request time: the organisations router also uses auth's session dependency.
+    from app.organisations import OrganisationsService
+
     settings = _settings(request)
     correlation_id = cast(str | None, getattr(request.state, "correlation_id", None))
-    return AuthService(db, settings, MailProvider(settings, correlation_id))
+    return AuthService(
+        db, settings, MailProvider(settings, correlation_id), OrganisationsService(db)
+    )
 
 
 def current_account(
     request: Request, db: Annotated[DbSession, Depends(get_db)]
 ) -> AccountPrincipal:
+    from app.organisations import OrganisationsService
+
     session_token = request.cookies.get("starter_session")
     if not session_token:
         raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
@@ -67,8 +68,11 @@ def current_account(
     account = db.get(AccountModel, session.account_id)
     if account is None:
         raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
+    principal = OrganisationsService(db).membership_for(account.id)
+    if principal is None:
+        raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
     request.state.csrf_token_hash = session.csrf_token_hash
-    return AccountPrincipal(id=account.id, email=account.email)
+    return principal
 
 
 def require_csrf(
@@ -185,7 +189,9 @@ def sign_in(
 def me(
     account: Annotated[AccountPrincipal, Depends(current_account)],
 ) -> SuccessEnvelope[Account]:
-    return SuccessEnvelope(data=Account(id=account.id, email=account.email))
+    return SuccessEnvelope(
+        data=Account(id=account.id, email=account.email, role=account.role)
+    )
 
 
 @router.post(

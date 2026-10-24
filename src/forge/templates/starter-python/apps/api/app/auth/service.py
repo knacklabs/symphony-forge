@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import secrets
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 from uuid import UUID, uuid4
 
@@ -20,6 +21,9 @@ from app.auth.schema import (
     SessionData,
 )
 from app.core import ApiError, Settings
+
+if TYPE_CHECKING:
+    from app.organisations import OrganisationsService
 
 _PASSWORD_KEY_BYTES = 64
 _PASSWORD_SALT_BYTES = 16
@@ -83,11 +87,16 @@ def _verify_password(password: str, stored_hash: str) -> bool:
 
 class AuthService:
     def __init__(
-        self, db: DbSession, settings: Settings, mail_provider: MailProvider
+        self,
+        db: DbSession,
+        settings: Settings,
+        mail_provider: MailProvider,
+        organisations: OrganisationsService,
     ) -> None:
         self.db = db
         self.settings = settings
         self.mail_provider = mail_provider
+        self.organisations = organisations
 
     def sign_up(self, credentials: CredentialsInput) -> SessionData:
         account_id = uuid4()
@@ -98,12 +107,13 @@ class AuthService:
             created_by_account_id=account_id,
             modified_by_account_id=account_id,
         )
-        session_data = self._new_session(
-            AccountResponse(id=account_id, email=credentials.email)
-        )
         try:
             self.db.add(account)
             self.db.flush()
+            principal = self.organisations.create_for_account(account_id, account.email)
+            session_data = self._new_session(
+                AccountResponse(id=account_id, email=account.email, role=principal.role)
+            )
             self.db.add(self._session_row(account_id, session_data))
             self.db.commit()
         except IntegrityError as error:
@@ -125,8 +135,11 @@ class AuthService:
             raise ApiError(
                 401, "INVALID_CREDENTIALS", "The email or password is incorrect."
             )
+        principal = self.organisations.membership_for(account.id)
+        if principal is None:
+            raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
         session_data = self._new_session(
-            AccountResponse(id=account.id, email=account.email)
+            AccountResponse(id=account.id, email=account.email, role=principal.role)
         )
         self.db.add(self._session_row(account.id, session_data))
         self.db.commit()
