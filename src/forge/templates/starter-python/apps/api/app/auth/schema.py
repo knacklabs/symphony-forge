@@ -44,6 +44,15 @@ class ResetPasswordInput(AuthSchema):
     password: str = Field(min_length=12, max_length=128)
 
 
+class AcceptInviteInput(CredentialsInput):
+    token: str = Field(
+        min_length=32,
+        max_length=256,
+        description="The single-use token from the invite link.",
+        examples=["abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG"],
+    )
+
+
 class Account(AuthSchema):
     id: UUID
     email: Email

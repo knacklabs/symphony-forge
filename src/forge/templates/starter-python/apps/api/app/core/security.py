@@ -17,6 +17,7 @@ _RATE_LIMITED_PATHS = {
     "/api/v1/auth/sign-in",
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password",
+    "/api/v1/auth/accept-invite",
     "/api/v1/error-reports",
 }
 _RATE_LIMIT_SECONDS = 60
@@ -162,7 +163,7 @@ def install_security_middleware(app: FastAPI) -> None:
             response.headers["Access-Control-Allow-Origin"] = settings.app_origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Methods"] = (
-                "GET, POST, PUT, DELETE, OPTIONS"
+                "GET, POST, PUT, PATCH, DELETE, OPTIONS"
             )
             response.headers["Access-Control-Allow-Headers"] = (
                 "Content-Type, X-CSRF-Token, X-Correlation-Id"

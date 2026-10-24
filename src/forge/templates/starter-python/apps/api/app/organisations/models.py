@@ -1,10 +1,41 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base, Role
+
+
+class Invite(Base):
+    # Invites are temporary credentials, so claiming one removes it instead of soft deleting it.
+    __tablename__ = "invite"
+    __table_args__ = (
+        UniqueConstraint("organisation_id", "email"),
+        Index("idx_invite_organisation_id", "organisation_id"),
+        Index("idx_invite_created_by_account_id", "created_by_account_id"),
+        Index("idx_invite_modified_by_account_id", "modified_by_account_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organisation_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organisation.id", ondelete="RESTRICT")
+    )
+    email: Mapped[str] = mapped_column(String(254))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at_utc: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    created_by_account_id: Mapped[UUID] = mapped_column(
+        ForeignKey("account.id", ondelete="RESTRICT")
+    )
+    modified_by_account_id: Mapped[UUID] = mapped_column(
+        ForeignKey("account.id", ondelete="RESTRICT")
+    )
 
 
 class Organisation(Base):
