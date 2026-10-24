@@ -58,7 +58,7 @@ def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
     )
     run = subprocess.run(["uv", "run", "--frozen", "pytest", "-q"],
                          cwd=tmp_path, env=env, capture_output=True, text=True)
-    assert run.returncode == 0, run.stderr
+    assert run.returncode == 0, run.stdout + run.stderr
     assert "1 passed" in run.stdout
 
 
