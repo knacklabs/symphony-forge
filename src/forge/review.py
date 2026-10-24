@@ -431,7 +431,7 @@ GAP = "No local test names "
 
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
              closing: bool = True) -> tuple[int, str]:
-    """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
+    """Run or skip tests; report a bounded tail, all failed tests and the full log path."""
     branch = repo.current_branch(top)
     item = (branch_item(branch, top) or (branch, {}))[0]
     start, clock = repo.now(), time.monotonic()
@@ -561,6 +561,13 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+        if done.returncode:
+            report = results.read_text("utf-8") if results.is_file() else ""
+            failures = sorted({node for outcome, node in re.findall(r"^(\w+) (.+)$", report, re.M)
+                               if outcome in ("failed", "error")})
+            lines += ["Failed tests:", *([f"- {node}" for node in failures] or
+                       ["Test names are not available from this test command."]),
+                      f"Full test log: {log.as_posix()}"]
         return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on this machine.", *lines])
     except BaseException:
         outcome = "failed"

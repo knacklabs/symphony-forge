@@ -1506,7 +1506,9 @@ If GitHub refuses a pull request body update, close stops after one attempt, inc
 history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 Close's tests and review run at the same time. Close waits for both and reports their results
 together; a red test or a P0/P1 finding still stops the round. When the
-test command fails, close keeps the output for the worker: run
+test command fails, its test report ends with all failed pytest files and test names,
+including setup, teardown and collection errors, and the full test log path.
+Close keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
