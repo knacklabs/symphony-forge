@@ -39,7 +39,7 @@ enforce the module rule with lint and review, and leave existing apps as they ar
 ## Done when
 
 1. **A new client app starts as one app split into modules on pnpm and Prisma: sign-in and the example records are separate modules, each module owns its own tables, and the starter's tests, its built image and its browser flows pass. An existing app keeps its package manager, lockfile, Dockerfile, test command and folder layout after upgrade and sync.**
-2. **In a new client app, the tests fail when a module imports another module's internal files or when shared code imports a module, and the failure names the module-boundary rule.**
+2. **In a new client app, the tests fail when a module imports another module's internal files or when the web app imports a backend module, and the failure names the module-boundary rule.**
 3. **A review reports a query that a change adds on another module's tables as a serious finding, and Forge holds the work until it is fixed. The sign-off review does the same for the whole product, and a cold read reports a plan that has such a query the same way. A normal review never reports a query that the default branch already has, so an existing app is held only for new ones.**
 4. **The guide tells the agent to start a new app from the client notes: read every note, fill the brief and the problem cards, list the contradictions and gaps, ask the FDE one question at a time only about points that change a screen, a field or a flow, with no fixed number, mark every other open point as an assumption, and put what the FDE cannot answer on the recap's list for the client without holding the prototype. New repos get this at init, and existing repos on upgrade and sync.**
 5. **The guide tells the agent to start the constitution with the 21 defaults filled in and, in an app made from the starter, the fixed module rules; to raise a default only when the notes contradict it; and, in any other app, to record the stack, package manager and layout that the app already uses. The owner still approves it once after sign-off. New repos get this at init, and existing repos on upgrade and sync.**
@@ -131,10 +131,13 @@ uses them) and the readers (`say` in `tests/test_readloop_gates.py` for Claude).
      become pnpm's own (keep `playwright-core` pinned to `@playwright/test`'s version).
      `package-lock.json` goes; `pnpm-lock.yaml` and `pnpm-workspace.yaml` come. Every version
      stays exact. pnpm runs no dependency install script unless it is listed in
-     `onlyBuiltDependencies`; list only the ones the tests need. The root scripts use
-     `pnpm run`. `scripts/test.mjs` and `scripts/test-build.mjs` run pnpm through Corepack
-     (`corepack pnpm ...`, with `COREPACK_ENABLE_DOWNLOAD_PROMPT=0`), and
-     `pnpm install --frozen-lockfile` replaces `npm ci`.
+     `onlyBuiltDependencies`; list only the ones the tests need. Every call to pnpm uses the
+     same Corepack form, `corepack pnpm ...`, with `COREPACK_ENABLE_DOWNLOAD_PROMPT=0`: the root
+     scripts that run other scripts (such as `test`, which becomes
+     `corepack pnpm run lint && corepack pnpm run typecheck && ...`), `scripts/test.mjs` and
+     `scripts/test-build.mjs`. `corepack pnpm` installs no `pnpm` shim on the path, so a bare
+     nested `pnpm run` would fail on a machine with only Node 24. `corepack pnpm install
+     --frozen-lockfile` replaces `npm ci`. The developer needs no new set-up step.
    - New dev dependency: `@nx/eslint-plugin`, pinned to the same version as `nx` (22.0.1). The
      starter does not have it today.
    - Modules: move the files into the layout above, as they are, except for their imports.
@@ -179,7 +182,7 @@ uses them) and the readers (`say` in `tests/test_readloop_gates.py` for Claude).
 2. The lint rule fails a cross-module import (STARTER).
    - Test: `tests/test_modular_starter.py::test_2_an_import_across_modules_fails_the_starter_tests`,
      marked `@pytest.mark.platform`, with the parameter `case` in ("clean", "reach into a module",
-     "shared code imports a module").
+     "the web app imports a backend module").
      - Always: `eslint.config.mjs` names `@nx/enforce-module-boundaries`, and the root `test`
        script runs lint first.
      - Live only (`FORGE_STARTER_LIVE=1` and Node 24 on the path; skip otherwise, as test_1 does):
@@ -189,9 +192,11 @@ uses them) and the readers (`say` in `tests/test_readloop_gates.py` for Claude).
        - reach into a module: add `libs/projects/src/reach-in.ts` with
          `import { AuthService } from '../../auth/src/auth.service';` and a use of it. Lint exits
          non-zero, and its output names `@nx/enforce-module-boundaries`.
-       - shared code imports a module: add `libs/core/src/reach-up.ts` with
+       - the web app imports a backend module: add `apps/web/src/reach-in.ts` with
          `import { ProjectsService } from '@app/projects';` and a use of it. Lint exits non-zero,
-         and its output names the rule and `type:core`.
+         and its output names the rule and `type:web`. No project depends on an app, so this
+         import makes no cycle, and Nx reaches its tag check (an import from core into a module
+         would make a cycle, because every module imports core, and Nx reports the cycle first).
        Remove the added file after each case.
    - `.github/workflows/starter-smoke.yml` runs this file with `tests/test_starter_tree.py`, and
      its `paths` add `tests/test_modular_starter.py`.
