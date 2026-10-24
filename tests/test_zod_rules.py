@@ -16,6 +16,8 @@ from test_score_notes import _client_repo as setup_client
 from test_shadcn_only import _commit_main
 from test_worker import calls, install_claude
 
+STORY = "FORGE-ZOD-1"
+
 
 REQUEST_RULE = (
     "Request input is a zod schema in `@app/shared`: one for each body and one for each list "
@@ -125,6 +127,7 @@ def test_5_review_flags_new_request_input_that_zod_does_not_check(env, tmp_path,
     assert REVIEW_RULE in " ".join(env.prompt().split())
 
 
+@pytest.mark.platform
 def test_6_an_existing_app_keeps_its_current_validation(env, tmp_path):
     # Supply exact bytes: text writes translate LF to CRLF on Windows before adoption.
     # This keeps the existing byte-preservation contract independent of host newlines.

@@ -16,6 +16,8 @@ from test_score_notes import _client_repo as setup_client
 from test_shadcn_only import _commit_main
 from test_worker import calls, install_claude
 
+STORY = "FORGE-REACTDEFAULTS-1"
+
 
 MEMO_RULE = (
     "In a React app with React Compiler turned on (`babel-plugin-react-compiler` in a "
