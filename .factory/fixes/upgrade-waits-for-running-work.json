@@ -11,12 +11,27 @@
   "done_when": "The guide's upgrade steps say to wait until no Forge runs are in progress, and forge upgrade warns and names the running items when the machine's lanes still have runs",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8687e38903f844c29eb6b2cf75eb680a67de75c1a6ae903e8780ce00ae92384a",
+    "changed": "69efd9d9d4360698287834ffa8be6de40450c5d1c2cc107fac84575dcee25d1e",
+    "commit": "449e29804c1f83ef4a81ad6ee091bf56ee459b78",
+    "dismissals": [],
+    "findings": [],
+    "id": "8feeee02-87ca-455a-8c0c-41276eb00abd",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T17:34:19.447447+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T17:42:01.549176+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
