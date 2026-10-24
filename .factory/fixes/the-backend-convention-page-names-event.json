@@ -1,0 +1,15 @@
+{
+  "base": "1879dd44e6a8cb4ad7a899276039b2d5e1507a8b",
+  "branch": "fix/the-backend-convention-page-names-event",
+  "done_when": "A new client app and an existing app that upgrades both get the call-or-event rule on the backend page, and reviews hold only new code against it.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-24T09:02:19.173132+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The backend convention page names event files but never says when a module calls another module's public service or sends an event. The standards page covers only part of it, and the stack page already says to add a queue only when a story's New moving parts names one, so the fix adds just the answer-now versus react-after split."
+}
