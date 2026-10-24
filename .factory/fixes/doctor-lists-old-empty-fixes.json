@@ -4,12 +4,20 @@
   "done_when": "forge doctor lists each started fix with no commits of its own that is older than seven days and gives the forge fix drop command for it",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T17:34:23.899186+00:00",
       "step": "start"
     }
   ],
-  "why": "Fixes that were started but never built pile up as worktrees, and forge doctor does not list them"
+  "stuck": {
+    "close": null,
+    "head": "7dc5c8dfc07bddc1a8f8d1be8dde144131ce1351",
+    "keys": {},
+    "round": null
+  },
+  "why": "Fixes that were started but never built pile up as worktrees, and forge doctor does not list them",
+  "worker": "codex"
 }
