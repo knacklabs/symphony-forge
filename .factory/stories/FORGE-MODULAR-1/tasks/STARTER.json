@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner approved this part's allowance in the FORGE-MODULAR-1 story: the pnpm lockfile replaces the npm lockfile and files move into modules unchanged",
   "branch": "task/FORGE-MODULAR-1-STARTER",
   "chat": {
     "approval": "b6153fd21e4ea86264f497addf6f0231ca3748b63ea7db4b25385cca34cc4727",
