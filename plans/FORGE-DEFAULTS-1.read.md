@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-24T09:44:22.322568+00:00
-seconds: 700.891
-read_hash: fe030e69af4185188f9d31a6617418e445348f9d
-round: 1
+read_at: 2026-10-24T09:49:59.534785+00:00
+seconds: 118.843
+read_hash: 0823181795c0b8d6bbd4a7228b54662edf36717f
+round: 2
 passed: no
-doc_seen: fe030e69af4185188f9d31a6617418e445348f9d
+doc_seen: 0823181795c0b8d6bbd4a7228b54662edf36717f
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: e1280b7f6ecdda6f7420a7ad30b1f11383e0106e
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a16d41-5bff-7d81-9ea3-e49b001fac54
 session:
@@ -81,3 +81,10 @@ Only a genuine trade-off goes to the human, as a question with options.
    Gain 3, Work 3, Harm 4 (floor: migration)
 
    Disposition: cut the two large parts; MEMBERS splits into MEMBERS and JOIN, and HISTORY into HISTORY and SOFTDELETE, with After chain FORMATS, ORGS, INVITES, MEMBERS, JOIN, HISTORY and SOFTDELETE after FORMATS.
+
+## Round 2
+
+9. Advisory: Plan gap: the shared error schema introduces dependency wiring that no task owns.
+   Raise: Plan gap. Case: normal use - ERRORS imports `errorReportSchema` into the controller in core.
+   [The schema ownership fix](/plans/FORGE-DEFAULTS-1.md:120) introduces core’s first `@app/shared` import. Core currently has neither a workspace dependency in [package.json](/src/forge/templates/starter/libs/core/package.json:12) nor a project reference in [tsconfig.json](/src/forge/templates/starter/libs/core/tsconfig.json:18). Neither file appears in any task’s Scope. The schema now has an owner, but consuming it requires unowned configuration changes before the starter can build.
+   Gain 4, Work 2, Harm 2
