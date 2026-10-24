@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-INVITESPY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T17:45:41.712984+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "dd9933ea8645f02ede836bd0edff65bdbf4a0e25",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
