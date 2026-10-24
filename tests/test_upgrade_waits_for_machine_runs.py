@@ -22,7 +22,8 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])
-def test_upgrade_names_runs_in_both_machine_lanes_before_install(up, tmp_path, adopted):
+def test_upgrade_names_runs_in_both_machine_lanes_before_install(unsynced_up, tmp_path, adopted, request):
+    up = unsynced_up if adopted else request.getfixturevalue("up")
     if adopted:
         up.repo.git("switch", "-q", "-c", "adoption")
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path,
