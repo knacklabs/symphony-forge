@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-24T15:11:55.751399+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "New client apps start with the constitution's built-in defaults: One error report for crashes is stuck. It should deliver: `ErrorReporter`, the report endpoint, the filter's one report per API crash, and the route error page's one report per UI crash.\nIt changes 497 lines outside tests, over its limit of 400.\nThe worker tried: Report UI and API crashes once.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "801e5f2f-48b1-427c-ba29-1164799122b9"
+  },
   "stuck": {
     "close": null,
     "head": "026add2e980ff3a5b1879887a04ebff49e39f15a",
