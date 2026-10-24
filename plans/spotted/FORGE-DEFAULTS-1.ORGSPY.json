@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tThe broad test selection treats prose in a task's Tests cell as test names and blames the settings file.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 465,
+      "text": "The broad test selection treats prose in a task's Tests cell as test names and blames the settings file.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/ORGSPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
