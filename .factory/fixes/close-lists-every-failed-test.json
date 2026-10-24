@@ -4,12 +4,20 @@
   "done_when": "A failed close's output ends with the full list of failed test files and test names and the path of the full test log",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T17:34:15.091881+00:00",
       "step": "start"
     }
   ],
-  "why": "A failed close prints only a bounded tail of the test output, so people rerun whole suites to find which tests failed"
+  "stuck": {
+    "close": null,
+    "head": "3540e2f28d7fe4a0c252877970ab6e75f68b4034",
+    "keys": {},
+    "round": null
+  },
+  "why": "A failed close prints only a bounded tail of the test output, so people rerun whole suites to find which tests failed",
+  "worker": "codex"
 }
