@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx\tPreserve table renderer identities for keyboard sorting\tFORGE-REACTDEFAULTS-1/STARTER",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "line": 109,
+      "text": "Preserve table renderer identities for keyboard sorting",
+      "from": "blocking",
+      "item": "FORGE-REACTDEFAULTS-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/src/components/route-error-page.tsx\tA crash on a public route or the root layout shows the error page without a main landmark, so the skip link has no target there.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/src/components/route-error-page.tsx",
+      "line": 5,
+      "text": "A crash on a public route or the root layout shows the error page without a main landmark, so the skip link has no target there.",
+      "from": "worker",
+      "item": "FORGE-REACTDEFAULTS-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/src/components/route-error-page.tsx\tFollow-up: Preserve the skip target on public-route error pages",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/src/components/route-error-page.tsx",
+      "line": 7,
+      "text": "Follow-up: Preserve the skip target on public-route error pages",
+      "from": "review",
+      "item": "FORGE-REACTDEFAULTS-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

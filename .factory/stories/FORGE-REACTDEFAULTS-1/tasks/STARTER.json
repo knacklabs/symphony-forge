@@ -1,12 +1,76 @@
 {
   "branch": "task/FORGE-REACTDEFAULTS-1-STARTER",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 109,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve table renderer identities for keyboard sorting",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/src/components/route-error-page.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/components/route-error-page.tsx",
+      "gain": 2,
+      "harm": 1,
+      "line": 7,
+      "outcome": "follow-up",
+      "reason": "Rare case outside normal use",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Preserve the skip target on public-route error pages",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d4e34605ccee4f70790ce42aab3d5735e4012172c767329f1ffc54c3a0b17f1a",
+    "changed": "d95cd4e208aa1f5b6c7d42775eafbc864ccbd6e05735b2a787b0f5c3e7b1bb5e",
+    "commit": "efc092deeefffe66e06ff0d179d132ca6e58f2bd",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a keyboard user cycles Name sorting ascending, descending, then ascending again.\nThe plain columns array recreates every header and cell function on each render. At lines 220 and 230, flexRender renders these functions as component types, so changing their identities unmounts their buttons. Returning to a cached sort therefore removes the focused header button and drops keyboard focus, even though the table remains visible. React Compiler does not stabilize these functions because it skips the component using useReactTable. Keep the renderer component types stable without hand-written memoization, and verify focus survives repeated keyboard sorting. See [TanStack's pinned flexRender implementation](https://github.com/TanStack/table/blob/v8.21.3/packages/react-table/src/index.tsx#L16-L24) and [React's incompatible-library documentation](https://react.dev/reference/eslint-plugin-react-hooks/lints/incompatible-library).",
+        "file": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+        "gain": 3,
+        "harm": 3,
+        "line": 109,
+        "priority": "P1",
+        "title": "Preserve table renderer identities for keyboard sorting",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 2, Harm 1\nCase: rare - a public route renders its error fallback.\nThis div replaces the public page's main landmark, while app.tsx:49 retains a Skip to content link targeting #main-content. The fallback supplies neither that target nor a main landmark, so activating the skip link does nothing. The protected-layout fallback has the same gap; only child errors inside AppShell inherit its content container. Supply the landmark and skip target at boundaries outside the shell while avoiding nested main elements inside it.",
+        "file": "src/forge/templates/starter/apps/web/src/components/route-error-page.tsx",
+        "follow_up": "Rare case outside normal use",
+        "gain": 2,
+        "harm": 1,
+        "line": 7,
+        "priority": "P2",
+        "title": "Follow-up: Preserve the skip target on public-route error pages",
+        "work": 2
+      }
+    ],
+    "id": "b4862fa9-4280-40c8-9442-922b8bf266ef",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T08:57:04.465381+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:50:18.277635+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
