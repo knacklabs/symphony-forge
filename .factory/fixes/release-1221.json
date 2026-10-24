@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bump changes the version in every pinned file",
   "base": "b60ac8b21c9689fc84359c0915b2c71e9116ac4f",
   "branch": "fix/release-1221",
   "done_when": "Forge's version, pins, installers and release tests name v1.2.21",
