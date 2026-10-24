@@ -25,27 +25,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f765da81872610a0d64459529a8455307f0d76a33a491ca29afc11d435f3d95a",
-    "changed": "7303e1e75ef03b6f3b69613e05882f4eabfe72371b32a92e7f2e2fee2369e958",
-    "commit": "ffec2135119ab06c0f161a6058e3ec5aed49db4e",
+    "branch_diff": "18a342ef2dccdfcc9863335512ffc49f0b7fa9501695b98c5f247a0ac413a0a2",
+    "changed": "9cd4a503a4c1ff054e7a5bc8845d887ef4d90cbadab9d7871e7db28a49da11ea",
+    "commit": "a4ccb219ffad58745ebce74af022adbf5716061d",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. Case: normal use - merging the GUIDE branch also adds screen designs assigned to other story parts. The selected change adds this screen specification, five HTML files under `docs/design/FORGE-DEFAULTS-1/src/`, and the corresponding five PNGs for accept-invite, change-history, invite-dialog, members and projects. GUIDE's constitution, brief, conventions, standards, README and named test do not require these additions. These paths are outside its allowed Scope and are not covered by the Forge-record exemption or a recorded allowance. Keep the approved screen artifacts in their owning design change.",
-        "file": "docs/design/FORGE-DEFAULTS-1/SCREENS.md",
-        "gain": 3,
-        "harm": 1,
-        "line": 1,
-        "priority": "P1",
-        "title": "Gate: design files outside GUIDE scope",
-        "work": 1
-      }
-    ],
-    "id": "f19f1491-f7ae-4427-b59f-e1a70a07117e",
+    "findings": [],
+    "id": "de61df28-d3fc-4b47-9644-ff48ac735ffe",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T13:08:13.313436+00:00",
@@ -53,6 +42,10 @@
     },
     {
       "at": "2026-10-24T13:17:13.072200+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T13:29:22.742312+00:00",
       "step": "review"
     }
   ],
