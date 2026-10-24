@@ -80,12 +80,12 @@ def test_3_reviews_and_reads_hold_a_query_on_another_modules_tables(env, tmp_pat
                 "   Gain 2, Work 1, Harm 1\n"
                 "2. Advisory: Module tables: A rare query\n"
                 "   Case: rare\n   Gain 2, Work 1, Harm 1\n")
-    shop = new_story(repo, "SHOP")
-    (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
-    read = repo.forge("read", "SHOP")
+    shop = new_story(repo, "MODULES")
+    (shop / "plans/MODULES.md").write_text(DOC, encoding="utf-8")
+    read = repo.forge("read", "MODULES")
     assert read.returncode == 0, read.stdout + read.stderr
     assert READ_RULE in " ".join(_read_prompt(repo).split())
-    notes = (shop / "plans/SHOP.read.md").read_text("utf-8")
+    notes = (shop / "plans/MODULES.read.md").read_text("utf-8")
     held = notes.split("1. Blocking:", 1)[1].split("2. Advisory:", 1)[0]
     assert "Gain 4, Work 1, Harm 1 (floor: module tables)" in held
     assert "below the bar" not in held
