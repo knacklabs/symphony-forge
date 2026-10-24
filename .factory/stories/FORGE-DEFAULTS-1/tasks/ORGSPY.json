@@ -2,12 +2,20 @@
   "base": "bd97bba40826ea2c792caa398c6fcff5ca098ba3",
   "branch": "task/FORGE-DEFAULTS-1-ORGSPY",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-DEFAULTS-1/SOFTDELETE",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T15:53:10.451990+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "838017129236b110669607689111f3bc3d651b48",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
