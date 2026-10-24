@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx\tClosing the edit dialog with Escape does not return focus to the row's Edit button; main does the same.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "line": 185,
+      "text": "Closing the edit dialog with Escape does not return focus to the row's Edit button; main does the same.",
+      "from": "worker",
+      "item": "FORGE-REACTDEFAULTS-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx\tPreserve table renderer identities for keyboard sorting\tFORGE-REACTDEFAULTS-1/STARTER",
       "kind": "bug",
       "path": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
@@ -29,6 +40,17 @@
       "line": 7,
       "text": "Follow-up: Preserve the skip target on public-route error pages",
       "from": "review",
+      "item": "FORGE-REACTDEFAULTS-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/starter/apps/web/src/features/projects/hooks/projects-hooks.ts\tA sort or page not yet cached hides the table while it loads, so keyboard focus leaves the header; keeping the previous data on screen would fix it.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/apps/web/src/features/projects/hooks/projects-hooks.ts",
+      "line": 30,
+      "text": "A sort or page not yet cached hides the table while it loads, so keyboard focus leaves the header; keeping the previous data on screen would fix it.",
+      "from": "worker",
       "item": "FORGE-REACTDEFAULTS-1/STARTER",
       "status": "open",
       "closed_by": null
