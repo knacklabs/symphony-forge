@@ -67,9 +67,6 @@ Raise, under one of these lines:
   covers, a one-way step missing from Risks, a task that is too big, a shape bigger than the Done
   when needs, work no Done-when item needs, or a known trap the change is likely to meet.
 
-In a client app, report a plan whose part has one module query a table another module owns as a
-note titled `Module tables: <the part>`.
-
 Leave out, unless it falls under Security or Data loss or the finding names a realistic scenario
 that makes it likely in normal use:
 - a rare combination that needs an unusual sequence: a crash or interrupt at a precise moment, a
@@ -87,6 +84,9 @@ realistic scenario that makes it likely in normal use, or when it falls under Se
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
 Prefer one blunt fail-closed rule with one test over listing every case.
+
+In a client app, report a plan whose part has one module query a table another module owns as a
+note titled `Module tables: <the part>`.
 
 Check:
 

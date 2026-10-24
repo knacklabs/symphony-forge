@@ -12,6 +12,8 @@ from test_score_notes import _client_repo as setup_client, _scored
 from test_story import DOC, new_story
 from test_worker import calls, install_claude
 
+STORY = "FORGE-MODULAR-1"
+
 
 REVIEW_RULE = (
     "In an app with a database, report a query that this change adds in one module on a table "
