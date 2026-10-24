@@ -2,12 +2,20 @@
   "base": "d0e2e38e6cdf69918f5154801e06607e718d6ea5",
   "branch": "task/FORGE-ZOD-1-RULES",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-REACTDEFAULTS-1/RULES",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T09:21:38.688732+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "43c9ddafc12464a70c68a9777dde5ab4bfb215eb",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
