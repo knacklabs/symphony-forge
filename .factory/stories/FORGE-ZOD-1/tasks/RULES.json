@@ -47,9 +47,9 @@
     "id": "849f1aab-319c-4746-b3ca-2dc0d6e232ca",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-REACTDEFAULTS-1/RULES",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T09:21:38.688732+00:00",
@@ -69,10 +69,10 @@
     }
   ],
   "stuck": {
-    "close": "764e2a29-0753-464e-93c3-20af742df739",
-    "head": "9ae145db3935edae5e8720c90a68ca8c83ea8bcd",
+    "close": "9e183876-179b-4437-8576-d1aff1212cb1",
+    "head": "43c7e3db21412b0fd01da85e4dd0bb0a461da50e",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
