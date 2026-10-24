@@ -145,7 +145,9 @@ starter before you start; where a line below differs from the merged tree, follo
      `.toLowerCase()` are fine (checked on 4.1.12).
    - Test (new repo):
      `tests/test_zod_starter.py::test_3_the_request_docs_come_from_the_shared_zod_schemas` reads
-     the starter tree: no `.ts` file under `libs/` or `apps/api/src` has `ApiQuery(`,
+     the starter tree: no `.ts` file under `libs/` or `apps/api/src`, except
+     `libs/core/src/common/api-zod.decorator.ts` (which calls `ApiQuery` and `ApiBody` from the
+     schema), has `ApiQuery(`,
      `ApiPropertyOptional` or `ApiBody({ type`; `libs/shared/src/index.ts` defines
      `projectListQuerySchema`; `libs/core/src/common/api-zod.decorator.ts` calls
      `z.toJSONSchema`.
