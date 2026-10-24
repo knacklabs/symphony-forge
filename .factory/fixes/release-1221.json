@@ -1,0 +1,15 @@
+{
+  "base": "b60ac8b21c9689fc84359c0915b2c71e9116ac4f",
+  "branch": "fix/release-1221",
+  "done_when": "Forge's version, pins, installers and release tests name v1.2.21",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-24T03:45:47.420520+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.21: the per-app design flow, the starter app, reviews that keep unscored findings, the no-speculative-complexity rule and this week's fixes"
+}
