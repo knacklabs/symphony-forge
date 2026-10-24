@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed this part past the limit: about 435 of its lines are generated API files and the rest is one module with its migration and scoping",
   "base": "bd97bba40826ea2c792caa398c6fcff5ca098ba3",
   "branch": "task/FORGE-DEFAULTS-1-ORGSPY",
   "chat": {
