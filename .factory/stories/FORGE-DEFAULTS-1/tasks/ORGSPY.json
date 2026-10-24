@@ -21,9 +21,9 @@
     "id": "29f5496a-c765-451f-a687-6f9374eae245",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "FORGE-DEFAULTS-1/SOFTDELETE",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T15:53:10.451990+00:00",
@@ -39,10 +39,10 @@
     }
   ],
   "stuck": {
-    "close": "b6479c9b-5fdd-40b1-8290-9e7de26be9d0",
-    "head": "5a2ea01fd8159caf9bbef6698775b9a083e56659",
+    "close": "fbb8addd-361b-4e91-b86f-a70ca783318b",
+    "head": "2977faf4eb7c1c55f068255f81005b0a4700d6ca",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "codex"
 }
