@@ -1,0 +1,15 @@
+{
+  "base": "a9e7461797209ac6e7feb9c468791d3dd8efcfe8",
+  "branch": "fix/review-unscored-findings",
+  "done_when": "A review run keeps every readable finding; a finding with no score line is judged by its priority and close names each such finding; a finding with no code_location or an unknown priority still makes the run unreadable, and that message names the saved raw output's path",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-24T02:41:50.257415+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Issue #979: Forge drops every Autoreview finding when one finding has no Gain/Work/Harm score line, so a chunked review with two unscored P1 findings fails twice and close stops with no findings shown"
+}
