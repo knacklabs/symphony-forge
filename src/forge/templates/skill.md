@@ -1504,6 +1504,10 @@ in the default branch. Land retries close once itself, including a conflict duri
 wait; if the merge needs a person, it stops with close's existing conflict next step.
 If GitHub refuses a pull request body update, close stops after one attempt, including during a
 history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
+Close reruns failed pytest files once after a local test failure. If they pass, close names
+them as flaky and continues. A second failure still stops close. A failure without named
+test files still stops close.
+
 Close's tests and review run at the same time. Close waits for both and reports their results
 together; a red test or a P0/P1 finding still stops the round. When the
 test command fails, close keeps the output for the worker: run

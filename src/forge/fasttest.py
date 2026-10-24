@@ -405,7 +405,7 @@ def pytest_sessionfinish(session):
 # repo, and outcome (passed, failed, skipped, xfail, xpass, or error for a failed setup or
 # teardown). xdist forwards each test's report to the controller, which alone writes the file.
 RESULTS_HEADER = "# forge test results\n"
-RESULTS = """import os, pathlib
+RESULTS = """import json, os, pathlib
 FILE, ROOT = [], []
 def pytest_configure(config):
     # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
@@ -413,6 +413,10 @@ def pytest_configure(config):
     plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
                        if name.strip() not in ("", "_forge_test_results"))
     os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
+    retry = os.environ.pop("FORGE_RETRY_FILES", None)
+    if retry:
+        config.args = json.loads(retry)
+        config.option.file_or_dir = config.args
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):
         FILE.append(pathlib.Path(path))
