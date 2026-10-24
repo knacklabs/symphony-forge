@@ -56,7 +56,7 @@
     "status": "blocked"
   },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T11:00:53.666103+00:00",
@@ -77,8 +77,12 @@
   ],
   "stop": {
     "at": "2026-10-24T11:53:54.519341+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "pyproject.toml",
-    "wait_id": "791c8270-2916-4126-9bc5-bc5fffee18fe"
+    "reason": "The owner chose one more round: move the collection limit into the pytest.ini that pytest reads",
+    "wait_id": "791c8270-2916-4126-9bc5-bc5fffee18fe",
+    "worker_round": 3
   },
   "stuck": {
     "close": "3306558c-edcf-4997-bfb3-10f6d6da6f83",
