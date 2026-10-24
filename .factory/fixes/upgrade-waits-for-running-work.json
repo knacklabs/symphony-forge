@@ -22,8 +22,8 @@
     "id": "8feeee02-87ca-455a-8c0c-41276eb00abd",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T17:34:19.447447+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "607e85cd51393569e17f8ce346374c7aacf38821",
+    "close": "a443a6e6-610a-4645-ae73-89c5e11c0d7c",
+    "head": "53a393dc6d2d9e06c335e21df959dac448ba9503",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "forge upgrade and the guide's Upgrade Forge steps do not say to let running Forge work finish first, and replacing the installed Forge during a close can mix two releases",
   "worker": "codex"
