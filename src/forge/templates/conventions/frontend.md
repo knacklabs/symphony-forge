@@ -18,7 +18,7 @@ apps/web/src/
   lib/              API client and utilities
 ```
 
-Error codes and their user messages live in `@app/shared`.
+Error codes and their user messages live in `libs/shared`, imported through `@app/shared`.
 Use one fetch wrapper for the base URL and auth header. It unwraps the response envelope,
 throws errors, and sends an `x-correlation-id` header.
 
