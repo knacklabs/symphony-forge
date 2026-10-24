@@ -1,10 +1,18 @@
 {
   "doc": "plans/FORGE-ZOD-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-24T09:01:19.240639+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:13:34.527378+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-24T09:16:00.596963+00:00",
+      "step": "read"
     }
   ],
   "title": "One zod schema checks every client app input",
