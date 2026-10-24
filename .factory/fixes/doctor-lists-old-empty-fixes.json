@@ -22,8 +22,8 @@
     "id": "4369787e-a7a6-4cbe-8cae-f22e433fd83f",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T17:34:23.899186+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7dc5c8dfc07bddc1a8f8d1be8dde144131ce1351",
+    "close": "27a54954-76bf-4e7d-b4a6-1e1fc96aab55",
+    "head": "d4d7ba18c1551515be93ea545488f2690c5c9ba0",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Fixes that were started but never built pile up as worktrees, and forge doctor does not list them",
   "worker": "codex"
