@@ -7,7 +7,7 @@
       "gain": 5,
       "harm": 3,
       "line": 13,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -22,27 +22,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0b95e46061276e82fa8a793a39b77a0be9638879baf4c211c0bfa59c266ca81d",
-    "changed": "975f68cdb8dddfed5d706afa3b974fa66fbf001f52507ffd1adeaf077663c813",
-    "commit": "a7b01ca78557b9a59e320d9c528aec891c65cfd1",
+    "branch_diff": "19a7e5d1e62482ad4077796bf13d4d810fec1cdc22265e1ea14cea95ac4e55fb",
+    "changed": "74a7a33f481e4de3a1f31c9401ba067ab8975b3d54a4113ea4af458da5f6ac4b",
+    "commit": "8a98bd47fb5bd91b8db7cafb59b0a41f4a083adc",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional. Case: normal use - creating an app with `forge init --starter python` and building or testing it. `src/forge/init.py:147` copies this same web app into Python starters, but uses Python's separate shared package. `src/forge/templates/starter-python/libs/shared/src/index.ts:1` exports none of the new format helpers, so this import breaks the web build; the new `format.test.ts` imports unavailable helpers too. The same compatibility gap affects this page's new export link at line 199 and `apps/web/e2e/formats.spec.ts:30`: Python's projects router has no export endpoint and matches `/export` against the UUID parameter (`src/forge/templates/starter-python/apps/api/app/projects/routes.py:54`). Supplying the helpers alone therefore leaves a broken download and browser test. Keep the shared frontend, its tests, and both starter implementations compatible together.",
-        "file": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
-        "gain": 5,
-        "harm": 3,
-        "line": 13,
-        "priority": "P1",
-        "title": "Preserve Python starter compatibility in the shared web app",
-        "work": 3
-      }
-    ],
-    "id": "2a380dbc-c0a9-4fca-89df-17bf2daf9f9d",
-    "status": "blocked"
+    "findings": [],
+    "id": "b6bd45ef-7b84-41d9-ac47-24497f646d69",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T13:07:45.820444+00:00",
@@ -50,6 +39,10 @@
     },
     {
       "at": "2026-10-24T13:40:56.439700+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T14:49:01.091336+00:00",
       "step": "review"
     }
   ],
