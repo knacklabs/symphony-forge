@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/conventions/frontend.md\tGate: unrelated React-defaults changes exceed this part's scope\tFORGE-ZOD-1/RULES",
+      "kind": "bug",
+      "path": "src/forge/templates/conventions/frontend.md",
+      "line": 48,
+      "text": "Gate: unrelated React-defaults changes exceed this part's scope",
+      "from": "blocking",
+      "item": "FORGE-ZOD-1/RULES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_zod_rules.py\tFollow-up: write the validation-preservation fixture as bytes",
+      "kind": "edge",
+      "path": "tests/test_zod_rules.py",
+      "line": 138,
+      "text": "Follow-up: write the validation-preservation fixture as bytes",
+      "from": "review",
+      "item": "FORGE-ZOD-1/RULES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

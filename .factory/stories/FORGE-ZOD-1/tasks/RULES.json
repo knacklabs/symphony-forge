@@ -8,14 +8,77 @@
     "head": null,
     "start": "760bf88adb6a2abb2f3359c2b81243a97056bceb"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/conventions/frontend.md",
+      "file": "src/forge/templates/conventions/frontend.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 48,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated React-defaults changes exceed this part's scope",
+      "work": 2
+    },
+    {
+      "area": "test_6_an_existing_app_keeps_its_current_validation() in tests/test_zod_rules.py",
+      "file": "tests/test_zod_rules.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 138,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: write the validation-preservation fixture as bytes",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2feb098f80bd294cb0b508224c0ef8866a83b0bec4709d2549ea6ab8f63a0038",
+    "changed": "f095c29dbdb3552f5f683cd1181787561d9cbbace1a99e838ec3a24fdff22b03",
+    "commit": "e3cab83d2130ad078d8e75fa39378d5e9dae3e70",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 1\nRaise: Gate\nCase: normal use - merging the selected change also ships unrelated frontend rules. The additions to `src/forge/templates/conventions/frontend.md` and the new `tests/test_react_review_rules.py` implement React Compiler, composition and routing guidance. None is needed for the Zod conventions, review rule or validation preservation covered by items 4\u20136. Both files are outside this part's explicit scope. Exclude that work from this change.",
+        "file": "src/forge/templates/conventions/frontend.md",
+        "gain": 4,
+        "harm": 1,
+        "line": 48,
+        "priority": "P1",
+        "title": "Gate: unrelated React-defaults changes exceed this part's scope",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 1\nCase: normal use - running the test suite on Windows. `env.repo.write` uses `Path.write_text` without newline control (`tests/conftest.py:328\u2013331`), so the LF characters in the main.ts and projects.dto.ts fixtures become CRLF. Line 141 compares the resulting bytes against LF-only `content.encode(\"utf-8\")`, failing even when upgrade preserves those files correctly. Write the fixtures with `write_bytes` so the byte-preservation assertions compare against the bytes supplied.",
+        "file": "tests/test_zod_rules.py",
+        "gain": 2,
+        "harm": 1,
+        "line": 138,
+        "priority": "P2",
+        "title": "Follow-up: write the validation-preservation fixture as bytes",
+        "work": 1
+      }
+    ],
+    "id": "465efc93-1fa7-4884-89c4-d5d6d5f932cb",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-REACTDEFAULTS-1/RULES",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T09:21:38.688732+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:31:43.642861+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
