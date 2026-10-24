@@ -450,7 +450,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if not always and docs_only(top, base):
             said = DOCS_ONLY.format(command=command)
             return 0, said
-        from forge import codex, records  # import review indirectly
+        from forge import records  # imports review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
@@ -505,6 +505,11 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                                      re.findall(r"^(failed|error) (.+)$", evidence, re.M)})
                     if not failed:
                         break  # A command failure without named tests cannot be retried by file.
+                    # A test lane belongs to its command, which has now exited.
+                    machine.leave(entry)
+                    entry = machine.join("test", top, item, None, None, small=len(failed) <= 5)
+                    entry.update(output_path=log.as_posix(), test_cpus=int(workers))
+                    env["FORGE_TEST_LANE"] = entry["id"]
                     env["FORGE_RETRY_FILES"] = json.dumps([str(top / file) for file in failed])
                     flaky = failed
                 if flaky and done.returncode == 0:
