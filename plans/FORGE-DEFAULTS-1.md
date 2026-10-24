@@ -20,7 +20,7 @@
 - Existing apps keep their code. On upgrade they get only the guide and the rules text.
 - This work starts after the React defaults and the zod changes to the starter merge.
 
-Design: docs/design/FORGE-DEFAULTS-1/ (<tree id>)
+Design: docs/design/FORGE-DEFAULTS-1/ (3334cdb7687ed1416c8a11ca5b10f1f79b19d0aa)
 
 ## Why
 
