@@ -110,8 +110,8 @@ def test_3_reviews_and_reads_hold_a_query_on_another_modules_tables(env, tmp_pat
         fix, answers, queue = _client(repo, signoff, monkeypatch)
         _decision(fix, answers)
         queue.write_text(json.dumps([
-            {"say": SOL_HIGH, "report": CLEAN},
-            {"say": SOL_HIGH, "report": blocked(issue)},
+            {**CLEAN, "say": SOL_HIGH},
+            {**blocked(issue), "say": SOL_HIGH},
         ]), encoding="utf-8")
         accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert accepted.returncode == 1, accepted.stdout + accepted.stderr
