@@ -1,6 +1,6 @@
 # FastAPI starter for Python backends
 
-2 parts · Risks: none one-way · New moving parts: FastAPI, SQLAlchemy, Alembic, uv, import-linter and Pydantic in the new Python starter; openapi-typescript for its web app's API types
+2 parts · Risks: none one-way · New moving parts: FastAPI, SQLAlchemy, Alembic, uv, import-linter, Pydantic, ruff and mypy in the new Python starter; openapi-typescript for its web app's API types
 
 ## What changes for you
 
@@ -9,6 +9,7 @@
 - The Python app uses the same React web app as the TypeScript starter, with the same screens and browser tests. The repo keeps the Python API in `apps/api` as a uv project, and the web app and its shared types in a pnpm workspace next to it. One test command runs both, and one image holds both.
 - The web app gets its API types from the API's OpenAPI schema, so the tests fail when the two sides do not agree. The API checks its input with Pydantic, and the web forms keep zod.
 - An import-linter contract fails the tests when one module imports another module's internals, as Nx's module-boundary lint does in the TypeScript starter.
+- The one test command also runs ruff (lint and format check) and mypy in strict mode on the Python code, as ESLint, Prettier and the type check do in the TypeScript starter.
 - The app deploys as the TypeScript starter does: one image, `GET /health`, port 3000, and migrations before the server starts.
 - forge init picks this starter only when the owner asks for a Python backend, and the constitution lists the fixed rules without asking about them.
 - Workers in a Python app read one Python page with the same rules as the NestJS and Prisma pages, in Python terms.
@@ -22,12 +23,11 @@ A Python backend has no starter today, so each Python client app starts from not
 
 ## Done when
 
-1. **A new client app whose owner asks for a Python backend gets from `forge init --starter python`, in its first commit, one app split into modules: a FastAPI API on uv, with sign-in and the example records as separate modules that each own their tables, SQLAlchemy models and Alembic migrations on Postgres, and the TypeScript starter's React web app. This works from an installed Forge as from its source, and the guide tells the agent to use it only when the owner asks for a Python backend. The app's test command runs API tests against the running API and a real database, browser tests and the module check, and they pass. One account never sees or changes another account's records, and a deployed app never writes a password-reset link to its log. Its image runs the migrations, then answers `GET /health` on port 3000.**
+1. **A new client app whose owner asks for a Python backend gets from `forge init --starter python`, in its first commit, one app split into modules: a FastAPI API on uv, with sign-in and the example records as separate modules that each own their tables, SQLAlchemy models and Alembic migrations on Postgres, and the TypeScript starter's React web app. This works from an installed Forge as from its source. The app's test command runs lint, format and strict type checks, API tests against the running API and a real database, browser tests and the module check, and they pass. One account never sees or changes another account's records, and a deployed app never writes a password-reset link or token to its log. Its image runs the migrations, then answers `GET /health` on port 3000. The guide tells the agent to use this starter only when the owner asks for a Python backend, and to copy its fixed rules into the constitution without a question about them. New repos get the guide at init, and existing repos on upgrade and sync.**
 2. **In that app, the tests fail when one module imports another module's internal files, and the failure names the module rule.**
 3. **In that app, the web app's API types come from the API's OpenAPI schema, and the tests fail when the API changes a field that the web app uses.**
-4. **The guide tells the agent to copy the Python starter's fixed rules into the constitution of an app made from it and to ask nothing about them. New repos get this at init, and existing repos on upgrade and sync.**
-5. **The worker brief tells a worker in a Python app to read one Python page. The page gives the shipped rules in Python terms: the layout, public module services, Pydantic validation, the error envelope and codes, JSON logs with the correlation id, SQLAlchemy models with UUID ids, `_at_utc` times, money in the smallest unit, soft delete, Alembic migrations and end-to-end pytest tests. New repos get this at init, and existing repos on upgrade and sync.**
-6. **An existing client app keeps its stack, Dockerfile and test command after upgrade and sync, and gets no starter file.**
+4. **The worker brief tells a worker in a Python app to read one Python page. The page gives the shipped rules in Python terms: the layout, public module services, Pydantic validation, the error envelope and codes, JSON logs with the correlation id, SQLAlchemy models with UUID ids, `_at_utc` times, money in the smallest unit, soft delete, Alembic migrations, ruff and mypy, and end-to-end pytest tests. New repos get this at init, and existing repos on upgrade and sync.**
+5. **An existing client app keeps its stack, Dockerfile and test command after upgrade and sync, and gets no starter file.**
 
 ## Risks
 
@@ -98,7 +98,8 @@ starts the new job, because the Python starter uses the React starter's `apps/we
   libs/shared/            @app/shared: the zod form schemas (as the React starter's) and the API
                           types: openapi.json and src/api-types.ts, both generated and committed
   apps/api/
-    pyproject.toml        uv project: exact pins, [tool.importlinter], [tool.pytest.ini_options]
+    pyproject.toml        uv project: exact pins, [tool.importlinter], [tool.ruff], [tool.mypy],
+                          [tool.pytest.ini_options]
     uv.lock
     .python-version       3.14
     alembic.ini
@@ -131,12 +132,18 @@ starts the new job, because the Python starter uses the React starter's `apps/we
   (import-linter 2.14 or later has `broken_contract_guidance`).
 - Root scripts in `package.json`: `api-types` (`uv --directory apps/api run python -m app.openapi
   ../../libs/shared/openapi.json`, then `openapi-typescript libs/shared/openapi.json -o
-  libs/shared/src/api-types.ts`); `build` (the web app only, with Vite); `lint`; `typecheck` (the
-  web app and `libs/shared`); `test:imports` (`uv --directory apps/api run lint-imports`);
+  libs/shared/src/api-types.ts`); `build` (the web app only, with Vite); `lint` (ESLint and
+  Prettier as in the React starter, then `uv --directory apps/api run ruff check` and
+  `uv --directory apps/api run ruff format --check`); `typecheck` (the web app and `libs/shared`,
+  then `uv --directory apps/api run mypy`); `test:imports` (`uv --directory apps/api run lint-imports`);
   `test:api` (`uv --directory apps/api run pytest --junitxml=../../test-results/api.xml`);
   `test:hooks`; `test:browser`; and `test`, which runs `api-types`, `lint`, `typecheck`,
   `test:imports`, `test:api`, `test:hooks` and `test:browser` in that order through
   `corepack pnpm run`.
+- `apps/api/pyproject.toml`: `[tool.mypy]` has `strict = true`, `plugins = ["pydantic.mypy"]`
+  and `files = ["app", "tests"]`; `[tool.ruff]` keeps ruff's default rules and sets only
+  `target-version = "py314"`. The starter's own code passes both with no `# type: ignore` and no
+  `# noqa`.
 - forge.toml's `test` for both starters is `node scripts/test.mjs`.
 - The option (STARTER): `--starter` takes `nargs="?"`, `const="react"`,
   `choices=["react", "python"]`, help `start a new app from a starter: react (the default) or
@@ -149,7 +156,7 @@ starts the new job, because the Python starter uses the React starter's `apps/we
 - Dependencies, exact, each the newest stable release that was at least two weeks old on
   24 October 2026: `fastapi` 0.143.0, `pydantic` 2.14.0, `sqlalchemy` 2.1.4, `alembic` 1.20.0,
   `uvicorn` 0.54.0, `psycopg[binary]` 3.3.6; dev `pytest` 9.1.1, `httpx` 0.28.1, `import-linter`
-  2.15; npm dev `openapi-typescript` 7.13.0; uv 0.13.0 in the Dockerfile. Python 3.14, not 3.15:
+  2.15, `ruff` 0.17.0, `mypy` 2.4.0; npm dev `openapi-typescript` 7.13.0; uv 0.13.0 in the Dockerfile. Python 3.14, not 3.15:
   3.15 is three weeks old, and its binary wheels may be missing. If uv cannot resolve this set,
   take the newest older release that resolves and say so in the pull request. Every other web
   package has the React starter's version.
@@ -195,7 +202,9 @@ starts the new job, because the Python starter uses the React starter's `apps/we
      `uv sync --frozen --no-dev` in `/app/apps/api`, copies the web build to
      `/app/apps/web/dist`, has `EXPOSE 3000`, and its CMD runs `uv run --no-sync alembic upgrade
      head` (on failure the React starter's message and `exit 1`), then `exec uv run --no-sync
-     uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-3000}"`. `compose.test.yml` health checks
+     uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-3000}" --no-access-log`. Uvicorn's
+     access log writes each request path with its query string, and the reset page's address
+     holds the reset token, so the starter has no access log, as the React starter has none. `compose.test.yml` health checks
      use Python's `urllib`.
    - `skeleton/.dockerignore` gets `**/.venv` and `**/__pycache__`. Plain `forge init` and the
      React starter get these two lines too, and they change nothing for a Node app.
@@ -208,8 +217,11 @@ starts the new job, because the Python starter uses the React starter's `apps/we
      delete a project; `test_account_isolation_...`; forgot-password gives the same answer for
      known and unknown addresses; reset a password once; invalid input; a whitespace-only name;
      sign-in and CSRF before project changes; a cross-origin sign-in;
-     `test_production_forgot_password_does_not_log_a_reset_link` (it reads `docker compose logs
-     production-api`). Each creates its data through the API.
+     `test_production_forgot_password_does_not_log_a_reset_link`. That last one, on the
+     production API: sign up; ask for a reset for that account and for an unknown address (the
+     same status and body); then `GET /reset-password?token=<a fixed 43-character test token>`,
+     which serves the web app. `docker compose logs production-api` then has neither
+     `/reset-password` nor the test token. Each test creates its data through the API.
    - `src/forge/init.py`: the option above; one helper gives the file list of each starter, and
      both the refusal check and `_scaffold` use it.
    - `skill.md` (the option is a coordinator's command, so it changes in this part): the "Set up
@@ -217,23 +229,38 @@ starts the new job, because the Python starter uses the React starter's `apps/we
      --starter python\` for a new app whose owner asks for a Python backend. Use \`forge init\` for
      any other stack, then propose a \`fast_test\` as in step 9 of Adopt a live app, below`. In App
      constitution, "A FastAPI backend has no starter yet." becomes `A FastAPI backend starts from
-     forge init --starter python.`
+     forge init --starter python.` In App constitution, after the sentence "In an app whose tests
+     run Nx's module-boundary lint, copy the fixed rules into the constitution's ## Fixed rules
+     section, and ask nothing about them.", add `In an app made from the Python starter, whose
+     tests run import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing
+     about them:` and the four lines:
+
+     ```
+     - One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
+     - Each module owns its tables, in its own models file.
+     - A module uses another module only through its public service, never through its tables.
+     - The tests run import-linter, so an import of another module's internal files fails them.
+     ```
+
+     The sentences that `tests/test_notes_first_discovery.py` test_5 pins stay word for word.
    - README: how to run it, and a short "How it works" that names the modules, the rule, the
      import check and the API types.
    - Test: `tests/test_python_starter.py::test_1_a_python_backend_app_starts_from_the_fastapi_starter`,
-     `@pytest.mark.platform`, `@pytest.mark.timeout(1800)`, with `case` in ("new", "wheel").
+     `@pytest.mark.platform`, `@pytest.mark.timeout(1800)`, with `case` in ("new", "wheel", "adopted").
      - new: `_fresh_client(repo, gh, tmp_path, "--starter", "python")` exits 0. The first commit
        has every file of `starter-python/` and the three React starter paths, byte for byte, and
        no `apps/api/src/`, `libs/auth/`, `prisma.config.ts` or `nx.json`. forge.toml's `test` is
        `node scripts/test.mjs`. For `.claude` and `.codex`, `skills/forge/SKILL.md` has
-       `forge init --starter python`. The tree: every version in `apps/api/pyproject.toml` is
+       `forge init --starter python`, the Python fixed-rules sentence and its four lines
+       (whitespace joined). The tree: every version in `apps/api/pyproject.toml` is
        `==` and exact, and `uv.lock` (read with `tomllib`) has each pinned package at that
        version; every version in `package.json` is exact; every package that both starters'
        `package.json` files name has the same version; no package starts with `@nestjs/`,
        `@prisma/`, `@nx/`, or is `prisma` or `nx`; the lockfile's root importer equals
        `package.json` (`_pnpm_root_importer` from `tests/test_starter_tree.py`);
-       `app/auth/models.py` and `app/projects/models.py` exist; the Dockerfile has the lines
-       above. Live half: one module-scoped fixture puts the composed tree (the three React
+       `app/auth/models.py` and `app/projects/models.py` exist; `pyproject.toml` has the
+       `[tool.mypy]` settings above, and the root `lint` and `typecheck` scripts call ruff and
+       mypy; the Dockerfile has the lines above, `--no-access-log` included. Live half: one module-scoped fixture puts the composed tree (the three React
        starter paths, then `starter-python/`, then the skeleton's `.dockerignore`) in a temp
        folder, with the Docker and Node set-up of `live_starter` in
        `tests/test_starter_tree.py` (move that set-up into a helper both files call; no change
@@ -244,8 +271,11 @@ starts the new job, because the Python starter uses the React starter's `apps/we
      - wheel: `uv build --wheel` into a temp folder; the wheel has
        `forge/templates/starter-python/<path>` for every path that `git ls-files
        src/forge/templates/starter-python` lists, dotfiles included, byte for byte.
-     - The adopted side is item 6. `tests/test_starter_app.py` test_3 keeps the React starter's
-       cases and its refusals, which do not change.
+     - adopted: the `client` fixture of `tests/test_notes_first_discovery.py` with `adoption`
+       "previous release upgrade and sync". For `.claude` and `.codex`, `SKILL.md` has the same
+       three texts as in "new". The app side of an existing repo is item 5.
+     - `tests/test_starter_app.py` test_3 keeps the React starter's cases and its refusals,
+       which do not change.
 2. The import check (STARTER).
    - Test: `tests/test_python_starter.py::test_2_an_import_of_another_modules_internals_fails_the_tests`,
      `@pytest.mark.platform`, with `case` in ("clean", "reach into a module"). Always:
@@ -267,26 +297,7 @@ starts the new job, because the Python starter uses the React starter's `apps/we
      `app/projects/schema.py`, rename the response model's `name` field to `title`. The same
      command exits non-zero, and its output names a file under `apps/web/src/features/projects/`.
      Put the file back after the case.
-4. The constitution's fixed rules for a Python app (GUIDE).
-   - `skill.md`, App constitution: after the sentence "In an app whose tests run Nx's
-     module-boundary lint, copy the fixed rules into the constitution's ## Fixed rules section,
-     and ask nothing about them.", add `In an app made from the Python starter, whose tests run
-     import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing about
-     them:` and the four lines:
-
-     ```
-     - One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
-     - Each module owns its tables, in its own models file.
-     - A module uses another module only through its public service, never through its tables.
-     - The tests run import-linter, so an import of another module's internal files fails them.
-     ```
-
-     The sentences that `tests/test_notes_first_discovery.py` test_5 pins stay word for word.
-   - Test: `tests/test_python_guide.py::test_4_a_python_app_constitution_gets_its_fixed_rules`,
-     with the `client` fixture and `adoption` in ("new init", "previous release upgrade and
-     sync"), as `test_5` of `tests/test_notes_first_discovery.py`. For `.claude` and `.codex`,
-     `skills/forge/SKILL.md` has the sentence and the four lines (whitespace joined).
-5. The Python page (GUIDE).
+4. The Python page (GUIDE).
    - `python.md` has these sections, each with a short example in the style of `backend.md`:
      `## Layout` (the tree above), `## Modules` (public entry in `__init__.py`; the `protected`
      contract per module, and a new contract for each new module; each module's tables in its
@@ -310,7 +321,8 @@ starts the new job, because the Python starter uses the React starter's `apps/we
      account, 404 for another account's record), `## Tests` (pytest and httpx against the running
      API and a fresh database, data created through the API, one test per Done-when item, the
      refusals; Playwright for flows as `testing.md` says; unit tests only for pure logic; the root
-     `test` script and `node scripts/test.mjs`), `## Deploy` (the image of item 1; `/health`;
+     `test` script with `ruff check`, `ruff format --check` and `mypy` in strict mode, and
+     `node scripts/test.mjs`), `## Deploy` (the image of item 1; `/health`;
      port 3000; migrations before start; the `DATABASE_URL` scheme) and one line on demo data (the
      loader in `apps/api/app/demo/` is app code, not a module, and may read every table).
    - `brief.md`: the brief sentence above, after "Open a file there only when your task touches
@@ -325,15 +337,16 @@ starts the new job, because the Python starter uses the React starter's `apps/we
      page in the folder: a line of `python.md` that names an interface must also have only, no,
      not or never, and the page must not ask for a test for every item whatever its runtime
      behaviour. `tests/test_starter_app.py` test_3 refuses `npm workspaces` on every page.
-   - Test: `tests/test_python_guide.py::test_5_a_worker_in_a_python_app_reads_the_python_page`,
-     same `client` fixture and `adoption` parameter. A fix runs `forge work` with
+   - Test: `tests/test_python_guide.py::test_4_a_worker_in_a_python_app_reads_the_python_page`,
+     with the `client` fixture of `tests/test_notes_first_discovery.py` and `adoption` in ("new
+     init", "previous release upgrade and sync"). A fix runs `forge work` with
      `install_claude`; the brief has the brief sentence. The conventions folder that the brief
      names (found as `tests/test_starter_app.py` test_3 finds it) has `python.md` with the eleven
      section headings, `extra="forbid"`, `errorId`, `x-correlation-id`, `Uuid`, `_at_utc`,
-     `_in_cents`, `deleted_at_utc`, `alembic upgrade head`, `lint-imports` and `pytest`;
+     `_in_cents`, `deleted_at_utc`, `alembic upgrade head`, `lint-imports`, `ruff format --check`, `mypy` and `pytest`;
      `standards.md` in the synced skills folder names `python.md`.
-6. An existing app keeps its stack (GUIDE).
-   - Test: `tests/test_python_guide.py::test_6_an_existing_app_keeps_its_stack`, adopted case
+5. An existing app keeps its stack (GUIDE).
+   - Test: `tests/test_python_guide.py::test_5_an_existing_app_keeps_its_stack`, adopted case
      only (the item is about existing apps). Before the adoption commit, the fixture gets an
      existing Python app: `pyproject.toml`, `uv.lock`, a `Dockerfile` and `app/main.py` of its
      own, and forge.toml's `test` set to `uv run pytest`. After upgrade and sync, those four
@@ -346,11 +359,11 @@ starts the new job, because the Python starter uses the React starter's `apps/we
   the import contracts and the API types in the first commit, with `node scripts/test.mjs` as
   the test command. `forge init --starter` writes the React starter as today. Plain `forge init`
   is as today, with two more `.dockerignore` lines. The guide lines, the Python page and the brief
-  sentence arrive with setup (items 1, 4, 5).
+  sentence arrive with setup (items 1 and 4).
 - **Existing repos** (on upgrade to this release, after `forge sync`): no app file, lockfile,
   Dockerfile or test command changes, and no starter file is written. The guide lines, the Python
   page and the brief sentence arrive with the release and sync; the repo's own rules still win.
-  Tested on the adopted earlier-release fixture moved to this release (items 4, 5 and 6).
+  Tested on the adopted earlier-release fixture moved to this release (items 1, 4 and 5).
 
 ## Tasks
 
@@ -368,18 +381,17 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| STARTER | The Python starter and its init option | The FastAPI starter tree with its modules, import contracts, API types, tests and Dockerfile; `forge init --starter python` from source and from the wheel; the guide's set-up row; the live job. New repos get it from init; existing repos get no file. The one part allowed over the line limit (see Risks). | 1, 2, 3 | `src/forge/templates/starter-python/**` (new), `src/forge/init.py`, `src/forge/templates/skeleton/.dockerignore`, `src/forge/templates/skill.md` (the set-up row and the FastAPI sentence only), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `.github/workflows/starter-smoke.yml`, `tests/test_starter_tree.py` (the live set-up helper only), `pyproject.toml` (only if the wheel misses a starter file) | `tests/test_python_starter.py` (`test_1`, `test_2`, `test_3`, new) | FORGE-REACTDEFAULTS-1/STARTER | no | |
-| GUIDE | The Python page and the fixed rules | The Python conventions page, the brief sentence that points to it, the standards and stack lines, and the constitution's Python fixed rules, on new and existing repos. | 4, 5, 6 | `src/forge/templates/conventions/python.md` (new), `src/forge/templates/conventions/stack.md`, `src/forge/templates/brief.md`, `src/forge/standards.md`, `src/forge/templates/skill.md` (the App constitution fixed-rules paragraph only), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`) | `tests/test_python_guide.py` (`test_4`, `test_5`, `test_6`, new) | | no | |
+| STARTER | The Python starter and its init option | The FastAPI starter tree with its modules, import contracts, API types, ruff and mypy, tests and Dockerfile; `forge init --starter python` from source and from the wheel; the guide's set-up row and the constitution's Python fixed rules; the live job. New repos get it from init; existing repos get no file. The one part allowed over the line limit (see Risks). | 1, 2, 3 | `src/forge/templates/starter-python/**` (new), `src/forge/init.py`, `src/forge/templates/skeleton/.dockerignore`, `src/forge/templates/skill.md` (every edit of this story), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `.github/workflows/starter-smoke.yml`, `tests/test_starter_tree.py` (the live set-up helper only), `pyproject.toml` (only if the wheel misses a starter file) | `tests/test_python_starter.py` (`test_1`, `test_2`, `test_3`, new) | FORGE-REACTDEFAULTS-1/STARTER | no | |
+| GUIDE | The Python page | The Python conventions page, the brief sentence that points to it, and the standards and stack lines, on new and existing repos, and the proof that an existing app keeps its stack. | 4, 5 | `src/forge/templates/conventions/python.md` (new), `src/forge/templates/conventions/stack.md`, `src/forge/templates/brief.md`, `src/forge/standards.md` | `tests/test_python_guide.py` (`test_4`, `test_5`, new) | | no | |
 
-New moving parts: FastAPI with Pydantic, uvicorn and psycopg, the Python starter's API (item 1); SQLAlchemy and Alembic, its database models and migrations (item 1); uv, its package manager (item 1); import-linter, the module check (item 2); openapi-typescript, a dev dependency that makes the web app's API types (item 3).
+New moving parts: FastAPI with Pydantic, uvicorn and psycopg, the Python starter's API (item 1); SQLAlchemy and Alembic, its database models and migrations (item 1); uv, its package manager (item 1); import-linter, the module check (item 2); ruff and mypy, the Python lint, format and type checks (item 1); openapi-typescript, a dev dependency that makes the web app's API types (item 3).
 
 ## Notes
 
 - **Order.** STARTER waits for FORGE-REACTDEFAULTS-1/STARTER, because it copies `apps/web` and
   mirrors the root web files. GUIDE waits for nothing and runs in parallel: its text names only
-  what this doc pins. Both parts change `skill.md`, in lines about 40 apart, and both rewrite the
-  two `SKILL.md` copies with `forge sync`. The part that merges second merges main and runs
-  `forge sync` again. Both ship in one release.
+  what this doc pins. STARTER owns every `skill.md` edit and its two regenerated copies, so
+  the two parts share no file. Both ship in one release.
 - **One Python page, not a Python section in each page.** One page is one file for a Python
   worker to open, and the NestJS pages and the tests that pin their text do not change. The
   brief sends a Python worker to it, and the rules of the other pages still apply.
@@ -395,7 +407,7 @@ New moving parts: FastAPI with Pydantic, uvicorn and psycopg, the Python starter
   interface globs that init writes today, so an API or table change goes to the story lane. A
   route-only change in `routes.py` does not match; add `**/routes.py` to `init.INTERFACES` only
   if that happens in a real app.
-- **Not in this story.** A Python linter or type checker (ruff, mypy); async SQLAlchemy; a
+- **Not in this story.** Async SQLAlchemy; a
   Python starter for an existing repo; moving an existing app to this starter; a Python-only app
   with no web app.
 - **Not to do.** No new command or `forge.toml` setting; the one change is the `python` value of

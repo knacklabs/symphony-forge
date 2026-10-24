@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-FASTAPI-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-24T08:58:52.342935+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:22:26.332983+00:00",
+      "step": "read"
     }
   ],
   "title": "FastAPI starter for Python backends",
