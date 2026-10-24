@@ -13,6 +13,10 @@
     {
       "at": "2026-10-24T09:49:59.551680+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-24T11:12:39.840081+00:00",
+      "step": "read"
     }
   ],
   "title": "New client apps start with the constitution's built-in defaults",
