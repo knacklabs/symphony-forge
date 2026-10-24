@@ -294,7 +294,7 @@ def test_1_a_python_backend_app_starts_from_the_fastapi_starter(
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("case", ["clean", "reach into a module"])
+@pytest.mark.parametrize("case", ["clean", "reach into a module", "reach into organisations"])
 def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request):
     # Audit: the import-linter contract protects the public-service module boundary at its CLI.
     # A removed or misconfigured contract lets a real cross-module import pass. Existing tests
@@ -320,9 +320,11 @@ def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request)
         return
     folder = request.getfixturevalue("live_python_starter")["folder"]
     injected = folder / "apps/api/app/projects/reach_in.py"
-    if case == "reach into a module":
+    module = "organisations" if case == "reach into organisations" else "auth"
+    service = "OrganisationsService" if module == "organisations" else "AuthService"
+    if case != "clean":
         injected.write_text(
-            "from app.auth.service import AuthService\n\nREACHED_SERVICE = AuthService\n",
+            f"from app.{module}.service import {service}\n\nREACHED_SERVICE = {service}\n",
             encoding="utf-8",
         )
     try:
@@ -335,7 +337,7 @@ def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request)
         else:
             output = result.stdout + result.stderr
             assert result.returncode != 0, output
-            assert "auth internals" in output
+            assert f"{module} internals" in output
             assert "only through its public service" in output
     finally:
         if injected.exists():
