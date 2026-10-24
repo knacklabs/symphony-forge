@@ -28,7 +28,7 @@
       "gain": null,
       "harm": null,
       "line": 20,
-      "outcome": "open",
+      "outcome": "fixed in round 4",
       "reason": "",
       "round": 3,
       "security": false,
@@ -39,24 +39,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "355116be559a881d6a15b248d94dc111d7c995aad42ff1c542b3337b61fae0d8",
-    "changed": "096067fa242afe7c16047482626636fea9756ed0f66e6171ca707cce84786ddb",
-    "commit": "9ec1383948570609f9f297ff47d0cba3cddb7151",
+    "branch_diff": "f3e732b9fe8bdfe7ba0578467939f64068dcb6c94b4599ebbea6eaf612dfd0a6",
+    "changed": "a12cb2a17f0ac9e72d9a2fa1e2b99e9fe46fc04b94552c3874625918502e5c95",
+    "commit": "de6a9785220dcc3bad495eec6dd0a307679b6235",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "chunk 1/2:\n\nA fresh clone's documented `uv sync && uv run pytest` still collects the starter's API tests. The root `pytest.ini` (lines 1\u20135) takes precedence over this new table, and pytest does not merge configuration files ([pytest documentation](https://docs.pytest.org/en/stable/reference/customize.html)). Consequently, collection imports the new starter `conftest.py`, whose `httpx` dependency is absent from Forge's dependencies, and fails before running tests. The clone regression test misses this because its fixture omits `pytest.ini`. Put the collection restriction in the active configuration and preserve that configuration in the fixture.",
-        "file": "pyproject.toml",
-        "line": 20,
-        "priority": "P1",
-        "title": "[P1] Restrict collection in the active pytest configuration"
-      }
-    ],
-    "id": "36cc00d4-f76e-4d45-b0fc-2a578778b338",
-    "status": "blocked"
+    "findings": [],
+    "id": "ff50305d-d99c-4a25-ace2-575a6bf03f18",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-24T11:00:53.666103+00:00",
@@ -72,6 +64,10 @@
     },
     {
       "at": "2026-10-24T11:53:54.518964+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T12:02:43.450246+00:00",
       "step": "review"
     }
   ],
