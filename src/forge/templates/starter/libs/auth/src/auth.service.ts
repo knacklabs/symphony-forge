@@ -3,6 +3,8 @@ import { Inject, Injectable, Optional, BadRequestException, ConflictException, U
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
 import { PrismaService } from '@app/core';
+import { OrganisationsService } from '@app/organisations';
+import type { Account as AccountResponse } from '@app/shared';
 import { MAIL_PROVIDER, type MailProvider } from './mail.provider';
 
 const PASSWORD_KEY_BYTES = 64;
@@ -13,7 +15,6 @@ const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const RESET_TOKEN_LIFETIME_MS = 60 * 60 * 1000;
 const RESET_MESSAGE = 'If an account exists, a reset link has been sent.';
 
-export type AccountResponse = { id: string; email: string };
 export type SessionCookies = { sessionToken: string; csrfToken: string; expiresAtUtc: Date };
 
 function sha256(value: string): string {
@@ -45,8 +46,8 @@ async function verifyPassword(password: string, storedHash: string): Promise<boo
   return timingSafeEqual(actual, expected);
 }
 
-function accountResponse(account: Pick<Account, 'id' | 'email'>): AccountResponse {
-  return { id: account.id, email: account.email };
+function accountResponse(account: Pick<Account, 'id' | 'email'>, role: AccountResponse['role']): AccountResponse {
+  return { id: account.id, email: account.email, role };
 }
 
 @Injectable()
@@ -54,6 +55,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly organisations: OrganisationsService,
     @Optional() @Inject(MAIL_PROVIDER) private readonly mailProvider: MailProvider | null = null,
   ) {}
 
@@ -71,7 +73,9 @@ export class AuthService {
       }
       throw error;
     }
-    return { account: accountResponse(account), cookies: await this.createSession(account.id) };
+    // ponytail: account and organisation creation are two module calls; add recovery if sign-up needs retries across failures.
+    const membership = await this.organisations.createForAccount(account);
+    return { account: accountResponse(account, membership.role), cookies: await this.createSession(account.id) };
   }
 
   async signIn(email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
@@ -79,7 +83,11 @@ export class AuthService {
     if (!account || !(await verifyPassword(password, account.passwordHash))) {
       throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS', message: 'The email or password is incorrect.', details: null });
     }
-    return { account: accountResponse(account), cookies: await this.createSession(account.id) };
+    const membership = await this.organisations.membershipFor(account.id);
+    if (!membership) {
+      throw new UnauthorizedException({ code: 'UNAUTHENTICATED', message: 'Sign in to continue.', details: null });
+    }
+    return { account: accountResponse(account, membership.role), cookies: await this.createSession(account.id) };
   }
 
   async signOut(accountId: string, sessionToken: string | undefined): Promise<void> {

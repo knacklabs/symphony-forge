@@ -776,6 +776,78 @@
         }
       }
     },
+    "/api/v1/error-reports": {
+      "post": {
+        "tags": [
+          "Error reports"
+        ],
+        "summary": "Record a web error report.",
+        "description": "Logs the error kind and page path without error text or a query string.",
+        "operationId": "create_error_report_api_v1_error_reports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorReportInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_ErrorReportResponse_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Check whether the API is ready.",
@@ -923,6 +995,54 @@
           "error"
         ],
         "title": "ErrorEnvelope"
+      },
+      "ErrorReportInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Name",
+            "description": "The class name of the error.",
+            "examples": [
+              "TypeError"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Path",
+            "description": "The page path where it happened.",
+            "examples": [
+              "/projects"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "path"
+        ],
+        "title": "ErrorReportInput"
+      },
+      "ErrorReportResponse": {
+        "properties": {
+          "errorId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Errorid",
+            "description": "The reference for this error report.",
+            "examples": [
+              "d49fe9c4-a93b-4e3d-a20a-1afc37f4d1c0"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "errorId"
+        ],
+        "title": "ErrorReportResponse"
       },
       "FieldError": {
         "properties": {
@@ -1182,6 +1302,35 @@
           "data"
         ],
         "title": "SuccessEnvelope[Account]"
+      },
+      "SuccessEnvelope_ErrorReportResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorReportResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[ErrorReportResponse]"
       },
       "SuccessEnvelope_HealthResponse_": {
         "properties": {

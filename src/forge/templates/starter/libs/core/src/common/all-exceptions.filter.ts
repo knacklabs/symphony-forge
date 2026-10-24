@@ -2,13 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { JsonLogger } from './json-logger';
+import { ErrorReporter } from './error-report';
 
 type ApiErrorBody = { code: string; message: string; details: unknown; errorId: string };
 type ErrorResponse = { success: false; data: null; error: ApiErrorBody };
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly logger: JsonLogger) {}
+  constructor(private readonly logger: JsonLogger, private readonly reporter: ErrorReporter) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
@@ -28,7 +29,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       errorId,
     };
     const context = { errorId, status, method: request.method, path: request.path };
-    if (status >= 500) this.logger.error('API request failed', 'AllExceptionsFilter', context);
+    if (status >= 500) this.reporter.report({
+      ...context, source: 'api', name: exception instanceof Error ? exception.constructor.name : 'UnknownError',
+    });
     else this.logger.debug('API request rejected', 'AllExceptionsFilter', context);
 
     response.status(status).json({ success: false, data: null, error } satisfies ErrorResponse);

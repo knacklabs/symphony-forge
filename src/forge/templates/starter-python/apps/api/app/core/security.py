@@ -17,6 +17,7 @@ _RATE_LIMITED_PATHS = {
     "/api/v1/auth/sign-in",
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password",
+    "/api/v1/error-reports",
 }
 _RATE_LIMIT_SECONDS = 60
 _RATE_LIMIT_COUNT = 30
@@ -141,13 +142,14 @@ def install_security_middleware(app: FastAPI) -> None:
             try:
                 response = await call_next(request)
             # Keep database driver details out of server logs.
-            except Exception:  # noqa: BLE001
+            except Exception as error:  # noqa: BLE001
                 response = _error_response(
                     request,
                     500,
                     "INTERNAL_SERVER_ERROR",
                     "Something went wrong. Try again.",
                     None,
+                    exception=error,
                 )
 
         nonce = (

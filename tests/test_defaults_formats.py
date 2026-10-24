@@ -14,7 +14,7 @@ STORY = "FORGE-DEFAULTS-1"
 LINT_MESSAGE = "Format dates, times, numbers and money with the helpers in @app/shared."
 FORMAT_FLOW = "dates show in the person's time zone and the constitution's format"
 DOWNLOAD_FLOW = "Export CSV downloads the projects list"
-CSV_API_CASES = ("projects export as CSV",)
+CSV_API_CASES = ("projects export as CSV", "members export as CSV")
 HAND_FORMAT_CASES = {
     "a web file formats a date by hand": (
         Path("apps") / "web" / "src" / "features" / "hand-format.ts",

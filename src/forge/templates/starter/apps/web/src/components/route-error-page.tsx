@@ -1,8 +1,12 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useRouteError } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { reportError } from '@/lib/error-report';
 
 // Each route's errorElement. Try again reloads the whole page, so it also drops the cached bad response.
 export function RouteErrorPage() {
+  const error = useRouteError();
+  useEffect(() => { void reportError(error); }, [error]);
   return (
     <div className="flex flex-col items-center justify-center gap-4 p-6 py-16 text-center">
       <h1 className="text-2xl font-semibold">This page could not load</h1>

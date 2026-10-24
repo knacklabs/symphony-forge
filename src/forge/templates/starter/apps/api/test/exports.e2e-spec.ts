@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { apiBaseUrl, credentials, csrfToken } from './helpers';
 
 const PROJECTS_HEADER = 'Name,Status,Created (UTC),Updated (UTC)';
+const MEMBERS_HEADER = 'Email,Role,Joined (UTC)';
 const UTC_DATE_TIME = '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}';
 
 describe('CSV exports', () => {
@@ -32,5 +33,22 @@ describe('CSV exports', () => {
     await other.post('/api/v1/auth/sign-up').send(credentials()).expect(201);
     expect((await other.get('/api/v1/projects/export').expect(200)).text).toBe(`${PROJECTS_HEADER}\r\n`);
     await request(apiBaseUrl).get('/api/v1/projects/export').expect(401);
+  });
+
+  it('members export as CSV', async () => {
+    const account = credentials();
+    const client = request.agent(apiBaseUrl);
+    await client.post('/api/v1/auth/sign-up').send(account).expect(201);
+
+    const response = await client.get('/api/v1/members/export').expect(200);
+    expect(response.get('Content-Type')).toBe('text/csv; charset=utf-8');
+    expect(response.get('Content-Disposition')).toBe('attachment; filename="members.csv"');
+    const lines = response.text.split('\r\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBe(MEMBERS_HEADER);
+    expect(lines[1].startsWith(`${account.email},admin,`)).toBe(true);
+    expect(lines[1]).toMatch(/,\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    expect(lines[2]).toBe('');
+    await request(apiBaseUrl).get('/api/v1/members/export').expect(401);
   });
 });

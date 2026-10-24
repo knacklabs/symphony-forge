@@ -17,6 +17,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/organisations"
+    },
+    {
       "path": "../../libs/core"
     },
     {

@@ -1,4 +1,6 @@
 export { AllExceptionsFilter } from './common/all-exceptions.filter';
+export type { AccountPrincipal } from './common/account-principal';
+export { CurrentAccount } from './common/current-account.decorator';
 export { ApiEnvelope, ApiErrors } from './common/api-envelope.decorator';
 export { ApiZodBody, ApiZodQuery } from './common/api-zod.decorator';
 export { CommonModule } from './common/common.module';

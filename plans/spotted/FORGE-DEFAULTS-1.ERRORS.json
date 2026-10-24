@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/app/auth/service.py\tSign-up treats every database constraint error as an email conflict.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/app/auth/service.py",
+      "line": 109,
+      "text": "Sign-up treats every database constraint error as an email conflict.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/ERRORS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -201,6 +201,9 @@ importers:
       '@app/core':
         specifier: workspace:*
         version: link:../../libs/core
+      '@app/organisations':
+        specifier: workspace:*
+        version: link:../../libs/organisations
       '@app/projects':
         specifier: workspace:*
         version: link:../../libs/projects
@@ -216,17 +219,30 @@ importers:
       '@app/core':
         specifier: workspace:*
         version: link:../core
+      '@app/organisations':
+        specifier: workspace:*
+        version: link:../organisations
       '@app/shared':
         specifier: workspace:*
         version: link:../shared
 
-  libs/core: {}
+  libs/core:
+    dependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  libs/organisations:
+    dependencies:
+      '@app/core':
+        specifier: workspace:*
+        version: link:../core
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   libs/projects:
     dependencies:
-      '@app/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@app/core':
         specifier: workspace:*
         version: link:../core

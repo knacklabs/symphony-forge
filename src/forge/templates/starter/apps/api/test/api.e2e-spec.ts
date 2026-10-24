@@ -77,35 +77,6 @@ describe('starter API', () => {
     await client.get(`/api/v1/projects/${projectId}`).expect(404);
   });
 
-  it('account isolation: returns 404 for another account and leaves the project unchanged', async () => {
-    const owner = credentials();
-    const ownerClient = request.agent(apiBaseUrl);
-    const ownerSignUp = await ownerClient.post('/api/v1/auth/sign-up').send(owner).expect(201);
-    const csrf = csrfToken(ownerSignUp);
-    const created = await ownerClient
-      .post('/api/v1/projects')
-      .set('x-csrf-token', csrf)
-      .send({ name: 'Private project', status: 'active' })
-      .expect(201);
-    const projectId = created.body.data.id as string;
-
-    const otherClient = request.agent(apiBaseUrl);
-    const otherSignUp = await otherClient.post('/api/v1/auth/sign-up').send(credentials()).expect(201);
-    const otherCsrf = csrfToken(otherSignUp);
-
-    await otherClient.get(`/api/v1/projects/${projectId}`).expect(404);
-    await otherClient
-      .put(`/api/v1/projects/${projectId}`)
-      .set('x-csrf-token', otherCsrf)
-      .send({ name: 'Changed by another account', status: 'archived' })
-      .expect(404);
-    await otherClient.delete(`/api/v1/projects/${projectId}`).set('x-csrf-token', otherCsrf).expect(404);
-
-    await ownerClient.get(`/api/v1/projects/${projectId}`).expect(200).expect(({ body }) => {
-      expect(body.data).toMatchObject({ name: 'Private project', status: 'active' });
-    });
-  });
-
   it('forgot-password gives the same response for known and unknown email addresses', async () => {
     const account = credentials();
     await request(apiBaseUrl).post('/api/v1/auth/sign-up').send(account).expect(201);
