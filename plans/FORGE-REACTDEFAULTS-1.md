@@ -4,30 +4,23 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A new client React app starts with React Compiler on, and its review flags hand-written memoization in its own code.
+- A new client React app follows a composition rule that its review checks: layout through children, shared-state parts as compound components, logic without markup in custom hooks, and no boolean props that switch a component between modes.
+- Filters, tabs, sort order and the page number of a list live in the web address, so a shared link or a page refresh shows the same view.
+- Each route in a new client app has its own error page, so a crash on one screen shows that screen's error page and the other screens keep working. React Router stays.
+- An existing client app gets these rules for new code only; its current code is not changed or flagged.
 
 ## Why
 
-Four frontend defaults for new client React apps
+The starter sets no frontend defaults beyond its layout. Its projects page writes memoization by hand, only that page keeps its list in the web address, no rule says how components are composed, and no route has an error page, so one crash on a screen can blank the whole app.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client React app starts with React Compiler turned on, and its review flags a change that adds useMemo, useCallback or React.memo to the app's own code, but not the shadcn/ui copies.**
+2. **Its review flags a component that breaks the composition rule.**
+3. **Reloading or sharing a link to a filtered, sorted or paged list shows the same view.**
+4. **A crash on one route shows that route's error page, and the other routes still work.**
+5. **An existing client app's current code is not flagged; only new code is checked.**
 
 ## Risks
 
