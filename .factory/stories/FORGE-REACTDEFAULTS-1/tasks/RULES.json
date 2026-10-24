@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-REACTDEFAULTS-1-RULES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-24T08:57:00.339378+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "b813d66e716a3eb4f4104cba75bec3caddd1d2e9",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
