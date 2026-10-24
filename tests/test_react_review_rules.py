@@ -74,7 +74,10 @@ def _review_new_code(env, tmp_path, adopted, name, path, code, title, rule):
     closed = env.close(item)
     output = closed.stdout + closed.stderr
     assert closed.returncode == 1, output
-    assert "The review left serious findings open" in output
+    # A fix reaches its review limit in round one. The current close contract
+    # asks the owner about the P1 instead of sending it to another worker round.
+    assert f"Review round 1 of {item} reached the round limit with open findings" in output
+    assert "One more round, split or accept?" in output
     assert title in output
     assert "Gain 4, Work 1, Harm 1" in output
     assert rule in " ".join(env.prompt().split())
