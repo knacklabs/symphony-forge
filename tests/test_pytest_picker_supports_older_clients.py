@@ -53,7 +53,7 @@ def _assert_external_setup(client):
 
 def test_2_init_ships_consistent_external_picker_setup(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     _assert_external_setup(client)
 

@@ -31,7 +31,7 @@ def _client(repo, gh, tmp_path: Path) -> Path:
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    _ok(repo.forge("init", cwd=client))
+    _ok(repo.forge("init", "--actions", "yes", cwd=client))
     return client
 
 

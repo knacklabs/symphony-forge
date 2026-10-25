@@ -62,7 +62,7 @@ def _tool_bootstrap(jobs: tuple[str, str]) -> None:
 def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_path, runner):
     client = _new_repo(repo, gh, tmp_path)
     args = ("--runner", runner) if runner else ()
-    initialized = repo.forge("init", *args, cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", *args, cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     settings = tomllib.loads((client / "forge.toml").read_text("utf-8"))
     selected = runner or "ubuntu-latest"

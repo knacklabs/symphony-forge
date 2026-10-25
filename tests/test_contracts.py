@@ -113,23 +113,23 @@ def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch, request):
 def _init_with_commits(repo, gh, tmp_path, monkeypatch, request):
     # FORGE-LIVE-1: a repo with history is adopted on a fix branch, not refused; without the
     # human's confirmed answers it names the ones it needs.
-    return (("init",), None, "",
+    return (("init", "--actions", "yes"), None, "",
             "This repo already has commits, so forge init adopts it on a fix branch, and it needs "
             "the answers you confirmed: --test, --checks, --interfaces, --approver, --merger.\n"
-            'Next: forge init --test "<command>" --checks <check> --interfaces "<glob>" '
+            'Next: forge init --actions yes|no --test "<command>" --checks <check> --interfaces "<glob>" '
             '--approver "<who>" --merger "<who>" --never-touch "<path>"\n')
 
 
 def _init_without_origin(repo, gh, tmp_path, monkeypatch, request):
     fresh = tmp_path / "fresh"
     repo.git("init", "-q", "-b", "main", str(fresh))
-    return (("init",), fresh, "",
+    return (("init", "--actions", "yes"), fresh, "",
             "This repo has no origin remote, so Forge can't push the first commit or protect the "
             "default branch.\nNext: gh repo create <name> --private --source . --remote origin\n")
 
 
 def _init_starter_with_commits(repo, gh, tmp_path, monkeypatch, request):
-    return (("init", "--starter"), None, "",
+    return (("init", "--actions", "yes", "--starter"), None, "",
             "This repo already has commits, so forge init --starter cannot set it up.\n"
             "Next: use a new repo for the starter\n")
 
@@ -138,7 +138,7 @@ def _init_starter_with_app(repo, gh, tmp_path, monkeypatch, request):
     fresh = tmp_path / "fresh"
     repo.git("init", "-q", "-b", "main", str(fresh))
     (fresh / "package.json").write_text("{}\n", encoding="utf-8")
-    return (("init", "--starter"), fresh, "",
+    return (("init", "--actions", "yes", "--starter"), fresh, "",
             "forge init --starter found an existing app file: package.json.\n"
             "Next: use a new folder for the starter, or forge init to keep this app\n")
 
@@ -152,7 +152,7 @@ def _protection_fails(repo, gh, tmp_path, monkeypatch, request):
     # The branch has no rule yet, so reading it works; setting Forge's rule fails.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    return (("init",), client, "", re.compile(
+    return (("init", "--actions", "yes"), client, "", re.compile(
         r"Branch protection on main was not set: gh exited with code 1\.\n"
         r"Next: gh api --method PUT 'repos/\{owner\}/\{repo\}/branches/main/protection' "
         r"--input \S+branch-protection\.json'?\n"))

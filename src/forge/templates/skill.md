@@ -57,7 +57,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
 | "Is my setup healthy?" or "Fix my setup" | `forge doctor`, then `forge doctor --fix` for what it can repair. On the default branch, repairs to Forge's files need a clean checkout at `origin/<default>` and use a dated fix `forge-files-<YYYYMMDD-HHMM>`: `forge close <name>`, then merge it like any other. An existing `fix/forge-files-*` branch with no merged or closed pull request blocks another repair, record or not; follow doctor's finish-or-remove step. Finished-work cleanup skips only the open doctor fix. If a repair already used this minute's name, run `forge doctor --fix` in the next minute. A file it holds back as changed by hand: move that change out of the file, then `forge doctor --fix` again. In AGENTS.md, only hand edits inside the `forge:begin` and `forge:end` lines hold the file; your rules outside them stay as written when doctor refreshes Forge's block |
-| "Set up a new repo" | Use `forge init --starter` for a new React app, and `forge init --starter python` for a new app whose owner asks for a Python backend. Use `forge init` for any other stack, then propose a `fast_test` as in step 9 of Adopt a live app, below |
+| "Set up a new repo" | Before `forge init`, answer "Does this repo run GitHub Actions?" from the repo's settings: `gh api repos/{owner}/{repo}/actions/permissions` gives `enabled`. Ask the human only if the settings do not answer it. Pass `--actions yes` or `--actions no`; yes uses CI checks, while no selects laptop tests with `checks = []`. Then use `forge init --starter` for a new React app, `forge init --starter python` for a new app whose owner asks for a Python backend, or `forge init` for another stack. Propose a `fast_test` as in step 9 of Adopt a live app, below |
 | "Bring our live app into Forge" | Adopt a live app, below |
 | "Change the test command" | Ask, then in a fix: edit `forge.toml` (never its `merge` setting), `forge close <fix>` |
 | "Run everything in Claude" | Ask, then in a fix: set `tools = "claude"`, `workers = "claude"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
@@ -986,6 +986,11 @@ to documents only keeps its light review, which holds only P0 findings.
 An app already in production joins Forge through one fix and one pull request the human merges.
 Adopting changes no app code.
 
+When initializing an existing repo, answer "Does this repo run GitHub Actions?" from the repo's
+settings: `gh api repos/{owner}/{repo}/actions/permissions` gives `enabled`. Ask the human only
+if the settings do not answer it. Pass
+`--actions yes` or `--actions no`; omit `--checks` when the answer is no.
+
 1. Follow [App constitution](#app-constitution) for both interview halves together. Ask only what
    the code cannot answer, and record the stack the code already uses.
 2. Write the codebase report in `docs/context/codebase.md`: the stack and how to run it; the tests
@@ -1272,14 +1277,16 @@ the handoff, so answer a Scope question only when the change isn't needed. If th
 choice the item does not settle, get that choice made before sending the note.
 
 When a round ends with changes left uncommitted, `forge work` continues the same conversation
-once, telling the worker to commit first, run the change's related tests through `forge test`
-in the foreground, wait for them and commit any fixes. Only
+once, telling the worker to commit first. In a local-test repo, the worker runs related tests
+through `forge test` once at the end of the turn, reruns only failures and commits any fixes. In a
+CI-test repo, the worker commits first and leaves the change's related tests, lint and type checks
+to pull request CI; it runs `forge test` only for a test it is writing, to watch it fail. Only
 if changes are still uncommitted after that does it warn, naming them: `forge close` reviews only
 what is committed, so look at them before closing.
 
-Continued worker rounds repeat `forge test` and the commit-first order,
-replacing any earlier full-suite instruction. The synced test-audit skill follows the same rule;
-CI runs the full suite.
+Continued worker rounds repeat the selected test-place instruction and the commit-first order,
+replacing any earlier full-suite instruction. Follow the repo's `test_place` choice when applying
+the test-audit skill. CI runs the full suite.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
 changes. Codex runs no project hook in a project it doesn't trust, so Codex workers and readers

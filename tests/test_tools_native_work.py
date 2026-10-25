@@ -50,6 +50,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
     # An earlier-adopted repo may have no [models] table: built-in models apply.
     models = MODELS[tool] if history == "new" else ""
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{setting}\n'
+                             'test_place = "ci"\nchecks = ["tests"]\n'
                              f'test = "pytest -q"\n{models}')
     # Exercise Windows settings bytes on every host, including the later main merge.
     config = repo.path / "forge.toml"
@@ -133,7 +134,12 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         nudged = handback("BOARD/HELP", number, "Built it.")
         assert nudged.returncode == 0, nudged.stdout + nudged.stderr
         assert "Send this to subagent w1, then hand back again:" in nudged.stdout
-        assert "Commit your work on this branch first." in nudged.stdout
+        assert "commit your work on this branch first, then" in nudged.stdout.lower()
+        assert ("the pull request's ci runs the change's related tests, lint and type checks, "
+                "so do not run them here; run `forge test` only for a test you are writing, "
+                "to watch it fail.") in nudged.stdout.lower()
+        assert ("run the change's related tests through `forge test` in the foreground"
+                not in nudged.stdout.lower())
         assert lane("BOARD/HELP")
         done = handback("BOARD/HELP", number, "Still not committed.")
         assert done.returncode == 0, done.stdout + done.stderr

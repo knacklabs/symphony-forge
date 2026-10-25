@@ -1,8 +1,7 @@
 """forge close: close a task or fix by the close rule.
 
-Bring the default branch in, push and open the pull request so CI runs during review. Commit and
-publish the result, then wait for the checks forge.toml names on exactly that pushed head.
-Nothing is committed after the checks: GitHub holds when they finished. A human merges.
+Bring the default branch in, push and open the pull request. Run tests alongside the review
+on a laptop repo; on a CI repo, wait for the checks on the pushed head after the review.
 """
 from __future__ import annotations
 
@@ -25,7 +24,8 @@ from forge import __version__, app_baseline, checks, codex, design, githooks, in
 
 REFUSALS = {
     "not_started": ("Forge has not started {item} in any worktree of this repo.", "forge next"),
-    "no_checks": ("forge.toml names no checks for close to wait for.", "forge doctor"),
+    "no_checks": ("forge.toml runs change tests in CI but names no checks.",
+                  'name the checks in forge.toml or set test_place = "local"'),
     "publish": ("GitHub refused to update this pull request, so this command stopped.\n{problem}",
                 "{action}, then retry this command"),
     "remote_conflict": ("The merge of the remote branch conflicts in {files}.",
@@ -158,7 +158,7 @@ def close(args: argparse.Namespace) -> int:
     question = codex.record(top, item).get("question")
     if question:
         repo.refuse(REFUSALS["question"], item=item, question=question)
-    if not cfg["checks"]:
+    if cfg["test_place"] == "ci" and not cfg["checks"]:
         repo.refuse(REFUSALS["no_checks"])
     dismissals = _dismissals(args, item)
     branch, default = state["branch"], repo.default_branch(top)
@@ -220,6 +220,10 @@ def close(args: argparse.Namespace) -> int:
     repo.resume_pin(top, cfg["version"], getattr(args, "land_rounds", None), accepted=choice == "accept",
                     before=getattr(args, "pin_before", None))
     cfg = repo.config(top)
+    local_tests = cfg["test_place"] == "local"
+    if not local_tests and "tests" in state:
+        state.pop("tests")
+        _save(top, item, state, "Leave change tests to CI")
     if switch:
         base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top)
         files = set(repo.git("diff", "--name-only", "--no-renames", f"origin/{default}...HEAD",
@@ -293,15 +297,20 @@ def close(args: argparse.Namespace) -> int:
         if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or ""):
             repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         # Read after the merge, which may change the command.
-        command = review.close_test(top, base, head=head)
+        command = review.close_test(top, base, head=head) if local_tests else ""
         pr = _publish(top, item, state, branch, default, pr,
                       {"status": "reviewing", "findings": [], "dismissals": []}, evidence)
         start, clock = repo.now(), time.monotonic()
         outcome = "failed"
         selected: dict[str, str] = {}
+        test_note = ("Tests are running alongside this review; close waits for "
+                     f"both results before continuing. Command: `{command}`." if local_tests else
+                     "CI runs the change's related tests on the pull request; "
+                     "close waits for them after the review.")
         # shortcut: an interrupted review waits for tests; add cancellation if immediate interruption is needed.
         with ThreadPoolExecutor(max_workers=1) as pool:
-            testing = pool.submit(review.test_run, top, command, f"origin/{default}", always=switch)
+            testing = (pool.submit(review.test_run, top, command, f"origin/{default}", always=switch)
+                       if local_tests else None)
             try:
                 if switch or records_only:
                     head = repo.git("rev-parse", "HEAD", cwd=top)
@@ -311,8 +320,7 @@ def close(args: argparse.Namespace) -> int:
                               "changed": changed, "branch_diff": branch_diff, "mechanical": True}
                 else:
                     result = review.run(top, item, state, cfg, f"origin/{default}", selected, previous,
-                                        light=light, tested="Tests are running alongside this review; close waits for "
-                                        f"both results before continuing. Command: `{command}`.")
+                                        light=light, tested=test_note)
                 areas = _areas(top, result)
                 outcome = "blocked" if review.blocking(result) else "clean"
             finally:
@@ -320,18 +328,19 @@ def close(args: argparse.Namespace) -> int:
                     repo.record_event(top, item, "review result", outcome=outcome, findings=None,
                                       review_round=review.round_number(top, item, state))
                 repo.record_timing(top, item, "review", start, clock, outcome, selected)
-                failed, tested = testing.result()
-                print(tested, flush=True)
-                evidence = (evidence[0], review.proof_list(top, f"origin/{default}", tested))
-                if failed:
-                    state["tests"] = tested
-                    if outcome == "failed":
-                        state["status"] = "fixing"
-                        _save(top, item, state, f"Tests of {item} failed")
-                else:
-                    state.pop("tests", None)
+                if testing is not None:
+                    failed, tested = testing.result()
+                    print(tested, flush=True)
+                    evidence = (evidence[0], review.proof_list(top, f"origin/{default}", tested))
+                    if failed:
+                        state["tests"] = tested
+                        if outcome == "failed":
+                            state["status"] = "fixing"
+                            _save(top, item, state, f"Tests of {item} failed")
+                    else:
+                        state.pop("tests", None)
         repo.add_step(state, "review")
-    elif state.get("tests"):
+    elif local_tests and state.get("tests"):
         command = review.close_test(top, f"origin/{default}")
         failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
         print(tested, flush=True)
@@ -342,7 +351,7 @@ def close(args: argparse.Namespace) -> int:
             state.pop("tests", None)
         state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
         _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
-    elif (command := review.close_test(top, f"origin/{default}")) and (
+    elif local_tests and (command := review.close_test(top, f"origin/{default}")) and (
             (passed := review.passed_record(top, command)) and passed.exists()):
         print(review.SKIPPED.format(command=command), flush=True)
     for key, because in requested.items():
@@ -414,10 +423,11 @@ def close(args: argparse.Namespace) -> int:
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
     # forge-pr-check runs from the base branch, which has no Forge until migrate's or adopt's PR merges.
     try:
-        checks.wait(top, item, head, [name for name in cfg["checks"]
-                                     if not (migrating and name == "forge-pr-check")],
-                    branch=branch, progress=getattr(args, "wait_for_progress", False),
-                    slot=getattr(args, "check_slot", None))
+        if not local_tests:
+            checks.wait(top, item, head, [name for name in cfg["checks"]
+                                         if not (migrating and name == "forge-pr-check")],
+                        branch=branch, progress=getattr(args, "wait_for_progress", False),
+                        slot=getattr(args, "check_slot", None))
     except BaseException:
         _publish(top, item, state, branch, default, pr, result, evidence)
         raise
@@ -445,11 +455,12 @@ def close(args: argparse.Namespace) -> int:
     tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
     os.replace(tmp, path)
     _publish(top, item, state, branch, default, pr, result, evidence)
+    proof = "its tests passed on this machine" if local_tests else "green checks"
     if merge == "agent":
-        print(f"Ready: {item} has a clean review and green checks.")
+        print(f"Ready: {item} has a clean review and {proof}.")
         print(f"Next: forge merge {item}")
     else:
-        print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+        print(f"Ready: {item} has a clean review and {proof}. A human merges its pull request.")
     if not retried_history and backfill.upgrade_fix(top, item, state):
         backfill.run(top)
     return 0

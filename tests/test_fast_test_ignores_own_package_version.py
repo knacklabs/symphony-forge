@@ -91,7 +91,7 @@ def test_2_a_local_dependency_is_not_the_repos_own_package(repo, kind):
 
 def test_3_new_clients_get_version_only_lock_selection(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     repo.path = client
     exercise(repo, "uv.lock")

@@ -26,7 +26,7 @@ def _init(repo, gh, tmp_path, answer):
     repo.git("remote", "add", "origin", str(remote), cwd=client)
     gh.respond("api", stdout="{}")
     answer(gh)
-    return client, repo.forge("init", cwd=client)
+    return client, repo.forge("init", "--actions", "yes", cwd=client)
 
 
 def test_1_init_skips_protection_the_plan_does_not_offer(repo, gh, tmp_path):

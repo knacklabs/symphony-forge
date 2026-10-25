@@ -30,7 +30,7 @@ def _with_test_command(env) -> Path:
     log, script = env.tmp / "runs.log", env.tmp / "suite.py"
     script.write_text(SUITE.format(log=str(log)), "utf-8")
     toml = env.repo.path / "forge.toml"
-    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n' + toml.read_text("utf-8")
                + f"test = {f'{sys.executable} {script}'!r}\n".replace("'", '"')
                + "fast_test = " + json.dumps(f"{sys.executable} {script}") + "\n")
     env.repo.git("push", "-q", "origin", "main")

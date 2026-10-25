@@ -43,8 +43,9 @@ def _close(env, adopted, command, red=False, greeting=GREETING, docs_only=False)
     text = (repo.path / "forge.toml").read_text("utf-8").replace('version = "v1.2.2"',
                                                                   f'version = "{version}"')
     kept = [line for line in text.splitlines()
-            if line.partition("=")[0].strip() not in ("test", "fast_test", "checks")]
-    env.commit(repo.path, "forge.toml", f"test = {json.dumps(command)}\nchecks = [\"forge-pr-check\"]\n"
+            if line.partition("=")[0].strip() not in ("test", "fast_test", "checks", "test_place")]
+    env.commit(repo.path, "forge.toml", f"test = {json.dumps(command)}\ntest_place = \"local\"\n"
+               f"checks = [\"forge-pr-check\"]\n"
                + "\n".join(kept) + "\n", "Run the tests")
     # The worker maps items to a test that runs, one that does not exist, one close does not run
     # and one in another language, and writes no results.

@@ -81,6 +81,6 @@ def test_2_init_delivers_the_board_plugin(repo, gh, tmp_path, history):
         args = ["--test", f'"{sys.executable}" -c "print(123)"', "--checks", "tests",
                 "--interfaces", "src/routes/**", "--approver", "The owner", "--merger", "The owner"]
     _claude(repo)
-    done = repo.forge("init", *args, cwd=client)
+    done = repo.forge("init", "--actions", "yes", *args, cwd=client)
     assert done.returncode == 0, done.stdout + done.stderr
     assert ["plugin", "install", "forge@forge", "--scope", "user"] in _calls(repo), done.stdout

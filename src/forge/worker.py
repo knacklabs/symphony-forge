@@ -40,15 +40,25 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
+TEST_STEPS = {
+    "local": ("run the change's related tests through `forge test` in the foreground once, at the "
+              "end of your turn. Wait for it to finish; rerun only what failed. Run tests only "
+              "through `forge test`: it runs forge.toml's `fast_test`, "
+              "or `test` when none is set, in the machine's one test lane with `{base}` as the "
+              "merge base with `origin/<default branch>`, on at most two test processes; a picker "
+              "run of five or fewer related test files skips the lane's wait unless the test "
+              "command or pytest config has a doctest option. It always runs, including uncommitted "
+              "changes. Then commit any fixes. CI runs the full suite."),
+    "ci": ("the pull request's CI runs the change's related tests, lint and type checks, so do not "
+           "run them here; run `forge test` only for a test you are writing, to watch it fail."),
+}
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
               "everything a worker needs. Start from the files and tests this brief names, and "
               "search the rest of the repo only for what they call or what calls them.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
-                "Commit your work on this branch first. Run "
-                "the change's related tests through `forge test` in the foreground and wait for them to finish; never "
-                "leave them running in the background. Then commit any fixes on this branch, and end "
-                "your turn only once nothing is left uncommitted.\n")
+                "Commit your work on this branch first, then $test_step "
+                "End your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
     "merged": ("The pull request for {item} is already merged. Start a new fix for follow-up work.",
@@ -270,7 +280,7 @@ def _work(args: argparse.Namespace) -> bool:
                             fresh_brief or brief, thread, fresh, chosen, family)
             return False
         start, clock = repo.now(), time.monotonic()
-        nudge = COMMIT_NUDGE
+        nudge = commit_nudge(config["test_place"])
         outcome = "failed"
         final = None
         asked = ""
@@ -510,6 +520,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     design_text = ""
     values: dict[str, str] = {
         "settings": SETTINGS,
+        "test_step": TEST_STEPS[repo.config(top)["test_place"]],
         "checkout": top.resolve().as_posix(),
         "start_here": START_HERE,
         "review_loop": REVIEW_LOOP,
@@ -595,9 +606,7 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief += "\n" + REVIEW_LOOP + "\n"
         if user_facing:
             brief += "\n" + LIVE_RUN + "\n"
-        brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
-                  "then commit any fixes before you stop. "
-                  "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
+        brief += ("\nBefore you stop, commit your work first, then " + values["test_step"] + "\n")
         brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
                   "CI output reaches you in your next round. If you need CI evidence, commit and "
                   "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
@@ -618,6 +627,11 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     text = re.sub(r"<!-- if ([\w-]+) -->\n(.*?)<!-- end -->\n",
                   lambda block: block[2] if block[1] in on else "", text, flags=re.S)
     return Template(text).safe_substitute(values), subject
+
+
+def commit_nudge(test_place: str) -> str:
+    """Ask the worker to finish the round using its repo's selected test place."""
+    return Template(COMMIT_NUDGE).safe_substitute(test_step=TEST_STEPS[test_place])
 
 
 def design_context(top: Path, text: str, user_facing: bool) -> tuple[str, str]:

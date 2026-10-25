@@ -77,9 +77,10 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
         try:
-            checks.wait(worktree, item, head, config["checks"],
-                        branch=branch, progress=getattr(args, "wait_for_progress", False),
-                        slot=getattr(args, "check_slot", None))
+            if config["test_place"] == "ci":
+                checks.wait(worktree, item, head, config["checks"],
+                            branch=branch, progress=getattr(args, "wait_for_progress", False),
+                            slot=getattr(args, "check_slot", None))
         except repo.Refused as error:
             if error.entry is not checks.REFUSALS["conflict"] or refreshed:
                 raise

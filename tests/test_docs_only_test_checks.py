@@ -74,7 +74,7 @@ def test_1_generated_tests_check_skips_only_documentation(env, tmp_path, monkeyp
 
 @pytest.mark.parametrize("code", [False, True])
 def test_2_close_uses_the_same_documentation_rule(env, code):
-    log = _with_test_command(env)
+    log = _with_test_command(env, test_place="local")
     changes = {**DOCS, **({"app.py": "value = 1\n"} if code else {})}
     item, _ = env.start_fix(changes)
     closed = env.close(item)

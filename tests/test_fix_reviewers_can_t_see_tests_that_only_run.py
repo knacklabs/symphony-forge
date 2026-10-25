@@ -115,7 +115,7 @@ def test_6_forge_init_in_a_go_repo_writes_a_test_command_that_prints_skips(repo,
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stderr
     toml = (client / "forge.toml").read_text(encoding="utf-8")
     assert 'test = "go test -v ./..."' in toml

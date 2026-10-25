@@ -39,7 +39,7 @@ def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
     # The test command names only tests/unit; an always_test entry may sit outside it.
     command = subprocess.list2cmdline([sys.executable, "-m", "pytest", "tests/unit", "-q", *options])
     settings = re.sub(r"^test = .*\n", "", (env.repo.path / "forge.toml").read_text("utf-8"), flags=re.M)
-    settings = "test = " + json.dumps(command) + "\n" + settings
+    settings = 'test_place = "local"\n' + "test = " + json.dumps(command) + "\n" + settings
     listed = ("always_test = " + (always if isinstance(always, str) else json.dumps(always)) + "\n"
               if always is not None else "# no always_test\n")
     # changed=0: the fix changes only forge.toml, adding always_test there.

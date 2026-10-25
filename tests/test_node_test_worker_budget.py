@@ -29,7 +29,7 @@ def client(repo, gh, upgrade):
         repo.git("checkout", "--orphan", "fresh")
         gh.respond("api", stderr="Branch not protected", exit=1)
         gh.respond("api", "--method", "PUT", stdout="{}")
-        initialized = repo.forge("init")
+        initialized = repo.forge("init", "--actions", "yes")
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
 
 

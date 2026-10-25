@@ -411,7 +411,8 @@ def doctor(args: argparse.Namespace) -> int:
                     said = (done.stderr.strip() or "it printed nothing").splitlines()
                     fix = next((line[6:] for line in said if line.startswith("Next: ")), install)
                     add(f"The {event} hook in {rel} fails with exit code " f"{done.returncode}{bare}: {said[0]}", fix)
-    if not cfg["checks"]: add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
+    if cfg["test_place"] == "ci" and not cfg["checks"]:
+        add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
     if shutil.which("gh"):
         prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state,number,headRefName")
         for pr in prs if isinstance(prs, list) else []:

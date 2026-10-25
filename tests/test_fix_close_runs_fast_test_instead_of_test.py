@@ -69,7 +69,7 @@ def test_4_doctor_explains_fast_test(env):
 
 def test_5_new_repos_get_fast_test_unset(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    assert repo.forge("init", cwd=client).returncode == 0
+    assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
     assert "fast_test" not in tomllib.loads((client / "forge.toml").read_text("utf-8"))
 
 

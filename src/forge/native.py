@@ -276,7 +276,8 @@ def _work_result(path: Path, item: str, pending: dict[str, Any], said: str, owne
     left = repo.git("status", "--porcelain", "-uall", cwd=top).splitlines()
     if said and left and not pending.get("nudged"):
         codex._record(path, pending={**pending, "nudged": True, "said": said})
-        print(f"Send this to subagent {subagent}, then hand back again:\n{worker.COMMIT_NUDGE}")
+        print(f"Send this to subagent {subagent}, then hand back again:\n"
+              f"{worker.commit_nudge(repo.config(top)['test_place'])}")
         return True
     outcome = "completed" if said else "failed"
     asked = worker.questions(pending.get("said", ""), said)

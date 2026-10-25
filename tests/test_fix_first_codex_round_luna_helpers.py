@@ -19,7 +19,7 @@ HELPERS = {"agents.default_subagent_model": "gpt-6-luna",
 def test_1_forge_init_gives_lite_luna_max_helpers(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
 
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
 
     assert initialized.returncode == 0, initialized.stderr
     lite = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["models"]["lite"]["codex"]

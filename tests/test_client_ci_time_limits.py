@@ -27,7 +27,7 @@ def test_1_node_tests_get_thirty_minutes_on_adoption_and_sync(repo, gh, tmp_path
         repo.path = client
         repo.write("package.json", '{"scripts":{"test":"node --test"}}\n')
         gh.respond("api", stdout="{}")
-        done = repo.forge("init")
+        done = repo.forge("init", "--actions", "yes")
     else:
         repo.git("switch", "-qc", "fix/upgrade-client")
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,

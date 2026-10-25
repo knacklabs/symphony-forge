@@ -119,16 +119,16 @@ $delegation
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
 - If close reports that the tests ran out of time, rerun the tests job or split the suite.
   This timeout does not send the item to a worker. Node client tests get 30 minutes in CI.
-- Run tests in the foreground and wait for them to finish. Never end your turn while a command you
-  started still runs in the background. Commit your work before your turn ends: the review reads
-  only what is committed.
-- Run the related tests once, at the end of your turn, and rerun only what failed. Never poll
-  `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
+- Run any test command you start in the foreground and wait for it to finish. Never end your turn
+  while a command you started still runs in the background. Commit your work before your turn ends:
+  the review reads only what is committed.
+- Follow the test-place instructions below to decide which tests to run. Rerun only what failed.
+  Never poll `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
 - Generated client CI on a `windows-*` runner retries a failed test command once in PowerShell.
   PowerShell syntax and `.ps1` scripts keep working. A second failure still fails the check;
   Linux, Mac and the trusted PR gate keep their commands.
-- When you change text the program prints (messages, pull request text, board lines), search the
-  tests for that text and run those tests too.
+- When you change text the program prints (messages, pull request text, board lines), include tests
+  for that text in the change's related tests and follow the test-place instructions below.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
   one closer to Done-when, write `Ruling: <what> - <why>` in the commit body, and carry on. Stop
   only for a one-way step, a security question, a new moving part, or Done-when items that
@@ -240,13 +240,7 @@ proven by the check the item names. Name a new test file after the behaviour it 
 after the fix's slug. Run each test and watch it fail, then build until it passes. Never edit or
 delete a test to make it pass; if a test is wrong, say so. A test whose result a stub or fake
 decides proves nothing. Use the test-audit skill whenever you write or change a test. Before you
-stop, commit your work first, then run the change's related tests through `forge test` in the
-foreground and wait for it to finish. Run tests only through `forge test`: it runs forge.toml's
-`fast_test`, or `test` when none is set, in the machine's one test lane with `{base}` as the merge
-base with `origin/<default branch>`, on at most two test processes; a picker run of five or fewer
-related test files skips the lane's wait unless the test command or pytest config has a doctest
-option. It always runs, including uncommitted changes. Then commit
-any fixes. CI runs the full suite.
+stop, commit your work first, then $test_step
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.

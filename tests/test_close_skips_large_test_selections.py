@@ -1,4 +1,4 @@
-"""Large pytest selections belong to required CI; workers still run their tests."""
+"""CI close leaves test execution to the pull request; workers still run their tests."""
 import json
 import re
 import shutil
@@ -25,7 +25,7 @@ STORY = "FIX-SKIP-LARGE-LOCAL-TESTS"
     (True, False, "red", "shared"),
     (True, False, "without-tests", 2),
 ])
-def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
+def test_1_ci_close_never_runs_tests_locally_and_required_checks_still_gate(
         env, monkeypatch, adopted, fast, checks, selection):
     # Real pytest writes the receipt; only review and GitHub are faked.
     if adopted:
@@ -50,9 +50,10 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
     command = subprocess.list2cmdline([sys.executable, "-m", "pytest", "tests", "-q"])
     settings = (env.repo.path / "forge.toml").read_text("utf-8")
     settings = re.sub(r"^test = .*\n", "", settings, flags=re.M)
+    settings = re.sub(r"^test_place = .*\n", "", settings, flags=re.M)
     if checks == "without-tests":
         settings = re.sub(r"^checks = .*", 'checks = ["forge-pr-check"]', settings, flags=re.M)
-    settings = "test = " + json.dumps(command) + "\n" + settings
+    settings = 'test_place = "ci"\n' + "test = " + json.dumps(command) + "\n" + settings
     if fast:
         settings = 'fast_test = "forge test --pytest {base}"\n' + settings
     env.repo.write("forge.toml", settings)
@@ -75,18 +76,12 @@ def test_1_close_skips_more_than_a_third_but_required_checks_still_gate(
                 f"def test_case_{number}():\n    assert 2 + 2 == 4\n"
                 for number in range(selection)})
     item, where = env.start_fix(changes)
-    large = selection != 2
-    skipped = large and checks != "without-tests"
-    failed = skipped and checks == "red"
+    failed = checks == "red"
     env.checks(([run("tests", "failure" if failed else "success")]
                 if checks != "without-tests" else []) + [run("forge-pr-check")])
     closed = env.close(item)
     assert closed.returncode == (1 if failed else 0), closed.stdout + closed.stderr
-    count = 6 if selection == "shared" or (not fast and checks == "without-tests") else selection
-    expected = set() if skipped else {f"test_case_{number}" for number in range(count)}
-    assert {path.name for path in log.iterdir()} == expected
-    message = "More than a third of the test files selected; skipping local tests and relying on the pull request's required checks."
-    assert closed.stdout.count(message) == (1 if skipped else 0), closed.stdout
+    assert list(log.iterdir()) == [], closed.stdout + closed.stderr
     if failed:  # the pull request's failed tests check still stops close
         assert "Checks failed on the pull request: tests." in closed.stderr
     else:

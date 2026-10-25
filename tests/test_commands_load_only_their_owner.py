@@ -79,7 +79,7 @@ def _assert_hooks_are_small(repo, client, log):
 @pytest.mark.platform
 def test_1_new_clients_git_commit_and_push_build_only_their_hook(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     _assert_hooks_are_small(repo, client, tmp_path / "starts.jsonl")
 

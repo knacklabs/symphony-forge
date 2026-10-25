@@ -11,7 +11,7 @@ STORY = "FIX-REPOS-ONLY-GET-CHANGE-BASED-TEST-RUNS-AT"
 
 def test_1_the_synced_skill_carries_the_fast_test_setup_step(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "fast_test" not in tomllib.loads((client / "forge.toml").read_text("utf-8"))
     for host in (".claude", ".codex"):

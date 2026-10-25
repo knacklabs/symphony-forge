@@ -45,6 +45,7 @@ def configure(env):
     config = repo.path / 'forge.toml'
     command = f'"{sys.executable}" -c "print(123)"'
     config.write_text(config.read_text('utf-8') +
+                      'test_place = "local"\n'
                       'models.lite = { model = "sonnet", effort = "medium" }\n'
                       f'test = {json.dumps(command)}\nfast_test = {json.dumps(command)}\n', 'utf-8')
     repo.git('add', 'forge.toml')
@@ -86,9 +87,12 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         item = 'BOARD/PAGE'
         config = where / 'forge.toml'
         command = f'"{sys.executable}" -c "print(123)"'
-        env.commit(where, 'forge.toml', 'checks = ["tests", "forge-pr-check"]\n'
+        settings = "\n".join(line for line in config.read_text('utf-8').splitlines()
+                               if line.partition("=")[0].strip() != "test_place")
+        env.commit(where, 'forge.toml', 'test_place = "local"\n'
+                   'checks = ["tests", "forge-pr-check"]\n'
                    + f'test = {json.dumps(command)}\nfast_test = {json.dumps(command)}\n'
-                   + config.read_text('utf-8'))
+                   + settings + "\n")
         # Coordinator test settings belong on main, not to the timing task's diff.
         Upgrade(env, env.tmp).on_main('forge.toml', config.read_text('utf-8'))
     require_worker_environment(env.queue.parent / 'autoreview' / 'scripts' / 'autoreview')
@@ -105,8 +109,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
     timings = records(repo, 'timings.jsonl')
     assert [(row['round'], row['step'], row['outcome']) for row in timings] == [
         (number, step, outcome) for number in (1, 2) for step, outcome in
-        [('worker round', 'completed'), ('test run', 'passed'), ('review', 'clean'),
-         ('CI wait', 'passed')]]
+        [('worker round', 'completed'), ('test run', 'passed'), ('review', 'clean')]]
     for row in timings:
         assert row['item'] == item
         assert row['seconds'] > 0
@@ -439,6 +442,7 @@ def _previously_adopted_client_records_runs_after_upgrade(unsynced_up, monkeypat
     assert len({row['id'] for row in events}) == len(events)
     timings = records(repo, 'timings.jsonl')
     assert any(row['step'] == 'worker round' and row['round'] == 1 for row in timings)
-    assert any(row['step'] == 'test run' and row['outcome'] == 'passed' for row in timings)
-    assert {'test run', 'review', 'CI wait', 'worker round'} <= {row['step'] for row in timings}
+    assert any(row['step'] == 'CI wait' and row['outcome'] == 'passed' for row in timings)
+    assert not any(row['step'] == 'test run' for row in timings)
+    assert {'review', 'CI wait', 'worker round'} <= {row['step'] for row in timings}
     assert all(row['seconds'] > 0 for row in timings)

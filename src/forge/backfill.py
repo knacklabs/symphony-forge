@@ -138,8 +138,9 @@ def rebuild(top: Path, pr: dict[str, Any], *, pushed_head: str = "") -> tuple[st
             clean.append({"commit": commit, "at": at, "outcome": "clean"})
         if not reviewed and commit not in work_heads and commit != head:
             continue
-        required = tomllib.loads(story.show(top, commit, "forge.toml") or "").get("checks", [])
-        runs = _checks(top, commit)
+        settings = tomllib.loads(story.show(top, commit, "forge.toml") or "")
+        required = settings.get("checks", [])
+        runs = _checks(top, commit) if repo.test_place(settings) == "ci" else []
         named = [run for run in runs if any(run.get("name") == want
                  or str(run.get("name") or "").startswith(want + " (") for want in required)]
         began = [time_records.when(run.get("started_at")) for run in named]

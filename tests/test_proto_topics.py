@@ -39,7 +39,7 @@ def test_5_init_gives_new_client_one_answers_page_with_all_line_formats(repo, gh
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    made = repo.forge("init", cwd=client)
+    made = repo.forge("init", "--actions", "yes", cwd=client)
     assert made.returncode == 0, made.stderr
     brief = (client / "docs/product/BRIEF.md").read_text(encoding="utf-8")
     answers = brief.split("\n## Answers\n")[1].split("\n## ")[0]
