@@ -90,7 +90,7 @@
     "id": "2c823337-7977-4873-9070-abf7754dc0a4",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -103,10 +103,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "e2cf8d72181acc13a8c9d4af1311ddc33ae4143c",
-    "keys": {},
-    "round": null
+    "close": "235ec0d8-3d42-4a62-b8fa-e45c7690806d",
+    "head": "763e4321824cc8f4551af397f001160002b7d446",
+    "keys": {
+      "the open P0 support detached head before invoking change tests in ci in src/forge/prcheck.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
