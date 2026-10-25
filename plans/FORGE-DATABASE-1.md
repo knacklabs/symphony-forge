@@ -1,6 +1,6 @@
 # Database rules for every client app
 
-7 parts · Risks: none one-way · New moving parts: three Postgres extensions and one trigger function in the starters
+9 parts · Risks: none one-way · New moving parts: three Postgres extensions and one trigger function in the starters
 
 ## What changes for you
 
@@ -13,6 +13,9 @@
 - Both starters move from Postgres 17 to Postgres 18. pg_stat_statements, pg_trgm and btree_gin
   are on from the first day.
 - In new apps, the database gives each new row a time-ordered id and sets its last-changed time.
+- The starters' own tables follow the new rules too. Status lists become text with a named check,
+  names become text, a sign-in email is unique without regard to upper and lower case, and all
+  times keep their time zone.
 - In new apps, money is an exact decimal with four decimal places and its own currency code
   column, not whole cents. The shared money helper shows each currency with its own decimal
   places.
@@ -37,7 +40,7 @@ list, Postgres 18 with time-ordered ids, and money as an exact decimal with a cu
 
 1. **A new client repo gets the database skill for both agents, and an existing repo gets it on upgrade with no change to its tables, its Postgres version or its money columns.**
 2. **Both starters run Postgres 18 with pg_stat_statements, pg_trgm and btree_gin on.**
-3. **In both starters, the database gives each new row a time-ordered id and sets its last-changed time on each update.**
+3. **In both starters, the database gives each new row a time-ordered id and sets its last-changed time on each update, and the starter's own tables follow the skill: status as text with a named check, names as text, a sign-in email unique on its lower case, and times as timestamptz.**
 4. **Money is stored as an exact decimal with four decimal places and a currency code column, and the shared money helper shows each currency with its own decimal places.**
 5. **The feature step fills each column type, constraint and index from the one field-kind table, and the table's values match the skill.**
 6. **A review holds a new table, column, index or extension that breaks the skill, in a new and in an existing app. An extension that the four hosts do not all offer passes only with the owner's OK in the app's constitution.**
@@ -56,9 +59,8 @@ once as the host's admin user, then deploy again.
 Trade-off: an existing app whose constitution says money is stored in cents keeps cents in its
 new tables too, because the constitution wins over the skill.
 
-Trade-off: the starters' own tables keep their current status lists, name lengths, email rule
-and numbered pages. Only their ids, their last-changed times and (in the TypeScript starter) their
-time columns change. Features that the feature step makes follow the new rules.
+Trade-off: the projects list keeps its numbered pages in this story. The move to next and
+previous links belongs to the feature step's story.
 
 Trade-off: an amount and its currency code are two columns for each money field. A table with
 three amounts has three currency columns.
@@ -282,18 +284,51 @@ wins. Sections, in this order:
      (platform mark), parameters `react` and `python`: `forge init --starter <kind>` copies the
      compose file and the migration byte for byte; under `LIVE`, the live run shows the case
      above. The existing-repo side of this item is test_1 (b).
-3. Time-ordered ids and the last-changed trigger (IDS for TypeScript, IDSPY for Python).
-   - IDS: every Prisma id becomes `@default(dbgenerated("uuidv7()"))` (Account included), every
-     `DateTime` becomes `@db.Timestamptz(3)`, and migration
+3. Time-ordered ids and the last-changed trigger (IDS for TypeScript, IDSPY for Python), and the
+   starter tables' columns (COLUMNS for TypeScript, COLUMNSPY for Python).
+   - IDS: every Prisma id becomes `@default(dbgenerated("uuidv7()"))` (Account included), and
+     migration
      `starter/apps/api/prisma/migrations/20261026000100_ids_and_updated_at/migration.sql` sets
-     each id default, changes each time column with `USING "<column>" AT TIME ZONE 'UTC'`, creates
-     `set_updated_at()` and the triggers. `auth.service.ts` stops calling `randomUUID()` for the
+     each id default, creates `set_updated_at()` and the triggers. `auth.service.ts` stops calling `randomUUID()` for the
      account id: it reads `SELECT uuidv7()::text AS id` in the sign-up transaction, because the
      account references itself. Prisma's `@updatedAt` stays; the trigger sets the same column.
    - IDSPY: each model id gets `server_default=text("uuidv7()")`; each service that sets
      `id=uuid4()` uses the standard library's `uuid7()` (Python 3.14); revision
      `0007_ids_and_updated_at.py` (down revision `0006_extensions`) sets the defaults and creates
      the function and triggers. The models' `onupdate=func.now()` stays.
+   - COLUMNS (TypeScript), migration
+     `starter/apps/api/prisma/migrations/20261026000200_columns/migration.sql`, all in one
+     transaction (a new app's tables are empty at set-up, but the `USING` clauses keep any rows):
+     every `DateTime` becomes `@db.Timestamptz(3)`, changed with `USING "<column>" AT TIME ZONE
+     'UTC'`; the `ProjectStatus` and `MembershipRole` enums go, and `status` and `role` become
+     `String` (`text`) with their defaults and the named checks `Project_status_allowed` and
+     `Membership_role_allowed` (`CHECK (... IN (...))`), then `DROP TYPE`; `Project.name` becomes
+     `text` with `Project_name_length CHECK (char_length("name") BETWEEN 1 AND 120)`, and every
+     other `varchar` becomes `text`; `Account.email @unique` becomes the unique index
+     `Account_email_lower_key ON "Account" (lower("email"))`, and `Invite`'s
+     `@@unique([organisationId, email])` becomes `Invite_organisationId_email_lower_key ON
+     "Invite" ("organisationId", lower("email"))`. The shared zod schemas already lower-case
+     emails and keep their status and role lists, so the HTTP contract does not change; only
+     code that imports the Prisma enum types changes to the shared string types. Where Prisma
+     7.10 cannot say an expression index or a check, the SQL has it and the drift check proves
+     the next `prisma migrate dev` drops nothing.
+   - COLUMNSPY (Python), revision `0008_columns.py` (down revision `0007_ids_and_updated_at`):
+     the `project_status` and `membership_role` native enums become `Text` with the named checks
+     `project_status_allowed` and `membership_role_allowed` (`CheckConstraint` in the models),
+     then `DROP TYPE`; every `String(n)` becomes `Text`, with `project_name_length` (1 to 120) on
+     `project.name`; `account.email`'s unique constraint becomes the unique index
+     `account_email_lower_key` on `lower(email)`, and the invite's `(organisation_id, email)`
+     unique becomes `invite_organisation_id_email_lower_key` on `(organisation_id, lower(email))`
+     (`Index(..., text("lower(email)"), unique=True)` in the models). The Python times are
+     already timestamptz. The Python `ProjectStatus` and `Role` types stay, so the API does not
+     change.
+   - Live cases (in the files from item 2): `the starter tables follow the database skill` and
+     `test_the_starter_tables_follow_the_database_skill`: through `psql`, no column of the app's
+     tables (all but `_prisma_migrations` and `alembic_version`) has the type `character
+     varying`, `USER-DEFINED` or `timestamp without time zone`; an `UPDATE` that sets a project's
+     status to `paused` fails and names `Project_status_allowed` (or `project_status_allowed`);
+     and after two sign-ups through the API, a `psql` `UPDATE` that sets the second account's
+     email to the first one's in capital letters fails and names the lower-case email index.
    - Live cases (in the files from item 2): `a new row gets a time-ordered id and an update sets
      its last-changed time` and `test_a_new_row_gets_a_time_ordered_id_and_an_update_sets_its_last_changed_time`:
      after sign-up and one project through the API, `SELECT count(*)` of rows in each starter
@@ -304,6 +339,12 @@ wins. Sections, in this order:
      the schema or model files have no `@default(uuid())` and no `uuid4()`, and under `LIVE` the
      live run shows the case. The `prisma migrate diff` drift check from item 5 also runs on the
      plain starter here and prints an empty migration.
+   - Test `tests/test_database_starters.py::test_3_starter_tables_follow_the_skill` (platform
+     mark), parameters `react` and `python`: init copies the columns migration byte for byte, the
+     schema or model files have no `enum`, `VarChar`, `String(` or `native_enum`, and under `LIVE`
+     the live run shows the columns case and the drift check (`prisma migrate diff ... --script`
+     empty; `alembic check` passes) runs after the columns migration. The existing-repo side of
+     item 3 is test_1 (b): an adopted app's schema and migrations stay byte for byte the same.
 4. Money (MONEY; the stored columns are KINDS's, item 5).
    - `formatMoney(amount, currency)`: refuses with a `RangeError` an amount that is not a decimal
      string (`/^-?\d+(\.\d+)?$/`) or a currency that is not three capital letters. It formats the
@@ -364,8 +405,9 @@ wins. Sections, in this order:
 
 - **New repos** (`forge init`, `--starter`, `--starter python`): the skill for both agents, the
   brief paragraph, the convention pages and the review rule. With a starter: Postgres 18, the
-  three extensions, uuidv7 ids, timestamptz times, the `set_updated_at()` trigger, the new money
-  helper, and the feature step's values.
+  three extensions, uuidv7 ids, the `set_updated_at()` trigger, starter tables with text status
+  and names, lower-case unique sign-in emails and timestamptz times, the new money helper, and
+  the feature step's values.
 - **Existing repos** (on upgrade to this release, after `forge sync`): the skill, the brief
   paragraph, the convention pages and the review rule. No app file, compose file, schema,
   migration or money helper changes. The review holds only schema that a change adds. Tested on
@@ -389,11 +431,13 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 |---|---|---|---|---|---|---|---|---|
 | SKILL | The database skill and its texts | The skill page, its shipping to both hosts, the brief paragraph, the coordinator lines, and the database and Python convention pages. | 1 | `src/forge/templates/skills/database/SKILL.md` (new), `src/forge/app_baseline.py`, `src/forge/templates/brief.md`, `src/forge/templates/skill.md`, `src/forge/templates/conventions/database.md`, `src/forge/templates/conventions/python.md`, synced copies under `.claude/skills/` and `.codex/skills/` | `tests/test_database_skill.py` (`test_1`, new); `tests/test_built_in_defaults_guide.py`, `tests/test_python_guide.py` (money lines) | | no | |
 | PG18 | Postgres 18 and day-one extensions | Both starters on Postgres 18 with pg_stat_statements preloaded, and one migration each that turns on the three extensions. | 2 | `starter/compose.test.yml`, `starter-python/compose.test.yml`, `starter/apps/api/prisma/migrations/20261026000000_extensions/` (new), `starter-python/apps/api/migrations/versions/0006_extensions.py` (new), `starter/apps/api/test/database.e2e-spec.ts` (new), `starter-python/apps/api/tests/test_database.py` (new) | `tests/test_database_starters.py` (`test_2`, new); the two live cases of item 2 | | no | |
-| IDS | Time-ordered ids in the TypeScript starter | uuidv7 ids, timestamptz times and the `set_updated_at()` trigger in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000100_ids_and_updated_at/` (new), `starter/libs/auth/src/auth.service.ts`, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3`, `react`); the TypeScript live case of item 3 | PG18 | no | |
-| IDSPY | Time-ordered ids in the Python starter | uuidv7 ids and the `set_updated_at()` trigger in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/app/*/service.py` (id lines only), `starter-python/apps/api/migrations/versions/0007_ids_and_updated_at.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3`, `python`); the Python live case of item 3 | PG18, IDS | no | |
+| IDS | Time-ordered ids in the TypeScript starter | uuidv7 ids and the `set_updated_at()` trigger in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000100_ids_and_updated_at/` (new), `starter/libs/auth/src/auth.service.ts`, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_new_rows...`, `react`); the TypeScript ids case of item 3 | PG18 | no | |
+| IDSPY | Time-ordered ids in the Python starter | uuidv7 ids and the `set_updated_at()` trigger in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/app/*/service.py` (id lines only), `starter-python/apps/api/migrations/versions/0007_ids_and_updated_at.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_new_rows...`, `python`); the Python ids case of item 3 | PG18, IDS | no | |
+| COLUMNS | TypeScript starter tables follow the skill | Text status and role with named checks, text names, the lower-case unique emails and timestamptz times in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000200_columns/` (new), the files in `starter/libs/*/src/` that import a Prisma enum type, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `react`); the TypeScript columns case of item 3 | IDS | no | |
+| COLUMNSPY | Python starter tables follow the skill | Text status and role with named checks, text names and the lower-case unique emails in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/migrations/versions/0008_columns.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `python`); the Python columns case of item 3 | IDSPY, COLUMNS | no | |
 | MONEY | Exact money with its currency | The new `formatMoney` in both starters, its unit cases and the README line. | 4 | `starter/libs/shared/src/format.ts`, `starter-python/libs/shared/src/format.ts`, `starter/apps/web/src/lib/format.test.ts`, `starter/README.md` | `tests/test_database_money.py` (`test_4`, new); the format unit cases | | no | |
 | REVIEW | Review holds schema that breaks the skill | The review rule and the `Database:` score floor. | 6 | `src/forge/templates/review.md`, `src/forge/score.py` | `tests/test_database_review.py` (`test_6`, new) | SKILL | no | |
-| KINDS | The field-kind table's database values | The final database values and new keys in kinds.toml, the money and number keys that follow the new helper, and the small `feature.py` changes they need. | 4, 5 | `src/forge/templates/feature/kinds.toml`, `src/forge/feature.py` (the value rendering only) | `tests/test_database_kinds.py` (`test_5`, new); FORGE-FEATURE-1's `tests/test_feature_command.py` where it names a placeholder value | FORGE-FEATURE-1/PY, SKILL, IDS, IDSPY, MONEY | no | |
+| KINDS | The field-kind table's database values | The final database values and new keys in kinds.toml, the money and number keys that follow the new helper, and the small `feature.py` changes they need. | 4, 5 | `src/forge/templates/feature/kinds.toml`, `src/forge/feature.py` (the value rendering only) | `tests/test_database_kinds.py` (`test_5`, new); FORGE-FEATURE-1's `tests/test_feature_command.py` where it names a placeholder value | FORGE-FEATURE-1/PY, SKILL, COLUMNS, COLUMNSPY, MONEY | no | |
 
 New moving parts: the pg_stat_statements, pg_trgm and btree_gin extensions in both starters (item 2); the `set_updated_at()` trigger function in both starters' migrations (item 3). No new package: `uuidv7()` is built into Postgres 18 and `uuid7()` into Python 3.14.
 
@@ -401,10 +445,17 @@ New moving parts: the pg_stat_statements, pg_trgm and btree_gin extensions in bo
 
 - **Order.** SKILL, PG18 and MONEY start at once; they share no file. IDS after PG18 (its
   migration comes after the extensions one and needs Postgres 18); IDSPY after PG18 and IDS (the
-  shared live test file and the same function name). REVIEW after SKILL (its test checks SKILL's
-  brief paragraph). KINDS last: it needs FORGE-FEATURE-1's command and kinds.toml, the skill's
-  table, the starters' new ids and trigger, and the new money helper. All parts ship in one
+  shared live test file and the same function name). COLUMNS after IDS (the same schema files
+  and the next migration); COLUMNSPY after IDSPY and COLUMNS. REVIEW after SKILL (its test checks
+  SKILL's brief paragraph). KINDS last: it needs FORGE-FEATURE-1's command and kinds.toml, the
+  skill's table, the starters' new tables, and the new money helper. All parts ship in one
   release.
+- **Order with FORGE-FEATURE-1.** That story's command copies the starter's projects module, so
+  IDS, IDSPY, COLUMNS and COLUMNSPY must merge before FORGE-FEATURE-1's COMMAND part. That part
+  lists them under After. Its SOURCE and SOURCEPY parts also change the projects files; whichever
+  merges later brings main in first.
+- **Not in this story.** Projects paging (next and previous links) belongs to FORGE-FEATURE-1's
+  SOURCE part.
 - **The other story.** FORGE-FEATURE-1's COMMAND part creates kinds.toml with placeholder database
   values; that story's plan says this story sets them. Its `{enum}` placeholder and its own
   Postgres enum for status go: status is text with a CHECK. Its test_3 reads the values from the
@@ -418,16 +469,17 @@ New moving parts: the pg_stat_statements, pg_trgm and btree_gin extensions in bo
   its own story; keyset paging by default; extensions only from the four hosts' list, others with
   the owner's OK for that client; pg_stat_statements, pg_trgm and btree_gin on from day one;
   existing apps get the rules for new tables only, with no forced Postgres, id or money
-  migration. The column, constraint, index, jsonb, history and dashboard rules in the skill are
+  migration. Later the same day the owner added: the starters' own tables move to the rules in
+  both starters (text status with a named check, text names, sign-in email unique on
+  `lower(email)`, timestamptz times), and existing client apps are not touched. The column, constraint, index, jsonb, history and dashboard rules in the skill are
   the owner's research decisions of the same day.
 - **Planner choices the owner did not make.** (1) The skill ships beside app-baseline from
   `app_baseline.ships`, with its source under `src/forge/templates/skills/`. (2) The extension OK
   is a line in the constitution, which the review already reads. (3) Each money field has its own
   currency column. (4) The email field kind is a contact field and is not unique; the unique
-  lower-case rule is for sign-in emails. (5) The TypeScript starter's times move to timestamptz,
-  because the feature step copies its audit columns and the skill requires timestamptz. (6) The
-  starters' own status lists, name lengths, account email rule and numbered pages stay as they
-  are (see the Risks trade-off). (7) The review holds schema only; paging and the other query
+  lower-case rule is for sign-in emails. (5) The project name keeps its 120-character limit as a
+  named check; token and password hashes become text with no check, because the app writes
+  them. (6) The invite's per-organisation email unique also moves to lower case. (7) The review holds schema only; paging and the other query
   rules are the skill's guidance. (8) A `Database:` finding gets the same score floor as a
   `Module tables:` finding, so a low score cannot let it through.
 - No client repo is named anywhere in this story's code, tests, texts or commits.
