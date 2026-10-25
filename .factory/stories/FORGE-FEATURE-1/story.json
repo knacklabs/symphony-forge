@@ -9,6 +9,10 @@
     {
       "at": "2026-10-25T17:45:30.324035+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-25T17:56:47.144559+00:00",
+      "step": "read"
     }
   ],
   "title": "Build a client feature from the starter in one step",
