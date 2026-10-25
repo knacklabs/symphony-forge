@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-TESTPLACE-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-24T17:39:26.182711+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-24T18:08:11.470879+00:00",
+      "step": "read"
     }
   ],
   "title": "Tests run once per change, in one place per repo, and CI is optional",
