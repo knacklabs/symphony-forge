@@ -21,6 +21,17 @@
       "item": "FORGE-DEFAULTS-1/HISTORYUI",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/src/main.tsx\tmutations keep the default network mode, so a save sent offline waits until the connection returns instead of failing.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/src/main.tsx",
+      "line": 13,
+      "text": "mutations keep the default network mode, so a save sent offline waits until the connection returns instead of failing.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/HISTORYUI",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

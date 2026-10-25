@@ -7,7 +7,7 @@
       "gain": 3,
       "harm": 3,
       "line": 26,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -22,27 +22,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6d49ff9ddeb8d33ebb4cf0ac04876c7f646b2e283d0eb1f311099a4fd247bc0f",
-    "changed": "ece87ed1cbb13745f2a7fe1346b8943f7043389a47fa031772ac89f2232d5598",
-    "commit": "4331bb6d98c2c85f8e91ced665e284700df19943",
+    "branch_diff": "57dd58756ea5f197a6cd6d38084db29bb146165eaf739a0159d07ad29904cbda",
+    "changed": "804976e232f38003348178194b7fb3a822df7b61efdd1b2ddec2bab7f787962d",
+    "commit": "44ac85e5233b22081ceabf9e5a8fa0f7d6aff8e5",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - a signed-in admin loses connectivity on Projects, then opens Change history for the first time. `useHistory` uses TanStack Query's default network mode; `main.tsx:10\u201313` does not override it. Offline queries remain pending with `fetchStatus: 'paused'`, so this line displays \u201cLoading change history\u2026\u201d until connectivity returns, while the connection-error message and retry control never appear. This misses the required offline message explaining what to do next. Handle the paused state explicitly and cover this navigation in the browser flow. The pending/paused behavior is documented in [TanStack Query's network modes](https://tanstack.com/query/latest/docs/framework/react/guides/network-mode).",
-        "file": "src/forge/templates/starter/apps/web/src/features/history/pages/history-page.tsx",
-        "gain": 3,
-        "harm": 3,
-        "line": 26,
-        "priority": "P1",
-        "title": "Handle paused history queries as an offline state",
-        "work": 2
-      }
-    ],
-    "id": "04590dd4-de90-4271-913e-afb31a8ce3c7",
-    "status": "blocked"
+    "findings": [],
+    "id": "df748206-9021-4f49-bdaf-337ae5b3caa9",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T07:07:34.293349+00:00",
@@ -50,6 +39,10 @@
     },
     {
       "at": "2026-10-25T07:37:33.482986+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T08:31:40.562355+00:00",
       "step": "review"
     }
   ],
