@@ -22,8 +22,8 @@
     "id": "16424546-5a2b-4dc9-b12f-54d86eb3adeb",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T15:33:06.585213+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "92069d6d08f2ad3ea505e672574c97b07cbcd6b5",
+    "close": "2b329099-5cdd-47b9-a9f7-fcff5d6d18d4",
+    "head": "5e411d01c8bd2d49ea9c507cb48367a92be3beda",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "With groups above 1 and a non-pytest test command that has no group placeholder, every CI group runs the whole suite, so the extra groups cost runner time with no speedup and nothing tells the client.",
   "worker": "codex"
