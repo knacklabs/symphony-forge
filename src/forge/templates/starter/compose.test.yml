@@ -27,6 +27,23 @@ services:
       interval: 1s
       timeout: 5s
       retries: 90
+  one-company-api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:test-password@database:5432/starter_test
+      APP_ENV: test
+      APP_COMPANIES: one
+      APP_ORIGIN: http://127.0.0.1:${ONE_COMPANY_TEST_PORT:-3002}
+      PORT: "3000"
+    ports: ["127.0.0.1:${ONE_COMPANY_TEST_PORT:-3002}:3000"]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
+      interval: 1s
+      timeout: 5s
+      retries: 90
   production-api:
     build: .
     environment:

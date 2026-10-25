@@ -7,6 +7,7 @@ export const productionApiBaseUrl = process.env.PRODUCTION_API_TEST_URL ?? 'http
 
 export type LogEvent = { message: string; context?: Record<string, unknown>; [field: string]: unknown };
 type ApiClient = ReturnType<typeof request.agent>;
+type LogService = 'api' | 'production-api' | 'one-company-api';
 
 export function credentials() {
   return { email: `starter-${randomUUID()}@example.test`, password: 'correct-horse-battery-staple' };
@@ -19,15 +20,15 @@ export function csrfToken(response: request.Response): string {
   return cookie.slice('starter_csrf='.length).split(';', 1)[0];
 }
 
-export async function invite(client: ApiClient, csrf: string, email: string): Promise<string> {
-  const previousLogCount = logEvents('api').length;
+export async function invite(client: ApiClient, csrf: string, email: string, service: LogService = 'api'): Promise<string> {
+  const previousLogCount = logEvents(service).length;
   await client
     .post('/api/v1/invites')
     .set('x-csrf-token', csrf)
     .send({ email })
     .expect(201);
 
-  const event = logEvents('api').slice(previousLogCount).reverse()
+  const event = logEvents(service).slice(previousLogCount).reverse()
     .find(({ context }) => typeof context?.inviteUrl === 'string');
   if (!event) throw new Error('The API did not log a test invite link.');
   const token = new URL(String(event.context?.inviteUrl)).searchParams.get('token');
@@ -36,7 +37,7 @@ export async function invite(client: ApiClient, csrf: string, email: string): Pr
 }
 
 /** The JSON log lines of one compose service, oldest first. */
-export function logEvents(service: 'api' | 'production-api'): LogEvent[] {
+export function logEvents(service: LogService): LogEvent[] {
   const logs = execFileSync('docker', ['compose', '-f', 'compose.test.yml', 'logs', '--no-color', service], { encoding: 'utf8' });
   return logs.split(/\r?\n/).flatMap((line) => {
     const jsonStart = line.indexOf('{');

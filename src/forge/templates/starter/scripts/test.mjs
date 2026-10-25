@@ -21,9 +21,14 @@ async function freePort() {
 }
 environment.APP_TEST_PORT = String(await freePort());
 environment.PRODUCTION_TEST_PORT = String(await freePort());
+environment.ONE_COMPANY_TEST_PORT = String(await freePort());
 environment.API_TEST_URL = `http://127.0.0.1:${environment.APP_TEST_PORT}`;
 environment.BASE_URL = environment.API_TEST_URL;
 environment.PRODUCTION_API_TEST_URL = `http://127.0.0.1:${environment.PRODUCTION_TEST_PORT}`;
+environment.ONE_COMPANY_API_TEST_URL = `http://127.0.0.1:${environment.ONE_COMPANY_TEST_PORT}`;
+environment.ONE_COMPANY_BASE_URL = environment.ONE_COMPANY_API_TEST_URL;
+environment.ONE_COMPANY_ADMIN_EMAIL = `admin-${randomUUID()}@example.test`;
+environment.ONE_COMPANY_ADMIN_PASSWORD = 'correct-horse-battery-staple';
 // Prisma generation/type checks need a URL, but only the containers access the database.
 environment.DATABASE_URL = 'postgresql://postgres:test-password@127.0.0.1:5432/starter_test';
 const compose = ['compose', '-f', 'compose.test.yml'];
@@ -32,6 +37,10 @@ try {
   run(process.execPath, ['scripts/test-build.mjs']);
   run(corepack, ['pnpm', 'exec', 'playwright', 'install', '--with-deps', 'chromium']);
   run('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '180']);
+  run('docker', [...compose, 'exec', '-T',
+    '-e', `ADMIN_EMAIL=${environment.ONE_COMPANY_ADMIN_EMAIL}`,
+    '-e', `ADMIN_PASSWORD=${environment.ONE_COMPANY_ADMIN_PASSWORD}`,
+    'one-company-api', 'corepack', 'pnpm', 'run', 'setup:company']);
   for (const suite of ['lint', 'typecheck', 'test:api', 'test:hooks']) {
     run(corepack, ['pnpm', 'run', suite]);
   }

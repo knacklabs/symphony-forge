@@ -8,6 +8,7 @@
   "scripts": {
     "build": "prisma generate && nx run-many -t build --parallel=2",
     "start:prod": "node apps/api/dist/main.js",
+    "setup:company": "node apps/api/dist/setup-company.js",
     "lint": "nx show projects && eslint .",
     "typecheck": "prisma generate && tsc -b apps/api/tsconfig.json && nx run-many -t typecheck --parallel=2",
     "test:api": "vitest run --config apps/api/vitest.config.ts",

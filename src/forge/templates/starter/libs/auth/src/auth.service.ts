@@ -1,10 +1,10 @@
 import { randomBytes, randomUUID, createHash, scrypt, timingSafeEqual } from 'node:crypto';
-import { Inject, Injectable, Optional, BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, Optional, BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
 import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core';
 import { OrganisationsService } from '@app/organisations';
-import type { Account as AccountResponse } from '@app/shared';
+import type { Account as AccountResponse, AuthOptions } from '@app/shared';
 
 const PASSWORD_KEY_BYTES = 64;
 const PASSWORD_SALT_BYTES = 16;
@@ -59,10 +59,22 @@ export class AuthService {
   ) {}
 
   async signUp(email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
+    if (!this.options().signUpOpen) {
+      throw new ForbiddenException({ code: 'SIGN_UP_CLOSED', message: 'This app is for one company. Ask an admin of your team for an invite.', details: null });
+    }
+    const account = await this.setUpCompany(email, password);
+    return { account, cookies: await this.createSession(account.id) };
+  }
+
+  options(): AuthOptions {
+    return { signUpOpen: this.config.getOrThrow<string>('APP_COMPANIES') === 'many' };
+  }
+
+  async setUpCompany(email: string, password: string): Promise<AccountResponse> {
     const account = await this.createAccount(email, password);
     // ponytail: account and organisation creation are two module calls; add recovery if sign-up needs retries across failures.
     const membership = await this.organisations.createForAccount(account);
-    return { account: accountResponse(account, membership.role), cookies: await this.createSession(account.id) };
+    return accountResponse(account, membership.role);
   }
 
   async invite(email: string, account: AccountPrincipal): Promise<{ message: string }> {
