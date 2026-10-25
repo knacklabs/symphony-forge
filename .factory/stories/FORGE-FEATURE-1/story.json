@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-FEATURE-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-25T17:10:50.907697+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Build a client feature from the starter in one step",
+  "touches": 0
+}
