@@ -13,9 +13,10 @@ in `package.json`. The starter includes its root Dockerfile; Forge supplies `.do
 node scripts/test.mjs
 ```
 
-This command installs the pinned pnpm packages and Chromium, starts a fresh Postgres database and
-both API instances, and runs lint, type checks, Supertest, Vitest, and Playwright. It then removes
-its containers and data, even when a test fails. Reports stay in `test-results/api.xml` and
+This command installs the pinned pnpm packages and Chromium. It starts a fresh Postgres database
+and API instances for many companies, one company and production. It runs lint, type checks,
+Supertest, Vitest, and Playwright. It then removes its containers and data, even when a test fails.
+Reports stay in `test-results/api.xml` and
 `test-results/browser.xml`.
 
 For local work, copy `.env.example` to `.env`. Set the database URL and app origin. Run Postgres, then run:
@@ -28,6 +29,29 @@ COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run start:prod
 ```
 
 The app serves the web app and API at port 3000. `/health` checks readiness. `/api/docs` lists the API endpoints.
+
+## One company
+
+Set `APP_COMPANIES=one` to close public sign-up. An unset value or `many` keeps sign-up open.
+Other values stop the API with `APP_COMPANIES must be one or many.`
+`GET /api/v1/auth/options` reports `signUpOpen`. A closed sign-up returns `403 SIGN_UP_CLOSED`.
+Admin invites still work.
+
+After migrations and the build, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the first admin.
+The setup command reads `.env` and checks these credentials with the sign-up schema:
+
+```sh
+COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run setup:company
+```
+
+Run this command once. It creates a company and its admin, without a browser session.
+A duplicate email returns exit status 1 with `An account already uses that email.`
+A new email creates another company. Remove the setup credentials from `.env` after setup.
+Production invites need the mail provider described below.
+
+To open sign-up later, change `APP_COMPANIES` to `many` and restart the API.
+The company, accounts and records stay in the same tables. No migration is needed.
+New apps receive this code. An upgrade leaves existing app files and their sign-up behavior unchanged.
 
 ## How it works
 

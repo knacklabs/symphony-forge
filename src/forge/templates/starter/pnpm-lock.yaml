@@ -210,6 +210,9 @@ importers:
       '@app/projects':
         specifier: workspace:*
         version: link:../../libs/projects
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../../libs/shared
 
   apps/web:
     dependencies:

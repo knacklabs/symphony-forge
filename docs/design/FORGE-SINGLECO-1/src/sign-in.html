@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sign in</title><style>
+:root{--radius:0.625rem;--background:oklch(1 0 0);--foreground:oklch(0.145 0 0);--card:oklch(1 0 0);--popover:oklch(1 0 0);--primary:oklch(0.205 0 0);--primary-foreground:oklch(0.985 0 0);--secondary:oklch(0.97 0 0);--muted:oklch(0.97 0 0);--muted-foreground:oklch(0.556 0 0);--accent:oklch(0.97 0 0);--accent-foreground:oklch(0.205 0 0);--destructive:oklch(0.577 0.245 27.325);--border:oklch(0.922 0 0);--input:oklch(0.922 0 0);--ring:oklch(0.708 0 0);--sidebar:oklch(0.985 0 0);--sidebar-foreground:oklch(0.145 0 0);--sidebar-accent:oklch(0.97 0 0);--sidebar-accent-foreground:oklch(0.205 0 0);--sidebar-border:oklch(0.922 0 0)}
+*{box-sizing:border-box;margin:0;border-color:var(--border)}
+html,body{height:100%}
+body{background:var(--background);color:var(--foreground);font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.43}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app{display:flex;height:100vh}
+.sb{width:256px;flex:none;background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:8px}
+.sb .lbl{height:32px;display:flex;align-items:center;padding:0 8px;font-size:12px;font-weight:500;color:oklch(0.145 0 0 / 70%);margin-top:8px}
+.sb a{display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;border-radius:calc(var(--radius) * 0.8);color:inherit;text-decoration:none}
+.sb a.on{background:var(--sidebar-accent);color:var(--sidebar-accent-foreground);font-weight:500}
+.inset{flex:1;min-width:0;display:flex;flex-direction:column}
+header{height:56px;flex:none;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);padding:0 16px}
+.vsep{width:1px;height:20px;background:var(--border)}
+.crumb{color:var(--foreground)}
+.hr{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn.o.search{width:208px;justify-content:space-between;color:var(--muted-foreground);font-weight:400}
+kbd{font-family:inherit;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:0 6px}
+main{flex:1;padding:24px}
+.page{max-width:1152px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.ph{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+h1{font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.025em}
+.sub{margin-top:4px;color:var(--muted-foreground)}
+.acts{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;border-radius:calc(var(--radius) * 0.8);font:inherit;font-weight:500;border:1px solid transparent;background:var(--primary);color:var(--primary-foreground);white-space:nowrap;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.btn.o{background:var(--background);color:var(--foreground);border-color:var(--border)}
+.btn.g{background:transparent;color:var(--foreground);box-shadow:none}
+.btn.ic{width:36px;padding:0}
+.btn.sm{height:32px;padding:0 12px}
+.tw{border:1px solid var(--border);border-radius:calc(var(--radius) * 0.8);overflow-x:auto}
+table{width:100%;border-collapse:collapse;caption-side:bottom}
+th{height:40px;padding:0 8px;text-align:left;font-weight:500;white-space:nowrap}
+td{padding:8px;vertical-align:middle;white-space:nowrap}
+tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:0}
+th .sort{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;margin-left:-12px;border-radius:calc(var(--radius) * 0.8)}
+th .sort svg{width:14px;height:14px}
+.wrap{white-space:normal;overflow-wrap:anywhere}
+.badge{display:inline-flex;align-items:center;border-radius:calc(var(--radius) * 0.6);padding:2px 8px;font-size:12px;font-weight:500;border:1px solid transparent;background:var(--secondary);color:var(--accent-foreground)}
+.badge.o{background:transparent;border-color:var(--border);color:var(--foreground)}
+.you{margin-left:8px;color:var(--muted-foreground);font-size:12px}
+.sel{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;width:128px;height:36px;padding:0 12px;border:1px solid var(--input);border-radius:calc(var(--radius) * 0.8);background:transparent;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.sel svg{opacity:.5}
+.muted{color:var(--muted-foreground)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.end{display:flex;justify-content:flex-end;gap:4px}
+.overlay{position:fixed;inset:0;background:rgb(0 0 0 / .5)}
+.dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:512px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:grid;gap:16px;box-shadow:0 10px 15px -3px rgb(0 0 0 / .1),0 4px 6px -4px rgb(0 0 0 / .1)}
+.dlg h2{font-size:18px;line-height:1;font-weight:600}
+.dlg .x{position:absolute;right:16px;top:16px;opacity:.7}
+.dfoot{display:flex;justify-content:flex-end;gap:8px}
+.field{display:grid;gap:8px}
+label{font-weight:500;line-height:1}
+.input{height:36px;width:100%;border:1px solid var(--input);border-radius:calc(var(--radius) * 0.8);padding:4px 12px;font:inherit;background:transparent;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05);display:flex;align-items:center}
+.input.focus{border-color:var(--ring);box-shadow:0 0 0 3px oklch(0.708 0 0 / 50%)}
+.authm{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+.authm section{width:100%;max-width:384px;display:grid;gap:24px}
+form{display:grid;gap:16px}
+.w{width:100%}
+a.u{color:inherit;text-decoration:underline;text-underline-offset:4px}
+</style></head><body><main id="main-content" class="authm"><section><div style="display:grid;gap:8px"><h1>Sign in</h1></div>
+<form><div class="field"><label for="e">Email</label><div class="input" id="e">grace@example.com</div></div>
+<div class="field"><label for="p">Password</label><div class="input focus" id="p">••••••••••••••</div></div>
+<div style="display:flex;flex-direction:column;gap:12px"><button class="btn">Sign in</button><a class="u" href="#">Forgot password?</a></div></form>
+</section></main></body></html>

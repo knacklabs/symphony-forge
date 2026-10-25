@@ -26,6 +26,10 @@ export const signUpSchema = z.object({
     .meta({ description: 'The account password.', example: 'correct-horse-battery-staple' }),
 }).strict();
 export const signInSchema = signUpSchema;
+export const authOptionsSchema = z.object({
+  signUpOpen: z.boolean().meta({ description: 'Whether anyone can create an account.', example: true }),
+}).strict();
+export type AuthOptions = z.infer<typeof authOptionsSchema>;
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254)
     .meta({ description: 'The email address for the account.', example: 'ada@example.com' }),

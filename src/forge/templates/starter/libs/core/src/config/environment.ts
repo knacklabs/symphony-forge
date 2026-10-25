@@ -1,9 +1,13 @@
 export type AppEnvironment = string;
 export type Environment = {
   APP_ENV: AppEnvironment;
+  APP_COMPANIES: 'one' | 'many';
   DATABASE_URL: string;
   APP_ORIGIN: string;
   PORT: number;
+  // Only setup:company requires and validates these with the shared sign-up schema.
+  ADMIN_EMAIL?: unknown;
+  ADMIN_PASSWORD?: unknown;
 };
 
 let activeEnvironment: AppEnvironment = 'development';
@@ -13,6 +17,10 @@ export function getAppEnvironment(): AppEnvironment {
 }
 
 export function validateEnvironment(values: Record<string, unknown>): Environment {
+  const companies = values.APP_COMPANIES ?? 'many';
+  if (companies !== 'one' && companies !== 'many') {
+    throw new Error('APP_COMPANIES must be one or many.');
+  }
   const appEnvironment = values.APP_ENV;
   if (typeof appEnvironment !== 'string' || appEnvironment.length === 0) {
     throw new Error('APP_ENV must be set.');
@@ -46,5 +54,8 @@ export function validateEnvironment(values: Record<string, unknown>): Environmen
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT must be a valid TCP port.');
 
   activeEnvironment = appEnvironment;
-  return { APP_ENV: appEnvironment, DATABASE_URL: databaseUrl, APP_ORIGIN: appOrigin, PORT: port };
+  return {
+    APP_ENV: appEnvironment, APP_COMPANIES: companies, DATABASE_URL: databaseUrl, APP_ORIGIN: appOrigin, PORT: port,
+    ADMIN_EMAIL: values.ADMIN_EMAIL, ADMIN_PASSWORD: values.ADMIN_PASSWORD,
+  };
 }
