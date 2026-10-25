@@ -39,17 +39,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "6c823631815313819b76c8b91f164406fdf20c59e288890c7998489c3ff2fdb5",
-    "changed": "4e4b05ef900ee32d673c5b2cdd2838fbbd1c30b2e952f86a18afad1580cca7c7",
-    "commit": "6707e44544feb616de16b3a77ea007b9cc80d0ab",
+    "branch_diff": "a1bbf23039c2ab3a744a2e4e47556ed77b387f519512a5a5bd62ced23616b810",
+    "changed": "e0919f59aa03e647f21a717235555b1c1cf99007840c03e40a9aa660eef32cdc",
+    "commit": "bb47c00f081936950a24f06cfb0cd2c039494195",
     "dismissals": [],
     "findings": [],
-    "id": "878f0085-5e69-4604-a483-7c30e3995299",
+    "id": "e5738514-a6f9-4de9-a26c-2848d70b9273",
     "status": "clean"
   },
   "round": 4,
   "stacked_on": "FORGE-DATABASE-1/PG18",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T19:29:06.370661+00:00",
@@ -65,6 +65,10 @@
     },
     {
       "at": "2026-10-25T20:25:31.147312+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T20:41:48.205687+00:00",
       "step": "review"
     }
   ],
