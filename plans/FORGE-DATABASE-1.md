@@ -125,7 +125,8 @@ cache layer anywhere in this story.
     constraint clauses, or `""`. `index` is written for every field of its kind, filter or not.
   - Placeholders the command fills in each starter's naming (TypeScript: `Invoice`, `dueDate`,
     `organisationId`, `updatedAtUtc`, `deletedAtUtc`; Python: `invoice`, `due_date`,
-    `organisation_id`, `updated_at_utc`, `deleted_at_utc`): `{table}`, `{column}`, `{org}`,
+    `organisation_id`, `updated_at_utc`, `deleted_at_utc`): `{schema}` (the module's Postgres schema, from FORGE-LIBS-1: the new module's folder
+    name), `{table}`, `{column}`, `{org}`,
     `{updated}` (the list's default sort is last change, newest first, as FORGE-FEATURE-1 sets
     it), `{deleted}`, `{target}` (the linked table), `{options}` (`'draft', 'sent'`),
     `{first}` (the first option) and `{currency}` (the money field's currency column:
@@ -139,19 +140,21 @@ cache layer anywhere in this story.
 
   | Kind | sql | prisma | sqlalchemy | check | filter_index / search_index / index |
   |---|---|---|---|---|---|
-  | text | `text` | `String` | `Text` | `CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") BETWEEN 1 AND 200)` | search: `CREATE INDEX "idx_{table}_{column}_search" ON "{table}" USING gin ("{org}", "{column}" gin_trgm_ops) WHERE "{deleted}" IS NULL;` |
+  | text | `text` | `String` | `Text` | `CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") BETWEEN 1 AND 200)` | search: `CREATE INDEX "idx_{table}_{column}_search" ON "{schema}"."{table}" USING gin ("{org}", "{column}" gin_trgm_ops) WHERE "{deleted}" IS NULL;` |
   | long-text | `text` | `String` | `Text` | `CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") <= 10000)` | none |
   | number | `numeric(19,4)` | `Decimal @db.Decimal(19, 4)` | `Numeric(19, 4)` | none (a plan adds a check for a field when the client needs one) | none |
   | money | `numeric(19,4)`; currency `text` | `Decimal @db.Decimal(19, 4)`; currency `String` | `Numeric(19, 4)`; currency `Text` | `CONSTRAINT "{table}_{currency}_code" CHECK ("{currency}" ~ '^[A-Z]{3}$')` | none |
   | date | `date` | `DateTime @db.Date` | `Date` | none | none |
-  | yes-no | `boolean DEFAULT false` | `Boolean @default(false)` | `Boolean, server_default=false()` | none | filter: `CREATE INDEX "idx_{table}_{column}" ON "{table}" ("{org}", "{column}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;` |
+  | yes-no | `boolean DEFAULT false` | `Boolean @default(false)` | `Boolean, server_default=false()` | none | filter: `CREATE INDEX "idx_{table}_{column}" ON "{schema}"."{table}" ("{org}", "{column}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;` |
   | email | `text` | `String` | `Text` | `CONSTRAINT "{table}_{column}_format" CHECK (char_length("{column}") <= 254 AND "{column}" ~ '^[^@[:space:]]+@[^@[:space:]]+$')` | search: as text |
   | status | `text DEFAULT '{first}'` | `String @default("{first}")` | `Text, server_default="{first}"` | `CONSTRAINT "{table}_{column}_allowed" CHECK ("{column}" IN ({options}))` | filter: as yes-no |
-  | link | `uuid` | `String @db.Uuid` | `Uuid` | none | filter: as yes-no; index: `CREATE INDEX "idx_{table}_{column}_fk" ON "{table}" ("{column}");` |
+  | link | `uuid` | `String @db.Uuid` | `Uuid` | none | filter: as yes-no; index: `CREATE INDEX "idx_{table}_{column}_link" ON "{schema}"."{table}" ("{column}");` and no foreign key |
 
-  `[table]`: `list_index = 'CREATE INDEX "idx_{table}_list" ON "{table}" ("{org}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'`
-  and `updated_at_trigger = 'CREATE TRIGGER "{table}_set_updated_at" BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE FUNCTION set_updated_at();'`.
-  The link foreign key stays `ON DELETE RESTRICT`, as FEATURE-1 writes it. The email kind is a
+  `[table]`: `list_index = 'CREATE INDEX "idx_{table}_list" ON "{schema}"."{table}" ("{org}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'`
+  and `updated_at_trigger = 'CREATE TRIGGER "{table}_set_updated_at" BEFORE UPDATE ON "{schema}"."{table}" FOR EACH ROW EXECUTE FUNCTION set_updated_at();'`.
+  Every SQL value names a table as `"{schema}"."{table}"`; index and constraint names stay
+  unqualified. A link to another business module has no foreign key, as FORGE-LIBS-1's link rule
+  says; the module checks the link through the other module's contracts service. The email kind is a
   contact field, so it is not unique; the skill's identity-email rule is for sign-in emails.
   The Prisma schema states each index in full, partial `WHERE` included: the TypeScript starter's
   `base.prisma` turns on Prisma's `partialIndexes` preview feature (in Prisma since 7.4; the starters pin
@@ -164,10 +167,11 @@ cache layer anywhere in this story.
   TypeScript starter and `NEW.updated_at_utc` in the Python starter. Each starter table with an
   updated-at column gets the `<table>_set_updated_at` trigger.
 - **The money helper (pinned by MONEY).** `formatMoney(amount: string, currency: string): string`
-  in `libs/shared/src/format.ts` of both starters (byte-identical files). `amount` is the decimal
+  in `libs/shared/util/src/format.ts` (FORGE-LIBS-1's layout). The Python starter has no copy of
+  its own: `forge init --starter python` copies the TypeScript `libs/shared/util`. `amount` is the decimal
   string the API returns for a `numeric(19,4)` column: Prisma `Decimal` and Python `Decimal` both
   serialize to a JSON string, never a JS number. The same file exports
-  `DEFAULT_CURRENCY = 'INR'` (and `index.ts` exports it), the app's one currency setting. The
+  `DEFAULT_CURRENCY = 'INR'` (and `libs/shared/util/src/index.ts` exports it), the app's one currency setting. The
   Python API has the same `DEFAULT_CURRENCY = "INR"` in `app/core/config.py`, exported from
   `app/core/__init__.py` so modules import it from `app.core`, and MONEY's test checks that the
   two are equal.
@@ -320,7 +324,10 @@ migrated to these rules unless a story asks; where the app's constitution differ
      `id=uuid4()` uses the standard library's `uuid7()` (Python 3.14); revision
      `0007_ids_and_updated_at.py` (down revision `0006_extensions`) sets the defaults and creates
      the function and triggers. The models' `onupdate=func.now()` stays.
-   - COLUMNS (TypeScript), migration
+   - COLUMNS (TypeScript) runs after FORGE-LIBS-1's SCHEMAS part has moved the tables to their
+     module schemas (`20261026000150_module_schemas`), so its SQL names each table with its schema
+     (`core."Account"`, `core."Membership"`, `core."Invite"`, `projects."Project"`, and the enums
+     `core."MembershipRole"` and `projects."ProjectStatus"`). Migration
      `starter/apps/api/prisma/migrations/20261026000200_columns/migration.sql`, all in one
      transaction (a new app's tables are empty at set-up, but the `USING` clauses keep any rows):
      every `DateTime` becomes `@db.Timestamptz(3)`, changed with `USING "<column>" AT TIME ZONE
@@ -335,14 +342,17 @@ migrated to these rules unless a story asks; where the app's constitution differ
      `findUnique({ where: { email } })` and `organisationId_email` upsert calls keep working with
      no change. The status and role lists stay the same, so the HTTP contract does not change.
      Prisma now types `status` and `role` as `string`, so the starter keeps one role list in
-     `@app/shared`, as it already does for status: `roleSchema = z.enum(['admin', 'member'])`
-     and `type Role = z.infer<typeof roleSchema>`, used by `Account['role']` and the role update
-     schema. The services that hand a stored role or status to a typed value narrow it with the
-     shared schema's `parse` (`roleSchema`, `projectStatusSchema`): `organisations.service.ts`,
-     `auth.service.ts`, `session.guard.ts` and `projects.service.ts`. The build and type check
+     `libs/organisations/contracts` (`roleSchema = z.enum(['admin', 'member'])` and
+     `type Role = z.infer<typeof roleSchema>`, used by `Account['role']` and `changeRoleSchema`),
+     as `libs/projects/contracts` already does for status with `projectStatusSchema`. The services that hand a stored role or status to a typed value narrow it with the
+     contracts schema's `parse` (`roleSchema`, `projectStatusSchema`): `organisations.service.ts`,
+     `auth.service.ts`, `session.guard.ts` and `projects.service.ts`, each now under
+     `libs/<module>/server/src`. The build and type check
      pass.
-   - COLUMNSPY (Python), revision `0008_columns.py` (down revision `0007_ids_and_updated_at`):
-     the `project_status` and `membership_role` native enums become `Text` with the named checks
+   - COLUMNSPY (Python), revision `0009_columns.py` (`down_revision = "0008_module_schemas"`),
+     after FORGE-LIBS-1's SCHEMASPY part; its SQL names each table with its schema (`core.account`,
+     `core.invite`, `core.membership`, `projects.project`): the `project_status` and
+     `membership_role` native enums become `Text` with the named checks
      `project_status_allowed` and `membership_role_allowed` (`CheckConstraint` in the models),
      then `DROP TYPE`; every `String(n)` becomes `Text`, with `project_name_length` (1 to 120) on
      `project.name`; `account.email` and the invite's `email` keep their unique
@@ -381,19 +391,19 @@ migrated to these rules unless a story asks; where the app's constitution differ
      string itself (never `Number(amount)`) with `Intl.NumberFormat('en-US')` and the currency's
      own fraction digits, from `Intl.NumberFormat('en-US', { style: 'currency', currency })
      .resolvedOptions().maximumFractionDigits`, as `<code> <number>` with a plain space. The
-     ponytail comment about two decimals goes. Both starters' `format.ts` stay byte-identical.
-   - `starter/apps/web/src/lib/format.test.ts`: `formatMoney('1234.5600', 'USD')` is
+     ponytail comment about two decimals goes.
+   - `starter/libs/shared/util/src/format.test.ts`: `formatMoney('1234.5600', 'USD')` is
      `USD 1,234.56`; `formatMoney('-0.0500', 'USD')` is `USD -0.05`; `formatMoney('1234', 'JPY')`
      is `JPY 1,234`; `formatMoney('12345678901234.5650', 'USD')` is `USD 12,345,678,901,234.57`
      (no float loss); `('1.5', 'usd')` and `('1,5', 'USD')` throw. `starter/README.md`: money is
      stored as `numeric(19,4)` with a currency code column.
    - One line in `src/forge/templates/skill.md`, section `## App constitution`: `Ask for the app's
      currency at setup (default INR) and write its code to DEFAULT_CURRENCY in
-     libs/shared/src/format.ts and, in a Python app, apps/api/app/core/config.py.` `forge sync`
+     libs/shared/util/src/format.ts and, in a Python app, apps/api/app/core/config.py.` `forge sync`
      rewrites the two synced skill copies.
    - Test `tests/test_database_money.py::test_4_money_is_an_exact_decimal_with_its_currency`
-     (platform mark), parameters `react` and `python`: init copies `format.ts` and (TypeScript)
-     `format.test.ts` byte for byte; `DEFAULT_CURRENCY` is `INR` in `format.ts` and (Python)
+     (platform mark), parameters `react` and `python`: init copies `libs/shared/util/src/format.ts`
+     (into both kinds of app) and `format.test.ts` byte for byte; `DEFAULT_CURRENCY` is `INR` in `format.ts` and (Python)
      `config.py`; the synced guide has the currency line. Under `LIVE`, the live run shows the
      passing format helper cases. Adopted case: the adopted client's own
      `libs/shared/src/format.ts` (a cents helper) is the same after `forge sync`.
@@ -470,11 +480,11 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 |---|---|---|---|---|---|---|---|---|
 | SKILL | The database skill and its texts | The skill page, its shipping to both hosts, the brief paragraph, the coordinator lines, and the database and Python convention pages. | 1 | `src/forge/templates/skills/database/SKILL.md` (new), `src/forge/app_baseline.py`, `src/forge/templates/brief.md`, `src/forge/templates/skill.md`, `src/forge/templates/conventions/database.md`, `src/forge/templates/conventions/python.md`, synced copies under `.claude/skills/` and `.codex/skills/` | `tests/test_database_skill.py` (`test_1`, new); `tests/test_built_in_defaults_guide.py`, `tests/test_python_guide.py` (money lines) | | no | |
 | PG18 | Postgres 18 and day-one extensions | Both starters on Postgres 18 with pg_stat_statements preloaded, and one migration each that turns on the three extensions. | 2 | `starter/compose.test.yml`, `starter-python/compose.test.yml`, `starter/apps/api/prisma/migrations/20261026000000_extensions/` (new), `starter-python/apps/api/migrations/versions/0006_extensions.py` (new), `starter/apps/api/test/database.e2e-spec.ts` (new), `starter-python/apps/api/tests/test_database.py` (new), `.github/workflows/starter-smoke.yml` (the two `tests/test_database_*.py` selections) | `tests/test_database_starters.py` (`test_2`, new); the two live cases of item 2 | | no | |
-| IDS | Time-ordered ids in the TypeScript starter | uuidv7 ids and the `set_updated_at()` trigger in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000100_ids_and_updated_at/` (new), `starter/libs/auth/src/auth.service.ts`, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_new_rows...`, `react`); the TypeScript ids case of item 3 | PG18 | no | |
+| IDS | Time-ordered ids in the TypeScript starter | uuidv7 ids and the `set_updated_at()` trigger in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000100_ids_and_updated_at/` (new), `starter/libs/auth/src/auth.service.ts` (`starter/libs/auth/server/src/auth.service.ts` if it lands after FORGE-LIBS-1/SERVER), `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_new_rows...`, `react`); the TypeScript ids case of item 3 | PG18 | no | |
 | IDSPY | Time-ordered ids in the Python starter | uuidv7 ids and the `set_updated_at()` trigger in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/app/*/service.py` (id lines only), `starter-python/apps/api/migrations/versions/0007_ids_and_updated_at.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_new_rows...`, `python`); the Python ids case of item 3 | PG18, IDS | no | |
-| COLUMNS | TypeScript starter tables follow the skill | Text status and role with named checks, text names, the lower-case unique emails and timestamptz times in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000200_columns/` (new), `starter/libs/shared/src/index.ts` (the role list), `starter/libs/organisations/src/organisations.service.ts`, `starter/libs/auth/src/auth.service.ts`, `starter/libs/auth/src/session.guard.ts`, `starter/libs/projects/src/projects.service.ts`, any other file in `starter/libs/*/src/` that imports a Prisma enum type, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `react`); the TypeScript columns case of item 3 | IDS | no | |
-| COLUMNSPY | Python starter tables follow the skill | Text status and role with named checks, text names and the lower-case unique emails in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/migrations/versions/0008_columns.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `python`); the Python columns case of item 3 | IDSPY, COLUMNS | no | |
-| MONEY | Exact money with its currency | The new `formatMoney` and `DEFAULT_CURRENCY` (INR) in both starters, the constitution guide's currency line, the unit cases and the README line. | 4 | `starter/libs/shared/src/format.ts`, `starter-python/libs/shared/src/format.ts`, `starter/libs/shared/src/index.ts`, `starter-python/libs/shared/src/index.ts`, `starter-python/apps/api/app/core/config.py`, `starter-python/apps/api/app/core/__init__.py` (exports `DEFAULT_CURRENCY`), `starter/apps/web/src/lib/format.test.ts`, `starter/README.md`, `src/forge/templates/skill.md` (the currency line), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`) | `tests/test_database_money.py` (`test_4`, new); the format unit cases | SKILL | no | |
+| COLUMNS | TypeScript starter tables follow the skill | Text status and role with named checks, text names, the lower-case unique emails and timestamptz times in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000200_columns/` (new), `starter/libs/organisations/contracts/src/index.ts` (the role list), `starter/libs/projects/contracts/src/index.ts` (the status list, if it needs a change), `starter/libs/organisations/server/src/organisations.service.ts`, `starter/libs/auth/server/src/auth.service.ts`, `starter/libs/auth/server/src/session.guard.ts`, `starter/libs/projects/server/src/projects.service.ts`, any other file in `starter/libs/*/server/src/` or `starter/libs/*/contracts/src/` that imports a Prisma enum type, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `react`); the TypeScript columns case of item 3 | IDS, FORGE-LIBS-1/SCHEMAS | no | |
+| COLUMNSPY | Python starter tables follow the skill | Text status and role with named checks, text names and the lower-case unique emails in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/migrations/versions/0009_columns.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `python`); the Python columns case of item 3 | IDSPY, COLUMNS, FORGE-LIBS-1/SCHEMASPY | no | |
+| MONEY | Exact money with its currency | The new `formatMoney` and `DEFAULT_CURRENCY` (INR) in both starters, the constitution guide's currency line, the unit cases and the README line. | 4 | `starter/libs/shared/util/src/format.ts`, `starter/libs/shared/util/src/index.ts`, `starter-python/apps/api/app/core/config.py`, `starter-python/apps/api/app/core/__init__.py` (exports `DEFAULT_CURRENCY`), `starter/libs/shared/util/src/format.test.ts`, `starter/README.md`, `src/forge/templates/skill.md` (the currency line), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`) | `tests/test_database_money.py` (`test_4`, new); the format unit cases | SKILL, FORGE-LIBS-1/SERVER | no | |
 | REVIEW | Review holds schema that breaks the skill | The review rule and the `Database:` score floor. | 6 | `src/forge/templates/review.md`, `src/forge/score.py` | `tests/test_database_review.py` (`test_6`, new) | SKILL | no | |
 | KINDS | The field-kind table's database values | The final database values and new keys in kinds.toml, the money and number keys that follow the new helper, and the small `feature.py` changes they need. | 4, 5 | `src/forge/templates/feature/kinds.toml`, `src/forge/feature.py` (the value rendering only) | `tests/test_database_kinds.py` (`test_5`, new); FORGE-FEATURE-1's `tests/test_feature_command.py` where it names a placeholder value | FORGE-FEATURE-1/PY, SKILL, COLUMNS, COLUMNSPY, MONEY | no | |
 
@@ -486,7 +496,10 @@ New moving parts: the pg_stat_statements, pg_trgm and btree_gin extensions in bo
   change skill.md. IDS after PG18 (its
   migration comes after the extensions one and needs Postgres 18); IDSPY after PG18 and IDS (the
   shared live test file and the same function name). COLUMNS after IDS (the same schema files
-  and the next migration); COLUMNSPY after IDSPY and COLUMNS. REVIEW after SKILL (its test checks
+  and the next migration); COLUMNSPY after IDSPY and COLUMNS. IDS and IDSPY merge before
+  FORGE-LIBS-1's SCHEMAS and SCHEMASPY parts, which list them under After. COLUMNS waits for
+  FORGE-LIBS-1/SCHEMAS and COLUMNSPY for FORGE-LIBS-1/SCHEMASPY, because their SQL names the module
+  schemas. MONEY waits for FORGE-LIBS-1/SERVER, which makes `libs/shared/util`. REVIEW after SKILL (its test checks
   SKILL's brief paragraph). KINDS last: it needs FORGE-FEATURE-1's command and kinds.toml, the
   skill's table, the starters' new tables, and the new money helper. All parts ship in one
   release.
