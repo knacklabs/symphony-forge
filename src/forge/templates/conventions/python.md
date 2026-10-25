@@ -176,24 +176,40 @@ After an API change, run `pnpm run api-types`. Commit both `libs/shared/openapi.
 
 ## Database
 
+The database skill (`.codex/skills/database/SKILL.md`) has the rules for new tables, columns,
+constraints, indexes and queries. This section has the SQLAlchemy and Alembic how-to. Existing
+tables keep their current rules unless a story asks to change them. If the app's constitution
+differs, follow it.
+
 Use SQLAlchemy 2 typed models and synchronous sessions over psycopg on Postgres. Table and column
 names are snake_case, tables singular. A model in its owning module's `models.py` looks like:
 
 ```python
 class Project(Base):
     __tablename__ = "project"
-    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
-    total_in_cents: Mapped[int] = mapped_column(BigInteger)
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=text("uuidv7()"))
+    total: Mapped[Decimal] = mapped_column(Numeric(19, 4))
+    total_currency: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, server_default="draft")
     is_archived: Mapped[bool] = mapped_column(default=False)
     created_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                    default=lambda: datetime.now(UTC))
+    updated_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True),
+                                                   default=lambda: datetime.now(UTC))
     deleted_at_utc: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        CheckConstraint("status IN ('draft', 'active')", name="project_status_allowed"),
+    )
 ```
 
-Money is an integer in the smallest unit (`*_in_cents`), never float. Booleans have defaults.
+Use a named CHECK constraint for the allowed status values. For money and other field types,
+follow the database skill: an exact decimal with its own `*_currency` column.
+
+Booleans have defaults.
 Every domain table has id, created_at_utc and updated_at_utc; once there are accounts, add
 created_by_account_id, modified_by_account_id and deleted_by_account_id. Updates set the time
-and account; automated jobs use a system account. Store `*_at_utc` in UTC.
+and account; the shared `set_updated_at()` trigger sets updated_at_utc, and automated jobs use a
+system account. Store `*_at_utc` in UTC. Follow the database skill for search and its indexes.
 Soft delete sets deleted_at_utc; filter it in the query itself, together with the caller's scope:
 
 ```python

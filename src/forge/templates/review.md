@@ -119,6 +119,16 @@ when another finding already blocks; a case the Done-when doesn't name is a P2 `
 (What blocks the merge, below). A missing list or entry is a P1 `Gate: proof list`; judge missing or hollow
 proof by the test-audit rules below.
 
+<!-- approach -->
+## Approach before code
+$before_coding
+
+Compare the diff with these three lines within this review's scope. Check git history: the
+worker records them in an empty commit before code changes. Check that the need justifies
+the code, the simplest option holds, and existing code is reused. Read later commit
+explanations when evidence changes the approach. Report missing lines or unjustified
+complexity under the normal Simpler rule.
+
 <!-- rules -->
 ## Tests on the close run
 $test_run
@@ -236,6 +246,10 @@ titled `Not done: <the item>`, quoting the owner-approved item. Never ask for un
 
 ## Build simple
 $moving_parts
+
+An added abstraction layer belongs only at the edge to an outside service. Keep business logic
+in domain services and pure computation in helpers. Required module boundaries, controllers
+and data access keep their roles, without extra wrappers.
 
 Complexity the diff adds that no Done-when item needs is a defect, not a style preference:
 - report it as a P2 finding titled `Simpler: <what to cut> → <what replaces it>`;

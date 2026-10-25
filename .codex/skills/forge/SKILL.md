@@ -946,7 +946,7 @@ The product facts are in docs/product/BRIEF.md.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
 - Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
 - Built in: admins invite people by email; members cannot invite people or change roles.
-- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored in cents; the helpers in @app/shared format them.
+- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: each UI or API crash writes one error report to the logs.
 
@@ -960,6 +960,11 @@ parts with no code, use the stack default: an Nx workspace with React (Vite and 
 NestJS and Postgres. Use a FastAPI backend only when the person asks for it. A FastAPI backend starts from
 forge init --starter python.
 Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
+
+Follow the database skill (.codex/skills/database/SKILL.md) for new tables and extensions.
+An extension outside its allowed list needs the owner's OK for this client. Ask the owner,
+then write `- Postgres extension <name>: the owner allows it on <date> (<why>)` under
+Architecture choices in `docs/product/CONSTITUTION.md`.
 
 A live app answers both halves at adoption: ask only what the code cannot answer. Record the stack
 the code already uses.
