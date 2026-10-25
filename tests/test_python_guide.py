@@ -57,7 +57,7 @@ def test_4_a_worker_in_a_python_app_reads_the_python_page(
                     "Migrations", "Security", "Tests", "Deploy"):
         assert f"## {heading}" in page
     for term in ('extra="forbid"', "errorId", "x-correlation-id", "Uuid", "_at_utc",
-                 "_in_cents", "deleted_at_utc", "alembic upgrade head", "lint-imports",
+                 "_currency", "deleted_at_utc", "alembic upgrade head", "lint-imports",
                  "ruff format --check", "mypy", "pytest"):
         assert term in page
     for host in (".claude", ".codex"):

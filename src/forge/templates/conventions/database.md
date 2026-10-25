@@ -1,7 +1,8 @@
 # Database (Prisma and Postgres)
 
-How the standards page's data rules look in Prisma. Read it when your task adds or changes a table,
-a migration or a query.
+The database skill (`.codex/skills/database/SKILL.md`) has the rules for new tables, columns,
+constraints, indexes and queries. This page has the Prisma how-to. Existing tables keep their
+current rules unless a story asks to change them. If the app's constitution differs, follow it.
 
 Each business module owns one schema file under `apps/api/prisma/schema/`. Keep its models in that
 file. `base.prisma` holds the generator and datasource; Prisma reads the directory to generate one
@@ -14,23 +15,27 @@ page names them and no `@@map` is needed:
 
 ```prisma
 model Order {
-  id                  String        @id @default(uuid()) @db.Uuid
+  id                  String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
   userId              String        @db.Uuid
-  paymentStatus       PaymentStatus @default(UNPAID)
-  totalInCents        Int
+  paymentStatus       String        @default("UNPAID")
+  total               Decimal       @db.Decimal(19, 4)
+  totalCurrency       String
   isGift              Boolean       @default(false)
-  cancelledAtUtc      DateTime?
-  createdAtUtc        DateTime      @default(now())
-  updatedAtUtc        DateTime      @updatedAt
-  deletedAtUtc        DateTime?
+  cancelledAtUtc      DateTime?     @db.Timestamptz(3)
+  createdAtUtc        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime      @default(now()) @db.Timestamptz(3)
+  deletedAtUtc        DateTime?     @db.Timestamptz(3)
   user                User          @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "idx_Order_userId")
 }
 ```
 
+- Add the named status CHECK in migration SQL, for example
+  `CONSTRAINT "Order_paymentStatus_allowed" CHECK ("paymentStatus" IN ('UNPAID', 'PAID'))`.
+- The shared `set_updated_at()` trigger sets `updatedAtUtc` on each update.
 - Store dates and times in UTC.
-- Money is an integer in the smallest unit (`totalInCents`), never a float.
+- For money, follow the database skill: use an exact decimal and a separate currency column.
 - A boolean has a default, so it never has a third, empty state.
 - Add `createdByAccountId`, `modifiedByAccountId` and `deletedByAccountId` once the app has
   accounts.
@@ -43,7 +48,7 @@ model Order {
   client asked to be erased.
 - Raw SQL goes through `$queryRaw` with tagged templates, so every value is a parameter, and lives
   in a repository file.
-- Search starts with Postgres full-text search (a `tsvector` column with a GIN index) in raw SQL.
+- For search queries and indexes, follow the database skill.
 
 ## Migrations
 
