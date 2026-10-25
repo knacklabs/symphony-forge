@@ -10,6 +10,17 @@
       "item": "FORGE-DEFAULTS-1/JOIN",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/starter-shell.spec.ts\tThe keyboard sort test failed once in a parallel live run and passed on rerun.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/e2e/starter-shell.spec.ts",
+      "line": 154,
+      "text": "The keyboard sort test failed once in a parallel live run and passed on rerun.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/JOIN",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
