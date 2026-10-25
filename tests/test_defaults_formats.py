@@ -15,7 +15,11 @@ LINT_MESSAGE = "Format dates, times, numbers and money with the helpers in @app/
 FORMAT_FLOW = "dates show in the person's time zone and the constitution's format"
 DOWNLOAD_FLOW = "Export CSV downloads the projects list"
 CSV_API_CASES = ("projects export as CSV", "members export as CSV", "change history exports as CSV")
-PYTHON_CSV_API_CASES = ("test_projects_export_as_csv", "test_members_export_as_csv")
+PYTHON_CSV_API_CASES = (
+    "test_projects_export_as_csv",
+    "test_members_export_as_csv",
+    "test_change_history_exports_as_csv",
+)
 HAND_FORMAT_CASES = {
     "a web file formats a date by hand": (
         Path("apps") / "web" / "src" / "features" / "hand-format.ts",

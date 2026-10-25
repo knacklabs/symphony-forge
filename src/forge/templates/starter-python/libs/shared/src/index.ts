@@ -41,3 +41,4 @@ export const changeRoleSchema = z.object({ role: memberRoleSchema }).strict();
 export type InviteInput = z.infer<typeof inviteSchema>;
 export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
 export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;
+export type HistoryEntry = components['schemas']['HistoryEntry'];

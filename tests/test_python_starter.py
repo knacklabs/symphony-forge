@@ -140,7 +140,7 @@ def _assert_python_tree(client: Path):
             assert locked["version"] == version or locked["version"].startswith(version + "("), (group, name)
 
     assert (api / ".python-version").read_text(encoding="utf-8").strip() == "3.14"
-    for module in ("auth", "projects", "organisations"):
+    for module in ("auth", "projects", "organisations", "history"):
         assert (api / "app" / module / "models.py").is_file()
     assert (api / "migrations/versions/0001_initial.py").is_file()
     scripts = package["scripts"]
@@ -308,7 +308,7 @@ def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request)
         "A module uses another module only through its public service in its __init__.py, "
         "never through its internal files."
     )
-    for module in ("core", "auth", "projects", "organisations"):
+    for module in ("core", "auth", "projects", "organisations", "history"):
         contract = contracts[f"{module} internals"]
         assert contract["protected_modules"] == [f"app.{module}.*"]
         assert contract["allowed_importers"] == [f"app.{module}"]
