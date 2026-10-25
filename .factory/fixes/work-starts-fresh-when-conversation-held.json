@@ -1,0 +1,15 @@
+{
+  "base": "9f221b36051273a449703680dfb4c5ff1d05fbf4",
+  "branch": "fix/work-starts-fresh-when-conversation-held",
+  "done_when": "When another program holds the earlier conversation, forge work starts a fresh Codex conversation with the whole brief and prints one line saying so, as the cold read and the grill already do",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-25T07:16:36.281345+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "When another program, such as the ChatGPT desktop app, holds a worker's Codex conversation, forge work refuses with 'Another program holds this Codex conversation' and the item cannot go on until a person closes that program; a cold read already starts fresh in this case"
+}
