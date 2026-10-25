@@ -39,8 +39,8 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '                        the pinned version\n'
      '    doctor              Check tools, versions, hooks, adapter drift and the\n'
      '                        named CI checks\n'
-     "    test                Run related tests in the machine test lane, or pick\n"
-     "                        pytest tests with --pytest\n"
+     "    test                Run tests in the machine test lane; --change selects\n"
+     "                        related tests and checks\n"
      '    migrate             Move a client from the copied-in Forge to v1 in one\n'
      '                        pull request\n'
      '    upgrade             Upgrade Forge in this repo to a release, or the\n'
