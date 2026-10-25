@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-HISTORYUI",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T07:07:34.293349+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "105e474492cfe8bd39cc3b2612830a31a9d06976",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
