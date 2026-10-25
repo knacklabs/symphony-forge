@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-HISTORYPY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T02:38:45.806877+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a3adb605ecc4412abd7c700edba3e1f6e7ca2e6e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
