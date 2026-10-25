@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-MEMBERS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T03:16:21.604655+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7bc93ddf3f6ca055c09fae67ebcdf79c67e35746",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
