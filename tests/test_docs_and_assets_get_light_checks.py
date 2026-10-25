@@ -107,7 +107,8 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
     assert (closed.returncode == 0) == light, closed.stdout + closed.stderr
     assert ("Docs review finding" in closed.stderr) == (not light), closed.stderr
     assert bool(env.gh_calls("pr", "ready")) == light
-    assert receipt.exists() == (not light), closed.stdout
+    # CI owns this repo's tests; close only chooses the review level here.
+    assert not receipt.exists(), closed.stdout
     checked_review = env.repo.forge("hook", "pr-check", "--base", base, "--head",
                                    env.repo.git("rev-parse", "HEAD", cwd=where),
                                    "--branch", "task/SHOP-T1")

@@ -80,7 +80,8 @@ def test_1_merge_enable_checks_the_final_published_change_runs_tests_and_waits_f
     stopped = enable(client)
     assert stopped.returncode != 0, stopped.stdout + stopped.stderr
     assert not client.review_calls()
-    assert (client.tmp / "tested.txt").read_text("utf-8") == "passed"
+    assert not (client.tmp / "tested.txt").exists()
+    assert "tests" in stopped.stdout + stopped.stderr
     published = [call for call in client.gh_calls("pr") if "--body-file" in call]
     assert "Review: clean, 0 dismissed, 0 advice." in body(published[-1])
     check_published_change()

@@ -621,7 +621,7 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
         repo.git("init", "-q", "-b", "main", str(client))
         repo.git("remote", "add", "origin", str(remote), cwd=client)
         env.gh.respond("api", stdout="{}")
-        initialized = repo.forge("init", cwd=client)
+        initialized = repo.forge("init", "--actions", "yes", cwd=client)
         assert initialized.returncode == 0, initialized.stderr
         checkout = env.tmp / "new-checkout"
         repo.git("clone", "-q", str(remote), str(checkout))
@@ -659,7 +659,8 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     # Keep the shipped client files; select the test harness's third-party review configuration.
     version = repo.forge("--version").stdout.split()[-1]
     env.commit(checkout, "forge.toml", f'version = "{version}"\nrepo = "client"\n'
-               'workers = "claude"\nmerge = "agent"\nchecks = ["tests", "forge-pr-check"]\n'
+               'workers = "claude"\nmerge = "agent"\ntest_place = "ci"\n'
+               'checks = ["tests", "forge-pr-check"]\n'
                'models.build = { model = "opus", effort = "high" }\n')
     repo.git("push", "-q", "origin", "main")
     doc = "\n".join(line for line in STORY_DOC.splitlines() if not line.startswith("| T2 |"))
@@ -698,7 +699,8 @@ def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     assert any(o["kind"] == "review_findings" for o in child["occurrences"])
     stages = {s["name"]: s for s in child["stages"]}
     assert stages["Build"]["status"] == "pass"
-    assert stages["Tests"]["status"] == "skipped"
+    # CI close has no local test receipt or skipped local test stage.
+    assert stages["Tests"]["status"] is None
     assert stages["Review"]["status"] == "pass"
     assert stages["Review"]["ended_at"] is not None
     env.reviews(CLEAN)

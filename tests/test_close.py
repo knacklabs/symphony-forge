@@ -372,9 +372,11 @@ def _github_api_error(env):
 def _no_checks_named(env):
     env.commit(env.repo.path, "forge.toml",
                env.repo.path.joinpath("forge.toml").read_text("utf-8").replace(
-                   'checks = ["tests", "forge-pr-check"]', "checks = []"))
+                   'checks = ["tests", "forge-pr-check"]',
+                   'test_place = "ci"\nchecks = []'))
     return {"item": env.start_fix()[0],
-            "problem": "forge.toml names no checks for close to wait for.", "next": "forge doctor"}
+            "problem": "forge.toml runs change tests in CI but names no checks.",
+            "next": 'name the checks in forge.toml or set test_place = "local"'}
 
 
 def _not_started(env):

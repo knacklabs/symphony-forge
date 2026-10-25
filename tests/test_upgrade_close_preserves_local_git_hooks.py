@@ -9,11 +9,27 @@ import pytest
 from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_close import GREEN, env  # noqa: F401
 from test_running_commands_follow_changed_forge_pin import _earlier_release
-from test_setup import _fresh_client
 
 pytestmark = pytest.mark.platform
 
 STORY = "skipped-close"
+
+
+def _fresh_client_before_actions(repo, gh, tmp_path):
+    """Initialize through the frozen Forge CLI, which predates --actions."""
+    client, remote = tmp_path / "client", tmp_path / "client.git"
+    repo.git("init", "-q", "--bare", "-b", "main", str(remote), cwd=tmp_path)
+    repo.git("init", "-q", "-b", "main", str(client), cwd=tmp_path)
+    repo.git("remote", "add", "origin", str(remote), cwd=client)
+    gh.respond("api", stdout="{}")
+    gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
+               stdout='{"message":"Branch not protected","status":"404"}')
+    initialized = repo.forge("init", cwd=client)
+    if initialized.returncode == 0:
+        gh.respond("api", "repos/{owner}/{repo}/branches/main/protection",
+                   stdout=json.dumps({"required_status_checks": {
+                       "checks": [{"context": "tests"}, {"context": "forge-pr-check"}]}}))
+    return client, initialized
 
 
 @pytest.mark.parametrize("merge, history", [
@@ -30,7 +46,8 @@ def test_1_upgrade_close_checks_generated_files_without_rewriting_local_git_hook
     _install(repo.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old / "src")))
     try:
         if history == "new":
-            client, initialized = _fresh_client(repo, env.gh, env.tmp)
+            # This client starts on the frozen earlier release, before init asked for --actions.
+            client, initialized = _fresh_client_before_actions(repo, env.gh, env.tmp)
             assert initialized.returncode == 0, initialized.stdout + initialized.stderr
             repo.path = client
         else:

@@ -203,6 +203,8 @@ def _fresh_client(repo, gh, tmp_path: Path, *init_args: str) -> tuple[Path, subp
     # What GitHub answers for a branch with no protection yet.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
+    if "--actions" not in init_args:
+        init_args = ("--actions", "yes", *init_args)
     initialized = repo.forge("init", *init_args, cwd=client)
     if initialized.returncode == 0:
         # Init has installed the required checks; later commands see that protection.

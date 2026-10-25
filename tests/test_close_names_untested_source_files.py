@@ -28,9 +28,10 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
     settings = tomllib.loads((ROOT / "forge.toml").read_text("utf-8"))
     later = f'"{Path(sys.executable).as_posix()}" -c "for i in range(40): print(i)"'  # sh and cmd
     # Forge's always_test names Forge's own test files, which this repo does not have.
-    env.repo.write("forge.toml", "".join(
+    root_settings = "".join(
         line for line in (ROOT / "forge.toml").read_text("utf-8").splitlines(keepends=True)
-        if not line.startswith("always_test")).replace(
+        if not line.startswith(("always_test", "test_place =")))
+    env.repo.write("forge.toml", 'test_place = "local"\n' + root_settings.replace(
         json.dumps(settings["fast_test"]), json.dumps(settings["fast_test"] + " && " + later)))
     monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", sys.prefix)
     monkeypatch.setenv("UV_NO_SYNC", "1")  # Reuse the enclosing run's installed test dependencies.
@@ -64,4 +65,5 @@ def test_2_worker_brief_says_run_the_tests_that_check_changed_printed_text(clien
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[0]["brief"].split())
     assert ("When you change text the program prints (messages, pull request text, board lines), "
-            "search the tests for that text and run those tests too.") in brief
+            "include tests for that text in the change's related tests and follow the test-place "
+            "instructions below.") in brief

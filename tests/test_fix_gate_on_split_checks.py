@@ -167,7 +167,7 @@ def test_3_init_splits_a_repo_that_already_lists_pytest_split_and_doctor_accepts
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
 
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
 
     assert initialized.returncode == 0, initialized.stderr
     groups = jobs((client / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]

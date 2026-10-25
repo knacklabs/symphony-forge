@@ -32,7 +32,7 @@ def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode):
     config = (repo.path / "forge.toml").read_text("utf-8").replace('version = "v1.2.2"',
                                                                       f'version = "{version}"')
     config = "\n".join(line for line in config.splitlines()
-                       if line.partition("=")[0].strip() not in ("test", "fast_test", "checks"))
+                       if line.partition("=")[0].strip() not in ("test", "fast_test", "checks", "test_place"))
     command = f'"{Path(sys.executable).as_posix()}" -m pytest -q -p no:cacheprovider "client tests"'
     if mode == "chain":
         command = f'"{Path(sys.executable).as_posix()}" -m pytest -q -p no:cacheprovider "client tests/test_a.py" && ' + command
@@ -41,7 +41,8 @@ def test_1_close_retries_only_failed_files_once(env, adopted, persistent, mode):
              'fast_test = "forge test --pytest {base}"\n'
              'always_test = ["client tests/test_required.py::test_required"]\n'
              if mode == "picker" else 'checks = ["forge-pr-check"]\n')
-    env.commit(repo.path, "forge.toml", f"test = {json.dumps(command)}\n"
+    env.commit(repo.path, "forge.toml", 'test_place = "local"\n'
+               f"test = {json.dumps(command)}\n"
                + extra + config + "\n")
     log = env.tmp / "executed.txt"
     record = f"    with open({json.dumps(log.as_posix())}, 'a', encoding='utf-8') as log:\n"

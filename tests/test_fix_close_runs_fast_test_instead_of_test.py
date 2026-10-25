@@ -2,6 +2,7 @@
 with the default branch; unsupported runners keep their full command. CI keeps the full test."""
 from __future__ import annotations
 
+import re
 import sys
 import tomllib
 from pathlib import Path
@@ -19,7 +20,7 @@ print("1 passed")
 '''
 
 
-def _settings(env, fast: bool) -> Path:
+def _settings(env, fast: bool, *, local: bool = False) -> Path:
     script = env.tmp / "logger.py"
     script.write_text(LOGGER.format(tmp=str(env.tmp)), "utf-8")
     # TOML literal strings, so a Windows path's backslashes stay as they are.
@@ -27,13 +28,15 @@ def _settings(env, fast: bool) -> Path:
     if fast:
         lines += f"fast_test = '{sys.executable} {script} fast {{base}}'\n"
     toml = env.repo.path / "forge.toml"
-    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8") + lines)
+    settings = re.sub(r"(?m)^test_place\s*=.*(?:\r?\n|$)", "", toml.read_text("utf-8"))
+    place = 'test_place = "local"\n' if local else ""
+    env.commit(env.repo.path, "forge.toml", place + settings + lines)
     env.repo.git("push", "-q", "origin", "main")
     return env.tmp / "runs.log"
 
 
 def test_1_close_runs_fast_test_with_the_merge_base_in_place_of_base(env):
-    log = _settings(env, fast=True)
+    log = _settings(env, fast=True, local=True)
     item, where = env.start_fix()
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
@@ -43,7 +46,7 @@ def test_1_close_runs_fast_test_with_the_merge_base_in_place_of_base(env):
 
 
 def test_2_close_runs_the_full_custom_command_when_fast_test_is_unset(env):
-    log = _settings(env, fast=False)
+    log = _settings(env, fast=False, local=True)
     item, _ = env.start_fix()
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
@@ -69,7 +72,7 @@ def test_4_doctor_explains_fast_test(env):
 
 def test_5_new_repos_get_fast_test_unset(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    assert repo.forge("init", cwd=client).returncode == 0
+    assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
     assert "fast_test" not in tomllib.loads((client / "forge.toml").read_text("utf-8"))
 
 

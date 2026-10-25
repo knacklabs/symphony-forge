@@ -154,7 +154,7 @@ def test_5_new_pytest_client_runs_the_proposed_picker_through_close(env, tmp_pat
     monkeypatch.setenv("CLIENT_RECEIPT", str(receipt))
     client = _new_repo(repo, env.gh, tmp_path)
     command = _client_tests(client, python)
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     env.checks(GREEN)
     skill = (client / ".codex/skills/forge/SKILL.md").read_text("utf-8")
@@ -163,6 +163,7 @@ def test_5_new_pytest_client_runs_the_proposed_picker_through_close(env, tmp_pat
     assert "fast_test" not in tomllib.loads(config.read_text("utf-8"))
     settings = config.read_text("utf-8")
     old_test = tomllib.loads(settings)["test"]
+    settings = settings.replace('test_place = "ci"', 'test_place = "local"')
     config.write_text('fast_test = "forge test --pytest {base}"\n'
                       + settings.replace("test = " + json.dumps(old_test),
                                          "test = " + json.dumps(command)), "utf-8")
@@ -215,6 +216,7 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     config = repo.path / "forge.toml"
     settings = config.read_text("utf-8").replace('test = "python -c \\"print(123)\\""',
                                                  "test = " + json.dumps(command))
+    settings = 'test_place = "local"\n' + settings
     legacy = "python -m forge.fasttest {base}"
     monkeypatch.setenv("PATH", str(python.parent) + os.pathsep + os.environ["PATH"])
     settings = "fast_test = " + json.dumps(legacy) + "\n" + settings

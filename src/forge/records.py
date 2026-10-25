@@ -400,7 +400,8 @@ def signoff_results(top: Path) -> str:
 def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]:
     from forge import init, sync
 
-    shipped = {"forge.toml", *init._scaffold(top), *sync.files(top, repo.config(top), check_syntax=False)}
+    shipped = {"forge.toml", *init._scaffold(top, "yes"),
+               *sync.files(top, repo.config(top), check_syntax=False)}
     candidates = [name for name in names if name and name not in shipped and not name.lower().endswith(".md")
                   and not name.startswith(("docs/", "plans/", ".factory/", ".forge/", ".github/", ".claude/", ".codex/"))]
     # Init's untouched starter is a canvas shell; edits to its source are app code.

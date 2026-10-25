@@ -19,10 +19,10 @@ pytestmark = pytest.mark.platform
 
 RED = [run("tests", "failure"), run("forge-pr-check")]
 LINK = "https://github.com/acme/shop/actions/runs/5/job/{}"
-RERUN = ("Re-running {} once: its failure names none of this change's files and the tests "
-         "passed here.")
+RERUN = ("Re-running {} once: its failure names none of this change's files and "
+         "CI runs this repo's tests.")
 FIX_ROUND = "Fix round 1 of 1: the worker fixes the failing checks."
-PASSING = 'merge = "agent"\ntest = "true"\nfast_test = "true"\n'  # close runs it, so this machine's tests pass
+PASSING = ('test_place = "ci"\nmerge = "agent"\ntest = "true"\nfast_test = "true"\n')
 
 
 def _failing(env, *checks: tuple[str, str, str], attempts: tuple[str, ...] = ('{"attempt": 1}',
@@ -70,20 +70,6 @@ def _unrelated_rerun_once(env):
 def _log_names_changed_file(env, named):
     _red_then_green(env, changes={"src/app.py": "print('hello')\n"})
     _failing(env, ("tests", LINK.format(9), f'File "{named}", line 1: AssertionError\n'))
-    _fix_round(env, _land(env))
-
-
-def _no_test_command(env):
-    _red_then_green(env, 'merge = "agent"\n')
-    _failing(env, ("tests", LINK.format(9), "ConnectionResetError\n"))
-    _fix_round(env, _land(env))
-
-
-def _no_passed_record(env):
-    # An untracked file could change the result, so close's passing run records nothing.
-    where = _red_then_green(env)
-    (where / "notes.txt").write_text("draft\n", "utf-8")
-    _failing(env, ("tests", LINK.format(9), "ConnectionResetError\n"))
     _fix_round(env, _land(env))
 
 
@@ -188,7 +174,7 @@ def _attempt_never_rises(env):
     assert len(_reruns(env)) == 1
 
 
-FOUR = [_unrelated_rerun_once, "src/app.py", "src\\app.py", _no_test_command, _no_passed_record,
+FOUR = [_unrelated_rerun_once, "src/app.py", "src\\app.py",
         _already_second_attempt, _one_of_two_names_a_changed_file, _two_jobs_one_run,
         _status_without_a_job, _attempt_unreadable, _log_unreadable, _non_ascii_name,
         _renamed_old_path, _rerun_refused, _fails_again, _attempt_never_rises]

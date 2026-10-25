@@ -532,7 +532,8 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 # ponytail: stop_default only loads settings from earlier releases; stops always wait for the owner.
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
-        "merge": str, "stack": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
+        "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
+        "always_test": list, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
@@ -541,7 +542,8 @@ DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "bot
 # ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
-           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off")}
+           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off"),
+           "test_place": ("ci", "local")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -571,6 +573,11 @@ def config(top: Path | None = None) -> dict[str, Any]:
         return _config_text(path.read_text(encoding="utf-8"), path.parent)
     except UnicodeDecodeError as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+
+
+def test_place(cfg: dict[str, Any]) -> str:
+    """The explicit place, or the old config's place based on whether it names checks."""
+    return cfg.get("test_place", "ci" if cfg.get("checks") else "local")
 
 
 LOCAL = "forge.local.toml"
@@ -658,7 +665,9 @@ def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
     problem = _models_problem(data.get("models", {}))
     if problem:
         refuse(REFUSALS["models"], problem=problem)
-    return _with_local({**DEFAULTS, **data}, top) if top else {**DEFAULTS, **data}
+    config = {**DEFAULTS, **data}
+    config["test_place"] = test_place(config)
+    return _with_local(config, top) if top else config
 
 
 def ready_path(item: str, top: Path) -> Path:

@@ -79,7 +79,7 @@ def test_1_land_waits_through_a_long_run_with_progress(clock, history):
         repo.git("init", "-q", "-b", "main", str(client))
         repo.git("remote", "add", "origin", str(remote), cwd=client)
         env.gh.respond("api", stdout="{}")
-        made = repo.forge("init", cwd=client)
+        made = repo.forge("init", "--actions", "yes", cwd=client)
         assert made.returncode == 0, made.stderr
         repo.path = client
         _install(repo.bin, "gh", GH.format(python=sys.executable, remote=remote.as_posix(), url=URL)

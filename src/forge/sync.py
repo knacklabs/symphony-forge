@@ -651,6 +651,7 @@ def sync(args: argparse.Namespace) -> None:
     from forge import codex
     top = repo.root()
     cfg = repo.config(top)
+    raw_config = tomllib.loads((top / "forge.toml").read_text(encoding="utf-8"))
     changed = write(top, cfg)
     if cfg.get("repo") == "forge-source":
         page = command_page()
@@ -668,6 +669,13 @@ def sync(args: argparse.Namespace) -> None:
         print("Installed the git hooks that check each commit and push.")
     elif not changed:
         print(f"Nothing to change: the adapters and git hooks already match Forge {cfg['version']}.")
+    if "test_place" not in raw_config:
+        if repo.test_place(cfg) == "ci":
+            print('Forge runs change tests in CI because forge.toml names checks. To run them on this '
+                  'machine, write test_place = "local".')
+        else:
+            print('Forge runs change tests on this machine because forge.toml names no checks. To '
+                  'run them in CI, write test_place = "ci".')
     codex.preserve_chats(top)  # after every file is written, so a chat problem only warns
 
 

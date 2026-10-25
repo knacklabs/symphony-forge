@@ -19,18 +19,21 @@ STORY = "FIX-TESTS-ONCE-PER-ROUND"
 NPM_CLOSE = 240
 
 
-def _command(env, command):
+def _command(env, command, *, local=False):
     config = (env.repo.path / "forge.toml").read_text("utf-8")
-    env.repo.write("forge.toml", config + "test = " + json.dumps(command) + "\n")
+    config = "\n".join(line for line in config.splitlines()
+                       if line.partition("=")[0].strip() != "test_place") + "\n"
+    place = 'test_place = "local"\n' if local else 'test_place = "ci"\n'
+    env.repo.write("forge.toml", config + "test = " + json.dumps(command) + "\n" + place)
     env.repo.git("add", "-A")
     env.repo.git("commit", "-q", "-m", "Existing client tests")
     env.repo.git("push", "-q", "origin", "main")
 
 
-def test_1_close_selects_pytest_tests_and_red_ci_returns_the_item(env, tmp_path):
+def test_1_ci_close_leaves_tests_to_ci_and_red_ci_returns_the_item(env, tmp_path):
     receipts = tmp_path / "test-receipts"
     receipts.mkdir()
-    # Two selected files stay at one third; unrelated receipts catch full-suite fallback.
+    # CI owns the change tests; any receipt means close ran them on the laptop too.
     for name in ("app", "changed", "unrelated", "other", "extra", "untouched"):
         env.repo.write(f"tests/test_{name}.py", ("import app\n" if name == "app" else "") + "from pathlib import Path\n"
                        "def test_client():\n"
@@ -47,7 +50,7 @@ def test_1_close_selects_pytest_tests_and_red_ci_returns_the_item(env, tmp_path)
 
     closed = env.close(item)
 
-    assert sorted(path.name for path in receipts.iterdir()) == ["app", "changed"], closed.stdout + closed.stderr
+    assert list(receipts.iterdir()) == [], closed.stdout + closed.stderr
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert "Checks failed on the pull request: tests." in closed.stderr
     assert f"Next: forge work {item}" in closed.stderr
@@ -59,7 +62,8 @@ def test_1_close_selects_pytest_tests_and_red_ci_returns_the_item(env, tmp_path)
     assert next_step.returncode == 0, next_step.stderr
     assert f"forge work {item}" in next_step.stdout
     assert "checks failed" in next_step.stdout
-    assert (where / "forge.toml").read_text("utf-8").endswith("test = " + json.dumps(command) + "\n")
+    settings = tomllib.loads((where / "forge.toml").read_text("utf-8"))
+    assert settings["test"] == command and settings["test_place"] == "ci"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-and-sync"])
@@ -101,10 +105,17 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     assert "run: " + json.dumps(full_command) in workflow
     assert "fast_test" not in workflow
 
-    # App adoption must keep init's command and select real runner tests at close.
-    # The unrelated throwing test makes a full-suite fallback observable.
+    # Keep the CI workflow generated at init, then choose laptop tests for this close.
     assert shutil.which("npm"), "The initialized Node client regression requires npm."
     repo.path = client
+    settings = (client / "forge.toml").read_text("utf-8").splitlines()
+    for index, line in enumerate(settings):
+        if line.partition("#")[0].strip().startswith("test_place"):
+            settings[index] = 'test_place = "local"'
+            break
+    else:
+        settings.insert(0, 'test_place = "local"')
+    repo.write("forge.toml", "\n".join(settings) + "\n")
     for name in list(os.environ):
         if name.lower().startswith("npm_config_"):
             monkeypatch.delenv(name)
@@ -184,7 +195,7 @@ def test_3_close_keeps_the_full_command_for_other_runners(env, tmp_path, monkeyp
                        f"Path({json.dumps(str(receipts / 'all'))}).write_text('ran', encoding='utf-8')\n")
         command = f'"{Path(sys.executable).as_posix()}" client-check.py'
         changed, expected = "client-check.py", ["all"]
-    _command(env, command)
+    _command(env, command, local=True)
     item, _ = env.start_fix({changed: (env.repo.path / changed).read_text("utf-8") + "\n"})
 
     closed = env.repo.forge("close", item, timeout=NPM_CLOSE)
@@ -220,7 +231,7 @@ def test_4_close_uses_native_node_changed_files_including_jest_tests_directories
     env.repo.write(unrelated, "test('unrelated', () => { throw new Error('unrelated test ran'); });\n")
     command = ("npm exec --yes --package=vitest@3.2.4 -- vitest run --globals --maxWorkers=1 --pool=threads --no-isolate"
                if runner == "vitest" else "npm exec --yes --package=jest@30.2.0 -- jest --runInBand")
-    _command(env, command)
+    _command(env, command, local=True)
     changed = selected if change == "touched-test" else "shared.js"
     item, _ = env.start_fix({changed: (env.repo.path / changed).read_text("utf-8") + "// Changed\n"})
 
@@ -253,7 +264,7 @@ def test_5_close_preserves_setup_arguments_before_selecting_pytest(env, tmp_path
     env.repo.write("tests/test_unrelated.py", "def test_unrelated():\n    raise AssertionError('unrelated test ran')\n")
     # One selected file stays at one third, so close must preserve setup and run pytest.
     env.repo.write("tests/test_other.py", "def test_other():\n    raise AssertionError('other test ran')\n")
-    _command(env, setup_command + " && uv run pytest tests -q")
+    _command(env, setup_command + " && uv run pytest tests -q", local=True)
     item, _ = env.start_fix({"tests/test_cart.py": (env.repo.path / "tests/test_cart.py").read_text("utf-8") + "# Changed\n"})
 
     closed = env.close(item)

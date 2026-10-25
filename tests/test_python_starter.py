@@ -262,7 +262,7 @@ def test_1_a_python_backend_app_starts_from_the_fastapi_starter(
         env = {**os.environ, "PATH": str(scripts) + os.pathsep + os.environ["PATH"]}
         command = scripts / ("forge.exe" if os.name == "nt" else "forge")
         initialized = subprocess.run(
-            [str(command), "init", "--starter", "python"], cwd=client, env=env,
+            [str(command), "init", "--actions", "yes", "--starter", "python"], cwd=client, env=env,
             capture_output=True, text=True, encoding="utf-8", timeout=240,
         )
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr

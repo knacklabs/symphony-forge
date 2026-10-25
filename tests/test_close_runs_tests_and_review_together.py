@@ -114,9 +114,10 @@ with socket.create_connection({address!r}) as connection:
         env.commit(repo.path, "client-tests.py", suite)
         config = (repo.path / "forge.toml").read_text("utf-8")
         config = "\n".join(line for line in config.splitlines()
-            if line.partition("=")[0].strip() not in ("test", "fast_test"))
+            if line.partition("=")[0].strip() not in ("test", "fast_test", "test_place"))
         command = f'"{Path(sys.executable).as_posix()}" client-tests.py'
-        env.commit(repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config + "\n")
+        env.commit(repo.path, "forge.toml", 'test_place = "local"\n'
+                   + "test = " + json.dumps(command) + "\n" + config + "\n")
         repo.git("push", "-q", "origin", "main")
         helper = Path(os.environ["AUTOREVIEW"])
         helper.write_text(helper.read_text("utf-8").replace(
@@ -213,7 +214,8 @@ def test_2_accepting_findings_still_refuses_failed_tests(env):
     env.commit(env.repo.path, "verify.py", "from pathlib import Path\n"
                "assert Path('app.py').read_text() != 'print(2)\\n', 'client test failed'\n")
     config = (env.repo.path / "forge.toml").read_text("utf-8")
-    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n'
+               + "test = " + json.dumps(command) + "\n" + config)
     env.repo.git("push", "-q", "origin", "main")
     item, where = _stop_with_remaining_findings(env)
     before = len(env.review_calls())
@@ -239,7 +241,8 @@ def test_3_failed_review_keeps_failed_tests_for_the_next_worker(land):
                "capture_output=True, text=True)\n"
                "assert actual.stdout == 'hello\\n', 'client greeting missing'\n")
     config = (env.repo.path / "forge.toml").read_text("utf-8")
-    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n'
+               + "test = " + json.dumps(command) + "\n" + config)
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix({"app.py": "print('goodbye')\n"})
     env.reviews(FAILED)
@@ -263,7 +266,8 @@ def test_5_tests_passing_later_keep_a_blocked_review_blocked(env):
     marker = env.tmp / "tests-pass"
     command = f'"{Path(sys.executable).as_posix()}" -c "import pathlib, sys; sys.exit(not pathlib.Path({str(marker)!r}).exists())"'
     config = (env.repo.path / "forge.toml").read_text("utf-8")
-    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n'
+               + "test = " + json.dumps(command) + "\n" + config)
     env.repo.git("push", "-q", "origin", "main")
     env.checks(GREEN)
     env.reviews(blocked(finding("P1", "Greeting loses the basket")))

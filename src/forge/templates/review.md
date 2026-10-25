@@ -105,7 +105,7 @@ schema or migration, a command table or a config schema) as a P1 finding titled
 <!-- proof-list -->
 ## Proof list
 Forge builds this list from the worker's mapping of Done-when items to tests. A pytest name
-the branch has shows it is in the branch; close's test run, alongside this review, gives its
+the branch has shows it is in the branch; the repo's chosen test place gives its
 result in the pull request. Any other name is marked `not run` or `not checked` and may not
 exist: `not run` means close ran no such test, and `not checked` means close could not match the
 line to its run, so judge it by reading it:
@@ -121,7 +121,6 @@ proof by the test-audit rules below.
 
 <!-- rules -->
 ## Tests on the close run
-forge close runs the repo's test command alongside this review, outside your sandbox:
 $test_run
 
 A test skipped in your sandbox that the close run passed is not a missing test. For a pure

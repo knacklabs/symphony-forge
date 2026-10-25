@@ -1,4 +1,4 @@
-"""Generated documentation runs the same tests in close and in client CI."""
+"""Client CI tests generated documentation; close leaves that run to CI."""
 import json
 import re
 import subprocess
@@ -78,5 +78,6 @@ def test_1_generated_documentation_runs_close_and_synced_ci_tests(
     outputs = dict(line.split("=", 1) for line in output.read_text("utf-8").splitlines())
     if suite_runs(workflow, outputs["reuse"]):
         subprocess.run(command, shell=True, cwd=where, check=True)
-    assert (close_ran, receipt.exists()) == (generated, generated), closed.stdout + checked.stdout
+    # The generated-file rule still selects CI tests, without a second laptop run.
+    assert (close_ran, receipt.exists()) == (False, generated), closed.stdout + checked.stdout
     assert (outputs.get("docs-only") == "true") == (not generated)

@@ -70,7 +70,7 @@ def test_1_last_task_merge_records_story_done_without_another_pull_request(
         repo.git("init", "-q", "-b", "main", str(client))
         repo.git("remote", "add", "origin", str(remote), cwd=client)
         env.gh.respond("api", stdout="{}")
-        initialized = repo.forge("init", cwd=client)
+        initialized = repo.forge("init", "--actions", "yes", cwd=client)
         assert initialized.returncode == 0, initialized.stderr
         # Start the scenario from a fresh clone of the landed release's client files.
         checkout = env.tmp / "new-checkout"

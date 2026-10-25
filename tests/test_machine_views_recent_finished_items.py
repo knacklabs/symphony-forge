@@ -26,7 +26,7 @@ def client(repo, gh, history):
         repo.git("init", "-q", "-b", "main", str(folder))
         repo.git("remote", "add", "origin", str(remote), cwd=folder)
         gh.respond("api", stdout="{}")
-        initialized = repo.forge("init", cwd=folder)
+        initialized = repo.forge("init", "--actions", "yes", cwd=folder)
         assert initialized.returncode == 0, initialized.stderr
     else:
         folder = repo.path

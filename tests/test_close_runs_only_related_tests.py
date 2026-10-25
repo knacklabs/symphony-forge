@@ -27,6 +27,10 @@ def test_1_close_runs_only_changed_and_module_related_tests_unless_shared_inputs
         source = ROOT / rel
         if source.exists():
             env.repo.write(rel, source.read_text("utf-8"))
+    settings_path = env.repo.path / "forge.toml"
+    settings = "\n".join(line for line in settings_path.read_text("utf-8").splitlines()
+                           if line.partition("=")[0].strip() != "test_place")
+    env.repo.write("forge.toml", 'test_place = "local"\n' + settings + "\n")
     monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", sys.prefix)
     monkeypatch.setenv("UV_NO_SYNC", "1")  # Reuse the enclosing run's installed test dependencies.
     log = env.tmp / "pytest-ran"

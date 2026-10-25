@@ -78,7 +78,7 @@ def _advice(done, expected):
 ], ids=[case[0] for case in CASES if case[3] is not None or case[0] == "configured"] + ["unsupported"])
 def test_1_doctor_suggests_the_new_clients_test_kind(repo, gh, tmp_path, cases):
     client = _new_repo(repo, gh, tmp_path)
-    assert repo.forge("init", cwd=client).returncode == 0
+    assert repo.forge("init", "--actions", "yes", cwd=client).returncode == 0
     # Unsupported kinds create no manifests, so each row only changes the test command.
     for kind, command, package, expected in cases:
         _inputs(client, kind, command, package)
@@ -167,7 +167,7 @@ def test_5_generated_node_settings_get_advice_without_replacing_the_test_command
         made = subprocess.run([sys.executable, str(repo.bin / "old-forge"), "init"],
                               cwd=client, capture_output=True, text=True, timeout=60)
     else:
-        made = repo.forge("init", cwd=client)
+        made = repo.forge("init", "--actions", "yes", cwd=client)
     assert made.returncode == 0, made.stdout + made.stderr
     settings = client / "forge.toml"
     before = settings.read_bytes()

@@ -407,8 +407,9 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
 @pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monkeypatch):
     env = client
-    # Close runs fast_test, so only its passed record says the tests passed here.
-    _settings(env, test=f"{sys.executable} -c \"print(1)\"", fast_test=f"{sys.executable} -c pass")
+    # CI runs the configured test command; an infrastructure-only failure can be retried there.
+    _settings(env, test_place="ci", test=f"{sys.executable} -c \"print(1)\"",
+              fast_test=f"{sys.executable} -c pass")
     for day, (slug, run_id) in enumerate((("flaky", "5"), ("broken", "6")), 1):
         _fix(env, monkeypatch, slug, day, {f"{slug}.py": "x = 1\n"})
         _red(env, slug)
@@ -420,8 +421,8 @@ def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monke
     assert done.returncode == 1, done.stdout + done.stderr
     lines = done.stdout.splitlines()
     for slug in ("flaky", "broken"):
-        assert (f"{slug}: Re-running tests once: its failure names none of this change's files and the tests "
-                "passed here.") in lines, done.stdout
+        assert (f"{slug}: Re-running tests once: its failure names none of this change's files and "
+                "CI runs this repo's tests.") in lines, done.stdout
     assert sorted(env.gh_calls("run", "rerun")) == [["run", "rerun", "5", "--failed"], ["run", "rerun", "6", "--failed"]]
     assert "flaky merged." in lines, done.stdout
     assert not env.gh_calls("pr", "merge", _number("fix/broken"))

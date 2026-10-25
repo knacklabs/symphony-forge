@@ -25,9 +25,10 @@ def test_1_failed_close_ends_with_all_failed_test_files_names_and_full_log(env, 
     config = (repo.path / "forge.toml").read_text("utf-8").replace(
         'version = "v1.2.2"', f'version = "{version}"')
     kept = [line for line in config.splitlines()
-            if line.partition("=")[0].strip() not in ("test", "fast_test")]
+            if line.partition("=")[0].strip() not in ("test", "fast_test", "test_place")]
     command = f'"{Path(sys.executable).as_posix()}" -m pytest tests -q -ra --tb=no -p no:cacheprovider'
-    env.commit(repo.path, "forge.toml", f"test = {json.dumps(command)}\n"
+    env.commit(repo.path, "forge.toml", f"test_place = \"local\"\n"
+               f"test = {json.dumps(command)}\n"
                f"fast_test = {json.dumps(command)}\n" + "\n".join(kept) + "\n")
     repo.git("push", "-q", "origin", "main")
     names = (["tests/test_broken.py"] if collection else

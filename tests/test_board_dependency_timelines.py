@@ -25,7 +25,7 @@ def _land_fixture(repo):
 def _client(repo, gh, tmp_path, history):
     if history == "new":
         client = _new_repo(repo, gh, tmp_path)
-        initialized = repo.forge("init", cwd=client)
+        initialized = repo.forge("init", "--actions", "yes", cwd=client)
         assert initialized.returncode == 0, initialized.stderr
         repo.path = client
         _land_fixture(repo)

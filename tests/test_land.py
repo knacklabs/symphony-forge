@@ -225,11 +225,12 @@ def _merged_after_close_returned(env):
 def _no_checks_named(env):
     where = _fix(env, "working", worked=True)
     env.commit(where, "forge.toml", (where / "forge.toml").read_text("utf-8").replace(
-        'checks = ["tests", "forge-pr-check"]', "checks = []"))
+        'checks = ["tests", "forge-pr-check"]', 'test_place = "ci"\nchecks = []'))
     done = _land(env)
     assert done.returncode == 1
     assert _steps(done) == [f"Closing {ITEM}.", f"Stopped: {ITEM} needs you."]
-    assert _refusal(done) == ["forge.toml names no checks for close to wait for.", "Next: forge doctor"]
+    assert _refusal(done) == ["forge.toml runs change tests in CI but names no checks.",
+                              'Next: name the checks in forge.toml or set test_place = "local"']
 
 
 def _unsynced_upgrade(env):

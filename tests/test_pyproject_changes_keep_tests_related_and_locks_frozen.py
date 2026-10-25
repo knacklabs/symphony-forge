@@ -205,7 +205,7 @@ def check_generated_ci(repo, lock, *, launcher=None):
 def test_3_new_clients_get_related_manifest_tests_and_frozen_uv(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
     (client / "pyproject.toml").write_text(MANIFEST, "utf-8")
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     repo.path = client
     base = configure(repo, uv=True)

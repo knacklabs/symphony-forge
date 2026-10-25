@@ -33,7 +33,7 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         client = _new_repo(repo, gh, tmp_path, config)
         if command_style == "split-pytest":
             (client / "requirements.txt").write_text("pytest-split\n", encoding="utf-8")
-        result = repo.forge("init", "--runner", "windows-latest", cwd=client)
+        result = repo.forge("init", "--actions", "yes", "--runner", "windows-latest", cwd=client)
     else:
         client = repo.path
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", client, dirs_exist_ok=True)

@@ -142,16 +142,22 @@ to increase deletion counts.
 
 Never edit source or tests while a test suite is running in the checkout.
 
-1. Run the smallest owner and sibling tests the task names in its Tests
+Follow `forge.toml`'s `test_place`. In local mode, use `forge test` for validation.
+In CI mode, do not run them here for a passing
+result; run `forge test` only for a test you are writing, to watch it fail.
+Pull request CI runs the change's related tests, lint and type checks.
+
+1. Identify the smallest owner and sibling tests the task names in its Tests
    column; include the relevant `tests/` files when changing Forge itself.
-2. For source greps or plan assertions, run the executable contract owner;
+2. For source greps or plan assertions, name the executable contract owner;
    source inspection alone is not test evidence.
-3. Before you stop, commit your work first, then run the change's related tests
-   through `forge test` in the foreground and wait for it to finish. Run tests only
-   through `forge test`: it runs forge.toml's `fast_test`, or `test` when none is set,
-   in the machine's one test lane, with `{base}` as the merge base with
-   `origin/<default branch>`. It always runs, including uncommitted changes.
-   Then commit any fixes. CI runs the full suite.
+3. Before you stop, commit your work first. In local mode, run the change's related
+   tests through `forge test` in the foreground and wait for it to finish. Run tests
+   only through `forge test`: it runs forge.toml's `fast_test`, or `test` when none
+   is set, in the machine's one test lane, with `{base}` as the merge base with
+   `origin/<default branch>`. It always runs, including uncommitted changes. In CI
+   mode, commit your work and leave the change's related tests to pull request CI.
+   Then commit any fixes from the local run. CI runs the full suite.
 4. `forge close <item>` owns the review and the checks. Do not reconstruct its
    review or check wait with ad hoc commands.
 5. After an audit batch, inspect the diff and report production/tooling changes

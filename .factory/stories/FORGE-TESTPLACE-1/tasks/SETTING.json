@@ -1,0 +1,97 @@
+{
+  "branch": "task/FORGE-TESTPLACE-1-SETTING",
+  "chat": {
+    "approval": "be1165261ad8a6a7d238bbab779080eb05ad2981ece85f728185164184008de5",
+    "claude": null,
+    "conversation": "01a1722f-0a9d-7741-bc5e-83515a33e3a0",
+    "head": null,
+    "start": "58758285dcd6feef15636291a84c0d7fd35d34dc"
+  },
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 354,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Require local test evidence when reusing a review",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/brief.md",
+      "file": "src/forge/templates/brief.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 243,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Make mandatory validation guidance honor the selected test place",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 300,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: Complete change-test selection and workflow routing in CISEL",
+      "work": 4
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "96e7607b57f8b8b461f54988c3852ec8cb7e54ae3ac0af11932aafa6d73284cd",
+    "changed": "1694f08798d11854f7e5f20438d78e6b6a6238d4b361062e3ed25e72381718cc",
+    "commit": "ad2981b9f28492e44b08a1c882bd0ded5d7586cf",
+    "dismissals": [],
+    "findings": [],
+    "id": "85b743fb-4c59-4a15-86e1-e82dcd884ff6",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T02:41:46.411263+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T04:26:53.028455+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T04:34:20.512392+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T05:10:42.910849+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T05:26:37.652024+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T08:35:28.602572+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "0fe7f6f1-b611-467b-af73-d85f5a6717d0",
+    "head": "a8e992cf4a1445d2621b661cbf9f3a7c722635dc",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

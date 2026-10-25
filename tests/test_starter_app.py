@@ -42,7 +42,7 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
         marker = "pyproject.toml" if case == "pyproject" else case
         (client / marker).write_text("{}\n", encoding="utf-8")
         before = repo.git("status", "--porcelain", "--ignored", "-uall", cwd=client)
-        result = repo.forge("init", "--starter", cwd=client)
+        result = repo.forge("init", "--actions", "yes", "--starter", cwd=client)
         assert result.returncode == 1, result.stdout + result.stderr
         assert marker in result.stdout + result.stderr
         assert repo.git("status", "--porcelain", "--ignored", "-uall", cwd=client) == before
@@ -74,7 +74,7 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Earlier adoption")
         before = repo.git("status", "--porcelain", "--ignored", "-uall")
-        result = repo.forge("init", "--starter")
+        result = repo.forge("init", "--actions", "yes", "--starter")
         assert result.returncode == 1, result.stdout + result.stderr
         assert "this repo already has commits" in (result.stdout + result.stderr).lower()
         assert repo.git("status", "--porcelain", "--ignored", "-uall") == before
