@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-25T02:54:18.166162+00:00
-seconds: 268.638
-read_hash: b8137876bd0b8bf79cb585110537087791a1c3c3
-round: 1
+read_at: 2026-10-25T03:00:40.996409+00:00
+seconds: 115.584
+read_hash: 89af9a90ea3a7fe6e4c74dd42f92378b7a7c641b
+round: 2
 passed: no
-doc_seen: b8137876bd0b8bf79cb585110537087791a1c3c3
+doc_seen: 89af9a90ea3a7fe6e4c74dd42f92378b7a7c641b
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: e6c8ab106bbeba0d7ed3c0e7ddefe8202c0b60ff
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a170f6-e233-7c53-9998-63c522ea35e5
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose to fix the pytest-only empty-group rule and the test name clash, then read once more
 ---
 # Cold read notes
 
@@ -57,3 +57,14 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Test. Case: normal use - a client writes `groups = 0` or `groups = true`. `plans/FORGE-GROUPS-1.md:46` requires a specific refusal, but every named test supplies a valid positive integer. Current validation handles strings, lists and enumerated choices, with no integer validation branch (`src/forge/repo.py:791`). Adding the key while omitting its validation would pass the proposed tests, violating the repository’s required refusal-message coverage.
    Gain 3, Work 2, Harm 2
    Disposition: cut shared names now name the `kind is int` branch in `repo._config_problem`, and item 2 adds a refusal test for 0, true and a string
+
+## Round 2
+
+6. Blocking: The new empty-group rule turns real failures from other runners into passes.
+   Raise: Functional. Case: normal use - a client sets `groups = 2` with `test = "mocha"`, and five tests fail. [Mocha’s exit handler](https://github.com/mochajs/mocha/blob/v11.7.5/lib/cli/run-helpers.js#L281) returns the failure count, so this run exits 5. Forge preserves that status for other runners (`src/forge/fasttest.py:272`), but the new unconditional conversion at `plans/FORGE-GROUPS-1.md:61` changes it to success. Both groups can therefore pass a failing suite, and `review.test_run` caches that false pass at `src/forge/review.py:526`. The new tests cover only pytest’s meaning of status 5.
+   Gain 5, Work 3, Harm 3
+
+7. Advisory: The added validation test duplicates criterion 1 and fails the repository’s test gate.
+   Raise: Gate. Case: normal use - ANYRUNNER implements the two prescribed tests. `plans/FORGE-GROUPS-1.md:80` names `test_1_groups_split_the_test_job`, while `:108` adds `test_1_groups_refuses_a_bad_value` in the same module. `tests/test_rules.py:49` keys tests by story and criterion number and rejects duplicates at `:50`. Following these names makes the suite fail.
+   Gain 3, Work 1, Harm 1
+   Disposition: keep - below the bar (follow-up)
