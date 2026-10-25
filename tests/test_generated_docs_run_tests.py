@@ -49,7 +49,9 @@ def test_1_generated_documentation_runs_close_and_synced_ci_tests(
     synced = env.repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     env.repo.git("add", "-A")
-    env.repo.git("commit", "-qm", "Sync client tests")
+    # The workflow's Forge command need not change when the configured test command changes.
+    if env.repo.git("diff", "--cached", "--name-only"):
+        env.repo.git("commit", "-qm", "Sync client tests")
     env.repo.git("switch", "-q", "main")
     env.repo.git("merge", "-q", "--ff-only", "fix/configure-generated-docs")
     _land_fixture(env.repo)

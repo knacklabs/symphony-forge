@@ -34,11 +34,9 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         client = _new_repo(repo, gh, tmp_path, config)
         if command_style == "split-pytest":
             (client / "requirements.txt").write_text("pytest-split\n", encoding="utf-8")
-        (client / "README.md").write_text("Retry fixture\n", encoding="utf-8")
-        repo.git("add", "-A", cwd=client)
-        repo.git("commit", "-qm", "Initialize retry fixture", cwd=client)
-        repo.git("push", "-qu", "origin", "main", cwd=client)
         result = repo.forge("init", "--actions", "yes", "--runner", "windows-latest", cwd=client)
+        assert result.returncode == 0, result.stdout + result.stderr
+        repo.git("checkout", "-qb", "fix/windows-client-retries", cwd=client)
     else:
         client = repo.path
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", client, dirs_exist_ok=True)
@@ -54,9 +52,7 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         config = 'runner = "windows-latest"\n' + config
         (client / "forge.toml").write_text(config, encoding="utf-8")
         result = repo.forge("sync", cwd=client)
-    assert result.returncode == 0, result.stdout + result.stderr
-    if setup == "init":
-        repo.git("checkout", "-qb", "fix/windows-client-retries", cwd=client)
+        assert result.returncode == 0, result.stdout + result.stderr
     (client / "retry_probe.py").write_text(
         "import os\nfrom pathlib import Path\n"
         "path = Path(os.environ['ATTEMPT_FILE'])\n"

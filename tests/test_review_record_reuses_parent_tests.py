@@ -15,12 +15,12 @@ STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
 
 
 def suite_runs(workflow, reuse):
-    # Inspect the tests job's suite step, not a setup step with the same guard.
+    # Change-test CI installs Forge before its suite; pytest-split keeps the raw suite command.
     tests_job = re.split(r"^  [\w-]+:\n", workflow.split("\n  tests:\n", 1)[1],
                          maxsplit=1, flags=re.M)[0]
     steps = re.split(r"^      - ", tests_job, flags=re.M)[1:]
     [suite] = [step for step in steps if step.startswith("run:")
-               and ".forge/review-tests.py" not in step and "npm exec" not in step]
+               and ("forge test --change" in step or "--splits " in step)]
     condition = re.search(r"^        if: steps\.parent-tests\.outputs\.reuse != '([^']+)'$",
                           suite, re.M)
     assert condition, "The suite step must use the parent-tests output"
