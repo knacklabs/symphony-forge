@@ -4,12 +4,20 @@
   "done_when": "The guide and the constitution defaults page mark the defaults as built in for an app with libs/organisations or apps/api/app/organisations, so a Python starter app is asked nothing about them",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T08:55:57.216123+00:00",
       "step": "start"
     }
   ],
-  "why": "The guide marks the constitution's defaults as built in only when the app has libs/organisations, the TypeScript starter's folder, so a Python app from forge init --starter python (which keeps it in apps/api/app/organisations) gets asked about defaults its starter already builds"
+  "stuck": {
+    "close": null,
+    "head": "defbdecbfd2458ac16fccf3d027e353f28abd667",
+    "keys": {},
+    "round": null
+  },
+  "why": "The guide marks the constitution's defaults as built in only when the app has libs/organisations, the TypeScript starter's folder, so a Python app from forge init --starter python (which keeps it in apps/api/app/organisations) gets asked about defaults its starter already builds",
+  "worker": "codex"
 }
