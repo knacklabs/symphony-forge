@@ -275,6 +275,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "      - uses: actions/checkout@v7\n"
                   "        with:\n"
                   "          fetch-depth: 0\n"
+                  "      - run: git remote set-head origin --auto\n"
                   "      - uses: actions/setup-python@v6\n"
                   "        with:\n"
                   "          python-version: '3.11'\n"

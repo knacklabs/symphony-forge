@@ -1557,6 +1557,7 @@ Local mode has no scheduled job; when `forge next` says the daily run is due, ru
 in the main checkout when the machine is quiet. A green full run on the latest default-branch
 commit is required before pushing a release tag or accepting `client-signoff`. Everyday merges do
 not wait for it.
+A failed scheduled or manual full run appears in `forge next` with its failed test names.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still
 fails. New repos get this rule at init. Existing repos get it after upgrade and sync.

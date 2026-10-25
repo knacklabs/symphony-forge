@@ -182,9 +182,8 @@ def details(top: Path) -> list[Item]:
 
 
 def failed_schedules(top: Path) -> list[Item]:
-    """Each workflow whose latest scheduled run on the default branch failed: its name and file,
-    failed jobs and failing pytest tests as printed; [] when none failed or GitHub can't be read.
-    One request for the runs and one log per failed workflow, kept ten minutes."""
+    """Failed scheduled workflows and manual Forge full runs on the default branch.
+    Read each run list once and one log per failed workflow, kept ten minutes."""
     branch = repo.default_branch(top)
 
     def fetch(now: datetime) -> list[Item] | None:
@@ -199,6 +198,16 @@ def failed_schedules(top: Path) -> list[Item]:
             return None
         if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
             return None
+        manual = repo.run("gh", "api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+                          "--method", "GET", "--raw-field", "event=workflow_dispatch",
+                          "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+        try:
+            manual_runs = json.loads(manual.stdout).get("workflow_runs", []) if not manual.returncode else []
+        except (ValueError, AttributeError):
+            manual_runs = []
+        if isinstance(manual_runs, list) and all(isinstance(run, dict) for run in manual_runs):
+            runs += manual_runs
+        runs.sort(key=lambda run: run.get("created_at", ""), reverse=True)
         latest: dict[Any, Item] = {}
         for run in runs:  # newest first
             latest.setdefault(run.get("workflow_id"), run)
@@ -211,10 +220,11 @@ def failed_schedules(top: Path) -> list[Item]:
                 return None
             lines = log.stdout.splitlines()
             failed.append({"workflow": str(run.get("name") or "workflow"), "branch": branch,
+                           "event": run.get("event", "schedule"),
                            "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
                            "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
                            "tests": sorted({found[1] for line in lines if (found := re.search(
-                               r"(?:FAILED|ERROR) (\S+?::[^\s\[]+(?:\[.*?\])?)(?= - |$)", line))})})
+                               r"(?:FAILED|ERROR|-) (\S+?::[^\s\[]+(?:\[.*?\])?|\S+\.py)(?= - |$)", line))})})
         return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
     return _cached(top, "schedule-cache", fetch, seconds=600) or []
 

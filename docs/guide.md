@@ -341,6 +341,7 @@ In CI mode, `forge.yml` also runs `forge test --full` once a day on the default 
 mode, `forge next` says when the daily run is due; run `forge test --full` in the main checkout
 when the machine is quiet. A green full run on the latest default-branch commit gates release tags
 and client sign-off. Everyday merges do not wait for it.
+A failed scheduled or manual full run appears in `forge next` with its failed test names.
 On a `windows-*` runner, the generated related-test job wraps `forge test --change` in PowerShell
 and retries it once after a failure. The command runs the configured test command with the same
 shell as a local close on Windows. Use `pwsh -File "<path>"` to run a PowerShell script. A second

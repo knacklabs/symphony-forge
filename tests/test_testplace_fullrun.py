@@ -1,7 +1,7 @@
 """A full run checks every test on clean main and records the result there.
 
 Owner paths: src/forge/fullrun.py, src/forge/prcheck.py, src/forge/githooks.py,
-src/forge/records.py, src/forge/nextstep.py.
+src/forge/records.py, src/forge/nextstep.py, src/forge/board_facts.py.
 
 Test-audit gate:
 1. Protect full-run selection, its status, daily notices, failure fixes and release gates at the
@@ -131,7 +131,8 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     due = repo.forge("next")
     assert "daily full run on main is due" in due.stdout.lower()
     assert "forge test --full" in due.stdout
-    graphql_calls = [call for call in gh.calls() if call[:2] == ["api", "graphql"]]
+    graphql_calls = [call for call in gh.calls() if call[:2] == ["api", "graphql"]
+                     and any("history(first:30)" in argument for argument in call)]
     assert len(graphql_calls) == 1
     assert "history(first:30)" in " ".join(graphql_calls[0])
     assert "branch=refs/heads/main" in graphql_calls[0]
@@ -189,10 +190,12 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     repo.write("forge.toml", old_config.replace('test_place = "local"', 'test_place = "ci"')
                .replace("checks = []", 'checks = ["tests", "forge-pr-check"]'))
     _commit(repo, "Use CI for change tests", "forge.toml")
-    before_graphql = len([call for call in gh.calls() if call[:2] == ["api", "graphql"]])
+    before_graphql = len([call for call in gh.calls() if call[:2] == ["api", "graphql"]
+                          and any("history(first:30)" in argument for argument in call)])
     ci_next = repo.forge("next")
     assert "daily full run on main is due" not in ci_next.stdout.lower()
-    assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == before_graphql
+    assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]
+                and any("history(first:30)" in argument for argument in call)]) == before_graphql
 
     ci_tmp = tmp_path / "ci-init"
     ci_tmp.mkdir()
@@ -208,7 +211,7 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     version = repo.forge("--version").stdout.split()[-1]
     assert f"uv tool install git+https://github.com/knacklabs/symphony-forge@{version}" in full_job
     assert "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'" in full_job
-    for name, body in _jobs(ci_workflow).items():
+    for name, body in _jobs(ci_workflow.split("\njobs:\n", 1)[1]).items():
         if name != "full-suite":
             condition = next(line for line in body.splitlines() if line.strip().startswith("if:"))
             assert "github.event_name" in condition and "pull_request" in condition
@@ -242,6 +245,42 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     adopted_workflow = (upgrade_tree / ".github/workflows/forge.yml").read_text("utf-8")
     assert "full-suite:" in adopted_workflow and "forge test --full" in adopted_workflow
 
+    # Actions fetches explicit refspecs, which leave origin/HEAD unset. An upgraded client
+    # whose default branch is master must run the generated preparation before the full run.
+    adopted_repo.git("add", "-A", cwd=upgrade_tree)
+    adopted_repo.git("commit", "-q", "-m", "Use the upgraded CI workflow", cwd=upgrade_tree)
+    adopted_repo.git("push", "-q", "origin", "HEAD", cwd=upgrade_tree)
+    remote = Path(adopted_repo.git("remote", "get-url", "origin"))
+    adopted_repo.git("update-ref", "refs/heads/main", "refs/heads/fix/upgrade-the-test-place", cwd=remote)
+    adopted_repo.git("branch", "-m", "main", "master", cwd=remote)
+    adopted_repo.git("symbolic-ref", "HEAD", "refs/heads/master", cwd=remote)
+    actions = tmp_path / "actions-checkout"
+    adopted_repo.git("init", "-q", str(actions))
+    adopted_repo.git("remote", "add", "origin", str(remote), cwd=actions)
+    adopted_repo.git("fetch", "-q", "origin",
+                     "+refs/heads/master:refs/remotes/origin/master", cwd=actions)
+    adopted_repo.git("checkout", "-q", "--detach", "origin/master", cwd=actions)
+    missing_head = subprocess.run(["git", "symbolic-ref", "refs/remotes/origin/HEAD"],
+                                  cwd=actions, capture_output=True, text=True)
+    assert missing_head.returncode != 0
+    full_job = _jobs(adopted_workflow)["full-suite"]
+    run_commands = [line.removeprefix("      - run: ") for line in full_job.splitlines()
+                    if line.startswith("      - run: ")]
+    assert "forge test --full" in run_commands
+    # The fixture supplies this release's Forge on PATH instead of downloading it again.
+    # Execute the generated native steps and Forge command in their actual order.
+    for command in run_commands:
+        if command.startswith("uv tool install "):
+            continue
+        completed = subprocess.run(command, shell=True, cwd=actions, capture_output=True,
+                                   text=True, encoding="utf-8", timeout=60)
+        assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert adopted_repo.git("symbolic-ref", "--short", "refs/remotes/origin/HEAD",
+                            cwd=actions) == "origin/master"
+    assert (actions / "test-count").read_text("utf-8") == "run\n"
+    assert _status_post_endpoint(adopted_repo.git("rev-parse", "HEAD", cwd=actions)) in _status_posts(gh)[-1]
+    assert "state=success" in _status_posts(gh)[-1]
+
     _local_config(repo, "")
     before = len(_status_posts(gh))
     no_command = repo.forge("test", "--full")
@@ -274,7 +313,11 @@ def test_4_failed_full_run_opens_a_fix(repo, gh, tmp_path, monkeypatch):
     assert started.returncode == 0, started.stdout + started.stderr
     board = repo.forge("board", "--json")
     assert board.returncode == 0, board.stdout + board.stderr
-    assert any(item.get("title") == expected_why for item in json.loads(board.stdout)["items"])
+    # The board shortens long titles. The created branch and its public start commit retain
+    # the fix and its complete why, including every failed test.
+    slug = started.stdout.split()[2]
+    assert any(item["id"] == slug for item in json.loads(board.stdout)["items"])
+    assert expected_why in repo.git("log", "-1", "--format=%B", f"fix/{slug}")
 
     adopted_repo = _adopted_repo(repo, tmp_path / "adopted-failure")
     prepare_adopted_client(SimpleNamespace(repo=adopted_repo), [])
@@ -323,13 +366,28 @@ def test_4_failed_full_run_opens_a_fix(repo, gh, tmp_path, monkeypatch):
             "checks = []", 'checks = ["tests", "forge-pr-check"]'))
     _commit(repo, "Run change tests in CI", "forge.toml")
     monkeypatch.setenv("FORGE_NOW", "2030-01-01T10:00:00+00:00")
-    run = {"id": 17, "workflow_id": 1, "name": "forge", "path": ".github/workflows/forge.yml",
-           "event": "schedule", "head_branch": "main", "conclusion": "failure"}
+    monkeypatch.delenv("GITHUB_RUN_ID", raising=False)
+    monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
+    ci_failed = repo.forge("test", "--full")
+    assert ci_failed.returncode == 1
+    assert all(test_id in ci_failed.stdout for test_id in ids)
+
+    def run(run_id, event, created_at, conclusion="failure"):
+        return {"id": run_id, "workflow_id": 1, "name": "forge",
+                "path": ".github/workflows/forge.yml", "event": event, "head_branch": "main",
+                "conclusion": conclusion, "created_at": created_at}
+
+    def actions_log(output):
+        return "\n".join(
+            f"full suite\tRun forge test --full\t2030-01-01T03:00:00Z {line}"
+            for line in output.splitlines())
+
+    scheduled = run(17, "schedule", "2030-01-01T04:00:00Z")
     gh.respond("api", "repos/{owner}/{repo}/actions/runs",
-               stdout=json.dumps({"total_count": 1, "workflow_runs": [run]}))
-    gh.respond("run", "view", "17", "--log-failed",
-               stdout="\n".join(f"full suite\tRun tests\t2030-01-01T03:00:00Z FAILED {test_id} - boom"
-                                 for test_id in ids))
+               stdout=json.dumps({"total_count": 1, "workflow_runs": [scheduled]}))
+    gh.respond("api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+               stdout=json.dumps({"total_count": 0, "workflow_runs": []}))
+    gh.respond("run", "view", "17", "--log-failed", stdout=actions_log(ci_failed.stdout))
     next_output = repo.forge("next")
     assert next_output.returncode == 0, next_output.stderr
     lines = next_output.stdout.splitlines()
@@ -337,6 +395,31 @@ def test_4_failed_full_run_opens_a_fix(repo, gh, tmp_path, monkeypatch):
     assert len(starts) == 1, next_output.stdout
     failing = next(line for line in lines if line.startswith("Failing tests: "))
     assert all(test_id in failing for test_id in ids)
+
+    stale = run(17, "schedule", "2030-01-01T04:00:00Z")
+    manual = run(18, "workflow_dispatch", "2030-01-01T05:00:00Z")
+    gh.respond("api", "repos/{owner}/{repo}/actions/runs",
+               stdout=json.dumps({"total_count": 1, "workflow_runs": [stale]}))
+    gh.respond("api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+               stdout=json.dumps({"total_count": 1, "workflow_runs": [manual]}))
+    gh.respond("run", "view", "17", "--log-failed",
+               stdout="full suite\tRun forge test --full\t2030-01-01T03:00:00Z "
+                     "FAILED tests/test_stale_run.py::test_old - boom")
+    gh.respond("run", "view", "18", "--log-failed", stdout=actions_log(ci_failed.stdout))
+    monkeypatch.setenv("FORGE_NOW", "2030-01-01T10:11:00+00:00")
+    next_manual = repo.forge("next")
+    assert next_manual.returncode == 0, next_manual.stderr
+    assert "The latest manual forge (forge.yml) run on main failed" in next_manual.stdout
+    manual_lines = next_manual.stdout.splitlines()
+    manual_starts = [line for line in manual_lines if line.startswith("Next: forge fix start ")]
+    assert len(manual_starts) == 1, next_manual.stdout
+    assert "The manual forge (forge.yml) run fails on main" in manual_starts[0]
+    manual_failing = next(line for line in manual_lines if line.startswith("Failing tests: "))
+    assert all(test_id in manual_failing for test_id in ids)
+    assert "tests/test_stale_run.py::test_old" not in manual_failing
+    manual_calls = [call for call in gh.calls()
+                    if call[:2] == ["api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs"]]
+    assert any("event=workflow_dispatch" in call for call in manual_calls)
 
 
 @pytest.mark.platform
@@ -423,6 +506,10 @@ def test_5_release_and_signoff_wait_for_a_green_full_run(repo, gh, tmp_path, mon
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     _set_status(gh, repo.git("rev-parse", "origin/main"), "failure")
+    gh.respond("pr", "view", stdout=json.dumps({
+        "number": 7, "state": "OPEN", "baseRefName": "main", "headRefName": "fix/tidy-readme",
+        "headRefOid": repo.git("rev-parse", "fix/tidy-readme"), "title": "Tidy readme",
+        "isDraft": False, "body": ""}))
     _merge_at_github(env)
     before = len(status_reads())
     merged = repo.forge("merge", item)

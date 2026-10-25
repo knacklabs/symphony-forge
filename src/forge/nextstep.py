@@ -330,8 +330,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
 
 
 def _failed_schedules(top: Path) -> dict[str, list[str]]:
-    """By "(<workflow file>)", which its fix's why names: each workflow whose latest scheduled run on
-    the default branch failed, with its failed jobs and tests and, last, the command that starts its fix."""
+    """By workflow file: each failed scheduled or manual full run, with one fix to start or continue."""
     def clean(text: str) -> str:  # safe inside double quotes in POSIX, PowerShell and cmd
         return " ".join(re.sub(r"[^A-Za-z0-9 .,:;/_=()-]", " ", text).split())
     alerts = {}
@@ -339,10 +338,11 @@ def _failed_schedules(top: Path) -> dict[str, list[str]]:
         key = f"({clean(run['file'])})"
         run = {**run, "workflow": f"{run['workflow']} {key}"}
         workflow, branch = clean(run["workflow"]), clean(run["branch"])
-        why = f"The scheduled {workflow} run fails on {branch}"
+        kind = "manual" if run.get("event") == "workflow_dispatch" else "scheduled"
+        why = f"The {kind} {workflow} run fails on {branch}"
         jobs = "; ".join(clean(job) for job in run["jobs"]) or "its failed jobs"
-        done = f"{jobs} of the scheduled {workflow} workflow pass again on the next scheduled run on {branch}"
-        alerts[key] = [f"The latest scheduled {run['workflow']} run on {run['branch']} failed in: "
+        done = f"{jobs} of the {kind} {workflow} workflow pass again on the next {kind} run on {branch}"
+        alerts[key] = [f"The latest {kind} {run['workflow']} run on {run['branch']} failed in: "
                        f"{'; '.join(run['jobs']) or 'unknown jobs'}.",
                        *([f"Failing tests: {', '.join(run['tests'])}."] if run["tests"] else []),
                        f'Next: forge fix start "{why}" --done "{done}" --kind mechanical']

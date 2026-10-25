@@ -69,6 +69,9 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
         assert _git(repo, "push", "-q", "origin", "main").returncode == 0
         approved_constitution(repo)
     assert made.returncode == 0, made.stdout + made.stderr
+    # No manual Forge full run accompanies these other workflows' scheduled runs.
+    gh.respond("api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+               stdout=json.dumps({"workflow_runs": []}))
     monkeypatch.setenv("FORGE_NOW", "2030-01-01T10:00:00+00:00")
 
     gh.respond(*RUNS, exit=1, stderr="network unavailable")
