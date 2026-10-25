@@ -44,8 +44,10 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
 ### Shared names
 
 - **The setting (pinned by ANYRUNNER).** `groups` in forge.toml, a whole number of 1 or more.
-  Add `"groups": int` to `repo.KEYS`; `_config_problem` refuses any other value with
-  `groups must be a whole number of 1 or more` (check `type(value) is int`, so `true` is refused).
+  Add `"groups": int` to `repo.KEYS`, and give `_config_problem` (src/forge/repo.py about line
+  791) a new `kind is int` branch beside the `str` and `list` branches that refuses any value but
+  a whole number of 1 or more with `groups must be a whole number of 1 or more` (check
+  `type(value) is int and value >= 1`, so `0`, `true` and `"3"` are refused).
   No entry in `repo.DEFAULTS`: readers use `cfg.get("groups")`, and a missing value means
   "derive" (today's rule: six for a direct pytest command in a repo that lists pytest-split, else
   one). Not a forge.local.toml key.
@@ -56,6 +58,11 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
 - **`repo.grouped(top, command) -> str` (pinned by ANYRUNNER).** Returns `command` with
   `{group}` and `{groups}` replaced by `FORGE_GROUP` and `FORGE_GROUPS` (each `"1"` when unset).
   PYGROUPS extends its body only (the pytest split options), never its signature or callers.
+- **The empty-group pass (PYGROUPS).** One place in `review.test_run`, which every grouped
+  command reaches (the picker wrapper, a direct `fast_test`, close's direct `test`): after an
+  attempt, when `FORGE_GROUPS` is above 1 and the command exited with status 5 (pytest collected
+  nothing for this group), the attempt counts as status 0 and its output gets the line
+  `This group got no tests to run.`
 
 ### Done-when details
 
@@ -79,9 +86,14 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    tests/test_close_always_tests.py sets it up), upgraded with `groups = 3` written, gets the same
    job.
 2. Placeholders: call `repo.grouped(top, ...)` where Forge reads a test command to run it:
-   `review.close_test` (the `fast_test` return, beside its `{base}` replacement),
+   `review.test_run` (the `command` it gets, before the cached-pass key and the run),
    `fasttest.close_tests` (forge.toml's `test`), and `fasttest.test`'s `--pytest` path (the raw
-   `test` it reads from forge.toml). With no group variables, both placeholders become `1`, so a
+   `test` it reads from forge.toml). `review.test_run`, not `review.close_test`, is the site for
+   a direct command, so a direct `fast_test` (after its `{base}` replacement), close's direct
+   `test`, and FORGE-TESTPLACE-1 FULLRUN's `review.test_run(..., always=True)` call on raw `test`
+   (the nightly full run, src/forge/fullrun.py) all get the placeholders filled, with no change in
+   fullrun.py. The nightly `full-suite` job has no matrix and sets no group variables, so it runs
+   group 1 of 1. With no group variables, both placeholders become `1`, so a
    laptop run of `vitest run --shard={group}/{groups}` runs `--shard=1/1` (all tests). No
    refusal when `groups` is above 1 and the command has no `{group}`: every group then runs the
    same tests, which is slower but correct; the skill tells the agent to add the shard flag.
@@ -89,8 +101,14 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    mark), with the stub `node_modules/.bin/vitest` (and its `.cmd` shim) from
    tests/test_node_test_worker_budget.py writing its arguments to a file: `FORGE_GROUP=2
    FORGE_GROUPS=3 forge test --change` passes the stub `--shard=2/3` together with Forge's own
-   `--changed <merge base> --passWithNoTests`; bare `forge test` passes `--shard=1/1`. Adopted
-   case: the same run in the adopted repo.
+   `--changed <merge base> --passWithNoTests`; bare `forge test` passes `--shard=1/1`; with
+   `fast_test = "vitest run --shard={group}/{groups}"` (the direct path that the nightly full run
+   also takes through `review.test_run`), `FORGE_GROUP=2 FORGE_GROUPS=3 forge test --change`
+   passes the stub `--shard=2/3`. Adopted case: the same runs in the adopted repo.
+   Test `tests/test_groups_any_runner.py::test_1_groups_refuses_a_bad_value` (platform mark):
+   with `groups = 0`, `groups = true` and `groups = "3"` in turn, `forge test` exits non-zero and
+   prints `groups must be a whole number of 1 or more`. Adopted case: `groups = 0` in the adopted
+   repo.
 3. Six pytest groups on upgrade (PYGROUPS): move prcheck's detection (the `direct` pytest regex,
    no `;&|`, pytest-split listed in pyproject.toml or requirements*.txt) into
    `repo.pytest_split(top, command) -> bool`; prcheck's derived count calls it. `repo.grouped`
@@ -99,10 +117,14 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    `repo.pytest_split` holds. With that, every repo's tests job (derived six or written `groups`)
    runs `forge test --change` per group: delete the `--splits` suffix, the bash and PowerShell
    exit-status-5 fallbacks in prcheck, and doctor's `" --splits "` workflow match
-   (src/forge/doctor.py about line 445, and its comment). In `fasttest.pytest_tests`, when
-   `FORGE_GROUPS` is above 1, an exit status of 5 (pytest collected nothing for this group) returns
-   0 with the line `This group got no tests to run.`; both return sites (the bare run and the
-   Popen run). Init writes `groups = 1` in `init._settings` (new and adopted repos alike, and the
+   (src/forge/doctor.py about line 445, and its comment). Add the empty-group pass (shared names)
+   in `review.test_run`; `fasttest.pytest_tests` gets no exit-status-5 code. Close's one retry of
+   failed files must not be split again: pytest-split would deal the failed files out anew and
+   could leave this group empty, so status 5 would turn a real failure green. So the results hook
+   (`fasttest.RESULTS`) makes its `pytest_configure` `tryfirst`, and its retry branch (where it
+   sets `config.args` to the failed files) also sets `config.option.splits` and
+   `config.option.group` to `None`, so pytest-split does not register and the retry runs this
+   group's failed files whole. Init writes `groups = 1` in `init._settings` (new and adopted repos alike, and the
    starters), so a new pytest-split repo starts with one group; upgrade writes nothing, so an
    existing repo with no `groups` keeps its derived count. Forge's own repo writes no `groups`
    and keeps six; sync regenerates `.github/workflows/forge.yml` to the `forge test --change`
@@ -114,7 +136,12 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    `forge test --change`, no `--splits` in forge.yml, and `forge doctor` accepts it; (c) in that
    repo with `groups = 2` written and a change that two test files name, `FORGE_GROUP=1` and
    `FORGE_GROUP=2` runs of `forge test --change` (with `FORGE_GROUPS=2`) each pass and run a
-   different one of the two files, and a `FORGE_GROUPS=3` group that gets no test passes.
+   different one of the two files, and a `FORGE_GROUPS=3` group that gets no test passes; (d) in
+   that repo with a direct pytest `fast_test` (no picker), a `FORGE_GROUPS=3` group that gets no
+   test passes with the line `This group got no tests to run.`; (e) with `groups = 2` and one of
+   the two files failing every time, of the two group runs of `forge test --change` exactly one
+   fails after its one retry, its output names the failed test, and neither prints
+   `This group got no tests to run.`.
    Existing tests PYGROUPS changes from the `--splits` form to the `forge test --change` form:
    tests/test_ci_job_budgets.py, tests/test_fix_gate_on_split_checks.py,
    tests/test_windows_client_retries.py, tests/test_windows_suite_retries.py,
@@ -127,10 +154,15 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    `passed.exists()` branches). A laptop run and a one-group CI run share a key, which is right:
    they run the same tests.
    Test `tests/test_groups_any_runner.py::test_4_groups_never_reuse_another_groups_pass`
-   (platform mark), the same stub vitest, set to fail when its arguments hold `--shard=2/2`:
-   `FORGE_GROUP=1 FORGE_GROUPS=2 forge test --change` passes; then `FORGE_GROUP=2` on the same
-   commit and machine runs the stub and fails, and its output has no "already passed" line. Adopted
-   case: the same two runs in the adopted repo.
+   (platform mark), the same stub vitest, changed to write its arguments to a file outside the
+   checkout (the test's `tmp_path`, named by an environment variable) so `git status --porcelain`
+   stays empty and the cached pass stays on, and set to fail when its arguments hold
+   `--shard=2/2`: `FORGE_GROUP=1 FORGE_GROUPS=2 forge test --change` passes; a second
+   `FORGE_GROUP=1` run on the same commit prints the "already passed" line and does not call the
+   stub (the cache is active); then `FORGE_GROUP=2` on the same commit and machine runs the stub
+   and fails, and its output has no "already passed" line. Without the key repair the last run
+   would skip on group 1's record and pass. Adopted case: the same three runs in the adopted
+   repo.
 5. Always-run tests (PYGROUPS): pytest-split's own selection is `trylast`, so each always_test
    entry lands in one group, and the other groups never run it. In `fasttest.SELECTION`'s
    `pytest_sessionfinish`, skip the "ran no test" check when `FORGE_GROUPS` is above 1 (read
@@ -172,13 +204,13 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | ANYRUNNER | Groups for any test runner | The `groups` setting and its check, the group variables in the tests job, `repo.grouped` at the three places Forge reads a test command to run it, the grouped `forge test --change` job for a written `groups`, the group in the cached-pass key, skill and guide lines | 1, 2, 4 | src/forge/repo.py, src/forge/prcheck.py, src/forge/review.py, src/forge/fasttest.py, src/forge/templates/skill.md, docs/guide.md, .github/workflows/forge.yml | tests/test_groups_any_runner.py, plus existing tests that match the tests job's text (the two new env lines) | FORGE-TESTPLACE-1/CISEL | no | |
-| PYGROUPS | Pytest groups on related tests | `repo.pytest_split` moved from prcheck, the automatic split options in `repo.grouped`, every tests job on `forge test --change` with the `--splits` form and its fallbacks deleted from prcheck and doctor, the empty-group pass, the grouped always_test check, `groups = 1` from init, skill and guide lines | 3, 5 | src/forge/repo.py, src/forge/prcheck.py, src/forge/doctor.py, src/forge/fasttest.py, src/forge/init.py, src/forge/templates/skill.md, docs/guide.md, .github/workflows/forge.yml | tests/test_groups_pytest.py, plus the existing tests listed under item 3 | ANYRUNNER | no | |
+| PYGROUPS | Pytest groups on related tests | `repo.pytest_split` moved from prcheck, the automatic split options in `repo.grouped`, every tests job on `forge test --change` with the `--splits` form and its fallbacks deleted from prcheck and doctor, the empty-group pass in `review.test_run`, the unsplit retry, the grouped always_test check, `groups = 1` from init, skill and guide lines | 3, 5 | src/forge/repo.py, src/forge/prcheck.py, src/forge/doctor.py, src/forge/review.py, src/forge/fasttest.py, src/forge/init.py, src/forge/templates/skill.md, docs/guide.md, .github/workflows/forge.yml | tests/test_groups_pytest.py, plus the existing tests listed under item 3 | ANYRUNNER | no | |
 
-The parts run in a chain: PYGROUPS edits repo.py, prcheck.py, fasttest.py, skill.md, guide.md and
+The parts run in a chain: PYGROUPS edits repo.py, prcheck.py, review.py, fasttest.py, skill.md, guide.md and
 forge.yml after ANYRUNNER merges, and extends ANYRUNNER's `repo.grouped`. FORGE-TESTPLACE-1's
 FULLRUN part also edits fasttest.py, prcheck.py, docs/guide.md and forge.yml; whichever merges
 later brings main in first. Module sizes: review.py is near 1,200 lines after CISEL, so
-ANYRUNNER adds at most three lines there; PYGROUPS removes more lines from prcheck.py and
+ANYRUNNER adds at most three lines there and PYGROUPS at most four; PYGROUPS removes more lines from prcheck.py and
 doctor.py than it adds.
 
 New moving parts: none
