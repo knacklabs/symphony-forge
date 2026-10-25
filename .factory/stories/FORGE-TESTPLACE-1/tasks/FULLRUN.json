@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-TESTPLACE-1-FULLRUN",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T11:44:17.884700+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "77bd00ab7b2b1e6e8001fbfb0056dcc7eb90bc5c",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
