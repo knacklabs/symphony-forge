@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { FolderKanban, Search, Settings, UserRound, Users, Sun, Moon, Monitor } from 'lucide-react';
+import { FolderKanban, HistoryIcon, Search, Settings, UserRound, Users, Sun, Moon, Monitor } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { toast } from 'sonner';
 import type { Account } from '@app/shared';
@@ -49,7 +49,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-function AppSidebar(props: ComponentProps<typeof Sidebar>) {
+function AppSidebar({ account, ...props }: ComponentProps<typeof Sidebar> & { account: Account }) {
   const pathname = useLocation().pathname;
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -68,6 +68,13 @@ function AppSidebar(props: ComponentProps<typeof Sidebar>) {
                 <Link to="/members"><Users /><span>Members</span></Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {account.role === 'admin' && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/history'} tooltip="Change history">
+                  <Link to="/history"><HistoryIcon /><span>Change history</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/settings'} tooltip="Settings">
                 <Link to="/settings"><Settings /><span>Settings</span></Link>
@@ -131,7 +138,7 @@ function UserMenu({ account }: { account: Account }) {
   );
 }
 
-function SearchBox() {
+function SearchBox({ account }: { account: Account }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -164,6 +171,7 @@ function SearchBox() {
           <CommandGroup heading="Pages">
             <CommandItem onSelect={() => goTo('/projects')}>Projects</CommandItem>
             <CommandItem onSelect={() => goTo('/members')}>Members</CommandItem>
+            {account.role === 'admin' && <CommandItem onSelect={() => goTo('/history')}>Change history</CommandItem>}
             <CommandItem onSelect={() => goTo('/settings')}>Settings</CommandItem>
           </CommandGroup>
         </CommandList>
@@ -175,7 +183,7 @@ function SearchBox() {
 function ShellContent({ account }: { account: Account }) {
   const location = useLocation();
   const { open, openMobile, isMobile } = useSidebar();
-  const pageTitle = ({ '/settings': 'Settings', '/members': 'Members' } as Record<string, string>)[location.pathname] ?? 'Projects';
+  const pageTitle = ({ '/settings': 'Settings', '/members': 'Members', '/history': 'Change history' } as Record<string, string>)[location.pathname] ?? 'Projects';
 
   return (
     <SidebarInset>
@@ -188,7 +196,7 @@ function ShellContent({ account }: { account: Account }) {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-2">
-          <SearchBox />
+          <SearchBox account={account} />
           <UserMenu account={account} />
         </div>
       </header>
@@ -203,7 +211,7 @@ export function AppShell({ account }: { account: Account }) {
   const savedSidebarState = document.cookie.split('; ').find((cookie) => cookie.startsWith('sidebar_state='))?.split('=')[1];
   return (
     <SidebarProvider defaultOpen={savedSidebarState !== 'false'}>
-      <AppSidebar />
+      <AppSidebar account={account} />
       <ShellContent account={account} />
     </SidebarProvider>
   );

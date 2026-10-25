@@ -7,6 +7,7 @@ import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
 import { SignInPage } from '@/features/auth/pages/sign-in-page';
 import { SignUpPage } from '@/features/auth/pages/sign-up-page';
 import { useAccount } from '@/features/auth/hooks/auth-hooks';
+import { HistoryPage } from '@/features/history/pages/history-page';
 import { MembersPage } from '@/features/members/pages/members-page';
 import { NotFoundPage } from '@/features/not-found/pages/not-found-page';
 import { ProjectsPage } from '@/features/projects/pages/projects-page';
@@ -45,6 +46,7 @@ export function App() {
     '/accept-invite': 'Join your team',
     '/projects': 'Projects',
     '/members': 'Members',
+    '/history': 'Change history',
     '/settings': 'Settings',
   } as Record<string, string>)[location.pathname] ?? 'Page not found';
   return (
@@ -69,6 +71,7 @@ export const router = createBrowserRouter(createRoutesFromElements(
     <Route element={<ProtectedLayout />} errorElement={<RouteErrorPage />}>
       <Route path="/projects" element={<ProjectsPage />} errorElement={<RouteErrorPage />} />
       <Route path="/members" element={<MembersPage />} errorElement={<RouteErrorPage />} />
+      <Route path="/history" element={<HistoryPage />} errorElement={<RouteErrorPage />} />
       <Route path="/settings" element={<SettingsPage />} errorElement={<RouteErrorPage />} />
     </Route>
     <Route path="*" element={<NotFoundPage />} errorElement={<RouteErrorPage />} />

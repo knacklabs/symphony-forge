@@ -22,7 +22,9 @@ test('an admin sees who changed what and exports it', async ({ page, browser }) 
   });
   expect(invite.ok()).toBeTruthy();
 
+  // The header breadcrumb also reads as a link, so leave the screen before opening it from the sidebar.
   await page.getByRole('link', { name: 'Projects' }).click();
+  await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
   await page.getByRole('link', { name: 'Change history' }).click();
   const row = page.getByRole('row', { name: new RegExp(`Invited ${memberEmail.replace(/[.]/g, '\\.')}`) });
   await expect(row).toContainText(adminEmail);
