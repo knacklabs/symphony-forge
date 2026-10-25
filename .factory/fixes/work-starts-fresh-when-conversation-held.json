@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T07:16:36.281345+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-10-25T07:22:32.654897+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/skill.md",
-    "wait_id": "7b5ff55b-3739-4782-b0de-6d91df853780"
+    "reason": "One more round to update the guide contract test for the new wording",
+    "wait_id": "7b5ff55b-3739-4782-b0de-6d91df853780",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
