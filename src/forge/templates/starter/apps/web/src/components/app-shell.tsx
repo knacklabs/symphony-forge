@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { FolderKanban, Search, Settings, UserRound, Sun, Moon, Monitor } from 'lucide-react';
+import { FolderKanban, Search, Settings, UserRound, Users, Sun, Moon, Monitor } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { toast } from 'sonner';
 import type { Account } from '@app/shared';
@@ -61,6 +61,11 @@ function AppSidebar(props: ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/projects'} tooltip="Projects">
                 <Link to="/projects"><FolderKanban /><span>Projects</span></Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === '/members'} tooltip="Members">
+                <Link to="/members"><Users /><span>Members</span></Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -158,6 +163,7 @@ function SearchBox() {
           <CommandEmpty>No matching pages.</CommandEmpty>
           <CommandGroup heading="Pages">
             <CommandItem onSelect={() => goTo('/projects')}>Projects</CommandItem>
+            <CommandItem onSelect={() => goTo('/members')}>Members</CommandItem>
             <CommandItem onSelect={() => goTo('/settings')}>Settings</CommandItem>
           </CommandGroup>
         </CommandList>
@@ -169,7 +175,7 @@ function SearchBox() {
 function ShellContent({ account }: { account: Account }) {
   const location = useLocation();
   const { open, openMobile, isMobile } = useSidebar();
-  const pageTitle = location.pathname === '/settings' ? 'Settings' : 'Projects';
+  const pageTitle = ({ '/settings': 'Settings', '/members': 'Members' } as Record<string, string>)[location.pathname] ?? 'Projects';
 
   return (
     <SidebarInset>
