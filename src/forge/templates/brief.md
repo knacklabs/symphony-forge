@@ -121,7 +121,9 @@ $delegation
   waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
 - If close reports that the tests ran out of time, rerun the tests job or split the suite.
-  This timeout does not send the item to a worker. Node client tests get 30 minutes in CI.
+  This timeout does not send the item to a worker. Generated pull request and nightly test jobs
+  each get 30 minutes. The nightly run uses the repo's groups and records one combined result
+  for the default branch after all groups finish.
 - Run any test command you start in the foreground and wait for it to finish. Never end your turn
   while a command you started still runs in the background. Commit your work before your turn ends:
   the review reads only what is committed.

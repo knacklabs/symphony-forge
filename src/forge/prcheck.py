@@ -257,6 +257,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     full_suite = ("\n  full-suite:\n"
                   "    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n"
                   "    name: Full test suite\n"
+                  "    strategy:\n"
+                  "      fail-fast: false\n"
+                  "      matrix:\n"
+                  "        group: <group-list>\n"
                   "    permissions:\n"
                   "      contents: read\n"
                   "      actions: read\n"
@@ -264,8 +268,10 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "    runs-on: <runner>\n"
                   "    env:\n"
                   "      UV_FROZEN: '1'\n"
+                  "      FORGE_GROUP: ${{ matrix.group }}\n"
+                  "      FORGE_GROUPS: '<groups>'\n"
                   "<containers>      GH_TOKEN: ${{ github.token }}\n"
-                  "    steps:\n"
+                  "<tests-timeout>    steps:\n"
                   "      - uses: actions/checkout@v7\n"
                   "        with:\n"
                   "          fetch-depth: 0\n"
@@ -275,7 +281,26 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                   "          python-version: '3.11'\n"
                   "      - uses: astral-sh/setup-uv@v6\n"
                   "<full-npm-cache><full-node>      - run: <full-install>\n"
-                  "      - run: forge test --full\n" if full_run else "")
+                  "      - run: forge test --full\n"
+                  "\n  full-suite-result:\n"
+                  "    needs: full-suite\n"
+                  "    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)\n"
+                  "    runs-on: <runner>\n"
+                  "    timeout-minutes: 5\n"
+                  "    permissions:\n"
+                  "      statuses: write\n"
+                  "    steps:\n"
+                  "      - name: Report full test result\n"
+                  "        shell: bash\n"
+                  "        env:\n"
+                  "          GH_TOKEN: ${{ github.token }}\n"
+                  "          FULL_RESULT: ${{ needs.full-suite.result }}\n"
+                  "          HEAD_SHA: ${{ github.sha }}\n"
+                  "        run: |\n"
+                  "          state=failure\n"
+                  "          if [ \"$FULL_RESULT\" = success ]; then state=success; fi\n"
+                  "          gh api --method POST \"repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA\" -f context=forge-full-suite -f \"state=$state\" -f \"target_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"\n"
+                  "          test \"$state\" = success\n" if full_run else "")
     workflow = (WORKFLOW.replace("<full-triggers>", full_triggers)
                 .replace("<full-suite-job>", full_suite)
                 .replace("<choose>", "" if source else CHOOSE)
@@ -283,9 +308,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 30\n"
-                         if cfg.get("repo") == "client" and (top / "package.json").is_file()
-                         else "")
+                .replace("<tests-timeout>", "    timeout-minutes: 30\n")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
                 .replace("<npm-cache>", npm_cache)

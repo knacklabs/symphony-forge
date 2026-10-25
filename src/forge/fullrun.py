@@ -61,6 +61,9 @@ def run(top: Path) -> int:
             "then forge test --full.", "")
     status, report = review.test_run(top, command, sha, always=True)
     print(report)
+    # The workflow publishes one result after every matrix group, including timed-out jobs.
+    if os.environ.get("GITHUB_RUN_ID") and "FORGE_GROUP" in os.environ:
+        return status
     fields = ["-f", f"context={STATUS}", "-f", f"state={'failure' if status else 'success'}",
               "-f", f"description=The full test run {'failed' if status else 'passed'}."]
     if os.environ.get("GITHUB_RUN_ID"):
