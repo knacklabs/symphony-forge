@@ -73,6 +73,7 @@ def test_2_ci_close_never_runs_local_tests_even_on_reused_review(env):
         assert "tests" not in state
     assert len(env.review_calls()) == 1
     assert "CI runs the change's related tests" in env.prompt()
+    assert "runs the repo's test command alongside this review" not in env.prompt()
     assert any(".check_runs[]" in call for call in env.gh.calls())
 
     # A failed external review must not leave a laptop failure for the next CI worker.
@@ -96,11 +97,11 @@ def test_6_a_ci_repo_can_switch_to_laptop_tests(env):
         'checks = ["tests", "forge-pr-check"]', "checks = []").replace(
             'test_place = "ci"', 'test_place = "local"'))
     env.repo.git("push", "-q", "origin", "main")
-    synced = env.repo.forge("sync")
-    assert synced.returncode == 0, synced.stdout + synced.stderr
-    assert "Forge runs change tests" not in synced.stdout
 
     item, where = env.start_fix()
+    synced = env.repo.forge("sync", cwd=where)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert "Forge runs change tests" not in synced.stdout
     env.open_pr("")
     closed = env.close(item)
 

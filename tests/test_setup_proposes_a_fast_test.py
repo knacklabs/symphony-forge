@@ -17,7 +17,7 @@ def test_1_the_synced_skill_carries_the_fast_test_setup_step(repo, gh, tmp_path)
     for host in (".claude", ".codex"):
         skill = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         # Python joins the React starter only when the owner asks for a Python backend.
-        assert ("Use `forge init --starter` for a new React app, and `forge init --starter python` "
+        assert ("Then use `forge init --starter` for a new React app, and `forge init --starter python` "
                 "for a new app whose owner asks for a Python backend.") in skill, host
         assert "Use `forge init` for any other stack, then propose a `fast_test`" in skill, host
         # The constitution interview is the first adoption step; fast-test setup now comes ninth.

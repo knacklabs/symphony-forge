@@ -29,7 +29,8 @@ def test_1_untracked_hook_files_never_block_an_upgrade_but_a_stale_tracked_file_
     env.repo.git("push", "-q", "origin", "main")
     prepare = ('node -e "const fs = require(\'fs\'); fs.mkdirSync(\'.husky/_\', {recursive:true}); '
                'fs.writeFileSync(\'.husky/_/h\', \'husky\')"')
-    toml += f"test = {json.dumps(prepare)}\nfast_test = {json.dumps(prepare)}\n"
+    toml += (f'test_place = "local"\ntest = {json.dumps(prepare)}\n'
+             f"fast_test = {json.dumps(prepare)}\n")
     item, where = env.start_fix({"forge.toml": toml}, allow_large="Forge's first synced files",
                                 done_when="forge.toml upgrades Forge and runs Husky preparation")
     synced = env.repo.forge("sync", cwd=where)

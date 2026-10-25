@@ -65,4 +65,5 @@ def test_2_worker_brief_says_run_the_tests_that_check_changed_printed_text(clien
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[0]["brief"].split())
     assert ("When you change text the program prints (messages, pull request text, board lines), "
-            "search the tests for that text and run those tests too.") in brief
+            "include tests for that text in the change's related tests and follow the test-place "
+            "instructions below.") in brief

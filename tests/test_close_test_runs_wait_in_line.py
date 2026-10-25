@@ -4,6 +4,7 @@ while waiting leaves no place behind."""
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import time
@@ -41,9 +42,9 @@ def _with_test_command(env) -> Path:
     script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
     toml = env.repo.path / "forge.toml"
     command = f'"{Path(sys.executable).as_posix()}" "{script.as_posix()}"'
+    settings = re.sub(r"(?m)^test_place\s*=.*(?:\r?\n|$)", "", toml.read_text("utf-8"))
     env.commit(env.repo.path, "forge.toml", 'test_place = "local"\nfast_test = '
-               + json.dumps(command) + "\n"
-               + toml.read_text("utf-8"))
+               + json.dumps(command) + "\n" + settings)
     env.repo.git("push", "-q", "origin", "main")
     return env.tmp / "runs.log"
 

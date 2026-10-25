@@ -90,6 +90,7 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     # Close now restores main's settings; install the coordinator's test command there.
     env.repo.git("merge", "--ff-only", "origin/main")
     Upgrade(env, tmp_path).on_main("forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
+               'test_place = "local"\n'
                'checks = ["tests", "forge-pr-check"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n'
                'models.build = { model = "sonnet", effort = "medium" }\n'
@@ -149,6 +150,9 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
                      if event["event"] == "owner wait start" and event.get("reason") == "review loop")
     wait_started = datetime.fromisoformat(loop_wait["at"])
     monkeypatch.setenv("FORGE_NOW", (wait_started + timedelta(seconds=30)).isoformat())
+    config = env.repo.path / "forge.toml"
+    Upgrade(env, tmp_path).on_main("forge.toml", config.read_text("utf-8").replace(
+        'test_place = "local"', 'test_place = "ci"'), "Leave accepted changes to CI")
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     # Acceptance in src/forge/close.py must retain the historical commit of a review still on this branch.
     accepted = env.close(item, "--resolve", "accept", "--reason", "The owner accepts this version")

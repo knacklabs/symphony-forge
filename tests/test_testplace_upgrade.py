@@ -98,4 +98,4 @@ def test_6_previous_adoption_uses_the_place_selected_by_its_checks(
         assert worked.returncode == 0, worked.stdout + worked.stderr
         brief = " ".join(calls(log)[-1]["brief"].split()).lower()
         assert ("The pull request's CI runs the change's related tests, lint and type checks, so do "
-                "not run them here.").lower() in brief
+                "not run them here").lower() in brief

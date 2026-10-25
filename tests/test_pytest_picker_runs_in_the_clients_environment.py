@@ -216,6 +216,7 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     config = repo.path / "forge.toml"
     settings = config.read_text("utf-8").replace('test = "python -c \\"print(123)\\""',
                                                  "test = " + json.dumps(command))
+    settings = 'test_place = "local"\n' + settings
     legacy = "python -m forge.fasttest {base}"
     monkeypatch.setenv("PATH", str(python.parent) + os.pathsep + os.environ["PATH"])
     settings = "fast_test = " + json.dumps(legacy) + "\n" + settings
@@ -246,7 +247,6 @@ def test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replac
     # Keep the source file's line endings: changing them too creates a different merge case.
     replacement = config.read_bytes().decode("utf-8").replace(
         json.dumps(legacy), '"forge test --pytest {base}"')
-    replacement = 'test_place = "local"' + line_ending + replacement
     env = up.env
     up.on_main("forge.toml", replacement, "Use the proposed picker")
     env.commit(up.folder, "prices.py", "PRICE = 2\n")

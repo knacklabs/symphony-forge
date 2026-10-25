@@ -125,6 +125,11 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
         model, effort = "gpt-6-sol", "medium"
     else:
         configure(env)
+        if case.startswith("ci"):
+            config = repo.path / "forge.toml"
+            env.commit(repo.path, "forge.toml", config.read_text("utf-8").replace(
+                'test_place = "local"', 'test_place = "ci"'))
+            repo.git("push", "-q", "origin", "main")
         if case.startswith("review"):
             config = repo.path / "forge.toml"
             family = case.split()[-1]

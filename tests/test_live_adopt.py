@@ -156,7 +156,7 @@ def _stops(repo, gh, case: str) -> None:
         assert refused.stderr.startswith(
             "This repo already has commits, so forge init adopts it on a fix branch, and it needs "
             "the answers you confirmed: --checks, --interfaces, --approver, --merger.\n"
-            "Next: forge init --test"), refused.stderr
+            "Next: forge init --actions yes|no --test"), refused.stderr
     assert _snapshot(repo) == before and gh.calls() == []
 
 

@@ -1,6 +1,7 @@
 """Close reports completed tests while its reviewer receives concurrent-run guidance."""
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 
@@ -24,8 +25,9 @@ def test_outside():
 def _with_test_command(env, suite: str) -> None:
     toml = env.repo.path / "forge.toml"
     command = f"{sys.executable} -m pytest -q -p no:cacheprovider checks"
+    settings = re.sub(r"(?m)^test_place\s*=.*(?:\r?\n|$)", "", toml.read_text("utf-8"))
     env.commit(env.repo.path, "forge.toml",
-               toml.read_text("utf-8") + f"test = {command!r}\n".replace("'", '"')
+               'test_place = "local"\n' + settings + f"test = {command!r}\n".replace("'", '"')
                + f"fast_test = {command!r}\n".replace("'", '"'))
     env.commit(env.repo.path, "checks/test_suite.py", suite)
     env.repo.git("push", "-q", "origin", "main")
@@ -77,7 +79,8 @@ print("ok  \texample.com/app\t0.01s")
 def test_4_close_shows_a_go_style_skip_and_its_reason(env):
     toml = env.repo.path / "forge.toml"
     env.commit(env.repo.path, "gotest.py", GO_STYLE)
-    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
+    settings = re.sub(r"(?m)^test_place\s*=.*(?:\r?\n|$)", "", toml.read_text("utf-8"))
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n' + settings
                + f"test = {f'{sys.executable} gotest.py'!r}\n".replace("'", '"')
                + f"fast_test = {f'{sys.executable} gotest.py'!r}\n".replace("'", '"'))
     env.repo.git("push", "-q", "origin", "main")

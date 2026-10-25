@@ -1,6 +1,4 @@
 """Worker briefs follow the repo's test place and never poll the machine lines."""
-import re
-
 import pytest
 
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
@@ -11,14 +9,6 @@ STORY = "worker-tests-once"
 
 def test_1_worker_brief_uses_test_place_instructions_without_polling(client):
     # The brief forge work sends is the contract; the stub only records it.
-    config = (client.path / "forge.toml").read_text("utf-8")
-    config = re.sub(r"(?m)^test_place\s*=.*\n", "", config)
-    config = re.sub(r"(?m)^checks\s*=.*$", "checks = []", config)
-    config = 'test_place = "local"\n' + config
-    client.write("forge.toml", config)
-    client.git("add", "forge.toml")
-    client.git("commit", "-q", "-m", "Select laptop tests")
-    client.git("push", "-q", "origin", "main")
     log = install_claude(client)
     started = client.forge("fix", "start", "Check worker test guidance", "--done",
                            "Workers run related tests once", "--kind", "mechanical")
@@ -26,8 +16,7 @@ def test_1_worker_brief_uses_test_place_instructions_without_polling(client):
     worked = client.forge("work", "check-worker-test-guidance")
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[0]["brief"].split())
-    assert ("run the change's related tests through `forge test` in the foreground once, at the "
-            "end of your turn. wait for it to finish; rerun only what failed.") in brief.lower()
+    assert "follow the test-place instructions below to decide which tests to run." in brief.lower()
     assert ("never poll `forge lanes --json` or `forge board --json` and never tail test logs "
             "while you wait.") in brief.lower()
 
