@@ -363,6 +363,10 @@ a new query on another module's tables.
 For new module calls and events, follow backend.md's "Call a service or send an event" rule.
 Existing code needs no conversion.
 
+In an app with a database, follow the database skill (.codex/skills/database/SKILL.md) for each
+table, column, index, constraint, migration or extension that you add. Existing tables stay as
+they are. A review holds new schema that breaks the skill.
+
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers

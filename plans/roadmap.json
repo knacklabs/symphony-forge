@@ -386,6 +386,12 @@
       "order": 96
     },
     {
+      "key": "FORGE-DATABASE-1",
+      "title": "Database rules for every client app",
+      "status": "pending",
+      "order": 97
+    },
+    {
       "key": "FORGE-SINGLECO-1",
       "title": "One-company client apps",
       "status": "pending",

@@ -31,6 +31,7 @@ PLAIN_ENGLISH = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.m
 LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".forge/records-only/action.yml", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
+          ".claude/skills/database/SKILL.md", ".codex/skills/database/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
@@ -395,12 +396,11 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
 def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path):
     _on_a_branch_with_forge_toml(repo)
     assert repo.forge("sync").returncode == 0
-    # forge can't launch: the only forge on PATH names an interpreter that doesn't exist. Every
-    # other one comes off PATH, because dash (Ubuntu's sh) skips a forge it can't start and runs
-    # the next one.
+    # Fail inside an executable wrapper: dash must not skip a broken shebang and find a real
+    # Forge installation that the hook launcher restores to PATH.
     broken = tmp_path / "broken"
     broken.mkdir()
-    _executable(broken / "forge", "#!/nonexistent/forge-interpreter\n")
+    _executable(broken / "forge", '#!/bin/sh\nexec /nonexistent/forge-interpreter "$@"\n')
     path = [folder for folder in os.environ["PATH"].split(os.pathsep)
             if not (Path(folder) / "forge").is_file()]
     env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path]),
