@@ -90,7 +90,7 @@
     "id": "4fd17dfa-3753-4f0e-8368-c4468416db55",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -103,10 +103,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8e15b4aa5763a2c78f440b9ce7d4ce38f3c223a5",
-    "keys": {},
-    "round": null
+    "close": "ba49f2a9-c32a-48fa-87ea-55e1d6d1dbd6",
+    "head": "3b150bfbb3d01dd1019cd869a18b715e84714d55",
+    "keys": {
+      "the open P0 [p1] require local test evidence when reusing a review in src/forge/close.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
