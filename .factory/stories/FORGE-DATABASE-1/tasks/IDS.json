@@ -8,14 +8,29 @@
     "head": null,
     "start": "d22ba2a3d870b74ae14a183751a7d6af25b179be"
   },
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7574b9e9c638212cd9980774c419439167b302dcb4aafdb2923f3be6e5fa9791",
+    "changed": "bc15db4070b3020fd2b96713b9afb5032af70888526b6e30e8a3f654cfaa1ee3",
+    "commit": "292785e5b6f5a80b14910846f1fc61d6975196b6",
+    "dismissals": [],
+    "findings": [],
+    "id": "898503ea-472d-460b-8377-0a041cbe9683",
+    "status": "clean"
+  },
   "round": 1,
   "stacked_on": "FORGE-DATABASE-1/PG18",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T19:29:11.232964+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T19:35:36.557032+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
