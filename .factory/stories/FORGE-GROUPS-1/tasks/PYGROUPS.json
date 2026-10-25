@@ -67,7 +67,7 @@
     "id": "945bd78f-1204-4845-9b7b-aebfe5eae968",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -80,10 +80,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "0f600eac436b032f646c165c10da5c83fea8c50f",
-    "keys": {},
-    "round": null
+    "close": "fad64bc6-7ede-49ef-865a-64579a50bac9",
+    "head": "eb4641eb06e8088ed21c5a63114adac12cfb73c8",
+    "keys": {
+      "the open P0 gate: repair tests broken by the workflow migration in tests/test_fix_gate_on_split_checks.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
