@@ -1,6 +1,13 @@
 {
   "base": "9f221b36051273a449703680dfb4c5ff1d05fbf4",
   "branch": "fix/work-starts-fresh-when-conversation-held",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a171eb-7c58-7332-a8a3-335b8a80ee9a",
+    "head": null,
+    "start": "6f1fbbe8063ad07574b5a41c2d6f57e33c648509"
+  },
   "done_when": "When another program holds the earlier conversation, forge work starts a fresh Codex conversation with the whole brief and prints one line saying so, as the cold read and the grill already do",
   "fix_kind": "backend",
   "kind": "fix",
