@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DATABASE-1-SKILL",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T18:02:43.589217+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "4596ce83440ff871f06cd348c8f86db44bad52d2",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
