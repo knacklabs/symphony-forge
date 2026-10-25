@@ -182,14 +182,15 @@ The part named first owns each name; later parts use it and list that part under
   changes nothing adds no row), `Deleted the <singular>` or `Restored the <singular>`. The title
   is the first text field's value. Search index updates, which FORGE-SEARCH-1 plans, stay
   separate writes.
-- **Restore (ACCESS).** The list query gets `deleted` (optional `true`): with it, the list shows
-  only deleted items; it needs `<plural>.restore`, and a caller without it gets
-  `403 PERMISSION_DENIED`. A caller with `.restore` can also read a deleted item's detail;
+- **Restore (ACCESS).** SCREENS.md wins here. The list query gets `deleted` (optional `yes`):
+  for a caller with `<plural>.restore` it shows the deleted items among the active ones, each
+  with its `Deleted` Badge; for a caller without `.restore` the API ignores the key and shows
+  only active items. A caller with `.restore` can also read a deleted item's detail;
   everyone else gets `404` for a deleted item, as today. `POST /api/v1/<plural>/:id/restore`
   needs `.restore`: it clears `deletedAtUtc` and `deletedByAccountId`, sets
   `modifiedByAccountId`, and writes the `Restored the <singular>` row in the same transaction; an
-  item that is not deleted gets `404 <SINGULAR>_NOT_FOUND`. Web: a `Show deleted` filter on the
-  list and a `Restore` button on a deleted item's detail screen, both shown only with
+  item that is not deleted gets `404 <SINGULAR>_NOT_FOUND`. Web: the `Show deleted` Switch on
+  the list and the Alert with its `Restore` button on a deleted item's detail screen, both shown only with
   `.restore`, with the texts and states the updated `docs/design/FORGE-FEATURE-1/` gives.
   Members never see deleted items.
 - **Permissions (ACCESS).** Roles map to permissions in code.
@@ -204,8 +205,9 @@ The part named first owns each name; later parts use it and list that part under
     The module imports it, so the map is in place before the first request. A plan changes a
     feature's mapping by editing only this file.
   - Routes: list, detail, changes and export need `<plural>.view`; create needs `.create`;
-    replace needs `.edit`; delete needs `.delete`; restore, and the list with `deleted=true`,
-    need `.restore`.
+    replace needs `.edit`; delete needs `.delete`; restore needs `.restore`. The list's
+    `deleted=yes` key needs no route check: the service applies it only for a caller with
+    `.restore`.
   - `/api/v1/auth/me`, sign-up and sign-in return `permissions: string[]` (from
     `permissionsFor(role)`) beside `role`; the shared `Account` type gets the field.
   - Web, `apps/web/src/lib/permissions.ts`: `useCan(permission: string): boolean`, from the
@@ -221,7 +223,8 @@ The part named first owns each name; later parts use it and list that part under
   other components are (they use the installed `radix-ui` package, so no new dependency), by the
   part that first uses it: `card.tsx` by DETAIL (the detail screen's cards); `textarea.tsx`,
   `checkbox.tsx` and `popover.tsx` by WEB (the form controls for long text, yes or no, and the
-  link Combobox with the existing `command.tsx`). The command copies a component that the app
+  link Combobox with the existing `command.tsx`); `switch.tsx` and `alert.tsx` by ACCESS (the
+  `Show deleted` Switch and the deleted item's Alert). The command copies a component that the app
   lacks from the Forge starter tree into `apps/web/src/components/ui/`.
 - **The command line (COMMAND).**
   `forge task feature <plural> --one <singular> --field <name>:<kind> [--field ...]`.
@@ -427,16 +430,17 @@ The part named first owns each name; later parts use it and list that part under
      `/auth/me`, and for each route expects `403 PERMISSION_DENIED` when the member lacks the
      permission and no 403 when the member has it. So it covers every route and stays right
      after a plan edits the mapping. With the default mapping, the member gets 403 on delete,
-     restore and the deleted list only, and the admin gets no 403 on any route.
+     and restore only, and the admin gets no 403 on any route.
    - The flow `a member does not see the <singular> actions they lack` reads the member's
      permissions too: without view, the list and detail routes show the not-found page and the
      sidebar item is gone; without create, no New button; without edit, no Edit button; without
      delete, no Delete button; without restore, no `Show deleted` filter. The
      `Open the change history` link is never shown to a member.
    - Restore: the generated API case `an admin restores a deleted <singular>` deletes an item,
-     finds it in the list with `deleted=true`, restores it, finds it in the normal list again and
-     finds `Restored the <singular>` in its changes; a member's `deleted=true` list and restore
-     are refused by the endpoint case above, and a member gets 404 for the deleted item's detail.
+     finds it, with the active items, in the list with `deleted=yes`, restores it, finds it in
+     the normal list again and finds `Restored the <singular>` in its changes; a member's restore
+     is refused by the endpoint case above, a member's `deleted=yes` list holds no deleted item,
+     and a member gets 404 for the deleted item's detail.
      The flow `an admin shows deleted <plural> and restores one` uses the `Show deleted` filter
      and the detail screen's Restore button.
    - **Denied view, create and edit.** With the default mapping the member lacks only delete and restore,
@@ -444,8 +448,8 @@ The part named first owns each name; later parts use it and list that part under
      --field 'title:text'`, and the Forge test then sets `member: []` in its one permissions
      file (`libs/notes/src/notes.permissions.ts`, Python `app/notes/permissions.py`) before the
      app's run. The same generated case for notes then expects 403 for the member on every route:
-     list, detail, changes and export (view), create, replace (edit), delete, restore and the
-     deleted list; and the notes
+     list, detail, changes and export (view), create, replace (edit), delete and restore; and
+     the notes
      flow sees the not-found page. A route guarded by the wrong permission fails here.
    - Test `tests/test_feature_access.py::test_3_each_feature_checks_its_permissions`,
      parameters `projects-typescript` and `projects-python` (ACCESS), `feature-typescript`
@@ -579,7 +583,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 |---|---|---|---|---|---|---|---|---|
 | PAGING | Projects list with keyset paging and URL filters | Keyset paging, search and the status filter in both APIs and the shared schemas; the projects list as SCREENS.md shows it, with Previous, Next and the total; rows that open the detail route; the button and form labels; the projects cases in their own files. | 2, 5 | `starter/libs/shared/src/index.ts`, `starter/libs/projects/src/**`, `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/app.tsx`, `starter/apps/api/test/api.e2e-spec.ts`, `starter/apps/api/test/organisations.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` and `starter/apps/api/test/soft-delete.e2e-spec.ts` (projects paging and button lines only), `starter/apps/api/test/projects.e2e-spec.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts`, `starter/apps/web/e2e/join.spec.ts` (button name only), `starter/apps/web/e2e/projects.spec.ts` (new), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_api.py`, `starter-python/apps/api/tests/test_organisations.py`, `starter-python/apps/api/tests/test_invites.py` and `starter-python/apps/api/tests/test_soft_delete.py` (projects paging lines only), `starter-python/apps/api/tests/test_projects.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `tests/test_starter_tree.py` and `tests/test_python_starter.py` (case names only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_projects.py` (`test_5`, `typescript` and `python`, new) | | yes | |
 | DETAIL | Projects detail screen and change history | The detail screen with its Details and Recent changes cards, Edit and the Delete AlertDialog; the Card component; the history subject columns, migrations and `listForSubject`; the changes route; a Change history row for each projects create, change and delete; the subject name on the Change history screen; in both APIs. | 4, 5 | `starter/apps/web/src/components/ui/card.tsx` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/features/history/**`, `starter/apps/web/src/app.tsx`, `starter/libs/history/**`, `starter/apps/api/prisma/schema/history.prisma`, `starter/apps/api/prisma/migrations/<new>_history_subjects/` (new), `starter/libs/projects/**`, `starter/apps/api/package.json` and `starter/pnpm-lock.yaml` (`@app/history` for projects), `starter/libs/shared/src/index.ts`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/app/history/**`, `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/migrations/versions/<next>_history_subjects.py` (new), `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_projects.py` (`test_5`, the DETAIL case names) | PAGING | yes | |
-| ACCESS | Projects permissions and restore | The permissions helpers and guard in both APIs, `permissions` on the account, `useCan` in the web app, the projects permissions file and one check on each projects route, the hidden Delete and history link, and the admin's deleted list and restore with its history row. | 3, 5 | `starter/libs/core/src/common/permissions.ts` (new), `starter/libs/core/src/index.ts`, `starter/libs/auth/**` (account `permissions` only), `starter/libs/shared/src/index.ts` (`Account` only), `starter/libs/projects/**`, `starter/apps/web/src/lib/permissions.ts` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` (the member delete only), `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/tests/test_invites.py` (the member delete only), `starter-python/apps/api/app/core/permissions.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/auth/**` (account `permissions` only), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_access.py` (`test_3`, `projects-typescript` and `projects-python`, new) | DETAIL | yes | |
+| ACCESS | Projects permissions and restore | The permissions helpers and guard in both APIs, `permissions` on the account, `useCan` in the web app, the projects permissions file and one check on each projects route, the hidden Delete and history link, and the admin's deleted list and restore with its history row. | 3, 5 | `starter/libs/core/src/common/permissions.ts` (new), `starter/libs/core/src/index.ts`, `starter/libs/auth/**` (account `permissions` only), `starter/libs/shared/src/index.ts` (`Account` and the projects list query's `deleted` key), `starter/libs/projects/**`, `starter/apps/web/src/lib/permissions.ts` (new), `starter/apps/web/src/components/ui/switch.tsx` and `alert.tsx` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` (the member delete only), `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/tests/test_invites.py` (the member delete only), `starter-python/apps/api/app/core/permissions.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/auth/**` (account `permissions` only), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_access.py` (`test_3`, `projects-typescript` and `projects-python`, new) | DETAIL | yes | |
 | COMMAND | The feature command and the TypeScript API copy | `forge task feature` with its line, refusals and starter check, the field-kind table with placeholder database values, the marks in the TypeScript API projects files, and the TypeScript API, permissions, Prisma, migration, shared schema and wiring copy. | 1, 4, 6 | `src/forge/cli.py` (one route), `src/forge/feature.py` (new), `src/forge/templates/feature/kinds.toml` (new), `starter/libs/projects/src/**` (marks only), `starter/libs/shared/src/index.ts` (marks only), `starter/apps/api/test/projects.e2e-spec.ts` (marks only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_command.py` (`test_1`, `test_4` not-live checks, `test_6`, `typescript`, new) | ACCESS, FORGE-DATABASE-1/PG18, FORGE-DATABASE-1/IDS, FORGE-DATABASE-1/IDSPY | no | |
 | WEB | The feature's screens | The marks in the web projects files, the Textarea, Checkbox and Popover components, and the web copy: list, detail, delete dialog, form with one control per field, hooks and their test, the route, sidebar and Ctrl+K items; the live TypeScript run with the generated cases. | 2, 3, 4 | `src/forge/feature.py` (the web copy only), `src/forge/templates/feature/kinds.toml` (the `input`, `cell`, `filter_options` and `column` keys only), `starter/apps/web/src/components/ui/textarea.tsx`, `checkbox.tsx` and `popover.tsx` (new), `starter/apps/web/src/features/projects/**` and `starter/apps/web/e2e/projects.spec.ts` (marks only) | `tests/test_feature_command.py` (`test_2`, `test_4` live, `typescript`); `tests/test_feature_access.py` (`test_3`, `feature-typescript`) | COMMAND | yes | |
 | PY | The Python API copy | The marks in the Python projects files, the Python starter check, and the Python API, permissions, Alembic revision, shared copy and wiring; the Python parameters of the feature tests, `test_2` and `test_6` included. | 1, 3, 4 | `src/forge/feature.py` (the Python copy only), `src/forge/templates/feature/kinds.toml` (`sqlalchemy` and `pydantic` keys only), `starter-python/apps/api/app/projects/**` and `starter-python/apps/api/tests/test_projects.py` (marks only), `starter-python/libs/shared/src/index.ts` (marks only) | `tests/test_feature_command.py` (`test_1`, `test_2`, `test_4`, `test_6`, `python`); `tests/test_feature_access.py` (`test_3`, `feature-python`) | WEB | no | |
