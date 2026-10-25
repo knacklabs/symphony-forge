@@ -12,6 +12,7 @@ on:
       - tests/test_starter_tree.py
       - tests/test_python_starter.py
       - tests/test_modular_starter.py
+      - tests/test_one_company.py
       - tests/test_defaults_*.py
       - .github/workflows/starter-smoke.yml
 
@@ -31,7 +32,7 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_modular_starter.py tests/test_defaults_*.py -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_modular_starter.py tests/test_one_company.py tests/test_defaults_*.py -q -n 0 --timeout=1800
 
   python-starter-smoke:
     runs-on: ubuntu-latest

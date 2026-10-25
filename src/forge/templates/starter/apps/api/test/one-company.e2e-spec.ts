@@ -6,11 +6,26 @@ import { apiBaseUrl, credentials, csrfToken, invite, psql } from './helpers';
 const oneCompanyApiBaseUrl = process.env.ONE_COMPANY_API_TEST_URL ?? 'http://127.0.0.1:3002';
 
 function setupCompany(email: string, password: string): { status: number; output: string } {
+  // Exercise the README's .env path: exported credentials hide dropped ConfigModule values.
+  const setupFromEnvFile = `
+    const { readFileSync, writeFileSync, unlinkSync } = require('node:fs');
+    const { spawnSync } = require('node:child_process');
+    const { email, password } = JSON.parse(readFileSync(0, 'utf8'));
+    writeFileSync('.env', 'ADMIN_EMAIL=' + JSON.stringify(email) + '\\nADMIN_PASSWORD=' + JSON.stringify(password) + '\\n', { flag: 'wx' });
+    try {
+      const env = { ...process.env };
+      delete env.ADMIN_EMAIL;
+      delete env.ADMIN_PASSWORD;
+      const result = spawnSync('corepack', ['pnpm', 'run', 'setup:company'], { env, stdio: 'inherit' });
+      process.exitCode = result.status ?? 1;
+    } finally {
+      unlinkSync('.env');
+    }
+  `;
   const result = spawnSync('docker', [
     'compose', '-f', 'compose.test.yml', 'exec', '-T',
-    '-e', `ADMIN_EMAIL=${email}`, '-e', `ADMIN_PASSWORD=${password}`,
-    'one-company-api', 'corepack', 'pnpm', 'run', 'setup:company',
-  ], { encoding: 'utf8' });
+    'one-company-api', 'node', '-e', setupFromEnvFile,
+  ], { encoding: 'utf8', input: JSON.stringify({ email, password }) });
   return { status: result.status ?? 1, output: `${result.stdout}${result.stderr}` };
 }
 
