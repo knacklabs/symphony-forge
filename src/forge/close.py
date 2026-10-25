@@ -289,7 +289,9 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
         finding = previous["findings"][number - 1]
         requested[score.identity(finding["file"], finding["title"])] = because
-    evidence = (review.functional_check(top, f"origin/{default}"),
+    evidence = ("\n\n".join(part for part in (
+                    review.before_coding(top, base, head),
+                    review.functional_check(top, f"origin/{default}")) if part),
                 review.proof_list(top, f"origin/{default}"))
     repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0
@@ -919,8 +921,7 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     if rebuilding and rebuilt is None:
         # Keep rendered local observations, but no record that would retire the missing-history retry.
         history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
-    approach = review.before_coding(top, f"origin/{default}")
-    block = _block(result, "\n\n".join(part for part in (approach, history, proof, check) if part))
+    block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
     draft = (result["status"] == "blocked" or bool(state.get("tests")) or
              (pr is None and result["status"] == "reviewing"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
