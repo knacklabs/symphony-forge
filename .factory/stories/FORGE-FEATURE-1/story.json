@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-25T17:59:46.545832+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01Y3dWspx3LDm4HykVHJgCTE",
+    "hash": "d87b61d57f1123509a4f6eaad642b89b43adac93703229702877cf41663496af",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-FEATURE-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-25T17:10:50.907697+00:00",
@@ -13,8 +23,12 @@
     {
       "at": "2026-10-25T17:56:47.144559+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-25T17:59:46.546013+00:00",
+      "step": "approved"
     }
   ],
   "title": "Build a client feature from the starter in one step",
-  "touches": 0
+  "touches": 1
 }
