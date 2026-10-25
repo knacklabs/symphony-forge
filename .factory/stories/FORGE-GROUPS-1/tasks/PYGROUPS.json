@@ -7,13 +7,76 @@
     "head": null,
     "start": "e3840c04c56ae874c8143034e7e881bf9743bc55"
   },
+  "known": [
+    {
+      "area": "test_2_small_split_suite_passes_without_hiding_errors() in tests/test_fix_gate_on_split_checks.py",
+      "file": "tests/test_fix_gate_on_split_checks.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 127,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: repair tests broken by the workflow migration",
+      "work": 2
+    },
+    {
+      "area": "test_5_always_tests_pass_in_their_owning_group() in tests/test_groups_pytest.py",
+      "file": "tests/test_groups_pytest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 255,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_always_tests_pass_in_their_owning_group",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cd8402a64a7024daa462a768ee4c8972a32c7dfd21e2efff6bc6c914e32f1928",
+    "changed": "866a7f87dbd0c5b6d9788530f696c043c00376ba166f4ad0de771c35ab84d565",
+    "commit": "5ff60b82675b5af771dcd11e2fe131e58b9b119a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4 (floor: migration)\nRaise: Functional\nCase: normal use - run the repository's test suite.\nThe preceding extractor selects the first tests-job run step, now `uv tool install .`, and passes it to `json.loads`, which raises before this assertion or any group execution. Several unchanged consumers also retain incompatible expectations: tests/test_ci_hang.py:20,33,48 require five inline pytest commands and an inline uv command; tests/test_fix_clone_gets_test_tools.py:82 requires the old inline command; tests/test_testplace_upgrade.py:124 requires the legacy job verbatim; tests/test_fix_close_runs_fast_test_instead_of_test.py:72,89 require the removed doctor exception and `six-group job` wording. Update the extractor and these contracts while retaining their timeout, upgrade and guidance checks; otherwise the suite cannot pass.",
+        "file": "tests/test_fix_gate_on_split_checks.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 127,
+        "priority": "P1",
+        "title": "Gate: repair tests broken by the workflow migration",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - an always_test entry persistently fails in its assigned group.\nDone-when 5 explicitly covers passing and failing always-run tests, but this proof only runs a passing entry and requires both groups to succeed. The persistent-failure case in test_3 removes always_test through `_settings(client, test=PYTEST, groups=2)`, so it does not cover this clause. Extend the command-level proof with a failing always_test entry and verify that exactly its owning group remains red after retry while the other group passes.",
+        "file": "tests/test_groups_pytest.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 255,
+        "priority": "P1",
+        "title": "Gate: test_5_always_tests_pass_in_their_owning_group",
+        "work": 2
+      }
+    ],
+    "id": "945bd78f-1204-4845-9b7b-aebfe5eae968",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T14:30:12.952853+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T14:50:24.912763+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
