@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-JOBS-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-25T17:43:14.862058+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Background jobs for client apps, with no Redis",
+  "touches": 0
+}
