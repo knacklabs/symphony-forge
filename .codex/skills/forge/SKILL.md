@@ -64,7 +64,7 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Run everything in Codex" | Ask, then in a fix: set `tools = "codex"`, `workers = "codex"` in `forge.toml`, then `forge sync`, `forge close <fix>` |
 | "Use both" | Ask, then in a fix: set `tools = "both"` in `forge.toml`, `forge close <fix>` |
 | "Change who builds just for me" | Edit `forge.local.toml` beside `forge.toml` in the main checkout (not a worktree): only `tools`, `workers` and `[models.<kind>]` tables. Git ignores it, so no fix; every worktree of that clone uses it. `forge next` and `forge doctor` name what it sets |
-| "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
+| "Close takes too long running every test" | In a local-test repo, ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint). In a CI-test repo, its pull request check runs related tests; the nightly full run covers the rest. Then `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
 `forge doctor` lists started fixes with no work commits after more than seven days.
@@ -1287,7 +1287,7 @@ what is committed, so look at them before closing.
 
 Continued worker rounds repeat the selected test-place instruction and the commit-first order,
 replacing any earlier full-suite instruction. Follow the repo's `test_place` choice when applying
-the test-audit skill. CI runs the full suite.
+the test-audit skill. The nightly full run covers the rest.
 
 Forge trusts its own Codex hooks for each turn it starts, so the guard runs even after a hook
 changes. Codex runs no project hook in a project it doesn't trust, so Codex workers and readers
@@ -1522,16 +1522,18 @@ Close reruns failed pytest files once after a local test failure. If they pass, 
 them as flaky and continues. A second failure still stops close. A failure without named
 test files still stops close.
 
-Close's tests and review run at the same time. Close waits for both and reports their results
-together; a red test or a P0/P1 finding still stops the round. When the
-test command fails, its test report ends with all failed pytest files and test names,
+In local mode, close's tests and review run at the same time. In CI mode, close runs its review
+while the pull request's checks run, then waits for both. A red test or a P0/P1 finding still
+stops the round. When the
+local test command fails, its test report ends with all failed pytest files and test names,
 including setup, teardown and collection errors, and the full test log path.
 Close keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
-When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
-Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
+In CI mode, close leaves test execution to the pull request's `tests` check. In local mode, close
+runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests
 and tests importing changed Python modules, Vitest's `--changed <base>`, or Jest's
-`--changedSince <base>` (including `__tests__` files). CI runs the full suite.
+`--changedSince <base>` (including `__tests__` files). The pull request's CI runs the related
+tests; the nightly full run covers the rest.
 Docs and brand-asset changes get the light review, which blocks only on P0 findings.
 Close and the generated `forge.yml` skip the test command when every changed path is Markdown
 (case-insensitive), or under `docs/`, `plans/`, `.factory/` or `.forge/`. They compare against the
@@ -1541,13 +1543,14 @@ live. Files marked `linguist-generated` and docs or assets referenced by tests k
 review and tests. Forge resolves literal paths from the repository or test file's folder on
 both sides of the change, including literal path joins, `__tests__/` files and shared
 `conftest.py` fixtures.
-CI checks this once before the test groups and skips the group jobs for a docs-only change.
+CI checks this once before the tests job and skips that job for a docs-only change.
 One code file runs tests as usual. New repos get
 this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
-For other changes, the generated `forge.yml` runs that suite as test groups behind the one required `tests` check,
-which passes only when every group passes: six groups when `test` calls pytest directly (not through make or tox) and
-the repo lists pytest-split, otherwise one. New repos get it at init, earlier ones after upgrading
-and syncing; branch protection keeps the same `tests` check.
+For other changes, the generated `forge.yml` runs one `tests` job with `forge test --change`.
+A repo with a direct pytest command and pytest-split keeps its existing six-group job, which runs
+the `test` command. The required `tests` check passes only when every job passes. New repos get
+this at init, earlier ones after upgrading and syncing; branch protection keeps the same `tests`
+check.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still
 fails. New repos get this rule at init. Existing repos get it after upgrade and sync.
@@ -1555,13 +1558,14 @@ Redo the change with `forge fix start "<why>" --done "<done when>"` and copy the
 Forge's generated `forge/*` branches and doctor's dated `fix/forge-files-*` branches still use
 the normal check for a Forge record and a current review. New repos get this check at init;
 existing repos get it after upgrading Forge. Sync refreshes these instructions for both.
-When the pytest selection would cover more than a third of the Python test files (shared
-test inputs select them all), close skips the local run, says so in one line, and relies on
-the pull request's required checks. Bare `forge test` runs only the part's Tests column or
-the fix's touched test files, plus `always_test`, and says that CI runs the full suite.
-With no named tests it runs only `always_test`. An explicit `forge test --pytest <base>`
-keeps the full selection. New repos get this bound at init; existing repos get it after upgrade
-and sync.
+Each change runs its related tests, lint and type checks once. Close runs the full related-test
+selection, even when it covers more than a third of the Python test files. Shared test inputs
+select every test.
+Bare `forge test` keeps worker runs bounded: when the pytest selection would cover more than
+a third of the Python test files, it runs only the part's Tests column or the fix's touched test
+files, plus `always_test`, and says "The nightly full run covers the rest." With no named tests
+it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
+New repos get this bound at init; existing repos get it after upgrade and sync.
 Setup steps such as `uv sync` and `npm ci` keep their arguments; no filenames are appended.
 Forge's initial optional-package Node command uses the same selection once an app adds
 `package.json`; with no package it still runs nothing.
@@ -1572,24 +1576,25 @@ the item back to the worker.
 To include fast checks or a wider selection, set `fast_test` in `forge.toml` (in a fix), with
 `{base}` standing for the merge base with the default branch.
 Tests that check the whole repo, such as rules over every test file, name no changed file, so
-the pytest picker never picks them and they fail only in CI. List them in `always_test` in
+the pytest picker never picks them by default. List them in `always_test` in
 `forge.toml` (in a fix), as test files or pytest node IDs such as
 `tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
-them on every change that includes code or settings, beside the tests it picks, even when it
-leaves a large selection to CI. Docs-only changes skip these tests too.
+them on every change that includes code or settings, beside the tests it picks. Docs-only changes
+skip these tests too.
 Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
 entry that runs no test, for example because `-k` deselects it, fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
 including package-relative imports. Filenames and references to changed non-Python inputs
-do not select tests. After the run it names each changed Python file that no test names; tests
-that run the program from outside miss it locally and GitHub's checks cover it. It supports root packages and the `src/` layout, and pytest's
+do not select tests. After the run it names each changed Python file that no test names. Tests
+that run the program from outside miss it locally; the nightly full run covers it. It supports
+root packages and the `src/` layout, and pytest's
 `test_*.py` and `*_test.py` filenames. It excludes unrelated tests even when the full command names them explicitly. It keeps
 the full `test` command's setup and options, caps pytest-xdist at half the machine's cores even
 when pytest configuration supplies the worker count, and runs the
-full command when `conftest.py`, requirements or lock files change, except for close's
-large-selection skip and bare `forge test`'s bound above.
+full command when `conftest.py`, requirements or lock files change, except for bare `forge test`'s
+worker bound above.
 For `pyproject.toml`, every change triggers the full command unless all changed lines are
 known-harmless: `project.version` and `project.description`, or Hatch's packaged-file
 `include`, `exclude` and `force-include` settings under `tool.hatch.build` and its `wheel`
