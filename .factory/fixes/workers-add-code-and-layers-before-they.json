@@ -1,0 +1,15 @@
+{
+  "base": "9eb15070b30ea0bf1d9369ac0e184a0401607687",
+  "branch": "fix/workers-add-code-and-layers-before-they",
+  "done_when": "Each worker pull request summary carries three lines written before coding (the need, the simplest option, the existing code reused), a layer appears only at the edge to an outside service, and the review checks the change against those three lines.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-25T18:18:39.508232+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Workers add code and layers before they think through the simplest way, and the rules say where not to add layers but not where a layer belongs, so the review has nothing written before coding to check the change against."
+}
