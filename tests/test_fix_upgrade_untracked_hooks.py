@@ -63,7 +63,7 @@ sys.exit(result)
     done = env.repo.forge("close", item, cwd=where)
 
     assert done.returncode == 0, done.stdout + done.stderr
-    assert "Ready: tidy-readme has a clean review and green checks." in done.stdout
+    assert "Ready: tidy-readme has a clean review and its tests passed on this machine." in done.stdout
     assert "?? .husky/_/h" in runtime_status.read_text("utf-8")
     assert (where / ".husky/_/h").read_text("utf-8").strip() == "husky"
     # Later blanket commits must not adopt Husky's generated runtime file.

@@ -38,7 +38,7 @@ def test_1_close_runs_a_passing_test_command_and_reports_its_result(env):
     item, _ = env.start_fix()
     done = env.close(item)
     assert done.returncode == 0, done.stdout + done.stderr
-    result = env.prompt().split("## Tests on the close run", 1)[1].split("\n## ", 1)[0]
+    result = env.prompt().split("## Change tests", 1)[1].split("\n## ", 1)[0]
     # Review starts before tests finish; the completed report belongs to close's output.
     assert "Tests are running alongside this review" in result
     assert "1 passed" in done.stdout

@@ -153,6 +153,8 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
     config = env.repo.path / "forge.toml"
     Upgrade(env, tmp_path).on_main("forge.toml", config.read_text("utf-8").replace(
         'test_place = "local"', 'test_place = "ci"'), "Leave accepted changes to CI")
+    env.repo.git("fetch", "-q", "origin", "main")
+    env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     # Acceptance in src/forge/close.py must retain the historical commit of a review still on this branch.
     accepted = env.close(item, "--resolve", "accept", "--reason", "The owner accepts this version")
