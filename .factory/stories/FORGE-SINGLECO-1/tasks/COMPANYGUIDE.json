@@ -1,0 +1,41 @@
+{
+  "branch": "task/FORGE-SINGLECO-1-COMPANYGUIDE",
+  "chat": {
+    "approval": "0d08757b739604620f35179a62a256cd5855426df6dc569487a239533d4478c8",
+    "claude": null,
+    "conversation": "01a1748a-9162-7013-883c-850691a6367f",
+    "head": null,
+    "start": "884ff3564a50e34c021c139b86937aa254b08af9"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9f97754044a55e5aba8c145787a06dcf7b0d7e33a9832a727681cd1ae5851a54",
+    "changed": "47e832961a02194dd46663dffbc0f4056a2d44230cdf77afaac91f34a99d1592",
+    "commit": "dba5db18dded99888f8a3f33cc6109f1d475ef6c",
+    "dismissals": [],
+    "findings": [],
+    "id": "52bb8c7e-66aa-49c2-bfa7-c6ec00aa6308",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T19:29:02.101063+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T19:33:39.237730+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8e72d88ac11b70d7cc8b82972f6a76bc8eb5a24a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}

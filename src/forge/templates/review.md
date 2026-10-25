@@ -285,6 +285,13 @@ code writes. Other modules reach those tables only through its public service. A
 default branch already has is not a finding, and neither is app code outside the modules, such
 as the demo-data loader.
 
+In an app with a database, report a table that this change adds, or a column, constraint, index
+or trigger on such a table, that breaks the database skill (.codex/skills/database/SKILL.md) as
+a P1 finding titled `Database: <the table or column>`. Report a Postgres extension that this
+change turns on and that is not on the skill's allowed list the same way, unless the app's
+constitution has a line "Postgres extension <name>:" with the owner's OK. A change to a table
+that the default branch already has is not a finding.
+
 In a TypeScript app with `zod` in a `package.json`, report a request body or query that this
 change adds and that no zod schema checks as a P1 finding titled `Zod: <the endpoint>`. Request
 input has one zod schema in the app's shared package, which the web form and the API both use,
