@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-25T01:38:40.669224+00:00
-seconds: 187.067
-read_hash: 22d5883e0e2b7e1a644376caf3c3c6c77cbff3c4
-round: 2
-passed: no
-doc_seen: 22d5883e0e2b7e1a644376caf3c3c6c77cbff3c4
+read_at: 2026-10-25T02:38:26.207632+00:00
+seconds: 38.454
+read_hash: b77bc22970b350363ee50dfbb3993b51dba963ef
+round: 3
+passed: yes
+doc_seen: b77bc22970b350363ee50dfbb3993b51dba963ef
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 1bc99794c2e6216afbe763c9b8b3d7b5eef537dd
+notes_seen: 0414427411a1cd614c7aff50fc3a78353e88e435
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a16f13-9e50-7203-8fbe-8cdb8019557f
 session:
-loop_choice: split
-loop_reason: The owner moved CI sharding to its own story; the three sharding notes leave this plan
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -89,3 +89,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Functional. Case: normal use - a pytest client combines multiple groups with an `always_test` node ID. The planned ordering selects that node before pytest-split assigns it to one group. The installed splitter removes other groups’ items at `.venv/lib/python3.11/site-packages/pytest_split/plugin.py:168`, but Forge’s selection hook still requires every configured entry to have run in every process (`src/forge/fasttest.py:393`), setting failure status for the other groups. The new empty-shard allowance handles exit status 5, whereas this hook produces status 1. The planned sharding test has no `always_test` entry.
    Gain 4, Work 3, Harm 3
    Disposition: defer - CI sharding moved to its own story; this plan keeps today's six-group pytest-split run unchanged.
+
+## Round 3
+
+No findings.
