@@ -1,5 +1,5 @@
 model Account {
-  id                  String   @id @db.Uuid
+  id                  String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
   email               String   @unique
   passwordHash        String
   createdAtUtc        DateTime @default(now())
@@ -23,7 +23,7 @@ model Account {
 }
 
 model Session {
-  id                  String   @id @default(uuid()) @db.Uuid
+  id                  String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
   accountId           String   @db.Uuid
   tokenHash           String   @unique
   csrfTokenHash       String
@@ -36,7 +36,7 @@ model Session {
 }
 
 model PasswordResetToken {
-  id           String   @id @default(uuid()) @db.Uuid
+  id           String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
   accountId    String   @db.Uuid
   tokenHash    String   @unique
   expiresAtUtc DateTime

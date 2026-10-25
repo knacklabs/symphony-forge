@@ -45,3 +45,32 @@ def test_2_starters_run_postgres_18_with_three_extensions(
             result = live_run(tmp_path_factory)
             case = "the database runs Postgres 18 with the day-one extensions"
         _require_cases(result["api"], (case,))
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(1800)
+@pytest.mark.parametrize("kind", ("react",))
+def test_3_new_rows_get_time_ordered_ids_and_updated_times(
+    repo, gh, tmp_path, tmp_path_factory, kind,
+):
+    # Audit: init must copy the id migration and database-generated schema defaults.
+    # Omitting either leaves new apps with random ids or no direct-SQL update clock.
+    # test_2 owns extensions, not ids; the live API/SQL case owns runtime behavior
+    # and schema drift. These use existing entry points, with no production seam.
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", kind)
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    migration = Path("apps/api/prisma/migrations/20261026000100_ids_and_updated_at/migration.sql")
+    assert (client / migration).read_bytes() == (STARTER / migration).read_bytes()
+    schemas = list((client / "apps/api/prisma/schema").glob("*.prisma"))
+    assert schemas
+    for schema in schemas:
+        text = schema.read_text(encoding="utf-8")
+        assert "@default(uuid())" not in text, schema
+        for field in re.findall(r"^\s*id\s+String\s+(.+)$", text, re.MULTILINE):
+            assert '@default(dbgenerated("uuidv7()"))' in field, schema
+
+    if LIVE:
+        result = live_run(tmp_path_factory)
+        _require_cases(result["api"], (
+            "a new row gets a time-ordered id and an update sets its last-changed time",
+        ))

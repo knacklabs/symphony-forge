@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID, createHash, scrypt, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, scrypt, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Optional, BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
@@ -98,11 +98,14 @@ export class AuthService {
 
   private async createAccount(email: string, password: string, conflictMessage = 'An account already uses that email.'): Promise<Account> {
     const passwordHash = await hashPassword(password);
-    const id = randomUUID();
     let account: Account;
     try {
-      account = await this.prisma.account.create({
-        data: { id, email, passwordHash, createdByAccountId: id, modifiedByAccountId: id },
+      account = await this.prisma.$transaction(async (transaction) => {
+        // The account's audit fields refer to itself, so obtain its database id first.
+        const [{ id }] = await transaction.$queryRaw<{ id: string }[]>`SELECT uuidv7()::text AS id`;
+        return transaction.account.create({
+          data: { id, email, passwordHash, createdByAccountId: id, modifiedByAccountId: id },
+        });
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
