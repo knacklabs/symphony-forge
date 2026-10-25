@@ -49,8 +49,8 @@
     "id": "9decbf16-927e-48c9-9eca-5264a08ce720",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T17:34:10.962169+00:00",
@@ -75,10 +75,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "50ac92b6-236c-4811-ba30-eea26d2545b9",
-    "head": "260ff1be91357b6b50bc734ce012e4acd5abd2b3",
+    "close": "1b8419a8-5214-4642-acf8-3ec182fe18e0",
+    "head": "4860256da0462b4fb5e6c5fa38260a4b0bce81ed",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "When close's local test run fails, it fails the item at once, so one flaky test that passes alone sends the item back and costs a whole new queued run",
   "worker": "codex"
