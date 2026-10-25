@@ -22,7 +22,7 @@ STORY = "windows-rerun-flakes"
 @pytest.mark.parametrize("setup", ["init", "earlier-adoption"])
 @pytest.mark.parametrize("command_style", ["powershell", "split-pytest"])
 def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_style):
-    # The Forge test command runs through the repo shell, so preserve its first failure.
+    # On pytest commands, Forge retries the failed file before the Windows job retries Forge.
     command = 'python retry_probe.py && python -c "print(\'suite passed\')"'
     windows_command = ('pwsh -File "retry probe.ps1"'
                        if command_style == "powershell" else "python -m pytest test_retry_probe.py -q")
@@ -74,6 +74,17 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         "    'native' { python -c 'import sys; sys.exit(7)'; exit $LASTEXITCODE }\n"
         "  }\n"
         "}\n", encoding="utf-8")
+    files = ["forge.toml", "retry_probe.py", "test_retry_probe.py", "retry probe.ps1"]
+    record = ".factory/fixes/windows-client-retries.json"
+    (client / record).parent.mkdir(parents=True, exist_ok=True)
+    (client / record).write_text(json.dumps({
+        "kind": "fix", "branch": "fix/windows-client-retries", "why": "Retry client checks",
+        "done_when": "The checks retain persistent failures", "status": "started"}), encoding="utf-8")
+    files.append(record)
+    if command_style == "split-pytest":
+        files.append("requirements.txt")
+    repo.git("add", *files, cwd=client)
+    repo.git("commit", "-qm", "Add Windows retry probes", cwd=client)
     bash = shutil.which("bash")
     pwsh = shutil.which("pwsh") or str(ROOT / ".venv/powershell/pwsh")
     assert bash, "Linux and Mac checks need Bash"
@@ -98,16 +109,19 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         run = json.loads(re.findall(r"^      - run: (.+)$", tests, re.M)[-1])
         # Actions checks out pull requests detached, without a local Forge item.
         repo.git("checkout", "-q", "--detach", "HEAD", cwd=client)
-        if runner == "windows-latest" and command_style == "split-pytest":
+        groups = (6 if runner == "windows-latest" and setup == "earlier-adoption"
+                  and command_style == "split-pytest" else 1)
+        if runner == "windows-latest" and command_style == "split-pytest" and groups > 1:
             empty_attempts = client / "empty-group-attempts.txt"
             empty = subprocess.run([pwsh, "-NoProfile", "-NonInteractive", "-Command",
-                                    run.replace("${{ matrix.group }}", "6")], cwd=client,
+                                    run], cwd=client,
                                    capture_output=True, text=True, encoding="utf-8",
                                    env={**os.environ, "ATTEMPT_FILE": empty_attempts.as_posix(),
-                                        "FAILURES": "0", "PATH": test_path}, timeout=30)
+                                        "FAILURES": "0", "FORGE_GROUP": "6",
+                                        "FORGE_GROUPS": str(groups), "PATH": test_path}, timeout=30)
             assert empty.returncode == 0, empty.stdout + empty.stderr
-            assert not empty_attempts.exists(), "An empty group only collects the unsplit suite"
-            run = run.replace("${{ matrix.group }}", "1")
+            assert "This group got no tests to run." in empty.stdout
+            assert not empty_attempts.exists(), "An empty group must not run the suite"
         normalized_check = check.replace(runner, "RUNNER")
         if windows_check is None:
             windows_check = normalized_check
@@ -120,7 +134,9 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         modes = (("native", "throw", "exit") if runner == "windows-latest" and
                  command_style == "powershell" else ("native",))
         for mode in modes:
-            for failures in (1, 2, 0):
+            failures_to_test = ((1, 4, 0) if runner == "windows-latest" and
+                                command_style == "split-pytest" else (1, 2, 0))
+            for failures in failures_to_test:
                 attempts = client / f"attempts-{runner}-{mode}-{failures}.txt"
                 shell = ([pwsh, "-NoProfile", "-NonInteractive", "-Command", run]
                          if runner == "windows-latest" else
@@ -128,10 +144,16 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
                 executed = subprocess.run(shell, cwd=client, capture_output=True, text=True,
                                           encoding="utf-8", env={**os.environ,
                                           "PATH": test_path,
+                                          "FORGE_GROUP": "1",
+                                          "FORGE_GROUPS": str(groups),
                                           "ATTEMPT_FILE": attempts.as_posix(),
                                           "FAILURES": str(failures), "FAILURE_MODE": mode}, timeout=30)
-                expected_attempts = 2 if runner == "windows-latest" and failures else 1
+                if runner == "windows-latest" and command_style == "split-pytest":
+                    expected_attempts = min(failures + 1, 4) if failures else 1
+                    passes = failures in (0, 1)
+                else:
+                    expected_attempts = 2 if runner == "windows-latest" and failures else 1
+                    passes = failures == 0 or (runner == "windows-latest" and failures == 1)
                 assert attempts.exists(), executed.stdout + executed.stderr
                 assert attempts.read_text(encoding="utf-8") == str(expected_attempts), executed.stderr
-                passes = failures == 0 or (runner == "windows-latest" and failures == 1)
                 assert (executed.returncode == 0) == passes, executed.stdout + executed.stderr

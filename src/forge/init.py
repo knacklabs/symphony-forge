@@ -141,6 +141,7 @@ def _settings(stage: str, test_place: str, test: str, checks: list[str], interfa
             f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'
             + (f'merge = "{merge}"\n' if merge else "") + 'workers = "split"\n'
             f'test_place = "{test_place}"\n'
+            'groups = 1\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(checks)}\n"
             f"runner = {json.dumps(runner)}\n"

@@ -71,7 +71,9 @@ jobs:
         with:
           path: ~/.npm
           key: npm-jest-30.2.0-vitest-3.2.4
-      - run: "uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --splits 6 --group ${{ matrix.group }} --splitting-algorithm least_duration || { status=$?; [ \"$status\" -eq 5 ] && uv run --frozen --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread --collect-only; }"
+      - run: uv tool install .
+        if: steps.parent-tests.outputs.reuse != 'true'
+      - run: "forge test --change"
         if: steps.parent-tests.outputs.reuse != 'true'
 
   tests-passed:

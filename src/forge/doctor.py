@@ -447,11 +447,7 @@ def doctor(args: argparse.Namespace) -> int:
         workflow = sync.read(top / sync.WORKFLOW_PATH)
         tests_job = re.search(r"^  tests:\n(.*?)(?=^  [\w-]+:\n|\Z)", workflow, re.M | re.S)
         tests_job = tests_job[1] if tests_job else ""
-        expected = wanted.get(sync.WORKFLOW_PATH, "")
-        expected_tests = re.search(r"^  tests:\n(.*?)(?=^  [\w-]+:\n|\Z)", expected, re.M | re.S)
-        split_run = next((line for line in (expected_tests[1] if expected_tests else "").splitlines()
-                          if "--splits 6 --group" in line), "")
-        if "forge test --change" not in tests_job and (not split_run or split_run not in tests_job):
+        if "forge test --change" not in tests_job:
             add(f"The tests check in {sync.WORKFLOW_PATH} does not run forge test --change.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted, trust = _codex_trust(top, codex_config)
@@ -483,8 +479,8 @@ def doctor(args: argparse.Namespace) -> int:
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
     if cfg["fast_test"]: print(f"- Note: change tests use fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
-              "the merge base with the default branch" + (". The pull request's tests check runs related tests, "
-              "except for existing pytest-split groups. The nightly full run covers the rest"
+              "the merge base with the default branch" + (". The pull request's tests check runs related tests. "
+              "The nightly full run covers the rest"
               if cfg["test_place"] == "ci" else "") + ".")
     if on_codex: print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see " "whether you did.")
     elif cfg["tools"] == "both" and not trusted: print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "

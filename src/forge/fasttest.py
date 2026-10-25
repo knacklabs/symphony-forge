@@ -397,6 +397,10 @@ def pytest_runtest_logreport(report):
 def pytest_sessionfinish(session):
     if hasattr(session.config, "workerinput"):
         return  # the controller sees every worker's reports
+    # ponytail: grouped runs cannot report entries removed by marks or -k; pytest still
+    # rejects missing files and nodes. One-group runs retain the ran-no-test check.
+    if int(os.environ.get("FORGE_GROUPS", "1")) > 1:
+        return
     for entry in ALWAYS:
         if not any(runs(nodeid, entry) for nodeid in
                    RAN | set(getattr(session.config, "_forge_prior_passed", []))):
@@ -419,6 +423,7 @@ FAILED, PASSED = set(), set()
 INVOCATION_HEADER = """ + repr(INVOCATION_HEADER) + """
 RETRY_HEADER = """ + repr(RETRY_HEADER) + """
 RETRY_STEP = """ + repr(RETRY_STEP) + """
+@pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
     # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
     # close's results file. xdist workers need neither; the controller records their reports.
@@ -440,6 +445,7 @@ def pytest_configure(config):
                 pytest.exit("Close keeps this pytest command's earlier result.", returncode=previous["exit"])
             config.args = previous["files"]
             config.option.file_or_dir = config.args
+            config.option.splits = config.option.group = None
             config._forge_prior_passed = previous["passed"]
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):

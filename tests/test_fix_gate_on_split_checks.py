@@ -1,10 +1,9 @@
 """The workflow that gates merging runs the tests as parallel groups behind one tests check."""
 import json
+import os
 import re
-import shlex
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,6 @@ pytestmark = pytest.mark.platform
 
 STORY = "FIX-GATE-ON-SPLIT-CHECKS"
 ROOT = Path(__file__).resolve().parents[1]
-SPLIT = " --splits 6 --group ${{ matrix.group }} --splitting-algorithm least_duration"
 
 
 # On Windows a bare "bash" starts WSL's System32 bash; take the one on PATH (Git's).
@@ -53,9 +51,9 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
     if kind == "new":
         client, initialized = _fresh_client(repo, gh, tmp_path)
         assert initialized.returncode == 0, initialized.stderr
-        # Init's own workflow already has the gate, with the suite in one group.
+        # Init's own workflow already has the gate, with one configured group.
         workflow = (client / ".github/workflows/forge.yml").read_text(encoding="utf-8")
-        assert "group: [1]" in jobs(workflow)["tests"] and SPLIT not in workflow
+        assert "group: [1]" in jobs(workflow)["tests"] and "--splits" not in workflow
         check_gate(workflow)
         repo.git("switch", "-q", "-c", "fix/split-tests", cwd=client)
         toml = client / "forge.toml"
@@ -80,7 +78,7 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
         repo.git("add", "forge.toml")
         repo.git("commit", "-q", "-m", "Forge's own settings")
         repo.git("switch", "-q", "-c", "fix/split-tests")
-    # A repo that can split its pytest suite gets six groups.
+    # Init sets one group for a new repo. Existing repos without the setting keep six.
     shutil.copy(ROOT / "pyproject.toml", client / "pyproject.toml")
 
     synced = repo.forge("sync", cwd=client)
@@ -89,9 +87,14 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
     workflow = (client / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     found = jobs(workflow)
     groups = found["tests"]
-    assert "group: [1, 2, 3, 4, 5, 6]" in groups and "fail-fast: false" in groups
-    assert "name: test group ${{ matrix.group }} of 6" in groups
-    assert SPLIT in groups
+    count = 1 if kind == "new" else 6
+    assert f"group: [{', '.join(map(str, range(1, count + 1)))}]" in groups
+    assert "fail-fast: false" in groups
+    assert f"name: test group ${{{{ matrix.group }}}} of {count}" in groups
+    assert '- run: "forge test --change"' in groups
+    assert "FORGE_GROUP: ${{ matrix.group }}" in groups
+    assert "FORGE_GROUPS:" in groups
+    assert "--splits" not in groups and "--collect-only" not in groups
     # Only Forge's own repo runs its container tests in the gating groups.
     assert ("FORGE_CONTAINERS: '1'" in groups) == (kind == "source")
     # Only Forge's own repo keeps npm's download cache for its Node client tests.
@@ -109,31 +112,38 @@ def test_1_one_tests_check_passes_only_when_every_group_passes(repo, gh, tmp_pat
 
 
 def test_2_small_split_suite_passes_without_hiding_errors(repo):
-    # Execute sync's actual CI command with real pytest-split: five groups have no items.
+    # Execute the generated CI command with real pytest-split: five groups have no items.
     repo.git("switch", "-q", "-c", "fix/small-split-suite")
     repo.write("requirements.txt", "pytest-split==0.11.0\n")
     repo.write("tests/test_small.py", "def test_small():\n    assert True\n")
     repo.write("forge.toml", re.sub(r'^test = .*$', 'test = "pytest tests -q"',
                                   (ROOT / "forge.toml").read_text(encoding="utf-8"), flags=re.M))
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Add a small split test suite")
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     command = json.loads(re.search(r"^      - run: (.+)$", jobs(workflow)["tests"], re.M)[1])
-    command = command.replace("pytest", shlex.quote(sys.executable) + " -m pytest")
+    assert command == "forge test --change"
 
     def run(group):
-        return bash("-e", "-c", command.replace("${{ matrix.group }}", str(group)),
-                    cwd=repo.path, capture_output=True, text=True)
+        environment = {**os.environ, "FORGE_GROUP": str(group), "FORGE_GROUPS": "6"}
+        return bash("-e", "-c", command, cwd=repo.path, env=environment,
+                    capture_output=True, text=True)
 
     for group in range(1, 7):
         result = run(group)
         assert result.returncode == 0, result.stdout + result.stderr
+        if group == 6:
+            assert "This group got no tests to run." in result.stdout
     repo.write("tests/test_small.py", "def test_small():\n    assert False\n")
     assert run(1).returncode != 0
     repo.write("tests/test_small.py", "raise RuntimeError('collection failed')\n")
     assert run(6).returncode != 0
-    repo.write("tests/test_small.py", "# No tests in the whole suite must still fail.\n")
-    assert run(6).returncode != 0
+    repo.write("tests/test_small.py", "# The changed group now has no tests to run.\n")
+    empty = run(6)
+    assert empty.returncode == 0, empty.stdout + empty.stderr
+    assert "This group got no tests to run." in empty.stdout
 
 
 @pytest.mark.parametrize("command", ["make pytest", "uv run make pytest", "tox -e pytest"])
@@ -156,7 +166,7 @@ def test_4_a_command_that_wraps_pytest_uses_change_tests_without_splitting(repo,
     assert "--splits" not in groups
 
 
-def test_3_init_splits_a_repo_that_already_lists_pytest_split_and_doctor_accepts_it(repo, gh, tmp_path):
+def test_3_init_starts_a_pytest_split_repo_with_one_group_and_doctor_accepts_it(repo, gh, tmp_path):
     client, remote = tmp_path / "client", tmp_path / "client.git"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
     subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)
@@ -171,7 +181,10 @@ def test_3_init_splits_a_repo_that_already_lists_pytest_split_and_doctor_accepts
     initialized = repo.forge("init", "--actions", "yes", cwd=client)
 
     assert initialized.returncode == 0, initialized.stderr
+    assert 'groups = 1' in (client / "forge.toml").read_text(encoding="utf-8")
     groups = jobs((client / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
-    assert "group: [1, 2, 3, 4, 5, 6]" in groups and SPLIT in groups
+    assert "group: [1]" in groups
+    assert '- run: "forge test --change"' in groups
+    assert "--splits" not in groups
     doctor = repo.forge("doctor", cwd=client)
     assert "doesn't run forge.toml's test" not in doctor.stdout, doctor.stdout

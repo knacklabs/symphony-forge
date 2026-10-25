@@ -493,12 +493,21 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
                 entry.update(output_path=log.as_posix(), test_cpus=int(workers))
                 history, flaky = [], []
+                grouped_pytest = (int(os.environ.get("FORGE_GROUPS", "1")) > 1
+                                  and any(repo.pytest_split(top, candidate) for candidate in
+                                          (command, repo.config(top)["test"])))
                 for attempt in range(2):
                     done = fasttest.test_process(top, item, capped, env, entry, ran, log)
+                    evidence = results.read_text("utf-8") if results.is_file() else ""
+                    if (not attempt and done.returncode == 5 and grouped_pytest
+                            and any(json.loads(line[len(fasttest.INVOCATION_HEADER):])["exit"] == 5
+                                    for line in evidence.splitlines()
+                                    if line.startswith(fasttest.INVOCATION_HEADER))):
+                        done = subprocess.CompletedProcess(command, 0, done.stdout +
+                                                           "\nThis group got no tests to run.\n")
                     history.append(done.stdout)
                     if not closing or attempt or done.returncode == 0:
                         break
-                    evidence = results.read_text("utf-8") if results.is_file() else ""
                     failed = sorted({node.split("::", 1)[0] for status, node in
                                      re.findall(r"^(failed|error) (.+)$", evidence, re.M)})
                     if not failed or fasttest.INVOCATION_HEADER not in evidence:

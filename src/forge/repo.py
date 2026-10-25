@@ -580,8 +580,20 @@ def test_place(cfg: dict[str, Any]) -> str:
     return cfg.get("test_place", "ci" if cfg.get("checks") else "local")
 
 
+def pytest_split(top: Path, command: str) -> bool:
+    """Only direct pytest commands in repos listing pytest-split can split automatically."""
+    # ponytail: wrappers such as `make pytest` keep their own command semantics.
+    direct = r"(?:(?:uv|poetry|pipenv) run(?: -\S+| [\d.]+)* |python3? -m )?pytest\b"
+    return bool(re.match(direct, command) and not re.search(r"[;&|]", command)
+                and any(path.is_file() and "pytest-split" in path.read_text(encoding="utf-8")
+                        for path in [top / "pyproject.toml", *top.glob("requirements*.txt")]))
+
+
 def grouped(top: Path, command: str) -> str:
     """Fill the CI group's numbers; local and nightly runs use group 1 of 1."""
+    if (int(os.environ.get("FORGE_GROUPS", "1")) > 1 and "{group}" not in command
+            and pytest_split(top, command)):
+        command += " --splits {groups} --group {group} --splitting-algorithm least_duration"
     return command.replace("{group}", os.environ.get("FORGE_GROUP", "1")).replace(
         "{groups}", os.environ.get("FORGE_GROUPS", "1"))
 

@@ -332,12 +332,16 @@ example `npx vitest run --changed {base} && npm run lint`). In a CI-test repo, t
 `tests` check runs the related tests and close waits for it. The nightly full run covers the rest.
 New repos leave `fast_test` unset. `forge doctor` says when it is set.
 The generated `forge.yml` runs one `tests` job with `forge test --change`. Set `groups = 4` in
-`forge.toml` to run four parallel jobs with any test runner. Put `{group}` and `{groups}` in the
-`test` or `fast_test` command where the runner expects its shard number and total, for example
-`vitest run --shard={group}/{groups}`. Forge fills these values for each job and uses `1` for
-both outside CI. Without a shard flag, each job runs the same tests; this is correct but slower.
-Without `groups`, a repo with a direct pytest command and pytest-split keeps its existing
-six-group job, which runs `test`.
+`forge.toml` to run four parallel jobs with any test runner. Each job runs the tests related to the
+pull request. Put `{group}` and `{groups}` in the `test` or `fast_test` command where the runner
+expects its shard number and total, for example `vitest run --shard={group}/{groups}`. Forge fills
+these values for each job and uses `1` for both outside CI. Without a shard flag, each job repeats
+the same related tests; this is correct but slower. For a direct pytest command with pytest-split,
+Forge adds the split options automatically.
+
+Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
+existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
+runs its share of the related tests through `forge test --change`.
 The required `tests` check passes only when every job passes.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.
@@ -360,6 +364,9 @@ test files. Shared test inputs select every test. Bare
 of the repo's Python test files, it runs only the part's Tests column or the fix's touched test
 files, plus `always_test`, and says "The nightly full run covers the rest." With no named tests
 it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
+In a grouped pytest run, each `always_test` entry runs in one group; the other groups do not fail
+because they did not run it. A missing file or node still fails. A mark or `-k` filter that removes
+an entry is not reported as missing in a grouped run.
 New repos get this bound from init; existing repos get it on upgrade.
 
 Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
