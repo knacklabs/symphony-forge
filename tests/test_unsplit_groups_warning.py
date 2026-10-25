@@ -50,9 +50,23 @@ def test_1_unsplit_groups_warn_without_refusal(repo, gh, monkeypatch, tmp_path,
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Configure client test groups")
     gh.respond("auth", "status")
-    gh.respond("api", "repos/{owner}/{repo}/branches/main/protection",
+    default = repo.git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").removeprefix("origin/")
+    gh.respond("api", f"repos/{{owner}}/{{repo}}/branches/{default}/protection",
                stdout=json.dumps({"required_status_checks": {"contexts": ["tests", "forge-pr-check"]}}))
     _autoreview(tmp_path, monkeypatch)
     checked = repo.forge("doctor")
     assert checked.stdout.count("- Warning: " + WARNING) == int(warns)
-    assert checked.returncode == 0, checked.stdout + checked.stderr
+    # Doctor can report unrelated host or tool problems. The warning must add
+    # neither a problem nor a refusal compared with the same repo at one group.
+    configured = (repo.path / "forge.toml").read_text("utf-8")
+    repo.write("forge.toml", configured.replace(f"groups = {groups}\n", "groups = 1\n", 1))
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    repo.git("add", "-A")
+    repo.git("commit", "--allow-empty", "-qm", "Compare one client test group")
+    baseline = repo.forge("doctor")
+    assert "- Warning: " + WARNING not in baseline.stdout
+    problem_count = r"forge doctor found (\d+) problem\(s\)"
+    assert re.findall(problem_count, checked.stderr) == re.findall(problem_count, baseline.stderr), (
+        checked.stdout + checked.stderr + baseline.stdout + baseline.stderr)
+    assert checked.returncode == baseline.returncode, checked.stdout + checked.stderr
