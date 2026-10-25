@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skills/database/SKILL.md\tConfigure a shadow database before requiring the Prisma drift check\tFORGE-DATABASE-1/SKILL",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/database/SKILL.md",
+      "line": 129,
+      "text": "Configure a shadow database before requiring the Prisma drift check",
+      "from": "blocking",
+      "item": "FORGE-DATABASE-1/SKILL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

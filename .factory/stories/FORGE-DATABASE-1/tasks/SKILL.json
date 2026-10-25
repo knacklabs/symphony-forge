@@ -7,13 +7,53 @@
     "head": null,
     "start": "a63b97f56adcfbac6779288b51ba09be3f7e051a"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/database/SKILL.md",
+      "file": "src/forge/templates/skills/database/SKILL.md",
+      "gain": 3,
+      "harm": 4,
+      "line": 129,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Configure a shadow database before requiring the Prisma drift check",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1824101294713c7f10b5cc12d0606278e8968d9cb38aed81e86071ffa287134c",
+    "changed": "4afdce8f9a3abb496d1e3a6fdf6c0009498f22d4cfd9c461a4e497c0892eb669",
+    "commit": "c6f8c572b40cb3f69725d34c90816eedfbeb9b5e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 4 (floor: migration)\nRaise: Functional.\nCase: normal use - checking a raw-SQL migration in a newly initialized Prisma app.\nThe prescribed `--from-migrations` command requires a configured shadow database, but the shipped `src/forge/templates/starter/prisma.config.ts:8` configures only `datasource.url`. Consequently, this command fails before comparing schemas, even when they match. [Prisma documents this prerequisite](https://www.prisma.io/docs/orm/v7/prisma-migrate/understanding-prisma-migrate/shadow-database). Document creation and configuration of a separate shadow database before this command, including in both synced skill copies.",
+        "file": "src/forge/templates/skills/database/SKILL.md",
+        "gain": 3,
+        "harm": 4,
+        "line": 129,
+        "priority": "P1",
+        "title": "Configure a shadow database before requiring the Prisma drift check",
+        "work": 1
+      }
+    ],
+    "id": "9db2d9f0-16d9-4fd1-b53f-352006cea33e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T18:02:43.589217+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T18:09:29.546037+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
