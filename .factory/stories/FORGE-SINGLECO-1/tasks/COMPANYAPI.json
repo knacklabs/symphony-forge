@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-SINGLECO-1-COMPANYAPI",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T17:52:03.919786+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1b87a7dcea725f69f0d4240dee96226f75a66322",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
