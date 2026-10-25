@@ -33,13 +33,41 @@ def configure(env, place, checks):
 
 @pytest.mark.platform
 def test_1_local_repo_ships_without_ci(env):
+    # Audit: a main-only dependency change leaves the reviewed diff unchanged.
+    # Existing cache tests cover unchanged trees, not this cache miss. Extend
+    # this local merge gate test with a real dependency failure; no new seam.
     configure(env, "local", [])
+    script = (env.repo.path / "count-tests.py").read_text("utf-8")
+    env.commit(env.repo.path, "count-tests.py", script + "import sys\n"
+               "sys.dont_write_bytecode = True\nfrom dependency import exit_code\n"
+               "raise SystemExit(exit_code)\n")
+    env.commit(env.repo.path, "dependency.py", "exit_code = 0\n")
+    env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix()
     env.open_pr("")
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     assert "clean review and its tests passed on this machine" in closed.stdout
     assert (where / "test-count").read_text("utf-8") == "run\n"
+
+    env.commit(env.repo.path, "dependency.py", "exit_code = 1\n")
+    env.repo.git("push", "-q", "origin", "main")
+    changed = env.close(item)
+    assert len(env.review_calls()) == 1  # The branch's own diff still has its clean review.
+    assert changed.returncode == 1, changed.stdout + changed.stderr
+    assert (where / "test-count").read_text("utf-8") == "run\nrun\n"
+    assert "Ready:" not in changed.stdout
+
+    env.commit(env.repo.path, "dependency.py", "exit_code = 0\n# repaired dependency\n")
+    env.repo.git("push", "-q", "origin", "main")
+    repaired = env.close(item)
+    assert repaired.returncode == 0, repaired.stdout + repaired.stderr
+    assert (where / "test-count").read_text("utf-8") == "run\nrun\nrun\n"
+    cached = env.close(item)
+    assert cached.returncode == 0, cached.stdout + cached.stderr
+    assert "already passed on this machine" in cached.stdout
+    assert (where / "test-count").read_text("utf-8") == "run\nrun\nrun\n"
+    assert len(env.review_calls()) == 1
     doctor = env.repo.forge("doctor", cwd=where)
     assert "names no checks" not in doctor.stdout + doctor.stderr
     head = env.repo.git("rev-parse", "HEAD", cwd=where)

@@ -1101,7 +1101,8 @@ fix's folder:
    declared ranges; recursive `yarn up -R` starts in Yarn 3.
 2. Pull each Dockerfile's base image at its current tag, or move it to the newest patch of the
    same tag, and rebuild the image.
-3. Run the test command in `forge.toml`, commit, then `forge close <fix>`.
+3. Follow the repo's `test_place`: in local mode, run the related tests through
+   `forge test`; in CI mode, do not run them here. Commit, then `forge close <fix>`.
 
 ## Planning a story
 

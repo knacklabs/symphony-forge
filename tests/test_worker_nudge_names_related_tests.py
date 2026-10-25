@@ -24,11 +24,25 @@ def _related_test_skills(client):
     for host in (".claude", ".codex"):
         skill = (client / host / "skills/test-audit/SKILL.md").read_text("utf-8")
         validation = " ".join(skill.split("## Validation\n")[1].split("## Landing")[0].split())
+        assert "follow `forge.toml`'s `test_place`" in validation.lower()
+        assert "in local mode" in validation.lower()
+        assert "run the change's related tests through `forge test`" in validation.lower()
+        assert "in ci mode" in validation.lower()
+        assert "do not run them here" in validation.lower()
+        assert "run `forge test` only for a test you are writing" in validation.lower()
         assert "run the change's related tests" in validation
         assert "through `forge test`" in validation
         assert "`fast_test`, or `test` when none is set" in validation
         assert "Run forge.toml's `test` command before you stop." not in validation
         _commit_test_fixes(validation)
+
+        guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
+        refresh = guide.split("## Refresh dependencies", 1)[1].split("## Planning a story", 1)[0]
+        assert "follow the repo's `test_place`" in refresh.lower()
+        assert "local mode" in refresh.lower()
+        assert "run the related tests through `forge test`" in refresh.lower()
+        assert "ci mode" in refresh.lower()
+        assert "do not run them here" in refresh.lower()
 
 
 def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypatch):

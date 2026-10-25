@@ -340,7 +340,7 @@ def close(args: argparse.Namespace) -> int:
                     else:
                         state.pop("tests", None)
         repo.add_step(state, "review")
-    elif local_tests and state.get("tests"):
+    elif local_tests:
         command = review.close_test(top, f"origin/{default}")
         failed, tested = review.test_run(top, command, f"origin/{default}", always=switch)
         print(tested, flush=True)
@@ -351,9 +351,6 @@ def close(args: argparse.Namespace) -> int:
             state.pop("tests", None)
         state["status"] = "fixing" if failed or review.blocking(result) else "waiting for checks"
         _save(top, item, state, f"Tests of {item}: {'failed' if failed else 'passed'}")
-    elif local_tests and (command := review.close_test(top, f"origin/{default}")) and (
-            (passed := review.passed_record(top, command)) and passed.exists()):
-        print(review.SKIPPED.format(command=command), flush=True)
     for key, because in requested.items():
         number = next((n for n, finding in enumerate(result["findings"], 1)
                        if score.identity(finding["file"], finding["title"]) == key), 0)
