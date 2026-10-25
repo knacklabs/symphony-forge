@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-GROUPS-1-ANYRUNNER",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T13:38:13.466627+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "66c7635d1ad9eacadc93c1537bc5456919dcfb01",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
