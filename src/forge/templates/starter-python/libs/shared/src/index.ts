@@ -33,3 +33,11 @@ export const memberListQuerySchema = z.object({
 }).strict();
 export type MemberListQuery = z.infer<typeof memberListQuerySchema>;
 export type Member = components['schemas']['Member'];
+export const memberRoleSchema = z.enum(['admin', 'member']);
+export type MemberRole = z.infer<typeof memberRoleSchema>;
+export const inviteSchema = forgotPasswordSchema;
+export const acceptInviteSchema = signUpSchema.extend({ token: resetPasswordSchema.shape.token }).strict();
+export const changeRoleSchema = z.object({ role: memberRoleSchema }).strict();
+export type InviteInput = z.infer<typeof inviteSchema>;
+export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
+export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;

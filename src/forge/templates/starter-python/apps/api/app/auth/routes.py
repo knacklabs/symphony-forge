@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth.mail import MailProvider
 from app.auth.models import Account as AccountModel
 from app.auth.models import Session as SessionModel
 from app.auth.schema import (
+    AcceptInviteInput,
     Account,
     CredentialsInput,
     ForgotPasswordInput,
@@ -21,13 +21,16 @@ from app.core import (
     AccountPrincipal,
     ApiError,
     ErrorEnvelope,
+    MailProvider,
     Settings,
     SuccessEnvelope,
+    admin_only,
     get_db,
     verify_csrf,
 )
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
+invites_router = APIRouter(prefix="/api/v1/invites", tags=["Organisations"])
 
 
 def _settings(request: Request) -> Settings:
@@ -148,6 +151,50 @@ def sign_up(
         session.csrf_token,
         session.expires_at_utc,
         settings,
+    )
+    return SuccessEnvelope(data=session.account)
+
+
+@invites_router.post(
+    "",
+    status_code=201,
+    response_model=SuccessEnvelope[MessageResponse],
+    responses={
+        status: {"model": ErrorEnvelope} for status in (400, 401, 403, 409, 422)
+    },
+    summary="Invite a person to your organisation.",
+    description="Admins invite an email without an account. A new invite replaces its seven-day link. Production requires a mail provider.",
+)
+def invite(
+    request: Request,
+    input_data: ForgotPasswordInput,
+    account: Annotated[AccountPrincipal, Depends(admin_only)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[MessageResponse]:
+    return SuccessEnvelope(data=_service(request, db).invite(input_data.email, account))
+
+
+@router.post(
+    "/accept-invite",
+    status_code=201,
+    response_model=SuccessEnvelope[Account],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 409, 429)},
+    summary="Join an organisation with an email invite.",
+    description="The seven-day invite must match the email and works once. Creates an account and starts a session.",
+)
+def accept_invite(
+    request: Request,
+    response: Response,
+    input_data: AcceptInviteInput,
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[Account]:
+    session = _service(request, db).accept_invite(input_data)
+    _set_session_cookies(
+        response,
+        session.session_token,
+        session.csrf_token,
+        session.expires_at_utc,
+        _settings(request),
     )
     return SuccessEnvelope(data=session.account)
 

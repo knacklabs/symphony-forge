@@ -24,6 +24,10 @@ class Member(OrganisationSchema):
     created_at_utc: datetime
 
 
+class ChangeRoleInput(OrganisationSchema):
+    role: Role = Field(description="The member’s new role.", examples=["member"])
+
+
 class MemberListQuery(OrganisationSchema):
     page: int = Field(
         default=1, ge=1, description="The one-based page number.", examples=[1]

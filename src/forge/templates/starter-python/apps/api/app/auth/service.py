@@ -11,16 +11,16 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth.mail import MailProvider
 from app.auth.models import Account, PasswordResetToken, Session
-from app.auth.schema import Account as AccountResponse
 from app.auth.schema import (
+    AcceptInviteInput,
     CredentialsInput,
     MessageResponse,
     ResetPasswordInput,
     SessionData,
 )
-from app.core import ApiError, Settings
+from app.auth.schema import Account as AccountResponse
+from app.core import AccountPrincipal, ApiError, MailProvider, Settings
 
 if TYPE_CHECKING:
     from app.organisations import OrganisationsService
@@ -99,6 +99,20 @@ class AuthService:
         self.organisations = organisations
 
     def sign_up(self, credentials: CredentialsInput) -> SessionData:
+        account = self._create_account(credentials)
+        principal = self.organisations.create_for_account(account.id, account.email)
+        session_data = self._new_session(
+            AccountResponse(id=account.id, email=account.email, role=principal.role)
+        )
+        self.db.add(self._session_row(account.id, session_data))
+        self.db.commit()
+        return session_data
+
+    def _create_account(
+        self,
+        credentials: CredentialsInput,
+        conflict_message: str = "An account already uses that email.",
+    ) -> Account:
         account_id = uuid4()
         account = Account(
             id=account_id,
@@ -110,19 +124,48 @@ class AuthService:
         try:
             self.db.add(account)
             self.db.flush()
-            principal = self.organisations.create_for_account(account_id, account.email)
-            session_data = self._new_session(
-                AccountResponse(id=account_id, email=account.email, role=principal.role)
-            )
-            self.db.add(self._session_row(account_id, session_data))
-            self.db.commit()
         except IntegrityError as error:
             self.db.rollback()
             raise ApiError(
                 409,
                 "EMAIL_ALREADY_REGISTERED",
-                "An account already uses that email.",
+                conflict_message,
             ) from error
+        return account
+
+    def invite(self, email: str, account: AccountPrincipal) -> MessageResponse:
+        if self.db.scalar(select(Account.id).where(Account.email == email)) is not None:
+            raise ApiError(
+                409, "EMAIL_ALREADY_REGISTERED", "That person already has an account."
+            )
+        self.organisations.invite(
+            email, account, self.mail_provider, self.settings.app_origin
+        )
+        return MessageResponse(message="Invite sent.")
+
+    def accept_invite(self, input_data: AcceptInviteInput) -> SessionData:
+        invite = self.organisations.open_invite(input_data.token)
+        if invite.email != input_data.email:
+            raise ApiError(
+                400,
+                "INVITE_INVALID",
+                "This invite link is not valid. Ask an admin for a new one.",
+            )
+        account = self._create_account(
+            input_data,
+            "An account already uses that email, so it cannot join this organisation.",
+        )
+        self.db.commit()
+        # ponytail: a failure between these module calls leaves an account with no membership
+        # and 401; support must remove it before another attempt.
+        principal = self.organisations.join_from_invite(
+            invite, account.id, account.email
+        )
+        session_data = self._new_session(
+            AccountResponse(id=account.id, email=account.email, role=principal.role)
+        )
+        self.db.add(self._session_row(account.id, session_data))
+        self.db.commit()
         return session_data
 
     def sign_in(self, credentials: CredentialsInput) -> SessionData:
