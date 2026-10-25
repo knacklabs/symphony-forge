@@ -31,6 +31,7 @@ PLAIN_ENGLISH = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.m
 LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".forge/records-only/action.yml", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
+          ".claude/skills/database/SKILL.md", ".codex/skills/database/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
