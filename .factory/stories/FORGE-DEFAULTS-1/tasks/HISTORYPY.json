@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 3,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-25T02:38:45.806877+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "New client apps start with the constitution's built-in defaults: Change history in the Python API is stuck. It should deliver: The same HTTP contract as HISTORY in the Python starter: the history module, records for invites and role changes, and the admin-only history list and its export.\nIt changes 576 lines outside tests, over its limit of 400.\nThe worker tried: Add change history to the Python starter API.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "0ed211c8-e7cd-4243-8858-7b8d5b900939"
+  },
   "stuck": {
     "close": null,
     "head": "a3adb605ecc4412abd7c700edba3e1f6e7ca2e6e",
