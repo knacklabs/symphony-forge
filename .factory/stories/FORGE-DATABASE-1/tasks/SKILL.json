@@ -1,0 +1,71 @@
+{
+  "branch": "task/FORGE-DATABASE-1-SKILL",
+  "chat": {
+    "approval": "a0a46044fc42a28b0c7128d1d8b4d17a54d38f4041dc6b8a7860e44f0b70fb6e",
+    "claude": null,
+    "conversation": "01a1743a-c602-7223-b489-cf5ce581fc2b",
+    "head": null,
+    "start": "a63b97f56adcfbac6779288b51ba09be3f7e051a"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/database/SKILL.md",
+      "file": "src/forge/templates/skills/database/SKILL.md",
+      "gain": 3,
+      "harm": 4,
+      "line": 129,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Configure a shadow database before requiring the Prisma drift check",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f74c6c24ee1d1b5db4a776f4595f7aba3d144643ba03dfcd2a24ee41f597249b",
+    "changed": "9a837eed8cb91ef35726ff07c66f91af3a3845bc67d52ef143fc9773f32d4050",
+    "commit": "d84b91dc7c5bb5f5a493f0ec7d959c87867ecdac",
+    "dismissals": [],
+    "findings": [],
+    "id": "fd7c7e7f-5e95-4c6d-b311-e2c019ec3bfb",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T18:02:43.589217+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T18:09:29.546037+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:11:18.328419+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:18:03.005068+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:24:25.826502+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:48:57.377288+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a2e08ce0-0cca-4b05-ad1d-9d4800836db2",
+    "head": "e5772ce8d572e39dc094fbbfdc578274401d9e72",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}

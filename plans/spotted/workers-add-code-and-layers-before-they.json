@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tRestrict approach lookup to the current worker's commits\tworkers-add-code-and-layers-before-they",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 733,
+      "text": "Restrict approach lookup to the current worker's commits",
+      "from": "blocking",
+      "item": "workers-add-code-and-layers-before-they",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
