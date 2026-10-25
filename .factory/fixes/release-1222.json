@@ -5,11 +5,74 @@
   "done_when": "Forge reports v1.2.22 and every pin, installer and plugin names v1.2.22",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": ".factory/fixes/release-1222.json",
+      "file": ".factory/fixes/release-1222.json",
+      "gain": 3,
+      "harm": 1,
+      "line": 5,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    },
+    {
+      "area": ".factory/fixes/release-1222.json",
+      "file": ".factory/fixes/release-1222.json",
+      "gain": 3,
+      "harm": 1,
+      "line": 2,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: release allowance does not cover the skill changes",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "26ac5c77f7a7863b875abcf94d02550929e688febcc8d29c610d0a9fe88b5e3f",
+    "changed": "2c07b152cb0e91d4ad09baf11b1f172fa65ed72a49f03820f0de68c688e72f8d",
+    "commit": "44edda1f7f9b92e074e8413b55a91f0674e214c8",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. Case: normal use - closing the v1.2.22 release. The supplied proof list is `missing`, and no commit in the selected change contains a `Proof list:` mapping. The release and installer tests exist, but the required association between the Done-when requirement and those checks is absent. Record that mapping so close can match the release requirement to its proof.",
+        "file": ".factory/fixes/release-1222.json",
+        "gain": 3,
+        "harm": 1,
+        "line": 5,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. Case: normal use - reviewing the release under its recorded size allowance. The allowance covers changing versions in pinned files, but both `.codex/skills/forge/SKILL.md` and `.claude/skills/forge/SKILL.md` also change grouped-test instructions, initialization defaults, warnings and filtered `always_test` behavior. These contain no version substitutions and address stale instructions separately from the release pins. The whole diff therefore exceeds the recorded reason; separate those updates or record an allowance that accurately covers them.",
+        "file": ".factory/fixes/release-1222.json",
+        "gain": 3,
+        "harm": 1,
+        "line": 2,
+        "priority": "P1",
+        "title": "Gate: release allowance does not cover the skill changes",
+        "work": 1
+      }
+    ],
+    "id": "37ffa23f-2c04-4c3c-9704-a483fb8114c5",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T16:46:39.994723+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T16:50:38.812807+00:00",
+      "step": "review"
     }
   ],
   "why": "Clients need v1.2.22: tests run once in one place, parallel test groups for any runner, the constitution's built-in defaults, the modular and FastAPI starters"
