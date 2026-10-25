@@ -4,6 +4,9 @@ name: forge
 on:
   pull_request:
   pull_request_target:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
@@ -149,3 +152,30 @@ jobs:
         run: |
           stats=$(git diff --numstat "$BASE_SHA...$HEAD_SHA")
           echo "$stats" | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\n", a - d, a, d}' >> "$GITHUB_STEP_SUMMARY"
+
+  full-suite:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: Full test suite
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
+    runs-on: "ubuntu-latest"
+    env:
+      UV_FROZEN: '1'
+      FORGE_CONTAINERS: '1'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-jest-30.2.0-vitest-3.2.4
+      - run: uv tool install .
+      - run: forge test --full

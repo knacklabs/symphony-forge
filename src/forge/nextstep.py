@@ -115,7 +115,9 @@ def open_must_answer_topics(top: Path) -> list[str]:
 
 def next_step(args: Any) -> int:
     top = repo.root()
-    notice = upgrade.release_notice(top)
+    from forge import fullrun
+
+    notice = upgrade.release_notice(top) + fullrun.notices(top)
     history = board._machine_history(top) if args.json else None
     lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})

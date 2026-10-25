@@ -9,7 +9,7 @@ import subprocess
 
 import pytest
 from test_aha_prepare import HOSTS, _synced
-from test_proto_signoff import SOL_HIGH, _client, _decision
+from test_proto_signoff import SOL_HIGH, _client, _decision, _green_full_run
 
 STORY = "FORGE-AHA-1"
 
@@ -129,6 +129,7 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
     _decision(fix, answers, via="", on="")
     queue.write_text(json.dumps(
         [{"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}]))
+    _green_full_run(repo)
     reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert reviewed.returncode == 0, reviewed.stderr
     assert "The sign-off review passed" in reviewed.stdout

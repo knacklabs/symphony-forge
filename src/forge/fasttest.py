@@ -14,6 +14,7 @@ from forge import init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"}),
+                      (("--full",), {"action": "store_true"}),
                       (("--change",), {"action": "store_true"})], "position": 35,
              "help": "Run tests in the machine test lane; --change selects related tests and checks",
              "listing": "| `forge test` | Run fast_test (else test) in the machine test lane; `--change` runs the change's related tests and checks; `--pytest <base>` picks related pytest tests. |"}]
@@ -291,6 +292,10 @@ def close_tests(base: str) -> int:
 
 
 def test(args) -> int:
+    if args.full:
+        from forge import fullrun
+
+        return fullrun.run(repo.root())
     if args.base is None:
         from forge import review
         top = repo.root()

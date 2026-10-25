@@ -45,7 +45,7 @@ name: forge
 on:
   pull_request:
   pull_request_target:
-
+<full-triggers>
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
@@ -184,7 +184,7 @@ jobs:
         run: |
           stats=$(git diff --numstat "$BASE_SHA...$HEAD_SHA")
           echo "$stats" | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\\n", a - d, a, d}' >> "$GITHUB_STEP_SUMMARY"
-"""
+<full-suite-job>"""
 
 # A client's check runs the Forge release its default branch pins. A pull request that changes
 # that pin (an upgrade) is checked by the release it pins instead, installed from Forge's own
@@ -236,6 +236,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     test = (cfg["test"] + " --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
             "least_duration" if groups > 1 else
             "forge test --change" if ci_tests else cfg["test"])
+    full_run = repo.test_place(cfg) == "ci"
     test_install = ("      - run: " + ("uv tool install ." if source else sync.install_line(cfg["version"]))
                     + "\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
                     if ci_tests and groups == 1 else "")
@@ -251,7 +252,38 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         attempt = ("& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -Command '" +
                    script.replace("'", "''") + "'")
         test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
-    workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
+    full_node = node.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
+    npm_cache = ("      - uses: actions/cache@v4\n"
+                 "        if: steps.parent-tests.outputs.reuse != 'true'\n"
+                 "        with:\n          path: ~/.npm\n"
+                 "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
+    full_npm_cache = npm_cache.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
+    full_triggers = ("  schedule:\n    - cron: '0 3 * * *'\n"
+                     "  workflow_dispatch:\n" if full_run else "")
+    full_suite = ("\n  full-suite:\n"
+                  "    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n"
+                  "    name: Full test suite\n"
+                  "    permissions:\n"
+                  "      contents: read\n"
+                  "      actions: read\n"
+                  "      statuses: write\n"
+                  "    runs-on: <runner>\n"
+                  "    env:\n"
+                  "      UV_FROZEN: '1'\n"
+                  "<containers>      GH_TOKEN: ${{ github.token }}\n"
+                  "    steps:\n"
+                  "      - uses: actions/checkout@v7\n"
+                  "        with:\n"
+                  "          fetch-depth: 0\n"
+                  "      - uses: actions/setup-python@v6\n"
+                  "        with:\n"
+                  "          python-version: '3.11'\n"
+                  "      - uses: astral-sh/setup-uv@v6\n"
+                  "<full-npm-cache><full-node>      - run: <full-install>\n"
+                  "      - run: forge test --full\n" if full_run else "")
+    workflow = (WORKFLOW.replace("<full-triggers>", full_triggers)
+                .replace("<full-suite-job>", full_suite)
+                .replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
@@ -261,11 +293,12 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          else "")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
-                .replace("<npm-cache>", "      - uses: actions/cache@v4\n"
-                         "        if: steps.parent-tests.outputs.reuse != 'true'\n"
-                         "        with:\n          path: ~/.npm\n"
-                         "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
+                .replace("<npm-cache>", npm_cache)
+                .replace("<full-npm-cache>", full_npm_cache)
                 .replace("<node>", node)
+                .replace("<full-node>", full_node)
+                .replace("<full-install>", "uv tool install ." if source
+                         else sync.install_line(cfg["version"]))
                 .replace("<test-install>", test_install)
                 .replace("<test>", json.dumps(test))
                 .replace("<groups>", str(groups))

@@ -336,6 +336,11 @@ pytest command and pytest-split keep their existing six-group job, which runs `t
 The required `tests` check passes only when every job passes.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.
+In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
+`workflow_dispatch`. Start a full run with `gh workflow run forge.yml --ref <default>`. In local
+mode, `forge next` says when the daily run is due; run `forge test --full` in the main checkout
+when the machine is quiet. A green full run on the latest default-branch commit gates release tags
+and client sign-off. Everyday merges do not wait for it.
 On a `windows-*` runner, the generated related-test job wraps `forge test --change` in PowerShell
 and retries it once after a failure. The command runs the configured test command with the same
 shell as a local close on Windows. Use `pwsh -File "<path>"` to run a PowerShell script. A second
@@ -438,9 +443,10 @@ For Forge's maintainers:
 
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Start a full run on the merge commit with `gh workflow run forge-next.yml --ref main`, and
-   confirm it is green on Linux, Mac and Windows before tagging. Pull requests and merges to
-   main run only the Linux test groups; they do not prove the other platforms ready for release.
+2. Start the full test run with `gh workflow run forge.yml --ref main` and confirm it is green.
+   Start the platform run with `gh workflow run forge-next.yml --ref main` and confirm it is green
+   on Linux, Mac and Windows before tagging. Pull requests and merges to main run only the Linux
+   test groups; they do not prove the other platforms ready for release.
 3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.

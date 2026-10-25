@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import StubGh
+
 pytestmark = pytest.mark.platform
 
 STORY = "FORGE-PROTO-1"
@@ -88,6 +90,13 @@ def _review_tools(repo, tmp_path, monkeypatch):
     return queue
 
 
+def _green_full_run(repo):
+    head = repo.git("rev-parse", "origin/main")
+    StubGh(repo.bin).respond(
+        "api", f"repos/{{owner}}/{{repo}}/commits/{head}/statuses",
+        stdout=json.dumps([{"context": "forge-full-suite", "state": "success"}]))
+
+
 def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_gap=None,
             design_model=None, seed_starter=False):
     version = repo.forge("--version").stdout.split()[-1]
@@ -108,6 +117,7 @@ def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_gap=None,
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Build prototype")
     repo.git("push", "-q", "origin", "main")
+    _green_full_run(repo)
     kind = [] if working_build else ["--kind", "mechanical"]
     started = repo.forge("fix", "start", "Record client approval", "--done", "Sign-off recorded",
                          *kind)
@@ -146,6 +156,7 @@ def _adopted_client(repo, tmp_path, monkeypatch, *, old_signoff=False, design_mo
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Upgrade the adopted client")
     repo.git("push", "-q", "-u", "origin", "main")
+    _green_full_run(repo)
     started = repo.forge("fix", "start", "Record client approval", "--done", "Sign-off recorded",
                          "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr

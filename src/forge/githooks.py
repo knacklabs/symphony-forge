@@ -112,6 +112,8 @@ REFUSALS = {
                 "with forge fix allow-large.", "forge story new <KEY> --from-fix {fix}"),
     "push_default": ("{branch} changes only through a merged pull request, so this push is refused.",
                      "forge close <item>"),
+    "release_tag": ("Release tag {tag} must point to the latest commit on {default}.",
+                    "create {tag} on the latest commit of {default}, then push it"),
     "worker_settings": ("Workers leave forge.toml to the coordinator; settings change in their own "
                         "fix whose Done-when names forge.toml.",
                         "report the needed settings change in your last message."),
@@ -146,11 +148,28 @@ def pre_commit(args: argparse.Namespace) -> None:
 
 
 def pre_push(args: argparse.Namespace) -> None:
-    default = repo.default_branch()
+    top = repo.root()
+    default = repo.default_branch(top)
+    release_main: str | None = None
     for line in sys.stdin.read().splitlines():
         _, sha, remote_ref = (line.split() + ["", "", ""])[:3]
         if remote_ref == f"refs/heads/{default}":
             refuse(REFUSALS["push_default"], branch=default)
+        tag = remote_ref.removeprefix("refs/tags/")
+        if remote_ref.startswith("refs/tags/") and set(sha) != {"0"}:
+            from forge import fullrun, releases
+
+            if releases.VERSION.fullmatch(tag):
+                if release_main is None:
+                    reason = fullrun.green(top)
+                    if reason:
+                        refuse((reason, fullrun.next_run(top)))
+                    release_main = git(
+                        "rev-parse", "--verify", f"origin/{default}^{{commit}}", cwd=top)
+                tagged = git("rev-parse", "--verify", f"{sha}^{{commit}}", cwd=top)
+                if tagged != release_main:
+                    refuse(REFUSALS["release_tag"], tag=tag, default=default)
+                continue
         # The destination names the fix, whatever the source: a branch, a tag or a commit ID.
         kind, _, fix = remote_ref.removeprefix("refs/heads/").partition("/")
         if kind not in ("fix", "forge") or set(sha) == {"0"}:  # a deletion pushes no commits

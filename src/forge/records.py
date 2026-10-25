@@ -269,7 +269,11 @@ def decision_accept(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
                     by=by)
     if signed:
-        from forge import nextstep, review
+        from forge import fullrun, nextstep, review
+
+        reason = fullrun.green(top)
+        if reason:
+            repo.refuse((reason, fullrun.next_run(top)))
 
         next_step = f'forge decision accept {args.slug} --by "{by}"'
         working = _working_build(top)
