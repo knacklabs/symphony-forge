@@ -384,6 +384,12 @@
       "title": "Split any test runner's CI tests into parallel groups",
       "status": "pending",
       "order": 96
+    },
+    {
+      "key": "FORGE-LIBS-1",
+      "title": "Client apps can split into services and frontends later without a rewrite",
+      "status": "pending",
+      "order": 97
     }
   ],
   "epics": [
