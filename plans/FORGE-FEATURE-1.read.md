@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-25T17:45:30.300657+00:00
-seconds: 487.769
-read_hash: 9521ff1d32a0893cec153f61d9cce543e5ba7504
-round: 1
+read_at: 2026-10-25T17:56:47.125968+00:00
+seconds: 230.781
+read_hash: d5fe6ee7129437511e455c78999115811e14a907
+round: 2
 passed: no
-doc_seen: 9521ff1d32a0893cec153f61d9cce543e5ba7504
+doc_seen: d5fe6ee7129437511e455c78999115811e14a907
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: ea3e81e46537b788402fd656c350baf4bfc8e641
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a17423-77f1-78b1-932c-6686090cb585
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: The owner accepted the three advisory notes; they are fixed in the builders section: the design's restore behaviour wins, ACCESS scope adds the shared query schema and the Switch and Alert components, and one rollback test
 ---
 # Cold read notes
 
@@ -87,4 +87,27 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - a planner supplies a reserved field name or unsupported field kind.
    [COMMAND promises](plans/FORGE-FEATURE-1.md:219) pre-write refusals for invalid names, reserved names, unknown kinds and missing link targets. [Test 1](plans/FORGE-FEATURE-1.md:345) exercises valid generation and an existing folder; [test 6](plans/FORGE-FEATURE-1.md:455) exercises starter detection. Neither proves the other refusal rules or that they leave the app unchanged.
    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+## Round 2
+
+9. Advisory: Restore’s screen and API contracts contradict each other.
+   Raise: Plan gap.
+   Case: normal use - an admin turns on Show deleted.
+   [The API contract](plans/FORGE-FEATURE-1.md:185) specifies `deleted=true`, deleted items only, and a permission refusal for members. [The screen contract](docs/design/FORGE-FEATURE-1/SCREENS.md:43) specifies `deleted=yes`, active and deleted items together, and ignoring the parameter for members. The plan makes SCREENS.md authoritative, so builders have incompatible instructions for the same request.
+   Gain 4, Work 2, Harm 3
+   Disposition: keep - The owner accepted the three advisory notes; they are fixed in the builders section: the design's restore behaviour wins, ACCESS scope adds the shared query schema and the Switch and Alert components, and one rollback test
+
+10. Advisory: ACCESS lacks Scope for the shared query change and restore components.
+    Raise: Gate.
+    Case: normal use - ACCESS implements the deleted list and deleted detail screen.
+    [ACCESS’s Scope](plans/FORGE-FEATURE-1.md:582) permits only `Account` changes in the TypeScript shared index, but `deleted` must enter [the strict projects query schema there](src/forge/templates/starter/libs/shared/src/index.ts:11). The updated design also requires [Switch](docs/design/FORGE-FEATURE-1/SCREENS.md:43) and [Alert](docs/design/FORGE-FEATURE-1/SCREENS.md:128). Neither component exists in the starter, and their files are outside every task’s Scope.
+    Gain 4, Work 2, Harm 3
+   Disposition: keep - The owner accepted the three advisory notes; they are fixed in the builders section: the design's restore behaviour wins, ACCESS scope adds the shared query schema and the Switch and Alert components, and one rollback test
+
+11. Advisory: Unproven: item 4’s new transaction guarantee has no rollback test.
+    Raise: Test.
+    Case: rare - the history write fails after the item write.
+    [The amended rule](plans/FORGE-FEATURE-1.md:173) promises that this failure rolls back the item change. [The assigned proof](plans/FORGE-FEATURE-1.md:485) checks successful writes and four history summaries only. The current [TypeScript history writer](src/forge/templates/starter/libs/history/src/history.service.ts:9) uses its own Prisma client, and [Python commits internally](src/forge/templates/starter-python/apps/api/app/history/service.py:30). Retaining that behavior while accepting an unused transaction argument would pass the specified proof.
+    Gain 3, Work 3, Harm 3
    Disposition: keep - below the bar (follow-up)
