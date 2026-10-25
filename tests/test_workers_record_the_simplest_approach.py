@@ -30,10 +30,10 @@ def test_1_workers_get_the_before_code_and_external_layer_rules(client):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "earlier-adopted"])
-def test_2_close_copies_the_original_three_lines_to_summary_and_review(env, previous):
+def test_2_close_copies_the_newest_planning_lines_to_summary_and_review(env, previous):
     # Real close owns delivery. Third-party GitHub and Autoreview alone are faked.
-    # Existing proof-list delivery tests do not protect pre-code intent or its survival
-    # across later commits. This boundary needs no new production seam.
+    # Existing proof-list delivery tests do not protect planning-line delivery or
+    # selection of the worker's newer lines over inherited ones. No new seam is needed.
     close_client(env, previous)
     item, where = env.start_fix()
     env.repo.git("commit", "-q", "--allow-empty", "-m", "Choose the approach\n\n" + PLAN,
@@ -53,5 +53,5 @@ def test_2_close_copies_the_original_three_lines_to_summary_and_review(env, prev
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     updated = body(env.gh_calls("pr", "edit")[-1])
-    assert PLAN in updated and replacement not in updated
-    assert PLAN in env.prompt() and replacement not in env.prompt()
+    assert replacement in updated and PLAN not in updated
+    assert replacement in env.prompt() and PLAN not in env.prompt()

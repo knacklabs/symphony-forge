@@ -729,8 +729,8 @@ def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
 
 
 def before_coding(top: Path, base: str, head: str = "HEAD") -> str:
-    """The original approach stays in git, independent of later worker commits."""
-    for _, message, files in reversed(repo.commit_log(top, base, head)):
+    """Read the newest planning lines, ahead of any inherited parent approach."""
+    for _, message, files in repo.commit_log(top, base, head):
         if files and all(path.startswith(BOOKKEEPING) for path in files):
             continue
         found = re.search(r"^Before coding:\nNeed: [^\n]+\nSimplest option: [^\n]+\n"
