@@ -47,6 +47,8 @@ def test_1_workers_commit_and_stop_when_they_need_ci_evidence(repo, gh, tmp_path
         call = calls(log)[-1]
         assert (bool(call["options"].get("resume"))) == (round_number == 2)
         brief = " ".join(call["brief"].split())
+        assert ("the pull request's CI runs the change's related tests, lint and type checks, so do not "
+                "run them here; run `forge test` only for a test you are writing, to watch it fail.") in brief
         assert "`forge close` pushes the committed branch and runs CI on every platform." in brief
         assert "CI output reaches you in your next round." in brief
         assert ("If you need CI evidence, commit and stop instead of asking the coordinator "
@@ -55,3 +57,4 @@ def test_1_workers_commit_and_stop_when_they_need_ci_evidence(repo, gh, tmp_path
         assert "CI is the merge gate." in brief
         assert ("Commit your local proof in the `Proof list:` without waiting for CI results "
                 "or timings.") in brief
+        assert "The nightly full run covers the rest." in brief

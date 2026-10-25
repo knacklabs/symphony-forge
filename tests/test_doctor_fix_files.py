@@ -312,19 +312,19 @@ def _on_a_fix_branch_the_files_are_written_in_place(repo, gh, tmp_path, monkeypa
 def _a_stale_tests_workflow_is_repaired_in_place(repo, gh, tmp_path, monkeypatch, _):
     client = _client(repo, gh, tmp_path, monkeypatch)
     folder = _start_fix(repo, client)
-    toml = folder / "forge.toml"
-    toml.write_text(re.sub(r"^test = .*$", 'test = "make check"', toml.read_text(encoding="utf-8"),
-                           count=1, flags=re.M), encoding="utf-8")
-    repo.git("commit", "-qam", "Run the tests with make", cwd=folder)
     workflow = ".github/workflows/forge.yml"
+    stale = (folder / workflow).read_text(encoding="utf-8").replace(
+        'run: "forge test --change"', 'run: "make check"')
+    _set(folder, workflow, stale)
+    repo.git("commit", "-qam", "Restore the old test step", cwd=folder)
     listed = repo.forge("doctor", cwd=folder).stdout
     assert f"{workflow} differs from what forge sync writes" in listed, listed
-    assert f"The tests check in {workflow} doesn't run forge.toml's test command." in listed
+    assert f"The tests check in {workflow} does not run forge test --change." in listed
     head = repo.git("rev-parse", "HEAD", cwd=folder)
 
     done = repo.forge("doctor", "--fix", cwd=folder)
     assert f"- Fixed: wrote {workflow}.\n" in done.stdout, done.stdout
-    assert 'run: "make check"' in (folder / workflow).read_text(encoding="utf-8")
+    assert 'run: "forge test --change"' in (folder / workflow).read_text(encoding="utf-8")
     assert workflow not in done.stdout.replace(f"- Fixed: wrote {workflow}.\n", "")
     assert "The tests check" not in done.stdout
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head

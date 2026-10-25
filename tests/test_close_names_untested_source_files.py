@@ -19,7 +19,7 @@ from test_worker import calls, install_claude
 STORY = "test-gap-warning"
 
 
-@pytest.mark.parametrize("others", [3, 0], ids=["runs-selected", "skips-large-selection"])
+@pytest.mark.parametrize("others", [3, 0], ids=["unrelated-files", "no-unrelated-files"])
 def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatch, others):
     # Forge's own settings and dependencies; only review and GitHub are faked. A second
     # runner prints after pytest, as Jest does after the Python part of a mixed command.
@@ -38,7 +38,7 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
     for name in ("named", "first", "second"):
         env.repo.write(f"src/app/{name}.py", "VALUE = 1\n")
     env.repo.write("tests/test_named.py", "# app/named.py\ndef test_named():\n    assert True\n")
-    for number in range(others):  # Close skips local tests when over a third would run.
+    for number in range(others):
         env.repo.write(f"tests/test_other_{number}.py", "def test_other():\n    assert True\n")
     env.repo.git("add", "-A")
     env.repo.git("commit", "-q", "-m", "Use Forge's own test settings")
@@ -51,7 +51,7 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     for name in ("first", "second"):
-        assert (f"No local test names src/app/{name}.py; GitHub's checks will cover it."
+        assert (f"No local test names src/app/{name}.py. The nightly full run covers it."
                 in closed.stdout), closed.stdout
     assert "No local test names src/app/named.py" not in closed.stdout
 

@@ -127,9 +127,10 @@ $delegation
   the review reads only what is committed.
 - Follow the test-place instructions below to decide which tests to run. Rerun only what failed.
   Never poll `forge lanes --json` or `forge board --json` and never tail test logs while you wait.
-- Generated client CI on a `windows-*` runner retries a failed test command once in PowerShell.
-  PowerShell syntax and `.ps1` scripts keep working. A second failure still fails the check;
-  Linux, Mac and the trusted PR gate keep their commands.
+- Generated client CI on a `windows-*` runner wraps `forge test --change` in PowerShell and
+  retries it once after a failure. The command runs the configured test command with the same
+  shell as a local close on Windows. Use `pwsh -File "<path>"` to run a PowerShell script. A second
+  failure fails the check; Linux and Mac run it once, and the trusted PR gate keeps its command.
 - When you change text the program prints (messages, pull request text, board lines), include tests
   for that text in the change's related tests and follow the test-place instructions below.
 - Decide and record. If the brief can be read two ways and both readings can be undone, pick the
@@ -250,8 +251,8 @@ test command without installing Forge in the project. This picker belongs in `fa
 workers run bare `forge test` to enter the lane.
 When the pytest picker selects more than a third of the test files, bare `forge test` runs
 only the part's Tests column or the fix's touched test files, plus `always_test`, and says
-that CI runs the full suite. This includes shared-fixture changes. With no named tests it
-runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
+"The nightly full run covers the rest." This includes shared-fixture changes. With no named
+tests it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
 
 You may update tests when Done-when deliberately changes behaviour: explain the old and new contract in
 the test and handoff, and never weaken a test to hide a defect. Call a test failure

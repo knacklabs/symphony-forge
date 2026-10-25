@@ -1,0 +1,28 @@
+  tests:
+    needs: docs-check
+    if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
+    name: test group ${{ matrix.group }} of 6
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2, 3, 4, 5, 6]
+    runs-on: "ubuntu-latest"
+    env:
+      UV_FROZEN: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: astral-sh/setup-uv@v6
+      - id: parent-tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**", ":(exclude,glob).forge/**", ":(exclude,glob)docs/**", ":(exclude,glob,icase)**/*.md", ":(exclude,glob,icase)**/*.png", ":(exclude,glob,icase)**/*.jpg", ":(exclude,glob,icase)**/*.jpeg", ":(exclude,glob,icase)**/*.gif", ":(exclude,glob,icase)**/*.svg", ":(exclude,glob,icase)**/*.webp", ":(exclude,glob,icase)**/*.avif", ":(exclude,glob,icase)**/*.ico", ":(exclude,glob,icase)**/*.bmp", ":(exclude,glob,icase)**/*.tif", ":(exclude,glob,icase)**/*.tiff", ":(exclude,glob,icase)**/*.icns", ":(exclude,glob,icase)**/*.woff", ":(exclude,glob,icase)**/*.woff2", ":(exclude,glob,icase)**/*.ttf", ":(exclude,glob,icase)**/*.otf", ":(exclude,glob,icase)**/*.eot"]'
+        run: python .forge/review-tests.py
+      - run: "pytest tests -q --splits 6 --group ${{ matrix.group }} --splitting-algorithm least_duration || { status=$?; [ \"$status\" -eq 5 ] && pytest tests -q --collect-only; }"
+        if: steps.parent-tests.outputs.reuse != 'true'

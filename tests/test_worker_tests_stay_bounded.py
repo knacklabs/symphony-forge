@@ -1,4 +1,4 @@
-"""A broad worker selection leaves the full suite to CI, even for shared fixtures."""
+"""A broad worker selection stays bounded; the nightly run covers the rest."""
 import json
 import re
 import subprocess
@@ -65,7 +65,7 @@ def test_1_worker_runs_item_tests_when_shared_inputs_or_a_broad_selection_change
     print(f"worker shared/broad case: {len(ran)}/12 tests in {time.monotonic() - started:.2f}s")
     assert result.returncode == 0, result.stdout + result.stderr
     assert ran == expected, result.stdout + result.stderr
-    assert result.stdout.count("CI runs the full suite.") == 1, result.stdout
+    assert result.stdout.count("The nightly full run covers the rest.") == 1, result.stdout
     # Explicit picker calls retain the full shared-input fallback.
     if kind == "shared" and not adopted and fast:
         base = env.repo.git("rev-parse", "origin/main", cwd=where)

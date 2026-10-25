@@ -1,4 +1,4 @@
-"""Close selects supported runners locally and leaves the full suite to CI."""
+"""Close and CI select related tests; the full suite runs separately."""
 import json
 import os
 import shutil
@@ -69,7 +69,7 @@ def test_1_ci_close_leaves_tests_to_ci_and_red_ci_returns_the_item(env, tmp_path
 @pytest.mark.parametrize("previous", [False, True], ids=["init", "upgrade-and-sync"])
 @pytest.mark.parametrize("runner", ["jest", "vitest"])
 @pytest.mark.timeout(NPM_CLOSE + 120)
-def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_ci(
+def test_2_new_and_previously_adopted_clients_receive_local_selection_and_related_ci(
         unsynced_up, tmp_path, monkeypatch, previous, runner):
     up, repo = unsynced_up, unsynced_up.repo
     command = "[ ! -f package.json ] || (npm ci && npm test)"
@@ -102,7 +102,8 @@ def test_2_new_and_previously_adopted_clients_receive_local_selection_and_full_c
     full_command = tomllib.loads((client / "forge.toml").read_text("utf-8"))["test"]
     assert full_command == command
     assert not tomllib.loads((client / "forge.toml").read_text("utf-8")).get("fast_test")
-    assert "run: " + json.dumps(full_command) in workflow
+    assert 'run: "forge test --change"' in workflow
+    assert "run: " + json.dumps(full_command) not in workflow
     assert "fast_test" not in workflow
 
     # Keep the CI workflow generated at init, then choose laptop tests for this close.

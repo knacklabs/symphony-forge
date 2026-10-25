@@ -390,14 +390,14 @@ def check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monk
     assert "test_current_app" in result.stdout and "1 failed" in result.stdout
     assert "unrelated test was selected" not in result.stdout
     assert "exited with status 1" in result.stdout
-    # Shared inputs make the selection broad. No test file was touched, so
-    # the worker leaves the suite to CI instead of running the unrelated failures.
+    # Shared inputs make the selection broad. The worker keeps its run bounded;
+    # the nightly full run covers the rest.
     (folder / "app.py").write_text("VALUE = 1\n", "utf-8")
     project = folder / "pyproject.toml"
     project.write_text(project.read_text("utf-8") + '\n[tool.pytest.ini_options]\naddopts = "-ra"\n',
                        "utf-8")
     result = repo.forge("test", cwd=folder)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.count("CI runs the full suite.") == 1, result.stdout
+    assert result.stdout.count("The nightly full run covers the rest.") == 1, result.stdout
     assert "No changed or module-related test files to run." in result.stdout
     assert "unrelated test was selected" not in result.stdout

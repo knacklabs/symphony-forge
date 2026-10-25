@@ -15,7 +15,7 @@ from test_worker import calls, install_claude
 STORY = "FORGE-TESTPLACE-1"
 
 
-def prepare_adopted_client(env, checks):
+def prepare_adopted_client(env, checks, *, grouped=False):
     """Upgrade the previous adoption fixture without adding a test_place setting."""
     repo = env.repo
     patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
@@ -25,13 +25,16 @@ def prepare_adopted_client(env, checks):
     old = old.replace('workers = "codex"', 'workers = "claude"')
     old = old.replace('checks = ["tests", "forge-pr-check"]',
                       "checks = " + json.dumps(checks))
-    command = '"' + Path(sys.executable).as_posix() + '" count-test.py'
+    command = "pytest tests -q" if grouped else '"' + Path(sys.executable).as_posix() + '" count-test.py'
     old = old.replace('test = "python -c \\"print(123)\\""', "test = " + json.dumps(command))
     old = old.replace('merge = "human"', 'merge = "agent"')
     repo.write(".gitignore", "test-count\n")
-    repo.write("count-test.py", "from pathlib import Path\n"
-               "p = Path('test-count')\n"
-               "p.write_text(p.read_text() + 'run\\n' if p.exists() else 'run\\n')\n")
+    if grouped:
+        repo.write("requirements.txt", "pytest-split==0.11.0\n")
+    else:
+        repo.write("count-test.py", "from pathlib import Path\n"
+                   "p = Path('test-count')\n"
+                   "p.write_text(p.read_text() + 'run\\n' if p.exists() else 'run\\n')\n")
     repo.write("forge.toml", old)
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Client on the previous Forge release")
@@ -101,3 +104,19 @@ def test_10_previous_adoption_uses_the_place_selected_by_its_checks(
         brief = " ".join(calls(log)[-1]["brief"].split()).lower()
         assert ("The pull request's CI runs the change's related tests, lint and type checks, so do "
                 "not run them here").lower() in brief
+
+
+@pytest.mark.platform
+def test_11_previous_adoption_keeps_the_six_group_ci_job_after_sync(env):
+    # Test-audit gate: a released client must retain the six-group CI contract after upgrade.
+    # A credible regression makes sync replace pytest-split with a single related-test job.
+    # The existing fresh/source group test does not cover this adopted upgrade path.
+    # This exercises upgrade and sync commands directly; it needs no production seam.
+    prepare_adopted_client(env, ["tests", "forge-pr-check"], grouped=True)
+    workflow = (env.repo.path / ".github/workflows/forge.yml").read_text("utf-8")
+    start = workflow.index("  tests:\n")
+    end = workflow.index("  tests-passed:\n", start)
+    previous_job = (ROOT / "tests/fixtures/previous-pytest-split-tests-job.yml").read_text("utf-8")
+    assert workflow[start:end] == previous_job + "\n"  # The separator before the next job.
+    doctor = env.repo.forge("doctor")
+    assert "does not run forge test --change" not in doctor.stdout

@@ -325,27 +325,31 @@ GitHub has not yet determined whether this head can merge.
 If GitHub refuses a pull request body update, close stops after one attempt, including during a
 history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 
-Close runs `forge.toml`'s `test` command before the review, and the pull request's `tests` check
-runs it again. When that check runs the full suite, ask your agent to set `fast_test` too: a
-command close runs instead of `test`, with `{base}` replaced by the merge base with the default
-branch, so it runs only the tests related to the changed files plus fast checks (for example
-`npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
-`test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
-The `tests` check runs the suite as parallel groups and passes only when every group passes:
-six groups when `test` calls pytest directly (not through make or tox) and the repo lists
-pytest-split, otherwise one.
+Each change's related tests, lint and type checks run once, in the repo's chosen test place.
+In a local-test repo, set `fast_test` in `forge.toml` when close needs a narrower command; it
+runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for
+example `npx vitest run --changed {base} && npm run lint`). In a CI-test repo, the pull request's
+`tests` check runs the related tests and close waits for it. The nightly full run covers the rest.
+New repos leave `fast_test` unset. `forge doctor` says when it is set.
+The generated `forge.yml` runs one `tests` job with `forge test --change`. Repos with a direct
+pytest command and pytest-split keep their existing six-group job, which runs `test`.
+The required `tests` check passes only when every job passes.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.
-For a client with a `windows-*` runner, the generated check runs the configured test command
-again once if it fails. A second failure fails the check. New clients get this at init; existing
-clients get it after upgrading Forge and running `forge sync`. Windows keeps PowerShell as its
-test shell, so configured PowerShell syntax and `.ps1` scripts still work. Linux, Mac and the trusted
-`forge-pr-check` gate keep their commands. Forge's own Windows full-suite job instead reruns
-each failed pytest test once and gives the known slow tests longer timeouts on Windows.
-When the pytest selection would cover more than a third of the repo's Python test files
-(shared test inputs select them all), close skips the local run, says so in one line, and
-relies on the pull request's required checks. `forge test` still runs its tests. New repos
-get this from init; existing repos get it on upgrade.
+On a `windows-*` runner, the generated related-test job wraps `forge test --change` in PowerShell
+and retries it once after a failure. The command runs the configured test command with the same
+shell as a local close on Windows. Use `pwsh -File "<path>"` to run a PowerShell script. A second
+failure fails the check; Linux and Mac run it once, and the trusted `forge-pr-check` gate keeps
+its command. New clients get this at init; existing clients get it after upgrading Forge and
+running `forge sync`. Forge's own Windows full-suite job instead reruns each failed pytest test
+once and gives the known slow tests longer timeouts on Windows.
+Close runs the full related-test selection, even when it covers more than a third of the Python
+test files. Shared test inputs select every test. Bare
+`forge test` keeps worker runs bounded: when the pytest selection would cover more than a third
+of the repo's Python test files, it runs only the part's Tests column or the fix's touched test
+files, plus `always_test`, and says "The nightly full run covers the rest." With no named tests
+it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
+New repos get this bound from init; existing repos get it on upgrade.
 
 Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
 After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.

@@ -443,10 +443,16 @@ def doctor(args: argparse.Namespace) -> int:
         add("fast_test still runs python -m forge.fasttest in the client's environment.",
             'replace it with fast_test = "forge test --pytest {base}" in forge.toml')
     if not cfg["test"]: add("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync")
-    # Test groups append their split options to the command.
-    elif "tests" in cfg["checks"] and not any(f"run: {json.dumps(cfg['test'])[:-1]}{end}" in sync.read(top / sync.WORKFLOW_PATH)
-                                              for end in ('"', " --splits ")):
-        add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
+    elif cfg["test_place"] == "ci" and "tests" in cfg["checks"]:
+        workflow = sync.read(top / sync.WORKFLOW_PATH)
+        tests_job = re.search(r"^  tests:\n(.*?)(?=^  [\w-]+:\n|\Z)", workflow, re.M | re.S)
+        tests_job = tests_job[1] if tests_job else ""
+        expected = wanted.get(sync.WORKFLOW_PATH, "")
+        expected_tests = re.search(r"^  tests:\n(.*?)(?=^  [\w-]+:\n|\Z)", expected, re.M | re.S)
+        split_run = next((line for line in (expected_tests[1] if expected_tests else "").splitlines()
+                          if "--splits 6 --group" in line), "")
+        if "forge test --change" not in tests_job and (not split_run or split_run not in tests_job):
+            add(f"The tests check in {sync.WORKFLOW_PATH} does not run forge test --change.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted, trust = _codex_trust(top, codex_config)
     if on_codex and not trusted: add("Codex doesn't trust this project, so it would skip Forge's hooks and the "
@@ -476,8 +482,10 @@ def doctor(args: argparse.Namespace) -> int:
                for name, entry in entries]) + ".")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
-    if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
-              "the merge base with the default branch; the pull request's tests check still runs " "the full test command.")
+    if cfg["fast_test"]: print(f"- Note: change tests use fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
+              "the merge base with the default branch" + (". The pull request's tests check runs related tests, "
+              "except for existing pytest-split groups. The nightly full run covers the rest"
+              if cfg["test_place"] == "ci" else "") + ".")
     if on_codex: print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see " "whether you did.")
     elif cfg["tools"] == "both" and not trusted: print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
               f"trust this one yet.\n  Fix: {trust}")

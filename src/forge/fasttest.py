@@ -13,9 +13,10 @@ from pathlib import Path
 from forge import init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
-             "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"})], "position": 35,
-             "help": "Run related tests in the machine test lane, or pick pytest tests with --pytest",
-             "listing": "| `forge test` | Run fast_test (else test) in the machine test lane; `--pytest <base>` picks related pytest tests. |"}]
+             "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"}),
+                      (("--change",), {"action": "store_true"})], "position": 35,
+             "help": "Run tests in the machine test lane; --change selects related tests and checks",
+             "listing": "| `forge test` | Run fast_test (else test) in the machine test lane; `--change` runs the change's related tests and checks; `--pytest <base>` picks related pytest tests. |"}]
 
 
 def git_files(*args: str) -> list[str]:
@@ -300,8 +301,9 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        status, report = review.test_run(top, review.close_test(top, base, closing=False), base,
-                                        always=True, closing=False)
+        # Change runs use close's full selection; bare worker runs keep the worker bound.
+        status, report = review.test_run(top, review.close_test(top, base, closing=args.change), base,
+                                        always=True, closing=args.change)
         print(report)
         return status
     from forge import review
@@ -320,10 +322,6 @@ def test(args) -> int:
         return pytest_tests(args.base, command, entry)
     finally:
         machine.leave(entry)
-
-
-LARGE = ("More than a third of the test files selected; skipping local tests and relying on the "
-         "pull request's required checks.")
 
 
 def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
@@ -536,8 +534,8 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     if mixed:
         command = " && ".join(part for kind, part, _ in parts
                               if kind not in ("vitest", "jest", "node-install", "node-check"))
+        parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
-    closing = environment.pop("FORGE_CLOSE_TESTS", None) == "1"
     worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
     workers = machine.test_cpus()
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
@@ -550,11 +548,11 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge import review  # imported late: review's imports lead back here
-    print("".join(f"{review.GAP}{source}; GitHub's checks will cover it.\n" for source in missed),
+    print("".join(f"{review.GAP}{source}. The nightly full run covers it.\n" for source in missed),
           end="", flush=True)
     if worker and len(picked) * 3 > len(tests):
         print("Broad selection: only the item's tests run locally. Other tests are skipped. "
-              "CI runs the full suite.", flush=True)
+              "The nightly full run covers the rest.", flush=True)
         item = review.branch_item(repo.current_branch(Path.cwd()), Path.cwd())
         if item and "/" in item[0]:
             named = review.cells(review.task(Path.cwd(), item[0])[2].get("tests", ""))
@@ -565,14 +563,14 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
             changed += git_files("ls-files", "--others", "--exclude-standard")
             picked = [path for path in tests if path in changed]
         shared_changed = False
-    elif closing and len(picked) * 3 > len(tests):
-        print(LARGE, flush=True)
-        if not always:
-            return 0
-        picked, shared_changed = [], False  # CI runs the rest; forge.toml's always_test runs here.
     if not shared_changed:
         if not picked and not always:
             print("No changed or module-related test files to run.")
+            for kind, part, _ in parts:
+                if kind != "python":
+                    status = subprocess.run(part, shell=True, env=environment).returncode
+                    if status:
+                        return status
             return 0
         # Keep shell setup, test roots and pytest settings in the repo's full command.
         listed = {entry.split("::")[0] for entry in always}

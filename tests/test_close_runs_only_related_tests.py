@@ -1,4 +1,4 @@
-"""Close defers broad selections to CI; workers keep only the item's tests."""
+"""Close runs related tests, or all tests for shared inputs; workers stay bounded."""
 from __future__ import annotations
 
 import json
@@ -68,7 +68,7 @@ def record_run(request):
         if shared_input == "pyproject.toml":
             changes[shared_input] += '[tool.pytest.ini_options]\naddopts = "-q"\n'
         assert changes[shared_input] != original
-    item, where = env.start_fix(changes)
+    item, _ = env.start_fix(changes)
     settings = tomllib.loads((env.repo.path / "forge.toml").read_text("utf-8"))
     env.checks([run(name) for name in settings["checks"]])
 
@@ -77,13 +77,8 @@ def record_run(request):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     expected = {"test_changed", "test_related"}
     if shared_input:
-        # Close still defers shared inputs to CI. The owner's new worker rule
-        # runs only the fix's touched test, with the same core cap.
-        assert not list(log.iterdir())
-        tested = env.repo.forge("test", cwd=where)
-        assert tested.returncode == 0, tested.stdout + tested.stderr
-        expected = {"test_changed"}
-        assert tested.stdout.count("CI runs the full suite.") == 1, tested.stdout
+        # Shared test inputs still select every file at close.
+        expected |= {"test_unrelated", "test_other_0", "test_other_1", "test_other_2"}
     assert {path.name for path in log.iterdir()} == expected
     assert {json.loads(path.read_text()) for path in log.iterdir()} == {
         max(1, (os.cpu_count() or 1) // 2)}

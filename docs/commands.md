@@ -6,7 +6,7 @@
 | `forge init` | Sets up a new repo: `forge.toml`, the docs skeleton, the first commit, then `forge sync` |
 | `forge sync` | Writes the generated files for both hosts, the CI workflow and the git hooks |
 | `forge doctor` | Checks tools, versions, hooks, generated-file drift and CI; one row per problem, each with a fix; `--fix` repairs what it safely can |
-| `forge test` | Run fast_test (else test) in the machine test lane; `--pytest <base>` picks related pytest tests. |
+| `forge test` | Run fast_test (else test) in the machine test lane; `--change` runs the change's related tests and checks; `--pytest <base>` picks related pytest tests. |
 | `forge handback <target>` | Records a session subagent result and frees its held place |
 | `forge migrate` | Moves a client from the copied-in Forge in one pull request |
 | `forge upgrade [release]` | Upgrades Forge to the release, or the newest: installs it, has it refresh Forge's files in a fix, and closes that fix |

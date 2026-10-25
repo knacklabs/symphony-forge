@@ -71,14 +71,13 @@ def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
                          ids=["unset", "set"])
 @pytest.mark.parametrize("changed", [1, 4, 0], ids=["small", "large", "settings-only"])
 def test_1_close_runs_always_test_beside_the_picked_tests(env, monkeypatch, adopted, always, changed):
-    # A large or settings-only change skips the picked tests, but the listed ones still run.
+    # Close runs the picked tests and any listed always_test cases.
     item, log = set_up(env, monkeypatch, adopted, always, changed)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    expected = ({"test_case_0"} if changed == 1 else set()) | (
+    expected = {f"test_case_{number}" for number in range(changed)} | (
         {"test_case_5", "test_other_5", "test_other_6", "test_rule"} if always else set())
     assert {path.name for path in log.iterdir()} == expected
-    assert ("More than a third of the test files selected" in closed.stdout) == (changed > 1)
 
 
 @pytest.mark.parametrize("value, options, problem", [

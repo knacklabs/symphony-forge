@@ -101,7 +101,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DOCS_ONLY_EXCLUDES: '<docs-excludes>'
         run: python .forge/review-tests.py
-<npm-cache><node>      - run: <test>
+<npm-cache><node><test-install>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
 
   tests-passed:
@@ -232,8 +232,13 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     groups = 6 if (re.match(direct, cfg["test"]) and not re.search(r"[;&|]", cfg["test"])
                    and any("pytest-split" in sync.read(path) for path in
                            [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
-    test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
-                          "least_duration" if groups > 1 else "")
+    ci_tests = repo.test_place(cfg) == "ci" and "tests" in cfg.get("checks", [])
+    test = (cfg["test"] + " --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
+            "least_duration" if groups > 1 else
+            "forge test --change" if ci_tests else cfg["test"])
+    test_install = ("      - run: " + ("uv tool install ." if source else sync.install_line(cfg["version"]))
+                    + "\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
+                    if ci_tests and groups == 1 else "")
     windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
     if groups > 1:
         # Empty groups pass only if the unsplit suite still collects tests successfully.
@@ -261,11 +266,12 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          "        with:\n          path: ~/.npm\n"
                          "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
                 .replace("<node>", node)
+                .replace("<test-install>", test_install)
                 .replace("<test>", json.dumps(test))
                 .replace("<groups>", str(groups))
                 .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
-    if "tests" not in cfg.get("checks", []):
+    if not ci_tests:
         start = workflow.index("  docs-check:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]

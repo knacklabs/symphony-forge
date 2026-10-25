@@ -380,12 +380,12 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
 
 def close_test(top: Path, base: str, *, closing: bool = True, head: str = "HEAD") -> str:
     """The command close runs: forge.toml's fast_test, with {base} as the merge base with `base`,
-    else supported runner selection when CI runs test, or pytest selection for workers."""
+    else supported runner selection for close and change runs, or pytest selection for workers."""
     from forge import quicktest
 
     cfg = repo.config(top)
     command = cfg["fast_test"] or cfg["test"]
-    select = ("tests" in cfg["checks"] if closing else
+    select = (closing or
               any(kind == "python" for kind, _, _ in quicktest.test_parts(top, command)))
     if command and not cfg["fast_test"] and select:
         merge_base = repo.git("merge-base", base, head, cwd=top)
@@ -482,11 +482,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                        PYTHONPATH=os.pathsep.join([str(hook), os.environ.get("PYTHONPATH", "")]),
                        PYTEST_PLUGINS=",".join(filter(None, [os.environ.get("PYTEST_PLUGINS"),
                                                              "_forge_test_results"])))
-            env.pop("FORGE_CLOSE_TESTS", None)
             env.pop("FORGE_WORKER_TESTS", None)
-            if closing and "tests" in repo.config(top)["checks"]:
-                env["FORGE_CLOSE_TESTS"] = "1"
-            elif not closing:
+            if not closing:
                 env["FORGE_WORKER_TESTS"] = "1"
             with repo.record_run(top, item, "test") as ran:
                 # Worker tests establish the product; close keeps that binding if it still fits.

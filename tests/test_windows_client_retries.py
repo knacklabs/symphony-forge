@@ -22,8 +22,9 @@ STORY = "windows-rerun-flakes"
 @pytest.mark.parametrize("setup", ["init", "earlier-adoption"])
 @pytest.mark.parametrize("command_style", ["powershell", "split-pytest"])
 def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_style):
-    command = 'python retry_probe.py; python -c "print(\'suite passed\')"'
-    windows_command = ("$probe = './retry probe.ps1'; & $probe\nWrite-Output 'suite passed'"
+    # The Forge test command runs through the repo shell, so preserve its first failure.
+    command = 'python retry_probe.py && python -c "print(\'suite passed\')"'
+    windows_command = ('pwsh -File "retry probe.ps1"'
                        if command_style == "powershell" else "python -m pytest test_retry_probe.py -q")
     current = repo.forge("--version").stdout.split()[-1]
     if setup == "init":
@@ -33,20 +34,25 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         client = _new_repo(repo, gh, tmp_path, config)
         if command_style == "split-pytest":
             (client / "requirements.txt").write_text("pytest-split\n", encoding="utf-8")
+        (client / "README.md").write_text("Retry fixture\n", encoding="utf-8")
+        repo.git("add", "-A", cwd=client)
+        repo.git("commit", "-qm", "Initialize retry fixture", cwd=client)
+        repo.git("push", "-qu", "origin", "main", cwd=client)
         result = repo.forge("init", "--actions", "yes", "--runner", "windows-latest", cwd=client)
     else:
         client = repo.path
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", client, dirs_exist_ok=True)
         config = (client / "forge.toml").read_text(encoding="utf-8")
+        if command_style == "split-pytest":
+            (client / "requirements.txt").write_text("pytest-split\n", encoding="utf-8")
         repo.git("add", "-A")
         repo.git("commit", "-qm", "Adopt Forge on an earlier release")
+        repo.git("push", "-qu", "origin", "main")
         repo.git("checkout", "-qb", "fix/windows-client-retries")
         config = config.replace('version = "v1.2.2"', f'version = "{current}"')
         config = re.sub(r"^test = .+$", lambda _: f"test = {json.dumps(windows_command)}", config, flags=re.M)
         config = 'runner = "windows-latest"\n' + config
         (client / "forge.toml").write_text(config, encoding="utf-8")
-        if command_style == "split-pytest":
-            (client / "requirements.txt").write_text("pytest-split\n", encoding="utf-8")
         result = repo.forge("sync", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     if setup == "init":
@@ -69,7 +75,7 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         "  switch ($env:FAILURE_MODE) {\n"
         "    'exit' { exit 7 }\n"
         "    'throw' { throw 'suite assertion failed' }\n"
-        "    'native' { python -c 'import sys; sys.exit(7)' }\n"
+        "    'native' { python -c 'import sys; sys.exit(7)'; exit $LASTEXITCODE }\n"
         "  }\n"
         "}\n", encoding="utf-8")
     bash = shutil.which("bash")
@@ -109,9 +115,9 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         assert normalized_check == windows_check, "The trusted PR gate must keep the same commands"
         assert "        shell: bash\n" not in tests
         if runner != "windows-latest":
-            assert run == command
-        # Exercise the real Actions shell: PowerShell syntax and .ps1 commands survive
-        # init and upgrade, including native failures, throws and script exits.
+            assert run == "forge test --change"
+        # Exercise the Actions shell: configured PowerShell scripts use pwsh explicitly,
+        # including native failures, throws and script exits.
         modes = (("native", "throw", "exit") if runner == "windows-latest" and
                  command_style == "powershell" else ("native",))
         for mode in modes:

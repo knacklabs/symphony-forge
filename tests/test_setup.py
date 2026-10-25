@@ -133,10 +133,10 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert re.search(r'^cd <checkout> && exec claude remote-control --name "<name>"$', skill, re.M)
     assert "no IDs, hashes or branch names" in skill and "under about 30 characters" in skill
 
-    # The workflow runs the test command as tests, plus forge-pr-check from the base branch.
+    # The workflow selects change tests, plus forge-pr-check from the base branch.
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job, check_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")
-    assert '- run: "make check"' in tests_job
+    assert '- run: "forge test --change"' in tests_job
     assert "forge hook pr-check" in check_job
     assert "pull_request_target" in workflow
     assert "ref: ${{ github.event.pull_request.base.sha }}" in check_job
