@@ -1,12 +1,52 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-JOIN",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/join.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/join.spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 22,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: isolate invite links between parallel browser tests",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5ce12c748f8f633340908e1f6f0a7ed0189bdc0f20874f3d905bce22829b164e",
+    "changed": "b77178ceb90eb65f7d4c331f3bd8e5416c8e123a0911f4983a568f1dea3d138e",
+    "commit": "de6f1bd26cd876b85106465699fd75dd7111a913",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - running the starter's browser suite with its configured two parallel workers.\nThis lookup selects the newest invite from the shared API log, regardless of which test created it. `e2e/members.spec.ts:31` uses the same lookup and also creates an invite; `playwright.config.ts:6-9` enables parallel execution with two workers. When the other flow sends its invite before this log read, this test retrieves that flow's token. Joining with `memberEmail` then fails because the token belongs to another email, intermittently failing the required live suite. Correlate each lookup with its own invite request, covering both browser flows.",
+        "file": "src/forge/templates/starter/apps/web/e2e/join.spec.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 22,
+        "priority": "P1",
+        "title": "Gate: isolate invite links between parallel browser tests",
+        "work": 2
+      }
+    ],
+    "id": "f6407361-c2bd-4f69-be63-08988aa8b287",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T04:42:55.208904+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T05:00:37.123323+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
