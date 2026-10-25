@@ -2,6 +2,13 @@
   "allow_large": "A release bump changes the version in every pinned file",
   "base": "95640b3b9479a8e30e6be749aacbdfc169e9afac",
   "branch": "fix/release-1222",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a173f9-5205-7533-abcb-654555fb6d5a",
+    "head": null,
+    "start": "23836fc920ce3c32eb7bff0ec1bc6781d0a7ef1b"
+  },
   "done_when": "Forge reports v1.2.22 and every pin, installer and plugin names v1.2.22",
   "fix_kind": "mechanical",
   "kind": "fix",
