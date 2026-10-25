@@ -8,9 +8,9 @@
   company, or for many customer companies? It writes the answer as one app setting.
 - A one-company app keeps the same starter code and the same tables. One setup command makes its
   company and its first account. That first account is the admin.
-- In a one-company app, nobody can sign up. The sign-in page shows no "Create an account" link,
-  the sign-up page goes back to sign in, and the API refuses a sign-up. People join only from an
-  admin's invite.
+- In a one-company app, nobody can sign up. The sign-in page shows no "Create an account" link.
+  The sign-up page says that sign-up is closed, asks the person to get an invite from an admin,
+  and links to sign in. The API refuses a sign-up. People join only from an admin's invite.
 - The starters have no organisation screen and no organisation switch to hide. The Members and
   Change history screens stay, because admins invite people from Members.
 - A one-company app can become a many-company app later. Change the setting to many: sign-up
@@ -19,7 +19,7 @@
   same web app).
 - Existing apps keep many-company behaviour. On upgrade, no app file changes.
 
-Design: none (it removes one link and one page from view and adds no screen)
+Design: docs/design/FORGE-SINGLECO-1/ (TREE)
 
 ## Why
 
@@ -31,7 +31,7 @@ of their own, and the agent of each app must remove sign-up by hand.
 
 1. **In a new app, the constitution asks once whether the app is for one company or for many customer companies, and the agent writes the answer to the app's `APP_COMPANIES` setting. An existing app is not asked, and its files do not change on upgrade.**
 2. **In a one-company app, one setup command makes the company and its first account as the admin.**
-3. **In a one-company app, the API refuses a sign-up, the sign-in page shows no sign-up link, and the sign-up page goes to sign in. An admin's invite still lets a person join as a member.**
+3. **In a one-company app, the API refuses a sign-up, the sign-in page shows no sign-up link, and the sign-up page says that sign-up is closed, asks for an invite from an admin and links to sign in. An admin's invite still lets a person join as a member.**
 4. **An app with `APP_COMPANIES` not set or set to `many` keeps open sign-up. A one-company app that changes the setting to `many` opens sign-up, and its company, people and records stay, with no data migration.**
 5. **Both starters pass the same API cases and the same browser flow for items 2 to 4.**
 
@@ -111,7 +111,10 @@ constitution (item 1).
     company; run it once.
 - **The one-company test service.** Each starter's `compose.test.yml` gets the service
   `one-company-api`, a copy of `api` with `APP_COMPANIES: one`, its own port
-  `${ONE_COMPANY_TEST_PORT:-3002}` and `APP_ORIGIN` on that port, on the same database. Each
+  `${ONE_COMPANY_TEST_PORT:-3002}` and `APP_ORIGIN` on that port, on the same database. Its
+  `depends_on` is `api` with `condition: service_healthy`, as `production-api` has it, so it
+  starts only after `api` has run the migrations; its own migration step then finds nothing to
+  do, and two services never migrate at the same time. Each
   starter's `scripts/test.mjs` picks a free port for it, sets `ONE_COMPANY_API_TEST_URL` and
   `ONE_COMPANY_BASE_URL`, and, after `docker compose up`, runs the setup command once in that
   service (`docker compose exec -T -e ADMIN_EMAIL -e ADMIN_PASSWORD one-company-api ...`) with
@@ -148,9 +151,13 @@ constitution (item 1).
      `the setup command makes the company and its first admin`: sign-in on
      `ONE_COMPANY_API_TEST_URL` with the setup admin answers `200` with role `admin`;
      `GET /api/v1/members` lists that admin only; a second setup run with the same email exits 1
-     and prints `An account already uses that email.`
+     and prints `An account already uses that email.`; a setup run with
+     `ADMIN_EMAIL=not-an-email` exits 1, prints the sign-up schema's email message, and makes no
+     account (a sign-in with that value gets `400` or `401`, and `psql` finds no account row for
+     it).
    - Python twin in the new `starter-python/apps/api/tests/test_one_company.py`:
-     `test_the_setup_command_makes_the_company_and_its_first_admin`.
+     `test_the_setup_command_makes_the_company_and_its_first_admin`, with the same bad
+     `ADMIN_EMAIL` refusal.
    - Test: `tests/test_one_company.py::test_2_setup_makes_the_company_and_its_first_admin`
      requires both case names from the two live runs.
 3. Invite only (COMPANYAPI, COMPANYPY, COMPANYWEB).
@@ -162,17 +169,23 @@ constitution (item 1).
      invited person joins with role `member` and sees the admin's project.
      Python twin: `test_a_one_company_app_refuses_sign_up_and_still_takes_invites`.
    - Web (COMPANYWEB): `useAuthOptions()` in `features/auth/hooks/auth-hooks.ts` reads
-     `GET /auth/options` with `authOptionsSchema` (`staleTime: Infinity`). The sign-in page shows
+     `GET /auth/options` with `authOptionsSchema` and the app's normal query defaults (no
+     `staleTime` of its own), so each page load reads the options again. The sign-in page shows
      the `New here? Create an account` line only when `signUpOpen` is `true` (not while loading,
-     so it does not flash). The sign-up page renders `<Navigate to="/sign-in" replace />` when
-     `signUpOpen` is `false`. The route in `app.tsx` stays, so a later switch to `many` needs no
-     web change.
+     so it does not flash). When `signUpOpen` is `false`, the sign-up page does not redirect: it
+     shows the closed sign-up page from `docs/design/FORGE-SINGLECO-1/` in the same
+     `AuthPageFrame`, which says that sign-up is closed, asks the person to get an invite from an
+     admin, and links to `/sign-in`. It shows no form. Follow the design's SCREENS.md for the
+     words and components. The route in `app.tsx` stays, so a later switch to `many` needs no web
+     change. No test covers a browser that stays open across an API restart.
    - Playwright flow in the new `starter/apps/web/e2e/one-company.spec.ts` with
      `test.use({ baseURL: process.env.ONE_COMPANY_BASE_URL })`:
      `a one-company app has no sign-up and the admin invites people`: the sign-in page has no
-     `Create an account` link; opening `/sign-up` lands on `/sign-in`; the setup admin signs in
+     `Create an account` link; opening `/sign-up` stays on `/sign-up`, shows that sign-up is
+     closed with no email or password field, and its sign-in link opens `/sign-in`; the setup
+     admin signs in
      and sees Members with the Invite person button; axe finds no serious problem on the sign-in
-     page. The flow also checks the many-company app: on the default `BASE_URL`, the sign-in page
+     page and on the closed sign-up page. The flow also checks the many-company app: on the default `BASE_URL`, the sign-in page
      still has the link.
    - Test: `tests/test_one_company.py::test_3_a_one_company_app_is_invite_only` requires the API
      case names from both live runs and the flow name from both browser reports.
@@ -228,7 +241,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 |---|---|---|---|---|---|---|---|---|
 | COMPANYAPI | One-company setting in the TypeScript API | `APP_COMPANIES` and its start check, the options endpoint, the sign-up refusal, `setUpCompany` and the setup command, the shared `authOptionsSchema`, the one-company test service and its setup run | 2, 3, 4 | `starter/libs/core/src/config/environment.ts`, `starter/libs/auth/src/auth.controller.ts`, `starter/libs/auth/src/auth.service.ts`, `starter/libs/auth/src/auth.dto.ts`, `starter/apps/api/src/setup-company.ts` (new), `starter/libs/shared/src/index.ts`, `starter/package.json`, `starter/.env.example`, `starter/compose.test.yml`, `starter/scripts/test.mjs`, `starter/apps/api/test/helpers.ts`, `starter/apps/api/test/one-company.e2e-spec.ts` (new), the API suite's config unit case, `starter/README.md`, `tests/test_one_company.py` (new) | `tests/test_one_company.py` (`test_2`, `test_3`, `test_4` with the TypeScript names); the three API cases of items 2 to 4 and the start check case | | no | |
 | COMPANYPY | One-company setting in the Python API | The same contract as COMPANYAPI in the Python starter: the setting and its start check, the options endpoint, the sign-up refusal, `set_up_company` and the setup command, the shared schema copy and regenerated types, the test service and its setup run | 2, 3, 4 | `starter-python/apps/api/app/core/config.py`, `starter-python/apps/api/app/auth/routes.py`, `starter-python/apps/api/app/auth/service.py`, `starter-python/apps/api/app/auth/schema.py`, `starter-python/apps/api/app/setup_company.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `starter-python/.env.example`, `starter-python/compose.test.yml`, `starter-python/scripts/test.mjs`, `starter-python/apps/api/tests/test_one_company.py` (new), the config unit case, `starter-python/README.md`, `tests/test_one_company.py` (Python names only) | the Python twins of the three API cases and the start check case, required by `test_2` to `test_4` | COMPANYAPI | no | |
-| COMPANYWEB | No sign-up in a one-company web app | `useAuthOptions()`, the sign-in page without the sign-up link, the sign-up page that goes to sign in, and the browser flow, in both starters through the shared web app | 3, 5 | `starter/apps/web/src/features/auth/hooks/auth-hooks.ts`, `starter/apps/web/src/features/auth/pages/sign-in-page.tsx`, `starter/apps/web/src/features/auth/pages/sign-up-page.tsx`, `starter/apps/web/e2e/one-company.spec.ts` (new), `tests/test_one_company.py` (`test_3` flow name, `test_5`) | the flow `a one-company app has no sign-up and the admin invites people` in both live runs, required by `test_3`; `tests/test_one_company.py::test_5` | COMPANYAPI, COMPANYPY | yes | |
+| COMPANYWEB | No sign-up in a one-company web app | `useAuthOptions()`, the sign-in page without the sign-up link, the closed sign-up page as the design shows it, and the browser flow, in both starters through the shared web app | 3, 5 | `starter/apps/web/src/features/auth/hooks/auth-hooks.ts`, `starter/apps/web/src/features/auth/pages/sign-in-page.tsx`, `starter/apps/web/src/features/auth/pages/sign-up-page.tsx`, `starter/apps/web/e2e/one-company.spec.ts` (new), `tests/test_one_company.py` (`test_3` flow name, `test_5`) | the flow `a one-company app has no sign-up and the admin invites people` in both live runs, required by `test_3`; `tests/test_one_company.py::test_5` | COMPANYAPI, COMPANYPY | yes | |
 | COMPANYGUIDE | The constitution's one question | The two sentences in the App constitution section, the synced skill copies, on new and existing repos | 1 | `src/forge/templates/skill.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`) | `tests/test_one_company_guide.py` (`test_1`, new) | COMPANYAPI | no | |
 
 COMPANYAPI pins the setting, the endpoint, the refusal, the setup command and the test service;
@@ -254,8 +267,22 @@ New moving parts: none
   explicit command with `ADMIN_EMAIL` and `ADMIN_PASSWORD`, not an automatic first start, so no
   stranger can be first on a new deploy; (4) the setup command does not check for an existing
   company; (5) the web app learns the setting from the new public `GET /api/v1/auth/options`;
-  (6) the question has no default and is asked at the start, before the prototype.
+  (6) the question has no default and is asked at the start, before the prototype; (7) the
+  one-company test service waits for `api` to be healthy, so only one service migrates at a
+  time.
 - Found while planning: the starters have no organisation screen and no organisation switch.
   Each person belongs to one organisation, and the only company screens are Members and Change
-  history. This plan keeps both, because an admin invites people from Members. No new screen is
-  needed.
+  history. This plan keeps both, because an admin invites people from Members.
+- Cold read round 1:
+  1. Design gate (closed sign-up changes a flow). Disposition: cut - the sign-up page now shows
+     a closed sign-up page from the design in docs/design/FORGE-SINGLECO-1/, with no redirect,
+     and the Design line names that folder.
+  2. Concurrent migrations in the one-company test service. Disposition: cut - the service
+     depends on `api` being healthy, as `production-api` does, so its migration step runs after
+     `api`'s and finds nothing to do.
+  3. Infinite options cache. Disposition: cut - `useAuthOptions()` uses the app's normal query
+     defaults and reads the options again on each page load; no test for a browser kept open
+     across a restart.
+  4. Advisory: no refusal case for a bad `ADMIN_EMAIL`. Disposition: cut - each starter's setup
+     case now also runs the command with `ADMIN_EMAIL=not-an-email` and expects exit 1, the
+     schema's message and no account.
