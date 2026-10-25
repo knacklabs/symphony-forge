@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-GROUPS-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-25T02:41:08.606792+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Split any test runner's CI tests into parallel groups",
+  "touches": 0
+}
