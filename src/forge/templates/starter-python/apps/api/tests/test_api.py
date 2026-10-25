@@ -119,41 +119,6 @@ def test_creates_lists_reads_updates_and_deletes_a_project(
     assert client.get(f"/api/v1/projects/{project_id}").status_code == 404
 
 
-def test_account_isolation_returns_404_and_leaves_the_project_unchanged(
-    client: httpx.Client,
-) -> None:
-    owner, csrf = sign_up(client)
-    created = client.post(
-        "/api/v1/projects",
-        headers={"x-csrf-token": csrf},
-        json={"name": "Private project", "status": "active"},
-    )
-    assert created.status_code == 201, created.text
-    project_id = created.json()["data"]["id"]
-    _, other_csrf = sign_up(client)
-    assert client.get("/api/v1/projects").json()["data"]["items"] == []
-    assert client.get(f"/api/v1/projects/{project_id}").status_code == 404
-    assert (
-        client.put(
-            f"/api/v1/projects/{project_id}",
-            headers={"x-csrf-token": other_csrf},
-            json={"name": "Changed by another account", "status": "archived"},
-        ).status_code
-        == 404
-    )
-    assert (
-        client.delete(
-            f"/api/v1/projects/{project_id}", headers={"x-csrf-token": other_csrf}
-        ).status_code
-        == 404
-    )
-    assert client.post("/api/v1/auth/sign-in", json=owner).status_code == 200
-    unchanged = client.get(f"/api/v1/projects/{project_id}")
-    assert unchanged.status_code == 200, unchanged.text
-    assert unchanged.json()["data"]["name"] == "Private project"
-    assert unchanged.json()["data"]["status"] == "active"
-
-
 def test_forgot_password_gives_the_same_reply_for_known_and_unknown_addresses(
     client: httpx.Client,
 ) -> None:

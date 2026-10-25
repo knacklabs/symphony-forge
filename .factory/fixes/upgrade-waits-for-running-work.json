@@ -1,0 +1,49 @@
+{
+  "base": "a474c8635ced7801f9df00e753d6e5c1b954644e",
+  "branch": "fix/upgrade-waits-for-running-work",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16efa-b27f-79d0-83e3-9ee9eddea260",
+    "head": null,
+    "start": "6bdf1544a8264ef8e964cbd51d487e3e89785fa4"
+  },
+  "done_when": "The guide's upgrade steps say to wait until no Forge runs are in progress, and forge upgrade warns and names the running items when the machine's lanes still have runs",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3c3d55281c7d7f0eba86670dc61cd6ce682b429381d919a508672378ea3d58c6",
+    "changed": "d6ad650b04a5dc69c304e4518504770f06bfc2d7eab1dece99fd603e987fab9a",
+    "commit": "de9e9022787b083da09258190761881b2d3a7e1a",
+    "dismissals": [],
+    "findings": [],
+    "id": "322a1c1e-4287-4a5c-8620-13ccbf85a069",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T17:34:19.447447+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T17:42:01.549176+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T18:06:28.647127+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a443a6e6-610a-4645-ae73-89c5e11c0d7c",
+    "head": "53a393dc6d2d9e06c335e21df959dac448ba9503",
+    "keys": {},
+    "round": 1
+  },
+  "why": "forge upgrade and the guide's Upgrade Forge steps do not say to let running Forge work finish first, and replacing the installed Forge during a close can mix two releases",
+  "worker": "codex"
+}

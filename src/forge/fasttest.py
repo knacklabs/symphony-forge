@@ -431,7 +431,12 @@ def pytest_runtest_logreport(report):
                    else report.outcome)
     else:
         outcome = "skipped" if report.skipped else "error"
-    file, _, rest = report.nodeid.partition("::")
+    _write_result(outcome, report.nodeid)
+def pytest_collectreport(report):
+    if FILE and report.failed:
+        _write_result("error", report.nodeid)
+def _write_result(outcome, nodeid):
+    file, _, rest = nodeid.partition("::")
     nodeid = pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
     with FILE[0].open("a", encoding="utf-8") as results:
         results.write(outcome + " " + nodeid + "\\n")
