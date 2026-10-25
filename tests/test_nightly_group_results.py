@@ -5,9 +5,12 @@ Test-audit gate:
 2. An unsplit full run, missing timeout or successful partial status breaks this contract.
 3. Existing full-run tests cover unsplit runs, not group execution and status aggregation.
 4. Drive init/sync, real grouped pytest and the generated status script. No new seam is needed.
+
+Use Bash from PATH explicitly: Windows otherwise launches System32's WSL shim.
 """
 import os
 import re
+import shutil
 import subprocess
 import textwrap
 
@@ -76,9 +79,11 @@ def test_1_nightly_groups_share_the_pr_budget_and_record_one_result(
     assert "FULL_RESULT: ${{ needs.full-suite.result }}" in report
     assert "HEAD_SHA: ${{ github.sha }}" in report
     script = textwrap.dedent(re.search(r"        run: \|\n((?:          .*\n)+)", report)[1])
+    bash = shutil.which("bash")
+    assert bash, "The generated result step needs Bash (Git Bash on Windows)."
     for outcome in ("success", "failure", "cancelled", "skipped"):
         before = len(gh.calls())
-        ran = subprocess.run(["bash", "-e", "-c", script], cwd=client, capture_output=True,
+        ran = subprocess.run([bash, "-e", "-c", script], cwd=client, capture_output=True,
                              text=True, encoding="utf-8", timeout=30,
                              env={**os.environ, "FULL_RESULT": outcome, "HEAD_SHA": sha,
                                   "GITHUB_SERVER_URL": "https://github.example"})
@@ -90,7 +95,7 @@ def test_1_nightly_groups_share_the_pr_budget_and_record_one_result(
         assert "target_url=https://github.example/owner/project/actions/runs/123" in posted
     gh.respond("api", "--method", "POST", exit=1, stderr="GitHub unavailable")
     unavailable = subprocess.run(
-        ["bash", "-e", "-c", script], cwd=client, capture_output=True,
+        [bash, "-e", "-c", script], cwd=client, capture_output=True,
         text=True, encoding="utf-8", timeout=30,
         env={**os.environ, "FULL_RESULT": "success", "HEAD_SHA": sha,
              "GITHUB_SERVER_URL": "https://github.example"})
