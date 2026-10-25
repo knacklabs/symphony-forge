@@ -333,6 +333,19 @@ $checks
 <!-- end -->
 ## Build simple
 
+Record this paragraph in an empty commit before you edit code:
+
+Before coding:
+Need: <the job or problem that needs this change>
+Simplest option: <the first rung of the ladder that works, and why>
+Existing code reused: <the existing code you will use, or none and why>
+
+Use `git commit --allow-empty` with that paragraph in the commit body. Keep the original
+three lines. Forge copies them into the pull request summary and gives them to the reviewer.
+If evidence changes your approach, explain the change in a later commit instead of rewriting
+the original lines. Add an abstraction layer only at the edge to an outside service.
+Keep business logic in the existing domain services and pure computation in helpers.
+
 Reproduce the bug before you change the code. Find the first place the code goes wrong.
 Fix it in the shared function that every affected caller uses. Check sibling callers for the
 same fault. A guard is a fix only when it handles a valid state.

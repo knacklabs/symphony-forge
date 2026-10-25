@@ -80,6 +80,9 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
 ## Structure only where its concern exists
 
 Structure earns its place by solving a problem the code has today. These rules say where.
+Add an abstraction layer only at the edge to an outside service. Keep business logic in domain
+services and pure computation in helpers. Required module boundaries, controllers and data
+access below keep their roles; do not wrap them in extra layers.
 
 - **One deployable app.** Build a modular monolith: one backend, one database, one module per
   business domain. No microservices, and no planning or abstractions for future growth: one app is
@@ -99,8 +102,8 @@ Structure earns its place by solving a problem the code has today. These rules s
   can fail, change or be swapped, and tests need a fake. The provider handles authentication,
   timeouts and retries, maps vendor errors to our error codes, returns our own types and holds no
   business logic. Pure computation is a helper, not a provider.
-- **An interface only for an external service or a real second implementation.** One class with
-  one implementation needs no interface, factory or base class; add one when the second arrives.
+- **An interface only at an external-service edge.** Internal code needs no extra interface,
+  factory or base class. Use the domain service or helper directly.
 - **Shared code.** Types and validators that both the backend and the frontend use live in the
   shared package, so both sides agree. Add a typed API client there only when the frontend calls
   that API, and a notification module only when a Done-when item sends a notification.

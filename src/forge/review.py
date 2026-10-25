@@ -195,6 +195,8 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
     parts.append(functional_check(top, base, commit))
+    if branch_diff and (approach := before_coding(top, base, commit)):
+        parts.append(approach)
     if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
         parts.append(proof)
     saved_level = reviewed_level or (state.get("review") or {}).get("blocking_level", "P1")
@@ -335,6 +337,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
               "rulings": _rulings(top, base, history),
               "accepted": _accepted(top, item, history),
               "test_run": tested,
+              "before_coding": before_coding(top, base) or "missing",
               "proof_list": proof_list(top, base) or "missing"}
     if "/" in item:
         doc_text, doc, row = task(top, item)
@@ -372,6 +375,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     prompt = (string.Template((Path(__file__).parent / "templates" / "review-light.md").read_text(
         encoding="utf-8")).substitute(values) if prototype else
         "\n\n".join(blocks[name].substitute(values) for name in chosen))
+    prompt += "\n\n" + blocks["approach"].substitute(values)
     if previous.get("commit"):
         prompt += "\n\n" + blocks["repair-review"].substitute(
             reviewed=previous["commit"], findings=_previous(previous))
@@ -722,6 +726,18 @@ def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
     empty commit counts); an older commit's check never counts. Git holds it; Forge copies it,
     never stores it."""
     return commit_paragraph(top, base, "Functional check:", head)
+
+
+def before_coding(top: Path, base: str, head: str = "HEAD") -> str:
+    """The original approach stays in git, independent of later worker commits."""
+    for _, message, files in reversed(repo.commit_log(top, base, head)):
+        if files and all(path.startswith(BOOKKEEPING) for path in files):
+            continue
+        found = re.search(r"^Before coding:\nNeed: [^\n]+\nSimplest option: [^\n]+\n"
+                          r"Existing code reused: [^\n]+", message, re.M)
+        if found:
+            return found[0]
+    return ""
 
 
 def commit_paragraph(top: Path, base: str, label: str, head: str = "HEAD") -> str:

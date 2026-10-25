@@ -919,7 +919,8 @@ def _publish(top: Path, item: str, state: dict[str, Any], branch: str, default: 
     if rebuilding and rebuilt is None:
         # Keep rendered local observations, but no record that would retire the missing-history retry.
         history = re.sub(r"\n<!-- forge:time-record \{.*?\} -->", "", history, flags=re.S)
-    block = _block(result, "\n\n".join(part for part in (history, proof, check) if part))
+    approach = review.before_coding(top, f"origin/{default}")
+    block = _block(result, "\n\n".join(part for part in (approach, history, proof, check) if part))
     draft = (result["status"] == "blocked" or bool(state.get("tests")) or
              (pr is None and result["status"] == "reviewing"))
     # The body goes through a file under .git/forge/: in argv it meets length limits, and a
