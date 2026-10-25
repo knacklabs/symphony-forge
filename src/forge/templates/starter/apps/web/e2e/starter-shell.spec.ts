@@ -146,7 +146,9 @@ test('keyboard sorting a cached order keeps focus on the header', async ({ page 
   await expect(page).toHaveURL(/sortOrder=asc/);
   await nameHeader.click();
   await expect(page).toHaveURL(/sortOrder=desc/);
-  await expect(page.getByRole('row', { name: /Pagination project 01/ })).toBeVisible();
+  // Both projects show in either order, so wait for the descending rows themselves: the router
+  // keeps the ascending table on screen until the descending list has loaded.
+  await expect(page.getByRole('row').nth(1)).toContainText('Pagination project 01');
 
   // Ascending is cached now, so the table stays on screen and the same button must keep focus.
   await nameHeader.focus();

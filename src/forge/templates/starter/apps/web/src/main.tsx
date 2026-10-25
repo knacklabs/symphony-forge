@@ -9,7 +9,8 @@ import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: false, refetchOnWindowFocus: false },
+    // 'always': an offline request fails at once, so each screen shows its error and Try again, not endless loading.
+    queries: { retry: false, refetchOnWindowFocus: false, networkMode: 'always' },
   },
 });
 
