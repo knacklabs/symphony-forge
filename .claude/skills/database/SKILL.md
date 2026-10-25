@@ -126,6 +126,15 @@ No cache server at the start. Add one only for a slow page that pg_stat_statemen
 | Trigram GIN | `@@index([...], type: Gin)` with `ops: raw("gin_trgm_ops")` | `postgresql_using="gin"`, `postgresql_ops` |
 | Generated tsvector | `Unsupported("tsvector")` plus raw SQL | `Computed(..., persisted=True)` with `TSVECTOR` |
 | Trigger, function, extension, exclusion constraint | Raw SQL in the migration | Raw SQL; `ExcludeConstraint` for an exclusion constraint. |
-| Drift check after raw SQL | `prisma migrate diff --from-migrations apps/api/prisma/migrations --to-schema apps/api/prisma/schema --script` must print an empty migration | `alembic check` must pass. |
+| Drift check after raw SQL | After the shadow database setup below, `prisma migrate diff --from-migrations apps/api/prisma/migrations --to-schema apps/api/prisma/schema --script` must print an empty migration | `alembic check` must pass. |
+
+Before running the Prisma drift check against a migrations directory:
+
+1. Create a separate, empty development database, for example `CREATE DATABASE app_shadow;`, using a database admin if needed. Give the migration user ownership of this database.
+2. Set `SHADOW_DATABASE_URL` in the command's environment to that database's connection URL. Keep credentials out of git.
+3. In `prisma.config.ts`, import `env` from `prisma/config` and add `shadowDatabaseUrl: env("SHADOW_DATABASE_URL")` to the existing `datasource` object, beside its `url`. Keep the existing schema and migrations paths.
+4. Run the drift check from the app root with both `DATABASE_URL` and `SHADOW_DATABASE_URL` set.
+
+The shadow database must be disposable and different from every database holding app data. Prisma resets it while replaying migrations; never point `shadowDatabaseUrl` at the development or production app database. This setup is for development checks, not production deployment. See [Prisma's shadow database setup](https://www.prisma.io/docs/orm/v7/prisma-migrate/understanding-prisma-migrate/shadow-database).
 
 State each Prisma index in full, including partial WHERE, type and ops. CHECK constraints and triggers live only in migration SQL: Prisma neither states nor compares them. Never edit a merged migration.
