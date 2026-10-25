@@ -17,14 +17,15 @@ Hours budget (number), Budget (money), Due date (date), Billable (yes or no), Co
 ## Projects
 
 Image: projects-list.png
-Route: `/projects?search=<text>&status=<status>&client=<id>&billable=<yes|no>&sortBy=<column>&sortOrder=<asc|desc>&after=<cursor>`,
+Route: `/projects?search=<text>&status=<status>&client=<id>&billable=<yes|no>&deleted=<yes>&sortBy=<column>&sortOrder=<asc|desc>&after=<cursor>`,
 inside the app shell. Admins and members can open it.
-Components: Input, Select, Table, Badge, Button
+Components: Input, Select, Switch, Table, Badge, Button
 Fields:
 - Search: text, optional
 - Status filter: choice, optional, options: All statuses | Planned | Active | Done
 - Client filter: choice, optional, options: All clients | each client by name
 - Billable filter: choice, optional, options: Billable or not | Billable | Not billable
+- Show deleted: yes or no, optional (admins only)
 
 Filled: the search box (on the first text or email field, with the placeholder
 `Search by <field>`; a feature with no such field has no search box), one Select per yes-or-no,
@@ -39,6 +40,14 @@ status-list and link field, and the table columns.
   first page.
 - The search waits until the person stops typing, then updates the list. The search box has the
   label `Search projects` for screen readers.
+- Show deleted: a Switch with the label `Show deleted` at the end of the filter row, off by
+  default and kept in the web address as the filters are. Admins only: a member never sees the
+  Switch, and the API ignores the key for a member. When it is on, the list shows the deleted
+  projects among the others. A deleted row has a `Deleted` Badge (secondary) after its name and
+  muted text, and it still opens the detail screen. The total under the table says `About 1,300
+  projects, deleted ones included`. The image `projects-deleted.png` shows the Switch on.
+  Export CSV exports what the list shows, so it includes deleted projects only when the Switch
+  is on.
 - Each row opens the detail screen: the name is a link and the whole row can be clicked. The
   name link is the keyboard target.
 - Under the table: `About 1,200 projects` (the approximate total, rounded) on the left, and
@@ -100,6 +109,39 @@ are on every feature.
   recent changes.` with a `Try again` button; the Details card still shows.
 - On a phone the two cards stack, Details first.
 
+## Projects with deleted ones
+
+Image: projects-deleted.png
+Route: `/projects?deleted=yes`, the Projects screen with `Show deleted` on. Admins only.
+Components: Switch, Table, Badge (the Projects screen's parts)
+Fields: as on Projects.
+
+- Deleted rows: a `Deleted` Badge (secondary) after the name, muted text in every cell.
+- Empty, with the Switch on and nothing at all: `No projects yet.` as on Projects.
+- No results: `No projects match this search.` as on Projects; `Clear search and filters` also
+  turns the Switch off.
+
+## Deleted project
+
+Image: project-deleted.png
+Route: `/projects/:id` for a deleted project. Admins only.
+Components: Breadcrumb, Badge, Alert, Button, Card, sonner toast
+Fields: as on Project detail, all read-only.
+
+- Heading: the project name, its status Badge and a `Deleted` Badge (secondary).
+- Under the heading, an Alert: `This project was deleted on 2026-10-25 by grace@example.com.`
+  (the date from `formatDate`, the person who deleted it) with a `Restore` button (outline,
+  small; `Restoring…` while it waits).
+- `Edit` and `Delete` are hidden.
+- Recent changes lists the delete first: `Deleted the project`, `grace@example.com ·
+  2026-10-25 10:02`.
+- After restore: the toast is `Project restored.`, the Alert and the `Deleted` Badge go, `Edit`
+  and `Delete` come back, and Recent changes lists `Restored the project` above `Deleted the
+  project`. Last changed shows the restore.
+- Restore fails: the toast is `Could not restore this project. Try again.` and the screen stays.
+- A member who opens a deleted project's address sees `This project does not exist or was
+  deleted.` with a `Back to projects` link, as for any missing project.
+
 ## Delete project
 
 Image: project-delete.png
@@ -110,7 +152,8 @@ Fields: none
 - Title `Delete project?`, text `The project “<name>” will be deleted. You cannot undo this.`
 - Buttons: `Cancel` (outline, has the focus when the dialog opens) and `Delete project`
   (destructive; `Deleting…` while it waits).
-- Success: the dialog closes, the list opens, and the toast is `Project deleted.`
+- Success: the dialog closes, the list opens, and the toast is `Project deleted.` An admin can
+  restore it from the Deleted project screen.
 - Failure: the dialog stays open and the toast is `Could not delete this project. Try again.`
 
 ## Project form
