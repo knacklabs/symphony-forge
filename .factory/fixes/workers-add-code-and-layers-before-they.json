@@ -11,14 +11,82 @@
   "done_when": "Each worker pull request summary carries three lines written before coding (the need, the simplest option, the existing code reused), a layer appears only at the edge to an outside service, and the review checks the change against those three lines.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "before_coding() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 733,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Restrict approach lookup to the current worker's commits",
+      "work": 2
+    },
+    {
+      "area": "test_2_close_copies_the_original_three_lines_to_summary_and_review() in tests/test_workers_record_the_simplest_approach.py",
+      "file": "tests/test_workers_record_the_simplest_approach.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 47,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_close_copies_the_original_three_lines_to_summary_and_review",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bbb83a5fccf35503a51877fe7d72c010306887d75b2a03b891c67f84dff0b7d9",
+    "changed": "fca5f82a5863192a6c6d9284a080ad08798afbc2ccd4aa9d8701c59019fe7698",
+    "commit": "3b53a5db9f7a0fb0b75aadc707a3afdc8b8f444a",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - a worker starts a stacked task or follow-up fix from an unmerged parent that already recorded its approach.\nThe reversed base-to-head history includes the parent's planning commit, so this function returns the parent's three lines and ignores the current worker's later planning commit. Stacked tasks inherit their parent's commits (`src/forge/task.py:402-408`), as do follow-up fixes (`src/forge/task.py:553-559`). Consequently, the child pull request summary and review receive another change's approach. Limit lookup to the current item's own history in the summary, review and fingerprint callers.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 733,
+        "priority": "P1",
+        "title": "Restrict approach lookup to the current worker's commits",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Test\nCase: normal use - close generates the review instructions for a worker change.\nThe proof list names this test as protection for checking pre-code git history, but its assertions only check copying, comparison wording and the layer rule. Removing the instruction to verify an empty commit before code changes would leave the test passing. Moreover, `env.start_fix()` already commits `app.py` before the planning commit (`tests/test_close.py:217-233`), so the fixture does not demonstrate the promised ordering. Create the planning commit before the first product change and assert that the delivered review instructions require checking that history.",
+        "file": "tests/test_workers_record_the_simplest_approach.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 47,
+        "priority": "P1",
+        "title": "Gate: test_2_close_copies_the_original_three_lines_to_summary_and_review",
+        "work": 1
+      }
+    ],
+    "id": "faaf0243-1ad6-43a8-b64d-ff367610366e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-25T18:18:39.508232+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T18:26:11.040593+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-25T18:26:11.051907+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "8fa9cac1-6a16-4c88-9073-b4075067fa69"
+  },
   "stuck": {
     "close": null,
     "head": "df845fb2d29f55b5ab7a452a02a79689ec93546d",
