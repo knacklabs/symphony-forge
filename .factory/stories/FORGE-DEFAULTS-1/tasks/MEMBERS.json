@@ -1,12 +1,52 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-MEMBERS",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 46,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Restore keyboard focus when the invite dialog closes",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ff641bacea4f94bb0dbfceade1fcc54e1dfcd81c966b56e474b87ed623a9c9f7",
+    "changed": "bed998ab218e06ef9dc21145bac5f6e9f79a533a88998ec58fae4a5a8d0a776e",
+    "commit": "ef7c3407c92f09ae21c60f1f504964471aa5e716",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - an admin opens Invite person with the keyboard and closes it with Esc or Cancel. The opener in members-page.tsx:57 sits outside this Dialog, with no DialogTrigger registered and no onCloseAutoFocus fallback. The shared dialog.tsx:61 forwards directly to Radix, whose modal close handler prevents default focus restoration and focuses its trigger ([Radix implementation](https://github.com/radix-ui/primitives/blob/main/packages/react/dialog/src/dialog.tsx)). Consequently, closing this dialog loses keyboard focus instead of returning it to Invite person. Put the opener under the same Dialog with DialogTrigger, or explicitly restore focus on close.",
+        "file": "src/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx",
+        "gain": 3,
+        "harm": 3,
+        "line": 46,
+        "priority": "P1",
+        "title": "Restore keyboard focus when the invite dialog closes",
+        "work": 2
+      }
+    ],
+    "id": "39c78434-e96c-44f7-b017-8b228b9c989e",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T03:16:21.604655+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T04:04:20.280451+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx\tRestore keyboard focus when the invite dialog closes\tFORGE-DEFAULTS-1/MEMBERS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx",
+      "line": 46,
+      "text": "Restore keyboard focus when the invite dialog closes",
+      "from": "blocking",
+      "item": "FORGE-DEFAULTS-1/MEMBERS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
