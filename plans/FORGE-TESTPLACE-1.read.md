@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-24T18:08:11.431619+00:00
-seconds: 373.267
-read_hash: 1df5e17ae2c35d65845a871749c0d4f0eed4f8d4
-round: 1
+read_at: 2026-10-25T01:38:40.669224+00:00
+seconds: 187.067
+read_hash: 22d5883e0e2b7e1a644376caf3c3c6c77cbff3c4
+round: 2
 passed: no
-doc_seen: 1df5e17ae2c35d65845a871749c0d4f0eed4f8d4
+doc_seen: 22d5883e0e2b7e1a644376caf3c3c6c77cbff3c4
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 1bc99794c2e6216afbe763c9b8b3d7b5eef537dd
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a16f13-9e50-7203-8fbe-8cdb8019557f
 session:
@@ -72,3 +72,20 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Plan gap. Case: normal use - one builder implements PLACE’s task row. `plans/FORGE-TESTPLACE-1.md:227` combines configuration and upgrade behavior, close/merge changes, picker changes, a command flag, workflow restructuring, a decision, and generated guidance across fifteen scoped paths, two new test modules, and numerous existing suites. That scope suggests substantially more than the requested roughly 400 changed lines per task.
    Gain 3, Work 2, Harm 2
    Disposition: cut - PLACE is now SETTING (items 1, 2, 6) and CISEL (item 2), chained before FULLRUN.
+
+## Round 2
+
+9. Blocking: A passing shard can make untested shards report success on a self-hosted runner.
+   Raise: Functional. Case: normal use - a two-group pytest matrix runs sequentially on one self-hosted runner; group 1 passes, while group 2 contains a failing test. The new `--change` contract at `plans/FORGE-TESTPLACE-1.md:47` uses close’s cached `review.test_run`. For picked commands, `src/forge/review.py:392` constructs the same wrapper command for every group. Its success-cache key includes the command and committed files, but neither group environment variable (`:592`). Group 2 therefore reuses group 1’s success at `:457` without running. This new sharding path can approve a broken change; the proposed argument-recording test does not exercise sequential groups or cache reuse.
+   Gain 5, Work 3, Harm 3
+   Disposition: defer - CI sharding moved to its own story; this plan keeps today's six-group pytest-split run unchanged.
+
+10. Advisory: Writing `groups` stops an existing pytest repo from sharding its tests.
+   Raise: Functional. Case: normal use - an existing repo with six automatic pytest groups writes `groups = 3` to change the count. Its configured test command contains no split arguments: today `src/forge/prcheck.py:235` adds them only when generating CI. The new rule at `plans/FORGE-TESTPLACE-1.md:54` explicitly adds no suffix when `groups` is written. All three jobs consequently run the same selected tests instead of separate shards. The adopted-case test at `:143` checks only the matrix count and would pass with this duplication.
+   Gain 4, Work 2, Harm 3
+   Disposition: defer - CI sharding moved to its own story; this plan keeps today's six-group pytest-split run unchanged.
+
+11. Advisory: Sharding makes valid `always_test` entries fail in groups that do not own them.
+   Raise: Functional. Case: normal use - a pytest client combines multiple groups with an `always_test` node ID. The planned ordering selects that node before pytest-split assigns it to one group. The installed splitter removes other groups’ items at `.venv/lib/python3.11/site-packages/pytest_split/plugin.py:168`, but Forge’s selection hook still requires every configured entry to have run in every process (`src/forge/fasttest.py:393`), setting failure status for the other groups. The new empty-shard allowance handles exit status 5, whereas this hook produces status 1. The planned sharding test has no `always_test` entry.
+   Gain 4, Work 3, Harm 3
+   Disposition: defer - CI sharding moved to its own story; this plan keeps today's six-group pytest-split run unchanged.

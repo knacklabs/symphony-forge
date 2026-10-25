@@ -5,8 +5,7 @@
 ## What changes for you
 
 - Each repo picks one place for its change tests: its CI, or the laptop. A repo with no GitHub CI can ship, with an empty checks list. Close's clean review and its laptop test result are then the merge gate. A repo with CI no longer runs the tests twice.
-- Each change runs only its related tests plus lint and type checks, in that one place. The pull request's CI run does the same, not the full suite.
-- A repo can split its CI tests into several parallel jobs with one setting, for any test runner. A large suite then fits in the job's time limit: four jobs run a 2,300-test suite in about 8 to 10 minutes.
+- Each change runs only its related tests plus lint and type checks, in that one place. The pull request's CI run does the same, not the full suite. A repo whose CI splits its suite into groups keeps that run for now.
 - The full suite runs nightly on main, in a scheduled GitHub workflow where the repo has CI, or on the laptop when it is quiet. A failed night opens a fix that names the failing tests.
 - A release or a client sign-off waits for a green full run on the current main. Everyday merges never wait for it.
 - Setup asks once whether the repo runs GitHub Actions. Yes gives CI tests, no gives laptop tests; your agent can answer from the repo's settings. Existing repos move to the new setting on upgrade: CI when their settings name checks, the laptop when they name none. The upgrade message says so, and the settings file can switch back.
@@ -20,7 +19,7 @@ Every change runs its tests twice, on the laptop at close and again in the pull 
 ## Done when
 
 1. **A repo set to test on the laptop, with no GitHub CI and an empty checks list, closes and merges a change on its laptop test result and a clean review. Close and merge do not wait for GitHub checks.**
-2. **Each change runs its related tests and the lint and type checks in the repo's test command once, in the chosen place: on the laptop at close, or in the pull request's CI, split across as many parallel jobs as the settings name, for any test runner. It runs every test only when it changes a shared test input, such as a lock file or a shared test fixture.**
+2. **Each change runs its related tests and the lint and type checks in the repo's test command once, in the chosen place: on the laptop at close, or in the pull request's CI. It runs every test only when it changes a shared test input, such as a lock file or a shared test fixture. A repo whose CI splits its test suite into groups today keeps that CI run as it is.**
 3. **The full suite runs nightly on main: in a scheduled GitHub workflow in a CI repo, or on the laptop in a laptop repo, where Forge asks for it once a day and the agent runs it when the machine is quiet.**
 4. **A failed full run opens a fix that names the failing tests.**
 5. **A release tag push or a client sign-off is refused until the latest commit on main has a green full run. Everyday merges never wait for it.**
@@ -47,15 +46,6 @@ tightening it needs no new approval. -->
   exactly the run close makes in a local repo: `review.test_run(top, review.close_test(top, base),
   base)` with `base = origin/<default>`, and prints the same report. It uses bare `forge test`'s
   missing-base refusal unchanged.
-- **The groups setting (pinned by CISEL).** `groups` in forge.toml, a whole number of 1 or more,
-  `repo.KEYS` int, checked like the other keys. When forge.toml does not write it, the default is
-  today's automatic rule in `prcheck.ships()`: 6, with `--splits {groups} --group {group}` added to
-  a direct pytest `test` command, when the repo lists pytest-split; else 1. Written `groups`
-  replaces that rule and adds no suffix. Forge fills `{group}` and `{groups}`
-  in `test` and `fast_test` wherever it runs them (close, workers' `forge test`, `--change`,
-  `--full`, the picker's own reads of `test`), from the `FORGE_GROUP` and `FORGE_GROUPS`
-  environment variables, and with 1 and 1 when they are unset. One helper does it, beside the
-  existing `{base}` fill.
 - **The full-run fact (FULLRUN).** A GitHub commit status with context `forge-full-suite` on the
   tested commit of main, state `success` or `failure`. Only the release and sign-off gates read
   it. GitHub holds the fact; Forge writes no record of it.
@@ -111,19 +101,17 @@ tightening it needs no new approval. -->
    - Generated CI (CISEL, src/forge/prcheck.py `WORKFLOW` and `ships()`): in CI mode the `tests`
      job installs the Forge release the checked-out forge.toml pins (`uv tool install .` in Forge's
      own repo, `sync.install_line` otherwise) and runs `forge test --change` in place of the `test`
-     command. Its matrix has `groups` jobs, each with `FORGE_GROUP` set to its matrix number and
-     `FORGE_GROUPS` to `groups`, so a command such as `vitest run --shard={group}/{groups}` or
-     `pytest --splits {groups} --group {group}` runs one shard per job. The automatic pytest-split
-     rule stays as the default (shared names), so a repo with six groups today keeps six, Forge's
-     own repo included; only the mechanism becomes general. A group whose shard of the related
-     tests is empty passes, as today's exit-status-5 handling does; check that the picker's
-     deselection runs before pytest-split's split. With 1 group there is one job. Keep the
+     command, as one job. A repo that gets today's automatic six pytest-split groups (a direct
+     pytest `test` command and pytest-split listed, Forge's own repo included) keeps its tests job
+     exactly as it is now: six groups running the `test` command with the split suffix and the
+     exit-status-5 fallback. Sharding the related-test run moves to its own story. Keep the
      docs-check job, the parent-tests reuse, the Node setup, the Node 30-minute timeout, the
      `tests-passed` job and the one required `tests` check name. On a `windows-*` runner keep the
      PowerShell retry wrapper around `forge test --change`; the test command inside it runs the way
      close runs it on Windows. In local mode the workflow has no tests jobs, whatever `checks`
      says. Doctor's workflow check (doctor.py about line 425) accepts the new step: in CI mode with
-     a `tests` check, the workflow must contain `forge test --change`; drop its `--splits` form.
+     a `tests` check, the workflow must contain `forge test --change`, or today's `--splits` form for
+     a repo with the six groups.
      Forge's own `.github/workflows/forge.yml` is regenerated by sync.
    Test `tests/test_testplace_selection.py::test_2_change_tests_run_once_in_one_place` (platform
    mark), one repo with two Python test files and a `test` command of
@@ -135,18 +123,15 @@ tightening it needs no new approval. -->
    same tree runs the same selection as close; (e) a change that selects more than a third of the
    test files still runs them; (f) the generated forge.yml in CI mode has one tests job whose run
    step is `forge test --change` and no `--splits`, `forge doctor` accepts it, and in local mode it
-   has no tests job; (g) with `groups = 4` and a `test` command of `<shard script> {group}/{groups}`
-   (any runner; the script records its argument), the generated forge.yml has four matrix jobs
-   with `FORGE_GROUP` 1 to 4 and `FORGE_GROUPS` 4, `FORGE_GROUP=2 FORGE_GROUPS=4 forge test --change`
-   runs the script with `2/4`, and a local close runs it with `1/1`. Adopted case: in the upgrade test
-   (item 6) an adopted client with a direct pytest command and pytest-split listed keeps six
-   matrix jobs after the upgrade with no forge.toml edit, and the same client with `groups = 3`
-   written gets three.
+   has no tests job; (g) a repo that lists pytest-split gets today's six-group tests job unchanged,
+   and doctor accepts it. Adopted case: in the upgrade test (item 6) an adopted client with a
+   direct pytest command and pytest-split listed keeps its six-group tests job byte for byte after
+   the upgrade's sync.
    Tests CISEL changes: delete tests/test_close_skips_large_test_selections.py (its rule is gone);
    adjust tests/test_close_always_tests.py (line 81), tests/test_close_names_untested_source_files.py,
    tests/test_close_runs_only_related_tests.py, tests/test_lanes_tests.py and
    tests/test_worker_tests_stay_bounded.py for the new texts; existing workflow tests that assert
-   the automatic six groups keep passing; tests that assert the old run line (for example
+   the automatic six groups keep passing unchanged; tests that assert the old one-group run line (for example
    tests/test_ci_reuses_tested_trees.py and tests/test_ci_limits_pull_requests_to_linux.py) and
    doctor's workflow-check tests change to the `forge test --change` step. Tests SETTING changes: add `test_place = "local"` to the forge.toml of each existing
    test that expects close to run tests locally (among them tests/test_close.py, tests/test_land.py,
@@ -273,8 +258,8 @@ tightening it needs no new approval. -->
   workers stop their local runs, and after the upgrade's sync the pull request runs related tests
   and the nightly job appears. Empty checks read as local: close stops refusing and runs the tests
   on the laptop, and `forge next` asks for the daily full run. Sync's line says which, until
-  forge.toml writes it. A repo with six automatic pytest-split groups today keeps six; `groups` in
-  forge.toml can change the count.
+  forge.toml writes it. A repo with six automatic pytest-split groups today keeps that CI tests job
+  as it is.
 
 ### Guide and skill
 
@@ -282,7 +267,7 @@ tightening it needs no new approval. -->
   close's checks wait and the empty-checks refusal; brief.md's `$test_step`.
 - CISEL: the "## Closing" paragraphs on the picker, its large-selection skip, `always_test`, the
   no-selection run of lint and type checks and the generated workflow's test groups (about lines
-  1508 to 1565) describe one place per repo, `forge test --change` and the `groups` setting; brief.md
+  1508 to 1565) describe one place per repo, `forge test --change` and the one-job run, with the six-group run unchanged; brief.md
   drops its "CI runs the full suite" wording and updates the Windows retry line; docs/guide.md's
   test section matches.
 - FULLRUN: a short new skill section "## Full test run" covering `forge test --full`, the daily
@@ -294,7 +279,7 @@ tightening it needs no new approval. -->
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | SETTING | One test place per repo | The `test_place` setting and its derived default, the sync line, local close and merge with no check wait and no empty-checks refusal, CI close and CI workers with no local test run, init writing `test_place = "ci"`, the decision record, skill and brief lines | 1, 2, 6 | src/forge/repo.py, src/forge/close.py, src/forge/merge.py, src/forge/doctor.py, src/forge/init.py, src/forge/sync.py, src/forge/worker.py, src/forge/templates/brief.md, src/forge/templates/skill.md, docs/decisions/, forge.toml | tests/test_testplace_settings.py, tests/test_testplace_upgrade.py, plus the existing tests listed under item 2 for SETTING | | no | |
-| CISEL | Related tests in the chosen place | The picker at close in both modes with the large-selection skip removed, lint and type checks run when no test is picked, `forge test --change`, the `groups` setting and its `{group}`/`{groups}` fill, the generated pull request tests job as a `groups`-wide matrix of `forge test --change`, doctor's workflow check, skill, brief and guide lines | 2 | src/forge/review.py, src/forge/fasttest.py, src/forge/prcheck.py, src/forge/doctor.py, src/forge/templates/skill.md, src/forge/templates/brief.md, docs/guide.md, .github/workflows/forge.yml | tests/test_testplace_selection.py, plus the existing tests listed under item 2 for CISEL | SETTING | no | |
+| CISEL | Related tests in the chosen place | The picker at close in both modes with the large-selection skip removed, lint and type checks run when no test is picked, `forge test --change`, the generated pull request tests job as one `forge test --change` job (the six-group pytest-split job unchanged), doctor's workflow check, skill, brief and guide lines | 2 | src/forge/review.py, src/forge/fasttest.py, src/forge/prcheck.py, src/forge/doctor.py, src/forge/templates/skill.md, src/forge/templates/brief.md, docs/guide.md, .github/workflows/forge.yml | tests/test_testplace_selection.py, plus the existing tests listed under item 2 for CISEL | SETTING | no | |
 | FULLRUN | Nightly full run and its gates | `forge test --full` and the full-run status, the nightly and on-demand job in the generated workflow, the daily line in `forge next`, the local fix line, the release tag and client sign-off gates, skill and guide lines | 3, 4, 5 | src/forge/fullrun.py, src/forge/fasttest.py, src/forge/prcheck.py, src/forge/nextstep.py, src/forge/githooks.py, src/forge/records.py, src/forge/templates/skill.md, docs/guide.md, .github/workflows/forge.yml | tests/test_testplace_fullrun.py, plus the existing sign-off tests listed under item 5 | CISEL | no | |
 
 The parts run in a chain, and each edits files an earlier one touched only after it merges:
@@ -321,10 +306,8 @@ New moving parts: a scheduled nightly job in the generated GitHub workflow (Done
   of the test command, with no new setting; (5) the full-run result is a GitHub commit status for
   the gates, and the fix comes from the existing scheduled-run report in CI or from
   `forge test --full`'s own output on the laptop.
-- Owner decision (25 Oct 2026): CI test sharding for any runner through a `groups` setting; a
-  client's 2,300-test vitest suite passed the job's 30-minute limit on a 2-core runner, and four
-  shards take about 8 to 10 minutes. Existing repos keep their group count (six automatic pytest-split groups stay the default),
-  and Forge's own repo keeps its six.
+- Owner decision (25 Oct 2026): CI test sharding for any runner moves to its own story; this
+  story keeps today's automatic six-group pytest-split run exactly as it is.
 - Forge's own `.github/workflows/forge-next.yml` keeps its Windows platform subset on pull
   requests and its full runs on main merges, tags and its own nightly. It is Forge's own file; a
   separate fix can trim it.
