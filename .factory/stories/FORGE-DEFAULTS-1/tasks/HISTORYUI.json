@@ -1,12 +1,52 @@
 {
   "branch": "task/FORGE-DEFAULTS-1-HISTORYUI",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/src/features/history/pages/history-page.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/features/history/pages/history-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 26,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Handle paused history queries as an offline state",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6d49ff9ddeb8d33ebb4cf0ac04876c7f646b2e283d0eb1f311099a4fd247bc0f",
+    "changed": "ece87ed1cbb13745f2a7fe1346b8943f7043389a47fa031772ac89f2232d5598",
+    "commit": "4331bb6d98c2c85f8e91ced665e284700df19943",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - a signed-in admin loses connectivity on Projects, then opens Change history for the first time. `useHistory` uses TanStack Query's default network mode; `main.tsx:10\u201313` does not override it. Offline queries remain pending with `fetchStatus: 'paused'`, so this line displays \u201cLoading change history\u2026\u201d until connectivity returns, while the connection-error message and retry control never appear. This misses the required offline message explaining what to do next. Handle the paused state explicitly and cover this navigation in the browser flow. The pending/paused behavior is documented in [TanStack Query's network modes](https://tanstack.com/query/latest/docs/framework/react/guides/network-mode).",
+        "file": "src/forge/templates/starter/apps/web/src/features/history/pages/history-page.tsx",
+        "gain": 3,
+        "harm": 3,
+        "line": 26,
+        "priority": "P1",
+        "title": "Handle paused history queries as an offline state",
+        "work": 2
+      }
+    ],
+    "id": "04590dd4-de90-4271-913e-afb31a8ce3c7",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T07:07:34.293349+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T07:37:33.482986+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
