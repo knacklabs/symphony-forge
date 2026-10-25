@@ -1,5 +1,5 @@
 from app.core.admin import admin_only
-from app.core.config import Settings, load_settings
+from app.core.config import Settings, load_admin_credentials, load_settings
 from app.core.csv import CsvColumn, csv_response, utc_date_time
 from app.core.database import Base, create_database, get_db
 from app.core.envelope import ErrorEnvelope, SuccessEnvelope
@@ -30,6 +30,7 @@ __all__ = [
     "install_error_handlers",
     "install_security_middleware",
     "load_settings",
+    "load_admin_credentials",
     "log_event",
     "utc_date_time",
     "verify_csrf",

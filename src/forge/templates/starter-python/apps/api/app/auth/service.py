@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session as DbSession
 from app.auth.models import Account, PasswordResetToken, Session
 from app.auth.schema import (
     AcceptInviteInput,
+    AuthOptions,
     CredentialsInput,
     MessageResponse,
     ResetPasswordInput,
@@ -99,14 +100,25 @@ class AuthService:
         self.organisations = organisations
 
     def sign_up(self, credentials: CredentialsInput) -> SessionData:
-        account = self._create_account(credentials)
-        principal = self.organisations.create_for_account(account.id, account.email)
-        session_data = self._new_session(
-            AccountResponse(id=account.id, email=account.email, role=principal.role)
-        )
+        if not self.options().sign_up_open:
+            raise ApiError(
+                403,
+                "SIGN_UP_CLOSED",
+                "This app is for one company. Ask an admin of your team for an invite.",
+            )
+        account = self.set_up_company(credentials)
+        session_data = self._new_session(account)
         self.db.add(self._session_row(account.id, session_data))
         self.db.commit()
         return session_data
+
+    def options(self) -> AuthOptions:
+        return AuthOptions(sign_up_open=self.settings.app_companies == "many")
+
+    def set_up_company(self, credentials: CredentialsInput) -> AccountResponse:
+        account = self._create_account(credentials)
+        principal = self.organisations.create_for_account(account.id, account.email)
+        return AccountResponse(id=account.id, email=account.email, role=principal.role)
 
     def _create_account(
         self,

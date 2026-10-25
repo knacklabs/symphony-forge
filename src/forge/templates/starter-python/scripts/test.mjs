@@ -23,15 +23,24 @@ async function freePort() {
 }
 environment.APP_TEST_PORT = String(await freePort());
 environment.PRODUCTION_TEST_PORT = String(await freePort());
+environment.ONE_COMPANY_TEST_PORT = String(await freePort());
 environment.API_TEST_URL = `http://127.0.0.1:${environment.APP_TEST_PORT}`;
 environment.BASE_URL = environment.API_TEST_URL;
 environment.PRODUCTION_API_TEST_URL = `http://127.0.0.1:${environment.PRODUCTION_TEST_PORT}`;
+environment.ONE_COMPANY_API_TEST_URL = `http://127.0.0.1:${environment.ONE_COMPANY_TEST_PORT}`;
+environment.ONE_COMPANY_BASE_URL = environment.ONE_COMPANY_API_TEST_URL;
+environment.ONE_COMPANY_ADMIN_EMAIL = `admin-${randomUUID()}@example.test`;
+environment.ONE_COMPANY_ADMIN_PASSWORD = 'correct-horse-battery-staple';
 const compose = ['compose', '-f', 'compose.test.yml'];
 try {
   run(corepack, ['pnpm', 'install', '--frozen-lockfile']);
   run('uv', ['--directory', 'apps/api', 'sync', '--frozen']);
   run(corepack, ['pnpm', 'exec', 'playwright', 'install', '--with-deps', 'chromium']);
   run('docker', [...compose, 'up', '-d', '--build', '--wait', '--wait-timeout', '180']);
+  run('docker', [...compose, 'exec', '-T',
+    '-e', `ADMIN_EMAIL=${environment.ONE_COMPANY_ADMIN_EMAIL}`,
+    '-e', `ADMIN_PASSWORD=${environment.ONE_COMPANY_ADMIN_PASSWORD}`,
+    'one-company-api', 'uv', 'run', '--no-sync', 'python', '-m', 'app.setup_company']);
   run(corepack, ['pnpm', 'test']);
   const response = await fetch(`${environment.API_TEST_URL}/health`);
   if (response.status !== 200) throw new Error('The built image did not answer GET /health with 200');

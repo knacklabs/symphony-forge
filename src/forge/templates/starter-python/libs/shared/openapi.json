@@ -6,6 +6,28 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/v1/auth/options": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Read the public sign-up options.",
+        "description": "One-company apps accept accounts only through an admin invite.",
+        "operationId": "options_api_v1_auth_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_AuthOptions_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/sign-up": {
       "post": {
         "tags": [
@@ -36,6 +58,16 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -1402,6 +1434,24 @@
         ],
         "title": "ApiErrorBody"
       },
+      "AuthOptions": {
+        "properties": {
+          "signUpOpen": {
+            "type": "boolean",
+            "title": "Signupopen",
+            "description": "Whether anyone can create an account.",
+            "examples": [
+              true
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "signUpOpen"
+        ],
+        "title": "AuthOptions"
+      },
       "ChangeRoleInput": {
         "properties": {
           "role": {
@@ -1932,6 +1982,35 @@
           "data"
         ],
         "title": "SuccessEnvelope[Account]"
+      },
+      "SuccessEnvelope_AuthOptions_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuthOptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[AuthOptions]"
       },
       "SuccessEnvelope_ErrorReportResponse_": {
         "properties": {

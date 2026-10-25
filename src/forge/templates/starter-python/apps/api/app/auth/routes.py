@@ -11,6 +11,7 @@ from app.auth.models import Session as SessionModel
 from app.auth.schema import (
     AcceptInviteInput,
     Account,
+    AuthOptions,
     CredentialsInput,
     ForgotPasswordInput,
     MessageResponse,
@@ -130,12 +131,25 @@ def _clear_session_cookies(response: Response, settings: Settings) -> None:
     )
 
 
+@router.get(
+    "/options",
+    response_model=SuccessEnvelope[AuthOptions],
+    summary="Read the public sign-up options.",
+    description="One-company apps accept accounts only through an admin invite.",
+)
+def options(
+    request: Request, db: Annotated[DbSession, Depends(get_db)]
+) -> SuccessEnvelope[AuthOptions]:
+    return SuccessEnvelope(data=_service(request, db).options())
+
+
 @router.post(
     "/sign-up",
     status_code=201,
     response_model=SuccessEnvelope[Account],
     responses={
         400: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
         409: {"model": ErrorEnvelope},
         429: {"model": ErrorEnvelope},
     },

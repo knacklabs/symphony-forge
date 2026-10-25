@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/v1/auth/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the public sign-up options.
+         * @description One-company apps accept accounts only through an admin invite.
+         */
+        get: operations["options_api_v1_auth_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/sign-up": {
         parameters: {
             query?: never;
@@ -372,6 +392,15 @@ export interface components {
              */
             errorId: string;
         };
+        /** AuthOptions */
+        AuthOptions: {
+            /**
+             * Signupopen
+             * @description Whether anyone can create an account.
+             * @example true
+             */
+            signUpOpen: boolean;
+        };
         /** ChangeRoleInput */
         ChangeRoleInput: {
             /**
@@ -605,6 +634,18 @@ export interface components {
             /** Error */
             error?: null;
         };
+        /** SuccessEnvelope[AuthOptions] */
+        SuccessEnvelope_AuthOptions_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["AuthOptions"] | null;
+            /** Error */
+            error?: null;
+        };
         /** SuccessEnvelope[ErrorReportResponse] */
         SuccessEnvelope_ErrorReportResponse_: {
             /**
@@ -737,6 +778,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    options_api_v1_auth_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_AuthOptions_"];
+                };
+            };
+        };
+    };
     sign_up_api_v1_auth_sign_up_post: {
         parameters: {
             query?: never;
@@ -761,6 +822,15 @@ export interface operations {
             };
             /** @description Bad Request */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

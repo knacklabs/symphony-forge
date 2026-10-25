@@ -17,7 +17,7 @@ node scripts/test.mjs
 ```
 
 This command installs the pinned pnpm packages, Python packages, and Chromium. It starts a new
-Postgres database and two API instances. It runs lint, format, and type checks, pytest, Vitest, and
+Postgres database and three API instances. It runs lint, format, and type checks, pytest, Vitest, and
 Playwright. It removes the containers and data after the run, even when a test fails. Reports go
 to `test-results/api.xml` and `test-results/browser.xml`.
 
@@ -25,6 +25,24 @@ to `test-results/api.xml` and `test-results/browser.xml`.
 
 The app serves the web app and API at port 3000. `/health` checks readiness. `/api/docs` lists the
 API endpoints.
+
+## Set up a one-company app
+
+Set `APP_COMPANIES=one` in the API environment to close public sign-up. If you do not set this
+value, the app uses `many` and keeps public sign-up open.
+
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the API environment. From `apps/api`, run this command
+to create the company and its first account as the admin:
+
+```sh
+uv run --no-sync python -m app.setup_company
+```
+
+Run the command once. It does not check whether a company already exists. A second run with a new
+email creates another company.
+
+Set `APP_COMPANIES=many` to open public sign-up later. Restart the API. The app keeps the same
+company, people, and records. No data migration is needed.
 
 ## How it works
 

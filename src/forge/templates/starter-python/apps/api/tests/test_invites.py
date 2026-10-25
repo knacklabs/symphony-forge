@@ -9,8 +9,8 @@ from test_api import compose_logs, credentials, sign_up
 from test_soft_delete import psql
 
 
-def invite(client: httpx.Client, csrf: str, email: str) -> str:
-    previous_lines = compose_logs("api").splitlines()
+def invite(client: httpx.Client, csrf: str, email: str, service: str = "api") -> str:
+    previous_lines = compose_logs(service).splitlines()
     response = client.post(
         "/api/v1/invites",
         headers={"x-csrf-token": csrf},
@@ -18,7 +18,7 @@ def invite(client: httpx.Client, csrf: str, email: str) -> str:
     )
     assert response.status_code == 201, response.text
 
-    new_lines = compose_logs("api").splitlines()[len(previous_lines) :]
+    new_lines = compose_logs(service).splitlines()[len(previous_lines) :]
     for line in reversed(new_lines):
         if '"inviteUrl"' not in line:
             continue

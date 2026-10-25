@@ -14,6 +14,10 @@ export const signUpSchema = z.object({
   password: z.string().min(12).max(128),
 }).strict();
 export const signInSchema = signUpSchema;
+export const authOptionsSchema = z.object({
+  signUpOpen: z.boolean().meta({ description: 'Whether anyone can create an account.', example: true }),
+}).strict();
+export type AuthOptions = z.infer<typeof authOptionsSchema>;
 export const forgotPasswordSchema = z.object({ email: z.string().trim().toLowerCase().email().max(254) }).strict();
 export const resetPasswordSchema = z.object({ token: z.string().min(32).max(256), password: z.string().min(12).max(128) }).strict();
 
