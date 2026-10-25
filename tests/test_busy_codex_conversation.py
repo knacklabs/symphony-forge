@@ -1,4 +1,4 @@
-"""Busy Codex chats: readers start fresh, workers explain how to free their chat.
+"""Busy Codex chats: readers start fresh.
 
 The CLI and pinned SDK run for real. Only the Codex app-server is a stand-in.
 """
@@ -9,8 +9,7 @@ import pytest
 from conftest import _install
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_readloop_rounds import CODEX
-from test_steer_resume import _ready, _writer
-from test_worker_and_reader_chats_survive_rounds import _adopted, _client_reader
+from test_worker_and_reader_chats_survive_rounds import _client_reader
 
 STORY = "busy-codex-conversation"
 
@@ -42,19 +41,3 @@ def test_1_cold_read_starts_fresh_after_busy_conversation_retry(
     assert _sent(reader.log, "turn/start")[-1]["threadId"] == "thr-stub-2"
     assert reader.doc.read_text("utf-8") in reader.prompt()
     assert "No findings." in reader.notes.read_text("utf-8")
-
-
-def test_2_work_on_earlier_adopted_repo_explains_how_to_free_busy_conversation(
-        repo, monkeypatch, sdk_data, claude_session):
-    _adopted(repo)
-    _, calls, _ = _ready(repo, monkeypatch, sdk_data)
-    monkeypatch.setenv("STUB_RESUME_ERROR", "hold")
-    with _writer(repo, "hold") as holder:
-        done = repo.forge("work", "BOARD/PAGE")
-        assert done.returncode != 0
-        assert holder.poll() is None
-    assert done.stderr == ("Another program holds this Codex conversation. Close it in that "
-                           "program, then run forge work BOARD/PAGE again.\n")
-    assert "Codex never reported" not in done.stdout + done.stderr
-    assert len(_sent(calls, "thread/resume")) == 2
-    assert len(_sent(calls, "thread/start")) == len(_sent(calls, "turn/start")) == 1

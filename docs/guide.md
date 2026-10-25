@@ -262,6 +262,10 @@ use `Grill · <story or spec> · <name>`. A later turn continues the item's conv
 can. For conversations you start yourself, names such as `Review`, `Explore` and `Debug` make
 them easier to find in the Codex app.
 
+If another program holds the earlier Codex conversation, Forge retries once. If it is still
+held, work starts a new conversation with the whole brief and says why in one line.
+New repos get this behavior at init. Existing repos get it on upgrade.
+
 ### Notes, worker questions and quick answers
 
 Use `forge work <item> --note "<text>"` when one sentence of guidance would help the worker in

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tUpdate the guide contract test for the new fallback behavior\twork-starts-fresh-when-conversation-held",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1345,
+      "text": "Update the guide contract test for the new fallback behavior",
+      "from": "blocking",
+      "item": "work-starts-fresh-when-conversation-held",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

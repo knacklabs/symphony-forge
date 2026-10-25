@@ -89,6 +89,9 @@ Before every work round, Forge fetches and merges the default branch before it r
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
 
+If another program holds the earlier Codex conversation, Forge retries once. If it is still
+held, work starts a new conversation with the whole brief and says why in one line.
+
 $delegation
 - Edit files only inside this checkout.
 - $settings
