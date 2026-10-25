@@ -64,7 +64,8 @@
     "id": "37ffa23f-2c04-4c3c-9704-a483fb8114c5",
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "round": 1,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T16:46:39.994723+00:00",
@@ -75,5 +76,12 @@
       "step": "review"
     }
   ],
-  "why": "Clients need v1.2.22: tests run once in one place, parallel test groups for any runner, the constitution's built-in defaults, the modular and FastAPI starters"
+  "stuck": {
+    "close": "ec755368-224a-454d-a6cb-44b33d889854",
+    "head": "03454d46a9eba7b27e75b6525064ad09b44aca39",
+    "keys": {},
+    "round": null
+  },
+  "why": "Clients need v1.2.22: tests run once in one place, parallel test groups for any runner, the constitution's built-in defaults, the modular and FastAPI starters",
+  "worker": "codex"
 }
