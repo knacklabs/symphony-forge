@@ -21,7 +21,8 @@ def test_1_sync_gives_package_client_tests_thirty_minutes(repo):
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")[0]
     assert "    timeout-minutes: 30\n" in tests_job
-    assert '- run: "npm test"' in tests_job
+    # The related-test entry point retains the package client's browser budget.
+    assert '- run: "forge test --change"' in tests_job
 
 
 def test_2_browser_scope_guidance():

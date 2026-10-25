@@ -84,7 +84,9 @@ def test_1_docs_and_assets_get_light_review_and_skip_ci_groups(
     synced = env.repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     env.repo.git("add", "-A")
-    env.repo.git("commit", "-qm", "Sync checks")
+    # The generic CI entry point can stay unchanged when the test command changes.
+    if env.repo.git("diff", "--cached", "--name-only"):
+        env.repo.git("commit", "-qm", "Sync checks")
     env.repo.git("switch", "-q", "main")
     env.repo.git("merge", "-q", "--ff-only", "fix/configure-docs-checks")
     _land_fixture(env.repo)

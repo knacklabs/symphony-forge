@@ -311,12 +311,11 @@ def _on_a_fix_branch_the_files_are_written_in_place(repo, gh, tmp_path, monkeypa
 
 def _a_stale_tests_workflow_is_repaired_in_place(repo, gh, tmp_path, monkeypatch, _):
     client = _client(repo, gh, tmp_path, monkeypatch)
-    folder = _start_fix(repo, client)
     workflow = ".github/workflows/forge.yml"
-    stale = (folder / workflow).read_text(encoding="utf-8").replace(
-        'run: "forge test --change"', 'run: "make check"')
-    _set(folder, workflow, stale)
-    repo.git("commit", "-qam", "Restore the old test step", cwd=folder)
+    stale = (Path(__file__).parent / "fixtures/doctor-v1.2.2" / workflow).read_text(encoding="utf-8")
+    assert 'run: "npm test"' in stale
+    _land(repo, client, "Upgrade Forge", lambda folder: _set(folder, workflow, stale), forge=True)
+    folder = _start_fix(repo, client)
     listed = repo.forge("doctor", cwd=folder).stdout
     assert f"{workflow} differs from what forge sync writes" in listed, listed
     assert f"The tests check in {workflow} does not run forge test --change." in listed

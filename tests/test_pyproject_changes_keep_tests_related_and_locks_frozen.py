@@ -195,6 +195,8 @@ def check_generated_ci(repo, lock, *, launcher=None):
     frozen = re.search(r"^      UV_FROZEN: '([^']+)'$", tests_job, re.M)
     assert frozen, tests_job
     command = json.loads(re.search(r'^      - run: (".*")$', tests_job, re.M)[1])
+    # Actions executes the generated step detached, without a local Forge item.
+    repo.git("checkout", "-q", "--detach", "HEAD")
     result = subprocess.run(command, shell=True, cwd=repo.path, capture_output=True, text=True,
                             env={**os.environ, "UV_FROZEN": frozen[1]}, timeout=60)
     assert result.returncode == 0, result.stdout + result.stderr
