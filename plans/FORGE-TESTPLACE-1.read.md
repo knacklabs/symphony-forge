@@ -11,8 +11,8 @@ notes_seen: 1bc99794c2e6216afbe763c9b8b3d7b5eef537dd
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a16f13-9e50-7203-8fbe-8cdb8019557f
 session:
-loop_choice:
-loop_reason:
+loop_choice: split
+loop_reason: The owner moved CI sharding to its own story; the three sharding notes leave this plan
 ---
 # Cold read notes
 
