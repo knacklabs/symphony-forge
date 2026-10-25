@@ -59,8 +59,8 @@
     "id": "b7d3b3a5-f571-4931-ad92-2f07b0b88277",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T02:41:46.411263+00:00",
@@ -76,12 +76,10 @@
     }
   ],
   "stuck": {
-    "close": "ba49f2a9-c32a-48fa-87ea-55e1d6d1dbd6",
-    "head": "3b150bfbb3d01dd1019cd869a18b715e84714d55",
-    "keys": {
-      "the open P0 [p1] require local test evidence when reusing a review in src/forge/close.py": 1
-    },
-    "round": 1
+    "close": "f6d95cba-d97b-4701-be14-0c39c843e231",
+    "head": "6b9041f16133b14b159706c62f8929345b7885e9",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
