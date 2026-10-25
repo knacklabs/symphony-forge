@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DATABASE-1-PG18",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T19:03:53.031421+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "ccce242f15967c2ab797c8ffddd3477ba26792cb",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
