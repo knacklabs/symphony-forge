@@ -68,7 +68,7 @@
     "id": "ca658147-833e-4cec-9113-e8d1ebc83c60",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-DATABASE-1/PG18",
   "status": "fixing",
   "steps": [
@@ -82,10 +82,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7794500260d390d94e29dafd9b6bdd3af9d7794f",
-    "keys": {},
-    "round": null
+    "close": "7985b053-e25d-4a14-a171-f28c4aed3042",
+    "head": "91411b355c24c069036f249c5039530392265e72",
+    "keys": {
+      "the open P0 gate: remove the unrelated database upgrade from the selected change in src/forge/templates/starter-python/apps/api/migrations/versions/0006_extensions.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
