@@ -306,9 +306,10 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        # Change runs use close's selection and cached passes; bare worker runs always execute.
+        # CI groups reuse their own passes; explicit ungrouped commands always execute.
         status, report = review.test_run(top, review.close_test(top, base, closing=args.change), base,
-                                        always=not args.change, closing=args.change)
+                                        always=not (args.change and "FORGE_GROUPS" in os.environ),
+                                        closing=args.change)
         print(report)
         return status
     from forge import review
