@@ -1,6 +1,13 @@
 {
   "base": "f78b42fd7fa691aa5e908a6fe5f2174241769dd5",
   "branch": "fix/python-apps-get-built-in-defaults",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17246-5723-7dc0-876c-f80bb2dcceb3",
+    "head": null,
+    "start": "98cd6b222ddf9f46aff4f85df05e0040e081b5df"
+  },
   "done_when": "The guide and the constitution defaults page mark the defaults as built in for an app with libs/organisations or apps/api/app/organisations, so a Python starter app is asked nothing about them",
   "fix_kind": "mechanical",
   "kind": "fix",
