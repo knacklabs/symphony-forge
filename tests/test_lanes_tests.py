@@ -136,8 +136,10 @@ def check_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_pa
     closing_home.mkdir()
     closing = Forge(other, env.gh, closing_home)
     cfg = (other.path / "forge.toml").read_text("utf-8")
-    closing.commit(other.path, "forge.toml", cfg + 'checks = ["tests", "forge-pr-check"]\n',
-                   "Name the client's CI checks")
+    # Named checks now imply CI tests; lane sharing exercises close's laptop mode.
+    closing.commit(other.path, "forge.toml",
+                   cfg + 'test_place = "local"\nchecks = ["tests", "forge-pr-check"]\n',
+                   "Run close tests on the laptop")
     configure(closing, server)
     item, folder = closing.start_fix({"app.py": 'print("close passed")\n'})
     processes = []
