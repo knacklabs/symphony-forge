@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 
 from test_close import env  # noqa: F401 (pytest fixture)
-from test_proto_signoff import SOL_HIGH, _client, _decision
+from test_proto_signoff import SOL_HIGH, _client, _decision, _green_full_run
 
 STORY = "FIX-A-REPO-S-OWN-REVIEW-RULES-SUCH-AS-WHICH"
 
@@ -69,6 +69,7 @@ def test_4_the_client_sign_off_review_gets_the_repo_s_review_rules(repo, tmp_pat
     repo.git("add", "AGENTS.md")
     repo.git("commit", "-q", "-m", "Write the review rules")
     repo.git("push", "-q", "origin", "main")
+    _green_full_run(repo)
     _decision(fix, answers, via="", on="")
     clean = {"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}
     queue.write_text(json.dumps([clean, clean]))

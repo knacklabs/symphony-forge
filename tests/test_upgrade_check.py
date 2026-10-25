@@ -80,7 +80,9 @@ def _pr_check_steps(env) -> list[str]:
     env.repo.git("worktree", "add", "-q", "-b", "fix/sync", str(synced))
     done = env.repo.forge("sync", cwd=synced)
     assert done.returncode == 0, done.stderr
-    job = (synced / ".github/workflows/forge.yml").read_text("utf-8").split("\n  forge-pr-check:\n")[1]
+    jobs = (synced / ".github/workflows/forge.yml").read_text("utf-8").split(
+        "\n  forge-pr-check:\n", 1)[1]
+    job = re.split(r"\n  [a-z0-9_-]+:\n", jobs, maxsplit=1)[0]
     steps = []
     for step in re.split(r"^      - ", job, flags=re.M)[1:]:
         # Advisory reporting now has its own real-script proof in test_client_setup_and_migration;

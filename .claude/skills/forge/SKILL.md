@@ -1551,6 +1551,13 @@ A repo with a direct pytest command and pytest-split keeps its existing six-grou
 the `test` command. The required `tests` check passes only when every job passes. New repos get
 this at init, earlier ones after upgrading and syncing; branch protection keeps the same `tests`
 check.
+In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
+`workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
+Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
+in the main checkout when the machine is quiet. A green full run on the latest default-branch
+commit is required before pushing a release tag or accepting `client-signoff`. Everyday merges do
+not wait for it.
+A failed scheduled or manual full run appears in `forge next` with its failed test names.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still
 fails. New repos get this rule at init. Existing repos get it after upgrade and sync.

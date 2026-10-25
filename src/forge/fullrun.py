@@ -85,7 +85,12 @@ def run(top: Path) -> int:
 
 
 def notices(top: Path) -> list[str]:
-    if repo.test_place(repo.config(top)) != "local" or not shutil.which("gh"):
+    try:
+        place = repo.test_place(repo.config(top))
+    except repo.Refused:
+        # Optional advice must not hide next's setup and unreadable-worktree reports.
+        return []
+    if place != "local" or not shutil.which("gh"):
         return []
     query = """query($owner:String!,$repo:String!,$branch:String!) {
       repository(owner:$owner,name:$repo) {

@@ -32,6 +32,8 @@ from test_setup import _fresh_client
 from test_testplace_upgrade import prepare_adopted_client
 from test_testplace_workflow import _jobs
 
+STORY = "FORGE-TESTPLACE-1"
+
 
 def _status_endpoint(sha: str) -> str:
     return f"repos/{{owner}}/{{repo}}/commits/{sha}/statuses"
@@ -455,7 +457,7 @@ def test_5_release_and_signoff_wait_for_a_green_full_run(repo, gh, tmp_path, mon
     tagged_repo.git("tag", "-f", "-a", "v1.0.0", "-m", "Older release", older)
     stale = push_tag(tagged_repo, "v1.0.0")
     assert stale.returncode != 0
-    assert "must point to the latest commit" in stale.stderr
+    assert stale.stderr.splitlines()[0] == "Release tag v1.0.0 must point to the latest commit on main."
     tagged_repo.git("tag", "-f", "-a", "v1.0.0", "-m", "Release", main)
     accepted = push_tag(tagged_repo, "v1.0.0")
     assert accepted.returncode == 0, accepted.stderr
