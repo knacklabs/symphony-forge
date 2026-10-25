@@ -14,7 +14,7 @@
       "gain": 5,
       "harm": 3,
       "line": 63,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -27,7 +27,7 @@
       "gain": 4,
       "harm": 3,
       "line": 277,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,48 +51,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fb67bcf0d658933983c6651582ba7bb57af644b8a084c3d873fb8b422a8c02cf",
-    "changed": "d0909db0db2735c6d37d2895c8a8f41c2be962a242f3910c92e545597ca9c610",
-    "commit": "731c8f13bba450ed140c024770cb5c9dbf0f7867",
+    "branch_diff": "2e84cafc12e4013b58f2f7d1b299bf9e655320744baf1df3d1b33e98225faeb6",
+    "changed": "a9bf3db49d3e8b39d07d78813403f4adeafac28a864e421bc2098dcf3f4f23cf",
+    "commit": "7d7217f1d74f08f3691361889ca414f180025ecf",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Not done. Case: normal use - a nightly pytest run fails, or a full run started through workflow_dispatch fails. The CI failure path has two gaps. First, review.test_run injects `-rs` (src/forge/review.py:473), which selects skipped-test summaries rather than FAILED/ERROR summaries ([pytest reporting contract](https://docs.pytest.org/en/stable/_modules/_pytest/terminal.html)). Its explicit failure list uses `- <nodeid>` bullets (:540), but board_facts.failed_schedules recognizes only `FAILED|ERROR <nodeid>` (src/forge/board_facts.py:216). Consequently, ordinary nightly pytest failures produce a fix report without the failing test names. The proof at tests/test_testplace_fullrun.py:330 supplies manufactured uppercase summaries instead of this command's output. Second, fullrun.py:72 suppresses the fix command in CI mode, while board_facts.py:193 queries only `event=schedule`; failed on-demand runs therefore produce no fix command at all. Both CI entry paths need reporting that preserves the real failing IDs.",
-        "file": "src/forge/fullrun.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 63,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A failed full run opens a fix that names the failing tests.",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - an existing CI client whose default branch is master upgrades and receives this job. The checkout uses explicit fetch refspecs ([checkout implementation](https://raw.githubusercontent.com/actions/checkout/v7/src/git-command-manager.ts)); Git creates origin/HEAD automatically only when fetching with default refspecs ([Git contract](https://git-scm.com/docs/git-config#Documentation/git-config.txt-fetchfollowRemoteHEAD)). This job never initializes that symbolic ref. src/forge/repo.py:413-415 consequently identifies the default branch as main, and fullrun.latest fetches refs/heads/main instead of master. The nightly and on-demand jobs fail before testing or publishing a status, leaving the new release and sign-off gates blocked. Initialize the remote default-branch reference before invoking Forge.",
-        "file": "src/forge/prcheck.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 277,
-        "priority": "P1",
-        "title": "Initialize origin/HEAD before running the full suite in Actions",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Test. Case: normal use - another developer advances remote main after this checkout last fetched, leaving a green status on the cached commit and no green run on current main. Every gate scenario uses an already-current local origin/main; the older-tag case merely tags its ancestor. Removing the fetch from fullrun.latest would leave this proof passing while both release and sign-off gates could authorize the cached green commit. Add a command-level case that advances main independently, retains success on the old commit, and verifies that the gates inspect and refuse the new remote commit.",
-        "file": "tests/test_testplace_fullrun.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 348,
-        "priority": "P1",
-        "title": "Gate: test_5_release_and_signoff_wait_for_a_green_full_run",
-        "work": 3
-      }
-    ],
-    "id": "425b087a-e8d9-48fc-881c-4d801de9efb2",
-    "status": "blocked"
+    "findings": [],
+    "id": "0ec0e47c-c1d5-45c2-b0d9-3d9d2de049f3",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T11:44:17.884700+00:00",
@@ -100,6 +68,10 @@
     },
     {
       "at": "2026-10-25T12:20:34.316148+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T12:37:55.031721+00:00",
       "step": "review"
     }
   ],
