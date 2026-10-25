@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/review.py\tA stacked task review includes unchanged work from its reviewed parent and blocks the child on its removal.",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 937,
+      "text": "A stacked task review includes unchanged work from its reviewed parent and blocks the child on its removal.",
+      "from": "worker",
+      "item": "FORGE-SINGLECO-1/COMPANYPY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/templates/starter-python/apps/api/migrations/versions/0006_extensions.py\tGate: remove the unrelated database upgrade from the selected change\tFORGE-SINGLECO-1/COMPANYPY",
       "kind": "bug",
       "path": "src/forge/templates/starter-python/apps/api/migrations/versions/0006_extensions.py",
