@@ -1547,14 +1547,19 @@ CI checks this once before the tests job and skips that job for a docs-only chan
 One code file runs tests as usual. New repos get
 this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
 For other changes, the generated `forge.yml` runs one `tests` job with `forge test --change`.
-Set `groups = 4` in `forge.toml` to run four parallel jobs with any test runner. Put `{group}`
-and `{groups}` in the `test` or `fast_test` command where the runner expects its shard number and
-total, for example `vitest run --shard={group}/{groups}`. Forge fills these values for each job
-and uses `1` for both outside CI. Without a shard flag, each job runs the same tests; this is
-correct but slower. Without `groups`, a repo with a direct pytest command and pytest-split keeps
-its existing six-group job, which runs the `test` command. The required `tests` check passes only
-when every job passes. New repos get this at init, earlier ones after upgrading and syncing;
-branch protection keeps the same `tests` check.
+Set `groups = 4` in `forge.toml` to run four parallel jobs with any test runner. Each job runs the
+tests related to the pull request. Put `{group}` and `{groups}` in the `test` or `fast_test`
+command where the runner expects its shard number and total, for example
+`vitest run --shard={group}/{groups}`. Forge fills these values for each job and uses `1` for both
+outside CI. Without a shard flag, each job repeats the same related tests; this is correct but
+slower. For a direct pytest command with pytest-split, Forge adds the split options automatically.
+When `groups` exceeds 1 and `test` has no `{group}` placeholder or automatic pytest split,
+`forge doctor` and the generated workflow each show one warning. They do not refuse or change
+the chosen groups. Set `groups` to 1 or add the runner's shard options to `test`.
+Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
+existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
+runs its share of the related tests through `forge test --change`. The required `tests` check passes
+only when every job passes; branch protection keeps the same `tests` check.
 In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
 `workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
 Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
@@ -1592,8 +1597,11 @@ the pytest picker never picks them by default. List them in `always_test` in
 `tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
 them on every change that includes code or settings, beside the tests it picks. Docs-only changes
 skip these tests too.
-Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
-entry that runs no test, for example because `-k` deselects it, fails the run.
+Forge passes each entry to pytest, so it runs even outside the paths `test` names. In a grouped
+run, pytest-split assigns each entry to one group; the other groups do not fail because they did
+not run it. A missing file or node still fails. In a grouped run, a mark or `-k` filter that
+removes an entry is not reported as missing. In a one-group run, an entry that runs no test, for
+example because `-k` deselects it, still fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,
