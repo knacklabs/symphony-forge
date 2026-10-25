@@ -118,6 +118,22 @@ the Python live run runs every flow in it. So each part that changes the web app
 part, and main never has a web app that one API cannot serve. COMMAND, WEB and PY change only
 `feature.py`, `kinds.toml`, marks and new UI components, which no live run of the starters uses.
 
+**Layout (FORGE-LIBS-1).** Every part builds on the library layout that FORGE-LIBS-1 pins; where
+a path here differs from the merged tree, follow the merged tree. The projects module is
+`libs/projects/contracts` (`@app/projects-contracts`: zod schemas, types and the public service
+interface), `libs/projects/server` (`@app/projects-server`) and `libs/projects/web`
+(`@app/projects-web`: pages and hooks under `libs/projects/web/src`). Shared code is
+`libs/shared/util` (`@app/shared-util`, the format helpers and the CSV cell guard) and
+`libs/shared/ui` (`@app/shared-ui`, the shadcn components in
+`libs/shared/ui/src/components/ui/`, added with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`).
+Core is `libs/core/server` (`@app/core-server`) and `libs/core/web` (`@app/core-web`).
+`apps/web` keeps `app.tsx`, `app-shell.tsx` and `main.tsx`. Each module's tables sit in its own
+Postgres schema (`projects`, `history`; core tables in `core`). A module uses another module only
+through that module's contracts: an interface and a token, injected with `@Inject(<TOKEN>)`. The
+Python API keeps `apps/api/app/<module>/`; the Python web app has the same web libraries and its
+own `libs/<module>/contracts`, with types from `@app/shared-api-types`
+(`libs/shared/api-types`). Paths below use this layout.
+
 ### Where the command lives
 
 The command is `forge task feature`, under the existing `task` group. `forge --help` lists 25
@@ -156,25 +172,31 @@ The part named first owns each name; later parts use it and list that part under
   search, with the placeholder `Search by <label>`. No other kind gets a filter. A link filter
   and the form's link Combobox are a searchable Select that asks the linked feature's list API
   page by page (its `search` and `after`), so a target with many items works; a list cell and
-  the detail row show the linked item's name from the linked feature's detail hook (a
+  the detail row show the linked item's name from the linked feature's detail API (a
   `ponytail:` comment names the ceiling: up to 20 cached detail reads per page; a name lookup
-  route is the upgrade). List columns: the first text field (a link to the detail screen), each `status`,
+  route is the upgrade). The feature's web library calls those APIs with `@app/core-web`'s API
+  client and the target's `@app/<target>-contracts` types, never the target's web library,
+  which the boundary rules refuse. List columns: the first text field (a link to the detail screen), each `status`,
   `link`, `date` and `money` field, then Updated. Every column header sorts. This comes from the
   `filter`, `search` and `column` keys of the kind table, not from code.
 - **The detail screen and recent changes (DETAIL).** `/<plural>/:id`, as SCREENS.md shows it.
   The change history table gets `subjectId uuid NULL` and `subjectName text NULL`, and the index
   `(organisationId, subjectId, createdAtUtc DESC)`, in one new migration in each starter (the
   TypeScript migration folder and the next Alembic revision on main, chained to the head at
-  build time). `HistoryService.record(principal, action: string, summary: string, subject?: { id: string; name: string })`
-  (Python `record(account, action: str, summary: str, subject: Subject | None = None)`) and
-  `listForSubject(principal, subjectId, limit)`. Route `GET /api/v1/<plural>/:id/changes`
+  build time; the table is in the `history` schema). The history contracts interface
+  `HistoryApi` (token `HISTORY_API`, in `@app/history-contracts`) gets
+  `record(principal, action: string, summary: string, subject?: { id: string; name: string }, tx?: unknown)`
+  and `listForSubject(principal, subjectId, limit)`; the transaction is typed `unknown` in the
+  contract, so the contract names no Prisma type, and `HistoryService` uses it as its Prisma
+  transaction client (Python `record(account, action: str, summary: str, subject: Subject | None = None)`
+  on the caller's session). Projects and every copied feature inject `HISTORY_API`. Route `GET /api/v1/<plural>/:id/changes`
   returns the newest 5 as `{ id, actorEmail, summary, createdAtUtc }[]`. The Change history
   screen and its CSV show `<subjectName>: <summary>` when `subjectName` is set.
 - **Change history rows (DETAIL; ACCESS adds restore).** Each create, change, delete and
   restore writes the record and calls `record` in one database transaction, as the database
   rules plan says: TypeScript `this.prisma.$transaction(async (tx) => { ...; await this.history.record(..., tx); })`,
-  where `record` and its Python twin take an optional transaction client (`tx?:
-  Prisma.TransactionClient`; Python: the caller's `Session`, with one `commit()` by the caller),
+  where `record` takes the caller's transaction as `tx?: unknown` (the contract above; Python:
+  the caller's `Session`, with one `commit()` by the caller),
   so history still writes only its own table. A failed history write rolls back the change. The
   action is `<singular>.created`, `.changed`, `.deleted` or `.restored`, with the subject (id
   and title), and the summary `Created the <singular>`, `<Label> changed from <old> to <new>`
@@ -194,13 +216,13 @@ The part named first owns each name; later parts use it and list that part under
   `.restore`, with the texts and states the updated `docs/design/FORGE-FEATURE-1/` gives.
   Members never see deleted items.
 - **Permissions (ACCESS).** Roles map to permissions in code.
-  - TypeScript, `libs/core/src/common/permissions.ts`, exported from `@app/core`:
+  - TypeScript, `libs/core/server/src/common/permissions.ts`, exported from `@app/core-server`:
     `definePermissions(map: Record<MemberRole, readonly string[]>)` adds a module's map to one
     in-memory list and returns it; `permissionsFor(role: MemberRole): string[]`;
     `RequirePermission(permission: string)`, a guard decorator that refuses a caller whose role
     lacks it with `403 { code: 'PERMISSION_DENIED', message: 'You do not have permission to do this.', details: null }`.
     Every route of a feature controller has exactly one `@RequirePermission(...)`.
-  - The one place per feature: `libs/<plural>/src/<plural>.permissions.ts`, for projects
+  - The one place per feature: `libs/<plural>/server/src/<plural>.permissions.ts`, for projects
     `export const PROJECT_PERMISSIONS = definePermissions({ admin: ['projects.view', 'projects.create', 'projects.edit', 'projects.delete', 'projects.restore'], member: ['projects.view', 'projects.create', 'projects.edit'] });`
     The module imports it, so the map is in place before the first request. A plan changes a
     feature's mapping by editing only this file.
@@ -210,7 +232,7 @@ The part named first owns each name; later parts use it and list that part under
     `.restore`.
   - `/api/v1/auth/me`, sign-up and sign-in return `permissions: string[]` (from
     `permissionsFor(role)`) beside `role`; the shared `Account` type gets the field.
-  - Web, `apps/web/src/lib/permissions.ts`: `useCan(permission: string): boolean`, from the
+  - Web, `libs/core/web/src/permissions.ts`, exported from `@app/core-web`: `useCan(permission: string): boolean`, from the
     signed-in account's `permissions`. A screen whose view permission the person lacks shows the
     not-found page; a button or link whose permission the person lacks is not shown. The
     `Open the change history` link shows only for an admin, as SCREENS.md says. The web code is
@@ -221,11 +243,11 @@ The part named first owns each name; later parts use it and list that part under
     non-GET request. The one place per feature is `app/<plural>/permissions.py`.
 - **shadcn/ui components.** Each one is added, from the shadcn/ui registry as the starter's
   other components are (they use the installed `radix-ui` package, so no new dependency), by the
-  part that first uses it: `card.tsx` by DETAIL (the detail screen's cards); `textarea.tsx`,
+  part that first uses it, into `libs/shared/ui/src/components/ui/`: `card.tsx` by DETAIL (the detail screen's cards); `textarea.tsx`,
   `checkbox.tsx` and `popover.tsx` by WEB (the form controls for long text, yes or no, and the
   link Combobox with the existing `command.tsx`); `switch.tsx` and `alert.tsx` by ACCESS (the
   `Show deleted` Switch and the deleted item's Alert). The command copies a component that the app
-  lacks from the Forge starter tree into `apps/web/src/components/ui/`.
+  lacks from the Forge starter tree into `libs/shared/ui/src/components/ui/`.
 - **The command line (COMMAND).**
   `forge task feature <plural> --one <singular> --field <name>:<kind> [--field ...]`.
   `<plural>` and `<singular>` are lower-case words joined by hyphens (`invoices`, `work-orders`;
@@ -284,7 +306,10 @@ The part named first owns each name; later parts use it and list that part under
   - Every database value carries the comment
     `# placeholder: the database rules story sets this value`. The placeholders follow the
     owner's database rules already: no `varchar(n)` (text with a named length CHECK), no float,
-    status as text with a named CHECK, foreign keys `ON DELETE RESTRICT`. The starting values:
+    status as text with a named CHECK, foreign keys to `core` only, `ON DELETE RESTRICT`.
+    Each feature's tables go in its own Postgres schema, named after the feature (the plural in
+    snake form: `jobs`, `work_orders`), so every table name in the SQL is `"{schema}"."{table}"`
+    and `{schema}` joins the placeholders. The starting values:
 
   | Kind | sql | check | index (filter, search or every field) |
   |---|---|---|---|
@@ -296,11 +321,12 @@ The part named first owns each name; later parts use it and list that part under
   | yes-no | `boolean DEFAULT false` | none | filter: `CREATE INDEX "idx_{table}_{column}" ON "{table}" ("{org}", "{column}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;` |
   | email | `text` | `CONSTRAINT "{table}_{column}_format" CHECK (char_length("{column}") <= 254 AND "{column}" ~ '^[^@[:space:]]+@[^@[:space:]]+$')` | none (only the first text field is the search) |
   | status | `text DEFAULT '{first}'` | `CONSTRAINT "{table}_{column}_allowed" CHECK ("{column}" IN ({options}))` | filter: as yes-no |
-  | link | `uuid`, with a foreign key to `{target}` `ON DELETE RESTRICT` | none | filter: as yes-no; index: `CREATE INDEX "idx_{table}_{column}_fk" ON "{table}" ("{column}");` |
+  | link | `uuid`, with no foreign key (the linked feature is another business module) | none | filter: as yes-no; index: `CREATE INDEX "idx_{table}_{column}_link" ON "{schema}"."{table}" ("{column}");` |
 
   `[table]`: the id keys are the uuidv7 id that FORGE-DATABASE-1/IDS gives the starter's tables
   (copied from the projects id after IDS merges, and marked as a placeholder);
-  `list_index = 'CREATE INDEX "idx_{table}_list" ON "{table}" ("{org}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'`
+  `list_index = 'CREATE INDEX "idx_{table}_list" ON "{schema}"."{table}" ("{org}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'`
+  (every `ON "{table}"` in the values above reads `ON "{schema}"."{table}"` the same way)
   for the default sort, Updated newest first; and `updated_at_trigger` as IDS writes it for the
   starter's tables. The `filter`, `search` and `column` keys follow the filters-and-columns rule
   above.
@@ -326,7 +352,9 @@ The part named first owns each name; later parts use it and list that part under
   `apps/api/src/app.module.ts` with its `OrganisationsModule` import line and its
   `OrganisationsModule,` entry in `imports` (the starter's app module imports organisations, and
   organisations imports history, so the app module has no `HistoryModule` line),
-  `libs/core/src/common/csv.ts`, `libs/core/src/common/permissions.ts`, a migration that
+  `libs/core/server/src/common/csv.ts`, `libs/core/server/src/common/permissions.ts`,
+  `libs/history/contracts` (with `HISTORY_API`), `libs/shared/ui`, `eslint.config.mjs` with its
+  module `scope:` lines, a migration that
   creates `set_updated_at()`, `apps/web/src/app.tsx` with its `/history` route and
   `apps/web/src/components/app-shell.tsx` with its Members item. It is a Python starter app
   when `apps/api/app/main.py` (with its `from app.history import router as history_router`
@@ -355,32 +383,46 @@ The part named first owns each name; later parts use it and list that part under
 ### Done-when details
 
 1. One step from the plan (COMMAND for TypeScript, PY for Python, GUIDE for the rules).
-   - TypeScript output: `libs/<plural>/**` (module, controller, service, DTO, permissions,
-     index, `package.json`, `project.json`, `tsconfig.json`), `apps/api/prisma/schema/<plural>.prisma`,
-     one migration folder `apps/api/prisma/migrations/<UTC yyyyMMddHHmmss>_<plural>/migration.sql`,
-     the shared schemas and types appended to `libs/shared/src/index.ts`, any missing UI
-     component, and the wiring: the module in `app.module.ts`, `apps/api/package.json` and the
-     references of `apps/api/tsconfig.json`, its importer in `pnpm-lock.yaml` (copied from the
-     projects importer, so `pnpm install --frozen-lockfile` passes with no network), its `dist`
-     in `scripts/test-build.mjs`, and the back-relation lines in `model Account`, `model
-     Organisation` and, for a link, the linked model. The migration holds the table with each
-     field's `sql` and `check`, the foreign keys, `[table]`'s `list_index`, each field's
+   - TypeScript output, three libraries copied from the projects ones:
+     `libs/<plural>/contracts` (the zod schemas, types and the `<Plural>Api` interface with its
+     `<PLURAL>_API` token in its `src/index.ts`), `libs/<plural>/server` (module, controller,
+     service, DTO, permissions) and `libs/<plural>/web` (pages and hooks in `src`), each with its
+     `package.json`, `project.json` (tags `type:contracts`, `type:server` or `type:web`, and
+     `scope:<plural>`) and `tsconfig.json`; `apps/api/prisma/schema/<plural>.prisma` with
+     `@@schema("<schema>")`; one migration folder
+     `apps/api/prisma/migrations/<UTC yyyyMMddHHmmss>_<plural>/migration.sql` that starts with
+     `CREATE SCHEMA "<schema>"`; any missing UI component; and the wiring: the schema name in
+     `base.prisma`'s `schemas` list, the module in `app.module.ts`, the packages in
+     `apps/api/package.json`, `apps/web/package.json` and the references of both apps'
+     `tsconfig.json`, the pages in `apps/web/src/app.tsx`, the feature's `depConstraints` line
+     `scope:<plural>` → `scope:<plural>`, `scope:core`, `scope:shared`, `type:contracts` in
+     `eslint.config.mjs` (under the module lines' comment), its three importers in
+     `pnpm-lock.yaml` (copied from the projects importers, so `pnpm install --frozen-lockfile`
+     passes with no network), its three `dist` folders in `scripts/test-build.mjs`, and the
+     back-relation lines in `model Account` and `model Organisation` (core links keep their
+     foreign keys). Projects get the same `ProjectsApi` interface and `PROJECTS_API` token (one
+     method, `get(principal, id)`), so the copy has them. The migration holds the table with each
+     field's `sql` and `check`, the foreign keys to `core`, `[table]`'s `list_index`, each field's
      `filter_index`, `search_index` and `index` where they apply, the
      `updated_at_trigger`, and the soft delete trigger line
      `CREATE TRIGGER soft_delete_only BEFORE DELETE ON "<Model>" FOR EACH ROW EXECUTE FUNCTION soft_delete_only();`.
      Where Prisma's schema cannot say an index (a partial `WHERE`), the schema has the nearest
-     `@@index` and the migration has the full statement. A link field adds `@app/<target>` to
-     the new module's `package.json` and `tsconfig.json`, and the service checks the linked item
-     with the target module's public service (`get(account, id)`), so no query reads another
-     module's table.
-   - Python output (PY): `apps/api/app/<plural>/` (`__init__.py`, `models.py`, `schema.py`,
-     `service.py`, `routes.py`, `permissions.py`), one Alembic revision in
+     `@@index` and the migration has the full statement. A link field adds
+     `@app/<target>-contracts` to the new server library's `package.json` and `tsconfig.json`,
+     and the service checks the linked item through the target's contracts service
+     (`@Inject(<TARGET>_API)`, `get(account, id)`) before it writes it, so no query reads another
+     module's table and no foreign key crosses the two schemas.
+   - Python output (PY): `apps/api/app/<plural>/` (`__init__.py`, `models.py` with
+     `__table_args__` naming the feature's schema and `ForeignKey("core.<table>.id")` for core
+     links only, `schema.py`, `service.py`, `routes.py`, `permissions.py`; a link is checked
+     through the target module's public service), one Alembic revision in
      `apps/api/migrations/versions/` named `<next number>_<plural>.py` whose `down_revision` is
      the current head (the one revision no other names as its down revision) with the same SQL
      from the kind table, the router in `main.py`, the model import in `migrations/env.py`, the
-     `<plural> internals` contract in `apps/api/pyproject.toml`, and the zod schema copy and the
-     `components['schemas']` types in the Python `libs/shared/src/index.ts`. The web files are
-     the same as in a TypeScript app (WEB).
+     `<plural> internals` contract in `apps/api/pyproject.toml`, and the Python
+     `libs/<plural>/contracts` (the zod schemas, with types from `@app/shared-api-types`). The
+     revision starts with `CREATE SCHEMA "<schema>"`. The web library and its wiring are the same
+     as in a TypeScript app (WEB).
    - Test `tests/test_feature_command.py::test_1_a_plan_line_builds_the_feature_in_one_step`,
      parameters `typescript` and `python`: in a new repo made with `forge init --starter` (or
      `--starter python`), the two lines `forge task feature clients --one client --field 'name:text'`
@@ -408,7 +450,7 @@ The part named first owns each name; later parts use it and list that part under
      replace; soft delete; `GET /api/v1/<plural>/export` through `sendCsv` (Python: the
      `app.core` CSV helper), declared before `:id`. Every query is scoped to
      `account.organisationId`; another organisation gets `404 <SINGULAR>_NOT_FOUND`.
-   - Web: `apps/web/src/features/<plural>/**` with the list page, the detail page, the delete
+   - Web: `libs/<plural>/web/src/**` with the list page, the detail page, the delete
      AlertDialog, the form Dialog with its discard AlertDialog, the hooks and their unit test,
      all as SCREENS.md shows them with the feature's names; the route in `app.tsx`, a sidebar
      item and a Ctrl+K item in `app-shell.tsx` (shown only with the view permission), and its
@@ -446,7 +488,7 @@ The part named first owns each name; later parts use it and list that part under
    - **Denied view, create and edit.** With the default mapping the member lacks only delete and restore,
      so the live runs also build a third feature, `forge task feature notes --one note
      --field 'title:text'`, and the Forge test then sets `member: []` in its one permissions
-     file (`libs/notes/src/notes.permissions.ts`, Python `app/notes/permissions.py`) before the
+     file (`libs/notes/server/src/notes.permissions.ts`, Python `app/notes/permissions.py`) before the
      app's run. The same generated case for notes then expects 403 for the member on every route:
      list, detail, changes and export (view), create, replace (edit), delete and restore; and
      the notes
@@ -475,7 +517,7 @@ The part named first owns each name; later parts use it and list that part under
      transaction, as the Change history rule above says.
    - The generated test files are renamed copies of the projects test files that PAGING, DETAIL
      and ACCESS add: `apps/api/test/<plural>.e2e-spec.ts`, `apps/web/e2e/<plural>.spec.ts`,
-     `apps/web/src/features/<plural>/hooks/<plural>-hooks.test.tsx`, and in Python
+     `libs/<plural>/web/src/hooks/<plural>-hooks.test.tsx`, and in Python
      `apps/api/tests/test_<plural>.py`. Their values come from the kind table's `sample`,
      `changed` and `bad`.
    - Test `tests/test_feature_command.py::test_4_the_feature_keeps_history_and_its_tests_pass_at_once`,
@@ -485,7 +527,11 @@ The part named first owns each name; later parts use it and list that part under
      `check`, `[table]`'s `list_index` (on the organisation column, the last-change column
      `updatedAtUtc` / `updated_at_utc` descending and `id` descending, not on the created
      column) and `updated_at_trigger`, the filter, search and
-     every-field indexes, the audit columns, the soft delete trigger, and no `CREATE TYPE`. Live:
+     every-field indexes, the audit columns, the soft delete trigger, `CREATE SCHEMA` and every
+     table name in the feature's schema, the link index `idx_<table>_<column>_link` with no
+     foreign key to the linked feature, and no `CREATE TYPE`; and that the three libraries carry
+     their `type:` and `scope:<plural>` tags and `eslint.config.mjs` has the feature's
+     `depConstraints` line. Live:
      one cached run per starter (shared with test_2 and test_3, as `live_run` does) of the app's
      `node scripts/test.mjs` after the item 1 lines exits 0, and the reports hold every generated
      case name above, `records each job change in the change history` among them (it creates,
@@ -559,7 +605,7 @@ The part named first owns each name; later parts use it and list that part under
   `forge task feature` line, run it first, set the plan's role mapping in the feature's one
   permissions file, run the app's tests, and commit its files before any other change; then
   rename labels and add the hand work. Do not hand-build a feature the command can build. In an
-  app with `libs/core/src/common/permissions.ts` (Python: `app/core/permissions.py`), guard
+  app with `libs/core/server/src/common/permissions.ts` (Python: `app/core/permissions.py`), guard
   each new route with one permission check.
 - `docs/guide.md`: one paragraph with the command line, the field kinds, the permissions, the
   starter-app rule, the kind table's place, and that the agent runs it from the plan.
@@ -581,19 +627,24 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| PAGING | Projects list with keyset paging and URL filters | Keyset paging, search and the status filter in both APIs and the shared schemas; the projects list as SCREENS.md shows it, with Previous, Next and the total; rows that open the detail route; the button and form labels; the projects cases in their own files. | 2, 5 | `starter/libs/shared/src/index.ts`, `starter/libs/projects/src/**`, `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/app.tsx`, `starter/apps/api/test/api.e2e-spec.ts`, `starter/apps/api/test/organisations.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` and `starter/apps/api/test/soft-delete.e2e-spec.ts` (projects paging and button lines only), `starter/apps/api/test/projects.e2e-spec.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts`, `starter/apps/web/e2e/join.spec.ts` (button name only), `starter/apps/web/e2e/projects.spec.ts` (new), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_api.py`, `starter-python/apps/api/tests/test_organisations.py`, `starter-python/apps/api/tests/test_invites.py` and `starter-python/apps/api/tests/test_soft_delete.py` (projects paging lines only), `starter-python/apps/api/tests/test_projects.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `tests/test_starter_tree.py` and `tests/test_python_starter.py` (case names only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_projects.py` (`test_5`, `typescript` and `python`, new) | | yes | |
-| DETAIL | Projects detail screen and change history | The detail screen with its Details and Recent changes cards, Edit and the Delete AlertDialog; the Card component; the history subject columns, migrations and `listForSubject`; the changes route; a Change history row for each projects create, change and delete; the subject name on the Change history screen; in both APIs. | 4, 5 | `starter/apps/web/src/components/ui/card.tsx` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/features/history/**`, `starter/apps/web/src/app.tsx`, `starter/libs/history/**`, `starter/apps/api/prisma/schema/history.prisma`, `starter/apps/api/prisma/migrations/<new>_history_subjects/` (new), `starter/libs/projects/**`, `starter/apps/api/package.json` and `starter/pnpm-lock.yaml` (`@app/history` for projects), `starter/libs/shared/src/index.ts`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/app/history/**`, `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/migrations/versions/<next>_history_subjects.py` (new), `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_projects.py` (`test_5`, the DETAIL case names) | PAGING | yes | |
-| ACCESS | Projects permissions and restore | The permissions helpers and guard in both APIs, `permissions` on the account, `useCan` in the web app, the projects permissions file and one check on each projects route, the hidden Delete and history link, and the admin's deleted list and restore with its history row. | 3, 5 | `starter/libs/core/src/common/permissions.ts` (new), `starter/libs/core/src/index.ts`, `starter/libs/auth/**` (account `permissions` only), `starter/libs/shared/src/index.ts` (`Account` and the projects list query's `deleted` key), `starter/libs/projects/**`, `starter/apps/web/src/lib/permissions.ts` (new), `starter/apps/web/src/components/ui/switch.tsx` and `alert.tsx` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` (the member delete only), `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/tests/test_invites.py` (the member delete only), `starter-python/apps/api/app/core/permissions.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/auth/**` (account `permissions` only), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_access.py` (`test_3`, `projects-typescript` and `projects-python`, new) | DETAIL | yes | |
-| COMMAND | The feature command and the TypeScript API copy | `forge task feature` with its line, refusals and starter check, the field-kind table with placeholder database values, the marks in the TypeScript API projects files, and the TypeScript API, permissions, Prisma, migration, shared schema and wiring copy. | 1, 4, 6 | `src/forge/cli.py` (one route), `src/forge/feature.py` (new), `src/forge/templates/feature/kinds.toml` (new), `starter/libs/projects/src/**` (marks only), `starter/libs/shared/src/index.ts` (marks only), `starter/apps/api/test/projects.e2e-spec.ts` (marks only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_command.py` (`test_1`, `test_4` not-live checks, `test_6`, `typescript`, new) | ACCESS, FORGE-DATABASE-1/PG18, FORGE-DATABASE-1/IDS, FORGE-DATABASE-1/IDSPY | no | |
-| WEB | The feature's screens | The marks in the web projects files, the Textarea, Checkbox and Popover components, and the web copy: list, detail, delete dialog, form with one control per field, hooks and their test, the route, sidebar and Ctrl+K items; the live TypeScript run with the generated cases. | 2, 3, 4 | `src/forge/feature.py` (the web copy only), `src/forge/templates/feature/kinds.toml` (the `input`, `cell`, `filter_options` and `column` keys only), `starter/apps/web/src/components/ui/textarea.tsx`, `checkbox.tsx` and `popover.tsx` (new), `starter/apps/web/src/features/projects/**` and `starter/apps/web/e2e/projects.spec.ts` (marks only) | `tests/test_feature_command.py` (`test_2`, `test_4` live, `typescript`); `tests/test_feature_access.py` (`test_3`, `feature-typescript`) | COMMAND | yes | |
-| PY | The Python API copy | The marks in the Python projects files, the Python starter check, and the Python API, permissions, Alembic revision, shared copy and wiring; the Python parameters of the feature tests, `test_2` and `test_6` included. | 1, 3, 4 | `src/forge/feature.py` (the Python copy only), `src/forge/templates/feature/kinds.toml` (`sqlalchemy` and `pydantic` keys only), `starter-python/apps/api/app/projects/**` and `starter-python/apps/api/tests/test_projects.py` (marks only), `starter-python/libs/shared/src/index.ts` (marks only) | `tests/test_feature_command.py` (`test_1`, `test_2`, `test_4`, `test_6`, `python`); `tests/test_feature_access.py` (`test_3`, `feature-python`) | WEB | no | |
-| GUIDE | Planner and worker rules | The planner rule in the skill, the first-step and permission rules in the worker brief, and the guide paragraph, on new and existing repos. | 1 | `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `docs/guide.md` | `tests/test_feature_command.py` (`test_1`: the skill and brief checks on a new and an adopted repo) | COMMAND | no | |
+| PAGING | Projects list with keyset paging and URL filters | Keyset paging, search and the status filter in both APIs and the projects contracts; the projects list as SCREENS.md shows it, with Previous, Next and the total; rows that open the detail route; the button and form labels; the projects cases in their own files. | 2, 5 | `starter/libs/projects/contracts/**`, `starter/libs/projects/server/**`, `starter/libs/projects/web/**`, `starter/apps/web/src/app.tsx`, `starter/apps/api/test/api.e2e-spec.ts`, `starter/apps/api/test/organisations.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` and `starter/apps/api/test/soft-delete.e2e-spec.ts` (projects paging and button lines only), `starter/apps/api/test/projects.e2e-spec.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts`, `starter/apps/web/e2e/join.spec.ts` (button name only), `starter/apps/web/e2e/projects.spec.ts` (new), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_api.py`, `starter-python/apps/api/tests/test_organisations.py`, `starter-python/apps/api/tests/test_invites.py` and `starter-python/apps/api/tests/test_soft_delete.py` (projects paging lines only), `starter-python/apps/api/tests/test_projects.py` (new), `starter-python/libs/projects/contracts/**`, `starter-python/libs/shared/api-types/**` (regenerated), `tests/test_starter_tree.py` and `tests/test_python_starter.py` (case names only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_projects.py` (`test_5`, `typescript` and `python`, new) | FORGE-LIBS-1/WEB | yes | |
+| DETAIL | Projects detail screen and change history | The detail screen with its Details and Recent changes cards, Edit and the Delete AlertDialog; the Card component; the history subject columns, migrations, `listForSubject` and the `tx` argument on `HistoryApi`; the changes route; a Change history row for each projects create, change and delete; the subject name on the Change history screen; in both APIs. | 4, 5 | `starter/libs/shared/ui/src/components/ui/card.tsx` (new), `starter/libs/projects/**`, `starter/libs/history/**`, `starter/apps/web/src/app.tsx`, `starter/apps/api/prisma/schema/history.prisma`, `starter/apps/api/prisma/migrations/<new>_history_subjects/` (new), `starter/pnpm-lock.yaml` (`@app/history-contracts` for projects), `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/app/history/**`, `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/migrations/versions/<next>_history_subjects.py` (new), `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/projects/contracts/**`, `starter-python/libs/history/contracts/**`, `starter-python/libs/shared/api-types/**` (regenerated) | `tests/test_feature_projects.py` (`test_5`, the DETAIL case names) | PAGING, FORGE-LIBS-1/WEB | yes | |
+| ACCESS | Projects permissions and restore | The permissions helpers and guard in both APIs, `permissions` on the account, `useCan` in core web, the projects permissions file and one check on each projects route, the hidden Delete and history link, and the admin's deleted list and restore with its history row. | 3, 5 | `starter/libs/core/server/src/common/permissions.ts` (new), `starter/libs/core/server/src/index.ts`, `starter/libs/core/web/src/permissions.ts` (new), `starter/libs/core/web/src/index.ts`, `starter/libs/auth/**` (account `permissions` only, in its server and contracts), `starter/libs/projects/**` (the projects list query's `deleted` key in its contracts included), `starter/libs/shared/ui/src/components/ui/switch.tsx` and `alert.tsx` (new), `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` (the member delete only), `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/tests/test_invites.py` (the member delete only), `starter-python/apps/api/app/core/permissions.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/auth/**` (account `permissions` only), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/auth/contracts/**` and `starter-python/libs/projects/contracts/**`, `starter-python/libs/shared/api-types/**` (regenerated) | `tests/test_feature_access.py` (`test_3`, `projects-typescript` and `projects-python`, new) | DETAIL, FORGE-LIBS-1/WEB | yes | |
+| COMMAND | The feature command and the TypeScript API copy | `forge task feature` with its line, refusals and starter check, the field-kind table with placeholder database values, the marks in the projects contracts and server files, the projects `ProjectsApi` contract and token, and the TypeScript contracts, server, permissions, Prisma schema, migration with its own Postgres schema, tags, `depConstraints` line, build folders and wiring copy. | 1, 4, 6 | `src/forge/cli.py` (one route), `src/forge/feature.py` (new), `src/forge/templates/feature/kinds.toml` (new), `starter/libs/projects/contracts/**` (marks, `ProjectsApi` and `PROJECTS_API`), `starter/libs/projects/server/**` (marks and the token provider), `starter/apps/api/test/projects.e2e-spec.ts` (marks only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_command.py` (`test_1`, `test_4` not-live checks, `test_6`, `typescript`, new) | ACCESS, FORGE-LIBS-1/WEB, FORGE-LIBS-1/SCHEMAS, FORGE-LIBS-1/SCHEMASPY, FORGE-DATABASE-1/PG18, FORGE-DATABASE-1/IDS, FORGE-DATABASE-1/IDSPY | no | |
+| WEB | The feature's screens | The marks in the projects web library, the Textarea, Checkbox and Popover components, and the web library copy: list, detail, delete dialog, form with one control per field, hooks and their test, the pages in `app.tsx`, sidebar and Ctrl+K items; the live TypeScript run with the generated cases. | 2, 3, 4 | `src/forge/feature.py` (the web copy only), `src/forge/templates/feature/kinds.toml` (the `input`, `cell`, `filter_options` and `column` keys only), `starter/libs/shared/ui/src/components/ui/textarea.tsx`, `checkbox.tsx` and `popover.tsx` (new), `starter/libs/projects/web/**` and `starter/apps/web/e2e/projects.spec.ts` (marks only) | `tests/test_feature_command.py` (`test_2`, `test_4` live, `typescript`); `tests/test_feature_access.py` (`test_3`, `feature-typescript`) | COMMAND, FORGE-LIBS-1/WEB, FORGE-LIBS-1/SCHEMAS, FORGE-LIBS-1/SCHEMASPY | yes | |
+| PY | The Python API copy | The marks in the Python projects files, the Python starter check, and the Python API with its own Postgres schema, permissions, Alembic revision, Python contracts library on `@app/shared-api-types`, and wiring; the Python parameters of the feature tests, `test_2` and `test_6` included. | 1, 3, 4 | `src/forge/feature.py` (the Python copy only), `src/forge/templates/feature/kinds.toml` (`sqlalchemy` and `pydantic` keys only), `starter-python/apps/api/app/projects/**` and `starter-python/apps/api/tests/test_projects.py` (marks only), `starter-python/libs/projects/contracts/**` (marks only) | `tests/test_feature_command.py` (`test_1`, `test_2`, `test_4`, `test_6`, `python`); `tests/test_feature_access.py` (`test_3`, `feature-python`) | WEB, FORGE-LIBS-1/WEB, FORGE-LIBS-1/SCHEMAS, FORGE-LIBS-1/SCHEMASPY | no | |
+| GUIDE | Planner and worker rules | The planner rule in the skill, the first-step and permission rules in the worker brief, and the guide paragraph, on new and existing repos. | 1 | `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `docs/guide.md` | `tests/test_feature_command.py` (`test_1`: the skill and brief checks on a new and an adopted repo) | COMMAND, FORGE-LIBS-1/WEB | no | |
 
 New moving parts: none (the permissions list in core is a plain in-memory map that each module
 fills at start, for item 3; no service, store or cache)
 
 ## Notes
 
+- **Order with FORGE-LIBS-1.** Every part waits for FORGE-LIBS-1/WEB, so it builds on the
+  library layout; COMMAND, WEB and PY also wait for FORGE-LIBS-1/SCHEMAS and SCHEMASPY, so the
+  copy follows one Postgres schema per module and the link rule. FORGE-LIBS-1 pins the link
+  index name `idx_{table}_{column}_link`; FORGE-DATABASE-1/KINDS keeps that name when it sets the
+  final values.
 - **Order.** PAGING, then DETAIL, then ACCESS, one after another: each changes the projects
   files that the next one builds on. Each of the three changes both APIs and the web app, so
   main never has a web app that the Python API cannot serve. COMMAND waits for ACCESS and for
