@@ -1,6 +1,13 @@
 {
   "base": "9eb15070b30ea0bf1d9369ac0e184a0401607687",
   "branch": "fix/workers-add-code-and-layers-before-they",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17449-8d9b-7220-b6b5-49cbada4df7a",
+    "head": null,
+    "start": "8de3e6662b8093a236fb994c9dc3eab5f7607416"
+  },
   "done_when": "Each worker pull request summary carries three lines written before coding (the need, the simplest option, the existing code reused), a layer appears only at the edge to an outside service, and the review checks the change against those three lines.",
   "fix_kind": "backend",
   "kind": "fix",
