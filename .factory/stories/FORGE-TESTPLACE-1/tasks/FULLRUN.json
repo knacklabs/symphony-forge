@@ -91,7 +91,7 @@
     "id": "425b087a-e8d9-48fc-881c-4d801de9efb2",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -104,10 +104,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "77bd00ab7b2b1e6e8001fbfb0056dcc7eb90bc5c",
-    "keys": {},
-    "round": null
+    "close": "a878e3b0-215b-45f2-aa54-75d3426a80b1",
+    "head": "fc700a17116531d45f8d0df515afa2e188e508d1",
+    "keys": {
+      "the open P0 not done: a failed full run opens a fix that names the failing tests. in src/forge/fullrun.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
