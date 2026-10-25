@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-SEARCH-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-25T17:36:09.771522+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "One search across the whole app",
+  "touches": 0
+}
