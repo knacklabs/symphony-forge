@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-25T17:42:21.610106+00:00
-seconds: 377.831
-read_hash: c56065e9d1d92b190d1c674b2e52156af0b8791f
-round: 1
+read_at: 2026-10-25T17:48:29.235185+00:00
+seconds: 76.726
+read_hash: f18fcc34d65efd094f19bbdf4fb045c0d08cedb9
+round: 2
 passed: no
-doc_seen: c56065e9d1d92b190d1c674b2e52156af0b8791f
+doc_seen: f18fcc34d65efd094f19bbdf4fb045c0d08cedb9
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 2e0c85eec297b838992e986998e4a929302f8152
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a17422-3ff2-7450-a68e-a8633e7e2ef7
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: The owner accepted the one advisory note as a known issue: show the sign-up link when the options request fails
 ---
 # Cold read notes
 
@@ -56,3 +56,11 @@ Only a genuine trade-off goes to the human, as a question with options.
    `plans/FORGE-SINGLECO-1.md:96` promises schema validation, an API-equivalent message and exit 1. Its setup cases at lines 147–153 cover valid credentials and duplicate email only. Both account-creation helpers accept their inputs without schema validation (`src/forge/templates/starter/libs/auth/src/auth.service.ts:87`; `src/forge/templates/starter-python/apps/api/app/auth/service.py:111`). A command that omits the promised validation could pass every named case while creating an unusable admin account.
    Gain 3, Work 3, Harm 3
    Disposition: keep - below the bar (follow-up)
+
+## Round 2
+
+5. Advisory: The options request has no defined failure state or recovery.
+   Raise: Plan gap. Case: normal use - `/auth/options` fails transiently when someone opens sign-in.
+   `plans/FORGE-SINGLECO-1.md:172` adopts the normal query defaults, which disable retries and focus refetching (`src/forge/templates/starter/apps/web/src/main.tsx:13`). The link appears only with `signUpOpen: true`, so a failed request hides account creation in a many-company app without an explanation or retry control. The new design explicitly excludes loading and error states (`docs/design/FORGE-SINGLECO-1/SCREENS.md:38`), and the browser cases cover successful responses only.
+   Gain 3, Work 2, Harm 3
+   Disposition: keep - The owner accepted the one advisory note as a known issue: show the sign-up link when the options request fails
