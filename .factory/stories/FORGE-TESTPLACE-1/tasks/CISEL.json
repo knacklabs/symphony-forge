@@ -59,8 +59,8 @@
     "id": "09c604c9-9c6c-46d8-9ed4-72976c7d9a07",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T09:05:30.246559+00:00",
@@ -76,12 +76,10 @@
     }
   ],
   "stuck": {
-    "close": "235ec0d8-3d42-4a62-b8fa-e45c7690806d",
-    "head": "763e4321824cc8f4551af397f001160002b7d446",
-    "keys": {
-      "the open P0 support detached head before invoking change tests in ci in src/forge/prcheck.py": 1
-    },
-    "round": 1
+    "close": "b62b466e-0959-411b-a72e-0096e386e706",
+    "head": "821b4e185edaaa7f42ba0349c622311dc1a73ea8",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
