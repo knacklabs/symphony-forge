@@ -8,21 +8,55 @@
     "head": null,
     "start": "92c01e837bf208ae90dc06b8a59490e429eef1b1"
   },
+  "known": [
+    {
+      "area": "list_history() in src/forge/templates/starter-python/apps/api/app/history/routes.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/history/routes.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 35,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allow history GET requests without a CSRF header",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ed99ab6ff3f1f844df35b7eec0186a466f97e6f6f9fa9aba1eaf69ff13252cde",
+    "changed": "06720a40f05d5ee021bcb24fc98020b4966e47c9586b232e619e82766d7b965f",
+    "commit": "3b4094e64b2991c08b41f203b63a6a48e825a338",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional. Case: normal use - a signed-in admin reads history or downloads its CSV. Both GET endpoints use `admin_only`, which unconditionally calls `verify_csrf(request)` in `src/forge/templates/starter-python/apps/api/app/core/admin.py:21`. Consequently, ordinary GET requests without an `x-csrf-token` header receive 403 `CSRF_CHECK_FAILED`. This breaks both new HTTP tests and the browser's CSV download link, which cannot supply that header. Separate admin authorization from CSRF enforcement for these read-only endpoints while retaining CSRF checks on mutations.",
+        "file": "src/forge/templates/starter-python/apps/api/app/history/routes.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 35,
+        "priority": "P1",
+        "title": "Allow history GET requests without a CSRF header",
+        "work": 2
+      }
+    ],
+    "id": "743d6fc4-189f-492d-9d96-aa7d0246aa25",
+    "status": "blocked"
+  },
   "round": 3,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T02:38:45.806877+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T02:50:48.438575+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "question": "New client apps start with the constitution's built-in defaults: Change history in the Python API is stuck. It should deliver: The same HTTP contract as HISTORY in the Python starter: the history module, records for invites and role changes, and the admin-only history list and its export.\nIt changes 576 lines outside tests, over its limit of 400.\nThe worker tried: Add change history to the Python starter API.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "0ed211c8-e7cd-4243-8858-7b8d5b900939"
-  },
   "stuck": {
     "close": null,
     "head": "a3adb605ecc4412abd7c700edba3e1f6e7ca2e6e",
