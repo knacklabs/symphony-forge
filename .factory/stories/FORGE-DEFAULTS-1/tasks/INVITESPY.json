@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed this part past the limit: about 466 hand-written lines, the rest generated API files",
   "branch": "task/FORGE-DEFAULTS-1-INVITESPY",
   "chat": {
     "approval": "243290d63c20635ccb12255ffe4d18e627b2f609c9cf16680931584c7da8986e",
