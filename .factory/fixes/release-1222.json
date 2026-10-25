@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bump changes the version in every pinned file",
   "base": "95640b3b9479a8e30e6be749aacbdfc169e9afac",
   "branch": "fix/release-1222",
   "done_when": "Forge reports v1.2.22 and every pin, installer and plugin names v1.2.22",
