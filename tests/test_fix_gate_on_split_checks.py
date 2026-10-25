@@ -125,6 +125,8 @@ def test_2_small_split_suite_passes_without_hiding_errors(repo):
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     command = json.loads(re.findall(r"^      - run: (.+)$", jobs(workflow)["tests"], re.M)[-1])
     assert command == "forge test --change"
+    # Actions checks out the tested commit detached, without a local Forge item.
+    repo.git("checkout", "-q", "--detach", "HEAD")
 
     def run(group):
         environment = {**os.environ, "FORGE_GROUP": str(group), "FORGE_GROUPS": "6"}

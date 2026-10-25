@@ -9,7 +9,6 @@ import pytest
 
 from conftest import ROOT, patient
 from test_close import env  # noqa: F401
-from test_story import worktree
 from test_worker import calls, install_claude
 
 STORY = "FORGE-TESTPLACE-1"
@@ -21,7 +20,7 @@ def prepare_adopted_client(env, checks, *, grouped=False):
     patient(lambda: shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                                    dirs_exist_ok=True))
     path = repo.path / "forge.toml"
-    old = path.read_text("utf-8").replace('version = "v1.2.2"', 'version = "v1.2.20"')
+    old = path.read_text("utf-8")
     old = old.replace('workers = "codex"', 'workers = "claude"')
     old = old.replace('checks = ["tests", "forge-pr-check"]',
                       "checks = " + json.dumps(checks))
@@ -43,12 +42,17 @@ def prepare_adopted_client(env, checks, *, grouped=False):
     before = tomllib.loads(old)
     installed = repo.forge("--version").stdout.split()[-1]
     assert before["version"] != installed
-    started = repo.forge("fix", "start", "Upgrade the test place",
-                         "--done", "The upgraded repo keeps its test place")
-    assert started.returncode == 0, started.stdout + started.stderr
-    folder = worktree(repo, "fix/upgrade-the-test-place")
+    # The current tool must not run a command in a repo still pinned to the old release.
+    # Build the upgrade branch with Git, then call sync only after updating its pin.
+    folder = repo.path.parent / "upgrade-the-test-place"
+    repo.git("worktree", "add", "-q", "-b", "fix/upgrade-the-test-place", str(folder))
+    record = folder / ".factory/fixes/upgrade-the-test-place.json"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    record.write_text(json.dumps({
+        "kind": "fix", "branch": "fix/upgrade-the-test-place", "why": "Upgrade the test place",
+        "done_when": "The upgraded repo keeps its test place", "status": "started"}), "utf-8")
     path = folder / "forge.toml"
-    upgraded = old.replace('version = "v1.2.20"', f'version = "{installed}"')
+    upgraded = old.replace(f'version = "{before["version"]}"', f'version = "{installed}"')
     path.write_text(upgraded, "utf-8")
     synced = repo.forge("sync", cwd=folder)
     assert synced.returncode == 0, synced.stdout + synced.stderr
