@@ -21,7 +21,7 @@ Where the app's constitution differs, it wins, including an existing rule to sto
 | yes-no | `boolean DEFAULT false` | `Boolean @default(false)` | `Boolean, server_default=false()` | Always NOT NULL, even when the field is marked optional. |
 | email | `text` | `String` | `Text` | `CONSTRAINT "{table}_{column}_format" CHECK (char_length("{column}") <= 254 AND "{column}" ~ '^[^@[:space:]]+@[^@[:space:]]+$')` |
 | status | `text DEFAULT '{first}'` | `String @default("{first}")` | `Text, server_default="{first}"` | `CONSTRAINT "{table}_{column}_allowed" CHECK ("{column}" IN ({options}))` |
-| link | `uuid` | `String @db.Uuid` | `Uuid` | Foreign key with `ON DELETE RESTRICT`; index it. |
+| link | `uuid` | `String @db.Uuid` | `Uuid` | Follow the module-link rule below; index it. |
 | id | `uuid DEFAULT uuidv7()` | `String @id @default(dbgenerated("uuidv7()")) @db.Uuid` | `mapped_column(Uuid, primary_key=True, server_default=text("uuidv7()"))` | Python code that needs the id first uses `uuid.uuid7()`. |
 | count | `integer` | `Int` | `Integer` | Use `bigint` / `BigInt` / `BigInteger` when it can pass two billion. |
 | instant | `timestamptz` | `DateTime @db.Timestamptz(3)` | `DateTime(timezone=True)` | Store UTC; local time belongs at the edge. |
@@ -38,8 +38,13 @@ The email kind is a contact field and is not unique; sign-in emails follow Keys 
 
 ## Keys and constraints
 
+| Concern | Rule |
+|---|---|
+| Module schemas | Each module has its own Postgres schema; core tables live in the `core` schema. |
+| Module links | A link between two business modules stores the id with an index and no foreign key. Links within a module and links to core tables keep their foreign key. |
+
 Use NOT NULL unless the field is really optional. Every constraint has a name: `<table>_<column>_<rule>`.
-Foreign keys use `ON DELETE RESTRICT`. Use `CASCADE` only for detail rows the parent owns, such as order lines; `SET NULL` only for an optional reference. Index every foreign key.
+Where a link has a foreign key, use `ON DELETE RESTRICT`. Use `CASCADE` only for detail rows the parent owns, such as order lines; `SET NULL` only for an optional reference. Index every foreign key.
 Store a sign-in email in lower case, with `<table>_email_lower CHECK (email = lower(email))`, and a unique key (organisation column first when the table has one). This makes it unique on `lower(email)`; do not use citext.
 The shared `set_updated_at()` BEFORE UPDATE trigger sets the last-changed time, including raw SQL updates. Use `updatedAtUtc` in Prisma and `updated_at_utc` in Python.
 Every tenant table has the organisation column. One data layer scopes each query to the caller's organisation, with one refusal test per endpoint. Row-level security is not a default; a regulated client gets it as its own story.
