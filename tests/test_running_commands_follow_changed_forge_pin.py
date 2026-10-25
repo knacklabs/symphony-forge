@@ -175,7 +175,7 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
     assert len(_workers(env)) == (1 if stage in ("land-build", "land-fix") else 0)
     assert len(env.review_calls()) == (2 if stage == "land-fix" else 1)
     assert env.gh_calls("pr", "ready")
-    assert env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")
+    assert bool(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")) == (stage != "land-fix")
     env.repo.git("merge-base", "--is-ancestor", "origin/main", "HEAD", cwd=where)
     assert env.repo.git("diff", "--name-only", "--diff-filter=U", cwd=where) == ""
     assert not Path(env.repo.git("rev-parse", "--path-format=absolute", "--git-path",

@@ -49,9 +49,9 @@ def test_1_test_lane_admits_one_run_per_four_cores_and_keeps_half_core_workers(
     # The old fixture names its own test command. Replace only that setting before
     # configuring the real socket-held client test used by both test and close.
     config = (repo.path / "forge.toml").read_text("utf-8")
-    env.commit(repo.path, "forge.toml", "\n".join(line for line in config.splitlines()
+    env.commit(repo.path, "forge.toml", 'test_place = "local"\n' + "\n".join(line for line in config.splitlines()
         if line.partition("=")[0].strip() not in ("test", "fast_test", "test_place"))
-        + '\ntest_place = "local"\n')
+        + '\n')
     configure(env, server)
     _, first_folder = env.start_fix()
     _, second_folder = env.start("second", "fix/second", ".factory/fixes/second.json",

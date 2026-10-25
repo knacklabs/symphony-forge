@@ -65,7 +65,7 @@ def test_1_doctor_fix_commit_proof_reaches_first_close_review(env, monkeypatch, 
     assert written
     for rel in written:
         assert rel in proof
-    assert f"forge close {name}" in proof and "test run" in proof
+    assert f"forge close {name}" in proof and "test evidence" in proof
     assert (f"forge close {name} reports the review result and test evidence from the repo's "
             "chosen test place (including any skip reason).") in proof
     for host in (".codex", ".claude"):

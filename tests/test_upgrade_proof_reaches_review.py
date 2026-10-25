@@ -60,7 +60,7 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert "forge.toml" in proof
     assert f"Forge {RELEASE}'s forge sync" in proof
     assert f"forge close {NAME}" in proof
-    assert "test run" in proof
+    assert "test evidence" in proof
     assert (f"forge close {NAME} reports the review result and test evidence from the repo's "
             "chosen test place (including any skip reason).") in proof
     for host in (".codex", ".claude"):
