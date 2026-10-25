@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-DATABASE-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-25T17:19:13.114488+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T17:43:31.345125+00:00",
+      "step": "read"
     }
   ],
   "title": "Database rules for every client app",

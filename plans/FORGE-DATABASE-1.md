@@ -108,8 +108,8 @@ cache layer anywhere in this story.
 - **The field-kind table.** `src/forge/templates/feature/kinds.toml`, the file FORGE-FEATURE-1's
   COMMAND part creates. FEATURE-1 owns its non-database keys and `feature.py`; this story owns
   the database values (`prisma`, `sql`, `sqlalchemy`, `check`, `filter_index`, `search_index`),
-  the new keys below, and every value of the `money` kind. The `number` kind stays a whole number
-  of 0 or more, as FORGE-FEATURE-1's design shows it, so only its database values change. KINDS replaces the
+  the new keys below, and every value of the `money` and `number` kinds. A number can hold
+  decimals and negative values (hours, a temperature), so it has no sign check. KINDS replaces the
   placeholder values and deletes each `# placeholder: the database rules story sets this value`
   comment. Format:
   - One `[<kind>]` table for each of the nine kinds: `text`, `long-text`, `number`, `money`,
@@ -139,7 +139,7 @@ cache layer anywhere in this story.
   |---|---|---|---|---|---|
   | text | `text` | `String` | `Text` | `CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") BETWEEN 1 AND 200)` | search: `CREATE INDEX "idx_{table}_{column}_search" ON "{table}" USING gin ("{org}", "{column}" gin_trgm_ops) WHERE "{deleted}" IS NULL;` |
   | long-text | `text` | `String` | `Text` | `CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") <= 10000)` | none |
-  | number | `integer` | `Int` | `Integer` | `CONSTRAINT "{table}_{column}_not_negative" CHECK ("{column}" >= 0)` | none |
+  | number | `numeric(19,4)` | `Decimal @db.Decimal(19, 4)` | `Numeric(19, 4)` | none (a plan adds a check for a field when the client needs one) | none |
   | money | `numeric(19,4)`; currency `text` | `Decimal @db.Decimal(19, 4)`; currency `String` | `Numeric(19, 4)`; currency `Text` | `CONSTRAINT "{table}_{currency}_code" CHECK ("{currency}" ~ '^[A-Z]{3}$')` | none |
   | date | `date` | `DateTime @db.Date` | `Date` | none | none |
   | yes-no | `boolean DEFAULT false` | `Boolean @default(false)` | `Boolean, server_default=false()` | none | filter: `CREATE INDEX "idx_{table}_{column}" ON "{table}" ("{org}", "{column}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;` |
@@ -392,7 +392,8 @@ migrated to these rules unless a story asks; where the app's constitution differ
      one amount input with the currency code in front (the row's code on edit,
      `DEFAULT_CURRENCY` on create), so the design does not change; `cell` and `csv` call
      `formatMoney(row.<name>, row.<name>Currency)`; `sample` and `bad` change to match. The
-     number kind's other keys do not change.
+     number kind's `zod`, `pydantic`, `cell` and `sample` take a decimal string that may be
+     negative.
    - Test `tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table`
      (platform mark), parameters `typescript` and `python`: in a new starter app,
      `forge task feature customers --one customer --field name:text`, then `forge task feature
@@ -526,8 +527,7 @@ New moving parts: the pg_stat_statements, pg_trgm and btree_gin extensions in bo
    `tests/test_database_*.py` to both starter-smoke jobs, split by the `python` parameter id.
 6. The money entry changes with no design. Disposition: cut. The currency is not entered: the
    form keeps FORGE-FEATURE-1's one amount input with the code in front, and the API fills the
-   currency column from `DEFAULT_CURRENCY`. Design stays none. The number kind also becomes a
-   whole number of 0 or more, as that design shows it.
+   currency column from `DEFAULT_CURRENCY`. Design stays none.
 7. Indexes sort on creation time, but lists sort on last change. Disposition: cut. The list and
    filter indexes use `{updated}`.
 8. Redeploy does not recover a failed Prisma migration. Disposition: cut. The trade-off and the
