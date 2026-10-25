@@ -11,12 +11,27 @@
   "done_when": "The nightly full run splits into the repo's groups with the same time limit as the pull request tests job, and one full-run result is recorded for the default branch.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a1f0dd93362d0771e58f0fa2e7245921214a9f3c11842c7db7ee5bdb403d2b77",
+    "changed": "042e0305a1424cce275f079d859ea2b37ccb431f6110b038feebd27d13671ecb",
+    "commit": "4b998057d41cce5b7e7d2e04e2d2712ac1510824",
+    "dismissals": [],
+    "findings": [],
+    "id": "a9e09da4-ad19-4ed9-9caf-26609c030380",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T19:23:21.850183+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T19:30:59.986054+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
