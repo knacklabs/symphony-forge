@@ -120,7 +120,7 @@ when another finding already blocks; a case the Done-when doesn't name is a P2 `
 proof by the test-audit rules below.
 
 <!-- rules -->
-## Change tests
+## Tests on the close run
 $test_run
 
 A test skipped in your sandbox that the close run passed is not a missing test. For a pure
