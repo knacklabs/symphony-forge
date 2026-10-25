@@ -1,0 +1,49 @@
+{
+  "base": "f78b42fd7fa691aa5e908a6fe5f2174241769dd5",
+  "branch": "fix/python-apps-get-built-in-defaults",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17246-5723-7dc0-876c-f80bb2dcceb3",
+    "head": null,
+    "start": "98cd6b222ddf9f46aff4f85df05e0040e081b5df"
+  },
+  "done_when": "The guide and the constitution defaults page mark the defaults as built in for an app with libs/organisations or apps/api/app/organisations, so a Python starter app is asked nothing about them",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5e5f825e415facb2afefbbd6e9c34aa87f7c5e1e4d4b78dd29462978a4dc5318",
+    "changed": "dd6417e38af217766c3a7e8eb1157578441f13c1621e72b087de79650f9558f8",
+    "commit": "1252d6b9d93224063052da5c456f57cd7d614bf6",
+    "dismissals": [],
+    "findings": [],
+    "id": "c7ba9f9b-6879-4e9a-bc1a-49cbe154144e",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T08:55:57.216123+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T08:59:14.873455+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T09:12:03.551828+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "86b189f6-c87e-42b2-bf84-81566d4ff800",
+    "head": "65b9b38de465110637c650868fe6df66d76457ba",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The guide marks the constitution's defaults as built in only when the app has libs/organisations, the TypeScript starter's folder, so a Python app from forge init --starter python (which keeps it in apps/api/app/organisations) gets asked about defaults its starter already builds",
+  "worker": "codex"
+}

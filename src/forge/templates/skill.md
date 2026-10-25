@@ -911,7 +911,7 @@ At the start, write docs/product/CONSTITUTION.md with every default from Constit
 filled in, and raise a default with the FDE only when the notes contradict it.
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
 constitution's ## Fixed rules section, and ask nothing about them.
-In an app that has libs/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
+In an app that has libs/organisations or apps/api/app/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
 In an app made from the Python starter, whose tests run import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing about them:
 
 - One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
