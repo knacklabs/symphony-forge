@@ -60,9 +60,12 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
   PYGROUPS extends its body only (the pytest split options), never its signature or callers.
 - **The empty-group pass (PYGROUPS).** One place in `review.test_run`, which every grouped
   command reaches (the picker wrapper, a direct `fast_test`, close's direct `test`): after an
-  attempt, when `FORGE_GROUPS` is above 1 and the command exited with status 5 (pytest collected
-  nothing for this group), the attempt counts as status 0 and its output gets the line
-  `This group got no tests to run.`
+  attempt, when `FORGE_GROUPS` is above 1, the command exited with status 5, and the grouped
+  command is pytest (`repo.pytest_split` holds for the direct command, or for forge.toml's `test`
+  behind the picker wrapper: exactly the runs where `repo.grouped` added the split options, so 5
+  is pytest's "no tests collected"), the attempt counts as status 0 and its output gets the line
+  `This group got no tests to run.` Every other runner keeps its exit status: mocha, for one,
+  exits with its failure count, so 5 there means five failed tests.
 
 ### Done-when details
 
@@ -84,7 +87,9 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    `--splits`, and `forge doctor` prints no workflow problem. Adopted case: the
    `tests/fixtures/adopted-v1.2.2/client` repo (as `adopt_earlier` in
    tests/test_close_always_tests.py sets it up), upgraded with `groups = 3` written, gets the same
-   job.
+   job. The same test also checks the setting's refusal: with `groups = 0`, `groups = true` and
+   `groups = "3"` in turn, `forge test` exits non-zero and prints
+   `groups must be a whole number of 1 or more`; adopted case: `groups = 0` in the adopted repo.
 2. Placeholders: call `repo.grouped(top, ...)` where Forge reads a test command to run it:
    `review.test_run` (the `command` it gets, before the cached-pass key and the run),
    `fasttest.close_tests` (forge.toml's `test`), and `fasttest.test`'s `--pytest` path (the raw
@@ -105,10 +110,6 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    `fast_test = "vitest run --shard={group}/{groups}"` (the direct path that the nightly full run
    also takes through `review.test_run`), `FORGE_GROUP=2 FORGE_GROUPS=3 forge test --change`
    passes the stub `--shard=2/3`. Adopted case: the same runs in the adopted repo.
-   Test `tests/test_groups_any_runner.py::test_1_groups_refuses_a_bad_value` (platform mark):
-   with `groups = 0`, `groups = true` and `groups = "3"` in turn, `forge test` exits non-zero and
-   prints `groups must be a whole number of 1 or more`. Adopted case: `groups = 0` in the adopted
-   repo.
 3. Six pytest groups on upgrade (PYGROUPS): move prcheck's detection (the `direct` pytest regex,
    no `;&|`, pytest-split listed in pyproject.toml or requirements*.txt) into
    `repo.pytest_split(top, command) -> bool`; prcheck's derived count calls it. `repo.grouped`
@@ -141,7 +142,10 @@ and always_test notes (9 to 11) that FORGE-TESTPLACE-1's plan read deferred to i
    test passes with the line `This group got no tests to run.`; (e) with `groups = 2` and one of
    the two files failing every time, of the two group runs of `forge test --change` exactly one
    fails after its one retry, its output names the failed test, and neither prints
-   `This group got no tests to run.`.
+   `This group got no tests to run.`; (f) a repo with `groups = 2` and `test = "mocha"`, with a
+   stub `node_modules/.bin/mocha` (and its `.cmd` shim) that exits with status 5:
+   `FORGE_GROUP=1 FORGE_GROUPS=2 forge test --change` fails with status 5 and prints no
+   `This group got no tests to run.` line.
    Existing tests PYGROUPS changes from the `--splits` form to the `forge test --change` form:
    tests/test_ci_job_budgets.py, tests/test_fix_gate_on_split_checks.py,
    tests/test_windows_client_retries.py, tests/test_windows_suite_retries.py,

@@ -63,8 +63,9 @@ Only a genuine trade-off goes to the human, as a question with options.
 6. Blocking: The new empty-group rule turns real failures from other runners into passes.
    Raise: Functional. Case: normal use - a client sets `groups = 2` with `test = "mocha"`, and five tests fail. [Mocha’s exit handler](https://github.com/mochajs/mocha/blob/v11.7.5/lib/cli/run-helpers.js#L281) returns the failure count, so this run exits 5. Forge preserves that status for other runners (`src/forge/fasttest.py:272`), but the new unconditional conversion at `plans/FORGE-GROUPS-1.md:61` changes it to success. Both groups can therefore pass a failing suite, and `review.test_run` caches that false pass at `src/forge/review.py:526`. The new tests cover only pytest’s meaning of status 5.
    Gain 5, Work 3, Harm 3
+   Disposition: cut the empty-group pass now applies only when the grouped command is pytest (`repo.pytest_split` holds, so Forge added the split options); other runners keep their status, with a mocha stub case (f) where status 5 still fails
 
 7. Advisory: The added validation test duplicates criterion 1 and fails the repository’s test gate.
    Raise: Gate. Case: normal use - ANYRUNNER implements the two prescribed tests. `plans/FORGE-GROUPS-1.md:80` names `test_1_groups_split_the_test_job`, while `:108` adds `test_1_groups_refuses_a_bad_value` in the same module. `tests/test_rules.py:49` keys tests by story and criterion number and rejects duplicates at `:50`. Following these names makes the suite fail.
    Gain 3, Work 1, Harm 1
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut the bad-value refusal cases folded into `test_1_groups_split_the_test_job`, so no two tests share criterion 1
