@@ -188,7 +188,7 @@ fields go two to a row; text and long text use the full width.
 - Validation messages, under the field, shown after the first submit and then while the person
   types:
   - Name empty: `Enter a name.` Name too long: `Use 200 characters or fewer.`
-  - Hours budget: `Enter a whole number, 0 or more.`
+  - Hours budget, when it is not a number: `Enter a number.`
   - Budget: `Enter an amount, such as 1,250.00.`
   - Due date: `Enter a real date as YYYY-MM-DD.`
   - Contact email: `Enter a valid email address.`
