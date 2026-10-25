@@ -44,7 +44,7 @@
     "id": "9db2d9f0-16d9-4fd1-b53f-352006cea33e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -57,10 +57,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "4596ce83440ff871f06cd348c8f86db44bad52d2",
-    "keys": {},
-    "round": null
+    "close": "fd224086-f907-418f-b196-36fbfe6f250a",
+    "head": "bebff8650eac8908ac9ee8ebc9c3044b46890ac2",
+    "keys": {
+      "the open P0 configure a shadow database before requiring the prisma drift check in src/forge/templates/skills/database/skill.md": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
