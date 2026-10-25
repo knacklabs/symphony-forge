@@ -1,6 +1,6 @@
 # Client apps can split into services and frontends later without a rewrite
 
-6 parts · Risks: none one-way · New moving parts: none
+5 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
@@ -9,9 +9,6 @@
   screens. General helpers go in one shared library, and the shared screen parts go in another.
 - The tests fail when a module uses another module's server code or screens directly. A module
   uses another module only through that module's contracts.
-- In both starters, the tests fail when code outside a provider file imports an outside vendor's
-  SDK, such as a payment, mail, storage, SMS or AI SDK. A new provider adds its vendor's package
-  to one list.
 - A new Python client app keeps its API as it is. Its web app gets the same screen libraries and
   the same rule, with its data types still made from the API's OpenAPI file.
 - In both starters, each module keeps its tables in its own Postgres schema. The organisation,
@@ -39,7 +36,7 @@ which changes the same tables.
 
 ## Done when
 
-1. **A new TypeScript app has `shared/util`, `core/server` and, for each module, `contracts` and `server` libraries; its lint fails when a module imports another module's server library, a web library imports a server library, or a file other than a provider file imports a listed vendor SDK; the Python starter's import check refuses the same vendor import.**
+1. **A new TypeScript app has `shared/util`, `core/server` and, for each module, `contracts` and `server` libraries, and its lint fails when a module imports another module's server library or a web library imports a server library.**
 2. **A new TypeScript app's screens are in each module's `web` library, with the shadcn components and shell parts in `shared/ui` and the API client in `core/web`, its lint fails when one module's web library imports another's, and its browser flows pass unchanged.**
 3. **A new Python app's API files stay as they are, its web app uses the same web libraries with types made from its OpenAPI file, and its lint fails when one module's web library imports another's.**
 4. **In both starters, each module's tables are in its own Postgres schema and the core tables in `core`, a link between business modules has an index and no foreign key, and a review reports a foreign key between two business-module schemas.**
@@ -69,13 +66,13 @@ and never import forge. One test per Done-when rule, named `test_<n>_...`. Live 
 `@pytest.mark.platform` and `@pytest.mark.timeout(1800)` and use `live_run` and `_require_cases`
 from `tests/test_starter_tree.py`, so each stack runs once per session.
 
-**Plan against the merged starter.** SERVER starts after FORGE-SINGLECO-1/COMPANYAPI, WEB after
-FORGE-SINGLECO-1/COMPANYWEB, PYWEB after FORGE-SINGLECO-1/COMPANYPY. They edit the files this story
+**Plan against the merged starter.** SERVER starts after FORGE-SINGLECO-1/COMPANYAPI and
+COMPANYPY, WEB after FORGE-SINGLECO-1/COMPANYWEB. They edit the files this story
 moves. Read the merged tree first; where a path below differs from it, follow the merged tree and
 move the new files the same way.
 
-**Large moves.** SERVER, WEB and PYWEB are mostly `git mv` and import-line changes. Each keeps the
-starter building on its own. When a part goes over the size limit, run
+**Large moves.** SERVER and WEB are mostly `git mv` and import-line changes. Each keeps the
+starter and the Python starter building on its own. When a part goes over the size limit, run
 `forge fix allow-large "A pure move of the starter's libraries; most lines are renames and import paths"`.
 Use `git mv` so that review sees renames.
 
@@ -144,23 +141,6 @@ The part named first owns each name; later parts use it and list that part under
   through the other module's contracts service before it writes it. A link to `core`
   (organisation, account) keeps its foreign key. The starters have no link between business
   modules today, so no column changes; the rule goes in the convention pages and the review.
-- **Vendor SDKs only in provider files (SERVER pins the TypeScript list, PYWEB the Python
-  contract).** The starters use no vendor SDK today (the mail provider only logs), so each list
-  starts with the common SDKs a later provider brings. TypeScript, `eslint.config.mjs`: one
-  `const VENDOR_PACKAGES = ['stripe', '@stripe/*', 'nodemailer', '@sendgrid/*', 'resend',
-  'postmark', '@aws-sdk/*', '@google-cloud/*', '@azure/*', 'twilio', 'openai',
-  '@anthropic-ai/*', '@google/genai']`, used in one block for `apps/**` and `libs/**`:
-  `no-restricted-imports` with `patterns: [{ group: VENDOR_PACKAGES, message: 'Import a vendor SDK only in its provider file (*.provider.ts).' }]`,
-  and `ignores: ['libs/*/server/src/**/*.provider.ts']`. Python,
-  `apps/api/pyproject.toml`: an import-linter `forbidden` contract named `vendor SDKs only in
-  providers`, `source_modules = ["app"]`, `forbidden_modules` = `stripe`, `boto3`, `botocore`,
-  `google.cloud`, `azure`, `twilio`, `openai`, `anthropic`, `resend`, `sendgrid`, `postmarker`,
-  `ignore_imports = ["app.*.providers.* -> <each>"]`, and `include_external_packages = true`
-  in `[tool.importlinter]` (check that the contract passes with these packages not installed;
-  if import-linter refuses a missing package, keep only the listed packages it accepts and say
-  so in the pull request). The Python provider file is `app/<module>/providers/<vendor>.py`.
-  backend.md and python.md say: a new provider adds its vendor's package to that list in the
-  same change, and imports it only in its provider file.
 - **Review rule (GUIDE).** In `src/forge/templates/review.md`: "A foreign key from a table in one
   business module's schema to a table in another business module's schema is a P1 finding. A
   link between business modules stores the id with an index, and the module checks it through
@@ -182,17 +162,23 @@ The part named first owns each name; later parts use it and list that part under
    `@app/<module>` import in `apps/api`, `apps/web` and the libraries changes to the new
    package. The format lint rule's `files` and `ignores` and the API tests' imports follow the
    new paths; its message names `@app/shared-util`.
+   `apps/web/package.json` and `apps/web/tsconfig.json` swap `@app/shared` and its reference
+   for the new packages.
+   The Python half (SERVER keeps the Python starter green): `init._starter_files` for `python`
+   also copies the TypeScript `libs/shared/util`; the Python starter gets its own
+   `libs/<module>/contracts` (the zod schemas, with types from the OpenAPI file, under the same
+   package names and exports as the TypeScript ones); the generated files move to
+   `libs/shared/api-types` (`@app/shared-api-types`, with `openapi.json` and `src/api-types.ts`)
+   and the `api-types` script writes there; the Python `libs/shared/src` goes (its `format.ts` is
+   byte-identical to the TypeScript one); the Python workspace lists `apps/web` and `libs/*/*`,
+   and `typecheck` builds the new libraries. No Python API file changes.
    Test `tests/test_libs_layout.py::test_1_server_code_is_split_by_module` (platform, live): the
-   tree has each folder in the table with its tags, and no `libs/shared/src` or
+   tree has each server, contracts and util folder in the table with its tags, and no `libs/shared/src` or
    `libs/<module>/src`; in a copy of the starter, `corepack pnpm run lint` passes clean and fails
    with `@nx/enforce-module-boundaries` for (a) `libs/projects/server/src/reach-in.ts` importing
    `@app/auth-server`, (b) the same file importing `../../../auth/server/src/auth.service`, and
-   (c) `libs/projects/contracts/src/reach-in.ts` importing `@app/projects-server`; it fails
-   with the vendor message for (d) `libs/projects/server/src/reach-in.ts` importing `stripe`,
-   and passes for the same import in `libs/projects/server/src/payment.provider.ts`; and the
-   live API suite passes. PYWEB adds the Python vendor case to the existing boundary test
-   `tests/test_python_starter.py::test_2`: `app/projects/service.py` importing `stripe` fails
-   `test:imports` with the contract's name. This test replaces `tests/test_modular_starter.py::test_2`; delete that
+   (c) `libs/projects/contracts/src/reach-in.ts` importing `@app/projects-server`; and the
+   live API suite passes. This test replaces `tests/test_modular_starter.py::test_2`; delete that
    file and move its install fixture here.
 2. WEB. Move the files as the table says. The shadcn files import `cn` and `useIsMobile`
    relatively inside `shared/ui`. `@app/shared-ui` exports `./components/ui/*`, `./lib/utils`,
@@ -212,21 +198,18 @@ The part named first owns each name; later parts use it and list that part under
    `@app/core-server`; the live run's browser flows (`BROWSER_FLOWS`) all pass; the built CSS has
    a class that only a module web library uses. `tests/test_starter_tree.py::test_2` reads the
    shell, router and shadcn files from their new folders.
-3. PYWEB. `init._starter_files` for `python` also copies, from the TypeScript starter,
-   `libs/shared/util`, `libs/shared/ui`, `libs/core/web` and `libs/*/web`. The Python starter
-   keeps its own `libs/<module>/contracts` (the zod schemas, with types from the OpenAPI file),
-   and the generated files move to `libs/shared/api-types` (`@app/shared-api-types`, with
-   `openapi.json` and `src/api-types.ts`); the `api-types` script writes there. Delete the
-   Python `libs/shared/src` (its `format.ts` is byte-identical to the TypeScript one). The
-   Python workspace lists `apps/web` and `libs/*/*`; `typecheck` builds the new libraries. The
-   Python lint has no Nx, so `starter-python/eslint.config.mjs` adds, for `libs/*/web/src/**`,
-   `no-restricted-imports` with `patterns: [{ group: ['@app/*-web', '!@app/core-web', '@app/*-server'], message: 'A module web library uses another module only through its contracts.' }]`.
+3. SERVER and WEB together (each keeps both starters green). SERVER's Python half is in item 1.
+   WEB: `init._starter_files` for `python` also copies `libs/shared/ui`, `libs/core/web` and
+   `libs/*/web`. The Python lint has no Nx, so `starter-python/eslint.config.mjs` adds, for `libs/*/web/src/**`,
+   `no-restricted-imports` with `patterns: [{ group: ['@app/*-web', '!@app/core-web', '@app/*-server'], message: 'A module web library uses another module only through its contracts.' }, { group: ['../../../*/web/**', '../../../*/server/**'], message: 'A module web library uses another module only through its contracts.' }]`.
    No Python API file changes in this part.
    Test `tests/test_libs_layout.py::test_3_the_python_web_app_uses_the_same_libraries`
    (platform, live): after `forge init --starter python`, the first commit has the copied web
    libraries byte for byte and the Python contracts, and no `apps/api/app` file differs from the
    starter; in the app, lint fails with that message for `libs/projects/web/src/reach-in.ts`
-   importing `@app/organisations-web`; the live Python run passes its browser flows.
+   importing `@app/organisations-web` and for `../../../organisations/web/src/index`; the live
+   Python run passes its browser flows. SERVER keeps `tests/test_python_starter.py` passing
+   (`REACT_PATHS`, the `api-types` paths), and this test is WEB's.
    `tests/test_python_starter.py` (`REACT_PATHS`, the `api-types` path checks) follows.
 4. SCHEMAS. `base.prisma`'s datasource gets `schemas = ["core", "history", "projects"]`; each
    model and enum gets `@@schema("...")` (multiSchema is in Prisma 7 without a preview flag;
@@ -240,8 +223,11 @@ The part named first owns each name; later parts use it and list that part under
    `projects."Project"`).
    SCHEMASPY. Each model gets `__table_args__` with `{"schema": "<schema>"}` (in the tuple form
    where the model has constraints) and each `ForeignKey` names `core.<table>.id`; each enum gets
-   `schema=`. New revision `migrations/versions/0008_module_schemas.py` after FORGE-DATABASE-1's
-   `0007`, with the same statements; `env.py` passes `include_schemas=True`.
+   `schema=`. New revision `migrations/versions/0008_module_schemas.py` with the same
+   statements. The one Python revision order is: `0005_history`, `0006_extensions`,
+   `0007_ids_and_updated_at` (FORGE-DATABASE-1), `0008_module_schemas` (this story, with
+   `down_revision = "0007"`), then FORGE-DATABASE-1's columns revision as `0009_columns` with
+   `down_revision = "0008"`. One head, no fork; `env.py` passes `include_schemas=True`.
    Test `tests/test_module_schemas.py::test_4_each_module_keeps_its_tables_in_its_own_schema`
    (platform, live), parametrized `react` and `python`: each starter's API suite has the case
    `each module keeps its tables in its own schema` (it reads `information_schema.tables` and
@@ -285,13 +271,13 @@ Each part changes the Forge-side text for the paths it moves:
   `tests/test_zod_starter.py`, `tests/test_built_in_defaults_guide.py`,
   `tests/test_defaults_formats.py`, `tests/test_standards.py`, `tests/test_starter_tree.py`
   (`test_1`'s libs list and tag check), `tests/test_modular_starter.py` (deleted).
+- SERVER also: `src/forge/init.py`, `conventions/python.md` (folder list, `api-types` paths),
+  `tests/test_python_starter.py`, `tests/test_python_guide.py`.
 - WEB: `conventions/frontend.md` (the web folder tree, the `components/ui` path, the shadcn
-  command), brief.md's shadcn sentence, `tests/test_shadcn_only.py` (that sentence),
+  command), brief.md's shadcn sentence, `src/forge/init.py` (the web libraries), `tests/test_shadcn_only.py` (that sentence),
   `tests/test_starter_tree.py` (`test_2`), `tests/test_react_starter.py` (the memo walk covers
   `libs/*/web` and `libs/shared/ui`). The shadcn close check matches any `components/ui` folder,
   so `app_baseline.py` does not change. "In an app that has libs/organisations" stays true.
-- PYWEB: `src/forge/init.py`, `conventions/python.md` (folder list, `api-types` paths),
-  `tests/test_python_starter.py`, `tests/test_python_guide.py`.
 - SCHEMAS and SCHEMASPY: `conventions/database.md` and `conventions/backend.md` (schemas and
   links), skill.md's fixed rule ("Each module keeps its tables in its own Postgres schema; a link
   between business modules stores the id with an index and no foreign key") and the Python fixed
@@ -299,8 +285,8 @@ Each part changes the Forge-side text for the paths it moves:
 - GUIDE: `review.md`, skill.md (paragraph and outline line).
 - `.github/workflows/starter-smoke.yml`: its `paths` and the TypeScript job's pytest list replace
   `tests/test_modular_starter.py` with `tests/test_libs_layout.py tests/test_module_schemas.py`
-  (SERVER adds the first, SCHEMAS the second); the Python job adds both files with `-k python`
-  where they are parametrized (PYWEB, SCHEMASPY).
+  (SERVER adds the first, SCHEMAS the second), with `-k "not python"`; the Python job adds both
+  files with `-k python` (WEB, SCHEMASPY).
 - Synced copies under `.claude/skills/` and `.codex/skills/` are rewritten by `forge sync`.
 
 ### New and existing repos
@@ -326,20 +312,19 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| SERVER | Server code split by module | `shared/util`, `core/server`, each module's `contracts` and `server` libraries, the two contracts services, the type and scope tags and boundary rules, the vendor SDK rule, the new import lines everywhere, the Forge texts that name these paths | 1, 6 | `src/forge/templates/starter/libs/**`, `starter/apps/api/**`, `starter/apps/web/src/**` (import lines only), `starter/eslint.config.mjs`, `starter/pnpm-workspace.yaml`, `starter/pnpm-lock.yaml`, `starter/scripts/test-build.mjs`, `starter/README.md`, `src/forge/templates/conventions/{stack,backend,api,frontend}.md`, `src/forge/standards.md`, `src/forge/templates/brief.md`, `src/forge/templates/skill.md`, `.github/workflows/starter-smoke.yml`, synced skill copies | `tests/test_libs_layout.py` (`test_1`, `test_6`, new); `tests/test_modular_starter.py` (deleted); the tests listed under SERVER above | FORGE-SINGLECO-1/COMPANYAPI | no | |
-| WEB | Screens in module web libraries | `shared/ui`, `core/web`, each module's `web` library, the pages folder, the web boundary lines, shadcn's new home, the Tailwind source line | 2 | `starter/apps/web/**`, `starter/libs/shared/ui/**`, `starter/libs/core/web/**`, `starter/libs/*/web/**`, `starter/eslint.config.mjs`, `starter/pnpm-lock.yaml`, `starter/README.md`, `src/forge/templates/conventions/frontend.md`, `src/forge/templates/brief.md` | `tests/test_libs_layout.py` (`test_2`); `tests/test_starter_tree.py` (`test_2`); `tests/test_react_starter.py`; `tests/test_shadcn_only.py` | SERVER, FORGE-SINGLECO-1/COMPANYWEB | no | |
-| PYWEB | The Python web app on the same libraries | The copied web libraries, the Python contracts, `libs/shared/api-types`, the no-cross-import lint rule, the vendor SDK contract, the Python texts | 1, 3 | `src/forge/init.py`, `src/forge/templates/starter-python/{libs/**,eslint.config.mjs,package.json,pnpm-workspace.yaml,pnpm-lock.yaml,README.md,apps/api/pyproject.toml}`, `src/forge/templates/conventions/python.md`, `.github/workflows/starter-smoke.yml` | `tests/test_libs_layout.py` (`test_3`); `tests/test_python_starter.py` (`test_2` vendor case and paths); `tests/test_python_guide.py` | WEB, FORGE-SINGLECO-1/COMPANYPY | no | |
-| SCHEMAS | Module schemas in the TypeScript starter | multiSchema, `@@schema` on each model and enum, the schema migration, schema-qualified raw SQL in the API tests, the schema case, the link rule texts | 4 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000150_module_schemas/` (new), `starter/apps/api/test/**`, `src/forge/templates/conventions/{database,backend}.md`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `.github/workflows/starter-smoke.yml`, synced skill copies | `tests/test_module_schemas.py` (`test_4`, `react`, new); `tests/test_built_in_defaults_guide.py` (the fixed rule line) | SERVER, FORGE-DATABASE-1/IDS | no | |
+| SERVER | Server code split by module | `shared/util`, `core/server`, each module's `contracts` and `server` libraries, the two contracts services, the type and scope tags and boundary rules, the new import lines everywhere, the Python contracts and `libs/shared/api-types` with `shared/util` copied in, the Forge texts that name these paths | 1, 3, 6 | `src/forge/templates/starter/libs/**`, `starter/apps/api/**`, `starter/apps/web/src/**` (import lines only), `starter/apps/web/package.json`, `starter/apps/web/tsconfig.json`, `starter/eslint.config.mjs`, `starter/pnpm-workspace.yaml`, `starter/pnpm-lock.yaml`, `starter/scripts/test-build.mjs`, `starter/README.md`, `src/forge/init.py`, `src/forge/templates/starter-python/{libs/**,package.json,pnpm-workspace.yaml,pnpm-lock.yaml,README.md}`, `src/forge/templates/conventions/{stack,backend,api,frontend,python}.md`, `src/forge/standards.md`, `src/forge/templates/brief.md`, `src/forge/templates/skill.md`, `.github/workflows/starter-smoke.yml`, synced skill copies | `tests/test_libs_layout.py` (`test_1`, `test_6`, new); `tests/test_modular_starter.py` (deleted); `tests/test_python_starter.py`; `tests/test_python_guide.py`; the tests listed under SERVER above | FORGE-SINGLECO-1/COMPANYAPI, FORGE-SINGLECO-1/COMPANYPY | no | |
+| WEB | Screens in module web libraries | `shared/ui`, `core/web`, each module's `web` library, the pages folder, the web boundary lines, shadcn's new home, the Tailwind source line, the web libraries copied into Python apps and the Python web lint rule | 2, 3 | `starter/apps/web/**`, `starter/libs/shared/ui/**`, `starter/libs/core/web/**`, `starter/libs/*/web/**`, `starter/eslint.config.mjs`, `starter/pnpm-lock.yaml`, `starter/README.md`, `src/forge/init.py`, `src/forge/templates/starter-python/{eslint.config.mjs,package.json,pnpm-lock.yaml,README.md}`, `src/forge/templates/conventions/{frontend,python}.md`, `src/forge/templates/brief.md`, `.github/workflows/starter-smoke.yml` | `tests/test_libs_layout.py` (`test_2`, `test_3`); `tests/test_starter_tree.py` (`test_2`); `tests/test_react_starter.py`; `tests/test_shadcn_only.py`; `tests/test_python_starter.py` | SERVER, FORGE-SINGLECO-1/COMPANYWEB | no | |
+| SCHEMAS | Module schemas in the TypeScript starter | multiSchema, `@@schema` on each model and enum, the schema migration, schema-qualified raw SQL in the API tests, the schema case, the link rule texts | 4 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000150_module_schemas/` (new), `starter/apps/api/test/**`, `src/forge/templates/conventions/{database,backend}.md`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `.github/workflows/starter-smoke.yml`, synced skill copies | `tests/test_module_schemas.py` (`test_4`, `react`, new); `tests/test_built_in_defaults_guide.py` (the fixed rule line) | WEB, FORGE-DATABASE-1/IDS | no | |
 | SCHEMASPY | Module schemas in the Python starter | `schema=` on each table and enum, `core.` foreign keys, the Alembic revision, the schema case, the Python fixed rule | 4 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/migrations/env.py`, `starter-python/apps/api/migrations/versions/0008_module_schemas.py` (new), `starter-python/apps/api/tests/**`, `src/forge/templates/conventions/python.md`, `src/forge/templates/skill.md`, synced skill copies | `tests/test_module_schemas.py` (`test_4`, `python`); `tests/test_python_guide.py` (the fixed rule line) | SCHEMAS, FORGE-DATABASE-1/IDSPY | no | |
-| GUIDE | Growth notes and the foreign-key review rule | The growth paragraph and outline line, the review rule and its case | 4, 5 | `src/forge/templates/skill.md`, `src/forge/templates/review.md`, synced skill copies | `tests/test_growth_notes.py` (`test_5`, new); `tests/test_module_schemas.py` (`test_4` review case) | SCHEMAS | no | |
+| GUIDE | Growth notes and the foreign-key review rule | The growth paragraph and outline line, the review rule and its case | 4, 5 | `src/forge/templates/skill.md`, `src/forge/templates/review.md`, synced skill copies | `tests/test_growth_notes.py` (`test_5`, new); `tests/test_module_schemas.py` (`test_4` review case) | SCHEMASPY | no | |
 
-The parts run in a chain on shared files: WEB after SERVER (`eslint.config.mjs`, the lock file,
-`apps/web`), PYWEB after WEB (it copies WEB's libraries), SCHEMASPY after SCHEMAS (the shared
-test file), GUIDE after SCHEMAS (skill.md and the shared test file). SCHEMAS waits for
-FORGE-DATABASE-1's IDS and SCHEMASPY for its IDSPY, so the schema migration sorts after the ids
-migration in both starters; FORGE-DATABASE-1's COLUMNS and COLUMNSPY wait for SCHEMAS and
-SCHEMASPY. FORGE-FEATURE-1's parts wait for WEB and PYWEB (and its COMMAND, WEB and PY parts for
-SCHEMAS and SCHEMASPY).
+The parts run in one chain, SERVER, WEB, SCHEMAS, SCHEMASPY, GUIDE, because each shares files
+with the next (`eslint.config.mjs`, the lock files, `init.py`, `brief.md`, `python.md`,
+`skill.md`, the workflow and the test files). Each part keeps both starters green on main.
+SCHEMAS also waits for FORGE-DATABASE-1's IDS and SCHEMASPY for its IDSPY, so the schema
+migration runs after the ids migration in both starters; FORGE-DATABASE-1's COLUMNS and
+COLUMNSPY wait for SCHEMAS and SCHEMASPY. FORGE-FEATURE-1's parts wait for WEB (and its
+COMMAND, WEB and PY parts for SCHEMAS and SCHEMASPY).
 
 New moving parts: none
 
@@ -365,12 +350,10 @@ New moving parts: none
   may not; "router shell" in `core/web` is the route error page and the query client;
   (4) not-found and settings pages go to `apps/web/src/pages`; (5) the Python OpenAPI types go to
   `libs/shared/api-types`, inside the shared group, so `shared/util` keeps no business words;
-  (6) the Python web rule uses ESLint's `no-restricted-imports`, since the Python starter has no
-  Nx; (7) `shared/ui` exports subpaths so shadcn's add command writes into it; (8) the starters
+  (6) the Python web rule uses ESLint's `no-restricted-imports`, with package and relative
+  patterns, since the Python starter has no Nx; (7) `shared/ui` exports subpaths so shadcn's add command writes into it; (8) the starters
   have no id helpers or in-process events today, so `shared/util` and `core/server` get none; a
   story that needs them puts them there; (9) the growth test also runs on an adopted repo, to
   keep the review rule's one existing-repo case, and checks only the synced text.
-- Owner decision (25 Oct 2026, settled): each outside vendor's SDK is imported only in its
-  provider file, by `no-restricted-imports` with one shared list in TypeScript and an
-  import-linter contract in Python. Planner choice: the starters use no vendor SDK today, so the
-  lists start with the common payment, mail, storage, SMS and AI SDKs.
+- Owner decision (26 Oct 2026, settled): the vendor-SDK lint is not in this story; a later story
+  adds it as an ast-grep rule.
