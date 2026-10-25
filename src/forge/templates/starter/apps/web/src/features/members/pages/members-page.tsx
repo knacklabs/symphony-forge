@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Download, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -43,7 +42,6 @@ function RoleCell({ member, account }: { member: Member; account: Account }) {
 export function MembersPage() {
   const account = useOutletContext<Account>();
   const members = useMembers();
-  const [inviteOpen, setInviteOpen] = useState(false);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -54,7 +52,7 @@ export function MembersPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild><a href="/api/v1/members/export" download><Download aria-hidden="true" />Export CSV</a></Button>
-          {account.role === 'admin' && <Button onClick={() => setInviteOpen(true)}><Plus aria-hidden="true" />Invite person</Button>}
+          {account.role === 'admin' && <InviteDialog><Button><Plus aria-hidden="true" />Invite person</Button></InviteDialog>}
         </div>
       </div>
 
@@ -87,8 +85,6 @@ export function MembersPage() {
           </Table>
         </div>
       )}
-
-      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   );
 }

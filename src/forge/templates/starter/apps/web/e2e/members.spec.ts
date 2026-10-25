@@ -8,8 +8,16 @@ test('only an admin sees the invite and role controls', async ({ page, browser }
   await page.getByRole('link', { name: 'Members' }).click();
   await expect(page.getByRole('heading', { name: 'Members' })).toBeVisible();
 
+  // Closing the dialog gives keyboard focus back to the button that opened it.
+  const inviteButton = page.getByRole('button', { name: 'Invite person' });
+  await inviteButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog', { name: 'Invite person' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(inviteButton).toBeFocused();
+
   // A likely failure first: an email that already has an account gets a message that says why.
-  await page.getByRole('button', { name: 'Invite person' }).click();
+  await inviteButton.click();
   const dialog = page.getByRole('dialog', { name: 'Invite person' });
   await dialog.getByLabel('Email').fill(adminEmail);
   await dialog.getByRole('button', { name: 'Send invite' }).click();

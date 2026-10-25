@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { inviteSchema, type InviteInput } from '@app/shared';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useInvite } from '@/features/members/hooks/members-hooks';
@@ -16,7 +16,9 @@ const INVITE_ERRORS: Record<string, string> = {
   MAIL_NOT_CONFIGURED: 'Email is not set up for this app yet.',
 };
 
-export function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+// The opener is the Dialog's trigger, so Radix gives it focus back when the dialog closes.
+export function InviteDialog({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
   const invite = useInvite();
   const [error, setError] = useState('');
   const form = useForm<InviteInput>({ resolver: zodResolver(inviteSchema), defaultValues: { email: '' } });
@@ -26,7 +28,7 @@ export function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChan
       form.reset();
       setError('');
     }
-    onOpenChange(nextOpen);
+    setOpen(nextOpen);
   }
 
   async function submit(input: InviteInput) {
@@ -43,6 +45,7 @@ export function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Invite person</DialogTitle>
