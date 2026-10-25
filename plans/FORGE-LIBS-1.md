@@ -226,8 +226,8 @@ The part named first owns each name; later parts use it and list that part under
    `schema=`. New revision `migrations/versions/0008_module_schemas.py` with the same
    statements. The one Python revision order is: `0005_history`, `0006_extensions`,
    `0007_ids_and_updated_at` (FORGE-DATABASE-1), `0008_module_schemas` (this story, with
-   `down_revision = "0007"`), then FORGE-DATABASE-1's columns revision as `0009_columns` with
-   `down_revision = "0008"`. One head, no fork; `env.py` passes `include_schemas=True`.
+   `down_revision = "0007_ids_and_updated_at"`), then FORGE-DATABASE-1's columns revision as `0009_columns` with
+   `down_revision = "0008_module_schemas"`. One head, no fork; `env.py` passes `include_schemas=True`.
    Test `tests/test_module_schemas.py::test_4_each_module_keeps_its_tables_in_its_own_schema`
    (platform, live), parametrized `react` and `python`: each starter's API suite has the case
    `each module keeps its tables in its own schema` (it reads `information_schema.tables` and
