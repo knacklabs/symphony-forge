@@ -1,0 +1,15 @@
+{
+  "base": "8cf1abddd9cd3c6d6e3fab022c386202eef3aa10",
+  "branch": "fix/with-groups-above-1-and-a-non-pytest-tes",
+  "done_when": "With groups above 1 and such a command, forge doctor and the generated CI workflow each show one warning line, and neither refuses.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-25T15:33:06.585213+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "With groups above 1 and a non-pytest test command that has no group placeholder, every CI group runs the whole suite, so the extra groups cost runner time with no speedup and nothing tells the client."
+}
