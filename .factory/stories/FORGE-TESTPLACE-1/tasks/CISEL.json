@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-TESTPLACE-1-CISEL",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T09:05:30.246559+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e2cf8d72181acc13a8c9d4af1311ddc33ae4143c",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
