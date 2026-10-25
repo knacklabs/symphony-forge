@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import type { Account, AuthCredentials } from '@app/shared';
+import type { AcceptInviteInput, Account, AuthCredentials } from '@app/shared';
 import { ApiError, apiRequest } from '@/lib/api-client';
 
 const accountKey = ['account'] as const;
@@ -28,10 +28,10 @@ export function useAccount() {
   });
 }
 
-function useStartSession(path: '/auth/sign-in' | '/auth/sign-up') {
+function useStartSession<T extends AuthCredentials>(path: '/auth/sign-in' | '/auth/sign-up' | '/auth/accept-invite') {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (credentials: AuthCredentials) => apiRequest<Account>(path, {
+    mutationFn: (credentials: T) => apiRequest<Account>(path, {
       method: 'POST',
       body: JSON.stringify(credentials),
     }),
@@ -48,6 +48,10 @@ export function useSignIn() {
 
 export function useSignUp() {
   return useStartSession('/auth/sign-up');
+}
+
+export function useAcceptInvite() {
+  return useStartSession<AcceptInviteInput>('/auth/accept-invite');
 }
 
 export function useSignOut() {
