@@ -25,28 +25,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c5b5877d6d7e9661bd2b952724e088ae2e681441ea7dfa20cd0e76b302826a84",
-    "changed": "50ba1c9fac1425d4f50355de6ca7284e779994cfc559fb6b316139933a7a5a9c",
-    "commit": "ee4e0c2c2391fc0cea1cf524bc972db57d95403d",
+    "branch_diff": "dcad9b9be6654907e8220f14aeab708e92f8e62ae4f727f3cc0d924ad48436a6",
+    "changed": "acc8f2b277949e23fb3b15068077bedd6669ad8a0e0ad22908b99135884f058f",
+    "commit": "c30c9eb203a6cb1753d224cc9e23ebe2e83e4acb",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Not done. Case: normal use - a client sets groups = 3 and fast_test = \"jest --shard={group}/{groups}\" with fewer matching test files than groups. review.close_test (src/forge/review.py:386\u2013396) sends fast_test directly here, bypassing fasttest.close_tests, the only path adding --passWithNoTests (src/forge/fasttest.py:287). This substitution therefore produces a valid empty shard whose failure status Forge preserves, making the required tests check fail despite no failing tests. [Jest checks for empty results after sharding and exits 1](https://github.com/jestjs/jest/blob/v30.2.0/packages/jest-core/src/runJest.ts#L194-L245). The compound-script fallback at src/forge/fasttest.py:267\u2013270 likewise bypasses the flag. Handle empty groups on these supported execution paths too; the current direct-command test checks substitution but never exercises an empty shard.",
-        "file": "src/forge/review.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 435,
-        "priority": "P1",
-        "title": "Not done: A group with no tests to run passes.",
-        "work": 3
-      }
-    ],
-    "id": "f1c8cbce-3a1e-4292-8b28-6ae126a4a2af",
+    "findings": [],
+    "id": "8389934e-1386-44a4-a1f6-a9e2e5409c06",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T13:38:13.466627+00:00",
@@ -54,6 +42,10 @@
     },
     {
       "at": "2026-10-25T13:50:27.026266+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T14:06:27.041475+00:00",
       "step": "review"
     }
   ],
