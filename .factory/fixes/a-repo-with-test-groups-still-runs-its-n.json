@@ -4,12 +4,20 @@
   "done_when": "The nightly full run splits into the repo's groups with the same time limit as the pull request tests job, and one full-run result is recorded for the default branch.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T19:23:21.850183+00:00",
       "step": "start"
     }
   ],
-  "why": "A repo with test groups still runs its nightly full suite on one runner with no time limit, so the run can take hours or hang until GitHub's six-hour limit and block releases."
+  "stuck": {
+    "close": null,
+    "head": "b886e395f0e6d3a6beb888a7d257c8e95d9a0894",
+    "keys": {},
+    "round": null
+  },
+  "why": "A repo with test groups still runs its nightly full suite on one runner with no time limit, so the run can take hours or hang until GitHub's six-hour limit and block releases.",
+  "worker": "codex"
 }
