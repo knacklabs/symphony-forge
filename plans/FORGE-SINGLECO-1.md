@@ -19,7 +19,7 @@
   same web app).
 - Existing apps keep many-company behaviour. On upgrade, no app file changes.
 
-Design: docs/design/FORGE-SINGLECO-1/ (TREE)
+Design: docs/design/FORGE-SINGLECO-1/ (ac29293912f99b314e54ca3488039afa66bbcd87)
 
 ## Why
 
