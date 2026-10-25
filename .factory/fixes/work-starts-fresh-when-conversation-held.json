@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 2,
       "line": 1345,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ff9425c8f7bfb91dd57d3b81e5d5e8db8934abb9d791ef4b28ad11f2a617622b",
-    "changed": "bac600959d739a6272a99f8bef566a40eb6a700c97a7145642725871b111defa",
-    "commit": "5dd8127e9a5cf8aea02c5d1913574b7395332ce6",
+    "branch_diff": "c07c613056b276e274db8a0623be6984ef4e9160cefdeaa96ab822fa4b673a8c",
+    "changed": "1d7153f02e969ebb63f75211f1e2d72ae92f291186061c0a94f36c7adb1d9e7c",
+    "commit": "fbb1a57dfc11b98fe16f4340870dfbf021f2674a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional. Case: normal use - running the configured repository test suite. This wording change makes both cases of `test_5_coordinator_guide_explains_chat_continuity` fail: `tests/test_worker_and_reader_chats_survive_rounds.py:365` still requires the exact old sentence ending \u201cold chat gone or archived or the item changes tools\u201d. The new sentence no longer contains it, and `src/forge/story.py:89\u201393` copies this template directly into both generated guides. Update that expectation to the new contract so the suite can pass.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 1345,
-        "priority": "P1",
-        "title": "Update the guide contract test for the new fallback behavior",
-        "work": 1
-      }
-    ],
-    "id": "4f316a3f-8d0f-435e-9d85-e462065e44b0",
-    "status": "blocked"
+    "findings": [],
+    "id": "be914c56-97f4-45f0-9d34-c2bfa2c6716c",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T07:16:36.281345+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-10-25T07:22:32.642046+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T07:41:25.980581+00:00",
       "step": "review"
     }
   ],
