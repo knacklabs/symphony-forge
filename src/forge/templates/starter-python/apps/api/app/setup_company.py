@@ -1,6 +1,7 @@
 import sys
 
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.auth import AuthService, CredentialsInput
 from app.core import (
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     except ApiError as error:
         sys.stderr.write(f"{error.message}\n")
         raise SystemExit(1) from None
-    except Exception:
+    except SQLAlchemyError:
         sys.stderr.write(
             "Company setup failed. Check the app settings and database, then try again.\n"
         )
