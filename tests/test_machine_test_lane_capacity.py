@@ -50,7 +50,8 @@ def test_1_test_lane_admits_one_run_per_four_cores_and_keeps_half_core_workers(
     # configuring the real socket-held client test used by both test and close.
     config = (repo.path / "forge.toml").read_text("utf-8")
     env.commit(repo.path, "forge.toml", "\n".join(line for line in config.splitlines()
-        if line.partition("=")[0].strip() not in ("test", "fast_test")) + "\n")
+        if line.partition("=")[0].strip() not in ("test", "fast_test", "test_place"))
+        + '\ntest_place = "local"\n')
     configure(env, server)
     _, first_folder = env.start_fix()
     _, second_folder = env.start("second", "fix/second", ".factory/fixes/second.json",
@@ -63,7 +64,7 @@ def test_1_test_lane_admits_one_run_per_four_cores_and_keeps_half_core_workers(
     # Fresh init queried branch protection through the same external gh stub.
     # Restore CI answers for the close rather than accepting that setup reply.
     closing.checks(GREEN)
-    closing.commit(other.path, "forge.toml", 'checks = ["tests", "forge-pr-check"]\n' +
+    closing.commit(other.path, "forge.toml", 'test_place = "local"\nchecks = ["tests", "forge-pr-check"]\n' +
                    (other.path / "forge.toml").read_text("utf-8"), "Name the client's checks")
     configure(closing, server)
     item, close_folder = closing.start_fix()

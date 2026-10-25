@@ -95,7 +95,9 @@ def _draft_clash(env, require_current):
     config = (env.repo.path / "forge.toml").read_text("utf-8")
     command = f'"{sys.executable}" "{script.as_posix()}"'
     config = re.sub(r'^fast_test = .*\n', '', config, flags=re.M)
-    env.commit(env.repo.path, "forge.toml", "fast_test = " + json.dumps(command) + "\n" + config)
+    config = re.sub(r'^test_place = .*\n', '', config, flags=re.M)
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\nfast_test = '
+               + json.dumps(command) + "\n" + config)
     env.commit(env.repo.path, "NEWS.md", "Old news\n")
     env.repo.git("push", "-q", "origin", "main")
     item, where = env.start_fix({"app.py": "print('draft greeting')\n"})
@@ -274,10 +276,9 @@ def test_2_close_merges_main_once_when_a_local_or_github_clash_requires_it(env, 
             reviewed = env.repo.git("diff", "--name-only", f"{base}...{call['head']}", cwd=where)
             assert {path for path in reviewed.splitlines()
                     if not path.startswith((".factory/", "plans/"))} == {"app.py"}
+        # This case selects laptop tests so it can prove close tested the refreshed branch.
         test_heads = [json.loads(line) for line in tested.read_text("utf-8").splitlines()]
         assert env.repo.git("show", f"{test_heads[-1]}:app.py", cwd=where) == "print('hello')"
-        pushed_head = env.repo.git("ls-remote", "origin", "refs/heads/fix/tidy-readme").split()[0]
-        assert any(f"/commits/{pushed_head}/check-runs" in call[-1] for call in env.gh_calls("api"))
     elif clash.startswith("LATE"):
         assert (env.repo.bin / "main-advanced-during-checks").exists()
         assert (where / "NEWS.md").read_text("utf-8") == (

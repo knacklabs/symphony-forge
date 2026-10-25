@@ -12,6 +12,8 @@ from test_close import env  # noqa: F401
 from test_story import worktree
 from test_worker import calls, install_claude
 
+STORY = "FORGE-TESTPLACE-1"
+
 
 def prepare_adopted_client(env, checks):
     """Upgrade the previous adoption fixture without adding a test_place setting."""
@@ -68,7 +70,7 @@ def prepare_adopted_client(env, checks):
      'Forge runs change tests on this machine because forge.toml names no checks. To run them in '
      'CI, write test_place = "ci".'),
 ])
-def test_6_previous_adoption_uses_the_place_selected_by_its_checks(
+def test_10_previous_adoption_uses_the_place_selected_by_its_checks(
         env, checks, place, expected_line):
     output = prepare_adopted_client(env, checks)
     assert expected_line in output

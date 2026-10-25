@@ -24,7 +24,7 @@ STORY = "FIX-BOARD-DATA-TRUTH"
 def test_13_close_tests_after_worker_exit_show_tests_running(
         env, tmp_path, monkeypatch, release_server, history):
     repo = env.repo
-    settings = (repo.path / "forge.toml").read_text("utf-8")
+    settings = (repo.path / "forge.toml").read_text("utf-8").rstrip() + '\ntest_place = "local"\n'
     _client(repo, env.gh, tmp_path, history)
     # Client setup has already landed; this case tests reporting, not commit gates.
     repo.git("config", "core.hooksPath", (tmp_path / "fixture-hooks").as_posix())

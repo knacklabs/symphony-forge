@@ -89,6 +89,8 @@ def test_1_waiting_run_names_each_holder_and_the_command_that_frees_it(
 def test_2_a_close_with_an_exited_test_process_frees_its_place(env, tmp_path, release_server):
     repo = env.repo
     machine_cores(repo, 4)
+    env.commit(repo.path, "forge.toml", (repo.path / "forge.toml").read_text("utf-8")
+               + '\ntest_place = "local"\n', "Run close tests on this machine")
     server, connections = release_server
     configure(env, server)
     first_item, first_folder = env.start_fix()

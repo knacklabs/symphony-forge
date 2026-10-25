@@ -195,14 +195,12 @@ def _problems(top: Path, item: str) -> None:
 
 def _rerun(top: Path, item: str, branch: str) -> bool:
     """Re-run the pull request's failed checks once per pushed head, when every failure is a job
-    whose first attempt's log names none of the change's files and this machine's tests passed on
-    these committed files. Any gh call that fails means no re-run."""
+    whose first attempt's log names none of the change's files. Laptop repos never wait for
+    GitHub checks. Any gh call that fails means no re-run."""
     default = repo.default_branch(top)
-    # close records only the command it ran: fast_test, when set, else test
-    commands = {repo.config(top)["test"], review.close_test(top, f"origin/{default}")} - {""}
+    cfg = repo.config(top)
     marker = repo.forge_dir(top) / "reruns" / repo.git("rev-parse", "HEAD", cwd=top)
-    if not any((passed := review.passed_record(top, command)) and passed.exists()
-               for command in commands) or marker.exists():
+    if cfg["test_place"] != "ci" or marker.exists():
         return False
     try:  # gh exits non-zero when a check fails, so read what it printed either way
         listed = json.loads(repo.run("gh", "pr", "checks", branch, "--json", "name,bucket,link",
@@ -230,8 +228,8 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
     marker.touch()
     for names in runs.values():
         for name in names:
-            say(f"Re-running {name} once: its failure names none of this change's files and the "
-                "tests passed here.")
+            say(f"Re-running {name} once: its failure names none of this change's files and "
+                "CI runs this repo's tests.")
     for run in runs:
         if repo.run("gh", "run", "rerun", run, "--failed", cwd=top).returncode:
             return False

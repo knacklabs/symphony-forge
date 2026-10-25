@@ -130,6 +130,8 @@ def test_1_running_command_continues_under_the_pin_merged_from_upgraded_default(
         suite = env.tmp / "suite.py"
         suite.write_text('import pathlib, sys\nsys.exit(not pathlib.Path("work-1.txt").exists())\n',
                          "utf-8")
+        original = re.sub(r'^test_place = .*\n', '', original, flags=re.M)
+        original = 'test_place = "local"\n' + original
         original = ("test = " + json.dumps(f'"{sys.executable}" "{suite}"') + "\n"
                     + re.sub(r'^test = .*\n', '', original, flags=re.M))
     env.commit(env.repo.path, "forge.toml", original, "Run the pinned earlier release")

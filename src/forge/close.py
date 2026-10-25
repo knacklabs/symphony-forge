@@ -787,7 +787,7 @@ def _synced(top: Path, item: str) -> None:
 def generated_fix_proof(done: str, evidence: str, item: str) -> str:
     """Generated fixes give their first review the same proof as a worker commit."""
     return (f"Proof list:\n- {done} Evidence: {evidence} "
-            f"forge close {item} reports its test run result alongside the review result "
+            f"forge close {item} reports the review result and test evidence from the repo's chosen test place "
             "(including any skip reason).")
 
 

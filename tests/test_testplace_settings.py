@@ -18,6 +18,8 @@ from test_close import FAILED, Forge as CloseHarness, env  # noqa: F401
 from test_merge_command import _merge_at_github
 from test_setup import _fresh_client
 
+STORY = "FORGE-TESTPLACE-1"
+
 
 def configure(env, place, checks):
     text = (env.repo.path / "forge.toml").read_text("utf-8")
@@ -52,6 +54,8 @@ def test_1_local_repo_ships_without_ci(env):
 
     env.commit(env.repo.path, "dependency.py", "exit_code = 1\n")
     env.repo.git("push", "-q", "origin", "main")
+    env.repo.git("fetch", "-q", "origin", "main")
+    env.repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
     changed = env.close(item)
     assert len(env.review_calls()) == 1  # The branch's own diff still has its clean review.
     assert changed.returncode == 1, changed.stdout + changed.stderr
@@ -60,6 +64,8 @@ def test_1_local_repo_ships_without_ci(env):
 
     env.commit(env.repo.path, "dependency.py", "exit_code = 0\n# repaired dependency\n")
     env.repo.git("push", "-q", "origin", "main")
+    env.repo.git("fetch", "-q", "origin", "main")
+    env.repo.git("merge", "-q", "--no-edit", "origin/main", cwd=where)
     repaired = env.close(item)
     assert repaired.returncode == 0, repaired.stdout + repaired.stderr
     assert (where / "test-count").read_text("utf-8") == "run\nrun\nrun\n"
@@ -118,7 +124,7 @@ def test_2_ci_close_never_runs_local_tests_even_on_reused_review(env):
 
 
 @pytest.mark.platform
-def test_6_a_ci_repo_can_switch_to_laptop_tests(env):
+def test_7_a_ci_repo_can_switch_to_laptop_tests(env):
     configure(env, "ci", ["tests", "forge-pr-check"])
     text = (env.repo.path / "forge.toml").read_text("utf-8")
     env.commit(env.repo.path, "forge.toml", text.replace(
@@ -169,7 +175,7 @@ def test_6_new_and_existing_repos_pick_a_test_place(repo, gh, tmp_path, actions,
 
 
 @pytest.mark.platform
-def test_6_a_new_no_actions_repo_closes_on_local_tests(env, tmp_path):
+def test_8_a_new_no_actions_repo_closes_on_local_tests(env, tmp_path):
     """A new laptop repo uses its test command at close without reading GitHub checks."""
     client, initialized = _fresh_client(env.repo, env.gh, tmp_path, "--actions", "no")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -208,7 +214,7 @@ def test_6_a_new_no_actions_repo_closes_on_local_tests(env, tmp_path):
 
 
 @pytest.mark.platform
-def test_6_new_init_requires_an_actions_answer_before_writing(repo, tmp_path):
+def test_9_new_init_requires_an_actions_answer_before_writing(repo, tmp_path):
     client, remote = tmp_path / "new-client", tmp_path / "new-client.git"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
     subprocess.run(["git", "init", "-q", "-b", "main", str(client)], check=True)

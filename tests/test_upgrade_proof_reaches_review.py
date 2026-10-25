@@ -61,8 +61,8 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert f"Forge {RELEASE}'s forge sync" in proof
     assert f"forge close {NAME}" in proof
     assert "test run" in proof
-    # Review starts with a pending notice; completed results belong to close's report.
-    assert "reports its test run result alongside the review result" in proof
+    assert (f"forge close {NAME} reports the review result and test evidence from the repo's "
+            "chosen test place (including any skip reason).") in proof
     for host in (".codex", ".claude"):
         guide = up.show(f"{host}/skills/forge/SKILL.md")
         assert "close supplies its test run result" not in guide
@@ -73,7 +73,8 @@ def test_1_upgrade_commit_proof_reaches_first_close_review(unsynced_up, adopted)
     assert len(up.env.review_calls()) == 1
     prompt = up.env.prompt()
     assert proof in prompt
-    assert "Tests are running alongside this review" in prompt
-    assert "client checks passed" in upgraded.stdout
-    assert "exited with status 0" in upgraded.stdout
+    assert "CI runs the change's related tests on the pull request" in prompt
+    assert "close waits for them after the review" in prompt
+    assert "client checks passed" not in upgraded.stdout
+    assert "exited with status 0" not in upgraded.stdout
     assert proof in body(up.env.gh_calls("pr", "create")[-1])
