@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-GROUPS-1-PYGROUPS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T14:30:12.952853+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0f600eac436b032f646c165c10da5c83fea8c50f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
