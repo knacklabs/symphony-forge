@@ -384,6 +384,12 @@
       "title": "Split any test runner's CI tests into parallel groups",
       "status": "pending",
       "order": 96
+    },
+    {
+      "key": "FORGE-VAPT-1",
+      "title": "Client apps pass a VAPT test without per-client security work",
+      "status": "pending",
+      "order": 97
     }
   ],
   "epics": [

@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-VAPT-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-25T17:46:57.227391+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client apps pass a VAPT test without per-client security work",
+  "touches": 0
+}
