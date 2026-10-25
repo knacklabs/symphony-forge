@@ -176,12 +176,14 @@ test('a crash on one screen shows its error page and the other screens still wor
 });
 
 test('switching accounts does not show the previous account projects', async ({ page }) => {
-  await signUp(page);
+  const firstEmail = await signUp(page);
   await page.getByRole('button', { name: 'Create project' }).click();
   const dialog = page.getByRole('dialog', { name: 'Create project' });
   await dialog.getByLabel('Name').fill('Account A private project');
   await dialog.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByRole('row', { name: /Account A private project/ })).toBeVisible();
+  await page.getByRole('link', { name: 'Members' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(firstEmail) })).toBeVisible();
   await page.getByRole('button', { name: 'Open user menu' }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/sign-in$/);
@@ -196,9 +198,12 @@ test('switching accounts does not show the previous account projects', async ({ 
     await route.continue();
   });
 
+  const secondEmail = newEmail();
   try {
-    await page.goto('/sign-up');
-    await page.getByLabel('Email').fill(newEmail());
+    // A link, not page.goto, so the app keeps its query cache as it does when people switch accounts.
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible();
+    await page.getByLabel('Email').fill(secondEmail);
     await page.getByLabel('Password').fill(password);
     const requestSeen = page.waitForRequest((request) => request.method() === 'GET' && request.url().includes('/api/v1/projects?'));
     await page.getByRole('button', { name: 'Create account' }).click();
@@ -210,6 +215,23 @@ test('switching accounts does not show the previous account projects', async ({ 
     await page.unrouteAll({ behavior: 'wait' });
   }
   await expect(page.getByText('No projects yet.')).toBeVisible();
+
+  let releaseMembers!: () => void;
+  const membersHeld = new Promise<void>((resolve) => { releaseMembers = resolve; });
+  await page.route('**/api/v1/members?*', async (route) => {
+    await membersHeld;
+    await route.continue();
+  });
+  try {
+    await page.getByRole('link', { name: 'Members' }).click();
+    await expect(page.getByText('Loading members…')).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(firstEmail) })).toHaveCount(0);
+  } finally {
+    releaseMembers();
+    await page.unrouteAll({ behavior: 'wait' });
+  }
+  await expect(page.getByRole('row', { name: new RegExp(secondEmail) })).toBeVisible();
+  await expect(page.getByRole('row', { name: new RegExp(firstEmail) })).toHaveCount(0);
 });
 
 test('theme changes in settings', async ({ page }) => {

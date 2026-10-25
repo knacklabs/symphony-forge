@@ -4,9 +4,12 @@ import { ApiError, apiRequest } from '@/lib/api-client';
 
 const accountKey = ['account'] as const;
 
-async function clearProjectCache(queryClient: QueryClient) {
-  await queryClient.cancelQueries({ queryKey: ['projects'] });
-  queryClient.removeQueries({ queryKey: ['projects'] });
+// Every query except the account belongs to one account, so an account change drops them all.
+const accountData = { predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => queryKey[0] !== accountKey[0] };
+
+async function clearAccountData(queryClient: QueryClient) {
+  await queryClient.cancelQueries(accountData);
+  queryClient.removeQueries(accountData);
 }
 
 export function useAccount() {
@@ -33,7 +36,7 @@ function useStartSession(path: '/auth/sign-in' | '/auth/sign-up') {
       body: JSON.stringify(credentials),
     }),
     onSuccess: async (account) => {
-      await clearProjectCache(queryClient);
+      await clearAccountData(queryClient);
       queryClient.setQueryData(accountKey, account);
     },
   });
@@ -52,7 +55,7 @@ export function useSignOut() {
   return useMutation({
     mutationFn: () => apiRequest<{ message: string }>('/auth/sign-out', { method: 'POST' }),
     onSuccess: async () => {
-      await clearProjectCache(queryClient);
+      await clearAccountData(queryClient);
       queryClient.setQueryData(accountKey, null);
     },
   });
@@ -75,7 +78,7 @@ export function useResetPassword() {
       body: JSON.stringify({ token, password }),
     }),
     onSuccess: async () => {
-      await clearProjectCache(queryClient);
+      await clearAccountData(queryClient);
       queryClient.setQueryData(accountKey, null);
     },
   });
