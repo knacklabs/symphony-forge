@@ -29,6 +29,7 @@ INVITE_API_CASES = (
     "production refuses an invite without a mail provider",
 )
 MEMBERS_FLOW = "only an admin sees the invite and role controls"
+JOIN_FLOW = "an admin invites a person who joins and sees the same projects"
 pytest_plugins = ("test_python_starter",)
 
 
@@ -52,7 +53,7 @@ def test_2_admins_invite_by_email_and_members_cannot_change_roles_or_invite(
         pytest.skip("set FORGE_STARTER_LIVE=1 to run organisation invites against the live API")
     python_live = request.getfixturevalue("live_python_starter")
     _require_cases(python_live["api"], PYTHON_INVITE_API_CASES)
-    _require_cases(python_live["browser"], (MEMBERS_FLOW,))
+    _require_cases(python_live["browser"], (MEMBERS_FLOW, JOIN_FLOW))
     react_live = live_run(tmp_path_factory)
     _require_cases(react_live["api"], INVITE_API_CASES)
-    _require_cases(react_live["browser"], (MEMBERS_FLOW,))
+    _require_cases(react_live["browser"], (MEMBERS_FLOW, JOIN_FLOW))
