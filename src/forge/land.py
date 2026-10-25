@@ -212,6 +212,10 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
                                          f"origin/{default}...HEAD", cwd=top).split("\0") if path]
     runs: dict[str, list[str]] = {}
     for check in failing:
+        # forge-pr-check verifies the review itself; replaying CI cannot repair its findings.
+        name = check.get("name", "")
+        if name == "forge-pr-check" or name.startswith("forge-pr-check ("):
+            return False
         job = re.search(r"/runs/(\d+)/job/(\d+)", check.get("link") or "")
         if check.get("bucket") != "fail" or not job:
             return False

@@ -1698,8 +1698,9 @@ Each job that uses the step skips only its guarded steps.
 
 When `forge land` stops after its one fix round or on a check it cannot fix, judge
 them the same way: dismiss with evidence, or `forge work <item>`, then `forge land <item>` again.
-A failed check whose log names none of the change's files, after this machine's tests passed, is
-re-run once per pushed head instead of costing a fix round. When GitHub has not started that
+A failed CI job whose log names none of the change's files is re-run once per pushed head
+instead of costing a fix round. Forge's review check follows review recovery, never this retry.
+When GitHub has not started that
 re-run in time, land stops; run `forge land <item>` again, which closes again and runs a fix
 round if the check is still red.
 
@@ -1741,9 +1742,9 @@ alone and the others go on. The run ends with `Merged (n): ... · Ready to merge
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
 its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
 answers. Close waits for the owner's recorded choice. A failed
-check whose log names none of the change's files runs again once when the tests passed here; a
-second failure stops that change. Where a human merges, the run closes every change, holds none
-and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
+CI job whose log names none of the change's files runs again once; a second failure stops that
+change. Forge's review check follows review recovery instead. Where a human merges, the run closes
+every change, holds none and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
 with their pull request links: merge them
 in that order.
 
