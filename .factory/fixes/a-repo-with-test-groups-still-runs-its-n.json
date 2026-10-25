@@ -22,8 +22,8 @@
     "id": "a9e09da4-ad19-4ed9-9caf-26609c030380",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T19:23:21.850183+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "b886e395f0e6d3a6beb888a7d257c8e95d9a0894",
+    "close": "0e98e5a3-528d-4be7-b6ad-6f06e2e7facf",
+    "head": "445fdf08d5758337569fdf16c2930e7e25c62a31",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A repo with test groups still runs its nightly full suite on one runner with no time limit, so the run can take hours or hang until GitHub's six-hour limit and block releases.",
   "worker": "codex"
