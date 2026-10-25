@@ -19,6 +19,10 @@
 - In new apps, money is an exact decimal with four decimal places and its own currency code
   column, not whole cents. The shared money helper shows each currency with its own decimal
   places.
+- When the agent writes a new app's constitution, it asks once which currency the app uses. The
+  default is Indian rupees (INR). The agent writes the answer to the app's currency setting, and
+  each new amount gets that currency. The screen has no currency picker. An existing app is not
+  asked, and its files do not change.
 - The feature step takes each column type, constraint and index from one field-kind table, so
   two builders make the same choice.
 - A review holds a new table, column, index or extension that breaks the skill.
@@ -41,7 +45,7 @@ list, Postgres 18 with time-ordered ids, and money as an exact decimal with a cu
 1. **A new client repo gets the database skill for both agents, and an existing repo gets it on upgrade with no change to its tables, its Postgres version or its money columns.**
 2. **Both starters run Postgres 18 with pg_stat_statements, pg_trgm and btree_gin on.**
 3. **In both starters, the database gives each new row a time-ordered id and sets its last-changed time on each update, and the starter's own tables follow the skill: status as text with a named check, names as text, a sign-in email unique on its lower case, and times as timestamptz.**
-4. **Money is stored as an exact decimal with four decimal places and a currency code column, and the shared money helper shows each currency with its own decimal places.**
+4. **Money is stored as an exact decimal with four decimal places and a currency code column, and the shared money helper shows each currency with its own decimal places. In a new app, the constitution asks once for the app's currency (default INR), and the agent writes the answer to the app's currency setting. An existing app is not asked, and its files do not change.**
 5. **The feature step fills each column type, constraint and index from the one field-kind table, and the table's values match the skill.**
 6. **A review holds a new table, column, index or extension that breaks the skill, in a new and in an existing app. An extension that the four hosts do not all offer passes only with the owner's OK in the app's constitution.**
 
@@ -165,10 +169,12 @@ cache layer anywhere in this story.
   in `libs/shared/src/format.ts` of both starters (byte-identical files). `amount` is the decimal
   string the API returns for a `numeric(19,4)` column: Prisma `Decimal` and Python `Decimal` both
   serialize to a JSON string, never a JS number. The same file exports
-  `DEFAULT_CURRENCY = 'USD'` (and `index.ts` exports it), the app's one default currency. The
-  Python API has the same `DEFAULT_CURRENCY = "USD"` in `app/core/config.py`, exported from
-  `app/core/__init__.py` so modules import it from `app.core`, and MONEY's test
-  checks that the two are equal. An app that bills in another currency changes both.
+  `DEFAULT_CURRENCY = 'INR'` (and `index.ts` exports it), the app's one currency setting. The
+  Python API has the same `DEFAULT_CURRENCY = "INR"` in `app/core/config.py`, exported from
+  `app/core/__init__.py` so modules import it from `app.core`. The Python starter's own test
+  `apps/api/tests/test_currency.py::test_the_api_and_the_web_use_one_currency` reads both files
+  and fails when the two codes differ, so a client app's suite keeps them matched. The agent
+  writes the constitution's answer to both places.
 
 ### The skill's content
 
@@ -384,12 +390,28 @@ migrated to these rules unless a story asks; where the app's constitution differ
      `USD 1,234.56`; `formatMoney('-0.0500', 'USD')` is `USD -0.05`; `formatMoney('1234', 'JPY')`
      is `JPY 1,234`; `formatMoney('12345678901234.5650', 'USD')` is `USD 12,345,678,901,234.57`
      (no float loss); `('1.5', 'usd')` and `('1,5', 'USD')` throw. `starter/README.md`: money is
-     stored as `numeric(19,4)` with a currency code column.
+     stored as `numeric(19,4)` with a currency code column, and the app's currency is
+     `DEFAULT_CURRENCY`, which the constitution's answer sets.
+   - The question (MONEY). `src/forge/templates/skill.md`, section `## App constitution`, next to
+     FORGE-SINGLECO-1's one-company question, adds: `In an app whose libs/shared/src/format.ts has
+     DEFAULT_CURRENCY, ask once: "Which currency does the app use? The default is Indian rupees
+     (INR)." Write the answer under ## Defaults as its three-letter code, set DEFAULT_CURRENCY to
+     that code in libs/shared/src/format.ts and, in a Python starter app, in
+     apps/api/app/core/config.py, and ask it again only when the person wants to change it.` The
+     question has a default, so the agent asks it with the other defaults. `forge sync` rewrites
+     `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md`. The worker brief needs no
+     change: workers do not write the constitution.
    - Test `tests/test_database_money.py::test_4_money_is_an_exact_decimal_with_its_currency`
-     (platform mark), parameters `react` and `python`: init copies `format.ts` and (TypeScript)
-     `format.test.ts` byte for byte; under `LIVE`, the live run shows the passing format helper
-     cases. Adopted case: the adopted client's own `libs/shared/src/format.ts` (a cents helper)
-     is the same after `forge sync`.
+     (platform mark), parameters `react` and `python`: init copies `format.ts` (with
+     `DEFAULT_CURRENCY = 'INR'`), `format.test.ts`, and (Python) `config.py` and
+     `test_currency.py` byte for byte, and the synced guide has the currency sentence. New-repo
+     case for the agent's write: in the new Python starter app, the test writes `EUR` to both
+     places as the sentence says; the starter's `test_currency.py` passes; with `EUR` in
+     `format.ts` only, it fails and names both codes. Under `LIVE`, the live run shows the
+     passing format helper and currency cases. Adopted case: after `forge sync` the adopted
+     client's guide has the sentence, its own `libs/shared/src/format.ts` (a cents helper with no
+     `DEFAULT_CURRENCY`, so the guide asks it nothing) and every other app file are byte for byte
+     the same, and no currency line is written anywhere.
 5. The field-kind table (KINDS).
    - kinds.toml holds the values above. `feature.py` changes only where the new values need it:
      the `{...}` placeholders, `index`, the `currency_*` column, the `[table]` lines, and the
@@ -467,7 +489,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | IDSPY | Time-ordered ids in the Python starter | uuidv7 ids and the `set_updated_at()` trigger in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/app/*/service.py` (id lines only), `starter-python/apps/api/migrations/versions/0007_ids_and_updated_at.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_new_rows...`, `python`); the Python ids case of item 3 | PG18, IDS | no | |
 | COLUMNS | TypeScript starter tables follow the skill | Text status and role with named checks, text names, the lower-case unique emails and timestamptz times in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000200_columns/` (new), `starter/libs/shared/src/index.ts` (the role list), `starter/libs/organisations/src/organisations.service.ts`, `starter/libs/auth/src/auth.service.ts`, `starter/libs/auth/src/session.guard.ts`, `starter/libs/projects/src/projects.service.ts`, any other file in `starter/libs/*/src/` that imports a Prisma enum type, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `react`); the TypeScript columns case of item 3 | IDS | no | |
 | COLUMNSPY | Python starter tables follow the skill | Text status and role with named checks, text names and the lower-case unique emails in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/migrations/versions/0008_columns.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `python`); the Python columns case of item 3 | IDSPY, COLUMNS | no | |
-| MONEY | Exact money with its currency | The new `formatMoney` and `DEFAULT_CURRENCY` in both starters, its unit cases and the README line. | 4 | `starter/libs/shared/src/format.ts`, `starter-python/libs/shared/src/format.ts`, `starter/libs/shared/src/index.ts`, `starter-python/libs/shared/src/index.ts`, `starter-python/apps/api/app/core/config.py`, `starter-python/apps/api/app/core/__init__.py` (exports `DEFAULT_CURRENCY`), `starter/apps/web/src/lib/format.test.ts`, `starter/README.md` | `tests/test_database_money.py` (`test_4`, new); the format unit cases | | no | |
+| MONEY | Exact money with its currency | The new `formatMoney` and the `DEFAULT_CURRENCY` setting (INR) in both starters, the check that keeps them matched, the constitution's currency question, the unit cases and the README line. | 4 | `starter/libs/shared/src/format.ts`, `starter-python/libs/shared/src/format.ts`, `starter/libs/shared/src/index.ts`, `starter-python/libs/shared/src/index.ts`, `starter-python/apps/api/app/core/config.py`, `starter-python/apps/api/app/core/__init__.py` (exports `DEFAULT_CURRENCY`), `starter-python/apps/api/tests/test_currency.py` (new), `starter/apps/web/src/lib/format.test.ts`, `starter/README.md`, `src/forge/templates/skill.md` (the currency question), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`) | `tests/test_database_money.py` (`test_4`, new); the format unit cases; the starter's currency case | SKILL | no | |
 | REVIEW | Review holds schema that breaks the skill | The review rule and the `Database:` score floor. | 6 | `src/forge/templates/review.md`, `src/forge/score.py` | `tests/test_database_review.py` (`test_6`, new) | SKILL | no | |
 | KINDS | The field-kind table's database values | The final database values and new keys in kinds.toml, the money and number keys that follow the new helper, and the small `feature.py` changes they need. | 4, 5 | `src/forge/templates/feature/kinds.toml`, `src/forge/feature.py` (the value rendering only) | `tests/test_database_kinds.py` (`test_5`, new); FORGE-FEATURE-1's `tests/test_feature_command.py` where it names a placeholder value | FORGE-FEATURE-1/PY, SKILL, COLUMNS, COLUMNSPY, MONEY | no | |
 
@@ -475,7 +497,8 @@ New moving parts: the pg_stat_statements, pg_trgm and btree_gin extensions in bo
 
 ## Notes
 
-- **Order.** SKILL, PG18 and MONEY start at once; they share no file. IDS after PG18 (its
+- **Order.** SKILL and PG18 start at once; they share no file. MONEY after SKILL, because both
+  change skill.md. IDS after PG18 (its
   migration comes after the extensions one and needs Postgres 18); IDSPY after PG18 and IDS (the
   shared live test file and the same function name). COLUMNS after IDS (the same schema files
   and the next migration); COLUMNSPY after IDSPY and COLUMNS. REVIEW after SKILL (its test checks
