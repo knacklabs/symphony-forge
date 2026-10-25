@@ -70,7 +70,7 @@
     "id": "2502e702-faa3-4b66-b4a0-0b5b4509c588",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -92,10 +92,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "aed4bb950a3b5a507375566bd5f847f28eb3087f",
+    "close": "50ac92b6-236c-4811-ba30-eea26d2545b9",
+    "head": "260ff1be91357b6b50bc734ce012e4acd5abd2b3",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "When close's local test run fails, it fails the item at once, so one flaky test that passes alone sends the item back and costs a whole new queued run",
   "worker": "codex"
