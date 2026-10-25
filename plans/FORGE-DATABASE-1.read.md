@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-25T17:55:31.681262+00:00
-seconds: 56.984
-read_hash: 5da612d63872931fb5e3b2808755e23af49eda9d
-round: 3
+read_at: 2026-10-25T18:00:40.466697+00:00
+seconds: 97.765
+read_hash: f97c9f400be5732a3b7aa35ad1b9184ee33c5d95
+round: 4
 passed: yes
-doc_seen: 5da612d63872931fb5e3b2808755e23af49eda9d
+doc_seen: f97c9f400be5732a3b7aa35ad1b9184ee33c5d95
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 42a73cb1d06066da5a44c74a4de15f04e0ca704d
+notes_seen: 4f7ec854092056d098cac5d911ad27e51a6261bc
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a17422-3f4d-7a10-aa5d-ba2e564cc0be
 session:
@@ -108,3 +108,12 @@ Only a genuine trade-off goes to the human, as a question with options.
 ## Round 3
 
 No findings.
+
+## Round 4
+
+11. Advisory: MONEY now waits for SKILL solely because both edit the coordinator guide.
+   Raise: Plan gap.
+   Case: normal use - scheduling the story’s independent money implementation.
+   [The order note](/plans/FORGE-DATABASE-1.md:485) explicitly gives the shared `skill.md` edit as the dependency’s reason. The task rules require shared guide lines to have one owner instead of creating an After link. Split: SKILL owns the currency instruction, its synced copies and guide assertion; MONEY owns the currency constants, formatter and helper tests.
+   Gain 2, Work 1, Harm 1
+   Disposition: keep - below the bar (live with)

@@ -17,6 +17,10 @@
     {
       "at": "2026-10-25T17:55:31.699921+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-25T18:00:40.483252+00:00",
+      "step": "read"
     }
   ],
   "title": "Database rules for every client app",
