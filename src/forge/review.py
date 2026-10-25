@@ -503,14 +503,16 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                     evidence = results.read_text("utf-8") if results.is_file() else ""
                     failed = sorted({node.split("::", 1)[0] for status, node in
                                      re.findall(r"^(failed|error) (.+)$", evidence, re.M)})
-                    if not failed:
+                    if not failed or fasttest.INVOCATION_HEADER not in evidence:
                         break  # A command failure without named tests cannot be retried by file.
                     # A test lane belongs to its command, which has now exited.
                     machine.leave(entry)
                     entry = machine.join("test", top, item, None, None, small=len(failed) <= 5)
                     entry.update(output_path=log.as_posix(), test_cpus=int(workers))
                     env["FORGE_TEST_LANE"] = entry["id"]
-                    env["FORGE_RETRY_FILES"] = json.dumps([str(top / file) for file in failed])
+                    with results.open("a", encoding="utf-8") as sink:
+                        sink.write(fasttest.RETRY_HEADER)
+                    env["FORGE_RETRY_FILES"] = str(results)
                     flaky = failed
                 if flaky and done.returncode == 0:
                     history.append("Flaky test files: " + ", ".join(flaky) +

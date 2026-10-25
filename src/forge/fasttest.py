@@ -394,7 +394,8 @@ def pytest_sessionfinish(session):
     if hasattr(session.config, "workerinput"):
         return  # the controller sees every worker's reports
     for entry in ALWAYS:
-        if not any(runs(nodeid, entry) for nodeid in RAN):
+        if not any(runs(nodeid, entry) for nodeid in
+                   RAN | set(getattr(session.config, "_forge_prior_passed", []))):
             print("\\nforge.toml's always_test names " + entry
                   + ", which ran no test; fix or remove it in forge.toml.", flush=True)
             session.exitstatus = pytest.ExitCode.TESTS_FAILED
@@ -405,8 +406,15 @@ def pytest_sessionfinish(session):
 # repo, and outcome (passed, failed, skipped, xfail, xpass, or error for a failed setup or
 # teardown). xdist forwards each test's report to the controller, which alone writes the file.
 RESULTS_HEADER = "# forge test results\n"
-RESULTS = """import json, os, pathlib
+INVOCATION_HEADER = "# forge pytest invocation "
+RETRY_HEADER = "# forge pytest retry\n"
+RETRY_STEP = "# forge pytest retry invocation\n"
+RESULTS = """import json, os, pathlib, pytest
 FILE, ROOT = [], []
+FAILED, PASSED = set(), set()
+INVOCATION_HEADER = """ + repr(INVOCATION_HEADER) + """
+RETRY_HEADER = """ + repr(RETRY_HEADER) + """
+RETRY_STEP = """ + repr(RETRY_STEP) + """
 def pytest_configure(config):
     # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
     # close's results file. xdist workers need neither; the controller records their reports.
@@ -415,8 +423,20 @@ def pytest_configure(config):
     os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
     retry = os.environ.pop("FORGE_RETRY_FILES", None)
     if retry:
-        config.args = json.loads(retry)
-        config.option.file_or_dir = config.args
+        before, _, after = pathlib.Path(retry).read_text("utf-8").partition(RETRY_HEADER)
+        previous = [json.loads(line[len(INVOCATION_HEADER):]) for line in before.splitlines()
+                    if line.startswith(INVOCATION_HEADER)]
+        index = after.count(RETRY_STEP)
+        with pathlib.Path(retry).open("a", encoding="utf-8") as results:
+            results.write(RETRY_STEP)
+        # Replay the executed prefix in order. Later commands retain their original scope.
+        if index < len(previous):
+            previous = previous[index]
+            if not previous["files"]:
+                pytest.exit("Close keeps this pytest command's earlier result.", returncode=previous["exit"])
+            config.args = previous["files"]
+            config.option.file_or_dir = config.args
+            config._forge_prior_passed = previous["passed"]
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):
         FILE.append(pathlib.Path(path))
@@ -437,9 +457,20 @@ def pytest_collectreport(report):
         _write_result("error", report.nodeid)
 def _write_result(outcome, nodeid):
     file, _, rest = nodeid.partition("::")
+    if outcome in ("failed", "error"):
+        FAILED.add((ROOT[0] / file).resolve().as_posix())
     nodeid = pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+    if outcome == "passed":
+        PASSED.add(nodeid)
     with FILE[0].open("a", encoding="utf-8") as results:
         results.write(outcome + " " + nodeid + "\\n")
+@pytest.hookimpl(hookwrapper=True)
+def pytest_sessionfinish(session):
+    yield  # Capture the final status, including always_test validation.
+    if FILE:
+        invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus))
+        with FILE[0].open("a", encoding="utf-8") as results:
+            results.write(INVOCATION_HEADER + json.dumps(invocation) + "\\n")
 """
 
 
