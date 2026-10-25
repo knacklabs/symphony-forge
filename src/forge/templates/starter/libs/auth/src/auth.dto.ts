@@ -1,4 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { AuthOptions } from '@app/shared';
+
+export class AuthOptionsResponseDto implements AuthOptions {
+  @ApiProperty({ description: 'Whether anyone can create an account.', example: true })
+  signUpOpen!: boolean;
+}
 
 export class AccountResponseDto {
   @ApiProperty({ description: 'The account identifier.', example: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7' })

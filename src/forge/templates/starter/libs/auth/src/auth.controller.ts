@@ -7,7 +7,7 @@ import { ApiEnvelope, ApiErrors, ApiZodBody, Public, ZodValidationPipe } from '@
 import { CurrentAccount, type AccountPrincipal } from '@app/core';
 import { sessionOptions } from './session.guard';
 import { AuthService, type SessionCookies } from './auth.service';
-import { AccountResponseDto, MessageResponseDto } from './auth.dto';
+import { AccountResponseDto, AuthOptionsResponseDto, MessageResponseDto } from './auth.dto';
 import { acceptInviteSchema, forgotPasswordSchema, resetPasswordSchema, signInSchema, signUpSchema, type AcceptInviteInput, type AuthCredentials, type ForgotPasswordInput, type ResetPasswordInput } from '@app/shared';
 
 @ApiTags('Auth')
@@ -16,12 +16,21 @@ export class AuthController {
   constructor(private readonly auth: AuthService, private readonly config: ConfigService) {}
 
   @Public()
+  @Get('options')
+  @ApiOperation({ summary: 'Read the public sign-up options.', description: 'Sign-up is closed when the app serves one company. Admin invites still work.' })
+  @ApiEnvelope(AuthOptionsResponseDto, 200)
+  @ApiErrors(429)
+  options(): AuthOptionsResponseDto {
+    return this.auth.options();
+  }
+
+  @Public()
   @Post('sign-up')
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @ApiZodBody(signUpSchema)
   @ApiOperation({ summary: 'Create an account and start a session.' })
   @ApiEnvelope(AccountResponseDto, 201)
-  @ApiErrors(400, 409, 429)
+  @ApiErrors(400, 403, 409, 429)
   async signUp(
     @Body(new ZodValidationPipe(signUpSchema)) input: AuthCredentials,
     @Res({ passthrough: true }) response: Response,
