@@ -22,8 +22,8 @@
     "id": "3b877c4e-998e-41c9-ac34-b462012d20a4",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T08:55:57.216123+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "defbdecbfd2458ac16fccf3d027e353f28abd667",
+    "close": "86b189f6-c87e-42b2-bf84-81566d4ff800",
+    "head": "65b9b38de465110637c650868fe6df66d76457ba",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The guide marks the constitution's defaults as built in only when the app has libs/organisations, the TypeScript starter's folder, so a Python app from forge init --starter python (which keeps it in apps/api/app/organisations) gets asked about defaults its starter already builds",
   "worker": "codex"
