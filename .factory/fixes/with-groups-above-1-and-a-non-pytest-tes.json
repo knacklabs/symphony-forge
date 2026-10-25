@@ -1,6 +1,13 @@
 {
   "base": "8cf1abddd9cd3c6d6e3fab022c386202eef3aa10",
   "branch": "fix/with-groups-above-1-and-a-non-pytest-tes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a173b1-eea7-74e1-801d-1ed7c7116483",
+    "head": null,
+    "start": "5540b0bc866d82ec54913ae671c1ebb0e18b913d"
+  },
   "done_when": "With groups above 1 and such a command, forge doctor and the generated CI workflow each show one warning line, and neither refuses.",
   "fix_kind": "backend",
   "kind": "fix",
