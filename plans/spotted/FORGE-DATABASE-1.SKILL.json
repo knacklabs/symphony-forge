@@ -10,6 +10,17 @@
       "item": "FORGE-DATABASE-1/SKILL",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_setup.py\tThe hook failure test lets the launcher restore the real Forge installation, so dash runs it instead of failing closed.",
+      "kind": "bug",
+      "path": "tests/test_setup.py",
+      "line": 404,
+      "text": "The hook failure test lets the launcher restore the real Forge installation, so dash runs it instead of failing closed.",
+      "from": "worker",
+      "item": "FORGE-DATABASE-1/SKILL",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
