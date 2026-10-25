@@ -316,7 +316,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert (STARTER / rel).is_file(), rel
     assert not (STARTER / "package-lock.json").exists(), "the starter still uses npm's lockfile"
     for rel in (Path("apps") / "web", Path("apps") / "api", *(Path("libs") / name for name in
-                                                               ("auth", "core", "organisations", "projects", "shared"))):
+                                                               ("auth", "core", "history", "organisations", "projects", "shared"))):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
@@ -351,14 +351,14 @@ def test_1_the_starter_is_a_runnable_stack(request):
     workspace = (STARTER / "pnpm-workspace.yaml").read_text(encoding="utf-8")
     for project in ("apps/*", "libs/*"):
         assert project in workspace, project
-    for name in ("auth", "core", "organisations", "projects", "shared"):
+    for name in ("auth", "core", "history", "organisations", "projects", "shared"):
         project = _json(STARTER / "libs" / name / "project.json")
         tags = project.get("tags", [])
         type_tags = [tag for tag in tags if tag.startswith("type:")]
         assert len(type_tags) == 1, (name, tags)
 
     schemas = {path.name for path in (STARTER / "apps" / "api" / "prisma" / "schema").glob("*.prisma")}
-    assert schemas == {"base.prisma", "auth.prisma", "organisations.prisma", "projects.prisma"}, schemas
+    assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "organisations.prisma", "projects.prisma"}, schemas
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
     assert command in (STARTER / "README.md").read_text(encoding="utf-8")

@@ -402,6 +402,8 @@ def close(args: argparse.Namespace) -> int:
             print(f"{number}. {priority}{finding['title']} "
                   f"({finding['file']}:{finding['line']})\n"
                   f"Does not block: {reason.rstrip('.')}.\n{finding['body']}\n")
+    if failed:
+        print("Failed tests:\n" + tested.rsplit("Failed tests:\n", 1)[-1], flush=True)
     if failed and not stopped:
         repo.refuse(REFUSALS["tests_failed"], command=command, item=item)
     if serious:

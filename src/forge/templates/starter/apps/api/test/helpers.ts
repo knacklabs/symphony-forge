@@ -6,6 +6,7 @@ export const apiBaseUrl = process.env.API_TEST_URL ?? 'http://127.0.0.1:3000';
 export const productionApiBaseUrl = process.env.PRODUCTION_API_TEST_URL ?? 'http://127.0.0.1:3001';
 
 export type LogEvent = { message: string; context?: Record<string, unknown>; [field: string]: unknown };
+type ApiClient = ReturnType<typeof request.agent>;
 
 export function credentials() {
   return { email: `starter-${randomUUID()}@example.test`, password: 'correct-horse-battery-staple' };
@@ -16,6 +17,22 @@ export function csrfToken(response: request.Response): string {
   const cookie = cookies.find((value) => value.startsWith('starter_csrf='));
   if (!cookie) throw new Error('The API did not set its CSRF cookie.');
   return cookie.slice('starter_csrf='.length).split(';', 1)[0];
+}
+
+export async function invite(client: ApiClient, csrf: string, email: string): Promise<string> {
+  const previousLogCount = logEvents('api').length;
+  await client
+    .post('/api/v1/invites')
+    .set('x-csrf-token', csrf)
+    .send({ email })
+    .expect(201);
+
+  const event = logEvents('api').slice(previousLogCount).reverse()
+    .find(({ context }) => typeof context?.inviteUrl === 'string');
+  if (!event) throw new Error('The API did not log a test invite link.');
+  const token = new URL(String(event.context?.inviteUrl)).searchParams.get('token');
+  if (!token) throw new Error('The invite link has no token.');
+  return token;
 }
 
 /** The JSON log lines of one compose service, oldest first. */

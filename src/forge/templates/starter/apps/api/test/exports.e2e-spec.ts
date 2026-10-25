@@ -4,6 +4,7 @@ import { apiBaseUrl, credentials, csrfToken } from './helpers';
 
 const PROJECTS_HEADER = 'Name,Status,Created (UTC),Updated (UTC)';
 const MEMBERS_HEADER = 'Email,Role,Joined (UTC)';
+const HISTORY_HEADER = 'When (UTC),Who,What';
 const UTC_DATE_TIME = '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}';
 
 describe('CSV exports', () => {
@@ -50,5 +51,35 @@ describe('CSV exports', () => {
     expect(lines[1]).toMatch(/,\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
     expect(lines[2]).toBe('');
     await request(apiBaseUrl).get('/api/v1/members/export').expect(401);
+  });
+
+  it('change history exports as CSV', async () => {
+    const admin = credentials();
+    const client = request.agent(apiBaseUrl);
+    const csrf = csrfToken(await client.post('/api/v1/auth/sign-up').send(admin).expect(201));
+    const emails: string[] = [];
+    for (let index = 0; index < 101; index += 1) {
+      const email = credentials().email;
+      emails.push(email);
+      await client.post('/api/v1/invites').set('x-csrf-token', csrf).send({ email }).expect(201);
+    }
+
+    const history = await client.get('/api/v1/history').expect(200);
+    expect(history.body.data).toHaveLength(100);
+    expect(history.body.data[0].summary).toBe(`Invited ${emails[100]}`);
+    expect(history.body.data[99].summary).toBe(`Invited ${emails[1]}`);
+
+    const response = await client.get('/api/v1/history/export').expect(200);
+    expect(response.get('Content-Type')).toBe('text/csv; charset=utf-8');
+    expect(response.get('Content-Disposition')).toBe('attachment; filename="history.csv"');
+    const lines = response.text.split('\r\n');
+    expect(lines).toHaveLength(103);
+    expect(lines[0]).toBe(HISTORY_HEADER);
+    expect(lines[102]).toBe('');
+    const rows = lines.slice(1, 102).map((line) => line.split(','));
+    expect(rows.map(([when, who, what]) => {
+      expect(when).toMatch(new RegExp(`^${UTC_DATE_TIME}$`));
+      return [who, what];
+    })).toEqual([...emails].reverse().map((email) => [admin.email, `Invited ${email}`]));
   });
 });
