@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-DASH-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-25T17:43:31.960064+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client apps get fast dashboards without hand-written queries",
+  "touches": 0
+}
