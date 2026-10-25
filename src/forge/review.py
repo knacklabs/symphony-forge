@@ -432,6 +432,7 @@ GAP = "No local test names "
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
              closing: bool = True) -> tuple[int, str]:
     """Run or skip tests; report a bounded tail, all failed tests and the full log path."""
+    command = repo.grouped(top, command)
     branch = repo.current_branch(top) or "HEAD"  # Pull-request CI checks out a detached HEAD.
     item = (branch_item(branch, top) or (branch, {}))[0]
     start, clock = repo.now(), time.monotonic()
@@ -568,7 +569,8 @@ def passed_record(top: Path, command: str) -> Path | None:
         return None
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", "HEAD", cwd=top).split("\0")
     files = [entry for entry in listing if not entry.partition("\t")[2].startswith(".factory/")]
-    key = hashlib.sha256("\0".join([command, *files]).encode("utf-8")).hexdigest()
+    key = hashlib.sha256("\0".join([command, os.environ.get("FORGE_GROUP", "1"),
+                                   os.environ.get("FORGE_GROUPS", "1"), *files]).encode("utf-8")).hexdigest()
     return machine._repos_file().parent / "passed-tests" / key
 
 

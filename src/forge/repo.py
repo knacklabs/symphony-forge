@@ -533,7 +533,7 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
-        "always_test": list, "models": dict}
+        "always_test": list, "groups": int, "models": dict}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
@@ -578,6 +578,12 @@ def config(top: Path | None = None) -> dict[str, Any]:
 def test_place(cfg: dict[str, Any]) -> str:
     """The explicit place, or the old config's place based on whether it names checks."""
     return cfg.get("test_place", "ci" if cfg.get("checks") else "local")
+
+
+def grouped(top: Path, command: str) -> str:
+    """Fill the CI group's numbers; local and nightly runs use group 1 of 1."""
+    return command.replace("{group}", os.environ.get("FORGE_GROUP", "1")).replace(
+        "{groups}", os.environ.get("FORGE_GROUPS", "1"))
 
 
 LOCAL = "forge.local.toml"
@@ -806,6 +812,8 @@ def _config_problem(data: dict[str, Any]) -> str:
             return f"{key!r} is not a forge.toml key"
         if kind is str and not isinstance(value, str):
             return f"{key} must be a string"
+        if kind is int and not (type(value) is int and value >= 1):
+            return f"{key} must be a whole number of 1 or more"
         if kind is list and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
             return f"{key} must be a list of strings"
         if key in CHOICES and value not in CHOICES[key]:

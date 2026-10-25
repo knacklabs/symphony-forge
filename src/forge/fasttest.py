@@ -253,7 +253,7 @@ def own_version_only(path: Path, base: str) -> bool:
 
 def close_tests(base: str) -> int:
     """Use supported runners' selection; leave other commands unchanged."""
-    command = repo.config(Path.cwd())["test"]
+    command = repo.grouped(Path.cwd(), repo.config(Path.cwd())["test"])
     parts = quicktest.test_parts(Path.cwd(), command)
     package = Path("package.json")
     if command == init.NODE_TEST:
@@ -306,15 +306,15 @@ def test(args) -> int:
         base = f"origin/{repo.default_branch(top)}"
         if repo.run("git", "rev-parse", "--verify", base, cwd=top).returncode:
             raise repo.Refused(f"Fetch {base} first: run git fetch origin, then forge test.", "")
-        # Change runs use close's full selection; bare worker runs keep the worker bound.
+        # Change runs use close's selection and cached passes; bare worker runs always execute.
         status, report = review.test_run(top, review.close_test(top, base, closing=args.change), base,
-                                        always=True, closing=args.change)
+                                        always=not args.change, closing=args.change)
         print(report)
         return status
     from forge import review
 
     top = Path.cwd().resolve()
-    command = tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"]
+    command = repo.grouped(top, tomllib.loads(Path("forge.toml").read_text("utf-8"))["test"])
     # A picker launched by close or bare forge test keeps that command's one place.
     parent = os.environ.get("FORGE_TEST_LANE")
     if parent and any(run["id"] == parent and run["kind"] == "test" and run.get("started_at")

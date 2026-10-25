@@ -331,8 +331,13 @@ runs instead of `test`, with `{base}` replaced by the merge base with the defaul
 example `npx vitest run --changed {base} && npm run lint`). In a CI-test repo, the pull request's
 `tests` check runs the related tests and close waits for it. The nightly full run covers the rest.
 New repos leave `fast_test` unset. `forge doctor` says when it is set.
-The generated `forge.yml` runs one `tests` job with `forge test --change`. Repos with a direct
-pytest command and pytest-split keep their existing six-group job, which runs `test`.
+The generated `forge.yml` runs one `tests` job with `forge test --change`. Set `groups = 4` in
+`forge.toml` to run four parallel jobs with any test runner. Put `{group}` and `{groups}` in the
+`test` or `fast_test` command where the runner expects its shard number and total, for example
+`vitest run --shard={group}/{groups}`. Forge fills these values for each job and uses `1` for
+both outside CI. Without a shard flag, each job runs the same tests; this is correct but slower.
+Without `groups`, a repo with a direct pytest command and pytest-split keeps its existing
+six-group job, which runs `test`.
 The required `tests` check passes only when every job passes.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.

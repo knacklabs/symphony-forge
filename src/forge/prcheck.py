@@ -86,6 +86,8 @@ jobs:
     runs-on: <runner>
     env:
       UV_FROZEN: '1'
+      FORGE_GROUP: ${{ matrix.group }}
+      FORGE_GROUPS: '<groups>'
 <containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
@@ -229,19 +231,23 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
     # ponytail: only a direct pytest call (bare, `python -m` or `uv run` with options) in a repo
     # listing pytest-split splits; any other command, such as `make pytest`, runs one group.
     direct = r"(?:(?:uv|poetry|pipenv) run(?: -\S+| [\d.]+)* |python3? -m )?pytest\b"
-    groups = 6 if (re.match(direct, cfg["test"]) and not re.search(r"[;&|]", cfg["test"])
-                   and any("pytest-split" in sync.read(path) for path in
-                           [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
+    configured_groups = cfg.get("groups")
+    pytest_split_groups = (configured_groups is None
+                           and re.match(direct, cfg["test"])
+                           and not re.search(r"[;&|]", cfg["test"])
+                           and any("pytest-split" in sync.read(path) for path in
+                                   [top / "pyproject.toml", *top.glob("requirements*.txt")]))
+    groups = configured_groups if configured_groups is not None else 6 if pytest_split_groups else 1
     ci_tests = repo.test_place(cfg) == "ci" and "tests" in cfg.get("checks", [])
     test = (cfg["test"] + " --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
-            "least_duration" if groups > 1 else
+            "least_duration" if pytest_split_groups else
             "forge test --change" if ci_tests else cfg["test"])
     full_run = repo.test_place(cfg) == "ci"
     test_install = ("      - run: " + ("uv tool install ." if source else sync.install_line(cfg["version"]))
                     + "\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
-                    if ci_tests and groups == 1 else "")
+                    if ci_tests and not pytest_split_groups else "")
     windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
-    if groups > 1:
+    if pytest_split_groups:
         # Empty groups pass only if the unsplit suite still collects tests successfully.
         test += ("; if ($LASTEXITCODE -eq 5) { " + cfg["test"] + " --collect-only }" if windows
                  else ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }')

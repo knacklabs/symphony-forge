@@ -48,6 +48,8 @@ jobs:
     runs-on: "ubuntu-latest"
     env:
       UV_FROZEN: '1'
+      FORGE_GROUP: ${{ matrix.group }}
+      FORGE_GROUPS: '6'
       FORGE_CONTAINERS: '1'
     steps:
       - uses: actions/checkout@v7
