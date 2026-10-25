@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 3,
       "line": 13,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -27,7 +27,7 @@
       "gain": 3,
       "harm": 3,
       "line": 26,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,37 +38,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cf0249dd85d4876630cc478ab922bc4c53d6a221412184bce8dbaa1d727a05e4",
-    "changed": "cbe65ab96d542212f0ba2afeb9a0beb046be9016ef1047741451b1798cb480ca",
-    "commit": "d69f4d51af8f77128f6e63aef39b37655d8ed1a0",
+    "branch_diff": "32f22ab77eaf694be8a10ba3a9b982d73feadd4acd54b96ef9b23e4a6bca45e0",
+    "changed": "ca47d5cbe71405125c1ac80492c4bb23d820a34ec8baaac014b6bbfc15750c71",
+    "commit": "32cd16715e9f70870fc62180e3a3b663d3548368",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - an operator follows the README and puts the admin credentials in `.env`. `AppModule` uses `validateEnvironment` (apps/api/src/app.module.ts:13), whose return value omits ADMIN_EMAIL and ADMIN_PASSWORD (libs/core/src/config/environment.ts:54). [NestJS ConfigModule 4.0.2](https://github.com/nestjs/config/blob/4.0.2/lib/config.module.ts#L69-L72) stores and exports only that validation result. Consequently these lookups return undefined unless the credentials were separately exported, and setup exits 1 without creating the company. The tests bypass this failure by supplying Docker `-e` arguments. Preserve the setup credentials through configuration loading and cover the documented `.env` invocation.",
-        "file": "src/forge/templates/starter/apps/api/src/setup-company.ts",
-        "gain": 4,
-        "harm": 3,
-        "line": 13,
-        "priority": "P1",
-        "title": "Load setup credentials from the documented .env file",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. Case: normal use - the pull request runs its configured checks. All three new pytest cases skip unless FORGE_STARTER_LIVE=1, but the live TypeScript job explicitly selects test_starter_tree.py, test_modular_starter.py and test_defaults_*.py (.github/workflows/starter-smoke.yml:34), excluding this file. The regular suite discovers these cases with live mode disabled, so none of their report assertions execute in CI. Although the current TypeScript cases run through the existing smoke suite, removing a required case would escape these intended presence checks. Include tests/test_one_company.py in the live job's selection.",
-        "file": "tests/test_one_company.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 26,
-        "priority": "P1",
-        "title": "Gate: run the one-company proof tests in live CI",
-        "work": 1
-      }
-    ],
-    "id": "1accd5cf-9041-4648-9357-772ed83b5813",
-    "status": "blocked"
+    "findings": [],
+    "id": "5b156de9-2e11-4cf0-a902-7c28cc96e63e",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T17:52:03.919786+00:00",
@@ -76,6 +55,10 @@
     },
     {
       "at": "2026-10-25T18:01:19.883409+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:04:11.552042+00:00",
       "step": "review"
     }
   ],
