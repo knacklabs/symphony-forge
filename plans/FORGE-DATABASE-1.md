@@ -4,34 +4,23 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- New client repos get a database skill covering column types, keys, constraints, indexes that match each list's filters, sorting and search, keyset paging, dashboards and summary tables, change history, job tables, and when to use each extension.
+- The skill covers only extensions that AWS RDS, Google Cloud SQL, Azure and Neon all offer, unless the owner allows one for a client.
+- Both starters move from Postgres 17 to Postgres 18, with time-ordered ids, money as numeric(19,4) with a currency column (replacing whole cents), and pg_stat_statements, pg_trgm and btree_gin on from the first day.
+- One field-kind table sets the column type, constraint and index for each kind of field, and the feature step reads it, so builders stop choosing them by hand.
+- A review rule rejects any schema that breaks the skill.
+- Existing apps get the skill and the rules for new tables only; their current tables stay as they are.
 
 ## Why
 
-Database rules for every client app
-
-
+Column types, keys, indexes and extensions are chosen by hand for each feature, so choices can differ from one builder to the next. The starters run Postgres 17.6, use random uuid ids, and the database convention page stores money as whole cents and covers only Prisma, while the Python starter uses SQLAlchemy.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client repo gets the database skill, and its starter runs Postgres 18 with the three extensions on.**
+2. **The feature step fills each column type, constraint and index from the field-kind table, with no manual choice.**
+3. **A review fails any schema that breaks the skill.**
+4. **An existing app's new tables follow the rules, and its old tables are unchanged.**
 
 ## Risks
 
