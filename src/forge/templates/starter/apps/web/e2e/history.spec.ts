@@ -8,7 +8,17 @@ test('an admin sees who changed what and exports it', async ({ page, browser }) 
   const memberEmail = newEmail();
   const appUrl = (path: string) => new URL(path, page.url()).toString();
 
+  // Offline, the screen says what to do next instead of loading for ever, and Try again recovers.
+  await page.context().setOffline(true);
+  await page.getByRole('link', { name: 'Change history' }).click();
+  await expect(page.getByRole('alert')).toContainText('Could not load the change history. Check your connection and try again.');
+  await page.context().setOffline(false);
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(page.getByText('No changes yet.')).toBeVisible();
+
   // A new organisation has no changes yet. The keyboard opens the screen through Ctrl+K.
+  await page.getByRole('link', { name: 'Projects' }).click();
+  await expect(page.getByRole('heading', { name: 'Projects' })).toBeVisible();
   await page.keyboard.press('Control+k');
   await page.getByRole('option', { name: 'Change history' }).click();
   await expect(page.getByRole('heading', { name: 'Change history' })).toBeVisible();
