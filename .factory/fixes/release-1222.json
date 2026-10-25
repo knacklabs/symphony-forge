@@ -1,0 +1,15 @@
+{
+  "base": "95640b3b9479a8e30e6be749aacbdfc169e9afac",
+  "branch": "fix/release-1222",
+  "done_when": "Forge reports v1.2.22 and every pin, installer and plugin names v1.2.22",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-25T16:46:39.994723+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Clients need v1.2.22: tests run once in one place, parallel test groups for any runner, the constitution's built-in defaults, the modular and FastAPI starters"
+}
