@@ -1553,6 +1553,9 @@ command where the runner expects its shard number and total, for example
 `vitest run --shard={group}/{groups}`. Forge fills these values for each job and uses `1` for both
 outside CI. Without a shard flag, each job repeats the same related tests; this is correct but
 slower. For a direct pytest command with pytest-split, Forge adds the split options automatically.
+When `groups` exceeds 1 and `test` has no `{group}` placeholder or automatic pytest split,
+`forge doctor` and the generated workflow each show one warning. They do not refuse or change
+the chosen groups. Set `groups` to 1 or add the runner's shard options to `test`.
 Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
 existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
 runs its share of the related tests through `forge test --change`. The required `tests` check passes

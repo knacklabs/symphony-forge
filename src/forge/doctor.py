@@ -312,6 +312,8 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str], fix: bool) ->
 def doctor(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)
+    if warning := repo.group_warning(top, cfg):
+        print(f"- Warning: {warning}")
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     def add(problem: str, fix: str = REPAIR) -> None: rows.append((problem, fix))

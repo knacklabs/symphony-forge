@@ -116,7 +116,7 @@ jobs:
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: <runner>
     steps:
-      - env:
+<group-warning>      - env:
           GROUPS: ${{ needs.tests.result }}
           DOCS_CHECK: ${{ needs.docs-check.result }}
           DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
@@ -229,6 +229,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             node += f"        with:\n          node-version: {json.dumps(version)}\n"
     source = cfg.get("repo") == "forge-source"
     configured_groups = cfg.get("groups")
+    warning = repo.group_warning(top, cfg)
     groups = (configured_groups if configured_groups is not None
               else 6 if repo.pytest_split(top, cfg["test"]) else 1)
     ci_tests = repo.test_place(cfg) == "ci" and "tests" in cfg.get("checks", [])
@@ -295,6 +296,8 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                          else sync.install_line(cfg["version"]))
                 .replace("<test-install>", test_install)
                 .replace("<test>", json.dumps(test))
+                .replace("<group-warning>", "      - run: " + json.dumps(
+                    'echo "::warning::' + warning + '"') + "\n" if warning else "")
                 .replace("<groups>", str(groups))
                 .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
