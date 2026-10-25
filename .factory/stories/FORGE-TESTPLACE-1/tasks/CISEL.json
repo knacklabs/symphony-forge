@@ -14,7 +14,7 @@
       "gain": 5,
       "harm": 3,
       "line": 238,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -27,7 +27,7 @@
       "gain": 4,
       "harm": 3,
       "line": 571,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -40,7 +40,7 @@
       "gain": 4,
       "harm": 3,
       "line": 1535,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,47 +51,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8c81dfc81c660dd31f612cea92dca8a980c57a51d5520910af1ae1368ccf3a74",
-    "changed": "ca17cff56d2108410be2b6649a23f5c748f6c2c5d5b6bced130fa24ff165d3c9",
-    "commit": "df5712ff552799ebb575401488db161cfc1936ba",
+    "branch_diff": "fac490f0845e9898b0562ece8aa84aef544510c52e37b93563bf5333360ae2fb",
+    "changed": "c89611d8620b1bd954f4ea01a54faeaef08f25e82e0fa5b7ed64071899ebba55",
+    "commit": "2a2b414be66ddcab146299ae20276b70d7853266",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional. Case: normal use - a pull request runs the generated single-job tests workflow. [Actions checkout uses detached HEAD for pull requests](https://github.com/actions/checkout#push-a-commit-to-a-pr-using-the-built-in-token). Consequently, review.test_run gets an empty branch and item (review.py:435-436). Its record_run calls record_event, which passes that empty item to read_state (repo.py:449-450); state_path rejects it (repo.py:985-986). The new CI command therefore fails before executing any tests or checks. Handle the detached checkout in the command and exercise the generated step in that state; the current selection test uses a named worktree.",
-        "file": "src/forge/prcheck.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 238,
-        "priority": "P1",
-        "title": "Support detached HEAD before invoking change tests in CI",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - a Python client uses `cd backend && python lint.py && pytest tests`, and a changed module selects no tests. Each retained part now runs in a separate shell, so `cd backend` has no effect on the following lint command. Forge runs lint from the repository root and fails to find backend/lint.py. Environment setup through `export`, activation scripts or Windows `set` is likewise discarded. Execute the retained checks as one ordered shell chain so the no-selection path preserves the configured command's setup.",
-        "file": "src/forge/fasttest.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 571,
-        "priority": "P1",
-        "title": "Preserve shell state when running checks without selected tests",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional. Case: normal use - Forge's retained six-group CI runs its test suite. This change removes `runs the full suite` from both the shipped skill and docs/guide.md, but tests/test_fix_close_runs_fast_test_instead_of_test.py:87 still requires that exact phrase in each file. Therefore test_6_the_skill_and_the_guide_recommend_fast_test deterministically fails. Update that assertion to protect the new related-test contract and the preserved pytest-split exception.",
-        "file": "src/forge/templates/skill.md",
-        "gain": 4,
-        "harm": 3,
-        "line": 1535,
-        "priority": "P1",
-        "title": "Update the remaining documentation test for related-test CI",
-        "work": 1
-      }
-    ],
-    "id": "2c823337-7977-4873-9070-abf7754dc0a4",
-    "status": "blocked"
+    "findings": [],
+    "id": "09c604c9-9c6c-46d8-9ed4-72976c7d9a07",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T09:05:30.246559+00:00",
@@ -99,6 +68,10 @@
     },
     {
       "at": "2026-10-25T09:26:38.445548+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T09:39:06.554522+00:00",
       "step": "review"
     }
   ],
