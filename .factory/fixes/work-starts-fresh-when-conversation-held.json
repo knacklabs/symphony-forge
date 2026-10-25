@@ -11,14 +11,59 @@
   "done_when": "When another program holds the earlier conversation, forge work starts a fresh Codex conversation with the whole brief and prints one line saying so, as the cold read and the grill already do",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 1345,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the guide contract test for the new fallback behavior",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ff9425c8f7bfb91dd57d3b81e5d5e8db8934abb9d791ef4b28ad11f2a617622b",
+    "changed": "bac600959d739a6272a99f8bef566a40eb6a700c97a7145642725871b111defa",
+    "commit": "5dd8127e9a5cf8aea02c5d1913574b7395332ce6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Functional. Case: normal use - running the configured repository test suite. This wording change makes both cases of `test_5_coordinator_guide_explains_chat_continuity` fail: `tests/test_worker_and_reader_chats_survive_rounds.py:365` still requires the exact old sentence ending \u201cold chat gone or archived or the item changes tools\u201d. The new sentence no longer contains it, and `src/forge/story.py:89\u201393` copies this template directly into both generated guides. Update that expectation to the new contract so the suite can pass.",
+        "file": "src/forge/templates/skill.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 1345,
+        "priority": "P1",
+        "title": "Update the guide contract test for the new fallback behavior",
+        "work": 1
+      }
+    ],
+    "id": "4f316a3f-8d0f-435e-9d85-e462065e44b0",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-25T07:16:36.281345+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-25T07:22:32.642046+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-25T07:22:32.654897+00:00",
+    "file": "src/forge/templates/skill.md",
+    "wait_id": "7b5ff55b-3739-4782-b0de-6d91df853780"
+  },
   "stuck": {
     "close": null,
     "head": "007b3b7cca5b93de354e5a35acf9be96e8516053",
