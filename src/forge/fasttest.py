@@ -394,7 +394,8 @@ def pytest_sessionfinish(session):
     if hasattr(session.config, "workerinput"):
         return  # the controller sees every worker's reports
     for entry in ALWAYS:
-        if not any(runs(nodeid, entry) for nodeid in RAN):
+        if not any(runs(nodeid, entry) for nodeid in
+                   RAN | set(getattr(session.config, "_forge_prior_passed", []))):
             print("\\nforge.toml's always_test names " + entry
                   + ", which ran no test; fix or remove it in forge.toml.", flush=True)
             session.exitstatus = pytest.ExitCode.TESTS_FAILED
@@ -405,14 +406,37 @@ def pytest_sessionfinish(session):
 # repo, and outcome (passed, failed, skipped, xfail, xpass, or error for a failed setup or
 # teardown). xdist forwards each test's report to the controller, which alone writes the file.
 RESULTS_HEADER = "# forge test results\n"
-RESULTS = """import os, pathlib
+INVOCATION_HEADER = "# forge pytest invocation "
+RETRY_HEADER = "# forge pytest retry\n"
+RETRY_STEP = "# forge pytest retry invocation\n"
+RESULTS = """import json, os, pathlib, pytest
 FILE, ROOT = [], []
+FAILED, PASSED = set(), set()
+INVOCATION_HEADER = """ + repr(INVOCATION_HEADER) + """
+RETRY_HEADER = """ + repr(RETRY_HEADER) + """
+RETRY_STEP = """ + repr(RETRY_STEP) + """
 def pytest_configure(config):
     # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
     # close's results file. xdist workers need neither; the controller records their reports.
     plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
                        if name.strip() not in ("", "_forge_test_results"))
     os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
+    retry = os.environ.pop("FORGE_RETRY_FILES", None)
+    if retry:
+        before, _, after = pathlib.Path(retry).read_text("utf-8").partition(RETRY_HEADER)
+        previous = [json.loads(line[len(INVOCATION_HEADER):]) for line in before.splitlines()
+                    if line.startswith(INVOCATION_HEADER)]
+        index = after.count(RETRY_STEP)
+        with pathlib.Path(retry).open("a", encoding="utf-8") as results:
+            results.write(RETRY_STEP)
+        # Replay the executed prefix in order. Later commands retain their original scope.
+        if index < len(previous):
+            previous = previous[index]
+            if not previous["files"]:
+                pytest.exit("Close keeps this pytest command's earlier result.", returncode=previous["exit"])
+            config.args = previous["files"]
+            config.option.file_or_dir = config.args
+            config._forge_prior_passed = previous["passed"]
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):
         FILE.append(pathlib.Path(path))
@@ -427,11 +451,83 @@ def pytest_runtest_logreport(report):
                    else report.outcome)
     else:
         outcome = "skipped" if report.skipped else "error"
-    file, _, rest = report.nodeid.partition("::")
+    _write_result(outcome, report.nodeid)
+def pytest_collectreport(report):
+    if FILE and report.failed:
+        _write_result("error", report.nodeid)
+def _write_result(outcome, nodeid):
+    file, _, rest = nodeid.partition("::")
+    if outcome in ("failed", "error"):
+        FAILED.add((ROOT[0] / file).resolve().as_posix())
     nodeid = pathlib.Path(os.path.relpath(ROOT[0] / file)).as_posix() + ("::" + rest if rest else "")
+    if outcome == "passed":
+        PASSED.add(nodeid)
     with FILE[0].open("a", encoding="utf-8") as results:
         results.write(outcome + " " + nodeid + "\\n")
+@pytest.hookimpl(hookwrapper=True)
+def pytest_sessionfinish(session):
+    yield  # Capture the final status, including always_test validation.
+    if FILE:
+        invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus))
+        with FILE[0].open("a", encoding="utf-8") as results:
+            results.write(INVOCATION_HEADER + json.dumps(invocation) + "\\n")
 """
+
+
+def test_process(top, item, command, env, entry, ran, log):
+    """Stream one attempt's progress and stop its process group on interruption."""
+    from forge import codex
+
+    with log.open("a", encoding="utf-8") as sink, subprocess.Popen(
+            command, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+            encoding="utf-8", errors="replace", **codex.GROUP) as process:
+        try:
+            machine.started(entry, process.pid)
+            output, total, completed, finished = [], None, 0, set()
+            for line in process.stdout:
+                sink.write(line)
+                sink.flush()
+                output.append(line)
+                found = re.search(r"collected (\d+) items?(.*)|\[(\d+) items?\]", line)
+                if found:
+                    selected = re.search(r" / (\d+) selected", found[2] or "")
+                    total = int(selected[1] if selected else found[1] or found[3])
+                    completed = 0
+                    finished.clear()
+                marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
+                result = re.search(r"(\S+::.*?)\s+(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b.*\[\s*\d+%\]", line)
+                if not result and re.search(r"\[\s*\d+%\]", line):
+                    result = re.search(r"\b(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\s+(\S+::.*?)\s*$", line)
+                tap = re.match(r"(?:ok|not ok) (\d+)\b|1\.\.(\d+)", line)
+                if tap and tap[2]:
+                    total = int(tap[2])
+                if result:
+                    finished.add(result[1])  # teardown errors repeat the same test's id
+                    completed = len(finished)
+                elif tap and tap[1]:
+                    completed = int(tap[1])
+                elif marks:
+                    # A quiet error can be setup or a second report for teardown.
+                    # Keep done unknown until a percentage gives an exact count.
+                    completed = completed + len(marks[1]) if completed is not None and "E" not in marks[1] else None
+                    if completed is None and total is not None:
+                        percent = int(re.search(r"(\d+)%", line)[1])
+                        lower, upper = (percent * total + 99) // 100, min(total, ((percent + 1) * total + 99) // 100 - 1)
+                        completed = lower if lower == upper else None
+                if found or marks or result or tap:
+                    repo.record_progress(top, item, ran["run_id"], done=completed, total=total)
+                    with machine._queue() as runs:
+                        for run in runs:
+                            if run["id"] == entry["id"]:
+                                run["progress"] = {"done": completed, "total": total}
+            done = subprocess.CompletedProcess(command, process.wait(), "".join(output))
+        except BaseException:
+            if process.poll() is None:
+                codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
+                process.wait()
+            raise
+    return done
 
 
 def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:

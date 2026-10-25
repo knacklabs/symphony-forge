@@ -1,16 +1,15 @@
 import hashlib
 from datetime import UTC, datetime
-from typing import Annotated, NamedTuple, cast
-from uuid import UUID
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth.mail import MailProvider
 from app.auth.models import Account as AccountModel
 from app.auth.models import Session as SessionModel
 from app.auth.schema import (
+    AcceptInviteInput,
     Account,
     CredentialsInput,
     ForgotPasswordInput,
@@ -19,21 +18,19 @@ from app.auth.schema import (
 )
 from app.auth.service import AuthService
 from app.core import (
+    AccountPrincipal,
     ApiError,
     ErrorEnvelope,
+    MailProvider,
     Settings,
     SuccessEnvelope,
+    admin_only,
     get_db,
     verify_csrf,
 )
 
-
-class AccountPrincipal(NamedTuple):
-    id: UUID
-    email: str
-
-
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
+invites_router = APIRouter(prefix="/api/v1/invites", tags=["Organisations"])
 
 
 def _settings(request: Request) -> Settings:
@@ -41,14 +38,21 @@ def _settings(request: Request) -> Settings:
 
 
 def _service(request: Request, db: DbSession) -> AuthService:
+    # Import at request time: the organisations router also uses auth's session dependency.
+    from app.organisations import OrganisationsService
+
     settings = _settings(request)
     correlation_id = cast(str | None, getattr(request.state, "correlation_id", None))
-    return AuthService(db, settings, MailProvider(settings, correlation_id))
+    return AuthService(
+        db, settings, MailProvider(settings, correlation_id), OrganisationsService(db)
+    )
 
 
 def current_account(
     request: Request, db: Annotated[DbSession, Depends(get_db)]
 ) -> AccountPrincipal:
+    from app.organisations import OrganisationsService
+
     session_token = request.cookies.get("starter_session")
     if not session_token:
         raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
@@ -67,8 +71,11 @@ def current_account(
     account = db.get(AccountModel, session.account_id)
     if account is None:
         raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
+    principal = OrganisationsService(db).membership_for(account.id)
+    if principal is None:
+        raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
     request.state.csrf_token_hash = session.csrf_token_hash
-    return AccountPrincipal(id=account.id, email=account.email)
+    return principal
 
 
 def require_csrf(
@@ -148,6 +155,50 @@ def sign_up(
     return SuccessEnvelope(data=session.account)
 
 
+@invites_router.post(
+    "",
+    status_code=201,
+    response_model=SuccessEnvelope[MessageResponse],
+    responses={
+        status: {"model": ErrorEnvelope} for status in (400, 401, 403, 409, 422)
+    },
+    summary="Invite a person to your organisation.",
+    description="Admins invite an email without an account. A new invite replaces its seven-day link. Production requires a mail provider.",
+)
+def invite(
+    request: Request,
+    input_data: ForgotPasswordInput,
+    account: Annotated[AccountPrincipal, Depends(admin_only)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[MessageResponse]:
+    return SuccessEnvelope(data=_service(request, db).invite(input_data.email, account))
+
+
+@router.post(
+    "/accept-invite",
+    status_code=201,
+    response_model=SuccessEnvelope[Account],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 409, 429)},
+    summary="Join an organisation with an email invite.",
+    description="The seven-day invite must match the email and works once. Creates an account and starts a session.",
+)
+def accept_invite(
+    request: Request,
+    response: Response,
+    input_data: AcceptInviteInput,
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[Account]:
+    session = _service(request, db).accept_invite(input_data)
+    _set_session_cookies(
+        response,
+        session.session_token,
+        session.csrf_token,
+        session.expires_at_utc,
+        _settings(request),
+    )
+    return SuccessEnvelope(data=session.account)
+
+
 @router.post(
     "/sign-in",
     response_model=SuccessEnvelope[Account],
@@ -185,7 +236,9 @@ def sign_in(
 def me(
     account: Annotated[AccountPrincipal, Depends(current_account)],
 ) -> SuccessEnvelope[Account]:
-    return SuccessEnvelope(data=Account(id=account.id, email=account.email))
+    return SuccessEnvelope(
+        data=Account(id=account.id, email=account.email, role=account.role)
+    )
 
 
 @router.post(

@@ -5,8 +5,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth import AccountPrincipal
-from app.core import ApiError
+from app.core import AccountPrincipal, ApiError
 from app.projects.models import Project as ProjectModel
 from app.projects.schema import (
     Project,
@@ -25,7 +24,7 @@ class ProjectService:
         self, account: AccountPrincipal, query: ProjectListQuery
     ) -> ProjectListResponse:
         filters = (
-            ProjectModel.account_id == account.id,
+            ProjectModel.organisation_id == account.organisation_id,
             ProjectModel.deleted_at_utc.is_(None),
         )
         sort_column = {
@@ -61,11 +60,11 @@ class ProjectService:
         )
 
     def list_all(self, account: AccountPrincipal) -> Sequence[Project]:
-        """Every project the account can see, newest first, for the CSV export."""
+        """Every project in the organisation, newest first, for the CSV export."""
         projects = self.db.scalars(
             select(ProjectModel)
             .where(
-                ProjectModel.account_id == account.id,
+                ProjectModel.organisation_id == account.organisation_id,
                 ProjectModel.deleted_at_utc.is_(None),
             )
             .order_by(ProjectModel.created_at_utc.desc(), ProjectModel.id.asc())
@@ -76,7 +75,7 @@ class ProjectService:
         project = self.db.scalar(
             select(ProjectModel).where(
                 ProjectModel.id == project_id,
-                ProjectModel.account_id == account.id,
+                ProjectModel.organisation_id == account.organisation_id,
                 ProjectModel.deleted_at_utc.is_(None),
             )
         )
@@ -87,7 +86,7 @@ class ProjectService:
     def create(self, account: AccountPrincipal, input_data: ProjectInput) -> Project:
         project = ProjectModel(
             id=uuid4(),
-            account_id=account.id,
+            organisation_id=account.organisation_id,
             name=input_data.name,
             status=input_data.status,
             created_by_account_id=account.id,
@@ -104,7 +103,7 @@ class ProjectService:
         project = self.db.scalar(
             select(ProjectModel).where(
                 ProjectModel.id == project_id,
-                ProjectModel.account_id == account.id,
+                ProjectModel.organisation_id == account.organisation_id,
                 ProjectModel.deleted_at_utc.is_(None),
             )
         )
@@ -121,7 +120,7 @@ class ProjectService:
         project = self.db.scalar(
             select(ProjectModel).where(
                 ProjectModel.id == project_id,
-                ProjectModel.account_id == account.id,
+                ProjectModel.organisation_id == account.organisation_id,
                 ProjectModel.deleted_at_utc.is_(None),
             )
         )

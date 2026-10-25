@@ -67,6 +67,11 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 | "Close takes too long running every test" | Ask, then in a fix: set `fast_test` in `forge.toml`, a command close runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for example `npx vitest run --changed {base}` plus lint); the pull request's CI still runs the full `test`, `forge close <fix>` |
 | "Upgrade Forge" | Ask which release, then `forge upgrade <release>`; Upgrade Forge, below |
 
+`forge doctor` lists started fixes with no work commits after more than seven days.
+Each row gives `forge fix drop <fix> --because "<reason>"`. Only drop a fix after
+the owner agrees. `forge doctor --fix` does not drop these fixes. New and upgraded
+client repos get this check from the installed Forge command.
+
 Send every new idea through `forge start "<their words>"`. Never ask the human whether it is a
 story or a fix. When the answer is a fix, run its `forge land <fix>` in the background and watch it.
 
@@ -1054,12 +1059,15 @@ An open upgrade or local work still refuses and stays in place. Ignored configur
 also stay in place; only recognized cache directories may be discarded.
 
 1. Ask which release to move to, recommending the newest.
-2. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
+2. Wait until no Forge runs are in progress anywhere on the machine. Let workers, plan reads,
+   tests and close finish first. An install during a close can mix two releases.
+   `forge upgrade` names the items in the machine's lanes and asks you to wait if any remain.
+3. Run `forge upgrade <release>` in the main checkout, on the default branch. It installs the
    release, has that release refresh Forge's files in the fix, commits them and closes the fix.
    Its commit includes the upgrade's proof list; close reports tests and review results together.
    It changes only the version in `forge.toml`.
-3. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
-4. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
+4. When it refuses, follow its `Next:` line. Running it again picks up where it stopped.
+5. Close's last line says who merges: the human, or `forge merge <fix>` when the repo allows it.
 
 Close runs the time-story backfill as part of the upgrade, with nothing extra to type. It
 rebuilds open items and items merged in the last six weeks from git and GitHub, marks them
@@ -1504,9 +1512,15 @@ in the default branch. Land retries close once itself, including a conflict duri
 wait; if the merge needs a person, it stops with close's existing conflict next step.
 If GitHub refuses a pull request body update, close stops after one attempt, including during a
 history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
+Close reruns failed pytest files once after a local test failure. If they pass, close names
+them as flaky and continues. A second failure still stops close. A failure without named
+test files still stops close.
+
 Close's tests and review run at the same time. Close waits for both and reports their results
 together; a red test or a P0/P1 finding still stops the round. When the
-test command fails, close keeps the output for the worker: run
+test command fails, its test report ends with all failed pytest files and test names,
+including setup, teardown and collection errors, and the full test log path.
+Close keeps the output for the worker: run
 `forge work <item>`, whose brief carries it; `forge land` runs that fix round itself.
 When the pull request's `tests` check runs the full suite, close avoids repeating it locally.
 Close runs `fast_test` when set. Otherwise it uses the shipped pytest picker for changed tests

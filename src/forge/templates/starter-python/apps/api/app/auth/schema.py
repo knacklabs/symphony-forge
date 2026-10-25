@@ -5,6 +5,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
+from app.core import Role
+
 
 class AuthSchema(BaseModel):
     model_config = ConfigDict(
@@ -42,9 +44,19 @@ class ResetPasswordInput(AuthSchema):
     password: str = Field(min_length=12, max_length=128)
 
 
+class AcceptInviteInput(CredentialsInput):
+    token: str = Field(
+        min_length=32,
+        max_length=256,
+        description="The single-use token from the invite link.",
+        examples=["abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG"],
+    )
+
+
 class Account(AuthSchema):
     id: UUID
     email: Email
+    role: Role
 
 
 class MessageResponse(AuthSchema):

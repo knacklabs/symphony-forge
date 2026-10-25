@@ -431,7 +431,7 @@ GAP = "No local test names "
 
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
              closing: bool = True) -> tuple[int, str]:
-    """Run or skip tests and record their timing; report skip reasons and a bounded output tail."""
+    """Run or skip tests; report a bounded tail, all failed tests and the full log path."""
     branch = repo.current_branch(top)
     item = (branch_item(branch, top) or (branch, {}))[0]
     start, clock = repo.now(), time.monotonic()
@@ -450,7 +450,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if not always and docs_only(top, base):
             said = DOCS_ONLY.format(command=command)
             return 0, said
-        from forge import codex, records  # import review indirectly
+        from forge import records  # imports review indirectly
 
         passed = None if always else passed_record(top, command)
         skipped = SKIPPED.format(command=command)
@@ -494,55 +494,30 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                            receipt.get("product", "") if isinstance(receipt, dict) else "")
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
                 entry.update(output_path=log.as_posix(), test_cpus=int(workers))
-                with log.open("w", encoding="utf-8") as sink, subprocess.Popen(
-                                      capped, shell=True, cwd=top, env=env, stdin=subprocess.DEVNULL,
-                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                      encoding="utf-8", errors="replace", **codex.GROUP) as process:
-                    try:
-                        machine.started(entry, process.pid)
-                        output, total, completed, finished = [], None, 0, set()
-                        for line in process.stdout:
-                            sink.write(line)
-                            sink.flush()
-                            output.append(line)
-                            found = re.search(r"collected (\d+) items?(.*)|\[(\d+) items?\]", line)
-                            if found:
-                                selected = re.search(r" / (\d+) selected", found[2] or "")
-                                total = int(selected[1] if selected else found[1] or found[3])
-                                completed = 0
-                                finished.clear()
-                            marks = re.search(r"(?:^|\s)([.FsxXE]+)\s+\[\s*\d+%\]", line)
-                            result = re.search(r"(\S+::.*?)\s+(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b.*\[\s*\d+%\]", line)
-                            if not result and re.search(r"\[\s*\d+%\]", line):
-                                result = re.search(r"\b(?:PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\s+(\S+::.*?)\s*$", line)
-                            tap = re.match(r"(?:ok|not ok) (\d+)\b|1\.\.(\d+)", line)
-                            if tap and tap[2]:
-                                total = int(tap[2])
-                            if result:
-                                finished.add(result[1])  # teardown errors repeat the same test's id
-                                completed = len(finished)
-                            elif tap and tap[1]:
-                                completed = int(tap[1])
-                            elif marks:
-                                # A quiet error can be setup or a second report for teardown.
-                                # Keep done unknown until a percentage gives an exact count.
-                                completed = completed + len(marks[1]) if completed is not None and "E" not in marks[1] else None
-                                if completed is None and total is not None:
-                                    percent = int(re.search(r"(\d+)%", line)[1])
-                                    lower, upper = (percent * total + 99) // 100, min(total, ((percent + 1) * total + 99) // 100 - 1)
-                                    completed = lower if lower == upper else None
-                            if found or marks or result or tap:
-                                repo.record_progress(top, item, ran["run_id"], done=completed, total=total)
-                                with machine._queue() as runs:
-                                    for run in runs:
-                                        if run["id"] == entry["id"]:
-                                            run["progress"] = {"done": completed, "total": total}
-                        done = subprocess.CompletedProcess(command, process.wait(), "".join(output))
-                    except BaseException:
-                        if process.poll() is None:
-                            codex._stop(codex.identity(process.pid) or {"pid": process.pid}, True)
-                            process.wait()
-                        raise
+                history, flaky = [], []
+                for attempt in range(2):
+                    done = fasttest.test_process(top, item, capped, env, entry, ran, log)
+                    history.append(done.stdout)
+                    if not closing or attempt or done.returncode == 0:
+                        break
+                    evidence = results.read_text("utf-8") if results.is_file() else ""
+                    failed = sorted({node.split("::", 1)[0] for status, node in
+                                     re.findall(r"^(failed|error) (.+)$", evidence, re.M)})
+                    if not failed or fasttest.INVOCATION_HEADER not in evidence:
+                        break  # A command failure without named tests cannot be retried by file.
+                    # A test lane belongs to its command, which has now exited.
+                    machine.leave(entry)
+                    entry = machine.join("test", top, item, None, None, small=len(failed) <= 5)
+                    entry.update(output_path=log.as_posix(), test_cpus=int(workers))
+                    env["FORGE_TEST_LANE"] = entry["id"]
+                    with results.open("a", encoding="utf-8") as sink:
+                        sink.write(fasttest.RETRY_HEADER)
+                    env["FORGE_RETRY_FILES"] = str(results)
+                    flaky = failed
+                if flaky and done.returncode == 0:
+                    history.append("Flaky test files: " + ", ".join(flaky) +
+                                   ". They passed on the one retry.\n")
+                done = subprocess.CompletedProcess(command, done.returncode, "".join(history))
                 outcome = ran["outcome"] = "passed" if done.returncode == 0 else "failed"
             if product and product == records.tested_product(top):
                 evidence = results.read_text("utf-8") if results.is_file() else done.stdout
@@ -561,6 +536,13 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         lines = [out[i] for i in picked]
         if len(lines) > 80:  # the tail is the last 30 picked; the earliest skip lines fill the rest
             lines = [*lines[:50], f"({len(lines) - 80} skip lines cut here)", *lines[-30:]]
+        if done.returncode:
+            report = results.read_text("utf-8") if results.is_file() else ""
+            failures = sorted({node for outcome, node in re.findall(r"^(\w+) (.+)$", report, re.M)
+                               if outcome in ("failed", "error")})
+            lines += ["Failed tests:", *([f"- {node}" for node in failures] or
+                       ["Test names are not available from this test command."]),
+                      f"Full test log: {log.as_posix()}"]
         return done.returncode, "\n".join([f"`{command}` exited with status {done.returncode} on this machine.", *lines])
     except BaseException:
         outcome = "failed"

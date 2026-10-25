@@ -1,0 +1,13 @@
+// Change history is a log: keep the actor's email as it was when the action happened.
+model ChangeRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @db.Uuid
+  actorAccountId String   @db.Uuid
+  actorEmail     String
+  action         String
+  summary        String
+  createdAtUtc   DateTime @default(now())
+
+  @@index([organisationId, createdAtUtc], map: "idx_ChangeRecord_organisationId_createdAtUtc")
+  @@index([actorAccountId], map: "idx_ChangeRecord_actorAccountId")
+}

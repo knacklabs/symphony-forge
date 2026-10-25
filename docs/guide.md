@@ -410,12 +410,16 @@ You never edit `forge.toml` by hand. Ask your coding agent to upgrade Forge, or 
 other setting such as the workers or the test command; it asks you first, with options, then
 makes the change in a fix like any other.
 
+Before an upgrade, wait until no Forge runs are in progress anywhere on the machine.
+Let workers, plan reads, tests and close finish first. An install during a close can mix two releases.
+
 To upgrade, the agent asks which release you want, recommending the newest, then runs
 `forge upgrade <release>` (or `forge upgrade` for the newest) from the default branch with
 nothing uncommitted. The command starts a fix, changes only `version` in `forge.toml`, installs
 that release, has it rewrite Forge's generated files for Claude Code and Codex, and closes the
 fix. Close's last line says who merges, as described in Merging a ready item. When the command
 refuses, follow its `Next:` line; running it again picks up where it stopped.
+If the machine's lanes still have runs, the command names them and asks you to wait.
 
 A repo pinned to a release older than the command upgrades once with
 `uvx --from git+https://github.com/knacklabs/symphony-forge@vX.Y.Z forge upgrade vX.Y.Z`.

@@ -325,7 +325,10 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         connections, activities = [], []
         try:
-            for expected in ([None] if case.startswith(("progress", "ci")) else expected_steps):
+            # A setup or teardown failure now retries the file once. Observe and release
+            # both real pytest attempts, keeping the same live-progress assertions.
+            for expected in ([None, None] if case in ("progress error", "progress teardown") else
+                             [None] if case.startswith(("progress", "ci")) else expected_steps):
                 connection, _ = listener.accept()
                 connections.append(connection)
                 if case.startswith("ci"):

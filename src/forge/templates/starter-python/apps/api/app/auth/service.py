@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import secrets
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 from uuid import UUID, uuid4
 
@@ -10,16 +11,19 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth.mail import MailProvider
 from app.auth.models import Account, PasswordResetToken, Session
-from app.auth.schema import Account as AccountResponse
 from app.auth.schema import (
+    AcceptInviteInput,
     CredentialsInput,
     MessageResponse,
     ResetPasswordInput,
     SessionData,
 )
-from app.core import ApiError, Settings
+from app.auth.schema import Account as AccountResponse
+from app.core import AccountPrincipal, ApiError, MailProvider, Settings
+
+if TYPE_CHECKING:
+    from app.organisations import OrganisationsService
 
 _PASSWORD_KEY_BYTES = 64
 _PASSWORD_SALT_BYTES = 16
@@ -83,13 +87,32 @@ def _verify_password(password: str, stored_hash: str) -> bool:
 
 class AuthService:
     def __init__(
-        self, db: DbSession, settings: Settings, mail_provider: MailProvider
+        self,
+        db: DbSession,
+        settings: Settings,
+        mail_provider: MailProvider,
+        organisations: OrganisationsService,
     ) -> None:
         self.db = db
         self.settings = settings
         self.mail_provider = mail_provider
+        self.organisations = organisations
 
     def sign_up(self, credentials: CredentialsInput) -> SessionData:
+        account = self._create_account(credentials)
+        principal = self.organisations.create_for_account(account.id, account.email)
+        session_data = self._new_session(
+            AccountResponse(id=account.id, email=account.email, role=principal.role)
+        )
+        self.db.add(self._session_row(account.id, session_data))
+        self.db.commit()
+        return session_data
+
+    def _create_account(
+        self,
+        credentials: CredentialsInput,
+        conflict_message: str = "An account already uses that email.",
+    ) -> Account:
         account_id = uuid4()
         account = Account(
             id=account_id,
@@ -98,21 +121,51 @@ class AuthService:
             created_by_account_id=account_id,
             modified_by_account_id=account_id,
         )
-        session_data = self._new_session(
-            AccountResponse(id=account_id, email=credentials.email)
-        )
         try:
             self.db.add(account)
             self.db.flush()
-            self.db.add(self._session_row(account_id, session_data))
-            self.db.commit()
         except IntegrityError as error:
             self.db.rollback()
             raise ApiError(
                 409,
                 "EMAIL_ALREADY_REGISTERED",
-                "An account already uses that email.",
+                conflict_message,
             ) from error
+        return account
+
+    def invite(self, email: str, account: AccountPrincipal) -> MessageResponse:
+        if self.db.scalar(select(Account.id).where(Account.email == email)) is not None:
+            raise ApiError(
+                409, "EMAIL_ALREADY_REGISTERED", "That person already has an account."
+            )
+        self.organisations.invite(
+            email, account, self.mail_provider, self.settings.app_origin
+        )
+        return MessageResponse(message="Invite sent.")
+
+    def accept_invite(self, input_data: AcceptInviteInput) -> SessionData:
+        invite = self.organisations.open_invite(input_data.token)
+        if invite.email != input_data.email:
+            raise ApiError(
+                400,
+                "INVITE_INVALID",
+                "This invite link is not valid. Ask an admin for a new one.",
+            )
+        account = self._create_account(
+            input_data,
+            "An account already uses that email, so it cannot join this organisation.",
+        )
+        self.db.commit()
+        # ponytail: a failure between these module calls leaves an account with no membership
+        # and 401; support must remove it before another attempt.
+        principal = self.organisations.join_from_invite(
+            invite, account.id, account.email
+        )
+        session_data = self._new_session(
+            AccountResponse(id=account.id, email=account.email, role=principal.role)
+        )
+        self.db.add(self._session_row(account.id, session_data))
+        self.db.commit()
         return session_data
 
     def sign_in(self, credentials: CredentialsInput) -> SessionData:
@@ -125,8 +178,11 @@ class AuthService:
             raise ApiError(
                 401, "INVALID_CREDENTIALS", "The email or password is incorrect."
             )
+        principal = self.organisations.membership_for(account.id)
+        if principal is None:
+            raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
         session_data = self._new_session(
-            AccountResponse(id=account.id, email=account.email)
+            AccountResponse(id=account.id, email=account.email, role=principal.role)
         )
         self.db.add(self._session_row(account.id, session_data))
         self.db.commit()

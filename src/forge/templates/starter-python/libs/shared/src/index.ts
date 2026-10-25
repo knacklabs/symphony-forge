@@ -27,3 +27,17 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ErrorReportInput = z.infer<typeof errorReportSchema>;
 export type Account = components['schemas']['Account'];
+export const memberListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+}).strict();
+export type MemberListQuery = z.infer<typeof memberListQuerySchema>;
+export type Member = components['schemas']['Member'];
+export const memberRoleSchema = z.enum(['admin', 'member']);
+export type MemberRole = z.infer<typeof memberRoleSchema>;
+export const inviteSchema = forgotPasswordSchema;
+export const acceptInviteSchema = signUpSchema.extend({ token: resetPasswordSchema.shape.token }).strict();
+export const changeRoleSchema = z.object({ role: memberRoleSchema }).strict();
+export type InviteInput = z.infer<typeof inviteSchema>;
+export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
+export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;
