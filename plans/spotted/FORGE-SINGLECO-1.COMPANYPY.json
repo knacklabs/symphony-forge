@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/migrations/versions/0006_extensions.py\tGate: remove the unrelated database upgrade from the selected change\tFORGE-SINGLECO-1/COMPANYPY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/migrations/versions/0006_extensions.py",
+      "line": 14,
+      "text": "Gate: remove the unrelated database upgrade from the selected change",
+      "from": "blocking",
+      "item": "FORGE-SINGLECO-1/COMPANYPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
