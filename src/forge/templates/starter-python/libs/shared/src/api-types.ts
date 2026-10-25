@@ -254,6 +254,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List your organisation’s newest 100 changes.
+         * @description Only admins can read change history. Changes are returned newest first.
+         */
+        get: operations["list_history_api_v1_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/history/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download every change in your organisation.
+         * @description Only admins can export change history. The file includes all changes, newest first.
+         */
+        get: operations["export_history_api_v1_history_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/error-reports": {
         parameters: {
             query?: never;
@@ -410,6 +450,34 @@ export interface components {
         HealthResponse: {
             /** Status */
             status: string;
+        };
+        /** HistoryEntry */
+        HistoryEntry: {
+            /**
+             * Id
+             * Format: uuid
+             * @description The change identifier.
+             */
+            id: string;
+            /**
+             * Actoremail
+             * @description The email of the admin who made the change.
+             * @example ada@example.com
+             */
+            actorEmail: string;
+            /**
+             * Summary
+             * @description What changed.
+             * @example Invited grace@example.com
+             */
+            summary: string;
+            /**
+             * Createdatutc
+             * Format: date-time
+             * @description When the change happened, in UTC.
+             * @example 2026-10-24T11:30:00Z
+             */
+            createdAtUtc: string;
         };
         /** Member */
         Member: {
@@ -631,6 +699,19 @@ export interface components {
              */
             success: true;
             data: components["schemas"]["Project"] | null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[list[HistoryEntry]] */
+        SuccessEnvelope_list_HistoryEntry__: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            /** Data */
+            data: components["schemas"]["HistoryEntry"][] | null;
             /** Error */
             error?: null;
         };
@@ -1541,6 +1622,80 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    list_history_api_v1_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_list_HistoryEntry__"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    export_history_api_v1_history_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The history.csv file: When (UTC), Who and What. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

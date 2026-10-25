@@ -15,6 +15,7 @@ from app.core import (
     get_db,
     utc_date_time,
 )
+from app.history import HistoryService
 from app.organisations.schema import (
     ChangeRoleInput,
     Member,
@@ -45,7 +46,9 @@ def change_role(
     db: Annotated[Session, Depends(get_db)],
 ) -> SuccessEnvelope[Member]:
     return SuccessEnvelope(
-        data=OrganisationsService(db).change_role(account, account_id, input_data.role)
+        data=OrganisationsService(db, HistoryService(db)).change_role(
+            account, account_id, input_data.role
+        )
     )
 
 
@@ -61,7 +64,9 @@ def list_members(
     db: Annotated[Session, Depends(get_db)],
 ) -> SuccessEnvelope[MemberListResponse]:
     return SuccessEnvelope(
-        data=OrganisationsService(db).list(account.organisation_id, query)
+        data=OrganisationsService(db, HistoryService(db)).list(
+            account.organisation_id, query
+        )
     )
 
 
@@ -81,5 +86,5 @@ def export_members(
     return csv_response(
         "members.csv",
         MEMBER_CSV_COLUMNS,
-        OrganisationsService(db).list_all(account.organisation_id),
+        OrganisationsService(db, HistoryService(db)).list_all(account.organisation_id),
     )

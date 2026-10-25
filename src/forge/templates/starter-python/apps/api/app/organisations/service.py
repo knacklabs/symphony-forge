@@ -11,6 +11,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core import AccountPrincipal, ApiError, MailProvider, Role
+from app.history import HistoryService
 from app.organisations.models import Invite, Membership, Organisation
 from app.organisations.schema import (
     Member,
@@ -36,8 +37,9 @@ def _invalid_invite() -> ApiError:
 
 
 class OrganisationsService:
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session, history: HistoryService) -> None:
         self.db = db
+        self.history = history
 
     def invite(
         self, email: str, account: AccountPrincipal, mail: MailProvider, app_origin: str
@@ -67,6 +69,10 @@ class OrganisationsService:
             email, f"{app_origin}/accept-invite?{urlencode({'token': token})}"
         )
         self.db.commit()
+
+        # ponytail: saving the invite and its history are two calls; use a shared
+        # transaction if atomic history becomes required.
+        self.history.record(account, "member.invited", f"Invited {email}")
 
     def open_invite(self, token: str) -> OpenInvite:
         invite = self.db.scalar(
@@ -119,6 +125,13 @@ class OrganisationsService:
             raise ApiError(
                 403, "CANNOT_CHANGE_OWN_ROLE", "You cannot change your own role."
             )
+        old_role = self.db.scalar(
+            select(Membership.role).where(
+                Membership.account_id == account_id,
+                Membership.organisation_id == account.organisation_id,
+                Membership.deleted_at_utc.is_(None),
+            )
+        )
         member = self.db.scalar(
             update(Membership)
             .where(
@@ -132,6 +145,13 @@ class OrganisationsService:
         if member is None:
             raise ApiError(404, "MEMBER_NOT_FOUND", "This member was not found.")
         self.db.commit()
+        # ponytail: changing the role and its history are two calls; use a shared
+        # transaction if atomic history becomes required.
+        self.history.record(
+            account,
+            "member.role_changed",
+            f"Changed {member.email} from {old_role} to {role}",
+        )
         return Member.model_validate(member)
 
     def create_for_account(self, account_id: UUID, email: str) -> AccountPrincipal:

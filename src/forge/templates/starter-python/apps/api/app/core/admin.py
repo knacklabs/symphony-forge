@@ -18,5 +18,6 @@ def admin_only(
     account = current_account(request, db)
     if account.role != "admin":
         raise ApiError(403, "ADMIN_ONLY", "Only an admin can do this.")
-    verify_csrf(request)
+    if request.method not in {"GET", "HEAD", "OPTIONS"}:
+        verify_csrf(request)
     return account

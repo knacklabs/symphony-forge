@@ -1134,6 +1134,83 @@
         }
       }
     },
+    "/api/v1/history": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "summary": "List your organisation\u2019s newest 100 changes.",
+        "description": "Only admins can read change history. Changes are returned newest first.",
+        "operationId": "list_history_api_v1_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_list_HistoryEntry__"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history/export": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "summary": "Download every change in your organisation.",
+        "description": "Only admins can export change history. The file includes all changes, newest first.",
+        "operationId": "export_history_api_v1_history_export_get",
+        "responses": {
+          "200": {
+            "description": "The history.csv file: When (UTC), Who and What."
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/error-reports": {
       "post": {
         "tags": [
@@ -1521,6 +1598,49 @@
           "status"
         ],
         "title": "HealthResponse"
+      },
+      "HistoryEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "The change identifier."
+          },
+          "actorEmail": {
+            "type": "string",
+            "title": "Actoremail",
+            "description": "The email of the admin who made the change.",
+            "examples": [
+              "ada@example.com"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "What changed.",
+            "examples": [
+              "Invited grace@example.com"
+            ]
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdatutc",
+            "description": "When the change happened, in UTC.",
+            "examples": [
+              "2026-10-24T11:30:00Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "actorEmail",
+          "summary",
+          "createdAtUtc"
+        ],
+        "title": "HistoryEntry"
       },
       "Member": {
         "properties": {
@@ -2038,6 +2158,39 @@
           "data"
         ],
         "title": "SuccessEnvelope[Project]"
+      },
+      "SuccessEnvelope_list_HistoryEntry__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/HistoryEntry"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[list[HistoryEntry]]"
       },
       "ValidationError": {
         "properties": {

@@ -28,6 +28,7 @@ from app.core import (
     get_db,
     verify_csrf,
 )
+from app.history import HistoryService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 invites_router = APIRouter(prefix="/api/v1/invites", tags=["Organisations"])
@@ -44,7 +45,10 @@ def _service(request: Request, db: DbSession) -> AuthService:
     settings = _settings(request)
     correlation_id = cast(str | None, getattr(request.state, "correlation_id", None))
     return AuthService(
-        db, settings, MailProvider(settings, correlation_id), OrganisationsService(db)
+        db,
+        settings,
+        MailProvider(settings, correlation_id),
+        OrganisationsService(db, HistoryService(db)),
     )
 
 
@@ -71,7 +75,7 @@ def current_account(
     account = db.get(AccountModel, session.account_id)
     if account is None:
         raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
-    principal = OrganisationsService(db).membership_for(account.id)
+    principal = OrganisationsService(db, HistoryService(db)).membership_for(account.id)
     if principal is None:
         raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
     request.state.csrf_token_hash = session.csrf_token_hash
