@@ -96,10 +96,11 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - building or type-checking a new TypeScript starter.
    [COLUMNS’s scope](/plans/FORGE-DATABASE-1.md:461) permits service edits only where files import Prisma enum types. Changing `Membership.role` to `String` also widens its generated type to `string`. Existing consumers require `'admin' | 'member'`: `starter/libs/organisations/src/organisations.service.ts:9-10`, `starter/libs/auth/src/auth.service.ts:48,65`, and `starter/libs/auth/src/session.guard.ts:36`. None imports a Prisma enum, so their required repairs remain outside scope. This is a separate type failure from note 1’s repaired email selectors.
    Gain 5, Work 3, Harm 4
+   Disposition: cut One shared roleSchema in @app/shared; the services narrow stored roles with it, and COLUMNS's scope names them.
 
 10. Advisory: The new Python currency constant has no public export for generated features.
    Raise: Plan gap.
    Case: normal use - generating a Python feature with a money field.
    [MONEY’s scope](/plans/FORGE-DATABASE-1.md:463) adds `DEFAULT_CURRENCY` to `app/core/config.py`, while KINDS requires generated APIs to use it. However, `starter-python/apps/api/app/core/__init__.py:2` exports only `Settings` and `load_settings` from that file. Direct imports from `app.core.config` violate the protected-module contract in `starter-python/apps/api/pyproject.toml:27-30`. Neither task owns the missing public export.
    Gain 3, Work 1, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut app/core/__init__.py exports DEFAULT_CURRENCY, and MONEY's scope names it.

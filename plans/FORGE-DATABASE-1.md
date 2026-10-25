@@ -166,7 +166,8 @@ cache layer anywhere in this story.
   string the API returns for a `numeric(19,4)` column: Prisma `Decimal` and Python `Decimal` both
   serialize to a JSON string, never a JS number. The same file exports
   `DEFAULT_CURRENCY = 'USD'` (and `index.ts` exports it), the app's one default currency. The
-  Python API has the same `DEFAULT_CURRENCY = "USD"` in `app/core/config.py`, and MONEY's test
+  Python API has the same `DEFAULT_CURRENCY = "USD"` in `app/core/config.py`, exported from
+  `app/core/__init__.py` so modules import it from `app.core`, and MONEY's test
   checks that the two are equal. An app that bills in another currency changes both.
 
 ### The skill's content
@@ -330,8 +331,14 @@ migrated to these rules unless a story asks; where the app's constitution differ
      `Account_email_lower` and `Invite_email_lower` (`CHECK ("email" = lower("email"))`), so each
      is unique on `lower(email)`. The shared zod schemas already lower-case emails, and the
      `findUnique({ where: { email } })` and `organisationId_email` upsert calls keep working with
-     no change. The status and role lists stay the same, so the HTTP contract does not change;
-     only code that imports the Prisma enum types changes to the shared string types.
+     no change. The status and role lists stay the same, so the HTTP contract does not change.
+     Prisma now types `status` and `role` as `string`, so the starter keeps one role list in
+     `@app/shared`, as it already does for status: `roleSchema = z.enum(['admin', 'member'])`
+     and `type Role = z.infer<typeof roleSchema>`, used by `Account['role']` and the role update
+     schema. The services that hand a stored role or status to a typed value narrow it with the
+     shared schema's `parse` (`roleSchema`, `projectStatusSchema`): `organisations.service.ts`,
+     `auth.service.ts`, `session.guard.ts` and `projects.service.ts`. The build and type check
+     pass.
    - COLUMNSPY (Python), revision `0008_columns.py` (down revision `0007_ids_and_updated_at`):
      the `project_status` and `membership_role` native enums become `Text` with the named checks
      `project_status_allowed` and `membership_role_allowed` (`CheckConstraint` in the models),
@@ -458,9 +465,9 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | PG18 | Postgres 18 and day-one extensions | Both starters on Postgres 18 with pg_stat_statements preloaded, and one migration each that turns on the three extensions. | 2 | `starter/compose.test.yml`, `starter-python/compose.test.yml`, `starter/apps/api/prisma/migrations/20261026000000_extensions/` (new), `starter-python/apps/api/migrations/versions/0006_extensions.py` (new), `starter/apps/api/test/database.e2e-spec.ts` (new), `starter-python/apps/api/tests/test_database.py` (new), `.github/workflows/starter-smoke.yml` (the two `tests/test_database_*.py` selections) | `tests/test_database_starters.py` (`test_2`, new); the two live cases of item 2 | | no | |
 | IDS | Time-ordered ids in the TypeScript starter | uuidv7 ids and the `set_updated_at()` trigger in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000100_ids_and_updated_at/` (new), `starter/libs/auth/src/auth.service.ts`, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_new_rows...`, `react`); the TypeScript ids case of item 3 | PG18 | no | |
 | IDSPY | Time-ordered ids in the Python starter | uuidv7 ids and the `set_updated_at()` trigger in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/app/*/service.py` (id lines only), `starter-python/apps/api/migrations/versions/0007_ids_and_updated_at.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_new_rows...`, `python`); the Python ids case of item 3 | PG18, IDS | no | |
-| COLUMNS | TypeScript starter tables follow the skill | Text status and role with named checks, text names, the lower-case unique emails and timestamptz times in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000200_columns/` (new), the files in `starter/libs/*/src/` that import a Prisma enum type, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `react`); the TypeScript columns case of item 3 | IDS | no | |
+| COLUMNS | TypeScript starter tables follow the skill | Text status and role with named checks, text names, the lower-case unique emails and timestamptz times in the TypeScript starter. | 3 | `starter/apps/api/prisma/schema/*.prisma`, `starter/apps/api/prisma/migrations/20261026000200_columns/` (new), `starter/libs/shared/src/index.ts` (the role list), `starter/libs/organisations/src/organisations.service.ts`, `starter/libs/auth/src/auth.service.ts`, `starter/libs/auth/src/session.guard.ts`, `starter/libs/projects/src/projects.service.ts`, any other file in `starter/libs/*/src/` that imports a Prisma enum type, `starter/apps/api/test/database.e2e-spec.ts` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `react`); the TypeScript columns case of item 3 | IDS | no | |
 | COLUMNSPY | Python starter tables follow the skill | Text status and role with named checks, text names and the lower-case unique emails in the Python starter. | 3 | `starter-python/apps/api/app/*/models.py`, `starter-python/apps/api/migrations/versions/0008_columns.py` (new), `starter-python/apps/api/tests/test_database.py` | `tests/test_database_starters.py` (`test_3_starter_tables...`, `python`); the Python columns case of item 3 | IDSPY, COLUMNS | no | |
-| MONEY | Exact money with its currency | The new `formatMoney` and `DEFAULT_CURRENCY` in both starters, its unit cases and the README line. | 4 | `starter/libs/shared/src/format.ts`, `starter-python/libs/shared/src/format.ts`, `starter/libs/shared/src/index.ts`, `starter-python/libs/shared/src/index.ts`, `starter-python/apps/api/app/core/config.py`, `starter/apps/web/src/lib/format.test.ts`, `starter/README.md` | `tests/test_database_money.py` (`test_4`, new); the format unit cases | | no | |
+| MONEY | Exact money with its currency | The new `formatMoney` and `DEFAULT_CURRENCY` in both starters, its unit cases and the README line. | 4 | `starter/libs/shared/src/format.ts`, `starter-python/libs/shared/src/format.ts`, `starter/libs/shared/src/index.ts`, `starter-python/libs/shared/src/index.ts`, `starter-python/apps/api/app/core/config.py`, `starter-python/apps/api/app/core/__init__.py` (exports `DEFAULT_CURRENCY`), `starter/apps/web/src/lib/format.test.ts`, `starter/README.md` | `tests/test_database_money.py` (`test_4`, new); the format unit cases | | no | |
 | REVIEW | Review holds schema that breaks the skill | The review rule and the `Database:` score floor. | 6 | `src/forge/templates/review.md`, `src/forge/score.py` | `tests/test_database_review.py` (`test_6`, new) | SKILL | no | |
 | KINDS | The field-kind table's database values | The final database values and new keys in kinds.toml, the money and number keys that follow the new helper, and the small `feature.py` changes they need. | 4, 5 | `src/forge/templates/feature/kinds.toml`, `src/forge/feature.py` (the value rendering only) | `tests/test_database_kinds.py` (`test_5`, new); FORGE-FEATURE-1's `tests/test_feature_command.py` where it names a placeholder value | FORGE-FEATURE-1/PY, SKILL, COLUMNS, COLUMNSPY, MONEY | no | |
 
@@ -532,3 +539,11 @@ New moving parts: the pg_stat_statements, pg_trgm and btree_gin extensions in bo
    filter indexes use `{updated}`.
 8. Redeploy does not recover a failed Prisma migration. Disposition: cut. The trade-off and the
    skill add `prisma migrate resolve --rolled-back <migration>` before the new deploy.
+
+### Cold read round 2
+
+9. Role as text breaks the TypeScript types. Disposition: cut. One shared `roleSchema` in
+   `@app/shared`, and the four services that read a stored role or status narrow it with the
+   shared schema; COLUMNS's scope names them.
+10. The Python currency has no public export. Disposition: cut. `app/core/__init__.py` exports
+   `DEFAULT_CURRENCY`; MONEY's scope names it.
