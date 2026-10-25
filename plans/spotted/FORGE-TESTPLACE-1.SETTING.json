@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_testplace_settings.py\tThe settings tests lack a STORY key and repeat criterion numbers, which conflicts with the one-test-per-rule check.",
+      "kind": "bug",
+      "path": "tests/test_testplace_settings.py",
+      "line": 1,
+      "text": "The settings tests lack a STORY key and repeat criterion numbers, which conflicts with the one-test-per-rule check.",
+      "from": "worker",
+      "item": "FORGE-TESTPLACE-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/templates/skill.md\tDependency refresh guidance still says to run the test command locally in every repo.",
       "kind": "improve",
       "path": "src/forge/templates/skill.md",

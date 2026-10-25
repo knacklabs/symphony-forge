@@ -14,7 +14,7 @@
       "gain": 5,
       "harm": 3,
       "line": 354,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -27,7 +27,7 @@
       "gain": 4,
       "harm": 2,
       "line": 243,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,47 +51,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "8a6c745bcb20ac1ca3e9ebdce719732a2ff0c63f343c53de1b6c091163c1b762",
-    "changed": "9caa6b5fdc6d1b982ddcb6fcb319250b38ec034d4623dd0094bd9f9c60015247",
-    "commit": "9030648087cebf7936aa609fb6295e8ee36062d4",
+    "branch_diff": "b635849c856ff1b211a0d088ae214f0ee03d1339195ac3563e2a2ab16d880bfe",
+    "changed": "bd48a2d4f6d2b55ac705d0d52a6cf12deb6fca9a924074fd90c944af7ff230c7",
+    "commit": "63e5ba92d4e752f955aea683337ea7c120725e2c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional. Case: normal use - a previously reviewed change incorporates a main-only dependency change, then closes again locally. Review reuse depends on the branch diff (`close.py:268`; `review.py:169\u2013177`), so the review can remain fresh even though the tested tree changed. This branch handles a remembered failure or prints a test-cache hit, but does nothing on a cache miss. `review.passed_record` keys the complete committed tree (`review.py:572\u2013575`), so the updated tree has no passing result. Close nevertheless skips checks and writes Ready, allowing untested code to merge. Run the local test gate independently of review freshness, retaining its existing cache reuse.",
-        "file": "src/forge/close.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 354,
-        "priority": "P1",
-        "title": "[P1] Require local test evidence when reusing a review",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional. Case: normal use - a CI worker changes tests, or the coordinator refreshes dependencies. The brief still requires the test-audit skill immediately before the new test-place instruction. That shipped skill's Validation step 3 unconditionally requires a local related-test run (`.codex/skills/test-audit/SKILL.md:149\u2013154`), and `review.py:59\u201363` ships it unchanged. Workers are explicitly told not to read the coordinator guide, so its new test-audit qualification does not reach them. The coordinator's dependency-refresh step also still says to run forge.toml's test command before close (`src/forge/templates/skill.md:1104`). These mandatory paths continue requesting laptop runs in CI repos, followed by the PR's CI run. Update both instructions to respect the selected place.",
-        "file": "src/forge/templates/brief.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 243,
-        "priority": "P1",
-        "title": "[P1] Make mandatory validation guidance honor the selected test place",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 4, Harm 2\nThe remaining item-2 behavior is explicitly assigned to CISEL (`plans/FORGE-TESTPLACE-1.md:282`). The current call still reaches selection conditioned on a named `tests` check (`review.py:388`), so an empty-checks laptop repo without fast_test runs the whole command. Broad local selections can still be skipped (`fasttest.py:568\u2013572`), empty selections skip lint/type command parts (`fasttest.py:574\u2013576`), and generated CI still runs the configured full command and decides whether to include test jobs solely from checks (`prcheck.py:235,268`). The named selection proof belongs to CISEL as well. These are deferred item-2 gaps, rather than completed behavior in this part.",
-        "file": "src/forge/close.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 300,
-        "priority": "P2",
-        "title": "Later: Complete change-test selection and workflow routing in CISEL",
-        "work": 4
-      }
-    ],
-    "id": "4fd17dfa-3753-4f0e-8368-c4468416db55",
-    "status": "blocked"
+    "findings": [],
+    "id": "b7d3b3a5-f571-4931-ad92-2f07b0b88277",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-25T02:41:46.411263+00:00",
@@ -99,6 +68,10 @@
     },
     {
       "at": "2026-10-25T04:26:53.028455+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T04:34:20.512392+00:00",
       "step": "review"
     }
   ],
