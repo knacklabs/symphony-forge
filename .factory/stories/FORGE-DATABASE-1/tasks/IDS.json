@@ -20,9 +20,9 @@
     "id": "898503ea-472d-460b-8377-0a041cbe9683",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-DATABASE-1/PG18",
-  "status": "waiting for checks",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T19:29:11.232964+00:00",
@@ -34,10 +34,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "73d6f6d83018fb34152466422e1996c5d9cb61b2",
+    "close": "090a9c5f-c09b-4ced-a384-ed50cf2428ee",
+    "head": "80ec98382f2b17aad1b079ee49a3cedd3dc3a270",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
