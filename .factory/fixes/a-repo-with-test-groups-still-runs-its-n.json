@@ -1,0 +1,15 @@
+{
+  "base": "b57fafaea2e32587274661ac94d4f6892c56105f",
+  "branch": "fix/a-repo-with-test-groups-still-runs-its-n",
+  "done_when": "The nightly full run splits into the repo's groups with the same time limit as the pull request tests job, and one full-run result is recorded for the default branch.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-25T19:23:21.850183+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A repo with test groups still runs its nightly full suite on one runner with no time limit, so the run can take hours or hang until GitHub's six-hour limit and block releases."
+}
