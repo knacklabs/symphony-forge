@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-SINGLECO-1-COMPANYGUIDE",
+  "chat": {
+    "approval": "0d08757b739604620f35179a62a256cd5855426df6dc569487a239533d4478c8",
+    "claude": null,
+    "conversation": "01a1748a-9162-7013-883c-850691a6367f",
+    "head": null,
+    "start": "884ff3564a50e34c021c139b86937aa254b08af9"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
