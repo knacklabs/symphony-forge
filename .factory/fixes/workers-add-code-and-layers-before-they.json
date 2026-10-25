@@ -71,7 +71,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T18:18:39.508232+00:00",
@@ -84,8 +84,12 @@
   ],
   "stop": {
     "at": "2026-10-25T18:26:11.051907+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/review.py",
-    "wait_id": "8fa9cac1-6a16-4c88-9073-b4075067fa69"
+    "reason": "The owner chose one more round: read the newest planning lines on this branch from its head, and fix the test name or its check",
+    "wait_id": "8fa9cac1-6a16-4c88-9073-b4075067fa69",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
