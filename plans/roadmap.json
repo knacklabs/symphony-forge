@@ -378,6 +378,12 @@
       "title": "Tests run once per change, in one place per repo, and CI is optional",
       "status": "pending",
       "order": 95
+    },
+    {
+      "key": "FORGE-GROUPS-1",
+      "title": "Split any test runner's CI tests into parallel groups",
+      "status": "pending",
+      "order": 96
     }
   ],
   "epics": [
