@@ -49,8 +49,8 @@
     "id": "a1acb5d2-fb56-47cb-9d46-0db794fb45ce",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T18:18:39.508232+00:00",
@@ -75,10 +75,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "6d6aea4a-b6ec-4ba2-aab5-fa8dea39287c",
-    "head": "5134a21d84c07b30307496a442b389522b7ed90f",
+    "close": "551ca83d-b3f6-4abc-b8f3-35472f65f8a1",
+    "head": "6076ef58e31efe8e3f3c5b7af913133731e53b5b",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Workers add code and layers before they think through the simplest way, and the rules say where not to add layers but not where a layer belongs, so the review has nothing written before coding to check the change against.",
   "worker": "codex"
