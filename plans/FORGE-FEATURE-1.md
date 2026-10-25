@@ -4,34 +4,21 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- The agent runs a new feature command from the plan, so the FDE never types it or makes technical choices.
+- Each new feature comes with a table that keeps deleted items and their change history, a checked API, list, detail and form screens with filters kept in the web address, CSV export, and admin and member access.
+- Each new feature takes the fields the plan names, of these kinds: text, long text, number, money, date, yes or no, email, a status list, and one link to an item of another feature.
+- In an app that is not a starter, the command says it needs a starter app and changes nothing.
 
 ## Why
 
-Build a client feature from the starter in one step
-
-
+FDEs must ship client features without technical choices, but each new feature is built by hand in both starters. The starter's projects feature already has soft delete, change history, validation, CSV export and URL filters, so the command can copy and rename it.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **An FDE names a new feature and its fields in a plan, and the first worker step builds it in both the TypeScript and the Python starters.**
+2. **The generated feature's API and UI tests pass in both starters.**
+3. **The generated feature has soft delete, change history, CSV export and role-based access, like the existing projects feature.**
+4. **Outside a starter app the command refuses and says it needs a starter app.**
 
 ## Risks
 
