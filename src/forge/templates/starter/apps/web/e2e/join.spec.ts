@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { logEvents, newEmail, password, signUp } from './helpers';
+import { inviteUrlsSince, logEvents, newEmail, password, signUp } from './helpers';
 
 test('an admin invites a person who joins and sees the same projects', async ({ page, browser }) => {
   await signUp(page);
@@ -19,10 +19,9 @@ test('an admin invites a person who joins and sees the same projects', async ({ 
   await dialog.getByLabel('Email').fill(memberEmail);
   await dialog.getByRole('button', { name: 'Send invite' }).click();
   await expect(page.getByText(`Invite sent to ${memberEmail}.`)).toBeVisible();
-  const inviteUrl = logEvents('api').slice(previousLogCount).reverse()
-    .map(({ context }) => context?.inviteUrl).find((url) => typeof url === 'string');
-  const logged = new URL(String(inviteUrl));
-  // The logged link carries the API's APP_ORIGIN; open its path on the web app under test.
+  const inviteUrls = inviteUrlsSince(previousLogCount);
+  expect(inviteUrls.length).toBeGreaterThan(0);
+  // A logged link carries the API's APP_ORIGIN; open its path on the web app under test.
   const appUrl = (path: string) => new URL(path, page.url()).toString();
 
   const memberContext = await browser.newContext();
@@ -32,7 +31,8 @@ test('an admin invites a person who joins and sees the same projects', async ({ 
     await expect(memberPage.getByRole('alert')).toHaveText('This invite link is not complete. Ask an admin for a new one.');
     await expect(memberPage.getByRole('button', { name: 'Join' })).toHaveCount(0);
 
-    await memberPage.goto(appUrl(`${logged.pathname}${logged.search}`));
+    const openLink = (link: URL) => memberPage.goto(appUrl(`${link.pathname}${link.search}`));
+    await openLink(inviteUrls[0]);
     await expect(memberPage.getByRole('heading', { name: 'Join your team' })).toBeVisible();
     await expect(memberPage.getByText('Use the email address that got the invite.')).toBeVisible();
     const axe = await new AxeBuilder({ page: memberPage }).analyze();
@@ -44,11 +44,18 @@ test('an admin invites a person who joins and sees the same projects', async ({ 
     await memberPage.getByRole('button', { name: 'Join' }).click();
     await expect(memberPage.getByRole('alert')).toHaveText('This invite link is not valid. Ask an admin for a new one.');
 
-    // The keyboard path: fill the fields and press Enter to join.
-    await memberPage.getByLabel('Email').fill(memberEmail);
-    await memberPage.getByLabel('Password').focus();
-    await memberPage.keyboard.press('Enter');
-    await expect(memberPage.getByRole('heading', { name: 'Projects' })).toBeVisible();
+    // The keyboard path: fill the fields and press Enter to join. A link that a parallel flow
+    // logged is refused for this email and stays unused, so try the next one.
+    const projectsHeading = memberPage.getByRole('heading', { name: 'Projects' });
+    for (const link of inviteUrls) {
+      await openLink(link);
+      await memberPage.getByLabel('Email').fill(memberEmail);
+      await memberPage.getByLabel('Password').fill(password);
+      await memberPage.getByLabel('Password').press('Enter');
+      await expect(projectsHeading.or(memberPage.getByRole('alert'))).toBeVisible();
+      if (await projectsHeading.isVisible()) break;
+    }
+    await expect(projectsHeading).toBeVisible();
     await expect(memberPage.getByRole('row', { name: new RegExp(projectName) })).toBeVisible();
   } finally {
     await memberContext.close();

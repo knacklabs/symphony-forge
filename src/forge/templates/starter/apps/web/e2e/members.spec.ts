@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { logEvents, newEmail, password, signUp } from './helpers';
+import { inviteUrlsSince, logEvents, newEmail, password, signUp } from './helpers';
 
 test('only an admin sees the invite and role controls', async ({ page, browser }) => {
   const adminEmail = await signUp(page);
@@ -28,19 +28,22 @@ test('only an admin sees the invite and role controls', async ({ page, browser }
   await dialog.getByRole('button', { name: 'Send invite' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText(`Invite sent to ${memberEmail}.`)).toBeVisible();
-  const inviteUrl = logEvents('api').slice(previousLogCount).reverse()
-    .map(({ context }) => context?.inviteUrl).find((url) => typeof url === 'string');
-  const token = new URL(String(inviteUrl)).searchParams.get('token');
-  expect(token).toBeTruthy();
+  const inviteUrls = inviteUrlsSince(previousLogCount);
+  expect(inviteUrls.length).toBeGreaterThan(0);
 
   const memberContext = await browser.newContext();
   try {
     const memberPage = await memberContext.newPage();
     const appUrl = (path: string) => new URL(path, page.url()).toString();
-    const joined = await memberPage.request.post(appUrl('/api/v1/auth/accept-invite'), {
-      data: { email: memberEmail, password, token },
-    });
-    expect(joined.ok()).toBeTruthy();
+    let joined = false;
+    for (const inviteUrl of inviteUrls) {
+      const response = await memberPage.request.post(appUrl('/api/v1/auth/accept-invite'), {
+        data: { email: memberEmail, password, token: inviteUrl.searchParams.get('token') },
+      });
+      joined = response.ok();
+      if (joined) break;
+    }
+    expect(joined).toBeTruthy();
 
     await memberPage.goto(appUrl('/members'));
     await expect(memberPage.getByRole('row', { name: new RegExp(adminEmail) })).toBeVisible();

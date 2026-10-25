@@ -48,3 +48,12 @@ export function logEvents(service: 'api' | 'production-api'): LogEvent[] {
     }
   });
 }
+
+// Invite links the API logged after `count` log events, newest first. Parallel flows share this log,
+// so a flow tries each link: the API refuses a link for another email and leaves it unused.
+export function inviteUrlsSince(count: number): URL[] {
+  return logEvents('api').slice(count).reverse()
+    .map(({ context }) => context?.inviteUrl)
+    .filter((url): url is string => typeof url === 'string')
+    .map((url) => new URL(url));
+}
