@@ -14,8 +14,10 @@
   the same organisation see its items.
 - The detail screen shows every field, who made and last changed the item, and its last five
   changes. Edit and Delete are on the detail screen, not on the list.
-- Each feature has four permissions: view, create, edit and delete. Admins have all four.
-  Members can view, create and edit, but not delete. The app checks the permission on every
+- Each feature has five permissions: view, create, edit, delete and restore. Admins have all
+  five. Members can view, create and edit, but not delete or restore.
+- An admin can show the deleted items on the list and restore one from its detail screen. The
+  restore adds a Change history row. Members never see deleted items. The app checks the permission on every
   screen and every API call. A plan can change which role has which permission for a feature,
   in one place in that feature's code.
 - Its table keeps deleted items. Each create, change and delete adds a row to the Change history
@@ -24,15 +26,15 @@
   to one item of another feature. The agent adds other kinds of field by hand.
 - The new feature comes with its own API and screen tests, and they pass at once.
 - The projects feature in a new app gets these first: the paging, search and status filter in
-  the web address, the detail screen with its recent changes, the four permissions, and a Change
-  history row for each create, change and delete.
+  the web address, the detail screen with its recent changes, the five permissions, restore for
+  admins, and a Change history row for each create, change, delete and restore.
 - In an app that did not start from the starter, the command says that it needs a starter app
   and changes nothing.
 - Existing apps keep their code. On upgrade they get the command and the guide text. An existing
   app that started from the current starter can use the command at once. An app made from an
   older starter, without organisations or change history, gets a refusal that names what is
   missing.
-Design: docs/design/FORGE-FEATURE-1/ (bbee968f36f83fc86a9b0c81bc1c0927dbfe1304)
+Design: docs/design/FORGE-FEATURE-1/ (972948e687aa96ad4ad5bab953cd9bc6cece276a)
 
 ## Why
 
@@ -43,13 +45,14 @@ a little different. The starter's projects feature already has soft delete, chec
 export with the formula guard, organisation access and its tests. One command that copies it,
 renamed and with the plan's fields, makes each new feature the same and passing from the first
 commit. On 25 October 2026 the owner chose this command, the field kinds, starter apps only,
-four permissions for each feature, a Change history row for each change, and keyset paging.
+five permissions for each feature, restore for admins, a Change history row for each change,
+and keyset paging.
 
 ## Done when
 
 1. **When a plan names a new feature and its fields, the worker's first step builds it in a TypeScript or a Python starter app with one command.**
 2. **The new feature has a list with search, filters, column sort and Previous and Next paging kept in the web address, a detail screen with its recent changes, a form, and a CSV export that keeps formulas as text, for its own organisation only.**
-3. **Each feature checks a view, create, edit and delete permission on every screen and API call; admins have all four and members all but delete, and one place in the feature's code changes this.**
+3. **Each feature checks a view, create, edit, delete and restore permission on every screen and API call; admins have all five and can show and restore deleted items, members have all but delete and restore and never see deleted items, and one place in the feature's code changes this.**
 4. **The new feature's table keeps deleted items, each create, change and delete adds a Change history row, each column's type and index come from one field-kind table, and its tests pass as soon as the command runs.**
 5. **In a new app, projects have the same list, detail screen, permissions and Change history rows.**
 6. **In an app that did not start from the starter, the command refuses, says what is missing, and changes nothing.**
@@ -68,10 +71,8 @@ installed Forge, not from the app's own projects code. An app can rename or remo
 feature, and the copy still works. An app made from an older starter, which has no organisations
 or change history, gets the refusal. The owner accepted this on 25 October 2026.
 
-Trade-off: members can no longer delete projects in a new app. Only admins can.
-
-Trade-off: the change and its Change history row are two writes, not one transaction. If the
-second write fails, the change stays without its row.
+Trade-off: members can no longer delete projects in a new app. Only admins can delete and
+restore.
 
 Trade-off: the list's total is exact up to 10,000 items. Above that the list says "More than
 10,000".
@@ -151,9 +152,13 @@ The part named first owns each name; later parts use it and list that part under
   Each `yes-no`, `status` and `link` field gets one list filter, a Select: yes-no
   `<Label> or not | <Label> | Not <label>` with URL values `yes` and `no`; status
   `All <label in plural> | <each option>`; link `All <target plural> | <each linked item by name>`
-  with the item id in the URL. The first `text` or `email` field is the search, with the
-  placeholder `Search by <label>`; a feature with neither has no search box. No other kind gets a
-  filter. List columns: the first text field (a link to the detail screen), each `status`,
+  with the item id in the URL. The first `text` field (the name, which every feature has) is the
+  search, with the placeholder `Search by <label>`. No other kind gets a filter. A link filter
+  and the form's link Combobox are a searchable Select that asks the linked feature's list API
+  page by page (its `search` and `after`), so a target with many items works; a list cell and
+  the detail row show the linked item's name from the linked feature's detail hook (a
+  `ponytail:` comment names the ceiling: up to 20 cached detail reads per page; a name lookup
+  route is the upgrade). List columns: the first text field (a link to the detail screen), each `status`,
   `link`, `date` and `money` field, then Updated. Every column header sorts. This comes from the
   `filter`, `search` and `column` keys of the kind table, not from code.
 - **The detail screen and recent changes (DETAIL).** `/<plural>/:id`, as SCREENS.md shows it.
@@ -165,13 +170,28 @@ The part named first owns each name; later parts use it and list that part under
   `listForSubject(principal, subjectId, limit)`. Route `GET /api/v1/<plural>/:id/changes`
   returns the newest 5 as `{ id, actorEmail, summary, createdAtUtc }[]`. The Change history
   screen and its CSV show `<subjectName>: <summary>` when `subjectName` is set.
-- **Change history rows (DETAIL).** Each create, change and delete calls `record` after the
-  write, with the action `<singular>.created`, `.changed` or `.deleted`, the subject (id and
-  title), and the summary `Created the <singular>`,
-  `<Label> changed from <old> to <new>` (one entry per changed field, joined by `; `, values as
-  the CSV shows them; a replace that changes nothing adds no row), or `Deleted the <singular>`.
-  The title is the first text field's value, or the id when the feature has none. A `ponytail:`
-  comment says the two writes are not one transaction.
+- **Change history rows (DETAIL; ACCESS adds restore).** Each create, change, delete and
+  restore writes the record and calls `record` in one database transaction, as the database
+  rules plan says: TypeScript `this.prisma.$transaction(async (tx) => { ...; await this.history.record(..., tx); })`,
+  where `record` and its Python twin take an optional transaction client (`tx?:
+  Prisma.TransactionClient`; Python: the caller's `Session`, with one `commit()` by the caller),
+  so history still writes only its own table. A failed history write rolls back the change. The
+  action is `<singular>.created`, `.changed`, `.deleted` or `.restored`, with the subject (id
+  and title), and the summary `Created the <singular>`, `<Label> changed from <old> to <new>`
+  (one entry per changed field, joined by `; `, values as the CSV shows them; a replace that
+  changes nothing adds no row), `Deleted the <singular>` or `Restored the <singular>`. The title
+  is the first text field's value. Search index updates, which FORGE-SEARCH-1 plans, stay
+  separate writes.
+- **Restore (ACCESS).** The list query gets `deleted` (optional `true`): with it, the list shows
+  only deleted items; it needs `<plural>.restore`, and a caller without it gets
+  `403 PERMISSION_DENIED`. A caller with `.restore` can also read a deleted item's detail;
+  everyone else gets `404` for a deleted item, as today. `POST /api/v1/<plural>/:id/restore`
+  needs `.restore`: it clears `deletedAtUtc` and `deletedByAccountId`, sets
+  `modifiedByAccountId`, and writes the `Restored the <singular>` row in the same transaction; an
+  item that is not deleted gets `404 <SINGULAR>_NOT_FOUND`. Web: a `Show deleted` filter on the
+  list and a `Restore` button on a deleted item's detail screen, both shown only with
+  `.restore`, with the texts and states the updated `docs/design/FORGE-FEATURE-1/` gives.
+  Members never see deleted items.
 - **Permissions (ACCESS).** Roles map to permissions in code.
   - TypeScript, `libs/core/src/common/permissions.ts`, exported from `@app/core`:
     `definePermissions(map: Record<MemberRole, readonly string[]>)` adds a module's map to one
@@ -180,11 +200,12 @@ The part named first owns each name; later parts use it and list that part under
     lacks it with `403 { code: 'PERMISSION_DENIED', message: 'You do not have permission to do this.', details: null }`.
     Every route of a feature controller has exactly one `@RequirePermission(...)`.
   - The one place per feature: `libs/<plural>/src/<plural>.permissions.ts`, for projects
-    `export const PROJECT_PERMISSIONS = definePermissions({ admin: ['projects.view', 'projects.create', 'projects.edit', 'projects.delete'], member: ['projects.view', 'projects.create', 'projects.edit'] });`
+    `export const PROJECT_PERMISSIONS = definePermissions({ admin: ['projects.view', 'projects.create', 'projects.edit', 'projects.delete', 'projects.restore'], member: ['projects.view', 'projects.create', 'projects.edit'] });`
     The module imports it, so the map is in place before the first request. A plan changes a
     feature's mapping by editing only this file.
   - Routes: list, detail, changes and export need `<plural>.view`; create needs `.create`;
-    replace needs `.edit`; delete needs `.delete`.
+    replace needs `.edit`; delete needs `.delete`; restore, and the list with `deleted=true`,
+    need `.restore`.
   - `/api/v1/auth/me`, sign-up and sign-in return `permissions: string[]` (from
     `permissionsFor(role)`) beside `role`; the shared `Account` type gets the field.
   - Web, `apps/web/src/lib/permissions.ts`: `useCan(permission: string): boolean`, from the
@@ -216,11 +237,21 @@ The part named first owns each name; later parts use it and list that part under
   `es` after s, x, z, ch and sh; the worker fixes labels by hand when the plan asks for other
   words. The generated permissions file has the default mapping; the worker edits it when the
   plan gives another one.
+  **Shell-safe.** `?`, `(`, `)` and `|` are shell characters, so the plan, the skill, the brief,
+  the guide and the command's own messages always write each `--field` value in single quotes:
+  `--field 'description?:long-text' --field 'status:status(planned|active|done)'`. The command
+  reads the same syntax; quotes are only for the shell. (Quoted values are simpler than a fields
+  file: no extra file to write, keep and delete.)
+  **One text field.** Each feature needs at least one `text` field. The first one is its name:
+  the list's first column and the keyboard link to the detail screen, the detail heading, the
+  search, and the title in history summaries. A line with no text field is refused.
   Refusals, each with its next action, all checked before the command writes anything:
   not a starter app (item 6); a feature folder of that name already there; a field name that is
   not camelCase or is one of `id`, `organisationId`, `createdAtUtc`, `updatedAtUtc`,
   `createdByAccountId`, `modifiedByAccountId`, `deletedAtUtc`, `deletedByAccountId`; an unknown
-  kind; a link to a feature that the app does not have.
+  kind; a link to a feature that the app does not have; no `text` field
+  (`A feature needs one text field for its name.` with
+  `Next: add a field such as --field 'name:text'.`).
   On success it prints the files it wrote, one per line, then
   `Next: run the app's tests, then commit these files with your task.` A Python app also gets
   `corepack pnpm run api-types` in that line, before the tests.
@@ -256,11 +287,11 @@ The part named first owns each name; later parts use it and list that part under
   |---|---|---|---|
   | text | `text` | `CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") BETWEEN 1 AND 200)` | search: `""` |
   | long-text | `text` | `CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") <= 10000)` | none |
-  | number | `integer` | `CONSTRAINT "{table}_{column}_min" CHECK ("{column}" >= 0)` | none |
+  | number | `numeric(19,4)`, as the database rules plan pins (the API carries it as a decimal string, so this story's `zod`, `pydantic`, `cell` and `sample` keys for number take a decimal string) | none (no sign check) | none |
   | money | `integer` (whole cents, for today's `formatMoney`; marked as the placeholder that FORGE-DATABASE-1 replaces with `numeric(19,4)` and a currency column) | none | none |
   | date | `date` | none | none |
   | yes-no | `boolean DEFAULT false` | none | filter: `CREATE INDEX "idx_{table}_{column}" ON "{table}" ("{org}", "{column}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;` |
-  | email | `text` | `CONSTRAINT "{table}_{column}_format" CHECK (char_length("{column}") <= 254 AND "{column}" ~ '^[^@[:space:]]+@[^@[:space:]]+$')` | search: `""` |
+  | email | `text` | `CONSTRAINT "{table}_{column}_format" CHECK (char_length("{column}") <= 254 AND "{column}" ~ '^[^@[:space:]]+@[^@[:space:]]+$')` | none (only the first text field is the search) |
   | status | `text DEFAULT '{first}'` | `CONSTRAINT "{table}_{column}_allowed" CHECK ("{column}" IN ({options}))` | filter: as yes-no |
   | link | `uuid`, with a foreign key to `{target}` `ON DELETE RESTRICT` | none | filter: as yes-no; index: `CREATE INDEX "idx_{table}_{column}_fk" ON "{table}" ("{column}");` |
 
@@ -289,15 +320,19 @@ The part named first owns each name; later parts use it and list that part under
 - **The starter check (COMMAND pins it; PY adds the Python list).** The app is a TypeScript
   starter app when every one of these is there: `apps/api/prisma/schema/organisations.prisma`,
   `apps/api/prisma/schema/history.prisma` with its `subjectId` line,
-  `apps/api/src/app.module.ts` with its `HistoryModule` line, `libs/core/src/common/csv.ts`,
-  `libs/core/src/common/permissions.ts`, a migration that creates `set_updated_at()`,
-  `apps/web/src/app.tsx` with its `/history` route and `apps/web/src/components/app-shell.tsx`
-  with its Members item. It is a Python starter app when `apps/api/app/main.py` (with its
-  history router line), `apps/api/app/organisations/`, `apps/api/app/history/` (with
-  `subject_id` in its model), `apps/api/app/core/csv.py`, `apps/api/app/core/permissions.py`,
-  a revision that creates `set_updated_at()`, `apps/api/migrations/versions/` and the same two
-  web files are there. Wiring lines go next to these lines, never next to a projects line. The
-  first missing one gives the refusal
+  `apps/api/src/app.module.ts` with its `OrganisationsModule` import line and its
+  `OrganisationsModule,` entry in `imports` (the starter's app module imports organisations, and
+  organisations imports history, so the app module has no `HistoryModule` line),
+  `libs/core/src/common/csv.ts`, `libs/core/src/common/permissions.ts`, a migration that
+  creates `set_updated_at()`, `apps/web/src/app.tsx` with its `/history` route and
+  `apps/web/src/components/app-shell.tsx` with its Members item. It is a Python starter app
+  when `apps/api/app/main.py` (with its `from app.history import router as history_router`
+  and `app.include_router(history_router)` lines), `apps/api/app/organisations/`,
+  `apps/api/app/history/` (with `subject_id` in its model), `apps/api/app/core/csv.py`,
+  `apps/api/app/core/permissions.py`, a revision that creates `set_updated_at()`,
+  `apps/api/migrations/versions/` and the same two web files are there. Wiring lines go next to
+  these lines, never next to a projects line. Item 1's test runs the command in a freshly made
+  starter app, so a new app passes this check. The first missing one gives the refusal
   `forge task feature needs a starter app (one made with forge init --starter), and this app has no <path>.`
   with `Next: build this feature by hand in this app.` Nothing is written. No other guard.
 - **Generated test names.** The copies of the projects test files keep the projects case names
@@ -306,7 +341,8 @@ The part named first owns each name; later parts use it and list that part under
   `invoices export as CSV`, `another organisation gets 404 for an invoice`,
   `rejects an invalid invoice with field errors`,
   `each invoices endpoint refuses a member without its permission`,
-  `records each invoice change in the change history`, and the flows
+  `records each invoice change in the change history`, `an admin restores a deleted invoice`,
+  and the flows `an admin shows deleted invoices and restores one`,
   `create, view, edit, and delete an invoice`, `a reloaded invoices list link keeps its search, filters and page`,
   `an invoice's detail screen shows its recent changes` and
   `a member does not see the invoice actions they lack`. The projects names are the same with
@@ -344,16 +380,22 @@ The part named first owns each name; later parts use it and list that part under
      the same as in a TypeScript app (WEB).
    - Test `tests/test_feature_command.py::test_1_a_plan_line_builds_the_feature_in_one_step`,
      parameters `typescript` and `python`: in a new repo made with `forge init --starter` (or
-     `--starter python`), `forge task feature clients --one client --field name:text` then
-     `forge task feature jobs --one job --field name:text --field description?:long-text
-     --field status:status(planned|active|done) --field client?:link(clients)
-     --field hoursBudget?:number --field budget?:money --field dueDate?:date
-     --field contactEmail?:email --field billable:yes-no` (the SCREENS.md example, one field of
-     each kind) each exit 0 and print the files they wrote; every printed file exists; the
-     wiring files have the new lines next to the history lines; a second run of the same line
-     refuses with the folder message and changes nothing (`git status --porcelain` is the same
-     before and after). Adopted case: the same two lines in the adopted starter app write the
-     same files with the same text, apart from the migration's timestamp or revision number.
+     `--starter python`), the two lines `forge task feature clients --one client --field 'name:text'`
+     and `forge task feature jobs --one job --field 'name:text' --field 'description?:long-text'
+     --field 'status:status(planned|active|done)' --field 'client?:link(clients)'
+     --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date'
+     --field 'contactEmail?:email' --field 'billable:yes-no'` (the SCREENS.md example, one field
+     of each kind) run as shell lines, exactly as written, through `bash -c` and, where it is
+     installed, `zsh -c` (with the forge command on `PATH`), so the test proves the line the
+     planner writes and not an argument list. Each exits 0 and prints the files it wrote; every
+     printed file exists; the wiring files have the new lines next to the starter check's anchor
+     lines. Refusals in the same app, each leaving `git status --porcelain` as it was: a second
+     run of the jobs line (the folder message); and one line for each malformed field: a field
+     name that is not camelCase (`'Due-date:date'`), a reserved name (`'id:text'`), an unknown
+     kind (`'size:large'`), a link to a missing feature (`'owner:link(people)'`), and no text
+     field (`'paid:yes-no'` alone); each prints its own message and next action. Adopted case:
+     the same two lines in the adopted starter app write the same files with the same text,
+     apart from the migration's timestamp or revision number.
    - GUIDE adds to the same test: the forge skill after `forge init` (new repo) and after
      upgrade and sync (the adopted-v1.2.2 client) holds the planner line, and the worker brief
      that `forge work` writes holds the first-step line.
@@ -368,8 +410,8 @@ The part named first owns each name; later parts use it and list that part under
      all as SCREENS.md shows them with the feature's names; the route in `app.tsx`, a sidebar
      item and a Ctrl+K item in `app-shell.tsx` (shown only with the view permission), and its
      title in the page title map. The form has one control per field from the kind table's
-     `input`, in the line's order. A link field's filter, Combobox and cell read the linked
-     feature's list hook in the web app; the API returns only the id.
+     `input`, in the line's order. A link field works as the filters-and-columns rule says; the
+     API returns only the id.
    - Test `tests/test_feature_command.py::test_2_the_new_feature_works_like_projects`,
      parameters `typescript` and `python`, live: after the item 1 lines in a new starter app,
      the app's own run passes and its reports hold the generated cases for create to delete,
@@ -384,17 +426,40 @@ The part named first owns each name; later parts use it and list that part under
      from the admin, as `invites.e2e-spec.ts` does), reads the member's `permissions` from
      `/auth/me`, and for each route expects `403 PERMISSION_DENIED` when the member lacks the
      permission and no 403 when the member has it. So it covers every route and stays right
-     after a plan edits the mapping. With the default mapping, the member gets 403 on delete
-     only, and the admin gets no 403 on any route.
-   - The flow `a member does not see the <singular> actions they lack`: the member sees the
-     list, the detail screen with Edit and the form, and no Delete button and no
-     `Open the change history` link.
+     after a plan edits the mapping. With the default mapping, the member gets 403 on delete,
+     restore and the deleted list only, and the admin gets no 403 on any route.
+   - The flow `a member does not see the <singular> actions they lack` reads the member's
+     permissions too: without view, the list and detail routes show the not-found page and the
+     sidebar item is gone; without create, no New button; without edit, no Edit button; without
+     delete, no Delete button; without restore, no `Show deleted` filter. The
+     `Open the change history` link is never shown to a member.
+   - Restore: the generated API case `an admin restores a deleted <singular>` deletes an item,
+     finds it in the list with `deleted=true`, restores it, finds it in the normal list again and
+     finds `Restored the <singular>` in its changes; a member's `deleted=true` list and restore
+     are refused by the endpoint case above, and a member gets 404 for the deleted item's detail.
+     The flow `an admin shows deleted <plural> and restores one` uses the `Show deleted` filter
+     and the detail screen's Restore button.
+   - **Denied view, create and edit.** With the default mapping the member lacks only delete and restore,
+     so the live runs also build a third feature, `forge task feature notes --one note
+     --field 'title:text'`, and the Forge test then sets `member: []` in its one permissions
+     file (`libs/notes/src/notes.permissions.ts`, Python `app/notes/permissions.py`) before the
+     app's run. The same generated case for notes then expects 403 for the member on every route:
+     list, detail, changes and export (view), create, replace (edit), delete, restore and the
+     deleted list; and the notes
+     flow sees the not-found page. A route guarded by the wrong permission fails here.
    - Test `tests/test_feature_access.py::test_3_each_feature_checks_its_permissions`,
      parameters `projects-typescript` and `projects-python` (ACCESS), `feature-typescript`
      (WEB) and `feature-python` (PY), live: the run's reports hold the endpoint case and the
-     flow for projects, or for the item 1 jobs. Not live, in the same test: every route method
-     in the projects controller and in the generated controller has exactly one
-     `@RequirePermission` (Python: one `require_permission` dependency). Adopted case: not live;
+     flow for projects, or for the item 1 jobs and for notes, and the restore case and flow for
+     projects or jobs. Projects keep the default mapping,
+     so their live case proves the denied delete and restore; the notes feature proves denied view, create
+     and edit through the same copied case, and the check below proves that projects name the
+     right permission on each route. Not live, in the same test: every
+     route method in the projects controller and in the generated controllers has exactly one
+     `@RequirePermission`, and its permission is the one the route needs (list, detail, changes
+     and export `.view`, create `.create`, replace `.edit`, delete `.delete`, restore
+     `.restore`); Python: one
+     `require_permission` dependency with the same names. Adopted case: not live;
      after upgrade and sync, the adopted starter app's permissions files and controllers are the
      same as a new app's.
 4. Table, Change history rows, the kind table and passing tests (COMMAND pins the non-live
@@ -402,8 +467,8 @@ The part named first owns each name; later parts use it and list that part under
    - The table has `organisationId` and the audit columns `createdByAccountId`,
      `modifiedByAccountId`, `deletedAtUtc` and `deletedByAccountId`, as projects; create,
      update and delete set them; delete sets `deletedAtUtc`, and the trigger refuses a hard
-     delete. The service records each create, change and delete as the Change history rule
-     above says.
+     delete. The service records each create, change, delete and restore in the same
+     transaction, as the Change history rule above says.
    - The generated test files are renamed copies of the projects test files that PAGING, DETAIL
      and ACCESS add: `apps/api/test/<plural>.e2e-spec.ts`, `apps/web/e2e/<plural>.spec.ts`,
      `apps/web/src/features/<plural>/hooks/<plural>-hooks.test.tsx`, and in Python
@@ -413,40 +478,55 @@ The part named first owns each name; later parts use it and list that part under
      parameters `typescript` and `python`. Not live: the test reads the shipped `kinds.toml`
      and checks that the generated migration (and in Python the Alembic revision and
      `models.py`) has each field's `sql` or `sqlalchemy` value with the NOT NULL rule, its
-     `check`, `[table]`'s `list_index` and `updated_at_trigger`, the filter, search and
+     `check`, `[table]`'s `list_index` (on the organisation column, the last-change column
+     `updatedAtUtc` / `updated_at_utc` descending and `id` descending, not on the created
+     column) and `updated_at_trigger`, the filter, search and
      every-field indexes, the audit columns, the soft delete trigger, and no `CREATE TYPE`. Live:
      one cached run per starter (shared with test_2 and test_3, as `live_run` does) of the app's
      `node scripts/test.mjs` after the item 1 lines exits 0, and the reports hold every generated
      case name above, `records each job change in the change history` among them (it creates,
-     changes and deletes a job as the admin, then reads `/api/v1/history` and the job's changes
-     and finds the three summaries). The Python app's own test script runs `api-types` first.
+     changes, deletes and restores a job as the admin, then reads `/api/v1/history` and the
+     job's changes and finds the four summaries). The Python app's own test script runs
+     `api-types` first.
      Adopted case: the non-live check in the adopted starter app.
 5. Projects source (PAGING, DETAIL, ACCESS; each part changes both APIs and the web app).
    - PAGING: the keyset list query, `search` (optional, trimmed, at most 200) and `status`
      (optional `projectStatusSchema`) in `projectListQuerySchema` and the Python schema; the
      projects page with the search box, the status Select, column sort, Previous and Next and
-     the total, all in the URL; rows with no Edit or Delete icons, each opening the detail
-     screen (the name is the link, and the row can be clicked); the `New project` button; the
-     form's submit button `Create project` (`Save changes` for an edit). The existing cases that
-     read `page`, `limit` or `pagination` change to the keyset form (the list case, the bad
-     query case and the list query docs case in `api.e2e-spec.ts`, and their Python twins). The
+     the total, all in the URL; the `New project` button; the form's submit button
+     `Create project` (`Save changes` for an edit). The rows keep their Edit and Delete icons in
+     PAGING, so the create, edit and delete flow works until DETAIL moves those actions to the
+     detail screen. The existing cases that read projects `page`, `limit` or `pagination`, or
+     click the old `Create project` list button, change to the new form: the list, bad query and
+     list query docs cases in `api.e2e-spec.ts`, the projects list check in
+     `organisations.e2e-spec.ts`, the projects reads in `invites.e2e-spec.ts` and
+     `soft-delete.e2e-spec.ts`, the flows in `starter-shell.spec.ts` and `join.spec.ts`, and
+     their Python twins in `test_api.py`, `test_organisations.py`, `test_invites.py` and
+     `test_soft_delete.py`. The members list keeps its numbered pages. The
      projects cases move to their own files, with no name change: the API cases in
      `apps/api/test/projects.e2e-spec.ts`, the flows in `apps/web/e2e/projects.spec.ts`, and in
      Python `apps/api/tests/test_projects.py`. New cases: `pages projects with next and
      previous cursors`, `filters projects by search and filters`, and the flow
      `a reloaded projects list link keeps its search, filters and page`, which replaces
      `a reloaded or shared list link shows the same view` (update that name in
-     `BROWSER_FLOWS` in `tests/test_starter_tree.py`). `create, edit, and delete a project`
-     becomes `create, view, edit, and delete a project`, through the detail screen.
+     `BROWSER_FLOWS` in `tests/test_starter_tree.py`).
    - DETAIL: `ProjectDetailPage` at `/projects/:id` with the breadcrumb, the Details card, the
      Recent changes card, Edit (the form Dialog) and Delete (the AlertDialog), as SCREENS.md
-     shows them; the history subject columns and `listForSubject`; the changes route; the
-     Change history rows for projects; the Change history screen's subject name. New cases:
+     shows them; rows lose their Edit and Delete icons and open the detail screen (the name is
+     the link, and the row can be clicked), and `create, edit, and delete a project` becomes
+     `create, view, edit, and delete a project`, through the detail screen; the history subject
+     columns and `listForSubject`; the changes route; the Change history rows for projects; the
+     Change history screen's subject name. New cases:
      `records each project change in the change history` and the flow
      `a project's detail screen shows its recent changes`.
-   - ACCESS: the projects permissions, `permissions` on the account, `useCan`, and the hidden
-     Delete and history link. A case that has a member delete a project, if one exists, now
-     expects 403. The permission cases are item 3's.
+   - ACCESS: the projects permissions, `permissions` on the account, `useCan`, the hidden
+     Delete and history link, and restore: the `deleted` list query, the restore route with its
+     history row in the same transaction, the `Show deleted` filter and the Restore button, in
+     both APIs and the web app. New cases: `an admin restores a deleted project` and the flow
+     `an admin shows deleted projects and restores one`. The member delete in `invites.e2e-spec.ts` (`a member` deletes
+     the admin's project) and its Python twin in `test_invites.py` now expect
+     `403 PERMISSION_DENIED`, and the case reads the member's `permissions` from `/auth/me`. The
+     permission cases are item 3's.
    - Test `tests/test_feature_projects.py::test_5_projects_have_the_list_detail_and_history`,
      live, parameters `typescript` and `python`: the starter's run holds the new PAGING and
      DETAIL cases. Adopted case: after upgrade and sync, the adopted starter app's projects files
@@ -465,9 +545,10 @@ The part named first owns each name; later parts use it and list that part under
 
 - `src/forge/templates/skill.md`, Planning a story: when a story adds a new thing that a client
   app keeps track of and the app is a starter app, the planner writes, in the first part's
-  Done-when details, one `forge task feature` line per new thing, with every field from the
+  Done-when details, one `forge task feature` line per new thing, each `--field` value in single
+  quotes, with at least one text field (the name), with every field from the
   brief's `## Things it keeps track of`, in the kinds the command takes, and the role mapping
-  when it is not the default (admins all four, members all but delete); many-to-many links,
+  when it is not the default (admins all five, members all but delete and restore); many-to-many links,
   files and computed fields go in the part as hand work. A link's target comes first, in the
   same line order. The part's Scope lists the folders the command writes.
 - `src/forge/templates/brief.md`, Build simple: when your part's details give a
@@ -496,9 +577,9 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| PAGING | Projects list with keyset paging and URL filters | Keyset paging, search and the status filter in both APIs and the shared schemas; the projects list as SCREENS.md shows it, with Previous, Next and the total; rows that open the detail route; the button and form labels; the projects cases in their own files. | 2, 5 | `starter/libs/shared/src/index.ts`, `starter/libs/projects/src/**`, `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/app.tsx`, `starter/apps/api/test/api.e2e-spec.ts`, `starter/apps/api/test/projects.e2e-spec.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts`, `starter/apps/web/e2e/projects.spec.ts` (new), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_api.py`, `starter-python/apps/api/tests/test_projects.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `tests/test_starter_tree.py` and `tests/test_python_starter.py` (case names only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_projects.py` (`test_5`, `typescript` and `python`, new) | | yes | |
+| PAGING | Projects list with keyset paging and URL filters | Keyset paging, search and the status filter in both APIs and the shared schemas; the projects list as SCREENS.md shows it, with Previous, Next and the total; rows that open the detail route; the button and form labels; the projects cases in their own files. | 2, 5 | `starter/libs/shared/src/index.ts`, `starter/libs/projects/src/**`, `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/app.tsx`, `starter/apps/api/test/api.e2e-spec.ts`, `starter/apps/api/test/organisations.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` and `starter/apps/api/test/soft-delete.e2e-spec.ts` (projects paging and button lines only), `starter/apps/api/test/projects.e2e-spec.ts` (new), `starter/apps/web/e2e/starter-shell.spec.ts`, `starter/apps/web/e2e/join.spec.ts` (button name only), `starter/apps/web/e2e/projects.spec.ts` (new), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_api.py`, `starter-python/apps/api/tests/test_organisations.py`, `starter-python/apps/api/tests/test_invites.py` and `starter-python/apps/api/tests/test_soft_delete.py` (projects paging lines only), `starter-python/apps/api/tests/test_projects.py` (new), `starter-python/libs/shared/src/index.ts`, `starter-python/libs/shared/openapi.json` and `starter-python/libs/shared/src/api-types.ts` (regenerated), `tests/test_starter_tree.py` and `tests/test_python_starter.py` (case names only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_projects.py` (`test_5`, `typescript` and `python`, new) | | yes | |
 | DETAIL | Projects detail screen and change history | The detail screen with its Details and Recent changes cards, Edit and the Delete AlertDialog; the Card component; the history subject columns, migrations and `listForSubject`; the changes route; a Change history row for each projects create, change and delete; the subject name on the Change history screen; in both APIs. | 4, 5 | `starter/apps/web/src/components/ui/card.tsx` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/features/history/**`, `starter/apps/web/src/app.tsx`, `starter/libs/history/**`, `starter/apps/api/prisma/schema/history.prisma`, `starter/apps/api/prisma/migrations/<new>_history_subjects/` (new), `starter/libs/projects/**`, `starter/apps/api/package.json` and `starter/pnpm-lock.yaml` (`@app/history` for projects), `starter/libs/shared/src/index.ts`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/app/history/**`, `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/migrations/versions/<next>_history_subjects.py` (new), `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_projects.py` (`test_5`, the DETAIL case names) | PAGING | yes | |
-| ACCESS | Projects permissions | The permissions helpers and guard in both APIs, `permissions` on the account, `useCan` in the web app, the projects permissions file and one check on each projects route, and the hidden Delete and history link. | 3, 5 | `starter/libs/core/src/common/permissions.ts` (new), `starter/libs/core/src/index.ts`, `starter/libs/auth/**` (account `permissions` only), `starter/libs/shared/src/index.ts` (`Account` only), `starter/libs/projects/**`, `starter/apps/web/src/lib/permissions.ts` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/app/core/permissions.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/auth/**` (account `permissions` only), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_access.py` (`test_3`, `projects-typescript` and `projects-python`, new) | DETAIL | yes | |
+| ACCESS | Projects permissions and restore | The permissions helpers and guard in both APIs, `permissions` on the account, `useCan` in the web app, the projects permissions file and one check on each projects route, the hidden Delete and history link, and the admin's deleted list and restore with its history row. | 3, 5 | `starter/libs/core/src/common/permissions.ts` (new), `starter/libs/core/src/index.ts`, `starter/libs/auth/**` (account `permissions` only), `starter/libs/shared/src/index.ts` (`Account` only), `starter/libs/projects/**`, `starter/apps/web/src/lib/permissions.ts` (new), `starter/apps/web/src/features/projects/**`, `starter/apps/web/src/components/app-shell.tsx`, `starter/apps/api/test/projects.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts` (the member delete only), `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/tests/test_invites.py` (the member delete only), `starter-python/apps/api/app/core/permissions.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/auth/**` (account `permissions` only), `starter-python/apps/api/app/projects/**`, `starter-python/apps/api/tests/test_projects.py`, `starter-python/libs/shared/**` (shared copy and regenerated types) | `tests/test_feature_access.py` (`test_3`, `projects-typescript` and `projects-python`, new) | DETAIL | yes | |
 | COMMAND | The feature command and the TypeScript API copy | `forge task feature` with its line, refusals and starter check, the field-kind table with placeholder database values, the marks in the TypeScript API projects files, and the TypeScript API, permissions, Prisma, migration, shared schema and wiring copy. | 1, 4, 6 | `src/forge/cli.py` (one route), `src/forge/feature.py` (new), `src/forge/templates/feature/kinds.toml` (new), `starter/libs/projects/src/**` (marks only), `starter/libs/shared/src/index.ts` (marks only), `starter/apps/api/test/projects.e2e-spec.ts` (marks only), `.github/workflows/starter-smoke.yml` | `tests/test_feature_command.py` (`test_1`, `test_4` not-live checks, `test_6`, `typescript`, new) | ACCESS, FORGE-DATABASE-1/PG18, FORGE-DATABASE-1/IDS, FORGE-DATABASE-1/IDSPY | no | |
 | WEB | The feature's screens | The marks in the web projects files, the Textarea, Checkbox and Popover components, and the web copy: list, detail, delete dialog, form with one control per field, hooks and their test, the route, sidebar and Ctrl+K items; the live TypeScript run with the generated cases. | 2, 3, 4 | `src/forge/feature.py` (the web copy only), `src/forge/templates/feature/kinds.toml` (the `input`, `cell`, `filter_options` and `column` keys only), `starter/apps/web/src/components/ui/textarea.tsx`, `checkbox.tsx` and `popover.tsx` (new), `starter/apps/web/src/features/projects/**` and `starter/apps/web/e2e/projects.spec.ts` (marks only) | `tests/test_feature_command.py` (`test_2`, `test_4` live, `typescript`); `tests/test_feature_access.py` (`test_3`, `feature-typescript`) | COMMAND | yes | |
 | PY | The Python API copy | The marks in the Python projects files, the Python starter check, and the Python API, permissions, Alembic revision, shared copy and wiring; the Python parameters of the feature tests, `test_2` and `test_6` included. | 1, 3, 4 | `src/forge/feature.py` (the Python copy only), `src/forge/templates/feature/kinds.toml` (`sqlalchemy` and `pydantic` keys only), `starter-python/apps/api/app/projects/**` and `starter-python/apps/api/tests/test_projects.py` (marks only), `starter-python/libs/shared/src/index.ts` (marks only) | `tests/test_feature_command.py` (`test_1`, `test_2`, `test_4`, `test_6`, `python`); `tests/test_feature_access.py` (`test_3`, `feature-python`) | WEB | no | |
@@ -527,7 +608,7 @@ fills at start, for item 3; no service, store or cache)
   largest Forge change: if it goes over 400 lines, move the shared-schema copy into WEB.
 - **What a new and an existing client repo get.** New repos (`forge init --starter` and
   `--starter python`): the projects list with keyset paging and URL filters, the detail screen
-  with recent changes, the permissions and Change history rows, the marks in the projects
+  with recent changes, the permissions, restore for admins and Change history rows, the marks in the projects
   files, the projects test files, and the command, which works at once. Plain `forge init`: the
   command, which refuses. Existing repos, on upgrade and sync: the command and the skill, brief
   and guide texts; no app file changes. An existing app that started from the current starter
@@ -539,10 +620,13 @@ fills at start, for item 3; no service, store or cache)
   apps only, with a refusal that names what is missing and changes nothing, also for older
   starter apps; no extra guards for unlikely races or security edge cases; one shipped
   field-kind table for column types and indexes, whose database values the database rules
-  story owns; no cache server; a Change history row for each create, change and delete, projects
-  first; four permissions per feature in code (admins all four, members all but delete), one
-  check on every endpoint and screen, a test per endpoint, one place per feature to change the
-  mapping, projects first; keyset paging with Previous, Next and an approximate total, the
+  story owns; no cache server; a Change history row for each create, change, delete and
+  restore, written in the same database transaction as the record (search updates stay
+  separate writes, as FORGE-SEARCH-1 plans), projects first; five permissions per feature in
+  code (admins all five, members all but delete and restore), one check on every endpoint and
+  screen, a test per endpoint, one place per feature to change the mapping, projects first;
+  admins can show deleted items and restore one, members never see deleted items; no
+  row-level security: app scoping and the per-endpoint refusal tests stay; keyset paging with Previous, Next and an approximate total, the
   cursor in the URL; the detail screen with recent changes and an admin-only history link;
   delete for admins only, from the detail screen, in an AlertDialog; the screens in
   `docs/design/FORGE-FEATURE-1/`.
@@ -559,10 +643,33 @@ fills at start, for item 3; no service, store or cache)
 - **Single-company apps.** A single-company app keeps the same code, with one organisation that
   Forge makes at setup; the command needs no change for it.
 - **For the database rules story.** FORGE-DATABASE-1/KINDS sets the final database values in
-  `kinds.toml` and the money and number keys that follow its money helper. Its pinned
-  `list_index` and filter indexes order by `{created}`; this story's default sort is Updated,
-  newest first (SCREENS.md), so those values need `{updated}`. This story adds the `{updated}`
-  placeholder for that.
+  `kinds.toml` and the money keys that follow its money helper. Its `list_index` and filter
+  indexes use the last-change time, which matches this story's default sort (Updated, newest
+  first) and the `{updated}` placeholder. The number kind is `numeric(19,4)` with no sign
+  check. Contact email fields stay not unique; the sign-in email's lower-case check is that
+  story's.
+- **Design follow-up.** The designer is updating `docs/design/FORGE-FEATURE-1/` for restore
+  (the deleted list and the deleted item's detail). The Design line keeps the old tree id until
+  the owner gives the new one. SCREENS.md's number message (`Enter a whole number, 0 or more.`)
+  does not fit a `numeric(19,4)` number with no sign check; the design update should change it.
+- **Cold read round 1.**
+  1. Starter check anchor: amended; the check uses the `OrganisationsModule` lines that a new
+     app has, and item 1's test runs on a fresh starter app.
+  2. Test files outside Scope: amended; PAGING and ACCESS Scopes name the organisations,
+     invites, soft delete and join tests of both starters, with what each changes.
+  3. PAGING removed edit and delete early: amended; rows keep their Edit and Delete icons in
+     PAGING, and DETAIL moves them to the detail screen.
+  4. Shell-unsafe line: amended; every `--field` value is in single quotes in the plan, skill,
+     brief and guide, and test_1 runs the lines through `bash -c` and `zsh -c`.
+  5. No text field: amended; a feature needs one text field, its name, and the command refuses
+     a line without one.
+  6. Denied view, create and edit unproven: amended; a notes feature with `member: []` runs the
+     same table-driven case on every route, and the static check names each route's permission.
+  7. Advisory, linked items beyond one page: decided; the link filter and Combobox are a
+     searchable Select that pages through the target's list API, and cells read the target's
+     detail hook.
+  8. Advisory, malformed-field refusals: decided; test_1 adds one refusal line for each
+     malformed kind and checks that nothing changes.
 - **No cache.** No cache server and no cache layer in the generated code; list queries use the
   indexes above.
 - No client repo is named anywhere in this story's code, tests, texts or commits.
