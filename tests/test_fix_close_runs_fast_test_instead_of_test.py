@@ -80,8 +80,11 @@ def test_5_new_repos_get_fast_test_unset(repo, gh, tmp_path):
 
 
 def test_6_the_skill_and_the_guide_recommend_fast_test():
+    # CI now selects related tests, while existing pytest-split jobs keep six groups.
     root = Path(__file__).parents[1]
     for rel in ("src/forge/templates/skill.md", "docs/guide.md"):
         text = " ".join((root / rel).read_text("utf-8").split())
         assert "set `fast_test`" in text and "`{base}`" in text, rel
-        assert "runs the full suite" in text, rel
+        assert "related tests" in text and "`forge test --change`" in text, rel
+        assert "pytest-split" in text and "six-group job" in text, rel
+        assert "nightly full run" in text, rel

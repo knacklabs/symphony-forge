@@ -432,7 +432,7 @@ GAP = "No local test names "
 def test_run(top: Path, command: str, base: str, *, always: bool = False,
              closing: bool = True) -> tuple[int, str]:
     """Run or skip tests; report a bounded tail, all failed tests and the full log path."""
-    branch = repo.current_branch(top)
+    branch = repo.current_branch(top) or "HEAD"  # Pull-request CI checks out a detached HEAD.
     item = (branch_item(branch, top) or (branch, {}))[0]
     start, clock = repo.now(), time.monotonic()
     outcome = "skipped"

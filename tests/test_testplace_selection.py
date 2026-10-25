@@ -1,11 +1,10 @@
 """A change test runs its lint and only its related pytest files at the command boundary.
 
 Test-audit gate:
-1. Protects the observable `forge test --change` selection and lint behavior.
-2. A regression that rejects `--change`, runs unrelated tests, or skips the lint part fails.
-3. Existing picker tests cover the lower-level selection rules, but none invokes this command
-   with a compound lint-and-pytest command in a real repo.
-4. The test uses Forge's command and a client repo; it needs no production-only seam.
+1. Protects `forge test --change` selection and the configured command's shell setup.
+2. A regression can run unrelated tests, skip lint, or lose the `cd` before lint runs.
+3. Existing picker tests cover selection rules, but not close's no-match shell context.
+4. The test invokes Forge's commands in a client repo; it needs no production-only seam.
 """
 from __future__ import annotations
 
@@ -17,7 +16,7 @@ import pytest
 
 from test_close import GREEN, env  # noqa: F401 (pytest fixture)
 
-STORY = "FORGE-TESTPLACE-1"
+STORY = "FORGE-TESTPLACE-1/CISEL"
 
 
 @pytest.mark.platform
@@ -131,3 +130,43 @@ def test_2_change_tests_run_once_in_one_place(env, tmp_path, monkeypatch, place)
     after = {path.name: len(path.read_text("utf-8").splitlines()) for path in receipts.iterdir()}
     assert {name: after.get(name, 0) - before.get(name, 0) for name in set(before) | set(after)} == {
         "cart": 1, "shipping": 1}
+
+
+@pytest.mark.platform
+def test_3_no_matching_tests_keep_the_configured_shell_context(env, tmp_path, monkeypatch):
+    """Close runs retained lint from its configured directory and skips unrelated pytest files."""
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
+    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    python = json.dumps(Path(sys.executable).as_posix())
+    command = f'cd backend && {python} lint.py && {python} -m pytest tests -q'
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
+    config = "\n".join(line for line in config.splitlines()
+                       if line.partition("=")[0].strip() not in {"checks", "test", "test_place"})
+    env.repo.write("forge.toml", config + "\nchecks = []\ntest_place = \"local\"\n"
+                   "test = " + json.dumps(command) + "\n")
+    env.repo.write("backend/lint.py", "from pathlib import Path\n"
+                   "p = Path('../lint-runs')\n"
+                   "with p.open('a', encoding='utf-8') as runs:\n"
+                   "    runs.write('ran\\n')\n")
+    receipt = tmp_path / "unrelated-pytest-ran"
+    env.repo.write("backend/tests/test_unrelated.py", "from pathlib import Path\n"
+                   f"RECEIPT = {json.dumps(str(receipt))}\n"
+                   "def test_unrelated():\n"
+                   "    Path(RECEIPT).write_text('ran', encoding='utf-8')\n")
+    ignore = (env.repo.path / ".gitignore").read_text("utf-8") if (env.repo.path / ".gitignore").exists() else ""
+    env.repo.write(".gitignore", ignore + "\n__pycache__/\n.pytest_cache/\nlint-runs\nlint-fails\n")
+    no_hooks = tmp_path / "setup-hooks"
+    no_hooks.mkdir()
+    hook_setting = f"core.hooksPath={no_hooks.as_posix()}"
+    env.repo.git("-c", hook_setting, "add", "-A")
+    env.repo.git("-c", hook_setting, "commit", "-q", "-m", "Set the shell-context test command")
+    env.repo.git("-c", hook_setting, "push", "-q", "origin", "main")
+
+    _, where = env.start_fix({"spare.py": "VALUE = 1\n"})
+    env.checks(GREEN)
+    env.open_pr("")
+    closed = env.close("tidy-readme")
+
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert (where / "lint-runs").read_text("utf-8").splitlines() == ["ran"]
+    assert not receipt.exists()
