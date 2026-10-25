@@ -46,6 +46,7 @@ def test_2_change_tests_run_once_in_one_place(env, tmp_path, monkeypatch, place)
     ignore = (env.repo.path / ".gitignore").read_text("utf-8") if (env.repo.path / ".gitignore").exists() else ""
     env.repo.write(".gitignore", ignore + "\n__pycache__/\n.pytest_cache/\nlint-runs\nlint-fails\n")
     env.repo.write("cart.py", "VALUE = 1\n")
+    original_cart = (env.repo.path / "cart.py").read_bytes()
     env.repo.write("shipping.py", "VALUE = 1\n")
     env.repo.write("tests/test_cart.py", "from pathlib import Path\nfrom cart import VALUE\n"
                    f"RECEIPT = {json.dumps(str(receipts / 'cart'))}\n"
@@ -94,7 +95,8 @@ def test_2_change_tests_run_once_in_one_place(env, tmp_path, monkeypatch, place)
     assert {name: after.get(name, 0) - before.get(name, 0) for name in set(before) | set(after)} == {
         "cart": 1}
 
-    env.commit(where, "cart.py", "VALUE = 1\n", "Restore the source module")
+    # Restore the exact baseline, including Windows newlines, so only spare.py changes.
+    env.commit(where, "cart.py", original_cart.decode("utf-8"), "Restore the source module")
     env.commit(where, "spare.py", "VALUE = 1\n", "Change an unrelated module")
     before = {path.name: len(path.read_text("utf-8").splitlines()) for path in receipts.iterdir()}
     lint_before = len((where / "lint-runs").read_text("utf-8").splitlines())
