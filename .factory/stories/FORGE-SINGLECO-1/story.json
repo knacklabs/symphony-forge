@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-SINGLECO-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-25T17:28:13.781867+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "One-company client apps",
+  "touches": 0
+}
