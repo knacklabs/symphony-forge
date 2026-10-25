@@ -238,8 +238,8 @@ def _fresh_client(repo, gh, tmp_path: Path, *init_args: str) -> tuple[Path, subp
         "  Fix: ask your agent to set checks in forge.toml\n",
         "forge.toml has no test command.\n"
         "  Fix: ask your agent to set test in forge.toml, then run forge sync\n")),
-    ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
-                             "forge.toml's test command.",)),
+    ("workflow skips test", ("The tests check in .github/workflows/forge.yml does not run "
+                             "forge test --change.",)),
     ("codex doesn't trust the project", ()),
     ("no impeccable", (NO_IMPECCABLE,)),
     ("impeccable only for codex", (NO_IMPECCABLE,)),
@@ -305,11 +305,19 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     log = _stub_forge(tmp_path, monkeypatch, "hook deny" if case == "host hook fails" else "")
     edit = {"version mismatch": (r'version = ".*"', 'version = "v0.0.1"'),
             "no checks or test": (r'(?s)test = .*?\nchecks = .*?\n', 'test = ""\nchecks = []\n'),
-            "workflow skips test": (r"test = .*", 'test = "make test"'),
             "forge's own repo without git hooks": ('repo = "client"', 'repo = "forge-source"'),
             }.get(case)
     if edit:
         toml.write_text(re.sub(*edit, toml.read_text(encoding="utf-8"), count=1), encoding="utf-8")
+    if case == "workflow skips test":
+        workflow = client / ".github/workflows/forge.yml"
+        workflow.write_text(
+            workflow.read_text(encoding="utf-8").replace(
+                'run: "forge test --change"', 'run: "make check"'),
+            encoding="utf-8")
+        repo.git("add", ".github/workflows/forge.yml", cwd=client)
+        repo.git("-c", f"core.hooksPath={(tmp_path / 'no-hooks').as_posix()}",
+                 "commit", "-q", "-m", "Break the test workflow", cwd=client)
     if case == "forge's own repo without git hooks":  # the workflow installs Forge from its checkout
         repo.git("checkout", "-q", "-b", "fix/own", cwd=client)  # sync refuses on main
         assert repo.forge("sync", cwd=client).returncode == 0

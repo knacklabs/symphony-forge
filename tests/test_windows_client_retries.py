@@ -80,11 +80,12 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
     if os.name != "nt" and not os.path.isfile(pwsh):
         pytest.skip("Real PowerShell is required; the Windows full suite supplies it")
     assert os.path.isfile(pwsh), "Install real PowerShell to prove Windows client commands"
-    # Use the active test environment's Python before PowerShell's system directory.
-    test_path = os.pathsep.join([str(Path(sys.executable).parent),
+    # Keep the fixture's Forge launcher and the active Python before system tools.
+    test_path = os.pathsep.join([str(repo.bin), str(Path(sys.executable).parent),
                                  str(Path(pwsh).parent), os.environ["PATH"]])
     windows_check = None
     for runner in ("windows-latest", "ubuntu-latest", "macos-latest"):
+        repo.git("checkout", "-q", "fix/windows-client-retries", cwd=client)
         settings = config.replace('runner = "windows-latest"', f'runner = "{runner}"')
         if runner != "windows-latest":
             settings = re.sub(r"^test = .+$", lambda _: f"test = {json.dumps(command)}",
@@ -95,6 +96,8 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
         workflow = (client / ".github/workflows/forge.yml").read_text(encoding="utf-8")
         tests, check = workflow.split("\n  tests:\n", 1)[1].split("\n  forge-pr-check:\n", 1)
         run = json.loads(re.findall(r"^      - run: (.+)$", tests, re.M)[-1])
+        # Actions checks out pull requests detached, without a local Forge item.
+        repo.git("checkout", "-q", "--detach", "HEAD", cwd=client)
         if runner == "windows-latest" and command_style == "split-pytest":
             empty_attempts = client / "empty-group-attempts.txt"
             empty = subprocess.run([pwsh, "-NoProfile", "-NonInteractive", "-Command",
@@ -128,6 +131,7 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
                                           "ATTEMPT_FILE": attempts.as_posix(),
                                           "FAILURES": str(failures), "FAILURE_MODE": mode}, timeout=30)
                 expected_attempts = 2 if runner == "windows-latest" and failures else 1
+                assert attempts.exists(), executed.stdout + executed.stderr
                 assert attempts.read_text(encoding="utf-8") == str(expected_attempts), executed.stderr
                 passes = failures == 0 or (runner == "windows-latest" and failures == 1)
                 assert (executed.returncode == 0) == passes, executed.stdout + executed.stderr
