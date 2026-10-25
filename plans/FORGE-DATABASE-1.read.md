@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-25T17:43:31.252319+00:00
-seconds: 447.896
-read_hash: 78e67f7141d20304c4c71d991385837789afbded
-round: 1
+read_at: 2026-10-25T17:52:52.858811+00:00
+seconds: 164.416
+read_hash: ee654d250f49f9da433c51b805414b89fe29c289
+round: 2
 passed: no
-doc_seen: 78e67f7141d20304c4c71d991385837789afbded
+doc_seen: ee654d250f49f9da433c51b805414b89fe29c289
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 1e54cd6fe4eb5b9f8951fbd0a17be65410de3f64
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a17422-3f4d-7a10-aa5d-ba2e564cc0be
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose one more round: fix the member role types and export the currency setting
 ---
 # Cold read notes
 
@@ -88,3 +88,18 @@ Only a genuine trade-off goes to the human, as a question with options.
    [The recovery instructions](/plans/FORGE-DATABASE-1.md:55) say an administrator enables the extension and deployment is retried. The TypeScript starter runs `prisma migrate deploy` (`starter/Dockerfile:12`), which records the failed migration and requires reconciliation before retrying it. Installing the extension does not clear that failure record. No task or test covers this recovery path. [Prisma failed-migration recovery](https://docs.prisma.io/docs/orm/v7/prisma-migrate/workflows/patching-and-hotfixing#failed-migration).
    Gain 3, Work 2, Harm 4
    Disposition: cut The trade-off and the skill add prisma migrate resolve --rolled-back before the new deploy.
+
+## Round 2
+
+9. Blocking: Converting membership roles to text leaves the TypeScript starter unbuildable.
+   Raise: Plan gap.
+   Case: normal use - building or type-checking a new TypeScript starter.
+   [COLUMNS’s scope](/plans/FORGE-DATABASE-1.md:461) permits service edits only where files import Prisma enum types. Changing `Membership.role` to `String` also widens its generated type to `string`. Existing consumers require `'admin' | 'member'`: `starter/libs/organisations/src/organisations.service.ts:9-10`, `starter/libs/auth/src/auth.service.ts:48,65`, and `starter/libs/auth/src/session.guard.ts:36`. None imports a Prisma enum, so their required repairs remain outside scope. This is a separate type failure from note 1’s repaired email selectors.
+   Gain 5, Work 3, Harm 4
+
+10. Advisory: The new Python currency constant has no public export for generated features.
+   Raise: Plan gap.
+   Case: normal use - generating a Python feature with a money field.
+   [MONEY’s scope](/plans/FORGE-DATABASE-1.md:463) adds `DEFAULT_CURRENCY` to `app/core/config.py`, while KINDS requires generated APIs to use it. However, `starter-python/apps/api/app/core/__init__.py:2` exports only `Settings` and `load_settings` from that file. Direct imports from `app.core.config` violate the protected-module contract in `starter-python/apps/api/pyproject.toml:27-30`. Neither task owns the missing public export.
+   Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
