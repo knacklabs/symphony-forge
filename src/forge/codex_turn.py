@@ -253,9 +253,6 @@ def main() -> int:
                         reason = retry_error.message
                 if resumed is None:
                     if "already has an active writer" in reason:
-                        if request["kind"] != "Grill":
-                            emit(refused="writer")
-                            return 3
                         emit(fresh="another program holds the earlier conversation")
                     elif reason == (f"session {request['thread']} is archived. Run "
                                   f"`codex unarchive {request['thread']}` to unarchive it first."):

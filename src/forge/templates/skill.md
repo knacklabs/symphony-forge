@@ -1342,11 +1342,9 @@ on the new worker with the whole brief and the latest review findings.
 Each task and fix keeps the same worker chat for each tool until merge. Later rounds resume it
 after model or effort changes, restarts, missing local records or a fresh worktree. Plan reads
 keep their reader chat across rounds too. Forge starts a new chat only when the tool reports
-the old chat gone or archived or the item changes tools, and says why in one line. If another
-program holds a Codex chat, Forge retries once. A cold read then starts a new chat if it is still
-held, and says why in one line. A work round keeps its chat and refuses: close the conversation
-in the other program, then run the work round again. Other resume errors stop the round and
-keep its chat.
+the old chat gone or archived, another program keeps it held after one retry, or the item changes
+tools, and says why in one line. A work round starts the new chat with the whole brief, as a cold
+read does. Other resume errors stop the round and keep its chat.
 Upgrade's sync commits earlier-release chat bindings in their owning work branches, without
 accepting reader findings. It also recovers turn logs when local JSON is missing, moved spec
 worktrees and workers on `forge/` branches. A landed spec's binding travels in the upgrade fix's existing notes.
