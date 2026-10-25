@@ -36,8 +36,8 @@
     "id": "be914c56-97f4-45f0-9d34-c2bfa2c6716c",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-25T07:16:36.281345+00:00",
@@ -62,10 +62,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "1757a434-53ad-4044-b584-8e16dbb67ea6",
-    "head": "304788abbe6670271268f14fe3ec26792c6be29b",
+    "close": "5a60446f-df6d-4599-bd57-2a938a4d19b2",
+    "head": "3e1b6de2d694f53a1861eadb50539aa931caceb0",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "When another program, such as the ChatGPT desktop app, holds a worker's Codex conversation, forge work refuses with 'Another program holds this Codex conversation' and the item cannot go on until a person closes that program; a cold read already starts fresh in this case",
   "worker": "codex"
