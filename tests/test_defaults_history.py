@@ -6,6 +6,7 @@ from test_starter_tree import LIVE, _require_cases, live_run
 STORY = "FORGE-DEFAULTS-1/HISTORY"
 HISTORY_API_CASES = ("an invite and a role change write change history",)
 PYTHON_HISTORY_API_CASES = ("test_an_invite_and_a_role_change_write_change_history",)
+HISTORY_FLOW = "an admin sees who changed what and exports it"
 pytest_plugins = ("test_python_starter",)
 
 
@@ -19,4 +20,7 @@ def test_4_admin_actions_write_change_history(tmp_path_factory, request):
         pytest.skip("set FORGE_STARTER_LIVE=1 to run change history against the live API")
     python_live = request.getfixturevalue("live_python_starter")
     _require_cases(python_live["api"], PYTHON_HISTORY_API_CASES)
-    _require_cases(live_run(tmp_path_factory)["api"], HISTORY_API_CASES)
+    _require_cases(python_live["browser"], (HISTORY_FLOW,))
+    react_live = live_run(tmp_path_factory)
+    _require_cases(react_live["api"], HISTORY_API_CASES)
+    _require_cases(react_live["browser"], (HISTORY_FLOW,))
