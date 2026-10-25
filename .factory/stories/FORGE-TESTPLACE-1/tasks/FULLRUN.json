@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-TESTPLACE-1-FULLRUN",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-25T11:44:17.884700+00:00",
+      "step": "start"
+    }
+  ]
+}
