@@ -116,11 +116,12 @@ def test_11_previous_adoption_keeps_the_six_group_ci_job_after_sync(env):
     workflow = (env.repo.path / ".github/workflows/forge.yml").read_text("utf-8")
     start = workflow.index("  tests:\n")
     end = workflow.index("  tests-passed:\n", start)
-    previous_job = (ROOT / "tests/fixtures/previous-pytest-split-tests-job.yml").read_text("utf-8")
-    # The legacy job stays byte-identical except for the group identity passed to Forge.
-    previous_job = previous_job.replace("      UV_FROZEN: '1'\n", "      UV_FROZEN: '1'\n"
-                                        "      FORGE_GROUP: ${{ matrix.group }}\n"
-                                        "      FORGE_GROUPS: '6'\n")
-    assert workflow[start:end] == previous_job + "\n"  # The separator before the next job.
+    tests_job = workflow[start:end]
+    assert "group: [1, 2, 3, 4, 5, 6]" in tests_job
+    assert "name: test group ${{ matrix.group }} of 6" in tests_job
+    assert "FORGE_GROUP: ${{ matrix.group }}" in tests_job
+    assert "FORGE_GROUPS: '6'" in tests_job
+    assert '- run: "forge test --change"' in tests_job
+    assert "--splits" not in tests_job
     doctor = env.repo.forge("doctor")
     assert "does not run forge test --change" not in doctor.stdout

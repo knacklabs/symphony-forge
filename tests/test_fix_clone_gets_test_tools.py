@@ -78,7 +78,10 @@ def test_2_ci_runs_the_documented_pytest_command():
     workflows = ROOT / ".github" / "workflows"
     for name in ("forge-next.yml", "forge.yml", "codex-smoke.yml"):
         workflow = (workflows / name).read_text(encoding="utf-8")
-        # Forge's generated workflow now consumes the lock without refreshing it.
-        assert (command if name == "forge.yml" else "uv run --python 3.11 pytest") in workflow
+        if name == "forge.yml":
+            # The generated job installs Forge, then delegates test execution to it.
+            assert 'run: "forge test --change"' in workflow
+        else:
+            assert "uv run --python 3.11 pytest" in workflow
         assert "--group dev" not in workflow
         assert "--with pytest" not in workflow

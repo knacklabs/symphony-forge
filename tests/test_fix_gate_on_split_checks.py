@@ -123,7 +123,7 @@ def test_2_small_split_suite_passes_without_hiding_errors(repo):
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stderr
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
-    command = json.loads(re.search(r"^      - run: (.+)$", jobs(workflow)["tests"], re.M)[1])
+    command = json.loads(re.findall(r"^      - run: (.+)$", jobs(workflow)["tests"], re.M)[-1])
     assert command == "forge test --change"
 
     def run(group):

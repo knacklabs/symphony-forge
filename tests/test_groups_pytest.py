@@ -5,9 +5,11 @@ Test-audit gate:
    empty groups, failed-file retries, and always_test ownership.
 2. A regression can drop the six-group default on upgrade, run the full suite in every group,
    make a genuinely empty pytest group fail, hide a failed Mocha status 5, or fail groups where
-   pytest-split placed no always_test node.
+   pytest-split placed no always_test node, or hide a persistent always_test failure on retry.
 3. Existing group tests cover non-pytest runners and one-group always_test behavior. They do not
    exercise pytest-split through init, upgrade, related-test selection, or grouped retries.
+   The failing always_test case keeps that setting while the change selects only test_a;
+   it separately guards failure ownership after the one unsplit retry.
 4. Each test invokes Forge commands and the real installed pytest-split plugin; no production seam
    is needed.
 """
@@ -227,8 +229,9 @@ def test_3_pytest_repos_keep_six_groups_and_new_repos_start_with_one(
 
 @pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
+@pytest.mark.parametrize("persistent", [False, True], ids=["passing", "persistent"])
 def test_5_always_tests_pass_in_their_owning_group(
-        repo, gh, tmp_path, monkeypatch, adopted):
+        repo, gh, tmp_path, monkeypatch, adopted, persistent):
     client = (_adopted_client(repo, tmp_path, "always-adopted-client") if adopted else
               _new_client(repo, gh, tmp_path, "always-new-client"))
     _branch(repo, client, "always-test-groups")
@@ -237,6 +240,10 @@ def test_5_always_tests_pass_in_their_owning_group(
     receipts = tmp_path / ("always-adopted" if adopted else "always-new")
     receipts.mkdir()
     _write_related_tests(client, receipts, assert_source=False)
+    if persistent:
+        required = client / "tests/test_b.py"
+        required.write_text(required.read_text("utf-8") +
+                            "    assert False, 'required test b failed'\n", encoding="utf-8")
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     _commit_setup(repo, client, "Set up always_test group ownership")
@@ -250,12 +257,18 @@ def test_5_always_tests_pass_in_their_owning_group(
     _git(repo, client, "add", "tests/test_a.py")
     _git(repo, client, "commit", "-qm", "Change only the selected test")
 
-    for group in (1, 2):
-        result = _group(repo, client, monkeypatch, group, 2)
-        assert result.returncode == 0, result.stdout + result.stderr
-    assert len(_recorded_group(receipts, "b")) == 1
-    assert _recorded_group(receipts, "b")[0].rsplit(":", 1)[1] in {"1", "2"}
+    results = {group: _group(repo, client, monkeypatch, group, 2) for group in (1, 2)}
+    required_runs = _recorded_group(receipts, "b")
+    assert len(required_runs) == (2 if persistent else 1)
+    owner = int(required_runs[0].rsplit(":", 1)[1])
+    assert {int(line.rsplit(":", 1)[1]) for line in required_runs} == {owner}
+    assert [group for group, result in results.items() if result.returncode != 0] == (
+        [owner] if persistent else []), "\n".join(
+            result.stdout + result.stderr for result in results.values())
+    if persistent:
+        failure = results[owner].stdout + results[owner].stderr
+        assert "tests/test_b.py::test_b" in failure
+        assert all("This group got no tests to run." not in result.stdout + result.stderr
+                   for result in results.values())
     assert len(_recorded_group(receipts, "a")) == 1
-    assert _recorded_group(receipts, "a")[0].rsplit(":", 1)[1] in {"1", "2"}
-    assert _recorded_group(receipts, "a")[0].rsplit(":", 1)[1] != \
-        _recorded_group(receipts, "b")[0].rsplit(":", 1)[1]
+    assert int(_recorded_group(receipts, "a")[0].rsplit(":", 1)[1]) == 3 - owner

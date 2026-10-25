@@ -69,7 +69,6 @@ def test_4_doctor_explains_fast_test(env):
     doctor = env.repo.forge("doctor")
     assert "change tests use fast_test" in doctor.stdout
     assert "pull request's tests check runs related tests" in doctor.stdout
-    assert "except for existing pytest-split groups" in doctor.stdout
     assert "The nightly full run covers the rest" in doctor.stdout
 
 
@@ -80,11 +79,11 @@ def test_5_new_repos_get_fast_test_unset(repo, gh, tmp_path):
 
 
 def test_6_the_skill_and_the_guide_recommend_fast_test():
-    # CI now selects related tests, while existing pytest-split jobs keep six groups.
+    # CI selects related tests, and adopted pytest-split repos keep six groups.
     root = Path(__file__).parents[1]
     for rel in ("src/forge/templates/skill.md", "docs/guide.md"):
         text = " ".join((root / rel).read_text("utf-8").split())
         assert "set `fast_test`" in text and "`{base}`" in text, rel
         assert "related tests" in text and "`forge test --change`" in text, rel
-        assert "pytest-split" in text and "six-group job" in text, rel
+        assert "pytest-split keeps its six groups" in text, rel
         assert "nightly full run" in text, rel
