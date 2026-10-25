@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DATABASE-1-REVIEW",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T19:28:57.209242+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "399846d50157343caba5a5ea8326bb9b78c647a4",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
