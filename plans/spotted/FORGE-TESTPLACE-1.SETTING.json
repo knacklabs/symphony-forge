@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\t[P1] Require local test evidence when reusing a review\tFORGE-TESTPLACE-1/SETTING",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 354,
+      "text": "[P1] Require local test evidence when reusing a review",
+      "from": "blocking",
+      "item": "FORGE-TESTPLACE-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\t[P1] Make mandatory validation guidance honor the selected test place\tFORGE-TESTPLACE-1/SETTING",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 243,
+      "text": "[P1] Make mandatory validation guidance honor the selected test place",
+      "from": "blocking",
+      "item": "FORGE-TESTPLACE-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/skill.md\tDependency refresh guidance still says to run the test command locally in every repo.",
+      "kind": "improve",
+      "path": "src/forge/templates/skill.md",
+      "line": 1104,
+      "text": "Dependency refresh guidance still says to run the test command locally in every repo.",
+      "from": "worker",
+      "item": "FORGE-TESTPLACE-1/SETTING",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
