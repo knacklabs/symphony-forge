@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, useLocation } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
 import { RouteErrorPage } from '@/components/route-error-page';
+import { AcceptInvitePage } from '@/features/auth/pages/accept-invite-page';
 import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page';
 import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
 import { SignInPage } from '@/features/auth/pages/sign-in-page';
@@ -41,6 +42,7 @@ export function App() {
     '/sign-up': 'Create account',
     '/forgot-password': 'Forgot password',
     '/reset-password': 'Reset password',
+    '/accept-invite': 'Join your team',
     '/projects': 'Projects',
     '/members': 'Members',
     '/settings': 'Settings',
@@ -63,6 +65,7 @@ export const router = createBrowserRouter(createRoutesFromElements(
     <Route path="/sign-up" element={<SignUpPage />} errorElement={<RouteErrorPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} errorElement={<RouteErrorPage />} />
     <Route path="/reset-password" element={<ResetPasswordPage />} errorElement={<RouteErrorPage />} />
+    <Route path="/accept-invite" element={<AcceptInvitePage />} errorElement={<RouteErrorPage />} />
     <Route element={<ProtectedLayout />} errorElement={<RouteErrorPage />}>
       <Route path="/projects" element={<ProjectsPage />} errorElement={<RouteErrorPage />} />
       <Route path="/members" element={<MembersPage />} errorElement={<RouteErrorPage />} />
