@@ -2,12 +2,20 @@
   "base": "743ca69ff3bd5b5dd7ebdb35d639038d788a5672",
   "branch": "task/FORGE-SINGLECO-1-COMPANYPY",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-DATABASE-1/PG18",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-25T19:29:06.370661+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7794500260d390d94e29dafd9b6bdd3af9d7794f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
