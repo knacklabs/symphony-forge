@@ -1,6 +1,13 @@
 {
   "base": "b57fafaea2e32587274661ac94d4f6892c56105f",
   "branch": "fix/a-repo-with-test-groups-still-runs-its-n",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17484-cde2-7fb3-86f7-485f8f14f211",
+    "head": null,
+    "start": "bafa1781642735da719b534c49fd888ba2c2d2ac"
+  },
   "done_when": "The nightly full run splits into the repo's groups with the same time limit as the pull request tests job, and one full-run result is recorded for the default branch.",
   "fix_kind": "mechanical",
   "kind": "fix",
