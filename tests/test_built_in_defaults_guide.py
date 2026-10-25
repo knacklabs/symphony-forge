@@ -63,8 +63,10 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
         _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=top)
 
+    # Both starter layouts supply these defaults; the interview must skip them for either.
     outline_sentence = (
-        "In an app that has libs/organisations, also copy the built-in lines into ## Fixed rules, "
+        "In an app that has libs/organisations or apps/api/app/organisations, "
+        "also copy the built-in lines into ## Fixed rules, "
         "and ask nothing about the defaults they answer."
     )
     fixed_rules = (
@@ -87,7 +89,7 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
             assert rule in outline
 
         fde = (skills / "fde.md").read_text("utf-8").splitlines()
-        built_in_suffix = " Built in when the app has libs/organisations."
+        built_in_suffix = " Built in when the app has libs/organisations or apps/api/app/organisations."
         for question in (
             "Can people see each other's information, or only their own?",
             "Who can add people and change what they can do?",
@@ -99,10 +101,11 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         partial_answers = {
             "Which languages and currencies, date formats, time zones?": (
                 " The date, time, number and money formats are built in when the app has "
-                "libs/organisations."
+                "libs/organisations or apps/api/app/organisations."
             ),
             "Do you need reports, charts or exports (PDF, Excel)?": (
-                " The CSV export is built in when the app has libs/organisations."
+                " The CSV export is built in when the app has "
+                "libs/organisations or apps/api/app/organisations."
             ),
         }
         for question, suffix in partial_answers.items():
