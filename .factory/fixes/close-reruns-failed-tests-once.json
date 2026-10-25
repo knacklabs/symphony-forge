@@ -71,7 +71,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-24T17:34:10.962169+00:00",
@@ -84,8 +84,12 @@
   ],
   "stop": {
     "at": "2026-10-24T17:48:38.907782+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/fasttest.py",
-    "wait_id": "d7018819-59a1-4c61-8356-391dc6101400"
+    "reason": "The owner chose one more round for the two retry cases",
+    "wait_id": "d7018819-59a1-4c61-8356-391dc6101400",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
