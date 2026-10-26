@@ -942,6 +942,14 @@ the options for each choice list with the thing it belongs to. The prototype use
 
 At the start, write docs/product/CONSTITUTION.md with every default from Constitution defaults
 filled in, and raise a default with the FDE only when the notes contradict it.
+
+On a new app, check the client notes for five growth topics: the users and records in year
+one and year three, heavy background work, other systems that call in or that the app calls,
+rules on where the data stays, and parts that can become their own product. Ask about a topic
+only when the notes touch it and do not answer it, one question at a time. Write each answer
+under ## Growth notes in the constitution. A later story reads these notes before it plans
+modules, jobs or links.
+
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
 constitution's ## Fixed rules section, and ask nothing about them.
 In an app that has libs/organisations or apps/api/app/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
@@ -986,6 +994,9 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: each UI or API crash writes one error report to the logs.
+
+## Growth notes
+- <the growth topic>: <the answer from the client notes or the person>
 
 ## Architecture choices
 - <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
