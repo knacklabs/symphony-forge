@@ -6,6 +6,7 @@ its own. Keys a later part fills stay null until then.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shutil
@@ -123,7 +124,7 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: int = 60) -> Any:
+def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: float = 60) -> Any:
     """Serialize readers through the fetch and write, then let waiters reuse the answer."""
     from forge import codex
     with ExitStack() as guard:
@@ -134,7 +135,7 @@ def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: i
         return _read_cached(top, name, fetch, stale=stale, seconds=seconds)
 
 
-def _read_cached(top: Path, name: str, fetch: Any, *, stale: bool, seconds: int) -> Any:
+def _read_cached(top: Path, name: str, fetch: Any, *, stale: bool, seconds: float) -> Any:
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     previous = None
@@ -179,9 +180,6 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
     their caller uses; cached reads always keep the complete board records."""
     # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
-        opened = _listing(top, "open", fields=open_fields if fresh else FIELDS)
-        if opened is None:
-            return None  # GitHub is unreachable: one call, not eight
         # Board restoration and backfill share these windows. The first Monday
         # is at least 42 days ago, including the cutoff on a Sunday (48 days).
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
@@ -192,9 +190,12 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
                                 fields=merged_fields if fresh else FIELDS)
             return (listing(now) if fresh or start == starts[-1] else
                     _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
-        with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
+        with ThreadPoolExecutor(len(starts) + 1) as pool:
+            opened_read = pool.submit(_listing, top, "open",
+                                      fields=open_fields if fresh else FIELDS.removesuffix(",files"))
             lists = list(pool.map(week, starts))
-        if None in lists:
+            opened = opened_read.result()
+        if opened is None or None in lists:
             return None
         weeks = []
         for start, found in zip(starts, lists):
@@ -258,18 +259,20 @@ def failed_schedules(top: Path) -> list[Item]:
     def fetch(now: datetime) -> list[Item] | None:
         # ponytail: the newest 100 scheduled runs; a frequent schedule can crowd out a daily one.
         # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
-        done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
-                        "--raw-field", "event=schedule", "--raw-field", f"branch={branch}",
-                        "--raw-field", "per_page=100", cwd=top)
+        with ThreadPoolExecutor(2) as pool:
+            manual_read = pool.submit(repo.run, "gh", "api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+                                      "--method", "GET", "--raw-field", "event=workflow_dispatch",
+                                      "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+            done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                            "--raw-field", "event=schedule", "--raw-field", f"branch={branch}",
+                            "--raw-field", "per_page=100", cwd=top)
+            manual = manual_read.result()
         try:
             runs = json.loads(done.stdout).get("workflow_runs") if done.returncode == 0 else None
         except (ValueError, AttributeError):
             return None
         if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
             return None
-        manual = repo.run("gh", "api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
-                          "--method", "GET", "--raw-field", "event=workflow_dispatch",
-                          "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
         try:
             manual_runs = json.loads(manual.stdout).get("workflow_runs", []) if not manual.returncode else []
         except (ValueError, AttributeError):
@@ -280,21 +283,27 @@ def failed_schedules(top: Path) -> list[Item]:
         latest: dict[Any, Item] = {}
         for run in runs:  # newest first
             latest.setdefault(run.get("workflow_id"), run)
-        failed = []
-        for run in latest.values():
-            if run.get("conclusion") != "failure":
-                continue
-            log = repo.run("gh", "run", "view", str(run.get("id")), "--log-failed", cwd=top)
-            if log.returncode != 0:
-                return None
-            lines = log.stdout.splitlines()
-            failed.append({"workflow": str(run.get("name") or "workflow"), "branch": branch,
-                           "event": run.get("event", "schedule"),
-                           "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
-                           "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
-                           "tests": sorted({found[1] for line in lines if (found := re.search(
-                               r"(?:FAILED|ERROR|-) (\S+?::[^\s\[]+(?:\[.*?\])?|\S+\.py)(?= - |$)", line))})})
-        return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
+        def failure(run: Item) -> Item | None:
+            def read(_now: datetime) -> Item | None:
+                log = repo.run("gh", "run", "view", str(run.get("id")), "--log-failed", cwd=top)
+                if log.returncode != 0:
+                    return None
+                lines = log.stdout.splitlines()
+                return {"workflow": str(run.get("name") or "workflow"), "branch": branch,
+                        "event": run.get("event", "schedule"),
+                        "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
+                        "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
+                        "tests": sorted({found[1] for line in lines if (found := re.search(
+                            r"(?:FAILED|ERROR|-) (\S+?::[^\s\[]+(?:\[.*?\])?|\S+\.py)(?= - |$)", line))})}
+            # A completed attempt's log is immutable; reruns reuse the id with a new attempt.
+            if type(run.get("id")) is int and type(run.get("run_attempt")) is int and run["run_attempt"] > 0:
+                return _cached(top, f"run-{run['id']}-{run['run_attempt']}-failure-cache", read, seconds=math.inf)
+            return read(now)  # Missing attempt information cannot establish an immutable answer.
+        with ThreadPoolExecutor(4) as pool:
+            failed = list(pool.map(failure, [run for run in latest.values() if run.get("conclusion") == "failure"]))
+        if None in failed:
+            return None
+        return sorted((run for run in failed if run is not None), key=lambda run: (run["workflow"], run["file"]))
     return _cached(top, "schedule-cache", fetch, seconds=600) or []
 
 

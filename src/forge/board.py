@@ -191,6 +191,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
     from forge import backfill, known_issues, nextstep, releases, time_records
 
+    repo.forge_dir(top)
+    repo.default_branch(top)
     trees = story.worktrees(top)
     # Fetch independent GitHub views while local Git supplies the state snapshot.
     with ThreadPoolExecutor(max_workers=4) as pool:
@@ -198,11 +200,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         viewer_read = pool.submit(board_facts._cached, top, "viewer-login", lambda _: task.github_login(top), stale=True)
         dates_read = (pool.submit(releases.dates, top) if any(
             releases.VERSION.fullmatch(tag) for tag in repo.git("tag", "--list", cwd=top).splitlines()) else None)
+        authors_read = pool.submit(_starters, top)
         history = history if history is not None else _machine_history(top)
         prs, github = checks_read.result(), github_read.result()
         viewer = viewer_read.result()
         if dates_read is not None:
             dates_read.result()
+        authors_read.result()
     if not trim:
         history = {**history, "expired": set()}
     landed = history["landed"]
@@ -959,6 +963,8 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 tree = line.split()[1]
     texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
     blobs = {blob: story.json_of(text) for blob, text in texts.items()}
+    state_files = {tree: {rel: blob for rel, blob in files.items() if STATE.fullmatch(rel)}
+                   for tree, files in snapshots.items()}
     # Clean working files already have bytes in the bulk Git read. Only changed or
     # untracked state needs a separate disk read, even with many linked worktrees.
     def changed_files(path: Path) -> set[str]:
@@ -969,12 +975,11 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     with ThreadPoolExecutor(max_workers=4) as pool:
         changes = dict(zip((path for _, path in work), pool.map(changed_files, (path for _, path in work))))
     for branch, path in work:
-        saved = snapshots.get(refs.get(f"refs/heads/{branch}"), {})
+        saved = state_files.get(refs.get(f"refs/heads/{branch}"), {})
         changed = changes[path]
-        # Walk strings here: most worktrees carry the same hundreds of state files.
         paths = (f"{prefix}/{name}"
                  for folder, _, names in os.walk(path / ".factory")
-                 for prefix in (Path(folder).relative_to(path).as_posix(),)
+                 for prefix in (os.path.relpath(folder, path).replace(os.sep, "/"),)
                  for name in names if name.endswith(".json"))
         for rel in sorted(paths):
             if STATE.fullmatch(rel):
@@ -986,16 +991,20 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                         parsed[text] = story.json_of(text)
                     state = parsed[text]
                 found.append((rel, state, path))
+    seen_states = set()
     for ref, tree in refs.items():
         if ref == landed or ref.startswith("refs/remotes/"):
-            found.extend((rel, blobs[blob], ref) for rel, blob in snapshots[tree].items() if STATE.fullmatch(rel))
+            for rel, blob in state_files[tree].items():
+                if ref == landed or (rel, blob) not in seen_states:
+                    seen_states.add((rel, blob))
+                    found.append((rel, blobs[blob], ref))
     if history is not None:
         history["worktrees"] = trees
-        history["ref_states"] = {ref: {rel: blobs[blob] for rel, blob in snapshots[tree].items()
-                                       if STATE.fullmatch(rel)} for ref, tree in refs.items()}
+        history["ref_states"] = {ref: {rel: blobs[blob] for rel, blob in state_files[tree].items()}
+                                 for ref, tree in refs.items()}
         history["docs"] = {f"{alias}:{rel}": texts[blob] for ref, tree in refs.items()
                            for alias in (ref, ref.removeprefix("refs/heads/").removeprefix("refs/remotes/"))
-                           for rel, blob in snapshots[tree].items() if not STATE.fullmatch(rel)}
+                           for rel, blob in snapshots[tree].items() if rel not in state_files[tree]}
         # The doc each plan read saw, for "changed since the read": one git process for all of them.
         seen = list(dict.fromkeys(h for text in dict.fromkeys(history["docs"].values())
                                   for h in map(story._record(text)[0].get,  # pyright: ignore[reportPrivateUsage]
