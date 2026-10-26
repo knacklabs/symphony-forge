@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-DEPLOY-1-DEPLOYSETUP",
+  "chat": {
+    "approval": "dc8be4beb63244e21adea8cbc421019d3d5e830633adec576c712abcacc8f884",
+    "claude": null,
+    "conversation": "01a1786a-c5a3-7653-b0c7-a8f9be0412d3",
+    "head": null,
+    "start": "bf5879a0387739095fd1de2abac533fb97feae01"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
