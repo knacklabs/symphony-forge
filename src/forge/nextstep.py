@@ -120,7 +120,7 @@ def next_step(args: Any) -> int:
 
     notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
     history = board._machine_history(top)
-    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
+    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True, fresh_prs=not args.json)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
@@ -186,7 +186,7 @@ def handoff_hook(args: Any) -> int:
 
 
 def _report(top: Path, history: dict[str, Any] | None = None,
-            schedules: bool = False) -> tuple[list[str], list[str]]:
+            schedules: bool = False, fresh_prs: bool = False) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
@@ -203,9 +203,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     for branch, path in trees.items():
         if branch.startswith(board.PREFIXES):
             _report_config(path, refusals)
-    # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
-    github = board_facts.prs(top) if history is not None else None
-    if github is None and history is not None:  # the board's one try failed: unknown, no live call per item
+    # Bulk Git history is independent of the machine view's minute-long GitHub cache.
+    cached_prs = history is not None and not fresh_prs
+    github = board_facts.prs(top) if cached_prs else None
+    if github is None and cached_prs:  # the board's one try failed: unknown, no live call per item
         merged_prs, opened = set(), []
     elif github is None:
         merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
