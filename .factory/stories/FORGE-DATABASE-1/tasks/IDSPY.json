@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DATABASE-1-IDSPY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T01:32:31.511608+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "fe4f57e10178db96bcbbcca9eb781178d0b93832",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
