@@ -21,22 +21,46 @@
       "security": false,
       "title": "Gate: unrelated review-bar changes outside Scope",
       "work": 2
+    },
+    {
+      "area": "_config_problem() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 875,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Gate: unrelated settings validation outside Scope",
+      "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "bf93bb5f536544357c98354fcf060453f808208d95a4e111c8a9cbba8821d192",
-    "changed": "62fb4c2dba981c90d618455991d06c6f8da5864b9792df482cbbd71ab427ed06",
-    "commit": "8de7984ee073a4c4ead9b5722f7c07df1d6210d9",
+    "branch_diff": "27774f50e4e21117356cdbe94b9c7482b692ac9d9b0125e990fb8d4d3285b0f1",
+    "changed": "5a87d803eae5c5fc113dda8262a47dd50b5580139d1815b2794fee1f667ec0f4",
+    "commit": "5f5c6ba81af50fd6bcb5512f1e8a11aed414df67",
     "dismissals": [],
-    "findings": [],
-    "id": "81227ef3-9beb-434c-9a61-7540ddcb28f3",
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. Case: normal use - delivering the services guides includes an unrelated change to review-setting validation. The added `added_work_min_gain` check in `src/forge/repo.py` serves none of item 3's guide, init, sync or worker requirements. `_config_text` already checks the same constraint at lines 727\u2013729, so this hunk is unnecessary for the existing validation too. Remove this hunk to meet the stated scope.",
+        "file": "src/forge/repo.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 875,
+        "priority": "P1",
+        "title": "Gate: unrelated settings validation outside Scope",
+        "work": 1
+      }
+    ],
+    "id": "5716ec88-4c14-4425-abe1-4495c4ea212c",
     "status": "clean"
   },
   "round": 4,
   "stacked_on": "FORGE-BAR-1/BARRULES",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T10:50:53.889177+00:00",
@@ -52,6 +76,10 @@
     },
     {
       "at": "2026-10-26T11:26:13.451962+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T13:05:57.025660+00:00",
       "step": "review"
     }
   ],
