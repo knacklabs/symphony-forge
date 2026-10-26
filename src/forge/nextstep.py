@@ -200,6 +200,9 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         key = next((key for key in alerts if key in str(state.get("why") or "")), None)
         return alerts.pop(key) if key else None
     trees = story.worktrees(top)
+    for branch, path in trees.items():
+        if branch.startswith(board.PREFIXES):
+            _report_config(path, refusals)
     # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
     github = board_facts.prs(top) if history is not None else None
     if github is None and history is not None:  # the board's one try failed: unknown, no live call per item

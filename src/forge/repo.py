@@ -91,8 +91,14 @@ def command_cache(*, snapshot: bool = False):
     """Repository facts and worker history live only for this command, never the next one."""
     global _command_cache
     previous = _command_cache
-    if snapshot and previous is not None and ("read snapshot",) in previous:
-        yield
+    if snapshot and previous is not None:
+        nested = ("read snapshot",) in previous
+        previous.setdefault(("read snapshot",), {})
+        try:
+            yield
+        finally:
+            if not nested:
+                previous.pop(("read snapshot",), None)
         return
     try:
         with ExitStack() as resources:
