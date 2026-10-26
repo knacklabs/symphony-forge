@@ -23,6 +23,9 @@ only against an owner-approved Done-when item (the fix's whole Done-when line or
 are guidance and never block as `Not done`.
 Close blocks a `Not done` on the item's own Done-when even below the score bar or in a light
 review. Each non-blocking finding close lists shows its own reason with its Gain, Work and Harm scores.
+The default branch's added_work_min_gain can keep added-work findings below its minimum as Known
+issues; a `Must: <kind>: <gap>` of a kind in always_block holds at any score, even when rare or
+in a light review, and only the owner can accept it; the worker cannot decline it.
 
 Forge records the "Prototype before sign-off" allowance. It covers any size and interface
 changes. Reviewers do not check this allowance against the diff. Other agent-recorded
@@ -321,6 +324,7 @@ If a finding is not worth the code, change nothing for it and write this line in
 with its exact title and file: `Declined: <title> (<file>): not worth the code - <reason>`.
 An empty commit is fine. Close applies declines on every run, including a reused review, and
 records them as follow-ups. A P0 or `Not done` on this item's own Done-when stays open.
+An owner-required `Must:` kind also stays open.
 Only the human dismisses findings.
 Forge records findings below the bar as follow-ups or lived with; leave those alone.
 

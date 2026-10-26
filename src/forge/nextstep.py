@@ -119,6 +119,12 @@ def next_step(args: Any) -> int:
     top = repo.root()
     from forge import fullrun
 
+    if (top / "forge.toml").is_file():
+        try:
+            repo.config(top)
+        except repo.Refused as refusal:
+            if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
+                raise
     notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
     # Independent network reads overlap each other and the bulk local history.
     with ThreadPoolExecutor(max_workers=4) as pool:

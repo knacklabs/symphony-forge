@@ -122,7 +122,7 @@ def test_a_one_company_app_refuses_sign_up_and_still_takes_invites() -> None:
         assert joined.status_code == 201, joined.text
         assert joined.json()["data"]["role"] == "member"
 
-        projects = member_client.get("/api/v1/projects?page=1&limit=20")
+        projects = member_client.get("/api/v1/projects?limit=20")
         assert projects.status_code == 200, projects.text
         assert [item["name"] for item in projects.json()["data"]["items"]] == [
             "Company project"
@@ -167,7 +167,7 @@ def test_a_one_company_app_becomes_many_company_by_its_setting_alone(
         (item["email"], item["role"]) for item in members.json()["data"]["items"]
     } == {(admin["email"], "admin"), (member["email"], "member")}
 
-    projects = client.get("/api/v1/projects?page=1&limit=20")
+    projects = client.get("/api/v1/projects?limit=20")
     assert projects.status_code == 200, projects.text
     assert [item["name"] for item in projects.json()["data"]["items"]] == [
         "Kept after switch"

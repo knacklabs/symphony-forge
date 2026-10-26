@@ -23,24 +23,27 @@ export class ProjectResponseDto {
   modifiedByAccountId!: string;
 }
 
-export class ProjectPaginationDto {
-  @ApiProperty({ description: 'The one-based page number.', example: 1 })
-  page!: number;
-
+export class ProjectPagingDto {
   @ApiProperty({ description: 'The number of projects per page.', example: 20 })
   limit!: number;
 
-  @ApiProperty({ description: 'The number of matching projects.', example: 4 })
-  totalItems!: number;
+  @ApiProperty({ description: 'The cursor for the next page, or null on the last page.', type: String, nullable: true, example: 'WyJuYW1lIiwiQSJd' })
+  nextCursor!: string | null;
 
-  @ApiProperty({ description: 'The number of available pages.', example: 1 })
-  totalPages!: number;
+  @ApiProperty({ description: 'The cursor for the previous page, or null on the first page.', type: String, nullable: true, example: null })
+  previousCursor!: string | null;
+
+  @ApiProperty({ description: 'The number of matching projects, counted up to 10,000.', example: 4 })
+  total!: number;
+
+  @ApiProperty({ description: 'True when more than 10,000 projects match.', example: false })
+  totalCapped!: boolean;
 }
 
 export class ProjectListResponseDto {
   @ApiProperty({ description: 'The projects on this page.', type: [ProjectResponseDto] })
   items!: ProjectResponseDto[];
 
-  @ApiProperty({ description: 'The page details.', type: ProjectPaginationDto })
-  pagination!: ProjectPaginationDto;
+  @ApiProperty({ description: 'The cursors and the total for this page.', type: ProjectPagingDto })
+  paging!: ProjectPagingDto;
 }
