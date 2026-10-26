@@ -763,9 +763,16 @@ def story(parts: list[dict[str, Any]], read_rounds: list[dict[str, Any]], *, unf
     intervals, totals = [], dict.fromkeys(("working", "waiting", "unknown"), 0.0)
     parsed = [(x, y, span.get("kind")) for span in spans
               if (x := when(span.get("start"))) and (y := when(span.get("end")))]
+    changes: dict[datetime, list[tuple[str, int]]] = {}
+    for x, y, kind in parsed:
+        if kind in ("working", "waiting") and x < y:
+            changes.setdefault(x, []).append((kind, 1))
+            changes.setdefault(y, []).append((kind, -1))
+    active = dict.fromkeys(("working", "waiting"), 0)
     for a, b in zip(points, points[1:]):
-        kinds = {kind for x, y, kind in parsed if x <= a and y >= b}
-        kind = "working" if "working" in kinds else "waiting" if "waiting" in kinds else "unknown"
+        for kind, change in changes.get(a, []):
+            active[kind] += change
+        kind = "working" if active["working"] else "waiting" if active["waiting"] else "unknown"
         totals[kind] += (b - a).total_seconds()
         intervals.append({"start": a.isoformat(), "end": b.isoformat(), "kind": kind})
     for fold in folds:  # Unknown instants in a part's folded range take its working, then waiting.

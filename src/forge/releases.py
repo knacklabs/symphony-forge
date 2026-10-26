@@ -24,7 +24,7 @@ def dates(top: Path) -> dict[str, str]:
                     if release.get("published_at") and not release.get("draft")}
         except (ValueError, TypeError, KeyError, AttributeError):
             return None
-    return repo.command_fact("release dates", top, lambda: board_facts._cached(top, "release-dates", published) or {})
+    return repo.command_fact("release dates", top, lambda: board_facts._cached(top, "release-dates-cache", published) or {})
 
 
 def collect(top: Path, history: dict[str, Any], maps: list[dict[str, Any]],

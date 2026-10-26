@@ -171,13 +171,15 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
     return rows if isinstance(rows, list) and all(isinstance(r, dict) for r in rows) else None
 
 
-def prs(top: Path, *, fresh: bool = False, people: bool = False) -> Item | None:
+def prs(top: Path, *, fresh: bool = False, people: bool = False,
+        merged_fields: str = FIELDS, open_fields: str = FIELDS) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
     this one. Past weeks live a day; open and current-week lists live a minute.
-    Only people may use expired records during an outage."""
+    Only people may use expired records during an outage. Fresh reads can select only the fields
+    their caller uses; cached reads always keep the complete board records."""
     # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
-        opened = _listing(top, "open")
+        opened = _listing(top, "open", fields=open_fields if fresh else FIELDS)
         if opened is None:
             return None  # GitHub is unreachable: one call, not eight
         # Board restoration and backfill share these windows. The first Monday
@@ -186,7 +188,8 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False) -> Item | None:
         def week(start: datetime) -> list[Item] | None:
             def listing(_now: datetime) -> list[Item] | None:
                 return _listing(top, "merged", "--search",
-                                f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}")
+                                f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}",
+                                fields=merged_fields if fresh else FIELDS)
             return (listing(now) if fresh or start == starts[-1] else
                     _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
         with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
@@ -235,7 +238,7 @@ def merged_before_weeks(top: Path) -> dict[str, Item]:
     def fetch(_now: datetime) -> list[Item] | None:
         # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
         return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}")
-    return {pr["headRefName"]: pr for pr in _cached(top, f"prs-older-cache-{cutoff:%Y-%m-%d}", fetch, seconds=86400) or []
+    return {pr["headRefName"]: pr for pr in _cached(top, f"prs-older-{cutoff:%Y-%m-%d}-cache", fetch, seconds=86400) or []
             if isinstance(pr.get("headRefName"), str)}
 
 

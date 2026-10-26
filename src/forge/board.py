@@ -196,7 +196,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     with ThreadPoolExecutor(max_workers=4) as pool:
         checks_read, github_read = reads or (pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top))
         viewer_read = pool.submit(board_facts._cached, top, "viewer-login", lambda _: task.github_login(top), stale=True)
-        dates_read = pool.submit(releases.dates, top) if repo.git("tag", "--list", cwd=top) else None
+        dates_read = (pool.submit(releases.dates, top) if any(
+            releases.VERSION.fullmatch(tag) for tag in repo.git("tag", "--list", cwd=top).splitlines()) else None)
         history = history if history is not None else _machine_history(top)
         prs, github = checks_read.result(), github_read.result()
         viewer = viewer_read.result()
@@ -1077,17 +1078,19 @@ def _display_names(top: Path) -> dict[str, str]:
 
 
 def _starters(top: Path) -> dict[str, str]:
-    names = _display_names(top)
-    log = repo.command_fact("board starter authors", top, lambda: repo.git(
-        "log", "--all", "--reverse", "--diff-filter=A", "--no-renames", "--grep=^Start ",
-        "--format=%x00%aN%x00%aE%x00", "--name-only", "--", ".factory/stories", ".factory/fixes",
-        cwd=top)).split("\0")[1:]
-    found = {}
-    for name, email, paths in zip(log[::3], log[1::3], log[2::3]):
-        for rel in paths.splitlines():
-            if rel.endswith(".json"):
-                found.setdefault(rel, names.get(email.casefold(), name))
-    return found
+    def read() -> dict[str, str]:
+        names = _display_names(top)
+        log = repo.git(
+            "log", "--all", "--reverse", "--diff-filter=A", "--no-renames", "--grep=^Start ",
+            "--format=%x00%aN%x00%aE%x00", "--name-only", "--", ".factory/stories", ".factory/fixes",
+            cwd=top).split("\0")[1:]
+        found = {}
+        for name, email, paths in zip(log[::3], log[1::3], log[2::3]):
+            for rel in paths.splitlines():
+                if rel.endswith(".json"):
+                    found.setdefault(rel, names.get(email.casefold(), name))
+        return found
+    return repo.command_fact("board starter authors", top, read)
 
 
 def _approver(top: Path, key: str) -> Item | None:

@@ -126,11 +126,16 @@ def next_step(args: Any) -> int:
             if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
                 raise
     notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
+    # Populate shared facts before concurrent readers can race on their first lookup.
+    repo.forge_dir(top)
+    repo.default_branch(top)
     # Independent network reads overlap each other and the bulk local history.
     with ThreadPoolExecutor(max_workers=4) as pool:
         pending = {"alerts": pool.submit(_failed_schedules, top),
                    "checks": pool.submit(board._machine_prs, top),
-                   "github": pool.submit(board_facts.prs, top)}
+                   "github": pool.submit(board_facts.prs, top, fresh=not args.json,
+                                         merged_fields="headRefName",
+                                         open_fields="headRefName,headRefOid,body,url,isDraft")}
         activity = pool.submit(board._event_history, top)
         history = board._machine_history(top)
         warnings = migration_warnings.warnings(top)
