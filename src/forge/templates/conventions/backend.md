@@ -44,6 +44,10 @@ app has no global ValidationPipe.
   `auth.prisma` for accounts, sessions and reset tokens; the projects module owns `projects.prisma`
   for projects and their status. Keep each module's models in its schema file, even when a relation
   points to a table owned by another module.
+- Each module's tables live in its own Postgres schema; organisation, account and sign-in tables
+  live in `core`. A link between business modules stores an indexed id without a foreign key
+  and is checked through the other module's public service. Links within a module and links to
+  core keep their foreign key. A review reports a foreign key between two business-module schemas.
 - Services query through `PrismaService`. Move a query into `<domain>.repository.ts` when a second
   service needs it or it is raw SQL.
 - Name request schemas `createXSchema` and `updateXSchema` (one `xSchema` when both are the same)

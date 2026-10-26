@@ -10,4 +10,5 @@ model ChangeRecord {
 
   @@index([organisationId, createdAtUtc], map: "idx_ChangeRecord_organisationId_createdAtUtc")
   @@index([actorAccountId], map: "idx_ChangeRecord_actorAccountId")
+  @@schema("history")
 }

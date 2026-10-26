@@ -17,8 +17,8 @@ describe('database', () => {
     await invite(client, csrf, credentials().email);
     await client.post('/api/v1/auth/forgot-password').send({ email: account.email }).expect(200);
 
-    for (const table of ['Account', 'Session', 'PasswordResetToken', 'Organisation', 'Membership', 'Invite', 'Project', 'ChangeRecord']) {
-      const ids = psql(`SELECT count(*) > 0 AS has_rows, count(*) FILTER (WHERE uuid_extract_version(id) <> 7) = 0 AS all_v7 FROM "${table}"`);
+    for (const table of ['core."Account"', 'core."Session"', 'core."PasswordResetToken"', 'core."Organisation"', 'core."Membership"', 'core."Invite"', 'projects."Project"', 'history."ChangeRecord"']) {
+      const ids = psql(`SELECT count(*) > 0 AS has_rows, count(*) FILTER (WHERE uuid_extract_version(id) <> 7) = 0 AS all_v7 FROM ${table}`);
       expect(ids.status, ids.output).toBe(0);
       expect(ids.output).toMatch(/t\s*\|\s*t/);
     }
@@ -27,9 +27,9 @@ describe('database', () => {
     expect(projectId).toMatch(/^[0-9a-f-]{36}$/);
     const updated = psql(`
       WITH previous AS MATERIALIZED (
-        SELECT id, "updatedAtUtc" FROM "Project" WHERE id = '${projectId}'
+        SELECT id, "updatedAtUtc" FROM projects."Project" WHERE id = '${projectId}'
       ), changed AS (
-        UPDATE "Project" SET name = 'Changed through SQL' WHERE id = '${projectId}'
+        UPDATE projects."Project" SET name = 'Changed through SQL' WHERE id = '${projectId}'
         RETURNING id, "updatedAtUtc"
       )
       SELECT changed."updatedAtUtc" > previous."updatedAtUtc" AS advanced
@@ -47,6 +47,55 @@ describe('database', () => {
     ], { encoding: 'utf8' });
     expect(drift.status, `${drift.stdout}${drift.stderr}`).toBe(0);
     expect(drift.stdout).toContain('-- This is an empty migration.');
+  });
+
+  // Audit: the API must use migrated schemas, without a business-to-business foreign key.
+  // A missing move or an accidental relation fails the catalog contract; the id test owns
+  // defaults, not namespaces or migration replay. This uses the existing Docker boundary.
+  it('each module keeps its tables in its own schema', () => {
+    const tables = psql(`
+      SELECT COALESCE(json_object_agg(table_name, table_schema), '{}'::json)::text
+      FROM information_schema.tables
+      WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('pg_catalog', 'information_schema')
+        AND table_name <> '_prisma_migrations'
+    `);
+    expect(tables.status, tables.output).toBe(0);
+    const catalog = tables.output.match(/\{.*\}/)?.[0];
+    expect(catalog, tables.output).toBeDefined();
+    expect(JSON.parse(catalog!)).toEqual({
+      Account: 'core', Session: 'core', PasswordResetToken: 'core',
+      Organisation: 'core', Membership: 'core', Invite: 'core',
+      Project: 'projects', ChangeRecord: 'history',
+    });
+    const foreignKeys = psql(`
+      SELECT count(*) FROM pg_constraint c
+      JOIN pg_class source ON source.oid = c.conrelid
+      JOIN pg_namespace source_schema ON source_schema.oid = source.relnamespace
+      JOIN pg_class target ON target.oid = c.confrelid
+      JOIN pg_namespace target_schema ON target_schema.oid = target.relnamespace
+      WHERE c.contype = 'f' AND source_schema.nspname IN ('history', 'projects')
+        AND target_schema.nspname IN ('history', 'projects')
+        AND source_schema.nspname <> target_schema.nspname
+    `);
+    expect(foreignKeys.status, foreignKeys.output).toBe(0);
+    expect(foreignKeys.output).toMatch(/\n\s*0\s*\n/);
+
+    const shadow = psql('CREATE DATABASE module_schemas_shadow');
+    expect(shadow.status, shadow.output).toBe(0);
+    try {
+      const drift = spawnSync('docker', [
+        'compose', '-f', 'compose.test.yml', 'exec', '-T',
+        '-e', 'SHADOW_DATABASE_URL=postgresql://postgres:test-password@database:5432/module_schemas_shadow',
+        'api', 'corepack', 'pnpm', 'exec', 'prisma', 'migrate', 'diff',
+        '--from-migrations', 'apps/api/prisma/migrations',
+        '--to-schema', 'apps/api/prisma/schema', '--script', '--exit-code',
+      ], { encoding: 'utf8' });
+      expect(drift.status, `${drift.stdout}${drift.stderr}`).toBe(0);
+      expect(drift.stdout).toContain('-- This is an empty migration.');
+    } finally {
+      const dropped = psql('DROP DATABASE module_schemas_shadow WITH (FORCE)');
+      expect(dropped.status, dropped.output).toBe(0);
+    }
   });
 
   it('the database runs Postgres 18 with the day-one extensions', () => {

@@ -8,6 +8,16 @@ Each business module owns one schema file under `apps/api/prisma/schema/`. Keep 
 file. `base.prisma` holds the generator and datasource; Prisma reads the directory to generate one
 client for the app.
 
+Each module keeps its tables in its own Postgres schema. Core tables (organisations, accounts
+and sign-in) live in `core`; projects live in `projects`, and change history lives in `history`.
+List these schemas in the datasource's `schemas` array and put `@@schema("<module>")` on each
+model and enum. Prisma 7 needs no `multiSchema` preview flag. Schema-qualified names are also
+required in raw SQL. Existing apps keep their own schemas unless a story asks to move them.
+
+A link between business modules stores an id with an index and no foreign key. Check the link
+through the other module's public service. Links within one module and links to core tables
+keep their foreign key. A review reports a foreign key between two business-module schemas.
+
 ## Schema
 
 Prisma model and field names become the table and column names, so write them as the standards

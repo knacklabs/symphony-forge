@@ -63,6 +63,10 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
         _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=top)
 
+    # Audit: init and sync must copy the built-in schema and link rule into fixed rules.
+    # A missing line lets new and adopted apps omit this database contract.
+    # Existing starter database tests prove schema behavior, not guidance delivery.
+    # This checks real init/sync output; no production test seam is needed.
     # Both starter layouts supply these defaults; the interview must skip them for either.
     outline_sentence = (
         "In an app that has libs/organisations or apps/api/app/organisations, "
@@ -78,6 +82,9 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         "format them.\n"
         "- Built in: each table has a CSV export, admin actions write change history, and records "
         "are soft deleted.\n"
+        "- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; "
+        "links between business modules store an indexed id without a foreign key, and links to core "
+        "keep their foreign key.\n"
         "- Built in: each UI or API crash writes one error report to the logs."
     )
     for host in (".claude", ".codex"):

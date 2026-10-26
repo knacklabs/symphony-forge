@@ -1,6 +1,7 @@
 enum MembershipRole {
   admin
   member
+  @@schema("core")
 }
 
 model Organisation {
@@ -18,6 +19,7 @@ model Organisation {
   @@index([createdByAccountId], map: "idx_Organisation_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Organisation_modifiedByAccountId")
   @@index([deletedByAccountId], map: "idx_Organisation_deletedByAccountId")
+  @@schema("core")
 }
 
 // Invites are temporary, single-use credentials and are removed when claimed.
@@ -37,6 +39,7 @@ model Invite {
   @@index([expiresAtUtc], map: "idx_Invite_expiresAtUtc")
   @@index([createdByAccountId], map: "idx_Invite_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Invite_modifiedByAccountId")
+  @@schema("core")
 }
 
 model Membership {
@@ -58,4 +61,5 @@ model Membership {
   @@index([createdByAccountId], map: "idx_Membership_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Membership_modifiedByAccountId")
   @@index([deletedByAccountId], map: "idx_Membership_deletedByAccountId")
+  @@schema("core")
 }

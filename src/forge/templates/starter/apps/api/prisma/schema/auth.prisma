@@ -20,6 +20,7 @@ model Account {
 
   @@index([createdByAccountId], map: "idx_Account_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Account_modifiedByAccountId")
+  @@schema("core")
 }
 
 model Session {
@@ -33,6 +34,7 @@ model Session {
 
   @@index([accountId], map: "idx_Session_accountId")
   @@index([expiresAtUtc], map: "idx_Session_expiresAtUtc")
+  @@schema("core")
 }
 
 model PasswordResetToken {
@@ -45,4 +47,5 @@ model PasswordResetToken {
 
   @@index([accountId], map: "idx_PasswordResetToken_accountId")
   @@index([expiresAtUtc], map: "idx_PasswordResetToken_expiresAtUtc")
+  @@schema("core")
 }

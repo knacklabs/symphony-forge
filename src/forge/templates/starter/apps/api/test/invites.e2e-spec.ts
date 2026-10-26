@@ -192,7 +192,7 @@ describe('organisation invites and roles', () => {
     const expiredToken = await invite(adminClient, csrf, expired.email);
     const expiredTokenHash = createHash('sha256').update(expiredToken).digest('hex');
     const expiry = psql(
-      `UPDATE "Invite" SET "expiresAtUtc" = NOW() - INTERVAL '1 second' WHERE "tokenHash" = '${expiredTokenHash}'`,
+      `UPDATE core."Invite" SET "expiresAtUtc" = NOW() - INTERVAL '1 second' WHERE "tokenHash" = '${expiredTokenHash}'`,
     );
     expect(expiry.status).toBe(0);
     expect(expiry.output).toContain('UPDATE 1');

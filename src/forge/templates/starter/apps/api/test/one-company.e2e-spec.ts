@@ -57,7 +57,7 @@ describe('one-company API', () => {
     expect([400, 401]).toContain(invalidSignIn.status);
 
     const account = psql(
-      `SELECT CASE WHEN EXISTS (SELECT 1 FROM "Account" WHERE email = 'not-an-email') THEN 'found' ELSE 'missing' END`,
+      `SELECT CASE WHEN EXISTS (SELECT 1 FROM core."Account" WHERE email = 'not-an-email') THEN 'found' ELSE 'missing' END`,
     );
     expect(account.status).toBe(0);
     expect(account.output).toContain('missing');

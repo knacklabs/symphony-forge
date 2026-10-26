@@ -13,7 +13,7 @@ describe('soft delete', () => {
       .expect(201);
     const projectId = created.body.data.id as string;
 
-    const hardDelete = psql(`DELETE FROM "Project" WHERE id = '${projectId}'`);
+    const hardDelete = psql(`DELETE FROM projects."Project" WHERE id = '${projectId}'`);
     expect(hardDelete.status).not.toBe(0);
     expect(hardDelete.output).toContain('are soft deleted');
     await client.get(`/api/v1/projects/${projectId}`).expect(200);
@@ -21,7 +21,7 @@ describe('soft delete', () => {
     await client.delete(`/api/v1/projects/${projectId}`).set('x-csrf-token', csrf).expect(200);
     await client.get(`/api/v1/projects/${projectId}`).expect(404);
     const retained = psql(
-      `SELECT CASE WHEN EXISTS (SELECT 1 FROM "Project" WHERE id = '${projectId}' AND "deletedAtUtc" IS NOT NULL) THEN 'retained' ELSE 'missing' END`,
+      `SELECT CASE WHEN EXISTS (SELECT 1 FROM projects."Project" WHERE id = '${projectId}' AND "deletedAtUtc" IS NOT NULL) THEN 'retained' ELSE 'missing' END`,
     );
     expect(retained.status).toBe(0);
     expect(retained.output).toContain('retained');

@@ -946,6 +946,7 @@ The product facts are in docs/product/BRIEF.md.
 ## Fixed rules
 - One app on pnpm and Prisma, split into modules.
 - Each module owns its tables, in its own schema file.
+- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
 - Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.

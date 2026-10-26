@@ -1,6 +1,7 @@
 enum ProjectStatus {
   active
   archived
+  @@schema("projects")
 }
 
 model Project {
@@ -24,4 +25,5 @@ model Project {
   @@index([createdByAccountId], map: "idx_Project_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Project_modifiedByAccountId")
   @@index([deletedByAccountId], map: "idx_Project_deletedByAccountId")
+  @@schema("projects")
 }

@@ -360,6 +360,10 @@ In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds
 a new query on another module's tables.
+Each module keeps its tables in its own Postgres schema, with organisation, account and sign-in
+tables in `core`. A link between business modules stores an indexed id without a foreign key
+and is checked through the other module's public service. Links within a module and links to
+core keep their foreign key. A review reports a foreign key between two business-module schemas.
 For new module calls and events, follow backend.md's "Call a service or send an event" rule.
 Existing code needs no conversion.
 
