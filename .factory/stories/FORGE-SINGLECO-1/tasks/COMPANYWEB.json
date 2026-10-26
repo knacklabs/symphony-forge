@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-SINGLECO-1-COMPANYWEB",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T02:19:23.311429+00:00",
+      "step": "start"
+    }
+  ]
+}
