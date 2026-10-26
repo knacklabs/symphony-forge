@@ -113,12 +113,13 @@ def open_must_answer_topics(top: Path) -> list[str]:
             or answers[topic][0][0] in ("ask the client", "later")]
 
 
+@repo.command_cache(snapshot=True)
 def next_step(args: Any) -> int:
     top = repo.root()
     from forge import fullrun
 
-    notice = upgrade.release_notice(top) + fullrun.notices(top)
-    history = board._machine_history(top) if args.json else None
+    notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
+    history = board._machine_history(top)
     lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
@@ -231,7 +232,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                             and (part := _task(top, key, name, trees, merged_prs, history, prs)).get("from_fix"))
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history)
+        readiness: dict[str, Any] = {}
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history, readiness)
+        if history is not None:
+            history.setdefault("story advice", {})[key] = found, readiness
         promoted.update(state["from_fix"] for state in tasks if state.get("from_fix"))
         assignments = {f"{key}/{tid}": developer(row) or owner(text)
                        for tid, row in task.rows(task.sections(text)).items()}
