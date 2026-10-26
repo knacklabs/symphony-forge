@@ -3,6 +3,9 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { apiBaseUrl, credentials, csrfToken, invite, psql } from './helpers';
 
+// Synchronous child processes block Vitest's own timeout timer.
+const migrationDiffTimeoutMilliseconds = 20_000;
+
 describe('database', () => {
   // Audit: HTTP-created rows must use v7 ids, and direct SQL must advance the clock.
   // Prisma-only updates hide a missing trigger; init-copy checks cannot prove SQL execution.
@@ -44,8 +47,8 @@ describe('database', () => {
       'compose', '-f', 'compose.test.yml', 'exec', '-T', 'api',
       'corepack', 'pnpm', 'exec', 'prisma', 'migrate', 'diff',
       '--from-config-datasource', '--to-schema', 'apps/api/prisma/schema', '--script', '--exit-code',
-    ], { encoding: 'utf8' });
-    expect(drift.status, `${drift.stdout}${drift.stderr}`).toBe(0);
+    ], { encoding: 'utf8', timeout: migrationDiffTimeoutMilliseconds, killSignal: 'SIGKILL' });
+    expect(drift.status, `${drift.error?.message ?? ''}${drift.stdout}${drift.stderr}`).toBe(0);
     expect(drift.stdout).toContain('-- This is an empty migration.');
   });
 
@@ -89,8 +92,8 @@ describe('database', () => {
         'api', 'corepack', 'pnpm', 'exec', 'prisma', 'migrate', 'diff',
         '--from-migrations', 'apps/api/prisma/migrations',
         '--to-schema', 'apps/api/prisma/schema', '--script', '--exit-code',
-      ], { encoding: 'utf8' });
-      expect(drift.status, `${drift.stdout}${drift.stderr}`).toBe(0);
+      ], { encoding: 'utf8', timeout: migrationDiffTimeoutMilliseconds, killSignal: 'SIGKILL' });
+      expect(drift.status, `${drift.error?.message ?? ''}${drift.stdout}${drift.stderr}`).toBe(0);
       expect(drift.stdout).toContain('-- This is an empty migration.');
     } finally {
       const dropped = psql('DROP DATABASE module_schemas_shadow WITH (FORCE)');

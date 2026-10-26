@@ -53,9 +53,11 @@ export function logEvents(service: LogService): LogEvent[] {
 
 /** Runs one SQL statement in the test database and returns its exit status and output. */
 export function psql(sql: string): { status: number; output: string } {
+  // A blocked Docker/SQL call must return even while Vitest's event loop is blocked.
+  const sqlTimeoutMilliseconds = 10_000;
   const result = spawnSync('docker', [
     'compose', '-f', 'compose.test.yml', 'exec', '-T', 'database',
     'psql', '-U', 'postgres', '-d', 'starter_test', '-v', 'ON_ERROR_STOP=1', '-c', sql,
-  ], { encoding: 'utf8' });
-  return { status: result.status ?? 1, output: `${result.stdout}${result.stderr}` };
+  ], { encoding: 'utf8', timeout: sqlTimeoutMilliseconds, killSignal: 'SIGKILL' });
+  return { status: result.status ?? 1, output: `${result.error?.message ?? ''}${result.stdout}${result.stderr}` };
 }
