@@ -42,14 +42,19 @@ with open(pathlib.Path(__file__).parent / "transport-calls.jsonl", "a", encoding
     requests = [call for call in calls if call[:1] == ["api"]
                 and any("/pulls?" in arg for arg in call)]
     assert requests, calls
+    pages = []
     for call in requests:
         endpoint = next(arg for arg in call if "/pulls?" in arg)
         fields = [call[n + 1] for n, arg in enumerate(call) if arg == "--raw-field"]
         query = parse_qs(urlsplit(endpoint).query)
         query.update({key: [value] for key, value in (field.split("=", 1) for field in fields)})
+        pages.append(query.pop("page", ["1"])[0])
         assert query == {"state": ["closed"], "per_page": ["100"]}, call
         assert (call[call.index("--method") + 1] if "--method" in call
                 else "POST" if fields else "GET") == "GET", call
         # .cmd launchers interpret unquoted shell operators even with shell=False.
         unquoted = re.sub(r'"[^"]*"', "", subprocess.list2cmdline(call))
         assert not re.search(r"[&|<>]", unquoted), unquoted
+    # The kept evidence is on page two: a parallel inventory must preserve the
+    # complete history and keep pagination fields out of Windows shell syntax.
+    assert pages == ["1", "2"], pages

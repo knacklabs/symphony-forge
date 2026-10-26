@@ -1,7 +1,9 @@
 """Kept review findings from landed lists and original, pre-squash review history."""
 import json
 import os
+import re
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -62,31 +64,54 @@ def _pull(top: Path, pr: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def collect(top: Path, copies: dict[str, tuple[dict[str, Any], Path | str]], landed: str) -> list[dict[str, Any]]:
-    """The board selects default-branch lists first, including empty lists. Each saved list uses
-    its own branch or worktree's files; older merged items use the default branch's files.
-    A problem in a file that no longer exists is left out; one with no file stays.
-
-    The paginated GitHub listing has no time cutoff: the board's six-week runway
-    must not discard findings kept earlier in the repo's life.
-    """
-    saved = {item: state["known"] for item, (state, _) in copies.items() if "known" in state}
-
-    def inventory(_now: Any) -> list[dict[str, Any]] | None:
+def inventory(top: Path) -> list[dict[str, Any]] | None:
+    """Every merged Forge PR, without a time cutoff. GitHub's last-page link lets
+    independent pages overlap rather than adding a network round trip per page."""
+    def page(number: int) -> tuple[list[dict[str, Any]], int] | None:
         # A query-string ampersand becomes a command separator through gh.cmd on Windows.
-        done = repo.run("gh", "api", "--paginate", "--method", "GET", "--raw-field", "per_page=100",
+        done = repo.run("gh", "api", "--include", "--method", "GET", "--raw-field", "per_page=100",
+                        *(("--raw-field", f"page={number}") if number != 1 else ()),
                         "repos/{owner}/{repo}/pulls?state=closed", "--jq",
                         ".[] | select(.merged_at != null) | {number, headRefName: .head.ref}", cwd=top)
         if done.returncode:
             return None
+        headers, separator, body = done.stdout.replace("\r\n", "\n").partition("\n\n")
+        if not separator or not headers.startswith("HTTP/"):
+            return None
+        last = re.search(r'<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"', headers)
+        if 'rel="next"' in headers and last is None:
+            return None  # An incomplete inventory must not replace the last complete read.
         try:
-            prs = [json.loads(line) for line in done.stdout.splitlines() if line.strip()]
+            prs = [json.loads(line) for line in body.splitlines() if line.strip()]
         except ValueError:
             return None
+        return prs, int(last[1]) if last else number
+
+    def fetch(_now: Any) -> list[dict[str, Any]] | None:
+        first = page(1)
+        if first is None:
+            return None
+        prs, last = first
+        if last > 1:
+            with ThreadPoolExecutor(min(12, last - 1)) as pool:
+                pages = list(pool.map(page, range(2, last + 1)))
+            if None in pages:
+                return None
+            prs = [*prs, *(pr for result in pages if result is not None for pr in result[0])]
         return [pr for pr in prs if isinstance(pr, dict)
                 and str(pr.get("headRefName") or "").startswith(("fix/", "task/", "story/"))]
 
-    prs = board_facts._cached(top, "known-issues-prs-cache", inventory, stale=True, seconds=86400)
+    return board_facts._cached(top, "known-issues-prs-cache", fetch, stale=True, seconds=86400)
+
+
+def collect(top: Path, copies: dict[str, tuple[dict[str, Any], Path | str]], landed: str) -> list[dict[str, Any]]:
+    """The board selects default-branch lists first, including empty lists. Each saved list uses
+    its own branch or worktree's files; older merged items use the default branch's files.
+    A problem in a file that no longer exists is left out; one with no file stays.
+    """
+    saved = {item: state["known"] for item, (state, _) in copies.items() if "known" in state}
+
+    prs = inventory(top)
     saved_branches = {state.get("branch") for item, (state, _) in copies.items() if item in saved}
 
     def historical(_now: Any) -> list[dict[str, Any]] | None:

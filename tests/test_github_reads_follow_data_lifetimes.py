@@ -22,7 +22,7 @@ NOW = datetime(2026, 11, 18, 12, tzinfo=timezone.utc)
 def setup(repo, gh, monkeypatch, history):
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
     client(repo, gh, history)
-    gh.respond("api", "--paginate", stdout="")
+    gh.respond("api", "--include", stdout="HTTP/2.0 200 OK\n\n")
     gh.respond("api", "user", stdout="builder\n")
     gh.respond("api", "repos/{owner}/{repo}/actions/runs", stdout='{"workflow_runs": []}')
     # An unfinished story retains a part older than the six-week window.
@@ -49,7 +49,7 @@ def reads(calls):
         sum("open" in call for call in lists),
         sum(any(arg.startswith("merged:") and not arg.startswith("merged:*") for arg in call) for call in lists),
         sum(any(arg.startswith("merged:*") for arg in call) for call in lists),
-        sum(call[:2] == ["api", "--paginate"] for call in calls),
+        sum(call[:2] == ["api", "--include"] for call in calls),
         sum("repos/{owner}/{repo}/actions/runs" in call for call in calls),
     )
 

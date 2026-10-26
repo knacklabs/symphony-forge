@@ -49,22 +49,29 @@ Item = dict[str, Any]
 
 
 def board(args: Any) -> int:
+    from forge import known_issues
+
     top = repo.root()
     with repo.command_cache(snapshot=True):
+        repo.forge_dir(top)
+        repo.default_branch(top)
         def local_history():
             from forge import backfill, time_records
             _event_history(top)
             for pr in backfill.people(top):
                 time_records.view_body(pr.get("body") or "")
-        with ThreadPoolExecutor(max_workers=3) as pool:
+        with ThreadPoolExecutor(max_workers=4) as pool:
             if args.json:
                 reads = pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top)
                 local = pool.submit(local_history)
+                inventory_read = pool.submit(known_issues.inventory, top)
             if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
                 print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
             if args.json:
                 local.result()
-                print(json.dumps(machine_board(top, reads=reads)))
+                view = machine_board(top, reads=reads)
+                inventory_read.result()
+                print(json.dumps(view))
                 return 0
     if not args.out:
         from forge import board_server
@@ -692,8 +699,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
              for rel, (state, _) in best.items() if rel in history["expired"]
              and (match := STATE.fullmatch(rel))["task"] and match["key"] in items]
     # An unfinished story's parts merged before the weekly searches still bring their records.
-    if any(branch not in by_branch and key not in completed for _, _, key, _, branch in older):
-        by_branch.update({branch: pr for branch, pr in board_facts.merged_before_weeks(top).items()
+    if needed := {branch for _, _, key, _, branch in older if branch not in by_branch and key not in completed}:
+        by_branch.update({branch: pr for branch, pr in board_facts.merged_before_weeks(top, needed).items()
                           if branch not in by_branch})
     for rel, state, key, tid, branch in older:
         if rel in merged or branch in merged_prs or key in completed:

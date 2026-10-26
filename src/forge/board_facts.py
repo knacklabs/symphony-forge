@@ -180,14 +180,31 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
     their caller uses; cached reads always keep the complete board records."""
     # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
+        # Merged file lists cannot change at the same PR head. Refresh mutable
+        # titles, bodies and people without downloading every old file list again.
+        files = {}
+        if not fresh:
+            try:
+                previous = json.loads((repo.forge_dir(top) / "prs-cache.json").read_text("utf-8"))["data"]
+                files = {(pr["number"], pr["headRefOid"]): pr["files"]
+                         for week in previous["weeks"] for pr in week["prs"]
+                         if isinstance(pr.get("number"), int) and pr.get("headRefOid")
+                         and isinstance(pr.get("files"), list)}
+            except (OSError, ValueError, KeyError, TypeError):
+                pass
         # Board restoration and backfill share these windows. The first Monday
         # is at least 42 days ago, including the cutoff on a Sunday (48 days).
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
         def week(start: datetime) -> list[Item] | None:
             def listing(_now: datetime) -> list[Item] | None:
-                return _listing(top, "merged", "--search",
-                                f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}",
-                                fields=merged_fields if fresh else FIELDS)
+                query = f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"
+                if files:
+                    rows = _listing(top, "merged", "--search", query, fields=FIELDS.removesuffix(",files"))
+                    if rows is None:
+                        return None
+                    if all((pr.get("number"), pr.get("headRefOid")) in files for pr in rows):
+                        return [{**pr, "files": files[pr["number"], pr["headRefOid"]]} for pr in rows]
+                return _listing(top, "merged", "--search", query, fields=merged_fields if fresh else FIELDS)
             return (listing(now) if fresh or start == starts[-1] else
                     _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
         with ThreadPoolExecutor(len(starts) + 1) as pool:
@@ -232,17 +249,31 @@ def person(record: Item | str | None = None, name: str | None = None, *, field: 
     return {"name": display, "login": login}
 
 
-def merged_before_weeks(top: Path) -> dict[str, Item]:
-    """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
-    kept for a day. Only asked when an unfinished story has parts merged that long ago."""
-    # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
+def merged_before_weeks(top: Path, branches: set[str] | None = None) -> dict[str, Item]:
+    """Older merged names, with bodies only for the parts the board still needs.
+    The list keeps its original 1,000-PR ceiling and daily lifetime."""
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     cutoff = full_weeks(now, 6)[0] - timedelta(days=1)
-    def fetch(_now: datetime) -> list[Item] | None:
-        # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
-        return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}")
-    return {pr["headRefName"]: pr for pr in _cached(top, f"prs-older-{cutoff:%Y-%m-%d}-cache", fetch, seconds=86400) or []
-            if isinstance(pr.get("headRefName"), str)}
+    def names(_now: datetime) -> list[Item] | None:
+        return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}",
+                        fields="headRefName,number,mergedAt")
+    found = {pr["headRefName"]: pr for pr in _cached(
+        top, f"prs-older-{cutoff:%Y-%m-%d}-cache", names, seconds=86400) or []
+        if isinstance(pr.get("headRefName"), str)}
+    if branches is None:
+        return found
+    needed = {branch: pr for branch, pr in found.items() if branch in branches}
+    def read(branch: str) -> tuple[str, Item]:
+        if "body" in needed[branch]:
+            return branch, needed[branch]  # An unexpired full record from an earlier release.
+        def fetch(_now: datetime) -> list[Item] | None:
+            # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
+            return _listing(top, "merged", "--head", branch, "--search", f"merged:*..{cutoff:%Y-%m-%d}")
+        rows = _cached(top, f"prs-older-{cutoff:%Y-%m-%d}-{branch.replace('/', '-')}-cache",
+                       fetch, seconds=86400) or []
+        return branch, next((pr for pr in reversed(rows) if pr.get("headRefName") == branch), needed[branch])
+    with ThreadPoolExecutor(4) as pool:
+        return dict(pool.map(read, sorted(needed)))
 
 
 def details(top: Path) -> list[Item]:

@@ -96,9 +96,14 @@ def kept_history(unsynced_up, monkeypatch, request):
     (repo.bin / "historical-checks.json").write_text("{}", "utf-8")
     github = GITHUB.replace('prs = json.loads(store.read_text("utf-8"))', '''prs = json.loads(store.read_text("utf-8"))
 if args and args[0] == "api" and any("/pulls?" in arg for arg in args):
-    for pr in prs:
-        if pr["state"] == "MERGED":
-            print(json.dumps({"number": pr["number"], "headRefName": pr["headRefName"]}))
+    print("HTTP/2.0 200 OK")
+    if "page=2" not in args:
+        print('Link: <https://api.github.com/repos/acme/shop/pulls?state=closed&per_page=100&page=2>; rel="next", <https://api.github.com/repos/acme/shop/pulls?state=closed&per_page=100&page=2>; rel="last"')
+    print()
+    if "page=2" in args:
+        for pr in prs:
+            if pr["state"] == "MERGED":
+                print(json.dumps({"number": pr["number"], "headRefName": pr["headRefName"]}))
     sys.exit(0)''')
     fallback = GH_STUB.format(python=sys.executable).split("\n", 1)[1]
     _install(repo.bin, "gh", "#!" + sys.executable + "\n" + github + fallback)
