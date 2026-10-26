@@ -45,7 +45,7 @@
     "id": "01a1f4cd-f0ac-4c4d-8a76-2aa51bb856c4",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-BAR-1/BARRULES",
   "status": "fixing",
   "steps": [
@@ -59,10 +59,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "51746b8ff7df948280d7fd83fcd8846b99283e6e",
+    "close": "80c81560-929b-41cc-8b6a-f6e347a8843f",
+    "head": "82821f7d1b5ea8879dde73a7817df698bb7a11a7",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
