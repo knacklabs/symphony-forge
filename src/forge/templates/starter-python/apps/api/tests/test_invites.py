@@ -77,6 +77,9 @@ def test_an_admin_invites_a_person_by_email_who_joins_the_organisation(
         assert joined.json()["data"]["email"] == invited["email"]
         assert joined.json()["data"]["role"] == "member"
         member_csrf = joined.cookies["starter_csrf"]
+        me = member.get("/api/v1/auth/me")
+        assert me.status_code == 200, me.text
+        assert "projects.delete" not in me.json()["data"]["permissions"]
 
         members = member.get("/api/v1/members?page=1&limit=20")
         assert members.status_code == 200, members.text
@@ -101,11 +104,13 @@ def test_an_admin_invites_a_person_by_email_who_joins_the_organisation(
             f"/api/v1/projects/{project_id}",
             headers={"x-csrf-token": member_csrf},
         )
-        assert deleted.status_code == 200, deleted.text
-        projects = member.get("/api/v1/projects?limit=20")
+        assert deleted.status_code == 403, deleted.text
+        assert deleted.json()["error"]["code"] == "PERMISSION_DENIED"
+        projects = member.get("/api/v1/projects?limit=20&sortBy=name&sortOrder=asc")
         assert projects.status_code == 200, projects.text
         assert [item["name"] for item in projects.json()["data"]["items"]] == [
-            "Shared project"
+            "Shared project",
+            "Updated member project",
         ]
 
 

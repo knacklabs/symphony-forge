@@ -18,8 +18,8 @@ from sqlalchemy.orm import Mapped, column_property, mapped_column
 from app.core import Base
 from app.projects.schema import ProjectStatus
 
-# The core account table, read only for the emails of the accounts that created and last
-# changed a project, through the project's own foreign keys to core.
+# The core account table, read only for the emails of the accounts that created, last
+# changed and deleted a project, through the project's own foreign keys to core.
 _account = table("account", column("id"), column("email"), schema="core")
 
 
@@ -73,5 +73,10 @@ class Project(Base):
     modified_by_email: Mapped[str] = column_property(
         select(_account.c.email)
         .where(_account.c.id == modified_by_account_id)
+        .scalar_subquery()
+    )
+    deleted_by_email: Mapped[str | None] = column_property(
+        select(_account.c.email)
+        .where(_account.c.id == deleted_by_account_id)
         .scalar_subquery()
     )

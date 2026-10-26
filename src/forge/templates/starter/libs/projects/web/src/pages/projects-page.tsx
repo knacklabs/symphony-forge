@@ -11,10 +11,13 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Download, Plus, Search } from 'lucide-
 import { toast } from 'sonner';
 import { formatDate, formatNumber } from '@app/shared-util';
 import { projectStatusSchema, type Project, type ProjectInput, type ProjectStatus } from '@app/projects-contracts';
+import { useCan } from '@app/core-web';
 import { Badge } from '@app/shared-ui/components/ui/badge';
 import { Button } from '@app/shared-ui/components/ui/button';
 import { Input } from '@app/shared-ui/components/ui/input';
+import { Label } from '@app/shared-ui/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
+import { Switch } from '@app/shared-ui/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@app/shared-ui/components/ui/table';
 import { ProjectFormDialog } from './project-form-dialog';
 import type { ProjectListState } from './project-detail-page';
@@ -30,6 +33,7 @@ function readListQuery(params: URLSearchParams): ProjectListQuery {
   return {
     search: params.get('search')?.trim() || undefined,
     status: status.success ? status.data : undefined,
+    deleted: params.get('deleted') === 'yes' ? 'yes' : undefined,
     sortBy: SORT_KEYS.includes(requestedSort) ? requestedSort : 'updatedAtUtc',
     sortOrder: params.get('sortOrder') === 'asc' ? 'asc' : 'desc',
     after: params.get('after') || undefined,
@@ -38,10 +42,11 @@ function readListQuery(params: URLSearchParams): ProjectListQuery {
 }
 
 /** Exact below 100, then rounded to the hundred; above the API's count limit, "More than 10,000". */
-function totalText(total: number, capped: boolean): string {
-  if (capped) return `More than ${formatNumber(total)} projects`;
-  if (total < 100) return `${total} project${total === 1 ? '' : 's'}`;
-  return `About ${formatNumber(Math.round(total / 100) * 100)} projects`;
+function totalText(total: number, capped: boolean, withDeleted: boolean): string {
+  const count = capped ? `More than ${formatNumber(total)} projects`
+    : total < 100 ? `${total} project${total === 1 ? '' : 's'}`
+      : `About ${formatNumber(Math.round(total / 100) * 100)} projects`;
+  return withDeleted ? `${count}, deleted ones included` : count;
 }
 
 function SortLabel({ label, sorted }: { label: string; sorted: false | 'asc' | 'desc' }) {
@@ -63,7 +68,10 @@ const columns: ColumnDef<Project>[] = [
       </Button>
     ),
     cell: ({ row, table }) => (
-      <Link className="font-medium underline-offset-4 hover:underline" to={`/projects/${row.original.id}`} state={(table.options.meta as RowMeta).listState}>{row.original.name}</Link>
+      <span className="inline-flex items-center gap-2">
+        <Link className="font-medium underline-offset-4 hover:underline" to={`/projects/${row.original.id}`} state={(table.options.meta as RowMeta).listState}>{row.original.name}</Link>
+        {row.original.deletedAtUtc && <Badge variant="secondary">Deleted</Badge>}
+      </span>
     ),
   },
   {
@@ -94,6 +102,8 @@ export function ProjectsPage() {
   const query = readListQuery(searchParams);
   const projects = useProjects(query);
   const createProject = useCreateProject();
+  const canCreate = useCan('projects.create');
+  const canRestore = useCan('projects.restore');
   const [formOpen, setFormOpen] = useState(false);
   const urlSearch = query.search ?? '';
   const [searchText, setSearchText] = useState(urlSearch);
@@ -129,7 +139,7 @@ export function ProjectsPage() {
 
   function clearSearchAndFilters() {
     setSearchText('');
-    setQuery({ search: undefined, status: undefined });
+    setQuery({ search: undefined, status: undefined, deleted: undefined });
   }
 
   const currentSorting: SortingState = [{ id: query.sortBy, desc: query.sortOrder === 'desc' }];
@@ -157,7 +167,7 @@ export function ProjectsPage() {
   // the old query, so Previous and Next wait for the new page.
   const stale = projects.isPlaceholderData;
   // Export CSV downloads what the list shows: the same search and filter, every page.
-  const exportParameters = new URLSearchParams(Object.entries({ search: query.search, status: query.status })
+  const exportParameters = new URLSearchParams(Object.entries({ search: query.search, status: query.status, deleted: query.deleted })
     .filter((entry): entry is [string, string] => Boolean(entry[1])));
 
   return (
@@ -169,7 +179,7 @@ export function ProjectsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild><a href={`/api/v1/projects/export?${exportParameters.toString()}`} download><Download aria-hidden="true" />Export CSV</a></Button>
-          <Button onClick={() => setFormOpen(true)}><Plus aria-hidden="true" />New project</Button>
+          {canCreate && <Button onClick={() => setFormOpen(true)}><Plus aria-hidden="true" />New project</Button>}
         </div>
       </div>
 
@@ -193,6 +203,12 @@ export function ProjectsPage() {
             {projectStatusSchema.options.map((status) => <SelectItem key={status} value={status}>{STATUS_LABELS[status]}</SelectItem>)}
           </SelectContent>
         </Select>
+        {canRestore && (
+          <div className="flex items-center gap-2 sm:ml-2">
+            <Switch id="show-deleted" checked={query.deleted === 'yes'} onCheckedChange={(checked) => setQuery({ deleted: checked ? 'yes' : undefined })} />
+            <Label htmlFor="show-deleted">Show deleted</Label>
+          </div>
+        )}
       </div>
 
       {projects.isPending && <p role="status" className="text-sm text-muted-foreground">Loading projects…</p>}
@@ -245,7 +261,7 @@ export function ProjectsPage() {
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer"
+                  className={row.original.deletedAtUtc ? 'cursor-pointer text-muted-foreground' : 'cursor-pointer'}
                   // The name link is the keyboard target; a click elsewhere on the row opens the same screen.
                   onClick={(event) => {
                     if (!(event.target as HTMLElement).closest('a, button')) void navigate(`/projects/${row.original.id}`, { state: listState });
@@ -260,7 +276,7 @@ export function ProjectsPage() {
       )}
       {paging && items.length > 0 && (
         <div className="flex items-center justify-between gap-4 text-sm">
-          <p className="text-muted-foreground">{totalText(paging.total, paging.totalCapped)}</p>
+          <p className="text-muted-foreground">{totalText(paging.total, paging.totalCapped, canRestore && query.deleted === 'yes')}</p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={!paging.previousCursor || stale} onClick={() => setQuery({ before: paging.previousCursor ?? undefined })}>Previous</Button>
             <Button variant="outline" size="sm" disabled={!paging.nextCursor || stale} onClick={() => setQuery({ after: paging.nextCursor ?? undefined })}>Next</Button>

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Link, useLocation, useMatch, useNavigate, useOutletContext } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDateTime } from '@app/shared-util';
+import { formatDate, formatDateTime } from '@app/shared-util';
 import type { Project, ProjectInput } from '@app/projects-contracts';
-import { ApiError } from '@app/core-web';
+import { ApiError, useCan } from '@app/core-web';
+import { Alert, AlertDescription } from '@app/shared-ui/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +22,7 @@ import { Button } from '@app/shared-ui/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@app/shared-ui/components/ui/card';
 import { ProjectFormDialog } from './project-form-dialog';
 import { STATUS_LABELS } from './projects-page';
-import { useDeleteProject, useProject, useProjectChanges, useUpdateProject } from '../hooks/projects-hooks';
+import { useDeleteProject, useProject, useProjectChanges, useRestoreProject, useUpdateProject } from '../hooks/projects-hooks';
 
 /** The list's search, filters, sort and page that the person came from, so going back keeps them. */
 export type ProjectListState = { listSearch?: string } | null;
@@ -96,12 +97,25 @@ function ProjectDetails({ project, isAdmin }: { project: Project; isAdmin: boole
   const listPath = useListPath();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const restoreProject = useRestoreProject();
+  const canEdit = useCan('projects.edit');
+  const canDelete = useCan('projects.delete');
+  const deleted = project.deletedAtUtc !== null;
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function save(input: ProjectInput) {
     await updateProject.mutateAsync({ id: project.id, input });
     toast.success('Project updated.');
+  }
+
+  async function restore() {
+    try {
+      await restoreProject.mutateAsync(project.id);
+      toast.success('Project restored.');
+    } catch {
+      toast.error('Could not restore this project. Try again.');
+    }
   }
 
   async function confirmDelete() {
@@ -121,12 +135,26 @@ function ProjectDetails({ project, isAdmin }: { project: Project; isAdmin: boole
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight break-words">{project.name}</h1>
           <Badge variant="outline">{STATUS_LABELS[project.status]}</Badge>
+          {deleted && <Badge variant="secondary">Deleted</Badge>}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setEditing(true)}><Pencil aria-hidden="true" />Edit</Button>
-          <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />Delete</Button>
-        </div>
+        {!deleted && (
+          <div className="flex flex-wrap gap-2">
+            {canEdit && <Button variant="outline" onClick={() => setEditing(true)}><Pencil aria-hidden="true" />Edit</Button>}
+            {canDelete && <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />Delete</Button>}
+          </div>
+        )}
       </div>
+
+      {project.deletedAtUtc && (
+        <Alert>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>This project was deleted on <time dateTime={project.deletedAtUtc}>{formatDate(project.deletedAtUtc)}</time> by {project.deletedByEmail}.</span>
+            <Button variant="outline" size="sm" disabled={restoreProject.isPending} onClick={() => void restore()}>
+              {restoreProject.isPending ? 'Restoring…' : 'Restore'}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <Card role="region" aria-labelledby="details-title">

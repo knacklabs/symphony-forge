@@ -12,6 +12,8 @@ const projectFilters = {
     .meta({ description: 'Text to find in the project name, up to 200 characters.', example: 'migration' }),
   status: projectStatusSchema.optional()
     .meta({ description: 'Show only projects with this status.', example: 'active' }),
+  deleted: z.enum(['yes']).optional()
+    .meta({ description: 'Show deleted projects too; only a caller with the restore permission gets them.', example: 'yes' }),
 };
 
 /** The export takes the list's search and filters, so it downloads what the list shows. */
@@ -50,6 +52,9 @@ export type Project = ProjectInput & {
   modifiedByAccountId: string;
   createdByEmail: string;
   modifiedByEmail: string;
+  /** Set only on a deleted project, which only a caller with the restore permission reads. */
+  deletedAtUtc: string | null;
+  deletedByEmail: string | null;
 };
 
 /** One entry in a project's recent changes. */

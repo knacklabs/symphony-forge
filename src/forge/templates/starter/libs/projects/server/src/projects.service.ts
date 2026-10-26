@@ -1,12 +1,17 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma, Project } from '@prisma/client';
 import { PrismaService } from '@app/core-server';
-import type { AccountPrincipal } from '@app/core-server';
+import { hasPermission, type AccountPrincipal } from '@app/core-server';
 import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
+import { PROJECT_PERMISSIONS } from './projects.permissions';
 import { projectStatusSchema, type ProjectExportQuery, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
 
-/** Every read loads the emails of the accounts that created and last changed the project. */
-const WITH_EMAILS = { createdByAccount: { select: { email: true } }, modifiedByAccount: { select: { email: true } } } as const;
+/** Every read loads the emails of the accounts that created, last changed and deleted the project. */
+const WITH_EMAILS = {
+  createdByAccount: { select: { email: true } },
+  modifiedByAccount: { select: { email: true } },
+  deletedByAccount: { select: { email: true } },
+} as const;
 type ProjectWithEmails = Prisma.ProjectGetPayload<{ include: typeof WITH_EMAILS }>;
 
 /** The labels the change summaries use, in the order the form shows the fields. */
@@ -31,6 +36,8 @@ function toProjectResponse(project: ProjectWithEmails) {
     modifiedByAccountId: project.modifiedByAccountId,
     createdByEmail: project.createdByAccount.email,
     modifiedByEmail: project.modifiedByAccount.email,
+    deletedAtUtc: project.deletedAtUtc?.toISOString() ?? null,
+    deletedByEmail: project.deletedByAccount?.email ?? null,
   };
 }
 
@@ -66,11 +73,16 @@ function decodeCursor(sortBy: SortBy, cursor: string, backward: boolean): { valu
   });
 }
 
-/** The organisation's live projects that match the list's search and status filter. */
+/** Only a caller who may restore projects sees deleted ones. */
+function seesDeleted(account: AccountPrincipal): boolean {
+  return hasPermission(account, PROJECT_PERMISSIONS.restore);
+}
+
+/** The organisation's projects that match the list's search and status filter; deleted ones too when asked for and allowed. */
 function filterWhere(account: AccountPrincipal, filters: ProjectExportQuery): Prisma.ProjectWhereInput {
   return {
     organisationId: account.organisationId,
-    deletedAtUtc: null,
+    ...(filters.deleted === 'yes' && seesDeleted(account) ? {} : { deletedAtUtc: null }),
     // Prisma passes % and _ to ILIKE as wildcards, so escape them to search for the text itself.
     ...(filters.search ? { name: { contains: filters.search.replace(/[\\%_]/g, '\\$&'), mode: 'insensitive' as const } } : {}),
     ...(filters.status ? { status: filters.status } : {}),
@@ -80,6 +92,11 @@ function filterWhere(account: AccountPrincipal, filters: ProjectExportQuery): Pr
 /** The organisation's project with this id, unless it is deleted. */
 function liveProject(account: AccountPrincipal, id: string): Prisma.ProjectWhereInput {
   return { id, organisationId: account.organisationId, deletedAtUtc: null };
+}
+
+/** The project the caller may read: a deleted one only for a caller who may restore it. */
+function readableProject(account: AccountPrincipal, id: string): Prisma.ProjectWhereInput {
+  return seesDeleted(account) ? { id, organisationId: account.organisationId } : liveProject(account, id);
 }
 
 /** The rows after the cursor row in this order: a later sort value, or the same value and a later id. */
@@ -138,14 +155,14 @@ export class ProjectsService {
   }
 
   async get(account: AccountPrincipal, id: string) {
-    const project = await this.prisma.project.findFirst({ where: liveProject(account, id), include: WITH_EMAILS });
+    const project = await this.prisma.project.findFirst({ where: readableProject(account, id), include: WITH_EMAILS });
     if (!project) throw this.notFound();
     return toProjectResponse(project);
   }
 
-  /** The project's newest changes; a deleted project or one of another organisation is not found. */
+  /** The project's newest changes; a project the caller may not read is not found. */
   async changes(account: AccountPrincipal, id: string) {
-    const project = await this.prisma.project.findFirst({ where: liveProject(account, id), select: { id: true } });
+    const project = await this.prisma.project.findFirst({ where: readableProject(account, id), select: { id: true } });
     if (!project) throw this.notFound();
     return this.history.listForSubject(account, id, RECENT_CHANGES);
   }
@@ -193,6 +210,23 @@ export class ProjectsService {
         data: { deletedAtUtc: new Date(), deletedByAccountId: account.id, modifiedByAccountId: account.id },
       });
       await this.history.record(account, 'project.deleted', 'Deleted the project', { id, name: project.name }, tx);
+    });
+  }
+
+  async restore(account: AccountPrincipal, id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const deleted = await tx.project.findFirst({
+        where: { id, organisationId: account.organisationId, deletedAtUtc: { not: null } },
+        select: { id: true },
+      });
+      if (!deleted) throw this.notFound();
+      const project = await tx.project.update({
+        where: { id },
+        data: { deletedAtUtc: null, deletedByAccountId: null, modifiedByAccountId: account.id },
+        include: WITH_EMAILS,
+      });
+      await this.history.record(account, 'project.restored', 'Restored the project', { id, name: project.name }, tx);
+      return toProjectResponse(project);
     });
   }
 

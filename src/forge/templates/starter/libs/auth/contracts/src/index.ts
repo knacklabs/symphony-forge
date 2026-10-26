@@ -34,7 +34,8 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
-export type Account = { id: string; email: string; role: Role };
+/** `permissions` lists what the account may do, as `<feature>.<action>`, such as `projects.delete`. */
+export type Account = { id: string; email: string; role: Role; permissions: string[] };
 
 export const inviteSchema = forgotPasswordSchema;
 

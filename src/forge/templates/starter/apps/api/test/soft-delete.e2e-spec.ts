@@ -19,7 +19,9 @@ describe('soft delete', () => {
     await client.get(`/api/v1/projects/${projectId}`).expect(200);
 
     await client.delete(`/api/v1/projects/${projectId}`).set('x-csrf-token', csrf).expect(200);
-    await client.get(`/api/v1/projects/${projectId}`).expect(404);
+    // An admin may restore, so it still reads the soft-deleted project.
+    await client.get(`/api/v1/projects/${projectId}`).expect(200)
+      .expect(({ body }) => expect(body.data.deletedAtUtc).toEqual(expect.any(String)));
     const retained = psql(
       `SELECT CASE WHEN EXISTS (SELECT 1 FROM projects."Project" WHERE id = '${projectId}' AND "deletedAtUtc" IS NOT NULL) THEN 'retained' ELSE 'missing' END`,
     );

@@ -5,10 +5,13 @@ projects suite: CRUD, keyset paging with next and previous cursors, search and t
 status filter. All data enters through HTTP against the running app and database.
 """
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 import httpx
-from test_api import sign_up
+from test_api import credentials, sign_up
+from test_invites import invite
 
 
 def create_projects(
@@ -70,7 +73,11 @@ def test_creates_lists_reads_updates_and_deletes_a_project(
     deleted = client.delete(f"/api/v1/projects/{project_id}", headers=headers)
     assert deleted.status_code == 200, deleted.text
     assert deleted.json() == {"success": True, "data": None, "error": None}
-    assert client.get(f"/api/v1/projects/{project_id}").status_code == 404
+    # An admin still reads a deleted project; the list no longer holds it.
+    read = client.get(f"/api/v1/projects/{project_id}")
+    assert read.status_code == 200, read.text
+    assert read.json()["data"]["deletedAtUtc"] is not None
+    assert names(list_projects(client, "")) == []
 
 
 def test_rejects_a_whitespace_only_project_name(client: httpx.Client) -> None:
@@ -306,8 +313,11 @@ def test_records_each_project_change_in_the_change_history(
     exported = client.get("/api/v1/history/export")
     assert f",{owner['email']},Fifth: Deleted the project" in exported.text
 
-    # A deleted project's changes, and another organisation's project's changes, are not found.
-    assert client.get(f"{path}/changes").status_code == 404
+    # An admin still reads a deleted project's changes; another organisation's are not found.
+    deleted_changes = client.get(f"{path}/changes")
+    assert deleted_changes.status_code == 200, deleted_changes.text
+    assert deleted_changes.json()["data"][0]["summary"] == "Deleted the project"
+    assert "Fifth" not in names(list_projects(client, ""))
     kept = client.post(
         "/api/v1/projects", headers=headers, json={"name": "Kept", "status": "active"}
     )
@@ -317,3 +327,136 @@ def test_records_each_project_change_in_the_change_history(
         refused = other.get(f"/api/v1/projects/{kept.json()['data']['id']}/changes")
         assert refused.status_code == 404, refused.text
         assert refused.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+
+
+@contextmanager
+def joined_member(admin: httpx.Client, admin_csrf: str) -> Iterator[httpx.Client]:
+    """A member the admin invites into its organisation, signed in on its own client."""
+    invited = credentials()
+    token = invite(admin, admin_csrf, invited["email"])
+    with httpx.Client(base_url=admin.base_url, timeout=15) as member:
+        joined = member.post(
+            "/api/v1/auth/accept-invite", json={**invited, "token": token}
+        )
+        assert joined.status_code == 201, joined.text
+        yield member
+
+
+# Every projects route and the permission it needs, as (method, path, permission).
+PROJECT_ROUTES = (
+    ("GET", "", "view"),
+    ("GET", "/export", "view"),
+    ("GET", "/{id}", "view"),
+    ("GET", "/{id}/changes", "view"),
+    ("POST", "", "create"),
+    ("PUT", "/{id}", "edit"),
+    ("DELETE", "/{id}", "delete"),
+    ("POST", "/{id}/restore", "restore"),
+)
+
+
+def call_each_route(client: httpx.Client, project_id: str) -> dict[str, httpx.Response]:
+    headers = {"x-csrf-token": client.cookies["starter_csrf"]}
+    body = {"name": "Permission check", "status": "active"}
+    responses = {}
+    for method, path, _ in PROJECT_ROUTES:
+        responses[f"{method} {path}"] = client.request(
+            method,
+            "/api/v1/projects" + path.replace("{id}", project_id),
+            headers=headers,
+            json=body if method in {"POST", "PUT"} and "restore" not in path else None,
+        )
+    return responses
+
+
+def test_each_projects_endpoint_refuses_a_member_without_its_permission(
+    client: httpx.Client,
+) -> None:
+    # Audit: each projects route must check its own permission, so a route that skips the check
+    # or names the wrong one lets a member through. The member's permissions come from the API,
+    # so the table holds whatever the mapping says. Real HTTP and Postgres; no test seam.
+    _, csrf = sign_up(client)
+    created = client.post(
+        "/api/v1/projects",
+        headers={"x-csrf-token": csrf},
+        json={"name": "Admin project", "status": "active"},
+    )
+    assert created.status_code == 201, created.text
+    project_id = created.json()["data"]["id"]
+
+    with joined_member(client, csrf) as member:
+        me = member.get("/api/v1/auth/me")
+        assert me.status_code == 200, me.text
+        permissions = me.json()["data"]["permissions"]
+        refused = []
+        for (method, path, permission), response in zip(
+            PROJECT_ROUTES, call_each_route(member, project_id).values(), strict=True
+        ):
+            if f"projects.{permission}" in permissions:
+                assert response.status_code != 403, (method, path, response.text)
+            else:
+                assert response.status_code == 403, (method, path, response.text)
+                assert response.json()["error"]["code"] == "PERMISSION_DENIED"
+                refused.append(permission)
+        # The starter's mapping lets a member do everything but delete and restore.
+        assert refused == ["delete", "restore"]
+
+    for route, response in call_each_route(client, project_id).items():
+        assert response.status_code != 403, (route, response.text)
+
+
+def test_an_admin_restores_a_deleted_project(client: httpx.Client) -> None:
+    # Audit: an admin sees deleted projects only when it asks, restores one with a history row,
+    # and a member never sees a deleted project. Real HTTP and Postgres; no test seam.
+    admin, csrf = sign_up(client)
+    headers = {"x-csrf-token": csrf}
+    create_projects(
+        client, csrf, [("Kept project", "active"), ("Gone project", "active")]
+    )
+    gone = next(
+        item
+        for item in list_projects(client, "")["items"]
+        if item["name"] == "Gone project"
+    )
+    path = f"/api/v1/projects/{gone['id']}"
+    assert client.delete(path, headers=headers).status_code == 200
+
+    with_deleted = list_projects(client, "deleted=yes&sortBy=name&sortOrder=asc")
+    assert names(with_deleted) == ["Gone project", "Kept project"]
+    assert with_deleted["paging"]["total"] == 2
+    deleted_item = with_deleted["items"][0]
+    assert deleted_item["deletedAtUtc"] is not None
+    assert deleted_item["deletedByEmail"] == admin["email"]
+    assert with_deleted["items"][1]["deletedAtUtc"] is None
+    assert names(list_projects(client, "")) == ["Kept project"]
+    assert "Gone project" in client.get("/api/v1/projects/export?deleted=yes").text
+    assert "Gone project" not in client.get("/api/v1/projects/export").text
+
+    restored = client.post(f"{path}/restore", headers=headers)
+    assert restored.status_code == 200, restored.text
+    assert restored.json()["data"]["deletedAtUtc"] is None
+    assert restored.json()["data"]["deletedByEmail"] is None
+    assert names(list_projects(client, "sortBy=name&sortOrder=asc")) == [
+        "Gone project",
+        "Kept project",
+    ]
+    changes = client.get(f"{path}/changes").json()["data"]
+    assert [entry["summary"] for entry in changes[:2]] == [
+        "Restored the project",
+        "Deleted the project",
+    ]
+    again = client.post(f"{path}/restore", headers=headers)
+    assert again.status_code == 404, again.text
+    assert again.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+
+    with joined_member(client, csrf) as member:
+        assert client.delete(path, headers=headers).status_code == 200
+        member_list = list_projects(member, "deleted=yes")
+        assert names(member_list) == ["Kept project"]
+        assert all(item["deletedAtUtc"] is None for item in member_list["items"])
+        hidden = member.get(path)
+        assert hidden.status_code == 404, hidden.text
+        assert hidden.json()["error"]["code"] == "PROJECT_NOT_FOUND"
+    seen = client.get(path)
+    assert seen.status_code == 200, seen.text
+    assert seen.json()["data"]["deletedAtUtc"] is not None

@@ -2,7 +2,7 @@ import { randomBytes, createHash, scrypt, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Optional, BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
-import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
+import { MAIL_PROVIDER, permissionsFor, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
 import { ORGANISATIONS_API, roleSchema, type OrganisationsApi } from '@app/organisations-contracts';
 import type { Account as AccountResponse, AuthOptions } from '@app/auth-contracts';
 
@@ -46,7 +46,8 @@ async function verifyPassword(password: string, storedHash: string): Promise<boo
 }
 
 function accountResponse(account: Pick<Account, 'id' | 'email'>, role: AccountResponse['role']): AccountResponse {
-  return { id: account.id, email: account.email, role: roleSchema.parse(role) };
+  const parsedRole = roleSchema.parse(role);
+  return { id: account.id, email: account.email, role: parsedRole, permissions: permissionsFor(parsedRole) };
 }
 
 @Injectable()

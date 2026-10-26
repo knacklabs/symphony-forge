@@ -21,7 +21,13 @@ from app.auth.schema import (
     SessionData,
 )
 from app.auth.schema import Account as AccountResponse
-from app.core import AccountPrincipal, ApiError, MailProvider, Settings
+from app.core import (
+    AccountPrincipal,
+    ApiError,
+    MailProvider,
+    Settings,
+    permissions_for,
+)
 
 if TYPE_CHECKING:
     from app.organisations import OrganisationsService
@@ -118,7 +124,12 @@ class AuthService:
     def set_up_company(self, credentials: CredentialsInput) -> AccountResponse:
         account = self._create_account(credentials)
         principal = self.organisations.create_for_account(account.id, account.email)
-        return AccountResponse(id=account.id, email=account.email, role=principal.role)
+        return AccountResponse(
+            id=account.id,
+            email=account.email,
+            role=principal.role,
+            permissions=permissions_for(principal.role),
+        )
 
     def _create_account(
         self,
@@ -174,7 +185,12 @@ class AuthService:
             invite, account.id, account.email
         )
         session_data = self._new_session(
-            AccountResponse(id=account.id, email=account.email, role=principal.role)
+            AccountResponse(
+                id=account.id,
+                email=account.email,
+                role=principal.role,
+                permissions=permissions_for(principal.role),
+            )
         )
         self.db.add(self._session_row(account.id, session_data))
         self.db.commit()
@@ -194,7 +210,12 @@ class AuthService:
         if principal is None:
             raise ApiError(401, "UNAUTHENTICATED", "Sign in to continue.")
         session_data = self._new_session(
-            AccountResponse(id=account.id, email=account.email, role=principal.role)
+            AccountResponse(
+                id=account.id,
+                email=account.email,
+                role=principal.role,
+                permissions=permissions_for(principal.role),
+            )
         )
         self.db.add(self._session_row(account.id, session_data))
         self.db.commit()

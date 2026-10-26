@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth import current_account, require_csrf
+from app.auth import require_csrf
 from app.core import (
     AccountPrincipal,
     CsvColumn,
@@ -12,9 +12,11 @@ from app.core import (
     SuccessEnvelope,
     csv_response,
     get_db,
+    require_permission,
     utc_date_time,
 )
 from app.history import HistoryEntry
+from app.projects.permissions import PROJECT_PERMISSIONS
 from app.projects.schema import (
     Project,
     ProjectExportQuery,
@@ -37,11 +39,17 @@ PROJECT_CSV_COLUMNS: tuple[CsvColumn[Project], ...] = (
 @router.get(
     "",
     response_model=SuccessEnvelope[ProjectListResponse],
-    responses={400: {"model": ErrorEnvelope}, 401: {"model": ErrorEnvelope}},
+    responses={
+        400: {"model": ErrorEnvelope},
+        401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
+    },
     summary="List your organisation’s projects.",
 )
 def list_projects(
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
     query: Annotated[ProjectListQuery, Query()],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[ProjectListResponse]:
@@ -61,7 +69,9 @@ def list_projects(
 )
 def create_project(
     input_data: ProjectInput,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.create))
+    ],
     _csrf: Annotated[None, Depends(require_csrf)],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
@@ -76,11 +86,14 @@ def create_project(
         200: {"description": "The projects.csv file, newest first."},
         400: {"model": ErrorEnvelope},
         401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
     },
     summary="Download the projects that match the list's search and filter as CSV.",
 )
 def export_projects(
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
     query: Annotated[ProjectExportQuery, Query()],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> Response:
@@ -95,13 +108,16 @@ def export_projects(
     responses={
         400: {"model": ErrorEnvelope},
         401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
         404: {"model": ErrorEnvelope},
     },
     summary="Read one project in your organisation.",
 )
 def get_project(
     project_id: UUID,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
     return SuccessEnvelope(data=ProjectService(db).get(account, project_id))
@@ -113,13 +129,16 @@ def get_project(
     responses={
         400: {"model": ErrorEnvelope},
         401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
         404: {"model": ErrorEnvelope},
     },
     summary="List the newest 5 changes to one project in your organisation.",
 )
 def list_project_changes(
     project_id: UUID,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[list[HistoryEntry]]:
     return SuccessEnvelope(data=ProjectService(db).changes(account, project_id))
@@ -139,7 +158,9 @@ def list_project_changes(
 def update_project(
     project_id: UUID,
     input_data: ProjectInput,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.edit))
+    ],
     _csrf: Annotated[None, Depends(require_csrf)],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
@@ -160,9 +181,32 @@ def update_project(
 )
 def delete_project(
     project_id: UUID,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.delete))
+    ],
     _csrf: Annotated[None, Depends(require_csrf)],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[None]:
     ProjectService(db).delete(account, project_id)
     return SuccessEnvelope(data=None)
+
+
+@router.post(
+    "/{project_id}/restore",
+    response_model=SuccessEnvelope[Project],
+    responses={
+        401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
+        404: {"model": ErrorEnvelope},
+    },
+    summary="Restore a deleted project in your organisation.",
+)
+def restore_project(
+    project_id: UUID,
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.restore))
+    ],
+    _csrf: Annotated[None, Depends(require_csrf)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[Project]:
+    return SuccessEnvelope(data=ProjectService(db).restore(account, project_id))

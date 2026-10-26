@@ -27,6 +27,12 @@ export class ProjectResponseDto {
 
   @ApiProperty({ description: 'The email of the account that last changed the project.', example: 'grace@example.com' })
   modifiedByEmail!: string;
+
+  @ApiProperty({ description: 'The UTC time the project was deleted, or null when it is not deleted.', type: String, nullable: true, example: null })
+  deletedAtUtc!: string | null;
+
+  @ApiProperty({ description: 'The email of the account that deleted the project, or null when it is not deleted.', type: String, nullable: true, example: null })
+  deletedByEmail!: string | null;
 }
 
 export class ProjectChangeResponseDto {

@@ -237,6 +237,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore a deleted project in your organisation. */
+        post: operations["restore_project_api_v1_projects__project_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/members/{account_id}": {
         parameters: {
             query?: never;
@@ -395,6 +412,15 @@ export interface components {
             /** Email */
             email: string;
             role: components["schemas"]["Role"];
+            /**
+             * Permissions
+             * @description What the account's role may do, such as projects.delete.
+             * @example [
+             *       "projects.view",
+             *       "projects.create"
+             *     ]
+             */
+            permissions: string[];
         };
         /** ApiErrorBody */
         ApiErrorBody: {
@@ -605,6 +631,10 @@ export interface components {
             createdByEmail: string;
             /** Modifiedbyemail */
             modifiedByEmail: string;
+            /** Deletedatutc */
+            deletedAtUtc: string | null;
+            /** Deletedbyemail */
+            deletedByEmail: string | null;
         };
         /** ProjectInput */
         ProjectInput: {
@@ -1253,6 +1283,8 @@ export interface operations {
             query?: {
                 search?: string | null;
                 status?: components["schemas"]["ProjectStatus"] | null;
+                /** @description Show deleted projects too; only for a caller with the restore permission. */
+                deleted?: "yes" | null;
                 limit?: number;
                 sortBy?: "name" | "status" | "createdAtUtc" | "updatedAtUtc";
                 sortOrder?: "asc" | "desc";
@@ -1285,6 +1317,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1368,6 +1409,8 @@ export interface operations {
             query?: {
                 search?: string | null;
                 status?: components["schemas"]["ProjectStatus"] | null;
+                /** @description Show deleted projects too; only for a caller with the restore permission. */
+                deleted?: "yes" | null;
             };
             header?: never;
             path?: never;
@@ -1393,6 +1436,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1442,6 +1494,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1629,6 +1690,73 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_project_api_v1_projects__project_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_Project_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

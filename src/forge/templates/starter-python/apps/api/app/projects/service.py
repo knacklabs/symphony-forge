@@ -9,9 +9,10 @@ from uuid import UUID, uuid7
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session as DbSession
 
-from app.core import AccountPrincipal, ApiError
+from app.core import AccountPrincipal, ApiError, has_permission
 from app.history import HistoryEntry, HistoryService, Subject
 from app.projects.models import Project as ProjectModel
+from app.projects.permissions import PROJECT_PERMISSIONS
 from app.projects.schema import (
     Project,
     ProjectExportQuery,
@@ -95,12 +96,18 @@ def _search_pattern(term: str) -> str:
     return f"%{escaped}%"
 
 
+def _sees_deleted(account: AccountPrincipal) -> bool:
+    return has_permission(account.role, PROJECT_PERMISSIONS.restore)
+
+
 def _filters(account: AccountPrincipal, query: ProjectExportQuery) -> list[Any]:
-    """The organisation's live projects that match the search and status filter."""
-    filters: list[Any] = [
-        ProjectModel.organisation_id == account.organisation_id,
-        ProjectModel.deleted_at_utc.is_(None),
-    ]
+    """The organisation's projects that match the search and status filter.
+
+    Deleted projects are left out unless the caller asks for them and may restore them.
+    """
+    filters: list[Any] = [ProjectModel.organisation_id == account.organisation_id]
+    if not (query.deleted == "yes" and _sees_deleted(account)):
+        filters.append(ProjectModel.deleted_at_utc.is_(None))
     if query.search:
         filters.append(
             ProjectModel.name.ilike(_search_pattern(query.search), escape="\\")
@@ -191,26 +198,37 @@ class ProjectService:
         ).all()
         return [Project.model_validate(project) for project in projects]
 
-    def _live(self, account: AccountPrincipal, project_id: UUID) -> ProjectModel:
+    def _find(
+        self, account: AccountPrincipal, project_id: UUID, *conditions: Any
+    ) -> ProjectModel:
         project = self.db.scalar(
             select(ProjectModel).where(
                 ProjectModel.id == project_id,
                 ProjectModel.organisation_id == account.organisation_id,
-                ProjectModel.deleted_at_utc.is_(None),
+                *conditions,
             )
         )
         if project is None:
             raise self._not_found()
         return project
 
+    def _live(self, account: AccountPrincipal, project_id: UUID) -> ProjectModel:
+        return self._find(account, project_id, ProjectModel.deleted_at_utc.is_(None))
+
+    def _readable(self, account: AccountPrincipal, project_id: UUID) -> ProjectModel:
+        """A live project, or a deleted one for a caller who may restore it."""
+        if _sees_deleted(account):
+            return self._find(account, project_id)
+        return self._live(account, project_id)
+
     def get(self, account: AccountPrincipal, project_id: UUID) -> Project:
-        return Project.model_validate(self._live(account, project_id))
+        return Project.model_validate(self._readable(account, project_id))
 
     def changes(
         self, account: AccountPrincipal, project_id: UUID
     ) -> Sequence[HistoryEntry]:
-        """The project's newest changes; a deleted or another organisation's project is not found."""
-        self._live(account, project_id)
+        """The project's newest changes; another organisation's project is not found."""
+        self._readable(account, project_id)
         return self.history.list_for_subject(account, project_id, RECENT_CHANGES)
 
     # Each change and its Change history row commit together in one commit.
@@ -263,6 +281,23 @@ class ProjectService:
             Subject(project.id, project.name),
         )
         self.db.commit()
+
+    def restore(self, account: AccountPrincipal, project_id: UUID) -> Project:
+        project = self._find(
+            account, project_id, ProjectModel.deleted_at_utc.is_not(None)
+        )
+        project.deleted_at_utc = None
+        project.deleted_by_account_id = None
+        project.modified_by_account_id = account.id
+        self.history.record(
+            account,
+            "project.restored",
+            "Restored the project",
+            Subject(project.id, project.name),
+        )
+        self.db.commit()
+        self.db.refresh(project)
+        return Project.model_validate(project)
 
     @staticmethod
     def _not_found() -> ApiError:

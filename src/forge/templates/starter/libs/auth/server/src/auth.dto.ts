@@ -15,6 +15,9 @@ export class AccountResponseDto {
 
   @ApiProperty({ description: 'The role in the account’s organisation.', enum: ['admin', 'member'], example: 'admin' })
   role!: 'admin' | 'member';
+
+  @ApiProperty({ description: 'What the account may do, as <feature>.<action>.', type: [String], example: ['projects.view', 'projects.create', 'projects.edit'] })
+  permissions!: string[];
 }
 
 export class MessageResponseDto {

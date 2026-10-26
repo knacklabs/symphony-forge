@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { csrfToken, signUp } from './helpers';
+import { csrfToken, inviteUrlsSince, logEvents, newEmail, password, signUp } from './helpers';
 
 async function addProjects(page: Page, names: string[], status = 'active') {
   const token = await csrfToken(page);
@@ -108,9 +108,9 @@ test('create, view, edit, and delete a project', async ({ page }) => {
   await expect(page.getByText('20 projects')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled();
 
-  // The deleted project's address, and an address with no project, say so.
+  // An admin can still open the deleted project, which says so; an address with no project says it does not exist.
   await page.goto(detailUrl);
-  await expect(page.getByRole('heading', { name: 'This project does not exist or was deleted.' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'This project was deleted on' })).toBeVisible();
   await page.goto('/projects/not-a-project');
   await expect(page.getByRole('heading', { name: 'This project does not exist or was deleted.' })).toBeVisible();
   await page.getByRole('link', { name: 'Back to projects' }).click();
@@ -241,4 +241,126 @@ test('keyboard sorting a cached order keeps focus on the header', async ({ page 
   await expect(page).toHaveURL(/sortOrder=asc/);
   await expect(page.locator('th', { has: nameHeader })).toHaveAttribute('aria-sort', 'ascending');
   await expect(nameHeader).toBeFocused();
+});
+
+test('a member does not see the project actions they lack', async ({ page, browser }) => {
+  await signUp(page);
+  await addProjects(page, ['Team project']);
+  const token = await csrfToken(page);
+  const apiUrl = (path: string) => new URL(`/api/v1${path}`, page.url()).toString();
+  const projects = await (await page.context().request.get(apiUrl('/projects'))).json();
+  const projectPath = `/projects/${projects.data.items[0].id as string}`;
+  const memberEmail = newEmail();
+  const previousLogCount = logEvents('api').length;
+  expect((await page.context().request.post(apiUrl('/invites'), { data: { email: memberEmail }, headers: { 'x-csrf-token': token } })).ok()).toBeTruthy();
+
+  const memberContext = await browser.newContext();
+  try {
+    // Parallel flows share the log, so try each logged link: the API refuses one for another email.
+    let joined = false;
+    for (const link of inviteUrlsSince(previousLogCount)) {
+      const response = await memberContext.request.post(apiUrl('/auth/accept-invite'), {
+        data: { email: memberEmail, password, token: link.searchParams.get('token') },
+      });
+      if (response.ok()) { joined = true; break; }
+    }
+    expect(joined).toBeTruthy();
+    const memberPage = await memberContext.newPage();
+    const permissions = (await (await memberContext.request.get(apiUrl('/auth/me'))).json()).data.permissions as string[];
+    const can = (permission: string) => permissions.includes(permission);
+    const projectsLink = memberPage.getByRole('link', { name: 'Projects', exact: true });
+
+    await memberPage.goto('/projects');
+    if (!can('projects.view')) {
+      // Without view, the list and the detail screen read as unknown addresses, and the sidebar has no Projects.
+      await expect(memberPage.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+      await memberPage.goto(projectPath);
+      await expect(memberPage.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+      await memberPage.goto('/members');
+      await expect(memberPage.getByRole('heading', { name: 'Members' })).toBeVisible();
+      await expect(projectsLink).toHaveCount(0);
+      return;
+    }
+    await expect(memberPage.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+    // The sidebar's link comes first; on this screen the breadcrumb also reads Projects.
+    await expect(projectsLink.first()).toHaveAttribute('href', '/projects');
+    await expect(memberPage.getByRole('button', { name: 'New project' })).toHaveCount(can('projects.create') ? 1 : 0);
+    await expect(memberPage.getByRole('switch', { name: 'Show deleted' })).toHaveCount(can('projects.restore') ? 1 : 0);
+
+    await memberPage.getByRole('link', { name: 'Team project' }).click();
+    await expect(memberPage.getByRole('heading', { level: 1, name: 'Team project' })).toBeVisible();
+    await expect(memberPage.getByRole('region', { name: 'Recent changes' }).getByRole('listitem')).toHaveCount(1);
+    await expect(memberPage.getByRole('button', { name: 'Edit' })).toHaveCount(can('projects.edit') ? 1 : 0);
+    await expect(memberPage.getByRole('button', { name: 'Delete' })).toHaveCount(can('projects.delete') ? 1 : 0);
+    // The whole Change history is for admins only.
+    await expect(memberPage.getByRole('link', { name: 'Open the change history' })).toHaveCount(0);
+    const axe = await new AxeBuilder({ page: memberPage }).analyze();
+    expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
+  } finally {
+    await memberContext.close();
+  }
+});
+
+test('an admin shows deleted projects and restores one', async ({ page }) => {
+  const email = await signUp(page);
+  await addProjects(page, ['Kept project', 'Old project']);
+  const token = await csrfToken(page);
+  const listed = await (await page.context().request.get(new URL('/api/v1/projects', page.url()).toString())).json();
+  const old = (listed.data.items as { id: string; name: string }[]).find((project) => project.name === 'Old project');
+  const deleted = await page.context().request.delete(new URL(`/api/v1/projects/${old?.id}`, page.url()).toString(), { headers: { 'x-csrf-token': token } });
+  expect(deleted.ok()).toBeTruthy();
+
+  await page.reload();
+  await expect(page.getByRole('row', { name: /Kept project/ })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Old project/ })).toHaveCount(0);
+  // The keyboard path: Space turns the switch on, and the address keeps it.
+  const showDeleted = page.getByRole('switch', { name: 'Show deleted' });
+  await showDeleted.focus();
+  await page.keyboard.press('Space');
+  await expect(showDeleted).toBeChecked();
+  await expect(page).toHaveURL(/deleted=yes/);
+  const oldRow = page.getByRole('row', { name: /Old project/ });
+  await expect(oldRow).toContainText('Deleted');
+  await expect(page.getByRole('row', { name: /Kept project/ })).not.toContainText('Deleted');
+  await expect(page.getByText('2 projects, deleted ones included')).toBeVisible();
+  await page.reload();
+  await expect(showDeleted).toBeChecked();
+
+  // The deleted project's screen says who deleted it and offers Restore instead of Edit and Delete.
+  await oldRow.getByRole('link', { name: 'Old project' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Old project' })).toBeVisible();
+  const notice = page.getByRole('alert').filter({ hasText: 'This project was deleted on' });
+  await expect(notice).toHaveText(new RegExp(`This project was deleted on \\d{4}-\\d{2}-\\d{2} by ${email.replace(/[.]/g, '\\.')}\\.`));
+  await expect(page.getByRole('button', { name: 'Edit' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0);
+  const entries = page.getByRole('region', { name: 'Recent changes' }).getByRole('listitem');
+  await expect(entries.first()).toContainText('Deleted the project');
+  const axe = await new AxeBuilder({ page }).analyze();
+  expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
+
+  // A failed restore says so and keeps the screen.
+  const restoreRoute = '**/api/v1/projects/*/restore';
+  await page.route(restoreRoute, (route) => route.abort());
+  await notice.getByRole('button', { name: 'Restore' }).click();
+  await expect(page.getByText('Could not restore this project. Try again.')).toBeVisible();
+  await expect(notice).toBeVisible();
+  await page.unroute(restoreRoute);
+
+  await notice.getByRole('button', { name: 'Restore' }).click();
+  await expect(page.getByText('Project restored.')).toBeVisible();
+  await expect(notice).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Edit' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
+  await expect(entries.first()).toContainText('Restored the project');
+  await expect(entries.nth(1)).toContainText('Deleted the project');
+
+  // Back on the list, the project is no longer marked; Clear search and filters turns the switch off.
+  await page.getByRole('navigation', { name: 'breadcrumb' }).getByRole('link', { name: 'Projects' }).click();
+  await expect(page).toHaveURL(/deleted=yes/);
+  await expect(page.getByRole('row', { name: /Old project/ })).not.toContainText('Deleted');
+  await page.getByRole('searchbox', { name: 'Search projects' }).fill('nothing matches this');
+  await expect(page.getByText('No projects match this search.')).toBeVisible();
+  await page.getByRole('button', { name: 'Clear search and filters' }).click();
+  await expect(showDeleted).not.toBeChecked();
+  await expect(page).not.toHaveURL(/deleted=yes/);
 });
