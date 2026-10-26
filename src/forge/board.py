@@ -26,8 +26,6 @@ from typing import Any
 
 from forge import __version__, approval, board_facts, board_graph, codex, machine, native, repo, story, task
 
-from forge.board_facts import machine_prs as _machine_prs
-
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
     "help": "Open the live board page on this computer",
@@ -82,6 +80,10 @@ def repo_root(top: Path) -> str:
     """The main worktree identifies a repo across all of its worktrees."""
     listing = repo.git("worktree", "list", "--porcelain", cwd=top)
     return str(Path(listing.splitlines()[0].removeprefix("worktree ")).resolve())
+
+
+def _machine_prs(top: Path) -> list[Item]:
+    return board_facts.machine_prs(top)
 
 
 def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
