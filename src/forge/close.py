@@ -247,6 +247,7 @@ def close(args: argparse.Namespace) -> int:
     spotted.check(top, item)
     design.require_working_build(top, f"origin/{default}")
     app_baseline.check(top, cfg, repo.git("merge-base", "HEAD", f"origin/{default}", cwd=top))
+    app_baseline.services(top, cfg)
     if not migrating:
         _synced(top, item)
     # Reconcile remote work before choosing tests or reusing an earlier review.

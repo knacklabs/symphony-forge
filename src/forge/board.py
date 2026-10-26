@@ -231,6 +231,7 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
     return runs
 
 
+@repo.command_cache(snapshot=True)
 def machine_board(top: Path, history: Item | None = None, trim: bool = True, cache: Item | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
     `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
@@ -269,7 +270,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         for actor in (pr.get("author"), pr.get("mergedBy")):
             if actor and actor.get("name"):
                 board_facts.person(actor, names=names)
-        actors = time_records.from_body(pr.get("body") or "")
+        actors = time_records.view_body(pr.get("body") or "")
         for field in ("started_by", "approved_by"):
             board_facts.person(actors, field=field, names=names)
     for pr in (github or {}).get("open", []):
@@ -429,10 +430,13 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             try:
                 if kind == "story":
                     plan_text = _read(top, tree or where, f"plans/{item}.md", history)
-                lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
-                         else nextstep._story(top, item, tree, plan_text,
-                                              title, trees, merged_prs, by_branch, {}, history,
-                                              readiness.setdefault(item, {}))[0])
+                if kind == "story" and item in history.get("story advice", {}):
+                    lines, readiness[item] = history["story advice"][item]
+                else:
+                    lines = (nextstep._item(item, title, state, top, tree, by_branch, {}) if kind != "story"
+                             else nextstep._story(top, item, tree, plan_text,
+                                                  title, trees, merged_prs, by_branch, {}, history,
+                                                  readiness.setdefault(item, {}))[0])
             except (repo.Refused, subprocess.CalledProcessError):
                 lines = [f"Couldn't check the next step for {title}; check the connection, then run forge next."]
         review = state.get("review") or {}
@@ -617,7 +621,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             (task.developer(assignments.get(item.split("/")[-1], {})) if kind == "task" else None)
             or owners.get(read_key), names=names)
         people_pr = people_branches.get(branch) or pr or {}
-        recorded_people = time_records.from_body(people_pr.get("body") or "")
+        recorded_people = time_records.view_body(people_pr.get("body") or "")
         author = people_pr.get("author") or {}
         starter_name = None
         if author.get("login") and not author.get("name"):
@@ -664,7 +668,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     top, item, state, (pr or {}).get("body") or "", events=activity, timings=item_timings,
                     ended_at=merged_dates.get(branch)).items()
                     if k not in ("events", "timings", "state", "ended_at", "seen", "known", "summary")}
-                   if kind != "story" or time_records.from_body((pr or {}).get("body") or "") else {}),
+                   if kind != "story" or time_records.view_body((pr or {}).get("body") or "") else {}),
                 "stages": stages, "occurrences": events, "next": nextstep.machine_next(lines),
                 "children": []}
 
@@ -998,13 +1002,15 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
         saved = snapshots.get(refs.get(f"refs/heads/{branch}"), {})
         changed = set(repo.git("diff", "HEAD", "--name-only", "--no-renames", "-z",
                                "--", ".factory", cwd=path).split("\0"))
-        for file in sorted(path.glob(".factory/**/*.json")):
-            rel = file.relative_to(path).as_posix()
+        # Walk strings here: most worktrees carry the same hundreds of state files.
+        paths = (f"{Path(folder).relative_to(path).as_posix()}/{name}"
+                 for folder, _, names in os.walk(path / ".factory") for name in names if name.endswith(".json"))
+        for rel in sorted(paths):
             if STATE.fullmatch(rel):
                 if rel in saved and rel not in changed:
                     state = blobs[saved[rel]]
                 else:
-                    text = file.read_text(encoding="utf-8")
+                    text = (path / rel).read_text(encoding="utf-8")
                     if text not in parsed:
                         parsed[text] = story.json_of(text)
                     state = parsed[text]

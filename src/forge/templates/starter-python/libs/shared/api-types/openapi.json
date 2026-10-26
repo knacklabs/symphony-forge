@@ -537,14 +537,36 @@
         "operationId": "list_projects_api_v1_projects_get",
         "parameters": [
           {
-            "name": "page",
+            "name": "search",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1,
-              "title": "Page"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProjectStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
             }
           },
           {
@@ -571,7 +593,7 @@
                 "updatedAtUtc"
               ],
               "type": "string",
-              "default": "createdAtUtc",
+              "default": "updatedAtUtc",
               "title": "Sortby"
             }
           },
@@ -587,6 +609,40 @@
               "type": "string",
               "default": "desc",
               "title": "Sortorder"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{1,2048}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{1,2048}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
             }
           }
         ],
@@ -708,18 +764,73 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Download every project of your organisation as a CSV file.",
+        "summary": "Download the projects that match the list's search and filter as CSV.",
         "operationId": "export_projects_api_v1_projects_export_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProjectStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "The projects.csv file, newest first."
           },
-          "401": {
-            "description": "Unauthorized",
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -1875,46 +1986,65 @@
             "type": "array",
             "title": "Items"
           },
-          "pagination": {
-            "$ref": "#/components/schemas/ProjectPagination"
+          "paging": {
+            "$ref": "#/components/schemas/ProjectPaging"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "items",
-          "pagination"
+          "paging"
         ],
         "title": "ProjectListResponse"
       },
-      "ProjectPagination": {
+      "ProjectPaging": {
         "properties": {
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
           "limit": {
             "type": "integer",
             "title": "Limit"
           },
-          "totalItems": {
-            "type": "integer",
-            "title": "Totalitems"
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
           },
-          "totalPages": {
+          "previousCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previouscursor"
+          },
+          "total": {
             "type": "integer",
-            "title": "Totalpages"
+            "title": "Total"
+          },
+          "totalCapped": {
+            "type": "boolean",
+            "title": "Totalcapped"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "page",
           "limit",
-          "totalItems",
-          "totalPages"
+          "nextCursor",
+          "previousCursor",
+          "total",
+          "totalCapped"
         ],
-        "title": "ProjectPagination"
+        "title": "ProjectPaging"
       },
       "ProjectStatus": {
         "type": "string",

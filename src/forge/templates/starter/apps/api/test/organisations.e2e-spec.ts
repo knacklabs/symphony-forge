@@ -23,7 +23,7 @@ describe('organisations', () => {
 
     const otherProjects = await otherClient.get('/api/v1/projects').expect(200);
     expect(otherProjects.body.data.items).toEqual([]);
-    expect(otherProjects.body.data.pagination.totalItems).toBe(0);
+    expect(otherProjects.body.data.paging.total).toBe(0);
     const otherExport = await otherClient.get('/api/v1/projects/export').expect(200);
     expect(otherExport.text).toBe(`${PROJECTS_HEADER}\r\n`);
 
