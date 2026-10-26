@@ -325,7 +325,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     # Appended statistics never enter machine_next's first line or command.
-    if history is None and repo.now()[:10] >= board.CHECK_DATE:
+    if (history is None or fresh_prs) and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
