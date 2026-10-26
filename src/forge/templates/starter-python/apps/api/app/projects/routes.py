@@ -14,6 +14,7 @@ from app.core import (
     get_db,
     utc_date_time,
 )
+from app.history import HistoryEntry
 from app.projects.schema import (
     Project,
     ProjectExportQuery,
@@ -104,6 +105,24 @@ def get_project(
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
     return SuccessEnvelope(data=ProjectService(db).get(account, project_id))
+
+
+@router.get(
+    "/{project_id}/changes",
+    response_model=SuccessEnvelope[list[HistoryEntry]],
+    responses={
+        400: {"model": ErrorEnvelope},
+        401: {"model": ErrorEnvelope},
+        404: {"model": ErrorEnvelope},
+    },
+    summary="List the newest 5 changes to one project in your organisation.",
+)
+def list_project_changes(
+    project_id: UUID,
+    account: Annotated[AccountPrincipal, Depends(current_account)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[list[HistoryEntry]]:
+    return SuccessEnvelope(data=ProjectService(db).changes(account, project_id))
 
 
 @router.put(

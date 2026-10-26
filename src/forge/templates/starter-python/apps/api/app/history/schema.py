@@ -12,7 +12,7 @@ class HistoryEntry(BaseModel):
 
     id: UUID = Field(description="The change identifier.")
     actor_email: str = Field(
-        description="The email of the admin who made the change.",
+        description="The email of the person who made the change.",
         examples=["ada@example.com"],
     )
     summary: str = Field(

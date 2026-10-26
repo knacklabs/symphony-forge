@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { FolderKanban, HistoryIcon, Search, Settings, UserRound, Users, Sun, Moon, Monitor } from 'lucide-react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { toast } from 'sonner';
 import type { Account } from '@app/auth-contracts';
 import { useTheme } from '@app/shared-ui/components/theme-provider';
@@ -59,7 +59,7 @@ function AppSidebar({ account, ...props }: ComponentProps<typeof Sidebar> & { ac
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/projects'} tooltip="Projects">
+              <SidebarMenuButton asChild isActive={pathname === '/projects' || pathname.startsWith('/projects/')} tooltip="Projects">
                 <Link to="/projects"><FolderKanban /><span>Projects</span></Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -182,6 +182,8 @@ function SearchBox({ account }: { account: Account }) {
 
 function ShellContent({ account }: { account: Account }) {
   const location = useLocation();
+  // A detail route names its own breadcrumb, such as Projects › <name>, in its route handle.
+  const crumbs = useMatches().map((match) => (match.handle as { crumbs?: ReactNode } | undefined)?.crumbs).find(Boolean);
   const { open, openMobile, isMobile } = useSidebar();
   const pageTitle = ({ '/settings': 'Settings', '/members': 'Members', '/history': 'Change history' } as Record<string, string>)[location.pathname] ?? 'Projects';
 
@@ -192,7 +194,7 @@ function ShellContent({ account }: { account: Account }) {
         <Separator orientation="vertical" className="h-5" />
         <Breadcrumb>
           <BreadcrumbList>
-            <BreadcrumbItem><BreadcrumbPage>{pageTitle}</BreadcrumbPage></BreadcrumbItem>
+            {crumbs ?? <BreadcrumbItem><BreadcrumbPage>{pageTitle}</BreadcrumbPage></BreadcrumbItem>}
           </BreadcrumbList>
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-2">

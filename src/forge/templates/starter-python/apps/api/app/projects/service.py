@@ -10,6 +10,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session as DbSession
 
 from app.core import AccountPrincipal, ApiError
+from app.history import HistoryEntry, HistoryService, Subject
 from app.projects.models import Project as ProjectModel
 from app.projects.schema import (
     Project,
@@ -20,6 +21,10 @@ from app.projects.schema import (
     ProjectPaging,
 )
 
+# The changes route returns this many entries, newest first.
+RECENT_CHANGES = 5
+# The labels the change summaries use, in the order the form shows the fields.
+FIELD_LABELS = {"name": "Name", "status": "Status"}
 # The list counts up to this many matching projects; above it the screen says "More than 10,000".
 TOTAL_CAP = 10_000
 SORT_COLUMNS = {
@@ -75,6 +80,16 @@ def _decode_cursor(
     )
 
 
+def _change_summary(project: ProjectModel, input_data: ProjectInput) -> str:
+    """One "<Label> changed from <old> to <new>" per changed field, as the CSV shows them."""
+    changes = []
+    for field, label in FIELD_LABELS.items():
+        before, after = str(getattr(project, field)), str(getattr(input_data, field))
+        if before != after:
+            changes.append(f"{label} changed from {before} to {after}")
+    return "; ".join(changes)
+
+
 def _search_pattern(term: str) -> str:
     escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     return f"%{escaped}%"
@@ -98,6 +113,7 @@ def _filters(account: AccountPrincipal, query: ProjectExportQuery) -> list[Any]:
 class ProjectService:
     def __init__(self, db: DbSession) -> None:
         self.db = db
+        self.history = HistoryService(db)
 
     def list(
         self, account: AccountPrincipal, query: ProjectListQuery
@@ -175,7 +191,7 @@ class ProjectService:
         ).all()
         return [Project.model_validate(project) for project in projects]
 
-    def get(self, account: AccountPrincipal, project_id: UUID) -> Project:
+    def _live(self, account: AccountPrincipal, project_id: UUID) -> ProjectModel:
         project = self.db.scalar(
             select(ProjectModel).where(
                 ProjectModel.id == project_id,
@@ -185,8 +201,19 @@ class ProjectService:
         )
         if project is None:
             raise self._not_found()
-        return Project.model_validate(project)
+        return project
 
+    def get(self, account: AccountPrincipal, project_id: UUID) -> Project:
+        return Project.model_validate(self._live(account, project_id))
+
+    def changes(
+        self, account: AccountPrincipal, project_id: UUID
+    ) -> Sequence[HistoryEntry]:
+        """The project's newest changes; a deleted or another organisation's project is not found."""
+        self._live(account, project_id)
+        return self.history.list_for_subject(account, project_id, RECENT_CHANGES)
+
+    # Each change and its Change history row commit together in one commit.
     def create(self, account: AccountPrincipal, input_data: ProjectInput) -> Project:
         project = ProjectModel(
             id=uuid7(),
@@ -197,6 +224,12 @@ class ProjectService:
             modified_by_account_id=account.id,
         )
         self.db.add(project)
+        self.history.record(
+            account,
+            "project.created",
+            "Created the project",
+            Subject(project.id, project.name),
+        )
         self.db.commit()
         self.db.refresh(project)
         return Project.model_validate(project)
@@ -204,36 +237,31 @@ class ProjectService:
     def update(
         self, account: AccountPrincipal, project_id: UUID, input_data: ProjectInput
     ) -> Project:
-        project = self.db.scalar(
-            select(ProjectModel).where(
-                ProjectModel.id == project_id,
-                ProjectModel.organisation_id == account.organisation_id,
-                ProjectModel.deleted_at_utc.is_(None),
-            )
-        )
-        if project is None:
-            raise self._not_found()
+        project = self._live(account, project_id)
+        summary = _change_summary(project, input_data)
         project.name = input_data.name
         project.status = input_data.status
         project.modified_by_account_id = account.id
+        # A replace that changes no field adds no history row.
+        if summary:
+            self.history.record(
+                account, "project.changed", summary, Subject(project.id, project.name)
+            )
         self.db.commit()
         self.db.refresh(project)
         return Project.model_validate(project)
 
     def delete(self, account: AccountPrincipal, project_id: UUID) -> None:
-        project = self.db.scalar(
-            select(ProjectModel).where(
-                ProjectModel.id == project_id,
-                ProjectModel.organisation_id == account.organisation_id,
-                ProjectModel.deleted_at_utc.is_(None),
-            )
-        )
-        if project is None:
-            raise self._not_found()
-        now = datetime.now(UTC)
-        project.deleted_at_utc = now
+        project = self._live(account, project_id)
+        project.deleted_at_utc = datetime.now(UTC)
         project.deleted_by_account_id = account.id
         project.modified_by_account_id = account.id
+        self.history.record(
+            account,
+            "project.deleted",
+            "Deleted the project",
+            Subject(project.id, project.name),
+        )
         self.db.commit()
 
     @staticmethod

@@ -6,9 +6,13 @@ model ChangeRecord {
   actorEmail     String
   action         String
   summary        String
+  // The changed item, such as a project, so its detail screen can list its own changes.
+  subjectId      String?  @db.Uuid
+  subjectName    String?
   createdAtUtc   DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([organisationId, createdAtUtc], map: "idx_ChangeRecord_organisationId_createdAtUtc")
   @@index([actorAccountId], map: "idx_ChangeRecord_actorAccountId")
+  @@index([organisationId, subjectId, createdAtUtc(sort: Desc)], map: "idx_ChangeRecord_organisationId_subjectId_createdAtUtc")
   @@schema("history")
 }

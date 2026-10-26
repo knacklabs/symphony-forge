@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   flexRender,
   getCoreRowModel,
@@ -7,38 +7,22 @@ import {
   type ColumnDef,
   type SortingState,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, Download, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDate, formatNumber } from '@app/shared-util';
 import { projectStatusSchema, type Project, type ProjectInput, type ProjectStatus } from '@app/projects-contracts';
 import { Badge } from '@app/shared-ui/components/ui/badge';
 import { Button } from '@app/shared-ui/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@app/shared-ui/components/ui/alert-dialog';
 import { Input } from '@app/shared-ui/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@app/shared-ui/components/ui/table';
 import { ProjectFormDialog } from './project-form-dialog';
-import {
-  useCreateProject,
-  useDeleteProject,
-  useProjects,
-  useUpdateProject,
-  type ProjectListQuery,
-  type ProjectSortBy,
-} from '../hooks/projects-hooks';
+import type { ProjectListState } from './project-detail-page';
+import { useCreateProject, useProjects, type ProjectListQuery, type ProjectSortBy } from '../hooks/projects-hooks';
 
 const SEARCH_DELAY_MS = 300;
 const SORT_KEYS: ProjectSortBy[] = ['name', 'status', 'createdAtUtc', 'updatedAtUtc'];
-const STATUS_LABELS: Record<ProjectStatus, string> = { active: 'Active', archived: 'Archived' };
+export const STATUS_LABELS: Record<ProjectStatus, string> = { active: 'Active', archived: 'Archived' };
 
 function readListQuery(params: URLSearchParams): ProjectListQuery {
   const requestedSort = params.get('sortBy') as ProjectSortBy;
@@ -68,7 +52,7 @@ function SortLabel({ label, sorted }: { label: string; sorted: false | 'asc' | '
 // flexRender mounts these renderers as components, so they live outside ProjectsPage: a new
 // function on each render would remount the header buttons and drop keyboard focus.
 // React Compiler skips ProjectsPage because of useReactTable, so it cannot keep them stable.
-type RowActions = { edit: (project: Project) => void; remove: (project: Project) => void; deleting: boolean };
+type RowMeta = { listState: ProjectListState };
 
 const columns: ColumnDef<Project>[] = [
   {
@@ -78,8 +62,8 @@ const columns: ColumnDef<Project>[] = [
         <SortLabel label="Name" sorted={column.getIsSorted()} />
       </Button>
     ),
-    cell: ({ row }) => (
-      <Link className="font-medium underline-offset-4 hover:underline" to={`/projects/${row.original.id}`}>{row.original.name}</Link>
+    cell: ({ row, table }) => (
+      <Link className="font-medium underline-offset-4 hover:underline" to={`/projects/${row.original.id}`} state={(table.options.meta as RowMeta).listState}>{row.original.name}</Link>
     ),
   },
   {
@@ -100,33 +84,17 @@ const columns: ColumnDef<Project>[] = [
     ),
     cell: ({ row }) => <time dateTime={row.original.updatedAtUtc}>{formatDate(row.original.updatedAtUtc)}</time>,
   },
-  {
-    id: 'actions',
-    header: () => <span className="sr-only">Actions</span>,
-    enableSorting: false,
-    cell: ({ row, table }) => {
-      const actions = table.options.meta as RowActions;
-      return (
-        <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" aria-label={`Edit ${row.original.name}`} onClick={() => actions.edit(row.original)}><Pencil aria-hidden="true" /></Button>
-          <Button variant="ghost" size="icon" aria-label={`Delete ${row.original.name}`} disabled={actions.deleting} onClick={() => actions.remove(row.original)}><Trash2 aria-hidden="true" /></Button>
-        </div>
-      );
-    },
-  },
 ];
 
 export function ProjectsPage() {
   const navigate = useNavigate();
+  // The detail screen's breadcrumb and Delete come back to this list as the person left it.
+  const listState: ProjectListState = { listSearch: useLocation().search };
   const [searchParams, setSearchParams] = useSearchParams();
   const query = readListQuery(searchParams);
   const projects = useProjects(query);
   const createProject = useCreateProject();
-  const updateProject = useUpdateProject();
-  const deleteProject = useDeleteProject();
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Project>();
-  const [deleting, setDeleting] = useState<Project>();
   const urlSearch = query.search ?? '';
   const [searchText, setSearchText] = useState(urlSearch);
   const [shownSearch, setShownSearch] = useState(urlSearch);
@@ -152,31 +120,11 @@ export function ProjectsPage() {
     return () => clearTimeout(timer);
   });
 
-  async function save(input: ProjectInput) {
-    if (editing) {
-      await updateProject.mutateAsync({ id: editing.id, input });
-      toast.success('Project updated.');
-    } else {
-      await createProject.mutateAsync(input);
-      toast.success('Project created.');
-    }
-    setEditing(undefined);
-  }
-
-  async function confirmDelete() {
-    if (!deleting) return;
-    try {
-      await deleteProject.mutateAsync(deleting.id);
-      toast.success('Project deleted.');
-      setDeleting(undefined);
-    } catch {
-      toast.error('Could not delete this project. Try again.');
-    }
-  }
-
-  function openCreate() {
-    setEditing(undefined);
-    setFormOpen(true);
+  // A new project opens on its own detail screen.
+  async function create(input: ProjectInput) {
+    const project = await createProject.mutateAsync(input);
+    toast.success('Project created.');
+    void navigate(`/projects/${project.id}`, { state: listState });
   }
 
   function clearSearchAndFilters() {
@@ -189,11 +137,7 @@ export function ProjectsPage() {
     data: projects.data?.items ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    meta: {
-      edit: (project) => { setEditing(project); setFormOpen(true); },
-      remove: setDeleting,
-      deleting: deleteProject.isPending,
-    } satisfies RowActions,
+    meta: { listState } satisfies RowMeta,
     manualSorting: true,
     state: { sorting: currentSorting },
     onSortingChange: (updater) => {
@@ -225,7 +169,7 @@ export function ProjectsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild><a href={`/api/v1/projects/export?${exportParameters.toString()}`} download><Download aria-hidden="true" />Export CSV</a></Button>
-          <Button onClick={openCreate}><Plus aria-hidden="true" />New project</Button>
+          <Button onClick={() => setFormOpen(true)}><Plus aria-hidden="true" />New project</Button>
         </div>
       </div>
 
@@ -304,7 +248,7 @@ export function ProjectsPage() {
                   className="cursor-pointer"
                   // The name link is the keyboard target; a click elsewhere on the row opens the same screen.
                   onClick={(event) => {
-                    if (!(event.target as HTMLElement).closest('a, button')) void navigate(`/projects/${row.original.id}`);
+                    if (!(event.target as HTMLElement).closest('a, button')) void navigate(`/projects/${row.original.id}`, { state: listState });
                   }}
                 >
                   {row.getVisibleCells().map((cell) => <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
@@ -324,26 +268,7 @@ export function ProjectsPage() {
         </div>
       )}
 
-      <ProjectFormDialog
-        open={formOpen}
-        project={editing}
-        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditing(undefined); }}
-        onSave={save}
-      />
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => { if (!open) setDeleting(undefined); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete project?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone. The project “{deleting?.name}” will be deleted.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={deleteProject.isPending} onClick={(event) => { event.preventDefault(); void confirmDelete(); }}>
-              {deleteProject.isPending ? 'Deleting…' : 'Delete project'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ProjectFormDialog open={formOpen} onOpenChange={setFormOpen} onSave={create} />
     </div>
   );
 }
