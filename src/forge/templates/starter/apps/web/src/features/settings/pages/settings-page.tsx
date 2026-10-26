@@ -1,5 +1,5 @@
 import { Link, useOutletContext } from 'react-router-dom';
-import type { Account } from '@app/shared';
+import type { Account } from '@app/auth-contracts';
 import { useTheme } from '@/components/theme-provider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

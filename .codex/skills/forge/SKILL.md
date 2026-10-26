@@ -948,7 +948,7 @@ The product facts are in docs/product/BRIEF.md.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
 - Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
 - Built in: admins invite people by email; members cannot invite people or change roles.
-- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared format them.
+- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: each UI or API crash writes one error report to the logs.
 

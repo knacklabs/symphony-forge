@@ -16,12 +16,16 @@ apps/api/
   app/projects/              example records: __init__.py, models.py, schema.py, routes.py, service.py
   tests/                     pytest HTTP tests against the running API
 apps/web/                    the React starter's web app and Playwright flows
-libs/shared/                 zod form schemas, openapi.json and src/api-types.ts
-pnpm-workspace.yaml          apps/web and libs/shared; Python dependencies stay in uv
+libs/<module>/contracts/     zod schemas and types, exported as @app/<module>-contracts
+libs/shared/api-types/       openapi.json and src/api-types.ts, exported as @app/shared-api-types
+libs/shared/util/            general helpers copied from the TypeScript starter
+pnpm-workspace.yaml          apps/web and libs/*/*; Python dependencies stay in uv
 compose.test.yml             Postgres and test API instances
 scripts/test.mjs             installs, builds and tests both sides
 Dockerfile, .env.example     one image; dummy values for every variable
 ```
+
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 ## Modules
 
@@ -171,8 +175,9 @@ Lists accept page from 1, limit 20 by default and at most 100, sortBy from an al
 and sortOrder asc or desc. Return `data.items` and `data.pagination` with page, limit,
 totalItems and totalPages. Follow api.md's versioning and Idempotency-Key rules.
 
-After an API change, run `pnpm run api-types`. Commit both `libs/shared/openapi.json` and
-`libs/shared/src/api-types.ts`; the web app imports these generated types through `@app/shared`.
+After an API change, run `pnpm run api-types`. Commit both `libs/shared/api-types/openapi.json` and
+`libs/shared/api-types/src/api-types.ts`; module contract libraries import these generated types
+through `@app/shared-api-types`.
 
 ## Database
 

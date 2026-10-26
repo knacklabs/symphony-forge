@@ -59,12 +59,13 @@ New apps receive this code. An upgrade leaves existing app files and their sign-
 client. Components use the hooks, without direct HTTP calls. React Compiler memoizes components, so the code has
 no `useMemo`, `useCallback` or `React.memo` outside `components/ui`. Each route has an error page,
 so a crash on one screen leaves the other screens working. `libs/auth` owns sign-in and account
-tables. `libs/projects` owns example records and project tables. Each exports a public service from
-its package entry. A module uses another module only through that service; it does not import
-internal files or query the other module's tables. `libs/core` holds shared NestJS code, and
-`libs/shared` holds the schemas and types used across the app.
+tables. `libs/projects` owns example records and project tables. Each module has a `contracts`
+library for schemas, types and its public service contract, and a `server` library for NestJS code.
+A module calls another through its contracts package. It does not import the other module's
+server code or query its tables. `libs/core/server` holds common NestJS code.
+`libs/shared/util` holds general helpers, the response envelope and error report input.
 
-Zod schemas in `libs/shared` check every request body and query, and the API documentation comes from the same schemas.
+Zod schemas in each module's contracts library check request bodies and queries. The API documentation uses the same schemas.
 
 `libs/organisations` owns organisations, admin and member roles, and email invites. Each account
 belongs to one organisation, and every query checks that organisation. Admins invite people and
@@ -72,9 +73,9 @@ change roles; members cannot. `libs/history` records these admin actions for the
 In local and test runs, invite links go to the log. Production refuses invites until the app
 has a real mail provider.
 
-The helpers in `@app/shared` format dates, times, numbers and money. Dates and times are stored in
+The helpers in `@app/shared-util` format dates, times, numbers and money. Dates and times are stored in
 UTC and shown in the person's browser time zone; money is stored in cents. Each table has an
-Export CSV button, and `sendCsv` from `@app/core` writes formula-like cells as plain text.
+Export CSV button, and `sendCsv` from `@app/core-server` writes formula-like cells as plain text.
 Deletes keep records with `deletedAtUtc`; the database's `soft_delete_only()` trigger refuses
 a hard delete. Each UI or API crash writes one error report to the logs, with only its kind,
 page path and reference number.

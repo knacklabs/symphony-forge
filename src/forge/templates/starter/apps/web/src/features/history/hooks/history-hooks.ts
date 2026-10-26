@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { HistoryEntry } from '@app/shared';
+import type { HistoryEntry } from '@app/history-contracts';
 import { apiRequest } from '@/lib/api-client';
 
 export function useHistory(enabled: boolean) {

@@ -18,7 +18,10 @@ apps/web/src/
   lib/              API client and utilities
 ```
 
-Error codes and their user messages live in `libs/shared`, imported through `@app/shared`.
+An app made before this layout keeps its own folders and schema; follow the folders it has.
+
+Each module's error codes, user messages, request schemas and types live in its contracts library.
+General helpers live in `libs/shared/util`, imported through `@app/shared-util`.
 Use one fetch wrapper for the base URL and auth header. It unwraps the response envelope,
 throws errors, and sends an `x-correlation-id` header.
 
@@ -83,7 +86,7 @@ crash reach that page instead of reporting it again in the component.
   in one place.
 
 In an app that has `libs/organisations`, format dates, times, numbers and money only with the
-helpers in `@app/shared`. Show dates and times in the person's time zone, from their browser.
+helpers in `@app/shared-util`. Show dates and times in the person's time zone, from their browser.
 Each table has an `Export CSV` link to its `GET /<list>/export` route; use the shared export path.
 
 ## Pointing at the screen in a demo

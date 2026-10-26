@@ -1,3 +1,5 @@
+import type { ApiEnvelope } from '@app/shared-util';
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -9,16 +11,6 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 }
-
-type ApiEnvelope<T> = {
-  success: true;
-  data: T;
-  error: null;
-} | {
-  success: false;
-  data: null;
-  error: { code: string; message: string; details: unknown; errorId?: string };
-};
 
 function csrfToken() {
   if (typeof document === 'undefined') return undefined;

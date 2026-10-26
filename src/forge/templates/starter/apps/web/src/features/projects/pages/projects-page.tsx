@@ -10,7 +10,8 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDate, type Project, type ProjectInput } from '@app/shared';
+import { formatDate } from '@app/shared-util';
+import { type Project, type ProjectInput } from '@app/projects-contracts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

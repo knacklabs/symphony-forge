@@ -370,11 +370,12 @@ they are. A review holds new schema that breaks the skill.
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
-in @app/shared, export a table only with sendCsv from @app/core, and let crashes reach
+in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
 the one error report. An app without libs/organisations keeps the code it has.
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add
-with a zod schema in the shared package, through ZodValidationPipe, and document it from the
+with a zod schema in the module's contracts package, through ZodValidationPipe, and document it from the
 same schema, as the API convention says. Do not add class-validator rules or @ApiProperty to
 request input. Review flags new request input that no zod schema checks.
 

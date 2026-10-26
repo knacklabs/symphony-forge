@@ -57,7 +57,9 @@ records and project tables. Each module exports its public service from `__init_
 uses another module only through its public service. Modules do not import each other's internal
 files or query their tables. `import-linter` contracts make an internal import fail the tests.
 
-`libs/shared` keeps the web form zod schemas. It reads API types from the `apps/api` OpenAPI schema.
+Each module's form schemas and public types live in `libs/<module>/contracts`. The shared API types
+come from `apps/api` OpenAPI in `libs/shared/api-types`, and general helpers live in
+`libs/shared/util`.
 
 Passwords use scrypt. Postgres holds sessions, reset tokens, accounts, and projects. Each project
 query checks the account. Delete keeps the audit record.

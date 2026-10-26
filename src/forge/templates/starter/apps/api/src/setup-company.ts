@@ -2,8 +2,8 @@ import 'reflect-metadata';
 import { HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AuthService } from '@app/auth';
-import { signUpSchema } from '@app/shared';
+import { AuthService } from '@app/auth-server';
+import { signUpSchema } from '@app/auth-contracts';
 import { AppModule } from './app.module';
 
 async function setupCompany(): Promise<void> {

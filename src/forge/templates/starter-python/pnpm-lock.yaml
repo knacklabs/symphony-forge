@@ -132,11 +132,49 @@ importers:
 
   apps/web:
     dependencies:
-      '@app/shared':
+      '@app/auth-contracts':
         specifier: workspace:*
-        version: link:../../libs/shared
+        version: link:../../libs/auth/contracts
+      '@app/history-contracts':
+        specifier: workspace:*
+        version: link:../../libs/history/contracts
+      '@app/organisations-contracts':
+        specifier: workspace:*
+        version: link:../../libs/organisations/contracts
+      '@app/projects-contracts':
+        specifier: workspace:*
+        version: link:../../libs/projects/contracts
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../libs/shared/util
 
-  libs/shared: {}
+  libs/auth/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/history/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/organisations/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/projects/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/shared/api-types: {}
+
+  libs/shared/util: {}
 
 packages:
 

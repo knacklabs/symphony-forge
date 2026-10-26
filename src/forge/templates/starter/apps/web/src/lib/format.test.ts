@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateTime, formatMoney } from '@app/shared';
+import { formatDateTime, formatMoney } from '@app/shared-util';
 
 describe('format helpers', () => {
   it('shows one instant in each person’s time zone', () => {

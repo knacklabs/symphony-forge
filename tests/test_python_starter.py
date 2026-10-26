@@ -24,7 +24,7 @@ STORY = "FORGE-FASTAPI-1"
 ROOT = Path(__file__).resolve().parents[1]
 REACT_STARTER = ROOT / "src/forge/templates/starter"
 PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
-REACT_PATHS = (Path("apps/web"), Path("tsconfig.base.json"), Path(".npmrc"))
+REACT_PATHS = (Path("apps/web"), Path("libs/shared/util"), Path("tsconfig.base.json"), Path(".npmrc"))
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 API_SECURITY_TESTS = (
     "production_forgot_password_does_not_log_a_reset_link",
@@ -85,7 +85,8 @@ def _assert_python_tree(client: Path):
     )
 
     assert not (client / "apps/api/src").exists()
-    assert not (client / "libs/auth").exists()
+    for module in ("auth", "projects", "organisations", "history"):
+        assert not (client / "libs" / module / "server").exists()
     assert not (client / "prisma.config.ts").exists()
     assert not (client / "nx.json").exists()
 
@@ -148,7 +149,7 @@ def _assert_python_tree(client: Path):
     assert "mypy" in scripts["typecheck"]
     assert "api-types" in scripts["test"] and "test:imports" in scripts["test"]
     assert scripts["test"].index("api-types") < scripts["test"].index("typecheck")
-    assert "./api-types" in (client / "libs/shared/src/index.ts").read_text(encoding="utf-8")
+    assert (client / "libs/shared/api-types/src/api-types.ts").is_file()
 
     dockerfile = (client / "Dockerfile").read_text(encoding="utf-8")
     for line in (
@@ -396,11 +397,12 @@ def test_3_the_tests_fail_when_the_api_changes_a_field_the_web_app_uses(case, re
     # Audit: the generated OpenAPI types must reach the web type checker. A stale or disconnected
     # generation step lets API response changes compile. Existing React starter tests do not have
     # a Python OpenAPI source. The test runs the root commands, with no test-only production seam.
-    shared = (PYTHON_STARTER / "libs/shared/src/index.ts").read_text(encoding="utf-8")
-    assert "./api-types" in shared
     scripts = json.loads((PYTHON_STARTER / "package.json").read_text(encoding="utf-8"))["scripts"]
     assert "api-types" in scripts["test"] and scripts["test"].index("api-types") < scripts["test"].index("typecheck")
-    assert "openapi-typescript" in scripts["api-types"]
+    assert "../../libs/shared/api-types/openapi.json" in scripts["api-types"]
+    assert "openapi-typescript libs/shared/api-types/openapi.json -o libs/shared/api-types/src/api-types.ts" in scripts["api-types"]
+    project_contracts = (PYTHON_STARTER / "libs/projects/contracts/src/index.ts").read_text(encoding="utf-8")
+    assert "@app/shared-api-types" in project_contracts
     if not LIVE:
         return
 

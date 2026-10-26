@@ -27,7 +27,19 @@
   ],
   "references": [
     {
-      "path": "../../libs/shared"
+      "path": "../../libs/auth/contracts"
+    },
+    {
+      "path": "../../libs/history/contracts"
+    },
+    {
+      "path": "../../libs/organisations/contracts"
+    },
+    {
+      "path": "../../libs/projects/contracts"
+    },
+    {
+      "path": "../../libs/shared/util"
     }
   ]
 }

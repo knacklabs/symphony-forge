@@ -11,7 +11,7 @@ on:
       - src/forge/init.py
       - tests/test_starter_tree.py
       - tests/test_python_starter.py
-      - tests/test_modular_starter.py
+      - tests/test_libs_layout.py
       - tests/test_one_company.py
       - tests/test_defaults_*.py
       - tests/test_database_*.py
@@ -33,7 +33,7 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_modular_starter.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py -k "not python" -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py -k "not python" -q -n 0 --timeout=1800
 
   python-starter-smoke:
     runs-on: ubuntu-latest

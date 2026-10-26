@@ -74,7 +74,7 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         "query is scoped to that organisation.\n"
         "- Built in: admins invite people by email; members cannot invite people or change roles.\n"
         "- Built in: dates and times are stored in UTC and shown in the person's time zone, and "
-        "money is stored as an exact decimal with its currency code; the helpers in @app/shared "
+        "money is stored as an exact decimal with its currency code; the helpers in @app/shared-util "
         "format them.\n"
         "- Built in: each table has a CSV export, admin actions write change history, and records "
         "are soft deleted.\n"
@@ -123,7 +123,7 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         "In an app that has libs/organisations, scope every query to the caller's organisation "
         "(organisationId on the principal), guard admin actions with @AdminOnly() and record them "
         "with HistoryService.record, format dates, times, numbers and money only with the helpers "
-        "in @app/shared, export a table only with sendCsv from @app/core, and let crashes reach "
+        "in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach "
         "the one error report. An app without libs/organisations keeps the code it has."
     )
     assert worker_rule in " ".join(brief.split())
@@ -141,14 +141,14 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
             "Record admin actions through `HistoryService.record`",
         ),
         "frontend.md": (
-            "format dates, times, numbers and money only with the helpers in `@app/shared`",
+            "format dates, times, numbers and money only with the helpers in `@app/shared-util`",
             "Show dates and times in the person's time zone, from their browser",
             "Each table has an `Export CSV` link", "the route error page reports the crash once",
         ),
         "backend.md": (
             "libs/organisations", "libs/history",
-            "`type:module` for auth, projects, organisations and history",
-            "Export a table only with `sendCsv` from `@app/core`",
+            "`type:contracts` or `type:server` with a `scope:<module>` tag",
+            "Export a table only with `sendCsv` from `@app/core-server`",
             "the filter writes one error report per crash",
         ),
         "api.md": ("each list has a `GET /<list>/export` route",),

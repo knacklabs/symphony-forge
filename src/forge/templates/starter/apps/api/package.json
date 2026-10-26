@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@app/core": "workspace:*",
-    "@app/history": "workspace:*",
-    "@app/auth": "workspace:*",
-    "@app/organisations": "workspace:*",
-    "@app/projects": "workspace:*",
-    "@app/shared": "workspace:*"
+    "@app/auth-contracts": "workspace:*",
+    "@app/auth-server": "workspace:*",
+    "@app/core-server": "workspace:*",
+    "@app/history-server": "workspace:*",
+    "@app/organisations-server": "workspace:*",
+    "@app/projects-server": "workspace:*"
   }
 }

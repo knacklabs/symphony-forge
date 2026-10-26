@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateEnvironment } from '@app/core';
+import { validateEnvironment } from '@app/core-server';
 
 const validEnvironment = {
   APP_ENV: 'test',

@@ -11,27 +11,35 @@ apps/api/src/
   app.module.ts          wires the API and its modules
   health/               GET /health, after migrations have succeeded at start-up
 libs/
-  auth/src/              sign-in module
-  projects/src/          example records module
-  organisations/src/     organisations, roles and invites module
-  history/src/           admin change history module
-  core/src/              config, common code and Prisma service
-  shared/src/            zod schemas for request input, and shared types
+  auth/contracts/        sign-in schemas and types
+  auth/server/           sign-in module, exported as @app/auth-server
+  projects/contracts/    project schemas and types
+  projects/server/       example records module, exported as @app/projects-server
+  organisations/contracts/ organisations schemas, types and OrganisationsApi contract
+  organisations/server/  organisations, roles and invites module, exported as @app/organisations-server
+  history/contracts/     history types and HistoryApi contract
+  history/server/        admin change history module, exported as @app/history-server
+  core/server/           config, common code and Prisma service, exported as @app/core-server
+  shared/util/           general helpers, exported as @app/shared-util
 ```
+
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 ## Modules
 
-Request input is checked by zod schemas from `@app/shared`, as api.md says; the app has no global
-ValidationPipe.
+Request input is checked by zod schemas from the module's contracts package, as api.md says; the
+app has no global ValidationPipe.
 
-- Each library's public entry is `src/index.ts`, imported by its package name: `@app/auth`,
-  `@app/projects`, `@app/organisations`, `@app/history`, `@app/core` or `@app/shared`. The package's
-  `exports` has only `.`. A module entry exports its Nest module, service and public types or
-  decorators that other modules use.
-- Nx tags are `type:module` for auth, projects, organisations and history, `type:core` for core,
-  and `type:shared` for shared. The app projects use `type:api` and `type:web`.
-- `@nx/enforce-module-boundaries` in `eslint.config.mjs` enforces these tags. A module can import
-  another module only through its public package entry; the web app cannot import a backend module.
+- Each library's public entry is `src/index.ts`, imported by its package name; its package's
+  `exports` has only `.`. A module has a `contracts` package, such as `@app/projects-contracts`, for
+  schemas and types, and a `server` package, such as `@app/projects-server`, for Nest modules,
+  controllers and services. A server uses another module's service through that module's public
+  contract. Only cross-module services expose interfaces and tokens: `OrganisationsApi`/
+  `ORGANISATIONS_API` and `HistoryApi`/`HISTORY_API`.
+- Nx tags use `type:contracts` or `type:server` with a `scope:<module>` tag. The core server uses
+  `scope:core`; shared helpers use `type:util` and `scope:shared`.
+- `@nx/enforce-module-boundaries` in `eslint.config.mjs` enforces these tags. A module server can
+  import another module only through its contracts package. The web app cannot import server code.
 - `apps/api/prisma/schema/base.prisma` holds the generator and datasource. The auth module owns
   `auth.prisma` for accounts, sessions and reset tokens; the projects module owns `projects.prisma`
   for projects and their status. Keep each module's models in its schema file, even when a relation
@@ -39,13 +47,14 @@ ValidationPipe.
 - Services query through `PrismaService`. Move a query into `<domain>.repository.ts` when a second
   service needs it or it is raw SQL.
 - Name request schemas `createXSchema` and `updateXSchema` (one `xSchema` when both are the same)
-  and list queries `xListQuerySchema`, in `@app/shared`; name response DTOs `XResponseDto`.
+  and list queries `xListQuerySchema`, in `@app/<module>-contracts`; name response DTOs `XResponseDto`.
 - Name event files `*.event.ts` and `*.handler.ts`.
 - Inject dependencies through constructors; never `new` a service yourself, so tests can swap it.
 
 In an app that has `libs/organisations`, that module owns organisations, roles and invites;
 `libs/history` owns change history. Record admin actions with its public `HistoryService.record`.
-Export a table only with `sendCsv` from `@app/core`; it writes formula-like cells as plain text.
+Export a table only with `sendCsv` from `@app/core-server`; it writes formula-like cells as plain
+text.
 
 ## Call a service or send an event
 

@@ -60,6 +60,10 @@ def test_4_a_worker_in_a_python_app_reads_the_python_page(
                  "_currency", "deleted_at_utc", "alembic upgrade head", "lint-imports",
                  "ruff format --check", "mypy", "pytest"):
         assert term in page
+    for term in ("libs/shared/util/", "libs/shared/api-types/", "libs/<module>/contracts/",
+                 "libs/*/*", "@app/shared-api-types",
+                 "An app made before this layout keeps its own folders and schema; follow the folders it has."):
+        assert term in page
     for host in (".claude", ".codex"):
         standards = (client / host / "skills/forge/standards.md").read_text(encoding="utf-8")
         assert "`python.md`" in standards

@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { FolderKanban, HistoryIcon, Search, Settings, UserRound, Users, Sun, Moon, Monitor } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { toast } from 'sonner';
-import type { Account } from '@app/shared';
+import type { Account } from '@app/auth-contracts';
 import { useTheme } from '@/components/theme-provider';
 import { useSignOut } from '@/features/auth/hooks/auth-hooks';
 import { Button } from '@/components/ui/button';

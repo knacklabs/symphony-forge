@@ -22,10 +22,10 @@ def test_1_a_new_app_has_no_class_validator():
 
 
 def test_3_the_request_docs_come_from_the_shared_zod_schemas():
-    decorator = STARTER / "libs/core/src/common/api-zod.decorator.ts"
+    decorator = STARTER / "libs/core/server/src/common/api-zod.decorator.ts"
     assert decorator.is_file()
     assert "z.toJSONSchema" in decorator.read_text(encoding="utf-8")
-    assert "projectListQuerySchema" in (STARTER / "libs/shared/src/index.ts").read_text(encoding="utf-8")
+    assert "projectListQuerySchema" in (STARTER / "libs/projects/contracts/src/index.ts").read_text(encoding="utf-8")
     for folder in (STARTER / "libs", STARTER / "apps/api/src"):
         for path in folder.rglob("*.ts"):
             if path != decorator:

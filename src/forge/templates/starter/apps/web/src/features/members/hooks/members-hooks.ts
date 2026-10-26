@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ChangeRoleInput, InviteInput, Member } from '@app/shared';
+import type { ChangeRoleInput, Member } from '@app/organisations-contracts';
+import type { InviteInput } from '@app/auth-contracts';
 import { apiRequest } from '@/lib/api-client';
 
 type MemberList = { items: Member[] };

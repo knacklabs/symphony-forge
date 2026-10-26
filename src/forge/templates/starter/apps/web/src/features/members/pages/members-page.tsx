@@ -1,7 +1,9 @@
 import { useOutletContext } from 'react-router-dom';
 import { Download, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDate, type Account, type Member } from '@app/shared';
+import { formatDate } from '@app/shared-util';
+import { type Account } from '@app/auth-contracts';
+import { type Member } from '@app/organisations-contracts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

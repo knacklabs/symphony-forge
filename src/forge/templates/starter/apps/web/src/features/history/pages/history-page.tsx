@@ -1,6 +1,7 @@
 import { useOutletContext } from 'react-router-dom';
 import { Download } from 'lucide-react';
-import { formatDateTime, type Account } from '@app/shared';
+import { formatDateTime } from '@app/shared-util';
+import { type Account } from '@app/auth-contracts';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useHistory } from '@/features/history/hooks/history-hooks';

@@ -349,13 +349,9 @@ def test_1_the_starter_is_a_runnable_stack(request):
                      lock_text), "playwright-core is not pinned to @playwright/test's version"
 
     workspace = (STARTER / "pnpm-workspace.yaml").read_text(encoding="utf-8")
-    for project in ("apps/*", "libs/*"):
+    for project in ("apps/*", "libs/*/*"):
         assert project in workspace, project
-    for name in ("auth", "core", "history", "organisations", "projects", "shared"):
-        project = _json(STARTER / "libs" / name / "project.json")
-        tags = project.get("tags", [])
-        type_tags = [tag for tag in tags if tag.startswith("type:")]
-        assert len(type_tags) == 1, (name, tags)
+    # The module library layout and its type/scope tags have one owner in test_libs_layout.
 
     schemas = {path.name for path in (STARTER / "apps" / "api" / "prisma" / "schema").glob("*.prisma")}
     assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "organisations.prisma", "projects.prisma"}, schemas

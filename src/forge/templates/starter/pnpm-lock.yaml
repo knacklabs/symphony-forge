@@ -195,80 +195,114 @@ importers:
 
   apps/api:
     dependencies:
-      '@app/auth':
+      '@app/auth-contracts':
         specifier: workspace:*
-        version: link:../../libs/auth
-      '@app/core':
+        version: link:../../libs/auth/contracts
+      '@app/auth-server':
         specifier: workspace:*
-        version: link:../../libs/core
-      '@app/history':
+        version: link:../../libs/auth/server
+      '@app/core-server':
         specifier: workspace:*
-        version: link:../../libs/history
-      '@app/organisations':
+        version: link:../../libs/core/server
+      '@app/history-server':
         specifier: workspace:*
-        version: link:../../libs/organisations
-      '@app/projects':
+        version: link:../../libs/history/server
+      '@app/organisations-server':
         specifier: workspace:*
-        version: link:../../libs/projects
-      '@app/shared':
+        version: link:../../libs/organisations/server
+      '@app/projects-server':
         specifier: workspace:*
-        version: link:../../libs/shared
+        version: link:../../libs/projects/server
 
   apps/web:
     dependencies:
-      '@app/shared':
+      '@app/auth-contracts':
         specifier: workspace:*
-        version: link:../../libs/shared
+        version: link:../../libs/auth/contracts
+      '@app/history-contracts':
+        specifier: workspace:*
+        version: link:../../libs/history/contracts
+      '@app/organisations-contracts':
+        specifier: workspace:*
+        version: link:../../libs/organisations/contracts
+      '@app/projects-contracts':
+        specifier: workspace:*
+        version: link:../../libs/projects/contracts
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../libs/shared/util
 
-  libs/auth:
+  libs/auth/contracts: {}
+
+  libs/auth/server:
     dependencies:
-      '@app/core':
+      '@app/auth-contracts':
         specifier: workspace:*
-        version: link:../core
-      '@app/organisations':
+        version: link:../contracts
+      '@app/core-server':
         specifier: workspace:*
-        version: link:../organisations
-      '@app/shared':
+        version: link:../../core/server
+      '@app/organisations-contracts':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../organisations/contracts
 
-  libs/core:
+  libs/core/server:
     dependencies:
-      '@app/shared':
+      '@app/shared-util':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../shared/util
 
-  libs/history:
+  libs/history/contracts: {}
+
+  libs/history/server:
     dependencies:
-      '@app/core':
+      '@app/core-server':
         specifier: workspace:*
-        version: link:../core
-      '@app/shared':
+        version: link:../../core/server
+      '@app/history-contracts':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../contracts
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../shared/util
 
-  libs/organisations:
+  libs/organisations/contracts:
     dependencies:
-      '@app/core':
+      '@app/auth-contracts':
         specifier: workspace:*
-        version: link:../core
-      '@app/history':
-        specifier: workspace:*
-        version: link:../history
-      '@app/shared':
-        specifier: workspace:*
-        version: link:../shared
+        version: link:../../auth/contracts
 
-  libs/projects:
+  libs/organisations/server:
     dependencies:
-      '@app/core':
+      '@app/core-server':
         specifier: workspace:*
-        version: link:../core
-      '@app/shared':
+        version: link:../../core/server
+      '@app/history-contracts':
         specifier: workspace:*
-        version: link:../shared
+        version: link:../../history/contracts
+      '@app/organisations-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../shared/util
 
-  libs/shared: {}
+  libs/projects/contracts: {}
+
+  libs/projects/server:
+    dependencies:
+      '@app/core-server':
+        specifier: workspace:*
+        version: link:../../core/server
+      '@app/projects-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../shared/util
+
+  libs/shared/util: {}
+
 
 packages:
 

@@ -1,0 +1,9 @@
+{
+  "name": "@app/auth-server",
+  "projectType": "library",
+  "sourceRoot": "libs/auth/server/src",
+  "tags": [
+    "type:server",
+    "scope:auth"
+  ]
+}
