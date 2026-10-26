@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-FEATURE-1-PAGING",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T10:17:36.496894+00:00",
+      "step": "start"
+    }
+  ]
+}
