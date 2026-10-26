@@ -43,8 +43,8 @@
     "id": "b83f2956-26a5-4fe1-b551-6396ed14c859",
     "status": "clean"
   },
-  "round": 7,
-  "status": "waiting for checks",
+  "round": 8,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T09:01:26.366142+00:00",
@@ -64,10 +64,10 @@
     }
   ],
   "stuck": {
-    "close": "83f7f7c4-65e5-4174-b160-16950e0b552a",
-    "head": "4085176ba3e7c4ee7a2d63656dab02b60c87a910",
+    "close": "da674068-b82b-4c80-a379-59e27a39b61b",
+    "head": "256a7eca9da2af96b23b5636656281db44aebadb",
     "keys": {},
-    "round": 6
+    "round": 7
   },
   "why": "The pane's refresh runs forge next and forge lanes, and next also runs the same slow board build, so the first load waits on it; the pane already shows Couldn't refresh when a first load fails, so only the speed part is new.",
   "worker": "codex"
