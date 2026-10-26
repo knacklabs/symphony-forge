@@ -6,7 +6,15 @@ import { CurrentAccount, type AccountPrincipal } from '@app/core-server';
 import { ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
 import { ProjectsService } from './projects.service';
 import { formatDateTime } from '@app/shared-util';
-import { projectListQuerySchema, projectSchema, type Project, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
+import {
+  projectExportQuerySchema,
+  projectListQuerySchema,
+  projectSchema,
+  type Project,
+  type ProjectExportQuery,
+  type ProjectInput,
+  type ProjectListQuery,
+} from '@app/projects-contracts';
 
 const PROJECT_CSV_COLUMNS: CsvColumn<Project>[] = [
   { header: 'Name', value: (project) => project.name },
@@ -41,11 +49,16 @@ export class ProjectsController {
 
   // Declared before ':id', so 'export' is not read as a project identifier.
   @Get('export')
-  @ApiOperation({ summary: 'Download every project in your organisation as a CSV file, newest first.' })
+  @ApiZodQuery(projectExportQuerySchema)
+  @ApiOperation({ summary: 'Download the projects that match the list’s search and filter as a CSV file, newest first.' })
   @ApiResponse({ status: 200, description: 'The projects.csv file: Name, Status, Created (UTC) and Updated (UTC).' })
-  @ApiErrors(401)
-  async export(@CurrentAccount() account: AccountPrincipal, @Res() response: Response): Promise<void> {
-    sendCsv(response, 'projects.csv', PROJECT_CSV_COLUMNS, await this.projects.listAll(account));
+  @ApiErrors(400, 401)
+  async export(
+    @CurrentAccount() account: AccountPrincipal,
+    @Query(new ZodValidationPipe(projectExportQuerySchema)) query: ProjectExportQuery,
+    @Res() response: Response,
+  ): Promise<void> {
+    sendCsv(response, 'projects.csv', PROJECT_CSV_COLUMNS, await this.projects.listAll(account, query));
   }
 
   @Get(':id')

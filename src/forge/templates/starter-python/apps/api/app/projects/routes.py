@@ -16,6 +16,7 @@ from app.core import (
 )
 from app.projects.schema import (
     Project,
+    ProjectExportQuery,
     ProjectInput,
     ProjectListQuery,
     ProjectListResponse,
@@ -72,16 +73,18 @@ def create_project(
     response_class=Response,
     responses={
         200: {"description": "The projects.csv file, newest first."},
+        400: {"model": ErrorEnvelope},
         401: {"model": ErrorEnvelope},
     },
-    summary="Download every project of your organisation as a CSV file.",
+    summary="Download the projects that match the list's search and filter as CSV.",
 )
 def export_projects(
     account: Annotated[AccountPrincipal, Depends(current_account)],
+    query: Annotated[ProjectExportQuery, Query()],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> Response:
     return csv_response(
-        "projects.csv", PROJECT_CSV_COLUMNS, ProjectService(db).list_all(account)
+        "projects.csv", PROJECT_CSV_COLUMNS, ProjectService(db).list_all(account, query)
     )
 
 

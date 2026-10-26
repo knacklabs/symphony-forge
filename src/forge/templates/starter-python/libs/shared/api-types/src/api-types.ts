@@ -191,7 +191,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Download every project of your organisation as a CSV file. */
+        /** Download the projects that match the list's search and filter as CSV. */
         get: operations["export_projects_api_v1_projects_export_get"];
         put?: never;
         post?: never;
@@ -1344,7 +1344,10 @@ export interface operations {
     };
     export_projects_api_v1_projects_export_get: {
         parameters: {
-            query?: never;
+            query?: {
+                search?: string | null;
+                status?: components["schemas"]["ProjectStatus"] | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1358,6 +1361,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -1365,6 +1377,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

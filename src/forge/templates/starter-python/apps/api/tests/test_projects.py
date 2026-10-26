@@ -161,6 +161,17 @@ def test_pages_projects_with_next_and_previous_cursors(client: httpx.Client) -> 
         fields = refused.json()["error"]["details"]["fieldErrors"]
         assert [error["field"] for error in fields] == [field]
 
+    # A cursor holds the whole name, so a full-length name in any script must still page.
+    long_names = ["项" * 119 + letter for letter in ("A", "B")]
+    create_projects(client, csrf, [(name, "active") for name in long_names])
+    by_long_name = "limit=1&sortBy=name&sortOrder=asc&search=%E9%A1%B9"
+    long_first = list_projects(client, by_long_name)
+    assert names(long_first) == [long_names[0]]
+    long_next = list_projects(
+        client, f"{by_long_name}&after={long_first['paging']['nextCursor']}"
+    )
+    assert names(long_next) == [long_names[1]]
+
 
 def test_filters_projects_by_search_and_filters(client: httpx.Client) -> None:
     _, csrf = sign_up(client)
@@ -183,6 +194,12 @@ def test_filters_projects_by_search_and_filters(client: httpx.Client) -> None:
     both = listed("search=website&status=archived")
     assert names(both) == ["Website audit"]
     assert both["paging"]["total"] == 1
+    # Export CSV downloads what the list shows: the same search and filter.
+    exported = client.get("/api/v1/projects/export?search=website&status=archived")
+    assert exported.status_code == 200, exported.text
+    assert "Website audit" in exported.text
+    assert "Website redesign" not in exported.text
+    assert "Mobile app" not in exported.text
     # The search text is literal: a % or _ does not match every name.
     assert names(listed("search=%25")) == []
     assert names(listed("search=_")) == []

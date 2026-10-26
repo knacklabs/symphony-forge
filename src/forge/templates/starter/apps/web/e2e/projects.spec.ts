@@ -109,6 +109,23 @@ test('a reloaded projects list link keeps its search, filters and page', async (
   const shared = await page.context().newPage();
   await shared.goto(page.url());
   await expectSecondPage(shared);
+  await expect(page.getByRole('link', { name: 'Export CSV' })).toHaveAttribute('href', '/api/v1/projects/export?search=pagination&status=active');
+
+  // The only project on this page stops matching: the page empties, but earlier pages still match.
+  const href = await page.getByRole('link', { name: 'Pagination project 20' }).getAttribute('href');
+  const changed = await page.context().request.put(new URL(`/api/v1${href}`, page.url()).toString(), {
+    data: { name: 'Pagination project 20', status: 'archived' },
+    headers: { 'x-csrf-token': await csrfToken(page) },
+  });
+  expect(changed.ok()).toBeTruthy();
+  await page.reload();
+  await expect(page.getByText('No projects on this page.')).toBeVisible();
+  await page.getByRole('button', { name: 'Go to the first page' }).click();
+  await expect(page).not.toHaveURL(/after=/);
+  await expect(page).toHaveURL(/search=pagination/);
+  await expect(page).toHaveURL(/status=active/);
+  await expect(page.getByRole('row', { name: /Pagination project 00/ })).toBeVisible();
+  await expect(page.getByText('20 projects')).toBeVisible();
 
   // A new search goes back to the first page; a search with no match offers to clear it.
   await page.getByRole('searchbox', { name: 'Search projects' }).fill('nothing has this name');

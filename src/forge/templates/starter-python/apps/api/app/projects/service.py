@@ -3,6 +3,7 @@ import binascii
 import json
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid7
 
 from sqlalchemy import and_, func, or_, select
@@ -12,6 +13,7 @@ from app.core import AccountPrincipal, ApiError
 from app.projects.models import Project as ProjectModel
 from app.projects.schema import (
     Project,
+    ProjectExportQuery,
     ProjectInput,
     ProjectListQuery,
     ProjectListResponse,
@@ -38,7 +40,7 @@ def _encode_cursor(sort_by: str, project: ProjectModel) -> str:
     """A cursor is the sort column, its value and the id of a page's first or last row."""
     value = getattr(project, SORT_ATTRIBUTES[sort_by])
     text = value.isoformat() if isinstance(value, datetime) else str(value)
-    raw = json.dumps([sort_by, text, str(project.id)]).encode()
+    raw = json.dumps([sort_by, text, str(project.id)], ensure_ascii=False).encode()
     return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
 
 
@@ -78,6 +80,21 @@ def _search_pattern(term: str) -> str:
     return f"%{escaped}%"
 
 
+def _filters(account: AccountPrincipal, query: ProjectExportQuery) -> list[Any]:
+    """The organisation's live projects that match the search and status filter."""
+    filters: list[Any] = [
+        ProjectModel.organisation_id == account.organisation_id,
+        ProjectModel.deleted_at_utc.is_(None),
+    ]
+    if query.search:
+        filters.append(
+            ProjectModel.name.ilike(_search_pattern(query.search), escape="\\")
+        )
+    if query.status is not None:
+        filters.append(ProjectModel.status == query.status)
+    return filters
+
+
 class ProjectService:
     def __init__(self, db: DbSession) -> None:
         self.db = db
@@ -85,16 +102,7 @@ class ProjectService:
     def list(
         self, account: AccountPrincipal, query: ProjectListQuery
     ) -> ProjectListResponse:
-        filters = [
-            ProjectModel.organisation_id == account.organisation_id,
-            ProjectModel.deleted_at_utc.is_(None),
-        ]
-        if query.search:
-            filters.append(
-                ProjectModel.name.ilike(_search_pattern(query.search), escape="\\")
-            )
-        if query.status is not None:
-            filters.append(ProjectModel.status == query.status)
+        filters = _filters(account, query)
         column = SORT_COLUMNS[query.sort_by]
         # A previous page reads backwards from its cursor, then flips its rows back.
         backward = query.before is not None
@@ -156,14 +164,13 @@ class ProjectService:
             ),
         )
 
-    def list_all(self, account: AccountPrincipal) -> Sequence[Project]:
-        """Every project in the organisation, newest first, for the CSV export."""
+    def list_all(
+        self, account: AccountPrincipal, query: ProjectExportQuery
+    ) -> Sequence[Project]:
+        """The projects the list shows for this search and filter, newest first."""
         projects = self.db.scalars(
             select(ProjectModel)
-            .where(
-                ProjectModel.organisation_id == account.organisation_id,
-                ProjectModel.deleted_at_utc.is_(None),
-            )
+            .where(*_filters(account, query))
             .order_by(ProjectModel.created_at_utc.desc(), ProjectModel.id.asc())
         ).all()
         return [Project.model_validate(project) for project in projects]

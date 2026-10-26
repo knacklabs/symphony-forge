@@ -38,12 +38,18 @@ class Project(ProjectSchema):
     modified_by_account_id: UUID
 
 
-CURSOR_PATTERN = r"^[A-Za-z0-9_-]{1,512}$"
+# A cursor holds a whole project name, which can be 120 characters of any script.
+CURSOR_PATTERN = r"^[A-Za-z0-9_-]{1,2048}$"
 
 
-class ProjectListQuery(ProjectSchema):
+class ProjectExportQuery(ProjectSchema):
+    """The list's search and filter, so the export downloads what the list shows."""
+
     search: str | None = Field(default=None, max_length=200)
     status: ProjectStatus | None = None
+
+
+class ProjectListQuery(ProjectExportQuery):
     limit: int = Field(default=20, ge=1, le=100)
     sort_by: Literal["name", "status", "createdAtUtc", "updatedAtUtc"] = "updatedAtUtc"
     sort_order: Literal["asc", "desc"] = "desc"

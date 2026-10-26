@@ -17,6 +17,14 @@ async function signedIn(): Promise<{ client: ApiClient; csrf: string }> {
   return { client, csrf: csrfToken(signUp) };
 }
 
+// Sign-up allows 30 accounts a minute for the whole API suite, so the cases that read no
+// project data share one account.
+let sharedAccount: Promise<{ client: ApiClient; csrf: string }> | undefined;
+function sharedSignedIn() {
+  sharedAccount ??= signedIn();
+  return sharedAccount;
+}
+
 async function createProjects(client: ApiClient, csrf: string, projects: { name: string; status: string }[]) {
   for (const project of projects) {
     await client.post('/api/v1/projects').set('x-csrf-token', csrf).send(project).expect(201);
@@ -99,6 +107,15 @@ describe('projects API', () => {
       expect(refused.body.error.code).toBe('VALIDATION_ERROR');
       expect(refused.body.error.details.fieldErrors).toEqual([expect.objectContaining({ field })]);
     }
+
+    // A cursor holds the whole name, so a full-length name in any script must still page.
+    const longNames = ['A', 'B'].map((letter) => `${'项'.repeat(119)}${letter}`);
+    await createProjects(client, csrf, longNames.map((name) => ({ name, status: 'active' })));
+    const byLongName = '/api/v1/projects?limit=1&sortBy=name&sortOrder=asc&search=%E9%A1%B9';
+    const longFirst = await client.get(byLongName).expect(200);
+    expect(names(longFirst)).toEqual([longNames[0]]);
+    const longNext = await client.get(`${byLongName}&after=${longFirst.body.data.paging.nextCursor}`).expect(200);
+    expect(names(longNext)).toEqual([longNames[1]]);
   });
 
   it('filters projects by search and filters', async () => {
@@ -116,6 +133,11 @@ describe('projects API', () => {
     const both = await list('search=website&status=archived');
     expect(names(both)).toEqual(['Website audit']);
     expect(both.body.data.paging.total).toBe(1);
+    // Export CSV downloads what the list shows: the same search and filter.
+    const exported = await client.get('/api/v1/projects/export?search=website&status=archived').expect(200);
+    expect(exported.text).toContain('Website audit');
+    expect(exported.text).not.toContain('Website redesign');
+    expect(exported.text).not.toContain('Mobile app');
     // The search text is literal: a % or _ does not match every name.
     expect(names(await list('search=%25'))).toEqual([]);
     expect(names(await list('search=_'))).toEqual([]);
@@ -127,7 +149,7 @@ describe('projects API', () => {
   });
 
   it('rejects a bad list query with the same field errors as a bad body', async () => {
-    const { client, csrf } = await signedIn();
+    const { client, csrf } = await sharedSignedIn();
 
     const query = await client
       .get('/api/v1/projects?limit=500&sortBy=password&unexpected=true')
@@ -260,7 +282,7 @@ describe('projects API', () => {
   });
 
   it('rejects a whitespace-only project name after trimming input', async () => {
-    const { client, csrf } = await signedIn();
+    const { client, csrf } = await sharedSignedIn();
 
     const response = await client
       .post('/api/v1/projects')
@@ -277,7 +299,7 @@ describe('projects API', () => {
       expect(body.error.code).toBe('UNAUTHENTICATED');
     });
 
-    const { client, csrf } = await signedIn();
+    const { client, csrf } = await sharedSignedIn();
     await client.post('/api/v1/projects').send({ name: 'No token', status: 'active' }).expect(403);
     await client
       .post('/api/v1/projects')

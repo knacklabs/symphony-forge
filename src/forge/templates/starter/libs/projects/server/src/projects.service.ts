@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type { Prisma, Project } from '@prisma/client';
 import { PrismaService } from '@app/core-server';
 import type { AccountPrincipal } from '@app/core-server';
-import { projectStatusSchema, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
+import { projectStatusSchema, type ProjectExportQuery, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
 
 function toProjectResponse(project: Project) {
   return {
@@ -45,6 +45,17 @@ function decodeCursor(sortBy: SortBy, cursor: string, backward: boolean): { valu
   });
 }
 
+/** The organisation's live projects that match the list's search and status filter. */
+function filterWhere(account: AccountPrincipal, filters: ProjectExportQuery): Prisma.ProjectWhereInput {
+  return {
+    organisationId: account.organisationId,
+    deletedAtUtc: null,
+    // Prisma passes % and _ to ILIKE as wildcards, so escape them to search for the text itself.
+    ...(filters.search ? { name: { contains: filters.search.replace(/[\\%_]/g, '\\$&'), mode: 'insensitive' as const } } : {}),
+    ...(filters.status ? { status: filters.status } : {}),
+  };
+}
+
 /** The rows after the cursor row in this order: a later sort value, or the same value and a later id. */
 function afterCursor(sortBy: SortBy, order: 'asc' | 'desc', cursor: { value: string | Date; id: string }): Prisma.ProjectWhereInput {
   const beyond = order === 'asc' ? 'gt' : 'lt';
@@ -56,13 +67,7 @@ export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(account: AccountPrincipal, query: ProjectListQuery) {
-    const where: Prisma.ProjectWhereInput = {
-      organisationId: account.organisationId,
-      deletedAtUtc: null,
-      // Prisma passes % and _ to ILIKE as wildcards, so escape them to search for the text itself.
-      ...(query.search ? { name: { contains: query.search.replace(/[\\%_]/g, '\\$&'), mode: 'insensitive' as const } } : {}),
-      ...(query.status ? { status: query.status } : {}),
-    };
+    const where = filterWhere(account, query);
     // A previous page reads backwards from its cursor, then flips its rows back into list order.
     const backward = query.before !== undefined;
     const cursor = query.before ?? query.after;
@@ -92,10 +97,10 @@ export class ProjectsService {
     };
   }
 
-  /** Every project in the organisation, newest first, for the CSV export; it ignores the screen's sort and page. */
-  async listAll(account: AccountPrincipal) {
+  /** The projects the list shows for this search and filter, newest first, for the CSV export; it ignores the screen's sort and page. */
+  async listAll(account: AccountPrincipal, filters: ProjectExportQuery) {
     const projects = await this.prisma.project.findMany({
-      where: { organisationId: account.organisationId, deletedAtUtc: null },
+      where: filterWhere(account, filters),
       orderBy: [{ createdAtUtc: 'desc' }, { id: 'asc' }],
     });
     return projects.map(toProjectResponse);

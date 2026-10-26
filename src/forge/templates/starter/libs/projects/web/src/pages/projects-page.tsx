@@ -209,6 +209,12 @@ export function ProjectsPage() {
   const items = projects.data ? projects.data.items : [];
   const filtered = Boolean(query.search || query.status);
   const paged = Boolean(query.after || query.before);
+  // While a new sort or filter loads, the old rows stay on screen, but their cursors belong to
+  // the old query, so Previous and Next wait for the new page.
+  const stale = projects.isPlaceholderData;
+  // Export CSV downloads what the list shows: the same search and filter, every page.
+  const exportParameters = new URLSearchParams(Object.entries({ search: query.search, status: query.status })
+    .filter((entry): entry is [string, string] => Boolean(entry[1])));
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -218,7 +224,7 @@ export function ProjectsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Create and manage your projects.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild><a href="/api/v1/projects/export" download><Download aria-hidden="true" />Export CSV</a></Button>
+          <Button variant="outline" asChild><a href={`/api/v1/projects/export?${exportParameters.toString()}`} download><Download aria-hidden="true" />Export CSV</a></Button>
           <Button onClick={openCreate}><Plus aria-hidden="true" />New project</Button>
         </div>
       </div>
@@ -254,17 +260,17 @@ export function ProjectsPage() {
       )}
       {projects.data && items.length === 0 && (
         <div className="rounded-md border p-6">
-          {filtered ? (
-            <>
-              <p className="font-medium">No projects match this search.</p>
-              <p className="mt-1 text-sm text-muted-foreground">Try other words or clear the filters.</p>
-              <Button variant="outline" className="mt-4" onClick={clearSearchAndFilters}>Clear search and filters</Button>
-            </>
-          ) : paged ? (
+          {paged && paging && paging.total > 0 ? (
             <>
               <p className="font-medium">No projects on this page.</p>
               <p className="mt-1 text-sm text-muted-foreground">The projects on it were changed or deleted.</p>
               <Button variant="outline" className="mt-4" onClick={() => setQuery({})}>Go to the first page</Button>
+            </>
+          ) : filtered ? (
+            <>
+              <p className="font-medium">No projects match this search.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Try other words or clear the filters.</p>
+              <Button variant="outline" className="mt-4" onClick={clearSearchAndFilters}>Clear search and filters</Button>
             </>
           ) : (
             <>
@@ -312,8 +318,8 @@ export function ProjectsPage() {
         <div className="flex items-center justify-between gap-4 text-sm">
           <p className="text-muted-foreground">{totalText(paging.total, paging.totalCapped)}</p>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={!paging.previousCursor} onClick={() => setQuery({ before: paging.previousCursor ?? undefined })}>Previous</Button>
-            <Button variant="outline" size="sm" disabled={!paging.nextCursor} onClick={() => setQuery({ after: paging.nextCursor ?? undefined })}>Next</Button>
+            <Button variant="outline" size="sm" disabled={!paging.previousCursor || stale} onClick={() => setQuery({ before: paging.previousCursor ?? undefined })}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={!paging.nextCursor || stale} onClick={() => setQuery({ after: paging.nextCursor ?? undefined })}>Next</Button>
           </div>
         </div>
       )}
