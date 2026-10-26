@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-SERVICES-1-SVCLIST",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T10:50:47.740299+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "b0bf3b8e956f3bf3a9e1b5626a4cdb2da67cfb45",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
