@@ -1,0 +1,15 @@
+{
+  "base": "2e441d3b330ca4a0bb1042cb540b152f6ca9cf4c",
+  "branch": "fix/the-nightly-full-run-on-main-is-red-with",
+  "done_when": "The nightly full run on main passes every test, and the shipped client files stay the same.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T03:36:11.836960+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The nightly full run on main is red with 13 failing tests, which blocks the release and client sign-off."
+}
