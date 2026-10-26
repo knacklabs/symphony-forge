@@ -11,12 +11,27 @@
   "done_when": "On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e363d070a9b3e52fff7fa09caf26f028afdacf25c74467e62e231a1ad2cfadae",
+    "changed": "9033ea78d2eb76168bc7b66f8ef00d07e851e2ea76cd45e0a1ce7aec93a6b0ea",
+    "commit": "31d2bfdc24570055e3ff766cd70412ffdff636b6",
+    "dismissals": [],
+    "findings": [],
+    "id": "1ab60b3b-8ed3-4305-a6e5-9a00b5c25824",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T09:20:17.910674+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T12:08:23.640906+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
