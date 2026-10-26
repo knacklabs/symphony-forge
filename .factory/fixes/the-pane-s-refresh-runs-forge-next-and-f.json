@@ -18,7 +18,7 @@
   "done_when": "On this repo, forge next and the board JSON both finish well inside the pane's 20-second refresh limit, so the pane loads its first rows",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 2,
+  "round": 3,
   "status": "working",
   "steps": [
     {
