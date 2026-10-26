@@ -62,7 +62,7 @@
     "id": "61604dbc-12bc-4c34-8c97-070482ff578f",
     "status": "blocked"
   },
-  "round": 8,
+  "round": 9,
   "status": "fixing",
   "steps": [
     {
@@ -95,10 +95,12 @@
     }
   ],
   "stuck": {
-    "close": "77ebf5da-a69f-4874-89d0-57e9f6e0c03b",
-    "head": "b8e51ad3e36e02375780f260140ec085e4162115",
-    "keys": {},
-    "round": 7
+    "close": "d71991b1-3d60-499b-9431-d894880df5d7",
+    "head": "ec630a929178323961915c9af8cde1693c30f347",
+    "keys": {
+      "the open P0 not done: on this repo, forge next and the board's json output each finish in under five seconds with unchanged output. in src/forge/board_facts.py": 1
+    },
+    "round": 8
   },
   "why": "The busy repo takes about 8 seconds for forge next and about 10 seconds for the board's JSON output, and slow is a bug under Forge's principles.",
   "worker": "codex"
