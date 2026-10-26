@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-LIBS-1-WEB",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T03:59:19.369123+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a4fc3f12552b9f5ae94703f64b0ae8ae228f88e7",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
