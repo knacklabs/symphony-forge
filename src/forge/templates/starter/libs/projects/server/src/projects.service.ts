@@ -2,13 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Project } from '@prisma/client';
 import { PrismaService } from '@app/core-server';
 import type { AccountPrincipal } from '@app/core-server';
-import type { ProjectInput, ProjectListQuery } from '@app/projects-contracts';
+import { projectStatusSchema, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
 
 function toProjectResponse(project: Project) {
   return {
     id: project.id,
     name: project.name,
-    status: project.status,
+    status: projectStatusSchema.parse(project.status),
     createdAtUtc: project.createdAtUtc.toISOString(),
     updatedAtUtc: project.updatedAtUtc.toISOString(),
     createdByAccountId: project.createdByAccountId,

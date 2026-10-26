@@ -4,10 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import type { Membership } from '@prisma/client';
 import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
 import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
-import type { Member, MemberListQuery, OrganisationInvite, OrganisationPrincipal, OrganisationsApi } from '@app/organisations-contracts';
+import { roleSchema, type Member, type MemberListQuery, type OrganisationInvite, type OrganisationPrincipal, type OrganisationsApi } from '@app/organisations-contracts';
 
 function memberResponse(member: Membership): Member {
-  return { id: member.id, accountId: member.accountId, email: member.email, role: member.role, createdAtUtc: member.createdAtUtc.toISOString() };
+  return { id: member.id, accountId: member.accountId, email: member.email, role: roleSchema.parse(member.role), createdAtUtc: member.createdAtUtc.toISOString() };
 }
 
 const INVITE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
@@ -53,10 +53,11 @@ export class OrganisationsService implements OrganisationsApi {
     return this.prisma.$transaction(async (transaction) => {
       const claimed = await transaction.invite.deleteMany({ where: { id: invite.id, tokenHash: invite.tokenHash, expiresAtUtc: { gt: new Date() } } });
       if (claimed.count !== 1) throw invalidInvite();
-      return transaction.membership.create({ data: {
+      const membership = await transaction.membership.create({ data: {
         accountId: account.id, email: account.email, organisationId: invite.organisationId, role: 'member',
         createdByAccountId: account.id, modifiedByAccountId: account.id,
       } });
+      return { ...membership, role: roleSchema.parse(membership.role) };
     });
   }
 
@@ -88,14 +89,16 @@ export class OrganisationsService implements OrganisationsApi {
       },
       include: { memberships: true },
     });
-    return organisation.memberships[0];
+    const membership = organisation.memberships[0];
+    return { ...membership, role: roleSchema.parse(membership.role) };
   }
 
-  membershipFor(accountId: string) {
-    return this.prisma.membership.findFirst({
+  async membershipFor(accountId: string) {
+    const membership = await this.prisma.membership.findFirst({
       where: { accountId, deletedAtUtc: null, organisation: { deletedAtUtc: null } },
       select: { organisationId: true, role: true },
     });
+    return membership ? { ...membership, role: roleSchema.parse(membership.role) } : null;
   }
 
   async list(organisationId: string, query: MemberListQuery) {

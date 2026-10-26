@@ -93,3 +93,31 @@ def test_3_new_rows_get_time_ordered_ids_and_updated_times(
         _require_cases(result["api"], (
             "a new row gets a time-ordered id and an update sets its last-changed time",
         ))
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(1800)
+@pytest.mark.parametrize("kind", ("react",), ids=("react",))
+def test_3_starter_tables_follow_the_skill(
+    repo, gh, tmp_path, tmp_path_factory, kind,
+):
+    # Audit: init must deliver the columns migration and schemas that use text and timestamptz.
+    # A stale migration or a restored Prisma enum/varchar leaves new apps outside the skill.
+    # Existing tests own extension and id defaults; the live SQL case owns column types and checks.
+    # The existing live run also checks migration drift, so this adds no duplicate drift command.
+    # The init and live API/SQL boundaries need no production test seam.
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", kind)
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+
+    migration = Path("apps/api/prisma/migrations/20261026000200_columns/migration.sql")
+    assert (client / migration).read_bytes() == (STARTER / migration).read_bytes()
+    schemas = list((client / "apps/api/prisma/schema").glob("*.prisma"))
+    assert schemas
+    for schema in schemas:
+        text = schema.read_text(encoding="utf-8")
+        for forbidden in ("enum ", "VarChar", "String(", "native_enum"):
+            assert forbidden not in text, schema
+
+    if LIVE:
+        result = live_run(tmp_path_factory)
+        _require_cases(result["api"], ("the starter tables follow the database skill",))

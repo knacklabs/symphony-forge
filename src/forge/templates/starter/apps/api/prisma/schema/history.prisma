@@ -6,7 +6,7 @@ model ChangeRecord {
   actorEmail     String
   action         String
   summary        String
-  createdAtUtc   DateTime @default(now())
+  createdAtUtc   DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([organisationId, createdAtUtc], map: "idx_ChangeRecord_organisationId_createdAtUtc")
   @@index([actorAccountId], map: "idx_ChangeRecord_actorAccountId")

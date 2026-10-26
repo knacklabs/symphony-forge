@@ -52,6 +52,56 @@ describe('database', () => {
     expect(drift.stdout).toContain('-- This is an empty migration.');
   });
 
+  // Audit: API-created rows must use text columns and enforce the named status and email checks.
+  // A stale or incomplete migration leaves legacy types or accepts invalid status and email values.
+  // The init test owns migration delivery; existing database tests do not exercise these constraints.
+  // This uses the running API and existing SQL helper, with no production test seam.
+  it('the starter tables follow the database skill', async () => {
+    const client = request.agent(apiBaseUrl);
+    const account = credentials();
+    const signUp = await client.post('/api/v1/auth/sign-up').send(account).expect(201);
+    const csrf = csrfToken(signUp);
+    const created = await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+      .send({ name: 'Database columns', status: 'active' }).expect(201);
+    const projectId = created.body.data.id as string;
+
+    const legacyColumns = psql(`
+      SELECT count(*)
+      FROM information_schema.columns
+      WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+        AND table_name NOT IN ('_prisma_migrations', 'alembic_version')
+        AND data_type IN ('character varying', 'USER-DEFINED', 'timestamp without time zone')
+    `);
+    expect(legacyColumns.status, legacyColumns.output).toBe(0);
+    expect(legacyColumns.output).toMatch(/\n\s*0\s*\n/);
+
+    const invalidStatus = psql(
+      `UPDATE projects."Project" SET status = 'paused' WHERE id = '${projectId}'`,
+    );
+    expect(invalidStatus.status).not.toBe(0);
+    expect(invalidStatus.output).toContain('Project_status_allowed');
+
+    const invalidEmail = psql(
+      `UPDATE core."Account" SET email = upper(email) WHERE email = '${account.email}'`,
+    );
+    expect(invalidEmail.status).not.toBe(0);
+    expect(invalidEmail.output).toContain('Account_email_lower');
+
+    const inviteEmail = credentials().email;
+    await invite(client, csrf, inviteEmail);
+    for (const [sql, constraint] of [
+      [`UPDATE core."Invite" SET email = upper(email) WHERE email = '${inviteEmail}'`, 'Invite_email_lower'],
+      [`UPDATE core."Membership" SET role = 'owner' WHERE "accountId" = '${signUp.body.data.id}'`, 'Membership_role_allowed'],
+      ...["''", "repeat('x', 121)"].map((name) => [
+        `UPDATE projects."Project" SET name = ${name} WHERE id = '${projectId}'`, 'Project_name_length',
+      ]),
+    ]) {
+      const invalid = psql(sql);
+      expect(invalid.status, constraint).not.toBe(0);
+      expect(invalid.output).toContain(constraint);
+    }
+  });
+
   // Audit: the API must use migrated schemas, without a business-to-business foreign key.
   // A missing move or an accidental relation fails the catalog contract; the id test owns
   // defaults, not namespaces or migration replay. This uses the existing Docker boundary.
