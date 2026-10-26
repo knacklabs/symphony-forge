@@ -2,7 +2,7 @@
 
 The app has a React web app, a NestJS API, and Postgres. Nx runs the builds and type checks.
 The shell uses the neutral shadcn/ui theme. Apply the app's approved design in its own story.
-`apps/web/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
+`libs/shared/ui/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
 
 ## Run it
 
@@ -55,10 +55,12 @@ New apps receive this code. An upgrade leaves existing app files and their sign-
 
 ## How it works
 
-`apps/web` holds routes and feature folders. Project hooks use TanStack Query and the typed API
-client. Components use the hooks, without direct HTTP calls. React Compiler memoizes components, so the code has
-no `useMemo`, `useCallback` or `React.memo` outside `components/ui`. Each route has an error page,
-so a crash on one screen leaves the other screens working. `libs/auth` owns sign-in and account
+`apps/web` holds the route table, app shell and theme CSS. Module screens and their hooks live in each
+module's `web` library. The API client, query client and route error page live in `libs/core/web`.
+`libs/shared/ui` holds shadcn/ui and shared screen parts. Components use the hooks, without direct
+HTTP calls. React Compiler memoizes components, so the code has no `useMemo`, `useCallback` or
+`React.memo` outside `libs/shared/ui/src/components/ui`. Each route has an error page, so a crash
+on one screen leaves the other screens working. `libs/auth` owns sign-in and account
 tables. `libs/projects` owns example records and project tables. Each module has a `contracts`
 library for schemas, types and its public service contract, and a `server` library for NestJS code.
 A module calls another through its contracts package. It does not import the other module's

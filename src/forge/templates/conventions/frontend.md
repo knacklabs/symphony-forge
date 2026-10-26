@@ -7,23 +7,35 @@ changes a screen.
 
 ```
 apps/web/src/
-  app.tsx           React Router routes
+  app.tsx           React Router route table
   main.tsx
-  features/
-    <feature>/
-      hooks/
-      pages/        screens for the feature
-  components/ui/    shadcn/ui components (generated; change them through shadcn)
-  components/       shared app components
-  lib/              API client and utilities
+  components/app-shell.tsx
+  index.css         app theme
+  pages/            not-found and settings screens
+libs/<module>/web/src/
+  hooks/
+  pages/            screens for the module
+libs/core/web/src/
+  api-client.ts
+  query-client.ts
+  route-error-page.tsx
+libs/shared/ui/src/
+  components/ui/    shadcn/ui components
+  components/       shared screen parts
+  hooks/
+  lib/utils.ts
 ```
 
 An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 Each module's error codes, user messages, request schemas and types live in its contracts library.
-General helpers live in `libs/shared/util`, imported through `@app/shared-util`.
-Use one fetch wrapper for the base URL and auth header. It unwraps the response envelope,
+General helpers live in `libs/shared/util`, imported through `@app/shared-util`. Shared screen parts
+live in `libs/shared/ui`, imported through `@app/shared-ui/components/*`. Add shadcn/ui components with
+`npx shadcn@4.21.4 add <name> --cwd libs/shared/ui` when the app has that library. Use one fetch
+wrapper from `libs/core/web` for the base URL and auth header. It unwraps the response envelope,
 throws errors, and sends an `x-correlation-id` header.
+Module web libraries use other modules only through their contracts; they do not import another
+module's web or server library.
 
 Start with React Router for the app shell, sign-in, protected routes, and 404/403
 pages.
@@ -51,7 +63,8 @@ already caches it and tracks loading and errors.
 ## Components
 
 - React Compiler is on (`babel-plugin-react-compiler` in the Vite config) and memoizes. Do not add
-  `useMemo`, `useCallback` or `React.memo`. The shadcn/ui copies in `components/ui/` keep theirs.
+  `useMemo`, `useCallback` or `React.memo`. The shadcn/ui copies in
+  `libs/shared/ui/src/components/ui/` keep theirs.
 - Pass layout content as `children`.
 - Build parts that share state as a compound component: one parent holds the state in a context,
   and its parts (`<Filters>`, `<Filters.Status>`) read it.

@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { formatMoney } from './index';
+import { formatDateTime, formatMoney } from './index';
 
-// Audit: this pure-logic table owns precision, currency digits and invalid input.
+// Audit: these pure-logic cases own time zones, precision, currency digits and invalid input.
 // Float conversion loses large-value precision; fixed digits break JPY and KWD.
 // Init/sync owns delivery; these cases exercise the real helper without a test seam.
 describe('format helpers', () => {
+  it('shows one instant in each person’s time zone', () => {
+    expect(formatDateTime('2026-10-24T20:30:00.000Z', 'Asia/Kolkata')).toBe('2026-10-25 02:00');
+    expect(formatDateTime('2026-10-24T20:30:00.000Z', 'America/New_York')).toBe('2026-10-24 16:30');
+  });
+
   it("formats exact decimal money with each currency's own fraction digits", () => {
     for (const [amount, currency, expected] of [
       ['1234.5600', 'USD', 'USD 1,234.56'],

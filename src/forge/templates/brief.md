@@ -355,7 +355,7 @@ same fault. A guard is a fix only when it handles a valid state.
 Do not hard-code expected values to make tests pass. Do not add a branch that detects a test.
 Do not add a silent default that hides a broken rule.
 
-In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new UI component library and a new file outside components/ui/ named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
+In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds

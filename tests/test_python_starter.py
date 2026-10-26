@@ -17,14 +17,22 @@ pytest_plugins = ("test_notes_first_discovery",)
 from test_setup import _fresh_client
 from test_defaults_formats import DOWNLOAD_FLOW, FORMAT_FLOW, PYTHON_CSV_API_CASES
 from test_defaults_organisations import PYTHON_ORGANISATION_API_CASES
-from test_starter_tree import BROWSER_FLOWS, _pnpm_root_importer, _require_cases, _run_live_starter
+from test_starter_tree import (
+    BROWSER_FLOWS,
+    PYTHON_REACT_PATHS,
+    _assert_first_commit_has,
+    _files_under,
+    _pnpm_root_importer,
+    _require_cases,
+    live_python_run,
+)
 
 STORY = "FORGE-FASTAPI-1"
 
 ROOT = Path(__file__).resolve().parents[1]
 REACT_STARTER = ROOT / "src/forge/templates/starter"
 PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
-REACT_PATHS = (Path("apps/web"), Path("libs/shared/util"), Path("tsconfig.base.json"), Path(".npmrc"))
+REACT_PATHS = PYTHON_REACT_PATHS
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 API_SECURITY_TESTS = (
     "production_forgot_password_does_not_log_a_reset_link",
@@ -43,28 +51,6 @@ PYTHON_GUIDANCE = (
     "A module uses another module only through its public service, never through its tables.",
     "The tests run import-linter, so an import of another module's internal files fails them.",
 )
-
-
-def _files_under(path: Path):
-    if path.is_file():
-        return [path]
-    return sorted(candidate for candidate in path.rglob("*") if candidate.is_file())
-
-
-def _assert_first_commit_has(client: Path, source: Path, target: Path):
-    files = _files_under(source)
-    assert files, f"missing starter files under {source}"
-    [first_commit] = subprocess.run(
-        ["git", "rev-list", "HEAD"], cwd=client, capture_output=True, text=True, check=True
-    ).stdout.splitlines()
-    for source_file in files:
-        relative = source_file.relative_to(source) if source.is_dir() else Path(source.name)
-        destination = target / relative if source.is_dir() else target
-        copied = subprocess.run(
-            ["git", "show", f"{first_commit}:{destination.as_posix()}"],
-            cwd=client, capture_output=True, check=True,
-        ).stdout
-        assert copied == source_file.read_bytes(), destination
 
 
 def _assert_python_guidance(client: Path):
@@ -187,13 +173,7 @@ def _assert_python_tree(client: Path):
 
 @pytest.fixture(scope="module")
 def live_python_starter(tmp_path_factory):
-    if not shutil.which("uv"):
-        pytest.skip("uv is required for the Python starter smoke run")
-    sources = tuple((REACT_STARTER / rel, rel) for rel in REACT_PATHS) + (
-        (PYTHON_STARTER, Path(".")),
-        (ROOT / "src/forge/templates/skeleton/.dockerignore", Path(".dockerignore")),
-    )
-    return _run_live_starter(tmp_path_factory, sources, ("GET /health returned 200",))
+    return live_python_run(tmp_path_factory)
 
 
 @pytest.mark.platform
@@ -417,6 +397,6 @@ def test_3_the_tests_fail_when_the_api_changes_a_field_the_web_app_uses(case, re
         checked = _run_api_types_and_typecheck(folder)
         output = checked.stdout + checked.stderr
         assert checked.returncode != 0, output
-        assert re.search(r"apps[/\\]+web[/\\]+src[/\\]+features[/\\]+projects[/\\]+", output), output
+        assert re.search(r"libs[/\\]+projects[/\\]+web[/\\]+src[/\\]+", output), output
     finally:
         schema_path.write_text(original, encoding="utf-8")

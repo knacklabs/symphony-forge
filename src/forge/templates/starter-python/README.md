@@ -2,7 +2,7 @@
 
 The app has a FastAPI API, a React web app, and Postgres. The API uses SQLAlchemy and Alembic.
 The shell uses the neutral shadcn/ui theme. Apply the app's approved design in its own story.
-`apps/web/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
+`libs/shared/ui/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
 
 ## Run it
 
@@ -46,11 +46,12 @@ company, people, and records. No data migration is needed.
 
 ## How it works
 
-`apps/web` holds routes and feature folders. Project hooks use TanStack Query and the typed API
-client. Components use the hooks and make no direct HTTP calls. React Compiler memoizes components.
-
-The code has no `useMemo`, `useCallback`, or `React.memo` outside `components/ui`. Each route has
-an error page. A crash on one screen leaves the other screens usable.
+`apps/web` holds the route table, app shell and theme CSS. Module screens and their hooks live in each
+module's `web` library. `libs/core/web` holds the API client, query client and route error page.
+`libs/shared/ui` holds shadcn/ui and shared screen parts. Components use the hooks and make no
+direct HTTP calls. React Compiler memoizes components, so the code has no `useMemo`, `useCallback`,
+or `React.memo` outside `libs/shared/ui/src/components/ui`. Each route has an error page. A crash
+on one screen leaves the other screens usable.
 
 The `app.auth` module owns sign-in and account tables. The `app.projects` module owns example
 records and project tables. Each module exports its public service from `__init__.py`. A module

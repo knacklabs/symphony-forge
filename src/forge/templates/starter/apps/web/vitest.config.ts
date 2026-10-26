@@ -13,7 +13,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', '../../libs/shared/util/src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', '../../libs/*/*/src/**/*.test.{ts,tsx}'],
     reporters: ['default', 'junit'],
     outputFile: { junit: '../../test-results/formats.xml' },
     setupFiles: ['./vitest.setup.ts'],

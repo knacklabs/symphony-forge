@@ -1,0 +1,27 @@
+{
+  "name": "@app/shared-ui",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    "./components/ui/*": {
+      "@app/source": "./src/components/ui/*.tsx",
+      "types": "./src/components/ui/*.tsx",
+      "default": "./src/components/ui/*.tsx"
+    },
+    "./lib/utils": {
+      "@app/source": "./src/lib/utils.ts",
+      "types": "./src/lib/utils.ts",
+      "default": "./src/lib/utils.ts"
+    },
+    "./hooks/*": {
+      "@app/source": "./src/hooks/*.ts",
+      "types": "./src/hooks/*.ts",
+      "default": "./src/hooks/*.ts"
+    },
+    "./components/*": {
+      "@app/source": "./src/components/*.tsx",
+      "types": "./src/components/*.tsx",
+      "default": "./src/components/*.tsx"
+    }
+  }
+}

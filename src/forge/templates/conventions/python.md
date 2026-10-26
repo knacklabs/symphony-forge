@@ -15,8 +15,11 @@ apps/api/
   app/auth/                  sign-in: __init__.py, models.py, schema.py, routes.py, service.py, mail.py
   app/projects/              example records: __init__.py, models.py, schema.py, routes.py, service.py
   tests/                     pytest HTTP tests against the running API
-apps/web/                    the React starter's web app and Playwright flows
+apps/web/                    route table, app shell, theme CSS and Playwright flows
 libs/<module>/contracts/     zod schemas and types, exported as @app/<module>-contracts
+libs/<module>/web/           module screens and hooks, exported as @app/<module>-web
+libs/core/web/               API client, query client and route error page
+libs/shared/ui/              shadcn/ui components and shared screen parts
 libs/shared/api-types/       openapi.json and src/api-types.ts, exported as @app/shared-api-types
 libs/shared/util/            general helpers copied from the TypeScript starter
 pnpm-workspace.yaml          apps/web and libs/*/*; Python dependencies stay in uv
@@ -26,6 +29,9 @@ Dockerfile, .env.example     one image; dummy values for every variable
 ```
 
 An app made before this layout keeps its own folders and schema; follow the folders it has.
+
+The Python API stays in `apps/api`. Its React app uses the same module web libraries, shared UI
+and core web libraries as the TypeScript starter. OpenAPI types stay in `libs/shared/api-types`.
 
 ## Modules
 
