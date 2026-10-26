@@ -3,7 +3,6 @@
 import subprocess
 
 import httpx
-
 from test_api import credentials, sign_up
 from test_soft_delete import psql
 
