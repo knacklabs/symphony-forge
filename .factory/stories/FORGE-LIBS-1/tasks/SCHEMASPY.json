@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-LIBS-1-SCHEMASPY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T06:06:09.108539+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "f3f3be4334accf4a515c3c35808bfc381cf23d21",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
