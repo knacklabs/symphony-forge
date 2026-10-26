@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner chose to keep the paging API and the projects screen in one part, because the screen in both starters calls the list API and they cannot merge apart",
   "branch": "task/FORGE-FEATURE-1-PAGING",
   "part_line_limit": 400,
   "round": 2,
