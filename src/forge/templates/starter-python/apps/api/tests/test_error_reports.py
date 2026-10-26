@@ -58,7 +58,7 @@ def _report_contexts(logs: str, error_id: str) -> list[Mapping[str, object]]:
 
 def test_an_api_crash_writes_one_error_report(client: httpx.Client) -> None:
     column = f"email_before_crash_{uuid4().hex}"
-    _run_psql(f'ALTER TABLE account RENAME COLUMN email TO "{column}"')
+    _run_psql(f'ALTER TABLE core.account RENAME COLUMN email TO "{column}"')
     try:
         response = client.post(
             "/api/v1/auth/sign-up",
@@ -84,7 +84,7 @@ def test_an_api_crash_writes_one_error_report(client: httpx.Client) -> None:
         assert "email_before_crash" not in logs
         assert "does not exist" not in logs
     finally:
-        _run_psql(f'ALTER TABLE account RENAME COLUMN "{column}" TO email')
+        _run_psql(f'ALTER TABLE core.account RENAME COLUMN "{column}" TO email')
 
 
 def test_accepts_a_public_web_error_report_and_logs_only_its_safe_fields(

@@ -65,16 +65,23 @@ def test_a_new_row_gets_a_time_ordered_id_and_an_update_sets_its_last_changed_ti
         "change_record",
     )
     for table in tables:
+        schema = (
+            "projects"
+            if table == "project"
+            else "history"
+            if table == "change_record"
+            else "core"
+        )
         versions = psql(
             "SELECT CASE WHEN count(*) > 0 AND "
             "count(*) FILTER (WHERE uuid_extract_version(id) IS DISTINCT FROM 7) = 0 "
-            f"THEN 'all-v7' ELSE 'invalid-ids' END FROM {table}"
+            f"THEN 'all-v7' ELSE 'invalid-ids' END FROM {schema}.{table}"
         )
         assert versions.returncode == 0, versions.stderr
         assert "all-v7" in versions.stdout, (table, versions.stdout)
         default = psql(
             "SELECT column_default FROM information_schema.columns "
-            f"WHERE table_schema = 'public' AND table_name = '{table}' "
+            f"WHERE table_schema = '{schema}' AND table_name = '{table}' "
             "AND column_name = 'id'"
         )
         assert default.returncode == 0, default.stderr
@@ -83,8 +90,8 @@ def test_a_new_row_gets_a_time_ordered_id_and_an_update_sets_its_last_changed_ti
     # No clock manipulation or delay: this update is a later transaction.
     updated = psql(
         "WITH previous AS MATERIALIZED ("
-        f"SELECT id, updated_at_utc FROM project WHERE id = '{project_id}') "
-        "UPDATE project SET name = 'Changed through SQL' FROM previous "
+        f"SELECT id, updated_at_utc FROM projects.project WHERE id = '{project_id}') "
+        "UPDATE projects.project SET name = 'Changed through SQL' FROM previous "
         "WHERE project.id = previous.id RETURNING CASE "
         "WHEN project.updated_at_utc > previous.updated_at_utc "
         "THEN 'advanced' ELSE 'unchanged' END"

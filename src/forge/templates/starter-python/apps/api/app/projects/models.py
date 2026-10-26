@@ -15,15 +15,16 @@ class Project(Base):
         Index("idx_project_created_by_account_id", "created_by_account_id"),
         Index("idx_project_modified_by_account_id", "modified_by_account_id"),
         Index("idx_project_deleted_by_account_id", "deleted_by_account_id"),
+        {"schema": "projects"},
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     organisation_id: Mapped[UUID] = mapped_column(
-        ForeignKey("organisation.id", ondelete="RESTRICT"), nullable=False
+        ForeignKey("core.organisation.id", ondelete="RESTRICT"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     status: Mapped[ProjectStatus] = mapped_column(
-        Enum(ProjectStatus, name="project_status", native_enum=True),
+        Enum(ProjectStatus, name="project_status", native_enum=True, schema="projects"),
         nullable=False,
         default=ProjectStatus.active,
     )
@@ -34,12 +35,12 @@ class Project(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     created_by_account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="RESTRICT"), nullable=False
+        ForeignKey("core.account.id", ondelete="RESTRICT"), nullable=False
     )
     modified_by_account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="RESTRICT"), nullable=False
+        ForeignKey("core.account.id", ondelete="RESTRICT"), nullable=False
     )
     deleted_at_utc: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     deleted_by_account_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("account.id", ondelete="RESTRICT")
+        ForeignKey("core.account.id", ondelete="RESTRICT")
     )

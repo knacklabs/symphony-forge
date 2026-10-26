@@ -17,14 +17,15 @@ class ChangeRecord(Base):
             "created_at_utc",
         ),
         Index("idx_change_record_actor_account_id", "actor_account_id"),
+        {"schema": "history"},
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     organisation_id: Mapped[UUID] = mapped_column(
-        ForeignKey("organisation.id", ondelete="RESTRICT")
+        ForeignKey("core.organisation.id", ondelete="RESTRICT")
     )
     actor_account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="RESTRICT")
+        ForeignKey("core.account.id", ondelete="RESTRICT")
     )
     actor_email: Mapped[str] = mapped_column(String(254))
     action: Mapped[str] = mapped_column(String(40))

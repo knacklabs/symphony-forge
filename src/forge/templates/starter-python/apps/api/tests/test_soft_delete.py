@@ -57,7 +57,7 @@ def test_the_database_refuses_a_hard_delete_of_a_project(
 ) -> None:
     project_id, csrf = create_project(client)
 
-    hard_delete = psql(f"DELETE FROM project WHERE id = '{project_id}'")
+    hard_delete = psql(f"DELETE FROM projects.project WHERE id = '{project_id}'")
     assert hard_delete.returncode != 0
     assert "are soft deleted" in hard_delete.stdout + hard_delete.stderr
     retained_by_api = client.get(f"/api/v1/projects/{project_id}")
@@ -69,7 +69,7 @@ def test_the_database_refuses_a_hard_delete_of_a_project(
     assert soft_delete.status_code == 200, soft_delete.text
     assert client.get(f"/api/v1/projects/{project_id}").status_code == 404
     retained_in_database = psql(
-        "SELECT CASE WHEN EXISTS (SELECT 1 FROM project "
+        "SELECT CASE WHEN EXISTS (SELECT 1 FROM projects.project "
         f"WHERE id = '{project_id}' AND deleted_at_utc IS NOT NULL) "
         "THEN 'retained' ELSE 'missing' END"
     )
