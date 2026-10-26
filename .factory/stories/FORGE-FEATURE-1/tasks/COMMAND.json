@@ -1,6 +1,13 @@
 {
   "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
   "branch": "task/FORGE-FEATURE-1-COMMAND",
+  "chat": {
+    "approval": "d87b61d57f1123509a4f6eaad642b89b43adac93703229702877cf41663496af",
+    "claude": null,
+    "conversation": "01a1792c-2296-73a1-b755-e78f9f60d519",
+    "head": null,
+    "start": "d5d41a7e04ad4a889a13481afc1b1ca884ef235e"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
