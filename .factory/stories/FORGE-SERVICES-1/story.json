@@ -1,10 +1,18 @@
 {
   "doc": "plans/FORGE-SERVICES-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-26T10:34:06.836711+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T10:46:15.685736+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-26T10:49:27.917329+00:00",
+      "step": "read"
     }
   ],
   "title": "Client apps can deploy several services from one repo",
