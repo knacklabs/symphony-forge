@@ -39,7 +39,7 @@ export default ts.config(
             message: 'A module web library uses another module only through its contracts.',
           },
           {
-            group: ['../../../*/web/**', '../../../*/server/**'],
+            regex: '^(?:\\.\\./){3,}[^/]+/(?:web|server)/',
             message: 'A module web library uses another module only through its contracts.',
           },
         ],

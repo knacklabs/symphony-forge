@@ -262,6 +262,7 @@ def test_3_the_python_web_app_uses_the_same_libraries(repo, gh, tmp_path, tmp_pa
     # A missing web copy, changed Python API file, or removed lint pattern breaks the contract.
     # Existing Python starter coverage checks its packaged tree and API types, but not Python web
     # boundary failures. This uses Forge init, its first commit, and the live starter.
+    # Pages and hooks add parent segments to relative imports; root-only probes miss that bypass.
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "python")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
 
@@ -300,6 +301,10 @@ def test_3_the_python_web_app_uses_the_same_libraries(repo, gh, tmp_path, tmp_pa
         ("libs/projects/web/src/reach-in.ts", "import '@app/organisations-web';\n"),
         ("libs/projects/web/src/reach-in.ts",
          "import '../../../organisations/web/src/index';\n"),
+        ("libs/projects/web/src/pages/reach-in.ts",
+         "import '../../../../organisations/web/src/index';\n"),
+        ("libs/projects/web/src/hooks/reach-in.ts",
+         "import '../../../../auth/server/src/index';\n"),
     )
     for relative, source in cases:
         added_file = folder / relative

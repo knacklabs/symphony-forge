@@ -22,7 +22,7 @@ PYTHON_CSV_API_CASES = (
 )
 HAND_FORMAT_CASES = {
     "a web file formats a date by hand": (
-        Path("apps") / "web" / "src" / "features" / "hand-format.ts",
+        Path("libs") / "projects" / "web" / "src" / "pages" / "hand-format.tsx",
         "export const today = new Intl.DateTimeFormat('en').format(new Date());\n",
     ),
     "an API module formats money by hand": (
@@ -30,7 +30,7 @@ HAND_FORMAT_CASES = {
         "export const total = (1234).toLocaleString();\n",
     ),
     "a web file formats cents by hand": (
-        Path("apps") / "web" / "src" / "features" / "hand-money.ts",
+        Path("libs") / "projects" / "web" / "src" / "hooks" / "hand-money.tsx",
         "export const total = (1234 / 100).toFixed(2);\n",
     ),
 }
@@ -39,7 +39,12 @@ CSV_WRITER = STARTER / "libs" / "core" / "server" / "src" / "common" / "csv.ts"
 
 
 def _app_sources():
-    for pattern in ("apps/*/src/**/*.ts", "apps/*/src/**/*.tsx", "libs/*/*/src/**/*.ts"):
+    for pattern in (
+        "apps/*/src/**/*.ts",
+        "apps/*/src/**/*.tsx",
+        "libs/*/*/src/**/*.ts",
+        "libs/*/*/src/**/*.tsx",
+    ):
         for path in STARTER.glob(pattern):
             if not {"node_modules", "dist"}.intersection(path.parts):
                 yield path
@@ -87,7 +92,8 @@ def test_4_each_table_exports_csv_from_one_shared_code_path(tmp_path_factory):
     writers = [path.relative_to(STARTER).as_posix() for path in _app_sources()
                if "text/csv" in path.read_text(encoding="utf-8")]
     assert writers == [CSV_WRITER.relative_to(STARTER).as_posix()], writers
-    pages = [path for path in (STARTER / "apps" / "web" / "src").rglob("*-page.tsx")
+    web_sources = [STARTER / "apps" / "web" / "src", *STARTER.glob("libs/*/web/src")]
+    pages = [path for source in web_sources for path in source.rglob("*-page.tsx")
              if "<Table" in path.read_text(encoding="utf-8")]
     assert pages, "no list screen renders a table"
     for page in pages:
