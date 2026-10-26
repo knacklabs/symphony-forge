@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
+DEFAULT_CURRENCY = "INR"
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -9,9 +11,14 @@ class Settings:
     app_env: str
     app_origin: str
     port: int
+    app_companies: str
 
 
 def load_settings() -> Settings:
+    app_companies = os.environ.get("APP_COMPANIES", "many")
+    if app_companies not in {"one", "many"}:
+        raise RuntimeError("APP_COMPANIES must be one or many.")
+
     app_env = os.environ.get("APP_ENV", "")
     if not app_env:
         raise RuntimeError("APP_ENV must be set.")
@@ -55,5 +62,16 @@ def load_settings() -> Settings:
         raise RuntimeError("PORT must be a valid TCP port.")
 
     return Settings(
-        database_url=database_url, app_env=app_env, app_origin=app_origin, port=port
+        database_url=database_url,
+        app_env=app_env,
+        app_origin=app_origin,
+        port=port,
+        app_companies=app_companies,
     )
+
+
+def load_admin_credentials() -> dict[str, str]:
+    return {
+        "email": os.environ.get("ADMIN_EMAIL", ""),
+        "password": os.environ.get("ADMIN_PASSWORD", ""),
+    }

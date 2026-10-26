@@ -20,14 +20,12 @@
   },
   "include": [
     "src",
+    "../../libs/*/web/src/**/*",
+    "../../libs/shared/ui/src/**/*",
     "e2e",
     "vite.config.ts",
     "playwright.config.ts",
     "vitest.config.ts"
   ],
-  "references": [
-    {
-      "path": "../../libs/shared"
-    }
-  ]
+  "references": []
 }

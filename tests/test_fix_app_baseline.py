@@ -15,6 +15,7 @@ BASELINE_SHA256 = "2f6876a725e67c0576437824ca67dc946d77a9566b4c312e6df764f5514e6
 
 @pytest.mark.platform
 def test_1_installed_sync_ships_app_baseline_to_both_agents(repo, tmp_path):
+    # Each package must run its own installed Forge, without the outer checkout's PYTHONPATH.
     # Pin the intended text so a shared source and package change cannot silently rewrite it.
     source = (ROOT / ".codex/skills/app-baseline/SKILL.md").read_text(
         encoding="utf-8").encode("utf-8")
@@ -24,7 +25,8 @@ def test_1_installed_sync_ships_app_baseline_to_both_agents(repo, tmp_path):
                    check=True, capture_output=True, text=True)
 
     repo.git("checkout", "-q", "-b", "fix/app-baseline")
-    repo.write("forge.toml", 'version = "v1.2.6"\ntest = "true"\n')
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\ntest = "true"\n')
     packages = (next(dist.glob("*.whl")), next(dist.glob("*.tar.gz")), ROOT)
     for kind, package in zip(("wheel", "sdist", "editable"), packages):
         env = tmp_path / kind

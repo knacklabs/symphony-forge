@@ -17,19 +17,22 @@
   ],
   "references": [
     {
-      "path": "../../libs/history"
+      "path": "../../libs/auth/contracts"
     },
     {
-      "path": "../../libs/organisations"
+      "path": "../../libs/auth/server"
     },
     {
-      "path": "../../libs/core"
+      "path": "../../libs/core/server"
     },
     {
-      "path": "../../libs/auth"
+      "path": "../../libs/history/server"
     },
     {
-      "path": "../../libs/projects"
+      "path": "../../libs/organisations/server"
+    },
+    {
+      "path": "../../libs/projects/server"
     }
   ]
 }

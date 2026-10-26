@@ -2,7 +2,7 @@
 
 The app has a FastAPI API, a React web app, and Postgres. The API uses SQLAlchemy and Alembic.
 The shell uses the neutral shadcn/ui theme. Apply the app's approved design in its own story.
-`apps/web/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
+`libs/shared/ui/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
 
 ## Run it
 
@@ -17,7 +17,7 @@ node scripts/test.mjs
 ```
 
 This command installs the pinned pnpm packages, Python packages, and Chromium. It starts a new
-Postgres database and two API instances. It runs lint, format, and type checks, pytest, Vitest, and
+Postgres database and three API instances. It runs lint, format, and type checks, pytest, Vitest, and
 Playwright. It removes the containers and data after the run, even when a test fails. Reports go
 to `test-results/api.xml` and `test-results/browser.xml`.
 
@@ -26,20 +26,41 @@ to `test-results/api.xml` and `test-results/browser.xml`.
 The app serves the web app and API at port 3000. `/health` checks readiness. `/api/docs` lists the
 API endpoints.
 
+## Set up a one-company app
+
+Set `APP_COMPANIES=one` in the API environment to close public sign-up. If you do not set this
+value, the app uses `many` and keeps public sign-up open.
+
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the API environment. From `apps/api`, run this command
+to create the company and its first account as the admin:
+
+```sh
+uv run --no-sync python -m app.setup_company
+```
+
+Run the command once. It does not check whether a company already exists. A second run with a new
+email creates another company.
+
+Set `APP_COMPANIES=many` to open public sign-up later. Restart the API. The app keeps the same
+company, people, and records. No data migration is needed.
+
 ## How it works
 
-`apps/web` holds routes and feature folders. Project hooks use TanStack Query and the typed API
-client. Components use the hooks and make no direct HTTP calls. React Compiler memoizes components.
-
-The code has no `useMemo`, `useCallback`, or `React.memo` outside `components/ui`. Each route has
-an error page. A crash on one screen leaves the other screens usable.
+`apps/web` holds the route table, app shell and theme CSS. Module screens and their hooks live in each
+module's `web` library. `libs/core/web` holds the API client, query client and route error page.
+`libs/shared/ui` holds shadcn/ui and shared screen parts. Components use the hooks and make no
+direct HTTP calls. React Compiler memoizes components, so the code has no `useMemo`, `useCallback`,
+or `React.memo` outside `libs/shared/ui/src/components/ui`. Each route has an error page. A crash
+on one screen leaves the other screens usable.
 
 The `app.auth` module owns sign-in and account tables. The `app.projects` module owns example
 records and project tables. Each module exports its public service from `__init__.py`. A module
 uses another module only through its public service. Modules do not import each other's internal
 files or query their tables. `import-linter` contracts make an internal import fail the tests.
 
-`libs/shared` keeps the web form zod schemas. It reads API types from the `apps/api` OpenAPI schema.
+Each module's form schemas and public types live in `libs/<module>/contracts`. The shared API types
+come from `apps/api` OpenAPI in `libs/shared/api-types`, and general helpers live in
+`libs/shared/util`.
 
 Passwords use scrypt. Postgres holds sessions, reset tokens, accounts, and projects. Each project
 query checks the account. Delete keeps the audit record.

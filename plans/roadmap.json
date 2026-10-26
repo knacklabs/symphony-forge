@@ -390,6 +390,30 @@
       "title": "Build a client feature from the starter in one step",
       "status": "pending",
       "order": 97
+    },
+    {
+      "key": "FORGE-DATABASE-1",
+      "title": "Database rules for every client app",
+      "status": "pending",
+      "order": 97
+    },
+    {
+      "key": "FORGE-SINGLECO-1",
+      "title": "One-company client apps",
+      "status": "pending",
+      "order": 97
+    },
+    {
+      "key": "FORGE-LIBS-1",
+      "title": "Client apps can split into services and frontends later without a rewrite",
+      "status": "pending",
+      "order": 98
+    },
+    {
+      "key": "FORGE-BAR-1",
+      "title": "Clients choose which added-work review notes hold their work",
+      "status": "pending",
+      "order": 99
     }
   ],
   "epics": [

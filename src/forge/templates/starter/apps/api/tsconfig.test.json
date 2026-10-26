@@ -5,6 +5,7 @@
     "moduleResolution": "Node16",
     "noEmit": true,
     "composite": false,
+    "experimentalDecorators": true,
     "types": [
       "node",
       "vitest/globals"

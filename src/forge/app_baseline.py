@@ -66,5 +66,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 
     skill = sync._synced_text(".codex/skills/app-baseline/SKILL.md",
                               "skills/app-baseline/SKILL.md")
-    return {f"{host}/skills/app-baseline/SKILL.md": skill
-            for host in (".claude", ".codex")}
+    database = (sync.TEMPLATES / "skills/database/SKILL.md").read_text(encoding="utf-8")
+    return {f"{host}/skills/{name}/SKILL.md": text
+            for host in (".claude", ".codex")
+            for name, text in (("app-baseline", skill), ("database", database))}

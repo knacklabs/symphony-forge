@@ -3,16 +3,16 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { FolderKanban, HistoryIcon, Search, Settings, UserRound, Users, Sun, Moon, Monitor } from 'lucide-react';
 import type { ComponentProps } from 'react';
 import { toast } from 'sonner';
-import type { Account } from '@app/shared';
-import { useTheme } from '@/components/theme-provider';
-import { useSignOut } from '@/features/auth/hooks/auth-hooks';
-import { Button } from '@/components/ui/button';
+import type { Account } from '@app/auth-contracts';
+import { useTheme } from '@app/shared-ui/components/theme-provider';
+import { useSignOut } from '@app/auth-web';
+import { Button } from '@app/shared-ui/components/ui/button';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
-} from '@/components/ui/breadcrumb';
+} from '@app/shared-ui/components/ui/breadcrumb';
 import {
   CommandDialog,
   CommandEmpty,
@@ -20,7 +20,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from '@app/shared-ui/components/ui/command';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,8 +31,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
+} from '@app/shared-ui/components/ui/dropdown-menu';
+import { Separator } from '@app/shared-ui/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -47,7 +47,7 @@ import {
   SidebarRail,
   SidebarTrigger,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from '@app/shared-ui/components/ui/sidebar';
 
 function AppSidebar({ account, ...props }: ComponentProps<typeof Sidebar> & { account: Account }) {
   const pathname = useLocation().pathname;

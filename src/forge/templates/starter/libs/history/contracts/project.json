@@ -1,0 +1,9 @@
+{
+  "name": "@app/history-contracts",
+  "projectType": "library",
+  "sourceRoot": "libs/history/contracts/src",
+  "tags": [
+    "type:contracts",
+    "scope:history"
+  ]
+}

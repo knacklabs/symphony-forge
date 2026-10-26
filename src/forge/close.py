@@ -289,7 +289,9 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
         finding = previous["findings"][number - 1]
         requested[score.identity(finding["file"], finding["title"])] = because
-    evidence = (review.functional_check(top, f"origin/{default}"),
+    evidence = ("\n\n".join(part for part in (
+                    review.before_coding(top, base, head),
+                    review.functional_check(top, f"origin/{default}")) if part),
                 review.proof_list(top, f"origin/{default}"))
     repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0
@@ -1055,14 +1057,16 @@ def _block(result: dict[str, Any], check: str) -> str:
         outcome = "follow-up" if finding.get("follow_up") else score.bar(score.of(finding))
         scores = score.of(finding)
         line = "Gain {}, Work {}, Harm {}".format(*scores) if scores else ""
+        is_blocking = n not in because and (
+            finding.get("required_done_when") or score.holds(finding, result.get("blocking_level")))
         note = (f"dismissed because {because[n]['because']}"
                 + (" (evidence from the base)" if because[n].get("from_base") else "")
                 if n in because
-                else "blocks the merge" if finding.get("required_done_when") or score.holds(finding, result.get("blocking_level"))
-                else line or finding.get("follow_up", "") if outcome in below
+                else "blocks the merge" if is_blocking
+                else finding.get("follow_up") or line if outcome in below
                 else "advisory: " + " ".join(score.strip(finding.get("body", "")).split()))
-        note += f"; {line}" if line and note != "blocks the merge" and note != line else ""
-        (blocking if note == "blocks the merge" else below[outcome] if n not in because and outcome in below
+        note += f"; {line}" if line and note != line else ""
+        (blocking if is_blocking else below[outcome] if n not in because and outcome in below
          else rest).append(f"- Finding {n} ({finding['priority']}): {finding['title']} "
                            f"({finding['file']}:{finding['line']}): {note}")
     if result["status"] == "reviewing":

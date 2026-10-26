@@ -121,7 +121,9 @@ $delegation
   waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
 - If close reports that the tests ran out of time, rerun the tests job or split the suite.
-  This timeout does not send the item to a worker. Node client tests get 30 minutes in CI.
+  This timeout does not send the item to a worker. Generated pull request and nightly test jobs
+  get 30 and 60 minutes, respectively. The nightly run uses the repo's groups and records one
+  combined result for the default branch after all groups finish.
 - Run any test command you start in the foreground and wait for it to finish. Never end your turn
   while a command you started still runs in the background. Commit your work before your turn ends:
   the review reads only what is committed.
@@ -333,6 +335,19 @@ $checks
 <!-- end -->
 ## Build simple
 
+Record this paragraph in an empty commit before you edit code:
+
+Before coding:
+Need: <the job or problem that needs this change>
+Simplest option: <the first rung of the ladder that works, and why>
+Existing code reused: <the existing code you will use, or none and why>
+
+Use `git commit --allow-empty` with that paragraph in the commit body. Keep the original
+three lines. Forge copies them into the pull request summary and gives them to the reviewer.
+If evidence changes your approach, explain the change in a later commit instead of rewriting
+the original lines. Add an abstraction layer only at the edge to an outside service.
+Keep business logic in the existing domain services and pure computation in helpers.
+
 Reproduce the bug before you change the code. Find the first place the code goes wrong.
 Fix it in the shared function that every affected caller uses. Check sibling callers for the
 same fault. A guard is a fix only when it handles a valid state.
@@ -340,22 +355,31 @@ same fault. A guard is a fix only when it handles a valid state.
 Do not hard-code expected values to make tests pass. Do not add a branch that detects a test.
 Do not add a silent default that hides a broken rule.
 
-In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new UI component library and a new file outside components/ui/ named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
+In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds
 a new query on another module's tables.
+Each module keeps its tables in its own Postgres schema, with organisation, account and sign-in
+tables in `core`. A link between business modules stores an indexed id without a foreign key
+and is checked through the other module's public service. Links within a module and links to
+core keep their foreign key. A review reports a foreign key between two business-module schemas.
 For new module calls and events, follow backend.md's "Call a service or send an event" rule.
 Existing code needs no conversion.
+
+In an app with a database, follow the database skill (.codex/skills/database/SKILL.md) for each
+table, column, index, constraint, migration or extension that you add. Existing tables stay as
+they are. A review holds new schema that breaks the skill.
 
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
-in @app/shared, export a table only with sendCsv from @app/core, and let crashes reach
+in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
 the one error report. An app without libs/organisations keeps the code it has.
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add
-with a zod schema in the shared package, through ZodValidationPipe, and document it from the
+with a zod schema in the module's contracts package, through ZodValidationPipe, and document it from the
 same schema, as the API convention says. Do not add class-validator rules or @ApiProperty to
 request input. Review flags new request input that no zod schema checks.
 

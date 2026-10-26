@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { AllExceptionsFilter, CommonModule, CsrfGuard, EnvelopeInterceptor, PrismaModule, validateEnvironment } from '@app/core';
-import { AuthModule, SessionGuard } from '@app/auth';
+import { AllExceptionsFilter, CommonModule, CsrfGuard, EnvelopeInterceptor, PrismaModule, validateEnvironment } from '@app/core-server';
+import { AuthModule, SessionGuard } from '@app/auth-server';
 import { HealthModule } from './health/health.module';
-import { ProjectsModule } from '@app/projects';
-import { OrganisationsModule } from '@app/organisations';
+import { ProjectsModule } from '@app/projects-server';
+import { HistoryModule } from '@app/history-server';
+import { OrganisationsModule } from '@app/organisations-server';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrganisationsModule } from '@app/organisations';
     AuthModule,
     ProjectsModule,
     OrganisationsModule,
+    HistoryModule,
     HealthModule,
   ],
   providers: [

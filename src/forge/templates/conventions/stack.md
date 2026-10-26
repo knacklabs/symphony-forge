@@ -15,7 +15,7 @@ already runs a different stack keeps its own.
 | Tests | Vitest, Supertest, Testing Library, Playwright | Unit and HTTP tests plus browser tests of user flows |
 | Workspace | Nx | One build tool for the web app and API; no Nx Cloud |
 | Package manager | pnpm through Corepack | The root package pins pnpm and the lockfile pins every dependency |
-| Modules | Nx libraries | Each business area owns its tables and exports a service |
+| Modules | Nx libraries | Each business area owns its tables and publishes contracts for other modules |
 | CI | Forge's generated `forge.yml` | Runs forge.toml's `test` command as the `tests` check |
 
 ## Layout
@@ -23,12 +23,16 @@ already runs a different stack keeps its own.
 ```
 apps/api/src/                 NestJS app entry, module wiring and health route (see backend.md)
 apps/web/src/                 React app (see frontend.md)
-libs/auth/src/                sign-in module, exported as @app/auth
-libs/projects/src/            example records module, exported as @app/projects
-libs/organisations/src/       organisations, roles and invites, exported as @app/organisations
-libs/history/src/             admin change history, exported as @app/history
-libs/core/src/                shared NestJS code
-libs/shared/src/              types and validators both apps use
+libs/auth/contracts/src/      sign-in schemas and types
+libs/auth/server/src/         sign-in module, exported as @app/auth-server
+libs/projects/contracts/src/  project schemas and types
+libs/projects/server/src/     project module, exported as @app/projects-server
+libs/organisations/contracts/src/ schemas, types and OrganisationsApi contract
+libs/organisations/server/src/ organisations, roles and invites, exported as @app/organisations-server
+libs/history/contracts/src/   history types and HistoryApi contract
+libs/history/server/src/      admin change history, exported as @app/history-server
+libs/core/server/src/         shared NestJS code, exported as @app/core-server
+libs/shared/util/src/         general helpers, exported as @app/shared-util
 apps/api/prisma/schema/       base.prisma plus one schema file per business module
 pnpm-workspace.yaml           the workspace package list
 pnpm-lock.yaml                exact dependency versions
@@ -37,6 +41,8 @@ Dockerfile                    the one deploy file (see deploy.md)
 .env.example                  every variable, with dummy values
 README.md                     how to run it, and a short plain-English "How it works"
 ```
+
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 The root `package.json` pins pnpm and has a `test` script for lint, type checks, API tests, hook
 tests and browser tests (see testing.md). Nx builds and type-checks the web and API apps and checks
@@ -72,6 +78,12 @@ advance. The story that needs one names it, with the Done-when item it serves.
 - Terraform, for the client's cloud infrastructure as code: add when a story's New moving parts names it.
 - OIDC sign-in through the client's identity provider: add when a story's New moving parts names it.
 - A monitoring stack (metrics, traces, dashboards): add when a story's New moving parts names it; until then the structured logs are the record.
+
+Modules use another module only through its contracts package. The server code stays inside its
+module library. The web app cannot import a server library.
+
+`OrganisationsApi`/`ORGANISATIONS_API` and `HistoryApi`/`HISTORY_API` are the public service
+contracts used across modules.
 
 The same goes for libraries an older scaffold installed on day one: a client-side state store and
 a generated API client each come with the story that needs them. Playwright arrives with the first

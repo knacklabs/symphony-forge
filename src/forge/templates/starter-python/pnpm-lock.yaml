@@ -132,11 +132,129 @@ importers:
 
   apps/web:
     dependencies:
-      '@app/shared':
+      '@app/auth-contracts':
         specifier: workspace:*
-        version: link:../../libs/shared
+        version: link:../../libs/auth/contracts
+      '@app/auth-web':
+        specifier: workspace:*
+        version: link:../../libs/auth/web
+      '@app/core-web':
+        specifier: workspace:*
+        version: link:../../libs/core/web
+      '@app/history-web':
+        specifier: workspace:*
+        version: link:../../libs/history/web
+      '@app/organisations-web':
+        specifier: workspace:*
+        version: link:../../libs/organisations/web
+      '@app/projects-web':
+        specifier: workspace:*
+        version: link:../../libs/projects/web
+      '@app/shared-ui':
+        specifier: workspace:*
+        version: link:../../libs/shared/ui
 
-  libs/shared: {}
+  libs/auth/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/auth/web:
+    dependencies:
+      '@app/auth-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@app/core-web':
+        specifier: workspace:*
+        version: link:../../core/web
+      '@app/shared-ui':
+        specifier: workspace:*
+        version: link:../../shared/ui
+
+  libs/core/web:
+    dependencies:
+      '@app/shared-ui':
+        specifier: workspace:*
+        version: link:../../shared/ui
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../shared/util
+
+  libs/history/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/history/web:
+    dependencies:
+      '@app/auth-contracts':
+        specifier: workspace:*
+        version: link:../../auth/contracts
+      '@app/core-web':
+        specifier: workspace:*
+        version: link:../../core/web
+      '@app/history-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@app/shared-ui':
+        specifier: workspace:*
+        version: link:../../shared/ui
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../shared/util
+
+  libs/organisations/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/organisations/web:
+    dependencies:
+      '@app/auth-contracts':
+        specifier: workspace:*
+        version: link:../../auth/contracts
+      '@app/core-web':
+        specifier: workspace:*
+        version: link:../../core/web
+      '@app/organisations-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@app/shared-ui':
+        specifier: workspace:*
+        version: link:../../shared/ui
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../shared/util
+
+  libs/projects/contracts:
+    dependencies:
+      '@app/shared-api-types':
+        specifier: workspace:*
+        version: link:../../shared/api-types
+
+  libs/projects/web:
+    dependencies:
+      '@app/core-web':
+        specifier: workspace:*
+        version: link:../../core/web
+      '@app/projects-contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@app/shared-ui':
+        specifier: workspace:*
+        version: link:../../shared/ui
+      '@app/shared-util':
+        specifier: workspace:*
+        version: link:../../shared/util
+
+  libs/shared/api-types: {}
+
+  libs/shared/ui: {}
+
+  libs/shared/util: {}
 
 packages:
 

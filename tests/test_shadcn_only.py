@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -22,9 +23,12 @@ REVIEW_RULE = (
     "neither is a library or component the default branch already has."
 )
 WORKER_RULE = (
-    "In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new UI component "
-    "library and a new file outside components/ui/ named like a shadcn/ui component. Review holds "
-    "a hand-built UI component unless a `Not shadcn: <why>` comment says why."
+    "In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, "
+    "add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a "
+    "new UI component library and a new file outside the app's shadcn components folder "
+    "(`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui "
+    "component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment "
+    "says why."
 )
 
 
@@ -39,8 +43,11 @@ def _commit_main(repo, tmp_path, message):
 def _shadcn_client(env, tmp_path, adopted):
     setup_client(env, tmp_path, adopted)
     repo = env.repo
-    (repo.path / "components.json").write_text("{}\n", encoding="utf-8")
-    button = repo.path / "apps/web/src/components/ui/button.tsx"
+    config = repo.path / ("components.json" if adopted else "libs/shared/ui/components.json")
+    config.parent.mkdir(parents=True, exist_ok=True)
+    config.write_text("{}\n", encoding="utf-8")
+    ui = Path("apps/web/src/components/ui") if adopted else Path("libs/shared/ui/src/components/ui")
+    button = repo.path / ui / "button.tsx"
     button.parent.mkdir(parents=True, exist_ok=True)
     button.write_text("export function Button() { return null; }\n", encoding="utf-8")
     if adopted:
@@ -58,10 +65,17 @@ def _fix(env, name, changes):
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
 def test_4_close_refuses_a_second_ui_library_and_shadcn_copies(env, tmp_path, adopted):
+    # Audit: this protects close's component-folder rule in both the new and old app layouts.
+    # A stale folder check could reject shadcn copies or allow hand-built component duplicates.
+    # Existing cases cover the old path only; this adds the library path while keeping adoption.
+    # The real Forge close command is the boundary, with no test-only seam.
     repo = _shadcn_client(env, tmp_path, adopted)
+    screens = Path("apps/web/src/features/orders") if adopted else Path("libs/projects/web/src/pages/orders")
+    button = screens / "Button.tsx"
+    ui = Path("apps/web/src/components/ui") if adopted else Path("libs/shared/ui/src/components/ui")
     item, where = _fix(env, "shadcn-only", {
         "apps/web/package.json": json.dumps({"devDependencies": {"@mui/material": "^7.0.0"}}),
-        "apps/web/src/features/orders/Button.tsx": "export function Button() { return null; }\n",
+        button.as_posix(): "export function Button() { return null; }\n",
     })
 
     refused = env.close(item)
@@ -69,19 +83,19 @@ def test_4_close_refuses_a_second_ui_library_and_shadcn_copies(env, tmp_path, ad
     assert refused.returncode == 1, output
     assert "This app uses shadcn/ui only, and this change adds" in output
     assert "@mui/material" in output
-    assert "apps/web/src/features/orders/Button.tsx" in output
+    assert button.as_posix() in output
     assert "npx shadcn@4.21.4 add <name>" in output
     assert f"then forge close {item}" in output
 
-    (where / "apps/web/src/features/orders/Button.tsx").unlink()
+    (where / button).unlink()
     (where / "apps/web/package.json").unlink()
     if adopted:
         (where / "package.json").write_text(
             json.dumps({"dependencies": {"antd": "^5.1.0"}}), encoding="utf-8")
-    dialog = where / "apps/web/src/components/ui/dialog.tsx"
+    dialog = where / ui / "dialog.tsx"
     dialog.parent.mkdir(parents=True, exist_ok=True)
     dialog.write_text("export function Dialog() { return null; }\n", encoding="utf-8")
-    table = where / "apps/web/src/features/orders/orders-table.tsx"
+    table = where / screens / "orders-table.tsx"
     table.parent.mkdir(parents=True, exist_ok=True)
     table.write_text("export function OrdersTable() { return null; }\n", encoding="utf-8")
     repo.git("add", "-A", cwd=where)
@@ -118,16 +132,22 @@ def test_4_close_refuses_a_second_ui_library_and_shadcn_copies(env, tmp_path, ad
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
 def test_5_review_holds_a_hand_built_component(env, tmp_path, monkeypatch, adopted):
     repo = _shadcn_client(env, tmp_path, adopted)
-    screen = repo.path / "apps/web/src/features/home.tsx"
+    # Audit: this protects the worker brief's shadcn command and the review rule for the app's
+    # current screen folder. A brief that still names the old location can put new code elsewhere.
+    # Existing tests cover the old app layout; this adds the module web library path through Forge.
+    # The real work and close commands are used, with only agent and review answers stubbed.
+    screens = Path("apps/web/src/features") if adopted else Path("libs/projects/web/src/pages")
+    screen = repo.path / screens / "home.tsx"
     screen.parent.mkdir(parents=True, exist_ok=True)
     screen.write_text("export function Home() { return <main>Old</main>; }\n", encoding="utf-8")
     _commit_main(repo, tmp_path, "Add a screen")
 
     (repo.path / "plans/roadmap.json").write_text('{"items": []}\n', encoding="utf-8")
     _commit_main(repo, tmp_path, "Prepare a story")
+    screen_path = (screens / "home.tsx").as_posix()
     doc = (STORY_DOC.replace("1. A shopper can save a basket.",
                              "1. The home screen uses shadcn/ui components.")
-           .replace("`app.py`", "`apps/web/src/features/home.tsx`")
+           .replace("`app.py`", f"`{screen_path}`")
            .replace("Save a basket | Shoppers can save their basket with one click",
                     "Change the screen | The home screen uses shadcn/ui components"))
     no_hooks = tmp_path / "fixture-no-hooks"
@@ -142,7 +162,7 @@ def test_5_review_holds_a_hand_built_component(env, tmp_path, monkeypatch, adopt
     with monkeypatch.context() as patch:
         patch.setattr(repo, "git", fixture_git)
         item, where = env.start_approved_task(doc, changes={
-            "apps/web/src/features/home.tsx": "export function Home() { return <main>Started</main>; }\n"
+            screen_path: "export function Home() { return <main>Started</main>; }\n"
         })
 
     log = install_claude(repo)
@@ -150,7 +170,7 @@ def test_5_review_holds_a_hand_built_component(env, tmp_path, monkeypatch, adopt
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert WORKER_RULE in calls(log)[-1]["brief"]
 
-    env.commit(where, "apps/web/src/features/home.tsx",
+    env.commit(where, screen_path,
                "export function Home() { return <main>New</main>; }\n", "Change the screen")
     review_finding = {**finding("P1", "shadcn: DatePicker"),
                       "body": "Gain 2, Work 3, Harm 1\nA new date picker duplicates shadcn/ui."}

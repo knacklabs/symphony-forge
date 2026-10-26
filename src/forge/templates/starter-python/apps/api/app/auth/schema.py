@@ -59,6 +59,12 @@ class Account(AuthSchema):
     role: Role
 
 
+class AuthOptions(AuthSchema):
+    sign_up_open: bool = Field(
+        description="Whether anyone can create an account.", examples=[True]
+    )
+
+
 class MessageResponse(AuthSchema):
     message: str = Field(max_length=200)
 

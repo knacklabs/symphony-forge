@@ -590,7 +590,7 @@ def pytest_split(top: Path, command: str) -> bool:
 
 
 def grouped(top: Path, command: str) -> str:
-    """Fill the CI group's numbers; local and nightly runs use group 1 of 1."""
+    """Fill the CI group's numbers; local runs default to group 1 of 1."""
     if (int(os.environ.get("FORGE_GROUPS", "1")) > 1 and "{group}" not in command
             and pytest_split(top, command)):
         command += " --splits {groups} --group {group} --splitting-algorithm least_duration"

@@ -1,18 +1,18 @@
 import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, useLocation } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
-import { RouteErrorPage } from '@/components/route-error-page';
-import { AcceptInvitePage } from '@/features/auth/pages/accept-invite-page';
-import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page';
-import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
-import { SignInPage } from '@/features/auth/pages/sign-in-page';
-import { SignUpPage } from '@/features/auth/pages/sign-up-page';
-import { useAccount } from '@/features/auth/hooks/auth-hooks';
-import { HistoryPage } from '@/features/history/pages/history-page';
-import { MembersPage } from '@/features/members/pages/members-page';
-import { NotFoundPage } from '@/features/not-found/pages/not-found-page';
-import { ProjectsPage } from '@/features/projects/pages/projects-page';
-import { SettingsPage } from '@/features/settings/pages/settings-page';
-import { Button } from '@/components/ui/button';
+import { RouteErrorPage } from '@app/core-web';
+import { AcceptInvitePage } from '@app/auth-web';
+import { ForgotPasswordPage } from '@app/auth-web';
+import { ResetPasswordPage } from '@app/auth-web';
+import { SignInPage } from '@app/auth-web';
+import { SignUpPage } from '@app/auth-web';
+import { useAccount } from '@app/auth-web';
+import { HistoryPage } from '@app/history-web';
+import { MembersPage } from '@app/organisations-web';
+import { NotFoundPage } from '@/pages/not-found-page';
+import { ProjectsPage } from '@app/projects-web';
+import { SettingsPage } from '@/pages/settings-page';
+import { Button } from '@app/shared-ui/components/ui/button';
 
 function ProtectedLayout() {
   const account = useAccount();

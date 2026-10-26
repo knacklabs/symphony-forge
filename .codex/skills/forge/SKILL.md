@@ -899,6 +899,8 @@ Until the decision, use a fake provider for an external service.
 
 ## App constitution
 
+Ask for the app's currency at setup (default INR) and write its code to DEFAULT_CURRENCY in libs/shared/util/src/format.ts and, in a Python app, apps/api/app/core/config.py.
+
 During both halves of the interview, ask one question at a time in plain words for a person who
 may not be technical.
 
@@ -912,10 +914,13 @@ filled in, and raise a default with the FDE only when the notes contradict it.
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
 constitution's ## Fixed rules section, and ask nothing about them.
 In an app that has libs/organisations or apps/api/app/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
+In an app whose .env.example has APP_COMPANIES, ask once: "Is the app for one company, or for many customer companies?" Write the answer under ## Defaults, set APP_COMPANIES to one or many in .env.example and in the host's settings, and ask it again only when the person wants to change it.
+When the answer is one company, also copy this line into ## Fixed rules: "- Built in: APP_COMPANIES=one makes a one-company app: corepack pnpm run setup:company (uv run --no-sync python -m app.setup_company in the Python starter) makes the company and its first admin, and people join only from an admin's invite."
 In an app made from the Python starter, whose tests run import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing about them:
 
 - One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
 - Each module owns its tables, in its own models file.
+- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
 
@@ -942,11 +947,12 @@ The product facts are in docs/product/BRIEF.md.
 ## Fixed rules
 - One app on pnpm and Prisma, split into modules.
 - Each module owns its tables, in its own schema file.
+- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
 - Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
 - Built in: admins invite people by email; members cannot invite people or change roles.
-- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored in cents; the helpers in @app/shared format them.
+- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: each UI or API crash writes one error report to the logs.
 
@@ -960,6 +966,11 @@ parts with no code, use the stack default: an Nx workspace with React (Vite and 
 NestJS and Postgres. Use a FastAPI backend only when the person asks for it. A FastAPI backend starts from
 forge init --starter python.
 Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
+
+Follow the database skill (.codex/skills/database/SKILL.md) for new tables and extensions.
+An extension outside its allowed list needs the owner's OK for this client. Ask the owner,
+then write `- Postgres extension <name>: the owner allows it on <date> (<why>)` under
+Architecture choices in `docs/product/CONSTITUTION.md`.
 
 A live app answers both halves at adoption: ask only what the code cannot answer. Record the stack
 the code already uses.
@@ -1547,14 +1558,19 @@ CI checks this once before the tests job and skips that job for a docs-only chan
 One code file runs tests as usual. New repos get
 this rule at init, and existing repos get it after upgrade and sync. Bare `forge test` still runs.
 For other changes, the generated `forge.yml` runs one `tests` job with `forge test --change`.
-Set `groups = 4` in `forge.toml` to run four parallel jobs with any test runner. Put `{group}`
-and `{groups}` in the `test` or `fast_test` command where the runner expects its shard number and
-total, for example `vitest run --shard={group}/{groups}`. Forge fills these values for each job
-and uses `1` for both outside CI. Without a shard flag, each job runs the same tests; this is
-correct but slower. Without `groups`, a repo with a direct pytest command and pytest-split keeps
-its existing six-group job, which runs the `test` command. The required `tests` check passes only
-when every job passes. New repos get this at init, earlier ones after upgrading and syncing;
-branch protection keeps the same `tests` check.
+Set `groups = 4` in `forge.toml` to run four parallel jobs with any test runner. Each job runs the
+tests related to the pull request. Put `{group}` and `{groups}` in the `test` or `fast_test`
+command where the runner expects its shard number and total, for example
+`vitest run --shard={group}/{groups}`. Forge fills these values for each job and uses `1` for both
+outside CI. Without a shard flag, each job repeats the same related tests; this is correct but
+slower. For a direct pytest command with pytest-split, Forge adds the split options automatically.
+When `groups` exceeds 1 and `test` has no `{group}` placeholder or automatic pytest split,
+`forge doctor` and the generated workflow each show one warning. They do not refuse or change
+the chosen groups. Set `groups` to 1 or add the runner's shard options to `test`.
+Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
+existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
+runs its share of the related tests through `forge test --change`. The required `tests` check passes
+only when every job passes; branch protection keeps the same `tests` check.
 In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
 `workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
 Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
@@ -1592,8 +1608,11 @@ the pytest picker never picks them by default. List them in `always_test` in
 `tests/test_rules.py::test_1_rules`; it is empty by default. With the pytest picker, close runs
 them on every change that includes code or settings, beside the tests it picks. Docs-only changes
 skip these tests too.
-Close passes each entry to pytest itself, so it runs even outside the paths `test` names; an
-entry that runs no test, for example because `-k` deselects it, fails the run.
+Forge passes each entry to pytest, so it runs even outside the paths `test` names. In a grouped
+run, pytest-split assigns each entry to one group; the other groups do not fail because they did
+not run it. A missing file or node still fails. In a grouped run, a mark or `-k` filter that
+removes an entry is not reported as missing. In a one-group run, an entry that runs no test, for
+example because `-k` deselects it, still fails the run.
 For pytest repos, set `fast_test` to `forge test --pytest {base}`. Forge's own repo uses this
 shipped picker too. It selects only changed test files and tests importing or naming a changed
 Python module by its dotted name or file path, such as `shop.prices` or `src/shop/prices.py`,

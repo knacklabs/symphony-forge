@@ -9,8 +9,8 @@ from test_api import compose_logs, credentials, sign_up
 from test_soft_delete import psql
 
 
-def invite(client: httpx.Client, csrf: str, email: str) -> str:
-    previous_lines = compose_logs("api").splitlines()
+def invite(client: httpx.Client, csrf: str, email: str, service: str = "api") -> str:
+    previous_lines = compose_logs(service).splitlines()
     response = client.post(
         "/api/v1/invites",
         headers={"x-csrf-token": csrf},
@@ -18,7 +18,7 @@ def invite(client: httpx.Client, csrf: str, email: str) -> str:
     )
     assert response.status_code == 201, response.text
 
-    new_lines = compose_logs("api").splitlines()[len(previous_lines) :]
+    new_lines = compose_logs(service).splitlines()[len(previous_lines) :]
     for line in reversed(new_lines):
         if '"inviteUrl"' not in line:
             continue
@@ -245,7 +245,7 @@ def test_an_invite_link_works_once_and_only_for_its_email(client: httpx.Client) 
 
     old_hash = hashlib.sha256(old_token.encode()).hexdigest()
     shortened = psql(
-        "UPDATE invite SET expires_at_utc = NOW() + INTERVAL '1 hour' "
+        "UPDATE core.invite SET expires_at_utc = NOW() + INTERVAL '1 hour' "
         f"WHERE token_hash = '{old_hash}'"
     )
     assert shortened.returncode == 0, shortened.stderr
@@ -255,7 +255,7 @@ def test_an_invite_link_works_once_and_only_for_its_email(client: httpx.Client) 
     lifetime = psql(
         "SELECT CASE WHEN expires_at_utc > NOW() + INTERVAL '6 days 23 hours' "
         "AND expires_at_utc <= NOW() + INTERVAL '7 days' THEN 'seven_days' "
-        f"ELSE 'wrong_expiry' END FROM invite WHERE token_hash = '{replacement_hash}'"
+        f"ELSE 'wrong_expiry' END FROM core.invite WHERE token_hash = '{replacement_hash}'"
     )
     assert lifetime.returncode == 0, lifetime.stderr
     assert "seven_days" in lifetime.stdout
@@ -310,7 +310,7 @@ def test_an_invite_link_works_once_and_only_for_its_email(client: httpx.Client) 
     )
     token_hash = hashlib.sha256(expired_token.encode()).hexdigest()
     expiry = psql(
-        "UPDATE invite SET expires_at_utc = NOW() - INTERVAL '1 second' "
+        "UPDATE core.invite SET expires_at_utc = NOW() - INTERVAL '1 second' "
         f"WHERE token_hash = '{token_hash}'"
     )
     assert expiry.returncode == 0, expiry.stdout + expiry.stderr

@@ -1,0 +1,16 @@
+{
+  "name": "@app/core-web",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "@app/source": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@app/shared-ui": "workspace:*",
+    "@app/shared-util": "workspace:*"
+  }
+}

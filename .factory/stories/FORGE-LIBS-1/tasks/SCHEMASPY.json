@@ -1,0 +1,76 @@
+{
+  "branch": "task/FORGE-LIBS-1-SCHEMASPY",
+  "chat": {
+    "approval": "081b4c1ca3c424c7e9d2bf1579b5eae131a7c83b954864370db9315c493d59f5",
+    "claude": null,
+    "conversation": "01a176d1-56b9-7ae1-8a99-823b388b9df1",
+    "head": null,
+    "start": "bff1345377b18a806972fde2dcf0ecc21b89064b"
+  },
+  "known": [
+    {
+      "area": "upgrade() in src/forge/templates/starter-python/apps/api/migrations/versions/0008_module_schemas.py",
+      "file": "src/forge/templates/starter-python/apps/api/migrations/versions/0008_module_schemas.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 31,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Qualify the error-report test's account table after moving it",
+      "work": 2
+    },
+    {
+      "area": "test_4_each_module_keeps_its_tables_in_its_own_schema() in tests/test_module_schemas.py",
+      "file": "tests/test_module_schemas.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 42,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: Deliver the foreign-key review rule and its proof in GUIDE",
+      "work": 3
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "580d35a685c7a1e6b62052e8886af165971235cb11067b387687291afd7db154",
+    "changed": "c7afc1084bbf90a3897bdece88d8f7fb68664f63977afd3594a330ad4073a696",
+    "commit": "c4abb2f77d32b18768c983a6ab676f69f3ea7946",
+    "dismissals": [],
+    "findings": [],
+    "id": "c7c279f8-1ac1-4b9f-a2bb-a2d3a8549dfd",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T06:06:09.108539+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T06:19:53.387407+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T06:21:38.239433+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T08:46:30.841661+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "7710125c-b3f9-4d32-9836-ec0a06c9edab",
+    "head": "2b41e8d1300361f5e564989025dbd4a1267b4c47",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

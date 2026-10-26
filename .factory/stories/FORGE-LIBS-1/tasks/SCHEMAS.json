@@ -1,0 +1,45 @@
+{
+  "branch": "task/FORGE-LIBS-1-SCHEMAS",
+  "chat": {
+    "approval": "081b4c1ca3c424c7e9d2bf1579b5eae131a7c83b954864370db9315c493d59f5",
+    "claude": null,
+    "conversation": "01a1768f-7ddf-7211-b72d-1443ec007230",
+    "head": null,
+    "start": "e592f530356e135809d4cb047fb4529f0171467d"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "75009f868d8d76854eaa2d55b80febbe0e446f41abe09f17ab8ad91970d92f65",
+    "changed": "29de2a1baee5f46ef1d3ea47bd2a7df9539bb5496209d3a4d7f6046eed2e9faf",
+    "commit": "54214e96c3fe23b982c58c24edee353e6923c8bb",
+    "dismissals": [],
+    "findings": [],
+    "id": "77e5a2a1-ca57-4ee3-a011-ed700de9db66",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T04:54:19.760373+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T05:01:11.955560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T05:43:48.016025+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "f858b90b-1f8b-4f78-abc1-7a9571c8dabf",
+    "head": "781a0dd5707a96c039fc4534b7114fc30cc349d3",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

@@ -119,6 +119,16 @@ when another finding already blocks; a case the Done-when doesn't name is a P2 `
 (What blocks the merge, below). A missing list or entry is a P1 `Gate: proof list`; judge missing or hollow
 proof by the test-audit rules below.
 
+<!-- approach -->
+## Approach before code
+$before_coding
+
+Compare the diff with these three lines within this review's scope. Check git history: the
+worker records them in an empty commit before code changes. Check that the need justifies
+the code, the simplest option holds, and existing code is reused. Read later commit
+explanations when evidence changes the approach. Report missing lines or unjustified
+complexity under the normal Simpler rule.
+
 <!-- rules -->
 ## Tests on the close run
 $test_run
@@ -237,6 +247,10 @@ titled `Not done: <the item>`, quoting the owner-approved item. Never ask for un
 ## Build simple
 $moving_parts
 
+An added abstraction layer belongs only at the edge to an outside service. Keep business logic
+in domain services and pure computation in helpers. Required module boundaries, controllers
+and data access keep their roles, without extra wrappers.
+
 Complexity the diff adds that no Done-when item needs is a defect, not a style preference:
 - report it as a P2 finding titled `Simpler: <what to cut> → <what replaces it>`;
 - make it P1 when the diff adds a new dependency, service, datastore, queue, background job or
@@ -271,12 +285,20 @@ code writes. Other modules reach those tables only through its public service. A
 default branch already has is not a finding, and neither is app code outside the modules, such
 as the demo-data loader.
 
+In an app with a database, report a table that this change adds, or a column, constraint, index
+or trigger on such a table, that breaks the database skill (.codex/skills/database/SKILL.md) as
+a P1 finding titled `Database: <the table or column>`. Report a Postgres extension that this
+change turns on and that is not on the skill's allowed list the same way, unless the app's
+constitution has a line "Postgres extension <name>:" with the owner's OK. A change to a table
+that the default branch already has is not a finding.
+
 In a TypeScript app with `zod` in a `package.json`, report a request body or query that this
 change adds and that no zod schema checks as a P1 finding titled `Zod: <the endpoint>`. Request
-input has one zod schema in the app's shared package, which the web form and the API both use,
-and the API documentation comes from that schema. A class-validator rule or an `@ApiProperty`
+input has one zod schema in the module's contracts package, which the web form and the API both
+use, and the API documentation comes from that schema. A class-validator rule or an `@ApiProperty`
 on request input that this change adds is a finding. Input the default branch already has is
 not a finding, and neither is a path parameter that a Nest parse pipe checks.
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;

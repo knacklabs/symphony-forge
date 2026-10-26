@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@app/shared": "workspace:*"
+    "@app/auth-contracts": "workspace:*",
+    "@app/auth-web": "workspace:*",
+    "@app/core-web": "workspace:*",
+    "@app/history-web": "workspace:*",
+    "@app/organisations-web": "workspace:*",
+    "@app/projects-web": "workspace:*",
+    "@app/shared-ui": "workspace:*"
   }
 }

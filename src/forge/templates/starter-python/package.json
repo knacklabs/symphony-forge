@@ -6,12 +6,12 @@
     "node": ">=24"
   },
   "scripts": {
-    "api-types": "uv --directory apps/api run python -m app.openapi ../../libs/shared/openapi.json && openapi-typescript libs/shared/openapi.json -o libs/shared/src/api-types.ts",
+    "api-types": "uv --directory apps/api run python -m app.openapi ../../libs/shared/api-types/openapi.json && openapi-typescript libs/shared/api-types/openapi.json -o libs/shared/api-types/src/api-types.ts",
     "build": "corepack pnpm exec vite build --config apps/web/vite.config.ts",
     "lint": "corepack pnpm exec eslint . && uv --directory apps/api run ruff check && uv --directory apps/api run ruff format --check",
-    "typecheck": "corepack pnpm exec tsc --build libs/shared/tsconfig.json apps/web/tsconfig.json && uv --directory apps/api run mypy",
+    "typecheck": "corepack pnpm exec tsc --build libs/shared/util/tsconfig.json libs/shared/api-types/tsconfig.json libs/auth/contracts/tsconfig.json libs/projects/contracts/tsconfig.json libs/organisations/contracts/tsconfig.json libs/history/contracts/tsconfig.json apps/web/tsconfig.json && uv --directory apps/api run mypy",
     "test:imports": "uv --directory apps/api run lint-imports",
-    "test:api": "uv --directory apps/api run pytest --junitxml=../../test-results/api.xml",
+    "test:api": "uv --directory apps/api run python -m pytest --junitxml=../../test-results/api.xml",
     "test:hooks": "corepack pnpm exec vitest run --config apps/web/vitest.config.ts",
     "test:browser": "corepack pnpm exec playwright test --config apps/web/playwright.config.ts",
     "test": "corepack pnpm run api-types && corepack pnpm run lint && corepack pnpm run typecheck && corepack pnpm run test:imports && corepack pnpm run test:api && corepack pnpm run test:hooks && docker compose -f compose.test.yml up -d --no-deps --force-recreate --wait --wait-timeout 180 api && corepack pnpm run test:browser"

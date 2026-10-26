@@ -3,6 +3,8 @@
 How the standards page's API rules look in NestJS. Read it when your task adds or changes an
 endpoint.
 
+An app made before this layout keeps its own folders and schema; follow the folders it has.
+
 ## Start-up
 
 ```ts
@@ -52,7 +54,7 @@ export class OrderController {
 
 - One controller per resource. It reads parameters, lets the pipe validate, calls one service
   method and returns a response DTO.
-- Request input is a zod schema in `@app/shared`: one for each body and one for each list query,
+- Request input is a zod schema in `@app/<module>-contracts`: one for each body and one for each list query,
   and the web form uses the same schema. Check it with `@Body(new ZodValidationPipe(schema))` or
   `@Query(new ZodValidationPipe(schema))`, and document it with `@ApiZodBody(schema)` or
   `@ApiZodQuery(schema)`. Each schema is `.strict()`, gives every string a maximum length, and
@@ -69,7 +71,7 @@ export class OrderController {
 ```ts
 import { z } from 'zod';
 
-// In @app/shared; name the allowed sort fields for each resource.
+// In @app/projects-contracts; name the allowed sort fields for each resource.
 export const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1)
     .meta({ description: 'The one-based page number.', example: 1 }),
@@ -86,7 +88,7 @@ A list returns `{ items, pagination: { page, limit, totalItems, totalPages } }` 
 Allow `sortBy` only on the columns the endpoint names, since any other value reaches the query.
 
 In an app that has `libs/organisations`, each list has a `GET /<list>/export` route. It uses
-`sendCsv` from `@app/core` to export every matching row in the caller's organisation, with the
+`sendCsv` from `@app/core-server` to export every matching row in the caller's organisation, with the
 same permissions as the list. The response is a CSV download, rather than the JSON envelope.
 
 ## Swagger
@@ -97,8 +99,8 @@ request schema field and response DTO field has a description and an example; pr
 carry `@ApiBearerAuth()`.
 
 Request documentation comes from the same schema the pipe checks. If the app does not have the
-decorators, copy this into `libs/core/src/common/api-zod.decorator.ts` and export them from
-`@app/core`:
+decorators, copy this into `libs/core/server/src/common/api-zod.decorator.ts` and export them from
+`@app/core-server`:
 
 ```ts
 import { applyDecorators } from '@nestjs/common';

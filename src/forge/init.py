@@ -154,6 +154,11 @@ def _starter_files(starter: str) -> dict[str, Path]:
     if starter == "python":
         sources = {path.relative_to(react).as_posix(): path
                    for path in sorted((react / "apps/web").rglob("*")) if path.is_file()}
+        sources.update({path.relative_to(react).as_posix(): path
+                        for path in sorted((react / "libs/shared/util").rglob("*")) if path.is_file()})
+        for library in (react / "libs/shared/ui", *sorted((react / "libs").glob("*/web"))):
+            sources.update({path.relative_to(react).as_posix(): path
+                            for path in sorted(library.rglob("*")) if path.is_file()})
         sources.update({name: react / name for name in ("tsconfig.base.json", ".npmrc")})
         root = sync.TEMPLATES / "starter-python"
     else:

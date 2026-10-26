@@ -1,15 +1,10 @@
-enum MembershipRole {
-  admin
-  member
-}
-
 model Organisation {
-  id                  String       @id @default(uuid()) @db.Uuid
-  createdAtUtc        DateTime     @default(now())
-  updatedAtUtc        DateTime     @updatedAt
+  id                  String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  createdAtUtc        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime     @updatedAt @db.Timestamptz(3)
   createdByAccountId  String       @db.Uuid
   modifiedByAccountId String       @db.Uuid
-  deletedAtUtc        DateTime?
+  deletedAtUtc        DateTime?    @db.Timestamptz(3)
   deletedByAccountId  String?      @db.Uuid
   memberships         Membership[]
   projects            Project[]
@@ -18,17 +13,18 @@ model Organisation {
   @@index([createdByAccountId], map: "idx_Organisation_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Organisation_modifiedByAccountId")
   @@index([deletedByAccountId], map: "idx_Organisation_deletedByAccountId")
+  @@schema("core")
 }
 
 // Invites are temporary, single-use credentials and are removed when claimed.
 model Invite {
-  id                  String       @id @default(uuid()) @db.Uuid
+  id                  String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
   organisationId      String       @db.Uuid
   email               String
   tokenHash           String       @unique
-  expiresAtUtc        DateTime
-  createdAtUtc        DateTime     @default(now())
-  updatedAtUtc        DateTime     @updatedAt
+  expiresAtUtc        DateTime     @db.Timestamptz(3)
+  createdAtUtc        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime     @updatedAt @db.Timestamptz(3)
   createdByAccountId  String       @db.Uuid
   modifiedByAccountId String       @db.Uuid
   organisation        Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
@@ -37,19 +33,20 @@ model Invite {
   @@index([expiresAtUtc], map: "idx_Invite_expiresAtUtc")
   @@index([createdByAccountId], map: "idx_Invite_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Invite_modifiedByAccountId")
+  @@schema("core")
 }
 
 model Membership {
-  id                  String         @id @default(uuid()) @db.Uuid
+  id                  String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
   accountId           String         @unique @db.Uuid
   organisationId      String         @db.Uuid
   email               String
-  role                MembershipRole
-  createdAtUtc        DateTime       @default(now())
-  updatedAtUtc        DateTime       @updatedAt
+  role                String
+  createdAtUtc        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime       @updatedAt @db.Timestamptz(3)
   createdByAccountId  String         @db.Uuid
   modifiedByAccountId String         @db.Uuid
-  deletedAtUtc        DateTime?
+  deletedAtUtc        DateTime?      @db.Timestamptz(3)
   deletedByAccountId  String?        @db.Uuid
   account             Account        @relation(fields: [accountId], references: [id], onDelete: Restrict)
   organisation        Organisation   @relation(fields: [organisationId], references: [id], onDelete: Restrict)
@@ -58,4 +55,5 @@ model Membership {
   @@index([createdByAccountId], map: "idx_Membership_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Membership_modifiedByAccountId")
   @@index([deletedByAccountId], map: "idx_Membership_deletedByAccountId")
+  @@schema("core")
 }

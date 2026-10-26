@@ -1,8 +1,0 @@
-{
-  "name": "@app/core",
-  "projectType": "library",
-  "sourceRoot": "libs/core/src",
-  "tags": [
-    "type:core"
-  ]
-}

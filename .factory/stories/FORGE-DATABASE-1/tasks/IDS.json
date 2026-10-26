@@ -1,0 +1,47 @@
+{
+  "base": "743ca69ff3bd5b5dd7ebdb35d639038d788a5672",
+  "branch": "task/FORGE-DATABASE-1-IDS",
+  "chat": {
+    "approval": "a0a46044fc42a28b0c7128d1d8b4d17a54d38f4041dc6b8a7860e44f0b70fb6e",
+    "claude": null,
+    "conversation": "01a1748a-8b15-77a0-ae50-940515bfbded",
+    "head": null,
+    "start": "d22ba2a3d870b74ae14a183751a7d6af25b179be"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f45eb1de216e19c29e3c2f6f46a9c19a63678c9cc9ca085d5a6a5e01489ee040",
+    "changed": "31aa11662a42afb1e0fbb17619de5de10308a4da659b65dba9b4a5e4fb884f74",
+    "commit": "0085e4f91acab50867f56beb3250fb7040c49579",
+    "dismissals": [],
+    "findings": [],
+    "id": "1717b19c-1c9a-4f09-b139-7f2f0b152bb6",
+    "status": "clean"
+  },
+  "round": 2,
+  "stacked_on": "FORGE-DATABASE-1/PG18",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T19:29:11.232964+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T19:35:36.557032+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T20:24:17.135035+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "090a9c5f-c09b-4ced-a384-ed50cf2428ee",
+    "head": "80ec98382f2b17aad1b079ee49a3cedd3dc3a270",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

@@ -13,6 +13,7 @@ import pytest
 
 from conftest import ROOT
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
+from test_testplace_workflow import _jobs
 
 pytestmark = pytest.mark.platform
 
@@ -22,6 +23,9 @@ STORY = "windows-rerun-flakes"
 @pytest.mark.parametrize("setup", ["init", "earlier-adoption"])
 @pytest.mark.parametrize("command_style", ["powershell", "split-pytest"])
 def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_style):
+    # Audit: retain retry behavior and compare the trusted PR job across runner settings.
+    # Comparing the rest of the workflow also captures the deliberately grouped nightly jobs.
+    # The existing command-level cases own this contract and need no production seam.
     # On pytest commands, Forge retries the failed file before the Windows job retries Forge.
     command = 'python retry_probe.py && python -c "print(\'suite passed\')"'
     windows_command = ('pwsh -File "retry probe.ps1"'
@@ -105,7 +109,8 @@ def test_3_windows_client_checks_retry_once(repo, gh, tmp_path, setup, command_s
             synced = repo.forge("sync", cwd=client)
             assert synced.returncode == 0, synced.stdout + synced.stderr
         workflow = (client / ".github/workflows/forge.yml").read_text(encoding="utf-8")
-        tests, check = workflow.split("\n  tests:\n", 1)[1].split("\n  forge-pr-check:\n", 1)
+        jobs = _jobs(workflow)
+        tests, check = jobs["tests"], jobs["forge-pr-check"]
         run = json.loads(re.findall(r"^      - run: (.+)$", tests, re.M)[-1])
         # Actions checks out pull requests detached, without a local Forge item.
         repo.git("checkout", "-q", "--detach", "HEAD", cwd=client)

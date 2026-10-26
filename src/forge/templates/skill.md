@@ -899,6 +899,8 @@ Until the decision, use a fake provider for an external service.
 
 ## App constitution
 
+Ask for the app's currency at setup (default INR) and write its code to DEFAULT_CURRENCY in libs/shared/util/src/format.ts and, in a Python app, apps/api/app/core/config.py.
+
 During both halves of the interview, ask one question at a time in plain words for a person who
 may not be technical.
 
@@ -912,10 +914,13 @@ filled in, and raise a default with the FDE only when the notes contradict it.
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
 constitution's ## Fixed rules section, and ask nothing about them.
 In an app that has libs/organisations or apps/api/app/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
+In an app whose .env.example has APP_COMPANIES, ask once: "Is the app for one company, or for many customer companies?" Write the answer under ## Defaults, set APP_COMPANIES to one or many in .env.example and in the host's settings, and ask it again only when the person wants to change it.
+When the answer is one company, also copy this line into ## Fixed rules: "- Built in: APP_COMPANIES=one makes a one-company app: corepack pnpm run setup:company (uv run --no-sync python -m app.setup_company in the Python starter) makes the company and its first admin, and people join only from an admin's invite."
 In an app made from the Python starter, whose tests run import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing about them:
 
 - One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
 - Each module owns its tables, in its own models file.
+- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
 
@@ -942,11 +947,12 @@ The product facts are in docs/product/BRIEF.md.
 ## Fixed rules
 - One app on pnpm and Prisma, split into modules.
 - Each module owns its tables, in its own schema file.
+- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
 - Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
 - Built in: admins invite people by email; members cannot invite people or change roles.
-- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored in cents; the helpers in @app/shared format them.
+- Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: each UI or API crash writes one error report to the logs.
 
@@ -960,6 +966,11 @@ parts with no code, use the stack default: an Nx workspace with React (Vite and 
 NestJS and Postgres. Use a FastAPI backend only when the person asks for it. A FastAPI backend starts from
 forge init --starter python.
 Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
+
+Follow the database skill (.codex/skills/database/SKILL.md) for new tables and extensions.
+An extension outside its allowed list needs the owner's OK for this client. Ask the owner,
+then write `- Postgres extension <name>: the owner allows it on <date> (<why>)` under
+Architecture choices in `docs/product/CONSTITUTION.md`.
 
 A live app answers both halves at adoption: ask only what the code cannot answer. Record the stack
 the code already uses.

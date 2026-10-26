@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 from urllib.parse import urlencode
-from uuid import UUID, uuid4
+from uuid import UUID, uuid7
 
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
@@ -54,7 +54,7 @@ class OrganisationsService:
         self.db.execute(
             insert(Invite)
             .values(
-                id=uuid4(),
+                id=uuid7(),
                 organisation_id=account.organisation_id,
                 email=email,
                 created_by_account_id=account.id,
@@ -106,7 +106,7 @@ class OrganisationsService:
             raise _invalid_invite()
         self.db.add(
             Membership(
-                id=uuid4(),
+                id=uuid7(),
                 organisation_id=invite.organisation_id,
                 account_id=account_id,
                 email=email,
@@ -155,7 +155,7 @@ class OrganisationsService:
         return Member.model_validate(member)
 
     def create_for_account(self, account_id: UUID, email: str) -> AccountPrincipal:
-        organisation_id = uuid4()
+        organisation_id = uuid7()
         self.db.add(
             Organisation(
                 id=organisation_id,
@@ -166,7 +166,7 @@ class OrganisationsService:
         self.db.flush()
         self.db.add(
             Membership(
-                id=uuid4(),
+                id=uuid7(),
                 organisation_id=organisation_id,
                 account_id=account_id,
                 email=email,
