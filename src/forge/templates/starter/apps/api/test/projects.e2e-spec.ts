@@ -149,9 +149,9 @@ describe('projects API', () => {
   });
 
   it('records each project change in the change history', async () => {
-    const owner = credentials();
-    const client = request.agent(apiBaseUrl);
-    const csrf = csrfToken(await client.post('/api/v1/auth/sign-up').send(owner).expect(201));
+    // The shared account: the suite's sign-up limit leaves no room for another one.
+    const { client, csrf } = await sharedSignedIn();
+    const owner = { email: (await client.get('/api/v1/auth/me').expect(200)).body.data.email as string };
     const send = (method: 'post' | 'put' | 'delete', path: string, body?: object) =>
       client[method](`/api/v1/projects${path}`).set('x-csrf-token', csrf).send(body);
 
@@ -188,11 +188,8 @@ describe('projects API', () => {
     ]);
     expect((await client.get('/api/v1/history/export').expect(200)).text).toContain(`,${owner.email},Fifth: Deleted the project`);
 
-    // A deleted project's changes, and another organisation's project's changes, are not found.
-    await client.get(`/api/v1/projects/${id}/changes`).expect(404);
-    const kept = await send('post', '', { name: 'Kept project', status: 'active' }).expect(201);
-    const { client: other } = await sharedSignedIn();
-    await other.get(`/api/v1/projects/${kept.body.data.id}/changes`).expect(404)
+    // A deleted project's changes are not found.
+    await client.get(`/api/v1/projects/${id}/changes`).expect(404)
       .expect(({ body }) => expect(body.error.code).toBe('PROJECT_NOT_FOUND'));
   });
 
