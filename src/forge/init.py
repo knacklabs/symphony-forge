@@ -183,7 +183,7 @@ def _scaffold(top: Path, actions: str, runner: str = "ubuntu-latest",
                                 INTERFACES, runner=runner),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()
-           and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
+           and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore", "services.toml"))},
         **({rel: path.read_bytes().decode("utf-8")
             for rel, path in _starter_files(starter).items()}
            if starter else {}),
@@ -342,6 +342,8 @@ def init(args: argparse.Namespace) -> None:
     repo.check_pin(top)
     branch = repo.current_branch(top)
     scaffold = _scaffold(top, args.actions, args.runner, args.starter)
+    if (top / "Dockerfile").exists():
+        scaffold.pop("services.toml", None)
     for rel, text in scaffold.items():
         if not (top / rel).exists():  # init never overwrites a file that is already there
             sync.write_file(top, rel, text)

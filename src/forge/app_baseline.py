@@ -1,13 +1,16 @@
-"""Ship the default client app skill and check additions to shadcn/ui apps."""
+"""Ship client app skills, check shadcn/ui additions and validate services lists."""
 from __future__ import annotations
 
 import json
+import tomllib
 from pathlib import Path, PurePosixPath
 from typing import Any
 
 from forge import repo
 
 REFUSALS = {
+    "services": ("services.toml {problem}.",
+                 "fix services.toml to match the Dockerfiles, then forge close {item}"),
     "shadcn": ("This app uses shadcn/ui only, and this change adds {problems}.",
                "use the shadcn/ui component (npx shadcn@4.21.4 add <name>) and remove the copy "
                "or the library, then forge close {item}"),
@@ -59,6 +62,36 @@ def check(top: Path, cfg: dict[str, Any], base: str) -> None:
     if problems:
         repo.refuse(REFUSALS["shadcn"], problems="; ".join(problems),
                     item=repo.current_branch(top).partition("/")[2])
+
+
+def services(top: Path, cfg: dict[str, Any]) -> None:
+    """Check the committed list against this branch's committed Dockerfiles."""
+    if cfg.get("repo") != "client":
+        return
+    paths = set(repo.git("ls-tree", "-r", "--name-only", "-z", "HEAD", cwd=top).split("\0")) - {""}
+    if "services.toml" not in paths:
+        return
+    item = repo.current_branch(top).partition("/")[2]
+    try:
+        listed = tomllib.loads(repo.git("show", "HEAD:services.toml", cwd=top)).get("service", [])
+    except tomllib.TOMLDecodeError as error:
+        repo.refuse(REFUSALS["services"], problem=f"is not valid TOML: {error}", item=item)
+    if not isinstance(listed, list):
+        listed = []
+    problems = []
+    main = 0
+    # ponytail: no port, health, command or subdomain checks; add one when a deploy shows the need.
+    for service in listed:
+        dockerfile = service.get("dockerfile") if isinstance(service, dict) else None
+        if not isinstance(dockerfile, str):
+            problems.append("has a service with no dockerfile")
+        elif dockerfile not in paths:
+            problems.append(f"names {dockerfile}, which this branch does not have")
+        main += isinstance(service, dict) and service.get("expose") == "main"
+    if main != 1:
+        problems.append(f'has {main} services with expose = "main"; it needs exactly one')
+    if problems:
+        repo.refuse(REFUSALS["services"], problem="; ".join(problems), item=item)
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
