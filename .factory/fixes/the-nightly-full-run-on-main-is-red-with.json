@@ -1,6 +1,13 @@
 {
   "base": "2e441d3b330ca4a0bb1042cb540b152f6ca9cf4c",
   "branch": "fix/the-nightly-full-run-on-main-is-red-with",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17647-ef89-75a0-8c59-1dbd83337f5e",
+    "head": null,
+    "start": "40a93922ae4c62662df686c7d8d00ef382732ed0"
+  },
   "done_when": "The nightly full run on main passes every test, and the shipped client files stay the same.",
   "fix_kind": "mechanical",
   "kind": "fix",
