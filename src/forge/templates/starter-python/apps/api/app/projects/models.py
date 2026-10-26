@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base
@@ -17,7 +17,7 @@ class Project(Base):
         Index("idx_project_deleted_by_account_id", "deleted_by_account_id"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     organisation_id: Mapped[UUID] = mapped_column(
         ForeignKey("organisation.id", ondelete="RESTRICT"), nullable=False
     )

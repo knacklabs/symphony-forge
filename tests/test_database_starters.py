@@ -49,9 +49,9 @@ def test_2_starters_run_postgres_18_with_three_extensions(
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("kind", ("react",))
+@pytest.mark.parametrize("kind", ("react", "python"))
 def test_3_new_rows_get_time_ordered_ids_and_updated_times(
-    repo, gh, tmp_path, tmp_path_factory, kind,
+    repo, gh, tmp_path, tmp_path_factory, request, kind,
 ):
     # Audit: init must copy the id migration and database-generated schema defaults.
     # Omitting either leaves new apps with random ids or no direct-SQL update clock.
@@ -59,6 +59,25 @@ def test_3_new_rows_get_time_ordered_ids_and_updated_times(
     # and schema drift. These use existing entry points, with no production seam.
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", kind)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    if kind == "python":
+        source = STARTER.parent / "starter-python"
+        migration = Path("apps/api/migrations/versions/0007_ids_and_updated_at.py")
+        assert (client / migration).read_bytes() == (source / migration).read_bytes()
+        models = list((client / "apps/api/app").glob("*/models.py"))
+        assert models
+        for model in models:
+            text = model.read_text(encoding="utf-8")
+            assert "uuid4" not in text, model
+            for field in re.findall(r"^\s*id: Mapped\[UUID\] = (.+)$", text, re.MULTILINE):
+                assert 'server_default=text("uuidv7()")' in field, model
+        for service in (client / "apps/api/app").glob("*/service.py"):
+            assert "uuid4()" not in service.read_text(encoding="utf-8"), service
+        if LIVE:
+            result = request.getfixturevalue("live_python_starter")
+            _require_cases(result["api"], (
+                "test_a_new_row_gets_a_time_ordered_id_and_an_update_sets_its_last_changed_time",
+            ))
+        return
     migration = Path("apps/api/prisma/migrations/20261026000100_ids_and_updated_at/migration.sql")
     assert (client / migration).read_bytes() == (STARTER / migration).read_bytes()
     schemas = list((client / "apps/api/prisma/schema").glob("*.prisma"))

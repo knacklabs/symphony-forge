@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import UUID, uuid7
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
@@ -85,7 +85,7 @@ class ProjectService:
 
     def create(self, account: AccountPrincipal, input_data: ProjectInput) -> Project:
         project = ProjectModel(
-            id=uuid4(),
+            id=uuid7(),
             organisation_id=account.organisation_id,
             name=input_data.name,
             status=input_data.status,

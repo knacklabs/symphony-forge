@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base
@@ -14,7 +14,7 @@ class Account(Base):
         Index("idx_account_modified_by_account_id", "modified_by_account_id"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     email: Mapped[str] = mapped_column(String(254), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at_utc: Mapped[datetime] = mapped_column(
@@ -38,7 +38,7 @@ class Session(Base):
         Index("idx_session_expires_at_utc", "expires_at_utc"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.id", ondelete="CASCADE"), nullable=False
     )
@@ -59,7 +59,7 @@ class PasswordResetToken(Base):
         Index("idx_password_reset_token_expires_at_utc", "expires_at_utc"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("account.id", ondelete="CASCADE"), nullable=False
     )

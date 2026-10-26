@@ -1,7 +1,16 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, UniqueConstraint, func
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base, Role
@@ -17,7 +26,7 @@ class Invite(Base):
         Index("idx_invite_modified_by_account_id", "modified_by_account_id"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     organisation_id: Mapped[UUID] = mapped_column(
         ForeignKey("organisation.id", ondelete="RESTRICT")
     )
@@ -46,7 +55,7 @@ class Organisation(Base):
         Index("idx_organisation_deleted_by_account_id", "deleted_by_account_id"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     created_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -74,7 +83,7 @@ class Membership(Base):
         Index("idx_membership_organisation_id", "organisation_id"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     organisation_id: Mapped[UUID] = mapped_column(
         ForeignKey("organisation.id", ondelete="RESTRICT")
     )

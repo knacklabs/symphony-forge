@@ -5,7 +5,7 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from urllib.parse import urlencode
-from uuid import UUID, uuid4
+from uuid import UUID, uuid7
 
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
@@ -125,7 +125,7 @@ class AuthService:
         credentials: CredentialsInput,
         conflict_message: str = "An account already uses that email.",
     ) -> Account:
-        account_id = uuid4()
+        account_id = uuid7()
         account = Account(
             id=account_id,
             email=credentials.email,
@@ -224,7 +224,7 @@ class AuthService:
         )
         self.db.add(
             PasswordResetToken(
-                id=uuid4(),
+                id=uuid7(),
                 account_id=account.id,
                 token_hash=_sha256(token),
                 expires_at_utc=datetime.now(UTC) + _RESET_TOKEN_LIFETIME,
@@ -282,7 +282,7 @@ class AuthService:
     @staticmethod
     def _session_row(account_id: UUID, session_data: SessionData) -> Session:
         return Session(
-            id=uuid4(),
+            id=uuid7(),
             account_id=account_id,
             token_hash=_sha256(session_data.session_token),
             csrf_token_hash=_sha256(session_data.csrf_token),

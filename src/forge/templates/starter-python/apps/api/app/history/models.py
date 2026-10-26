@@ -1,7 +1,7 @@
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base
@@ -19,7 +19,7 @@ class ChangeRecord(Base):
         Index("idx_change_record_actor_account_id", "actor_account_id"),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     organisation_id: Mapped[UUID] = mapped_column(
         ForeignKey("organisation.id", ondelete="RESTRICT")
     )
