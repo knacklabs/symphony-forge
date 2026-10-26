@@ -18,12 +18,27 @@
   "done_when": "On this repo, forge next and the board JSON both finish well inside the pane's 20-second refresh limit, so the pane loads its first rows",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "261a7da27db2cffc47260388fc3c87844a71a01ba105e1042b54f01b17496aaa",
+    "changed": "62a763ffa2d142ebb09633edb9d3510eccca69678bbc7b92db23b4899654ae07",
+    "commit": "35112196c4861a12001c0be36e12ef440a6275cb",
+    "dismissals": [],
+    "findings": [],
+    "id": "ff21899c-18b1-43cd-ba33-22b3f8283645",
+    "status": "clean"
+  },
   "round": 5,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T09:01:26.366142+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T10:08:25.880388+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
