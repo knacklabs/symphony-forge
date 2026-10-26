@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/board_facts.py\tNot done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.\tthe-busy-repo-takes-about-8-seconds-for",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 264,
+      "text": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
+      "from": "blocking",
+      "item": "the-busy-repo-takes-about-8-seconds-for",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_busy_repo_views_finish_quickly.py\tNot done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.\tthe-busy-repo-takes-about-8-seconds-for",
       "kind": "bug",
       "path": "tests/test_busy_repo_views_finish_quickly.py",

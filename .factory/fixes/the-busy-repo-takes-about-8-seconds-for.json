@@ -25,17 +25,42 @@
       "security": false,
       "title": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
       "work": 3
+    },
+    {
+      "area": "prs.fetch() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 264,
+      "outcome": "open",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
+      "work": 3
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cbc8a63119471130ac337585ea7590dfe2c554d3c5cafdab2887cce4f790acf6",
-    "changed": "dbfd576b674e1adc0e08e61f196219c0ec5c559c61f958b06543dddcbef24569",
-    "commit": "f608539577846a597361a61d418f47de13cfd29a",
+    "branch_diff": "ed7ff6a3f95481f2e92fa8f2a3a421ffcd67f75a2ac7c938d2544dfbe1b2ab18",
+    "changed": "7e037573864e3e5020f5040b156c013a3414ff132734dae7065af7dd34431362",
+    "commit": "6908f9c5aee1ed124381524654bfb9799df5eb86",
     "dismissals": [],
-    "findings": [],
-    "id": "6d995496-f525-4da3-b297-efb8af70a674",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 2\nRaise: Not done. Case: normal use - running forge board --json on this repository. The final supplied measurements are 5.265 and 5.156 seconds, both exceeding the required five-second limit. This read-sharing change benefits plain next; board.py:65 still invokes prs without open_read, retaining its previous execution path here. These current measurements are new evidence beyond the earlier accepted 4.807-second sample. The next timings meet the target, but the board requirement remains unmet.",
+        "file": "src/forge/board_facts.py",
+        "gain": 5,
+        "harm": 2,
+        "line": 264,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
+        "work": 3
+      }
+    ],
+    "id": "61604dbc-12bc-4c34-8c97-070482ff578f",
+    "status": "blocked"
   },
   "round": 8,
   "status": "fixing",
@@ -62,6 +87,10 @@
     },
     {
       "at": "2026-10-26T16:36:17.707203+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T17:13:27.659560+00:00",
       "step": "review"
     }
   ],
