@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/nextstep.py\tEager settings validation prevents next from listing other items when the current worktree has an unsupported model kind.",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 120,
+      "text": "Eager settings validation prevents next from listing other items when the current worktree has an unsupported model kind.",
+      "from": "worker",
+      "item": "FORGE-SERVICES-1/SVCGUIDE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/review.py\tGate: unrelated review-bar changes outside Scope\tFORGE-SERVICES-1/SVCGUIDE",
       "kind": "bug",
       "path": "src/forge/review.py",

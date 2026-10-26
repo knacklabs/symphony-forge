@@ -26,17 +26,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "70cbafe1a3fe2479b68dbda84612e5a597ab5f098dbec2b63d0a01bc00222e43",
+    "branch_diff": "bf93bb5f536544357c98354fcf060453f808208d95a4e111c8a9cbba8821d192",
     "changed": "62fb4c2dba981c90d618455991d06c6f8da5864b9792df482cbbd71ab427ed06",
-    "commit": "c78b345eb76e2891b9ec2b078e34626a41972385",
+    "commit": "8de7984ee073a4c4ead9b5722f7c07df1d6210d9",
     "dismissals": [],
     "findings": [],
-    "id": "75588c64-f5f6-441e-a517-a91cc5b7e2bf",
+    "id": "81227ef3-9beb-434c-9a61-7540ddcb28f3",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-BAR-1/BARRULES",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T10:50:53.889177+00:00",
@@ -48,6 +48,10 @@
     },
     {
       "at": "2026-10-26T11:04:43.938776+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T11:26:13.451962+00:00",
       "step": "review"
     }
   ],
