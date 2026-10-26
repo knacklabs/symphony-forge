@@ -34,6 +34,9 @@ describe('organisation invites and roles', () => {
     expect(joined.body.data).toMatchObject({ email: invited.email, role: 'member' });
 
     const memberCsrf = csrfToken(joined);
+    // A member may view, create and edit projects, but not delete or restore them.
+    const permissions = (await memberClient.get('/api/v1/auth/me').expect(200)).body.data.permissions as string[];
+    expect(permissions).not.toContain('projects.delete');
     const members = await memberClient.get('/api/v1/members?page=1&limit=20').expect(200);
     expect(members.body.data.items).toEqual(expect.arrayContaining([
       expect.objectContaining({ email: admin.email, role: 'admin' }),
@@ -53,10 +56,14 @@ describe('organisation invites and roles', () => {
     await memberClient
       .delete(`/api/v1/projects/${memberProject.body.data.id}`)
       .set('x-csrf-token', memberCsrf)
-      .expect(200);
+      .expect(403)
+      .expect(({ body }) => expect(body.error.code).toBe('PERMISSION_DENIED'));
 
     const projects = await memberClient.get('/api/v1/projects?limit=20').expect(200);
-    expect(projects.body.data.items).toEqual([expect.objectContaining({ name: 'Shared project' })]);
+    expect(projects.body.data.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'Shared project' }),
+      expect.objectContaining({ name: 'Updated member project' }),
+    ]));
   });
 
   it('a member cannot invite people or change roles', async () => {

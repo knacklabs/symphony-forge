@@ -1,6 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiBaseUrl, credentials, csrfToken } from './helpers';
+import { apiBaseUrl, credentials, csrfToken, invite } from './helpers';
 
 type ApiClient = ReturnType<typeof request.agent>;
 
@@ -24,6 +25,34 @@ function sharedSignedIn() {
   sharedAccount ??= signedIn();
   return sharedAccount;
 }
+
+// A member of the shared account's organisation, invited as invites.e2e-spec.ts does, with the
+// permissions the API reports for it.
+let sharedMember: Promise<{ client: ApiClient; csrf: string; permissions: string[] }> | undefined;
+function sharedMemberSignedIn() {
+  sharedMember ??= (async () => {
+    const admin = await sharedSignedIn();
+    const invited = credentials();
+    const token = await invite(admin.client, admin.csrf, invited.email);
+    const client = request.agent(apiBaseUrl);
+    const joined = await client.post('/api/v1/auth/accept-invite').send({ ...invited, token }).expect(201);
+    const permissions = (await client.get('/api/v1/auth/me').expect(200)).body.data.permissions as string[];
+    return { client, csrf: csrfToken(joined), permissions };
+  })();
+  return sharedMember;
+}
+
+/** Every projects route with the permission it needs. A plan that changes the mapping keeps this table right. */
+const PROJECT_ROUTES: [string, string, (client: ApiClient, csrf: string, id: string) => request.Test][] = [
+  ['list', 'projects.view', (client) => client.get('/api/v1/projects')],
+  ['export', 'projects.view', (client) => client.get('/api/v1/projects/export')],
+  ['detail', 'projects.view', (client, _csrf, id) => client.get(`/api/v1/projects/${id}`)],
+  ['changes', 'projects.view', (client, _csrf, id) => client.get(`/api/v1/projects/${id}/changes`)],
+  ['create', 'projects.create', (client, csrf) => client.post('/api/v1/projects').set('x-csrf-token', csrf).send({ name: 'Permission check', status: 'active' })],
+  ['replace', 'projects.edit', (client, csrf, id) => client.put(`/api/v1/projects/${id}`).set('x-csrf-token', csrf).send({ name: 'Permission check changed', status: 'archived' })],
+  ['delete', 'projects.delete', (client, csrf, id) => client.delete(`/api/v1/projects/${id}`).set('x-csrf-token', csrf)],
+  ['restore', 'projects.restore', (client, csrf, id) => client.post(`/api/v1/projects/${id}/restore`).set('x-csrf-token', csrf)],
+];
 
 async function createProjects(client: ApiClient, csrf: string, projects: { name: string; status: string }[]) {
   for (const project of projects) {
@@ -65,7 +94,10 @@ describe('projects API', () => {
       .set('x-csrf-token', csrf)
       .expect(200)
       .expect(({ body }) => expect(body).toMatchObject({ success: true, data: null, error: null }));
-    await client.get(`/api/v1/projects/${projectId}`).expect(404);
+    // An admin may restore, so it still reads the deleted project; the list leaves it out.
+    await client.get(`/api/v1/projects/${projectId}`).expect(200)
+      .expect(({ body }) => expect(body.data.deletedAtUtc).toEqual(expect.any(String)));
+    expect((await client.get('/api/v1/projects').expect(200)).body.data.items).toEqual([]);
   });
 
   it('pages projects with next and previous cursors', async () => {
@@ -195,8 +227,67 @@ describe('projects API', () => {
       .toEqual(['Status changed from active to archived', 'Created the project']);
     expect((await client.get('/api/v1/history/export').expect(200)).text).toContain(`,${owner.email},Fifth: Deleted the project`);
 
-    // A deleted project's changes are not found.
-    await client.get(`/api/v1/projects/${id}/changes`).expect(404)
+    // An admin still reads a deleted project's changes, the delete first.
+    const afterDelete = await client.get(`/api/v1/projects/${id}/changes`).expect(200);
+    expect(afterDelete.body.data[0]).toMatchObject({ summary: 'Deleted the project', actorEmail: owner.email });
+  });
+
+  // After the change history case: these cases add projects to the shared organisation.
+  it('each projects endpoint refuses a member without its permission', async () => {
+    const admin = await sharedSignedIn();
+    const member = await sharedMemberSignedIn();
+    const adminPermissions = (await admin.client.get('/api/v1/auth/me').expect(200)).body.data.permissions as string[];
+    for (const [who, caller, permissions] of [['member', member, member.permissions], ['admin', admin, adminPermissions]] as const) {
+      const id = (await admin.client.post('/api/v1/projects').set('x-csrf-token', admin.csrf)
+        .send({ name: `Checked for the ${who}`, status: 'active' }).expect(201)).body.data.id as string;
+      for (const [route, permission, send] of PROJECT_ROUTES) {
+        const response = await send(caller.client, caller.csrf, id);
+        if (permissions.includes(permission)) {
+          expect(response.status, `${who} ${route}`).not.toBe(403);
+        } else {
+          expect(response.status, `${who} ${route}`).toBe(403);
+          expect(response.body.error.code, `${who} ${route}`).toBe('PERMISSION_DENIED');
+        }
+      }
+    }
+  });
+
+  it('an admin restores a deleted project', async () => {
+    const { client, csrf } = await sharedSignedIn();
+    const member = await sharedMemberSignedIn();
+    const ownerEmail = (await client.get('/api/v1/auth/me').expect(200)).body.data.email as string;
+    const mark = randomUUID();
+    const create = async (name: string) => (await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+      .send({ name: `${name} ${mark}`, status: 'active' }).expect(201)).body.data.id as string;
+    const id = await create('Restored');
+    const keptId = await create('Kept');
+    await client.delete(`/api/v1/projects/${id}`).set('x-csrf-token', csrf).expect(200);
+    const listIds = async (caller: ApiClient, extra = '') =>
+      (await caller.get(`/api/v1/projects?search=${mark}${extra}`).expect(200)).body.data.items.map((project: { id: string }) => project.id);
+
+    // The deleted project shows among the active ones only when asked for.
+    expect(await listIds(client)).toEqual([keptId]);
+    const withDeleted = await client.get(`/api/v1/projects?search=${mark}&deleted=yes`).expect(200);
+    // Newest change first: the delete changed the deleted project last.
+    expect(withDeleted.body.data.items).toEqual([
+      expect.objectContaining({ id, deletedAtUtc: expect.any(String), deletedByEmail: ownerEmail }),
+      expect.objectContaining({ id: keptId, deletedAtUtc: null, deletedByEmail: null }),
+    ]);
+    expect((await client.get(`/api/v1/projects/export?search=${mark}&deleted=yes`).expect(200)).text).toContain(`Restored ${mark}`);
+    expect((await client.get(`/api/v1/projects/export?search=${mark}`).expect(200)).text).not.toContain(`Restored ${mark}`);
+
+    // A member never sees a deleted project: the key is ignored and the detail is not found.
+    expect(await listIds(member.client, '&deleted=yes')).toEqual([keptId]);
+    await member.client.get(`/api/v1/projects/${id}`).expect(404);
+    await member.client.get(`/api/v1/projects/${id}/changes`).expect(404);
+
+    const restored = await client.post(`/api/v1/projects/${id}/restore`).set('x-csrf-token', csrf).expect(200);
+    expect(restored.body.data).toMatchObject({ id, deletedAtUtc: null, deletedByEmail: null, modifiedByEmail: ownerEmail });
+    expect(await listIds(client)).toEqual([id, keptId]);
+    const changes = await client.get(`/api/v1/projects/${id}/changes`).expect(200);
+    expect(changes.body.data.map((change: { summary: string }) => change.summary).slice(0, 2)).toEqual(['Restored the project', 'Deleted the project']);
+    // Only a deleted project can be restored.
+    await client.post(`/api/v1/projects/${id}/restore`).set('x-csrf-token', csrf).expect(404)
       .expect(({ body }) => expect(body.error.code).toBe('PROJECT_NOT_FOUND'));
   });
 
@@ -247,8 +338,14 @@ describe('projects API', () => {
     const projectsList = response.body.paths['/api/v1/projects'].get;
     const parameters = projectsList.parameters;
 
-    expect(parameters).toHaveLength(7);
+    expect(parameters).toHaveLength(8);
     expect(parameters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: 'deleted',
+        in: 'query',
+        required: false,
+        schema: expect.objectContaining({ enum: ['yes'] }),
+      }),
       expect.objectContaining({
         name: 'search',
         in: 'query',

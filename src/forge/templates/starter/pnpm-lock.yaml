@@ -354,6 +354,9 @@ importers:
 
   libs/projects/server:
     dependencies:
+      '@app/auth-contracts':
+        specifier: workspace:*
+        version: link:../../auth/contracts
       '@app/core-server':
         specifier: workspace:*
         version: link:../../core/server

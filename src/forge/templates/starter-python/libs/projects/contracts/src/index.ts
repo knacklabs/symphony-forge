@@ -13,6 +13,8 @@ const projectFilters = {
     .meta({ description: 'Text to find in the project name, up to 200 characters.', example: 'migration' }),
   status: projectStatusSchema.optional()
     .meta({ description: 'Show only projects with this status.', example: 'active' }),
+  deleted: z.enum(['yes']).optional()
+    .meta({ description: 'Show deleted projects too; only an admin gets them.', example: 'yes' }),
 };
 
 /** The export takes the list's search and filters, so it downloads what the list shows. */

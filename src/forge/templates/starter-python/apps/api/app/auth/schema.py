@@ -57,6 +57,10 @@ class Account(AuthSchema):
     id: UUID
     email: Email
     role: Role
+    permissions: list[str] = Field(
+        description="What the account's role may do, such as projects.delete.",
+        examples=[["projects.view", "projects.create"]],
+    )
 
 
 class AuthOptions(AuthSchema):

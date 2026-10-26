@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import type { Account } from '@app/auth-contracts';
 import { useTheme } from '@app/shared-ui/components/theme-provider';
 import { useSignOut } from '@app/auth-web';
+import { PermissionsContext, useCan } from '@app/core-web';
 import { Button } from '@app/shared-ui/components/ui/button';
 import {
   Breadcrumb,
@@ -58,11 +59,13 @@ function AppSidebar({ account, ...props }: ComponentProps<typeof Sidebar> & { ac
         <SidebarGroup>
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/projects' || pathname.startsWith('/projects/')} tooltip="Projects">
-                <Link to="/projects"><FolderKanban /><span>Projects</span></Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {useCan('projects.view') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/projects' || pathname.startsWith('/projects/')} tooltip="Projects">
+                  <Link to="/projects"><FolderKanban /><span>Projects</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/members'} tooltip="Members">
                 <Link to="/members"><Users /><span>Members</span></Link>
@@ -139,6 +142,7 @@ function UserMenu({ account }: { account: Account }) {
 }
 
 function SearchBox({ account }: { account: Account }) {
+  const canViewProjects = useCan('projects.view');
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -169,7 +173,7 @@ function SearchBox({ account }: { account: Account }) {
         <CommandList>
           <CommandEmpty>No matching pages.</CommandEmpty>
           <CommandGroup heading="Pages">
-            <CommandItem onSelect={() => goTo('/projects')}>Projects</CommandItem>
+            {canViewProjects && <CommandItem onSelect={() => goTo('/projects')}>Projects</CommandItem>}
             <CommandItem onSelect={() => goTo('/members')}>Members</CommandItem>
             {account.role === 'admin' && <CommandItem onSelect={() => goTo('/history')}>Change history</CommandItem>}
             <CommandItem onSelect={() => goTo('/settings')}>Settings</CommandItem>
@@ -212,9 +216,11 @@ function ShellContent({ account }: { account: Account }) {
 export function AppShell({ account }: { account: Account }) {
   const savedSidebarState = document.cookie.split('; ').find((cookie) => cookie.startsWith('sidebar_state='))?.split('=')[1];
   return (
-    <SidebarProvider defaultOpen={savedSidebarState !== 'false'}>
-      <AppSidebar account={account} />
-      <ShellContent account={account} />
-    </SidebarProvider>
+    <PermissionsContext value={account.permissions}>
+      <SidebarProvider defaultOpen={savedSidebarState !== 'false'}>
+        <AppSidebar account={account} />
+        <ShellContent account={account} />
+      </SidebarProvider>
+    </PermissionsContext>
   );
 }

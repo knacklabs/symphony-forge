@@ -38,6 +38,8 @@ class Project(ProjectSchema):
     modified_by_account_id: UUID
     created_by_email: str
     modified_by_email: str
+    deleted_at_utc: datetime | None
+    deleted_by_email: str | None
 
 
 # A cursor holds a whole project name, which can be 120 characters of any script.
@@ -49,6 +51,11 @@ class ProjectExportQuery(ProjectSchema):
 
     search: str | None = Field(default=None, max_length=200)
     status: ProjectStatus | None = None
+    deleted: Literal["yes"] | None = Field(
+        default=None,
+        description="Show deleted projects too; only for a caller with the restore permission.",
+        examples=["yes"],
+    )
 
 
 class ProjectListQuery(ProjectExportQuery):

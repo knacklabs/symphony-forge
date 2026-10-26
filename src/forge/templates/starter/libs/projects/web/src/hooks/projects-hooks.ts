@@ -6,6 +6,7 @@ export type ProjectSortBy = 'name' | 'status' | 'createdAtUtc' | 'updatedAtUtc';
 export type ProjectListQuery = {
   search?: string;
   status?: ProjectStatus;
+  deleted?: 'yes';
   sortBy: ProjectSortBy;
   sortOrder: 'asc' | 'desc';
   after?: string;
@@ -81,5 +82,14 @@ export function useDeleteProject() {
     // Mark the lists stale without a refetch now: the open detail screen would read the deleted
     // project as missing before the list opens. Each screen refetches when it opens.
     onSuccess: () => queryClient.invalidateQueries({ queryKey: projectKeys.all, refetchType: 'none' }),
+  });
+}
+
+export function useRestoreProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiRequest<Project>(`/projects/${encodeURIComponent(id)}/restore`, { method: 'POST' }),
+    // The detail, its recent changes and the lists all sit under the projects key.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectKeys.all }),
   });
 }

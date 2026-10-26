@@ -2,9 +2,9 @@ import { randomBytes, createHash, scrypt, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Optional, BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
-import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
+import { MAIL_PROVIDER, permissionsFor, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
 import { ORGANISATIONS_API, roleSchema, type OrganisationsApi } from '@app/organisations-contracts';
-import type { Account as AccountResponse, AuthOptions } from '@app/auth-contracts';
+import type { Account as AccountResponse, AuthApi, AuthOptions } from '@app/auth-contracts';
 
 const PASSWORD_KEY_BYTES = 64;
 const PASSWORD_SALT_BYTES = 16;
@@ -46,17 +46,23 @@ async function verifyPassword(password: string, storedHash: string): Promise<boo
 }
 
 function accountResponse(account: Pick<Account, 'id' | 'email'>, role: AccountResponse['role']): AccountResponse {
-  return { id: account.id, email: account.email, role: roleSchema.parse(role) };
+  const parsedRole = roleSchema.parse(role);
+  return { id: account.id, email: account.email, role: parsedRole, permissions: permissionsFor(parsedRole) };
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements AuthApi {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @Inject(ORGANISATIONS_API) private readonly organisations: OrganisationsApi,
     @Optional() @Inject(MAIL_PROVIDER) private readonly mailProvider: MailProvider | null = null,
   ) {}
+
+  async emailsFor(accountIds: string[]): Promise<Map<string, string>> {
+    const accounts = await this.prisma.account.findMany({ where: { id: { in: [...new Set(accountIds)] } }, select: { id: true, email: true } });
+    return new Map(accounts.map((account) => [account.id, account.email]));
+  }
 
   async signUp(email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
     if (!this.options().signUpOpen) {

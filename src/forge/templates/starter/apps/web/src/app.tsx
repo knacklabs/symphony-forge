@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, matchPath, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, matchPath, useLocation, useMatches } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
 import { RouteErrorPage } from '@app/core-web';
 import { AcceptInvitePage } from '@app/auth-web';
@@ -17,6 +17,8 @@ import { Button } from '@app/shared-ui/components/ui/button';
 function ProtectedLayout() {
   const account = useAccount();
   const location = useLocation();
+  // A screen names the permission it needs in its route handle; without it the screen reads as an unknown address.
+  const needed = useMatches().map((match) => (match.handle as { permission?: string } | undefined)?.permission).find(Boolean);
 
   if (account.isPending) {
     return <main id="main-content" className="flex min-h-screen items-center justify-center p-6"><p role="status">Loading your account…</p></main>;
@@ -31,6 +33,7 @@ function ProtectedLayout() {
     );
   }
   if (!account.data) return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />;
+  if (needed && !account.data.permissions.includes(needed)) return <NotFoundPage />;
 
   return <AppShell account={account.data} />;
 }
@@ -69,8 +72,8 @@ export const router = createBrowserRouter(createRoutesFromElements(
     <Route path="/reset-password" element={<ResetPasswordPage />} errorElement={<RouteErrorPage />} />
     <Route path="/accept-invite" element={<AcceptInvitePage />} errorElement={<RouteErrorPage />} />
     <Route element={<ProtectedLayout />} errorElement={<RouteErrorPage />}>
-      <Route path="/projects" element={<ProjectsPage />} errorElement={<RouteErrorPage />} />
-      <Route path="/projects/:id" element={<ProjectDetailPage />} handle={{ crumbs: <ProjectCrumbs /> }} errorElement={<RouteErrorPage />} />
+      <Route path="/projects" element={<ProjectsPage />} handle={{ permission: 'projects.view' }} errorElement={<RouteErrorPage />} />
+      <Route path="/projects/:id" element={<ProjectDetailPage />} handle={{ crumbs: <ProjectCrumbs />, permission: 'projects.view' }} errorElement={<RouteErrorPage />} />
       <Route path="/members" element={<MembersPage />} errorElement={<RouteErrorPage />} />
       <Route path="/history" element={<HistoryPage />} errorElement={<RouteErrorPage />} />
       <Route path="/settings" element={<SettingsPage />} errorElement={<RouteErrorPage />} />

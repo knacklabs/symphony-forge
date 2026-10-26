@@ -9,9 +9,11 @@ from uuid import UUID, uuid7
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session as DbSession
 
-from app.core import AccountPrincipal, ApiError
+from app.auth import account_emails
+from app.core import AccountPrincipal, ApiError, has_permission
 from app.history import HistoryEntry, HistoryService, Subject
 from app.projects.models import Project as ProjectModel
+from app.projects.permissions import PROJECT_PERMISSIONS
 from app.projects.schema import (
     Project,
     ProjectExportQuery,
@@ -95,12 +97,18 @@ def _search_pattern(term: str) -> str:
     return f"%{escaped}%"
 
 
+def _sees_deleted(account: AccountPrincipal) -> bool:
+    return has_permission(account.role, PROJECT_PERMISSIONS.restore)
+
+
 def _filters(account: AccountPrincipal, query: ProjectExportQuery) -> list[Any]:
-    """The organisation's live projects that match the search and status filter."""
-    filters: list[Any] = [
-        ProjectModel.organisation_id == account.organisation_id,
-        ProjectModel.deleted_at_utc.is_(None),
-    ]
+    """The organisation's projects that match the search and status filter.
+
+    Deleted projects are left out unless the caller asks for them and may restore them.
+    """
+    filters: list[Any] = [ProjectModel.organisation_id == account.organisation_id]
+    if not (query.deleted == "yes" and _sees_deleted(account)):
+        filters.append(ProjectModel.deleted_at_utc.is_(None))
     if query.search:
         filters.append(
             ProjectModel.name.ilike(_search_pattern(query.search), escape="\\")
@@ -110,10 +118,48 @@ def _filters(account: AccountPrincipal, query: ProjectExportQuery) -> list[Any]:
     return filters
 
 
+# The project's own columns; the account emails come from auth.
+_STORED_FIELDS = tuple(
+    name for name in Project.model_fields if not name.endswith("_email")
+)
+
+
 class ProjectService:
     def __init__(self, db: DbSession) -> None:
         self.db = db
         self.history = HistoryService(db)
+
+    def _responses(self, projects: Sequence[ProjectModel]) -> list[Project]:
+        """Auth owns the accounts, so their emails come through its public service."""
+        emails = account_emails(
+            self.db,
+            {
+                account_id
+                for project in projects
+                for account_id in (
+                    project.created_by_account_id,
+                    project.modified_by_account_id,
+                    project.deleted_by_account_id,
+                )
+                if account_id is not None
+            },
+        )
+        return [
+            Project.model_validate(
+                {name: getattr(project, name) for name in _STORED_FIELDS}
+                | {
+                    "created_by_email": emails[project.created_by_account_id],
+                    "modified_by_email": emails[project.modified_by_account_id],
+                    "deleted_by_email": emails[project.deleted_by_account_id]
+                    if project.deleted_by_account_id
+                    else None,
+                }
+            )
+            for project in projects
+        ]
+
+    def _response(self, project: ProjectModel) -> Project:
+        return self._responses([project])[0]
 
     def list(
         self, account: AccountPrincipal, query: ProjectListQuery
@@ -166,7 +212,7 @@ class ProjectService:
         has_next = bool(projects) and (backward or more)
         has_previous = bool(projects) and (more if backward else cursor is not None)
         return ProjectListResponse(
-            items=[Project.model_validate(project) for project in projects],
+            items=self._responses(projects),
             paging=ProjectPaging(
                 limit=query.limit,
                 next_cursor=_encode_cursor(query.sort_by, projects[-1])
@@ -189,28 +235,39 @@ class ProjectService:
             .where(*_filters(account, query))
             .order_by(ProjectModel.created_at_utc.desc(), ProjectModel.id.asc())
         ).all()
-        return [Project.model_validate(project) for project in projects]
+        return self._responses(projects)
 
-    def _live(self, account: AccountPrincipal, project_id: UUID) -> ProjectModel:
+    def _find(
+        self, account: AccountPrincipal, project_id: UUID, *conditions: Any
+    ) -> ProjectModel:
         project = self.db.scalar(
             select(ProjectModel).where(
                 ProjectModel.id == project_id,
                 ProjectModel.organisation_id == account.organisation_id,
-                ProjectModel.deleted_at_utc.is_(None),
+                *conditions,
             )
         )
         if project is None:
             raise self._not_found()
         return project
 
+    def _live(self, account: AccountPrincipal, project_id: UUID) -> ProjectModel:
+        return self._find(account, project_id, ProjectModel.deleted_at_utc.is_(None))
+
+    def _readable(self, account: AccountPrincipal, project_id: UUID) -> ProjectModel:
+        """A live project, or a deleted one for a caller who may restore it."""
+        if _sees_deleted(account):
+            return self._find(account, project_id)
+        return self._live(account, project_id)
+
     def get(self, account: AccountPrincipal, project_id: UUID) -> Project:
-        return Project.model_validate(self._live(account, project_id))
+        return self._response(self._readable(account, project_id))
 
     def changes(
         self, account: AccountPrincipal, project_id: UUID
     ) -> Sequence[HistoryEntry]:
-        """The project's newest changes; a deleted or another organisation's project is not found."""
-        self._live(account, project_id)
+        """The project's newest changes; another organisation's project is not found."""
+        self._readable(account, project_id)
         return self.history.list_for_subject(account, project_id, RECENT_CHANGES)
 
     # Each change and its Change history row commit together in one commit.
@@ -232,7 +289,7 @@ class ProjectService:
         )
         self.db.commit()
         self.db.refresh(project)
-        return Project.model_validate(project)
+        return self._response(project)
 
     def update(
         self, account: AccountPrincipal, project_id: UUID, input_data: ProjectInput
@@ -249,7 +306,7 @@ class ProjectService:
             )
         self.db.commit()
         self.db.refresh(project)
-        return Project.model_validate(project)
+        return self._response(project)
 
     def delete(self, account: AccountPrincipal, project_id: UUID) -> None:
         project = self._live(account, project_id)
@@ -263,6 +320,23 @@ class ProjectService:
             Subject(project.id, project.name),
         )
         self.db.commit()
+
+    def restore(self, account: AccountPrincipal, project_id: UUID) -> Project:
+        project = self._find(
+            account, project_id, ProjectModel.deleted_at_utc.is_not(None)
+        )
+        project.deleted_at_utc = None
+        project.deleted_by_account_id = None
+        project.modified_by_account_id = account.id
+        self.history.record(
+            account,
+            "project.restored",
+            "Restored the project",
+            Subject(project.id, project.name),
+        )
+        self.db.commit()
+        self.db.refresh(project)
+        return self._response(project)
 
     @staticmethod
     def _not_found() -> ApiError:

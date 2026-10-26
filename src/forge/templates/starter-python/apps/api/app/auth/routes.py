@@ -27,6 +27,7 @@ from app.core import (
     SuccessEnvelope,
     admin_only,
     get_db,
+    permissions_for,
     verify_csrf,
 )
 from app.history import HistoryService
@@ -255,7 +256,12 @@ def me(
     account: Annotated[AccountPrincipal, Depends(current_account)],
 ) -> SuccessEnvelope[Account]:
     return SuccessEnvelope(
-        data=Account(id=account.id, email=account.email, role=account.role)
+        data=Account(
+            id=account.id,
+            email=account.email,
+            role=account.role,
+            permissions=permissions_for(account.role),
+        )
     )
 
 

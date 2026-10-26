@@ -570,6 +570,28 @@
             }
           },
           {
+            "name": "deleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "yes",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Show deleted projects too; only for a caller with the restore permission.",
+              "examples": [
+                "yes"
+              ],
+              "title": "Deleted"
+            },
+            "description": "Show deleted projects too; only for a caller with the restore permission."
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -676,6 +698,16 @@
               }
             },
             "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
           },
           "422": {
             "description": "Validation Error",
@@ -799,6 +831,28 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "name": "deleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "yes",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Show deleted projects too; only for a caller with the restore permission.",
+              "examples": [
+                "yes"
+              ],
+              "title": "Deleted"
+            },
+            "description": "Show deleted projects too; only for a caller with the restore permission."
           }
         ],
         "responses": {
@@ -824,6 +878,16 @@
               }
             },
             "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
           },
           "422": {
             "description": "Validation Error",
@@ -887,6 +951,16 @@
               }
             },
             "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
           },
           "404": {
             "content": {
@@ -1122,6 +1196,89 @@
               }
             },
             "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/restore": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Restore a deleted project in your organisation.",
+        "operationId": "restore_project_api_v1_projects__project_id__restore_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_Project_"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
           },
           "404": {
             "content": {
@@ -1569,6 +1726,20 @@
           },
           "role": {
             "$ref": "#/components/schemas/Role"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Permissions",
+            "description": "What the account's role may do, such as projects.delete.",
+            "examples": [
+              [
+                "projects.view",
+                "projects.create"
+              ]
+            ]
           }
         },
         "additionalProperties": false,
@@ -1576,7 +1747,8 @@
         "required": [
           "id",
           "email",
-          "role"
+          "role",
+          "permissions"
         ],
         "title": "Account"
       },
@@ -2023,6 +2195,29 @@
           "modifiedByEmail": {
             "type": "string",
             "title": "Modifiedbyemail"
+          },
+          "deletedAtUtc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deletedatutc"
+          },
+          "deletedByEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deletedbyemail"
           }
         },
         "additionalProperties": false,
@@ -2036,7 +2231,9 @@
           "createdByAccountId",
           "modifiedByAccountId",
           "createdByEmail",
-          "modifiedByEmail"
+          "modifiedByEmail",
+          "deletedAtUtc",
+          "deletedByEmail"
         ],
         "title": "Project"
       },

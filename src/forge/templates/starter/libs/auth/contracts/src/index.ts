@@ -34,7 +34,8 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
-export type Account = { id: string; email: string; role: Role };
+/** `permissions` lists what the account may do, as `<feature>.<action>`, such as `projects.delete`. */
+export type Account = { id: string; email: string; role: Role; permissions: string[] };
 
 export const inviteSchema = forgotPasswordSchema;
 
@@ -45,3 +46,11 @@ export const acceptInviteSchema = signUpSchema.extend({
 export type InviteInput = z.infer<typeof inviteSchema>;
 
 export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
+
+export const AUTH_API = 'AuthApi';
+
+/** What other modules may ask auth about accounts, which auth alone reads. */
+export interface AuthApi {
+  /** Each known account's email by its id. */
+  emailsFor(accountIds: string[]): Promise<Map<string, string>>;
+}
