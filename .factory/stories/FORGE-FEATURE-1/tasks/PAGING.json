@@ -2,7 +2,7 @@
   "branch": "task/FORGE-FEATURE-1-PAGING",
   "part_line_limit": 400,
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T10:17:36.496894+00:00",
@@ -10,10 +10,14 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "split",
     "question": "Build a client feature from the starter in one step: Projects list with keyset paging and URL filters is stuck. It should deliver: Keyset paging, search and the status filter in both APIs and the projects contracts; the projects list as SCREENS.md shows it, with Previous, Next and the total; rows that open the detail route; the button and form labels; the projects cases in their own files.\nIt changes 662 lines outside tests, over its limit of 400.\nThe worker tried: Page the projects list with cursors, search and a status filter.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "reason": "The owner chose to split: this part keeps the paging API and contracts in both starters; a new part takes the projects screen",
     "size": true,
     "tool": "claude",
-    "wait_id": "ec5f2605-31bb-469c-99a9-953c082d7a39"
+    "wait_id": "ec5f2605-31bb-469c-99a9-953c082d7a39",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
