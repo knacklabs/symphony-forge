@@ -1,19 +1,13 @@
-enum ProjectStatus {
-  active
-  archived
-  @@schema("projects")
-}
-
 model Project {
   id                  String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
   organisationId      String        @db.Uuid
-  name                String        @db.VarChar(120)
-  status              ProjectStatus @default(active)
-  createdAtUtc        DateTime      @default(now())
-  updatedAtUtc        DateTime      @updatedAt
+  name                String
+  status              String        @default("active")
+  createdAtUtc        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime      @updatedAt @db.Timestamptz(3)
   createdByAccountId  String        @db.Uuid
   modifiedByAccountId String        @db.Uuid
-  deletedAtUtc        DateTime?
+  deletedAtUtc        DateTime?     @db.Timestamptz(3)
   deletedByAccountId  String?       @db.Uuid
 
   organisation        Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)

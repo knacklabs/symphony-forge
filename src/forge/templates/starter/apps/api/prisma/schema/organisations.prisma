@@ -1,16 +1,10 @@
-enum MembershipRole {
-  admin
-  member
-  @@schema("core")
-}
-
 model Organisation {
   id                  String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  createdAtUtc        DateTime     @default(now())
-  updatedAtUtc        DateTime     @updatedAt
+  createdAtUtc        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime     @updatedAt @db.Timestamptz(3)
   createdByAccountId  String       @db.Uuid
   modifiedByAccountId String       @db.Uuid
-  deletedAtUtc        DateTime?
+  deletedAtUtc        DateTime?    @db.Timestamptz(3)
   deletedByAccountId  String?      @db.Uuid
   memberships         Membership[]
   projects            Project[]
@@ -28,9 +22,9 @@ model Invite {
   organisationId      String       @db.Uuid
   email               String
   tokenHash           String       @unique
-  expiresAtUtc        DateTime
-  createdAtUtc        DateTime     @default(now())
-  updatedAtUtc        DateTime     @updatedAt
+  expiresAtUtc        DateTime     @db.Timestamptz(3)
+  createdAtUtc        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime     @updatedAt @db.Timestamptz(3)
   createdByAccountId  String       @db.Uuid
   modifiedByAccountId String       @db.Uuid
   organisation        Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
@@ -47,12 +41,12 @@ model Membership {
   accountId           String         @unique @db.Uuid
   organisationId      String         @db.Uuid
   email               String
-  role                MembershipRole
-  createdAtUtc        DateTime       @default(now())
-  updatedAtUtc        DateTime       @updatedAt
+  role                String
+  createdAtUtc        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime       @updatedAt @db.Timestamptz(3)
   createdByAccountId  String         @db.Uuid
   modifiedByAccountId String         @db.Uuid
-  deletedAtUtc        DateTime?
+  deletedAtUtc        DateTime?      @db.Timestamptz(3)
   deletedByAccountId  String?        @db.Uuid
   account             Account        @relation(fields: [accountId], references: [id], onDelete: Restrict)
   organisation        Organisation   @relation(fields: [organisationId], references: [id], onDelete: Restrict)

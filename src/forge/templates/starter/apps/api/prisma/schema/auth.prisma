@@ -2,8 +2,8 @@ model Account {
   id                  String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
   email               String   @unique
   passwordHash        String
-  createdAtUtc        DateTime @default(now())
-  updatedAtUtc        DateTime @updatedAt
+  createdAtUtc        DateTime @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime @updatedAt @db.Timestamptz(3)
   createdByAccountId  String   @db.Uuid
   modifiedByAccountId String   @db.Uuid
 
@@ -28,8 +28,8 @@ model Session {
   accountId           String   @db.Uuid
   tokenHash           String   @unique
   csrfTokenHash       String
-  expiresAtUtc        DateTime
-  createdAtUtc        DateTime @default(now())
+  expiresAtUtc        DateTime @db.Timestamptz(3)
+  createdAtUtc        DateTime @default(now()) @db.Timestamptz(3)
   account             Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId], map: "idx_Session_accountId")
@@ -41,8 +41,8 @@ model PasswordResetToken {
   id           String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
   accountId    String   @db.Uuid
   tokenHash    String   @unique
-  expiresAtUtc DateTime
-  createdAtUtc DateTime @default(now())
+  expiresAtUtc DateTime @db.Timestamptz(3)
+  createdAtUtc DateTime @default(now()) @db.Timestamptz(3)
   account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId], map: "idx_PasswordResetToken_accountId")

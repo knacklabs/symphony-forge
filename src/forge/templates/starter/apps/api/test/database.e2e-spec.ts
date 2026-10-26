@@ -1,33 +1,43 @@
 import { spawnSync } from 'node:child_process';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { apiBaseUrl, credentials, csrfToken, invite, psql } from './helpers';
 
 // Synchronous child processes block Vitest's own timeout timer.
 const migrationDiffTimeoutMilliseconds = 20_000;
 
 describe('database', () => {
+  const client = request.agent(apiBaseUrl);
+  const account = credentials();
+  const inviteEmail = credentials().email;
+  let projectId: string;
+  let accountId: string;
+
+  // Both column and id checks use these API-created rows. A second sign-up pushes the
+  // full API suite over the real sign-up rate limit; no check needs a separate account.
+  beforeAll(async () => {
+    const signUp = await client.post('/api/v1/auth/sign-up').send(account).expect(201);
+    accountId = signUp.body.data.id as string;
+    const csrf = csrfToken(signUp);
+    const created = await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+      .send({ name: 'Database defaults', status: 'active' }).expect(201);
+    projectId = created.body.data.id as string;
+    expect(projectId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(accountId).toMatch(/^[0-9a-f-]{36}$/);
+    await invite(client, csrf, inviteEmail);
+    await client.post('/api/v1/auth/forgot-password').send({ email: account.email }).expect(200);
+  });
+
   // Audit: HTTP-created rows must use v7 ids, and direct SQL must advance the clock.
   // Prisma-only updates hide a missing trigger; init-copy checks cannot prove SQL execution.
   // All data comes from public API calls; SQL and migrate diff use the existing Docker boundary.
   it('a new row gets a time-ordered id and an update sets its last-changed time', async () => {
-    const client = request.agent(apiBaseUrl);
-    const account = credentials();
-    const signUp = await client.post('/api/v1/auth/sign-up').send(account).expect(201);
-    const csrf = csrfToken(signUp);
-    const created = await client.post('/api/v1/projects').set('x-csrf-token', csrf)
-      .send({ name: 'Database defaults', status: 'active' }).expect(201);
-    await invite(client, csrf, credentials().email);
-    await client.post('/api/v1/auth/forgot-password').send({ email: account.email }).expect(200);
-
     for (const table of ['core."Account"', 'core."Session"', 'core."PasswordResetToken"', 'core."Organisation"', 'core."Membership"', 'core."Invite"', 'projects."Project"', 'history."ChangeRecord"']) {
       const ids = psql(`SELECT count(*) > 0 AS has_rows, count(*) FILTER (WHERE uuid_extract_version(id) <> 7) = 0 AS all_v7 FROM ${table}`);
       expect(ids.status, ids.output).toBe(0);
       expect(ids.output).toMatch(/t\s*\|\s*t/);
     }
 
-    const projectId = created.body.data.id as string;
-    expect(projectId).toMatch(/^[0-9a-f-]{36}$/);
     const updated = psql(`
       WITH previous AS MATERIALIZED (
         SELECT id, "updatedAtUtc" FROM projects."Project" WHERE id = '${projectId}'
@@ -50,6 +60,46 @@ describe('database', () => {
     ], { encoding: 'utf8', timeout: migrationDiffTimeoutMilliseconds, killSignal: 'SIGKILL' });
     expect(drift.status, `${drift.error?.message ?? ''}${drift.stdout}${drift.stderr}`).toBe(0);
     expect(drift.stdout).toContain('-- This is an empty migration.');
+  });
+
+  // Audit: API-created rows must use text columns and enforce the named status and email checks.
+  // A stale or incomplete migration leaves legacy types or accepts invalid status and email values.
+  // The init test owns migration delivery; existing database tests do not exercise these constraints.
+  // This uses the running API and existing SQL helper, with no production test seam.
+  it('the starter tables follow the database skill', () => {
+    const legacyColumns = psql(`
+      SELECT count(*)
+      FROM information_schema.columns
+      WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
+        AND table_name NOT IN ('_prisma_migrations', 'alembic_version')
+        AND data_type IN ('character varying', 'USER-DEFINED', 'timestamp without time zone')
+    `);
+    expect(legacyColumns.status, legacyColumns.output).toBe(0);
+    expect(legacyColumns.output).toMatch(/\n\s*0\s*\n/);
+
+    const invalidStatus = psql(
+      `UPDATE projects."Project" SET status = 'paused' WHERE id = '${projectId}'`,
+    );
+    expect(invalidStatus.status).not.toBe(0);
+    expect(invalidStatus.output).toContain('Project_status_allowed');
+
+    const invalidEmail = psql(
+      `UPDATE core."Account" SET email = upper(email) WHERE email = '${account.email}'`,
+    );
+    expect(invalidEmail.status).not.toBe(0);
+    expect(invalidEmail.output).toContain('Account_email_lower');
+
+    for (const [sql, constraint] of [
+      [`UPDATE core."Invite" SET email = upper(email) WHERE email = '${inviteEmail}'`, 'Invite_email_lower'],
+      [`UPDATE core."Membership" SET role = 'owner' WHERE "accountId" = '${accountId}'`, 'Membership_role_allowed'],
+      ...["''", "repeat('x', 121)"].map((name) => [
+        `UPDATE projects."Project" SET name = ${name} WHERE id = '${projectId}'`, 'Project_name_length',
+      ]),
+    ]) {
+      const invalid = psql(sql);
+      expect(invalid.status, constraint).not.toBe(0);
+      expect(invalid.output).toContain(constraint);
+    }
   });
 
   // Audit: the API must use migrated schemas, without a business-to-business foreign key.

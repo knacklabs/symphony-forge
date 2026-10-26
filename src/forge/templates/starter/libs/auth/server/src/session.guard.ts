@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PrismaService, PUBLIC_ROUTE, type AuthenticatedRequest } from '@app/core-server';
-import { ORGANISATIONS_API, type OrganisationsApi } from '@app/organisations-contracts';
+import { ORGANISATIONS_API, roleSchema, type OrganisationsApi } from '@app/organisations-contracts';
 
 const SESSION_COOKIE = 'starter_session';
 
@@ -33,7 +33,7 @@ export class SessionGuard implements CanActivate {
 
     const membership = await this.organisations.membershipFor(session.account.id);
     if (!membership) throw this.unauthorized();
-    request.principal = { ...session.account, organisationId: membership.organisationId, role: membership.role };
+    request.principal = { ...session.account, organisationId: membership.organisationId, role: roleSchema.parse(membership.role) };
     request.csrfTokenHash = session.csrfTokenHash;
     return true;
   }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import type { Account } from '@app/auth-contracts';
+export const roleSchema = z.enum(['admin', 'member']);
+export type Role = z.infer<typeof roleSchema>;
 
 export const memberListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1)
@@ -11,10 +12,10 @@ export const memberListQuerySchema = z.object({
 
 export type MemberListQuery = z.infer<typeof memberListQuerySchema>;
 
-export type Member = { id: string; accountId: string; email: string; role: Account['role']; createdAtUtc: string };
+export type Member = { id: string; accountId: string; email: string; role: Role; createdAtUtc: string };
 
 export const changeRoleSchema = z.object({
-  role: z.enum(['admin', 'member']).meta({ description: 'The member’s new role.', example: 'member' }),
+  role: roleSchema.meta({ description: 'The member’s new role.', example: 'member' }),
 }).strict();
 
 export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;
