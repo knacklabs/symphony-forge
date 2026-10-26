@@ -458,6 +458,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     # Outer test-selection flags must not change a client's own pytest command.
     monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
+    # The checkout launcher exposes src through PYTHONPATH; clients and released tools must not.
+    monkeypatch.delenv("PYTHONPATH", raising=False)
     for name in list(os.environ):
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):

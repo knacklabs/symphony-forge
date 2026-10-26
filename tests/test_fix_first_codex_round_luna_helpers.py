@@ -29,12 +29,15 @@ def test_1_forge_init_gives_lite_luna_max_helpers(repo, gh, tmp_path):
 
 @pytest.mark.platform
 def test_2_first_fix_round_sends_a_codex_repos_lite_helpers(repo, monkeypatch, sdk_data, claude_session):
+    # The historical settings fixture must use today's pin to exercise today's helper contract.
     _install(repo.bin, "codex-app-server",
              (ROOT / "tests/stubs/codex-app-server").read_text(encoding="utf-8"))
     program = repo.bin / ("codex-app-server.cmd" if os.name == "nt" else "codex-app-server")
     monkeypatch.setenv("CODEX_BIN", str(program))
     monkeypatch.setenv("XDG_DATA_HOME", str(sdk_data))
-    repo.write("forge.toml", (ROOT / "tests/fixtures/codex-forge.toml").read_text(encoding="utf-8"))
+    settings = (ROOT / "tests/fixtures/codex-forge.toml").read_text(encoding="utf-8")
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", settings.replace('version = "v1.2.3"', f'version = "{version}"'))
     repo.git("add", "forge.toml")
     repo.git("commit", "-q", "-m", "Configure Forge")
     repo.git("push", "-q", "origin", "main")

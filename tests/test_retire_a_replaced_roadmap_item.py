@@ -123,8 +123,10 @@ def _commit(repo, items: list[dict], message: str) -> None:
 
 
 def test_4_the_roadmap_merge_rule_conflicts_on_competing_statuses(repo):
+    # Sync today's merge driver; competing statuses must still conflict in both directions.
     repo.git("checkout", "-q", "-b", "fix/roadmap")
-    repo.write("forge.toml", 'version = "v1.2.6"\ntest = "echo ok"\n'
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     repo.write("plans/roadmap.json", json.dumps({"items": [_item("OLD-1", "pending", 1)]}) + "\n")
     _ok(repo.forge("sync"))

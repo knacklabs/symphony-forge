@@ -12,6 +12,8 @@ from conftest import ROOT
 from test_app_constitution import _fixture_git
 from test_setup import _fresh_client
 
+STORY = "FORGE-SINGLECO-1"
+
 
 @pytest.mark.platform
 @pytest.mark.parametrize("adoption", ["new init", "previous release upgrade and sync"])

@@ -15,6 +15,8 @@ from test_setup import _fresh_client
 from test_starter_tree import API_SECURITY_TESTS, API_ZOD_CASES, LIVE, STARTER, _require_cases, live_run
 from test_worker import calls, install_claude
 
+STORY = "FORGE-LIBS-1"
+
 SERVER_LIBRARIES = (
     ("@app/shared-util", "libs/shared/util", "util", "shared"),
     ("@app/core-server", "libs/core/server", "server", "core"),
