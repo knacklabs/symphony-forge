@@ -2,12 +2,20 @@
   "base": "8c288db8db1fbeb48d28ae4b5098b5318ef8ab6f",
   "branch": "task/FORGE-DATABASE-1-COLUMNSPY",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-LIBS-1/SCHEMASPY",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T08:43:06.240730+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "77fad36a788513c30714d684a275adebacda17e3",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
