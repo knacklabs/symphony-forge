@@ -410,6 +410,12 @@
       "order": 99
     },
     {
+      "key": "FORGE-SERVICES-1",
+      "title": "Client apps can deploy several services from one repo",
+      "status": "pending",
+      "order": 100
+    },
+    {
       "key": "FORGE-FEATURE-1",
       "title": "Build a client feature from the starter in one step",
       "status": "pending",
