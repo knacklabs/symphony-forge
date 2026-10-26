@@ -4,34 +4,24 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- An engineer asks the agent once to set up deploys. The agent signs in to Mainline in the browser, connects the repo, writes the service settings after the engineer confirms them, and sets the subdomain and the variables from the example env file.
+- Every merge to main deploys dev automatically, and every pull request gets a preview link. No agent runs a deploy after setup.
+- Production changes only when a person presses Promote.
+- The board and each pull request show the preview link, dev health and the release now in production.
+- A failed dev deploy opens a fix that carries the failed step's log.
 
 ## Why
 
-Client apps deploy to dev and preview on their own, and production waits for a person's Promote
-
-
+Each deploy is a manual agent run that waits for a specific request, the address is written by hand, and neither the board nor the pull request shows whether dev or production is healthy. A failed deploy has no fix path.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client repo completes the setup once, and its first dev deploy reports healthy before any other deploy runs.**
+2. **A merge to main updates dev, and a pull request shows a preview link without any agent command.**
+3. **An agent cannot deploy production, and production changes only after a person presses Promote.**
+4. **The board and the pull request show the preview link, dev health and the production release.**
+5. **A failed dev deploy opens a fix that includes the failed step's log.**
+6. **An existing client repo on upgrade receives the new guidance and the setup prompt, with a test for that path next to the new-repo test.**
 
 ## Risks
 
