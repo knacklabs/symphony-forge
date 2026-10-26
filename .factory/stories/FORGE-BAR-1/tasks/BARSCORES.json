@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-BAR-1-BARSCORES",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T09:09:41.696928+00:00",
+      "step": "start"
+    }
+  ]
+}
