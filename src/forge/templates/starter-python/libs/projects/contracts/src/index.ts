@@ -9,15 +9,21 @@ export const projectSchema = z.object({
 }).strict();
 
 export const projectListQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1)
-    .meta({ description: 'The one-based page number.', example: 1 }),
+  search: z.string().trim().max(200).optional()
+    .meta({ description: 'Text to find in the project name, up to 200 characters.', example: 'migration' }),
+  status: projectStatusSchema.optional()
+    .meta({ description: 'Show only projects with this status.', example: 'active' }),
   limit: z.coerce.number().int().min(1).max(100).default(20)
     .meta({ description: 'The number of projects per page, up to 100.', example: 20 }),
-  sortBy: z.enum(['name', 'status', 'createdAtUtc', 'updatedAtUtc']).default('createdAtUtc')
-    .meta({ description: 'The project field used to sort the list.', example: 'createdAtUtc' }),
+  sortBy: z.enum(['name', 'status', 'createdAtUtc', 'updatedAtUtc']).default('updatedAtUtc')
+    .meta({ description: 'The project field used to sort the list.', example: 'updatedAtUtc' }),
   sortOrder: z.enum(['asc', 'desc']).default('desc')
     .meta({ description: 'The sort direction.', example: 'desc' }),
-}).strict();
+  after: z.string().regex(/^[\w-]{1,512}$/).optional()
+    .meta({ description: 'The nextCursor of the page before, to read the next page.', example: 'WyJuYW1lIiwiQSJd' }),
+  before: z.string().regex(/^[\w-]{1,512}$/).optional()
+    .meta({ description: 'The previousCursor of the page after, to read the previous page.', example: 'WyJuYW1lIiwiQSJd' }),
+}).strict().refine((query) => !(query.after && query.before), { path: ['before'], message: 'Use after or before, not both.' });
 
 export type ProjectStatus = components['schemas']['ProjectStatus'];
 

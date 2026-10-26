@@ -34,18 +34,18 @@ describe('project hooks', () => {
 
   it('reads a project list and one project through the API envelope', async () => {
     const fetch = vi.fn()
-      .mockResolvedValueOnce(response({ items: [project], pagination: { page: 1, limit: 20, totalItems: 1, totalPages: 1 } }))
+      .mockResolvedValueOnce(response({ items: [project], paging: { limit: 20, nextCursor: null, previousCursor: null, total: 1, totalCapped: false } }))
       .mockResolvedValueOnce(response(project));
     vi.stubGlobal('fetch', fetch);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const queryWrapper = wrapper(client);
 
-    const list = renderHook(() => useProjects({ page: 1, limit: 20, sortBy: 'name', sortOrder: 'asc' }), { wrapper: queryWrapper });
+    const list = renderHook(() => useProjects({ search: 'migration', status: 'active', sortBy: 'name', sortOrder: 'asc', after: 'cursor-1' }), { wrapper: queryWrapper });
     await waitFor(() => expect(list.result.current.data?.items).toEqual([project]));
     const detail = renderHook(() => useProject(project.id), { wrapper: queryWrapper });
     await waitFor(() => expect(detail.result.current.data).toEqual(project));
 
-    expect(String(fetch.mock.calls[0][0])).toContain('/api/v1/projects?page=1&limit=20&sortBy=name&sortOrder=asc');
+    expect(String(fetch.mock.calls[0][0])).toContain('/api/v1/projects?search=migration&status=active&sortBy=name&sortOrder=asc&after=cursor-1');
     expect(String(fetch.mock.calls[1][0])).toBe(`/api/v1/projects/${project.id}`);
   });
 

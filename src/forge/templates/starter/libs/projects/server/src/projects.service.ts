@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Project } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma, Project } from '@prisma/client';
 import { PrismaService } from '@app/core-server';
 import type { AccountPrincipal } from '@app/core-server';
 import { projectStatusSchema, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
@@ -16,28 +16,78 @@ function toProjectResponse(project: Project) {
   };
 }
 
+/** The list counts up to this many matching projects; above it the screen says "More than 10,000". */
+const TOTAL_CAP = 10_000;
+type SortBy = ProjectListQuery['sortBy'];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A cursor is the sort column, its value and the id of a page's first or last row, as base64url JSON. */
+function encodeCursor(sortBy: SortBy, project: Project): string {
+  const value = project[sortBy];
+  return Buffer.from(JSON.stringify([sortBy, value instanceof Date ? value.toISOString() : value, project.id])).toString('base64url');
+}
+
+function decodeCursor(sortBy: SortBy, cursor: string, backward: boolean): { value: string | Date; id: string } {
+  try {
+    const [cursorSort, value, id] = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as unknown[];
+    if (cursorSort === sortBy && typeof value === 'string' && typeof id === 'string' && UUID.test(id)) {
+      if (!sortBy.endsWith('AtUtc')) return { value, id };
+      const time = new Date(value);
+      if (!Number.isNaN(time.getTime())) return { value: time, id };
+    }
+  } catch {
+    // An unreadable cursor gets the same field error as one for another sort.
+  }
+  throw new BadRequestException({
+    code: 'VALIDATION_ERROR',
+    message: 'Check the fields and try again.',
+    details: { fieldErrors: [{ field: backward ? 'before' : 'after', reason: 'Open the first page of the list again.' }] },
+  });
+}
+
+/** The rows after the cursor row in this order: a later sort value, or the same value and a later id. */
+function afterCursor(sortBy: SortBy, order: 'asc' | 'desc', cursor: { value: string | Date; id: string }): Prisma.ProjectWhereInput {
+  const beyond = order === 'asc' ? 'gt' : 'lt';
+  return { OR: [{ [sortBy]: { [beyond]: cursor.value } }, { [sortBy]: cursor.value, id: { [beyond]: cursor.id } }] };
+}
+
 @Injectable()
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(account: AccountPrincipal, query: ProjectListQuery) {
-    const where = { organisationId: account.organisationId, deletedAtUtc: null };
-    const [projects, totalItems] = await Promise.all([
+    const where: Prisma.ProjectWhereInput = {
+      organisationId: account.organisationId,
+      deletedAtUtc: null,
+      // Prisma passes % and _ to ILIKE as wildcards, so escape them to search for the text itself.
+      ...(query.search ? { name: { contains: query.search.replace(/[\\%_]/g, '\\$&'), mode: 'insensitive' as const } } : {}),
+      ...(query.status ? { status: query.status } : {}),
+    };
+    // A previous page reads backwards from its cursor, then flips its rows back into list order.
+    const backward = query.before !== undefined;
+    const cursor = query.before ?? query.after;
+    const order = backward ? (query.sortOrder === 'asc' ? 'desc' : 'asc') : query.sortOrder;
+    const [rows, total] = await Promise.all([
       this.prisma.project.findMany({
-        where,
-        skip: (query.page - 1) * query.limit,
-        take: query.limit,
-        orderBy: [{ [query.sortBy]: query.sortOrder }, { id: 'asc' }],
+        where: cursor ? { AND: [where, afterCursor(query.sortBy, order, decodeCursor(query.sortBy, cursor, backward))] } : where,
+        orderBy: [{ [query.sortBy]: order }, { id: order }],
+        take: query.limit + 1,
       }),
-      this.prisma.project.count({ where }),
+      this.prisma.project.count({ where, take: TOTAL_CAP + 1 }),
     ]);
+    const more = rows.length > query.limit;
+    const projects = rows.slice(0, query.limit);
+    if (backward) projects.reverse();
+    const first = projects.at(0);
+    const last = projects.at(-1);
     return {
       items: projects.map(toProjectResponse),
-      pagination: {
-        page: query.page,
+      paging: {
         limit: query.limit,
-        totalItems,
-        totalPages: Math.ceil(totalItems / query.limit),
+        nextCursor: last && (backward || more) ? encodeCursor(query.sortBy, last) : null,
+        previousCursor: first && (backward ? more : cursor !== undefined) ? encodeCursor(query.sortBy, first) : null,
+        total: Math.min(total, TOTAL_CAP),
+        totalCapped: total > TOTAL_CAP,
       },
     };
   }
