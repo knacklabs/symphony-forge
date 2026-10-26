@@ -1,12 +1,34 @@
 {
+  "approval": {
+    "at": "2026-10-26T09:08:54.445717+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01QFk5uLeUcKAhji1NArkZTs",
+    "hash": "47e14f7abb27bc753b3c6c135eabaf2b16d4144de6c6e47fadfe8afd10f4c20e",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-BAR-1.md",
-  "status": "planning",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-26T06:34:42.981253+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T08:58:19.282763+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-26T09:05:47.847457+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-26T09:08:54.445902+00:00",
+      "step": "approved"
     }
   ],
   "title": "Clients choose which added-work review notes hold their work",
-  "touches": 0
+  "touches": 1
 }
