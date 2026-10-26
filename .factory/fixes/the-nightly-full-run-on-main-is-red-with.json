@@ -11,12 +11,27 @@
   "done_when": "The nightly full run on main passes every test, and the shipped client files stay the same.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "df14e7339961ce79c9003cddbf6452b82d00fc9bb56f1bb9f8bd99b79027f449",
+    "changed": "7851f4344586cb0429f6e2b3131fc81e7e2faa79957d023d2ba94848bc1cabbd",
+    "commit": "6248a612181890759d534727f3919f7cb0b8427a",
+    "dismissals": [],
+    "findings": [],
+    "id": "7aa7285a-dca1-486f-889b-4fa55bc4204a",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T03:36:11.836960+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T03:55:24.680735+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
