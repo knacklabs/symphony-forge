@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-BAR-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-26T06:34:42.981253+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Clients choose which added-work review notes hold their work",
+  "touches": 0
+}
