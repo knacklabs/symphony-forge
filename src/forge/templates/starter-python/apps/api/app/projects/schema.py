@@ -36,6 +36,8 @@ class Project(ProjectSchema):
     updated_at_utc: datetime
     created_by_account_id: UUID
     modified_by_account_id: UUID
+    created_by_email: str
+    modified_by_email: str
 
 
 # A cursor holds a whole project name, which can be 120 characters of any script.

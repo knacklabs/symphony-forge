@@ -48,4 +48,9 @@ export type Project = ProjectInput & {
   updatedAtUtc: string;
   createdByAccountId: string;
   modifiedByAccountId: string;
+  createdByEmail: string;
+  modifiedByEmail: string;
 };
+
+/** One entry in a project's recent changes. */
+export type ProjectChange = { id: string; actorEmail: string; summary: string; createdAtUtc: string };

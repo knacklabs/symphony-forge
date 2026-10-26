@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ApiEnvelope, ApiErrors, ApiZodBody, ApiZodQuery, sendCsv, ZodValidationPipe, type CsvColumn } from '@app/core-server';
 import { CurrentAccount, type AccountPrincipal } from '@app/core-server';
-import { ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
+import { ProjectChangeResponseDto, ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
 import { ProjectsService } from './projects.service';
 import { formatDateTime } from '@app/shared-util';
 import {
@@ -68,6 +68,22 @@ export class ProjectsController {
   @ApiErrors(400, 401, 404)
   get(@CurrentAccount() account: AccountPrincipal, @Param('id', ParseUUIDPipe) id: string) {
     return this.projects.get(account, id);
+  }
+
+  @Get(':id/changes')
+  @ApiParam({ name: 'id', description: 'The project identifier.', example: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7' })
+  @ApiOperation({ summary: 'List the newest 5 changes to one project in your organisation, newest first.' })
+  @ApiExtraModels(ProjectChangeResponseDto)
+  @ApiOkResponse({ schema: {
+    type: 'object', required: ['success', 'data', 'error'], properties: {
+      success: { type: 'boolean', example: true },
+      data: { type: 'array', items: { $ref: getSchemaPath(ProjectChangeResponseDto) } },
+      error: { type: 'object', nullable: true, example: null },
+    },
+  } })
+  @ApiErrors(400, 401, 404)
+  changes(@CurrentAccount() account: AccountPrincipal, @Param('id', ParseUUIDPipe) id: string): Promise<ProjectChangeResponseDto[]> {
+    return this.projects.changes(account, id);
   }
 
   @Put(':id')

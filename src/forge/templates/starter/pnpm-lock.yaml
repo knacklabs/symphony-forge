@@ -357,6 +357,9 @@ importers:
       '@app/core-server':
         specifier: workspace:*
         version: link:../../core/server
+      '@app/history-contracts':
+        specifier: workspace:*
+        version: link:../../history/contracts
       '@app/projects-contracts':
         specifier: workspace:*
         version: link:../contracts

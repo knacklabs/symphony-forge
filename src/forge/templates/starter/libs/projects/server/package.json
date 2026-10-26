@@ -13,6 +13,7 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@app/core-server": "workspace:*",
+    "@app/history-contracts": "workspace:*",
     "@app/projects-contracts": "workspace:*",
     "@app/shared-util": "workspace:*"
   }

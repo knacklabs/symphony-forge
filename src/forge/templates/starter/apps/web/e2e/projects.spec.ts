@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { csrfToken, signUp } from './helpers';
 
 async function addProjects(page: Page, names: string[], status = 'active') {
@@ -17,8 +18,12 @@ function paginationNames(count: number) {
   return Array.from({ length: count }, (_, index) => `Pagination project ${String(index).padStart(2, '0')}`);
 }
 
-test('create, edit, and delete a project', async ({ page }) => {
-  await signUp(page);
+function breadcrumb(page: Page) {
+  return page.getByRole('navigation', { name: 'breadcrumb' });
+}
+
+test('create, view, edit, and delete a project', async ({ page }) => {
+  const email = await signUp(page);
   await page.getByRole('button', { name: 'New project' }).click();
   const createDialog = page.getByRole('dialog', { name: 'New project' });
   await createDialog.getByLabel('Name').fill('Unsaved project');
@@ -28,48 +33,126 @@ test('create, edit, and delete a project', async ({ page }) => {
   await discardDialog.getByRole('button', { name: 'Discard changes' }).click();
   await expect(createDialog).toBeHidden();
 
+  // A new project opens on its detail screen, with every field and who made it.
   await page.getByRole('button', { name: 'New project' }).click();
   const newProjectDialog = page.getByRole('dialog', { name: 'New project' });
   await newProjectDialog.getByLabel('Name').fill('Migration review');
   await newProjectDialog.getByRole('combobox', { name: 'Status' }).click();
   await page.getByRole('option', { name: 'Active' }).click();
   await newProjectDialog.getByRole('button', { name: 'Create project' }).click();
-  await expect(page.getByRole('row', { name: /Migration review/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Migration review' })).toHaveAttribute('href', /^\/projects\/[0-9a-f-]{36}$/);
+  await expect(page.getByText('Project created.')).toBeVisible();
+  await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Migration review' })).toBeVisible();
+  await expect(breadcrumb(page)).toContainText('Migration review');
+  const details = page.getByRole('region', { name: 'Details' });
+  await expect(details).toContainText('NameMigration review');
+  await expect(details).toContainText('StatusActive');
+  await expect(details).toContainText(new RegExp(`Created\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} by ${email.replace(/[.]/g, '\\.')}`));
+  await expect(details).toContainText(`by ${email}`);
+  await breadcrumb(page).getByRole('link', { name: 'Projects' }).click();
+  await expect(page).toHaveURL(/\/projects$/);
 
+  // The row opens the detail screen, and its breadcrumb goes back to the same page of the list.
   await addProjects(page, paginationNames(20));
   await page.getByRole('button', { name: 'Name' }).click();
-  await expect(page).toHaveURL(/sortBy=name/);
   await expect(page).toHaveURL(/sortOrder=asc/);
-  await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page).toHaveURL(/after=/);
-  await expect(page.getByRole('row', { name: /Pagination project 19/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Previous' }).click();
-  await expect(page).toHaveURL(/before=/);
-  await expect(page.getByRole('button', { name: 'Previous' })).toBeDisabled();
-
-  await page.getByRole('button', { name: 'Edit Migration review' }).click();
+  await page.getByRole('link', { name: 'Migration review' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Migration review' })).toBeVisible();
+  await page.getByRole('button', { name: 'Edit' }).click();
   const editDialog = page.getByRole('dialog', { name: 'Edit project' });
+  await expect(editDialog.getByLabel('Name')).toHaveValue('Migration review');
   await editDialog.getByLabel('Name').fill('Migration review updated');
   await editDialog.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Project updated.')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Migration review updated' })).toBeVisible();
+  await breadcrumb(page).getByRole('link', { name: 'Projects' }).click();
+  await expect(page).toHaveURL(/sortBy=name&sortOrder=asc/);
   await expect(page.getByRole('row', { name: /Migration review updated/ })).toBeVisible();
 
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page).toHaveURL(/after=/);
-  await expect(page.getByRole('row', { name: /Pagination project 19/ })).toBeVisible();
   await expect(page.getByRole('row', { name: /Pagination project/ })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled();
+  // A click anywhere on the row opens the detail screen too.
+  await page.getByRole('row', { name: /Pagination project 19/ }).getByRole('cell').nth(1).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Pagination project 19' })).toBeVisible();
+  const detailUrl = page.url();
 
-  await page.getByRole('button', { name: 'Delete Pagination project 19' }).click();
-  const confirmation = page.getByRole('alertdialog');
-  await expect(confirmation).toContainText('This action cannot be undone');
+  // Cancel has the focus, so Enter or Escape keeps the project.
+  await page.getByRole('button', { name: 'Delete' }).click();
+  const confirmation = page.getByRole('alertdialog', { name: 'Delete project?' });
+  await expect(confirmation).toContainText('The project “Pagination project 19” will be deleted. You cannot undo this.');
+  await expect(confirmation.getByRole('button', { name: 'Cancel' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(confirmation).toBeHidden();
+
+  // A failed delete keeps the dialog open and says so.
+  const deleteRoute = '**/api/v1/projects/*';
+  await page.route(deleteRoute, (route) => route.request().method() === 'DELETE' ? route.abort() : route.continue());
+  await page.getByRole('button', { name: 'Delete' }).click();
   await confirmation.getByRole('button', { name: 'Delete project' }).click();
+  await expect(page.getByText('Could not delete this project. Try again.')).toBeVisible();
+  await expect(confirmation).toBeVisible();
+  await page.unroute(deleteRoute);
+
+  // The delete opens the list as it was, where this page is now empty.
+  await confirmation.getByRole('button', { name: 'Delete project' }).click();
+  await expect(page.getByText('Project deleted.')).toBeVisible();
+  await expect(page).toHaveURL(/after=/);
   await expect(page.getByText('No projects on this page.')).toBeVisible();
   await page.getByRole('button', { name: 'Go to the first page' }).click();
   await expect(page).not.toHaveURL(/after=|before=/);
   await expect(page.getByRole('row', { name: /Migration review updated/ })).toBeVisible();
   await expect(page.getByText('20 projects')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next' })).toBeDisabled();
+
+  // The deleted project's address, and an address with no project, say so.
+  await page.goto(detailUrl);
+  await expect(page.getByRole('heading', { name: 'This project does not exist or was deleted.' })).toBeVisible();
+  await page.goto('/projects/not-a-project');
+  await expect(page.getByRole('heading', { name: 'This project does not exist or was deleted.' })).toBeVisible();
+  await page.getByRole('link', { name: 'Back to projects' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+});
+
+test("a project's detail screen shows its recent changes", async ({ page }) => {
+  const email = await signUp(page);
+  await addProjects(page, ['Website redesign']);
+  const token = await csrfToken(page);
+  await page.reload();
+  const href = await page.getByRole('link', { name: 'Website redesign' }).getAttribute('href');
+  const projectUrl = new URL(`/api/v1${href}`, page.url()).toString();
+  for (const [name, status] of [['Website relaunch', 'archived'], ['Website relaunch', 'active'], ['Second', 'active'], ['Third', 'active'], ['Fourth', 'active']]) {
+    const changed = await page.context().request.put(projectUrl, { data: { name, status }, headers: { 'x-csrf-token': token } });
+    expect(changed.ok()).toBeTruthy();
+  }
+
+  // While the changes fail to load, the Details card still shows, and Try again recovers.
+  const changesRoute = '**/api/v1/projects/*/changes';
+  await page.route(changesRoute, (route) => route.abort());
+  await page.goto(href ?? '');
+  await expect(page.getByRole('region', { name: 'Details' })).toContainText('NameFourth');
+  const recent = page.getByRole('region', { name: 'Recent changes' });
+  await expect(recent.getByRole('alert')).toContainText('Could not load the recent changes.');
+  await page.unroute(changesRoute);
+  await recent.getByRole('button', { name: 'Try again' }).click();
+
+  await expect(recent).toContainText('The last 5 changes to this project.');
+  const entries = recent.getByRole('listitem');
+  await expect(entries).toHaveCount(5);
+  await expect(entries.first()).toContainText('Name changed from Third to Fourth');
+  await expect(entries.first()).toContainText(new RegExp(`${email.replace(/[.]/g, '\\.')} · \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}`));
+  await expect(entries.nth(3)).toHaveText(/^Status changed from archived to active/);
+  await expect(entries.nth(4)).toHaveText(/^Name changed from Website redesign to Website relaunch; Status changed from active to archived/);
+  await expect(page.getByRole('region', { name: 'Details' })).toContainText(`Last changed`);
+  const axe = await new AxeBuilder({ page }).analyze();
+  expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
+
+  // The admin's link opens the whole Change history, which names the project of each change.
+  await recent.getByRole('link', { name: 'Open the change history' }).click();
+  await expect(page.getByRole('heading', { name: 'Change history' })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Fourth: Name changed from Third to Fourth/ })).toBeVisible();
+  await expect(page.getByRole('row', { name: /Website redesign: Created the project/ })).toBeVisible();
 });
 
 test('a reloaded projects list link keeps its search, filters and page', async ({ page }) => {

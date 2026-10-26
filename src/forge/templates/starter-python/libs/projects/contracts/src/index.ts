@@ -44,3 +44,6 @@ export type ProjectListQuery = z.infer<typeof projectListQuerySchema>;
 export type ProjectExportQuery = z.infer<typeof projectExportQuerySchema>;
 
 export type Project = components['schemas']['Project'];
+
+/** One entry in a project's recent changes. */
+export type ProjectChange = components['schemas']['HistoryEntry'];

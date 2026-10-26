@@ -68,11 +68,8 @@ class OrganisationsService:
         mail.send_invite(
             email, f"{app_origin}/accept-invite?{urlencode({'token': token})}"
         )
-        self.db.commit()
-
-        # ponytail: saving the invite and its history are two calls; use a shared
-        # transaction if atomic history becomes required.
         self.history.record(account, "member.invited", f"Invited {email}")
+        self.db.commit()
 
     def open_invite(self, token: str) -> OpenInvite:
         invite = self.db.scalar(
@@ -144,14 +141,12 @@ class OrganisationsService:
         )
         if member is None:
             raise ApiError(404, "MEMBER_NOT_FOUND", "This member was not found.")
-        self.db.commit()
-        # ponytail: changing the role and its history are two calls; use a shared
-        # transaction if atomic history becomes required.
         self.history.record(
             account,
             "member.role_changed",
             f"Changed {member.email} from {old_role} to {role}",
         )
+        self.db.commit()
         return Member.model_validate(member)
 
     def create_for_account(self, account_id: UUID, email: str) -> AccountPrincipal:

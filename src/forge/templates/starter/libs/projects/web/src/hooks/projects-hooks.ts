@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Project, ProjectInput, ProjectStatus } from '@app/projects-contracts';
+import type { Project, ProjectChange, ProjectInput, ProjectStatus } from '@app/projects-contracts';
 import { apiRequest } from '@app/core-web';
 
 export type ProjectSortBy = 'name' | 'status' | 'createdAtUtc' | 'updatedAtUtc';
@@ -20,6 +20,7 @@ export const projectKeys = {
   all: ['projects'] as const,
   list: (query: ProjectListQuery) => ['projects', 'list', query] as const,
   detail: (id: string) => ['projects', 'detail', id] as const,
+  changes: (id: string) => ['projects', 'changes', id] as const,
 };
 
 export function useProjects(query: ProjectListQuery) {
@@ -42,6 +43,14 @@ export function useProject(id: string) {
   });
 }
 
+/** The project's newest 5 changes, newest first. */
+export function useProjectChanges(id: string) {
+  return useQuery({
+    queryKey: projectKeys.changes(id),
+    queryFn: () => apiRequest<ProjectChange[]>(`/projects/${encodeURIComponent(id)}/changes`),
+  });
+}
+
 export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -60,10 +69,8 @@ export function useUpdateProject() {
       method: 'PUT',
       body: JSON.stringify(input),
     }),
-    onSuccess: (_, { id }) => {
-      void queryClient.invalidateQueries({ queryKey: projectKeys.all });
-      return queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) });
-    },
+    // The detail, its recent changes and the lists all sit under the projects key.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectKeys.all }),
   });
 }
 
@@ -71,6 +78,8 @@ export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => apiRequest<null>(`/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectKeys.all }),
+    // Mark the lists stale without a refetch now: the open detail screen would read the deleted
+    // project as missing before the list opens. Each screen refetches when it opens.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectKeys.all, refetchType: 'none' }),
   });
 }

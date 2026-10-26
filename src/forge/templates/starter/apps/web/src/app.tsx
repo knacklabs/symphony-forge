@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, matchPath, useLocation } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
 import { RouteErrorPage } from '@app/core-web';
 import { AcceptInvitePage } from '@app/auth-web';
@@ -10,7 +10,7 @@ import { useAccount } from '@app/auth-web';
 import { HistoryPage } from '@app/history-web';
 import { MembersPage } from '@app/organisations-web';
 import { NotFoundPage } from '@/pages/not-found-page';
-import { ProjectsPage } from '@app/projects-web';
+import { ProjectCrumbs, ProjectDetailPage, ProjectsPage } from '@app/projects-web';
 import { SettingsPage } from '@/pages/settings-page';
 import { Button } from '@app/shared-ui/components/ui/button';
 
@@ -48,7 +48,7 @@ export function App() {
     '/members': 'Members',
     '/history': 'Change history',
     '/settings': 'Settings',
-  } as Record<string, string>)[location.pathname] ?? 'Page not found';
+  } as Record<string, string>)[location.pathname] ?? (matchPath('/projects/:id', location.pathname) ? 'Project' : 'Page not found');
   return (
     <>
       <title>{`${title} | Starter app`}</title>
@@ -70,6 +70,7 @@ export const router = createBrowserRouter(createRoutesFromElements(
     <Route path="/accept-invite" element={<AcceptInvitePage />} errorElement={<RouteErrorPage />} />
     <Route element={<ProtectedLayout />} errorElement={<RouteErrorPage />}>
       <Route path="/projects" element={<ProjectsPage />} errorElement={<RouteErrorPage />} />
+      <Route path="/projects/:id" element={<ProjectDetailPage />} handle={{ crumbs: <ProjectCrumbs /> }} errorElement={<RouteErrorPage />} />
       <Route path="/members" element={<MembersPage />} errorElement={<RouteErrorPage />} />
       <Route path="/history" element={<HistoryPage />} errorElement={<RouteErrorPage />} />
       <Route path="/settings" element={<SettingsPage />} errorElement={<RouteErrorPage />} />

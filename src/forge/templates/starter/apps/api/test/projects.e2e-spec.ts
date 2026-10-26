@@ -148,6 +148,54 @@ describe('projects API', () => {
     }
   });
 
+  it('records each project change in the change history', async () => {
+    const owner = credentials();
+    const client = request.agent(apiBaseUrl);
+    const csrf = csrfToken(await client.post('/api/v1/auth/sign-up').send(owner).expect(201));
+    const send = (method: 'post' | 'put' | 'delete', path: string, body?: object) =>
+      client[method](`/api/v1/projects${path}`).set('x-csrf-token', csrf).send(body);
+
+    const created = await send('post', '', { name: 'Website redesign', status: 'active' }).expect(201);
+    const id = created.body.data.id as string;
+    expect(created.body.data).toMatchObject({ createdByEmail: owner.email, modifiedByEmail: owner.email });
+    await send('put', `/${id}`, { name: 'Website relaunch', status: 'archived' }).expect(200);
+    // A replace that changes nothing adds no row.
+    await send('put', `/${id}`, { name: 'Website relaunch', status: 'archived' }).expect(200);
+
+    const changes = await client.get(`/api/v1/projects/${id}/changes`).expect(200);
+    expect(changes.body.data).toEqual([
+      { id: expect.any(String), actorEmail: owner.email, summary: 'Name changed from Website redesign to Website relaunch; Status changed from active to archived', createdAtUtc: expect.any(String) },
+      { id: expect.any(String), actorEmail: owner.email, summary: 'Created the project', createdAtUtc: expect.any(String) },
+    ]);
+
+    // The detail screen lists the newest 5 changes only.
+    for (const name of ['Second', 'Third', 'Fourth', 'Fifth']) await send('put', `/${id}`, { name, status: 'archived' }).expect(200);
+    const recent = await client.get(`/api/v1/projects/${id}/changes`).expect(200);
+    expect(recent.body.data.map((change: { summary: string }) => change.summary)).toEqual([
+      'Name changed from Fourth to Fifth', 'Name changed from Third to Fourth', 'Name changed from Second to Third',
+      'Name changed from Website relaunch to Second',
+      'Name changed from Website redesign to Website relaunch; Status changed from active to archived',
+    ]);
+
+    await send('delete', `/${id}`).expect(200);
+    // The Change history screen names the project each change was made to.
+    const history = await client.get('/api/v1/history').expect(200);
+    expect(history.body.data.map((entry: { summary: string }) => entry.summary)).toEqual([
+      'Fifth: Deleted the project', 'Fifth: Name changed from Fourth to Fifth', 'Fourth: Name changed from Third to Fourth',
+      'Third: Name changed from Second to Third', 'Second: Name changed from Website relaunch to Second',
+      'Website relaunch: Name changed from Website redesign to Website relaunch; Status changed from active to archived',
+      'Website redesign: Created the project',
+    ]);
+    expect((await client.get('/api/v1/history/export').expect(200)).text).toContain(`,${owner.email},Fifth: Deleted the project`);
+
+    // A deleted project's changes, and another organisation's project's changes, are not found.
+    await client.get(`/api/v1/projects/${id}/changes`).expect(404);
+    const kept = await send('post', '', { name: 'Kept project', status: 'active' }).expect(201);
+    const { client: other } = await sharedSignedIn();
+    await other.get(`/api/v1/projects/${kept.body.data.id}/changes`).expect(404)
+      .expect(({ body }) => expect(body.error.code).toBe('PROJECT_NOT_FOUND'));
+  });
+
   it('rejects a bad list query with the same field errors as a bad body', async () => {
     const { client, csrf } = await sharedSignedIn();
 
