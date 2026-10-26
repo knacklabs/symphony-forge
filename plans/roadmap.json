@@ -408,6 +408,12 @@
       "title": "Clients choose which added-work review notes hold their work",
       "status": "pending",
       "order": 99
+    },
+    {
+      "key": "FORGE-SERVICES-1",
+      "title": "Client apps can deploy several services from one repo",
+      "status": "pending",
+      "order": 100
     }
   ],
   "epics": [
