@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-SINGLECO-1-COMPANYWEB",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T02:19:23.311429+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "51aba2ffeea265ffd3185f4c8eb18825bfcd6e54",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
