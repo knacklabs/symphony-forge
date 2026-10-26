@@ -899,6 +899,8 @@ Until the decision, use a fake provider for an external service.
 
 ## App constitution
 
+Ask for the app's currency at setup (default INR) and write its code to DEFAULT_CURRENCY in libs/shared/util/src/format.ts and, in a Python app, apps/api/app/core/config.py.
+
 During both halves of the interview, ask one question at a time in plain words for a person who
 may not be technical.
 

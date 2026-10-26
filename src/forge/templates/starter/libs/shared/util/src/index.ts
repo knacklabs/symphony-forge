@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export { formatDate, formatDateTime, formatMoney, formatNumber, formatTime } from './format';
+export { DEFAULT_CURRENCY, formatDate, formatDateTime, formatMoney, formatNumber, formatTime } from './format';
 export { csvField } from './csv-field';
 export type { ApiEnvelope } from './envelope';
 

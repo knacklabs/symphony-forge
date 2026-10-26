@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
+DEFAULT_CURRENCY = "INR"
+
 
 @dataclass(frozen=True)
 class Settings:

@@ -74,7 +74,7 @@ In local and test runs, invite links go to the log. Production refuses invites u
 has a real mail provider.
 
 The helpers in `@app/shared-util` format dates, times, numbers and money. Dates and times are stored in
-UTC and shown in the person's browser time zone; money is stored in cents. Each table has an
+UTC and shown in the person's browser time zone; money is stored as `numeric(19,4)` with a currency code column. Each table has an
 Export CSV button, and `sendCsv` from `@app/core-server` writes formula-like cells as plain text.
 Deletes keep records with `deletedAtUtc`; the database's `soft_delete_only()` trigger refuses
 a hard delete. Each UI or API crash writes one error report to the logs, with only its kind,

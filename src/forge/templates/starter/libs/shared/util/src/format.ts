@@ -1,4 +1,4 @@
-// The constitution's default formats: dates as YYYY-MM-DD, 24-hour times and money from whole cents.
+// The constitution's default formats: dates as YYYY-MM-DD, 24-hour times and exact decimal money.
 // An app whose constitution chooses other formats changes them here, and only here.
 // With no timeZone the runtime's zone is used, which in the browser is the person's zone; the API passes 'UTC'.
 
@@ -27,8 +27,17 @@ export function formatNumber(value: number, fractionDigits = 0): string {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(value);
 }
 
-// ponytail: every currency shows two decimals, change this when the app takes a currency without cents.
-export function formatMoney(cents: number, currency = 'USD'): string {
-  if (!Number.isInteger(cents)) throw new RangeError('Money must be a whole number of cents.');
-  return `${currency} ${formatNumber(cents / 100, 2)}`;
+export const DEFAULT_CURRENCY = 'INR';
+
+export function formatMoney(amount: string, currency: string): string {
+  if (typeof amount !== 'string' || !/^-?\d+(\.\d+)?$/.test(amount)) throw new RangeError('Money must be a decimal string.');
+  if (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)) throw new RangeError('Currency must be three capital letters.');
+  const fractionDigits = new Intl.NumberFormat('en-US', { style: 'currency', currency })
+    .resolvedOptions().maximumFractionDigits;
+  const formatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits,
+  });
+  // Intl accepts exact decimal strings; the ES2022 types only declare numbers and bigints.
+  const format = formatter.format as (value: string | number | bigint) => string;
+  return `${currency} ${format(amount)}`;
 }
