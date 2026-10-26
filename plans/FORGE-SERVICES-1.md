@@ -105,6 +105,12 @@ or a `role` field; the jobs story decides that.
      `path.name not in ("Dockerfile", ".dockerignore", "services.toml")`. A starter init and a
      plain init on a Node or empty repo get the file; a plain init on another stack gets no
      Dockerfile and no list. `_adopt` does not change: the agent writes the list (item 3).
+   - Init writes the list only beside a Dockerfile that it writes itself. `init` keeps a file
+     that is already there, so in `init`, before the write loop, add
+     `if (top / "Dockerfile").exists(): scaffold.pop("services.toml", None)`. The popped path then
+     also stays out of the first commit. A repo whose own Dockerfile was there before init gets
+     no list; the agent writes one from that Dockerfile before the first requested deployment
+     (item 3). A starter init already refuses a repo that has a Dockerfile (`starter_app`).
      Both starters already `EXPOSE 3000` and answer `GET /health`, so the skeleton file is true
      for them.
    - Test: `tests/test_services_list.py::test_1_new_apps_list_one_main_service`, parametrised
@@ -112,7 +118,10 @@ or a `role` field; the jobs story decides that.
      `tests/test_setup.py`, as `tests/test_database_starters.py` does) and `plain`
      (`_fresh_client` with no starter). Each: `tomllib.loads` of `services.toml` gives
      `{"service": [{"name": "app", "dockerfile": "Dockerfile", "port": 3000, "health": "/health", "expose": "main"}]}`,
-     the root Dockerfile has `EXPOSE 3000`, and `git ls-files` lists `services.toml`.
+     the root Dockerfile has `EXPOSE 3000`, and `git ls-files` lists `services.toml`. A fourth
+     case, `plain-own-dockerfile`, writes `package.json` (`{}`) and a Dockerfile with
+     `EXPOSE 8080` before `forge init`: after init the Dockerfile is unchanged and the repo has no
+     `services.toml`.
    - Change existing tests for the same scaffold rule: `tests/test_setup.py` `SCAFFOLD` gets
      `"services.toml"`; `tests/test_client_setup_matches_stack.py::test_1` loops over
      `("Dockerfile", ".dockerignore", "services.toml")`, so a non-Node repo proves it gets no list.
@@ -183,10 +192,12 @@ or a `role` field; the jobs story decides that.
      of this guide says, get the human's confirmation, and add it to the adoption fix."
    - `src/forge/templates/brief.md`, after the line
      `conventions apply only to a repo on the default stack.`:
-     "When a change adds, moves or removes a Dockerfile, or changes a service's port, health path
-     or start command, update `services.toml` in the same change. Close refuses a `services.toml`
-     that names a Dockerfile the branch does not have, or that does not have exactly one service
-     with `expose = \"main\"`."
+     "In a repo that has `services.toml`, when a change adds, moves or removes a Dockerfile, or
+     changes a service's port, health path or start command, update `services.toml` in the same
+     change. Close refuses a `services.toml` that names a Dockerfile the branch does not have, or
+     that does not have exactly one service with `expose = \"main\"`. In a repo without
+     `services.toml`, do not create one: the coordinator writes the first list with the owner's
+     confirmation."
    - `forge sync` rewrites `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md`.
    - Test: `tests/test_services_guide.py::test_3_the_guides_name_the_services_list`, parametrised
      `new init` and `previous release` (the `tests/fixtures/adopted-v1.2.2/client` repo moved to
@@ -194,7 +205,7 @@ or a `role` field; the jobs story decides that.
      `tests/test_deployment_requires_an_explicit_request.py::test_1`: the synced
      `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` have the top paragraph's
      write-and-confirm sentence and step 10; the worker brief from `forge work` (`install_claude`,
-     `calls(log)[-1]["brief"]`) has the brief sentence; the installed deploy.md has
+     `calls(log)[-1]["brief"]`) has both brief sentences, the update rule and `do not create one`; the installed deploy.md has
      `services.toml` and the three `expose` values. Previous release: after `forge sync`, the repo
      has no `services.toml`.
 
