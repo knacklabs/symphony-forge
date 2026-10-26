@@ -1,6 +1,13 @@
 {
   "base": "24d23d671483c7975cf6a257ce6d86f228e92c61",
   "branch": "fix/the-grouped-full-run-uses-the-pull-reque",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a175f2-1c19-7120-8471-664771d282de",
+    "head": null,
+    "start": "e9b30c82b6224f74a86e1d62291fcb1e98f81391"
+  },
   "done_when": "The generated full run's jobs have a 60-minute limit while the pull request tests keep theirs, in new and existing repos after sync",
   "fix_kind": "mechanical",
   "kind": "fix",
