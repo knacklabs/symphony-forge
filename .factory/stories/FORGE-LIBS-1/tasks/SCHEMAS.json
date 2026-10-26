@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-LIBS-1-SCHEMAS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T04:54:19.760373+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "baf4c78a6e3e19bce4ab1339669b626f66ae4abb",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
