@@ -2,12 +2,20 @@
   "base": "6dec6114e1054edbcae14b355a190a4396db742d",
   "branch": "task/FORGE-BAR-1-BARRULES",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-LIBS-1/SCHEMASPY",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T09:09:36.654765+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "b9494fa4ceb940a0be292b800e490b6b121a8fa7",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
