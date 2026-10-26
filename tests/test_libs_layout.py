@@ -318,7 +318,9 @@ def test_3_the_python_web_app_uses_the_same_libraries(repo, gh, tmp_path, tmp_pa
             added_file.unlink(missing_ok=True)
         output = result.stdout + result.stderr
         assert result.returncode != 0, output
-        assert message in output, output
+        assert "no-restricted-imports" in output, output
+        # ESLint's stylish formatter omits the message's final full stop.
+        assert message.removesuffix(".") in output, output
 
 
 @pytest.mark.platform
