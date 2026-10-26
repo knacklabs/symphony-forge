@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-SERVICES-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-26T10:34:06.836711+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client apps can deploy several services from one repo",
+  "touches": 0
+}
