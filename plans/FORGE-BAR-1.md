@@ -6,18 +6,20 @@
 
 - You can set a minimum Gain for review findings that ask for added work: another check, a
   retry, a guard or a flag for a rarer case. A finding of this type with a lower Gain does not
-  stop the merge. Forge keeps it in Known issues as a follow-up, with its scores and the reason.
+  stop the merge. Forge keeps it in Known issues, with its scores and the reason.
 - You can list kinds of work that a change must not miss, such as legal must-haves or safety
   steps. A review finding of one of these kinds stops the merge at any score. The worker cannot
   decline it. Only you can accept it.
-- Security, data loss and migration findings still stop the merge, whatever the minimum is.
+- Security, data loss and migration findings, and findings against the app's constitution or
+  Forge's database, module tables and shadcn rules, still stop the merge, whatever the minimum
+  is.
 - The pull request shows the Gain, Work and Harm scores of each review finding, also of a
   finding that stops the merge.
 - You tell your agent which minimum and which kinds you want. The agent writes them in
   forge.toml in a fix. They apply after that fix merges.
 - New repos and existing repos keep today's review bar until you set these. An upgrade adds no
   setting.
-- Plan reads keep today's bar.
+- Plan reads and the prototype sign-off review keep today's bar.
 
 Design: none (no screens; it changes how close holds review findings and what the pull request shows)
 
@@ -31,7 +33,7 @@ scores and this record.
 
 ## Done when
 
-1. **In a repo whose forge.toml sets `added_work_min_gain` to 4 or 5, a review finding that asks for added work and has a lower Gain does not block. Close keeps it as a follow-up in Known issues with its scores and the reason. A finding with Harm 4 or more, or Gain 5, still blocks.**
+1. **In a repo whose forge.toml sets `added_work_min_gain` to 4 or 5, a review finding that asks for added work and has a lower Gain does not block. Close keeps it in Known issues with its scores and the reason. A finding with Harm 4 or more, Gain 5, or a score that Forge raises by its own rules still blocks.**
 2. **In a repo whose forge.toml lists kinds in `always_block`, a review finding of one of those kinds blocks the merge at any score, also when it is marked as a rare case or the review is light. The worker cannot decline it.**
 3. **Close and the pull request show the Gain, Work and Harm scores of each review finding beside its reason, a blocking finding too.**
 4. **A repo that sets neither setting keeps today's review bar exactly: a new repo from `forge init`, and an existing repo after upgrade and `forge sync`, which gets no new forge.toml line. A value of `added_work_min_gain` other than 3, 4 or 5 stops Forge with a message that names the allowed values.**
@@ -48,8 +50,8 @@ mark follows today's bar.
 Trade-off: Forge reads the two settings from forge.toml on the default branch, as it reads the
 review rules. A fix that changes them gets today's bar in its own review.
 
-Trade-off: plan reads keep today's bar. A plan that misses a legal must-have is held only by the
-reader's own scores.
+Trade-off: plan reads and the prototype sign-off review keep today's bar. A plan or a prototype
+that misses a legal must-have is held only by the reader's or reviewer's own scores.
 
 ## For the builders
 
@@ -90,10 +92,17 @@ report, `env.close(item)` and `env.prompt()`. To set a setting, append it to `fo
     This already makes `review.blocking`, `score.remember` (outcome `open`), the light review,
     the `known:` dismissal clean-up and `review.declines` (which skips `required_done_when`)
     treat it as blocking at any score. The round-limit stop still lets the owner accept it.
-  - A finding with an `Adds work:` line whose `score.bar(score.of(finding))` is `fix now` and
-    whose Gain is below `added_work_min_gain` gets the follow-up reason
-    `Adds work below this repo's minimum Gain <n>`, in the same `elif` chain as the rare case.
-    A `block` outcome (Harm 4 or more, Gain 5, every floor) is never changed. `score.holds`,
+  - A finding with an `Adds work:` line whose `score.bar(score.of(finding))` is `fix now`, whose
+    score line has no `(floor:` mark, and whose Gain is below `added_work_min_gain` gets the
+    follow-up reason `Adds work below this repo's minimum Gain <n>`, in the same `elif` chain as
+    the rare case. A `block` outcome (Harm 4 or more, Gain 5) and every floored finding
+    (`score.normalise` marks the line for security, data loss, migration, constitution, shadcn,
+    module tables and database; the last four have Gain 4 and Work 2, so they are `fix now` and
+    would fall at minimum 5 without this check) are never changed.
+  - When no reason applies now and the finding's saved `follow_up` starts with
+    `Adds work below this repo's minimum Gain`, remove that `follow_up`, so a saved finding holds
+    again after the owner lowers or removes the minimum. Other saved reasons (split, decline,
+    rare) stay as they are. `score.holds`,
     `score.remember`, `known_issues._rows`, close's `Does not block:` line and the pull
     request's follow-up list then read it as they read a rare case today.
   - Put the two matches in one small function in `src/forge/score.py` (for example
@@ -104,7 +113,9 @@ report, `env.close(item)` and `env.prompt()`. To set a setting, append it to `fo
 - **The reviewer prompt.** Two new blocks in `src/forge/templates/review.md`, each between its
   own marker and the next `<!-- `, as `<!-- constitution -->` is. `review.run` appends a block
   only when its setting differs from the default, so a repo with neither gets the same prompt as
-  today. The light review and sign-off prompts get them by the same `run` path.
+  today. The light review gets them by the same `run` path. A sign-off review (`signoff_prompt`
+  set) gets neither block: `review.py` calls `bound_review` only for reviews without a sign-off
+  prompt, so sign-off keeps today's bar for both prompt and classification.
   - `<!-- added-work -->`, heading `## Added work`, with `$min_gain`: "When a finding asks for
     code beyond the fix of a broken path, such as another check, a retry, a guard or a flag for a
     rarer case, add the line `Adds work: <what it adds>` to its body after the score line. This
@@ -120,7 +131,8 @@ report, `env.close(item)` and `env.prompt()`. To set a setting, append it to `fo
     ``A `Case: rare` finding never blocks.``: "The owner can set two review settings in
     forge.toml. `added_work_min_gain` (3, 4 or 5; 3 is the default and today's bar) keeps a
     finding with an `Adds work:` line and a lower Gain as a follow-up, unless it scores Harm 4 or
-    more or Gain 5. `always_block` lists kinds, such as legal or safety: a finding titled
+    more or Gain 5, or Forge raised its score by a floor. The prototype sign-off review and plan
+    reads keep today's bar. `always_block` lists kinds, such as legal or safety: a finding titled
     `Must: <kind>:` with a listed kind blocks at any score, and the worker cannot decline it.
     Close reads both from the default branch. Ask the owner before you change them, as for every
     setting."
@@ -133,14 +145,16 @@ report, `env.close(item)` and `env.prompt()`. To set a setting, append it to `fo
 
 1. Added work below the minimum (BARRULES).
    - Test: `tests/test_review_bar.py::test_1_added_work_below_the_minimum_gain_is_a_follow_up`,
-     parametrised `new-client` and `adopted-v1.2.2`. Set `added_work_min_gain = 4`. The review
-     gives three P1 findings, each scored `Gain 3, Work 2, Harm 3`: `Retry the upload` with the
-     body line `Adds work: a retry for a failed upload`; `Upload drops the file name` with no
-     mark; and `Check the upload token` with an `Adds work:` line under `Raise: Security` (the
-     floor makes it Harm 4). Close exits 1 with the second and third open, and lists the first
-     with `Does not block: Adds work below this repo's minimum Gain 4.` and its score line. The
-     prompt has the `## Added work` block with `4`. After a clean second round, the pull
-     request's follow-up list has `Retry the upload` with `Gain 3, Work 2, Harm 3`.
+     parametrised `new-client` and `adopted-v1.2.2`. Set `added_work_min_gain = 5`. The review
+     gives four P1 findings, each with an `Adds work:` line except the second:
+     `Retry the upload` scored `Gain 4, Work 2, Harm 1`; `Upload drops the file name` scored
+     `Gain 4, Work 2, Harm 1` with no mark; `Check the upload token` scored
+     `Gain 3, Work 2, Harm 1` under `Raise: Security` (the floor makes it Harm 4); and
+     `Database: Upload.size` scored `Gain 2, Work 3, Harm 1` (the floor makes it Gain 4, Work 2).
+     Close exits 1 with the last three open, and lists the first with
+     `Does not block: Adds work below this repo's minimum Gain 5.` and its score line. The
+     prompt has the `## Added work` block with `5`. Then remove the key from forge.toml on
+     `main`, push, and run close again with no new commit: `Retry the upload` is open again.
 2. Kinds a change must not miss (BARRULES).
    - Test: `tests/test_review_bar.py::test_2_a_listed_kind_blocks_at_any_score`, parametrised
      `new-client` and `adopted-v1.2.2`. Set `always_block = ["legal"]`. The review gives
@@ -156,17 +170,24 @@ report, `env.close(item)` and `env.prompt()`. To set a setting, append it to `fo
    - In `close._block`, a blocking finding's line gets `; Gain <g>, Work <w>, Harm <h>` after
      `blocks the merge`, when it has scores. The line goes to `blocking` by the blocking
      condition, not by a compare of the note text with `"blocks the merge"`, as it does today.
-     Close's own terminal list already prints each finding's body with its score line, and the
-     follow-up and lived-with lines already show scores.
+   - A follow-up line shows its `follow_up` reason before its scores:
+     `: <reason>; Gain <g>, Work <w>, Harm <h>`. Today `line or finding.get("follow_up", "")`
+     picks the score text first and drops the reason; take the reason first and let the existing
+     `note += f"; {line}"` add the scores. Lived-with lines have no reason and stay as they are.
+     Close's own terminal list already prints each finding's reason and its body with the score
+     line.
    - Test: `tests/test_review_finding_scores.py::test_3_every_finding_shows_its_scores`,
      parametrised `new-client` and `adopted-v1.2.2`: a blocking P1 scored `Gain 4, Work 2,
-     Harm 1` and a P2 scored `Gain 2, Work 1, Harm 1`. Close's output has both score lines, and
-     the pull request body has `: blocks the merge; Gain 4, Work 2, Harm 1` and the lived-with
-     line with its scores.
+     Harm 1`, a P1 scored `Gain 4, Work 2, Harm 1` with `Case: rare - one browser`, and a P2
+     scored `Gain 2, Work 1, Harm 1`. Close's output has the three score lines, and the pull
+     request body has `: blocks the merge; Gain 4, Work 2, Harm 1`,
+     `: Rare case outside normal use; Gain 4, Work 2, Harm 1` and the lived-with line with its
+     scores. The rare case stands in for every follow-up reason, so this part needs nothing
+     from BARRULES.
    - Change the exact expected line in
      `tests/test_review_block_reads_clean_or_lists_blockers.py::test_2` to end in
-     `blocks the merge; Gain 4, Work 2, Harm 1`. Other tests match `blocks the merge` as a part of
-     the line and keep passing.
+     `blocks the merge; Gain 4, Work 2, Harm 1`. Other tests match `blocks the merge` and the
+     follow-up titles and scores as a part of the line and keep passing.
 4. Defaults keep today's bar (BARRULES).
    - Test: `tests/test_review_bar.py::test_4_no_setting_keeps_todays_bar`, parametrised
      `new-client` and `adopted-v1.2.2`, with neither key set: the `Adds work:` finding scored
@@ -204,7 +225,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | BARRULES | The added-work minimum and the kinds a change must not miss | The two forge.toml keys and their check, the `Adds work:` and `Must:` matches, the classification in `bound_review`, the two reviewer prompt blocks, the guide paragraph and the brief sentence, on new and existing repos | 1, 2, 4 | `src/forge/repo.py`, `src/forge/score.py`, `src/forge/review.py`, `src/forge/templates/review.md`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `tests/test_review_bar.py` (new) | `tests/test_review_bar.py` (`test_1`, `test_2`, `test_4`) | | no | |
-| BARSCORES | Scores on every finding in the pull request | The score line on each blocking finding in the pull request's review block | 3 | `src/forge/close.py` (`_block` only), `tests/test_review_finding_scores.py` (new), `tests/test_review_block_reads_clean_or_lists_blockers.py` | `tests/test_review_finding_scores.py::test_3` (new); the changed expected line in `test_review_block_reads_clean_or_lists_blockers.py::test_2` | | no | |
+| BARSCORES | Scores and reasons on every finding in the pull request | The score line on each blocking finding, and the reason before the scores on each follow-up, in the pull request's review block | 3 | `src/forge/close.py` (`_block` only), `tests/test_review_finding_scores.py` (new), `tests/test_review_block_reads_clean_or_lists_blockers.py` | `tests/test_review_finding_scores.py::test_3` (new); the changed expected line in `test_review_block_reads_clean_or_lists_blockers.py::test_2` | | no | |
 
 The two parts share no file and no name, so they can run at the same time.
 
@@ -218,10 +239,11 @@ New moving parts: none
   repos and for existing repos on upgrade.
 - Planner choices the owner did not make: (1) the reviewer marks added work with a body line
   `Adds work: <what>` and a must-not-miss kind with the title `Must: <kind>: <gap>`, beside the
-  existing `Case: rare` and `Constitution:` forms; (2) the minimum changes only a finding that
-  would be `fix now`: Harm 4 or more, Gain 5 and every floor still block, so the allowed values
-  are 3 (today), 4 and 5; (3) a listed `Must:` finding reuses the hold that an approved
+  existing `Case: rare` and `Constitution:` forms; (2) the minimum changes only an unfloored
+  finding that would be `fix now`: Harm 4 or more, Gain 5 and every floor still block, so the
+  allowed values are 3 (today), 4 and 5, and a Gain 1 or 2 finding stays lived with, as today;
+  (3) a listed `Must:` finding reuses the hold that an approved
   `Not done` gets, so it blocks also when marked rare or in a light review, and the worker cannot
   decline it; (4) both settings come from the default branch, as the review rules do; (5) plan
-  reads keep today's bar; (6) the prompt blocks appear only when a setting is set, so a repo with
+  reads and the prototype sign-off review keep today's bar; (6) the prompt blocks appear only when a setting is set, so a repo with
   neither gets today's prompt.
