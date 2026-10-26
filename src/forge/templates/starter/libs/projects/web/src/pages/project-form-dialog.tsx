@@ -63,14 +63,14 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
   }
 
   const editing = Boolean(project);
-  const title = editing ? 'Edit project' : 'New project';
+  const title = editing ? 'Edit project' : 'Create project';
   return (
     <>
     <Dialog open={open} onOpenChange={requestOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{editing ? 'Change the project’s details.' : 'Add a project to your list.'}</DialogDescription>
+          <DialogDescription>{editing ? 'Update the project name or status.' : 'Add a project to your list.'}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(submit)}>

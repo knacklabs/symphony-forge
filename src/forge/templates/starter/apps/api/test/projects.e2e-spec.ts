@@ -17,6 +17,14 @@ async function signedIn(): Promise<{ client: ApiClient; csrf: string }> {
   return { client, csrf: csrfToken(signUp) };
 }
 
+// Sign-up allows 30 accounts a minute for the whole API suite, so the cases that read no
+// project data share one account.
+let sharedAccount: Promise<{ client: ApiClient; csrf: string }> | undefined;
+function sharedSignedIn() {
+  sharedAccount ??= signedIn();
+  return sharedAccount;
+}
+
 async function createProjects(client: ApiClient, csrf: string, projects: { name: string; status: string }[]) {
   for (const project of projects) {
     await client.post('/api/v1/projects').set('x-csrf-token', csrf).send(project).expect(201);
@@ -127,7 +135,7 @@ describe('projects API', () => {
   });
 
   it('rejects a bad list query with the same field errors as a bad body', async () => {
-    const { client, csrf } = await signedIn();
+    const { client, csrf } = await sharedSignedIn();
 
     const query = await client
       .get('/api/v1/projects?limit=500&sortBy=password&unexpected=true')
@@ -260,7 +268,7 @@ describe('projects API', () => {
   });
 
   it('rejects a whitespace-only project name after trimming input', async () => {
-    const { client, csrf } = await signedIn();
+    const { client, csrf } = await sharedSignedIn();
 
     const response = await client
       .post('/api/v1/projects')
@@ -277,7 +285,7 @@ describe('projects API', () => {
       expect(body.error.code).toBe('UNAUTHENTICATED');
     });
 
-    const { client, csrf } = await signedIn();
+    const { client, csrf } = await sharedSignedIn();
     await client.post('/api/v1/projects').send({ name: 'No token', status: 'active' }).expect(403);
     await client
       .post('/api/v1/projects')

@@ -14,7 +14,7 @@ test.describe('in a far time zone', () => {
         data: {
           items: [{ id: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7', name: 'Late evening project', status: 'active',
             createdAtUtc: instant, updatedAtUtc: instant, createdByAccountId: 'a', modifiedByAccountId: 'a' }],
-          paging: { limit: 20, nextCursor: null, previousCursor: null, total: 1, totalCapped: false },
+          pagination: { page: 1, limit: 20, totalItems: 1, totalPages: 1 },
         },
         error: null,
       },
@@ -22,7 +22,7 @@ test.describe('in a far time zone', () => {
     await page.goto('/projects');
     const row = page.getByRole('row', { name: /Late evening project/ });
     // Kiritimati is 14 hours ahead of UTC, so the evening of 24 October is already 25 October there.
-    await expect(row.getByRole('cell', { name: '2026-10-25' })).toHaveCount(1);
+    await expect(row.getByRole('cell', { name: '2026-10-25' })).toHaveCount(2);
     await expect(row).not.toContainText('2026-10-24');
   });
 });

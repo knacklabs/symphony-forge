@@ -595,20 +595,18 @@ export interface components {
         ProjectListResponse: {
             /** Items */
             items: components["schemas"]["Project"][];
-            paging: components["schemas"]["ProjectPaging"];
+            pagination: components["schemas"]["ProjectPagination"];
         };
-        /** ProjectPaging */
-        ProjectPaging: {
+        /** ProjectPagination */
+        ProjectPagination: {
+            /** Page */
+            page: number;
             /** Limit */
             limit: number;
-            /** Nextcursor */
-            nextCursor: string | null;
-            /** Previouscursor */
-            previousCursor: string | null;
-            /** Total */
-            total: number;
-            /** Totalcapped */
-            totalCapped: boolean;
+            /** Totalitems */
+            totalItems: number;
+            /** Totalpages */
+            totalPages: number;
         };
         /**
          * ProjectStatus
@@ -1230,13 +1228,10 @@ export interface operations {
     list_projects_api_v1_projects_get: {
         parameters: {
             query?: {
-                search?: string | null;
-                status?: components["schemas"]["ProjectStatus"] | null;
+                page?: number;
                 limit?: number;
                 sortBy?: "name" | "status" | "createdAtUtc" | "updatedAtUtc";
                 sortOrder?: "asc" | "desc";
-                after?: string | null;
-                before?: string | null;
             };
             header?: never;
             path?: never;

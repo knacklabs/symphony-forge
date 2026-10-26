@@ -537,36 +537,14 @@
         "operationId": "list_projects_api_v1_projects_get",
         "parameters": [
           {
-            "name": "search",
+            "name": "page",
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "maxLength": 200
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Search"
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/ProjectStatus"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Status"
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
             }
           },
           {
@@ -593,7 +571,7 @@
                 "updatedAtUtc"
               ],
               "type": "string",
-              "default": "updatedAtUtc",
+              "default": "createdAtUtc",
               "title": "Sortby"
             }
           },
@@ -609,40 +587,6 @@
               "type": "string",
               "default": "desc",
               "title": "Sortorder"
-            }
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^[A-Za-z0-9_-]{1,512}$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "After"
-            }
-          },
-          {
-            "name": "before",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^[A-Za-z0-9_-]{1,512}$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Before"
             }
           }
         ],
@@ -1931,65 +1875,46 @@
             "type": "array",
             "title": "Items"
           },
-          "paging": {
-            "$ref": "#/components/schemas/ProjectPaging"
+          "pagination": {
+            "$ref": "#/components/schemas/ProjectPagination"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "items",
-          "paging"
+          "pagination"
         ],
         "title": "ProjectListResponse"
       },
-      "ProjectPaging": {
+      "ProjectPagination": {
         "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
           "limit": {
             "type": "integer",
             "title": "Limit"
           },
-          "nextCursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Nextcursor"
-          },
-          "previousCursor": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Previouscursor"
-          },
-          "total": {
+          "totalItems": {
             "type": "integer",
-            "title": "Total"
+            "title": "Totalitems"
           },
-          "totalCapped": {
-            "type": "boolean",
-            "title": "Totalcapped"
+          "totalPages": {
+            "type": "integer",
+            "title": "Totalpages"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "page",
           "limit",
-          "nextCursor",
-          "previousCursor",
-          "total",
-          "totalCapped"
+          "totalItems",
+          "totalPages"
         ],
-        "title": "ProjectPaging"
+        "title": "ProjectPagination"
       },
       "ProjectStatus": {
         "type": "string",

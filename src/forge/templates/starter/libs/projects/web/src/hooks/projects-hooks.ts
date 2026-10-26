@@ -1,19 +1,17 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Project, ProjectInput, ProjectStatus } from '@app/projects-contracts';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Project, ProjectInput } from '@app/projects-contracts';
 import { apiRequest } from '@app/core-web';
 
 export type ProjectSortBy = 'name' | 'status' | 'createdAtUtc' | 'updatedAtUtc';
 export type ProjectListQuery = {
-  search?: string;
-  status?: ProjectStatus;
+  page: number;
+  limit: number;
   sortBy: ProjectSortBy;
   sortOrder: 'asc' | 'desc';
-  after?: string;
-  before?: string;
 };
 export type ProjectList = {
   items: Project[];
-  paging: { limit: number; nextCursor: string | null; previousCursor: string | null; total: number; totalCapped: boolean };
+  pagination: { page: number; limit: number; totalItems: number; totalPages: number };
 };
 
 export const projectKeys = {
@@ -23,14 +21,15 @@ export const projectKeys = {
 };
 
 export function useProjects(query: ProjectListQuery) {
-  const parameters = new URLSearchParams(
-    Object.entries(query).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1] !== ''),
-  );
+  const parameters = new URLSearchParams({
+    page: String(query.page),
+    limit: String(query.limit),
+    sortBy: query.sortBy,
+    sortOrder: query.sortOrder,
+  });
   return useQuery({
     queryKey: projectKeys.list(query),
     queryFn: () => apiRequest<ProjectList>(`/projects?${parameters.toString()}`),
-    // A page change keeps the old rows on screen until the new rows arrive.
-    placeholderData: keepPreviousData,
   });
 }
 
