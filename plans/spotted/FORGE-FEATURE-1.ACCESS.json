@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/app/projects/models.py\tModule tables: projects query the deleting account directly\tFORGE-FEATURE-1/ACCESS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/app/projects/models.py",
+      "line": 79,
+      "text": "Module tables: projects query the deleting account directly",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/ACCESS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx\tGate: UI check\tFORGE-FEATURE-1/ACCESS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx",
+      "line": 150,
+      "text": "Gate: UI check",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/ACCESS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_feature_access.py\tGate: earlier-adopted permissions survive sync\tFORGE-FEATURE-1/ACCESS",
+      "kind": "bug",
+      "path": "tests/test_feature_access.py",
+      "line": 75,
+      "text": "Gate: earlier-adopted permissions survive sync",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/ACCESS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

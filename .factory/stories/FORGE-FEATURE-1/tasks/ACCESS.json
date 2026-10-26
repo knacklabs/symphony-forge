@@ -1,13 +1,99 @@
 {
   "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
   "branch": "task/FORGE-FEATURE-1-ACCESS",
+  "known": [
+    {
+      "area": "test_3_each_feature_checks_its_permissions() in tests/test_feature_access.py",
+      "file": "tests/test_feature_access.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 75,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: earlier-adopted permissions survive sync",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx",
+      "file": "src/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 150,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: UI check",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter-python/apps/api/app/projects/models.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/projects/models.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 79,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Module tables: projects query the deleting account directly",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "caaada934e22254544021cb67d87ea102027fc85a77fe729e77cecc0b311e12c",
+    "changed": "0cd4ad067dd744b1ad2d59445270687bd94c262262ebfb1c838c8b45ef5de850",
+    "commit": "571f86c8d431e7b89a9eb1b3e917b2833faf06ca",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate. Case: normal use - an existing client upgrades and syncs while retaining its app-owned permissions.\nThe `earlier adopted` case initializes a fresh app using the current Forge, then compares its files with current templates. `_fresh_client` creates an empty repository and invokes the current `forge init` (tests/test_setup.py:197\u2013209). This neither exercises an earlier-adopted app nor detects sync overwriting customized permissions with template defaults. Use an earlier-adopted fixture and compare its app files before and after sync.",
+        "file": "tests/test_feature_access.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 75,
+        "priority": "P1",
+        "title": "Gate: earlier-adopted permissions survive sync",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Gate. Case: normal use - shipping the new Show deleted and Restore interfaces.\nThe implementation commit explicitly records that the impeccable and emil-design-eng pass was not run. The existing CHECKS.md covers design artboards and their images (docs/design/FORGE-FEATURE-1/CHECKS.md:3\u20134), rather than the implemented screens. The required audit and polish of the rendered permissions and restore states remains unfinished; the browser flows and axe checks do not complete that inspection.",
+        "file": "src/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx",
+        "gain": 3,
+        "harm": 3,
+        "line": 150,
+        "priority": "P1",
+        "title": "Gate: UI check",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2 (floor: module tables)\nRaise: Gate. Case: normal use - loading projects with the deleting account's email.\nThis new scalar subquery reads `core.account` directly from the projects module, although auth owns that table (apps/api/app/auth/models.py:10\u201316 in the Python starter). The TypeScript counterpart also adds a direct `deletedByAccount` lookup in libs/projects/server/src/projects.service.ts:13. These additions violate the requirement that another module's tables be reached through its public service. Obtain the deleting account's email through auth's public boundary in both starters.",
+        "file": "src/forge/templates/starter-python/apps/api/app/projects/models.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 79,
+        "priority": "P1",
+        "title": "Module tables: projects query the deleting account directly",
+        "work": 2
+      }
+    ],
+    "id": "0cdbd7c0-c10e-4364-9bc5-c772a69d2a24",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T14:14:00.630030+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T14:48:45.524541+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
