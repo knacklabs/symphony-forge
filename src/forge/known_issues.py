@@ -72,7 +72,7 @@ def collect(top: Path, copies: dict[str, tuple[dict[str, Any], Path | str]], lan
     """
     saved = {item: state["known"] for item, (state, _) in copies.items() if "known" in state}
 
-    def historical(_now: Any) -> list[dict[str, Any]] | None:
+    def inventory(_now: Any) -> list[dict[str, Any]] | None:
         # A query-string ampersand becomes a command separator through gh.cmd on Windows.
         done = repo.run("gh", "api", "--paginate", "--method", "GET", "--raw-field", "per_page=100",
                         "repos/{owner}/{repo}/pulls?state=closed", "--jq",
@@ -83,12 +83,19 @@ def collect(top: Path, copies: dict[str, tuple[dict[str, Any], Path | str]], lan
             prs = [json.loads(line) for line in done.stdout.splitlines() if line.strip()]
         except ValueError:
             return None
+        return [pr for pr in prs if isinstance(pr, dict)
+                and str(pr.get("headRefName") or "").startswith(("fix/", "task/", "story/"))]
+
+    prs = board_facts._cached(top, "known-issues-prs-cache", inventory, stale=True, seconds=86400)
+    saved_branches = {state.get("branch") for item, (state, _) in copies.items() if item in saved}
+
+    def historical(_now: Any) -> list[dict[str, Any]] | None:
+        if prs is None:
+            return None
         rows = []
         for pr in prs:
-            if not isinstance(pr, dict) or not str(pr.get("headRefName") or "").startswith(("fix/", "task/", "story/")):
-                continue
             # No fetch is needed for items whose current landed list is available.
-            if any(state.get("branch") == pr["headRefName"] for item, (state, _) in copies.items() if item in saved):
+            if pr["headRefName"] in saved_branches:
                 continue
             try:
                 rows.extend(_pull(top, pr))
@@ -96,7 +103,10 @@ def collect(top: Path, copies: dict[str, tuple[dict[str, Any], Path | str]], lan
                 return None  # Keep the last complete read and retry when GitHub is reachable.
         return rows
 
-    older = board_facts._cached(top, "known-issues", historical, stale=True, seconds=86400) or []
+    # Cache the inventory, not the projection of it through today's saved lists.
+    # Rebuild that projection each request; the aggregate is only an outage fallback
+    # (also seeded by upgrade). Individual PR evidence remains immutable in _pull.
+    older = board_facts._cached(top, "known-issues", historical, stale=True, seconds=0) or []
     rows = [row for row in older if row["item"] not in saved]
     rows.extend(row for item, known in saved.items() for row in _rows(item, known))
     sources = {item: where for item, (_, where) in copies.items() if item in saved}

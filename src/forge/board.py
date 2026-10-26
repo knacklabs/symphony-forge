@@ -978,7 +978,8 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
         saved = state_files.get(refs.get(f"refs/heads/{branch}"), {})
         changed = changes[path]
         paths = (f"{prefix}/{name}"
-                 for folder, _, names in os.walk(path / ".factory")
+                 for kind in ("stories", "fixes")
+                 for folder, _, names in os.walk(path / ".factory" / kind)
                  for prefix in (os.path.relpath(folder, path).replace(os.sep, "/"),)
                  for name in names if name.endswith(".json"))
         for rel in sorted(paths):

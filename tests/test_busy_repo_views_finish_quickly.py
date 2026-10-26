@@ -9,10 +9,12 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 
 import pytest
 
 from test_machine_views_recent_finished_items import NOW, client, finished_fix, landed
+from test_board_counts import github
 
 STORY = "the-busy-repo-takes-about-8-seconds-for"
 
@@ -39,9 +41,9 @@ def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history,
         # read changed local inputs, not just a changed title outside the time record.
         began = (datetime.fromisoformat(NOW) - timedelta(seconds=10)).isoformat()
         files[".factory/fixes/saved-0.json"]["steps"] = [*steps, {"step": "start", "at": began}]
-        gh.respond("pr", "list", "--state", "merged", "--search", "merged:2026-11-16..2026-11-22",
-                   stdout=json.dumps([{"headRefName": "fix/saved-0", "mergedAt": NOW,
-                                       "files": [{"path": ".factory/fixes/saved-0.json"}]}]))
+        github(SimpleNamespace(repo=repo, gh=gh), [{"headRefName": "fix/saved-0",
+               "state": "MERGED", "mergedAt": NOW,
+               "files": [{"path": ".factory/fixes/saved-0.json"}]}])
     landed(repo, monkeypatch, NOW, files)
     repo.git("push", "-q", "origin", *(
         f"HEAD:refs/heads/fix/saved-{n}" for n in range(80)))

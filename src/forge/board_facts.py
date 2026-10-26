@@ -195,13 +195,15 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
                                       fields=open_fields if fresh else FIELDS.removesuffix(",files"))
             lists = list(pool.map(week, starts))
             opened = opened_read.result()
-        if opened is None or None in lists:
+        if not fresh and (opened is None or None in lists):
             return None
         weeks = []
         for start, found in zip(starts, lists):
             # A capped week need not hold all of its rows, so its counts are unknown.
-            weeks.append({"start": start.isoformat(), "prs": found, "complete": len(found) < 1000})
-        return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
+            weeks.append({"start": start.isoformat(), "prs": found or [],
+                          "complete": found is not None and len(found) < 1000})
+        return {"open": opened or [], "open_complete": opened is not None and len(opened) < 1000,
+                "weeks": weeks}
     if fresh:
         return fetch(time_records.when(repo.now()) or datetime.now(timezone.utc))
     current = repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command

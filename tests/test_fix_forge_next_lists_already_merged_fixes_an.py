@@ -1,4 +1,7 @@
-"""A merged pull request wins over a stale task or fix worktree in `forge next`."""
+"""A merged pull request wins over a stale task or fix worktree in `forge next`.
+
+Exercises src/forge/nextstep.py through the real command, including an unavailable open list.
+"""
 
 import json
 import os
