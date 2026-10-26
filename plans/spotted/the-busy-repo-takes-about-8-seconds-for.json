@@ -21,6 +21,17 @@
       "item": "the-busy-repo-takes-about-8-seconds-for",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/nextstep.py\tPreserve local next output when gh is unavailable",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 135,
+      "text": "Preserve local next output when gh is unavailable",
+      "from": "review",
+      "item": "the-busy-repo-takes-about-8-seconds-for",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

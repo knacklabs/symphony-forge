@@ -32,38 +32,47 @@
       "gain": 5,
       "harm": 2,
       "line": 264,
-      "outcome": "open",
+      "outcome": "fixed in round 7",
       "reason": "",
       "round": 6,
       "security": false,
       "title": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
       "work": 3
+    },
+    {
+      "area": "next_step() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": null,
+      "harm": null,
+      "line": 135,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Preserve local next output when gh is unavailable",
+      "work": null
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ed7ff6a3f95481f2e92fa8f2a3a421ffcd67f75a2ac7c938d2544dfbe1b2ab18",
-    "changed": "7e037573864e3e5020f5040b156c013a3414ff132734dae7065af7dd34431362",
-    "commit": "6908f9c5aee1ed124381524654bfb9799df5eb86",
+    "branch_diff": "a68a50100c52b58265ea094d02919a4789f59d0a0c81b3fb40e1c7bad0125c26",
+    "changed": "ce949f51355ab6f1bfce2b499eb361c9892e4de1a5a9793feb73220d988faa0e",
+    "commit": "8bbf9b6573b9588e5e897e230a32ec07e66efe1b",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 5, Work 3, Harm 2\nRaise: Not done. Case: normal use - running forge board --json on this repository. The final supplied measurements are 5.265 and 5.156 seconds, both exceeding the required five-second limit. This read-sharing change benefits plain next; board.py:65 still invokes prs without open_read, retaining its previous execution path here. These current measurements are new evidence beyond the earlier accepted 4.807-second sample. The next timings meet the target, but the board requirement remains unmet.",
-        "file": "src/forge/board_facts.py",
-        "gain": 5,
-        "harm": 2,
-        "line": 264,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
-        "work": 3
+        "body": "Plain `forge next` now submits `_listing` directly even when `gh` is absent from PATH. `_listing` calls `repo.run`, which raises the missing-tool refusal; that exception escapes through the futures and prevents local state or setup advice from being printed. Previously, `_prs` explicitly returned an empty list without `gh` (nextstep.py:1088\u20131090). Preserve that availability check for the new fresh reads.",
+        "file": "src/forge/nextstep.py",
+        "line": 135,
+        "priority": "P2",
+        "title": "Preserve local next output when gh is unavailable"
       }
     ],
-    "id": "61604dbc-12bc-4c34-8c97-070482ff578f",
-    "status": "blocked"
+    "id": "e93aaa0a-2585-4c4d-a83c-76309c24d959",
+    "status": "clean"
   },
   "round": 9,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T09:20:17.910674+00:00",
@@ -91,6 +100,10 @@
     },
     {
       "at": "2026-10-26T17:13:27.659560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T17:41:45.787371+00:00",
       "step": "review"
     }
   ],
