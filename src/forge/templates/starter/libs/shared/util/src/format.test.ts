@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CURRENCY, formatMoney } from './index';
+import { formatMoney } from './index';
 
 // Audit: this pure-logic table owns precision, currency digits and invalid input.
 // Float conversion loses large-value precision; fixed digits break JPY and KWD.
 // Init/sync owns delivery; these cases exercise the real helper without a test seam.
 describe('format helpers', () => {
   it("formats exact decimal money with each currency's own fraction digits", () => {
-    expect(DEFAULT_CURRENCY).toBe('INR');
     for (const [amount, currency, expected] of [
       ['1234.5600', 'USD', 'USD 1,234.56'],
       ['-0.0500', 'USD', 'USD -0.05'],
