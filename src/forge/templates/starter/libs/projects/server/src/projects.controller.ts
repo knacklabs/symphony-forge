@@ -18,8 +18,10 @@ import {
 } from '@app/projects-contracts';
 
 const PROJECT_CSV_COLUMNS: CsvColumn<Project>[] = [
+  // forge:feature:csv-fields:start
   { header: 'Name', value: (project) => project.name },
   { header: 'Status', value: (project) => project.status },
+  // forge:feature:csv-fields:end
   { header: 'Created (UTC)', value: (project) => formatDateTime(project.createdAtUtc, 'UTC') },
   { header: 'Updated (UTC)', value: (project) => formatDateTime(project.updatedAtUtc, 'UTC') },
 ];
@@ -55,7 +57,9 @@ export class ProjectsController {
   @RequirePermission(PROJECT_PERMISSIONS.view)
   @ApiZodQuery(projectExportQuerySchema)
   @ApiOperation({ summary: 'Download the projects that match the list’s search and filter as a CSV file, newest first.' })
+  // forge:feature:csv-description:start
   @ApiResponse({ status: 200, description: 'The projects.csv file: Name, Status, Created (UTC) and Updated (UTC).' })
+  // forge:feature:csv-description:end
   @ApiErrors(400, 401, 403)
   async export(
     @CurrentAccount() account: AccountPrincipal,

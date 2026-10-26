@@ -4,11 +4,13 @@ export class ProjectResponseDto {
   @ApiProperty({ description: 'The project identifier.', example: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7' })
   id!: string;
 
+  // forge:feature:dto-fields:start
   @ApiProperty({ description: 'The project name.', example: 'Migration plan' })
   name!: string;
 
   @ApiProperty({ description: 'The project status.', enum: ['active', 'archived'], example: 'active' })
   status!: 'active' | 'archived';
+  // forge:feature:dto-fields:end
 
   @ApiProperty({ description: 'The UTC creation time.', example: '2026-10-22T11:30:00.000Z' })
   createdAtUtc!: string;

@@ -3,6 +3,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { apiBaseUrl, credentials, csrfToken, invite } from './helpers';
 
+// forge:feature:generated-tests:start
 type ApiClient = ReturnType<typeof request.agent>;
 
 function requestBodySchema(response: request.Response, path: string, method: 'post' | 'put') {
@@ -457,3 +458,4 @@ describe('projects API', () => {
       .expect(403);
   });
 });
+// forge:feature:generated-tests:end

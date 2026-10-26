@@ -1,22 +1,28 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma, Project } from '@prisma/client';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma, Project as ProjectRecord } from '@prisma/client';
 import { PrismaService } from '@app/core-server';
 import { hasPermission, type AccountPrincipal } from '@app/core-server';
 import { AUTH_API, type AuthApi } from '@app/auth-contracts';
 import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
 import { PROJECT_PERMISSIONS } from './projects.permissions';
-import { projectStatusSchema, type ProjectExportQuery, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
+import { projectStatusSchema, type Project, type ProjectExportQuery, type ProjectInput, type ProjectListQuery, type ProjectsApi } from '@app/projects-contracts';
+// forge:feature:link-imports:start
+// forge:feature:link-imports:end
 
 /** The labels the change summaries use, in the order the form shows the fields. */
+// forge:feature:field-labels:start
 const FIELD_LABELS: Record<keyof ProjectInput, string> = { name: 'Name', status: 'Status' };
+// forge:feature:field-labels:end
 
+// forge:feature:change-summary:start
 /** One "<Label> changed from <old> to <new>" per changed field, with values as the CSV shows them; empty when nothing changed. */
-function changeSummary(before: Project, input: ProjectInput): string {
+function changeSummary(before: ProjectRecord, input: ProjectInput): string {
   return (Object.keys(FIELD_LABELS) as (keyof ProjectInput)[])
     .filter((field) => before[field] !== input[field])
     .map((field) => `${FIELD_LABELS[field]} changed from ${before[field]} to ${input[field]}`)
     .join('; ');
 }
+// forge:feature:change-summary:end
 
 /** The project's foreign keys keep every account it names, so a missing email is a crash. */
 function emailOf(emails: Map<string, string>, accountId: string): string {
@@ -26,11 +32,13 @@ function emailOf(emails: Map<string, string>, accountId: string): string {
 }
 
 /** The project with the emails of the accounts that created, last changed and deleted it, which auth gives. */
-function toProjectResponse(project: Project, emails: Map<string, string>) {
+function toProjectResponse(project: ProjectRecord, emails: Map<string, string>): Project {
   return {
     id: project.id,
+    // forge:feature:response-fields:start
     name: project.name,
     status: projectStatusSchema.parse(project.status),
+    // forge:feature:response-fields:end
     createdAtUtc: project.createdAtUtc.toISOString(),
     updatedAtUtc: project.updatedAtUtc.toISOString(),
     createdByAccountId: project.createdByAccountId,
@@ -51,11 +59,12 @@ type SortBy = ProjectListQuery['sortBy'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A cursor is the sort column, its value and the id of a page's first or last row, as base64url JSON. */
-function encodeCursor(sortBy: SortBy, project: Project): string {
+function encodeCursor(sortBy: SortBy, project: ProjectRecord): string {
   const value = project[sortBy];
   return Buffer.from(JSON.stringify([sortBy, value instanceof Date ? value.toISOString() : value, project.id])).toString('base64url');
 }
 
+// forge:feature:cursor-decode:start
 function decodeCursor(sortBy: SortBy, cursor: string, backward: boolean): { value: string | Date; id: string } {
   try {
     const [cursorSort, value, id] = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as unknown[];
@@ -73,6 +82,7 @@ function decodeCursor(sortBy: SortBy, cursor: string, backward: boolean): { valu
     details: { fieldErrors: [{ field: backward ? 'before' : 'after', reason: 'Open the first page of the list again.' }] },
   });
 }
+// forge:feature:cursor-decode:end
 
 /** Only a caller who may restore projects sees deleted ones. */
 function seesDeleted(account: AccountPrincipal): boolean {
@@ -84,9 +94,11 @@ function filterWhere(account: AccountPrincipal, filters: ProjectExportQuery): Pr
   return {
     organisationId: account.organisationId,
     ...(filters.deleted === 'yes' && seesDeleted(account) ? {} : { deletedAtUtc: null }),
+    // forge:feature:field-filters:start
     // Prisma passes % and _ to ILIKE as wildcards, so escape them to search for the text itself.
     ...(filters.search ? { name: { contains: filters.search.replace(/[\\%_]/g, '\\$&'), mode: 'insensitive' as const } } : {}),
     ...(filters.status ? { status: filters.status } : {}),
+    // forge:feature:field-filters:end
   };
 }
 
@@ -101,28 +113,32 @@ function readableProject(account: AccountPrincipal, id: string): Prisma.ProjectW
 }
 
 /** The rows after the cursor row in this order: a later sort value, or the same value and a later id. */
+// forge:feature:cursor-after:start
 function afterCursor(sortBy: SortBy, order: 'asc' | 'desc', cursor: { value: string | Date; id: string }): Prisma.ProjectWhereInput {
   const beyond = order === 'asc' ? 'gt' : 'lt';
   return { OR: [{ [sortBy]: { [beyond]: cursor.value } }, { [sortBy]: cursor.value, id: { [beyond]: cursor.id } }] };
 }
+// forge:feature:cursor-after:end
 
 @Injectable()
-export class ProjectsService {
+export class ProjectsService implements ProjectsApi {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(HISTORY_API) private readonly history: HistoryApi,
     @Inject(AUTH_API) private readonly auth: AuthApi,
+    // forge:feature:link-injections:start
+    // forge:feature:link-injections:end
   ) {}
 
   /** Auth owns the accounts, so their emails come through its public API, one call per page. */
-  private async responses(projects: Project[]) {
+  private async responses(projects: ProjectRecord[]) {
     const emails = await this.auth.emailsFor(projects.flatMap((project) => [
       project.createdByAccountId, project.modifiedByAccountId, ...(project.deletedByAccountId ? [project.deletedByAccountId] : []),
     ]));
     return projects.map((project) => toProjectResponse(project, emails));
   }
 
-  private async response(project: Project) {
+  private async response(project: ProjectRecord): Promise<Project> {
     const [response] = await this.responses([project]);
     return response;
   }
@@ -167,7 +183,14 @@ export class ProjectsService {
     return this.responses(projects);
   }
 
-  async get(account: AccountPrincipal, id: string) {
+  async get(account: AccountPrincipal, id: string): Promise<Project> {
+    if (!hasPermission(account, PROJECT_PERMISSIONS.view)) {
+      throw new ForbiddenException({
+        code: 'PERMISSION_DENIED',
+        message: 'You do not have permission to do this.',
+        details: null,
+      });
+    }
     const project = await this.prisma.project.findFirst({ where: readableProject(account, id) });
     if (!project) throw this.notFound();
     return this.response(project);
@@ -181,46 +204,77 @@ export class ProjectsService {
   }
 
   // Each change and its Change history row commit together: a failed history write rolls back the change.
+  // forge:feature:link-validation:start
+  // forge:feature:link-validation:end
+
   async create(account: AccountPrincipal, input: ProjectInput) {
+    // forge:feature:link-validation-create:start
+    // forge:feature:link-validation-create:end
     return this.prisma.$transaction(async (tx) => {
       const project = await tx.project.create({
         data: {
           organisationId: account.organisationId,
+          // forge:feature:create-fields:start
           name: input.name,
           status: input.status,
+          // forge:feature:create-fields:end
           createdByAccountId: account.id,
           modifiedByAccountId: account.id,
         },
       });
-      await this.history.record(account, 'project.created', 'Created the project', { id: project.id, name: project.name }, tx);
+      await this.history.record(account, 'project.created', 'Created the project', { id: project.id,
+        // forge:feature:history-created-name:start
+        name: project.name,
+        // forge:feature:history-created-name:end
+      }, tx);
       return this.response(project);
     });
   }
 
   async update(account: AccountPrincipal, id: string, input: ProjectInput) {
+    // forge:feature:link-validation-update:start
+    // forge:feature:link-validation-update:end
     return this.prisma.$transaction(async (tx) => {
       const before = await tx.project.findFirst({ where: liveProject(account, id) });
       if (!before) throw this.notFound();
       const project = await tx.project.update({
         where: { id },
-        data: { name: input.name, status: input.status, modifiedByAccountId: account.id },
+        data: {
+          // forge:feature:update-fields:start
+          name: input.name,
+          status: input.status,
+          // forge:feature:update-fields:end
+          modifiedByAccountId: account.id,
+        },
       });
       // A replace that changes no field adds no history row.
       const summary = changeSummary(before, input);
-      if (summary) await this.history.record(account, 'project.changed', summary, { id, name: project.name }, tx);
+      if (summary) await this.history.record(account, 'project.changed', summary, { id,
+        // forge:feature:history-changed-name:start
+        name: project.name,
+        // forge:feature:history-changed-name:end
+      }, tx);
       return this.response(project);
     });
   }
 
   async delete(account: AccountPrincipal, id: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const project = await tx.project.findFirst({ where: liveProject(account, id), select: { name: true } });
+      const project = await tx.project.findFirst({ where: liveProject(account, id), select: {
+        // forge:feature:delete-name:start
+        name: true,
+        // forge:feature:delete-name:end
+      } });
       if (!project) throw this.notFound();
       await tx.project.update({
         where: { id },
         data: { deletedAtUtc: new Date(), deletedByAccountId: account.id, modifiedByAccountId: account.id },
       });
-      await this.history.record(account, 'project.deleted', 'Deleted the project', { id, name: project.name }, tx);
+      await this.history.record(account, 'project.deleted', 'Deleted the project', { id,
+        // forge:feature:history-deleted-name:start
+        name: project.name,
+        // forge:feature:history-deleted-name:end
+      }, tx);
     });
   }
 
@@ -235,7 +289,11 @@ export class ProjectsService {
         where: { id },
         data: { deletedAtUtc: null, deletedByAccountId: null, modifiedByAccountId: account.id },
       });
-      await this.history.record(account, 'project.restored', 'Restored the project', { id, name: project.name }, tx);
+      await this.history.record(account, 'project.restored', 'Restored the project', { id,
+        // forge:feature:history-restored-name:start
+        name: project.name,
+        // forge:feature:history-restored-name:end
+      }, tx);
       return this.response(project);
     });
   }
