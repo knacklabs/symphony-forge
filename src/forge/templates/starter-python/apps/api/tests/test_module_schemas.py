@@ -7,7 +7,6 @@ import pytest
 from test_api import sign_up
 from test_soft_delete import psql
 
-
 EXPECTED_TABLE_SCHEMAS = (
     "core.account",
     "core.invite",
