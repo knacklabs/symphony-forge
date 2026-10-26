@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BAR-1-BARSCORES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T09:09:41.696928+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a85cc889eb06b5d63cd5a01887c6139c1b123f0e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
