@@ -34,9 +34,9 @@
     "id": "81227ef3-9beb-434c-9a61-7540ddcb28f3",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-BAR-1/BARRULES",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T10:50:53.889177+00:00",
@@ -56,10 +56,10 @@
     }
   ],
   "stuck": {
-    "close": "63a3a21e-e638-4ae6-aca0-1b8ab2116bae",
-    "head": "909164dde5b8ee415e0866d814e3c28898e2cee0",
+    "close": "a57c452d-b60b-4a25-9343-9cb5ef67cecc",
+    "head": "490919db1ce694dd4824c06a063b3a5c345b11b5",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
