@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-26T11:23:57.865844+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01TQM1mXmo6Mqk3kUBptfYBz",
+    "hash": "dc8be4beb63244e21adea8cbc421019d3d5e830633adec576c712abcacc8f884",
+    "part_line_limit": 400,
+    "round": 1,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-DEPLOY-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-26T11:07:42.305525+00:00",
@@ -9,8 +19,12 @@
     {
       "at": "2026-10-26T11:22:17.828003+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-26T11:23:57.866268+00:00",
+      "step": "approved"
     }
   ],
   "title": "Client apps deploy to dev and preview on their own, and production waits for a person's Promote",
-  "touches": 0
+  "touches": 1
 }
