@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DEPLOY-1-DEPLOYSETUP",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T13:33:11.904862+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "17237b7abc644637cb793bdbae39266561569f10",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
