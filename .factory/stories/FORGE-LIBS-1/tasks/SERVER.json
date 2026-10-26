@@ -1,4 +1,5 @@
 {
+  "allow_large": "A pure move of the starter libraries; most lines are renames and import paths",
   "branch": "task/FORGE-LIBS-1-SERVER",
   "chat": {
     "approval": "081b4c1ca3c424c7e9d2bf1579b5eae131a7c83b954864370db9315c493d59f5",
