@@ -117,6 +117,8 @@ def next_step(args: Any) -> int:
     top = repo.root()
     from forge import fullrun
 
+    if (top / "forge.toml").is_file():
+        repo.config(top)
     notice = upgrade.release_notice(top) + fullrun.notices(top)
     history = board._machine_history(top) if args.json else None
     lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
