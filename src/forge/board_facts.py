@@ -11,7 +11,7 @@ import os
 import re
 import shutil
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -174,11 +174,13 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
 
 
 def prs(top: Path, *, fresh: bool = False, people: bool = False,
-        merged_fields: str = FIELDS, open_fields: str = FIELDS) -> Item | None:
+        merged_fields: str = FIELDS, open_fields: str = FIELDS,
+        open_read: Future[list[Item] | None] | None = None) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
     this one. Past weeks live a day; open and current-week lists live a minute.
     Only people may use expired records during an outage. Fresh reads can select only the fields
-    their caller uses; cached reads always keep the complete board records."""
+    their caller uses; cached reads always keep the complete board records.
+    A caller may share its pending open-list read with its checks query."""
     # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
         # Validate each body's revision against GitHub; file lists also require
@@ -259,8 +261,8 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
             # again. Refresh that small inventory beside the weekly requests.
             older_read = (pool.submit(merged_before_weeks, top)
                           if any(repo.forge_dir(top).glob("prs-older-*-cache.json")) else None)
-            opened_read = pool.submit(_listing, top, "open",
-                                      fields=open_fields if fresh else FIELDS.removesuffix(",files"))
+            opened_read = open_read or pool.submit(_listing, top, "open",
+                                                   fields=open_fields if fresh else FIELDS.removesuffix(",files"))
             lists = list(pool.map(week, starts))
             opened = opened_read.result()
             if older_read is not None:

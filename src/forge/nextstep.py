@@ -130,12 +130,19 @@ def next_step(args: Any) -> int:
     repo.forge_dir(top)
     repo.default_branch(top)
     # Independent network reads overlap each other and the bulk local history.
-    with ThreadPoolExecutor(max_workers=5) as pool:
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        open_fields = "headRefName,headRefOid,body,url,isDraft"
+        open_read = (pool.submit(board_facts._listing, top, "open", fields=open_fields)
+                     if not args.json else None)
+        github_read = pool.submit(board_facts.prs, top, fresh=not args.json,
+                                  merged_fields="headRefName",
+                                  open_fields=open_fields, open_read=open_read)
+        def checks():
+            if open_read is not None and open_read.result() == []:
+                return []  # A complete empty inventory has no open PR checks to read.
+            return board._machine_prs(top)
         pending = {"alerts": pool.submit(_failed_schedules, top),
-                   "checks": pool.submit(board._machine_prs, top),
-                   "github": pool.submit(board_facts.prs, top, fresh=not args.json,
-                                         merged_fields="headRefName",
-                                         open_fields="headRefName,headRefOid,body,url,isDraft")}
+                   "checks": pool.submit(checks), "github": github_read}
         activity = pool.submit(board._event_history, top)
         warning_read = pool.submit(migration_warnings.warnings, top)
         history = board._machine_history(top)
