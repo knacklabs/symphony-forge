@@ -37,8 +37,8 @@
     "id": "6d995496-f525-4da3-b297-efb8af70a674",
     "status": "clean"
   },
-  "round": 7,
-  "status": "waiting for checks",
+  "round": 8,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T09:20:17.910674+00:00",
@@ -66,10 +66,10 @@
     }
   ],
   "stuck": {
-    "close": "e5fb38ef-1a69-471f-b02d-b3a914544847",
-    "head": "d5e28449f2d87e2bebd428ba4d956bdccd9e3171",
+    "close": "77ebf5da-a69f-4874-89d0-57e9f6e0c03b",
+    "head": "b8e51ad3e36e02375780f260140ec085e4162115",
     "keys": {},
-    "round": 6
+    "round": 7
   },
   "why": "The busy repo takes about 8 seconds for forge next and about 10 seconds for the board's JSON output, and slow is a bug under Forge's principles.",
   "worker": "codex"
