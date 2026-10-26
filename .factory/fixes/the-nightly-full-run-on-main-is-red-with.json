@@ -4,12 +4,20 @@
   "done_when": "The nightly full run on main passes every test, and the shipped client files stay the same.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T03:36:11.836960+00:00",
       "step": "start"
     }
   ],
-  "why": "The nightly full run on main is red with 13 failing tests, which blocks the release and client sign-off."
+  "stuck": {
+    "close": null,
+    "head": "eb58e9f8f100108ecf0e431cc6bfde5abf624749",
+    "keys": {},
+    "round": null
+  },
+  "why": "The nightly full run on main is red with 13 failing tests, which blocks the release and client sign-off.",
+  "worker": "codex"
 }
