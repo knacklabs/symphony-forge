@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/api/test/projects.e2e-spec.ts\tGate: recent changes are scoped to the requested project\tFORGE-FEATURE-1/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "line": 165,
+      "text": "Gate: recent changes are scoped to the requested project",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\tsrc/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx\tuseReactTable keeps the react-hooks/incompatible-library lint warning on every run.",
+      "kind": "simplify",
+      "path": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "line": 136,
+      "text": "useReactTable keeps the react-hooks/incompatible-library lint warning on every run.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/DETAIL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,21 +1,55 @@
 {
   "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
   "branch": "task/FORGE-FEATURE-1-DETAIL",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "file": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 165,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: recent changes are scoped to the requested project",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "abd6d9d0d58b7e9e0a4228332551a2ebf72ee228e2e7a443ed623dfba61ed152",
+    "changed": "8349930672ff4802272bbddaf6d0667932ce916073ae1a0d8b40261570588c9f",
+    "commit": "3d2918a4f2a4b209f726398efe5e7e0e7414b629",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - an organisation has changes to two projects. This assertion runs with only one project in the organisation, as do the corresponding successful reads in the Python case (`apps/api/tests/test_projects.py:246`) and the recent-changes browser flow. Removing the subject filter from either history implementation would therefore leave these checks passing while showing another project's changes. Extend the existing API cases in both starters with interleaved changes to a second project and verify that each changes endpoint excludes the other project's entries.",
+        "file": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 165,
+        "priority": "P1",
+        "title": "Gate: recent changes are scoped to the requested project",
+        "work": 2
+      }
+    ],
+    "id": "54c3e836-4f71-47d2-bd07-c0a249b71dbc",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T12:07:09.964009+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T13:06:19.862558+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "question": "Build a client feature from the starter in one step: Projects detail screen and change history is stuck. It should deliver: The detail screen with its Details and Recent changes cards, Edit and the Delete AlertDialog; the Card component; the history subject columns, migrations, `listForSubject` and the `tx` argument on `HistoryApi`; the changes route; a Change history row for each projects create, change and delete; the subject name on the Change history screen; in both APIs.\nIt changes 1043 lines outside tests, over its limit of 400.\nThe worker tried: Keep the projects API suite under the sign-up limit; Projects get a detail screen with recent changes, and each change writes a history row.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
-    "size": true,
-    "tool": "claude",
-    "wait_id": "fbfd3306-1654-4b05-97d2-356af454076f"
-  },
   "stuck": {
     "close": null,
     "head": "3c86e18da97870c81409b4d3b5b337ab69e8972d",
