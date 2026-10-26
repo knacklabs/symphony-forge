@@ -1,8 +1,104 @@
 """Live Postgres database contracts."""
 
+import subprocess
+
 import httpx
+
 from test_api import credentials, sign_up
 from test_soft_delete import psql
+
+
+def test_the_starter_tables_follow_the_database_skill(client: httpx.Client) -> None:
+    # Audit: API-created rows must retain the same HTTP contract while SQL rejects
+    # invalid statuses, roles, names and upper-case sign-in/invite emails.
+    # Native enums and varchar used to supply only part of this contract.
+    # The init test owns delivery; this real Postgres test owns enforcement and
+    # model/migration drift. Existing HTTP and CLI boundaries need no new seam.
+    account, csrf = sign_up(client)
+    headers = {"x-csrf-token": csrf}
+    created = client.post(
+        "/api/v1/projects",
+        headers=headers,
+        json={"name": "Column rules", "status": "active"},
+    )
+    assert created.status_code == 201, created.text
+    project_id = created.json()["data"]["id"]
+    invite_email = credentials()["email"]
+    invited = client.post(
+        "/api/v1/invites", headers=headers, json={"email": invite_email}
+    )
+    assert invited.status_code == 201, invited.text
+
+    types = psql(
+        "SELECT count(*) AS forbidden_types FROM information_schema.columns "
+        "WHERE table_schema IN ('core', 'projects', 'history') "
+        "AND table_name NOT IN ('alembic_version', '_prisma_migrations') "
+        "AND data_type IN ('character varying', 'USER-DEFINED', "
+        "'timestamp without time zone')"
+    )
+    assert types.returncode == 0, types.stderr
+    counts = [
+        line.strip() for line in types.stdout.splitlines() if line.strip().isdigit()
+    ]
+    assert counts == ["0"], types.stdout
+
+    for sql, constraint in (
+        (
+            f"UPDATE projects.project SET status = 'paused' WHERE id = '{project_id}'",
+            "project_status_allowed",
+        ),
+        (
+            "UPDATE core.membership SET role = 'owner' WHERE account_id = "
+            f"(SELECT id FROM core.account WHERE email = '{account['email']}')",
+            "membership_role_allowed",
+        ),
+        (
+            f"UPDATE projects.project SET name = '' WHERE id = '{project_id}'",
+            "project_name_length",
+        ),
+        (
+            "UPDATE projects.project SET name = repeat('x', 121) "
+            f"WHERE id = '{project_id}'",
+            "project_name_length",
+        ),
+        (
+            "UPDATE core.account SET email = upper(email) "
+            f"WHERE email = '{account['email']}'",
+            "account_email_lower",
+        ),
+        (
+            "UPDATE core.invite SET email = upper(email) "
+            f"WHERE email = '{invite_email}'",
+            "invite_email_lower",
+        ),
+    ):
+        rejected = psql(sql)
+        assert rejected.returncode != 0, rejected.stdout
+        assert constraint in rejected.stderr, rejected.stderr
+
+    drift = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            "compose.test.yml",
+            "exec",
+            "-T",
+            "api",
+            "uv",
+            "run",
+            "--no-sync",
+            "alembic",
+            "check",
+        ],
+        cwd="../..",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+        timeout=30,
+    )
+    assert drift.returncode == 0, drift.stdout + drift.stderr
 
 
 def test_the_database_runs_postgres_18_with_the_day_one_extensions() -> None:

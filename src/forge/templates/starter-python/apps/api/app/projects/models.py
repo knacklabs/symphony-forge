@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func, text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base
@@ -11,6 +11,12 @@ from app.projects.schema import ProjectStatus
 class Project(Base):
     __tablename__ = "project"
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('active', 'archived')", name="project_status_allowed"
+        ),
+        CheckConstraint(
+            "char_length(name) BETWEEN 1 AND 120", name="project_name_length"
+        ),
         Index("idx_project_organisation_id", "organisation_id"),
         Index("idx_project_created_by_account_id", "created_by_account_id"),
         Index("idx_project_modified_by_account_id", "modified_by_account_id"),
@@ -22,9 +28,9 @@ class Project(Base):
     organisation_id: Mapped[UUID] = mapped_column(
         ForeignKey("core.organisation.id", ondelete="RESTRICT"), nullable=False
     )
-    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[ProjectStatus] = mapped_column(
-        Enum(ProjectStatus, name="project_status", native_enum=True, schema="projects"),
+        Text,
         nullable=False,
         default=ProjectStatus.active,
     )
