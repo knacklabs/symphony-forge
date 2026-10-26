@@ -7,13 +7,53 @@
     "head": null,
     "start": "b24e6db91c6c83bc018a4e4dbe197459452ad222"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/starter/libs/shared/util/src/format.test.ts",
+      "file": "src/forge/templates/starter/libs/shared/util/src/format.test.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 9,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Keep shipped money tests compatible with the chosen currency",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "01e1825955f880e83f32aedc8241be5a446a1c3d362f61041b5b0790f0be5256",
+    "changed": "cd551086551235bf9c333d9e781e38fe66a72b0f6ef5fc2887a045f2f651fdf7",
+    "commit": "decd610f9c24cd19326893c0a4c44d78ef0cb9f4",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - an owner chooses USD instead of INR during setup. The new setup instruction at src/forge/templates/skill.md:902 changes DEFAULT_CURRENCY, but this copied test unconditionally requires INR. Both starters therefore fail their normal test command after following the supported setup choice, despite correct formatter behavior. Keep the INR template-default assertion in Forge's init test, which already checks it, rather than in the test shipped to client apps.",
+        "file": "src/forge/templates/starter/libs/shared/util/src/format.test.ts",
+        "gain": 3,
+        "harm": 3,
+        "line": 9,
+        "priority": "P1",
+        "title": "[P1] Keep shipped money tests compatible with the chosen currency",
+        "work": 1
+      }
+    ],
+    "id": "30908521-079e-448e-a602-fca7536dbefc",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T02:19:19.021895+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T02:26:31.801163+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
