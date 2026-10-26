@@ -9,7 +9,7 @@
     "start": "55fd3079e4f2206d92b0d8133dcfa7bc433c0228"
   },
   "part_line_limit": 400,
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-LIBS-1/SCHEMASPY",
   "status": "working",
   "steps": [
@@ -19,10 +19,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "b9494fa4ceb940a0be292b800e490b6b121a8fa7",
+    "close": "20a5932f-96d4-4202-a529-49cd24d6e338",
+    "head": "ba61b07d0640121246047ed173803d2b37cb7ac1",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
