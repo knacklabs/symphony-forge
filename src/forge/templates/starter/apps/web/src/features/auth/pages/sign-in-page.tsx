@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { applyApiFieldErrors } from '@/lib/form-errors';
-import { useSignIn } from '@/features/auth/hooks/auth-hooks';
+import { useAuthOptions, useSignIn } from '@/features/auth/hooks/auth-hooks';
 
 export function SignInPage() {
   const signIn = useSignIn();
+  const options = useAuthOptions();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const form = useForm<AuthCredentials>({
@@ -55,7 +56,7 @@ export function SignInPage() {
           </div>
         </form>
       </Form>
-      <p className="text-sm text-muted-foreground">New here? <Link className="underline underline-offset-4" to="/sign-up">Create an account</Link></p>
+      {options.data?.signUpOpen === true && <p className="text-sm text-muted-foreground">New here? <Link className="underline underline-offset-4" to="/sign-up">Create an account</Link></p>}
     </AuthPageFrame>
   );
 }

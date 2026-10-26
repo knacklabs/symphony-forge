@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import type { AcceptInviteInput, Account, AuthCredentials } from '@app/auth-contracts';
+import { authOptionsSchema, type AcceptInviteInput, type Account, type AuthCredentials } from '@app/auth-contracts';
 import { ApiError, apiRequest } from '@/lib/api-client';
 
 const accountKey = ['account'] as const;
@@ -25,6 +25,14 @@ export function useAccount() {
     },
     retry: false,
     refetchOnWindowFocus: false,
+  });
+}
+
+// The app's normal query defaults, so each page load reads the options again.
+export function useAuthOptions() {
+  return useQuery({
+    queryKey: ['auth-options'],
+    queryFn: async () => authOptionsSchema.parse(await apiRequest<unknown>('/auth/options')),
   });
 }
 

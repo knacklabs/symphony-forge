@@ -8,9 +8,26 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { applyApiFieldErrors } from '@/lib/form-errors';
-import { useSignUp } from '@/features/auth/hooks/auth-hooks';
+import { useAuthOptions, useSignUp } from '@/features/auth/hooks/auth-hooks';
 
 export function SignUpPage() {
+  const options = useAuthOptions();
+  if (options.isPending) {
+    return <main id="main-content" className="flex min-h-screen items-center justify-center p-6"><p role="status">Loading…</p></main>;
+  }
+  // ponytail: if the options fail to load, the form shows and the API still refuses a closed sign-up.
+  if (options.data?.signUpOpen === false) {
+    return (
+      <AuthPageFrame title="Sign-up is closed">
+        <p className="text-sm text-muted-foreground">This app is for one company. Ask an admin of your team for an invite.</p>
+        <Link className="inline-block text-sm underline underline-offset-4" to="/sign-in">Sign in</Link>
+      </AuthPageFrame>
+    );
+  }
+  return <SignUpForm />;
+}
+
+function SignUpForm() {
   const signUp = useSignUp();
   const navigate = useNavigate();
   const [error, setError] = useState('');
