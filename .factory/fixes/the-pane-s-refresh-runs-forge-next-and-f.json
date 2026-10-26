@@ -1,0 +1,15 @@
+{
+  "base": "8145252c3aca2b2228e7f7c923d8374bfa890bf7",
+  "branch": "fix/the-pane-s-refresh-runs-forge-next-and-f",
+  "done_when": "Both forge next and the board JSON finish in under five seconds on this repo.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T09:01:26.366142+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The pane's refresh runs forge next and forge lanes, and next also runs the same slow board build, so the first load waits on it; the pane already shows Couldn't refresh when a first load fails, so only the speed part is new."
+}
