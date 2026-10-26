@@ -2,13 +2,19 @@
   "branch": "task/FORGE-FEATURE-1-DETAIL",
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-26T12:07:09.964009+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Build a client feature from the starter in one step: Projects detail screen and change history is stuck. It should deliver: The detail screen with its Details and Recent changes cards, Edit and the Delete AlertDialog; the Card component; the history subject columns, migrations, `listForSubject` and the `tx` argument on `HistoryApi`; the changes route; a Change history row for each projects create, change and delete; the subject name on the Change history screen; in both APIs.\nIt changes 1043 lines outside tests, over its limit of 400.\nThe worker tried: Keep the projects API suite under the sign-up limit; Projects get a detail screen with recent changes, and each change writes a history row.\nChoose one: switch this item to Codex; keep Claude for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "claude",
+    "wait_id": "fbfd3306-1654-4b05-97d2-356af454076f"
+  },
   "stuck": {
     "close": null,
     "head": "3c86e18da97870c81409b4d3b5b337ab69e8972d",
