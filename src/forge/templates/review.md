@@ -391,6 +391,21 @@ files are there to read; the standard note that the sandbox is empty does not ap
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
 missing, the changed line nearest the gap).
+<!-- added-work -->
+## Added work
+This repo sets a minimum Gain of $minimum for findings that ask for added work, such as another
+check, retry, guard or flag for a rarer case. Mark each such finding with a body line
+`Adds work: <what>`. Score it as usual. Forge keeps an unfloored fix-now finding below this
+minimum as a follow-up. Harm 4 or more, Gain 5 and every score floor still hold the work.
+
+<!-- always-block -->
+## Kinds a change must not miss
+The owner requires these kinds of work at any score:
+$kinds
+
+Title a finding of a listed kind `Must: <kind>: <gap>`. It holds the work even for a rare case
+or in a light review. The worker cannot decline it. Only the owner can accept it.
+
 <!-- repair-review -->
 ## Repair review
 The previous review checked commit $reviewed. From this second or later round, check each

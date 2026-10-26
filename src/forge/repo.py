@@ -533,7 +533,8 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
-        "always_test": list, "groups": int, "models": dict}
+        "always_test": list, "groups": int, "models": dict,
+        "added_work_min_gain": int, "always_block": list}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
@@ -640,6 +641,14 @@ def default_config(top: Path) -> dict[str, Any]:
     if found.returncode:
         refuse(REFUSALS["no_config"])
     return _config_text(found.stdout)
+
+
+def review_settings(top: Path) -> dict[str, Any]:
+    """Review settings from the same landed branch as the repository's review rules."""
+    from forge import story
+
+    text = story.show(top, story.landed_ref(top), "forge.toml")
+    return _config_text(text) if text is not None else {}
 
 
 def merge_setting(top: Path) -> str:
@@ -831,6 +840,8 @@ def _config_problem(data: dict[str, Any]) -> str:
         kind = KEYS.get(key)
         if kind is None:
             return f"{key!r} is not a forge.toml key"
+        if key == "added_work_min_gain" and (type(value) is not int or value not in (3, 4, 5)):
+            return "added_work_min_gain must be 3, 4 or 5"
         if kind is str and not isinstance(value, str):
             return f"{key} must be a string"
         if kind is int and not (type(value) is int and value >= 1):

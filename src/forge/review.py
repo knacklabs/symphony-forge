@@ -376,6 +376,11 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         encoding="utf-8")).substitute(values) if prototype else
         "\n\n".join(blocks[name].substitute(values) for name in chosen))
     prompt += "\n\n" + blocks["approach"].substitute(values)
+    settings = repo.review_settings(top)
+    if "added_work_min_gain" in settings:
+        prompt += "\n\n" + blocks["added-work"].substitute(minimum=settings["added_work_min_gain"])
+    if "always_block" in settings:
+        prompt += "\n\n" + blocks["always-block"].substitute(kinds=_bullets(settings["always_block"]))
     if previous.get("commit"):
         prompt += "\n\n" + blocks["repair-review"].substitute(
             reviewed=previous["commit"], findings=_previous(previous))
@@ -1052,10 +1057,14 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
         parts = re.findall(r""".+?[.!?]["”’'`*_]*(?=\s|$)|.+$""", done_when, re.S)
         approved = {sentence(done_when), *(sentence(part) for part in parts)}
     changed = False
+    settings = repo.review_settings(top)
+    kinds = {kind.strip().casefold() for kind in settings.get("always_block", [])}
+    minimum = settings.get("added_work_min_gain", 3)
     for finding in findings:
         title = re.sub(r"^\[P[0-3]\]\s*", "", finding["title"])
         missed = re.match(r"Not done\s*:\s*(.*)", title, re.I)
-        if missed and sentence(missed[1]) in approved:
+        must = score.MUST.match(title)
+        if (missed and sentence(missed[1]) in approved) or (must and must[1].strip().casefold() in kinds):
             if not finding.get("required_done_when") or finding.get("follow_up"):
                 finding["required_done_when"] = True
                 finding.pop("follow_up", None)
@@ -1068,12 +1077,19 @@ def bound_review(top: Path, item: str, state: dict[str, Any], result: dict[str, 
             reason = "Rare case outside normal use"
         elif missed and sentence(missed[1]) not in approved:
             reason = "Not done names no owner-approved Done-when item; builder details are guidance."
+        elif score.below_added_work_minimum(finding, minimum):
+            reason = f"{score.ADDED_WORK_REASON}{minimum}."
+        if not reason and finding.get("follow_up", "").startswith(score.ADDED_WORK_REASON):
+            finding.pop("follow_up")
+            changed = True
         if reason and finding.get("follow_up") != reason:
             finding["follow_up"] = reason
             changed = True
     kept = [d for d in result.get("dismissals", []) if not (
         not d.get("accepted") and d["because"].startswith("known:")
-        and findings[d["finding"] - 1].get("required_done_when"))]
+        and (findings[d["finding"] - 1].get("required_done_when")
+             or (d["because"].startswith("known: " + score.ADDED_WORK_REASON)
+                 and not findings[d["finding"] - 1].get("follow_up"))))]
     if kept != result.get("dismissals", []):
         result["dismissals"] = kept
         changed = True
