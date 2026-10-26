@@ -209,3 +209,111 @@ def test_filters_projects_by_search_and_filters(client: httpx.Client) -> None:
         assert refused.status_code == 400, refused.text
         fields = refused.json()["error"]["details"]["fieldErrors"]
         assert [error["field"] for error in fields] == [field]
+
+
+FIRST_CHANGE = (
+    "Name changed from Website redesign to Website relaunch; "
+    "Status changed from active to archived"
+)
+
+
+def test_records_each_project_change_in_the_change_history(
+    client: httpx.Client,
+) -> None:
+    # Audit: the twin of the React case. Each create, change and delete must write one
+    # Change history row in the same commit, a replace that changes nothing writes none,
+    # the changes route lists the newest 5 of this project only, and the organisation-wide
+    # history names the project. Real HTTP and Postgres; no production test seam.
+    owner, csrf = sign_up(client)
+    headers = {"x-csrf-token": csrf}
+    created = client.post(
+        "/api/v1/projects",
+        headers=headers,
+        json={"name": "Website redesign", "status": "active"},
+    )
+    assert created.status_code == 201, created.text
+    project = created.json()["data"]
+    assert project["createdByEmail"] == project["modifiedByEmail"] == owner["email"]
+    path = f"/api/v1/projects/{project['id']}"
+    # A second project's changes come between this project's changes and must stay out of its list.
+    mobile = client.post(
+        "/api/v1/projects",
+        headers=headers,
+        json={"name": "Mobile app", "status": "active"},
+    )
+    assert mobile.status_code == 201, mobile.text
+    other_path = f"/api/v1/projects/{mobile.json()['data']['id']}"
+    archived = client.put(
+        other_path, headers=headers, json={"name": "Mobile app", "status": "archived"}
+    )
+    assert archived.status_code == 200, archived.text
+    for _ in range(2):  # The second replace changes nothing and adds no row.
+        replaced = client.put(
+            path,
+            headers=headers,
+            json={"name": "Website relaunch", "status": "archived"},
+        )
+        assert replaced.status_code == 200, replaced.text
+
+    changes = client.get(f"{path}/changes")
+    assert changes.status_code == 200, changes.text
+    assert [
+        (entry["actorEmail"], entry["summary"]) for entry in changes.json()["data"]
+    ] == [
+        (owner["email"], FIRST_CHANGE),
+        (owner["email"], "Created the project"),
+    ]
+    assert set(changes.json()["data"][0]) == {
+        "id",
+        "actorEmail",
+        "summary",
+        "createdAtUtc",
+    }
+
+    # The detail screen lists the newest 5 changes only.
+    for name in ("Second", "Third", "Fourth", "Fifth"):
+        renamed = client.put(
+            path, headers=headers, json={"name": name, "status": "archived"}
+        )
+        assert renamed.status_code == 200, renamed.text
+    recent = client.get(f"{path}/changes").json()["data"]
+    assert [entry["summary"] for entry in recent] == [
+        "Name changed from Fourth to Fifth",
+        "Name changed from Third to Fourth",
+        "Name changed from Second to Third",
+        "Name changed from Website relaunch to Second",
+        FIRST_CHANGE,
+    ]
+
+    deleted = client.delete(path, headers=headers)
+    assert deleted.status_code == 200, deleted.text
+    # The Change history screen names the project each change was made to.
+    history = client.get("/api/v1/history").json()["data"]
+    assert [entry["summary"] for entry in history] == [
+        "Fifth: Deleted the project",
+        "Fifth: Name changed from Fourth to Fifth",
+        "Fourth: Name changed from Third to Fourth",
+        "Third: Name changed from Second to Third",
+        "Second: Name changed from Website relaunch to Second",
+        f"Website relaunch: {FIRST_CHANGE}",
+        "Mobile app: Status changed from active to archived",
+        "Mobile app: Created the project",
+        "Website redesign: Created the project",
+    ]
+    assert [
+        entry["summary"] for entry in client.get(f"{other_path}/changes").json()["data"]
+    ] == ["Status changed from active to archived", "Created the project"]
+    exported = client.get("/api/v1/history/export")
+    assert f",{owner['email']},Fifth: Deleted the project" in exported.text
+
+    # A deleted project's changes, and another organisation's project's changes, are not found.
+    assert client.get(f"{path}/changes").status_code == 404
+    kept = client.post(
+        "/api/v1/projects", headers=headers, json={"name": "Kept", "status": "active"}
+    )
+    assert kept.status_code == 201, kept.text
+    with httpx.Client(base_url=client.base_url, timeout=15) as other:
+        sign_up(other)
+        refused = other.get(f"/api/v1/projects/{kept.json()['data']['id']}/changes")
+        assert refused.status_code == 404, refused.text
+        assert refused.json()["error"]["code"] == "PROJECT_NOT_FOUND"

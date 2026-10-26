@@ -13,18 +13,24 @@ pytest_plugins = ("test_python_starter",)
 STORY = "FORGE-FEATURE-1"
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
-LIST_FLOW = "a reloaded projects list link keeps its search, filters and page"
+FLOWS = (
+    "a reloaded projects list link keeps its search, filters and page",
+    "create, view, edit, and delete a project",
+    "a project's detail screen shows its recent changes",
+)
 CASES = {
     "typescript": (
         STARTER,
         (Path("apps/api/test/projects.e2e-spec.ts"), Path("apps/web/e2e/projects.spec.ts")),
-        ("pages projects with next and previous cursors", "filters projects by search and filters"),
+        ("pages projects with next and previous cursors", "filters projects by search and filters",
+         "records each project change in the change history"),
     ),
     "python": (
         PYTHON_STARTER,
         (Path("apps/api/tests/test_projects.py"),),
         ("test_pages_projects_with_next_and_previous_cursors",
-         "test_filters_projects_by_search_and_filters"),
+         "test_filters_projects_by_search_and_filters",
+         "test_records_each_project_change_in_the_change_history"),
     ),
 }
 
@@ -35,8 +41,10 @@ CASES = {
 def test_5_projects_have_the_list_detail_and_history(repo, gh, tmp_path, starter, request):
     # Audit: init must ship each starter's projects cases, and the live run must pass them through
     # the real API, database and browser. A dropped test file, a list that pages by number or a
-    # list link that forgets its search would fail here. The live starter reports own the
-    # behaviour; this test names the cases. Sync must leave an adopted app's files alone.
+    # list link that forgets its search would fail here, and so would a project change that
+    # writes no Change history row or a detail screen without its recent changes. The live
+    # starter reports own the behaviour; this test names the cases. Sync must leave an adopted
+    # app's files alone.
     if starter == "earlier adopted":
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
@@ -68,4 +76,4 @@ def test_5_projects_have_the_list_detail_and_history(repo, gh, tmp_path, starter
         live = (live_run(request.getfixturevalue("tmp_path_factory")) if starter == "typescript"
                 else request.getfixturevalue("live_python_starter"))
         _require_cases(live["api"], api_cases)
-        _require_cases(live["browser"], (LIST_FLOW,))
+        _require_cases(live["browser"], FLOWS)

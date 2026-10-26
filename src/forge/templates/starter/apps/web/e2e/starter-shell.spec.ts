@@ -71,7 +71,8 @@ test('switching accounts does not show the previous account projects', async ({ 
   const dialog = page.getByRole('dialog', { name: 'New project' });
   await dialog.getByLabel('Name').fill('Account A private project');
   await dialog.getByRole('button', { name: 'Create project' }).click();
-  await expect(page.getByRole('row', { name: /Account A private project/ })).toBeVisible();
+  // A new project opens on its detail screen.
+  await expect(page.getByRole('heading', { level: 1, name: 'Account A private project' })).toBeVisible();
   await page.getByRole('link', { name: 'Members' }).click();
   await expect(page.getByRole('row', { name: new RegExp(firstEmail) })).toBeVisible();
   await page.getByRole('button', { name: 'Open user menu' }).click();

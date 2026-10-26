@@ -220,6 +220,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the newest 5 changes to one project in your organisation. */
+        get: operations["list_project_changes_api_v1_projects__project_id__changes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/members/{account_id}": {
         parameters: {
             query?: never;
@@ -490,7 +507,7 @@ export interface components {
             id: string;
             /**
              * Actoremail
-             * @description The email of the admin who made the change.
+             * @description The email of the person who made the change.
              * @example ada@example.com
              */
             actorEmail: string;
@@ -584,6 +601,10 @@ export interface components {
              * Format: uuid
              */
             modifiedByAccountId: string;
+            /** Createdbyemail */
+            createdByEmail: string;
+            /** Modifiedbyemail */
+            modifiedByEmail: string;
         };
         /** ProjectInput */
         ProjectInput: {
@@ -1550,6 +1571,64 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_project_changes_api_v1_projects__project_id__changes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_list_HistoryEntry__"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -1,10 +1,26 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma, Project } from '@prisma/client';
 import { PrismaService } from '@app/core-server';
 import type { AccountPrincipal } from '@app/core-server';
+import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
 import { projectStatusSchema, type ProjectExportQuery, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
 
-function toProjectResponse(project: Project) {
+/** Every read loads the emails of the accounts that created and last changed the project. */
+const WITH_EMAILS = { createdByAccount: { select: { email: true } }, modifiedByAccount: { select: { email: true } } } as const;
+type ProjectWithEmails = Prisma.ProjectGetPayload<{ include: typeof WITH_EMAILS }>;
+
+/** The labels the change summaries use, in the order the form shows the fields. */
+const FIELD_LABELS: Record<keyof ProjectInput, string> = { name: 'Name', status: 'Status' };
+
+/** One "<Label> changed from <old> to <new>" per changed field, with values as the CSV shows them; empty when nothing changed. */
+function changeSummary(before: Project, input: ProjectInput): string {
+  return (Object.keys(FIELD_LABELS) as (keyof ProjectInput)[])
+    .filter((field) => before[field] !== input[field])
+    .map((field) => `${FIELD_LABELS[field]} changed from ${before[field]} to ${input[field]}`)
+    .join('; ');
+}
+
+function toProjectResponse(project: ProjectWithEmails) {
   return {
     id: project.id,
     name: project.name,
@@ -13,8 +29,13 @@ function toProjectResponse(project: Project) {
     updatedAtUtc: project.updatedAtUtc.toISOString(),
     createdByAccountId: project.createdByAccountId,
     modifiedByAccountId: project.modifiedByAccountId,
+    createdByEmail: project.createdByAccount.email,
+    modifiedByEmail: project.modifiedByAccount.email,
   };
 }
+
+/** The changes route returns this many entries, newest first. */
+const RECENT_CHANGES = 5;
 
 /** The list counts up to this many matching projects; above it the screen says "More than 10,000". */
 const TOTAL_CAP = 10_000;
@@ -56,6 +77,11 @@ function filterWhere(account: AccountPrincipal, filters: ProjectExportQuery): Pr
   };
 }
 
+/** The organisation's project with this id, unless it is deleted. */
+function liveProject(account: AccountPrincipal, id: string): Prisma.ProjectWhereInput {
+  return { id, organisationId: account.organisationId, deletedAtUtc: null };
+}
+
 /** The rows after the cursor row in this order: a later sort value, or the same value and a later id. */
 function afterCursor(sortBy: SortBy, order: 'asc' | 'desc', cursor: { value: string | Date; id: string }): Prisma.ProjectWhereInput {
   const beyond = order === 'asc' ? 'gt' : 'lt';
@@ -64,7 +90,10 @@ function afterCursor(sortBy: SortBy, order: 'asc' | 'desc', cursor: { value: str
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(HISTORY_API) private readonly history: HistoryApi,
+  ) {}
 
   async list(account: AccountPrincipal, query: ProjectListQuery) {
     const where = filterWhere(account, query);
@@ -77,6 +106,7 @@ export class ProjectsService {
         where: cursor ? { AND: [where, afterCursor(query.sortBy, order, decodeCursor(query.sortBy, cursor, backward))] } : where,
         orderBy: [{ [query.sortBy]: order }, { id: order }],
         take: query.limit + 1,
+        include: WITH_EMAILS,
       }),
       this.prisma.project.count({ where, take: TOTAL_CAP + 1 }),
     ]);
@@ -102,44 +132,68 @@ export class ProjectsService {
     const projects = await this.prisma.project.findMany({
       where: filterWhere(account, filters),
       orderBy: [{ createdAtUtc: 'desc' }, { id: 'asc' }],
+      include: WITH_EMAILS,
     });
     return projects.map(toProjectResponse);
   }
 
   async get(account: AccountPrincipal, id: string) {
-    const project = await this.prisma.project.findFirst({ where: { id, organisationId: account.organisationId, deletedAtUtc: null } });
+    const project = await this.prisma.project.findFirst({ where: liveProject(account, id), include: WITH_EMAILS });
     if (!project) throw this.notFound();
     return toProjectResponse(project);
   }
 
+  /** The project's newest changes; a deleted project or one of another organisation is not found. */
+  async changes(account: AccountPrincipal, id: string) {
+    const project = await this.prisma.project.findFirst({ where: liveProject(account, id), select: { id: true } });
+    if (!project) throw this.notFound();
+    return this.history.listForSubject(account, id, RECENT_CHANGES);
+  }
+
+  // Each change and its Change history row commit together: a failed history write rolls back the change.
   async create(account: AccountPrincipal, input: ProjectInput) {
-    const project = await this.prisma.project.create({
-      data: {
-        organisationId: account.organisationId,
-        name: input.name,
-        status: input.status,
-        createdByAccountId: account.id,
-        modifiedByAccountId: account.id,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.create({
+        data: {
+          organisationId: account.organisationId,
+          name: input.name,
+          status: input.status,
+          createdByAccountId: account.id,
+          modifiedByAccountId: account.id,
+        },
+        include: WITH_EMAILS,
+      });
+      await this.history.record(account, 'project.created', 'Created the project', { id: project.id, name: project.name }, tx);
+      return toProjectResponse(project);
     });
-    return toProjectResponse(project);
   }
 
   async update(account: AccountPrincipal, id: string, input: ProjectInput) {
-    const result = await this.prisma.project.updateMany({
-      where: { id, organisationId: account.organisationId, deletedAtUtc: null },
-      data: { name: input.name, status: input.status, modifiedByAccountId: account.id },
+    return this.prisma.$transaction(async (tx) => {
+      const before = await tx.project.findFirst({ where: liveProject(account, id) });
+      if (!before) throw this.notFound();
+      const project = await tx.project.update({
+        where: { id },
+        data: { name: input.name, status: input.status, modifiedByAccountId: account.id },
+        include: WITH_EMAILS,
+      });
+      // A replace that changes no field adds no history row.
+      const summary = changeSummary(before, input);
+      if (summary) await this.history.record(account, 'project.changed', summary, { id, name: project.name }, tx);
+      return toProjectResponse(project);
     });
-    if (result.count === 0) throw this.notFound();
-    return this.get(account, id);
   }
 
   async delete(account: AccountPrincipal, id: string): Promise<void> {
-    const result = await this.prisma.project.updateMany({
-      where: { id, organisationId: account.organisationId, deletedAtUtc: null },
-      data: { deletedAtUtc: new Date(), deletedByAccountId: account.id, modifiedByAccountId: account.id },
+    await this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.findFirst({ where: liveProject(account, id), select: { name: true } });
+      if (!project) throw this.notFound();
+      await tx.project.update({
+        where: { id },
+        data: { deletedAtUtc: new Date(), deletedByAccountId: account.id, modifiedByAccountId: account.id },
+      });
+      await this.history.record(account, 'project.deleted', 'Deleted the project', { id, name: project.name }, tx);
     });
-    if (result.count === 0) throw this.notFound();
   }
 
   private notFound(): NotFoundException {

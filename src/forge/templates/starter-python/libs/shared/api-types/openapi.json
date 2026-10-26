@@ -1073,6 +1073,79 @@
         }
       }
     },
+    "/api/v1/projects/{project_id}/changes": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "List the newest 5 changes to one project in your organisation.",
+        "operationId": "list_project_changes_api_v1_projects__project_id__changes_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_list_HistoryEntry__"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/members/{account_id}": {
       "patch": {
         "tags": [
@@ -1771,7 +1844,7 @@
           "actorEmail": {
             "type": "string",
             "title": "Actoremail",
-            "description": "The email of the admin who made the change.",
+            "description": "The email of the person who made the change.",
             "examples": [
               "ada@example.com"
             ]
@@ -1942,6 +2015,14 @@
             "type": "string",
             "format": "uuid",
             "title": "Modifiedbyaccountid"
+          },
+          "createdByEmail": {
+            "type": "string",
+            "title": "Createdbyemail"
+          },
+          "modifiedByEmail": {
+            "type": "string",
+            "title": "Modifiedbyemail"
           }
         },
         "additionalProperties": false,
@@ -1953,7 +2034,9 @@
           "createdAtUtc",
           "updatedAtUtc",
           "createdByAccountId",
-          "modifiedByAccountId"
+          "modifiedByAccountId",
+          "createdByEmail",
+          "modifiedByEmail"
         ],
         "title": "Project"
       },

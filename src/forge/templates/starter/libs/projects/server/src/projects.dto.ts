@@ -21,6 +21,26 @@ export class ProjectResponseDto {
 
   @ApiProperty({ description: 'The account that last changed the project.', example: 'a3e1d349-1d8e-481c-8c69-99ea576f94c7' })
   modifiedByAccountId!: string;
+
+  @ApiProperty({ description: 'The email of the account that created the project.', example: 'ada@example.com' })
+  createdByEmail!: string;
+
+  @ApiProperty({ description: 'The email of the account that last changed the project.', example: 'grace@example.com' })
+  modifiedByEmail!: string;
+}
+
+export class ProjectChangeResponseDto {
+  @ApiProperty({ description: 'The change identifier.', example: 'b3e1d349-1d8e-481c-8c69-99ea576f94c7' })
+  id!: string;
+
+  @ApiProperty({ description: 'The email of the person who made the change.', example: 'grace@example.com' })
+  actorEmail!: string;
+
+  @ApiProperty({ description: 'What changed.', example: 'Status changed from active to archived' })
+  summary!: string;
+
+  @ApiProperty({ description: 'When the change happened, in UTC.', example: '2026-10-24T16:42:00.000Z' })
+  createdAtUtc!: string;
 }
 
 export class ProjectPagingDto {
