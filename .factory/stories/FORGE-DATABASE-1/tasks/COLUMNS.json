@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-DATABASE-1-COLUMNS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T06:06:14.756491+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "9c5be972a2d08f323d7f4b83646cafed6e758b8f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
