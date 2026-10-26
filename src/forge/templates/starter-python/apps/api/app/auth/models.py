@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, func, text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core import Base
@@ -10,14 +10,15 @@ from app.core import Base
 class Account(Base):
     __tablename__ = "account"
     __table_args__ = (
+        CheckConstraint("email = lower(email)", name="account_email_lower"),
         Index("idx_account_created_by_account_id", "created_by_account_id"),
         Index("idx_account_modified_by_account_id", "modified_by_account_id"),
         {"schema": "core"},
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
-    email: Mapped[str] = mapped_column(String(254), unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     created_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -44,8 +45,8 @@ class Session(Base):
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("core.account.id", ondelete="CASCADE"), nullable=False
     )
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
-    csrf_token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    token_hash: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    csrf_token_hash: Mapped[str] = mapped_column(Text, nullable=False)
     expires_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -66,7 +67,7 @@ class PasswordResetToken(Base):
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("core.account.id", ondelete="CASCADE"), nullable=False
     )
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    token_hash: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     expires_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )

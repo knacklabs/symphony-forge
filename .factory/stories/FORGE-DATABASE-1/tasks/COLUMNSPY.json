@@ -1,0 +1,55 @@
+{
+  "base": "8c288db8db1fbeb48d28ae4b5098b5318ef8ab6f",
+  "branch": "task/FORGE-DATABASE-1-COLUMNSPY",
+  "chat": {
+    "approval": "a0a46044fc42a28b0c7128d1d8b4d17a54d38f4041dc6b8a7860e44f0b70fb6e",
+    "claude": null,
+    "conversation": "01a17760-e5c9-7513-bb71-1d214650842c",
+    "head": null,
+    "start": "2feaef7a8fca1f76ec314114ec65fde502892149"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d7f930485052bf2ad815ead2df432bdd1b8f73db7164027ac3573a62df642e6d",
+    "changed": "b45147fc936a44dcc5a57d9569e3054e0b185060896dfd66a72758a12a02fca2",
+    "commit": "9630103e5582a203cf4a6b72869aa836cc4469a7",
+    "dismissals": [],
+    "findings": [],
+    "id": "2a972f0a-609b-489e-aaad-b78b20880b2c",
+    "status": "clean"
+  },
+  "round": 5,
+  "stacked_on": "FORGE-LIBS-1/SCHEMASPY",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T08:43:06.240730+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T09:15:10.896048+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T09:21:59.518925+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T09:45:04.808690+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T09:54:37.707385+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "fe45f94a-5d1e-4932-ba6c-de3171dbe26f",
+    "head": "7bc915193c101525ef81757488a5dbd2d111f26c",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

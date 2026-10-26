@@ -2,11 +2,11 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
-    Enum,
     ForeignKey,
     Index,
-    String,
+    Text,
     UniqueConstraint,
     func,
     text,
@@ -20,6 +20,7 @@ class Invite(Base):
     # Invites are temporary credentials, so claiming one removes it instead of soft deleting it.
     __tablename__ = "invite"
     __table_args__ = (
+        CheckConstraint("email = lower(email)", name="invite_email_lower"),
         UniqueConstraint("organisation_id", "email"),
         Index("idx_invite_organisation_id", "organisation_id"),
         Index("idx_invite_created_by_account_id", "created_by_account_id"),
@@ -31,8 +32,8 @@ class Invite(Base):
     organisation_id: Mapped[UUID] = mapped_column(
         ForeignKey("core.organisation.id", ondelete="RESTRICT")
     )
-    email: Mapped[str] = mapped_column(String(254))
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    email: Mapped[str] = mapped_column(Text)
+    token_hash: Mapped[str] = mapped_column(Text, unique=True)
     expires_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -79,6 +80,7 @@ class Organisation(Base):
 class Membership(Base):
     __tablename__ = "membership"
     __table_args__ = (
+        CheckConstraint("role IN ('admin', 'member')", name="membership_role_allowed"),
         Index("idx_membership_created_by_account_id", "created_by_account_id"),
         Index("idx_membership_modified_by_account_id", "modified_by_account_id"),
         Index("idx_membership_deleted_by_account_id", "deleted_by_account_id"),
@@ -93,10 +95,8 @@ class Membership(Base):
     account_id: Mapped[UUID] = mapped_column(
         ForeignKey("core.account.id", ondelete="RESTRICT"), unique=True
     )
-    email: Mapped[str] = mapped_column(String(254))
-    role: Mapped[Role] = mapped_column(
-        Enum("admin", "member", name="membership_role", schema="core")
-    )
+    email: Mapped[str] = mapped_column(Text)
+    role: Mapped[Role] = mapped_column(Text)
     created_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
