@@ -49,7 +49,9 @@ def test_a_new_row_gets_a_time_ordered_id_and_an_update_sets_its_last_changed_ti
         "/api/v1/invites", headers=headers, json={"email": credentials()["email"]}
     )
     assert invited.status_code == 201, invited.text
-    reset = client.post("/api/v1/auth/forgot-password", json={"email": account["email"]})
+    reset = client.post(
+        "/api/v1/auth/forgot-password", json={"email": account["email"]}
+    )
     assert reset.status_code == 200, reset.text
 
     tables = (
