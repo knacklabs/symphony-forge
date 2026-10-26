@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 4,
       "line": 31,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -38,37 +38,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e26f85f0b553a60ef7b1b273a63d8f13db1babf794ff7d2e1ad60f2bd7786f36",
-    "changed": "a32d58d829bd7f739ca119f390f74478ead13e63bac2262dcf7d50060bb72dbd",
-    "commit": "b4fb2929763a372ff238877713e4380fa81edaa6",
+    "branch_diff": "0fefa4ddc780171b10d2d27e14f13c3249dc76a2c26c06fc07b13e1678e84dbe",
+    "changed": "816d472b144bee92efb4d877dfd70ee867721ceae736ea1f1cf04f78ab0f4589",
+    "commit": "1dcf65516b6a61df895c701e1e44bab1f790d191",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Functional\nCase: normal use - a new Python app runs node scripts/test.mjs.\nThis migration moves account into core, but apps/api/tests/test_error_reports.py:61 and :87 still execute ALTER TABLE account. With the starter's unchanged search path, the first statement fails because that relation no longer exists in public. The standard API suite and Python starter smoke therefore fail before exercising the error-report assertions. Qualify both statements as core.account, as this change does for the other SQL consumers.",
-        "file": "src/forge/templates/starter-python/apps/api/migrations/versions/0008_module_schemas.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 31,
-        "priority": "P1",
-        "title": "Qualify the error-report test's account table after moving it",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 3, Harm 1\nThe schema proof ends with checking the API report; it does not exercise forge close or assert that the reviewer receives the cross-business-schema foreign-key rule. The shipped review template also lacks that rule. Done-when 4's review-reporting clause therefore remains outstanding. plans/FORGE-LIBS-1.md:319 explicitly assigns the rule and its new/adopted-repository prompt case to GUIDE, so this is deferred advice for that task.",
-        "file": "tests/test_module_schemas.py",
-        "gain": 2,
-        "harm": 1,
-        "line": 42,
-        "priority": "P2",
-        "title": "Later: Deliver the foreign-key review rule and its proof in GUIDE",
-        "work": 3
-      }
-    ],
-    "id": "dc47b8a1-7267-4bda-855b-63abc0dfeb83",
-    "status": "blocked"
+    "findings": [],
+    "id": "9f39bdcc-b5a6-4bbb-8466-995c01ee8931",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T06:06:09.108539+00:00",
@@ -76,6 +55,10 @@
     },
     {
       "at": "2026-10-26T06:19:53.387407+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T06:21:38.239433+00:00",
       "step": "review"
     }
   ],
