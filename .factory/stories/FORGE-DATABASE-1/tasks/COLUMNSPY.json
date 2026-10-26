@@ -20,9 +20,9 @@
     "id": "6bb1e68c-74f5-4d62-a33b-28c2b034e23d",
     "status": "clean"
   },
-  "round": 4,
+  "round": 5,
   "stacked_on": "FORGE-LIBS-1/SCHEMASPY",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T08:43:06.240730+00:00",
@@ -42,10 +42,10 @@
     }
   ],
   "stuck": {
-    "close": "1c5cff76-1d88-4227-9dc0-3d2c531f8a99",
-    "head": "8c133dac49852e28113847cef44c62b24e003424",
+    "close": "fe45f94a-5d1e-4932-ba6c-de3171dbe26f",
+    "head": "7bc915193c101525ef81757488a5dbd2d111f26c",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "worker": "codex"
 }
