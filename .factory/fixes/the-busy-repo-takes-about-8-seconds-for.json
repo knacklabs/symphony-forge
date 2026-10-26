@@ -1,0 +1,15 @@
+{
+  "base": "681f68953998c6b6344c6dbe77b86a94b03f15ec",
+  "branch": "fix/the-busy-repo-takes-about-8-seconds-for",
+  "done_when": "On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T09:20:17.910674+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The busy repo takes about 8 seconds for forge next and about 10 seconds for the board's JSON output, and slow is a bug under Forge's principles."
+}
