@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
   "branch": "task/FORGE-FEATURE-1-ACCESS",
   "part_line_limit": 400,
   "status": "started",
