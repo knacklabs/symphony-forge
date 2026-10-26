@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-SERVICES-1-SVCLIST",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T10:50:47.740299+00:00",
+      "step": "start"
+    }
+  ]
+}
