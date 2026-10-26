@@ -1,6 +1,13 @@
 {
   "base": "8145252c3aca2b2228e7f7c923d8374bfa890bf7",
   "branch": "fix/the-pane-s-refresh-runs-forge-next-and-f",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17771-b7d9-7292-90ca-cb6b1c9ebf17",
+    "head": null,
+    "start": "76b245f72eed490523de6caee4bd9700a8d2c358"
+  },
   "done_when": "Both forge next and the board JSON finish in under five seconds on this repo.",
   "fix_kind": "backend",
   "kind": "fix",
