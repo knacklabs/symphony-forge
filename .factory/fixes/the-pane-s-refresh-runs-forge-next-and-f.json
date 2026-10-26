@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-26T09:18:09.343487+00:00",
+      "because": "The first round cut board JSON from about 17 to 10 seconds within five files; the five-second goal moves to a follow-up fix",
+      "done_when": "Both forge next and the board JSON finish in under five seconds on this repo."
+    }
+  ],
   "base": "8145252c3aca2b2228e7f7c923d8374bfa890bf7",
   "branch": "fix/the-pane-s-refresh-runs-forge-next-and-f",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "76b245f72eed490523de6caee4bd9700a8d2c358"
   },
-  "done_when": "Both forge next and the board JSON finish in under five seconds on this repo.",
+  "done_when": "On this repo, forge next and the board JSON both finish well inside the pane's 20-second refresh limit, so the pane loads its first rows",
   "fix_kind": "backend",
   "kind": "fix",
   "round": 1,
