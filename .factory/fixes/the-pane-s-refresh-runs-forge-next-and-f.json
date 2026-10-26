@@ -35,24 +35,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "4de843a023f1443222aa62707c7e1e7f911e096acc85693dae3199b7dcfd4d3c",
-    "changed": "f5e049d69367c8be1228f7118b37396d4bbc9eeb514fe33aca81e831c8a471b7",
-    "commit": "a37ddc4afd7a8f5817259e58678d67e289ff9d3f",
+    "branch_diff": "1043ec49f38ac9dfdb056a4e013b4776e4c0e360af15d7a1eb18076427186bb2",
+    "changed": "775c5378ff29ccb73a052ecf3981b7af851aa8bda13ab13367a8a5f4af1b7140",
+    "commit": "e84a8b3c89446b922ea3356093235a2d5e053c3c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Plain `forge next` now always passes a history dictionary to `_report`, but `_report` still emits the statistics summary only when `history is None` (nextstep.py:327\u2013328). Consequently, from the configured check date, 2026-11-15, ordinary text output permanently loses the cycle-time, human-touch and Forge-fix metrics. Existing assertions in tests/test_board.py:181 and tests/test_fix_one_worktree_with_settings_the_installed.py:52 require that summary. Keep snapshot reuse separate from the decision to show text-only statistics.",
-        "file": "src/forge/nextstep.py",
-        "line": 122,
-        "priority": "P2",
-        "title": "[P2] Preserve the statistics summary in plain forge next output"
-      }
-    ],
-    "id": "515b1dd9-71cb-4567-adfa-42ec4f578b85",
+    "findings": [],
+    "id": "b83f2956-26a5-4fe1-b551-6396ed14c859",
     "status": "clean"
   },
   "round": 7,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T09:01:26.366142+00:00",
@@ -64,6 +56,10 @@
     },
     {
       "at": "2026-10-26T10:27:51.760269+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T10:46:54.432521+00:00",
       "step": "review"
     }
   ],
