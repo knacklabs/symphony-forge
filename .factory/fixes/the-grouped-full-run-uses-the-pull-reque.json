@@ -4,12 +4,20 @@
   "done_when": "The generated full run's jobs have a 60-minute limit while the pull request tests keep theirs, in new and existing repos after sync",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T02:02:27.812140+00:00",
       "step": "start"
     }
   ],
-  "why": "The grouped full run uses the pull request tests job's 30-minute limit, but each group of the whole suite needs 22 to 30 minutes on a 2-core runner, so groups are cancelled at the limit and no full run can pass, which blocks every release"
+  "stuck": {
+    "close": null,
+    "head": "6016584515bf874115bd9d2b0334292e9eed1d94",
+    "keys": {},
+    "round": null
+  },
+  "why": "The grouped full run uses the pull request tests job's 30-minute limit, but each group of the whole suite needs 22 to 30 minutes on a 2-core runner, so groups are cancelled at the limit and no full run can pass, which blocks every release",
+  "worker": "codex"
 }
