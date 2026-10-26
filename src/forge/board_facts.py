@@ -24,6 +24,72 @@ WORK_STATES = ("done", "ready to merge", "in progress", "to do")
 FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft,files"
 
 
+# The explicit query retains GitHub's own occurrence ids; gh pr list's default rollup does not.
+CHECKS_QUERY = """query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: 25, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
+      nodes { number headRefName headRefOid title url isDraft body
+        commits(last: 1) { nodes { commit { oid statusCheckRollup {
+          contexts(first: 100) { pageInfo { hasNextPage } nodes {
+            __typename
+            ... on CheckRun { databaseId name status conclusion startedAt completedAt
+              checkSuite { status conclusion workflowRun { workflow { id name } } } }
+            ... on StatusContext { id context state createdAt }
+          } }
+        } } } }
+      }
+    }
+  }
+}"""
+
+
+def machine_prs(top: Path) -> list[Item]:
+    """One request for the newest 25 open PRs, cached across command invocations for 60s."""
+    from forge.board import _rollup, _when
+
+    cache = repo.forge_dir(top) / "checks-cache.json"
+    fetched_at = repo.now()
+    now = _when(fetched_at)
+    try:
+        saved = json.loads(cache.read_text(encoding="utf-8"))
+        at = _when(saved.get("fetched_at"))
+        if now and at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("prs"), list):
+            return [{**pr, "checks_fetched_at": saved["fetched_at"]} for pr in saved["prs"]]
+    except (OSError, ValueError, AttributeError):
+        pass
+    done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
+                    "-f", f"query={' '.join(CHECKS_QUERY.split())}", cwd=top) if shutil.which("gh") else None
+    try:
+        response = json.loads(done.stdout) if done and done.returncode == 0 else {}
+        prs = response["data"]["repository"]["pullRequests"]["nodes"]
+        if response.get("errors") or not isinstance(prs, list) or not all(isinstance(p, dict) for p in prs):
+            return []
+    except (ValueError, KeyError, TypeError):
+        return []  # An expired answer must not hide a failed check while GitHub is unreachable.
+    for pr in prs:
+        for check in _rollup(pr):
+            if check.get("conclusion") != "CANCELLED" or not isinstance(check.get("databaseId"), int):
+                continue
+            annotations = repo.run("gh", "api", "--paginate", "--slurp",
+                f"repos/{{owner}}/{{repo}}/check-runs/{check['databaseId']}/annotations?per_page=100", cwd=top)
+            try:
+                pages = json.loads(annotations.stdout) if annotations.returncode == 0 else []
+                check["timeout"] = any("has exceeded the maximum execution time of" in str(a.get("message", ""))
+                                       for page in pages if isinstance(page, list)
+                                       for a in page if isinstance(a, dict))
+            except (ValueError, TypeError):
+                pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
+    temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
+    try:
+        temp.write_text(json.dumps({"fetched_at": fetched_at, "prs": prs}), encoding="utf-8")
+        os.replace(temp, cache)
+    except OSError:
+        pass  # A read-only/full Git directory must not prevent a view.
+    finally:
+        temp.unlink(missing_ok=True)
+    return [{**pr, "checks_fetched_at": fetched_at} for pr in prs]
+
+
 def item_key(branch: str, paths: list[str]) -> str | None:
     """An item's own state identifies a Forge branch; its prefix alone does not."""
     for path in paths:

@@ -73,6 +73,11 @@ def read(top: Path, name: str) -> list[dict[str, Any]]:
 
 
 def when(value: Any) -> datetime | None:
+    return _timestamp(value) if isinstance(value, str) else None
+
+
+@functools.lru_cache(maxsize=8192)
+def _timestamp(value: str) -> datetime | None:
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         return parsed if parsed.tzinfo else None

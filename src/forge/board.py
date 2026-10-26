@@ -18,12 +18,15 @@ import shutil
 import statistics
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from textwrap import shorten
 from typing import Any
 
 from forge import __version__, approval, board_facts, board_graph, codex, machine, native, repo, story, task
+
+from forge.board_facts import machine_prs as _machine_prs
 
 COMMANDS = [{
     "words": "board", "run": "board", "changes_state": False,
@@ -49,11 +52,22 @@ Item = dict[str, Any]
 
 def board(args: Any) -> int:
     top = repo.root()
-    if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
-        print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
-    if args.json:
-        print(json.dumps(machine_board(top)))
-        return 0
+    with repo.command_cache(snapshot=True):
+        def local_history():
+            from forge import backfill, time_records
+            _event_history(top)
+            for pr in backfill.people(top):
+                time_records.view_body(pr.get("body") or "")
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            if args.json:
+                reads = pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top)
+                local = pool.submit(local_history)
+            if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
+                print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
+            if args.json:
+                local.result()
+                print(json.dumps(machine_board(top, reads=reads)))
+                return 0
     if not args.out:
         from forge import board_server
         return board_server.serve(top)
@@ -68,70 +82,6 @@ def repo_root(top: Path) -> str:
     """The main worktree identifies a repo across all of its worktrees."""
     listing = repo.git("worktree", "list", "--porcelain", cwd=top)
     return str(Path(listing.splitlines()[0].removeprefix("worktree ")).resolve())
-
-
-# The explicit query retains GitHub's own occurrence ids; gh pr list's default rollup does not.
-CHECKS_QUERY = """query($owner: String!, $name: String!) {
-  repository(owner: $owner, name: $name) {
-    pullRequests(first: 25, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
-      nodes { number headRefName headRefOid title url isDraft body
-        commits(last: 1) { nodes { commit { oid statusCheckRollup {
-          contexts(first: 100) { pageInfo { hasNextPage } nodes {
-            __typename
-            ... on CheckRun { databaseId name status conclusion startedAt completedAt
-              checkSuite { status conclusion workflowRun { workflow { id name } } } }
-            ... on StatusContext { id context state createdAt }
-          } }
-        } } } }
-      }
-    }
-  }
-}"""
-
-
-def _machine_prs(top: Path) -> list[Item]:
-    """One request for the newest 25 open PRs, cached across command invocations for 60s."""
-    cache = repo.forge_dir(top) / "checks-cache.json"
-    fetched_at = repo.now()
-    now = _when(fetched_at)
-    try:
-        saved = json.loads(cache.read_text(encoding="utf-8"))
-        at = _when(saved.get("fetched_at"))
-        if now and at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("prs"), list):
-            return [{**pr, "checks_fetched_at": saved["fetched_at"]} for pr in saved["prs"]]
-    except (OSError, ValueError, AttributeError):
-        pass
-    done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
-                    "-f", f"query={' '.join(CHECKS_QUERY.split())}", cwd=top) if shutil.which("gh") else None
-    try:
-        response = json.loads(done.stdout) if done and done.returncode == 0 else {}
-        prs = response["data"]["repository"]["pullRequests"]["nodes"]
-        if response.get("errors") or not isinstance(prs, list) or not all(isinstance(p, dict) for p in prs):
-            return []
-    except (ValueError, KeyError, TypeError):
-        return []  # An expired answer must not hide a failed check while GitHub is unreachable.
-    for pr in prs:
-        for check in _rollup(pr):
-            if check.get("conclusion") != "CANCELLED" or not isinstance(check.get("databaseId"), int):
-                continue
-            annotations = repo.run("gh", "api", "--paginate", "--slurp",
-                f"repos/{{owner}}/{{repo}}/check-runs/{check['databaseId']}/annotations?per_page=100", cwd=top)
-            try:
-                pages = json.loads(annotations.stdout) if annotations.returncode == 0 else []
-                check["timeout"] = any("has exceeded the maximum execution time of" in str(a.get("message", ""))
-                                       for page in pages if isinstance(page, list)
-                                       for a in page if isinstance(a, dict))
-            except (ValueError, TypeError):
-                pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
-    temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
-    try:
-        temp.write_text(json.dumps({"fetched_at": fetched_at, "prs": prs}), encoding="utf-8")
-        os.replace(temp, cache)
-    except OSError:
-        pass  # A read-only/full Git directory must not prevent a view.
-    finally:
-        temp.unlink(missing_ok=True)
-    return [{**pr, "checks_fetched_at": fetched_at} for pr in prs]
 
 
 def _checks(pr: Item | None, required: list[str]) -> tuple[str, list[Item], list[Item]]:
@@ -232,29 +182,38 @@ def active_runs(top: Path, item: str, activity: list[Item] | None = None,
 
 
 @repo.command_cache(snapshot=True)
-def machine_board(top: Path, history: Item | None = None, trim: bool = True, cache: Item | None = None) -> Item:
+def machine_board(top: Path, history: Item | None = None, trim: bool = True, cache: Item | None = None,
+                  reads: tuple[Any, Any] | None = None) -> Item:
     """Stories and fixes, with tasks one level down. No invented run times or occurrence ids.
     `trim` leaves out work finished more than seven days ago; the page keeps it. With the live page's
     `cache`, only rows whose inputs changed are derived again, listed in `cache["rebuilt"]`."""
     from forge import backfill, known_issues, nextstep, releases, time_records
 
     trees = story.worktrees(top)
-    history = history if history is not None else _machine_history(top)
+    # Fetch independent GitHub views while local Git supplies the state snapshot.
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        checks_read, github_read = reads or (pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top))
+        viewer_read = pool.submit(board_facts._cached, top, "viewer-login", lambda _: task.github_login(top), stale=True)
+        dates_read = pool.submit(releases.dates, top) if repo.git("tag", "--list", cwd=top) else None
+        history = history if history is not None else _machine_history(top)
+        prs, github = checks_read.result(), github_read.result()
+        viewer = viewer_read.result()
+        if dates_read is not None:
+            dates_read.result()
     if not trim:
         history = {**history, "expired": set()}
     landed = history["landed"]
     best: dict[str, tuple[Item, Path | str]] = {}
+    step_counts = history["step_counts"]
     merged = set()
     for rel, state, where in history["copies"]:
         if where == landed:
             merged.add(rel)
-        if (rel not in best or len(_steps(state)) > len(_steps(best[rel][0])) or
-                len(_steps(state)) == len(_steps(best[rel][0])) and where == trees.get(state.get("branch"))):
+        if (rel not in best or step_counts[id(state)] > step_counts[id(best[rel][0])] or
+                step_counts[id(state)] == step_counts[id(best[rel][0])] and where == trees.get(state.get("branch"))):
             best[rel] = state, where
-    prs = _machine_prs(top)
     by_branch = {p.get("headRefName"): p for p in prs}
     # Older open PRs keep their number, but deliberately have unknown checks.
-    github = board_facts.prs(top)
     people_prs = board_facts.prs(top, people=True)
     past_people = backfill.people(top)
     by_branch = {**{pr["headRefName"]: pr for pr in past_people}, **by_branch}
@@ -278,13 +237,14 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             by_branch[pr["headRefName"]] = {**by_branch.get(pr["headRefName"], {}), **pr}
     finished_prs = board_facts.merged_prs(github)
     remembered = {branch for branch, pr in people_branches.items() if pr.get("author") or pr.get("mergedBy")}
+    merged_prs = {pr["headRefName"] for pr in finished_prs}
+    visible_branches = remembered | merged_prs
     # The upgrade's six-week history is visible immediately, including older finished rows.
     history = {**history, "expired": history["expired"] - {
         rel for rel, (state, _) in best.items()
-        if state.get("branch") in remembered | {pr["headRefName"] for pr in finished_prs}}}
+        if state.get("branch") in visible_branches}}
     by_branch.update({p["headRefName"]: p for p in finished_prs})
     merged_details = {p["headRefName"]: p for p in finished_prs}
-    merged_prs = set(merged_details)
     merged_dates = {branch: pr.get("mergedAt") for branch, pr in merged_details.items()}
     # Rows and counts must read the same published drop or restore, even with a stale worktree.
     for rel, (state, where) in list(best.items()):
@@ -446,8 +406,9 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     enumerate(review.get("findings", []), 1)
                     if isinstance(f, dict) and n not in dismissed]
         worker = None
+        finished = state.get("status") in ("done", "merged")
         lock = codex._item_file(top, item, ".lock", "Grill" if kind == "story" else "Build")
-        if native.lock_alive(lock) is not False:
+        if not finished and native.lock_alive(lock) is not False:
             family = state.get("worker")
             role = "grill" if kind == "story" else "build" if kind == "task" else "lite"
             if family == "codex" and kind != "story":
@@ -478,10 +439,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             worker = {"kind": "read" if kind == "story" else "build", "model": model,
                       "started_at": None}
         activity = by_item.get(item, [])
-        active = active_runs(top, item, activity, state.get("round") if kind != "story" else None)
-        finished = state.get("status") in ("done", "merged")
-        if finished:
-            active, worker = [], None
+        active = [] if finished else active_runs(top, item, activity, state.get("round") if kind != "story" else None)
         agents = [e for e in active if e.get("kind") in ("work", "worker", "read", "review")
                   and (kind == "story" or "round" not in state or e.get("round") == state["round"])]
         if agents:
@@ -847,7 +805,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     [(rel, state, where) for rel, (state, where) in best.items() if rel not in merged]
                     + [(rel, state, where) for rel, state, where in history["copies"] if where == landed])
                 if (match := STATE.fullmatch(rel))}, landed),
-            "viewer": board_facts._cached(top, "viewer-login", lambda _: task.github_login(top), stale=True),
+            "viewer": viewer,
             "items": list(items.values()),
             "dependency_maps": maps, "team": team, "events": recent,
             "lanes": machine.view(), "machine": machine.load()}
@@ -942,8 +900,12 @@ def _machine_history(top: Path) -> Item:
     expired = {rel for rel, at in dates.items() if not rel.endswith("/story.json")
                and _when(at) is not None and _when(at) < cutoff}
     best: dict[str, Item] = {}
+    step_counts = {}
     for rel, state, _ in copies:
-        if rel not in best or len(_steps(state)) > len(_steps(best[rel])):
+        identity = id(state)
+        if identity not in step_counts:
+            step_counts[identity] = len(_steps(state))
+        if rel not in best or step_counts[identity] > step_counts[id(best[rel])]:
             best[rel] = state
     for rel, state in best.items():
         match = STATE.fullmatch(rel)
@@ -955,7 +917,7 @@ def _machine_history(top: Path) -> Item:
         match = STATE.fullmatch(rel)
         if match["task"] and repo.state_path(match["key"]) in expired:
             expired.add(rel)
-    return {**history, "expired": expired}
+    return {**history, "expired": expired, "step_counts": step_counts}
 
 
 def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[str, Item, Path | str]]:
@@ -996,15 +958,21 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     blobs = {blob: story.json_of(text) for blob, text in texts.items()}
     # Clean working files already have bytes in the bulk Git read. Only changed or
     # untracked state needs a separate disk read, even with many linked worktrees.
-    for branch, path in trees.items():
-        if not branch.startswith(PREFIXES):
-            continue
+    def changed_files(path: Path) -> set[str]:
+        return set(repo.git("diff", "HEAD", "--name-only", "--no-renames", "-z",
+                            "--", ".factory", cwd=path).split("\0"))
+
+    work = [(branch, path) for branch, path in trees.items() if branch.startswith(PREFIXES)]
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        changes = dict(zip((path for _, path in work), pool.map(changed_files, (path for _, path in work))))
+    for branch, path in work:
         saved = snapshots.get(refs.get(f"refs/heads/{branch}"), {})
-        changed = set(repo.git("diff", "HEAD", "--name-only", "--no-renames", "-z",
-                               "--", ".factory", cwd=path).split("\0"))
+        changed = changes[path]
         # Walk strings here: most worktrees carry the same hundreds of state files.
-        paths = (f"{Path(folder).relative_to(path).as_posix()}/{name}"
-                 for folder, _, names in os.walk(path / ".factory") for name in names if name.endswith(".json"))
+        paths = (f"{prefix}/{name}"
+                 for folder, _, names in os.walk(path / ".factory")
+                 for prefix in (Path(folder).relative_to(path).as_posix(),)
+                 for name in names if name.endswith(".json"))
         for rel in sorted(paths):
             if STATE.fullmatch(rel):
                 if rel in saved and rel not in changed:
@@ -1026,7 +994,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                            for alias in (ref, ref.removeprefix("refs/heads/").removeprefix("refs/remotes/"))
                            for rel, blob in snapshots[tree].items() if not STATE.fullmatch(rel)}
         # The doc each plan read saw, for "changed since the read": one git process for all of them.
-        seen = list(dict.fromkeys(h for text in history["docs"].values()
+        seen = list(dict.fromkeys(h for text in dict.fromkeys(history["docs"].values())
                                   for h in map(story._record(text)[0].get,  # pyright: ignore[reportPrivateUsage]
                                                ("read_hash", "notes_seen")) if h))
         history["past notes"] = _blob_texts(top, seen, follow_notes=True)

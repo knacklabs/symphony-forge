@@ -12,6 +12,21 @@ from forge import board_facts, repo, time_records
 VERSION = re.compile(r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z][0-9A-Za-z.+-]*)?")
 
 
+def dates(top: Path) -> dict[str, str]:
+    """Publication dates from GitHub, shared by the command's independent reads."""
+    def published(_now: Any) -> dict[str, str] | None:
+        if not shutil.which("gh"):
+            return None
+        done = repo.run("gh", "api", "repos/{owner}/{repo}/releases", "--paginate", "--slurp", cwd=top)
+        try:
+            pages = json.loads(done.stdout) if not done.returncode else []
+            return {release["tag_name"]: release["published_at"] for page in pages for release in page
+                    if release.get("published_at") and not release.get("draft")}
+        except (ValueError, TypeError, KeyError, AttributeError):
+            return None
+    return repo.command_fact("release dates", top, lambda: board_facts._cached(top, "release-dates", published) or {})
+
+
 def collect(top: Path, history: dict[str, Any], maps: list[dict[str, Any]],
             items: dict[str, Any], tag_refs: list[tuple[str, str, str]]) -> dict[str, Any]:
     from forge.board import STATE
@@ -24,28 +39,19 @@ def collect(top: Path, history: dict[str, Any], maps: list[dict[str, Any]],
     released = {}
     if tags:
         # Ancestry orders releases even when dates are unknown or clocks disagree.
-        order = {commit: n for n, commit in enumerate(repo.git(
-            "rev-list", "--topo-order", "--reverse", landed, cwd=top).splitlines())}
+        graph = [line.split() for line in repo.git(
+            "rev-list", "--parents", "--topo-order", "--reverse", landed, cwd=top).splitlines()]
+        order = {row[0]: n for n, row in enumerate(graph)}
+        parents = {row[0]: row[1:] for row in graph}
         tips = {}
-        for entry in tags:
-            tip = repo.run("git", "rev-parse", "--verify", f"refs/tags/{entry['tag']}^{{commit}}", cwd=top)
-            if not tip.returncode and tip.stdout.strip() in order:
-                tips[entry["tag"]] = tip.stdout.strip()
+        for line in repo.git("show-ref", "--tags", "--dereference", cwd=top).splitlines():
+            tip, ref = line.split()
+            if tip in order:
+                tips[ref.removeprefix("refs/tags/").removesuffix("^{}")] = tip
         tags = [entry for entry in tags if entry["tag"] in tips]
         tags.sort(key=lambda entry: (order[tips[entry["tag"]]], entry["tag"]))
 
-        def published(_now: Any) -> dict[str, str] | None:
-            if not shutil.which("gh"):
-                return None
-            done = repo.run("gh", "api", "repos/{owner}/{repo}/releases", "--paginate", "--slurp", cwd=top)
-            try:
-                pages = json.loads(done.stdout) if not done.returncode else []
-                return {release["tag_name"]: release["published_at"] for page in pages for release in page
-                        if release.get("published_at") and not release.get("draft")}
-            except (ValueError, TypeError, KeyError, AttributeError):
-                return None
-
-        dates = board_facts._cached(top, "release-dates", published) or {}
+        published_dates = dates(top)
         merges = {}
         log = repo.git("log", "--first-parent", "--diff-filter=A", "--no-renames",
                        "--format=%x00%H%x00", "--name-only", landed, "--",
@@ -59,8 +65,13 @@ def collect(top: Path, history: dict[str, Any], maps: list[dict[str, Any]],
                         item = f"{match['key']}/{match['task']}" if match["task"] else match["fix"]
                         merges[item] = commit
         for entry in tags:
-            entry["date"] = dates.get(entry["tag"]) or entry["date"] or None
-            ancestors = set(repo.git("rev-list", tips[entry["tag"]], cwd=top).splitlines())
+            entry["date"] = published_dates.get(entry["tag"]) or entry["date"] or None
+            ancestors, pending = set(), [tips[entry["tag"]]]
+            while pending:
+                commit = pending.pop()
+                if commit not in ancestors:
+                    ancestors.add(commit)
+                    pending.extend(parents.get(commit, []))
             for item, commit in merges.items():
                 if item not in released and commit in ancestors:
                     released[item] = entry["tag"]
