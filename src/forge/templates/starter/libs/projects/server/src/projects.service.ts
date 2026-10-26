@@ -2,17 +2,10 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import type { Prisma, Project } from '@prisma/client';
 import { PrismaService } from '@app/core-server';
 import { hasPermission, type AccountPrincipal } from '@app/core-server';
+import { AUTH_API, type AuthApi } from '@app/auth-contracts';
 import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
 import { PROJECT_PERMISSIONS } from './projects.permissions';
 import { projectStatusSchema, type ProjectExportQuery, type ProjectInput, type ProjectListQuery } from '@app/projects-contracts';
-
-/** Every read loads the emails of the accounts that created, last changed and deleted the project. */
-const WITH_EMAILS = {
-  createdByAccount: { select: { email: true } },
-  modifiedByAccount: { select: { email: true } },
-  deletedByAccount: { select: { email: true } },
-} as const;
-type ProjectWithEmails = Prisma.ProjectGetPayload<{ include: typeof WITH_EMAILS }>;
 
 /** The labels the change summaries use, in the order the form shows the fields. */
 const FIELD_LABELS: Record<keyof ProjectInput, string> = { name: 'Name', status: 'Status' };
@@ -25,7 +18,15 @@ function changeSummary(before: Project, input: ProjectInput): string {
     .join('; ');
 }
 
-function toProjectResponse(project: ProjectWithEmails) {
+/** The project's foreign keys keep every account it names, so a missing email is a crash. */
+function emailOf(emails: Map<string, string>, accountId: string): string {
+  const email = emails.get(accountId);
+  if (email === undefined) throw new Error('A project names an account that does not exist.');
+  return email;
+}
+
+/** The project with the emails of the accounts that created, last changed and deleted it, which auth gives. */
+function toProjectResponse(project: Project, emails: Map<string, string>) {
   return {
     id: project.id,
     name: project.name,
@@ -34,10 +35,10 @@ function toProjectResponse(project: ProjectWithEmails) {
     updatedAtUtc: project.updatedAtUtc.toISOString(),
     createdByAccountId: project.createdByAccountId,
     modifiedByAccountId: project.modifiedByAccountId,
-    createdByEmail: project.createdByAccount.email,
-    modifiedByEmail: project.modifiedByAccount.email,
+    createdByEmail: emailOf(emails, project.createdByAccountId),
+    modifiedByEmail: emailOf(emails, project.modifiedByAccountId),
     deletedAtUtc: project.deletedAtUtc?.toISOString() ?? null,
-    deletedByEmail: project.deletedByAccount?.email ?? null,
+    deletedByEmail: project.deletedByAccountId ? emailOf(emails, project.deletedByAccountId) : null,
   };
 }
 
@@ -110,7 +111,21 @@ export class ProjectsService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(HISTORY_API) private readonly history: HistoryApi,
+    @Inject(AUTH_API) private readonly auth: AuthApi,
   ) {}
+
+  /** Auth owns the accounts, so their emails come through its public API, one call per page. */
+  private async responses(projects: Project[]) {
+    const emails = await this.auth.emailsFor(projects.flatMap((project) => [
+      project.createdByAccountId, project.modifiedByAccountId, ...(project.deletedByAccountId ? [project.deletedByAccountId] : []),
+    ]));
+    return projects.map((project) => toProjectResponse(project, emails));
+  }
+
+  private async response(project: Project) {
+    const [response] = await this.responses([project]);
+    return response;
+  }
 
   async list(account: AccountPrincipal, query: ProjectListQuery) {
     const where = filterWhere(account, query);
@@ -123,7 +138,6 @@ export class ProjectsService {
         where: cursor ? { AND: [where, afterCursor(query.sortBy, order, decodeCursor(query.sortBy, cursor, backward))] } : where,
         orderBy: [{ [query.sortBy]: order }, { id: order }],
         take: query.limit + 1,
-        include: WITH_EMAILS,
       }),
       this.prisma.project.count({ where, take: TOTAL_CAP + 1 }),
     ]);
@@ -133,7 +147,7 @@ export class ProjectsService {
     const first = projects.at(0);
     const last = projects.at(-1);
     return {
-      items: projects.map(toProjectResponse),
+      items: await this.responses(projects),
       paging: {
         limit: query.limit,
         nextCursor: last && (backward || more) ? encodeCursor(query.sortBy, last) : null,
@@ -149,15 +163,14 @@ export class ProjectsService {
     const projects = await this.prisma.project.findMany({
       where: filterWhere(account, filters),
       orderBy: [{ createdAtUtc: 'desc' }, { id: 'asc' }],
-      include: WITH_EMAILS,
     });
-    return projects.map(toProjectResponse);
+    return this.responses(projects);
   }
 
   async get(account: AccountPrincipal, id: string) {
-    const project = await this.prisma.project.findFirst({ where: readableProject(account, id), include: WITH_EMAILS });
+    const project = await this.prisma.project.findFirst({ where: readableProject(account, id) });
     if (!project) throw this.notFound();
-    return toProjectResponse(project);
+    return this.response(project);
   }
 
   /** The project's newest changes; a project the caller may not read is not found. */
@@ -178,10 +191,9 @@ export class ProjectsService {
           createdByAccountId: account.id,
           modifiedByAccountId: account.id,
         },
-        include: WITH_EMAILS,
       });
       await this.history.record(account, 'project.created', 'Created the project', { id: project.id, name: project.name }, tx);
-      return toProjectResponse(project);
+      return this.response(project);
     });
   }
 
@@ -192,12 +204,11 @@ export class ProjectsService {
       const project = await tx.project.update({
         where: { id },
         data: { name: input.name, status: input.status, modifiedByAccountId: account.id },
-        include: WITH_EMAILS,
       });
       // A replace that changes no field adds no history row.
       const summary = changeSummary(before, input);
       if (summary) await this.history.record(account, 'project.changed', summary, { id, name: project.name }, tx);
-      return toProjectResponse(project);
+      return this.response(project);
     });
   }
 
@@ -223,10 +234,9 @@ export class ProjectsService {
       const project = await tx.project.update({
         where: { id },
         data: { deletedAtUtc: null, deletedByAccountId: null, modifiedByAccountId: account.id },
-        include: WITH_EMAILS,
       });
       await this.history.record(account, 'project.restored', 'Restored the project', { id, name: project.name }, tx);
-      return toProjectResponse(project);
+      return this.response(project);
     });
   }
 

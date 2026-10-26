@@ -146,8 +146,9 @@ function ProjectDetails({ project, isAdmin }: { project: Project; isAdmin: boole
       </div>
 
       {project.deletedAtUtc && (
-        <Alert>
-          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+        <Alert className="items-center [&>svg]:translate-y-0">
+          <Trash2 aria-hidden="true" />
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3 text-foreground">
             <span>This project was deleted on <time dateTime={project.deletedAtUtc}>{formatDate(project.deletedAtUtc)}</time> by {project.deletedByEmail}.</span>
             <Button variant="outline" size="sm" disabled={restoreProject.isPending} onClick={() => void restore()}>
               {restoreProject.isPending ? 'Restoring…' : 'Restore'}

@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
 import { MAIL_PROVIDER, permissionsFor, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
 import { ORGANISATIONS_API, roleSchema, type OrganisationsApi } from '@app/organisations-contracts';
-import type { Account as AccountResponse, AuthOptions } from '@app/auth-contracts';
+import type { Account as AccountResponse, AuthApi, AuthOptions } from '@app/auth-contracts';
 
 const PASSWORD_KEY_BYTES = 64;
 const PASSWORD_SALT_BYTES = 16;
@@ -51,13 +51,18 @@ function accountResponse(account: Pick<Account, 'id' | 'email'>, role: AccountRe
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements AuthApi {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @Inject(ORGANISATIONS_API) private readonly organisations: OrganisationsApi,
     @Optional() @Inject(MAIL_PROVIDER) private readonly mailProvider: MailProvider | null = null,
   ) {}
+
+  async emailsFor(accountIds: string[]): Promise<Map<string, string>> {
+    const accounts = await this.prisma.account.findMany({ where: { id: { in: [...new Set(accountIds)] } }, select: { id: true, email: true } });
+    return new Map(accounts.map((account) => [account.id, account.email]));
+  }
 
   async signUp(email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
     if (!this.options().signUpOpen) {

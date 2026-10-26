@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import secrets
+from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from urllib.parse import urlencode
@@ -90,6 +91,14 @@ def _verify_password(password: str, stored_hash: str) -> bool:
         maxmem=_PASSWORD_SCRYPT_MAXMEM,
     )
     return hmac.compare_digest(actual_key, expected_key)
+
+
+def account_emails(db: DbSession, account_ids: Iterable[UUID]) -> dict[UUID, str]:
+    """Each known account's email by its id, for modules that show who changed what."""
+    rows = db.execute(
+        select(Account.id, Account.email).where(Account.id.in_(set(account_ids)))
+    )
+    return {account_id: email for account_id, email in rows.tuples()}
 
 
 class AuthService:

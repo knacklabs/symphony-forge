@@ -1,5 +1,7 @@
 """Each feature checks its view, create, edit, delete and restore permission on every route."""
+import json
 import re
+import shutil
 from pathlib import Path
 
 import pytest
@@ -70,15 +72,29 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
     # the static check; a guard that lets a member delete or restore, a deleted project shown to
     # a member, or a restore with no history row fails the live cases. The starters' own reports
     # own the behaviour; this test names the cases and checks each route's one permission. Sync
-    # must leave an app's permissions files and controllers as a new app has them.
+    # must leave an earlier-adopted app's own permissions files and controllers as they are.
     if starter == "earlier adopted":
-        client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
-        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-        repo.git("checkout", "-b", "fix/check-permissions-upgrade", cwd=client)
-        synced = repo.forge("sync", cwd=client)
-        assert synced.returncode == 0, synced.stdout + synced.stderr
+        # An app adopted on an earlier release that has since edited its own permissions.
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
+                        dirs_exist_ok=True)
+        config = repo.path / "forge.toml"
+        version = repo.forge("--version").stdout.split()[-1]
+        config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
+                          encoding="utf-8")
         for path in (TS_CONTROLLER, TS_PERMISSIONS):
-            assert (client / path).read_bytes() == (STARTER / path).read_bytes(), path
+            (repo.path / path).parent.mkdir(parents=True, exist_ok=True)
+            (repo.path / path).write_text(
+                (STARTER / path).read_text("utf-8").replace(
+                    "member: ['view', 'create', 'edit']", "member: []"), encoding="utf-8")
+        before = {path.relative_to(repo.path): path.read_bytes()
+                  for path in (repo.path / "libs").rglob("*") if path.is_file()}
+        repo.git("checkout", "-b", "fix/check-permissions-upgrade")
+        synced = repo.forge("sync")
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        after = {path.relative_to(repo.path): path.read_bytes()
+                 for path in (repo.path / "libs").rglob("*") if path.is_file()}
+        assert after == before
+        assert "member: []" in (repo.path / TS_PERMISSIONS).read_text("utf-8")
         return
 
     typescript = starter == "projects-typescript"
