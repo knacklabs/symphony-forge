@@ -8,14 +8,54 @@
     "head": null,
     "start": "11610c0097d7f80bfbfc4ac01fdbf41976ed7248"
   },
+  "known": [
+    {
+      "area": "instructions() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 379,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated review-bar changes outside Scope",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "992ec81078a5829f1e56a8e7ec14a8b48822890d28f1557698ee52b9a37ccbcb",
+    "changed": "62fb4c2dba981c90d618455991d06c6f8da5864b9792df482cbbd71ab427ed06",
+    "commit": "08e7b53f547b2b9d8004f4f33eeb520be207b5c6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Gate. Case: normal use - delivering the services guides also ships unrelated changes to which review findings block a merge. This line loads review-bar settings, with corresponding changes in src/forge/nextstep.py, src/forge/repo.py, src/forge/score.py, src/forge/templates/review.md and tests/test_review_bar.py. None of these six files is needed to deliver the services paragraph, adoption step, worker instructions or init/sync coverage required by item 3. Keep the review-bar implementation in its separate change and remove these files' changes, plus the corresponding review-bar hunks in the otherwise permitted templates and generated guides, from this target.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 379,
+        "priority": "P1",
+        "title": "Gate: unrelated review-bar changes outside Scope",
+        "work": 2
+      }
+    ],
+    "id": "01a1f4cd-f0ac-4c4d-8a76-2aa51bb856c4",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-BAR-1/BARRULES",
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T10:50:53.889177+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T11:02:46.302740+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

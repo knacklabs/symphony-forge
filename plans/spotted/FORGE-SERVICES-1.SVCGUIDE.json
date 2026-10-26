@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tGate: unrelated review-bar changes outside Scope\tFORGE-SERVICES-1/SVCGUIDE",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 379,
+      "text": "Gate: unrelated review-bar changes outside Scope",
+      "from": "blocking",
+      "item": "FORGE-SERVICES-1/SVCGUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
