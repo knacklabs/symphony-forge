@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-26T08:58:19.241636+00:00
-seconds: 409.126
-read_hash: 0d6d616a611c5c04f7a03cc15b7890478f490b5d
-round: 1
+read_at: 2026-10-26T09:05:47.824231+00:00
+seconds: 185.079
+read_hash: 210cc499b8b05d954a0e8850e28280b77372b9f4
+round: 2
 passed: no
-doc_seen: 0d6d616a611c5c04f7a03cc15b7890478f490b5d
+doc_seen: c71613409f3f066bbc6ae03de8426aa8061164ba
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: c13c5aa900d0b4d7ca3a4b0b977f0e63ffc1ed27
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a17768-603e-7773-bd97-9b88c92450e9
 session:
-loop_choice:
-loop_reason:
+loop_choice: accept
+loop_reason: The owner accepts; the builder notes now also remove a carried dismissal that came from an added-work reason
 ---
 # Cold read notes
 
@@ -67,3 +67,12 @@ Only a genuine trade-off goes to the human, as a question with options.
    Done-when 3 at `plans/FORGE-BAR-1.md:36` requires scores beside each finding’s reason. The change specified at `plans/FORGE-BAR-1.md:155–165` updates only blocking lines. For follow-ups, `src/forge/close.py:1064` selects the nonempty score text before `follow_up`, so the pull request omits “Adds work below this repo’s minimum Gain …”. Both proposed tests would pass with that reason absent.
    Gain 3, Work 2, Harm 1
    Disposition: keep - below the bar (follow-up)
+
+## Round 2
+
+6. Blocking: Disputed keep 2: carried dismissals still bypass a tightened minimum.
+   Raise: Functional.
+   Case: normal use - an added-work finding deferred at minimum 5 appears again in a repair review, then the owner lowers the minimum to 4.
+   The repair at `plans/FORGE-BAR-1.md:102–105` removes only `follow_up`. New evidence: `src/forge/review.py:671–673` and `review.py:993–997` turn the repeated finding into a carried `known:` dismissal. Cleanup at `review.py:1074–1076` removes that dismissal only for `required_done_when` findings. Consequently, `review.py:226–230` still excludes this finding from blockers after its added-work reason is removed. The revised test changes the setting after the first review, before a carried dismissal exists, so it misses this remaining path.
+   Gain 3, Work 2, Harm 3
+   Disposition: keep - The owner accepts; the builder notes now also remove a carried dismissal that came from an added-work reason
