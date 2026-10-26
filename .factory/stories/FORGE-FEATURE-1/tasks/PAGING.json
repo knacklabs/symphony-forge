@@ -55,6 +55,10 @@
       "work": 2
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
@@ -107,7 +111,7 @@
     "id": "53a131e6-0739-4f66-ae0b-a5e19bdbb699",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -120,10 +124,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7af9e725adcb61f7d39655d9cde7f86c62a64f7d",
+    "close": "f56de4c3-9456-4bbd-ad63-c7fdc9c6ae1d",
+    "head": "44ba6aa48922eeb104706997eef95544b11321b1",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "worker": "claude"
 }
