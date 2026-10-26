@@ -102,7 +102,9 @@ report, `env.close(item)` and `env.prompt()`. To set a setting, append it to `fo
   - When no reason applies now and the finding's saved `follow_up` starts with
     `Adds work below this repo's minimum Gain`, remove that `follow_up`, so a saved finding holds
     again after the owner lowers or removes the minimum. Other saved reasons (split, decline,
-    rare) stay as they are. `score.holds`,
+    rare) stay as they are. In the same step, also remove a carried `known:` dismissal that came
+    from that added-work reason (the repair-review path in `review.py` turns a repeated deferred
+    finding into one), as the cleanup already does for `required_done_when`. `score.holds`,
     `score.remember`, `known_issues._rows`, close's `Does not block:` line and the pull
     request's follow-up list then read it as they read a rare case today.
   - Put the two matches in one small function in `src/forge/score.py` (for example
