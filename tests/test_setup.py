@@ -41,7 +41,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
             for name in PLAIN_ENGLISH), *ROLE_FILES}
 LISTED.add(".forge/design/support.js")
 # The old first commit had only Forge docs and config; it now includes deploy files.
-SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
+SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "services.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
 NO_IMPECCABLE = ("impeccable is required for UI work but isn't installed where the claude "
                  "worker reads skills.\n  Fix: npx skills add pbakaus/impeccable -g\n")
