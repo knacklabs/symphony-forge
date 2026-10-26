@@ -98,7 +98,9 @@ def test_4_each_table_exports_csv_from_one_shared_code_path(tmp_path_factory):
     assert pages, "no list screen renders a table"
     for page in pages:
         text = page.read_text(encoding="utf-8")
-        assert re.search(r'href="/api/v1/[a-z-]+/export"\s+download', text), page.name
+        # The link may carry the list's search and filters as a query.
+        assert re.search(r'href=(?:"/api/v1/[a-z-]+/export"|\{`/api/v1/[a-z-]+/export\?[^`]*`\})\s+download',
+                         text), page.name
 
     if LIVE:
         live = live_run(tmp_path_factory)

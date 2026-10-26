@@ -35,7 +35,7 @@ BROWSER_FLOWS = (
     "theme changes in settings",
     "unknown address shows the 404 page",
     "axe finds no serious problem on the shell",
-    "a reloaded or shared list link shows the same view",
+    "a reloaded projects list link keeps its search, filters and page",
     "keyboard sorting a cached order keeps focus on the header",
     "a crash on one screen shows its error page and the other screens still work",
 )

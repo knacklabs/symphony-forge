@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -38,20 +38,40 @@ class Project(ProjectSchema):
     modified_by_account_id: UUID
 
 
-class ProjectListQuery(ProjectSchema):
-    page: int = Field(default=1, ge=1)
+# A cursor holds a whole project name, which can be 120 characters of any script.
+CURSOR_PATTERN = r"^[A-Za-z0-9_-]{1,2048}$"
+
+
+class ProjectExportQuery(ProjectSchema):
+    """The list's search and filter, so the export downloads what the list shows."""
+
+    search: str | None = Field(default=None, max_length=200)
+    status: ProjectStatus | None = None
+
+
+class ProjectListQuery(ProjectExportQuery):
     limit: int = Field(default=20, ge=1, le=100)
-    sort_by: Literal["name", "status", "createdAtUtc", "updatedAtUtc"] = "createdAtUtc"
+    sort_by: Literal["name", "status", "createdAtUtc", "updatedAtUtc"] = "updatedAtUtc"
     sort_order: Literal["asc", "desc"] = "desc"
+    after: str | None = Field(default=None, pattern=CURSOR_PATTERN)
+    before: str | None = Field(default=None, pattern=CURSOR_PATTERN)
+
+    @field_validator("before")
+    @classmethod
+    def _one_cursor(cls, before: str | None, info: ValidationInfo) -> str | None:
+        if before is not None and info.data.get("after") is not None:
+            raise ValueError("Use after or before, not both.")
+        return before
 
 
-class ProjectPagination(ProjectSchema):
-    page: int
+class ProjectPaging(ProjectSchema):
     limit: int
-    total_items: int
-    total_pages: int
+    next_cursor: str | None
+    previous_cursor: str | None
+    total: int
+    total_capped: bool
 
 
 class ProjectListResponse(ProjectSchema):
     items: list[Project]
-    pagination: ProjectPagination
+    paging: ProjectPaging

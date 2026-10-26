@@ -55,7 +55,7 @@ describe('organisation invites and roles', () => {
       .set('x-csrf-token', memberCsrf)
       .expect(200);
 
-    const projects = await memberClient.get('/api/v1/projects?page=1&limit=20').expect(200);
+    const projects = await memberClient.get('/api/v1/projects?limit=20').expect(200);
     expect(projects.body.data.items).toEqual([expect.objectContaining({ name: 'Shared project' })]);
   });
 

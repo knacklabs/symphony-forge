@@ -102,7 +102,7 @@ def test_an_admin_invites_a_person_by_email_who_joins_the_organisation(
             headers={"x-csrf-token": member_csrf},
         )
         assert deleted.status_code == 200, deleted.text
-        projects = member.get("/api/v1/projects?page=1&limit=20")
+        projects = member.get("/api/v1/projects?limit=20")
         assert projects.status_code == 200, projects.text
         assert [item["name"] for item in projects.json()["data"]["items"]] == [
             "Shared project"

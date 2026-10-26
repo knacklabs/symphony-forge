@@ -118,6 +118,12 @@ def next_step(args: Any) -> int:
     top = repo.root()
     from forge import fullrun
 
+    if (top / "forge.toml").is_file():
+        try:
+            repo.config(top)
+        except repo.Refused as refusal:
+            if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
+                raise
     notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
     history = board._machine_history(top)
     lines = migration_warnings.warnings(top) + _report(top, history, schedules=True, fresh_prs=not args.json)[0]

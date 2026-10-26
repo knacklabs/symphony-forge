@@ -191,7 +191,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Download every project of your organisation as a CSV file. */
+        /** Download the projects that match the list's search and filter as CSV. */
         get: operations["export_projects_api_v1_projects_export_get"];
         put?: never;
         post?: never;
@@ -595,18 +595,20 @@ export interface components {
         ProjectListResponse: {
             /** Items */
             items: components["schemas"]["Project"][];
-            pagination: components["schemas"]["ProjectPagination"];
+            paging: components["schemas"]["ProjectPaging"];
         };
-        /** ProjectPagination */
-        ProjectPagination: {
-            /** Page */
-            page: number;
+        /** ProjectPaging */
+        ProjectPaging: {
             /** Limit */
             limit: number;
-            /** Totalitems */
-            totalItems: number;
-            /** Totalpages */
-            totalPages: number;
+            /** Nextcursor */
+            nextCursor: string | null;
+            /** Previouscursor */
+            previousCursor: string | null;
+            /** Total */
+            total: number;
+            /** Totalcapped */
+            totalCapped: boolean;
         };
         /**
          * ProjectStatus
@@ -1228,10 +1230,13 @@ export interface operations {
     list_projects_api_v1_projects_get: {
         parameters: {
             query?: {
-                page?: number;
+                search?: string | null;
+                status?: components["schemas"]["ProjectStatus"] | null;
                 limit?: number;
                 sortBy?: "name" | "status" | "createdAtUtc" | "updatedAtUtc";
                 sortOrder?: "asc" | "desc";
+                after?: string | null;
+                before?: string | null;
             };
             header?: never;
             path?: never;
@@ -1339,7 +1344,10 @@ export interface operations {
     };
     export_projects_api_v1_projects_export_get: {
         parameters: {
-            query?: never;
+            query?: {
+                search?: string | null;
+                status?: components["schemas"]["ProjectStatus"] | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1353,6 +1361,15 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -1360,6 +1377,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

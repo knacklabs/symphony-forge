@@ -1455,8 +1455,9 @@ From the second review round, close checks the previous round's findings and new
 happen in normal use. The reviewer says fixed or not fixed for each previous finding.
 A round-one fix that breaks the main path counts as a P0 (Harm 4 or more). Open findings below
 P0 need the owner's choice at the limit, whether their lines changed or not.
-A `Case: rare` finding never blocks. A security hole or data loss that any user can reach is
-normal use. Reviewers and readers do not raise questions that Review rules or recorded owner
+A `Case: rare` finding does not block unless it names a kind the owner requires.
+A security hole or data loss that any user can reach is normal use. Reviewers and readers do not
+raise questions that Review rules or recorded owner
 decisions (`docs/decisions/`, `Decided:` or `Ruling:`) already settle.
 A worker can decline a finding in a commit body with
 `Declined: <title> (<file>): not worth the code - <reason>`, using its exact title and file.
@@ -1466,6 +1467,15 @@ A P0 stays open. Later rounds receive the decline as settled. Only the human dis
 line). Builder details, Notes and implementation guidance never block as `Not done`.
 New repos get this guide on init; existing repos, including earlier adopted repos, get it on
 upgrade and sync. Close applies the same boundary in every repo.
+
+The owner can set added_work_min_gain to 3, 4 or 5 and always_block to a list of kinds in
+forge.toml. Record the owner's settings in a fix. They apply after it merges, from the default
+branch. `Adds work: <what>` marks a finding that asks for another check, retry, guard or flag.
+An unfloored fix-now finding below the minimum becomes a Known issue with its scores and reason.
+Harm 4 or more, Gain 5 and every score floor still block. `Must: <kind>: <gap>` holds a listed
+kind at any score, even for a rare case or in a light review. The worker cannot decline it.
+Only the owner can accept it. Without these settings, new and existing repos keep today's bar.
+An upgrade adds no setting. Plan reads and prototype sign-off keep today's bar.
 
 Before building a fix, check its brief for the five-code-file limit, interface globs and any
 recorded allowance; test files and files whose content is exactly what `forge sync` writes don't
@@ -1672,8 +1682,9 @@ When `forge close` stops on a finding, open the line it cites, and the code that
 before anything else. The review's "What counts" list is the boundary, and the bar decides
 inside it: every finding at the bar (Proposed "fix now" or "fix this round") gets a fix round with
 `forge work <item>`, whatever its priority, unless close waits for the owner's choice or a decline
-makes it a follow-up. A finding below the bar never holds the work; close
-lists it in the pull request as a follow-up or lived with. Harm 4 or 5, or Gain 5 stops the work.
+makes it a follow-up. A finding below the bar holds only when it names a required `Must:` kind
+or this item's own Done-when. Close lists other findings in the pull request as follow-ups or
+lived with. Harm 4 or 5, or Gain 5 stops the work.
 Otherwise, Gain 4, or Gain 3 with Harm 3, holds the work only with Work 1 or 2. Every other
 Gain 3 or 4 finding becomes a follow-up fix, even at Work 1 or 2 when Gain is 3 and Harm is 1 or 2.
 Gain 1 or 2 is lived with. Never re-score a finding to change its

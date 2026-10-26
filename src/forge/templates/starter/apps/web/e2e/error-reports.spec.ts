@@ -15,7 +15,7 @@ test('a UI crash writes one error report', async ({ page }) => {
   await page.route('**/api/v1/projects?*', (route) => route.fulfill({
     json: {
       success: true,
-      data: { items: null, pagination: { page: 1, limit: 20, totalItems: 0, totalPages: 1 } },
+      data: { items: null, paging: { limit: 20, nextCursor: null, previousCursor: null, total: 0, totalCapped: false } },
       error: null,
     },
   }));

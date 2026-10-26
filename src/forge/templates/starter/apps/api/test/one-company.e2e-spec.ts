@@ -100,7 +100,7 @@ describe('one-company API', () => {
       .expect(201);
     expect(joined.body.data).toMatchObject({ email: member.email, role: 'member' });
 
-    const projects = await memberClient.get('/api/v1/projects?page=1&limit=20').expect(200);
+    const projects = await memberClient.get('/api/v1/projects?limit=20').expect(200);
     expect(projects.body.data.items).toEqual([
       expect.objectContaining({ name: 'Company project' }),
     ]);
@@ -135,7 +135,7 @@ describe('one-company API', () => {
       expect.objectContaining({ email: admin.email, role: 'admin' }),
       expect.objectContaining({ email: member.email, role: 'member' }),
     ]));
-    const projects = await manyCompanyAdmin.get('/api/v1/projects?page=1&limit=20').expect(200);
+    const projects = await manyCompanyAdmin.get('/api/v1/projects?limit=20').expect(200);
     expect(projects.body.data.items).toEqual([
       expect.objectContaining({ id: project.body.data.id, name: 'Kept after switch' }),
     ]);

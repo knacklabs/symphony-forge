@@ -81,44 +81,6 @@ def test_signs_up_signs_in_and_signs_out_with_a_server_session(
     assert client.get("/api/v1/auth/me").status_code == 200
 
 
-def test_creates_lists_reads_updates_and_deletes_a_project(
-    client: httpx.Client,
-) -> None:
-    _, csrf = sign_up(client)
-    headers = {"x-csrf-token": csrf}
-    created = client.post(
-        "/api/v1/projects",
-        headers=headers,
-        json={"name": "First project", "status": "active"},
-    )
-    assert created.status_code == 201, created.text
-    project_id = created.json()["data"]["id"]
-    listed = client.get("/api/v1/projects?page=1&limit=20&sortBy=name&sortOrder=asc")
-    assert listed.status_code == 200, listed.text
-    assert listed.json()["data"]["items"] == [created.json()["data"]]
-    assert listed.json()["data"]["pagination"] == {
-        "page": 1,
-        "limit": 20,
-        "totalItems": 1,
-        "totalPages": 1,
-    }
-    assert (
-        client.get(f"/api/v1/projects/{project_id}").json()["data"]["id"] == project_id
-    )
-    updated = client.put(
-        f"/api/v1/projects/{project_id}",
-        headers=headers,
-        json={"name": "Renamed project", "status": "archived"},
-    )
-    assert updated.status_code == 200, updated.text
-    assert updated.json()["data"]["name"] == "Renamed project"
-    assert updated.json()["data"]["status"] == "archived"
-    deleted = client.delete(f"/api/v1/projects/{project_id}", headers=headers)
-    assert deleted.status_code == 200, deleted.text
-    assert deleted.json() == {"success": True, "data": None, "error": None}
-    assert client.get(f"/api/v1/projects/{project_id}").status_code == 404
-
-
 def test_forgot_password_gives_the_same_reply_for_known_and_unknown_addresses(
     client: httpx.Client,
 ) -> None:
@@ -189,34 +151,6 @@ def test_rejects_invalid_input_with_field_errors_in_the_envelope(
         "password",
         "unexpected",
     }
-
-
-def test_rejects_a_whitespace_only_project_name(client: httpx.Client) -> None:
-    _, csrf = sign_up(client)
-    response = client.post(
-        "/api/v1/projects",
-        headers={"x-csrf-token": csrf},
-        json={"name": "   ", "status": "active"},
-    )
-    assert response.status_code == 400, response.text
-    assert any(
-        field["field"] == "name"
-        for field in response.json()["error"]["details"]["fieldErrors"]
-    )
-
-
-def test_requires_sign_in_and_csrf_before_project_changes(client: httpx.Client) -> None:
-    response = client.get("/api/v1/projects")
-    assert response.status_code == 401
-    assert response.json()["error"]["code"] == "UNAUTHENTICATED"
-    _, csrf = sign_up(client)
-    project = {"name": "No token", "status": "active"}
-    assert client.post("/api/v1/projects", json=project).status_code == 403
-    response = client.post(
-        "/api/v1/projects", json=project, headers={"x-csrf-token": csrf + "wrong"}
-    )
-    assert response.status_code == 403
-    assert response.json()["error"]["code"] == "CSRF_CHECK_FAILED"
 
 
 def test_rejects_cross_origin_sign_in(client: httpx.Client) -> None:

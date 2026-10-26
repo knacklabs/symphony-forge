@@ -25,7 +25,7 @@ def test_organisation_isolation_returns_404_and_leaves_the_project_unchanged(
     listed = client.get("/api/v1/projects")
     assert listed.status_code == 200, listed.text
     assert listed.json()["data"]["items"] == []
-    assert listed.json()["data"]["pagination"]["totalItems"] == 0
+    assert listed.json()["data"]["paging"]["total"] == 0
     exported = client.get("/api/v1/projects/export")
     assert exported.status_code == 200, exported.text
     assert exported.text == "Name,Status,Created (UTC),Updated (UTC)\r\n"

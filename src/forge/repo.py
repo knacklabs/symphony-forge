@@ -41,6 +41,7 @@ REFUSALS = {
     "no_github": ("GitHub did not answer. Rerun the command.", ""),
     "no_config": ("This repo has no forge.toml.", "forge init"),
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
+    "added_work_min_gain": ("forge.toml is not usable: added_work_min_gain must be 3, 4 or 5.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
     "bad_local": ("forge.local.toml is not usable: {problem}.", "ask your agent to fix forge.local.toml"),
@@ -561,7 +562,8 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
-        "always_test": list, "groups": int, "models": dict}
+        "always_test": list, "groups": int, "models": dict,
+        "added_work_min_gain": int, "always_block": list}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
@@ -670,6 +672,14 @@ def default_config(top: Path) -> dict[str, Any]:
     return _config_text(found.stdout)
 
 
+def review_settings(top: Path) -> dict[str, Any]:
+    """Review settings from the same landed branch as the repository's review rules."""
+    from forge import story
+
+    text = story.show(top, story.landed_ref(top), "forge.toml")
+    return _config_text(text) if text is not None else {}
+
+
 def merge_setting(top: Path) -> str:
     """Use agent merges for client prototypes until the fetched default branch signs off."""
     cfg = default_config(top)
@@ -714,6 +724,9 @@ def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+    if "added_work_min_gain" in data and (type(data["added_work_min_gain"]) is not int
+                                         or data["added_work_min_gain"] not in (3, 4, 5)):
+        refuse(REFUSALS["added_work_min_gain"])
     problem = _config_problem(data)
     if problem:
         refuse(REFUSALS["bad_config"], problem=problem)
