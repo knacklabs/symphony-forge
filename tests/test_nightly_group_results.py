@@ -1,8 +1,8 @@
-"""Nightly groups have a bounded budget and publish only their combined result.
+"""Nightly groups publish only their combined result.
 
 Test-audit gate:
-1. Protect the generated workflow's matrix, time budget and one default-branch status.
-2. An unsplit full run, missing timeout or successful partial status breaks this contract.
+1. Protect the generated workflow's matrix and one default-branch status.
+2. An unsplit full run or successful partial status breaks this contract.
 3. Existing full-run tests cover unsplit runs, not group execution and status aggregation.
 4. Drive init/sync, real grouped pytest and the generated status script. No new seam is needed.
 
@@ -24,7 +24,7 @@ STORY = "FIX-A-REPO-WITH-TEST-GROUPS-STILL-RUNS-ITS-N"
 
 @pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adopted"])
-def test_1_nightly_groups_share_the_pr_budget_and_record_one_result(
+def test_1_nightly_groups_record_one_result(
         repo, gh, tmp_path, monkeypatch, adopted):
     monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
     client = (_adopted_client(repo, tmp_path, "nightly-client") if adopted else
@@ -42,9 +42,7 @@ def test_1_nightly_groups_share_the_pr_budget_and_record_one_result(
     full = jobs["full-suite"]
     assert "group: [1, 2]" in full
     assert "fail-fast: false" in full
-    budget = re.search(r"^    timeout-minutes: (\d+)$", jobs["tests"], re.M)
-    assert budget and 0 < int(budget[1]) < 360
-    assert f"    timeout-minutes: {budget[1]}\n" in full
+    # Full-run and pull request limits have separate coverage in test_full_run_time_limits.py.
     assert "FORGE_GROUP: ${{ matrix.group }}" in full
     assert "FORGE_GROUPS: '2'" in full
 
