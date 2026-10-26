@@ -12,6 +12,7 @@ class Account(Base):
     __table_args__ = (
         Index("idx_account_created_by_account_id", "created_by_account_id"),
         Index("idx_account_modified_by_account_id", "modified_by_account_id"),
+        {"schema": "core"},
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
@@ -24,10 +25,10 @@ class Account(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     created_by_account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="NO ACTION"), nullable=False
+        ForeignKey("core.account.id", ondelete="NO ACTION"), nullable=False
     )
     modified_by_account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="NO ACTION"), nullable=False
+        ForeignKey("core.account.id", ondelete="NO ACTION"), nullable=False
     )
 
 
@@ -36,11 +37,12 @@ class Session(Base):
     __table_args__ = (
         Index("idx_session_account_id", "account_id"),
         Index("idx_session_expires_at_utc", "expires_at_utc"),
+        {"schema": "core"},
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("core.account.id", ondelete="CASCADE"), nullable=False
     )
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     csrf_token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -57,11 +59,12 @@ class PasswordResetToken(Base):
     __table_args__ = (
         Index("idx_password_reset_token_account_id", "account_id"),
         Index("idx_password_reset_token_expires_at_utc", "expires_at_utc"),
+        {"schema": "core"},
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text("uuidv7()"))
     account_id: Mapped[UUID] = mapped_column(
-        ForeignKey("account.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("core.account.id", ondelete="CASCADE"), nullable=False
     )
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     expires_at_utc: Mapped[datetime] = mapped_column(

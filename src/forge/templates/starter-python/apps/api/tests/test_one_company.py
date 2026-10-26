@@ -74,7 +74,7 @@ def test_the_setup_command_makes_the_company_and_its_first_admin() -> None:
         assert invalid_sign_in.status_code in {400, 401}
 
     account = psql(
-        "SELECT CASE WHEN EXISTS (SELECT 1 FROM account "
+        "SELECT CASE WHEN EXISTS (SELECT 1 FROM core.account "
         "WHERE email = 'not-an-email') THEN 'found' ELSE 'missing' END"
     )
     assert account.returncode == 0, account.stderr

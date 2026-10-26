@@ -920,6 +920,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 
 - One app split into modules: a FastAPI API on uv, with SQLAlchemy and Alembic on Postgres, and a React web app on pnpm.
 - Each module owns its tables, in its own models file.
+- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
 

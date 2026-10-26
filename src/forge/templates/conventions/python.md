@@ -38,7 +38,9 @@ and core web libraries as the TypeScript starter. OpenAPI types stay in `libs/sh
 Each module owns its tables in its own `models.py`; auth owns account, session and
 password_reset_token, and projects owns project. Its public entry is `__init__.py`.
 Import another module only through that entry's public service and types, never its internal
-files or tables. Cross-module foreign keys name the table as a string, with no model import.
+files or tables. Links to core name the foreign key as a schema-qualified string, with no model import.
+A link between business modules stores an indexed id without a foreign key and uses the other
+module's public service to check it. Links within a module and links to core keep their foreign key.
 A service queries its own data; move shared queries or raw SQL into a repository file.
 
 ```python
@@ -210,11 +212,19 @@ class Project(Base):
     deleted_at_utc: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     __table_args__ = (
         CheckConstraint("status IN ('draft', 'active')", name="project_status_allowed"),
+        {"schema": "projects"},
     )
 ```
 
 Use a named CHECK constraint for the allowed status values. For money and other field types,
 follow the database skill: an exact decimal with its own `*_currency` column.
+
+Each module keeps its tables in its own Postgres schema. Organisation, account and sign-in
+tables live in `core`; projects live in `projects`, and change history lives in `history`.
+Set `__table_args__ = {"schema": "<schema>"}` on each model, or put that dictionary last in
+the tuple when the model has constraints or indexes. Schema-qualify foreign keys, for example
+`ForeignKey("core.account.id")`. Give an existing Postgres enum its owning `schema=` too.
+New status fields use the named CHECK rule above.
 
 Booleans have defaults.
 Every domain table has id, created_at_utc and updated_at_utc; once there are accounts, add
@@ -231,7 +241,7 @@ statement = select(Project).where(Project.id == project_id,
 
 Hard delete is only for logs, temporary tables and data the client asked to erase.
 Raw SQL belongs in a repository file and uses only `text()` with bound values, for example
-`session.execute(text("SELECT id FROM project WHERE id = :id"), {"id": project_id})`.
+`session.execute(text("SELECT id FROM projects.project WHERE id = :id"), {"id": project_id})`.
 Index foreign keys, frequent filter columns and unique fields; name indexes
 `idx_<table>_<column>`, for example `idx_project_created_by_account_id`.
 
@@ -246,6 +256,10 @@ uv --directory apps/api run alembic revision --autogenerate -m "<what>"
 
 Never edit a merged migration. Put a data change in its own migration. Prefer additions; a drop
 or rewrite goes under the story's Risks with recovery steps. Apply with `alembic upgrade head`.
+Pass `include_schemas=True` to Alembic's `context.configure` in both online and offline modes.
+Move tables and existing enums with `ALTER TABLE ... SET SCHEMA` and `ALTER TYPE ... SET SCHEMA`.
+Indexes, foreign keys and triggers move with the table; shared trigger functions stay in `public`.
+Run `alembic check` after migrations to check that autogenerate finds no model changes.
 
 ## Security
 
