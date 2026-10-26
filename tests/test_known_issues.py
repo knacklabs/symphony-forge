@@ -168,15 +168,19 @@ def test_15_board_refresh_uses_the_current_saved_list(kept_history, monkeypatch)
     repo, _, item = kept_history
     path = f".factory/fixes/{item}.json"
     state = json.loads((repo.path / path).read_text("utf-8"))
-    repo.git("switch", "-q", "-c", "fix/saved-known-list")
+    branch = state["branch"]
+    # Upgrade installs real hooks: edit the existing item's own branch, then
+    # let the bare remote receive the landed state as GitHub would after a merge.
+    repo.git("switch", "-q", "-c", branch)
 
     def publish(message):
         repo.write(path, json.dumps(state))
         repo.git("add", path)
         repo.git("commit", "-q", "-m", message)
         repo.git("switch", "-q", "main")
-        repo.git("merge", "-q", "--ff-only", "fix/saved-known-list")
-        repo.git("push", "-q", "origin", "main")
+        repo.git("merge", "-q", "--ff-only", branch)
+        repo.git("--git-dir", repo.git("remote", "get-url", "origin"), "fetch", "-q",
+                 str(repo.path), "main:main")
 
     state["known"] = []
     publish("Save an empty known list")
@@ -186,7 +190,7 @@ def test_15_board_refresh_uses_the_current_saved_list(kept_history, monkeypatch)
     assert not any(row["item"] == item for row in first)
 
     state.pop("known")
-    repo.git("switch", "-q", "fix/saved-known-list")
+    repo.git("switch", "-q", branch)
     publish("Read original review evidence again")
     refreshed = board(repo)["known_issues"]
     old = {row["title"] for row in refreshed if row["item"] == item}
