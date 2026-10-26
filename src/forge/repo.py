@@ -872,6 +872,8 @@ def _config_problem(data: dict[str, Any]) -> str:
         kind = KEYS.get(key)
         if kind is None:
             return f"{key!r} is not a forge.toml key"
+        if key == "added_work_min_gain" and (type(value) is not int or value not in (3, 4, 5)):
+            return "added_work_min_gain must be 3, 4 or 5"
         if kind is str and not isinstance(value, str):
             return f"{key} must be a string"
         if kind is int and not (type(value) is int and value >= 1):

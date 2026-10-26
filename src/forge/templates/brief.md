@@ -411,6 +411,13 @@ and Prisma code does not.
 Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
 conventions apply only to a repo on the default stack.
 
+In a repo that has `services.toml`, when a change adds, moves or removes a Dockerfile, or
+changes a service's port, health path or start command, update `services.toml` in the same
+change. Close refuses a `services.toml` that names a Dockerfile the branch does not have, or
+that does not have exactly one service with `expose = "main"`. In a repo without
+`services.toml`, do not create one: the coordinator writes the first list with the owner's
+confirmation.
+
 ## When you finish
 
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you

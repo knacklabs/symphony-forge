@@ -20,6 +20,16 @@ successful test or review, demo preparation, or Forge next step does not by itse
 Do not install Mainline or start OAuth sign-in for those requests. An explicit request such as
 "deploy this to staging" or "publish this on Mainline" needs no separate routine deployment approval.
 
+Our deploy platform reads `services.toml` at the repo root: one `[[service]]` per service,
+with `name`, `dockerfile`, `port`, `health`, `expose` (`main`, `subdomain` or `internal`) and,
+when needed, `subdomain` and `command`; deploy.md in Forge's conventions has the details.
+Close refuses a list that names a Dockerfile the branch does not have or does not have
+exactly one `main` service. When a client repo has a Dockerfile and no `services.toml`, write
+it before the first deployment the owner asks for: one service per Dockerfile the app runs,
+the port from its `EXPOSE` line and the health path from the code. Show it to the owner and
+ask with options: confirm it, or change a service's exposure. Then merge it in a fix. The
+owner picks the main subdomain on the platform, so the list does not hold it.
+
 | The human says | Run |
 |---|---|
 | "What now?" | `forge next` |
@@ -1047,6 +1057,9 @@ if the settings do not answer it. Pass
    the changed-file flags. Go, Rust, Java, .NET
    and Ruby get no suggestion. Check the suggestion against the repo's setup before
    agreeing to it; other shell flows need the agent to adapt the command.
+
+10. When the repo has a Dockerfile, write `services.toml` as the deploy paragraph at the top
+    of this guide says, get the human's confirmation, and add it to the adoption fix.
 
 On a live app, every story and fix also follows these:
 
