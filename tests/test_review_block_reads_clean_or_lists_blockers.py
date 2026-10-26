@@ -37,7 +37,8 @@ def test_2_blocked_review_lists_open_blocking_findings_first(env):
     assert env.close(item).returncode == 1
     review = body(env.gh_calls("pr", "create")[-1]).split(BEGIN, 1)[1]
     assert review.startswith("The review found serious problems.\n\n"
-                             "- Finding 2 (P1): Greeting is missing (app.py:1): blocks the merge\n")
+                             "- Finding 2 (P1): Greeting is missing (app.py:1): blocks the merge; "
+                             "Gain 4, Work 2, Harm 1\n")
     assert ("Lived with:\n- Finding 1 (P2): Simpler: drop the cache (app.py:1): "
             "Gain 2, Work 1, Harm 1") in review.split("<details>", 1)[1]
     assert "Review: clean" not in review
