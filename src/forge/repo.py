@@ -41,6 +41,7 @@ REFUSALS = {
     "no_github": ("GitHub did not answer. Rerun the command.", ""),
     "no_config": ("This repo has no forge.toml.", "forge init"),
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
+    "added_work_min_gain": ("forge.toml is not usable: added_work_min_gain must be 3, 4 or 5.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
     "bad_local": ("forge.local.toml is not usable: {problem}.", "ask your agent to fix forge.local.toml"),
@@ -695,6 +696,9 @@ def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+    if "added_work_min_gain" in data and (type(data["added_work_min_gain"]) is not int
+                                         or data["added_work_min_gain"] not in (3, 4, 5)):
+        refuse(REFUSALS["added_work_min_gain"])
     problem = _config_problem(data)
     if problem:
         refuse(REFUSALS["bad_config"], problem=problem)
@@ -840,8 +844,6 @@ def _config_problem(data: dict[str, Any]) -> str:
         kind = KEYS.get(key)
         if kind is None:
             return f"{key!r} is not a forge.toml key"
-        if key == "added_work_min_gain" and (type(value) is not int or value not in (3, 4, 5)):
-            return "added_work_min_gain must be 3, 4 or 5"
         if kind is str and not isinstance(value, str):
             return f"{key} must be a string"
         if kind is int and not (type(value) is int and value >= 1):
