@@ -1,6 +1,13 @@
 {
   "base": "681f68953998c6b6344c6dbe77b86a94b03f15ec",
   "branch": "fix/the-busy-repo-takes-about-8-seconds-for",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a177fb-9245-7fd1-bd9d-f41cd4eeba92",
+    "head": null,
+    "start": "42fd32fd88b4e7933fd068dbb784cdc477a63456"
+  },
   "done_when": "On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
   "fix_kind": "backend",
   "kind": "fix",
