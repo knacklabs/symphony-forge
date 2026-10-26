@@ -1,13 +1,122 @@
 {
   "allow_large": "The owner chose to keep the paging API and the projects screen in one part, because the screen in both starters calls the list API and they cannot merge apart",
   "branch": "task/FORGE-FEATURE-1-PAGING",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "file": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 16,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Preserve the sign-up rate-limit repair",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter-python/apps/api/app/projects/schema.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/projects/schema.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Accept every cursor generated for a valid project name",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "file": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 221,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Apply the list filters to CSV exports",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "file": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 256,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Keep first-page recovery on filtered empty cursor pages",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1b0727ea0c3f4afc1c8721249c77a3a9055545ba43137cd05c02597a8859a544",
+    "changed": "045b09a6385bf487f1d3a6a6470bbb6180a4c8f7c0cdb5832c258bfcc247ec1e",
+    "commit": "37fd89ceb8383441ba4d10b57d31768b56c97642",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - running the complete TypeScript starter API suite. Every signedIn() call creates another account, and the two new paging/filter cases push the suite over the 30-per-minute sign-up limit in auth.controller.ts:29. Commit d7789c82 records actual 429 failures and repairs them by sharing an account between three validation cases; its raw-parent patch and the inverse patch in b81967e1 verify that restoring the web work also removed that repair. The final tree therefore reinstates the known suite failure. Preserve the repair independently of the web restoration.",
+        "file": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+        "gain": 4,
+        "harm": 3,
+        "line": 16,
+        "priority": "P1",
+        "title": "[P1] Preserve the sign-up rate-limit repair",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - paging a list sorted by Name with valid Chinese or Japanese project names. The cursor encoder includes the complete name, but this pattern rejects cursors longer than 512 characters. Python's json.dumps escapes non-ASCII characters, so a valid 60-character CJK name produces a cursor of about 550 characters. The TypeScript encoder also exceeds 512 for a valid 120-character CJK name. Following the returned Next or Previous cursor consequently gets HTTP 400. Align the limit with the maximum encoded payload in this schema and both starters' contracts/src/index.ts validators.",
+        "file": "src/forge/templates/starter-python/apps/api/app/projects/schema.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 41,
+        "priority": "P1",
+        "title": "[P1] Accept every cursor generated for a valid project name",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 3, Harm 3\nRaise: Functional. Case: normal use - selecting Archived or entering a search, then choosing Export CSV. The download link always requests /projects/export without the current filters. Both export handlers also accept no list query and call unfiltered listAll/list_all (projects.controller.ts:47\u201348 and Python projects/routes.py:79\u201384). The CSV therefore contains projects excluded from the displayed list, contrary to SCREENS.md's requirement that export reproduce what the list shows. Carry search and status through the download and apply them in both APIs.",
+        "file": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+        "gain": 3,
+        "harm": 3,
+        "line": 221,
+        "priority": "P1",
+        "title": "[P1] Apply the list filters to CSV exports",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - reopening a filtered second-page link after its last matching project was deleted or changed status. This branch checks filtered before paged, so it says no projects match and offers only Clear search and filters, even when paging.total reports matching projects on earlier pages. The footer is hidden for empty pages, leaving no Previous button either. The recorded empty-cursor ruling's Go to the first page recovery is therefore unavailable whenever search or status is active. Offer cursor recovery while retaining those filters when matching projects remain.",
+        "file": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+        "gain": 3,
+        "harm": 3,
+        "line": 256,
+        "priority": "P1",
+        "title": "[P1] Keep first-page recovery on filtered empty cursor pages",
+        "work": 2
+      }
+    ],
+    "id": "53a131e6-0739-4f66-ae0b-a5e19bdbb699",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T10:17:36.496894+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T11:05:51.591713+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/app/projects/schema.py\t[P1] Accept every cursor generated for a valid project name\tFORGE-FEATURE-1/PAGING",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/app/projects/schema.py",
+      "line": 41,
+      "text": "[P1] Accept every cursor generated for a valid project name",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/api/test/projects.e2e-spec.ts\t[P1] Preserve the sign-up rate-limit repair\tFORGE-FEATURE-1/PAGING",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "line": 16,
+      "text": "[P1] Preserve the sign-up rate-limit repair",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx\t[P1] Keep first-page recovery on filtered empty cursor pages\tFORGE-FEATURE-1/PAGING",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "line": 256,
+      "text": "[P1] Keep first-page recovery on filtered empty cursor pages",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/members.spec.ts\tThe admin axe check can catch a sonner toast mid-fade and report low contrast.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "line": 63,
+      "text": "The admin axe check can catch a sonner toast mid-fade and report low contrast.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/libs/auth/server/src/auth.controller.ts\tThe API test suite is close to the 30 sign-ups a minute limit, so new API cases that sign up can make other cases fail with 429.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/libs/auth/server/src/auth.controller.ts",
+      "line": 29,
+      "text": "The API test suite is close to the 30 sign-ups a minute limit, so new API cases that sign up can make other cases fail with 429.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/standards.md\tThe standards and conventions/api.md still say a list returns page, limit, totalItems and totalPages, which no longer matches the keyset projects list.",
+      "kind": "improve",
+      "path": "src/forge/standards.md",
+      "line": 152,
+      "text": "The standards and conventions/api.md still say a list returns page, limit, totalItems and totalPages, which no longer matches the keyset projects list.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/starter/apps/api/prisma/schema/projects.prisma\tThe keyset list sorts by the last change within an organisation, but the projects table has no list index on organisation, last change and id.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/apps/api/prisma/schema/projects.prisma",
+      "line": 18,
+      "text": "The keyset list sorts by the last change within an organisation, but the projects table has no list index on organisation, last change and id.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
