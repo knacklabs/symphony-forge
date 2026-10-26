@@ -47,8 +47,10 @@ def test_the_starter_tables_follow_the_database_skill(client: httpx.Client) -> N
             "project_status_allowed",
         ),
         (
-            "UPDATE core.membership SET role = 'owner' WHERE account_id = "
-            f"(SELECT id FROM core.account WHERE email = '{account['email']}')",
+            (
+                "UPDATE core.membership SET role = 'owner' WHERE account_id = "
+                f"(SELECT id FROM core.account WHERE email = '{account['email']}')"
+            ),
             "membership_role_allowed",
         ),
         (
@@ -56,18 +58,24 @@ def test_the_starter_tables_follow_the_database_skill(client: httpx.Client) -> N
             "project_name_length",
         ),
         (
-            "UPDATE projects.project SET name = repeat('x', 121) "
-            f"WHERE id = '{project_id}'",
+            (
+                "UPDATE projects.project SET name = repeat('x', 121) "
+                f"WHERE id = '{project_id}'"
+            ),
             "project_name_length",
         ),
         (
-            "UPDATE core.account SET email = upper(email) "
-            f"WHERE email = '{account['email']}'",
+            (
+                "UPDATE core.account SET email = upper(email) "
+                f"WHERE email = '{account['email']}'"
+            ),
             "account_email_lower",
         ),
         (
-            "UPDATE core.invite SET email = upper(email) "
-            f"WHERE email = '{invite_email}'",
+            (
+                "UPDATE core.invite SET email = upper(email) "
+                f"WHERE email = '{invite_email}'"
+            ),
             "invite_email_lower",
         ),
     ):
