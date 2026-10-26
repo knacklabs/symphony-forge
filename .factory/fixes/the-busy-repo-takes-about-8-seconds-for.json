@@ -1,4 +1,5 @@
 {
+  "allow_large": "The stale-cache repair needs known_issues.py as a sixth file; the fix stays one speed change with no interface change",
   "base": "681f68953998c6b6344c6dbe77b86a94b03f15ec",
   "branch": "fix/the-busy-repo-takes-about-8-seconds-for",
   "chat": {
