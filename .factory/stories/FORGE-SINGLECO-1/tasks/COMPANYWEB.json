@@ -1,12 +1,27 @@
 {
   "branch": "task/FORGE-SINGLECO-1-COMPANYWEB",
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a47bf0acb151de8a06b4e85328f9251b3ddd4e3429fb677b595064a7930b6aef",
+    "changed": "c40edc33c726d34cdba97e4d31c48d76e681d38b6f069d4029d2a751227d4e34",
+    "commit": "12dba40c7c4daf58bbdd4053ff9232d894c9d6b0",
+    "dismissals": [],
+    "findings": [],
+    "id": "0cce020d-0828-48c7-a91b-d94f1af42dca",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T02:19:23.311429+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T03:32:45.801464+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
