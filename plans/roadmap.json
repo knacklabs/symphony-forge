@@ -420,6 +420,12 @@
       "title": "Build a client feature from the starter in one step",
       "status": "pending",
       "order": 100
+    },
+    {
+      "key": "FORGE-DEPLOY-1",
+      "title": "Client apps deploy to dev and preview on their own, and production waits for a person's Promote",
+      "status": "pending",
+      "order": 101
     }
   ],
   "epics": [
