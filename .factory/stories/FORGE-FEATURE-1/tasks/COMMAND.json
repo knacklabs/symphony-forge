@@ -2,11 +2,19 @@
   "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
   "branch": "task/FORGE-FEATURE-1-COMMAND",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T17:04:44.116978+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8691144723635f29f86119bc62606d63a513e19a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
