@@ -238,7 +238,11 @@ importers:
         specifier: workspace:*
         version: link:../../libs/shared/ui
 
-  libs/auth/contracts: {}
+  libs/auth/contracts:
+    dependencies:
+      '@app/organisations-contracts':
+        specifier: workspace:*
+        version: link:../../organisations/contracts
 
   libs/auth/server:
     dependencies:
@@ -311,11 +315,7 @@ importers:
         specifier: workspace:*
         version: link:../../shared/util
 
-  libs/organisations/contracts:
-    dependencies:
-      '@app/auth-contracts':
-        specifier: workspace:*
-        version: link:../../auth/contracts
+  libs/organisations/contracts: {}
 
   libs/organisations/server:
     dependencies:

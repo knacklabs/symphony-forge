@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Role } from '@app/organisations-contracts';
 
 export const signUpSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254)
@@ -33,7 +34,7 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
-export type Account = { id: string; email: string; role: 'admin' | 'member' };
+export type Account = { id: string; email: string; role: Role };
 
 export const inviteSchema = forgotPasswordSchema;
 
