@@ -10,6 +10,7 @@ import math
 import os
 import re
 import shutil
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
@@ -22,7 +23,7 @@ Item = dict[str, Any]
 STORY_STATES = ("done", "building", "approved, not started", "waiting for approval", "planning", "no plan yet")
 IN_PROGRESS_STATES = ("building", "in progress", "ready to merge")  # the board page's In progress group
 WORK_STATES = ("done", "ready to merge", "in progress", "to do")
-FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft,files"
+FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft,updatedAt,files"
 
 
 # The explicit query retains GitHub's own occurrence ids; gh pr list's default rollup does not.
@@ -180,38 +181,90 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
     their caller uses; cached reads always keep the complete board records."""
     # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
-        # Merged file lists cannot change at the same PR head. Refresh mutable
-        # titles, bodies and people without downloading every old file list again.
-        files = {}
+        # Validate each body's revision against GitHub; file lists also require
+        # the same immutable PR head. People and other metadata always refresh.
+        previous_rows = {}
         if not fresh:
             try:
                 previous = json.loads((repo.forge_dir(top) / "prs-cache.json").read_text("utf-8"))["data"]
-                files = {(pr["number"], pr["headRefOid"]): pr["files"]
+                previous_rows = {(pr["number"], pr["headRefOid"]): pr
                          for week in previous["weeks"] for pr in week["prs"]
                          if isinstance(pr.get("number"), int) and pr.get("headRefOid")
                          and isinstance(pr.get("files"), list)}
             except (OSError, ValueError, KeyError, TypeError):
                 pass
+        day_counts = Counter(str(pr.get("mergedAt") or "")[:10] for pr in previous_rows.values())
         # Board restoration and backfill share these windows. The first Monday
         # is at least 42 days ago, including the cutoff on a Sunday (48 days).
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
         def week(start: datetime) -> list[Item] | None:
             def listing(_now: datetime) -> list[Item] | None:
                 query = f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"
-                if files:
-                    rows = _listing(top, "merged", "--search", query, fields=FIELDS.removesuffix(",files"))
+                if previous_rows:
+                    # The last read tells us where pagination would serialize a
+                    # busy week. Cover the same seven days in parallel ranges
+                    # sized for GitHub's 100-row pages; never truncate a range.
+                    ranges, low, count = [], start, 0
+                    for offset in range(7):
+                        day = start + timedelta(days=offset)
+                        size = day_counts.get(f"{day:%Y-%m-%d}", 0)
+                        if count and count + size > 100:
+                            ranges.append((low, day - timedelta(days=1)))
+                            low, count = day, 0
+                        count += size
+                    ranges.append((low, start + timedelta(days=6)))
+                    def metadata(bounds: tuple[datetime, datetime]) -> list[Item] | None:
+                        return _listing(top, "merged", "--search",
+                                        f"merged:{bounds[0]:%Y-%m-%d}..{bounds[1]:%Y-%m-%d}",
+                                        fields=FIELDS.replace(",body", "").removesuffix(",files"))
+                    with ThreadPoolExecutor(len(ranges)) as pages:
+                        found = list(pages.map(metadata, ranges))
+                    if None in found:
+                        return None
+                    rows = [pr for page in found if page is not None for pr in page]
+                    if len(rows) >= 1000:  # Preserve the weekly ceiling and its unknown counts.
+                        rows = metadata((start, start + timedelta(days=6)))
+                    elif len(ranges) > 1:
+                        rows.sort(key=lambda pr: pr.get("number", 0), reverse=True)
                     if rows is None:
                         return None
-                    if all((pr.get("number"), pr.get("headRefOid")) in files for pr in rows):
-                        return [{**pr, "files": files[pr["number"], pr["headRefOid"]]} for pr in rows]
+                    restored, missing = [], []
+                    for pr in rows:
+                        old = previous_rows.get((pr.get("number"), pr.get("headRefOid")), {})
+                        if (pr.get("updatedAt") and pr["updatedAt"] == old.get("updatedAt")
+                                and isinstance(old.get("body"), str)):
+                            restored.append({**pr, "body": old["body"], "files": old["files"]})
+                        else:
+                            missing.append(pr)
+                    if not missing:
+                        return restored
+                    if len(missing) == 1 and isinstance(missing[0].get("number"), int):
+                        done = repo.run("gh", "pr", "view", str(missing[0]["number"]), "--json", FIELDS, cwd=top)
+                        try:
+                            record = json.loads(done.stdout) if done.returncode == 0 else None
+                        except ValueError:
+                            return None
+                        if not (isinstance(record, dict) and isinstance(record.get("body"), str)
+                                and isinstance(record.get("files"), list)
+                                and record.get("number") == missing[0]["number"]
+                                and record.get("headRefName") == missing[0].get("headRefName")):
+                            return None
+                        by_number = {pr["number"]: pr for pr in [*restored, record]}
+                        return [by_number[pr["number"]] for pr in rows]
                 return _listing(top, "merged", "--search", query, fields=merged_fields if fresh else FIELDS)
             return (listing(now) if fresh or start == starts[-1] else
                     _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
-        with ThreadPoolExecutor(len(starts) + 1) as pool:
+        with ThreadPoolExecutor(len(starts) + 2) as pool:
+            # Repositories that needed older parts before will usually need them
+            # again. Refresh that small inventory beside the weekly requests.
+            older_read = (pool.submit(merged_before_weeks, top)
+                          if any(repo.forge_dir(top).glob("prs-older-*-cache.json")) else None)
             opened_read = pool.submit(_listing, top, "open",
                                       fields=open_fields if fresh else FIELDS.removesuffix(",files"))
             lists = list(pool.map(week, starts))
             opened = opened_read.result()
+            if older_read is not None:
+                older_read.result()
         if not fresh and (opened is None or None in lists):
             return None
         weeks = []

@@ -83,10 +83,11 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
 
     # Lifetimes are elapsed seconds from each fetch, not calendar boundaries.
     # The open/current-week lists live 60 seconds, schedules 600 seconds,
-    # and past weeks, older merges and known issues 86400 seconds.
+    # and past weeks and older merges 86400 seconds. A complete recent window
+    # extends the historical inventory without another whole-repo request.
     for seconds, expected in [(59, (0, 0, 0, 0, 0)), (60, (1, 1, 0, 0, 0)),
                               (599, (1, 1, 0, 0, 0)), (600, (0, 0, 0, 0, 1)),
-                              (86400, (1, 7, 1, 1, 1)), (86401, (0, 0, 0, 0, 0))]:
+                              (86400, (1, 7, 1, 0, 1)), (86401, (0, 0, 0, 0, 0))]:
         monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=seconds)).isoformat())
         before = len(gh.calls())
         read(repo)

@@ -68,8 +68,8 @@ def board(args: Any) -> int:
             if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
                 print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
             if args.json:
-                local.result()
                 view = machine_board(top, reads=reads)
+                local.result()
                 inventory_read.result()
                 print(json.dumps(view))
                 return 0
@@ -811,6 +811,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                {"work": "Worker", "worker": "Worker", "ci": "Checks", "read": "Plan read",
                 "test": "Tests", "review": "Review"}.get(e.get("kind"), "Run") + " " + event_lines[e["event"]]}
               for e in recorded if e.get("event") in (*event_lines, "worker question")][-20:]
+    time_records.save_body_validation(top)
     return {"version": __version__, "repo_root": repo_root(top),
             **releases.collect(top, history, maps, items, tag_refs),
             "known_issues": known_issues.collect(top, {
@@ -950,13 +951,16 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     refs[landed] = repo.git("show", "-s", "--format=%T", landed, cwd=top)
     empty = repo.run("git", "hash-object", "-t", "tree", "--stdin", cwd=top)
     empty.check_returncode()
-    # Comparing each unique tree with Git's empty tree lists all its blobs in one process.
+    # Read the default tree once, then apply each branch's differences. Most
+    # retained branches share almost all state and plan blobs with the default.
     snapshots: dict[str, dict[str, str]] = {tree: {} for tree in refs.values()}
+    base_tree = refs[landed]
     # Git requires LF pairs; text-mode stdin adds CR on Windows and Git silently lists nothing.
     done = subprocess.run([shutil.which("git") or "git", "diff-tree", "--stdin", "-r", "--raw",
                            "-z", "--no-abbrev", "--no-renames", "--", ".factory/stories",
                            ".factory/fixes", "plans", "forge.toml"], cwd=top,
-                          input="".join(f"{empty.stdout.strip()} {tree}\n" for tree in snapshots).encode("utf-8"),
+                          input=(f"{empty.stdout.strip()} {base_tree}\n" + "".join(
+                              f"{base_tree} {tree}\n" for tree in snapshots if tree != base_tree)).encode("utf-8"),
                           capture_output=True, check=True, env={**os.environ, "FORGE_WORKER": "1"})
     fields = iter(done.stdout.decode("utf-8", errors="replace").split("\0"))
     for field in fields:
@@ -965,12 +969,18 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
                 rel = next(fields)
                 if (STATE.fullmatch(rel) or rel == "forge.toml"
                         or re.fullmatch(r"plans/[A-Z0-9][A-Z0-9-]*(\.read)?\.md", rel)):
-                    snapshots[tree][rel] = line.split()[3]
+                    blob = line.split()[3]
+                    if blob == "0" * len(blob):
+                        snapshots[tree].pop(rel, None)
+                    else:
+                        snapshots[tree][rel] = blob
             elif line:
                 tree = line.split()[1]
+                if tree != base_tree:
+                    snapshots[tree] = dict(snapshots[base_tree])
     texts = _blob_texts(top, list(dict.fromkeys(blob for files in snapshots.values() for blob in files.values())))
     blobs = {blob: story.json_of(text) for blob, text in texts.items()}
-    state_files = {tree: {rel: blob for rel, blob in files.items() if STATE.fullmatch(rel)}
+    state_files = {tree: {rel: blob for rel, blob in sorted(files.items()) if STATE.fullmatch(rel)}
                    for tree, files in snapshots.items()}
     # Clean working files already have bytes in the bulk Git read. Only changed or
     # untracked state needs a separate disk read, even with many linked worktrees.
@@ -1155,12 +1165,15 @@ def _step(state: Item, name: str) -> datetime | None:
 
 
 def _when(text: Any) -> datetime | None:
+    return _parsed_time(str(text))
+
+
+@functools.lru_cache(maxsize=8192)
+def _parsed_time(text: str) -> datetime | None:
     try:
-        return datetime.fromisoformat(str(text)).astimezone(timezone.utc)
+        return datetime.fromisoformat(text).astimezone(timezone.utc)
     except ValueError:
         return None
-
-
 
 
 def _took(delta: timedelta) -> str:

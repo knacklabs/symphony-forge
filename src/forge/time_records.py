@@ -3,6 +3,7 @@ import functools
 import copy
 import json
 import hashlib
+import os
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -475,9 +476,44 @@ def from_body(body: str) -> dict[str, Any]:
     return copy.deepcopy(view_body(body))
 
 
+@functools.lru_cache(maxsize=1024)
 def view_body(body: str) -> dict[str, Any]:
-    """Read the validated command snapshot without copying; callers must not amend it."""
-    return repo.command_fact(("time record", body), None, lambda: _from_body(body))
+    """Read validated body bytes without copying; callers must not amend the result."""
+    return _from_body(body)
+
+
+def _validation_cache(top: Path | None = None) -> dict[str, Any]:
+    def read():
+        try:
+            code = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+            path = repo.forge_dir(top) / "body-validation-cache.json"
+        except OSError:
+            return {"path": None, "bodies": {}, "dirty": False}
+        bodies = {}
+        try:
+            saved = json.loads(path.read_text("utf-8"))
+            if saved.get("code") == code:
+                bodies = dict.fromkeys(saved["bodies"])
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            pass
+        return {"path": path, "code": code, "bodies": bodies, "dirty": False}
+    return repo.command_fact("body validation", top, read)
+
+
+def save_body_validation(top: Path) -> None:
+    """Persist only successful validation hashes, never derived elapsed times."""
+    cache = _validation_cache(top)
+    if cache["path"] is None or not cache["dirty"]:
+        return
+    spare = cache["path"].with_suffix(f".{os.getpid()}.tmp")
+    try:
+        spare.write_text(json.dumps({"code": cache["code"], "bodies": list(cache["bodies"])[-4096:]}), "utf-8")
+        os.replace(spare, cache["path"])
+        cache["dirty"] = False
+    except OSError:
+        pass  # A missing cache only costs another validation.
+    finally:
+        spare.unlink(missing_ok=True)
 
 
 def _from_body(body: str) -> dict[str, Any]:
@@ -496,10 +532,15 @@ def _from_body(body: str) -> dict[str, Any]:
                 and all(type(folded.get(kind, 0)) in (int, float) and folded.get(kind, 0) >= 0
                         for kind in ("working", "waiting", "unknown"))):
             summary["folded"] = None
-        _board_rounds(merged({}, data))
+        cache = _validation_cache()
+        digest = hashlib.sha256(match[1].encode("utf-8")).hexdigest()
+        if digest not in cache["bodies"]:
+            _board_rounds(merged({}, data))
         "".join((data.get("summary") or {}).get(field) or "" for field in ("started_by", "approved_by"))
         (data.get("ready") or {}).get("commit")
         "".join([data.get("legacy_text") or ""])
+        if digest not in cache["bodies"]:
+            cache["bodies"][digest], cache["dirty"] = None, True
         return data
     except Exception:  # a PR body is user-editable text, so no record shape may crash a reader
         return {}

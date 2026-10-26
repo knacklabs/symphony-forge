@@ -130,15 +130,16 @@ def next_step(args: Any) -> int:
     repo.forge_dir(top)
     repo.default_branch(top)
     # Independent network reads overlap each other and the bulk local history.
-    with ThreadPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=5) as pool:
         pending = {"alerts": pool.submit(_failed_schedules, top),
                    "checks": pool.submit(board._machine_prs, top),
                    "github": pool.submit(board_facts.prs, top, fresh=not args.json,
                                          merged_fields="headRefName",
                                          open_fields="headRefName,headRefOid,body,url,isDraft")}
         activity = pool.submit(board._event_history, top)
+        warning_read = pool.submit(migration_warnings.warnings, top)
         history = board._machine_history(top)
-        warnings = migration_warnings.warnings(top)
+        warnings = warning_read.result()
         activity.result()
         facts = {name: future.result() for name, future in pending.items()}
     lines = warnings + _report(

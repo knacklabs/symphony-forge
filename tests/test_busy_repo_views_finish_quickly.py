@@ -41,12 +41,33 @@ def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history,
         # read changed local inputs, not just a changed title outside the time record.
         began = (datetime.fromisoformat(NOW) - timedelta(seconds=10)).isoformat()
         files[".factory/fixes/saved-0.json"]["steps"] = [*steps, {"step": "start", "at": began}]
-        github(SimpleNamespace(repo=repo, gh=gh), [{"headRefName": "fix/saved-0",
-               "state": "MERGED", "mergedAt": NOW,
-               "files": [{"path": ".factory/fixes/saved-0.json"}]}])
     landed(repo, monkeypatch, NOW, files)
-    repo.git("push", "-q", "origin", *(
-        f"HEAD:refs/heads/fix/saved-{n}" for n in range(80)))
+    if command != "next":
+        pr = {"number": 7, "headRefName": "fix/saved-0", "state": "MERGED", "mergedAt": NOW,
+              "headRefOid": repo.git("rev-parse", "HEAD"), "updatedAt": NOW, "body": "",
+              "files": [{"path": ".factory/fixes/saved-0.json"}]}
+        github(SimpleNamespace(repo=repo, gh=gh), [pr])
+        # GitHub emits only requested fields. Metadata-only responses cannot
+        # accidentally supply the body that this regression expects Forge to reuse.
+        stub = repo.bin / "gh"
+        stub.write_text(stub.read_text("utf-8").replace('sys.stdout.write(output)', '''if args[:2] == ["pr", "list"] and "--json" in args and output.startswith("["):
+            fields = args[args.index("--json") + 1].split(",")
+            output = json.dumps([{key: value for key, value in row.items() if key in fields} for row in json.loads(output)])
+        sys.stdout.write(output)'''), "utf-8")
+
+    def body_reads():
+        return sum(call[:4] == ["pr", "list", "--state", "merged"] and "--json" in call
+                   and "body" in call[call.index("--json") + 1].split(",") for call in gh.calls())
+
+    # Retained heads differ outside state, as real feature branches do. Comparing
+    # each whole tree with the empty tree needlessly repeats all 1,200 states.
+    heads = []
+    for n in range(80):
+        repo.write("retained-copy.txt", str(n))
+        repo.git("add", "retained-copy.txt")
+        repo.git("commit", "-qm", "Retain another branch head")
+        heads.append(f"{repo.git('rev-parse', 'HEAD')}:refs/heads/fix/saved-{n}")
+    repo.git("push", "-q", "origin", *heads)
     repo.git("fetch", "-q", "origin")
     repo.git("switch", "-qc", "fix/saved-0")
     # Audit: time the first read and a refresh, not only primed caches. Completed
@@ -61,6 +82,7 @@ def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history,
     first = repo.forge(*args, timeout=120)
     first_elapsed = time.monotonic() - start
     assert first.returncode == 0, first.stderr
+    initial_body_reads = body_reads()
     changed = {**files[".factory/fixes/saved-0.json"], "why": "Current local title"}
     if command != "next":
         assert next(row for row in json.loads(first.stdout)["items"] if row["id"] == "saved-0")["total_seconds"] == 10
@@ -90,6 +112,33 @@ def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history,
         assert rows["saved-0"]["title"] == "Current local title"
         assert rows["saved-0"]["total_seconds"] == 20
         assert rows["saved-1199"]["stage"] == "merged"
+        # Audit: mutable metadata must be read again, but an unchanged PR revision
+        # must not download its body again. A body edit must change the public time
+        # fact. Other lifetime cases have no revised body; this uses the same real
+        # command and external GitHub fixture, with no production seam.
+        assert body_reads() == initial_body_reads
+        updated = (datetime.fromisoformat(NOW) + timedelta(seconds=1202)).isoformat()
+        monkeypatch.setenv("FORGE_NOW", updated)
+        began = (datetime.fromisoformat(NOW) - timedelta(seconds=30)).isoformat()
+        record = {"events": [], "timings": [], "state": {"steps": [{"step": "start", "at": began}]}}
+        pr.update(updatedAt=updated, body="<!-- forge:begin -->\n<!-- forge:time-record "
+                  + json.dumps(record) + " -->\n<!-- forge:end -->")
+        github(SimpleNamespace(repo=repo, gh=gh), [pr])
+        gh.respond("pr", "view", "7", stdout=json.dumps(pr))
+        revised = repo.forge(*args, timeout=120)
+        assert revised.returncode == 0, revised.stderr
+        assert next(row for row in json.loads(revised.stdout)["items"]
+                    if row["id"] == "saved-0")["total_seconds"] == 30
+        # A validated earlier body must never admit malformed new bytes.
+        updated = (datetime.fromisoformat(NOW) + timedelta(seconds=1803)).isoformat()
+        monkeypatch.setenv("FORGE_NOW", updated)
+        pr.update(updatedAt=updated, body='<!-- forge:begin -->\n<!-- forge:time-record {"events":null} -->\n<!-- forge:end -->')
+        github(SimpleNamespace(repo=repo, gh=gh), [pr])
+        gh.respond("pr", "view", "7", stdout=json.dumps(pr))
+        invalid = repo.forge(*args, timeout=120)
+        assert invalid.returncode == 0, invalid.stderr
+        assert next(row for row in json.loads(invalid.stdout)["items"]
+                    if row["id"] == "saved-0")["total_seconds"] == 20
     # Windows process and filesystem costs have a separate platform allowance.
     budget = 30 if os.name == "nt" else 5
     assert first_elapsed < budget, f"cold {command} took {first_elapsed:.2f}s (budget {budget}s)"
