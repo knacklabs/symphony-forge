@@ -46,13 +46,27 @@ def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history,
         pr = {"number": 7, "headRefName": "fix/saved-0", "state": "MERGED", "mergedAt": NOW,
               "headRefOid": repo.git("rev-parse", "HEAD"), "updatedAt": NOW, "body": "",
               "files": [{"path": ".factory/fixes/saved-0.json"}]}
-        github(SimpleNamespace(repo=repo, gh=gh), [pr])
+        other = {**pr, "number": 8, "headRefName": "fix/saved-1",
+                 "files": [{"path": ".factory/fixes/saved-1.json"}]}
+        stable = {**pr, "number": 9, "headRefName": "fix/saved-2",
+                  "files": [{"path": ".factory/fixes/saved-2.json"}]}
+        prs = [pr, other, stable]
+        github(SimpleNamespace(repo=repo, gh=gh), prs)
         # GitHub emits only requested fields. Metadata-only responses cannot
         # accidentally supply the body that this regression expects Forge to reuse.
         stub = repo.bin / "gh"
         stub.write_text(stub.read_text("utf-8").replace('sys.stdout.write(output)', '''if args[:2] == ["pr", "list"] and "--json" in args and output.startswith("["):
+            rows = json.loads(output)
+            if "--search" in args:
+                for term in args[args.index("--search") + 1].split():
+                    if term.startswith("updated:"):
+                        since = term.removeprefix("updated:").partition("..")[0]
+                        rows = [row for row in rows if row.get("updatedAt", "") >= since]
             fields = args[args.index("--json") + 1].split(",")
-            output = json.dumps([{key: value for key, value in row.items() if key in fields} for row in json.loads(output)])
+            if "body" in fields:
+                for row in rows:
+                    append_json(here / "body-downloads.jsonl", row["number"])
+            output = json.dumps([{key: value for key, value in row.items() if key in fields} for row in rows])
         sys.stdout.write(output)'''), "utf-8")
 
     def body_reads():
@@ -123,7 +137,7 @@ def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history,
         record = {"events": [], "timings": [], "state": {"steps": [{"step": "start", "at": began}]}}
         pr.update(updatedAt=updated, body="<!-- forge:begin -->\n<!-- forge:time-record "
                   + json.dumps(record) + " -->\n<!-- forge:end -->")
-        github(SimpleNamespace(repo=repo, gh=gh), [pr])
+        github(SimpleNamespace(repo=repo, gh=gh), prs)
         gh.respond("pr", "view", "7", stdout=json.dumps(pr))
         revised = repo.forge(*args, timeout=120)
         assert revised.returncode == 0, revised.stderr
@@ -133,12 +147,30 @@ def test_1_busy_views_finish_within_five_seconds(repo, gh, monkeypatch, history,
         updated = (datetime.fromisoformat(NOW) + timedelta(seconds=1803)).isoformat()
         monkeypatch.setenv("FORGE_NOW", updated)
         pr.update(updatedAt=updated, body='<!-- forge:begin -->\n<!-- forge:time-record {"events":null} -->\n<!-- forge:end -->')
-        github(SimpleNamespace(repo=repo, gh=gh), [pr])
+        github(SimpleNamespace(repo=repo, gh=gh), prs)
         gh.respond("pr", "view", "7", stdout=json.dumps(pr))
         invalid = repo.forge(*args, timeout=120)
         assert invalid.returncode == 0, invalid.stderr
         assert next(row for row in json.loads(invalid.stdout)["items"]
                     if row["id"] == "saved-0")["total_seconds"] == 20
+        # Two body edits must not redownload the unchanged third PR's body.
+        # The existing owner covers one edit; this batch risk uses the same
+        # real command and logs actual external response records, with no new seam.
+        downloads = repo.bin / "body-downloads.jsonl"
+        before = len(downloads.read_text("utf-8").splitlines())
+        updated = (datetime.fromisoformat(NOW) + timedelta(seconds=2404)).isoformat()
+        monkeypatch.setenv("FORGE_NOW", updated)
+        for published, seconds in ((pr, 30), (other, 40)):
+            began = (datetime.fromisoformat(NOW) - timedelta(seconds=seconds)).isoformat()
+            record = {"events": [], "timings": [], "state": {"steps": [{"step": "start", "at": began}]}}
+            published.update(updatedAt=updated, body="<!-- forge:begin -->\n<!-- forge:time-record "
+                             + json.dumps(record) + " -->\n<!-- forge:end -->")
+        github(SimpleNamespace(repo=repo, gh=gh), prs)
+        batch = repo.forge(*args, timeout=120)
+        assert batch.returncode == 0, batch.stderr
+        rows = {row["id"]: row for row in json.loads(batch.stdout)["items"]}
+        assert (rows["saved-0"]["total_seconds"], rows["saved-1"]["total_seconds"]) == (30, 40)
+        assert sorted(json.loads(line) for line in downloads.read_text("utf-8").splitlines()[before:]) == [7, 8]
     # Windows process and filesystem costs have a separate platform allowance.
     budget = 30 if os.name == "nt" else 5
     assert first_elapsed < budget, f"cold {command} took {first_elapsed:.2f}s (budget {budget}s)"

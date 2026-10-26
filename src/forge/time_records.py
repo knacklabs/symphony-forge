@@ -242,10 +242,14 @@ def item(top: Path, key: str, state: dict[str, Any], *,
             previous = current
 
     attempts.sort(key=lambda current: (current["start"] is None, current["start"]))
+    all_choices = list(enumerate(attempts))
+    choices_by_round = {}
+    for choice in all_choices:
+        choices_by_round.setdefault(choice[1]["worker_round"], []).append(choice)
 
     @functools.cache  # Called per interval and per timing; a long round has hundreds of each.
     def attempt(number: int | None, at: datetime, *, idle: bool = False) -> int | None:
-        choices = [(index, r) for index, r in enumerate(attempts) if idle or r["worker_round"] == number]
+        choices = all_choices if idle else choices_by_round.get(number, [])
         return next((index for index, r in reversed(choices) if r["start"] and r["start"] <= at),
                     choices[0][0] if choices else None)
 
@@ -297,10 +301,10 @@ def item(top: Path, key: str, state: dict[str, Any], *,
                 by_category = per_attempt.setdefault(index, {})
                 by_category[category] = by_category.get(category, 0) + seconds
                 if category == "waiting_for_owner":
-                    waits = [e for e in events if e.get("round") == number
+                    waits = [] if merged else [e for e in events if e.get("round") == number
                              and e.get("event") in ("owner wait start", "worker question")
                              and (at := when(e.get("at"))) and at <= a]
-                    finished_wait = any(any(f.get("event") == "owner wait end" and f.get("wait_id") == e.get("id")
+                    finished_wait = merged or any(any(f.get("event") == "owner wait end" and f.get("wait_id") == e.get("id")
                                            and (at := when(f.get("at"))) and at >= b for f in events) for e in waits)
                     if finished_wait or merged:
                         owner_done[index] = owner_done.get(index, 0) + seconds
@@ -311,6 +315,13 @@ def item(top: Path, key: str, state: dict[str, Any], *,
     rounds, seen = [], dict.fromkeys((summary or {}).get("seen", []))
     first_review = next((r for r in attempts if r["result"] or r["review_timings"]), {})
     known_history = summary["known"] if summary else first_review.get("number") == 1
+    timing_rows = {}
+    for timing in timings:
+        step = timing.get("step")
+        if (step in ("worker round", "test run", "review", "CI wait")
+                and (at := when(timing.get("start")))
+                and (index := attempt(timing.get("round"), at)) is not None):
+            timing_rows.setdefault((index, step), []).append(timing)
     for index, current in enumerate(attempts):
         number, worker_round, result = current["number"], current["worker_round"], current["result"]
         findings = result.get("findings") if isinstance(result.get("findings"), list) else None
@@ -326,8 +337,7 @@ def item(top: Path, key: str, state: dict[str, Any], *,
             known_history = False
         steps = []
         for step, label in (("worker round", "work"), ("test run", "tests"), ("review", "review"), ("CI wait", "CI")):
-            rows = [t for t in timings if t.get("round") == worker_round and t.get("step") == step
-                    and (at := when(t.get("start"))) and attempt(worker_round, at) == index]
+            rows = timing_rows.get((index, step), [])
             if step == "review":
                 rows = current["review_timings"]
             if rows:

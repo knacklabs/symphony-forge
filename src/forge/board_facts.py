@@ -253,6 +253,19 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
                             return None
                         by_number = {pr["number"]: pr for pr in [*restored, record]}
                         return [by_number[pr["number"]] for pr in rows]
+                    updates = [pr.get("updatedAt") for pr in missing]
+                    if all(isinstance(at, str) and time_records.when(at) for at in updates):
+                        # Several changed bodies need only their updated slice, not every
+                        # large historical body in the week. Require every missing row.
+                        changed = _listing(top, "merged", "--search",
+                                           query + f" updated:{min(updates)}..*")
+                        records = {pr.get("number"): pr for pr in changed or []
+                                   if isinstance(pr.get("body"), str) and isinstance(pr.get("files"), list)}
+                        if all(pr.get("number") in records and
+                               records[pr["number"]].get("headRefName") == pr.get("headRefName") for pr in missing):
+                            by_number = {pr["number"]: pr for pr in restored}
+                            by_number.update(records)
+                            return [by_number[pr["number"]] for pr in rows]
                 return _listing(top, "merged", "--search", query, fields=merged_fields if fresh else FIELDS)
             return (listing(now) if fresh or start == starts[-1] else
                     _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))

@@ -201,6 +201,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
     repo.forge_dir(top)
     repo.default_branch(top)
     trees = story.worktrees(top)
+    configuration = functools.cache(lambda path: nextstep._report_config(path, {}))
     # Fetch independent GitHub views while local Git supplies the state snapshot.
     with ThreadPoolExecutor(max_workers=4) as pool:
         checks_read, github_read = reads or (pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top))
@@ -391,7 +392,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         if kind != "story" and branch in merged_prs:
             state = {**state, "status": "merged"}
         tree = trees.get(branch)
-        cfg = nextstep._report_config(tree or top, {})
+        cfg = configuration(tree or top)
         pr = by_branch.get(branch)
         state = nextstep.at_ref(top, item, state, pr) if kind != "story" else state
         checks, events, failures = _checks(pr, cfg["checks"])
@@ -421,8 +422,8 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                     if isinstance(f, dict) and n not in dismissed]
         worker = None
         finished = state.get("status") in ("done", "merged")
-        lock = codex._item_file(top, item, ".lock", "Grill" if kind == "story" else "Build")
-        if not finished and native.lock_alive(lock) is not False:
+        if not finished and native.lock_alive(codex._item_file(
+                top, item, ".lock", "Grill" if kind == "story" else "Build")) is not False:
             family = state.get("worker")
             role = "grill" if kind == "story" else "build" if kind == "task" else "lite"
             if family == "codex" and kind != "story":
@@ -471,10 +472,11 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         elapsed = lambda at: max(0, (now - _when(at)).total_seconds()) if now and _when(at) else None
         if worker:
             worker["elapsed"] = elapsed(worker.get("started_at"))
-        dates = ([e.get("at") for e in activity] + [s.get("at") for s in _steps(state)]
+        dates = ([] if active or worker or finished else
+                 [e.get("at") for e in activity] + [s.get("at") for s in _steps(state)]
                  + timing_dates.get(item, [])
                  + [branch_dates.get(branch), branch_dates.get("origin/" + branch)])
-        if kind == "story":
+        if kind == "story" and not (active or worker or finished):
             dates.extend(story_event_dates.get(item, []))
             prefix = f".factory/stories/{item}/tasks/"
             dates.extend(s.get("at") for rel, (part, _) in best.items() if rel.startswith(prefix)
@@ -530,7 +532,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
         if worker and worker.get("round") is not None:
             worker["round"] = max(1, worker["round"])
         stage, receipt = (nextstep._item_readiness(item, state, top, checks, runs=active, pr=pr)
-                          if kind != "story" else (state.get("status"), {}))
+                          if kind != "story" and not finished else (state.get("status"), {}))
         if kind == "story" and not finished:
             stage = readiness.get(item, {}).get("stage", "planning")
         if worker and not finished:
@@ -951,8 +953,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     refs[landed] = repo.git("show", "-s", "--format=%T", landed, cwd=top)
     empty = repo.run("git", "hash-object", "-t", "tree", "--stdin", cwd=top)
     empty.check_returncode()
-    # Read the default tree once, then apply each branch's differences. Most
-    # retained branches share almost all state and plan blobs with the default.
+    # Apply each branch's differences to the default snapshot; retained branches share most blobs.
     snapshots: dict[str, dict[str, str]] = {tree: {} for tree in refs.values()}
     base_tree = refs[landed]
     # Git requires LF pairs; text-mode stdin adds CR on Windows and Git silently lists nothing.
