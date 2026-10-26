@@ -1,10 +1,48 @@
 """Live Postgres database contracts."""
 
 import subprocess
+from collections.abc import Iterator
 
 import httpx
+import pytest
 from test_api import credentials, sign_up
 from test_soft_delete import psql
+
+
+@pytest.fixture(scope="module", autouse=True)
+def isolated_database_api() -> Iterator[None]:
+    # These API cases add sign-ups to a suite that shares one source IP. Give
+    # this module its own rate-limit window without changing the app's limits.
+    def recreate_api() -> None:
+        result = subprocess.run(
+            [
+                "docker",
+                "compose",
+                "-f",
+                "compose.test.yml",
+                "up",
+                "-d",
+                "--no-deps",
+                "--force-recreate",
+                "--wait",
+                "--wait-timeout",
+                "180",
+                "api",
+            ],
+            cwd="../..",
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+            timeout=210,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+
+    recreate_api()
+    try:
+        yield
+    finally:
+        recreate_api()
 
 
 def test_the_starter_tables_follow_the_database_skill(client: httpx.Client) -> None:
