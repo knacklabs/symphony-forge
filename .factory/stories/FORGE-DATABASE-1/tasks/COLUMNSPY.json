@@ -8,14 +8,29 @@
     "head": null,
     "start": "2feaef7a8fca1f76ec314114ec65fde502892149"
   },
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cbeabfe643f6a7e11abf670924b20fdbf2c4e363e3552ba7c91bb5054ef3db41",
+    "changed": "5edddf9f57c901b3b549c7e9ec78dcc14646a8d96ceebba47d0e1fd627983dec",
+    "commit": "1685411a5e1e134dd16229db98872097b5799fb0",
+    "dismissals": [],
+    "findings": [],
+    "id": "83499b0b-14e2-4c3e-be65-1eb479581350",
+    "status": "clean"
+  },
   "round": 2,
   "stacked_on": "FORGE-LIBS-1/SCHEMASPY",
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T08:43:06.240730+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-26T09:15:10.896048+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
