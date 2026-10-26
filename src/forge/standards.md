@@ -116,6 +116,8 @@ access below keep their roles; do not wrap them in extra layers.
 
 ## The client stack
 
+The starter's modules are `libs/auth`, `libs/projects`, `libs/organisations` and `libs/history`.
+
 A new client app uses the smallest stack that runs its first story: a pnpm workspace with NestJS,
 Prisma and Postgres behind a React app built with Vite and React
 Router. Nx builds `apps/web` and `apps/api`; each module has a `contracts` library for its schemas
