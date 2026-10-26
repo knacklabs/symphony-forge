@@ -4,34 +4,19 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Each client repo keeps a services list that the deploy platform reads. Each service has a name, a Dockerfile path, a role or start command, a port, a health path, and one exposure: public at the main address, public at its own subdomain, or internal only.
+- New apps from the starters list one public service. An existing app that Forge adopts gets a list the agent writes from its Dockerfiles.
+- The deploy guide names the list and the subdomain that the deploy skill already asks for.
 
 ## Why
 
-Client apps can deploy several services from one repo
-
-
+The deploy guide and both starters assume one root Dockerfile, container port 3000 and GET /health. An app with several Dockerfiles, such as an API, a web app and a worker, cannot be described to the platform, and the planned jobs story (one image run with APP_ROLE set to api, worker or all) has nowhere to say which service runs which role.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new starter repo's services list has one public service on port 3000 with GET /health, and the deploy guide names the list.**
+2. **An existing repo with two Dockerfiles, adopted by Forge, gets a list with both services, one of them internal only, and the agent confirms it with the owner.**
+3. **The deploy skill reads the subdomain for each public service from the list, not from the root Dockerfile.**
 
 ## Risks
 
