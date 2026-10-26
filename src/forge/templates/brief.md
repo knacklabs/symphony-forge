@@ -61,6 +61,10 @@ successful test or review, demo preparation, or Forge next step does not by itse
 Do not install Mainline or start OAuth sign-in for those requests. An explicit request such as
 "deploy this to staging" or "publish this on Mainline" needs no separate routine deployment approval.
 
+A worker never deploys. After a client repo's one-time deploy setup, Mainline deploys dev at
+each merge to the default branch and a preview for each pull request, and production changes
+only when a person presses Promote in Mainline. Never deploy or promote production.
+
 $review_loop
 
 Cold-read stops use `forge read <KEY or spec> --resolve <accept|more|split> --reason "<human's choice>"`;

@@ -25,6 +25,13 @@ For a requested deployment, follow the installed Mainline Deploy skill to connec
 GitHub repository and choose its main subdomain; the list does not hold it.
 Keep one instance running while migrations are made.
 
+The first deployment that the owner asks for is the deploy setup, once for each repository:
+browser sign-in with Google or GitHub, then the repository, `services.toml`, the main
+subdomain, the variables that `.env.example` names, and dev first. After the setup, Mainline
+deploys dev at each merge to the default branch and a preview for each pull request.
+Production changes only when a person presses Promote in Mainline. An agent does not run
+these deploys, and an agent never deploys or promotes production.
+
 The root `package.json` and committed `pnpm-lock.yaml` hold the app scripts and dependencies.
 The Dockerfile installs from the lockfile, runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run build`,
 then runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run start:prod`.

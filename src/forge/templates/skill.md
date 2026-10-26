@@ -30,6 +30,27 @@ the port from its `EXPOSE` line and the health path from the code. Show it to th
 ask with options: confirm it, or change a service's exposure. Then merge it in a fix. The
 owner picks the main subdomain on the platform, so the list does not hold it.
 
+The first deployment that the owner asks for in a client repo is its deploy setup, and that
+request is the explicit request above. Follow the installed Mainline Deploy skill in this
+order, and skip a step that is already done:
+
+1. Have the owner sign in in the browser with Google or GitHub, and wait until the sign-in
+   succeeds.
+2. Connect the client GitHub repository.
+3. Read `services.toml`. When the repo has none, write it as the paragraph above says and get
+   the owner's confirmation.
+4. Set the main subdomain that the owner picks.
+5. Set each variable that `.env.example` names, with the values the owner gives, except the
+   ones that the platform provides, such as `DATABASE_URL`.
+6. Deploy dev, and wait until dev reports healthy. Always deploy dev first.
+
+After the setup, do not deploy. Mainline deploys dev at each merge to the default branch and
+a preview for each pull request. These deploys are Mainline's, not an agent's, and need no
+request. Production changes only when a person presses Promote in Mainline. Never deploy or
+promote production, also when the owner asks: tell them to press Promote in Mainline. When
+the owner asks for another deployment after the setup, tell them that Mainline deploys dev at
+the next merge.
+
 | The human says | Run |
 |---|---|
 | "What now?" | `forge next` |
