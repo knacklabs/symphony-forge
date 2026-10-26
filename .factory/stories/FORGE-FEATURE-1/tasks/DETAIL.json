@@ -8,7 +8,7 @@
       "gain": 3,
       "harm": 3,
       "line": 165,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -23,27 +23,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "abd6d9d0d58b7e9e0a4228332551a2ebf72ee228e2e7a443ed623dfba61ed152",
-    "changed": "8349930672ff4802272bbddaf6d0667932ce916073ae1a0d8b40261570588c9f",
-    "commit": "3d2918a4f2a4b209f726398efe5e7e0e7414b629",
+    "branch_diff": "c4848d72303d53373962030acbd4e1ff83242e407f41c62409def5318c89f2b7",
+    "changed": "e61717140f6bc31e7c413532a4f61dfd4469c572c8df8539de99bf284bf2a499",
+    "commit": "6ccc2ec48f7a20dad3bf6cddf41ee421b47f11ce",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - an organisation has changes to two projects. This assertion runs with only one project in the organisation, as do the corresponding successful reads in the Python case (`apps/api/tests/test_projects.py:246`) and the recent-changes browser flow. Removing the subject filter from either history implementation would therefore leave these checks passing while showing another project's changes. Extend the existing API cases in both starters with interleaved changes to a second project and verify that each changes endpoint excludes the other project's entries.",
-        "file": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 165,
-        "priority": "P1",
-        "title": "Gate: recent changes are scoped to the requested project",
-        "work": 2
-      }
-    ],
-    "id": "54c3e836-4f71-47d2-bd07-c0a249b71dbc",
-    "status": "blocked"
+    "findings": [],
+    "id": "b14d685c-172b-410f-99f4-51b31de12a75",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T12:07:09.964009+00:00",
@@ -51,6 +40,10 @@
     },
     {
       "at": "2026-10-26T13:06:19.862558+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T13:50:25.585322+00:00",
       "step": "review"
     }
   ],
