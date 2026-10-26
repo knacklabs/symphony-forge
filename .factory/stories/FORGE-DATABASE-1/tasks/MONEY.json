@@ -14,7 +14,7 @@
       "gain": 3,
       "harm": 3,
       "line": 9,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,27 +25,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "01e1825955f880e83f32aedc8241be5a446a1c3d362f61041b5b0790f0be5256",
-    "changed": "cd551086551235bf9c333d9e781e38fe66a72b0f6ef5fc2887a045f2f651fdf7",
-    "commit": "decd610f9c24cd19326893c0a4c44d78ef0cb9f4",
+    "branch_diff": "21ed077b2a94f3ce85903cb98eb68df0ec721fb4012d15db3e034b86547120cc",
+    "changed": "6d4e8937278e65d111261651b9d08b40dbc833423758be785df4bcdc9708270f",
+    "commit": "4966a0635b32c1c3849375c2a1771592ae6873c9",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. Case: normal use - an owner chooses USD instead of INR during setup. The new setup instruction at src/forge/templates/skill.md:902 changes DEFAULT_CURRENCY, but this copied test unconditionally requires INR. Both starters therefore fail their normal test command after following the supported setup choice, despite correct formatter behavior. Keep the INR template-default assertion in Forge's init test, which already checks it, rather than in the test shipped to client apps.",
-        "file": "src/forge/templates/starter/libs/shared/util/src/format.test.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 9,
-        "priority": "P1",
-        "title": "[P1] Keep shipped money tests compatible with the chosen currency",
-        "work": 1
-      }
-    ],
-    "id": "30908521-079e-448e-a602-fca7536dbefc",
-    "status": "blocked"
+    "findings": [],
+    "id": "2dc31344-2298-427a-98ec-f7337f3e2c8c",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T02:19:19.021895+00:00",
@@ -53,6 +42,10 @@
     },
     {
       "at": "2026-10-26T02:26:31.801163+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T02:28:22.302759+00:00",
       "step": "review"
     }
   ],
