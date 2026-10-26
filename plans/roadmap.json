@@ -408,6 +408,12 @@
       "title": "Clients choose which added-work review notes hold their work",
       "status": "pending",
       "order": 99
+    },
+    {
+      "key": "FORGE-DEPLOY-1",
+      "title": "Client apps deploy to dev and preview on their own, and production waits for a person's Promote",
+      "status": "pending",
+      "order": 100
     }
   ],
   "epics": [

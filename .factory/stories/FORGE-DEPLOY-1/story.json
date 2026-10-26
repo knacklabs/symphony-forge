@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-DEPLOY-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-26T11:07:42.305525+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client apps deploy to dev and preview on their own, and production waits for a person's Promote",
+  "touches": 0
+}
