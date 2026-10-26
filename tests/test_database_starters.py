@@ -97,17 +97,34 @@ def test_3_new_rows_get_time_ordered_ids_and_updated_times(
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("kind", ("react",), ids=("react",))
+@pytest.mark.parametrize("kind", ("react", "python"))
 def test_3_starter_tables_follow_the_skill(
-    repo, gh, tmp_path, tmp_path_factory, kind,
+    repo, gh, tmp_path, tmp_path_factory, request, kind,
 ):
     # Audit: init must deliver the columns migration and schemas that use text and timestamptz.
-    # A stale migration or a restored Prisma enum/varchar leaves new apps outside the skill.
+    # A stale migration or a restored enum/varchar leaves new apps outside the skill.
     # Existing tests own extension and id defaults; the live SQL case owns column types and checks.
     # The existing live run also checks migration drift, so this adds no duplicate drift command.
     # The init and live API/SQL boundaries need no production test seam.
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", kind)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+
+    if kind == "python":
+        source = STARTER.parent / "starter-python"
+        migration = Path("apps/api/migrations/versions/0009_columns.py")
+        assert (client / migration).read_bytes() == (source / migration).read_bytes()
+        models = list((client / "apps/api/app").glob("*/models.py"))
+        assert models
+        for model in models:
+            text = model.read_text(encoding="utf-8")
+            for forbidden in ("Enum(", "VarChar", "String(", "native_enum"):
+                assert forbidden not in text, model
+        if LIVE:
+            result = request.getfixturevalue("live_python_starter")
+            _require_cases(result["api"], (
+                "test_the_starter_tables_follow_the_database_skill",
+            ))
+        return
 
     migration = Path("apps/api/prisma/migrations/20261026000200_columns/migration.sql")
     assert (client / migration).read_bytes() == (STARTER / migration).read_bytes()
