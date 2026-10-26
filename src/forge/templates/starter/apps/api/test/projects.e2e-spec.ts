@@ -158,6 +158,9 @@ describe('projects API', () => {
     const created = await send('post', '', { name: 'Website redesign', status: 'active' }).expect(201);
     const id = created.body.data.id as string;
     expect(created.body.data).toMatchObject({ createdByEmail: owner.email, modifiedByEmail: owner.email });
+    // A second project's changes come between this project's changes and must stay out of its list.
+    const other = (await send('post', '', { name: 'Mobile app', status: 'active' }).expect(201)).body.data.id as string;
+    await send('put', `/${other}`, { name: 'Mobile app', status: 'archived' }).expect(200);
     await send('put', `/${id}`, { name: 'Website relaunch', status: 'archived' }).expect(200);
     // A replace that changes nothing adds no row.
     await send('put', `/${id}`, { name: 'Website relaunch', status: 'archived' }).expect(200);
@@ -184,8 +187,12 @@ describe('projects API', () => {
       'Fifth: Deleted the project', 'Fifth: Name changed from Fourth to Fifth', 'Fourth: Name changed from Third to Fourth',
       'Third: Name changed from Second to Third', 'Second: Name changed from Website relaunch to Second',
       'Website relaunch: Name changed from Website redesign to Website relaunch; Status changed from active to archived',
+      'Mobile app: Status changed from active to archived', 'Mobile app: Created the project',
       'Website redesign: Created the project',
     ]);
+    const otherChanges = await client.get(`/api/v1/projects/${other}/changes`).expect(200);
+    expect(otherChanges.body.data.map((change: { summary: string }) => change.summary))
+      .toEqual(['Status changed from active to archived', 'Created the project']);
     expect((await client.get('/api/v1/history/export').expect(200)).text).toContain(`,${owner.email},Fifth: Deleted the project`);
 
     // A deleted project's changes are not found.

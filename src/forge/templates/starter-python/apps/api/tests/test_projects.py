@@ -235,6 +235,18 @@ def test_records_each_project_change_in_the_change_history(
     project = created.json()["data"]
     assert project["createdByEmail"] == project["modifiedByEmail"] == owner["email"]
     path = f"/api/v1/projects/{project['id']}"
+    # A second project's changes come between this project's changes and must stay out of its list.
+    mobile = client.post(
+        "/api/v1/projects",
+        headers=headers,
+        json={"name": "Mobile app", "status": "active"},
+    )
+    assert mobile.status_code == 201, mobile.text
+    other_path = f"/api/v1/projects/{mobile.json()['data']['id']}"
+    archived = client.put(
+        other_path, headers=headers, json={"name": "Mobile app", "status": "archived"}
+    )
+    assert archived.status_code == 200, archived.text
     for _ in range(2):  # The second replace changes nothing and adds no row.
         replaced = client.put(
             path,
@@ -284,8 +296,13 @@ def test_records_each_project_change_in_the_change_history(
         "Third: Name changed from Second to Third",
         "Second: Name changed from Website relaunch to Second",
         f"Website relaunch: {FIRST_CHANGE}",
+        "Mobile app: Status changed from active to archived",
+        "Mobile app: Created the project",
         "Website redesign: Created the project",
     ]
+    assert [
+        entry["summary"] for entry in client.get(f"{other_path}/changes").json()["data"]
+    ] == ["Status changed from active to archived", "Created the project"]
     exported = client.get("/api/v1/history/export")
     assert f",{owner['email']},Fifth: Deleted the project" in exported.text
 

@@ -56,6 +56,8 @@ test('create, view, edit, and delete a project', async ({ page }) => {
   await addProjects(page, paginationNames(20));
   await page.getByRole('button', { name: 'Name' }).click();
   await expect(page).toHaveURL(/sortOrder=asc/);
+  // Wait for the sorted rows: a click while the old rows are swapped out can land on another row.
+  await expect(page.getByRole('row').nth(2)).toContainText('Pagination project 00');
   await page.getByRole('link', { name: 'Migration review' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Migration review' })).toBeVisible();
   await page.getByRole('button', { name: 'Edit' }).click();
