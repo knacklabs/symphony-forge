@@ -2,12 +2,20 @@
   "base": "4fc5be47a84d48390c085579b4fd5fcbae7f089d",
   "branch": "task/FORGE-SERVICES-1-SVCGUIDE",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-BAR-1/BARRULES",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T10:50:53.889177+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "51746b8ff7df948280d7fd83fcd8846b99283e6e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
