@@ -1,0 +1,13 @@
+{
+  "base": "8c288db8db1fbeb48d28ae4b5098b5318ef8ab6f",
+  "branch": "task/FORGE-DATABASE-1-COLUMNSPY",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-LIBS-1/SCHEMASPY",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-26T08:43:06.240730+00:00",
+      "step": "start"
+    }
+  ]
+}
