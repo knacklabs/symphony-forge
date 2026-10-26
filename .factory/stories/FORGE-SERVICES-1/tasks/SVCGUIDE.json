@@ -1,6 +1,13 @@
 {
   "base": "4fc5be47a84d48390c085579b4fd5fcbae7f089d",
   "branch": "task/FORGE-SERVICES-1-SVCGUIDE",
+  "chat": {
+    "approval": "4a5900ede65e43d289a0790eaf68cf1206ff54c1f423db4622d24938d763ef7c",
+    "claude": null,
+    "conversation": "01a177d5-d9ff-79b1-8eaf-50d63626883f",
+    "head": null,
+    "start": "11610c0097d7f80bfbfc4ac01fdbf41976ed7248"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-BAR-1/BARRULES",
