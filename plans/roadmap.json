@@ -402,6 +402,12 @@
       "title": "Client apps can split into services and frontends later without a rewrite",
       "status": "pending",
       "order": 98
+    },
+    {
+      "key": "FORGE-BAR-1",
+      "title": "Clients choose which added-work review notes hold their work",
+      "status": "pending",
+      "order": 99
     }
   ],
   "epics": [
