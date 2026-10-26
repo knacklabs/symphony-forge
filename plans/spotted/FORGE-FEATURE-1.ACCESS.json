@@ -32,6 +32,28 @@
       "item": "FORGE-FEATURE-1/ACCESS",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/starter/apps/web/src/app.tsx\tThe page title still says Projects when a member without view sees the not-found page.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/apps/web/src/app.tsx",
+      "line": 1,
+      "text": "The page title still says Projects when a member without view sees the not-found page.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/ACCESS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/starter/libs/shared/ui/src/components/ui/button.tsx\tThe shared Button has no press feedback (no active scale), so every button in the app feels the same on press.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/libs/shared/ui/src/components/ui/button.tsx",
+      "line": 1,
+      "text": "The shared Button has no press feedback (no active scale), so every button in the app feels the same on press.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/ACCESS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
