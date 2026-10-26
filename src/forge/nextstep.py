@@ -113,6 +113,7 @@ def open_must_answer_topics(top: Path) -> list[str]:
             or answers[topic][0][0] in ("ask the client", "later")]
 
 
+@repo.command_cache(snapshot=True)
 def next_step(args: Any) -> int:
     top = repo.root()
     from forge import fullrun
@@ -123,9 +124,9 @@ def next_step(args: Any) -> int:
         except repo.Refused as refusal:
             if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
                 raise
-    notice = upgrade.release_notice(top) + fullrun.notices(top)
-    history = board._machine_history(top) if args.json else None
-    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
+    notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
+    history = board._machine_history(top)
+    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True, fresh_prs=not args.json)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
@@ -191,7 +192,7 @@ def handoff_hook(args: Any) -> int:
 
 
 def _report(top: Path, history: dict[str, Any] | None = None,
-            schedules: bool = False) -> tuple[list[str], list[str]]:
+            schedules: bool = False, fresh_prs: bool = False) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
@@ -205,9 +206,13 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         key = next((key for key in alerts if key in str(state.get("why") or "")), None)
         return alerts.pop(key) if key else None
     trees = story.worktrees(top)
-    # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
-    github = board_facts.prs(top) if history is not None else None
-    if github is None and history is not None:  # the board's one try failed: unknown, no live call per item
+    for branch, path in trees.items():
+        if branch.startswith(board.PREFIXES):
+            _report_config(path, refusals)
+    # Bulk Git history is independent of the machine view's minute-long GitHub cache.
+    cached_prs = history is not None and not fresh_prs
+    github = board_facts.prs(top) if cached_prs else None
+    if github is None and cached_prs:  # the board's one try failed: unknown, no live call per item
         merged_prs, opened = set(), []
     elif github is None:
         merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
@@ -237,7 +242,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                             and (part := _task(top, key, name, trees, merged_prs, history, prs)).get("from_fix"))
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history)
+        readiness: dict[str, Any] = {}
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history, readiness)
+        if history is not None:
+            history.setdefault("story advice", {})[key] = found, readiness
         promoted.update(state["from_fix"] for state in tasks if state.get("from_fix"))
         assignments = {f"{key}/{tid}": developer(row) or owner(text)
                        for tid, row in task.rows(task.sections(text)).items()}
@@ -323,7 +331,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     # Appended statistics never enter machine_next's first line or command.
-    if history is None and repo.now()[:10] >= board.CHECK_DATE:
+    if (history is None or fresh_prs) and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
