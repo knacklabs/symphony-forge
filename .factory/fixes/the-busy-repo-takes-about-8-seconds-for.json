@@ -4,12 +4,20 @@
   "done_when": "On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-26T09:20:17.910674+00:00",
       "step": "start"
     }
   ],
-  "why": "The busy repo takes about 8 seconds for forge next and about 10 seconds for the board's JSON output, and slow is a bug under Forge's principles."
+  "stuck": {
+    "close": null,
+    "head": "ffe5c2f6c9c00bcecc849ac1e82f6368ac2f7d98",
+    "keys": {},
+    "round": null
+  },
+  "why": "The busy repo takes about 8 seconds for forge next and about 10 seconds for the board's JSON output, and slow is a bug under Forge's principles.",
+  "worker": "codex"
 }
