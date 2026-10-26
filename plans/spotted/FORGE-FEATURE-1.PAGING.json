@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/join.spec.ts\tThe join flow waits 5 seconds for the Projects heading after joining, which can run out on a loaded machine.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/e2e/join.spec.ts",
+      "line": 55,
+      "text": "The join flow waits 5 seconds for the Projects heading after joining, which can run out on a loaded machine.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PAGING",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/members.spec.ts\tThe admin axe check can catch a sonner toast mid-fade and report low contrast.",
       "kind": "edge",
       "path": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
