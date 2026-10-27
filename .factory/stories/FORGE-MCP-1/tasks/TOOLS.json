@@ -15,7 +15,7 @@
       "gain": 4,
       "harm": 3,
       "line": 146,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,7 +28,7 @@
       "gain": 3,
       "harm": 3,
       "line": 170,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,7 +41,7 @@
       "gain": 3,
       "harm": 3,
       "line": 121,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,7 +54,7 @@
       "gain": 3,
       "harm": 3,
       "line": 179,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,7 +67,7 @@
       "gain": 3,
       "harm": 3,
       "line": 142,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -78,67 +78,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d7fe3d61fffb25d56a0d7dbf95e72e10ab0434eac51a3384e348f56f827baaca",
-    "changed": "c64bfdcbe8a50219d24cea56f63a8db79ab8b57c35c0798d595a9b184225e691",
-    "commit": "bd5defd31bb77d895cfa393ee22ae1bc76953a27",
+    "branch_diff": "7dd69944699c2df4c0bdf322ab8452a18343b9625071d60dc489ec30ee7fcade",
+    "changed": "9cf56ff97ce36ebcd97c6d48e33c40bcdfcbbb76e67a7fb238b7f5a109ff6760",
+    "commit": "f6824a4262944f542d459922637369e5c98b16da",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - an agent creates or reads a generated feature with an optional field left empty. The output reuses input schemas that accept undefined but reject null, while feature_api.py:132-163 generates nullable responses and stores omitted fields as null. An unset client link or date therefore breaks concise results; other empty optional fields break detailed results. The output parse at tools.ts:69 converts these valid responses into retryable unavailable errors, including after a create has committed. Build the output schemas for the service's nullable response values.",
-        "file": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
-        "gain": 4,
-        "harm": 3,
-        "line": 146,
-        "priority": "P1",
-        "title": "Accept null optional fields in generated tool results",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - an admin deletes a client that an existing job references, then a Member agent searches or reads jobs. The linked-name lookup propagates the client's 404 and fails the entire job response or search page. Generated services exclude deleted targets for members (projects.service.ts:105-112), but retain the referencing job and its link. The job remains readable through its own API. Handle an unavailable linked name without failing the permitted parent read, while preserving the target's access restrictions.",
-        "file": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
-        "gain": 3,
-        "harm": 3,
-        "line": 170,
-        "priority": "P1",
-        "title": "Preserve parent tool reads when a linked item is deleted",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - the required feature smoke suite runs its notes feature with member permissions disabled. These copied cases always create a Member agent and require four tools, including in the member delete/restore case. The existing feature_live_run fixture explicitly sets notes' member permissions to [] in tests/test_feature_command.py:219-223, so correct authorization returns no notes tools and the new assertions fail. Derive expectations from the feature's permissions and exercise successful calls with an allowed role.",
-        "file": "src/forge/feature_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 121,
-        "priority": "P1",
-        "title": "Gate: generated MCP cases must respect feature permissions",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. Case: normal use - test_3_each_feature_has_its_tools[typescript] builds jobs. This assertion requires single-quoted concise fields, but _tool_fields uses _literal/json.dumps and emits concise: [\"name\", \"status\"]. The work-orders assertion at line 185 has the same mismatch. Both reject valid generated code, making the required command-level proof fail. Check the generated behavior without depending on quote spelling.",
-        "file": "tests/test_mcp.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 179,
-        "priority": "P1",
-        "title": "Gate: tools-copy assertions reject the generated literals",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test. Case: normal use - an agent filters a generated feature or requests its full fields. The starter and copied MCP cases never search with a feature filter. Their detailed-result checks also reuse expectFeatureFields, which checks only concise columns, plus created_by_email. Ignoring every filter or always omitting non-column fields such as description, hoursBudget and contactEmail would pass these proofs, despite Done-when 4 requiring filters and full results on request. Extend the real MCP cases to assert filtered exclusion, non-column fields in detailed results, and their omission from concise results.",
-        "file": "src/forge/feature_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 142,
-        "priority": "P1",
-        "title": "Gate: MCP filters and response formats need boundary assertions",
-        "work": 2
-      }
-    ],
-    "id": "5252c96b-8a4f-4f8c-bdf6-4b15b540fb80",
-    "status": "blocked"
+    "findings": [],
+    "id": "4459b6cb-2e73-4109-9ae8-4f1ffd2180ec",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T11:26:04.478598+00:00",
@@ -146,6 +95,10 @@
     },
     {
       "at": "2026-10-27T11:58:15.062068+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:14:13.372024+00:00",
       "step": "review"
     }
   ],
