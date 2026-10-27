@@ -20,6 +20,20 @@ that one question, record the answer in the finding's disposition and the story'
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the story's first task update the answers
 page. Do not call a deferred topic open when no Done-when item needs it.
 
+When a note needs a choice only the client can make, put this block inside the note, indented
+under it, just before the note's score line. The block has no score line of its own: the note's
+score line scores the question too.
+
+```text
+  - Open question: <question>
+    Touches: <screen or rule>
+    Why we ask: <what the answer changes>
+    Default: <choice>
+    Why this default: <reason>
+    If the default stands: <what happens>
+    Due: <one week after today>
+```
+
 A story with no linked confirmed spec is not a finding.
 
 Treat `## Proven by the prototype` as settled evidence from the accepted sign-off. Read only

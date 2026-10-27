@@ -770,6 +770,6 @@ COMMANDS = [
 
 GROUP_HELP = {
     "spec": "Save and confirm specs, weigh whether a build pays back, and record its result",
-    "decision": "Write and accept decisions",
+    "decision": "Write, accept, list and answer decisions",
     "roadmap": "Add and retire roadmap items",
 }

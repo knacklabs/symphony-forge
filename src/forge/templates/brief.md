@@ -301,6 +301,11 @@ and constitution, and explain any explicit exception:
 
 These checks belong to the production story, not canvas sign-off.
 
+When your work needs a choice only the client can make, do not guess and do not stop. Build with
+a sensible default, and name it in your handback as an open question: what it touches, why it is
+asked, the default, why you picked it and what happens if it stands. The coordinator adds it to
+the open-decisions list.
+
 impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
 visual design (layout, type, colour, states and copy): shape before building, then audit and polish
 before a demo. Run emil-design-eng's review checklist inside impeccable's one batched inspection,
