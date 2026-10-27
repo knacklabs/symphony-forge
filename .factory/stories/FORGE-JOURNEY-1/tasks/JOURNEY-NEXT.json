@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-JOURNEY-1-JOURNEY-NEXT",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T09:33:44.085148+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1df6e857b76ae646c6ef40ec04c9d9c9ef82e022",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
