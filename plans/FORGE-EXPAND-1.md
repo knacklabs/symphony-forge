@@ -37,7 +37,7 @@ it merges.
 ## Done when
 
 1. **In a new client repo and in a repo adopted on an earlier release, close refuses a change that adds a Prisma or Alembic migration that drops, renames or changes the type of a column or table. The refusal names the migration file and each statement, and names the Contract line as the way past it.**
-2. **With a Contract line in that migration file, the same change passes close. Statements that keep the previous release working do not stop close: added tables and columns, index and constraint changes, and the drops in an Alembic `downgrade()`.**
+2. **With a Contract line in that migration file, the same change passes close. A migration that only adds a table and a column passes close with no Contract line. Statements that keep the previous release working do not stop close: added tables and columns, index and constraint changes, and the drops in an Alembic `downgrade()`.**
 3. **The database guide, the agent's guide (`src/forge/templates/skill.md`) and the worker brief (`src/forge/templates/brief.md`) state expand then contract and the Contract line, in the same change.**
 
 ## Risks
@@ -84,7 +84,9 @@ far from the statement it allows. One Contract line allows every statement in it
   `:(glob)**/prisma/migrations/*/migration.sql` and `:(glob)**/migrations/versions/*.py`. The
   text is `git show HEAD:<path>`.
 - A file with a line that matches `^\s*(?:--|#)\s*Contract:\s*\S` (multiline) passes.
-- SQL (the `.sql` file, and each string constant in an Alembic `upgrade()`): drop comment lines
+- SQL (the `.sql` file, and the whole argument of each `execute` or `text` call in an Alembic
+  `upgrade()`, as `ast.unparse` writes it, so an f-string such as
+  `f"ALTER TABLE {schema}.project RENAME COLUMN name TO title"` is one text): drop comment lines
   that start with `--`, then match, case-insensitive, `DROP TABLE`, `DROP COLUMN`,
   `ALTER TABLE ... RENAME` (but not `RENAME CONSTRAINT`), and `ALTER COLUMN ... TYPE` or
   `ALTER COLUMN ... SET DATA TYPE`. `DROP INDEX`, `DROP CONSTRAINT`, `DROP TRIGGER` and
@@ -95,7 +97,8 @@ far from the statement it allows. One Contract line allows every statement in it
   not a regex: autogenerate writes `existing_type=sa.INTEGER()` before `type_=`, and
   `drop_constraint(..., type_="foreignkey")` is not a type change.
 - Each problem is `<path>: <statement>`, where the statement is the matched SQL line, stripped,
-  or `op.<name>` for a Python call. Problems join with `; `.
+  or `op.<name>` for a Python call (`op.execute` for matched SQL in it). Problems join with `; `.
+  A file with no problem passes without a Contract line.
 - The entry:
 
   ```python
@@ -152,14 +155,21 @@ far from the statement it allows. One Contract line allows every statement in it
    parametrised `new-client-prisma`, `new-client-alembic` and `adopted-v1.2.2-prisma`. Setup:
    `_client_repo(env, tmp_path, previous)` from `tests/test_score_notes.py`, `env.checks(GREEN)`,
    and a fix through `env.start`, as `_fix` in `tests/test_shadcn_only.py` does.
-   - `new-client-prisma` adds `apps/api/prisma/migrations/20261101000000_notes/migration.sql`
+   - `new-client-prisma` first closes a fix that adds only
+     `apps/api/prisma/migrations/20261101000000_tags/migration.sql` with
+     `CREATE TABLE "Tag" ("id" UUID PRIMARY KEY);` and
+     `ALTER TABLE "Project" ADD COLUMN "tagId" UUID;`, with no Contract line:
+     `env.reviews(CLEAN)`, and `forge close` exits 0. Then it starts the fix below.
+   - `new-client-prisma` adds `apps/api/prisma/migrations/20261101000100_notes/migration.sql`
      with `ALTER TABLE "Project" ADD COLUMN "title" TEXT;`, `DROP INDEX "idx_Old";`,
      `ALTER INDEX "a" RENAME TO "b";`, `ALTER TABLE "Project" DROP COLUMN "legacyName";` and
      `DROP TABLE "LegacyNote";`.
    - `new-client-alembic` adds `apps/api/migrations/versions/0011_notes.py` whose `upgrade()`
      has `op.add_column(...)`, `op.drop_constraint("fk", "project", type_="foreignkey")`,
      `op.alter_column("project", "status", existing_type=sa.INTEGER(), type_=sa.Text())` and
-     `op.rename_table("note", "memo")`, and whose `downgrade()` has `op.drop_column(...)` and
+     `op.rename_table("note", "memo")` and
+     `op.execute(f"ALTER TABLE {schema}.project RENAME COLUMN name TO title")`, and whose
+     `downgrade()` has `op.drop_column(...)` and
      `op.drop_table(...)`.
    - `adopted-v1.2.2-prisma` adds a Prisma migration with
      `ALTER TABLE "Project" RENAME COLUMN "name" TO "title";`.
