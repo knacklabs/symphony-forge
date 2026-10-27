@@ -112,8 +112,8 @@
     "id": "47173c9a-4934-4a75-8114-5646b602de27",
     "status": "clean"
   },
-  "round": 4,
-  "status": "waiting for checks",
+  "round": 5,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T08:36:21.945925+00:00",
@@ -133,12 +133,10 @@
     }
   ],
   "stuck": {
-    "close": "70290b76-e4eb-40a3-8b37-89c37938628a",
-    "head": "2801daa86b01f214b48b14f6436fc70050f17512",
-    "keys": {
-      "the open P0 emit python tests that pass the starter's formatter check in src/forge/feature_python_tests.py": 2
-    },
-    "round": 3
+    "close": "c0b4c604-3066-43cd-ab5d-b9799f0cf4cc",
+    "head": "c44047a00ad1494590df71aff16e5b84d56f00ca",
+    "keys": {},
+    "round": 4
   },
   "worker": "codex"
 }
