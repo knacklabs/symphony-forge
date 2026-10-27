@@ -311,9 +311,8 @@ def _build_python(args, root: Path) -> int:
     files[main] = _insert(files[main], "app.include_router(organisations_router)",
                           f"\napp.include_router({module}_router)", main)
     env = "apps/api/migrations/env.py"
-    # The explicit alias preserves model registration under Ruff's unused-import check.
     files[env] = _insert(current[env], "import app.organisations",
-                         f"\nfrom app import {module} as {module}", env)
+                         f"\nimport app.{module}  # noqa: F401", env)
     config = "apps/api/pyproject.toml"
     contract = (f'[[tool.importlinter.contracts]]\nname = "{plural} internals"\n'
                 f'type = "protected"\nprotected_modules = ["app.{module}.*"]\n'
@@ -370,11 +369,12 @@ def _build_python(args, root: Path) -> int:
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
     _write(root, current, files)
     python_files = sorted("../../" + path for path in files if path.endswith(".py"))
-    for command in (("check", "--select", "I", "--fix"), ("format",)):
+    # Keep F401 enabled so Ruff retains necessary model-import suppressions.
+    for command in (("check", "--select", "I,F401,RUF100", "--fix"), ("format",)):
         formatted = repo.run("uv", "run", "ruff", *command, *python_files, cwd=root / "apps/api")
         if formatted.returncode:
             print(formatted.stdout + formatted.stderr, end="")
             _refuse("The feature files were written, but Python formatting failed.",
-                    "run uv --directory apps/api run ruff check --select I --fix app migrations tests, "
+                    "run uv --directory apps/api run ruff check --select I,F401,RUF100 --fix app migrations tests, "
                     "then uv --directory apps/api run ruff format app migrations tests.")
     return 0

@@ -203,7 +203,7 @@ def _assert_python_api_output(
     assert f"from app.{plural} import router as {plural}_router" in api_module
     assert f"app.include_router({plural}_router)" in api_module
     environment = (client / "apps/api/migrations/env.py").read_text("utf-8")
-    assert f"from app import {plural} as {plural}" in environment
+    assert f"import app.{plural}" in environment
     pyproject = tomllib.loads((client / "apps/api/pyproject.toml").read_text("utf-8"))
     assert any(
         contract.get("name") == f"{plural} internals"
@@ -821,7 +821,7 @@ def test_6_an_older_starter_names_the_missing_history_module(repo, gh, tmp_path,
         message = refused.stdout + refused.stderr
         assert refused.returncode != 0, message
         assert "The feature files were written, but Python formatting failed." in message
-        assert "Next: run uv --directory apps/api run ruff check --select I --fix" in message
+        assert "Next: run uv --directory apps/api run ruff check --select I,F401,RUF100 --fix" in message
         assert "then uv --directory apps/api run ruff format app migrations tests." in message
         assert (client / "apps/api/app/invoices/schema.py").is_file()
         pyproject.write_text(project_source, "utf-8")
