@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-SPECRULES-1-SPECRULES",
+  "chat": {
+    "approval": "c50a750be543f289d0cfa99a3cdd295f208de77bb46882a3ab1e25e9aabe3b2c",
+    "claude": null,
+    "conversation": "01a17c9f-3217-7360-93ef-7c98b3bcdf21",
+    "head": null,
+    "start": "05c98327e7325e99d2cfb50b0bfea3d768a7da74"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
