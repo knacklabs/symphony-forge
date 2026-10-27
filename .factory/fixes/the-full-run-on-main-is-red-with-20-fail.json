@@ -25,7 +25,7 @@
       "gain": 5,
       "harm": 3,
       "line": 11,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -35,28 +35,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "c603bf54bde4c907edb8c9cb009f3a3058b64f5bec4c20735613f9a651c4e993",
-    "changed": "ced5a2c577c771694121bd0ae318a696c969cf1f7ce43bfde8b254321ba4d1d9",
-    "commit": "4f8da741955af2063f931dc96c4bb625e9f20a50",
+    "branch_diff": "0a9a77e346fcdec960df10ae195ba0cf1fb2a0f9fe07ac58810636790a71cdaa",
+    "changed": "d24527f4268adebf883f732c3c058ef945f3abe8bd9c1695ae49d5492b30ec37",
+    "commit": "ccc8be371cbf166f534219869c0599a583aa525a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - verifying that v1.2.23 is unblocked after the merged changes.\nThe proof list explicitly records the full CI run after close and merge as missing. The pull-request workflow runs `forge test --change` (.github/workflows/forge.yml:77), so its pending checks do not establish that the full suite passes on main. Obtain a successful full-suite run on main before treating this release-blocking repair as complete.",
-        "file": ".factory/fixes/the-full-run-on-main-is-red-with-20-fail.json",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 11,
-        "priority": "P1",
-        "title": "Not done: The full test suite passes on main",
-        "work": 2
-      }
-    ],
-    "id": "8ceef67a-8c2d-4454-ac3a-2617e8b09ef1",
-    "status": "blocked"
+    "findings": [],
+    "id": "51ac881c-78f3-4279-984d-7c6e45bcd203",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T16:52:10.076485+00:00",
@@ -64,6 +52,10 @@
     },
     {
       "at": "2026-10-27T17:11:44.125067+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T17:17:15.041688+00:00",
       "step": "review"
     }
   ],
