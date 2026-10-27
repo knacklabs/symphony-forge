@@ -22,8 +22,8 @@
     "id": "70bacc02-f2e5-4d41-a68a-b02f03711833",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T17:27:53.674749+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "8402c28eb27339d44071559cbf853ce7ca791bd6",
+    "close": "a64d44ea-2e12-49c7-a286-2c6559dda523",
+    "head": "390081fabefddd86aa1bee8fbdc2c1048dfd628e",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "On Windows the client sign-off completeness check cannot run: it picks Claude whenever Claude is installed, although only Codex can review the screen images (issue 1159), and on Codex the Windows launcher is a cmd shim, so passing one image flag per screen goes past the 8191-character command line limit (issue 1160)",
   "worker": "codex"
