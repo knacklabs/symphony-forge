@@ -1,4 +1,11 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-27T17:13:48.088920+00:00",
+      "because": "Main's full run can only be checked after merge; the coordinator runs it on main before the release",
+      "done_when": "The full test suite passes on main"
+    }
+  ],
   "base": "ae5cc0561e40412a7782e71b59978bd0a963e158",
   "branch": "fix/the-full-run-on-main-is-red-with-20-fail",
   "chat": {
@@ -8,7 +15,7 @@
     "head": null,
     "start": "e5e3bdb5c689b64e8a3b5313516aa41d00f22861"
   },
-  "done_when": "The full test suite passes on main",
+  "done_when": "The 20 tests that failed in the full run on main pass on this branch",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
