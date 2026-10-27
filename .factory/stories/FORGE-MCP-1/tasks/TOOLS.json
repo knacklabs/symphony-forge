@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-MCP-1-TOOLS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T11:26:04.478598+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "bfa38d0f512ec8dec845329a254c5af17b7e8d22",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
