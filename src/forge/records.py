@@ -283,7 +283,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
                     by=by)
     if signed:
-        from forge import fullrun, nextstep, review
+        from forge import fullrun, nextstep, open_decisions, review
 
         gaps = []
         reason = fullrun.green(top)
@@ -328,6 +328,23 @@ def decision_accept(args: argparse.Namespace) -> None:
             gaps.append(("Customer sign-off needs a client, salesperson, or developer answer for: "
                          + ", ".join(open_topics) + ".",
                          "forge next, then update docs/product/BRIEF.md and the decision quote"))
+        found = open_decisions.blocking(top)
+        if found:
+            details = []
+            for item in found:
+                details.append(f"- {item['question']} ({item['path']}, line {item['line']})")
+                details.extend(f"  {field}: {item['fields'].get(field) or 'not written yet'}"
+                               for field in ("Why we ask", "Default", "Why this default", "If the default stands"))
+            gaps.append((f"Sign-off waits for {len(found)} open decisions on Build now screens:\n"
+                         + "\n".join(details),
+                         'record the client\'s answers with forge decision answer --from <file> --by "<name>", '
+                         f'or the passed defaults with --defaults, then {next_step}'))
+        if status == "proposed":
+            screens = _sections(_text(top / "docs/design/prototype/SCREENS.md"))
+            for screen, content in screens.items():
+                if not re.search(r"^Build: (?:now|later)[ \t]*$", content, re.M):
+                    gaps.append((f"SCREENS.md: {screen} needs Build: now or Build: later",
+                                 f"mark the screen's scope, then {next_step}"))
         if ("Sign-off person" not in open_topics
                 and fields.get("customer", "") != answers["Sign-off person"][0][0]):
             gaps.append((f"{rel}'s customer must match the Sign-off person answer.",
@@ -350,8 +367,8 @@ def decision_accept(args: argparse.Namespace) -> None:
             gaps.append(("The prototype differs from the reviewed commit.",
                          f"commit the changes, then {next_step}"))
         if gaps:
-            repo.refuse(("Client sign-off needs these changes:\n" + "\n".join(
-                f"- {problem} Next: {action}" for problem, action in gaps), ""))
+            repo.refuse(("Client sign-off needs these changes:\n{gaps}", ""), gaps="\n".join(
+                f"- {problem} Next: {action}" for problem, action in gaps))
         product_hash = _digest("\0".join(product))
         brief_hash = _digest(brief)
         if fields.get("design_checked") != product_hash or fields.get("brief_checked") != brief_hash:
