@@ -426,6 +426,12 @@
       "title": "Client apps deploy to dev and preview on their own, and production waits for a person's Promote",
       "status": "pending",
       "order": 101
+    },
+    {
+      "key": "FORGE-MCP-1",
+      "title": "Client apps ship an MCP server so agents can use their features",
+      "status": "pending",
+      "order": 102
     }
   ],
   "epics": [
