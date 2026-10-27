@@ -60,17 +60,17 @@ def board(args: Any) -> int:
             _event_history(top)
             for pr in backfill.people(top):
                 time_records.view_body(pr.get("body") or "")
+            reads[1].result()
+            known_issues.inventory(top)
         with ThreadPoolExecutor(max_workers=4) as pool:
             if args.json:
                 reads = pool.submit(_machine_prs, top), pool.submit(board_facts.prs, top)
                 local = pool.submit(local_history)
-                inventory_read = pool.submit(known_issues.inventory, top)
             if repo.run("git", "fetch", "-q", "--prune", "--tags", "origin", cwd=top).returncode:
                 print("Could not refresh work from GitHub; showing the local git records.", file=sys.stderr)
             if args.json:
                 view = machine_board(top, reads=reads)
                 local.result()
-                inventory_read.result()
                 print(json.dumps(view))
                 return 0
     if not args.out:
@@ -943,14 +943,15 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     found: list[tuple[str, Item, Path | str]] = []
     trees = story.worktrees(top)
     parsed: dict[str, Item] = {}  # most copies match; a shared state is never changed in place
+    landed_ref = f"refs/{'remotes' if landed.startswith('origin/') else 'heads'}/{landed}"
     listing = repo.git("for-each-ref", "--format=%(refname) %(tree) %(objectname)",
                        *(f"refs/remotes/origin/{prefix}" for prefix in PREFIXES),
                        *(("refs/heads/story/", "refs/heads/task/") if history is not None else ()),
-                       *(f"refs/heads/{branch}" for branch in trees if branch.startswith(PREFIXES)), cwd=top)
+                       *(f"refs/heads/{branch}" for branch in trees if branch.startswith(PREFIXES)), landed_ref, cwd=top)
     refs = {line.split()[0]: line.split()[1] for line in listing.splitlines()}
     if history is not None:
         history["tips"] = {line.split()[0]: line.split()[2] for line in listing.splitlines()}
-    refs[landed] = repo.git("show", "-s", "--format=%T", landed, cwd=top)
+    refs[landed] = refs.pop(landed_ref)
     empty = repo.run("git", "hash-object", "-t", "tree", "--stdin", cwd=top)
     empty.check_returncode()
     # Apply each branch's differences to the default snapshot; retained branches share most blobs.
@@ -983,8 +984,7 @@ def _copies(top: Path, landed: str, history: Item | None = None) -> list[tuple[s
     blobs = {blob: story.json_of(text) for blob, text in texts.items()}
     state_files = {tree: {rel: blob for rel, blob in sorted(files.items()) if STATE.fullmatch(rel)}
                    for tree, files in snapshots.items()}
-    # Clean working files already have bytes in the bulk Git read. Only changed or
-    # untracked state needs a separate disk read, even with many linked worktrees.
+    # Bulk Git supplies clean state; changed and untracked state still needs fresh disk reads.
     def changed_files(path: Path) -> set[str]:
         return set(repo.git("diff", "HEAD", "--name-only", "--no-renames", "-z",
                             "--", ".factory", cwd=path).split("\0"))

@@ -269,15 +269,16 @@ def prs(top: Path, *, fresh: bool = False, people: bool = False,
                 return _listing(top, "merged", "--search", query, fields=merged_fields if fresh else FIELDS)
             return (listing(now) if fresh or start == starts[-1] else
                     _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
+        opened = (open_read.result() if open_read is not None else
+                  _listing(top, "open", fields=open_fields if fresh else FIELDS.removesuffix(",files")))
+        if opened is None and not fresh:
+            return None
         with ThreadPoolExecutor(len(starts) + 2) as pool:
             # Repositories that needed older parts before will usually need them
             # again. Refresh that small inventory beside the weekly requests.
             older_read = (pool.submit(merged_before_weeks, top)
                           if any(repo.forge_dir(top).glob("prs-older-*-cache.json")) else None)
-            opened_read = open_read or pool.submit(_listing, top, "open",
-                                                   fields=open_fields if fresh else FIELDS.removesuffix(",files"))
             lists = list(pool.map(week, starts))
-            opened = opened_read.result()
             if older_read is not None:
                 older_read.result()
         if not fresh and (opened is None or None in lists):

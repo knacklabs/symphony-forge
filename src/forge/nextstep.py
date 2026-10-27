@@ -129,6 +129,7 @@ def next_step(args: Any) -> int:
     # Populate shared facts before concurrent readers can race on their first lookup.
     repo.forge_dir(top)
     repo.default_branch(top)
+    story.worktrees(top)
     # Independent network reads overlap each other and the bulk local history.
     with ThreadPoolExecutor(max_workers=6) as pool:
         open_fields = "headRefName,headRefOid,body,url,isDraft"

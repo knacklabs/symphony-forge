@@ -1,4 +1,7 @@
-"""Machine views reconcile a shared plan once instead of once per part."""
+"""Machine views reconcile a shared plan once instead of once per part.
+
+Owns src/forge/board.py's shared plan reads in src/forge/nextstep.py too.
+"""
 import json
 
 import pytest
