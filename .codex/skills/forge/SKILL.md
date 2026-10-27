@@ -789,7 +789,8 @@ New clients get these steps at init; existing clients get the same guide after u
 
 In a new client repo, follow the FDE route: start with discovery of the customer's job,
 workaround, cost, people, frequency and evidence. Start with a canvas, as described below.
-The customer can sign off on the canvas alone. Build a working prototype only when the FDE
+The canvas in Play mode is the default clickable prototype: the customer clicks through it,
+and can sign off on it alone. Build a working prototype only when the FDE
 requests one to prove something the canvas cannot, such as real data or speed. Record that
 request with `forge decision new prototype-build`; the owner accepts it with
 `forge decision accept prototype-build --by "<name>"`. Then build the smallest working demo that proves
@@ -838,7 +839,7 @@ When `forge next` says to connect the repo to our deploy platform, explain what 
 that reminder does not authorize deployment. When the user explicitly requests deployment, use
 Mainline Deploy as above. After the requested deployment is verified, record its address under
 `## Demo` in `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off
-decision.
+decision. A canvas-only prototype needs no demo address.
 
 **The demo.** Every demo follows five steps, in order:
 
@@ -887,21 +888,20 @@ default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
 client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
 
-**Canvas and app design.** Make each app's own design from `docs/product/BRIEF.md`:
-`## Summary`, `## Users` and `## Things it keeps track of`, including every field and choice-list
-option. Use impeccable and emil-design-eng. Run impeccable's init when PRODUCT.md is missing.
-Write the app's theme tokens, type and colours in root DESIGN.md. The starter has no look of its own.
-Make the screens in a Claude Design artifact with a shadcn design system and named shadcn components.
-On a Codex-only host without an artifact tool, make HTML artboards in the repo.
-Save the artboards and images in `docs/design/prototype/` in a mechanical fix.
-Copy `.forge/design/support.js` beside the HTML and run it for a 1440 by 900 PNG per screen.
-Write SCREENS.md there: one `## <screen>` per image with `Image: <file>`, `Components: <shadcn names>`
-and `Fields:`. List each field as `- <field>: <type>, required|optional`, with
-`, options: <a> | <b>` for choice lists. Use `Fields: none` for a screen without fields.
-Run impeccable's critique and polish and the emil-design-eng checklist before sign-off.
-Record notes and `Result: passed` under `## Critique`, `## Polish` and `## Emil checklist` in CHECKS.md.
-Commit the folder, then run `forge decision new prototype-design` and record the owner's or FDE's
-approval with `forge decision accept prototype-design --by "<name>"`.
+**Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
+purpose, users, records, fields, choice-list options and key flows. Use impeccable and
+emil-design-eng. Run impeccable's init when PRODUCT.md is missing. Make the screens in a Claude
+Design artifact with a shadcn design system and named shadcn components. On a Codex-only host
+without an artifact tool, make HTML artboards in the repo. Keep the canvas available for the
+customer and the sign-off review. New clients get this process at init; existing clients can use
+their current brief and design after upgrade and sync. Client sign-off does not require a root
+DESIGN.md, SCREENS.md or CHECKS.md, or a specific `Things it keeps track of` heading.
+When the canvas has a SCREENS.md screen list, add `Build: now` or `Build: later` to each screen.
+Put the whole product on the canvas, every screen, state and flow, later ones too, and mark
+`Build: now` only what the first stories build.
+Before sign-off, use impeccable's critique and polish and the emil-design-eng checklist. The owner
+or FDE can approve the canvas with `forge decision new prototype-design` and
+`forge decision accept prototype-design --by "<name>"`.
 
 For each story that adds a screen or changes a flow, use this design process before its cold read.
 Save the folder under `docs/design/<KEY>/`. End `## What changes for you` with
@@ -909,8 +909,8 @@ Save the folder under `docs/design/<KEY>/`. End `## What changes for you` with
 One plan approval covers that exact folder. A changed folder needs a new tree id and approval.
 For small changes to existing screens that add no screen and change no flow, use
 `Design: none (<why>)` instead. Backend-only stories need no canvas. Earlier approved stories keep working.
-The build applies the app's DESIGN.md theme, type and colours to the starter and maps each screen's
-components and fields from SCREENS.md. Workers and reviewers receive that design context.
+The build applies any existing app theme and follows the approved story design, including its
+components and fields. Workers and reviewers receive that design context.
 
 **Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
 goes through every item from `forge decision open` and every answer on the answers page: our
@@ -921,16 +921,20 @@ our default or the agent, so record each as the client, salesperson or developer
 write `forge decision new
 client-signoff` (customer, demo address for a working build, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded. Put `docs/design/prototype/ (<tree id>)` under `## Signed design`,
-demo outcomes and their tests under `## Proof` for a working build, and settled choices under `## Decisions`.
-Sign-off checks the design records above and the brief's nonempty `## Things it keeps track of`.
-It runs one completeness check against the brief's Summary, Users, Things it keeps track of and Key flows,
-with SCREENS.md and the images. Missing screens, fields, options or flows hold sign-off.
+before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
+and settled choices under `## Decisions`.
+Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
+run on main is green. Its completeness review must pass after judging the screens against the whole
+brief, including its purpose, users, records, fields, choices and key flows; it does not require a
+separate screen list. Missing screens, fields, options or flows hold sign-off. When a precondition is
+missing, the refusal lists every gap and the next action for each. Existing clients can complete
+sign-off with the brief and design they have after upgrade and sync; they do not need to add
+prototype design files for this gate.
 The check uses Claude's `claude-opus-5-5` at high effort, independent of `[models.design]`.
 Without Claude it uses Codex's `gpt-6.1-sol` at high and says it fell back.
-Fix gaps, approve the changed canvas again, then retry sign-off.
-A canvas-only sign-off needs no working build. A working build also gets one strict whole-product review.
-Forge reuses both passed results while what they checked stays unchanged.
+Fix gaps, then retry `forge decision accept client-signoff`.
+A canvas-only sign-off needs no working build. A working build also gets one strict whole-product
+review with no serious findings. Forge reuses passed results while what they checked stays unchanged.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
 Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
@@ -953,9 +957,11 @@ A requested working prototype gets a light review that blocks only on P0 finding
 A `Not done` against the item's own approved Done-when still blocks at any priority.
 Full proof is due at sign-off.
 
-After sign-off, every new story copies Signed design, Proof and Decisions into
+After sign-off, every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work
-or production risks. Start from the signed canvas or a newer design approved with the plan.
+or production risks. Start from the prototype canvas or a newer design approved with the plan.
+Plan the first stories only from screens marked `Build: now`. A `Build: later` screen stays on
+the signed canvas as the source for a later story.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
@@ -970,9 +976,9 @@ During both halves of the interview, ask one question at a time in plain words f
 may not be technical.
 
 Before the prototype, take the product answers from the client notes: what the app is for, who
-uses it, what it keeps track of with each thing's fields, and the options of each choice list.
-Write the answers in docs/product/BRIEF.md under ## Summary, ## Users and ## Things it keeps track of. Record
-the options for each choice list with the thing it belongs to. The prototype uses these answers.
+uses it, the records and fields it needs, the options of each choice list, and the key flows.
+Write them in docs/product/BRIEF.md. Record the options for each choice list with the thing it
+belongs to. The prototype and sign-off review use the whole brief.
 
 At the start, write docs/product/CONSTITUTION.md with every default from Constitution defaults
 filled in, and raise a default with the FDE only when the notes contradict it.
