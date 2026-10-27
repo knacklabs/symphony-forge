@@ -2,12 +2,20 @@
   "base": "81c662ef9bbc25089339a02ec6c786cf0536545e",
   "branch": "task/FORGE-EXPAND-1-EXPAND",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-SIGNOFF-1/OPENLIST",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T11:14:40.036459+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d2e537c1d495fe4b314a071a35bdfd2a8ea6b4f0",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
