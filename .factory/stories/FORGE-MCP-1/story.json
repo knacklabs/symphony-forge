@@ -1,10 +1,18 @@
 {
   "doc": "plans/FORGE-MCP-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-27T05:36:51.671158+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T06:14:01.678944+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-27T06:19:54.659128+00:00",
+      "step": "read"
     }
   ],
   "title": "Client apps ship an MCP server so agents can use their features",
