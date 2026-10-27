@@ -119,11 +119,6 @@ def cells(value: str) -> list[str]:
     return [part.strip(" `") for part in value.split(",") if part.strip(" `—-")]
 
 
-def moving_parts(text: str) -> str:
-    found = re.search(r"^New moving parts:.*$", text, re.M)
-    return found[0].strip() if found else "New moving parts: (the story doc has no such line)"
-
-
 def task(top: Path, item: str, commit: str | None = None) -> tuple[str, dict[str, str], dict[str, str]]:
     """A task's story doc, sections and row, from the given commit or its live plan."""
     from forge import story  # story imports review indirectly
@@ -193,7 +188,7 @@ def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any], base: 
             parts.append(task(top, item)[0])
     else:
         parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
-    parts.append(functional_check(top, base, commit))
+    parts.append(commit_paragraph(top, base, "Functional check:", commit))
     if branch_diff and (approach := before_coding(top, base, commit)):
         parts.append(approach)
     if branch_diff and (proof := commit_paragraph(top, base, "Proof list:", commit)):
@@ -348,16 +343,17 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         values.update(
             name=row.get("name", ""), delivers=row.get("what it delivers", ""),
             scope=_bullets(scope), tests=_bullets(tests),
-            outside=_bullets(p for p in changed if not any(_within(p, s) for s in scope + tests)),
+            outside=_bullets(p for p in changed if not any(
+                p.startswith(s.rstrip("/") + "/") or fnmatch(p, s) for s in scope + tests)),
             covered=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n in covers),
             guidance=_bullets(parsed["details"][n] for n in covers if n in parsed["details"]),
             context=_bullets(story.item(parsed, n, False) for n in parsed["done"] if n not in covers),
             risks=doc.get("Risks", "Risks: none"), notes=doc.get("Notes", "none"),
-            moving_parts=moving_parts(doc_text))
+            moving_parts=re.search(r"^New moving parts:.*$", doc_text, re.M)[0].strip())
         chosen = ["task", "proof-list", "rules"]
         if row.get("user-facing", "").lower() in ("yes", "true"):
             chosen.insert(1, "functional-check")
-            values["functional_check"] = functional_check(top, base) or (
+            values["functional_check"] = commit_paragraph(top, base, "Functional check:") or (
                 "None: the worker's last commit message has no `Functional check:` paragraph.")
     else:
         chosen = ["fix", "proof-list", "rules"]
@@ -724,14 +720,6 @@ def _cited_changed(top: Path, history: list[dict[str, Any]], key: tuple[str, str
     return False
 
 
-def functional_check(top: Path, base: str, head: str = "HEAD") -> str:
-    """The worker's functional check: the `Functional check:` paragraph of its last commit message,
-    to the end. That's the branch's newest commit that isn't a merge or only Forge's records (an
-    empty commit counts); an older commit's check never counts. Git holds it; Forge copies it,
-    never stores it."""
-    return commit_paragraph(top, base, "Functional check:", head)
-
-
 def before_coding(top: Path, base: str, head: str = "HEAD") -> str:
     """Read the newest planning lines, ahead of any inherited parent approach."""
     for _, message, files in repo.commit_log(top, base, head):
@@ -840,11 +828,6 @@ def proof_list(top: Path, base: str, report: str | None = None) -> str:
 
 def _bullets(items: Any) -> str:
     return "\n".join(f"- {item}" for item in items) or "- none"
-
-
-def _within(path: str, entry: str) -> bool:
-    """A changed path is inside a Scope entry: the same file, under the folder, or a glob match."""
-    return path == entry or path.startswith(entry.rstrip("/") + "/") or fnmatch(path, entry)
 
 
 # --- the round -------------------------------------------------------------------------

@@ -27,7 +27,7 @@ pytestmark = pytest.mark.platform
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_completeness_always_uses_codex(repo, tmp_path, monkeypatch, adopted):
+def test_1_completeness_always_uses_codex(repo, tmp_path, monkeypatch, adopted):
     fix, answers, queue = (_adopted_client if adopted else _client)(repo, tmp_path, monkeypatch)
     Image.new("RGB", (1, 1)).save(fix / "docs/design/prototype/order-detail.png")
     repo.git("add", "docs/design/prototype/order-detail.png", cwd=fix)
@@ -45,7 +45,7 @@ def test_completeness_always_uses_codex(repo, tmp_path, monkeypatch, adopted):
     assert "design_checked:" in page.read_text("utf-8")
 
 
-def test_engine_failure_names_engine_repair(repo, tmp_path, monkeypatch):
+def test_2_engine_failure_names_engine_repair(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     page = _decision(fix, answers)
     queue.write_text(json.dumps([{"exit": 2, "say": "Codex could not start", "report": None}]), encoding="utf-8")
@@ -60,7 +60,7 @@ def test_engine_failure_names_engine_repair(repo, tmp_path, monkeypatch):
 
 @pytest.mark.skipif(os.name != "nt", reason="Exercise the native Windows process boundary in Windows CI")
 @pytest.mark.parametrize("count", [80, 400])
-def test_windows_completeness_reviews_all_screen_images(repo, tmp_path, monkeypatch, count):
+def test_3_windows_completeness_reviews_all_screen_images(repo, tmp_path, monkeypatch, count):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     folder = fix / "docs/design/prototype"
     for number in range(count):
