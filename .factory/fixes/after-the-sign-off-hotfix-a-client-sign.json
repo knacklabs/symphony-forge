@@ -1,6 +1,13 @@
 {
   "base": "930f7311b9eac452fd8c8dd9f9d64d26113411e4",
   "branch": "fix/after-the-sign-off-hotfix-a-client-sign",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17d96-deeb-7423-8f6d-b49e2384aaff",
+    "head": null,
+    "start": "d8ec92f4e2b5137f6a0139a848105bcd46d3c253"
+  },
   "done_when": "The sign-off review gets the green full run as its test evidence with no separate forge test run, and a failed sign-off or completeness review names the saved raw report path",
   "fix_kind": "backend",
   "kind": "fix",
