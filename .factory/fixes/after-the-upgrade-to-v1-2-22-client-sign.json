@@ -4,12 +4,20 @@
   "done_when": "Client sign-off passes on a green full run, matching answers, a strict review with no serious findings and a clean completeness review, and when something is missing one refusal lists every gap.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T12:46:34.844774+00:00",
       "step": "start"
     }
   ],
-  "why": "After the upgrade to v1.2.22, client sign-off loops because the ritual checks added in v1.2.21 stop it one missing record at a time."
+  "stuck": {
+    "close": null,
+    "head": "7d5791eb0defd84fee875fc0a1d8db19172b4562",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the upgrade to v1.2.22, client sign-off loops because the ritual checks added in v1.2.21 stop it one missing record at a time.",
+  "worker": "codex"
 }
