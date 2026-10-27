@@ -21,10 +21,12 @@
   the change and why deleting does not solve it, the simplest option with F x H and 2 x C for
   each check, retry, guard or flag it adds, and the code it reuses. The cold read and the review
   apply the same principles. (Source: your request, 27 Oct 2026)
-- A cold-read or review note that asks for added work, such as another check, retry, guard or
-  flag, shows its F x H and 2 x C. When F x H is less than 2 x C, the note does not stop the
-  work, and Forge keeps it in Known issues as a known limit. Security, data loss and migration
-  notes still stop the work. (Source: your request, 27 Oct 2026)
+- A cold-read or review note that asks for added work beyond the Done-when items, such as another
+  check, retry, guard or flag, shows its F x H and 2 x C. When F x H is less than 2 x C, the note
+  does not stop the work. A review keeps it in Known issues as a known limit, and a cold read
+  keeps it with its disposition in the read notes, as today. Security, data loss and migration
+  notes still stop the work. A check that a Done-when item promises is not added work: when it
+  is missing, the work stops, as today. (Source: your request, 27 Oct 2026)
 - Each item in a story plan's "What changes for you" ends with its source: a client note, a brief
   answer, a decision, a screen marked Build now at sign-off, a fixed rule of the app, or your own
   request with its date. (Source: your request, 27 Oct 2026)
@@ -37,7 +39,9 @@
   For a large addition, it also says that the addition is large and why. Nobody is stopped
   without a reason that they can act on. (Source: your request, 27 Oct 2026)
 - Forge checks plans and code against the screens marked Build now at sign-off, never against the
-  canvas. The canvas can still show the whole product, with its later screens.
+  canvas. Until sign-off can mark screens Build now, the Build now screens are the ones that the
+  story's Done-when items name. Workers build, and reviews check, only the fields of those
+  screens. The canvas can still show the whole product, with its later screens.
   (Source: your request, 27 Oct 2026)
 - When a worker or planner thinks of something useful that nobody asked for, it adds one line to
   the repo's idea list (`plans/ideas.md`) and builds nothing for it. The starter's fixed defaults
@@ -61,9 +65,9 @@ so a reader cannot tell an asked-for field from a guess.
 ## Done when
 
 1. **A new app's constitution, the worker's planning lines, the cold read, the review and Forge's own review rules state the four principles, with the scales for F, H and C.**
-2. **A cold-read or review note that asks for added work shows its F x H and 2 x C. When F x H is less than 2 x C, the note does not hold the work, and Forge keeps it as a known limit. Security, data loss and migration notes still hold the work.**
+2. **A cold-read or review note that asks for added work beyond the Done-when items shows its F x H and 2 x C. When F x H is less than 2 x C, the note does not hold the work: a review keeps it in Known issues as a known limit, and a cold read keeps it with its disposition in the read notes. Security, data loss and migration notes still hold the work, and so does a missing check that a Done-when item promises.**
 3. **Every story plan names a source for each screen, field, endpoint, tool and setting that it adds.**
-4. **The cold read and the review report an addition with no source as "Not asked for". A small one is advice. A large one (a new table, background job, workflow or settings flag, or about 150 lines or more) holds the work until it names a source or moves to the idea list. The note says what was added, which sources were checked, the two ways forward, and for a large one why it is large. Plans and code are checked against the screens marked Build now at sign-off, never against the canvas.**
+4. **The cold read and the review report an addition with no source as "Not asked for". A small one is advice. A large one (a new table, background job, workflow or settings flag, or about 150 lines or more) holds the work until it names a source or moves to the idea list. The note says what was added, which sources were checked, the two ways forward, and for a large one why it is large. Plans and code are checked against the screens marked Build now at sign-off, or until sign-off can mark them, the screens that the story's Done-when items name, never against the canvas.**
 5. **A worker or planner who thinks of something useful that nobody asked for adds one line to the idea list and builds nothing for it, and nothing is built beyond the starter's fixed defaults just in case.**
 6. **A new repo gets these rules from the start, and an existing repo gets them on upgrade with forge sync, with its approved constitution unchanged.**
 
@@ -82,8 +86,9 @@ Trade-off: in a review, a worker can clear a "Not asked for" note with a `Source
 commit that names a real client note, brief answer, decision or Build now screen. The plan's
 approved items do not change, so no new approval is needed. The reviewer opens the named source.
 
-Trade-off: until sign-off marks screens Build now (the sign-off story adds that mark), every
-signed screen counts as Build now.
+Trade-off: until sign-off can mark screens Build now (the sign-off story adds that mark), the
+Build now screens are the ones that the story's Done-when items name. A field that the canvas
+shows on such a screen, and that no source asks for, is not built.
 
 Trade-off: two branches that each add an idea line can conflict on `plans/ideas.md` at merge.
 `forge start` already carries idea lines into branches, so this is not new. Keep both lines.
@@ -107,6 +112,13 @@ import forge.
   "live with", and `src/forge/known_issues.py` keeps the finding as lived with: the known limit.
   A finding under Security or Data loss, or one that names a migration, keeps its Harm-4 floor,
   and `score.bar` still gives "block".
+- A `Not done` finding that names an approved Done-when item is marked `required_done_when`
+  (`src/forge/review.py` line 1067) and blocks at any score (`blocking`, line 229). Text P2 keeps
+  the two apart in words: work that a Done-when item promises is `Not done`, and it keeps
+  blocking; work beyond the Done-when is added work under F x H against 2 x C, and its title is
+  never `Not done`. No close code changes.
+- In a cold read, a note below the bar keeps its disposition in the read notes (`src/forge/story.py`
+  line 389), as today. No cold-read code changes, and nothing new goes to Known issues.
 - `added_work_min_gain`, `always_block` and the `added-work` block do not change, and they still
   apply on top when a repo sets them. No score, close or review code changes for this rule.
 
@@ -170,11 +182,14 @@ Four principles govern every change.
 then:
 
 ```
-Mark each finding that asks for added work (another check, retry, guard or flag) with a body line
-`Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less than 2 x C, score its Gain
-2 or less: it is a known limit, which Forge keeps in Known issues, and it does not hold the work.
-A finding under Security or Data loss, or one that names a migration, keeps its Harm floor and
-still holds the work.
+Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
+or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
+than 2 x C, score its Gain 2 or less: it is a known limit and does not hold the work. A review
+keeps it in Known issues; a cold read keeps it with its disposition in the read notes. A finding
+under Security or Data loss, or one that names a migration, keeps its Harm floor and still holds
+the work. A check that a Done-when item promises is not added work: report it missing as
+`Not done: <the item>`, which holds the work at any score. Never title an added-work finding
+`Not done`.
 ```
 
 It sits outside the `## What counts` boundary, so
@@ -245,9 +260,10 @@ Title an addition with no source `Not asked for: <what was added>`. Write its ev
 words for the developer and the client: what the change adds, with its file and line or plan item;
 which sources you checked and found silent; and the two ways forward: name its source, or remove it
 and add one line for it to `plans/ideas.md`. Check plans and code against the screens marked Build
-now at sign-off, never against the canvas, which can show later screens. A repo signed off before
-sign-off marked Build now treats every signed screen as Build now. What the app's fixed rules or
-the starter already give is not an addition. A large addition goes under the Raise line above: say
+now at sign-off, never against the canvas, which can show later screens. Until sign-off can mark
+screens Build now, the Build now screens are the ones that the story's Done-when items name. What
+the app's fixed rules or the starter already give is not an addition. A large addition goes under
+the Raise line above: say
 that it is large and why, score it Gain 4, and Work 1 or 2, because either way forward is small,
 so it holds the work, and include `Case: normal use - <the addition>`. A smaller addition is
 advice: in a cold read start it with `Advisory:`, in a review report it as P2, and score it Gain 1
@@ -332,6 +348,22 @@ and synced to `.claude/skills/forge/standards.md` and `.codex/skills/forge/stand
   "The starter's fixed rules are the base of each app. Build nothing beyond them just in case:
   modules, contracts, a schema per module and `services.toml` already leave room to grow."
 
+**I. Screens in the Build now scope (SOURCES).** Three places tell workers and reviewers to build
+every field of a screen's `SCREENS.md` section. Each one narrows to the Build now screens:
+
+- `src/forge/templates/review.md`, the `<!-- design-screens -->` block: replace its first sentence
+  with "Report as P1 a built screen that lacks a component or field its section of
+  `${design_folder}SCREENS.md` lists, when that screen is a screen marked Build now at sign-off,
+  or, until sign-off can mark screens Build now, a screen that this story's Done-when items name.
+  Do not report a field missing from any other screen." Keep the next two sentences.
+- `src/forge/templates/brief.md`, the `<!-- if screen-design -->` block: replace its sentence with
+  "Build each screen you touch that is marked Build now at sign-off, or, until sign-off can mark
+  screens Build now, that your Done-when items name, with the components and fields its section of
+  `${design_folder}SCREENS.md` lists. Build nothing for any other screen or field."
+- `src/forge/worker.py`, the continued brief (the `if owned_design:` string near line 598): the
+  same sentence as the brief, with `{owned_design}` in place of `${design_folder}`. This is a text
+  change in one string; the brief and its continued copy must stay the same.
+
 The prototype's light review (`review-light.md`), the sign-off review and the design check keep
 their own blocks and do not change: before sign-off the canvas is the scope.
 
@@ -359,7 +391,9 @@ their own blocks and do not change: before sign-off the canvas is the scope.
      `tests/test_fix_lean_review_prompts.py::test_1` (`env`, the `READER` reader, `forge read` for
      the cold-read prompt, `env.close` and `env.prompt()` for the review prompt). Each prompt has
      `Four principles govern every change.`, `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`
-     and `When p is less than 2 x C, score its Gain 2 or less`. Then, with the scored-review stub
+     `When p is less than 2 x C, score its Gain 2 or less`,
+     `a cold read keeps it with its disposition in the read notes` and
+     `A check that a Done-when item promises is not added work`. Then, with the scored-review stub
      that `tests/test_score_notes.py` uses (`_scored`), a review that returns one finding with
      `Adds work: a retry; F 1 x H 1 = 1; 2 x C = 4` and `Gain 2, Work 2, Harm 1` lets close pass
      and lists it under Known issues; a finding raised under Security with
@@ -390,6 +424,12 @@ their own blocks and do not change: before sign-off the canvas is the scope.
      takes the same path in both repos.
    - `tests/test_fix_lean_review_prompts.py::test_1` keeps passing unchanged: it proves text B is
      the same in both prompts.
+   - Text I. Test: change `tests/test_design_context.py::test_1`, which already runs the first
+     and the continued `forge work` brief and the review for a story with its own design folder,
+     on new and adopted repos and both worker families: in the cases with a design folder, the
+     brief has `that your Done-when items name` and `Build nothing for any other screen or field`,
+     and the review prompt has `Do not report a field missing from any other screen`. Its current
+     assertions (`Report as P1 a built screen`, `component or field`) stay true.
 5. Extras go to the idea list; the starter is the base (SOURCES).
    - Texts F (the idea-list line and the cold-read bullet), G and H.
    - Test: `tests/test_build_only_what_was_asked.py::test_3_useful_extras_go_to_the_idea_list`,
@@ -439,7 +479,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | PRINCIPLES | The four principles | The principles in the constitution outline, the worker's planning lines, the cold read, the review and Forge's own review rules, and the F x H against 2 x C rule for added work, on new and existing repos | 1, 2, 6 | `src/forge/templates/cold-read.md`, `src/forge/templates/review.md`, `src/forge/templates/brief.md` (`## Build simple`), `src/forge/templates/skill.md` (`## App constitution`), `AGENTS.md` (`## Review rules`), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `tests/test_four_principles.py` (new) | `tests/test_four_principles.py` (`test_1`, `test_2`); `tests/test_fix_lean_review_prompts.py::test_1` unchanged | | no | |
-| SOURCES | Sources and the idea list | The source on each plan item, the "Not asked for" note (advice when small, holding the work when large), the approved items in the task review, the idea-list rule and the starter base in the brief, the guide and the standards page, on new and existing repos | 3, 4, 5 | `src/forge/templates/story.md`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md`, `src/forge/review.py` (one value in `instructions`), `src/forge/templates/brief.md`, `src/forge/templates/skill.md` (`## Save decisions and ideas`, `## Planning a story`, `## Cold read findings`), `src/forge/standards.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/standards.md` and `.codex/skills/forge/standards.md` (rewritten by `forge sync`), `tests/test_build_only_what_was_asked.py` (new) | `tests/test_build_only_what_was_asked.py` (`test_1`, `test_2`, `test_3`) | PRINCIPLES | no | |
+| SOURCES | Sources and the idea list | The source on each plan item, the "Not asked for" note (advice when small, holding the work when large), the approved items in the task review, the Build now scope for screens in the brief and the review, the idea-list rule and the starter base in the brief, the guide and the standards page, on new and existing repos | 3, 4, 5 | `src/forge/templates/story.md`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md`, `src/forge/review.py` (one value in `instructions`), `src/forge/worker.py` (one string in the continued brief), `src/forge/templates/brief.md`, `src/forge/templates/skill.md` (`## Save decisions and ideas`, `## Planning a story`, `## Cold read findings`), `src/forge/standards.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/standards.md` and `.codex/skills/forge/standards.md` (rewritten by `forge sync`), `tests/test_build_only_what_was_asked.py` (new), `tests/test_design_context.py` (`test_1`) | `tests/test_build_only_what_was_asked.py` (`test_1`, `test_2`, `test_3`); the changed `tests/test_design_context.py::test_1` | PRINCIPLES | no | |
 
 SOURCES waits for PRINCIPLES. Both change `cold-read.md`, `review.md`, `brief.md` and `skill.md`,
 in different paragraphs, so Forge refuses to start SOURCES while PRINCIPLES is open. SOURCES' text
@@ -478,8 +518,9 @@ New moving parts: none
   Forge keeps it as lived with, and FORGE-BAR-1's `Adds work:` line is now asked for on every read
   and review, with no code change; (4) in a review, a `Source:` commit line that names a real
   source clears a large-addition note with no new plan approval; (5) workers and planners write
-  the idea line in their own branch, with no `forge start` call; (6) until sign-off marks Build
-  now, every signed screen counts as Build now; (7) the prototype's light review and the sign-off
+  the idea line in their own branch, with no `forge start` call; (6) until sign-off can mark Build
+  now, the Build now screens are the ones that the story's Done-when items name, and workers and
+  reviews build and check only their fields (coordinator, round 1); (7) the prototype's light review and the sign-off
   review do not change; (8) sync does not add `## Principles` to an approved constitution; (9) the
   title stays "Build only what was asked", because the story's state and roadmap entry hold that
   title.
