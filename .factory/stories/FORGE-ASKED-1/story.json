@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-ASKED-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-27T08:52:56.186628+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Build only what was asked",
+  "touches": 0
+}

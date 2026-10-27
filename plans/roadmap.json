@@ -432,6 +432,12 @@
       "title": "Client apps ship an MCP server so agents can use their features",
       "status": "pending",
       "order": 102
+    },
+    {
+      "key": "FORGE-ASKED-1",
+      "title": "Build only what was asked",
+      "status": "pending",
+      "order": 103
     }
   ],
   "epics": [
