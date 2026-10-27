@@ -1,0 +1,13 @@
+{
+  "base": "81c662ef9bbc25089339a02ec6c786cf0536545e",
+  "branch": "task/FORGE-EXPAND-1-EXPAND",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-SIGNOFF-1/OPENLIST",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T11:14:40.036459+00:00",
+      "step": "start"
+    }
+  ]
+}
