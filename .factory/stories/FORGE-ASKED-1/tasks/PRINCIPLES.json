@@ -7,13 +7,54 @@
     "head": null,
     "start": "f66f4718db20417e0302c692dd025b1a040766ae"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/cold-read.md",
+      "file": "src/forge/templates/cold-read.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 117,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Missing checks promised by Done-when still hold the work",
+      "work": 3
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8315c7552d763a111f9441174723796ed74953c74d4d9e2d16331860a449fbe2",
+    "changed": "73fcdd54ba1e939044db9fee8208fe8cab507236d10bc6fb3aa7cc5f772db387",
+    "commit": "14abd2db4f6069501122060379063e68defccc62",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 3, Harm 2\nRaise: Not done\nCase: normal use - a cold reader reports a missing promised check with Gain 3, Work 3, Harm 2.\nThis line says `Not done` holds at any score, but `src/forge/score.py:137\u2013142` evaluates cold-read notes solely through the score bar. Those scores do not hold; `score.py:75` automatically records a keep disposition, and `src/forge/story.py:721` allows the read to pass. Unlike reviews, cold reads have no `required_done_when` override. Consequently, item 2's promised-check exception is unmet. Make the cold-read instructions or handling ensure these notes actually block, and cover this case through `forge read`; the added test currently returns no cold-read findings.",
+        "file": "src/forge/templates/cold-read.md",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 2,
+        "line": 117,
+        "priority": "P1",
+        "title": "Not done: Missing checks promised by Done-when still hold the work",
+        "work": 3
+      }
+    ],
+    "id": "1feeac39-8f89-4e8b-858f-da1c6e8c4841",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T14:34:44.105580+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T14:44:02.391657+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
