@@ -4,34 +4,19 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- A rollback of a client app's code keeps its data working. A migration may add tables and columns, but a drop, rename or type change waits until the live release no longer uses that column or table.
+- The database guide states expand then contract: add first, remove two releases later.
+- Close reads the SQL and Python migration files of each new migration in both starters, and refuses a drop, rename or type change unless the story's Contract line says the live release no longer uses it.
 
 ## Why
 
-Client migrations keep the previous release working
-
-
+A Mainline rollback reverts code only and leaves the database at the new migration, so old code that still reads a removed or renamed column fails. The rule is prose only today, and close reads no migration file, so nothing stops a destructive migration.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **Close refuses a new migration that drops, renames or changes the type of a column or table, and names the Contract line as the way past it, in a new client repo and in a repo adopted on an earlier release.**
+2. **With a Contract line that says the live release no longer uses the column or table, the same migration passes close.**
+3. **The database guide and the coordinator and worker guide state expand then contract in the same change.**
 
 ## Risks
 
