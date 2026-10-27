@@ -1,6 +1,13 @@
 {
   "base": "d89a55d633b5db320139e269ccc58e3b96fd0724",
   "branch": "task/FORGE-SIGNOFF-1-OPENLIST",
+  "chat": {
+    "approval": "eee40133eb4349971e36ff140f0a50244bfb0ab070555cde5ff09f8b05436fe3",
+    "claude": null,
+    "conversation": "01a17cac-4f3f-7802-85ce-2df17bdc976f",
+    "head": null,
+    "start": "96c44fa2edac48fc7ab11afa66549eb013a1ce00"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
