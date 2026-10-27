@@ -82,6 +82,9 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
 ## Structure only where its concern exists
 
 Structure earns its place by solving a problem the code has today. These rules say where.
+Add an abstraction layer only at the edge to an outside service. Keep business logic in domain
+services and pure computation in helpers. Required module boundaries, controllers and data
+access below keep their roles; do not wrap them in extra layers.
 
 - **One deployable app.** Build a modular monolith: one backend, one database, one module per
   business domain. No microservices, and no planning or abstractions for future growth: one app is
@@ -118,13 +121,13 @@ Structure earns its place by solving a problem the code has today. These rules s
 The starter's modules are `libs/auth`, `libs/projects`, `libs/organisations` and `libs/history`.
 
 A new client app uses the smallest stack that runs its first story: a pnpm workspace with NestJS,
-Prisma and Postgres behind a React app built with Vite and React Router. Nx builds `apps/web` and
-`apps/api`; each module has a `contracts` library for its schemas and types and a `server` library
-for its Nest code. `libs/core/server` holds shared Nest code, and `libs/shared/util` holds general
-helpers. Forge's `tests` check runs the test command. An existing app keeps its package manager,
-lockfile, Dockerfile, test command and folder layout. Anything else arrives only when a story's
-`New moving parts` line names it, and that includes Redis and job queues, Terraform, OIDC sign-in
-and a monitoring stack.
+Prisma and Postgres behind a React app built with Vite and React
+Router. Nx builds `apps/web` and `apps/api`; each module has a `contracts` library for its schemas
+and types and a `server` library for its Nest code. `libs/core/server` holds shared Nest code, and
+`libs/shared/util` holds general helpers. Forge's `tests` check runs the test command. An existing
+app keeps its package manager, lockfile, Dockerfile, test command and folder layout. Anything else
+arrives only when a story's `New moving parts` line names it, and that includes Redis and job queues,
+Terraform, OIDC sign-in and a monitoring stack.
 
 Forge's package ships a short how-to per concern for this stack in `forge/templates/conventions/`:
 `stack.md`, `backend.md`, `api.md`, `database.md`, `frontend.md`, `testing.md` and `security.md`,
