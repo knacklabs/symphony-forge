@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/open_decisions.py\tPrevent source updates from following links outside the checkout\tFORGE-SIGNOFF-1/OPENLIST",
+      "kind": "bug",
+      "path": "src/forge/open_decisions.py",
+      "line": 182,
+      "text": "Prevent source updates from following links outside the checkout",
+      "from": "blocking",
+      "item": "FORGE-SIGNOFF-1/OPENLIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/sync.py\tGate: unrelated spec-rule changes exceed the OPENLIST scope\tFORGE-SIGNOFF-1/OPENLIST",
+      "kind": "bug",
+      "path": "src/forge/sync.py",
+      "line": 655,
+      "text": "Gate: unrelated spec-rule changes exceed the OPENLIST scope",
+      "from": "blocking",
+      "item": "FORGE-SIGNOFF-1/OPENLIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/open_decisions.py\tNot done: a question that is not open is refused by name with the next step",
+      "kind": "edge",
+      "path": "src/forge/open_decisions.py",
+      "line": 143,
+      "text": "Not done: a question that is not open is refused by name with the next step",
+      "from": "review",
+      "item": "FORGE-SIGNOFF-1/OPENLIST",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
