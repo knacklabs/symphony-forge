@@ -33,7 +33,7 @@
   an app made from an older starter, the feature command builds the feature without tools and
   says so.
 
-Design: docs/design/FORGE-MCP-1/ (to be added before approval)
+Design: docs/design/FORGE-MCP-1/ (a1de7c1d7f5c5bf9a059d738f91383c384bea40b)
 
 ## Why
 
