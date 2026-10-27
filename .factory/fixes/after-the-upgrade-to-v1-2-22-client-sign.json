@@ -1,0 +1,15 @@
+{
+  "base": "d051e3adb187d70d8625fa23d98b0b245d9adecd",
+  "branch": "fix/after-the-upgrade-to-v1-2-22-client-sign",
+  "done_when": "Client sign-off passes on a green full run, matching answers, a strict review with no serious findings and a clean completeness review, and when something is missing one refusal lists every gap.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T12:46:34.844774+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After the upgrade to v1.2.22, client sign-off loops because the ritual checks added in v1.2.21 stop it one missing record at a time."
+}
