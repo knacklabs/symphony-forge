@@ -15,7 +15,7 @@
       "gain": 5,
       "harm": 3,
       "line": 228,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,7 +28,7 @@
       "gain": 5,
       "harm": 3,
       "line": 504,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,7 +41,7 @@
       "gain": 3,
       "harm": 3,
       "line": 105,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,7 +54,7 @@
       "gain": 3,
       "harm": 3,
       "line": 63,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -67,7 +67,7 @@
       "gain": 3,
       "harm": 3,
       "line": 134,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -78,67 +78,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "cc8b895f4fb356d5b584d9265248334a9a657a117db1a787355778c2e0df3c4a",
-    "changed": "8f607c6617d734e7c88094ffbd57b5749a2ccfa8fe9bf2a9dd85d11ff1bad1f8",
-    "commit": "6c108444b191ac08bc5f315814716f3d0256016e",
+    "branch_diff": "66aff6109ab7e945f9c09426758303b3e0966e45ec74c3e8dad3eb4728b77823",
+    "changed": "88b6f7d38b4b74a81dfb0b31980b24eec1141686463a64656b0c019e5b85dc9c",
+    "commit": "fe7df3160ea0ee789af74389ab1739483d873bc6",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional. Case: normal use - running either documented clients/jobs command. The filters marker encloses the entire `const projectFilters = { ... };` declaration in the starter contracts (lines 15\u201324), but `_filters` returns only its property lines. Replacing that section therefore emits invalid top-level TypeScript and leaves the renamed filters variable undefined. Every generated contracts package fails to compile. Preserve the declaration around the generated properties.",
-        "file": "src/forge/feature_api.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 228,
-        "priority": "P1",
-        "title": "Preserve the filters object declaration in generated contracts",
-        "work": 2
-      },
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional. Case: normal use - generating the documented clients or jobs API. This replacement recognizes `project:` but excludes `project[`, so the starter's `encodeCursor` parameter becomes `featureItem` while `project[sortBy]` becomes `client[sortBy]` or `job[sortBy]`. The source expression is in projects.service.ts:63. Those identifiers are undeclared, causing every generated server package to fail compilation; bypassing type checks also breaks cursor creation. Rename indexed references consistently with the parameter.",
-        "file": "src/forge/feature_api.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 504,
-        "priority": "P1",
-        "title": "Rename indexed cursor references along with their parameter",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - generating a feature with two links, such as `client:link(clients)` and `project:link(projects)`. Each iteration emits `const linkedInput`, `crossOrganisation`, `crossRefused`, `deletedLink` and `deletedRefused`, and line 121 concatenates them into one function scope. The resulting API test has duplicate lexical declarations and cannot load in Vitest. Give each field's checks a separate block or distinct variable names.",
-        "file": "src/forge/feature_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 105,
-        "priority": "P1",
-        "title": "Scope the generated validation case for each link field",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - clients have a name, jobs require a client link, and tasks link to jobs. The generated tasks tests call `linkedItem` to create a job. This helper copies the required `clientId` property's documentation example into the request without creating its client. Link examples come from the fixed kind-table sample, so the jobs API rejects that nonexistent client with 400 while this helper expects 201. Generate valid required dependencies through their APIs so linked features' tests run successfully.",
-        "file": "src/forge/feature_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 63,
-        "priority": "P1",
-        "title": "Create required linked dependencies instead of using example UUIDs",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - generating `status:status(active|planned)`. `_field_cases` selects the kind-table sample `planned`, but this line also assigns `options[1]` (`planned`) to the supposedly nonmatching record. Both records match the filter, so the generated assertions expecting one ID and one CSV data row fail despite a correctly functioning API. Select an option unequal to the matching record's actual value.",
-        "file": "src/forge/feature_tests.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 134,
-        "priority": "P1",
-        "title": "Choose a status filter fixture different from the matching value",
-        "work": 2
-      }
-    ],
-    "id": "68e2edc9-2bf0-421f-840d-6a3de85e17fc",
-    "status": "blocked"
+    "findings": [],
+    "id": "945988bc-c493-4759-944d-1672e621b633",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T17:04:44.116978+00:00",
@@ -146,6 +95,10 @@
     },
     {
       "at": "2026-10-27T04:17:35.315175+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T04:23:20.974694+00:00",
       "step": "review"
     }
   ],
