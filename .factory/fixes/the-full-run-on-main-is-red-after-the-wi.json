@@ -1,0 +1,15 @@
+{
+  "base": "0d5ea6249dd4ed3a361b897519c3d2994d36b6ac",
+  "branch": "fix/the-full-run-on-main-is-red-after-the-wi",
+  "done_when": "tests/test_rules.py and tests/test_signoff_reuse.py pass on this branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T19:29:35.115746+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The full run on main is red after the Windows completeness hotfix: review.py is 1,215 lines (over the 1,200 ceiling), a new test name cites no rule, and the sign-off reuse test still expects the completeness check on Claude"
+}
