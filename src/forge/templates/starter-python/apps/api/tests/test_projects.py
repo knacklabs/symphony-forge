@@ -341,6 +341,8 @@ def joined_member(admin: httpx.Client, admin_csrf: str) -> Iterator[httpx.Client
         )
         assert joined.status_code == 201, joined.text
         yield member
+
+
 # forge:feature:test-helper:end
 
 

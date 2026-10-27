@@ -312,7 +312,7 @@ def _build_python(args, root: Path) -> int:
                           f"\napp.include_router({module}_router)", main)
     env = "apps/api/migrations/env.py"
     files[env] = _insert(current[env], "import app.organisations",
-                         f"\nimport app.{module}  # noqa: F401", env)
+                         f"\nimport app.{module}", env)
     config = "apps/api/pyproject.toml"
     contract = (f'[[tool.importlinter.contracts]]\nname = "{plural} internals"\n'
                 f'type = "protected"\nprotected_modules = ["app.{module}.*"]\n'
@@ -367,4 +367,13 @@ def _build_python(args, root: Path) -> int:
         shipped = (source / lockpath).read_text(encoding="utf-8")
         additions.append(_importer(shipped, f"libs/projects/{kind}").replace("projects", plural))
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
-    return _write(root, current, files)
+    _write(root, current, files)
+    python_files = sorted("../../" + path for path in files if path.endswith(".py"))
+    for command in (("check", "--select", "I", "--fix"), ("format",)):
+        formatted = repo.run("uv", "run", "ruff", *command, *python_files, cwd=root / "apps/api")
+        if formatted.returncode:
+            print(formatted.stdout + formatted.stderr, end="")
+            _refuse("The feature files were written, but Python formatting failed.",
+                    "run uv --directory apps/api run ruff check --select I --fix app migrations tests, "
+                    "then uv --directory apps/api run ruff format app migrations tests.")
+    return 0

@@ -486,6 +486,24 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
 
     kinds = tomllib.loads((ROOT / "src/forge/templates/feature/kinds.toml").read_text("utf-8"))
     if starter == "python":
+        # Audit: generation must leave both minimal and nine-kind Python output ready for
+        # the starter's formatter check. Fixing one template layout misses other field mixes;
+        # existing non-live checks only parse output. Use the real pinned formatter after the
+        # real feature commands, with no production seam or substitute formatter.
+        written = _written_paths(clients, client) | _written_paths(built, client)
+        python_files = sorted("../../" + path for path in written if path.endswith(".py"))
+        formatted = subprocess.run(
+            ["uv", "run", "ruff", "format", "--check", *python_files],
+            cwd=client / "apps/api", capture_output=True, text=True, encoding="utf-8",
+            timeout=240,
+        )
+        assert formatted.returncode == 0, formatted.stdout + formatted.stderr
+        linted = subprocess.run(
+            ["uv", "run", "ruff", "check", *python_files],
+            cwd=client / "apps/api", capture_output=True, text=True, encoding="utf-8",
+            timeout=240,
+        )
+        assert linted.returncode == 0, linted.stdout + linted.stderr
         migration_paths = list((client / "apps/api/migrations/versions").glob("*_jobs.py"))
         assert len(migration_paths) == 1
         migration_path = migration_paths[0]
@@ -787,6 +805,20 @@ def test_6_an_older_starter_names_the_missing_history_module(repo, gh, tmp_path,
             assert "Next: build this feature by hand in this app." in message, message
             assert repo.git("status", "--porcelain", cwd=client) == before
             inventory.write_text(original, "utf-8")
+        # A real formatter configuration error must report that files were already written
+        # and give a recovery command. The successful format check cannot cover this lifecycle.
+        pyproject = client / "apps/api/pyproject.toml"
+        project_source = pyproject.read_text("utf-8")
+        pyproject.write_text(project_source.replace('target-version = "py314"',
+                                                     'target-version = "invalid"'), "utf-8")
+        refused = repo.forge(*_feature_args("entries", "entry", ["name:text"]), cwd=client)
+        message = refused.stdout + refused.stderr
+        assert refused.returncode != 0, message
+        assert "The feature files were written, but Python formatting failed." in message
+        assert "Next: run uv --directory apps/api run ruff check --select I --fix" in message
+        assert "then uv --directory apps/api run ruff format app migrations tests." in message
+        assert (client / "apps/api/app/entries/schema.py").is_file()
+        pyproject.write_text(project_source, "utf-8")
         shutil.rmtree(client / "apps/api/app/history")
         missing = "apps/api/app/history/__init__.py"
     before = repo.git("status", "--porcelain", cwd=client)
@@ -938,7 +970,10 @@ def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell,
         ) == "/api/v1/sales-orders"
         permission_names = {
             expression.value.id
-            for expression in ast.walk(routes)
+            for call in ast.walk(routes)
+            if isinstance(call, ast.Call) and isinstance(call.func, ast.Name)
+            and call.func.id == "require_permission"
+            for expression in call.args
             if isinstance(expression, ast.Attribute)
             and isinstance(expression.value, ast.Name)
             and expression.attr in {"view", "create", "edit", "delete", "restore"}

@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 from pydantic.alias_generators import to_camel
+
 # forge:feature:schema-imports:end
 
 
@@ -22,6 +23,8 @@ class ProjectSchema(BaseModel):
 class ProjectStatus(StrEnum):
     active = "active"
     archived = "archived"
+
+
 # forge:feature:status-type:end
 
 
