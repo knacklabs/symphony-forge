@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-27T09:14:04.870516+00:00
-seconds: 443.934
-read_hash: bb64eeb813cfd2596a0c0e40ab9057ab574f8d5d
-round: 1
-passed: no
-doc_seen: bb64eeb813cfd2596a0c0e40ab9057ab574f8d5d
+read_at: 2026-10-27T09:22:05.156769+00:00
+seconds: 139.223
+read_hash: 4e2233e96dc12b308ce828ec774156e0256dcee4
+round: 2
+passed: yes
+doc_seen: 4e2233e96dc12b308ce828ec774156e0256dcee4
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 53ea1c821323a13d1d84312da460edb58f7b7595
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a17c9c-9fc5-7a93-a3fe-28c5d96d651e
 session:
@@ -81,3 +81,12 @@ Only a genuine trade-off goes to the human, as a question with options.
    [The contract](/plans/FORGE-SIGNOFF-1.md:141) explicitly includes incomplete items in `blocking`, but [test 5](/plans/FORGE-SIGNOFF-1.md:339) exercises only complete questions. An implementation that filters incomplete items out before checking sign-off passes the described tests while allowing this expressly covered blocker through.
    Gain 3, Work 2, Harm 3
    Disposition: cut - test 5 now has an incomplete question on a Build now screen that blocks and prints not written yet
+
+## Round 2
+
+8. Advisory: Later production questions can now block rechecking an accepted sign-off.
+   Raise: Functional
+   Case: normal use - after sign-off, an agent records a new question touching an existing Build now screen, then reruns sign-off acceptance.
+   New in this amendment, [blocking no longer requires an unsigned prototype](/plans/FORGE-SIGNOFF-1.md:134), and its call is unconditional in the signed path. [Accepted records with `design_checked`](/src/forge/records.py:255) enter that path. The new question therefore refuses the recheck, contradicting [the promise that already-signed repos are never blocked](/plans/FORGE-SIGNOFF-1.md:379). This differs from finding 4: Build marks exist; the new refusal comes from a later question.
+   Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)

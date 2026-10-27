@@ -9,6 +9,10 @@
     {
       "at": "2026-10-27T09:14:04.889151+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-27T09:22:05.176442+00:00",
+      "step": "read"
     }
   ],
   "title": "Client apps reach sign-off through five guided steps and one list of open decisions",
