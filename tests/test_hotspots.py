@@ -49,8 +49,9 @@ def _close_lands_hotspots_and_the_printed_command_starts_the_fix(env):
     env.repo.git("worktree", "remove", str(where))
     result = env.repo.forge("next")
     assert result.returncode == 0, result.stderr
-    assert result.stdout.startswith("app.py keeps breaking: 3 noted problems are open there.\n"
-                                    + COMMAND + "\nNo story or fix is in progress")
+    assert "\n".join(result.stdout.splitlines()[1:]).startswith(
+        "app.py keeps breaking: 3 noted problems are open there.\n"
+        + COMMAND + "\nNo story or fix is in progress")
     started = env.repo.forge(*shlex.split(COMMAND.removeprefix("Next: forge ")))
     assert started.returncode == 0, started.stderr
     folder = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
@@ -111,7 +112,7 @@ def _success_checks_then_sorted_hotspots_then_idle_lines(env):
     seed(env, [*[entry("bug", "z.py", 1, text, "worker") for text in ("Z", "Y", "X")], *opens()])
     result = env.repo.forge("next")
     assert result.returncode == 0, result.stderr
-    assert result.stdout.splitlines()[:8] == [*DUE,
+    assert result.stdout.splitlines()[1:9] == [*DUE,
         "app.py keeps breaking: 3 noted problems are open there.", COMMAND,
         "z.py keeps breaking: 3 noted problems are open there.",
         'Next: forge fix start "Simplify z.py: problems keep turning up there" --done "z.py is simpler and none of these happen any more: X; Y; Z" --kind backend',
@@ -128,7 +129,8 @@ def _missing_deleted_and_unreadable_lists(env):
     seed(env, [], raw="broken")
     result = env.repo.forge("next")
     assert result.returncode == 0
-    assert result.stdout.startswith("plans/spotted.json on the default branch can't be read, so no hotspots are listed: it isn't UTF-8 JSON.\n")
+    assert "\n".join(result.stdout.splitlines()[1:]).startswith(
+        "plans/spotted.json on the default branch can't be read, so no hotspots are listed: it isn't UTF-8 JSON.\n")
 
 
 def _unrelated_branches_do_not_block_hotspots(env):
@@ -137,8 +139,9 @@ def _unrelated_branches_do_not_block_hotspots(env):
         env.repo.git("worktree", "add", "-q", "-b", branch, str(env.tmp / f"unrelated-{number}"))
     result = env.repo.forge("next")
     assert result.returncode == 0, result.stderr
-    assert result.stdout.startswith("app.py keeps breaking: 3 noted problems are open there.\n"
-                                    + COMMAND + "\nNo story or fix is in progress")
+    assert "\n".join(result.stdout.splitlines()[1:]).startswith(
+        "app.py keeps breaking: 3 noted problems are open there.\n"
+        + COMMAND + "\nNo story or fix is in progress")
 
 
 @pytest.mark.parametrize("case,details", [

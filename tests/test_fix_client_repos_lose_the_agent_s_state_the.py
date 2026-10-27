@@ -1,4 +1,8 @@
-"""Compaction keeps Forge's current state beside the agent's own notes."""
+"""Compaction keeps the full next report, including its journey step, beside notes.
+
+The shipped hooks own this persistence contract; checking only forge next cannot
+catch a handoff that drops its heading. Keep the complete report comparisons.
+"""
 import json
 import subprocess
 
