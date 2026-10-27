@@ -1489,7 +1489,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
 and explorers use their host's entry. Workers and Claude plan readers with no entry use Forge's defaults.
-Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses its design default.
+Codex build, fix, lite and explore default to `gpt-6.1-terra` at high effort; design uses its design default.
 Claude workers use model and effort
 and ignore the Codex-only subagents and subagent_effort keys.
 

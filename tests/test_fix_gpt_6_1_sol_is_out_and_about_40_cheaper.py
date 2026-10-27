@@ -1,4 +1,4 @@
-"""Workers, fixes, design and the Codex cold reader use GPT-6.1 Sol.
+"""Implementation uses Terra high; design and the Codex cold reader keep GPT-6.1 Sol.
 New review settings are left to Autoreview; existing repository settings remain unchanged.
 
 Sign-off defaults, the light prototype review and the SDK install are proven by their own tests:
@@ -15,12 +15,12 @@ REVIEW = {"model": NEW, "effort": "high"}
 HELPERS = {"subagents": "gpt-6-luna", "subagent_effort": "max"}
 
 
-def test_1_forge_init_defaults_work_to_gpt_6_1_sol_and_leaves_reviews_to_autoreview(repo, gh, tmp_path):
+def test_1_forge_init_defaults_work_to_terra_high_and_leaves_reviews_to_autoreview(repo, gh, tmp_path):
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     models = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["models"]
-    assert models["build"]["codex"] == models["fix"]["codex"] == {"model": NEW, "effort": "medium"}
-    assert models["lite"]["codex"] == {"model": NEW, "effort": "medium", **HELPERS}
+    assert models["build"]["codex"] == models["fix"]["codex"] == {"model": "gpt-6.1-terra", "effort": "high"}
+    assert models["lite"]["codex"] == {"model": "gpt-6.1-terra", "effort": "high", **HELPERS}
     assert models["grill"]["codex"] == models["design"]["codex"] == {"model": NEW, "effort": "high"}
     assert "review" not in models
 

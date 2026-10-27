@@ -119,7 +119,7 @@ def test_1_sync_writes_roles_for_both_hosts_from_forge_toml(repo, adopted):
                "grill": (("gpt-6.1-sol", "high"), ("opus", "high"))}
     # The Codex worker runs forge work's own built-in model when no entry names a Codex one.
     expected = {**{name: by_kind[kind] for name, kind in ROLES.items()},
-                "worker": (("gpt-6.1-sol", "medium"), by_kind["build"][1])}
+                "worker": (("gpt-6.1-terra", "high"), by_kind["build"][1])}
     for name in ROLES:
         assert _settings(repo.path, name) == expected[name], name
     # The reader reviews the plan without writing and reports only new blocking defects.
@@ -180,7 +180,7 @@ def test_4_missing_design_leaves_codex_unpinned_and_claude_planning_uses_grill(r
 
     for name in ("planner", "architect"):
         assert _settings(repo.path, name) == ((None, None), ("opus", "high")), name
-    assert _settings(repo.path, "worker") == (("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium"))
+    assert _settings(repo.path, "worker") == (("gpt-6.1-terra", "high"), ("claude-opus-5-5", "medium"))
 
 
 def test_5_a_value_from_forge_toml_stays_one_setting_and_grill_keeps_its_own_model(repo):
@@ -221,5 +221,5 @@ def test_6_codex_roles_without_a_model_are_not_pinned_by_old_subagent_defaults(r
         assert config["agents"][name] == {
             "config_file": f"agents/{name}.toml",
             "description": _codex(repo.path, name)["description"]}
-    assert _settings(repo.path, "worker")[0] == ("gpt-6.1-sol", "medium")  # forge work's built-in
+    assert _settings(repo.path, "worker")[0] == ("gpt-6.1-terra", "high")  # forge work's built-in
     assert repo.forge("sync").stdout.startswith("Nothing to change")

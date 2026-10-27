@@ -60,7 +60,7 @@ def test_1_init_gives_read_only_work_explore_defaults(repo, gh, tmp_path):
     assert models["explore"]["claude"] == {"model": "claude-haiku-5-5", "effort": "high"}
     assert models["explore"]["codex"] == models["lite"]["codex"]
     assert _settings(client, "explorer") == (
-        ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
+        ("gpt-6.1-terra", "high"), ("claude-haiku-5-5", "high"))
 
 
 def test_2_sync_writes_explorer_from_explore_for_both_hosts(repo):

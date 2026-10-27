@@ -218,8 +218,8 @@ def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, mon
     again = repo.forge("work", "BOARD/HELP")
     assert again.returncode == 0, again.stdout + again.stderr
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
-        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
-    assert ("Building BOARD/HELP with Codex (gpt-6.1-sol, medium) because workers = codex"
+        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-terra", "model_reasoning_effort": "high"}
+    assert ("Building BOARD/HELP with Codex (gpt-6.1-terra, high) because workers = codex"
             in again.stdout)
 
 

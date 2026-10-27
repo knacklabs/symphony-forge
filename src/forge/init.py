@@ -73,24 +73,24 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 # Implementation and cold-read models for each host; Autoreview owns its review defaults.
 MODELS = """
 [models.build.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 
 [models.build.claude]
 model = "claude-sonnet-5-5"
 effort = "xhigh"
 
 [models.fix.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 
 [models.fix.claude]
 model = "claude-sonnet-5-5"
 effort = "xhigh"
 
 [models.lite.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
@@ -99,8 +99,8 @@ model = "claude-sonnet-5-5"
 effort = "xhigh"
 
 [models.explore.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 

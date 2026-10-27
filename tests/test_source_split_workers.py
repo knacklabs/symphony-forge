@@ -31,5 +31,5 @@ def test_1_user_facing_source_task_uses_opus_medium_and_plain_task_uses_codex(
     assert plain.returncode == 0, plain.stdout + plain.stderr
     assert len(calls(claude_log)) == 1
     [codex] = _sent(codex_log, "thread/start")
-    assert codex["config"]["model"] == "gpt-6.1-sol"
-    assert codex["config"]["model_reasoning_effort"] == "medium"
+    assert codex["config"]["model"] == "gpt-6.1-terra"
+    assert codex["config"]["model_reasoning_effort"] == "high"

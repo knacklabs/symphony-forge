@@ -169,7 +169,7 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert len(_stub(stub)) == before
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
-    # an old one gets the ordinary unknown-key refusal. Codex work uses GPT-6.1 Sol;
+    # an old one gets the ordinary unknown-key refusal. Codex work uses GPT-6.1 Terra;
     # review selection now belongs to Autoreview.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
@@ -177,14 +177,14 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     assert "model" not in written
     # Lite keeps first fix rounds; explore now owns read-only work with separate host defaults.
     assert written["models"] == {
-        "build": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
+        "build": {"codex": {"model": "gpt-6.1-terra", "effort": "high"},
                   "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
-        "fix": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
+        "fix": {"codex": {"model": "gpt-6.1-terra", "effort": "high"},
                 "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
-        "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+        "lite": {"codex": {"model": "gpt-6.1-terra", "effort": "high",
                            "subagents": "gpt-6-luna", "subagent_effort": "max"},
                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
-        "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+        "explore": {"codex": {"model": "gpt-6.1-terra", "effort": "high",
                               "subagents": "gpt-6-luna", "subagent_effort": "max"},
                     "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
         "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},

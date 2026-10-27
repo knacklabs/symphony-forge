@@ -272,8 +272,8 @@ single entry counts for its model's family: a gpt model is Codex's, any other is
 kind has no Claude implementation entry, Forge uses `claude-sonnet-5-5` at xhigh effort.
 Claude plan reads default to `claude-opus-5-5` at high effort, including when Claude is the only
 installed tool. Claude planner and architect roles use that plan-read entry; debugger,
-security and performance use Opus 5.5 at high effort. Codex build, fix and lite workers with
-no entry use Forge's `gpt-6.1-sol` at medium effort; Codex design uses its design default.
+security and performance use Opus 5.5 at high effort. Codex build, fix, lite and explore workers with
+no entry use Forge's `gpt-6.1-terra` at high effort; Codex design uses its design default.
 Ask your agent to change these settings in a fix.
 
 `forge init` writes Sonnet at xhigh for Claude build, fix, lite and design (frontend included),

@@ -1,4 +1,4 @@
-"""This repo's user-facing story parts build on Claude Opus, everything else on Codex at medium effort;
+"""This repo's user-facing story parts build on Claude Opus, everything else on Codex at high effort;
 reviews stay on Codex (owner, 2026-10-09: frontend code on Opus)."""
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import pytest
 pytestmark = pytest.mark.platform
 
 STORY = "the-owner-moved-this-repo-s-workers-from"
-SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
+TERRA = {"model": "gpt-6.1-terra", "effort": "high"}
 OPUS = {"model": "claude-opus-5-5", "effort": "medium"}
 
 
@@ -34,15 +34,15 @@ def _codex(repo, monkeypatch, sdk_data):
     return repo.bin / "codex-app-server.jsonl"
 
 
-def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatch, sdk_data, claude_session):
+def test_1_this_repo_works_on_codex_high_and_reviews_on_codex(repo, monkeypatch, sdk_data, claude_session):
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
     assert config["workers"] == "split"
     # Ordinary work stays on Codex; all Claude work overrides the shipped defaults for now.
     assert config["models"]["build"] == config["models"]["fix"] == {
-        "codex": SOL, "claude": OPUS}
+        "codex": TERRA, "claude": OPUS}
     assert config["models"]["lite"] == {
-        "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
+        "codex": {**TERRA, "subagents": "gpt-6-luna", "subagent_effort": "max"},
         "claude": OPUS}
     for kind, effort in (("design", "medium"), ("grill", "high")):
         assert config["models"][kind] == {
@@ -65,7 +65,7 @@ def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatc
     [call] = _sent(log, "thread/start")
     # A fix's first turn uses lite; its helpers must reach the SDK too.
     assert call["config"] == {**QUIET, "features.multi_agent": True,
-        "model": "gpt-6.1-sol", "model_reasoning_effort": "medium",
+        "model": "gpt-6.1-terra", "model_reasoning_effort": "high",
         "agents.default_subagent_model": "gpt-6-luna",
         "agents.default_subagent_reasoning_effort": "max"}
 
@@ -87,7 +87,7 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
             ("claude-opus-5-5", "medium")), name
     # Explorer now uses read-only explore settings; implementation roles still use Opus medium.
     assert _settings(repo.path, "explorer") == (
-        ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
+        ("gpt-6.1-terra", "high"), ("claude-haiku-5-5", "high"))
     # Codex replaces the Claude executable and UI skills prerequisites with the pinned SDK.
     gh.respond("auth", "status")
     _autoreview(tmp_path, monkeypatch)
