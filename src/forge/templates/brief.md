@@ -363,6 +363,20 @@ same fault. A guard is a fix only when it handles a valid state.
 Do not hard-code expected values to make tests pass. Do not add a branch that detects a test.
 Do not add a silent default that hides a broken rule.
 
+When the plan adds a new feature to a TypeScript or Python starter app, use its plural,
+singular and fields. As your first step, run the plan's line:
+`forge task feature <plural> --one <singular> --field '<field>:<kind>'`.
+Keep every `--field` value in single quotes, such as `'name:text'`,
+`'description?:long-text'`, `'status:status(planned|active|done)'` and `'client?:link(clients)'`.
+The command copies the installed starter's projects feature, not the app's projects code.
+Keep its organisation scoping, soft delete, restore and transactional change history.
+Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
+Admins have all five. Members can view, create and edit, but cannot delete or restore and never
+see deleted items. Change the role mapping in the feature's permissions file only when the plan
+asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
+refuses a non-starter or an older starter, follow its named missing parts and build the feature
+by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
+
 In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a

@@ -1,0 +1,59 @@
+{
+  "branch": "task/FORGE-FEATURE-1-GUIDE",
+  "chat": {
+    "approval": "d87b61d57f1123509a4f6eaad642b89b43adac93703229702877cf41663496af",
+    "claude": null,
+    "conversation": "01a17c05-b32f-7853-90ec-c506080f334b",
+    "head": null,
+    "start": "4aa14f430f3d51ba1e680c1d13be82c3ee80c287"
+  },
+  "known": [
+    {
+      "area": "_assert_feature_guidance() in tests/test_feature_command.py",
+      "file": "tests/test_feature_command.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 359,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_plan_line_builds_the_feature_in_one_step",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "48064444e1d0daf0de3daeb9d9234b993a0376295de747446550a1acd25b993b",
+    "changed": "8254ae56dbfef65a404f72a6c9402491be75f49350ffb4412ebd52d8ea228409",
+    "commit": "eb7b2c1652cc61c05a32971b91f2cfb6beec715a",
+    "dismissals": [],
+    "findings": [],
+    "id": "2f468af7-79e2-46b7-aa13-b52825c2606f",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T06:21:36.470631+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T06:29:12.026221+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T06:31:57.726019+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2b3c38ef-18e5-41cf-8788-3be196d1854d",
+    "head": "b95528651f46f7be9f5b3ff9eac297fec9722126",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

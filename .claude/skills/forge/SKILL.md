@@ -1231,6 +1231,23 @@ recording succeeds; if the repo pins a newer release, install that pinned releas
   split it, or record an allowance with a reason by running `forge fix allow-large "<reason>"`
   in the part's folder, the same way fixes work. Stories approved before this limit keep working.
 - Keep each part's builder notes to its goal, files and one test per rule.
+- When a plan adds a new feature to a TypeScript or Python starter app, name its plural,
+  singular and fields in the builder notes, and give the worker's first-step command:
+  `forge task feature <plural> --one <singular> --field '<field>:<kind>'`.
+  Quote every `--field` value with single quotes, including simple fields. For example:
+
+```sh
+forge task feature clients --one client --field 'name:text'
+forge task feature jobs --one job --field 'name:text' --field 'description?:long-text' --field 'status:status(planned|active|done)' --field 'client?:link(clients)' --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date' --field 'contactEmail?:email' --field 'billable:yes-no'
+```
+
+  A feature needs a text field for its name. The nine kinds are text, long-text, number, money,
+  date, yes-no, email, status and link; `?` makes a field optional. Add other kinds by hand.
+  The worker runs the command; the human makes no technical choices and never types it.
+  Keep the generated organisation checks, change history and five permissions. If the plan
+  changes the role permissions, name that change for the worker to make in the feature's
+  permission mapping. A non-starter or older starter missing the required parts gets a refusal
+  naming what is missing; build that feature by hand in its existing layout.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
