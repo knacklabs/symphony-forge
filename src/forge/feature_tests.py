@@ -126,6 +126,10 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
         optional_case = r'''  it('omitted optional fields stay valid in concise and detailed MCP results', async () => {
     // Audit: protects nullable service responses at the real MCP boundary for every optional feature field.
     // Omission is accepted by the API but returns null from storage; REST tests cannot catch MCP output parsing, and no test-only production seam is used.
+    const FEATURE_OPTIONAL_INPUT_FIELDS: string[] = @@OPTIONAL_INPUT@@;
+    const FEATURE_OPTIONAL_FIELDS: string[] = @@OPTIONAL@@;
+    const FEATURE_OPTIONAL_NULL_FIELDS: string[] = @@OPTIONAL_NULL@@;
+    const FEATURE_OPTIONAL_CONCISE_FIELDS: string[] = @@OPTIONAL_CONCISE@@;
     const { client, csrf } = await signedIn();
     const memberPermissions = await featurePermissions(client, 'member');
     const role = FEATURE_MAIN_ACTIONS.every((action) => memberPermissions.includes(FEATURE_PERMISSIONS[action]))
@@ -318,10 +322,6 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
   const FEATURE_NUMBER_FIELDS: string[] = @@NUMBERS@@;
   const FEATURE_STATUS_FIELDS: string[] = @@STATUSES@@;
   const FEATURE_LINK_FIELDS: string[] = @@LINKS@@;
-  const FEATURE_OPTIONAL_INPUT_FIELDS: string[] = @@OPTIONAL_INPUT@@;
-  const FEATURE_OPTIONAL_FIELDS: string[] = @@OPTIONAL@@;
-  const FEATURE_OPTIONAL_NULL_FIELDS: string[] = @@OPTIONAL_NULL@@;
-  const FEATURE_OPTIONAL_CONCISE_FIELDS: string[] = @@OPTIONAL_CONCISE@@;
   const FEATURE_DETAIL_ONLY_FIELDS: string[] = @@DETAIL_ONLY@@;
   const FEATURE_PERMISSIONS = {
     view: '@@SLUG@@.view', create: '@@SLUG@@.create', edit: '@@SLUG@@.edit',
