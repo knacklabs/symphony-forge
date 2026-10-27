@@ -208,7 +208,10 @@ def handoff_hook(args: Any) -> int:
     old = path.read_text(encoding="utf-8") if path.is_file() else ""
     heading = "## Decisions and lessons\n"
     notes = old[old.index(heading):] if heading in old else heading
-    current = "\n".join(_report(top)[0])
+    lines = _report(top)[0]
+    step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
+            if (top / "forge.toml").is_file() else [])
+    current = "\n".join(step + lines)
     temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent,
                                        prefix="handoff-", suffix=".tmp", delete=False)
     try:
