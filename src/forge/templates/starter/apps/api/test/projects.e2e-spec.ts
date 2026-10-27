@@ -540,8 +540,8 @@ describe('projects MCP tools', () => {
 
       const history = await client.get('/api/v1/history').expect(200);
       expect(history.body.data).toEqual(expect.arrayContaining([
-        expect.objectContaining({ actorEmail: agent.email, summary: 'Created the project' }),
-        expect.objectContaining({ actorEmail: agent.email, summary: 'Status changed from active to archived' }),
+        expect.objectContaining({ actorEmail: agent.email, summary: `Agent project ${mark}: Created the project` }),
+        expect.objectContaining({ actorEmail: agent.email, summary: `Agent project ${mark}: Status changed from active to archived` }),
       ]));
       const changes = await client.get(`/api/v1/projects/${projectId}/changes`).expect(200);
       expect(changes.body.data).toEqual(expect.arrayContaining([
@@ -605,8 +605,8 @@ describe('projects MCP tools', () => {
       }
       const history = await client.get('/api/v1/history').expect(200);
       const agentChanges = history.body.data.filter((entry: { actorEmail: string }) => entry.actorEmail === agent.email);
-      expect(agentChanges.filter((entry: { summary: string }) => entry.summary === 'Deleted the project')).toHaveLength(1);
-      expect(agentChanges.filter((entry: { summary: string }) => entry.summary === 'Restored the project')).toHaveLength(1);
+      expect(agentChanges.filter((entry: { summary: string }) => entry.summary === `${project.name}: Deleted the project`)).toHaveLength(1);
+      expect(agentChanges.filter((entry: { summary: string }) => entry.summary === `${project.name}: Restored the project`)).toHaveLength(1);
 
       await client.put('/api/v1/agent-tools/projects').set('x-csrf-token', csrf)
         .send({ deleteAndRestore: false }).expect(200);
