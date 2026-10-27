@@ -145,22 +145,14 @@ def test_1_decision_open_ranks_every_open_question(repo, tmp_path, monkeypatch, 
 
     if setup == "new-client":
         # The real reader is a model; this checks the prompt delivered by forge read.
-        version = repo.forge("--version").stdout.split()[-1]
-        main_config = repo.path / "forge.toml"
-        main_config.write_text(f'version = "{version}"\nrepo = "forge-source"\n',
-                               encoding="utf-8")
-        roadmap = repo.path / "plans/roadmap.json"
-        roadmap.parent.mkdir(parents=True, exist_ok=True)
-        roadmap.write_text(json.dumps({"items": [{"key": "OPEN"}]}), encoding="utf-8")
-        repo.git("add", "-A")
-        repo.git("commit", "-q", "-m", "Prepare a cold read")
-        repo.git("push", "-q", "origin", "main")
-        story = repo.forge("story", "new", "OPEN", "Read an open question")
-        assert story.returncode == 0, story.stdout + story.stderr
+        # Sync installed the branch-protection hooks. Read the spec already committed
+        # on this Forge fix instead of committing a new story setup on main.
         reader_log = install_claude(repo, worker=False)
-        read = repo.forge("read", "OPEN")
+        read = repo.forge("read", "orders", cwd=fix)
         assert read.returncode == 0, read.stdout + read.stderr
-        prompt = " ".join(calls(reader_log)[-1]["brief"].split())
+        events = map(json.loads, calls(reader_log)[-1]["brief"].splitlines())
+        prompt = next(event["message"]["content"] for event in events if event["type"] == "user")
+        prompt = " ".join(prompt.split())
         for field in ("- Open question:", "Touches:", "Why we ask:", "Default:",
                       "Why this default:", "If the default stands:", "Due:",
                       "The block has no score line of its own",
