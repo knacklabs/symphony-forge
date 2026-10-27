@@ -7,6 +7,7 @@ from test_close import blocked, body, env  # noqa: F401
 from test_score_notes import _client_repo, _scored
 
 
+STORY = "FORGE-BAR-1"
 CLIENTS = ["new-client", "adopted-v1.2.2"]
 
 
