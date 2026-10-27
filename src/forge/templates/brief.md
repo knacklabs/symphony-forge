@@ -96,6 +96,11 @@ Before every work round, Forge fetches and merges the default branch before it r
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
 
+If the default branch moved after close, `forge merge` first merges it into the item's branch.
+It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
+merge base. It pushes and merges only after the tests pass. A failure names the failed tests
+and gives `forge work <item>` as the next step. With no default-branch move, merge runs no extra tests.
+
 If another program holds the earlier Codex conversation, Forge retries once. If it is still
 held, work starts a new conversation with the whole brief and says why in one line.
 

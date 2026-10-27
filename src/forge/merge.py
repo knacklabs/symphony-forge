@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, repo, story, task
+from forge import checks, close, codex, githooks, repo, review, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -26,6 +26,7 @@ REFUSALS = {
     "owner_merges": ("{item} changes the merge setting in forge.toml, so only the repo owner merges its pull request.", "the repo owner merges its pull request, then forge next"),
     "not_ready": ("Forge has no clean ready record for {item}.", "forge close {item}"),
     "changed": ("The pull request's head changed since Forge recorded {item} ready.", "forge close {item}"),
+    "retest_failed": ("The combined change failed its tests.\n{tests}", "forge work {item}"),
     "pr": ("Forge needs an open pull request for {item} targeting {default} from {branch}.",
            "open or correct its pull request, then forge close {item}"),
     "merge_failed": ("GitHub did not merge the pull request for {item}: {reason}.", "check the pull request, then forge merge {item}"),
@@ -76,6 +77,22 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
+        if repo.git("rev-parse", f"origin/{default}", cwd=top) != base:
+            print(f"{default} moved; Forge will merge it into this branch and run the related tests.", flush=True)
+            close._merge_default(worktree, item, branch, default,
+                                 {**pr, "mergeStateStatus": "BEHIND"}, repo.config(worktree))
+            base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
+            cfg = repo.config(worktree)
+            command = (cfg["fast_test"] or cfg["test"]).replace("{base}", base)
+            failed, tested = review.test_run(worktree, command, f"origin/{default}", always=True)
+            print(tested, flush=True)
+            if failed:
+                repo.refuse(REFUSALS["retest_failed"], item=item,
+                            tests=tested.rsplit("Failed tests:\n", 1)[-1])
+            head = repo.git("rev-parse", "HEAD", cwd=worktree)
+            close._push(worktree, branch)
+            receipt["commit"] = head
+            _save_ready(path, receipt)
         try:
             if config["test_place"] == "ci":
                 checks.wait(worktree, item, head, config["checks"],
