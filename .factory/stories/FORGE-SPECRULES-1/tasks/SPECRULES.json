@@ -7,13 +7,53 @@
     "head": null,
     "start": "05c98327e7325e99d2cfb50b0bfea3d768a7da74"
   },
+  "known": [
+    {
+      "area": "test_1_specs_state_each_rule_once() in tests/test_spec_rules.py",
+      "file": "tests/test_spec_rules.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 77,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_specs_state_each_rule_once omits the check-reference guidance",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4e306203c1d1ba8e320392a72dbf89ac28faef2c795211519c47cedaffe33939",
+    "changed": "64789ca07cf0d6db6bb6846b084a678b669be5a05907f614f1d9b49be00a07e1",
+    "commit": "312a9481334cc7e92610e796143676014e37520d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Test. Case: normal use - delivering the guide and worker brief during init or upgrade. Done-when 1 requires both to instruct VAL, UAT and AC lines to name their rule by ID. These assertions and the brief assertions at lines 83\u201384 never check that instruction. Removing it from templates/skill.md:134\u2013135 and templates/brief.md:449\u2013451 would leave this test passing on both setup paths while violating that requirement. Extend this boundary test to check the reference-by-ID instruction in both delivered guides and the worker brief.",
+        "file": "tests/test_spec_rules.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 77,
+        "priority": "P1",
+        "title": "Gate: test_1_specs_state_each_rule_once omits the check-reference guidance",
+        "work": 1
+      }
+    ],
+    "id": "dfd721be-af84-4aa6-bb56-17d34f46e613",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T09:07:45.796292+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T09:16:40.853226+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
