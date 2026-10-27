@@ -279,13 +279,18 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
     ]));
   }
 
-  function resultData(result: { isError?: boolean; structuredContent?: Record<string, unknown> }): Record<string, unknown> {
-    if (result.isError || !result.structuredContent) throw new Error('The MCP tool call failed.');
-    return result.structuredContent;
+  function resultData(result: unknown): Record<string, unknown> {
+    if (typeof result !== 'object' || result === null
+      || ('isError' in result && result.isError) || !('structuredContent' in result)
+      || typeof result.structuredContent !== 'object' || result.structuredContent === null) {
+      throw new Error('The MCP tool call failed.');
+    }
+    return result.structuredContent as Record<string, unknown>;
   }
 
-  function resultError(result: { isError?: boolean; content?: unknown }): Record<string, unknown> {
-    if (!result.isError || !Array.isArray(result.content) || result.content[0]?.type !== 'text') {
+  function resultError(result: unknown): Record<string, unknown> {
+    if (typeof result !== 'object' || result === null || !('isError' in result) || result.isError !== true
+      || !('content' in result) || !Array.isArray(result.content) || result.content[0]?.type !== 'text') {
       throw new Error('The MCP tool did not return an error.');
     }
     const data = JSON.parse(result.content[0].text);
