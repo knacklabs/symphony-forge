@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\tsrc/forge/feature_api.py\t_sample with changed=True compares with the kind table's sample, not the field's own, so a status like open|closed gives the same value for sample and changed.",
+      "kind": "bug",
+      "path": "src/forge/feature_api.py",
+      "line": 63,
+      "text": "_sample with changed=True compares with the kind table's sample, not the field's own, so a status like open|closed gives the same value for sample and changed.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/feature_web.py\tAllow optional status selections to be cleared\tFORGE-FEATURE-1/WEB",
       "kind": "bug",
       "path": "src/forge/feature_web.py",

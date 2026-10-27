@@ -21,7 +21,7 @@
       "gain": 3,
       "harm": 3,
       "line": 598,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -34,7 +34,7 @@
       "gain": 3,
       "harm": 3,
       "line": 435,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -47,7 +47,7 @@
       "gain": 3,
       "harm": 3,
       "line": 56,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -60,7 +60,7 @@
       "gain": 3,
       "harm": 3,
       "line": 441,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -88,78 +88,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "92b979095eb740e4a6cd4ffc86bdc3bfefa90ffa729bd01335f28bf4ddb57da2",
-    "changed": "c303e14ec7a776738e32f02a39fd4b00d546190f6f83811af5ba0d6e017e8c4d",
-    "commit": "524a575f01d6d8a4866a98b9af1c1054d3f344af",
+    "branch_diff": "c30700aa545abbc61a59b62ef8163c127d4e011f73aaee0d1757bea129a0209b",
+    "changed": "f8fc2ba37765f572f6ec5112077e55ce8fe64b5e842e8950a55d371f7e13eaba",
+    "commit": "4fa653e92e3311a91a29480dfccff06a88696e59",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done. Case: normal use - generate a feature with a required link, such as jobs with `name:text` and `client:link(clients)`. This loop skips every link when generating both API fixture data and form-filling steps. Consequently, the copied browser flows POST jobs without clientId and cannot submit the required Client control. Their tests fail immediately after generation, violating item 4's requirement that \u201cits tests pass as soon as the command runs.\u201d The fixtures also vary only the naming field, so schemas with an email before that field cannot satisfy the copied name-based search/paging flow. Generate fixtures and form interactions using the declared required links and searchable field.",
-        "file": "src/forge/feature_web.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 517,
-        "priority": "P1",
-        "title": "Not done: its tests pass as soon as the command runs",
-        "work": 3
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - generate products with `code:text` followed by `name:text`. Because code is the first required text field, this substitution replaces every product.name with product.code. It runs after inserting the generated detail fields, so it also rewrites the real Name field's value: the detail screen displays the code under both labels while the form and list retain the distinct values. Restrict this replacement to the starter placeholders, before inserting field-specific bodies.",
-        "file": "src/forge/feature_web.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 598,
-        "priority": "P1",
-        "title": "Preserve real name fields when replacing heading placeholders",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - edit an item and remove its optional status. The generated form schema accepts an empty optional status and converts it to undefined, but this Select renders only the declared status options. After choosing a value, the user has no way to clear it, although the field is optional. Add an empty choice that maps back to the empty form value.",
-        "file": "src/forge/feature_web.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 435,
-        "priority": "P1",
-        "title": "Allow optional status selections to be cleared",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - a temporary API failure prevents loading clients, then the user follows \u201cClose this list and try again.\u201d Closing and reopening only changes open; useLinkedItems stays mounted with the same query key and does not refetch. The shared query configuration explicitly disables retries and window-focus refetching (`src/forge/templates/starter/libs/core/web/src/query-client.ts:6`). Thus the prescribed recovery action leaves the same error after the API recovers. Refetch when reopening an errored picker or provide a working retry control.",
-        "file": "src/forge/templates/feature/link-picker.tsx",
-        "gain": 3,
-        "harm": 3,
-        "line": 56,
-        "priority": "P1",
-        "title": "Make the linked-list retry instruction trigger a request",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. Case: normal use - submit a form with a valid name and an empty required Client field. The generated LinkPicker receives value and onChange but never field.ref. React Hook Form therefore cannot focus its trigger when validation fails; focus remains on Submit instead of moving to the first invalid field as SCREENS.md requires. Pass the registration ref through to the focusable trigger and exercise this keyboard path.",
-        "file": "src/forge/feature_web.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 441,
-        "priority": "P1",
-        "title": "Register linked-field triggers for validation error focus",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 3, Harm 3\nRaise: Gate. Case: normal use - validate the generated nine-field form and its linked-client workflow using the named live proof. The recorded functional check claims validation messages and one control per field, but the copied browser case fills only valid values (`src/forge/templates/starter/apps/web/e2e/projects.spec.ts:82`), and flow_fields explicitly omits links. No generated flow selects a client, reloads its saved link, or checks invalid-field messages and focus. The generated Ctrl+K entry is also never exercised; the existing shell test opens Projects only. Removing the optional Client control, form validation, or generated command-palette entry could leave this proof green. Extend the browser proof to exercise these covered paths and make the functional-check claims match it.",
-        "file": "tests/test_feature_command.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 266,
-        "priority": "P1",
-        "title": "Gate: functional check",
-        "work": 3
-      }
-    ],
-    "id": "3f78a173-6f9b-45ee-af5a-07d24c69ded1",
-    "status": "blocked"
+    "findings": [],
+    "id": "3dd68ff7-4e76-45ab-9c02-a8827618f40e",
+    "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T05:34:20.147444+00:00",
@@ -167,6 +105,10 @@
     },
     {
       "at": "2026-10-27T06:54:25.090944+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T07:34:25.491331+00:00",
       "step": "review"
     }
   ],
