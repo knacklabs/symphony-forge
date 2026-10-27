@@ -278,6 +278,12 @@ emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 
+On client app screens, report an emoji that this change adds as an icon or decoration as a
+finding titled `Icons: <the screen>`. Report an icon from outside the starter's `lucide-react`
+library the same way; shadcn/ui is set to `lucide`. Keyboard key labels such as the Command key
+symbol (⌘) are not emojis. Apply this rule to new and existing client repos; do not report
+unchanged screen code.
+
 In an app with a database, report a query that this change adds in one module on a table another
 module owns as a P1 finding titled `Module tables: <the query>`. A module owns the tables in its
 own schema file; in an app without one schema file per module, it owns the tables that only its
@@ -464,6 +470,8 @@ the strength of a template or a test stub alone. Give concrete file and line evi
 
 Report a query in one module on a table another module owns as a P1 finding titled
 `Module tables: <the query>`.
+
+On client app screens, report emoji icons or decoration and icons outside `lucide-react` as a finding titled `Icons: <the screen>`. Keyboard key labels such as the Command key symbol (⌘) are not emojis.
 
 ## Scores
 Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your
