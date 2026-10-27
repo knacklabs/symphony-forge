@@ -1,0 +1,15 @@
+{
+  "base": "281106209bc4b0d55f310e0f78fe2fb7fb721837",
+  "branch": "fix/full-run-red-guides-and-timings",
+  "done_when": "tests/test_tools_guide.py and tests/test_ci_timing_inventory.py pass on this branch: the synced guides match the template and .test_durations names only collected tests",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T21:01:52.242587+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The full run on main is red: the checked-in agent guides lag the guide template after the completeness hotfix, and .test_durations names 6 tests the CI fix deleted"
+}
