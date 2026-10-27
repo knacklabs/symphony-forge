@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-MCPRES-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-27T07:31:41.156652+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client apps offer MCP resources and prompts too",
+  "touches": 0
+}
