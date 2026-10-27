@@ -1,6 +1,8 @@
 """`forge board`'s page shell in real Chrome: the live server serves the page, its styles and its
 script under the run's token and the page's strict policy, the page shows the snapshot's updating
-mark until the rebuild is done, and the pinned `Board` interfaces carry the server's snapshot."""
+mark until the rebuild is done, and the pinned `Board` interfaces carry the server's snapshot.
+Exercises src/forge/board.py through the live server and browser.
+"""
 from __future__ import annotations
 
 import json

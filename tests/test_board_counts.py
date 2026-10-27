@@ -2,6 +2,7 @@
 
 Real Forge commands and git build every item; only GitHub, the reviewer and the reader are
 stubs. Board and next output is all the tests read.
+Owns src/forge/board.py and src/forge/board_facts.py's shared request counts.
 """
 import json
 import os

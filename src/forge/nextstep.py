@@ -13,6 +13,7 @@ import re
 import shlex
 import shutil
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -125,8 +126,32 @@ def next_step(args: Any) -> int:
             if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
                 raise
     notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
-    history = board._machine_history(top)
-    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True, fresh_prs=not args.json)[0]
+    # Populate shared facts before concurrent readers can race on their first lookup.
+    repo.forge_dir(top)
+    repo.default_branch(top)
+    story.worktrees(top)
+    # Independent network reads overlap each other and the bulk local history.
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        open_fields = "headRefName,headRefOid,body,url,isDraft"
+        open_read = (pool.submit(board_facts._listing, top, "open", fields=open_fields)
+                     if not args.json else None)
+        github_read = pool.submit(board_facts.prs, top, fresh=not args.json,
+                                  merged_fields="headRefName",
+                                  open_fields=open_fields, open_read=open_read)
+        def checks():
+            if open_read is not None and open_read.result() == []:
+                return []  # A complete empty inventory has no open PR checks to read.
+            return board._machine_prs(top)
+        pending = {"alerts": pool.submit(_failed_schedules, top),
+                   "checks": pool.submit(checks), "github": github_read}
+        activity = pool.submit(board._event_history, top)
+        warning_read = pool.submit(migration_warnings.warnings, top)
+        history = board._machine_history(top)
+        warnings = warning_read.result()
+        activity.result()
+        facts = {name: future.result() for name, future in pending.items()}
+    lines = warnings + _report(
+        top, history, schedules=True, numbers=not args.json, facts=facts)[0]
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
           if args.json else "\n".join(notice + lines))
     return 0
@@ -192,14 +217,15 @@ def handoff_hook(args: Any) -> int:
 
 
 def _report(top: Path, history: dict[str, Any] | None = None,
-            schedules: bool = False, fresh_prs: bool = False) -> tuple[list[str], list[str]]:
+            schedules: bool = False, numbers: bool = False,
+            facts: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
     refusals: dict[Path, str] = {}
     # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
     # failed run shows its own lines under it.
-    alerts = _failed_schedules(top) if schedules else {}
+    alerts = (facts["alerts"] if facts is not None else _failed_schedules(top)) if schedules else {}
     pinned: list[str] = []
 
     def claim(state: dict[str, Any]) -> list[str] | None:  # by the workflow file the fix's why names
@@ -210,8 +236,8 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         if branch.startswith(board.PREFIXES):
             _report_config(path, refusals)
     # Bulk Git history is independent of the machine view's minute-long GitHub cache.
-    cached_prs = history is not None and not fresh_prs
-    github = board_facts.prs(top) if cached_prs else None
+    cached_prs = history is not None
+    github = (facts["github"] if facts is not None else board_facts.prs(top)) if cached_prs else None
     if github is None and cached_prs:  # the board's one try failed: unknown, no live call per item
         merged_prs, opened = set(), []
     elif github is None:
@@ -223,7 +249,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     prs = {pr["headRefName"]: pr for pr in opened if isinstance(pr.get("url"), str)}
     if trees:
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
-                    for pr in board._machine_prs(top)
+                    for pr in (facts["checks"] if facts is not None else board._machine_prs(top))
                     if isinstance(pr.get("headRefName"), str)})
     stories = _stories(top, history)
     if history is not None and any(
@@ -331,7 +357,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     # Appended statistics never enter machine_next's first line or command.
-    if (history is None or fresh_prs) and repo.now()[:10] >= board.CHECK_DATE:
+    if (history is None or numbers) and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"

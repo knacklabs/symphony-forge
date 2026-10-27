@@ -33,8 +33,9 @@ with open(pathlib.Path(__file__).parent / "transport-calls.jsonl", "a", encoding
     calls.write(json.dumps(args) + "\\n")''', 1), "utf-8")
 
     # Upgrade fills the daily history cache before request recording starts.
-    # Expire it so both new and adopted repos exercise the request transport.
-    monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(days=2)).isoformat())
+    # Leave a gap beyond weekly coverage so both new and adopted repos must
+    # rebuild the complete inventory through the external request transport.
+    monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(days=50)).isoformat())
     issues = board(repo)["known_issues"]
     assert any(row["item"] == item for row in issues), issues
     calls = [json.loads(line) for line in
@@ -42,14 +43,21 @@ with open(pathlib.Path(__file__).parent / "transport-calls.jsonl", "a", encoding
     requests = [call for call in calls if call[:1] == ["api"]
                 and any("/pulls?" in arg for arg in call)]
     assert requests, calls
+    pages = []
     for call in requests:
         endpoint = next(arg for arg in call if "/pulls?" in arg)
         fields = [call[n + 1] for n, arg in enumerate(call) if arg == "--raw-field"]
         query = parse_qs(urlsplit(endpoint).query)
         query.update({key: [value] for key, value in (field.split("=", 1) for field in fields)})
-        assert query == {"state": ["closed"], "per_page": ["100"]}, call
+        pages.append((query.get("per_page", [""])[0], query.pop("page", ["1"])[0]))
+        assert query.pop("per_page", None) in (["1"], ["100"]), call
+        assert query == {"state": ["closed"]}, call
         assert (call[call.index("--method") + 1] if "--method" in call
                 else "POST" if fields else "GET") == "GET", call
         # .cmd launchers interpret unquoted shell operators even with shell=False.
         unquoted = re.sub(r'"[^"]*"', "", subprocess.list2cmdline(call))
         assert not re.search(r"[&|<>]", unquoted), unquoted
+    # The kept evidence is on page two: a parallel inventory must preserve the
+    # complete history and keep pagination fields out of Windows shell syntax.
+    assert pages[0] == ("1", "1"), pages
+    assert sorted(pages[1:]) == [("100", "1"), ("100", "2")], pages
