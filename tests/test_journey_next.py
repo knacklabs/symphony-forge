@@ -243,9 +243,11 @@ def test_4_forge_next_says_what_each_running_item_waits_on(
     _fix(repo, slug="c-queued", status="waiting for checks")
     _fix(repo, slug="d-running", status="waiting for checks")
     _fix(repo, slug="e-unknown-time", status="waiting for checks")
+    # The earlier JSON view cached no checks. Observe GitHub after its minute cache expires.
+    monkeypatch.setenv("FORGE_NOW", "2026-10-09T12:01:00+00:00")
     prs = [
-        _pr(repo, 1, "c-queued", "QUEUED", created="2026-10-09T11:48:00Z"),
-        _pr(repo, 2, "d-running", "IN_PROGRESS", started="2026-10-09T11:48:00Z",
+        _pr(repo, 1, "c-queued", "QUEUED", created="2026-10-09T11:49:00Z"),
+        _pr(repo, 2, "d-running", "IN_PROGRESS", started="2026-10-09T11:49:00Z",
             created="2026-10-09T11:40:00Z"),
         _pr(repo, 3, "e-unknown-time", "QUEUED"),
     ]
