@@ -48,9 +48,9 @@ An FDE or client who is stopped must see why, so each item and each refusal carr
 ## Done when
 
 1. **`forge decision open` prints one ranked list of every open decision written in the fixed form in the checkout's decision records, specs, plans and cold-read notes; each item shows its question, why it is asked with the screen or rule it touches, its default and why that default was picked, what happens if the default stands, its due date and its Gain, Work and Harm, ranked by the review bar; an item with a missing field is listed with what it needs; the agent's guide, the worker brief and the cold-read prompt tell agents to write such questions in that form.**
-2. **`forge decision answer <slug> --from <file> --by "<name>"` records every answer in the file as one accepted decision record that keeps each question's reason beside its answer, and marks each question answered where it was asked, so the list no longer shows it; a question that is not open, or one with no answer, is refused by name with the next step.**
-3. **When an open decision's due date has passed, `forge next` names it with its default and tells the agent to record it and tell the client; `forge decision answer <slug> --defaults` records each such default as decided by default in one decision record and marks it where it was asked.**
-4. **`forge next` asks a prototype for a demo address only after a working build exists; client sign-off needs each screen in the screen list marked `Build: now` or `Build: later`; the guide says the canvas in Play mode is the default clickable prototype and only Build now screens become the first stories.**
+2. **`forge decision answer --from <file> --by "<name>"` records every answer in the file as one accepted decision record, never a sign-off record, that keeps each question's reason beside its answer, and marks each question answered where it was asked, so the list no longer shows it; a question that is not open, or one with no answer, is refused by name with the next step.**
+3. **When an open decision's due date has passed, `forge next` names it with its default and tells the agent to record it and tell the client; `forge decision answer --defaults` records each such default as decided by default in one decision record and marks it where it was asked.**
+4. **`forge next` asks a prototype for a demo address only after app code is on the default branch; a client sign-off accepted from this release on needs each screen in the screen list marked `Build: now` or `Build: later`; the guide says the canvas in Play mode is the default clickable prototype and only Build now screens become the first stories.**
 5. **Client sign-off is refused while an open decision touches a screen marked `Build: now`; the refusal lists, for each such decision, why it is asked, its default and why that default was picked, and what happens if the default stands, then names the next step; a decision that touches only a Later screen, or one already answered or decided by default, does not block.**
 
 ## Risks
@@ -107,6 +107,10 @@ fields end at the first line that is not a field line. Every field is required:
   Gain 3, Work 2, Harm 4
 ```
 
+- In a cold-read note, the block has no score line of its own. The reader puts it just before
+  the note's own score line, so that one line is both the note's score (`score.parse` finds the
+  first score line) and the question's score. The note keeps its scores, and no consumer of
+  cold-read notes changes.
 - `Touches:` names a screen section of `docs/design/prototype/SCREENS.md` (its `## ` title) or a
   rule ID. `Due:` is a real `YYYY-MM-DD` date. The score line is `score.LINE`'s format; read it
   with `score.parse`.
@@ -128,9 +132,10 @@ fields end at the first line that is not a field line. Every field is required:
 line under it. Other lines are ignored.
 
 **Build marks.** Each `## ` screen section in `docs/design/prototype/SCREENS.md` has one line
-`Build: now` or `Build: later`. An open item blocks sign-off when the repo is an unsigned prototype
-(`repo.is_prototype(top)`) and its `Touches:` value, compared without case and with whitespace
-made one space, equals the title of a section with `Build: now`.
+`Build: now` or `Build: later`. An open item, complete or not, blocks sign-off when its
+`Touches:` value, compared without case and with whitespace made one space, equals the title of a
+section with `Build: now`. Only the sign-off path asks `blocking`; `decision open` shows its
+`Blocks sign-off` line only while `repo.is_prototype(top)` is true.
 
 **Ranking.** Sort complete items by `(list(score.WORDS).index(score.bar(s)), -harm, -gain, work,
 due, path, line)`, the same order as `score.table`.
@@ -143,7 +148,7 @@ due, path, line)`, the same order as `score.table`.
      complete and incomplete open items that touch a Build now screen; `decision_open(args)`;
      `decision_answer(args)`; `due_lines(top)`. Its `COMMANDS` holds `decision open` (position
      224, `changes_state: False`, no arguments) and `decision answer` (position 226,
-     `changes_state: True`; `slug`, `--from` with `dest="answers"` and metavar `FILE`, `--by`
+     `changes_state: True`; no positional argument, `--from` with `dest="answers"` and metavar `FILE`, `--by`
      with metavar `NAME`, `--defaults` with `action="store_true"`), each with its `listing` row.
    - `src/forge/cli.py` `ROUTES`: `"decision open": "open_decisions"`,
      `"decision answer": "open_decisions"`. `src/forge/records.py` `GROUP_HELP["decision"]`:
@@ -165,7 +170,7 @@ due, path, line)`, the same order as `score.table`.
      These open questions need every field before they count:
      - <path>, line <line>: <question> needs <missing fields, joined with ", ">.
 
-     Next: go through the list with the client, then forge decision answer <slug> --from <answers file> --by "<name>"
+     Next: go through the list with the client, then forge decision answer --from <answers file> --by "<name>"
      ```
 
      The `Blocks sign-off` line shows only for a blocking item. A past due date reads
@@ -173,7 +178,7 @@ due, path, line)`, the same order as `score.table`.
      exists. With no open question at all: `No open decisions.` and exit 0.
    - Guide text (OPENLIST): in `src/forge/templates/skill.md`, two rows in the command table after
      "The decision is accepted": `| "What does the client still need to decide?" | `forge decision open` |`
-     and `| "Record the client's answers" | In a fix: `forge decision answer <slug> --from <file> --by "<name>"` |`.
+     and `| "Record the client's answers" | In a fix: `forge decision answer --from <file> --by "<name>"` |`.
      And a new `**Open decisions.**` paragraph in `## Prototype`, before `**Sign-off.**`. It says:
      write each question only the client can answer in the form above (shown in a fence), in the
      decision record under `## To confirm`, the spec or the plan's Notes it belongs to; pick the
@@ -191,8 +196,10 @@ due, path, line)`, the same order as `score.table`.
      why it is asked, the default, why you picked it and what happens if it stands. The coordinator
      adds it to the open-decisions list."
    - `src/forge/templates/cold-read.md`, after the `Decide first` paragraph: "When a note needs a
-     choice only the client can make, put this block inside the note, indented under it:" then
-     the form in a fence, with `Due: <one week after today>`.
+     choice only the client can make, put this block inside the note, indented under it, just
+     before the note's score line. The block has no score line of its own: the note's score line
+     scores the question too." Then the form in a fence with no score line, with
+     `Due: <one week after today>`.
    - `src/forge/templates/skeleton/docs/decisions/README.md`: one line: "Questions still open go
      under `## To confirm` in the open-question form from the Forge guide. `forge decision open`
      lists them; `forge decision answer` records the answers." (new repos only; sync does not
@@ -213,17 +220,20 @@ due, path, line)`, the same order as `score.table`.
      handback sentence (as `tests/test_services_guide.py::test_3` reads it); the cold-read prompt
      from `forge read` holds the form (as `tests/test_proto_topics.py` reads it).
 2. Recording answers (OPENLIST).
-   - `decision answer` runs only on a fix or story branch: call `records._start(args, args.slug)`.
+   - `decision answer` takes no slug. Forge names the record itself: `client-answers` with
+     `--from`, `decided-by-default` with `--defaults`. So it never writes a `client-signoff`,
+     `prototype-design`, `prototype-build` or `app-constitution` record, and sign-off keeps all
+     its checks. It runs only on a fix or story branch: call `records._start(args, <that slug>)`.
      With `--from`, `--by` is required, checked with `records._name`. Exactly one of `--from` and
      `--defaults`, or refuse `("Use --from <file> with --by \"<name>\", or --defaults.", "forge decision open")`.
-     An existing decision with the slug refuses with `records.REFUSALS["decision_exists"]`.
    - Every question in the file must match an open item, and each needs an `Answer:` line. Refuse
      with the first problem:
-     `("{file} answers a question that is not open: {question}.", "copy the question from forge decision open, then forge decision answer {slug} --from {file} --by \"{by}\"")`
-     and `("{file} has no Answer: line for: {question}.", "add its answer, then forge decision answer {slug} --from {file} --by \"{by}\"")`.
+     `("{file} answers a question that is not open: {question}.", "copy the question from forge decision open, then forge decision answer --from {file} --by \"{by}\"")`
+     and `("{file} has no Answer: line for: {question}.", "add its answer, then forge decision answer --from {file} --by \"{by}\"")`.
      Pass the question and file through `repo.refuse`'s values, never inside the format string, so
      braces in a question cannot break the message.
-   - Write `docs/decisions/NNNN-<slug>.md`, number `max(records._decision_numbers(top), default=0) + 1`:
+   - Write `docs/decisions/NNNN-<slug>.md` with that slug (several such records share it; each is
+     named by its number), number `max(records._decision_numbers(top), default=0) + 1`:
 
      ```
      ---
@@ -234,7 +244,7 @@ due, path, line)`, the same order as `score.table`.
      supersedes: ""
      ---
 
-     # <slug with hyphens as spaces, capitalised>
+     # Client answers   (or: Decided by default)
 
      ## Context
      <n> open decisions were answered by <by> on <today>.
@@ -247,6 +257,7 @@ due, path, line)`, the same order as `score.table`.
        Why we ask: <text>
        Default was: <default>
        Why this default: <text>
+       If the default stands: <text>
 
      ## Consequences
      Each question is marked answered where it was asked. A new decision that supersedes this one
@@ -256,14 +267,14 @@ due, path, line)`, the same order as `score.table`.
      The Decision section has one block per answer, in the file's order. An incomplete item keeps
      only the fields it has.
    - On each source line of an answered question, change `- Open question:` to
-     `- Answered in NNNN-<slug>:`. Mark every place that asks the same question.
+     `- Answered in NNNN-client-answers:`. Mark every place that asks the same question.
    - `repo.commit_state(f"Record {n} answers from the client", rel, *sources, top=top)` and print
      `Recorded <n> answers in <rel> and marked each where it was asked.`
    - Test: `tests/test_open_decisions.py::test_2_decision_answer_records_one_decision`,
      parametrised `new-client` and `adopted-v1.2.2`. Two open items in two files, an answers file
      in `tmp_path` answering both: exit 0; one new accepted record with both blocks and their
-     `Why we ask:` lines; each source line now reads `- Answered in NNNN-<slug>:` with its field
-     lines kept; `forge decision open` prints `No open decisions.`; the last commit holds the
+     `Why we ask:`, `Why this default:` and `If the default stands:` lines; each source line now
+     reads `- Answered in NNNN-client-answers:` with its field lines kept; `forge decision open` prints `No open decisions.`; the last commit holds the
      record and both sources. New client only: an answers file with an unknown question exits 1
      and names it, and one with no `Answer:` line exits 1 and names it; neither writes a record.
 3. Defaults on the due date (OPENLIST).
@@ -275,28 +286,32 @@ due, path, line)`, the same order as `score.table`.
      <n> open decisions passed their due date, so their defaults apply:
      - <question>: <default> (due <date>, <path>)
      Next: forge fix start "Record the defaults of past-due decisions" --done "One decision record holds each default" --kind mechanical
-     Next: forge decision answer defaults-<today> --defaults, then tell the client each default and that a new decision can change it
+     Next: forge decision answer --defaults, then tell the client each default and that a new decision can change it
      ```
 
-   - `decision answer <slug> --defaults` records the same record as item 2 with
+   - `decision answer --defaults` records the same record as item 2 with
      `confirmed_by: "decided by default"`, Context `<n> open decisions passed their due date with no answer, so their defaults apply.`,
      and `Answer: <default> (decided by default; due <date>)`. Source lines become
-     `- Decided by default in NNNN-<slug>:`. It prints the record path, then one line per default
+     `- Decided by default in NNNN-decided-by-default:`. It prints the record path, then one line per default
      for the agent to tell the client. With no past-due item it prints
      `No open decision has passed its due date.` and exits 0.
    - Test: `tests/test_open_decisions.py::test_3_a_passed_due_date_applies_the_default`,
      parametrised `new-client` and `adopted-v1.2.2`. One item due 2026-11-03 committed on main,
      `FORGE_NOW=2026-11-04T09:00:00+00:00`: `forge next` in the main checkout prints the lines
      above; with `FORGE_NOW=2026-11-03T09:00:00+00:00` it prints none. In the fix:
-     `forge decision answer defaults-2026-11-04 --defaults` exits 0, writes the record with
+     `forge decision answer --defaults` exits 0, writes the record with
      `confirmed_by: "decided by default"`, and marks the source line; `forge next` in the fix
      prints no due lines.
 4. Canvas first and the Build marks (SIGNOFF).
    - `src/forge/nextstep.py` `_needs_demo_address`: return true only when it does today and
-     `design.working_build(top, ref)` is true. Check it last, after the brief's demo address, so a
-     repo with an address starts no extra git process. Keep `tests/test_git_process_ceiling.py`
+     `design.has_app_code(top, ref)` is true: app code on the default branch's history. Do not use
+     `design.working_build`; it is also true for an accepted build request before any code
+     exists. Check it last, after the brief's demo address, so a repo with an address starts no
+     extra git process. Keep `tests/test_git_process_ceiling.py`
      green.
-   - `src/forge/records.py` `_signoff_design`: in the screens loop, add
+   - `src/forge/records.py` `_signoff_design` gets a `marks: bool` argument. `decision_accept`
+     passes `status == "proposed"`, so a record already accepted (the `design_checked` recheck
+     path) is never held for marks. With `marks`, the screens loop adds
      `SCREENS.md: <screen> needs Build: now or Build: later` to `gaps` when the section has no
      line matching `^Build: (?:now|later)[ \t]*$`. The existing refusal lists it with the others.
    - `tests/test_proto_signoff.py` `_design_records`: add `Build: now\n` after the `Image:` line,
@@ -314,10 +329,14 @@ due, path, line)`, the same order as `score.table`.
      `Build: now` in SCREENS.md. Build a `Build: later` screen only when the plan names it."
    - Test: `tests/test_signoff_scope.py::test_4_canvas_first_and_build_marks`. New client: commit
      a `Dockerfile` on main; `forge next` prints no `connect the repo on our deploy platform` line;
-     then `_client(..., working_build=True)` (app code on main) with a `Dockerfile` prints it.
+     an accepted `prototype-build` request with no app code still prints none; then
+     `_client(..., working_build=True)` (app code on main) with `stage = "prototype"` added to its
+     forge.toml and a `Dockerfile` prints it.
      Canvas sign-off with a SCREENS.md section that has no `Build:` line exits 1 with
      `SCREENS.md: Order list needs Build: now or Build: later`. Adopted client: the same sign-off
-     refusal for its SCREENS.md written before this release. The synced skill copies hold
+     refusal for its SCREENS.md written before this release; and an accepted sign-off record with
+     `design_checked` set, rerun with `forge decision accept client-signoff`, reports no Build
+     gap. The synced skill copies hold
      `Play mode`, `Build: now` and `Build: later`; the worker brief holds the Build sentence.
 5. Sign-off waits for blocking decisions (SIGNOFF).
    - `records.decision_accept`, in the `signed` path, right after the `open_topics` refusal:
@@ -330,7 +349,7 @@ due, path, line)`, the same order as `score.table`.
        Default: <text>
        Why this default: <text>
        If the default stands: <text>
-     Next: record the client's answers with forge decision answer <slug> --from <file> --by "<name>", or the passed defaults with --defaults, then forge decision accept client-signoff --by "<by>"
+     Next: record the client's answers with forge decision answer --from <file> --by "<name>", or the passed defaults with --defaults, then forge decision accept client-signoff --by "<by>"
      ```
 
      A missing field prints as `<field>: not written yet`. Pass the item text through values, as in
@@ -339,7 +358,9 @@ due, path, line)`, the same order as `score.table`.
    - Test: `tests/test_signoff_scope.py::test_5_signoff_waits_for_blocking_decisions`,
      parametrised `new-client` and `adopted-v1.2.2`. A decision record with one open item that
      touches `Order list` (Build now): `forge decision accept client-signoff --by Ravi` exits 1
-     with the lines above and no review call. New client only: add a second screen
+     with the lines above and no review call. New client only: an item that touches
+     `Order list` and has no `Why this default:` and no `Due:` also blocks, and its refusal block
+     shows `Why this default: not written yet`. Add a second screen
      `## Order archive` with `Build: later`, an image and its fields, and change `Touches:` to
      `Order archive`: sign-off passes this check (it reaches
      `The canvas completeness check passed`). Then set `Touches:` back to `Order list`, answer it
@@ -400,8 +421,8 @@ New moving parts: none
   question is asked (with the screen or rule it touches), why the default was picked and what
   happens if the default stands.
 - Planner choices the owner did not make: (1) the commands are `forge decision open` and
-  `forge decision answer <slug> --from <file> --by "<name>"` or `--defaults`, inside the decision
-  group, so the top-level command count stays the same; (2) one form for every source, a
+  `forge decision answer --from <file> --by "<name>"` or `--defaults`, inside the decision
+  group, with no slug, so it can never write a sign-off record, so the top-level command count stays the same; (2) one form for every source, a
   `- Open question:` line with seven field lines, and the agent copies review notes into it,
   because review notes live in pull requests and item state, not in files; (3) the blocking rule
   is "its Touches line names a Build now screen", with no rule for stories, because no story
