@@ -62,7 +62,7 @@ function featureTools() {
     input: z.object({}),
     output: z.object({ value: z.string() }),
     annotations: { title: 'Custom item check', readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: false },
-    async call(_principal, _args) { return { data: { value: 'ready' }, summary: 'The custom item check is ready.' }; },
+    async call() { return { data: { value: 'ready' }, summary: 'The custom item check is ready.' }; },
   });
 }
 
