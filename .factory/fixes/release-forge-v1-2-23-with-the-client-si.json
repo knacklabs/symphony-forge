@@ -49,7 +49,7 @@
     "status": "blocked"
   },
   "round": 4,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T14:16:01.771362+00:00",
@@ -62,8 +62,12 @@
   ],
   "stop": {
     "at": "2026-10-27T14:38:22.785648+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".codex/skills/forge/standards.md",
-    "wait_id": "738f8ebf-d3d4-4c00-92f5-3da49ea6d7b5"
+    "reason": "The allowance now names the synced guides that close required for the version change",
+    "wait_id": "738f8ebf-d3d4-4c00-92f5-3da49ea6d7b5",
+    "worker_round": 4
   },
   "stuck": {
     "close": null,
