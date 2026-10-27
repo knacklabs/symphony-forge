@@ -4,6 +4,8 @@ from pathlib import Path
 import pytest
 
 from test_setup import _fresh_client
+from test_close import CLEAN, GREEN, env  # noqa: F401 (fixture)
+from test_score_notes import _client_repo as setup_client
 from test_starter_tree import (
     LIVE,
     STARTER,
@@ -18,6 +20,36 @@ MIGRATION = Path(
 )
 PYTHON_STARTER = Path(__file__).resolve().parents[1] / "src/forge/templates/starter-python"
 PYTHON_MIGRATION = Path("apps/api/migrations/versions/0008_module_schemas.py")
+
+STORY = "FORGE-LIBS-1"
+
+
+@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
+def test_4_review_reports_a_foreign_key_between_business_module_schemas(env, tmp_path, adopted):
+    # Audit: close must send the schema rule to the reviewer on both adoption paths.
+    # A lost rule or exception would silently change review instructions. The live schema
+    # case below checks the starter database, not prompt delivery. Only external edges are
+    # stubbed; this tests delivery, not a model's judgement, and needs no production seam.
+    setup_client(env, tmp_path, adopted)
+    env.checks(GREEN)
+    item, _ = env.start(
+        "module-link", "fix/module-link", ".factory/fixes/module-link.json",
+        {"kind": "fix", "why": "Link business modules",
+         "done_when": "The module link follows the schema rule"},
+        {"link.sql": 'ALTER TABLE projects."Project" ADD COLUMN "historyId" uuid '
+                     'REFERENCES history."History"(id);\n'},
+    )
+    env.reviews(CLEAN)
+    closed = env.close(item)
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert (
+        "In an app with a database, report a foreign key that this change adds between two "
+        "business-module Postgres schemas as a P1 finding titled `Module foreign key: <the link>`. "
+        "A link between business modules stores an indexed id without a foreign key and is "
+        "checked through the other module's public service. Links within a module and links "
+        "to core keep their foreign key. A foreign key the default branch already has is not "
+        "a finding; existing apps keep their tables and schemas."
+    ) in " ".join(env.prompt().split())
 
 
 @pytest.mark.platform
