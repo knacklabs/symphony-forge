@@ -95,6 +95,10 @@ def _link_names(fields: list[dict], root: Path) -> dict[str, dict[str, str]]:
     names = {}
     for target in sorted({field["target"] for field in fields if field["kind"] == "link"}):
         contract = (root / f"libs/{target}/contracts/src/index.ts").read_text(encoding="utf-8")
+        # Query examples (such as sortBy) are not fields accepted by create.
+        schema = re.search(r"export const \w+Schema = z\.object\(\{(.*?)^\}\)\.strict\(\);",
+                           contract, re.M | re.S)
+        contract = schema[1] if schema else ""
         match = re.search(r"^\s+(\w+): z\.string\(\)\.trim\(\)\.min\(1\)", contract, re.M)
         if not match:
             _refuse(f"The linked feature {target!r} has no required text field for its name.",

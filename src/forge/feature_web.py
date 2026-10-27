@@ -619,7 +619,7 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
                 f"      const response = await page.context().request.post(new URL('/api/v1/{target}', page.url()).toString(), {{",
                 f"        data: {{ {data} }}, headers: {{ 'x-csrf-token': await csrfToken(page) }},",
                 "      });",
-                "      expect(response.ok()).toBeTruthy();",
+                "      expect(response.ok(), await response.text()).toBeTruthy();",
                 "      return (await response.json()).data.id as string;",
                 "    })();",
                 f"    linked{_pascal(column)}Items.set(page, id);",
