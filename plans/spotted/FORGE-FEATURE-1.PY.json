@@ -67,6 +67,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/members.spec.ts\tThe Python starter smoke times out waiting for the member-list refresh after the delayed agent key response.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "line": 135,
+      "text": "The Python starter smoke times out waiting for the member-list refresh after the delayed agent key response.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_feature_command.py\tGate: generated Python API and browser proofs never run in CI\tFORGE-FEATURE-1/PY",
       "kind": "bug",
       "path": "tests/test_feature_command.py",
