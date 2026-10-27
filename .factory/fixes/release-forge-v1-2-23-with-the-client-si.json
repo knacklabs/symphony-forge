@@ -1,0 +1,15 @@
+{
+  "base": "44686c923e254ffa75a6d0eb2a2981078420e012",
+  "branch": "fix/release-forge-v1-2-23-with-the-client-si",
+  "done_when": "src/forge/__init__.py says version 1.2.23",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T14:16:01.771362+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Release Forge v1.2.23 with the client sign-off hotfix"
+}
