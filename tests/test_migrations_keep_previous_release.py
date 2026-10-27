@@ -9,6 +9,8 @@ from test_close import CLEAN, GREEN, env  # noqa: F401 (env is a fixture)
 from test_score_notes import _client_repo as setup_client
 from test_worker import calls, install_claude
 
+STORY = "FORGE-EXPAND-1"
+
 
 @pytest.mark.parametrize(
     "case",
@@ -21,6 +23,8 @@ def test_1_close_holds_a_migration_the_previous_release_cannot_run(
     # Audit: protect the close command's live-release migration boundary, including its
     # Contract exception, the independent SQL and Alembic formats, and guidance delivered by
     # work/init/sync. A parser regression could miss one destructive statement or read old files.
+    # The adopted app uses root-level Prisma migrations, which the starter-path cases cannot
+    # cover: a path matcher that requires a parent directory silently skips the adopted layout.
     # No existing test exercises close against newly added migrations; database guide tests only
     # check delivery. The real Forge work and close commands are the boundary; Claude, review and
     # GitHub use the repository's existing edge stubs. No production test seam is needed.
@@ -44,7 +48,9 @@ def test_1_close_holds_a_migration_the_previous_release_cannot_run(
     migration_path = Path(
         "apps/api/migrations/versions/0011_notes.py"
         if case == "new-client-alembic"
-        else "apps/api/prisma/migrations/20261101000100_notes/migration.sql"
+        else ("prisma/migrations/20261101000100_notes/migration.sql"
+              if case == "adopted-v1.2.2-prisma"
+              else "apps/api/prisma/migrations/20261101000100_notes/migration.sql")
     ).as_posix()
     if case == "new-client-alembic":
         migration = (

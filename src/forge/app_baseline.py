@@ -111,7 +111,7 @@ def migrations(top: Path, cfg: dict[str, Any], base: str) -> None:
     for path in repo.git("diff", "--name-only", "-z", "--no-renames", "--diff-filter=A",
                          base, "HEAD", cwd=top).split("\0"):
         file = PurePosixPath(path)
-        sql = file.match("**/prisma/migrations/*/migration.sql")
+        sql = file.match("prisma/migrations/*/migration.sql")
         python = (file.suffix == ".py" and file.parent.name == "versions"
                   and file.parent.parent.name == "migrations")
         if not (sql or python):
