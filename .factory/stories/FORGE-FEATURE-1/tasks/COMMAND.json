@@ -86,8 +86,8 @@
     "id": "945988bc-c493-4759-944d-1672e621b633",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-26T17:04:44.116978+00:00",
@@ -103,13 +103,10 @@
     }
   ],
   "stuck": {
-    "close": "500280b7-e8a7-4528-9afd-f82cce28e11a",
-    "head": "0dd3589dcd9451f28369d4a569b250a1ab6fb520",
-    "keys": {
-      "the open P0 preserve the filters object declaration in generated contracts in src/forge/feature_api.py": 1,
-      "the open P0 rename indexed cursor references along with their parameter in src/forge/feature_api.py": 1
-    },
-    "round": 1
+    "close": "36bc6b8d-a653-40ad-8d0f-266e34d98a31",
+    "head": "a0ab19f0f810d0d9b12ed92c1b15dc963c9be706",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
