@@ -4,34 +4,20 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- The seven-step journey is written once in the shipped guide, with one plain say-this sentence per step, and the README journey page matches it.
+- After forge init, the agent explains the seven steps and asks for the first input.
+- Each forge next starts with one line that names the current step out of seven, such as Step 3 of 7: canvas design, then the next step.
+- When someone asks what they can do or seems unsure, the agent shows the plain phrases for the current step.
+- When Forge refuses something, the agent explains the reason and the fix in plain words, and offers to file a Forge bug when the refusal looks like a Forge fault.
+- New repos get all of this at init; existing repos get it on upgrade with forge sync.
 
 ## Why
 
-Agents teach the seven-step journey to new users
-
-
+New users learn the journey from the owner. The repo has no single journey yet: the README's From idea to production table has ten stages, the shipped guide's Prototype section describes a different route, and forge next has no journey step to show, because its stage names belong to each item, not to the whole journey.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **In a new repo, the agent can list the seven steps with a say-this sentence each, and the first forge next names the current step out of seven; an existing repo gets the same after forge sync.**
 
 ## Risks
 
