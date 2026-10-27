@@ -130,6 +130,13 @@ recommendation first. Save the answer before moving to the next question.
   and answer findings between rounds, as for a spec. Notes stay beside the numbered decision
   record. Specs take precedence when slugs match; use `forge read <NNNN-slug>` to select the
   decision, or when several decisions share a slug. A cold read does not accept the decision.
+- In `docs/specs/`, state each rule once, on an `R-<n>:` line under `## Behaviour`.
+  Validation (VAL), UAT and acceptance (AC) lines name the rule that they check by its ID, for
+  example `VAL-11 checks R-13`, and do not say the rule again. A decision that changes a rule
+  names its ID. `forge decision accept` then lists every spec line that names that ID: in the
+  same change, before close, update each line that no longer fits. On upgrade, the first
+  `forge sync` lists the old spec lines that seem to repeat a rule, with a fix to start. Show
+  the list to the owner and ask with options: rewrite those specs now in that fix, or later.
 - `forge start` keeps `plans/ideas.md`, a short dated list, only when the owner says later, and carries waiting entries into the next fix or story.
   Remove an entry when the owner says to do it now, as the command table explains.
 

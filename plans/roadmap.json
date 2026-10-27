@@ -438,6 +438,12 @@
       "title": "Agents teach the seven-step journey to new users",
       "status": "pending",
       "order": 103
+    },
+    {
+      "key": "FORGE-SPECRULES-1",
+      "title": "Client specs state each rule once",
+      "status": "pending",
+      "order": 103
     }
   ],
   "epics": [
