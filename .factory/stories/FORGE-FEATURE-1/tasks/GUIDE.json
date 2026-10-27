@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-FEATURE-1-GUIDE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T06:21:36.470631+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "70b3f446d24bb0030aa0e9ce01edcdf5cef4ec6d",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
