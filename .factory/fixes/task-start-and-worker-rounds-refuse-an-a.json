@@ -1,0 +1,15 @@
+{
+  "base": "88604bd9092273e2d1e13f2a191e0fa67cd79780",
+  "branch": "fix/task-start-and-worker-rounds-refuse-an-a",
+  "done_when": "A story approved through Plan Mode starts its parts with forge task start, using the same approval check as the approval itself",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T11:00:30.458805+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Task start and worker rounds refuse an approved story as changed when its plan has text that their own copy of the approval check reads differently from the approval command's copy"
+}
