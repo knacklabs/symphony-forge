@@ -1,6 +1,13 @@
 {
   "base": "4f70eedef923759c587cbb74f5d53a3c35aaabbc",
   "branch": "fix/forge-s-own-ci-runs-the-full-linux-suite",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17ea4-3aae-72f0-bfa9-323cb5017b42",
+    "head": null,
+    "start": "aa047e739d40d4740331e8130affa1449a705390"
+  },
   "done_when": "forge-next.yml runs only the Windows platform tests and the Windows installer and plugin checks, the full Linux suite runs only in forge.yml, and the release steps name one Linux full run plus the Windows platform run",
   "fix_kind": "mechanical",
   "kind": "fix",
