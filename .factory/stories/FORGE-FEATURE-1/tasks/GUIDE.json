@@ -7,13 +7,53 @@
     "head": null,
     "start": "4aa14f430f3d51ba1e680c1d13be82c3ee80c287"
   },
+  "known": [
+    {
+      "area": "_assert_feature_guidance() in tests/test_feature_command.py",
+      "file": "tests/test_feature_command.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 359,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_a_plan_line_builds_the_feature_in_one_step",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9dc86354312153baf2ec708d0e7d723dec86b6adaca93553a3be0f58db1601fd",
+    "changed": "e09dab0f3c1a57a672003bedc8d798f8c934ff2b7c5ae47768f48f41389bdeb8",
+    "commit": "d9615f158acf6e8fb8772d2728c96dc4d776c630",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test. Case: normal use - CI runs either shell parameter of test_1. The fresh client's init installs Git hooks (src/forge/init.py:356), but this helper creates fix/feature-guidance directly without a Forge state record. The commit here therefore fails: pre_commit rejects unregistered branches (src/forge/githooks.py:128), so the worker brief assertions never run. The subsequent push to main at line 364 is independently refused by pre_push (src/forge/githooks.py:157); the adopted fixture also installs these hooks through sync. Prepare the fixture history with hooks explicitly disabled for those setup operations, while retaining the real forge work call being tested.",
+        "file": "tests/test_feature_command.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 359,
+        "priority": "P1",
+        "title": "Gate: test_1_a_plan_line_builds_the_feature_in_one_step",
+        "work": 2
+      }
+    ],
+    "id": "fcccecec-1bd4-4a5a-a864-f8c33813a01c",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T06:21:36.470631+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T06:29:12.026221+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
