@@ -416,23 +416,6 @@ def tested_product(top: Path, *, clean: bool = False) -> str:
     return hashlib.sha256("\0".join(files).encode("utf-8")).hexdigest()
 
 
-def signoff_results(top: Path) -> str:
-    """Carry actual test outcomes into the review clone only for the product they tested."""
-    from forge import review
-
-    path = review.results_path(top)
-    saved = path.read_text("utf-8") if path.is_file() else ""
-    header, _, evidence = saved.partition("\n")
-    try:
-        receipt = json.loads(header.removeprefix("# "))
-    except ValueError:
-        receipt = {}
-    product = tested_product(top)
-    if not isinstance(receipt, dict) or not product or receipt.get("product") != product:
-        return "No test results match this product. Run forge test on the finished product."
-    return f"The test command exited with status {receipt.get('exit')}.\n{evidence}"
-
-
 def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]:
     from forge import init, sync
 
