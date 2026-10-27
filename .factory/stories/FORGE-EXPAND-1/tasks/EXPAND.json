@@ -1,6 +1,13 @@
 {
   "base": "81c662ef9bbc25089339a02ec6c786cf0536545e",
   "branch": "task/FORGE-EXPAND-1-EXPAND",
+  "chat": {
+    "approval": "045576adcc8304670d6cd183ca5f6b80f5b1bc8605305d4266a0ff62c8bff120",
+    "claude": null,
+    "conversation": "01a17d11-e47c-7d20-99ad-7677c8c4d4e5",
+    "head": null,
+    "start": "a2c67c3bf8c8a0d335402ff5d16c73be99b17b7d"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-SIGNOFF-1/OPENLIST",
