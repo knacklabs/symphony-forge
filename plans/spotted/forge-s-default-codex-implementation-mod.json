@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tforge.toml\tSync Forge's checked-in adapters with the new defaults\tforge-s-default-codex-implementation-mod",
+      "kind": "bug",
+      "path": "forge.toml",
+      "line": 38,
+      "text": "Sync Forge's checked-in adapters with the new defaults",
+      "from": "blocking",
+      "item": "forge-s-default-codex-implementation-mod",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
