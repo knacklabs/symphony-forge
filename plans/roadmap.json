@@ -432,6 +432,12 @@
       "title": "Client apps ship an MCP server so agents can use their features",
       "status": "pending",
       "order": 102
+    },
+    {
+      "key": "FORGE-SIGNOFF-1",
+      "title": "Client apps reach sign-off through five guided steps and one list of open decisions",
+      "status": "pending",
+      "order": 103
     }
   ],
   "epics": [
