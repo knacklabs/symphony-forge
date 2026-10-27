@@ -41,7 +41,7 @@
       "gain": 5,
       "harm": 3,
       "line": 325,
-      "outcome": "open",
+      "outcome": "fixed in round 3",
       "reason": "",
       "round": 1,
       "security": false,
@@ -104,27 +104,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e3eac6a3f4fa16a098890f608ab88ccc788e1bbe7dd243ba8c02cf2a50341af8",
-    "changed": "8e962ce74b771ad6822fd389665027b307cdb901e24de77cc27e8c4bc4fc9057",
-    "commit": "f2fca49dccfa77ff73c206ca0fc57e7ede0683db",
+    "branch_diff": "8d2cd19c688481a22c6af861431e3127106aa6215a2dadf7717db39fb0eb2b5c",
+    "changed": "63a88200b911a56316ba78372af8c9542740db5984bce61d911b79a0b7e616fb",
+    "commit": "396272beb3b195819f3d1f88b9fa1855881da62a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional. Case: normal use - generate clients or the documented jobs feature and run the app's test command. The keyword-only indentation is repaired, but the emitted tests still require formatting. For example, this three-line client.post call has no trailing comma and fits on one line after dedenting, so Ruff collapses it. render_python_tests returns that source unchanged at line 995. The starter's package.json:11 requires ruff format --check, and line 17 runs it before the tests, so generated apps still fail their required test command. Finish formatting the emitted source.",
-        "file": "src/forge/feature_python_tests.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 827,
-        "priority": "P1",
-        "title": "Emit Python tests that pass the starter's formatter check",
-        "work": 2
-      }
-    ],
-    "id": "e0740fd1-f258-4c1f-a5c2-1fe98a495f0b",
-    "status": "blocked"
+    "findings": [],
+    "id": "47173c9a-4934-4a75-8114-5646b602de27",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T08:36:21.945925+00:00",
@@ -136,6 +125,10 @@
     },
     {
       "at": "2026-10-27T09:59:53.596388+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T10:19:32.092257+00:00",
       "step": "review"
     }
   ],
