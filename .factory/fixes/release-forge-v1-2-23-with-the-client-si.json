@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner instructed this worker to commit the prepared version-only release after the worker reported that its release references span nine counted code files. The allowance covers only the v1.2.23 release references, existing release tests, lockfile, installers, plugin metadata and generated release pins.",
   "base": "44686c923e254ffa75a6d0eb2a2981078420e012",
   "branch": "fix/release-forge-v1-2-23-with-the-client-si",
   "chat": {
