@@ -11,12 +11,27 @@
   "done_when": "The sign-off review gets the green full run as its test evidence with no separate forge test run, and a failed sign-off or completeness review names the saved raw report path",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f7c3c060746c9dc0aab90dc521f09122772d282aa588e8cfb0a15af302c93448",
+    "changed": "35cb32a16323da8002dd57c82eecdc1ba168ebf824413ce9264e05351a88477e",
+    "commit": "202522e135fad0486991f35102591e8eea882e50",
+    "dismissals": [],
+    "findings": [],
+    "id": "a0445e54-c7e1-4ef0-bc31-3922fd272a6f",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T13:39:41.062267+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T13:44:13.967026+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
