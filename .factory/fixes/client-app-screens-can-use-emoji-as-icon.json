@@ -4,12 +4,20 @@
   "done_when": "Review reports an emoji used as an icon on a client app screen as a finding.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T11:53:46.943991+00:00",
       "step": "start"
     }
   ],
-  "why": "Client app screens can use emoji as icons, which clash with the lucide icons the starter and shadcn use, and nothing shipped stops it or makes review report it."
+  "stuck": {
+    "close": null,
+    "head": "1b54cfce89691336efcc1f9c77724702d86e56a7",
+    "keys": {},
+    "round": null
+  },
+  "why": "Client app screens can use emoji as icons, which clash with the lucide icons the starter and shadcn use, and nothing shipped stops it or makes review report it.",
+  "worker": "codex"
 }
