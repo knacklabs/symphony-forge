@@ -41,7 +41,7 @@ def _design_records(top, answers):
     (folder / "order-list.svg").write_text(
         '<svg xmlns="http://www.w3.org/2000/svg"><text>Orders</text></svg>\n', encoding="utf-8")
     (folder / "SCREENS.md").write_text(
-        "# Screens\n\n## Order list\nImage: order-list.svg\n"
+        "# Screens\n\n## Order list\nImage: order-list.svg\nBuild: now\n"
         "Components: Card, Badge, Button\n"
         "Fields:\n- order name: text, required\n- status: choice, required, options: Open | Submitted\n",
         encoding="utf-8")

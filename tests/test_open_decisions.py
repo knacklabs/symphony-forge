@@ -22,6 +22,9 @@ def _client_checkout(setup, repo, tmp_path, monkeypatch):
         fix, _, _ = _client(repo, tmp_path, monkeypatch, working_build=False)
     else:
         fix, _, _ = _adopted_client(repo, tmp_path, monkeypatch)
+        # Keep the older client's unmarked screen list despite the current sign-off fixture.
+        screens = fix / "docs/design/prototype/SCREENS.md"
+        screens.write_text(screens.read_text("utf-8").replace("Build: now\n", ""), encoding="utf-8")
     return fix
 
 
@@ -140,7 +143,9 @@ def test_1_decision_open_ranks_every_open_question(repo, tmp_path, monkeypatch, 
     brief = " ".join(calls(log)[-1]["brief"].split())
     for instruction in ("When your work needs a choice only the client can make",
                         "do not guess and do not stop", "what it touches", "why it is asked",
-                        "why you picked it", "what happens if it stands"):
+                        "why you picked it", "what happens if it stands",
+                        "Build the screens marked `Build: now` in SCREENS.md.",
+                        "Build a `Build: later` screen only when the plan names it."):
         assert instruction in brief
 
     if setup == "new-client":
