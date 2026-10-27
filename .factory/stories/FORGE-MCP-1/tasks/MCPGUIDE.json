@@ -1,6 +1,13 @@
 {
   "allow_large": "The owner allows every FORGE-MCP-1 part over the line limit",
   "branch": "task/FORGE-MCP-1-MCPGUIDE",
+  "chat": {
+    "approval": "1f115deaacad6f96cad786da78b6bc3172cc164cd891d26f118e71c6b3381bdf",
+    "claude": null,
+    "conversation": "01a17c23-dcb4-79f3-baf2-7a30931a57fc",
+    "head": null,
+    "start": "d07d154a9f32344865eacbea5fc2e45cc19c084f"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
