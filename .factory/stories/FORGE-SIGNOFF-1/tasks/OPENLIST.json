@@ -1,0 +1,13 @@
+{
+  "base": "d89a55d633b5db320139e269ccc58e3b96fd0724",
+  "branch": "task/FORGE-SIGNOFF-1-OPENLIST",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T09:23:33.615101+00:00",
+      "step": "start"
+    }
+  ]
+}
