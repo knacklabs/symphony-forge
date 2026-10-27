@@ -176,7 +176,9 @@ def _pr(repo, number: int, slug: str, status: str, *, started: str | None = None
 
 def _install_prs(gh, prs) -> None:
     github(gh, prs)
-    listing = [{**pr, "state": "OPEN"} for pr in prs]
+    # The CLI inventory requests no commits; GraphQL supplies the check rollups and their oids.
+    listing = [{**{key: value for key, value in pr.items() if key != "commits"}, "state": "OPEN"}
+               for pr in prs]
     gh.respond("pr", "list", "--state", "all", stdout=json.dumps(listing))
     gh.respond("pr", "list", "--state", "open", stdout=json.dumps(listing))
 
@@ -307,6 +309,8 @@ def test_4_forge_next_says_what_each_running_item_waits_on(
     no_hooks.mkdir(exist_ok=True)
     repo.git("config", "core.hooksPath", no_hooks.as_posix(), cwd=original)
     _codex_repo(repo, monkeypatch, sdk_data, client=True)
+    # This helper creates a local plan branch; next discovers plans in a worktree or on origin.
+    repo.git("push", "-q", "origin", "story/BOARD")
     monkeypatch.setenv("FORGE_NOW", NOW)
     monkeypatch.setenv("STUB_CODEX_OVERLOADED", "1")
     # Keep the real retry pending while even slow Windows commands inspect it; cleanup ends it.
