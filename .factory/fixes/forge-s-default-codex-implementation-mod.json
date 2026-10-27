@@ -9,6 +9,13 @@
     "start": "03defba07c7dfcdf728abde0456612def34213e4"
   },
   "done_when": "A new repo from forge init and Forge's own forge.toml use gpt-6.1-terra at high effort for build, fix, lite and explore, and the guides say so",
+  "drop": {
+    "at": "2026-10-27T18:20:45.261030+00:00",
+    "because": "The owner keeps Sol 6.1 medium unless a blind comparison shows Terra 6.1 max is significantly better",
+    "by": "vrknetha <vrknetha@gmail.com> 1793125245 +0530",
+    "pull_request": 1169,
+    "status": "waiting for checks"
+  },
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
@@ -37,7 +44,7 @@
     "status": "clean"
   },
   "round": 2,
-  "status": "waiting for checks",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-27T18:02:49.601250+00:00",
@@ -50,6 +57,10 @@
     {
       "at": "2026-10-27T18:12:03.322836+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-27T18:20:45.261174+00:00",
+      "step": "drop"
     }
   ],
   "stop": {
