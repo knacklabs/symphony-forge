@@ -227,7 +227,11 @@ def _model_source(
         base = "str" if kind == "status" else definitions[kind]["pydantic"]
         if optional:
             base += " | None"
-        args = [_table_type(kind, definitions), f"nullable={optional}"]
+        column_type = _table_type(kind, definitions)
+        if optional and kind == "status":
+            # Persist an explicit None instead of letting the server default replace it.
+            column_type += "().evaluates_none()"
+        args = [column_type, f"nullable={optional}"]
         if kind == "yes-no":
             args.append('server_default=text("false")')
         elif kind == "status":
