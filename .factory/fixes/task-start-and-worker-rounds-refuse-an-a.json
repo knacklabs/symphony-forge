@@ -11,12 +11,27 @@
   "done_when": "A story approved through Plan Mode starts its parts with forge task start, using the same approval check as the approval itself",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "279aaee83eddf7fc3824a2ec999ebeb3732b23b5302c60526f385fa0075d3549",
+    "changed": "089066e344843f19a8f2770dc494a8a93084effb925140c47a44d874a25e449f",
+    "commit": "531350dd43ffce4b3fde271cce03d0689161c906",
+    "dismissals": [],
+    "findings": [],
+    "id": "8bf30e71-81bc-4a8d-a592-6b240b0a0db9",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T11:00:30.458805+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T11:04:44.994439+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
