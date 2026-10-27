@@ -12,7 +12,7 @@
   "done_when": "src/forge/__init__.py says version 1.2.23",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
