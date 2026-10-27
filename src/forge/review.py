@@ -93,7 +93,7 @@ elif "--tools" in argv:
     argv.append("--restricted")
 # The engine's chat and token use go to a side file, as the helper keeps no copy.
 with open({spent!r}, "ab") as spent, subprocess.Popen(
-        [{real!r}, *argv], cwd={tree!r}, stdout=subprocess.PIPE) as engine:
+        [*{real!r}, *argv], cwd={tree!r}, stdout=subprocess.PIPE) as engine:
     for line in engine.stdout:
         sys.stdout.buffer.write(line)
         sys.stdout.buffer.flush()
@@ -896,7 +896,8 @@ def round_number(top: Path, item: str, state: dict[str, Any]) -> int | None:
 
 def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         base: str, selected: dict[str, str], previous: dict[str, Any],
-        signoff_prompt: str = "", light: bool = False, tested: str = "") -> dict[str, Any]:
+        signoff_prompt: str = "", light: bool = False, tested: str = "",
+        images: set[str] | None = None) -> dict[str, Any]:
     """Review the branch head once, retrying once when a run doesn't finish. Returns the result."""
     from forge import design, records, story  # story imports review indirectly
     prototype = (light and not signoff_prompt and state.get("kind") == "fix"
@@ -925,6 +926,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
                      ".factory", "plans", "docs/decisions", cwd=tree)
+            if images is not None:
+                omitted = [name for name in product if Path(name).suffix.lower() in design.IMAGES
+                           and name not in images]
+                if omitted:
+                    repo.git("rm", "-q", "--cached", "--", *omitted, cwd=tree)
             review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
                                    cwd=tree)
             snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", review_base,
@@ -969,6 +975,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
+            if os.name == "nt":
+                argv[1:1] = [str(Path(__file__).with_name("review_process.py")), str(launcher)]
         with machine.agent_slot(top, "review", item):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine) as ran:
@@ -1022,7 +1030,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 problem = ("The canvas completeness check did not finish: " + reason + "." if reason else
                            "The canvas completeness check found gaps: " + "; ".join(
                                f["title"] + ": " + f["body"] for _, f in serious) + ".")
-                action = "fix the prototype screens"
+                action = "fix the review engine problem" if reason else "fix the prototype screens"
             repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
     base = repo.resolve_commit(top, base)
     return {"id": identity, "commit": head, **result,
@@ -1159,12 +1167,25 @@ def signoff(top: Path, answers: str, evidence: str = "") -> str:
 
 def design_check(top: Path, prompt: str) -> None:
     """Check the canvas with its own pinned model through the strict review engine."""
-    engine = "claude" if shutil.which(os.environ.get("CLAUDE_BIN") or "claude") else "codex"
-    if engine == "codex":
-        print("Claude is unavailable. The completeness check fell back to Codex with gpt-6.1-sol at high effort.")
-    cfg = {**repo.config(top), "tools": engine, "models": {"review": {
-        "model": "claude-opus-5-5" if engine == "claude" else "gpt-6.1-sol", "effort": "high"}}}
-    run(top, "design-check", {}, cfg, "", {}, {}, signoff_prompt=prompt)
+    from forge import design
+
+    cfg = {**repo.config(top), "tools": "codex", "models": {"review": {
+        "model": "gpt-6.1-sol", "effort": "high"}}}
+    images = [name for name in repo.git("ls-files", "-z", cwd=top).split("\0")
+              if not name.startswith((*BOOKKEEPING, "docs/decisions/"))
+              and Path(name).suffix.lower() in design.IMAGES]
+    # The pinned helper stages each attachment under gettempdir(), with fixed-size names.
+    # Leave 8K for executable, configs, schema, output and working-directory arguments.
+    size = max(1, 24000 // (len(str(Path(tempfile.gettempdir()).resolve())) * 2 + 256))
+    if os.name != "nt" or len(images) <= size:
+        run(top, "design-check", {}, cfg, "", {}, {}, signoff_prompt=prompt)
+        return
+    for start in range(0, len(images), size):
+        batch = set(images[start:start + size])
+        run(top, "design-check", {}, cfg, "", {}, {}, images=batch,
+            signoff_prompt=prompt + "\n\nThis is one image batch. Check the attached screens against "
+            "the whole brief. Other screens have separate batches; do not report them as absent "
+            "from this batch.\nAttached screens:\n" + _bullets(sorted(batch)))
 
 
 def _spent(path: Path) -> dict[str, Any]:
@@ -1200,17 +1221,24 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     real = shutil.which(os.environ.get(f"{engine.upper()}_BIN") or engine)
     if not real:
         return None  # the helper then finds no such engine itself and says so
+    command = [real]
+    if os.name == "nt" and engine == "codex" and Path(real).suffix.lower() == ".cmd":
+        # npm's shim merely runs this entry point with Node. Bypass cmd.exe here too.
+        entry = Path(real).parent / "node_modules/@openai/codex/bin/codex.js"
+        node = Path(real).with_name("node.exe")
+        if entry.is_file():
+            command = [str(node) if node.is_file() else shutil.which("node.exe") or "node.exe", str(entry)]
     # ponytail: the old launcher also carried the Windows elevated-sandbox setting through the
     # helper's --ignore-user-config; port it when a Windows review can't run its read-only shell.
     folder.mkdir()
     script = folder / f"{engine}_in_tree.py"
     from forge.codex import QUIET
     quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
-    script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=real, quiet=quiet,
+    script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=command, quiet=quiet,
                                       spent=str(folder.parent / SPENT)), encoding="utf-8")
-    launcher = folder / (f"{engine}.cmd" if os.name == "nt" else engine)
-    launcher.write_text(f'@"{sys.executable}" "{script}" %*\r\n' if os.name == "nt" else
-                        f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n', encoding="utf-8")
-    if os.name != "nt":
-        launcher.chmod(0o755)
+    if os.name == "nt":
+        return script
+    launcher = folder / engine
+    launcher.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n', encoding="utf-8")
+    launcher.chmod(0o755)
     return launcher
