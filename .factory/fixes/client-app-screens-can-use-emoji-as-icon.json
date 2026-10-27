@@ -1,0 +1,72 @@
+{
+  "base": "10bb6caffc0afcb3fe11ea62c62e089d59cd4f54",
+  "branch": "fix/client-app-screens-can-use-emoji-as-icon",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17d35-d142-7dc0-bd1b-626b1eafa087",
+    "head": null,
+    "start": "5197749c618465a414e7e61b35e31acd0e025351"
+  },
+  "done_when": "Review reports an emoji used as an icon on a client app screen as a finding.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/review.md",
+      "file": "src/forge/templates/review.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 281,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Review reports an emoji used as an icon on a client app screen as a finding.",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c7704b0b1f0da62bffbeb0f742cf0ac0fa14c19a86f852ff015b37740a67e579",
+    "changed": "e90ab74ecb6d58ed7491965a5fdc3369605602c9f7a80e1d0e8908c9c5451747",
+    "commit": "1752d341006dda202df4eb1e525bb7e4e8c004af",
+    "dismissals": [],
+    "findings": [],
+    "id": "e672f231-1057-48cd-b0ca-c4e49734e7c6",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T11:53:46.943991+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T11:58:13.826523+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:17:25.527114+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-27T11:58:13.838977+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/review.md",
+    "reason": "Owner chose one more round: add the same rule to the prototype light review and the sign-off review",
+    "wait_id": "fb035090-d18e-4b2d-8188-e06e4d2ee6f2",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "459a95aa-68dd-41b9-a400-96d6b283005f",
+    "head": "9455e283622d241c2eb7fc502c5a375dde0fe64d",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Client app screens can use emoji as icons, which clash with the lucide icons the starter and shadcn use, and nothing shipped stops it or makes review report it.",
+  "worker": "codex"
+}

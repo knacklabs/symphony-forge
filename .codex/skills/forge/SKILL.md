@@ -86,6 +86,8 @@ the next merge.
 | "Record the check-back result" | In a fix: `forge spec measure <slug> --result "<result>"` |
 | "Record a decision" | `forge decision new <slug>` |
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
+| "What does the client still need to decide?" | `forge decision open` |
+| "Record the client's answers" | In a fix: `forge decision answer --from <file> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
@@ -130,6 +132,13 @@ recommendation first. Save the answer before moving to the next question.
   and answer findings between rounds, as for a spec. Notes stay beside the numbered decision
   record. Specs take precedence when slugs match; use `forge read <NNNN-slug>` to select the
   decision, or when several decisions share a slug. A cold read does not accept the decision.
+- In `docs/specs/`, state each rule once, on an `R-<n>:` line under `## Behaviour`.
+  Validation (VAL), UAT and acceptance (AC) lines name the rule that they check by its ID, for
+  example `VAL-11 checks R-13`, and do not say the rule again. A decision that changes a rule
+  names its ID. `forge decision accept` then lists every spec line that names that ID: in the
+  same change, before close, update each line that no longer fits. On upgrade, the first
+  `forge sync` lists the old spec lines that seem to repeat a rule, with a fix to start. Show
+  the list to the owner and ask with options: rewrite those specs now in that fix, or later.
 - `forge start` keeps `plans/ideas.md`, a short dated list, only when the owner says later, and carries waiting entries into the next fix or story.
   Remove an entry when the owner says to do it now, as the command table explains.
 
@@ -780,7 +789,8 @@ New clients get these steps at init; existing clients get the same guide after u
 
 In a new client repo, follow the FDE route: start with discovery of the customer's job,
 workaround, cost, people, frequency and evidence. Start with a canvas, as described below.
-The customer can sign off on the canvas alone. Build a working prototype only when the FDE
+The canvas in Play mode is the default clickable prototype: the customer clicks through it,
+and can sign off on it alone. Build a working prototype only when the FDE
 requests one to prove something the canvas cannot, such as real data or speed. Record that
 request with `forge decision new prototype-build`; the owner accepts it with
 `forge decision accept prototype-build --by "<name>"`. Then build the smallest working demo that proves
@@ -798,6 +808,28 @@ from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell 
 they can point at the screen: click an element in the demo build, write what's wrong and paste the
 output to the agent.
 
+**Open decisions.** Write each question only the client can answer in this form, in the decision
+record under `## To confirm`, the spec, or the plan's Notes where it belongs:
+
+```text
+- Open question: <question>
+  Touches: <screen or rule>
+  Why we ask: <what the answer changes>
+  Default: <choice>
+  Why this default: <reason>
+  If the default stands: <what happens>
+  Due: <YYYY-MM-DD>
+  Gain <1-5>, Work <1-5>, Harm <1-5>
+```
+
+Pick the default, due date and scores with the review bar before you ask. Copy a cold-read or
+review note that needs the client into this form. `forge decision open` prints the ranked list;
+go through the whole list with the client in one sitting, then record the answers with
+`forge decision answer`. When `forge next` says a due date passed, record the defaults with
+`forge decision answer --defaults` and tell the client each default and that a new decision can
+change it. After an upgrade, rewrite each existing to-confirm list and open question in this form
+once in a mechanical fix.
+
 For each demo round, gather all requests from one conversation into one prototype fix. Build,
 test, review and merge that round before starting another. Tell the salesperson what changed in
 the demo: "the next version is ready to demo" or "the reviewer found a missing error message".
@@ -807,7 +839,7 @@ When `forge next` says to connect the repo to our deploy platform, explain what 
 that reminder does not authorize deployment. When the user explicitly requests deployment, use
 Mainline Deploy as above. After the requested deployment is verified, record its address under
 `## Demo` in `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off
-decision.
+decision. A canvas-only prototype needs no demo address.
 
 **The demo.** Every demo follows five steps, in order:
 
@@ -856,21 +888,20 @@ default or agent as its source. Record an open request as
 `- <Topic>: ask the client (<who asked>, <date>)`; replace it with the sourced answer when the
 client replies. Only a may-wait topic can read `- <Topic>: later, when <trigger>`.
 
-**Canvas and app design.** Make each app's own design from `docs/product/BRIEF.md`:
-`## Summary`, `## Users` and `## Things it keeps track of`, including every field and choice-list
-option. Use impeccable and emil-design-eng. Run impeccable's init when PRODUCT.md is missing.
-Write the app's theme tokens, type and colours in root DESIGN.md. The starter has no look of its own.
-Make the screens in a Claude Design artifact with a shadcn design system and named shadcn components.
-On a Codex-only host without an artifact tool, make HTML artboards in the repo.
-Save the artboards and images in `docs/design/prototype/` in a mechanical fix.
-Copy `.forge/design/support.js` beside the HTML and run it for a 1440 by 900 PNG per screen.
-Write SCREENS.md there: one `## <screen>` per image with `Image: <file>`, `Components: <shadcn names>`
-and `Fields:`. List each field as `- <field>: <type>, required|optional`, with
-`, options: <a> | <b>` for choice lists. Use `Fields: none` for a screen without fields.
-Run impeccable's critique and polish and the emil-design-eng checklist before sign-off.
-Record notes and `Result: passed` under `## Critique`, `## Polish` and `## Emil checklist` in CHECKS.md.
-Commit the folder, then run `forge decision new prototype-design` and record the owner's or FDE's
-approval with `forge decision accept prototype-design --by "<name>"`.
+**Canvas and app design.** Make each app's design from the whole `docs/product/BRIEF.md`: its
+purpose, users, records, fields, choice-list options and key flows. Use impeccable and
+emil-design-eng. Run impeccable's init when PRODUCT.md is missing. Make the screens in a Claude
+Design artifact with a shadcn design system and named shadcn components. On a Codex-only host
+without an artifact tool, make HTML artboards in the repo. Keep the canvas available for the
+customer and the sign-off review. New clients get this process at init; existing clients can use
+their current brief and design after upgrade and sync. Client sign-off does not require a root
+DESIGN.md, SCREENS.md or CHECKS.md, or a specific `Things it keeps track of` heading.
+When the canvas has a SCREENS.md screen list, add `Build: now` or `Build: later` to each screen.
+Put the whole product on the canvas, every screen, state and flow, later ones too, and mark
+`Build: now` only what the first stories build.
+Before sign-off, use impeccable's critique and polish and the emil-design-eng checklist. The owner
+or FDE can approve the canvas with `forge decision new prototype-design` and
+`forge decision accept prototype-design --by "<name>"`.
 
 For each story that adds a screen or changes a flow, use this design process before its cold read.
 Save the folder under `docs/design/<KEY>/`. End `## What changes for you` with
@@ -878,27 +909,32 @@ Save the folder under `docs/design/<KEY>/`. End `## What changes for you` with
 One plan approval covers that exact folder. A changed folder needs a new tree id and approval.
 For small changes to existing screens that add no screen and change no flow, use
 `Design: none (<why>)` instead. Backend-only stories need no canvas. Earlier approved stories keep working.
-The build applies the app's DESIGN.md theme, type and colours to the starter and maps each screen's
-components and fields from SCREENS.md. Workers and reviewers receive that design context.
+The build applies any existing app theme and follows the approved story design, including its
+components and fields. Workers and reviewers receive that design context.
 
 **Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
-goes through every answer on the answers page: our defaults, the agent's guesses and the topics
-marked later. Settle every open must-answer topic in that call: `forge next` lists those still
+goes through every item from `forge decision open` and every answer on the answers page: our
+defaults, the agent's guesses and the topics marked later. Settle every open must-answer topic
+in that call: `forge next` lists those still
 missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
 our default or the agent, so record each as the client, salesperson or developer answered it. Then
 write `forge decision new
 client-signoff` (customer, demo address for a working build, and the answers page copied word for word, leaving
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
-before any reply is recorded. Put `docs/design/prototype/ (<tree id>)` under `## Signed design`,
-demo outcomes and their tests under `## Proof` for a working build, and settled choices under `## Decisions`.
-Sign-off checks the design records above and the brief's nonempty `## Things it keeps track of`.
-It runs one completeness check against the brief's Summary, Users, Things it keeps track of and Key flows,
-with SCREENS.md and the images. Missing screens, fields, options or flows hold sign-off.
+before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
+and settled choices under `## Decisions`.
+Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
+run on main is green. Its completeness review must pass after judging the screens against the whole
+brief, including its purpose, users, records, fields, choices and key flows; it does not require a
+separate screen list. Missing screens, fields, options or flows hold sign-off. When a precondition is
+missing, the refusal lists every gap and the next action for each. Existing clients can complete
+sign-off with the brief and design they have after upgrade and sync; they do not need to add
+prototype design files for this gate.
 The check uses Claude's `claude-opus-5-5` at high effort, independent of `[models.design]`.
 Without Claude it uses Codex's `gpt-6.1-sol` at high and says it fell back.
-Fix gaps, approve the changed canvas again, then retry sign-off.
-A canvas-only sign-off needs no working build. A working build also gets one strict whole-product review.
-Forge reuses both passed results while what they checked stays unchanged.
+Fix gaps, then retry `forge decision accept client-signoff`.
+A canvas-only sign-off needs no working build. A working build also gets one strict whole-product
+review with no serious findings. Forge reuses passed results while what they checked stays unchanged.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
 Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
@@ -921,9 +957,11 @@ A requested working prototype gets a light review that blocks only on P0 finding
 A `Not done` against the item's own approved Done-when still blocks at any priority.
 Full proof is due at sign-off.
 
-After sign-off, every new story copies Signed design, Proof and Decisions into
+After sign-off, every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work
-or production risks. Start from the signed canvas or a newer design approved with the plan.
+or production risks. Start from the prototype canvas or a newer design approved with the plan.
+Plan the first stories only from screens marked `Build: now`. A `Build: later` screen stays on
+the signed canvas as the source for a later story.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as
@@ -938,9 +976,9 @@ During both halves of the interview, ask one question at a time in plain words f
 may not be technical.
 
 Before the prototype, take the product answers from the client notes: what the app is for, who
-uses it, what it keeps track of with each thing's fields, and the options of each choice list.
-Write the answers in docs/product/BRIEF.md under ## Summary, ## Users and ## Things it keeps track of. Record
-the options for each choice list with the thing it belongs to. The prototype uses these answers.
+uses it, the records and fields it needs, the options of each choice list, and the key flows.
+Write them in docs/product/BRIEF.md. Record the options for each choice list with the thing it
+belongs to. The prototype and sign-off review use the whole brief.
 
 At the start, write docs/product/CONSTITUTION.md with every default from Constitution defaults
 filled in, and raise a default with the FDE only when the notes contradict it.
@@ -1100,7 +1138,8 @@ if the settings do not answer it. Pass
 On a live app, every story and fix also follows these:
 
 - Before changing code no test covers, first add a test that pins today's behaviour.
-- Migrations only add, and work with the previous version of the app still running.
+- Migrations work with the previous release still running: expand, then contract. Add a new table or column before code uses it. Keep the old table or column for two releases, and remove it only when no live release uses it.
+- Close checks only migrations added by the change, and skips the check in a prototype repo with no live release. A migration that drops or renames a table or column, or changes a column's type, needs a `-- Contract: ...` line in Prisma SQL or a `# Contract: ...` line in Alembic Python. The line explains why the live release no longer reads the table or column; close allows it when the line is present, and review reads the explanation.
 - A change users would notice ships behind the team's own feature flags.
 - No production credentials on this machine; never ask for them.
 

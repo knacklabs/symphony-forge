@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/members.spec.ts\tGate: adding an agent with the Admin role\tFORGE-MCP-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "line": 89,
+      "text": "Gate: adding an agent with the Admin role",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/organisations/web/src/hooks/members-hooks.ts\tHandle offline agent mutations instead of leaving them pending\tFORGE-MCP-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/organisations/web/src/hooks/members-hooks.ts",
+      "line": 48,
+      "text": "Handle offline agent mutations instead of leaving them pending",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/organisations/web/src/pages/agent-key-dialog.tsx\tIgnore key responses from earlier dialog openings\tFORGE-MCP-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/organisations/web/src/pages/agent-key-dialog.tsx",
+      "line": 21,
+      "text": "Ignore key responses from earlier dialog openings",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/organisations/web/src/pages/members-page.tsx\tLoad agent accounts beyond the first members page\tFORGE-MCP-1/AGENTS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/organisations/web/src/pages/members-page.tsx",
+      "line": 148,
+      "text": "Load agent accounts beyond the first members page",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter-python/apps/api/tests/test_module_schemas.py\t\"uv run alembic check\" has no --no-sync, so it downloads the dev packages inside the container and can pass its 120-second limit; test_database.py uses --no-sync.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter-python/apps/api/tests/test_module_schemas.py",
+      "line": 75,
+      "text": "\"uv run alembic check\" has no --no-sync, so it downloads the dev packages inside the container and can pass its 120-second limit; test_database.py uses --no-sync.",
+      "from": "worker",
+      "item": "FORGE-MCP-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/libs/organisations/web/src/pages/agent-key-dialog.tsx\ta key that arrives after the person closes the dialog stays in component state until the next open clears it.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/libs/organisations/web/src/pages/agent-key-dialog.tsx",
+      "line": 22,
+      "text": "a key that arrives after the person closes the dialog stays in component state until the next open clears it.",
+      "from": "worker",
+      "item": "FORGE-MCP-1/AGENTS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

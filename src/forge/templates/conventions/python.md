@@ -254,8 +254,15 @@ and uses Base.metadata from core. Generate a revision, then read and commit it:
 uv --directory apps/api run alembic revision --autogenerate -m "<what>"
 ```
 
-Never edit a merged migration. Put a data change in its own migration. Prefer additions; a drop
-or rewrite goes under the story's Risks with recovery steps. Apply with `alembic upgrade head`.
+Never edit a merged migration. Put a data change in its own migration. Expand, then contract:
+add a new table or column before code uses it, keep the old table or column for two releases, and
+remove it only when no live release uses it. Mainline rollback restores the previous release's
+code and keeps the database, so each migration must work with that code still running. Apply with
+`alembic upgrade head`.
+Close checks only migrations added by the change, and skips the check in a prototype repo with no
+live release. A migration that drops or renames a table or column, or changes a column's type,
+needs a `# Contract: ...` comment explaining why the live release no longer reads it. Close allows
+the migration when the line is present; review reads the explanation.
 Pass `include_schemas=True` to Alembic's `context.configure` in both online and offline modes.
 Move tables and existing enums with `ALTER TABLE ... SET SCHEMA` and `ALTER TYPE ... SET SCHEMA`.
 Indexes, foreign keys and triggers move with the table; shared trigger functions stay in `public`.

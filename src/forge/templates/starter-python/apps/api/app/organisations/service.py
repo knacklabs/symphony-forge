@@ -14,11 +14,47 @@ from app.core import AccountPrincipal, ApiError, MailProvider, Role
 from app.history import HistoryService
 from app.organisations.models import Invite, Membership, Organisation
 from app.organisations.schema import (
+    AgentKey,
+    AgentTools,
     Member,
     MemberListQuery,
     MemberListResponse,
     MemberPagination,
 )
+
+_ROLE_NAMES: dict[Role, str] = {"admin": "Admin", "member": "Member"}
+
+
+class AgentAccess(NamedTuple):
+    principal: AccountPrincipal
+    delete_and_restore: list[str]
+
+
+def agent_for_key(db: Session, key_hash: str) -> AgentAccess | None:
+    """The agent with this key hash and its organisation's agent delete and restore list."""
+    row = db.execute(
+        select(Membership, Organisation.agent_delete_restore)
+        .join(Organisation)
+        .where(
+            Membership.agent_key_hash == key_hash,
+            Membership.is_agent.is_(True),
+            Membership.deleted_at_utc.is_(None),
+            Organisation.deleted_at_utc.is_(None),
+        )
+    ).first()
+    if row is None:
+        return None
+    agent, delete_and_restore = row.tuple()
+    return AgentAccess(
+        AccountPrincipal(
+            agent.account_id, agent.email, agent.organisation_id, agent.role
+        ),
+        list(delete_and_restore),
+    )
+
+
+def _member_not_found() -> ApiError:
+    return ApiError(404, "MEMBER_NOT_FOUND", "This member was not found.")
 
 
 class OpenInvite(NamedTuple):
@@ -188,6 +224,95 @@ class OrganisationsService:
         return AccountPrincipal(
             member.account_id, member.email, member.organisation_id, member.role
         )
+
+    def add_agent(
+        self, account_id: UUID, email: str, role: Role, admin: AccountPrincipal
+    ) -> Member:
+        membership = Membership(
+            id=uuid7(),
+            organisation_id=admin.organisation_id,
+            account_id=account_id,
+            email=email,
+            role=role,
+            is_agent=True,
+            created_by_account_id=admin.id,
+            modified_by_account_id=admin.id,
+        )
+        self.db.add(membership)
+        self.history.record(
+            admin,
+            "agent.added",
+            f"Added the agent account {email} as {_ROLE_NAMES[role]}",
+        )
+        self.db.commit()
+        return Member.model_validate(membership)
+
+    def create_key(self, admin: AccountPrincipal, account_id: UUID) -> AgentKey:
+        """A new key replaces the agent's old one, which stops working at once."""
+        key = f"agent_{secrets.token_urlsafe(32)}"
+        self._set_key_hash(
+            admin,
+            account_id,
+            hashlib.sha256(key.encode()).hexdigest(),
+            "agent.key-created",
+            "Created a key for",
+        )
+        return AgentKey(key=key)
+
+    def revoke_key(self, admin: AccountPrincipal, account_id: UUID) -> None:
+        self._set_key_hash(
+            admin, account_id, None, "agent.key-revoked", "Revoked the key for"
+        )
+
+    def _set_key_hash(
+        self,
+        admin: AccountPrincipal,
+        account_id: UUID,
+        key_hash: str | None,
+        action: str,
+        summary: str,
+    ) -> None:
+        email = self.db.scalar(
+            update(Membership)
+            .where(
+                Membership.account_id == account_id,
+                Membership.organisation_id == admin.organisation_id,
+                Membership.is_agent.is_(True),
+                Membership.deleted_at_utc.is_(None),
+            )
+            .values(agent_key_hash=key_hash, modified_by_account_id=admin.id)
+            .returning(Membership.email)
+        )
+        if email is None:
+            raise _member_not_found()
+        self.history.record(admin, action, f"{summary} {email}")
+        self.db.commit()
+
+    def agent_tools(self, organisation_id: UUID) -> AgentTools:
+        organisation = self.db.get_one(Organisation, organisation_id)
+        return AgentTools(delete_and_restore=list(organisation.agent_delete_restore))
+
+    # ponytail: a feature name is checked only for its form; an unknown name is stored and does nothing.
+    def set_agent_tools(
+        self, admin: AccountPrincipal, feature: str, delete_and_restore: bool
+    ) -> AgentTools:
+        organisation = self.db.get_one(Organisation, admin.organisation_id)
+        features = list(organisation.agent_delete_restore)
+        if (feature in features) != delete_and_restore:
+            features = (
+                [*features, feature]
+                if delete_and_restore
+                else [name for name in features if name != feature]
+            )
+            organisation.agent_delete_restore = features
+            organisation.modified_by_account_id = admin.id
+            self.history.record(
+                admin,
+                "agent-tools.changed",
+                f"Turned {'on' if delete_and_restore else 'off'} agent delete and restore for {feature}",
+            )
+            self.db.commit()
+        return AgentTools(delete_and_restore=features)
 
     def list(self, organisation_id: UUID, query: MemberListQuery) -> MemberListResponse:
         statement = select(Membership).where(

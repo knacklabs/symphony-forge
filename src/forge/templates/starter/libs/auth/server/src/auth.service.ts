@@ -3,7 +3,7 @@ import { Inject, Injectable, Optional, BadRequestException, ConflictException, F
 import { ConfigService } from '@nestjs/config';
 import { Prisma, type Account } from '@prisma/client';
 import { MAIL_PROVIDER, permissionsFor, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
-import { ORGANISATIONS_API, roleSchema, type OrganisationsApi } from '@app/organisations-contracts';
+import { ORGANISATIONS_API, roleSchema, type AddAgentInput, type Member, type OrganisationsApi } from '@app/organisations-contracts';
 import type { Account as AccountResponse, AuthApi, AuthOptions } from '@app/auth-contracts';
 
 const PASSWORD_KEY_BYTES = 64;
@@ -13,6 +13,9 @@ const PASSWORD_SCRYPT_OPTIONS = { N: 2 ** 17, r: 8, p: 1, maxmem: 256 * 1024 * 1
 const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const RESET_TOKEN_LIFETIME_MS = 60 * 60 * 1000;
 const RESET_MESSAGE = 'If an account exists, a reset link has been sent.';
+const AGENT_EMAIL_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+// No password matches an empty hash, so an agent account cannot sign in.
+const NO_PASSWORD = '';
 
 export type SessionCookies = { sessionToken: string; csrfToken: string; expiresAtUtc: Date };
 
@@ -77,7 +80,7 @@ export class AuthService implements AuthApi {
   }
 
   async setUpCompany(email: string, password: string): Promise<AccountResponse> {
-    const account = await this.createAccount(email, password);
+    const account = await this.createAccount(email, await hashPassword(password));
     // ponytail: account and organisation creation are two module calls; add recovery if sign-up needs retries across failures.
     const membership = await this.organisations.createForAccount(account);
     return accountResponse(account, membership.role);
@@ -96,14 +99,21 @@ export class AuthService implements AuthApi {
     if (invite.email !== email) {
       throw new BadRequestException({ code: 'INVITE_INVALID', message: 'This invite link is not valid. Ask an admin for a new one.', details: null });
     }
-    const account = await this.createAccount(email, password, 'An account already uses that email, so it cannot join this organisation.');
+    const account = await this.createAccount(email, await hashPassword(password), 'An account already uses that email, so it cannot join this organisation.');
     // ponytail: a failure between these module calls leaves an account with no membership and 401; support must remove it before another attempt.
     const membership = await this.organisations.joinFromInvite(invite, account);
     return { account: accountResponse(account, membership.role), cookies: await this.createSession(account.id) };
   }
 
-  private async createAccount(email: string, password: string, conflictMessage = 'An account already uses that email.'): Promise<Account> {
-    const passwordHash = await hashPassword(password);
+  /** An agent account has an email that can never receive mail and no password. */
+  async addAgent(input: AddAgentInput, admin: AccountPrincipal): Promise<Member> {
+    const suffix = Array.from(randomBytes(6), (byte) => AGENT_EMAIL_ALPHABET[byte % AGENT_EMAIL_ALPHABET.length]).join('');
+    const account = await this.createAccount(`${input.name}-${suffix}@agents.invalid`, NO_PASSWORD);
+    // ponytail: account and membership creation are two module calls, as in sign-up; a failure between them leaves an account no one can use.
+    return this.organisations.addAgent(account, input.role, admin);
+  }
+
+  private async createAccount(email: string, passwordHash: string, conflictMessage = 'An account already uses that email.'): Promise<Account> {
     let account: Account;
     try {
       account = await this.prisma.$transaction(async (transaction) => {

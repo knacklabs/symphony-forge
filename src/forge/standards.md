@@ -29,8 +29,10 @@ run in the cold reads, the review's Simpler rule, the functional check and the c
 8. **Measure then check back.** Success means the client's number moved, not that a feature
    shipped. Every spec has a metric, baseline, target and check date. At the check-back the choice
    is to stop, change the slice or remove it; adding more is never the default.
-9. **Reversible.** Every change is a pull request a revert undoes. Prefer migrations that only add,
-   keep data rather than drop it, and list any one-way step under Risks for the human to decide.
+9. **Reversible.** Every change is a pull request a revert undoes. Expand, then contract: add a new
+   table or column before code uses it, keep the old table or column for two releases, and remove
+   it only when no live release uses it. Keep data rather than drop it, and list any one-way step
+   under Risks for the human to decide.
 10. **Runnable by a non-technical client.** Errors and empty states say in plain words what
     happened and what to do next, and the README keeps a short, current "How it works".
 11. **Security and accessibility never simplified away.** Input is checked where it enters, every
@@ -195,7 +197,8 @@ A Python app writes these names in snake_case (payment_transaction, created_at_u
 - Index every foreign key and every column a frequent query filters on, as `idx_<Table>_<column>`, and every unique field.
 - Many-to-many uses an explicit join table named with both tables in alphabetical order (`RoleUser`).
 - Every schema change is a migration with a timestamped name. Never edit a merged migration.
-  Prefer migrations that only add; a destructive one goes under the story's Risks.
+  Expand, then contract: add a new table or column before code uses it, keep the old table or
+  column for two releases, and remove it only when no live release uses it.
 - Use Postgres full-text search before adding a search engine.
 - When a story does add in-process events: name them `<Domain><Action>Event`, give each payload an
   `id`, `version`, `timestampUtc`, `initiatedByAccountId` and `data`, keep secrets out of it, and

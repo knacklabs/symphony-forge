@@ -166,6 +166,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an agent account to your organisation.
+         * @description Only admins can add agent accounts. The account’s email is the name with six random characters at agents.invalid, and it has no password. Create its key next.
+         */
+        post: operations["add_agent_api_v1_agents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects": {
         parameters: {
             query?: never;
@@ -308,6 +328,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/members/{account_id}/key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a key for an agent account.
+         * @description Only admins can create keys. The key shows this one time only. A new key replaces the old one, which stops working at once.
+         */
+        post: operations["create_agent_key_api_v1_members__account_id__key_post"];
+        /**
+         * Revoke an agent account’s key.
+         * @description Only admins can revoke keys. Agents that use the key stop working at once.
+         */
+        delete: operations["revoke_agent_key_api_v1_members__account_id__key_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agent-tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the features whose delete and restore tools agents can use.
+         * @description Only admins can read it. Every feature’s search, get, create and update tools are always on.
+         */
+        get: operations["list_agent_tools_api_v1_agent_tools_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agent-tools/{feature}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Turn agent delete and restore on or off for one feature.
+         * @description Only admins can change it. The agent account’s role still applies.
+         */
+        put: operations["change_agent_tools_api_v1_agent_tools__feature__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/history": {
         parameters: {
             query?: never;
@@ -421,6 +505,83 @@ export interface components {
              *     ]
              */
             permissions: string[];
+        };
+        /** AddAgentInput */
+        AddAgentInput: {
+            /**
+             * Name
+             * @description The start of the agent account’s email: lower-case letters, numbers and hyphens.
+             * @example gantry
+             */
+            name: string;
+            /**
+             * @description The agent account’s role.
+             * @example member
+             */
+            role: components["schemas"]["Role"];
+        };
+        /** Agent */
+        Agent: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Accountid
+             * Format: uuid
+             */
+            accountId: string;
+            /**
+             * Email
+             * @example gantry-k3x9p2@agents.invalid
+             */
+            email: string;
+            role: components["schemas"]["Role"];
+            /**
+             * Isagent
+             * @description Always true for an agent account.
+             */
+            isAgent: boolean;
+            /**
+             * Haskey
+             * @description Whether the agent account has a working key; false until you create one.
+             */
+            hasKey: boolean;
+            /**
+             * Createdatutc
+             * Format: date-time
+             */
+            createdAtUtc: string;
+        };
+        /** AgentKey */
+        AgentKey: {
+            /**
+             * Key
+             * @description The agent’s key. It shows this one time only.
+             * @example agent_Vb3Qm9xT2kLr8sYw4Nc6Hd1Fj7Pz0Ae5Gu3Ki9Ob2Wl
+             */
+            key: string;
+        };
+        /** AgentTools */
+        AgentTools: {
+            /**
+             * Deleteandrestore
+             * @description The features whose delete and restore tools agents can use.
+             * @example [
+             *       "projects"
+             *     ]
+             */
+            deleteAndRestore: string[];
+        };
+        /** AgentToolsChange */
+        AgentToolsChange: {
+            /**
+             * Deleteandrestore
+             * @description Whether agents can use the feature’s delete and restore tools.
+             * @example true
+             */
+            deleteAndRestore: boolean;
         };
         /** ApiErrorBody */
         ApiErrorBody: {
@@ -570,6 +731,16 @@ export interface components {
             email: string;
             role: components["schemas"]["Role"];
             /**
+             * Isagent
+             * @description Whether the member is an agent account.
+             */
+            isAgent: boolean;
+            /**
+             * Haskey
+             * @description Whether the agent account has a working key.
+             */
+            hasKey: boolean;
+            /**
              * Createdatutc
              * Format: date-time
              */
@@ -684,6 +855,42 @@ export interface components {
              */
             success: true;
             data: components["schemas"]["Account"] | null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[AgentKey] */
+        SuccessEnvelope_AgentKey_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["AgentKey"] | null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[AgentTools] */
+        SuccessEnvelope_AgentTools_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["AgentTools"] | null;
+            /** Error */
+            error?: null;
+        };
+        /** SuccessEnvelope[Agent] */
+        SuccessEnvelope_Agent_: {
+            /**
+             * Success
+             * @default true
+             * @constant
+             */
+            success: true;
+            data: components["schemas"]["Agent"] | null;
             /** Error */
             error?: null;
         };
@@ -1274,6 +1481,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    add_agent_api_v1_agents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddAgentInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_Agent_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1930,6 +2206,223 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    create_agent_key_api_v1_members__account_id__key_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_AgentKey_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_agent_key_api_v1_members__account_id__key_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_NoneType_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_agent_tools_api_v1_agent_tools_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_AgentTools_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    change_agent_tools_api_v1_agent_tools__feature__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The feature’s plural in kebab case. */
+                feature: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentToolsChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessEnvelope_AgentTools_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

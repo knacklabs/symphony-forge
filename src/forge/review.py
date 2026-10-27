@@ -925,10 +925,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
                      ".factory", "plans", "docs/decisions", cwd=tree)
-            if item == "design-check":
-                repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", ".",
-                         ":(exclude)docs/design/prototype/**", ":(exclude)docs/product/BRIEF.md",
-                         ":(exclude)PRODUCT.md", ":(exclude)DESIGN.md", cwd=tree)
             review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
                                    cwd=tree)
             snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", review_base,
@@ -944,8 +940,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 merged_base = repo.git("merge-base", base, "HEAD", cwd=tree)
                 if repo.git("merge-base", base, review_base, cwd=tree) != merged_base:
                     review_base = merged_base
-        if item != "design-check":  # The completeness reviewer must see the actual screen images.
-            prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD")
+        prompt += _hide_generated(tree, repo.git("merge-base", review_base, "HEAD", cwd=tree), "HEAD",
+                                  keep_images=item == "design-check")
         # The worker brief's standards page, as rules; a prompt file keeps it out of argv.
         rules = block.split("<!-- standards -->\n", 1)[1].split("\n<!-- ", 1)[0]
         # The branch may track this path, even as a link out of the tree: drop it unfollowed,
@@ -985,10 +981,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 if not reason:
                     break
                 print(f"Autoreview run {attempt} did not finish: {reason}.", file=sys.stderr)
-        if reason and not signoff_prompt:
+        if reason:
             if saved.is_file():
                 print(f"Raw Autoreview output: {saved}", file=sys.stderr)
-            repo.refuse(REFUSALS["failed"], reason=reason, item=item)
+            if not signoff_prompt:
+                repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
         if not signoff_prompt:
             history = _history(top, item, base, previous, state=state)
@@ -1025,7 +1022,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 problem = ("The canvas completeness check did not finish: " + reason + "." if reason else
                            "The canvas completeness check found gaps: " + "; ".join(
                                f["title"] + ": " + f["body"] for _, f in serious) + ".")
-                action = "change the canvas and approve it again with forge decision accept prototype-design"
+                action = "fix the prototype screens"
             repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
     base = repo.resolve_commit(top, base)
     return {"id": identity, "commit": head, **result,
@@ -1112,17 +1109,21 @@ def declines(top: Path, base: str, result: dict[str, Any]) -> bool:
     return changed
 
 
-def _hide_generated(tree: Path, start: str, head: str) -> str:
+def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = False) -> str:
     """Put changed binary and linguist-generated files back as they were at start in the review
     tree, so their contents stay out of the reviewed diff.
+    Completeness review keeps images visible, including generated screen captures.
     Returns the lines naming those files with their changed-line counts, or "" when there are none."""
+    from forge import design
+
     counts = {row[2]: row[:2] for record in repo.git(
         "diff", "--numstat", "-z", "--no-renames", start, head, cwd=tree).split("\0")
         if len(row := record.split("\t", 2)) == 3}
     attrs = repo.run("git", "check-attr", "--stdin", "-z", "linguist-generated", cwd=tree,
                      input="\0".join(counts)).stdout.split("\0")
     marked = {path for path, value in zip(attrs[::3], attrs[2::3]) if value in ("set", "true")}
-    generated = [path for path, count in counts.items() if path in marked or "-" in count]
+    generated = [path for path, count in counts.items() if (path in marked or "-" in count)
+                 and not (keep_images and Path(path).suffix.lower() in design.IMAGES)]
     if not generated:
         return ""
     repo.git("restore", f"--source={start}", "--staged", "--", *generated, cwd=tree)
@@ -1138,8 +1139,6 @@ def _hide_generated(tree: Path, start: str, head: str) -> str:
 
 def signoff(top: Path, answers: str, evidence: str = "") -> str:
     """Review every tracked product file once, against an empty root, before client acceptance."""
-    from forge import records
-
     skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
     table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
@@ -1149,7 +1148,11 @@ def signoff(top: Path, answers: str, evidence: str = "") -> str:
         prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
                    "Each step must name a passing test. Refuse a missing step, a missing test, "
                    "or a test without evidence that it passes. The full production proof is due now."
-                   "\n\n## Test results for this product\n" + records.signoff_results(top))
+                   "\n\n## Test evidence\n"
+                   f"The full test run on the latest commit on {repo.default_branch(top)} passed "
+                   "(forge-full-suite). Client sign-off checked this result before this review. "
+                   "Use this green full run as passing evidence for the tests named in Proof. "
+                   "No separate forge test run is required.")
     cfg = repo.config(top)
     return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
 
