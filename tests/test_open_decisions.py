@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 
 import pytest
 
 from test_proto_signoff import _adopted_client, _client
 from test_worker import calls, install_claude
+from conftest import patient
 
 STORY = "FORGE-SIGNOFF-1"
 
@@ -263,3 +265,61 @@ def test_3_a_passed_due_date_applies_the_default(repo, tmp_path, monkeypatch, se
     next_in_fix = repo.forge("next", cwd=fix)
     assert next_in_fix.returncode == 0, next_in_fix.stdout + next_in_fix.stderr
     assert "open decisions passed their due date" not in next_in_fix.stdout
+
+
+@pytest.mark.parametrize("setup,linked,defaults", [
+    ("new-client", "source", False),
+    ("new-client", "source", True),
+    ("new-client", "record-directory", False),
+    ("new-client", "record-directory", True),
+    ("adopted-v1.2.2", "source", False),
+])
+def test_4_answers_refuse_links_outside_the_checkout(repo, tmp_path, monkeypatch, setup, linked, defaults):
+    # Existing answer tests use ordinary files. This guards the distinct filesystem boundary:
+    # a linked source or record directory must not cause any write before the refusal.
+    fix = _client_checkout(setup, repo, tmp_path, monkeypatch)
+    monkeypatch.setenv("FORGE_NOW", "2026-11-04T09:00:00+00:00")
+    question = "Should staff keep the current order sort?"
+    local = fix / "plans/local-question.md"
+    local.parent.mkdir(parents=True, exist_ok=True)
+    original = _question(question)
+    local.write_text(original, encoding="utf-8")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    if linked == "source":
+        target = outside / "shared.md"
+        target.write_text(original, encoding="utf-8")
+        link = fix / "docs/specs/shared.md"
+        link.parent.mkdir(parents=True, exist_ok=True)
+        named = "docs/specs/shared.md"
+    else:
+        link = fix / "docs/decisions"
+        link.mkdir(parents=True, exist_ok=True)
+        target = outside / "decisions"
+        patient(lambda: link.rename(target))
+        named = "docs/decisions/"
+    try:
+        link.symlink_to(target, target_is_directory=linked == "record-directory")
+    except OSError:
+        if os.name == "nt":
+            pytest.skip("Windows does not permit this user to create symbolic links.")
+        raise
+    before = {path.relative_to(outside).as_posix(): path.read_bytes()
+              for path in outside.rglob("*") if path.is_file()}
+    head = repo.git("rev-parse", "HEAD", cwd=fix)
+    answers = tmp_path / "answers.md"
+    answers.write_text(f"- Open question: {question}\n  Answer: Keep the current sort.\n", encoding="utf-8")
+    options = ["--defaults"] if defaults else ["--from", str(answers), "--by", "Ravi"]
+
+    refused = repo.forge("decision", "answer", *options, cwd=fix)
+
+    assert refused.returncode == 1, refused.stdout + refused.stderr
+    assert named in refused.stderr
+    assert "resolves outside this checkout" in refused.stderr
+    assert "Next:" in refused.stderr and "forge decision open" in refused.stderr
+    assert before == {path.relative_to(outside).as_posix(): path.read_bytes()
+                      for path in outside.rglob("*") if path.is_file()}
+    assert local.read_text("utf-8") == original
+    assert repo.git("rev-parse", "HEAD", cwd=fix) == head
+    assert not list((fix / "docs/decisions").glob("*-client-answers.md"))
+    assert not list((fix / "docs/decisions").glob("*-decided-by-default.md"))

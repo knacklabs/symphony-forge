@@ -170,9 +170,14 @@ def decision_answer(args: argparse.Namespace) -> None:
         text += "\n"
     text += ("## Consequences\nEach question is marked answered where it was asked. A new decision that supersedes this one\n"
              "changes an answer.\n")
-    records._write(top / rel, text)
     questions = {item["question"] for item, _ in chosen}
     sources = sorted({item["path"] for item in opened if item["question"] in questions})
+    for path in (rel, *sources):
+        if not (top / path).resolve().is_relative_to(top.resolve()):
+            repo.refuse(("Cannot record answers: {path} resolves outside this checkout.",
+                         "replace the link with a file inside this checkout, then forge decision open"),
+                        path=path)
+    records._write(top / rel, text)
     for source in sources:
         lines = (top / source).read_text(encoding="utf-8").splitlines(keepends=True)
         for item in opened:
