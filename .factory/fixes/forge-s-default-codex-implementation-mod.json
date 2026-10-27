@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T18:02:49.601250+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-10-27T18:08:45.893501+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "forge.toml",
-    "wait_id": "331fcad0-f579-4566-b4c9-084b2e880aca"
+    "reason": "forge sync refreshed the Codex explorer role to Terra high; the other roles use Sol high and stay",
+    "wait_id": "331fcad0-f579-4566-b4c9-084b2e880aca",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
