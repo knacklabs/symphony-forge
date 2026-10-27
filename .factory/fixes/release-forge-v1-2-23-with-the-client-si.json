@@ -12,14 +12,59 @@
   "done_when": "src/forge/__init__.py says version 1.2.23",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": ".codex/skills/forge/standards.md",
+      "file": ".codex/skills/forge/standards.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 85,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: release allowance does not cover unrelated guidance changes",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6aae919339052097d712b09f7d6f4f1383a3c9e72cc3bd8390e5d31fb9b8df37",
+    "changed": "720668ce0467d8cc615f7b332df79362d98b87909cf2bb87ec60f73c5f7b456d",
+    "commit": "b2ca25f582972e568d26647cea598e3cded349db",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate - allowance reason does not match the whole diff. Case: normal use - merging the approved version-only v1.2.23 release. Both synced standards files add an abstraction policy, and both synced SKILL.md files add sign-off instructions. These changes address guidance rather than release references, so the recorded version-bump allowance does not cover the whole diff. They also contradict the recorded ruling to keep these guides unchanged. Remove these edits from all four files while retaining the release-reference updates.",
+        "file": ".codex/skills/forge/standards.md",
+        "gain": 4,
+        "harm": 2,
+        "line": 85,
+        "priority": "P1",
+        "title": "Gate: release allowance does not cover unrelated guidance changes",
+        "work": 1
+      }
+    ],
+    "id": "72e2045b-9bbd-4421-8661-b125ba763c5e",
+    "status": "blocked"
+  },
   "round": 4,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-27T14:16:01.771362+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T14:38:22.768796+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-27T14:38:22.785648+00:00",
+    "file": ".codex/skills/forge/standards.md",
+    "wait_id": "738f8ebf-d3d4-4c00-92f5-3da49ea6d7b5"
+  },
   "stuck": {
     "close": null,
     "head": "679a418a72f540e9a1d058fa585f7afda8feeddd",
