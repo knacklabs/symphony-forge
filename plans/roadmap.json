@@ -434,12 +434,6 @@
       "order": 102
     },
     {
-      "key": "FORGE-JOURNEY-1",
-      "title": "Agents teach the seven-step journey to new users",
-      "status": "pending",
-      "order": 103
-    },
-    {
       "key": "FORGE-SPECRULES-1",
       "title": "Client specs state each rule once",
       "status": "pending",
@@ -450,6 +444,18 @@
       "title": "Client apps reach sign-off through five guided steps and one list of open decisions",
       "status": "pending",
       "order": 104
+    },
+    {
+      "key": "FORGE-EXPAND-1",
+      "title": "Client migrations keep the previous release working",
+      "status": "pending",
+      "order": 105
+    },
+    {
+      "key": "FORGE-JOURNEY-1",
+      "title": "Agents teach the seven-step journey to new users",
+      "status": "pending",
+      "order": 103
     }
   ],
   "epics": [
