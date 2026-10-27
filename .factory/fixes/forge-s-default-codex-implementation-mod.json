@@ -47,7 +47,7 @@
     "id": "882d4a6a-d2ff-48ea-b937-c33423440763",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -69,10 +69,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "4db5a09bf11488273114ccc804bec53bdba4a80f",
+    "close": "7b720f23-9d82-4e8e-ae39-b0a46c706743",
+    "head": "4c67db126a303ca1cbf8373da7bb1c7b82df425d",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Forge's default Codex implementation model is gpt-6.1-sol at medium effort; the owner wants gpt-6.1-terra at high effort for build, fix, lite and explore (owner request 27 Oct 2026)",
   "worker": "codex"
