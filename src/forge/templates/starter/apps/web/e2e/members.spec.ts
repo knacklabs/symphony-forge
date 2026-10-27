@@ -131,6 +131,9 @@ test('an admin adds an agent account, creates its key once and revokes it', asyn
   await expect(keyField).toHaveValue(/^agent_/);
   const key = await keyField.inputValue();
   await settled;
+  // A response event precedes JSON parsing and the query's cache update. Wait for
+  // the refreshed row before releasing another answer that invalidates the same query.
+  await expect(row).toContainText('Key active');
   // The late answer refreshes the member list, so its reply comes after the dialog has handled the answer.
   const refreshed = page.waitForResponse((response) => response.url().includes('/api/v1/members?page=1'));
   await release();
