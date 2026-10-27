@@ -1,6 +1,13 @@
 {
   "base": "ae5cc0561e40412a7782e71b59978bd0a963e158",
   "branch": "fix/on-windows-the-client-sign-off-completen",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17e67-bfe1-7830-b0de-48b054db6ae2",
+    "head": null,
+    "start": "7d1e62c738fe7fdd667cfd8b5c2526c4f845d393"
+  },
   "done_when": "The sign-off completeness check always runs on Codex, and on Windows it runs with a design folder of 80 screen images",
   "fix_kind": "backend",
   "kind": "fix",
