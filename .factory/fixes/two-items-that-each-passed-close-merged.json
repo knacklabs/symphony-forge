@@ -4,12 +4,20 @@
   "done_when": "When the default branch has moved, a merge retests the combined change first, and it refuses with the names of the failing tests when that retest fails.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T14:11:28.595728+00:00",
       "step": "start"
     }
   ],
-  "why": "Two items that each passed close merged one after the other and left the default branch red."
+  "stuck": {
+    "close": null,
+    "head": "280c4ac7ae733b3ec7510f23422c41fbf39e4edb",
+    "keys": {},
+    "round": null
+  },
+  "why": "Two items that each passed close merged one after the other and left the default branch red.",
+  "worker": "codex"
 }
