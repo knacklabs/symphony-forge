@@ -2,11 +2,19 @@
   "allow_large": "The owner allows this story's parts over the line limit, because each part spans an API, the screen and tests",
   "branch": "task/FORGE-MCP-1-AGENTS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T08:36:16.518590+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "474d5b259702db8545e060292b83a90db8cf6c4b",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
