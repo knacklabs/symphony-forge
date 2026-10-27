@@ -4,12 +4,20 @@
   "done_when": "The full test suite passes on main",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T16:52:10.076485+00:00",
       "step": "start"
     }
   ],
-  "why": "The full run on main is red with 20 failing tests after the day's merges, which blocks the v1.2.23 release"
+  "stuck": {
+    "close": null,
+    "head": "0c6225697efbe0b92cbd221fcc289c2c6f949713",
+    "keys": {},
+    "round": null
+  },
+  "why": "The full run on main is red with 20 failing tests after the day's merges, which blocks the v1.2.23 release",
+  "worker": "codex"
 }
