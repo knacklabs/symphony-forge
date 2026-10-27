@@ -60,9 +60,9 @@
     "id": "59ad28bd-30ef-421a-8fdd-56cea16fe4a8",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T09:23:33.615101+00:00",
@@ -82,10 +82,10 @@
     }
   ],
   "stuck": {
-    "close": "0b622cc0-e56c-4fae-b07d-2c759e5842ac",
-    "head": "1674c977ec217ad5e9832e70a5d573cc0c4c0bc7",
+    "close": "38f48c7b-3eaa-4814-af63-be62d48c7ee0",
+    "head": "928d24e113297d924ba38fc81bcf3cb7201cf475",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
