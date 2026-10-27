@@ -46,7 +46,7 @@
   and no app file. In an app made from an older starter, the feature command builds the feature
   without tools and says so.
 
-Design: docs/design/FORGE-MCP-1/ (to be added before approval)
+Design: docs/design/FORGE-MCP-1/ (a1de7c1d7f5c5bf9a059d738f91383c384bea40b)
 
 ## Why
 
@@ -125,8 +125,10 @@ of an app made from the starter before this story.
 
 **Design.** `docs/design/FORGE-MCP-1/SCREENS.md` is the source for every screen text, state and
 layout: the Members screen's Add agent account dialog, the agent rows, the key dialog, the
-revoke AlertDialog, and the Agent access dialog on a feature's list screen. Until it lands, the
-texts below are the defaults.
+revoke AlertDialog, and the Agent access dialog on a feature's list screen. Where a text below
+differs from it, SCREENS.md wins. Its Agent access dialog names the read tool `List projects`;
+the tool is now `projects_search`, so the dialog's label follows the design update that renames
+it to `Search projects`.
 
 **Both starters in step.** `forge init --starter python` copies the TypeScript `apps/web`, and
 the Python live run runs every web flow. So AGENTS, which changes the web app's HTTP contract,
@@ -182,18 +184,14 @@ The part named first owns each name; later parts use it and list that part under
     query. Python: `agent_for_key(db, key_hash)` on the organisations public service, returning
     an `AccountPrincipal` and the list, or `None`. AGENTS adds it with no caller; TOOLS and
     TOOLSPY call it.
-- **Screens (AGENTS).** On the Members screen, admins see `Add agent account` beside `Invite`.
-  Its dialog has `Name` (help text `Lower-case letters, numbers and hyphens, such as gantry.`),
-  `Role` (Admin or Member, Member first), and `Cancel` and `Add agent account`. An agent row
-  shows an `Agent` Badge after its email. For an agent row, admins see `Create key` when it has
-  no key and `Revoke key` when it has one. Create key opens a dialog with the key in a read-only
-  field, a `Copy` button, the text `Copy this key now. You cannot see it again.` and `Done`.
-  Revoke key opens an AlertDialog `Revoke this key? Agents that use it stop working at once.`
-  with `Cancel` and `Revoke key`. Members see agent rows and no buttons. On each feature's list
-  screen, admins see `Agent access` beside `Export CSV`. Its dialog has one Switch,
-  `Agents can delete and restore <plural>`, the line
-  `Agents still need a role that can delete and restore. Search, view, create and edit are always on.`,
-  and `Done`; a change saves at once with the toast `Agent access updated.` The dialog is one
+- **Screens (AGENTS).** `docs/design/FORGE-MCP-1/SCREENS.md` gives every text and state. In
+  short: the Members screen keeps its people table and gets an `Agent accounts` section under
+  it, with Email, Role and Key columns; admins see `Add agent account` (a Name and a Role),
+  `Create key` on every agent row (a new key replaces the old one) and `Revoke key` on a row
+  with a key; the Agent key dialog shows the key one time with `Copy`; members see the agent
+  rows with no buttons. On each feature's list screen, admins see `Agent access` beside
+  `Export CSV`, a dialog with the four tools that are always on and one Switch,
+  `Agents can delete and restore <plural>`. The dialog is one
   component, `AgentAccessDialog({ feature, label })`, in `libs/core/web/src/agent-access-dialog.tsx`,
   exported from `@app/core-web`, with its own response type, so a feature's web library uses it
   within the boundary rules. The projects list page renders
