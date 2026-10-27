@@ -28,7 +28,7 @@
       "gain": 3,
       "harm": 4,
       "line": 18,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,7 +41,7 @@
       "gain": 3,
       "harm": 4,
       "line": 32,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -54,7 +54,7 @@
       "gain": 2,
       "harm": 4,
       "line": 114,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -65,59 +65,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "91a59c604c13a841fd0015189a099c3e4be2bfb33a555cf7a051e7adc15f8691",
-    "changed": "7b72b174e9fd08f1a57a48d190be4b9b94ef3c58f5ac31b8a4682875dc520bb9",
-    "commit": "524047c9efe2cce28b47ae380676933146e4ecc3",
+    "branch_diff": "d560db0f19e427ff65491e3c42d94dd9841151f8eca73e10682b02d376c88d49",
+    "changed": "517f79fb5674644899e06ec1bb24cd84e2ab54c3cd9f0af7c18fbd205b540582",
+    "commit": "613fc68420bdd3517fc54b6db9aaf4cb9f2c413e",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Not done\nCase: normal use - an Alembic upgrade uses batch operations.\nThe receiver check accepts only the literal name `op`. Consequently, `with op.batch_alter_table('project') as batch_op:` followed by `batch_op.drop_column('legacy_name')` or `batch_op.alter_column('status', type_=sa.Text())` produces no problems and passes close without a Contract comment. These are supported [Alembic operations](https://alembic.sqlalchemy.org/en/latest/batch.html), including on Postgres. This leaves item 1 unmet. The named proof exercises only direct `op` calls, so it misses this bypass.",
-        "file": "src/forge/app_baseline.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 4,
-        "line": 134,
-        "priority": "P1",
-        "title": "Not done: close refuses a change that adds a Prisma or Alembic migration that drops, renames or changes the type of a column or table",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 4\nRaise: Functional\nCase: normal use - running the repository's full test suite.\nThe new migration test has no `STORY` assignment. `tests/test_rules.py:31\u201335` therefore assigns it to `FORGE-NEXT-1`, and its `test_1` duplicates criterion 1 already owned by `tests/test_story.py:215`. The uniqueness assertion at `tests/test_rules.py:49` rejects this addition. Assign the test to `FORGE-EXPAND-1` so it satisfies the existing suite rule.",
-        "file": "tests/test_migrations_keep_previous_release.py",
-        "gain": 3,
-        "harm": 4,
-        "line": 18,
-        "priority": "P1",
-        "title": "Gate: test_4_one_test_per_rule",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 4\nRaise: Gate\nCase: normal use - reviewing and shipping the selected change under the stated Scope.\nThis diff also adds the independent OPENLIST feature. Its changes to `src/forge/open_decisions.py`, `src/forge/cli.py`, `src/forge/nextstep.py`, `src/forge/records.py`, `docs/commands.md`, `src/forge/templates/cold-read.md`, `src/forge/templates/skeleton/docs/decisions/README.md`, `tests/test_open_decisions.py`, `tests/test_contracts.py` and `tests/test_split_commands.py` are outside Scope. The migration check neither calls nor needs these commands, and none of this part's Done-when items requires them. Keep OPENLIST in its own change.",
-        "file": "src/forge/cli.py",
-        "gain": 3,
-        "harm": 4,
-        "line": 32,
-        "priority": "P1",
-        "title": "Gate: unrelated open-decision commands exceed the migration scope",
-        "work": 2
-      },
-      {
-        "body": "Gain 2, Work 1, Harm 4\nCase: normal use - an adopted app stores migrations at `prisma/migrations/<timestamp>/migration.sql`.\nThe leading `**/` requires an additional path component here: [PurePath.match treats `**` as a nonrecursive wildcard](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.match). A root-level Prisma migration therefore fails this match and is skipped, even when it contains `DROP TABLE`. The proof uses only `apps/api/prisma/...` paths. Match the `prisma/migrations/*/migration.sql` suffix without requiring a parent directory.",
-        "file": "src/forge/app_baseline.py",
-        "gain": 2,
-        "harm": 4,
-        "line": 114,
-        "priority": "P2",
-        "title": "Follow-up: check Prisma migrations at the repository root",
-        "work": 1
-      }
-    ],
-    "id": "285e002d-669e-424e-9ac3-06b0d5088d14",
-    "status": "blocked"
+    "findings": [],
+    "id": "3b0781e0-ec50-42ef-90ab-495e47e613d1",
+    "status": "clean"
   },
   "round": 2,
   "stacked_on": "FORGE-SIGNOFF-1/OPENLIST",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T11:14:40.036459+00:00",
@@ -125,6 +83,10 @@
     },
     {
       "at": "2026-10-27T11:48:00.309687+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T11:51:26.720935+00:00",
       "step": "review"
     }
   ],
