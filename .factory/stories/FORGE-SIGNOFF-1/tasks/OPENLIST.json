@@ -2,12 +2,20 @@
   "base": "d89a55d633b5db320139e269ccc58e3b96fd0724",
   "branch": "task/FORGE-SIGNOFF-1-OPENLIST",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T09:23:33.615101+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7af84bd1c3e681375a9687c0033f256a94ed9256",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
