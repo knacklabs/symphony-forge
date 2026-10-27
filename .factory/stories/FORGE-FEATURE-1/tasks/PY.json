@@ -1,6 +1,13 @@
 {
   "allow_large": "The owner allows this story's parts over the line limit, because each part spans an API, the screen and tests",
   "branch": "task/FORGE-FEATURE-1-PY",
+  "chat": {
+    "approval": "d87b61d57f1123509a4f6eaad642b89b43adac93703229702877cf41663496af",
+    "claude": null,
+    "conversation": "01a17c81-246c-7350-828f-ec1bf96d18c6",
+    "head": null,
+    "start": "a282f7183462bf27dec4955ea18fc0a0d485ecd2"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
