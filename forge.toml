@@ -9,24 +9,24 @@ checks = ["tests", "forge-pr-check", "windows-installers"]
 interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schema.*", "**/*.schema.*", "**/cli.*"]
 
 [models.build.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 
 [models.build.claude]
 model = "claude-opus-5-5"
 effort = "medium"
 
 [models.fix.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 
 [models.fix.claude]
 model = "claude-opus-5-5"
 effort = "medium"
 
 [models.lite.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
@@ -35,8 +35,8 @@ model = "claude-opus-5-5"
 effort = "medium"
 
 [models.explore.codex]
-model = "gpt-6.1-sol"
-effort = "medium"
+model = "gpt-6.1-terra"
+effort = "high"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
