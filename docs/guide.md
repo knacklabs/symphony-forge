@@ -16,7 +16,7 @@ or the coordinating session's `reader` subagent when the other tool is unavailab
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.22
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.23
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
