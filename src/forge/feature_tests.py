@@ -52,7 +52,12 @@ async function docs(): Promise<request.Response> {
   return featureDocs;
 }
 
-async function linkedItem(client: ApiClient, csrf: string, target: string, mark: string): Promise<string> {
+async function linkedItem(
+  client: ApiClient,
+  csrf: string,
+  target: string,
+  mark: string,
+): Promise<string> {
   const openapi = await docs();
   const schema = requestBodySchema(openapi, `/api/v1/${target}`, 'post');
   const properties = schema.properties as Record<string, Record<string, unknown>>;
@@ -60,15 +65,19 @@ async function linkedItem(client: ApiClient, csrf: string, target: string, mark:
   for (const name of schema.required as string[]) {
     const property = properties[name];
     const values = property.enum;
+    const linkDescription = typeof property.description === 'string' ? property.description : '';
+    const linkedTarget = /^The linked item from (.+)\.$/.exec(linkDescription)?.[1];
     let value: unknown = property.example;
-    if (Array.isArray(values) && values.length > 0) value = values[0];
+    if (linkedTarget) {
+      value = await linkedItem(client, csrf, linkedTarget, `${mark}-${name}`);
+    } else if (Array.isArray(values) && values.length > 0) value = values[0];
     else if (typeof value === 'undefined') {
       value = property.format === 'email' ? `${mark}@example.test`
         : property.type === 'boolean' ? false
           : property.type === 'number' || property.type === 'integer' ? 1
             : `Linked ${mark}`;
     }
-    if (name.toLowerCase().includes('name')) value = `Linked ${mark}`;
+    if (!linkedTarget && name.toLowerCase().includes('name')) value = `Linked ${mark}`;
     input[name] = value;
   }
   const response = await client.post(`/api/v1/${target}`).set('x-csrf-token', csrf).send(input).expect(201);
@@ -98,19 +107,21 @@ def render_api_tests(
         for field in link_fields:
             column = _column(field)
             target = field["target"]
-            link_checks.append(f'''    const {column} = await linkedItem(client, csrf, {json.dumps(target)}, `${{mark}}-{column}`);
-    const other{column[0].upper() + column[1:]} = await linkedItem(otherClient, otherCsrf, {json.dumps(target)}, `other-${{mark}}-{column}`);
-    const deleted{column[0].upper() + column[1:]} = await linkedItem(client, csrf, {json.dumps(target)}, `deleted-${{mark}}-{column}`);
-    await client.delete(`/api/v1/{target}/${{deleted{column[0].upper() + column[1:]}}}`).set('x-csrf-token', csrf).expect(200);
-    const linkedInput = await featureInput(client, csrf, mark, 'sample');
-    linkedInput[{json.dumps(column)}] = {column};
-    await client.post('{root}').set('x-csrf-token', csrf).send(linkedInput).expect(201);
-    const crossOrganisation = {{ ...linkedInput, [{json.dumps(column)}]: other{column[0].upper() + column[1:]} }};
-    const crossRefused = await client.post('{root}').set('x-csrf-token', csrf).send(crossOrganisation).expect(400);
-    expect(crossRefused.body.error.details.fieldErrors).toEqual(expect.arrayContaining([expect.objectContaining({{ field: {json.dumps(column)} }})]));
-    const deletedLink = {{ ...linkedInput, [{json.dumps(column)}]: deleted{column[0].upper() + column[1:]} }};
-    const deletedRefused = await client.post('{root}').set('x-csrf-token', csrf).send(deletedLink).expect(400);
-    expect(deletedRefused.body.error.details.fieldErrors).toEqual(expect.arrayContaining([expect.objectContaining({{ field: {json.dumps(column)} }})]));''')
+            link_checks.append(f'''    {{
+      const {column} = await linkedItem(client, csrf, {json.dumps(target)}, `${{mark}}-{column}`);
+      const other{column[0].upper() + column[1:]} = await linkedItem(otherClient, otherCsrf, {json.dumps(target)}, `other-${{mark}}-{column}`);
+      const deleted{column[0].upper() + column[1:]} = await linkedItem(client, csrf, {json.dumps(target)}, `deleted-${{mark}}-{column}`);
+      await client.delete(`/api/v1/{target}/${{deleted{column[0].upper() + column[1:]}}}`).set('x-csrf-token', csrf).expect(200);
+      const linkedInput = await featureInput(client, csrf, mark, 'sample');
+      linkedInput[{json.dumps(column)}] = {column};
+      await client.post('{root}').set('x-csrf-token', csrf).send(linkedInput).expect(201);
+      const crossOrganisation = {{ ...linkedInput, [{json.dumps(column)}]: other{column[0].upper() + column[1:]} }};
+      const crossRefused = await client.post('{root}').set('x-csrf-token', csrf).send(crossOrganisation).expect(400);
+      expect(crossRefused.body.error.details.fieldErrors).toEqual(expect.arrayContaining([expect.objectContaining({{ field: {json.dumps(column)} }})]));
+      const deletedLink = {{ ...linkedInput, [{json.dumps(column)}]: deleted{column[0].upper() + column[1:]} }};
+      const deletedRefused = await client.post('{root}').set('x-csrf-token', csrf).send(deletedLink).expect(400);
+      expect(deletedRefused.body.error.details.fieldErrors).toEqual(expect.arrayContaining([expect.objectContaining({{ field: {json.dumps(column)} }})]));
+    }}''')
         link_case = f'''  it('checks linked items through their public API', async () => {{
     const {{ client, csrf }} = await sharedSignedIn();
     const other = credentials();
@@ -131,7 +142,10 @@ def render_api_tests(
             options = field.get("options", [])
             if len(options) < 2:
                 continue
-            alternate = f"other[{json.dumps(column)}] = FIELD_CASES[{json.dumps(column)}].options[1];"
+            alternate = (
+                f"other[{json.dumps(column)}] = FIELD_CASES[{json.dumps(column)}].options"
+                f".find((option) => option !== matching[{json.dumps(column)}])!;"
+            )
         elif kind == "yes-no":
             alternate = f"other[{json.dumps(column)}] = !(matching[{json.dumps(column)}] as boolean);"
         else:

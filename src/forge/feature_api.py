@@ -225,7 +225,7 @@ def _filters(fields: list[dict[str, Any]], one: str, kinds: dict[str, Any]) -> s
         example = 'yes' if kind == 'yes-no' else _sample(field, kinds)
         lines.append(f"  {column}: {expr}.meta({{ description: 'Filter by {_label(field['name']).lower()}.', example: {_literal(example)} }}),")
     lines.append("  deleted: z.enum(['yes']).optional().meta({ description: 'Show deleted items too; only a caller with the restore permission gets them.', example: 'yes' }),")
-    return "\n".join(lines)
+    return f"const {_camel(one)}Filters = {{\n" + "\n".join(lines) + "\n};"
 
 
 def _field_filter_where(fields: list[dict[str, Any]]) -> str:
@@ -501,7 +501,7 @@ def render_feature_api(fields: list[dict[str, Any]], one: str, plural: str, kind
             source = source.replace("import { FeatureDatabase } from '@app/core-server';", "import { PrismaService as FeatureDatabase } from '@app/core-server';")
             source = source.replace("this.projects", "this.__featureItems")
             source = re.sub(r"\bconst (project|projects)\b", lambda match: "const __featureItem" + ("s" if match[1] == "projects" else ""), source)
-            source = re.sub(r'''(?<![.'"/\w])\b(project|projects)\b(?=[:.,)\];])''',
+            source = re.sub(r'''(?<![.'"/\w])\b(project|projects)\b(?=[:.,)\[\];])''',
                             lambda match: "__featureItem" + ("s" if match[1] == "projects" else ""), source)
         source = _renamed_source(source, one, plural)
         source = source.replace("__featureItems", "featureItems").replace("__featureItem", "featureItem")

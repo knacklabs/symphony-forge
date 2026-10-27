@@ -147,6 +147,57 @@ def _feature_args(plural: str, one: str, fields: list[str]) -> list[str]:
             *(argument for field in fields for argument in ("--field", field))]
 
 
+@pytest.mark.platform
+def test_1_generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path):
+    # Audit: emitted code must parse and its cursor encoder must run. The file/wiring
+    # checks do not execute output and missed broken declarations and renamed locals.
+    # Node checks the public generated artifacts, with no Forge imports or test seam.
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node 24 or later is needed to check generated TypeScript syntax.")
+    version = subprocess.run([node, "--version"], capture_output=True, text=True, timeout=30)
+    if version.returncode or int(version.stdout.strip().lstrip("v").split(".")[0]) < 24:
+        pytest.skip("Node 24 or later is needed to check generated TypeScript syntax.")
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    for plural, one, fields in (
+        ("clients", "client", ["name:text"]),
+        ("jobs", "job", ["name:text", "client:link(clients)"]),
+        ("tasks", "task", ["name:text", "status:status(active|planned)",
+                             "job:link(jobs)", "project:link(projects)"]),
+    ):
+        result = repo.forge(*_feature_args(plural, one, fields), cwd=client)
+        assert result.returncode == 0, result.stdout + result.stderr
+    script = r'''
+import { readFileSync } from 'node:fs';
+import { stripTypeScriptTypes } from 'node:module';
+import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+const failures = [];
+for (const plural of ['clients', 'jobs', 'tasks']) {
+  for (const path of [`libs/${plural}/contracts/src/index.ts`, `apps/api/test/${plural}.e2e-spec.ts`]) {
+    try {
+      const source = stripTypeScriptTypes(readFileSync(path, 'utf8'));
+      const checked = spawnSync(process.execPath, ['--check', '--input-type=module'], { input: source, encoding: 'utf8' });
+      assert.equal(checked.status, 0, checked.stderr);
+    } catch (error) { failures.push(`${path}: ${error.message}`); }
+  }
+  try {
+    const service = readFileSync(`libs/${plural}/server/src/${plural}.service.ts`, 'utf8');
+    const encoder = service.match(/function encodeCursor\([\s\S]*?\n}/)[0];
+    const encode = new Function(`${stripTypeScriptTypes(encoder)}; return encodeCursor;`)();
+    const id = '018f0000-0000-7000-8000-000000000001';
+    const cursor = encode('name', { id, name: 'First' });
+    assert.deepEqual(JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')), ['name', 'First', id]);
+  } catch (error) { failures.push(`${plural} cursor: ${error.message}`); }
+}
+assert.deepEqual(failures, []);
+'''
+    checked = subprocess.run([node, "--input-type=module", "-e", script], cwd=client,
+                             capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert checked.returncode == 0, checked.stdout + checked.stderr
+
+
 def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, field: dict) -> None:
     kind = kinds["kinds"][field["kind"]]
     column = field.get("column", field["name"] + ("Id" if field["kind"] == "link" else ""))
