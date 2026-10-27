@@ -11,14 +11,60 @@
   "done_when": "Review reports an emoji used as an icon on a client app screen as a finding.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/review.md",
+      "file": "src/forge/templates/review.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 281,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Review reports an emoji used as an icon on a client app screen as a finding.",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7153b79500c9934a304db806ee1b9a21afedd9d8fda7c43adc302350f726209a",
+    "changed": "9ea1e1cb7cac3bda2347c71eefcd87cdfbcfd23c64c12cdb034f7189e24cfd1d",
+    "commit": "00c35cdeca77ee07953b9be6f8be9af0b9f0315e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 1\nRaise: Not done\nCase: normal use - reviewing an unsigned client prototype and its subsequent sign-off.\nThe icon instruction is added only to the normal review's `rules` block. `src/forge/review.py:375\u2013377` substitutes `review-light.md` for unsigned working prototypes; that template explicitly limits findings to demo breakage, security and data loss. Sign-off also bypasses this block (`src/forge/review.py:1146`). Consequently, these normal client-screen review paths never receive the new icon rule. The added tests cover ordinary close only, so both pass despite this delivery gap. Deliver the instruction through the prototype and sign-off paths and cover their prompt delivery.",
+        "file": "src/forge/templates/review.md",
+        "gain": 4,
+        "harm": 1,
+        "line": 281,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: Review reports an emoji used as an icon on a client app screen as a finding.",
+        "work": 2
+      }
+    ],
+    "id": "5dda5585-ab63-4c45-99e9-74b311acbc1b",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-27T11:53:46.943991+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T11:58:13.826523+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-27T11:58:13.838977+00:00",
+    "file": "src/forge/templates/review.md",
+    "wait_id": "fb035090-d18e-4b2d-8188-e06e4d2ee6f2"
+  },
   "stuck": {
     "close": null,
     "head": "1b54cfce89691336efcc1f9c77724702d86e56a7",
