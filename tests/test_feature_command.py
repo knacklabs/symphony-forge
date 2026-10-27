@@ -811,13 +811,13 @@ def test_6_an_older_starter_names_the_missing_history_module(repo, gh, tmp_path,
         project_source = pyproject.read_text("utf-8")
         pyproject.write_text(project_source.replace('target-version = "py314"',
                                                      'target-version = "invalid"'), "utf-8")
-        refused = repo.forge(*_feature_args("entries", "entry", ["name:text"]), cwd=client)
+        refused = repo.forge(*_feature_args("invoices", "invoice", ["name:text"]), cwd=client)
         message = refused.stdout + refused.stderr
         assert refused.returncode != 0, message
         assert "The feature files were written, but Python formatting failed." in message
         assert "Next: run uv --directory apps/api run ruff check --select I --fix" in message
         assert "then uv --directory apps/api run ruff format app migrations tests." in message
-        assert (client / "apps/api/app/entries/schema.py").is_file()
+        assert (client / "apps/api/app/invoices/schema.py").is_file()
         pyproject.write_text(project_source, "utf-8")
         shutil.rmtree(client / "apps/api/app/history")
         missing = "apps/api/app/history/__init__.py"
