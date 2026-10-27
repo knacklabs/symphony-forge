@@ -4,34 +4,20 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Every new client app, from either starter or from forge init, starts with an MCP server, a standard way for AI agents to call an app's features as tools.
+- Each feature that the feature command builds adds its own agent tools, such as list, get, create, edit, delete and restore, and each tool checks the same permission as the app's own screens.
+- Agents, including Gantry Cloud agents through Mainline, sign in with the app's sign-in or a Mainline key. Calls are rate limited.
 
 ## Why
 
-Client apps ship an MCP server so agents can use their features
-
-
+Agents cannot use a client app's features today. Each feature is only reachable through the app's screens and API, so an agent would have to be hand-wired for every app.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new TypeScript or Python starter app lists an MCP service in services.toml, and that service starts and returns its tool list.**
+2. **A feature built by the feature command gets its tools, and each tool refuses a call from a person or key that lacks the feature's permission.**
+3. **A tool call with no valid sign-in or Mainline key is refused, and calls over the rate limit are refused.**
+4. **Tests run the MCP service and each tool, and an existing app gets the command and guide text on upgrade but no new service file.**
 
 ## Risks
 
