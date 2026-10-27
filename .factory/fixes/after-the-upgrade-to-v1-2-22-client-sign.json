@@ -47,8 +47,8 @@
     "id": "2b89d519-f4da-4004-845d-32455cd2c48e",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T12:46:34.844774+00:00",
@@ -60,10 +60,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7d5791eb0defd84fee875fc0a1d8db19172b4562",
+    "close": "21418a94-e7cb-4430-ba9a-7156eab6b745",
+    "head": "b25d5492bba8d8c520a3d3991c0a43ca42d4d12e",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "After the upgrade to v1.2.22, client sign-off loops because the ritual checks added in v1.2.21 stop it one missing record at a time.",
   "worker": "codex"
