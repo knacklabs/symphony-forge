@@ -55,24 +55,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a68a50100c52b58265ea094d02919a4789f59d0a0c81b3fb40e1c7bad0125c26",
-    "changed": "ce949f51355ab6f1bfce2b499eb361c9892e4de1a5a9793feb73220d988faa0e",
-    "commit": "8bbf9b6573b9588e5e897e230a32ec07e66efe1b",
+    "branch_diff": "1843920e2d68ba13534aa34c4d6c4f75203cc8d3ae76add267443ecc2f464ca2",
+    "changed": "4a8f75a5ec0e0231cc3d481e7512cb4201d6f300d3880248ba16b73b536cd49a",
+    "commit": "14d019346ce3dacfaf943fdb0ed26dd9263d7dc0",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Plain `forge next` now submits `_listing` directly even when `gh` is absent from PATH. `_listing` calls `repo.run`, which raises the missing-tool refusal; that exception escapes through the futures and prevents local state or setup advice from being printed. Previously, `_prs` explicitly returned an empty list without `gh` (nextstep.py:1088\u20131090). Preserve that availability check for the new fresh reads.",
-        "file": "src/forge/nextstep.py",
-        "line": 135,
-        "priority": "P2",
-        "title": "Preserve local next output when gh is unavailable"
-      }
-    ],
-    "id": "e93aaa0a-2585-4c4d-a83c-76309c24d959",
+    "findings": [],
+    "id": "b48d9e4d-3e37-418f-8183-c73ca121c118",
     "status": "clean"
   },
   "round": 10,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-26T09:20:17.910674+00:00",
@@ -104,6 +96,10 @@
     },
     {
       "at": "2026-10-26T17:41:45.787371+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T04:37:24.862458+00:00",
       "step": "review"
     }
   ],
