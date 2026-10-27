@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ChangeRoleInput, Member } from '@app/organisations-contracts';
+import type { AddAgentInput, AgentKey, ChangeRoleInput, Member } from '@app/organisations-contracts';
 import type { InviteInput } from '@app/auth-contracts';
 import { apiRequest } from '@app/core-web';
 
@@ -32,5 +32,29 @@ export function useInvite() {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+  });
+}
+
+export function useAddAgent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AddAgentInput) => apiRequest<Member>('/agents', { method: 'POST', body: JSON.stringify(input) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: membersKey }),
+  });
+}
+
+export function useCreateAgentKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (accountId: string) => apiRequest<AgentKey>(`/members/${encodeURIComponent(accountId)}/key`, { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: membersKey }),
+  });
+}
+
+export function useRevokeAgentKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (accountId: string) => apiRequest<null>(`/members/${encodeURIComponent(accountId)}/key`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: membersKey }),
   });
 }

@@ -337,6 +337,9 @@ test('a member does not see the project actions they lack', async ({ page, brows
     // The sidebar's link comes first; on this screen the breadcrumb also reads Projects.
     await expect(projectsLink.first()).toHaveAttribute('href', '/projects');
     await expect(memberPage.getByRole('button', { name: 'New project' })).toHaveCount(can('projects.create') ? 1 : 0);
+    // forge:feature:mcp:start
+    await expect(memberPage.getByRole('button', { name: 'Agent access' })).toHaveCount(0);
+    // forge:feature:mcp:end
     await expect(memberPage.getByRole('switch', { name: 'Show deleted' })).toHaveCount(can('projects.restore') ? 1 : 0);
 
     await memberPage.getByRole('link', { name: 'Team project' }).click();
@@ -352,6 +355,52 @@ test('a member does not see the project actions they lack', async ({ page, brows
     await memberContext.close();
   }
 });
+
+// forge:feature:mcp:start
+test('an admin turns on agent delete and restore for projects', async ({ page }) => {
+  await signUpOnProjects(page);
+  const opener = page.getByRole('button', { name: 'Agent access' });
+  await opener.click();
+  const dialog = page.getByRole('dialog', { name: 'Agent access' });
+  const toggle = dialog.getByRole('switch', { name: 'Agents can delete and restore projects' });
+  await expect(toggle).not.toBeChecked();
+  for (const tool of ['Search projects', 'Create projects', 'Edit projects']) {
+    await expect(dialog.getByRole('listitem').filter({ hasText: tool })).toContainText('Always on');
+  }
+  const axe = await new AxeBuilder({ page }).analyze();
+  expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
+
+  // A failed save says so, and the Switch goes back.
+  const changeRoute = '**/api/v1/agent-tools/*';
+  await page.route(changeRoute, (route) => route.abort());
+  await toggle.click();
+  await expect(page.getByText('Could not update agent access. Try again.')).toBeVisible();
+  await expect(toggle).not.toBeChecked();
+  await page.unroute(changeRoute);
+
+  // The keyboard path: Space turns the Switch on, and it saves at once.
+  await toggle.focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByText('Agent access updated.')).toBeVisible();
+  await expect(toggle).toBeChecked();
+  await dialog.getByRole('button', { name: 'Done' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(opener).toBeFocused();
+
+  await page.reload();
+  await opener.click();
+  await expect(toggle).toBeChecked();
+  const saved = page.waitForResponse((response) => response.url().includes('/api/v1/agent-tools/') && response.request().method() === 'PUT');
+  await toggle.click();
+  expect((await saved).ok()).toBeTruthy();
+  await expect(toggle).not.toBeChecked();
+  await page.keyboard.press('Escape');
+  await page.reload();
+  await opener.click();
+  await expect(dialog.getByRole('listitem').filter({ hasText: 'Search projects' })).toBeVisible();
+  await expect(toggle).not.toBeChecked();
+});
+// forge:feature:mcp:end
 
 test('an admin shows deleted projects and restores one', async ({ page }) => {
   const email = await signUpOnProjects(page);

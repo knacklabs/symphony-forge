@@ -4,10 +4,19 @@ import { ConfigService } from '@nestjs/config';
 import type { Membership } from '@prisma/client';
 import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
 import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
-import { roleSchema, type Member, type MemberListQuery, type OrganisationInvite, type OrganisationPrincipal, type OrganisationsApi } from '@app/organisations-contracts';
+import { roleSchema, type AgentKey, type AgentTools, type Member, type MemberListQuery, type OrganisationAccount, type OrganisationInvite, type OrganisationPrincipal, type OrganisationsApi, type Role } from '@app/organisations-contracts';
 
 function memberResponse(member: Membership): Member {
-  return { id: member.id, accountId: member.accountId, email: member.email, role: roleSchema.parse(member.role), createdAtUtc: member.createdAtUtc.toISOString() };
+  return {
+    id: member.id, accountId: member.accountId, email: member.email, role: roleSchema.parse(member.role),
+    isAgent: member.isAgent, hasKey: member.agentKeyHash !== null, createdAtUtc: member.createdAtUtc.toISOString(),
+  };
+}
+
+const ROLE_NAMES: Record<Role, string> = { admin: 'Admin', member: 'Member' };
+
+function memberNotFound(): NotFoundException {
+  return new NotFoundException({ code: 'MEMBER_NOT_FOUND', message: 'This member was not found.', details: null });
 }
 
 const INVITE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
@@ -99,6 +108,67 @@ export class OrganisationsService implements OrganisationsApi {
       select: { organisationId: true, role: true },
     });
     return membership ? { ...membership, role: roleSchema.parse(membership.role) } : null;
+  }
+
+  async addAgent(account: OrganisationAccount, role: Role, admin: OrganisationPrincipal): Promise<Member> {
+    return this.prisma.$transaction(async (tx) => {
+      const membership = await tx.membership.create({ data: {
+        accountId: account.id, email: account.email, organisationId: admin.organisationId, role, isAgent: true,
+        createdByAccountId: admin.id, modifiedByAccountId: admin.id,
+      } });
+      await this.history.record(admin, 'agent.added', `Added the agent account ${account.email} as ${ROLE_NAMES[role]}`, undefined, tx);
+      return memberResponse(membership);
+    });
+  }
+
+  /** A new key replaces the agent's old one, which stops working at once. The app keeps only its hash. */
+  async createKey(admin: AccountPrincipal, accountId: string): Promise<AgentKey> {
+    const key = `agent_${randomBytes(32).toString('base64url')}`;
+    await this.setKeyHash(admin, accountId, createHash('sha256').update(key).digest('hex'), 'agent.key-created', 'Created a key for');
+    return { key };
+  }
+
+  async revokeKey(admin: AccountPrincipal, accountId: string): Promise<void> {
+    await this.setKeyHash(admin, accountId, null, 'agent.key-revoked', 'Revoked the key for');
+  }
+
+  private async setKeyHash(admin: AccountPrincipal, accountId: string, agentKeyHash: string | null, action: string, summary: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const where = { accountId, organisationId: admin.organisationId, isAgent: true, deletedAtUtc: null };
+      const agent = await tx.membership.findFirst({ where });
+      if (!agent) throw memberNotFound();
+      await tx.membership.updateMany({ where, data: { agentKeyHash, modifiedByAccountId: admin.id } });
+      await this.history.record(admin, action, `${summary} ${agent.email}`, undefined, tx);
+    });
+  }
+
+  async agentForKey(keyHash: string) {
+    const agent = await this.prisma.membership.findUnique({
+      where: { agentKeyHash: keyHash },
+      include: { organisation: { select: { agentDeleteRestore: true, deletedAtUtc: true } } },
+    });
+    if (!agent || !agent.isAgent || agent.deletedAtUtc || agent.organisation.deletedAtUtc) return null;
+    return {
+      principal: { id: agent.accountId, email: agent.email, organisationId: agent.organisationId, role: roleSchema.parse(agent.role) },
+      deleteAndRestore: agent.organisation.agentDeleteRestore,
+    };
+  }
+
+  async agentTools(organisationId: string): Promise<AgentTools> {
+    const organisation = await this.prisma.organisation.findUniqueOrThrow({ where: { id: organisationId }, select: { agentDeleteRestore: true } });
+    return { deleteAndRestore: organisation.agentDeleteRestore };
+  }
+
+  // ponytail: a feature name is checked only for its form; an unknown name is stored and does nothing.
+  async setAgentTools(admin: AccountPrincipal, feature: string, deleteAndRestore: boolean): Promise<AgentTools> {
+    return this.prisma.$transaction(async (tx) => {
+      const { agentDeleteRestore } = await tx.organisation.findUniqueOrThrow({ where: { id: admin.organisationId }, select: { agentDeleteRestore: true } });
+      if (agentDeleteRestore.includes(feature) === deleteAndRestore) return { deleteAndRestore: agentDeleteRestore };
+      const next = deleteAndRestore ? [...agentDeleteRestore, feature] : agentDeleteRestore.filter((name) => name !== feature);
+      await tx.organisation.update({ where: { id: admin.organisationId }, data: { agentDeleteRestore: next, modifiedByAccountId: admin.id } });
+      await this.history.record(admin, 'agent-tools.changed', `Turned ${deleteAndRestore ? 'on' : 'off'} agent delete and restore for ${feature}`, undefined, tx);
+      return { deleteAndRestore: next };
+    });
   }
 
   async list(organisationId: string, query: MemberListQuery) {

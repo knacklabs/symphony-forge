@@ -15,6 +15,9 @@ import { projectStatusSchema, type Project, type ProjectInput, type ProjectStatu
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
 // forge:feature:list-imports:end
 import { useCan } from '@app/core-web';
+// forge:feature:mcp:start
+import { AgentAccessDialog } from '@app/core-web';
+// forge:feature:mcp:end
 import { Badge } from '@app/shared-ui/components/ui/badge';
 import { Button } from '@app/shared-ui/components/ui/button';
 import { Input } from '@app/shared-ui/components/ui/input';
@@ -188,6 +191,9 @@ export function ProjectsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Create and manage your projects.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {/* forge:feature:mcp:start */}
+          <AgentAccessDialog feature="projects" one="project" label="projects" />
+          {/* forge:feature:mcp:end */}
           <Button variant="outline" asChild><a href={`/api/v1/projects/export?${exportParameters.toString()}`} download><Download aria-hidden="true" />Export CSV</a></Button>
           {canCreate && <Button onClick={() => setFormOpen(true)}><Plus aria-hidden="true" />New project</Button>}
         </div>

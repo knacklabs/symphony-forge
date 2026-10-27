@@ -11,6 +11,8 @@ from app.auth.models import Session as SessionModel
 from app.auth.schema import (
     AcceptInviteInput,
     Account,
+    AddAgentInput,
+    Agent,
     AuthOptions,
     CredentialsInput,
     ForgotPasswordInput,
@@ -34,6 +36,8 @@ from app.history import HistoryService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 invites_router = APIRouter(prefix="/api/v1/invites", tags=["Organisations"])
+# In auth, because it makes the account, as sign-up and invites do.
+agents_router = APIRouter(prefix="/api/v1/agents", tags=["Organisations"])
 
 
 def _settings(request: Request) -> Settings:
@@ -191,6 +195,23 @@ def invite(
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[MessageResponse]:
     return SuccessEnvelope(data=_service(request, db).invite(input_data.email, account))
+
+
+@agents_router.post(
+    "",
+    status_code=201,
+    response_model=SuccessEnvelope[Agent],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 401, 403, 409)},
+    summary="Add an agent account to your organisation.",
+    description="Only admins can add agent accounts. The account’s email is the name with six random characters at agents.invalid, and it has no password. Create its key next.",
+)
+def add_agent(
+    request: Request,
+    input_data: AddAgentInput,
+    account: Annotated[AccountPrincipal, Depends(admin_only)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[Agent]:
+    return SuccessEnvelope(data=_service(request, db).add_agent(input_data, account))
 
 
 @router.post(
