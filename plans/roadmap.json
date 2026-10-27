@@ -435,7 +435,7 @@
     },
     {
       "key": "FORGE-ASKED-1",
-      "title": "Build only what was asked",
+      "title": "Build only what is needed",
       "status": "pending",
       "order": 103
     }

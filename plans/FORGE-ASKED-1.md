@@ -1,4 +1,4 @@
-# Build only what was asked
+# Build only what is needed
 
 2 parts · Risks: none one-way · New moving parts: none
 
@@ -27,26 +27,36 @@
   keeps it with its disposition in the read notes, as today. Security, data loss and migration
   notes still stop the work. A check that a Done-when item promises is not added work: when it
   is missing, the work stops, as today. (Source: your request, 27 Oct 2026)
-- Each item in a story plan's "What changes for you" ends with its source: a client note, a brief
-  answer, a decision, a screen marked Build now at sign-off, a fixed rule of the app, or your own
-  request with its date. (Source: your request, 27 Oct 2026)
-- An addition with no source gets a "Not asked for" note. For a small addition, the note is
-  advice and does not stop the work. For a large addition (a new table, background job, workflow
-  or settings flag, or about 150 lines or more), the note stops the work until the addition names
-  a source or moves to the idea list. (Source: your request, 27 Oct 2026)
-- Each "Not asked for" note says in plain words what was added, which sources Forge checked and
-  found silent, and the two ways forward: name the source, or move the addition to the idea list.
-  For a large addition, it also says that the addition is large and why. Nobody is stopped
-  without a reason that they can act on. (Source: your request, 27 Oct 2026)
+- An addition is needed when a source asks for it, or when an item that has a source cannot work
+  without it. A source is a client note, a brief answer, a decision, a screen marked Build now at
+  sign-off, a fixed rule of the app, or your own request with its date. Examples of an addition
+  that a sourced item needs are its validation, an error or empty state, an index for a filter
+  that a list shows, and accessibility basics. (Source: your request, 27 Oct 2026)
+- Each item in a story plan's "What changes for you", and each addition, ends with its source or
+  with the sourced item that needs it, such as "(Needed by: the Customers screen)".
+  (Source: your request, 27 Oct 2026)
+- When a source asks for something that the work does not need, the cold read or the review asks,
+  as advice, whether it can be cut: "Is it needed at all? Deleting beats fixing."
+  (Source: your request, 27 Oct 2026)
+- An addition that no source asks for and that no sourced item needs gets a "Not needed" note. For
+  a small addition, the note is advice and does not stop the work. For a large addition (a new
+  table, background job, workflow or settings flag, or about 150 lines or more), the note stops
+  the work until the addition names its source or the item that needs it, or moves to the idea
+  list. (Source: your request, 27 Oct 2026)
+- Each "Not needed" note says in plain words what was added, which sources and needs Forge checked
+  and found silent, and the two ways forward: name the source or the item that needs it, or move
+  the addition to the idea list. For a large addition, it also says that the addition is large
+  and why. Nobody is stopped without a reason that they can act on.
+  (Source: your request, 27 Oct 2026)
 - Forge checks plans and code against the screens marked Build now at sign-off, never against the
   canvas. Until sign-off can mark screens Build now, the Build now screens are the ones that the
   story's Done-when items name. Workers build, and reviews check, every field that those
   screens show, because the client's sign-off is their source. The canvas can still show the
   whole product, with its later screens.
   (Source: your request, 27 Oct 2026)
-- When a worker or planner thinks of something useful that nobody asked for, it adds one line to
-  the repo's idea list (`plans/ideas.md`) and builds nothing for it. The starter's fixed defaults
-  stay the base of each app, and nothing more is built just in case.
+- When a worker or planner thinks of something useful that nothing needs, it adds one line to the
+  repo's idea list (`plans/ideas.md`) and builds nothing for it. The starter's fixed defaults stay
+  the base of each app, and nothing more is built just in case.
   (Source: your request, 27 Oct 2026)
 - A new repo gets all of this from the start. An existing repo gets it when it upgrades Forge and
   runs `forge sync`. An existing app's approved constitution does not change; its workers, cold
@@ -57,19 +67,19 @@ Design: none (no screens; it changes plan, constitution, cold-read, review and w
 ## Why
 
 Forge and the apps it builds collect checks, guards and flags for rare cases, and features that
-nobody asked for. Each extra adds code, tests, checks and review time, and it slows every later
+nothing needs. Each extra adds code, tests, checks and review time, and it slows every later
 change. Today a review holds added work by a fixed score bar that does not weigh the cost. The
 cold read and the review flag only work that no Done-when item needs, so an extra that a
-Done-when line can be stretched to cover gets through. Nobody records where a request came from,
-so a reader cannot tell an asked-for field from a guess.
+Done-when line can be stretched to cover gets through. Nobody records where a request came from
+or which item needs an addition, so a reader cannot tell a needed field from a guess.
 
 ## Done when
 
 1. **A new app's constitution, the worker's planning lines, the cold read, the review and Forge's own review rules state the four principles, with the scales for F, H and C.**
 2. **A cold-read or review note that asks for added work beyond the Done-when items shows its F x H and 2 x C. When F x H is less than 2 x C, the note does not hold the work: a review keeps it in Known issues as a known limit, and a cold read keeps it with its disposition in the read notes. Security, data loss and migration notes still hold the work, and so does a missing check that a Done-when item promises.**
-3. **Every story plan names a source for each screen, field, endpoint, tool and setting that it adds.**
-4. **The cold read and the review report an addition with no source as "Not asked for". A small one is advice. A large one (a new table, background job, workflow or settings flag, or about 150 lines or more) holds the work until it names a source or moves to the idea list. The note says what was added, which sources were checked, the two ways forward, and for a large one why it is large. Plans and code are checked against the screens marked Build now at sign-off, or until sign-off can mark them, the screens that the story's Done-when items name, never against the canvas.**
-5. **A worker or planner who thinks of something useful that nobody asked for adds one line to the idea list and builds nothing for it, and nothing is built beyond the starter's fixed defaults just in case.**
+3. **Every story plan names, for each screen, field, endpoint, tool and setting that it adds, its source or the sourced item that needs it.**
+4. **The cold read and the review report an addition that no source asks for and no sourced item needs as "Not needed". A small one is advice. A large one (a new table, background job, workflow or settings flag, or about 150 lines or more) holds the work until it names its source or the item that needs it, or moves to the idea list. The note says what was added, which sources and needs were checked, the two ways forward, and for a large one why it is large. A sourced addition that the work does not need gets advice to cut it. Plans and code are checked against the screens marked Build now at sign-off, or until sign-off can mark them, the screens that the story's Done-when items name, never against the canvas.**
+5. **A worker or planner who thinks of something useful that nothing needs adds one line to the idea list and builds nothing for it, and nothing is built beyond the starter's fixed defaults just in case.**
 6. **A new repo gets these rules from the start, and an existing repo gets them on upgrade with forge sync, with its approved constitution unchanged.**
 
 ## Risks
@@ -78,14 +88,16 @@ so a reader cannot tell an asked-for field from a guess.
 
 Risks: none one-way. Each part reverts with its pull request.
 
-Trade-off: the reader and the reviewer judge F, H and C, and whether an addition is large. No
-code counts lines or checks the numbers.
+Trade-off: the reader and the reviewer judge F, H and C, whether an addition is large, and whether
+a sourced item really needs an addition. No code counts lines or checks the numbers.
 
-Trade-off: a small addition with no source can ship. The rule is stated, and the note is advice.
+Trade-off: a small addition that nothing needs can ship. The rule is stated, and the note is
+advice.
 
-Trade-off: in a review, a worker can clear a "Not asked for" note with a `Source:` line in its
-commit that names a real client note, brief answer, decision or Build now screen. The plan's
-approved items do not change, so no new approval is needed. The reviewer opens the named source.
+Trade-off: in a review, a worker can clear a "Not needed" note with a `Source:` line in its commit
+that names a real client note, brief answer, decision or Build now screen, or the sourced item that
+needs the addition. The plan's approved items do not change, so no new approval is needed. The
+reviewer opens the named source or item.
 
 Trade-off: until sign-off can mark screens Build now (the sign-off story adds that mark), the
 Build now screens are the ones that the story's Done-when items name. Every field that such a
@@ -99,7 +111,9 @@ Trade-off: two branches that each add an idea line can conflict on `plans/ideas.
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
-Owner ruling after the second cold read (27 Oct 2026): a field or component that a signed Build now screen shows is in scope. The client's sign-off of that screen is its source, so workers build it and reviews check it. "Not asked for" applies only to additions that no note, decision or signed Build now screen shows.
+Owner ruling after the second cold read (27 Oct 2026): a field or component that a signed Build now screen shows is in scope. The client's sign-off of that screen is its source, so workers build it and reviews check it. "Not needed" applies only to additions that no note, decision or signed Build now screen shows and that no sourced item needs.
+
+Owner correction after approval (27 Oct 2026): build only what is needed, not only what was asked. The approval text above changed with it, so the story needs a new approval. PRINCIPLES keeps its row, scope and texts P1 to P5; the change falls in SOURCES.
 
 Each new test file starts with `STORY = "FORGE-ASKED-1"`. Tests run the forge command and never
 import forge.
@@ -125,7 +139,7 @@ import forge.
 - `added_work_min_gain`, `always_block` and the `added-work` block do not change, and they still
   apply on top when a repo sets them. No score, close or review code changes for this rule.
 
-### How "Not asked for" maps to the existing bar
+### How "Not needed" maps to the existing bar
 
 - A large addition is cost 3 on the C scale. It goes under a new Raise line (text B). The reader
   scores it Gain 4 with Work 1 or 2, which holds a plan (`cold-read.md`: "Otherwise, Gain 4, or
@@ -133,6 +147,9 @@ import forge.
   line 186).
 - A smaller addition is advice: `Advisory:` in a cold read, a P2 advice form in a review, scored
   Gain 1 or 2, so it is lived with. Rules are stated, not policed.
+- A sourced addition that the work does not need gets advice under principle 1, in the forms the
+  prompts already have: `Cut or defer: <what>` in a cold read and `Simpler: <what> → cut` in a
+  review, scored Gain 1 or 2. No new finding form.
 
 ### Why the source goes on the "What changes for you" items
 
@@ -233,23 +250,31 @@ a new subsection before `### Forge's 13 principles`: the heading `### Four simpl
 the line "These govern every change to Forge, as they govern every app that Forge builds.", then
 P1's four numbered lines.
 
-**A. The source list (SOURCES).** These words are the one list of sources. Texts B to H use them.
+**A. The source list and the need (SOURCES).** These words are the one list of sources. Texts B
+to H use them.
 
 > a client note in `docs/product/DISCOVERY.md`, an answer in `docs/product/BRIEF.md`, a decision
 > in `docs/decisions/`, a screen marked Build now at sign-off, a fixed rule in
 > `docs/product/CONSTITUTION.md`, or the human's own request: a dated source on a plan item, or a
 > fix's Why and Done-when line
 
+An addition is needed when a source asks for it, or when an item that has a source cannot work
+without it. That second kind names the item, as `(Needed by: <the sourced item>)`, for example
+`(Needed by: the Customers screen)`: its validation, an error or empty state, an index for a
+filter that a list shows, or accessibility basics.
+
 **B. The Raise line (SOURCES).** In `cold-read.md` and `review.md`, under `## What counts`, a new
 line after the two-line `- Moving part:` entry, the same bytes in both files:
 
 ```
-- Not asked for: a large addition that no source asks for: a new table, background job, workflow
-  or settings flag, or about 150 lines or more. A source is a client note in
+- Not needed: a large addition that no source asks for and that no sourced item needs: a new
+  table, background job, workflow or settings flag, or about 150 lines or more. A source is a
+  client note in
   `docs/product/DISCOVERY.md`, an answer in `docs/product/BRIEF.md`, a decision in
   `docs/decisions/`, a screen marked Build now at sign-off, a fixed rule in
   `docs/product/CONSTITUTION.md`, or the human's own request: a dated source on a plan item, or a
-  fix's Why and Done-when line. The canvas is not a source.
+  fix's Why and Done-when line. An item that has a source needs what it cannot work without. The
+  canvas is not a source.
 ```
 
 `tests/test_fix_lean_review_prompts.py::test_1` asserts that the two `What counts` boundaries are
@@ -259,10 +284,11 @@ equal apart from the `Not done` line, so the two copies must match.
 both:
 
 ```
-Title an addition with no source `Not asked for: <what was added>`. Write its evidence in plain
-words for the developer and the client: what the change adds, with its file and line or plan item;
-which sources you checked and found silent; and the two ways forward: name its source, or remove it
-and add one line for it to `plans/ideas.md`. Check plans and code against the screens marked Build
+Title an addition that no source asks for and that no sourced item needs
+`Not needed: <what was added>`. Write its evidence in plain words for the developer and the client:
+what the change adds, with its file and line or plan item; which sources and sourced items you
+checked and found silent; and the two ways forward: name its source or the sourced item that needs
+it, or remove it and add one line for it to `plans/ideas.md`. Check plans and code against the screens marked Build
 now at sign-off, never against the canvas, which can show later screens. Until sign-off can mark
 screens Build now, the Build now screens are the ones that the story's Done-when items name. What
 the app's fixed rules or the starter already give is not an addition. A large addition goes under
@@ -270,18 +296,21 @@ the Raise line above: say
 that it is large and why, score it Gain 4, and Work 1 or 2, because either way forward is small,
 so it holds the work, and include `Case: normal use - <the addition>`. A smaller addition is
 advice: in a cold read start it with `Advisory:`, in a review report it as P2, and score it Gain 1
-or 2.
+or 2. When a source asks for an addition that the work does not need, ask whether it can be cut:
+Is it needed at all? Deleting beats fixing. Report it as advice, `Cut or defer: <what>` in a cold
+read or `Simpler: <what> → cut` in a review, scored Gain 1 or 2.
 ```
 
 In `review.md` `## What blocks the merge`, extend the advice-form list
-``(`Simpler:`, `Later:`, `Follow-up:`, `Simpler (existing):`)`` with `` a small `Not asked for:` ``.
+``(`Simpler:`, `Later:`, `Follow-up:`, `Simpler (existing):`)`` with `` a small `Not needed:` ``.
 
 **D. The task review gets the approved items (SOURCES).** In `review.md`, in the `<!-- task -->`
 block, a new section between `## Done when` (after its `$context` line) and `## Builder guidance`:
 
 ```
 ## What changes for you
-The owner approved these items with the plan. Each ends with its source:
+The owner approved these items with the plan. Each ends with its source or the sourced item
+that needs it:
 $changes
 ```
 
@@ -295,10 +324,11 @@ under `## What changes for you`,
 
 ```
 <What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct).
-A source is a client note, a brief answer, a decision, a screen marked Build now at sign-off, a
-fixed rule of the app, or the owner's own request with its date. Name each screen, field,
-endpoint, tool and setting that the plan adds in one of these items.>
+item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
+or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
+client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
+the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
+setting that the plan adds in one of these items.>
 ```
 
 **F. The agent's guide (SOURCES).** In `src/forge/templates/skill.md`:
@@ -307,22 +337,26 @@ endpoint, tool and setting that the plan adds in one of these items.>
   ``- `forge start` keeps `plans/ideas.md` `` with:
   "- `forge start` keeps `plans/ideas.md`, a short dated list, when the owner says later, and
   carries waiting entries into the next fix or story. When you, a planner or a worker think of
-  something useful that nobody asked for, add one line `- <YYYY-MM-DD>: <the idea>` to
+  something useful that nothing needs, add one line `- <YYYY-MM-DD>: <the idea>` to
   `plans/ideas.md` in the branch in hand and build nothing for it."
   Keep the next line (`Remove an entry when the owner says to do it now, ...`).
 - In `## Planning a story`, a new paragraph after the one that ends
   `New repos get this guide at init; existing repos get it after upgrading Forge and running sync.`:
   "End each item of a plan's What changes for you with its source in plain words, such as
-  `(Source: the client's note on late orders, 12 Oct)`. A source is a client note in
+  `(Source: the client's note on late orders, 12 Oct)`, or with the sourced item that needs it,
+  such as `(Needed by: the Customers screen)`. A source is a client note in
   `docs/product/DISCOVERY.md`, an answer in `docs/product/BRIEF.md`, a decision in
   `docs/decisions/`, a screen marked Build now at sign-off, a fixed rule in
-  `docs/product/CONSTITUTION.md`, or the human's own request with its date. Name each screen,
-  field, endpoint, tool and setting that the plan adds in one of these items. The canvas can show
+  `docs/product/CONSTITUTION.md`, or the human's own request with its date. An item that has a
+  source needs what it cannot work without: its validation, an error or empty state, an index for
+  a filter that a list shows, or accessibility basics. Name each screen, field, endpoint, tool and
+  setting that the plan adds in one of these items. Plan nothing that a source asks for but the
+  work does not need: Is it needed at all? Deleting beats fixing. The canvas can show
   later screens; plan only the screens marked Build now. The starter's fixed rules are the base:
   plan nothing beyond them just in case."
 - In `## Cold read findings`, a new bullet after the `Unproven:` / `Trap:` bullet:
-  "- `Not asked for: <what>` on a large addition: name the item's source, or cut the addition and
-  add one line for it to `plans/ideas.md`. On a small addition it is advice: act on it only when
+  "- `Not needed: <what>` on a large addition: name the item's source or the sourced item that
+  needs it, or cut the addition and add one line for it to `plans/ideas.md`. On a small addition it is advice: act on it only when
   that is cheap."
 - `forge sync` rewrites `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md`.
 
@@ -330,23 +364,26 @@ endpoint, tool and setting that the plan adds in one of these items.>
 `Spotted:` paragraph, which ends `fix it and name it in your handoff.`:
 
 ```
-Build only what your Done-when items and the story's What changes for you name. When you think of
-something useful that nobody asked for, build nothing for it: add one line
-`- <YYYY-MM-DD>: <the idea in one plain sentence>` at the end of `plans/ideas.md` and name it in
-your handoff. When a review reports `Not asked for: <what>` on a large addition, remove the
-addition and add its idea line, or, when a client note, brief answer, decision or Build now screen
-asks for it, add `Source: <what>: <where it was asked>` to your commit body.
+Build only what your Done-when items and the story's What changes for you name, and what those
+items cannot work without, such as validation, error and empty states, an index for a listed
+filter, and accessibility basics. When you think of something useful that nothing needs, build
+nothing for it: add one line `- <YYYY-MM-DD>: <the idea in one plain sentence>` at the end of
+`plans/ideas.md` and name it in your handoff. When a review reports `Not needed: <what>` on a large
+addition, remove the addition and add its idea line, or, when a client note, brief answer,
+decision or Build now screen asks for it or a sourced item needs it, add
+`Source: <what>: <where it was asked, or the sourced item that needs it>` to your commit body.
 ```
 
 **H. The standards page (SOURCES).** In `src/forge/standards.md` (in every worker brief and review,
 and synced to `.claude/skills/forge/standards.md` and `.codex/skills/forge/standards.md`):
 
 - Replace principle 3 with:
-  "3. **Only what was asked.** Every task, screen, field, endpoint, tool, setting, role and
-  integration traces to a Done-when item and to a source: a client note, a brief answer, a
-  decision, a screen marked Build now at sign-off, a fixed rule of the app, or the owner's own
-  request. An idea that nobody asked for goes as one line to `plans/ideas.md`, and nothing is
-  built for it. Anything else is cut, or goes under the spec's Out of scope."
+  "3. **Only what is needed.** Every task, screen, field, endpoint, tool, setting, role and
+  integration traces to a Done-when item and is needed: a source asks for it (a client note, a
+  brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of the app, or the
+  owner's own request), or an item that has a source cannot work without it. An idea that
+  nothing needs goes as one line to `plans/ideas.md`, and nothing is built for it. Anything else
+  is cut, or goes under the spec's Out of scope."
 - At the end of principle 4, add:
   "The starter's fixed rules are the base of each app. Build nothing beyond them just in case:
   modules, contracts, a schema per module and `services.toml` already leave room to grow."
@@ -403,22 +440,23 @@ their own blocks and do not change: before sign-off the canvas is the scope.
      `Gain 2, Work 2, Harm 4` and the same `Adds work:` line still blocks.
 3. Plans name their sources (SOURCES).
    - Texts E and F (the planning paragraph).
-   - Test: `tests/test_build_only_what_was_asked.py::test_1_plans_ask_for_a_source_on_each_item`,
+   - Test: `tests/test_build_only_what_is_needed.py::test_1_plans_name_a_source_or_a_need_for_each_item`,
      parametrised `new-client` and `adopted-v1.2.2` (the fixture copy and version move of
      `tests/test_fix_lean_review_prompts.py::test_1`, then `forge sync`). Each case: run
      `forge story new SHOP "Shoppers can save a basket"` as `tests/test_app_constitution.py` does,
      and read `plans/SHOP.md` in the story checkout: its `## What changes for you` has
-     `End each item with its source in plain words`. The synced `.claude/skills/forge/SKILL.md`
+     `End each item with its source in plain words` and `(Needed by: the Customers screen)`. The synced `.claude/skills/forge/SKILL.md`
      and `.codex/skills/forge/SKILL.md` have `Name each screen, field, endpoint, tool and setting
      that the plan adds in one of these items` and `plan only the screens marked Build now`.
-4. Unsourced additions are "Not asked for" (SOURCES).
+4. Additions that nothing needs are "Not needed" (SOURCES).
    - Texts B, C and D.
-   - Test: `tests/test_build_only_what_was_asked.py::test_2_unsourced_additions_are_not_asked_for`,
+   - Test: `tests/test_build_only_what_is_needed.py::test_2_additions_that_nothing_needs_get_a_not_needed_note`,
      parametrised `new-client` and `adopted-v1.2.2`, with the setup of test 2 in
      `tests/test_four_principles.py`. Both cases: each prompt's `## What counts` has text B's line,
-     and each prompt has text C's phrases `Title an addition with no source`,
-     `which sources you checked and found silent`,
-     ``name its source, or remove it and add one line for it to `plans/ideas.md` ``,
+     and each prompt has text C's phrases `Not needed: <what was added>`,
+     `which sources and sourced items you checked and found silent`,
+     `name its source or the sourced item that needs it`,
+     `remove it and add one line for it to `plans/ideas.md``, `Deleting beats fixing`,
      `say that it is large and why`, `A smaller addition is advice` and
      `never against the canvas`. New-client case, also: approve a SHOP doc whose first
      What-changes item ends `(Source: the owner's request, 27 Oct)` with
@@ -435,15 +473,15 @@ their own blocks and do not change: before sign-off the canvas is the scope.
      assertions (`Report as P1 a built screen`, `component or field`) stay true.
 5. Extras go to the idea list; the starter is the base (SOURCES).
    - Texts F (the idea-list line and the cold-read bullet), G and H.
-   - Test: `tests/test_build_only_what_was_asked.py::test_3_useful_extras_go_to_the_idea_list`,
+   - Test: `tests/test_build_only_what_is_needed.py::test_3_useful_extras_go_to_the_idea_list`,
      parametrised `new init` and `previous release`, set up as in test 1 of
      `tests/test_four_principles.py`. Each case: the worker brief has `build nothing for it`,
-     `plans/ideas.md`, `Source: <what>: <where it was asked>` and, from the standards page,
-     `Only what was asked` and `Build nothing beyond them just in case`; the synced
+     `plans/ideas.md`, `the sourced item that needs it>` and, from the standards page,
+     `Only what is needed` and `Build nothing beyond them just in case`; the synced
      `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` have
      ``add one line `- <YYYY-MM-DD>: <the idea>` to `plans/ideas.md` ``; the synced
      `.claude/skills/forge/standards.md` and `.codex/skills/forge/standards.md` have
-     `Only what was asked`.
+     `Only what is needed`.
 6. New and existing repos (PRINCIPLES): the `previous release` and `adopted-v1.2.2` cases of tests
    1 and 2, and in test 1's `previous release` case, after `forge sync`, the repo has no
    `docs/product/CONSTITUTION.md` (sync writes and changes no constitution).
@@ -462,8 +500,8 @@ their own blocks and do not change: before sign-off the canvas is the scope.
   (`docs/decisions/NNNN-app-constitution.md`); the principles reach that app through its briefs,
   cold reads and reviews. A plan approved before the upgrade keeps its approval, because an
   approval binds the text of its own "What changes for you". A review of that plan's parts can
-  find a large addition with no source; the worker then names the source with a `Source:` line or
-  cuts the addition. Tested by the `adopted-v1.2.2` and `previous release` cases.
+  find a large addition that nothing needs; the worker then names the source or the sourced item
+  with a `Source:` line, or cuts the addition. Tested by the `adopted-v1.2.2` and `previous release` cases.
 
 ## Tasks
 
@@ -482,7 +520,7 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
 | PRINCIPLES | The four principles | The principles in the constitution outline, the worker's planning lines, the cold read, the review and Forge's own review rules, and the F x H against 2 x C rule for added work, on new and existing repos | 1, 2, 6 | `src/forge/templates/cold-read.md`, `src/forge/templates/review.md`, `src/forge/templates/brief.md` (`## Build simple`), `src/forge/templates/skill.md` (`## App constitution`), `AGENTS.md` (`## Review rules`), `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `tests/test_four_principles.py` (new) | `tests/test_four_principles.py` (`test_1`, `test_2`); `tests/test_fix_lean_review_prompts.py::test_1` unchanged | | no | |
-| SOURCES | Sources and the idea list | The source on each plan item, the "Not asked for" note (advice when small, holding the work when large), the approved items in the task review, the Build now scope for screens in the brief and the review, the idea-list rule and the starter base in the brief, the guide and the standards page, on new and existing repos | 3, 4, 5 | `src/forge/templates/story.md`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md`, `src/forge/review.py` (one value in `instructions`), `src/forge/worker.py` (one string in the continued brief), `src/forge/templates/brief.md`, `src/forge/templates/skill.md` (`## Save decisions and ideas`, `## Planning a story`, `## Cold read findings`), `src/forge/standards.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/standards.md` and `.codex/skills/forge/standards.md` (rewritten by `forge sync`), `tests/test_build_only_what_was_asked.py` (new), `tests/test_design_context.py` (`test_1`) | `tests/test_build_only_what_was_asked.py` (`test_1`, `test_2`, `test_3`); the changed `tests/test_design_context.py::test_1` | PRINCIPLES | no | |
+| SOURCES | Sources, needs and the idea list | The source or the sourced need on each plan item, the "Not needed" note (advice when small, holding the work when large), the approved items in the task review, the Build now scope for screens in the brief and the review, the idea-list rule and the starter base in the brief, the guide and the standards page, on new and existing repos | 3, 4, 5 | `src/forge/templates/story.md`, `src/forge/templates/cold-read.md`, `src/forge/templates/review.md`, `src/forge/review.py` (one value in `instructions`), `src/forge/worker.py` (one string in the continued brief), `src/forge/templates/brief.md`, `src/forge/templates/skill.md` (`## Save decisions and ideas`, `## Planning a story`, `## Cold read findings`), `src/forge/standards.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/standards.md` and `.codex/skills/forge/standards.md` (rewritten by `forge sync`), `tests/test_build_only_what_is_needed.py` (new), `tests/test_design_context.py` (`test_1`) | `tests/test_build_only_what_is_needed.py` (`test_1`, `test_2`, `test_3`); the changed `tests/test_design_context.py::test_1` | PRINCIPLES | no | |
 
 SOURCES waits for PRINCIPLES. Both change `cold-read.md`, `review.md`, `brief.md` and `skill.md`,
 in different paragraphs, so Forge refuses to start SOURCES while PRINCIPLES is open. SOURCES' text
@@ -493,7 +531,7 @@ New moving parts: none
 
 ## Notes
 
-- Owner decisions (27 Oct 2026, settled): build only what is asked, in every client repo and in
+- Owner decisions (27 Oct 2026, settled, as corrected below): build only what is asked, in every client repo and in
   Forge itself; every screen, field, endpoint, tool or setting that a plan adds names its source
   (a client note, a brief answer, a decision record, a screen marked Build now at sign-off; in
   Forge's own repo, the owner's request or a decision); the canvas may show the whole product,
@@ -503,7 +541,7 @@ New moving parts: none
   `forge sync`; one or two parts, one test per rule, a new-repo case and one earlier-adopted case
   each.
 - Owner addition (27 Oct 2026): FDEs and clients must not feel blocked for no reason. Each "Not
-  asked for" note says what was added, why Forge sees no source (which sources it checked), and
+  needed" note (first named "Not asked for") says what was added, why Forge sees no source (which sources it checked), and
   the two ways forward: name the source, or move it to the idea list.
 - Owner changes (27 Oct 2026): four core principles for every app and for Forge (needed at all,
   F x H >= 2 x C with the stated 1-3 scales, simplest option, rules stated not policed), in the
@@ -514,10 +552,17 @@ New moving parts: none
 - Owner refinement (27 Oct 2026): a missing source is advice for a small addition and holds the
   work for a large one. Large uses C = 3: a new table, background job, workflow or settings flag,
   or about 150 lines or more. The note says it is large and why.
+- Owner correction (27 Oct 2026, after approval): build only what is needed. An addition is
+  needed when a source asks for it or when a sourced item cannot work without it, named as
+  "needed by" that item (validation, an error or empty state, an index for a listed filter,
+  accessibility basics). A sourced addition that is not needed gets advice to cut it under
+  principle 1. The note is "Not needed", with the same small-advice and large-hold rule and the
+  same plain text. An idea that nothing needs goes as one line to `plans/ideas.md`. The story is
+  retitled "Build only what is needed"; PRINCIPLES does not change.
 - Planner choices the owner did not make: (1) the source goes at the end of each "What changes
   for you" item, not in a Tasks-table column; (2) the source list also counts the app's fixed
   rules and the human's own dated request in every repo, so a feature's built-in CSV export or
-  history is not "Not asked for"; (3) added work below F x H >= 2 x C maps to Gain 2 or less, so
+  history is not "Not needed"; (3) added work below F x H >= 2 x C maps to Gain 2 or less, so
   Forge keeps it as lived with, and FORGE-BAR-1's `Adds work:` line is now asked for on every read
   and review, with no code change; (4) in a review, a `Source:` commit line that names a real
   source clears a large-addition note with no new plan approval; (5) workers and planners write
@@ -525,8 +570,8 @@ New moving parts: none
   now, the Build now screens are the ones that the story's Done-when items name, and workers and
   reviews build and check only their fields (coordinator, round 1); (7) the prototype's light review and the sign-off
   review do not change; (8) sync does not add `## Principles` to an approved constitution; (9) the
-  title stays "Build only what was asked", because the story's state and roadmap entry hold that
-  title.
+  advice to cut a sourced addition reuses the `Cut or defer:` and `Simpler:` forms; (10) a review's
+  `Source:` commit line also names a sourced item that needs the addition.
 - Depends on nothing: the sign-off story adds the Build now mark. This story only reads it, and
   the rule for repos without the mark (text C) covers the time before it lands.
 - `src/forge/review.py` is 1,213 lines today, over the 1,200-line principle; SOURCES adds one

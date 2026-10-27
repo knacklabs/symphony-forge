@@ -33,6 +33,6 @@
       "step": "approved"
     }
   ],
-  "title": "Build only what was asked",
+  "title": "Build only what is needed",
   "touches": 1
 }
