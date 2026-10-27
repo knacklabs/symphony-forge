@@ -1,6 +1,13 @@
 {
   "base": "281106209bc4b0d55f310e0f78fe2fb7fb721837",
   "branch": "fix/full-run-red-guides-and-timings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17f2b-9bfa-7f43-ac77-8988b184389f",
+    "head": null,
+    "start": "c4c1470dd7cc8528d7693fd67bf51d98d0be3139"
+  },
   "done_when": "tests/test_tools_guide.py and tests/test_ci_timing_inventory.py pass on this branch: the synced guides match the template and .test_durations names only collected tests",
   "fix_kind": "mechanical",
   "kind": "fix",
