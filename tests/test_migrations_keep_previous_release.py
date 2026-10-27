@@ -134,6 +134,7 @@ def test_1_close_holds_a_migration_the_previous_release_cannot_run(
     refused = env.close(item)
     output = refused.stdout + refused.stderr
     assert refused.returncode == 1, output
+    assert "These new migrations can break the previous release: " in output
     assert migration_path in output
     for statement in destructive:
         assert statement in output, statement
