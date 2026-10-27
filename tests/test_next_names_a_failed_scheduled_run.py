@@ -120,9 +120,10 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     still = repo.forge("next", cwd=client)
     assert still.returncode == 0, still.stderr
     lines = still.stdout.splitlines()
-    assert lines[:2] == expected
-    assert lines[2].startswith(f"The fix {fix} ")
-    assert lines.count(lines[2]) == 1
+    # The journey heading now precedes the existing scheduled-run advice and fix lines.
+    assert lines[1:3] == expected
+    assert lines[3].startswith(f"The fix {fix} ")
+    assert lines.count(lines[3]) == 1
     assert "forge fix start" not in still.stdout
     machine = repo.forge("next", "--json", cwd=client)
     assert json.loads(machine.stdout)["next"]["command"] == f"forge work {fix}"
@@ -138,9 +139,9 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     elsewhere = repo.forge("next", cwd=client)
     assert elsewhere.returncode == 0, elsewhere.stderr
     lines = elsewhere.stdout.splitlines()
-    assert lines[:2] == expected
-    assert lines[2].startswith(f"The fix {fix} was started by ")
-    assert lines[2].endswith(" and runs on their machine.")
+    assert lines[1:3] == expected
+    assert lines[3].startswith(f"The fix {fix} was started by ")
+    assert lines[3].endswith(" and runs on their machine.")
     assert "forge fix start" not in elsewhere.stdout
 
     monkeypatch.setenv("FORGE_NOW", "2030-01-03T10:00:00+00:00")
