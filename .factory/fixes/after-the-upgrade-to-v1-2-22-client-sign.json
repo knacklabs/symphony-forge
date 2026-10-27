@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "899a73886e7c52c618c0cb813d5fa76859a16b427bf5622bf86e112d20099831",
-    "changed": "69cc997a8a8fbc22c27218bad03db8e19358f69bfbae7bf7975f13379e491643",
-    "commit": "f28f76720a8d03e5331df6f66d412608ddcbc257",
+    "branch_diff": "24b47a2bb4d7ddc0a7451fd4b6b523392d5e9f143230365201b4336dac34ef65",
+    "changed": "141d051d1c5cdb3602c34fafd262dbcf78159b3ad1ae31a4248092151259e05f",
+    "commit": "958c96fda3ef4941ab8074b37e36ab06d5aa585a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 1\nRaise: Test. Case: normal use - running the sign-off reuse tests after this change. The new cache key reruns completeness review when app.py or the brief's answers change. However, tests/test_signoff_reuse.py:114 still requires exactly one Claude call for both the `product` and `answers` cases; each now produces two calls, so both assertions fail. Update those cases to verify the intended completeness invalidation alongside the strict review, preserving reuse assertions for unchanged inputs.",
-        "file": "src/forge/records.py",
-        "gain": 3,
-        "harm": 1,
-        "line": 357,
-        "priority": "P1",
-        "title": "Gate: test_5_signoff_reuses_results_until_their_inputs_change",
-        "work": 2
-      }
-    ],
-    "id": "2b89d519-f4da-4004-845d-32455cd2c48e",
+    "findings": [],
+    "id": "58fd4431-ee6e-4572-8790-39f08cc359f1",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T12:46:34.844774+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-10-27T12:55:51.411731+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T13:13:46.939586+00:00",
       "step": "review"
     }
   ],
