@@ -98,6 +98,8 @@ Trade-off: two branches that each add an idea line can conflict on `plans/ideas.
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Owner ruling after the second cold read (27 Oct 2026): a field or component that a signed Build now screen shows is in scope. The client's sign-off of that screen is its source, so workers build it and reviews check it. "Not asked for" applies only to additions that no note, decision or signed Build now screen shows.
+
 Each new test file starts with `STORY = "FORGE-ASKED-1"`. Tests run the forge command and never
 import forge.
 
