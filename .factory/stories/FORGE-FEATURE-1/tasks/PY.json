@@ -2,11 +2,19 @@
   "allow_large": "The owner allows this story's parts over the line limit, because each part spans an API, the screen and tests",
   "branch": "task/FORGE-FEATURE-1-PY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T08:36:21.945925+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "cb67c56ff6e53db98a16a43c121e916840365f39",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
