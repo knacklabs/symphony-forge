@@ -17,6 +17,7 @@ model Account {
   createdProjects   Project[] @relation("ProjectCreatedBy")
   modifiedProjects  Project[] @relation("ProjectModifiedBy")
   deletedProjects   Project[] @relation("ProjectDeletedBy")
+  idempotencyKeys   IdempotencyKey[]
 
   @@index([createdByAccountId], map: "idx_Account_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Account_modifiedByAccountId")

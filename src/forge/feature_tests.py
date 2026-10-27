@@ -43,6 +43,238 @@ def _field_cases(fields: list[dict[str, Any]], kinds: dict[str, Any]) -> str:
     return "\n".join(cases)
 
 
+def _snake(value: str) -> str:
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value).replace("-", "_").lower()
+
+
+def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any]) -> str:
+    """Render the three feature-specific MCP permission and history cases."""
+    root = f"/api/v1/{plural}"
+    feature = plural.replace("-", "_")
+    item_id = f"{_snake(one)}_id"
+    display_one, display_plural = one.replace("-", " "), plural.replace("-", " ")
+    label = _snake(_column(next(field for field in fields if field["kind"] == "text" and not field.get("optional"))))
+    concise = [_snake(_column(field)) for field in fields if kinds["kinds"][field["kind"]]["column"]]
+    numbers = [_snake(_column(field)) for field in fields
+               if field["kind"] == "number" and kinds["kinds"][field["kind"]]["column"]]
+    statuses = [_snake(_column(field)) for field in fields
+                if field["kind"] == "status" and kinds["kinds"][field["kind"]]["column"]]
+    links = [_snake(_column(field)) for field in fields
+             if field["kind"] == "link" and kinds["kinds"][field["kind"]]["column"]]
+    template = r'''describe('@@PLURAL@@ MCP tools', () => {
+  async function featureAgent(client: ApiClient, csrf: string, role: 'admin' | 'member') {
+    const name = `feature-${randomUUID().slice(0, 8)}`;
+    const added = await client.post('/api/v1/agents').set('x-csrf-token', csrf)
+      .send({ name, role }).expect(201);
+    const agent = added.body.data as { accountId: string; email: string };
+    const key = (await client.post(`/api/v1/members/${agent.accountId}/key`)
+      .set('x-csrf-token', csrf).expect(201)).body.data.key as string;
+    return { email: agent.email, mcp: await agentClient(key) };
+  }
+
+  function featureArguments(input: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(input).map(([field, value]) => [
+      field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`), value,
+    ]));
+  }
+
+  function resultData(result: { isError?: boolean; structuredContent?: Record<string, unknown> }): Record<string, unknown> {
+    if (result.isError || !result.structuredContent) throw new Error('The MCP tool call failed.');
+    return result.structuredContent;
+  }
+
+  function resultError(result: { isError?: boolean; structuredContent?: Record<string, unknown> }): Record<string, unknown> {
+    if (!result.isError || !result.structuredContent || typeof result.structuredContent.error !== 'object'
+      || result.structuredContent.error === null) throw new Error('The MCP tool did not return an error.');
+    return result.structuredContent.error as Record<string, unknown>;
+  }
+
+  function expectFeatureFields(actual: Record<string, unknown>, input: Record<string, unknown>): void {
+    for (const field of FEATURE_CONCISE_FIELDS) {
+      if (FEATURE_NUMBER_FIELDS.includes(field)) expect(Number(actual[field])).toBe(Number(input[field]));
+      else expect(actual[field]).toEqual(input[field]);
+    }
+    for (const field of FEATURE_STATUS_FIELDS) {
+      const value = String(input[field]);
+      expect(actual[`${field}_label`]).toBe(value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' '));
+    }
+    for (const field of FEATURE_LINK_FIELDS) {
+      const nameField = field.endsWith('_id') ? `${field.slice(0, -3)}_name` : `${field}_name`;
+      expect(typeof actual[nameField]).toBe('string');
+      expect(actual[nameField]).not.toBe(input[field]);
+    }
+  }
+
+  const FEATURE_CONCISE_FIELDS: string[] = @@CONCISE@@;
+  const FEATURE_NUMBER_FIELDS: string[] = @@NUMBERS@@;
+  const FEATURE_STATUS_FIELDS: string[] = @@STATUSES@@;
+  const FEATURE_LINK_FIELDS: string[] = @@LINKS@@;
+  const FEATURE_TOOLS = ['@@FEATURE@@_search', '@@FEATURE@@_get', '@@FEATURE@@_create', '@@FEATURE@@_update'];
+  const ALL_FEATURE_TOOLS = [...FEATURE_TOOLS, '@@FEATURE@@_delete', '@@FEATURE@@_restore'];
+
+  it('an agent searches, reads, creates and updates @@PLURAL@@ through MCP as its account', async () => {
+    const { client, csrf } = await signedIn();
+    const { email, mcp } = await featureAgent(client, csrf, 'member');
+    try {
+      const listed = await mcp.listTools();
+      expect(listed.tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
+        .toEqual(FEATURE_TOOLS);
+
+      const mark = randomUUID();
+      const input = featureArguments(await featureInput(client, csrf, mark, 'sample'));
+      const created = await mcp.callTool({ name: '@@FEATURE@@_create', arguments: input });
+      expect(created.content).toEqual([{ type: 'text', text: `Created the @@ONE@@ ${String(input['@@LABEL@@'])}.` }]);
+      const createdData = resultData(created);
+      const id = String(createdData['@@ITEM_ID@@']);
+      expect(id).toMatch(/^[0-9a-f-]{36}$/i);
+      expectFeatureFields(createdData, input);
+      expect(createdData).not.toHaveProperty('created_by_email');
+
+      const fetched = resultData(await mcp.callTool({ name: '@@FEATURE@@_get', arguments: { '@@ITEM_ID@@': id } }));
+      expectFeatureFields(fetched, input);
+      expect(fetched).not.toHaveProperty('created_by_email');
+      const detailed = resultData(await mcp.callTool({ name: '@@FEATURE@@_get', arguments: {
+        '@@ITEM_ID@@': id, response_format: 'detailed',
+      } }));
+      expect(detailed.created_by_email).toBe(email);
+      expectFeatureFields(detailed, input);
+
+      const searched = resultData(await mcp.callTool({ name: '@@FEATURE@@_search', arguments: { query: mark } }));
+      expect(searched.items).toEqual(expect.arrayContaining([
+        expect.objectContaining({ '@@ITEM_ID@@': id }),
+      ]));
+      expect(searched.items).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ created_by_email: expect.any(String) }),
+      ]));
+      const found = (searched.items as Record<string, unknown>[]).find((item) => item['@@ITEM_ID@@'] === id);
+      expect(found).toBeDefined();
+      if (found) {
+        expectFeatureFields(found, input);
+        expect(found).not.toHaveProperty('created_by_email');
+      }
+
+      const changedInput = featureArguments(await featureInput(client, csrf, mark, 'changed'));
+      const updated = resultData(await mcp.callTool({ name: '@@FEATURE@@_update', arguments: {
+        ...changedInput, '@@ITEM_ID@@': id,
+      } }));
+      expectFeatureFields(updated, changedInput);
+      expect(updated).not.toHaveProperty('created_by_email');
+
+      for (const [field, value] of Object.entries(FIELD_CASES)) {
+        const argument = field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+        const rejected = await mcp.callTool({ name: '@@FEATURE@@_create', arguments: {
+          ...input, [argument]: value.bad,
+        } });
+        expect(rejected.isError).toBe(true);
+        const error = resultError(rejected);
+        expect(error).toMatchObject({ kind: 'invalid_input', retryable: false });
+        expect(String(error.message)).toContain('Example:');
+        expect(error.details).toEqual(expect.arrayContaining([expect.objectContaining({ field: argument })]));
+      }
+
+      const changes = (await client.get(`@@ROOT@@/${id}/changes`).expect(200)).body.data as
+        { actorEmail: string; summary: string }[];
+      expect(changes).toEqual(expect.arrayContaining([
+        expect.objectContaining({ actorEmail: email, summary: 'Created the @@ONE@@' }),
+        expect.objectContaining({ actorEmail: email, summary: expect.stringContaining(' changed from ') }),
+      ]));
+      const history = (await client.get('/api/v1/history').expect(200)).body.data as
+        { actorEmail: string; summary: string }[];
+      const agentChanges = history.filter((entry) => entry.actorEmail === email
+        && (entry.summary.includes('Created the @@ONE@@') || entry.summary.includes(' changed from ')));
+      expect(agentChanges).toHaveLength(2);
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('a member agent cannot delete or restore a @@ONE@@ through MCP', async () => {
+    const { client, csrf } = await signedIn();
+    const { mcp } = await featureAgent(client, csrf, 'member');
+    try {
+      await client.put('/api/v1/agent-tools/@@SLUG@@').set('x-csrf-token', csrf)
+        .send({ deleteAndRestore: true }).expect(200);
+      const mark = randomUUID();
+      const id = await createFeature(client, csrf, await featureInput(client, csrf, mark, 'sample'));
+      const listed = await mcp.listTools();
+      const names = listed.tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name);
+      expect(names).toEqual(FEATURE_TOOLS);
+      for (const action of ['delete', 'restore']) {
+        const result = await mcp.callTool({ name: `@@FEATURE@@_${action}`, arguments: { '@@ITEM_ID@@': id } });
+        expect(result.isError).toBe(true);
+        expect((result.structuredContent as Record<string, unknown>).error).toMatchObject({
+          kind: 'not_allowed', retryable: false,
+        });
+      }
+      await client.get(`@@ROOT@@/${id}`).expect(200);
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('@@ONE@@ delete and restore tools stay off until an admin turns them on', async () => {
+    const { client, csrf } = await signedIn();
+    const { email, mcp } = await featureAgent(client, csrf, 'admin');
+    try {
+      expect((await mcp.listTools()).tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
+        .toEqual(FEATURE_TOOLS);
+      const mark = randomUUID();
+      const id = await createFeature(client, csrf, await featureInput(client, csrf, mark, 'sample'));
+      const refused = await mcp.callTool({ name: '@@FEATURE@@_delete', arguments: { '@@ITEM_ID@@': id } });
+      expect(refused.isError).toBe(true);
+      expect((refused.structuredContent as Record<string, unknown>).error).toMatchObject({
+        kind: 'not_allowed', retryable: false,
+      });
+
+      await client.put('/api/v1/agent-tools/@@SLUG@@').set('x-csrf-token', csrf)
+        .send({ deleteAndRestore: true }).expect(200);
+      expect((await mcp.listTools()).tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
+        .toEqual(ALL_FEATURE_TOOLS);
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        expect(resultData(await mcp.callTool({ name: '@@FEATURE@@_delete', arguments: { '@@ITEM_ID@@': id } })).deleted)
+          .toBe(true);
+      }
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        expect(resultData(await mcp.callTool({ name: '@@FEATURE@@_restore', arguments: { '@@ITEM_ID@@': id } }))['@@ITEM_ID@@'])
+          .toBe(id);
+      }
+      const changes = (await client.get(`@@ROOT@@/${id}/changes`).expect(200)).body.data as
+        { actorEmail: string; summary: string }[];
+      const deleted = changes.filter((entry) => entry.summary === 'Deleted the @@ONE@@');
+      const restored = changes.filter((entry) => entry.summary === 'Restored the @@ONE@@');
+      expect(deleted).toHaveLength(1);
+      expect(deleted[0].actorEmail).toBe(email);
+      expect(restored).toHaveLength(1);
+      expect(restored[0].actorEmail).toBe(email);
+
+      await client.put('/api/v1/agent-tools/@@SLUG@@').set('x-csrf-token', csrf)
+        .send({ deleteAndRestore: false }).expect(200);
+      expect((await mcp.listTools()).tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
+        .toEqual(FEATURE_TOOLS);
+    } finally {
+      await mcp.close();
+    }
+  });
+});
+'''
+    replacements = {
+        "@@PLURAL@@": display_plural,
+        "@@SLUG@@": plural,
+        "@@ONE@@": display_one,
+        "@@ROOT@@": root,
+        "@@FEATURE@@": feature,
+        "@@ITEM_ID@@": item_id,
+        "@@CONCISE@@": json.dumps(concise),
+        "@@NUMBERS@@": json.dumps(numbers),
+        "@@STATUSES@@": json.dumps(statuses),
+        "@@LINKS@@": json.dumps(links),
+        "@@LABEL@@": label,
+    }
+    for marker, value in replacements.items():
+        template = template.replace(marker, value)
+    return template.strip()
+
+
 def _target_helper(fields: list[dict[str, Any]]) -> str:
     if not any(field["kind"] == "link" for field in fields):
         return ""

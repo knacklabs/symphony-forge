@@ -2,13 +2,14 @@
 import json
 import shlex
 import shutil
+import tomllib
 from pathlib import Path
 
 import pytest
 
-from test_feature_command import feature_live_run, require_feature_cases
+from test_feature_command import _written_paths, feature_live_run, require_feature_cases
 from test_setup import _fresh_client
-from test_starter_tree import LIVE, STARTER, _require_cases, live_run
+from test_starter_tree import LIVE, STARTER, _junit_cases, _require_cases, live_run
 
 STORY = "FORGE-MCP-1"
 
@@ -28,9 +29,10 @@ AGENT_FLOW = "an admin adds an agent account, creates its key once and revokes i
 ACCESS_FLOW = "an admin turns on agent delete and restore for {plural}"
 FEATURE_LINE = ("forge task feature jobs --one job --field 'name:text' "
                 "--field 'status:status(planned|active|done)'")
+CLIENTS_LINE = "forge task feature clients --one client --field 'name:text'"
 
 
-def _adopted_files_after_sync(repo) -> tuple[dict, dict]:
+def _adopted_files_after_sync(repo, *, include_sync_status=False):
     """An app adopted on an earlier release, with the starter's members and projects code, before
     and after it upgrades and syncs."""
     shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
@@ -48,15 +50,62 @@ def _adopted_files_after_sync(repo) -> tuple[dict, dict]:
                 if path.is_file()}
 
     before = files()
+    if include_sync_status:
+        repo.git("add", "-A")
+        repo.git("commit", "-q", "-m", "Prepare adopted app")
     repo.git("checkout", "-b", "fix/agent-accounts-upgrade")
+    status_before = repo.git("status", "--porcelain=v1", "-uall")
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
+    if include_sync_status:
+        status_after = repo.git("status", "--porcelain=v1", "-uall")
+        return before, files(), status_before, status_after, synced.stdout
     return before, files()
 
 
 def _live(starter: str, request) -> dict:
     return (live_run(request.getfixturevalue("tmp_path_factory")) if starter == "typescript"
             else request.getfixturevalue("live_python_starter"))
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(1800)
+@pytest.mark.parametrize("starter", ["typescript", "plain", "earlier adopted"])
+def test_1_a_new_starter_app_serves_its_mcp_server(repo, gh, tmp_path, starter, request):
+    # Audit: protects the generated-app boundary: the TypeScript starter registers its API path,
+    # while plain init and an earlier-adopted app gain no MCP code. The existing starter-tree
+    # checks compare files but do not parse the service that Mainline reads. No production seam
+    # is needed; GitHub's init responses use the existing fixture.
+    if starter == "earlier adopted":
+        before, after, status_before, status_after, sync_output = _adopted_files_after_sync(
+            repo, include_sync_status=True)
+        assert after == before
+        assert not (repo.path / "services.toml").exists()
+        assert not (repo.path / "libs/mcp").exists()
+        assert not (repo.path / "apps/api/src/mcp").exists()
+        sync_written = {line.removeprefix("Wrote ") for line in sync_output.splitlines()
+                        if line.startswith("Wrote ")}
+        paths_after = {entry[3:] if entry[2] == " " else entry[2:]
+                       for entry in status_after.splitlines() if len(entry) >= 3}
+        assert not status_before
+        assert paths_after <= sync_written
+        return
+
+    init_args = ("--starter", "react") if starter == "typescript" else ()
+    client, initialized = _fresh_client(repo, gh, tmp_path, *init_args)
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    service = tomllib.loads((client / "services.toml").read_text(encoding="utf-8"))["service"][0]
+    if starter == "typescript":
+        assert service["mcp"] == "/mcp"
+        assert "services.toml" in repo.git("ls-files", cwd=client).splitlines()
+        assert (client / "libs/mcp/server/src/index.ts").is_file()
+        assert (client / "apps/api/test/mcp.e2e-spec.ts").is_file()
+        if LIVE:
+            _require_cases(live_run(request.getfixturevalue("tmp_path_factory"))["api"],
+                           ("the MCP server refuses a missing or revoked agent key",))
+    else:
+        assert "mcp" not in service
+        assert not (client / "libs/mcp").exists()
 
 
 @pytest.mark.platform
@@ -85,11 +134,27 @@ def test_2_an_admin_adds_an_agent_account_and_its_key(repo, gh, tmp_path, starte
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted", "older starter"])
 def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
-    # Audit: a list screen without the Agent access dialog, a switch that does not save or does
-    # not stay on after a reload, or a member who sees it fails the flow; a feature the command
-    # builds must carry the dialog under its own name, or its switch saves for the wrong feature.
+    # Audit: a generated feature without its six field-based tools, its linked-name resolver,
+    # or its delete/restore switch fails this command-boundary contract; an older starter must
+    # not receive MCP code that it cannot run. The generated API cases exercise the copied tools
+    # through the agent boundary, while the unit case owns custom-tool registration and timeout.
+    if starter == "older starter":
+        client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+        (client / "libs/core/server/src/common/tools.ts").unlink()
+        shutil.rmtree(client / "libs/mcp")
+        built = repo.forge(*shlex.split(FEATURE_LINE)[1:], cwd=client)
+        assert built.returncode == 0, built.stdout + built.stderr
+        assert "This app has no MCP server, so jobs get no agent tools." in built.stdout
+        written = _written_paths(built, client)
+        forbidden = ("forge:feature:mcp", "JobsTools", "AgentAccessDialog", "agentClient", "afterCreate", "_search")
+        for path in written:
+            text = (client / path).read_text("utf-8")
+            assert all(value not in text for value in forbidden), path
+        assert "libs/jobs/server/src/jobs.tools.ts" not in written
+        return
     if starter == "earlier adopted":
         before, after = _adopted_files_after_sync(repo)
         projects = {path: text for path, text in before.items() if "projects" in path.as_posix()}
@@ -99,15 +164,72 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         repo, gh, tmp_path, "--starter", "react" if starter == "typescript" else "python")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     if starter == "typescript":
-        for line, plural, words in ((FEATURE_LINE, "jobs", "jobs"),
-                                    ("forge task feature work-orders --one work-order --field 'name:text'",
-                                     "work-orders", "work orders")):
+        for line, plural, words in ((CLIENTS_LINE, "clients", "clients"),
+                                    (FEATURE_LINE, "jobs", "jobs"),
+                                    ("forge task feature work-orders --one work-order --field 'name:text' "
+                                     "--field 'client?:link(clients)'", "work-orders", "work orders")):
             built = repo.forge(*shlex.split(line)[1:], cwd=client)
             assert built.returncode == 0, built.stdout + built.stderr
-            page = (client / f"libs/{plural}/web/src/pages/{plural}-page.tsx").read_text("utf-8")
-            assert f'feature="{plural}"' in page and f'label="{words}"' in page, page
+            if plural != "clients":
+                page = (client / f"libs/{plural}/web/src/pages/{plural}-page.tsx").read_text("utf-8")
+                assert f'feature="{plural}"' in page and f'label="{words}"' in page, page
+            if plural == "jobs":
+                tools = (client / "libs/jobs/server/src/jobs.tools.ts").read_text("utf-8")
+                assert "feature: 'jobs'" in tools and "JOB_PERMISSIONS" in tools
+                assert "concise: ['name', 'status']" in tools
+                assert "links: {}" in tools
+            if plural == "work-orders":
+                tools = (client / "libs/work-orders/server/src/work-orders.tools.ts").read_text("utf-8")
+                assert "import { CLIENTS_API } from '@app/clients-contracts';" in tools
+                assert "clientId: CLIENTS_API" in tools
+                assert "concise: ['name', 'clientId']" in tools
     if LIVE:
         _require_cases(_live(starter, request)["browser"], (ACCESS_FLOW.format(plural="projects"),))
         if starter == "typescript":
             live = feature_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
             require_feature_cases(live["browser"], "jobs.spec.ts", (ACCESS_FLOW.format(plural="jobs"),))
+            require_feature_cases(live["api"], "jobs.e2e-spec.ts", (
+                "an agent searches, reads, creates and updates jobs through MCP as its account",
+                "a member agent cannot delete or restore a job through MCP",
+                "job delete and restore tools stay off until an admin turns them on",
+            ))
+            require_feature_cases(live["api"], "projects.e2e-spec.ts", (
+                "an agent searches, reads, creates and updates projects through MCP as its account",
+                "a member agent cannot delete or restore a project through MCP",
+                "project delete and restore tools stay off until an admin turns them on",
+            ))
+            _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"),
+                           ("a tools file can hide a default tool and add its own",))
+
+
+MCP_API_CASES = (
+    "every tool has a description, annotations, schemas and the error shape",
+    "project search pages with a cursor and says how many match",
+    "a retried project create with the same idempotency key makes one project",
+    "a repeated project update changes nothing",
+    "an invalid project input gets a non-retryable error with an example",
+    "an agent key over its rate limit gets a retryable error",
+)
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(1800)
+@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+def test_4_tools_page_answer_and_fail_in_the_agent_form(repo, gh, tmp_path, starter, request):
+    # Audit: verifies the running API's MCP contract and behavior report; the REST tests cannot
+    # catch a broken MCP transport, tool schema, paging response, or retry result. The adopted
+    # app gets no MCP tool implementation during sync.
+    if starter == "earlier adopted":
+        _adopted_files_after_sync(repo)
+        assert not (repo.path / "libs/core/server/src/common/tools.ts").exists()
+        assert not (repo.path / "apps/api/app/core/tools.py").exists()
+        return
+
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    assert (client / "apps/api/test/mcp.e2e-spec.ts").is_file()
+    if LIVE:
+        live = live_run(request.getfixturevalue("tmp_path_factory"))
+        _require_cases(live["api"], MCP_API_CASES)
+        _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"),
+                       ("a tool over its time limit gets a retryable unavailable error",))

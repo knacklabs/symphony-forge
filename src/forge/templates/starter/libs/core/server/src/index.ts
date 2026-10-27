@@ -19,3 +19,5 @@ export { MAIL_PROVIDER, type MailProvider } from './mail/mail.provider';
 export { MailModule } from './mail/mail.module';
 export { PrismaModule } from './prisma/prisma.module';
 export { PrismaService } from './prisma/prisma.service';
+export { defineTool, defineFeatureTools, listTools, callTool, ToolError, toolFailure, type ToolContext } from './common/tools';
+export { ErrorReporter } from './common/error-report';
