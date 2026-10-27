@@ -23,6 +23,28 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_machine_memory_budget.py\tThe new-repo doctor case failed in the interrupted local selection and needs its failure details checked.",
+      "kind": "bug",
+      "path": "tests/test_machine_memory_budget.py",
+      "line": 270,
+      "text": "The new-repo doctor case failed in the interrupted local selection and needs its failure details checked.",
+      "from": "worker",
+      "item": "FORGE-SIGNOFF-1/OPENLIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_pull_request_cache_survives_close.py\tThe new-repo cache case failed in the interrupted local selection and needs its failure details checked.",
+      "kind": "bug",
+      "path": "tests/test_pull_request_cache_survives_close.py",
+      "line": 41,
+      "text": "The new-repo cache case failed in the interrupted local selection and needs its failure details checked.",
+      "from": "worker",
+      "item": "FORGE-SIGNOFF-1/OPENLIST",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/open_decisions.py\tNot done: a question that is not open is refused by name with the next step",
       "kind": "edge",
       "path": "src/forge/open_decisions.py",

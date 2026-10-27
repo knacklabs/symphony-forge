@@ -15,7 +15,7 @@
       "gain": 4,
       "harm": 4,
       "line": 182,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": true,
@@ -41,7 +41,7 @@
       "gain": 4,
       "harm": 4,
       "line": 655,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -52,49 +52,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "83771c8b240dc2a3670dde176872bc8f4bed7bc08545809388f2dad188b84df9",
-    "changed": "4d5ddde9d8718076b0f267426a89f6adf0c12eb0681dadfa66ba6f94dc99409f",
-    "commit": "dccc121f87495fe3b27a0be6a6a24cf422d113dd",
+    "branch_diff": "138cf76c51d5207a658804c4f3517be23ab65041676bceb7025ee59f7da1ebc9",
+    "changed": "e7f6c16e84152b8e0cfb6b1f4a6b628d6150769542265d451827a4bf940adb1d",
+    "commit": "cb0cf61b2f81db74fedb7a2e89e7d0be4966a61a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4\nRaise: Data loss. Case: normal use - docs/specs/shared.md links to a shared specification outside this worktree and contains an open question. This write follows the symlink and changes the external file. records._write delegates to story._write (src/forge/story.py:1173), which performs an unchecked write_bytes. The subsequent commit records the symlink rather than the changed target, so the external edit is neither captured nor reversible by reverting this decision commit. Check source containment before writing any record or source.\nRaise: Security",
-        "file": "src/forge/open_decisions.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 182,
-        "priority": "P1",
-        "title": "Prevent source updates from following links outside the checkout",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done. Case: normal use - the agent saves the answers file under docs/decisions/answers.md. items(top) scans that file before validation, so its answer-only Open question markers become incomplete open items. Consequently, this lookup accepts even a question never asked elsewhere, instead of refusing it as Done-when 2 requires. It can also accept a stale answer copied from an already-answered question. Exclude the --from file from the source inventory used for matching; the current test places it outside docs and plans and misses this case.",
-        "file": "src/forge/open_decisions.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 4,
-        "harm": 3,
-        "line": 143,
-        "priority": "P1",
-        "title": "Not done: a question that is not open is refused by name with the next step",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 4 (floor: migration)\nRaise: Gate. Case: normal use - merging the selected change also ships the separate spec-rule feature. This sync migration, src/forge/templates/skeleton/docs/specs/README.md and tests/test_spec_rules.py are outside OPENLIST's scope and are unnecessary for collecting or answering open decisions. The RULE_ID helpers and decision_accept changes also exceed records.py's GROUP_HELP-only scope. The supplied story explicitly leaves the spec-format feature outside this part. Remove those changes from the selected target or review OPENLIST against its stacked parent; tests/test_split_commands.py is needed for the new command help and does not have this problem.",
-        "file": "src/forge/sync.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 655,
-        "priority": "P1",
-        "title": "Gate: unrelated spec-rule changes exceed the OPENLIST scope",
-        "work": 2
-      }
-    ],
-    "id": "6a151f3a-b58c-4a55-9e51-50dab10f8fe3",
-    "status": "blocked"
+    "findings": [],
+    "id": "580ed74b-720f-4371-87c9-4ded1fde0811",
+    "status": "clean"
   },
   "round": 2,
   "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T09:23:33.615101+00:00",
@@ -102,6 +70,10 @@
     },
     {
       "at": "2026-10-27T09:41:13.895865+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T09:56:11.919386+00:00",
       "step": "review"
     }
   ],
