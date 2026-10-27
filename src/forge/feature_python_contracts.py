@@ -102,12 +102,9 @@ def render_python_contracts(
         "\n".join(_input_field(field, one, kinds) for field in fields),
     )
     template = _replace(template, "filters", _filters(fields, one, kinds))
-    sortable = [field["column"] for field in fields if kinds["kinds"][field["kind"]]["column"]]
+    sortable = [field["column"] for field in fields if field["kind"] != "long-text"]
     if not any(field["kind"] == "text" and not field.get("optional") for field in fields):
         raise ValueError("The feature needs a required text field for its display name.")
-    name = next(field["column"] for field in fields if field["kind"] == "text" and not field.get("optional"))
-    if name not in sortable:
-        sortable.insert(0, name)
     sortable.extend(["createdAtUtc", "updatedAtUtc"])
     sort_field = (
         f"sortBy: z.enum([{', '.join(_quote(value) for value in sortable)}]).default('updatedAtUtc')"

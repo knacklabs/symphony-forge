@@ -53,4 +53,4 @@ jobs:
       - name: Run the Python starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py -k python -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py -k python -q -n 0 --timeout=1800

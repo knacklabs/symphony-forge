@@ -249,11 +249,6 @@ def _schema_source(
     fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any]
 ) -> str:
     definitions = kinds["kinds"]
-    name_field = next(
-        field
-        for field in fields
-        if field["kind"] == "text" and not field.get("optional")
-    )
     imports = [
         "from datetime import date, datetime"
         if any(field["kind"] == "date" for field in fields)
@@ -281,6 +276,10 @@ def _schema_source(
             constraints.append("max_length=10000")
         elif kind == "email":
             constraints.extend(["max_length=254", 'pattern=r"^[^@\\s]+@[^@\\s]+$"'])
+        elif kind == "number":
+            constraints.extend(["max_digits=19", "decimal_places=4"])
+        elif kind == "money":
+            constraints.extend(["ge=-2147483648", "le=2147483647"])
         if kind == "status":
             suffix = " | None" if optional else ""
             default = " = None" if optional else f" = {_literal(field['options'][0])}"
@@ -334,12 +333,7 @@ def _schema_source(
         else:
             query_type = 'Literal["yes", "no"]' if kind == "yes-no" else "UUID"
             filter_fields.append(f"{attr}: {query_type} | None = None")
-    sort_fields = [name_field]
-    sort_fields.extend(
-        field
-        for field in fields
-        if definitions[field["kind"]].get("column") and field is not name_field
-    )
+    sort_fields = [field for field in fields if field["kind"] != "long-text"]
     sort_names = [field["column"] for field in sort_fields]
     sort_names.extend(["createdAtUtc", "updatedAtUtc"])
     sort_field = ["sort_by: Literal["]
@@ -504,7 +498,10 @@ def _permissions_source(plural: str) -> str:
     template = (STARTER_PYTHON / "apps/api/app/projects/permissions.py").read_text(
         encoding="utf-8"
     )
-    return _remove_marks(_python_rename(template, plural, plural))
+    template = template.replace('"projects"', "@@FEATURE_SLUG@@")
+    return _remove_marks(_python_rename(template, plural, plural)).replace(
+        "@@FEATURE_SLUG@@", _literal(plural)
+    )
 
 
 def _routes_source(
@@ -588,7 +585,7 @@ def _service_source(
     name_field = next(field for field in fields if field["kind"] == "text" and not field.get("optional"))
     search_field = next(field for field in fields if field["kind"] in ("text", "email"))
     filter_fields = [field for field in fields if definitions[field["kind"]].get("filter_index")]
-    sort_fields = [name_field, *[field for field in fields if definitions[field["kind"]].get("column") and field is not name_field]]
+    sort_fields = [field for field in fields if field["kind"] != "long-text"]
     sort_fields += [
         {"name": "createdAtUtc", "column": "createdAtUtc", "kind": "datetime", "optional": False},
         {"name": "updatedAtUtc", "column": "updatedAtUtc", "kind": "datetime", "optional": False},
@@ -685,6 +682,11 @@ def _service_source(
                 "                return value, UUID(cursor_id)",
             ])
         else:
+            if kind == "boolean":
+                cursor_parsers.extend([
+                    '                if text not in ("True", "False"):',
+                    "                    raise ValueError()",
+                ])
             cursor_parsers.extend([f"                return {parser}, UUID(cursor_id)"])
     if [name for name, value in sort_types.items() if value == "string"]:
         names = [name for name, value in sort_types.items() if value == "string"]
@@ -701,11 +703,11 @@ def _service_source(
         "import json",
         "from collections.abc import Sequence",
         "from datetime import UTC, datetime" + (", date" if search_import else ""),
-        "from decimal import Decimal" if "decimal" in sort_types.values() else None,
+        "from decimal import Decimal, InvalidOperation" if "decimal" in sort_types.values() else None,
         "from typing import Any, NoReturn",
         "from uuid import UUID, uuid7",
         "",
-        "from sqlalchemy import and_, func, or_, select",
+        "from sqlalchemy import and_, func, literal, or_, select",
         "from sqlalchemy.orm import Session as DbSession",
         "",
         "from app.auth import account_emails",
@@ -768,7 +770,7 @@ def _decode_cursor(sort_by: str, cursor: str, field: str) -> tuple[Any, UUID]:
                     return None, UUID(cursor_id)
                 raise ValueError()
 {cursor_parsers}
-    except (binascii.Error, ValueError, TypeError):
+    except ({cursor_errors}):
         pass
     raise ApiError(
         400,
@@ -868,7 +870,8 @@ class {model}Service:
                     or_(column.is_not(None), ties) if backward else ties
                 )
             else:
-                beyond = column > value if ascending else column < value
+                bound_value = literal(value, type_=column.type)
+                beyond = column > bound_value if ascending else column < bound_value
                 ties = and_(
                     column == value,
                     Model.id > cursor_id if ascending else Model.id < cursor_id,
@@ -1053,6 +1056,9 @@ class {model}Service:
         sort_attributes=sort_attrs, nullable=nullable_set,
         field_labels=labels_source, name_attr=_literal(_field_attr(name_field)),
         cursor_parsers=parsers, model=model,
+        cursor_errors="binascii.Error, ValueError, TypeError" + (
+            ", InvalidOperation" if "decimal" in sort_types.values() else ""
+        ),
         search_clause=search_clause, filter_body="\n".join(filter_lines),
         link_body=link_body, create_fields=data_fields, update_fields=assigns,
         module=module, one=one.replace("-", " "), permission=module.upper() + "_PERMISSIONS",

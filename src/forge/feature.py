@@ -283,6 +283,7 @@ def _build_python(args, root: Path) -> int:
     required = ["apps/api/app/main.py", "apps/api/app/organisations/__init__.py",
                 "apps/api/app/history/__init__.py", "apps/api/app/core/permissions.py",
                 "apps/api/migrations/env.py", "apps/api/pyproject.toml",
+                "apps/api/tests/test_module_schemas.py",
                 "libs/history/contracts/src/index.ts", "apps/web/src/app.tsx",
                 "apps/web/src/components/app-shell.tsx", "apps/web/package.json",
                 "package.json", "pnpm-lock.yaml"]
@@ -318,6 +319,30 @@ def _build_python(args, root: Path) -> int:
                 f'allowed_importers = ["app.{module}"]\n'
                 'broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."\n\n')
     files[config] = _before(current[config], "[tool.mypy]", contract, config)
+    schema_tests = "apps/api/tests/test_module_schemas.py"
+    schema_source = current[schema_tests]
+    inventory = re.search(r"(?ms)^EXPECTED_TABLE_SCHEMAS = \(\n(.*?)^\)", schema_source)
+    if inventory is None:
+        _refuse(f"This feature needs a starter app. The expected table inventory is missing in {schema_tests}.",
+                "build this feature by hand in this app.")
+    table_schemas = set(re.findall(r'^\s*"([^"]+)",\s*$', inventory[1], re.M))
+    table_schemas.add(f"{module}.{one.replace('-', '_')}")
+    expected = "EXPECTED_TABLE_SCHEMAS = (\n" + "".join(
+        f'    "{value}",\n' for value in sorted(table_schemas)
+    ) + ")"
+    schema_source = schema_source[:inventory.start()] + expected + schema_source[inventory.end():]
+    module_schema_filters = re.compile(r"((?:source|target)_schema\.nspname IN \()([^)]*)(\))")
+
+    def include_feature_schema(match: re.Match[str]) -> str:
+        schemas = set(re.findall(r"'([^']+)'", match[2]))
+        schemas.add(module)
+        return match[1] + ", ".join(f"'{value}'" for value in sorted(schemas)) + match[3]
+
+    schema_source, filter_count = module_schema_filters.subn(include_feature_schema, schema_source)
+    if filter_count != 2:
+        _refuse(f"This feature needs a starter app. The schema ownership check is missing in {schema_tests}.",
+                "build this feature by hand in this app.")
+    files[schema_tests] = schema_source
     python_starter = Path(__file__).parent / "templates/starter-python"
     for kind in ("contracts", "web"):
         source_root = python_starter if kind == "contracts" else STARTER

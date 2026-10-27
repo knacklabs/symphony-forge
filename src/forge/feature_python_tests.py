@@ -76,7 +76,7 @@ def _field_specs(fields: list[dict[str, Any]], kinds: dict[str, Any]) -> tuple[d
                 "bad": kind["bad"],
                 "target": field.get("target"),
                 "filterable": bool(kind.get("filter_index")),
-                "sortable": bool(kind.get("column")),
+                "sortable": kind_name != "long-text",
             }
         )
     return tuple(specs)
@@ -193,7 +193,7 @@ def _schema_specs(root: Path, module: str, kinds: dict[str, Any]) -> tuple[dict[
                 "bad": kind["bad"],
                 "target": None,
                 "filterable": bool(kind.get("filter_index")),
-                "sortable": bool(kind.get("column")),
+                "sortable": kind_name != "long-text",
             }
         )
     return tuple(fields)
@@ -322,10 +322,10 @@ def render_python_tests(
             client: httpx.Client,
             csrf: str,
             field: dict[str, Any],
-        *,
-        changed: bool,
-        index: int,
-        seen: tuple[str, ...],
+            *,
+            changed: bool,
+            index: int,
+            seen: tuple[str, ...],
         ) -> Any:
             kind = field["kind"]
             if kind == "link":
@@ -661,9 +661,10 @@ def render_python_tests(
                 assert owned_id not in [item["id"] for item in _list(other)["items"]]
 
 
-        # Audit: this protects validation of every field, unknown body keys and unknown query
-        # parameters. A field kind accepts its bad sample or a future query is ignored
-        # would violate the request contract; the live app is the owning boundary.
+        # Audit: this protects validation of every field, including numeric values whose shape
+        # is valid but whose precision or range cannot be stored. Existing bad samples do not
+        # cover those persistence failures; the live API and database path is the owner, with no
+        # production seam.
         def test_rejects_bad_fields_unknown_inputs_and_unknown_list_parameters(
             client: httpx.Client,
         ) -> None:
@@ -692,6 +693,24 @@ def render_python_tests(
                     )
                     assert missing.status_code == 400, missing.text
                     assert missing.json()["error"]["code"] == "VALIDATION_ERROR"
+
+            invalid_numeric_values = {{
+                "number": ("1.23456", "1000000000000000"),
+                "money": (2147483648, -2147483649),
+            }}
+            for field in FEATURE_FIELDS:
+                for bad in invalid_numeric_values.get(field["kind"], ()):
+                    body = dict(valid)
+                    body[field["column"]] = bad
+                    refused = client.post(
+                        FEATURE_PATH,
+                        headers={{"x-csrf-token": csrf}},
+                        json=body,
+                    )
+                    assert refused.status_code == 400, (field, bad, refused.text)
+                    assert refused.json()["error"]["code"] == "VALIDATION_ERROR"
+                    errors = refused.json()["error"]["details"]["fieldErrors"]
+                    assert any(error["field"] == field["column"] for error in errors)
 
             extra = dict(valid)
             extra["unexpected"] = True

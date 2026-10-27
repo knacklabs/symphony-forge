@@ -29,6 +29,7 @@ JOBS_LINE = (
     "--field 'contactEmail?:email' --field 'billable:yes-no'"
 )
 NOTES_LINE = "forge task feature notes --one note --field 'title:text'"
+SALES_ORDERS_LINE = "forge task feature sales-orders --one sales-order --field 'name:text'"
 # The first text field is not the one called name, a status is optional and a link is required.
 TASKS_LINE = ("forge task feature tasks --one task --field 'code:text' --field 'name:text' "
               "--field 'stage?:status(open|closed)' --field 'job:link(jobs)'")
@@ -122,7 +123,7 @@ def _assert_api_output(client: Path, plural: str, one: str, shell_paths: set[str
 
 
 def _assert_python_api_output(
-    client: Path, plural: str, shell_paths: set[str]
+    client: Path, plural: str, one: str, shell_paths: set[str]
 ) -> Path:
     required = {
         f"apps/api/app/{plural}/__init__.py",
@@ -132,6 +133,7 @@ def _assert_python_api_output(
         f"apps/api/app/{plural}/routes.py",
         f"apps/api/app/{plural}/permissions.py",
         f"apps/api/tests/test_{plural}.py",
+        "apps/api/tests/test_module_schemas.py",
         f"libs/{plural}/contracts/package.json",
         f"libs/{plural}/contracts/tsconfig.json",
         f"libs/{plural}/contracts/src/index.ts",
@@ -163,6 +165,13 @@ def _assert_python_api_output(
     contract_source = (client / f"libs/{plural}/contracts/src/index.ts").read_text("utf-8")
     assert "import type { components } from '@app/shared-api-types'" in contract_source
     assert "z.object(" in contract_source
+    schema_test = (client / "apps/api/tests/test_module_schemas.py").read_text("utf-8")
+    assert f'"{plural}.{one.replace("-", "_")}"' in schema_test
+    filters = [
+        re.search(rf"{owner}_schema\.nspname IN \(([^)]*)\)", schema_test)
+        for owner in ("source", "target")
+    ]
+    assert all(filter_match and repr(plural) in filter_match[1] for filter_match in filters)
     revisions = {}
     migration_dir = client / "apps/api/migrations/versions"
     for path in migration_dir.glob("[0-9][0-9][0-9][0-9]_*.py"):
@@ -338,7 +347,7 @@ def feature_python_client(repo, gh, tmp_path) -> Path:
     if "feature-python-client" not in _LIVE_RUNS:
         client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "python")
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-        for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE, TASKS_LINE):
+        for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE, TASKS_LINE, SALES_ORDERS_LINE):
             built = repo.forge(*shlex.split(line)[1:], cwd=client)
             assert built.returncode == 0, built.stdout + built.stderr
         permissions = client / "apps/api/app/notes/permissions.py"
@@ -379,7 +388,8 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
     # focus, a required link the form cannot fill, a list that forgets its
     # filters on reload, or a detail screen without its recent changes fails the live flows.
     # The existing generated TypeScript feature run and Python projects run do not cover a
-    # generated Python feature; the app's reports own this behavior, with no test seam.
+    # generated Python feature or a public hyphenated slug crossing API permissions and web
+    # access. The app's reports own this behavior, with no test seam.
     starter_name = "react" if starter == "typescript" else "python"
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -400,7 +410,7 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
     web = json.loads((client / "libs/jobs/web/project.json").read_text("utf-8"))
     assert web["tags"] == ["type:web", "scope:jobs"]
     if starter == "python":
-        _assert_python_api_output(client, "jobs", written)
+        _assert_python_api_output(client, "jobs", "job", written)
     if LIVE:
         live = (feature_live_run(repo, gh, tmp_path_factory) if starter == "typescript"
                 else feature_python_live_run(repo, gh, tmp_path_factory))
@@ -424,11 +434,18 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
                 "test_rejects_bad_fields_unknown_inputs_and_unknown_list_parameters",
                 "test_keeps_formula_leading_text_safe_in_csv",
             ))
+            require_feature_cases(live["api"], "test_sales_orders", (
+                "test_each_sales_orders_endpoint_refuses_a_member_without_its_permission",
+            ))
         require_feature_cases(live["browser"], "jobs.spec.ts", (
             "create, view, edit, and delete a job",
             "a reloaded jobs list link keeps its search, filters and page",
             "a job's detail screen shows its recent changes",
         ))
+        if starter == "python":
+            require_feature_cases(live["browser"], "sales-orders.spec.ts", (
+                "create, view, edit, and delete a sales order",
+            ))
         # A required link: the form checks and focuses it, and the flows link each task to a job.
         require_feature_cases(live["browser"], "tasks.spec.ts", ("create, view, edit, and delete a task",))
 
@@ -451,10 +468,11 @@ def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, f
 def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
     repo, gh, tmp_path, tmp_path_factory, starter
 ):
-    # Audit: this protects the shipped kind table's generated storage and history contract plus
-    # the real generated history flow. A renderer can omit an index or skip a history row; the
-    # TypeScript case and the Python projects case do not cover a
-    # generated Python feature. The command and live app are the owning boundaries; no seam.
+    # Audit: this protects the shipped kind table's storage, input-bound, sort and history
+    # contracts plus the real generated history flow. A renderer can omit an index or validation
+    # limit, advertise an unusable sort value, or skip a history row; the TypeScript case and the
+    # Python projects case do not cover this generated Python feature. The command and live app
+    # are the owning boundaries; no seam.
     starter_name = "react" if starter == "typescript" else "python"
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -487,6 +505,38 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
         sql = "\n".join(sql_statements)
         models = (client / "apps/api/app/jobs/models.py").read_text("utf-8")
         schema_file = (client / "apps/api/app/jobs/schema.py").read_text("utf-8")
+        schema_tree = ast.parse(schema_file)
+        input_model = next(
+            node for node in schema_tree.body
+            if isinstance(node, ast.ClassDef) and node.name == "JobInput"
+        )
+        input_fields = {
+            node.target.id: node
+            for node in input_model.body
+            if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+        }
+        list_query = next(
+            node for node in schema_tree.body
+            if isinstance(node, ast.ClassDef) and node.name == "JobListQuery"
+        )
+        sort_annotation = next(
+            node.annotation for node in list_query.body
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "sort_by"
+        )
+        assert isinstance(sort_annotation, ast.Subscript)
+        assert isinstance(sort_annotation.value, ast.Name)
+        assert sort_annotation.value.id == "Literal"
+        sort_values = (
+            sort_annotation.slice.elts
+            if isinstance(sort_annotation.slice, ast.Tuple)
+            else [sort_annotation.slice]
+        )
+        assert [ast.literal_eval(value) for value in sort_values] == [
+            "name", "status", "clientId", "hoursBudget", "budget", "dueDate",
+            "contactEmail", "billable", "createdAtUtc", "updatedAtUtc",
+        ]
         assert sql.lstrip().startswith('CREATE SCHEMA "jobs";')
         assert 'CREATE TABLE "jobs"."job"' in sql
         assert sql.index('CREATE SCHEMA "jobs";') < sql.index('CREATE TABLE "jobs"."job"')
@@ -537,17 +587,38 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
             assert kind["sql"] in declaration, (column, declaration)
             assert ("NOT NULL" in declaration) is required, column
             assert kind["sqlalchemy"].split(", server_default")[0] in models, column
-            annotation = re.search(
-                rf'^\s*{re.escape(column)}\s*:\s*([^=\n]+)', schema_file, re.M
-            )
-            assert annotation, column
+            schema_field = input_fields.get(column)
+            assert schema_field, column
             if kind_name == "status":
-                literal = ast.parse(annotation[1], mode="eval").body
+                literal = schema_field.annotation
                 assert isinstance(literal, ast.Subscript)
                 assert isinstance(literal.value, ast.Name) and literal.value.id == "Literal"
                 assert [ast.literal_eval(option) for option in literal.slice.elts] == options
             else:
-                assert kind["pydantic"] in annotation[1], (column, annotation[1])
+                annotation = ast.unparse(schema_field.annotation)
+                assert kind["pydantic"] in annotation, (column, annotation)
+            if kind_name == "number":
+                assert isinstance(schema_field.value, ast.Call)
+                assert isinstance(schema_field.value.func, ast.Name)
+                assert schema_field.value.func.id == "Field"
+                constraints = {
+                    keyword.arg: ast.literal_eval(keyword.value)
+                    for keyword in schema_field.value.keywords
+                    if keyword.arg is not None
+                }
+                assert constraints["max_digits"] == 19
+                assert constraints["decimal_places"] == 4
+            if kind_name == "money":
+                assert isinstance(schema_field.value, ast.Call)
+                assert isinstance(schema_field.value.func, ast.Name)
+                assert schema_field.value.func.id == "Field"
+                constraints = {
+                    keyword.arg: ast.literal_eval(keyword.value)
+                    for keyword in schema_field.value.keywords
+                    if keyword.arg is not None
+                }
+                assert constraints["ge"] == -(2**31)
+                assert constraints["le"] == 2**31 - 1
             if kind["check"]:
                 expected_check = (
                     kind["check"].replace("{table}", "job")
@@ -693,6 +764,29 @@ def test_6_an_older_starter_names_the_missing_history_module(repo, gh, tmp_path,
         (client / "apps/api/prisma/schema/history.prisma").unlink()
         missing = "apps/api/prisma/schema/history.prisma"
     else:
+        # Inventory wiring has its own prerequisite: missing anchors must refuse before
+        # any generated files are written. History-only coverage cannot reach this failure;
+        # these cases use the command boundary with no production seam.
+        inventory = client / "apps/api/tests/test_module_schemas.py"
+        original = inventory.read_text("utf-8")
+        for contents, expected in (
+            (None, "Missing apps/api/tests/test_module_schemas.py"),
+            (original.replace("EXPECTED_TABLE_SCHEMAS =", "OLD_TABLE_SCHEMAS ="),
+             "The expected table inventory is missing"),
+            (original.replace("target_schema.nspname IN", "target_schema.nspname NOT IN"),
+             "The schema ownership check is missing"),
+        ):
+            if contents is None:
+                inventory.unlink()
+            else:
+                inventory.write_text(contents, "utf-8")
+            before = repo.git("status", "--porcelain", cwd=client)
+            refused = repo.forge(*_feature_args("jobs", "job", ["name:text"]), cwd=client)
+            message = refused.stdout + refused.stderr
+            assert refused.returncode != 0 and expected in message, message
+            assert "Next: build this feature by hand in this app." in message, message
+            assert repo.git("status", "--porcelain", cwd=client) == before
+            inventory.write_text(original, "utf-8")
         shutil.rmtree(client / "apps/api/app/history")
         missing = "apps/api/app/history/__init__.py"
     before = repo.git("status", "--porcelain", cwd=client)
@@ -763,7 +857,8 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
 def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter):
     # Audit: the observable contract is that the planner's quoted shell lines build the feature
     # and report files in both new and upgraded starter apps. A Python dispatch or quoting
-    # regression can select the wrong renderer or change a field value; existing coverage only
+    # regression can select the wrong renderer or change a field value; a hyphen-to-underscore
+    # regression can publish a permission name the web app cannot use. Existing coverage only
     # exercised TypeScript. The real Forge command runs through bash/zsh, so this needs no seam.
     """The shell lines work in new and adopted starters and report existing output files."""
     starter_name = "react" if starter == "typescript" else "python"
@@ -781,13 +876,18 @@ def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell,
     outputs = {}
     for label, client in (("new", new_client), ("adopted", adopted_client)):
         outputs[label] = {}
-        for plural, line in (("clients", CLIENT_LINE), ("jobs", JOBS_LINE)):
+        for plural, one, line in (
+            ("clients", "client", CLIENT_LINE),
+            ("jobs", "job", JOBS_LINE),
+        ):
             result = _run_line(repo, client, shell, line)
             assert result.returncode == 0, result.stdout + result.stderr
             written = _written_paths(result, client)
             migration = (
                 _assert_api_output(client, plural, "client" if plural == "clients" else "job", written)
-                if starter == "typescript" else _assert_python_api_output(client, plural, written)
+                if starter == "typescript" else _assert_python_api_output(
+                    client, plural, one, written
+                )
             )
             outputs[label][plural] = {
                 rel: (client / rel).read_bytes() for rel in written
@@ -799,6 +899,51 @@ def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell,
     for plural in ("clients", "jobs"):
         assert _normalized_outputs(outputs["new"][plural]) == _normalized_outputs(
             outputs["adopted"][plural])
+
+    if starter == "python":
+        result = _run_line(repo, new_client, shell, SALES_ORDERS_LINE)
+        assert result.returncode == 0, result.stdout + result.stderr
+        written = _written_paths(result, new_client)
+        permissions = ast.parse(
+            (new_client / "apps/api/app/sales_orders/permissions.py").read_text("utf-8")
+        )
+        permission_assignment = next(
+            node for node in permissions.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id == "SALES_ORDERS_PERMISSIONS"
+                for target in node.targets
+            )
+        )
+        permission_call = permission_assignment.value
+        assert isinstance(permission_call, ast.Call)
+        assert isinstance(permission_call.func, ast.Name)
+        assert permission_call.func.id == "define_permissions"
+        assert ast.literal_eval(permission_call.args[0]) == "sales-orders"
+
+        routes_path = new_client / "apps/api/app/sales_orders/routes.py"
+        assert routes_path.relative_to(new_client).as_posix() in written
+        routes = ast.parse(routes_path.read_text("utf-8"))
+        router = next(
+            node for node in ast.walk(routes)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "APIRouter"
+        )
+        assert next(
+            ast.literal_eval(keyword.value)
+            for keyword in router.keywords
+            if keyword.arg == "prefix"
+        ) == "/api/v1/sales-orders"
+        permission_names = {
+            expression.value.id
+            for expression in ast.walk(routes)
+            if isinstance(expression, ast.Attribute)
+            and isinstance(expression.value, ast.Name)
+            and expression.attr in {"view", "create", "edit", "delete", "restore"}
+        }
+        assert permission_names == {"SALES_ORDERS_PERMISSIONS"}
 
     before = repo.git("status", "--porcelain", cwd=new_client)
     duplicate = _run_line(repo, new_client, shell, JOBS_LINE)
