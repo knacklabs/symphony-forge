@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allows this story's parts over the line limit, because each part spans an API, the screen and tests",
   "branch": "task/FORGE-FEATURE-1-PY",
   "part_line_limit": 400,
   "status": "started",
