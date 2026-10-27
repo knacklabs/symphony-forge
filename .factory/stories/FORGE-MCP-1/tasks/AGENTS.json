@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-MCP-1-AGENTS",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T08:36:16.518590+00:00",
+      "step": "start"
+    }
+  ]
+}
