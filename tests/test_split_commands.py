@@ -19,6 +19,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # Test adds the lane and picker; stop adds cancellation; FORGE-BOARD-3 adds assign.
 # Dropping and restoring a fix adds a fix subcommand, with no new top-level command.
 # Amend now offers --append alongside --done and describes the preview of both texts.
+# Open decisions adds listing and answer commands to the existing decision group.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,start,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
@@ -64,21 +65,24 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '    land                Build, close, fix and merge a task or fix\n'
      '    spec                Save and confirm specs, weigh whether a build pays\n'
      '                        back, and record its result\n'
-     '    decision            Write and accept decisions\n'
+     '    decision            Write, accept, list and answer decisions\n'
      '    roadmap             Add and retire roadmap items\n'
      '    hook                Internal: the one entry point that git hooks, host\n'
      '                        hooks and CI call\n',
- 'decision': 'usage: forge decision [-h] {new,accept} ...\n'
+ 'decision': 'usage: forge decision [-h] {new,accept,open,answer} ...\n'
              '\n'
-             'Write and accept decisions\n'
+             'Write, accept, list and answer decisions\n'
              '\n'
              'options:\n'
-             '  -h, --help    show this help message and exit\n'
+             '  -h, --help            show this help message and exit\n'
              '\n'
              'commands:\n'
-             '  {new,accept}\n'
-             '    new         Write a decision record\n'
-             '    accept      Accept a decision after the human confirms in chat\n',
+             '  {new,accept,open,answer}\n'
+             '    new                 Write a decision record\n'
+             '    accept              Accept a decision after the human confirms in chat\n'
+             '    open                List open decisions, highest first\n'
+             '    answer              Record client answers or past-due defaults in one\n'
+             '                        decision\n',
  'fix': 'usage: forge fix [-h] {start,drop,allow-large,amend} ...\n'
         '\n'
         'Start a fix, let it go over the fix limit, or change its done-when\n'

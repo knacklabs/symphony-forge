@@ -315,6 +315,11 @@ mode and Emil's restraint. Scale popovers from their trigger with shadcn/Radix's
 variable. Do not animate keyboard-driven or very frequent actions.
 
 <!-- end -->
+When your work needs a choice only the client can make, do not guess and do not stop. Build with
+a sensible default, and name it in your handback as an open question: what it touches, why it is
+asked, the default, why you picked it and what happens if it stands. The coordinator adds it to
+the open-decisions list.
+
 <!-- if fix-round -->
 ## Fix round
 

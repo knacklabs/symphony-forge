@@ -346,6 +346,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
+        if cfg["repo"] == "client":
+            from forge import open_decisions
+
+            lines += open_decisions.due_lines(top)
         if repo.is_prototype(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:

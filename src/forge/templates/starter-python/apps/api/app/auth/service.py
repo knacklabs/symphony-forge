@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session as DbSession
 from app.auth.models import Account, PasswordResetToken, Session
 from app.auth.schema import (
     AcceptInviteInput,
+    AddAgentInput,
+    Agent,
     AuthOptions,
     CredentialsInput,
     MessageResponse,
@@ -42,6 +44,9 @@ _PASSWORD_SCRYPT_MAXMEM = 256 * 1024 * 1024
 _SESSION_LIFETIME = timedelta(days=30)
 _RESET_TOKEN_LIFETIME = timedelta(hours=1)
 _RESET_MESSAGE = "If an account exists, a reset link has been sent."
+_AGENT_EMAIL_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789"
+# No password matches an empty hash, so an agent account cannot sign in.
+_NO_PASSWORD = ""
 
 
 def _sha256(value: str) -> str:
@@ -131,7 +136,9 @@ class AuthService:
         return AuthOptions(sign_up_open=self.settings.app_companies == "many")
 
     def set_up_company(self, credentials: CredentialsInput) -> AccountResponse:
-        account = self._create_account(credentials)
+        account = self._create_account(
+            credentials.email, _hash_password(credentials.password)
+        )
         principal = self.organisations.create_for_account(account.id, account.email)
         return AccountResponse(
             id=account.id,
@@ -140,16 +147,28 @@ class AuthService:
             permissions=permissions_for(principal.role),
         )
 
+    def add_agent(self, input_data: AddAgentInput, admin: AccountPrincipal) -> Agent:
+        """An agent account has an email that can never receive mail and no password."""
+        suffix = "".join(secrets.choice(_AGENT_EMAIL_ALPHABET) for _ in range(6))
+        account = self._create_account(
+            f"{input_data.name}-{suffix}@agents.invalid", _NO_PASSWORD
+        )
+        member = self.organisations.add_agent(
+            account.id, account.email, input_data.role, admin
+        )
+        return Agent.model_validate(member.model_dump())
+
     def _create_account(
         self,
-        credentials: CredentialsInput,
+        email: str,
+        password_hash: str,
         conflict_message: str = "An account already uses that email.",
     ) -> Account:
         account_id = uuid7()
         account = Account(
             id=account_id,
-            email=credentials.email,
-            password_hash=_hash_password(credentials.password),
+            email=email,
+            password_hash=password_hash,
             created_by_account_id=account_id,
             modified_by_account_id=account_id,
         )
@@ -184,7 +203,8 @@ class AuthService:
                 "This invite link is not valid. Ask an admin for a new one.",
             )
         account = self._create_account(
-            input_data,
+            input_data.email,
+            _hash_password(input_data.password),
             "An account already uses that email, so it cannot join this organisation.",
         )
         self.db.commit()

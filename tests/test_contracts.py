@@ -645,7 +645,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
-                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
+                 ("decision", "accept", "carts", "--by", "Ravi"),
+                 ("decision", "answer", "--defaults"), ("roadmap", "add", "carts"),
                  ("roadmap", "retire", "CARTS-1", "--by", "carts")):
         done = repo.forge(*args)
         if args[:2] == ("fix", "drop"):
@@ -655,6 +656,10 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
             # Exercise a published assignment, not only a refusal that leaves main alone.
             assert done.returncode == 0, done.stdout + done.stderr
             assert "Owner: alice" in repo.git("show", "origin/story/ASSIGN:plans/ASSIGN.md")
+        if args[:2] == ("decision", "answer"):
+            # Valid command arguments must reach the branch guard, not a usage refusal.
+            assert done.returncode == 1, done.stdout + done.stderr
+            assert "Forge changes nothing on main" in done.stderr
     # Intake holds its place outside the checkout; handback writes each draft on its own branch.
     with monkeypatch.context() as host:
         host.delenv("CLAUDECODE", raising=False)

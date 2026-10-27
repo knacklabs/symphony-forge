@@ -1,0 +1,95 @@
+{
+  "base": "d89a55d633b5db320139e269ccc58e3b96fd0724",
+  "branch": "task/FORGE-SIGNOFF-1-OPENLIST",
+  "chat": {
+    "approval": "eee40133eb4349971e36ff140f0a50244bfb0ab070555cde5ff09f8b05436fe3",
+    "claude": null,
+    "conversation": "01a17cac-4f3f-7802-85ce-2df17bdc976f",
+    "head": null,
+    "start": "96c44fa2edac48fc7ab11afa66549eb013a1ce00"
+  },
+  "known": [
+    {
+      "area": "decision_answer() in src/forge/open_decisions.py",
+      "file": "src/forge/open_decisions.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 182,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Prevent source updates from following links outside the checkout",
+      "work": 2
+    },
+    {
+      "area": "decision_answer() in src/forge/open_decisions.py",
+      "file": "src/forge/open_decisions.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 143,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: a question that is not open is refused by name with the next step",
+      "work": 2
+    },
+    {
+      "area": "sync() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 655,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated spec-rule changes exceed the OPENLIST scope",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6c7165bc758201673c7ed6deea3a614cb9e70978f51f18da4e974f30a37e9400",
+    "changed": "01a43d498c31a3dc034a6cbf2f2a3bc794e90990889f510905ae2bad8e6813b7",
+    "commit": "f630321d2e6658d4e44aeb9589d5e39527a5a5f9",
+    "dismissals": [],
+    "findings": [],
+    "id": "3ed92cc4-5b7f-41ed-8109-7840c69d6a42",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T09:23:33.615101+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T09:41:13.895865+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T09:56:11.919386+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T10:13:58.429167+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T10:40:29.271697+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "38f48c7b-3eaa-4814-af63-be62d48c7ee0",
+    "head": "928d24e113297d924ba38fc81bcf3cb7201cf475",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

@@ -36,6 +36,8 @@
 | `forge spec payback --build-days <n> --day-rate <n> <value>` | Says whether a build pays back: build (three months or less), smallest slice first (up to twelve), don't build, or find out first when no value can be estimated. The value is any of `--hours-per-month`, `--people` and `--hourly-rate`; `--revenue-per-month`; `--incident-cost` and `--incident-chance`, weighed by `--confidence measured`, `estimated` or `guessed` (the default). Use rounded rates, never real salaries. It changes nothing |
 | `forge decision new <slug>` | Writes a decision record |
 | `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat, and lists the spec lines that name a rule ID it names |
+| `forge decision open` | Lists open decisions, highest first |
+| `forge decision answer --from <file> --by "<name>"` or `forge decision answer --defaults` | Records client answers or past-due defaults and marks each source |
 | `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |
 | `forge roadmap retire <KEY> --by <spec>` | Marks a pending roadmap item superseded by the spec that replaces it; `forge next` and the board stop showing it |
 | `forge hook context` | Session start: prints `forge next` and the story's state |

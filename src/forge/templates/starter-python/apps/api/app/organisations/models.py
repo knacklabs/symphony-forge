@@ -2,6 +2,8 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
+    ARRAY,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -75,6 +77,10 @@ class Organisation(Base):
     deleted_by_account_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("core.account.id", ondelete="RESTRICT")
     )
+    # The features whose delete and restore tools agents may use.
+    agent_delete_restore: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), server_default=text("'{}'")
+    )
 
 
 class Membership(Base):
@@ -97,6 +103,9 @@ class Membership(Base):
     )
     email: Mapped[str] = mapped_column(Text)
     role: Mapped[Role] = mapped_column(Text)
+    is_agent: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    # The SHA-256 of the agent's one key; None when it has none.
+    agent_key_hash: Mapped[str | None] = mapped_column(Text, unique=True)
     created_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -113,3 +122,7 @@ class Membership(Base):
     deleted_by_account_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("core.account.id", ondelete="RESTRICT")
     )
+
+    @property
+    def has_key(self) -> bool:
+        return self.agent_key_hash is not None

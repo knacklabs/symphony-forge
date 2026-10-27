@@ -681,8 +681,11 @@ def render_feature_web(fields: list[dict[str, Any]], one: str, plural: str, kind
             # Only the starter's own text names the item's name field; the bodies below use the real columns.
             text = re.sub(rf"\b({_camel(one)}(?:\.data\?)?)\.name\b", rf"\1.{name}", text)
             text = text.replace("{ id: string; name: string }[]", f"{{ id: string; {name}: string }}[]")
-        for match in list(MARK.finditer(text)):
+        # The mcp marks keep their renamed lines; they mark what an app without an MCP server leaves out.
+        for match in [match for match in MARK.finditer(text) if match["name"] != "mcp"]:
             text = _replace_mark(text, match["name"], bodies[match["name"]])
+        # The Agent access dialog's feature is the plural's slug, as its route takes it.
+        text = text.replace(f'feature="{plural.replace("-", " ")}"', f'feature="{plural}"')
         target = re.sub(r"projects|project", lambda match: plural if match[0] == "projects" else one, path)
         files[target] = text
     if any(field["kind"] == "link" for field in fields):
