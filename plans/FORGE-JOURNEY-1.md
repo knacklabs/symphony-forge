@@ -9,7 +9,7 @@
 - The README journey section has the same seven steps and loops. It replaces the ten-stage table.
 - After `forge init`, the agent explains the seven steps and asks for the first input: the client notes or the idea.
 - Each `forge next` starts with one line that names the repo's current step, for example "Step 3 of 7: canvas design."
-- For each running item, `forge next` adds one plain line that says what the item waits on, why, and for how long. For example: "Review round 2 of 2: 2 problems found (export ignores filters; focus on empty link). The worker is fixing them, 6 minutes so far."
+- For each running item, `forge next` adds one plain line that says what the item waits on, why, and for how long. For example: "Review round 2: 2 problems found (export ignores filters; focus on empty link). The worker is fixing them, 6 minutes so far."
 - When you ask what you can do, or seem unsure, the agent shows the phrases for the current step.
 - When Forge refuses something, the agent tells you the reason and the fix in plain words. When the refusal looks like a Forge fault, the agent offers to file a Forge bug.
 - A new repo gets all of this at init. An existing repo gets the guide text with `forge sync` after the upgrade, and the step and wait lines with the new release.
@@ -25,7 +25,7 @@ New users learn the journey from the owner. The repo has no single journey: the 
 1. **The shipped guide has one journey section with the seven steps in order. Each step has one sentence of what happens and one sentence that the person can say. The section has one short paragraph each for the cold read loop, the build and review loop, and the CI checks, and each paragraph says why the loop exists. The README journey section lists the same seven steps and loops and no longer has the ten-stage table. A new repo gets the guide at init, and an existing repo gets it with `forge sync`.**
 2. **The guide tells the agent to explain the seven steps after `forge init` and ask for the client notes or the idea. It tells the agent to show the current step's phrases when a person asks what they can do or seems unsure. It tells the agent to explain each refusal's reason and fix in plain words, and to offer to file a Forge bug with the existing bug template when the refusal looks like a Forge fault. `forge init` prints the same first instruction before its next step. The worker brief tells workers to report each refusal's reason and fix in plain words.**
 3. **Each `forge next` starts with one line, "Step N of 7: <step>.", taken from facts that Forge already has. Forge's own repo shows step 5. A repo past sign-off with work in progress shows step 5. The `--json` view and the board do not change.**
-4. **For each running item, `forge next` prints one plain line directly under the item's status line. The line says what the item waits on, why, and for how long. It covers a machine queue place, a Codex capacity retry, a build round, a review round with its problems, a test run, a CI runner queue or a running CI check, and a cold read round with its notes. It uses only facts that Forge already records. An item that waits on nothing gets no line.**
+4. **For each running item, `forge next` prints one plain line directly under the item's status line. The line says what the item waits on, why, and for how long. It covers a worker that builds it, a review round with its problems, a Codex capacity retry until its retry time, queued or running CI checks, and a cold read round with its notes or its running reader. Rounds that run as subagents of the agent's own session get the same line. It uses only facts that Forge already records. An item that waits on nothing gets no line.**
 
 ## Risks
 
@@ -33,7 +33,7 @@ New users learn the journey from the owner. The repo has no single journey: the 
 
 Risks: none one-way. Each part reverts with its pull request.
 
-Trade-off: the step comes from the default branch as last fetched. Work on a branch that has not merged does not move the step. Only work that has a worktree on this machine counts as work in progress.
+Trade-off: the step comes from the default branch as last fetched. Work on a branch that has not merged does not move the step. Work counts as in progress while forge next lists any story or fix; when it says nothing is in progress, the repo moves past step 5.
 
 Trade-off: the deploy step uses the demo address in the brief as the sign that the app runs on Mainline. An adopted live app never shows step 6, because it already runs somewhere.
 
@@ -101,11 +101,11 @@ The step names, exactly and in this order: `ideas and client notes`, `brief`, `c
         - Otherwise: step 4.
 
         Read the sections with `records._sections` after you remove the HTML comments, as `records._signoff_design` does.
-     3. A worktree branch starts with `board.PREFIXES` (`story.worktrees(top)`), or no story on `ref` has status `done`: step 5. Use `history["stories"]` when `next_step` has it, else `story.completed(top, key, ref)` for each `.factory/stories/<KEY>/story.json` on `ref`.
+     3. `forge next` lists work (its lines are not `_idle(top)`'s "No story or fix is in progress."), or no story on `ref` has status `done`: step 5. `next_step` and `context_hook` pass `idle = _idle(top)[0] in lines` from their own `_report` result. A story that is done is already left out of `_report`, so a planning worktree that stays after the last merge does not hold step 5. Use `history["stories"]` when `next_step` has it, else `story.completed(top, key, ref)` for each `.factory/stories/<KEY>/story.json` on `ref`.
      4. `cfg["stage"] == "prototype"` and the brief at `ref` has no `- Address: https?://...` line under `## Demo` (the regex in `nextstep._needs_demo_address`): step 6.
      5. Otherwise: step 7.
 
-     The line is `f"Step {n} of 7: {STEPS[n - 1]}."`. A repo with no `forge.toml` gets no line. Mark the rule with a `ponytail:` comment: only worktrees on this machine count as work in progress; read remote branches as well if teams report a wrong step.
+     The line is `f"Step {n} of 7: {STEPS[n - 1]}."`. A repo with no `forge.toml` gets no line. Mark the rule with a `ponytail:` comment: "in progress" is forge next's own idle line, so the step follows what next lists.
    - `nextstep.next_step`: in the text path only, print the step line before `notice`: `print("\n".join([journey.step_line(...)] + notice + lines))`. `nextstep.context_hook` prints it first too. `machine_next`, `--json`, `handoff_hook` and the board do not change.
    - Change existing tests that check the first line of `forge next`: `tests/test_discovery.py` line 85 and `tests/test_retire_a_replaced_roadmap_item.py` line 165, and any others that the suite shows. They read the second line instead.
    - Test: `tests/test_journey_next.py::test_3_forge_next_names_the_journey_step`.
@@ -115,42 +115,32 @@ The step names, exactly and in this order: `ideas and client notes`, `brief`, `c
        - (c) a filled Summary and Things it keeps track of: step 3.
        - (d) `PRODUCT.md`, a PNG in `docs/design/prototype/`, and `docs/decisions/0001-prototype-design.md` with `status: accepted` and `design_tree: <git rev-parse HEAD:docs/design/prototype>`: step 4.
        - (e) `docs/decisions/0002-client-signoff.md` with `status: accepted`: step 5.
-       - (f) a done story state on `main`: step 6.
+       - (f) `forge story new` for one story (its planning worktree stays), then its state with `status: done` committed on `main`, as the last task's merge records it: step 6.
        - (g) `## Demo` with `- Address: https://demo.example`: step 7.
        - `forge next --json`'s `next.line` does not start with `Step `.
      - Forge's own repo (the `repo` fixture with `repo = "forge-source"`): step 5.
      - Adopted client (`adopted-v1.2.2`, moved to this release): step 5, because no story is done.
 4. The wait line (JOURNEY-NEXT).
-   - `journey.wait_line(top, item, state, status, runs, pr, checks) -> str | None`. The first case that holds gives the line:
-     1. Machine queue: the entry in `machine.view()["agents" or "tests"]["entries"]` with `item == item` and `repo_root == machine.main_checkout(top).as_posix()` has `machine._place(run, [r for r in lane if not r.get("free")], size) > 0`. Line: `Waiting for a free place on this machine: number {place} in line, {plain(now - joined_at)} so far.` Read `machine.view()` once for each `forge next` through `repo.command_fact`.
-     2. Codex capacity: the live work run's latest progress `step` starts with `Codex is at capacity`. Line: that step text, then `.`.
-     3. Live work run, and `review.blocking(state["review"])` is not empty. Line: `Review round {n} of {limit}: {k} problems found ({titles}). The worker is fixing them, {elapsed} so far.`
-     4. Live work run, otherwise. Line: `The worker is building it, {elapsed} so far.`
-     5. Live review run. Line: `Review round {n} of {limit} is running, {elapsed} so far.` In this case `n` counts the running round.
-     6. Live test run. Line: `Tests are running: {done} of {total} done, {elapsed} so far.` Leave out the counts when no progress is recorded.
-     7. `status == "fixing"` and no live run. Line: `Review round {n} of {limit}: {k} problems found ({titles}); they wait for the next build round, {since} since the review.` `since` is from the last `review` step's `at` in `state["steps"]`.
-     8. `checks == "running"`. If every unfinished check in `board._rollup(pr)` is `QUEUED`, `WAITING`, `PENDING` or `REQUESTED`, the line is `Waiting for a CI runner: queued {elapsed}.` Otherwise it is `CI checks are running, {elapsed} so far.` `elapsed` is from the earliest `startedAt` (or `createdAt`) among those checks, as `board.machine_board` reads it. Leave out the time when there is none.
-     9. Otherwise `None`.
+   - `journey.wait_line(top, item, state, started, pr, checks, kind) -> str | None`. `started` is the live run's start time: the `at` of the live run from `board.active_runs(top, item, round_number=state.get("round"))`, or, for a round handed to a session subagent, the `started_at` (else `joined_at`) of the `machine.entries()` entry that `nextstep._native_round` matches. `kind` is `build` or `read`. The first case that holds gives the line:
+     1. Codex capacity: the latest progress event of the live work run has a `retry_at` later than now. Line: `Codex is at capacity; Forge sends the turn again at {HH:MM}.`
+     2. `review.blocking(state["review"])` is not empty. Line: `Review round {n}: {k} problems found ({titles}).`, and when a work run is live, add ` The worker is fixing them, {elapsed} so far.`
+     3. A work run is live. Line: `The worker is building it, {elapsed} so far.`
+     4. `checks == "running"`. If every unfinished check in `board._rollup(pr)` is `QUEUED`, `WAITING`, `PENDING` or `REQUESTED`, the line is `Waiting for a CI runner: queued {elapsed}.` Otherwise it is `CI checks are running, {elapsed} so far.` `elapsed` is from the earliest `startedAt` (or `createdAt`) among those checks, as `board.machine_board` reads it. Leave out the time when there is none.
+     5. Otherwise `None`.
 
-     Definitions:
-     - `n` is the number of `review` steps in `state["steps"]`, as `close.py` counts them.
-     - `limit` is 2 for a task (`"/" in item`) and 1 for a fix. When `n > limit` (a P0 keeps the loop going), write `Review round {n} (a P0 problem keeps the loop going)` instead of `round {n} of {limit}`.
-     - `titles` are the first three blocking titles joined with `; `, then `and {m} more` when there are more.
-     - `elapsed` is `time_records.plain(now - run["at"])`.
-     - "Live" means `board.active_runs(top, item, round_number=state.get("round"))`, which `_item` already reads.
-   - `nextstep._item`: on the last return only (the generic status sentence), put the wait line between the sentence and the `Next:` line. The hotspot, question, ready, merged and other-machine paths do not change. `machine_next` reads the first line that is not a `Next:` line, so the board's `next.line` and `waits_on` do not change.
-   - Story reads, in `nextstep._story`:
-     - When a reader is running: under `A reader is reading {title}.`, add `Cold read round {r + 1} is running, {elapsed} so far.` `r` is the notes' `round` (0 when there is none), and `elapsed` is from the read run's `at`.
-     - In `_next_round`, in the branch that says the round had findings: put `Cold read round {done} of 2: {k} notes to answer.` between the two lines. `k` is the number of findings in the latest round (`story._latest(record, findings)`).
-   - `src/forge/codex.py`, in the `"retry" in said` branch (line 712): when `ran.get("run_id")` is set, also call `repo.record_progress(checkout, item, ran["run_id"], step=f"Codex is at capacity; Forge sends the turn again at {clock} (attempt {said['attempt']} of {said['of']})")`. `clock` is the local `HH:MM` of now plus `said["retry"]` seconds. This adds no new record: it is the run's progress step, which the board pane also shows as the worker's current step.
-   - Mark the function with a `ponytail:` comment: no Claude rate-limit case, because Forge records none.
+     Definitions: `n` is the number of `review` steps in `state["steps"]`, as `close.py` counts them. `titles` are the first three blocking titles joined with `; `, then `and {m} more` when there are more. `elapsed` is `time_records.plain(now - started)`.
+   - `nextstep._item`: put the wait line between the status sentence and the `Next:` line on the last return (the generic status sentence). When `_native_round(top, item, label, "Build")` returns its two lines, put the wait line between them too. The hotspot, question, ready, merged and other-machine paths do not change. `machine_next` reads the first line that is not a `Next:` line, so the board's `next.line` and `waits_on` do not change.
+   - Story reads, in `nextstep._story`. When `_native_round(top, key, title, "Grill")` holds a round, or a read run is live, add `Cold read round {r + 1} is running, {elapsed} so far.` under the first line. `r` is the notes' `round` (0 when there is none), and `elapsed` is from the same `started`. In `_next_round`, in the branch that says the round had findings, put `Cold read round {done} of 2: {k} notes to answer.` between the two lines. `k` is the number of findings in the latest round (`story._latest(record, findings)`).
+   - `src/forge/codex.py`, in the `"retry" in said` branch (line 712): when `ran.get("run_id")` is set, also call `repo.record_progress(checkout, item, ran["run_id"], retry_at=<now plus said["retry"] seconds, ISO UTC>)`. This adds no new record: it is a field on the run's progress event. After the retry time the line goes away by itself, so no clearing update is needed.
+   - Mark the function with a `ponytail:` comment: no machine-queue, test-progress or Claude rate-limit case; add one when people ask why such a wait takes time.
    - Test: `tests/test_journey_next.py::test_4_forge_next_says_what_each_running_item_waits_on`. Follow `tests/test_fix_forge_next_says_a_worker_is_building_ite.py` and `tests/test_worker_liveness_controls_next_step.py` for a live run. Follow `tests/test_fix_a_codex_turn_that_fails_because_the_mode.py` and `tests/stubs/codex-app-server` for a capacity retry. Set the clock with `FORGE_NOW`.
      - New client, one fix each:
-       - (a) a blocked review with two titles and a live work run started 6 minutes ago: `Review round 1 of 1: 2 problems found (A; B). The worker is fixing them, 6 minutes so far.`
-       - (b) a pull request whose rollup has one `QUEUED` check that started 12 minutes ago: `Waiting for a CI runner: queued 12 minutes.`
-       - (c) a capacity retry from the Codex stub during `forge work`: a line that starts with `Codex is at capacity; Forge sends the turn again at`.
+       - (a) a blocked review with two titles and a live work run started 6 minutes ago: `Review round 1: 2 problems found (A; B). The worker is fixing them, 6 minutes so far.`
+       - (b) a pull request whose rollup has one `QUEUED` check that started 12 minutes ago: `Waiting for a CI runner: queued 12 minutes.` Then the same check `IN_PROGRESS`: `CI checks are running, 12 minutes so far.`
+       - (c) a capacity retry from the Codex stub during `forge work`: while `FORGE_NOW` is before the retry time, the line starts with `Codex is at capacity; Forge sends the turn again at`. With `FORGE_NOW` after it, there is no capacity line.
        - (d) a story with round 1 notes that have three findings: `Cold read round 1 of 2: 3 notes to answer.`
-       - (e) a fix with nothing running: no wait line.
+       - (e) a fix whose round is held by a session subagent (as in `tests/test_worker_liveness_controls_next_step.py`), with no review: `The worker is building it, ` between the held-round line and its `Next:` line.
+       - (f) a fix with nothing running: no wait line.
        - In (a), `forge next --json`'s `next.line` equals the line that the item had before this change.
      - Adopted client (`adopted-v1.2.2`, moved to this release): case (b). This path is the same as on a new repo, so one case is enough.
 
