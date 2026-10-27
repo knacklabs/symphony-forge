@@ -56,7 +56,7 @@ jobs:
           FORGE_STARTER_LIVE: '1'
         run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py -k python -q -n 0 --timeout=1800
 
-  python-feature-smoke:
+  python-feature-screens-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -68,4 +68,32 @@ jobs:
       - name: Run the Python feature stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py tests/test_feature_access.py -k python -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py -k "python and test_2_the_new_feature_works_like_projects" -q -n 0 --timeout=1800
+
+  python-feature-history-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run the Python feature history and generated tests
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py -k "python and test_4_the_feature_keeps_history_and_its_tests_pass_at_once" -q -n 0 --timeout=1800
+
+  python-feature-permissions-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run the Python feature permission checks
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest tests/test_feature_access.py -k "feature-python and test_3_each_feature_checks_its_permissions" -q -n 0 --timeout=1800
