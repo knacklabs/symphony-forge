@@ -48,7 +48,7 @@
     "id": "8ceef67a-8c2d-4454-ac3a-2617e8b09ef1",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -61,10 +61,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "0c6225697efbe0b92cbd221fcc289c2c6f949713",
-    "keys": {},
-    "round": null
+    "close": "409bb3c6-f2c9-4bdf-a174-679ba3fff924",
+    "head": "596f99ea83c59da8310906e63f0dff1993203012",
+    "keys": {
+      "the open P0 not done: the full test suite passes on main in .factory/fixes/the-full-run-on-main-is-red-with-20-fail.json": 1
+    },
+    "round": 1
   },
   "why": "The full run on main is red with 20 failing tests after the day's merges, which blocks the v1.2.23 release",
   "worker": "codex"
