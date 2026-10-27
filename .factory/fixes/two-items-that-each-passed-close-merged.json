@@ -62,8 +62,8 @@
     "id": "7a7f9c17-183d-42ef-8930-5076a6ba0d7d",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T14:11:28.595728+00:00",
@@ -92,10 +92,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "e06f795d-1270-4f1d-bcf3-01842afc057c",
-    "head": "4ad198d2e10f9897d973595d9e9bbdb55a4787bd",
+    "close": "7b61b01b-5941-4a8a-996f-b7ae5ea50298",
+    "head": "cab976723d065709afea61402cabfa11ae7e56a0",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Two items that each passed close merged one after the other and left the default branch red.",
   "worker": "codex"
