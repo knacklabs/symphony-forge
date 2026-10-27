@@ -1,0 +1,15 @@
+{
+  "base": "ae5cc0561e40412a7782e71b59978bd0a963e158",
+  "branch": "fix/the-full-run-on-main-is-red-with-20-fail",
+  "done_when": "The full test suite passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T16:52:10.076485+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The full run on main is red with 20 failing tests after the day's merges, which blocks the v1.2.23 release"
+}
