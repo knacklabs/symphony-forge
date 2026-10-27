@@ -33,21 +33,45 @@
       "security": false,
       "title": "Follow-up: Show the pending cold-read round after a restart",
       "work": 2
+    },
+    {
+      "area": "next_step() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 158,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "[P1] Update the due-check test for the journey heading",
+      "work": 1
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "56595cfc64086aed5bfb1bbabb27f7e276e2251610e54bf7f82733dcd222c9fd",
-    "changed": "e7679a18bad52859629f279801fa0f587b354285ccf0d67629cc552d8d976ae5",
-    "commit": "60c48c3e88e5ae8899e581f80657a495cf8d1c49",
+    "branch_diff": "714512ed46a301c051e46f8d6d8ff0bdd16d13c765fc30492316c3274a922f0a",
+    "changed": "d7b1e04e42f3cd87988cb63d5e1d6635a5f74500b7974424b74e7ac58174884b",
+    "commit": "f135fdeffecc521cc02fdb966d75d30b3cad98cf",
     "dismissals": [],
-    "findings": [],
-    "id": "fcc2fd89-bab7-4764-8a95-7ccdd52ab4a6",
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test. Case: normal use - running the repository's full test suite. This prepends the journey heading for configured repositories, but tests/test_due_success_checks_before_planning.py:61 still compares the first output lines directly with DUE plus the idle lines. Both its new-client and previous-release fixtures have forge.toml, so both assertions now fail. Update that existing test to account for the heading while preserving its check that due checks precede planning instructions.",
+        "file": "src/forge/nextstep.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 158,
+        "priority": "P1",
+        "title": "[P1] Update the due-check test for the journey heading",
+        "work": 1
+      }
+    ],
+    "id": "25e5be7d-0fc9-461a-abdc-682d1292f052",
     "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T09:33:44.085148+00:00",
@@ -63,6 +87,10 @@
     },
     {
       "at": "2026-10-27T10:37:25.317857+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T11:11:16.006659+00:00",
       "step": "review"
     }
   ],
