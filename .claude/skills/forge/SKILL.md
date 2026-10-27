@@ -958,9 +958,11 @@ separate screen list. Missing screens, fields, options or flows hold sign-off. W
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
 sign-off with the brief and design they have after upgrade and sync; they do not need to add
 prototype design files for this gate.
-The check uses Claude's `claude-opus-5-5` at high effort, independent of `[models.design]`.
-Without Claude it uses Codex's `gpt-6.1-sol` at high and says it fell back.
+The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
+Codex must be installed because only Codex can review the screen images.
+On Windows, large image folders use separate batches to fit the native command line limit.
 Fix gaps, then retry `forge decision accept client-signoff`.
+If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build also gets one strict whole-product
 review with no serious findings. Forge reuses passed results while what they checked stays unchanged.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
