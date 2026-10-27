@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-FEATURE-1-GUIDE",
+  "chat": {
+    "approval": "d87b61d57f1123509a4f6eaad642b89b43adac93703229702877cf41663496af",
+    "claude": null,
+    "conversation": "01a17c05-b32f-7853-90ec-c506080f334b",
+    "head": null,
+    "start": "4aa14f430f3d51ba1e680c1d13be82c3ee80c287"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
