@@ -4,12 +4,20 @@
   "done_when": "The sign-off review gets the green full run as its test evidence with no separate forge test run, and a failed sign-off or completeness review names the saved raw report path",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T13:39:41.062267+00:00",
       "step": "start"
     }
   ],
-  "why": "After the sign-off hotfix, a client sign-off review can still be held by a hidden need for forge test results on exactly the committed product, which the green full run on main already proves, and a failed sign-off review still does not name the saved review report"
+  "stuck": {
+    "close": null,
+    "head": "eb0189b029ff979357ea0982258ca50aad61e14d",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the sign-off hotfix, a client sign-off review can still be held by a hidden need for forge test results on exactly the committed product, which the green full run on main already proves, and a failed sign-off review still does not name the saved review report",
+  "worker": "codex"
 }
