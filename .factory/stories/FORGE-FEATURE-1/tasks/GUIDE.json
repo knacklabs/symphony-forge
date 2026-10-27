@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 3,
       "line": 359,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,27 +25,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9dc86354312153baf2ec708d0e7d723dec86b6adaca93553a3be0f58db1601fd",
-    "changed": "e09dab0f3c1a57a672003bedc8d798f8c934ff2b7c5ae47768f48f41389bdeb8",
-    "commit": "d9615f158acf6e8fb8772d2728c96dc4d776c630",
+    "branch_diff": "48064444e1d0daf0de3daeb9d9234b993a0376295de747446550a1acd25b993b",
+    "changed": "8254ae56dbfef65a404f72a6c9402491be75f49350ffb4412ebd52d8ea228409",
+    "commit": "eb7b2c1652cc61c05a32971b91f2cfb6beec715a",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test. Case: normal use - CI runs either shell parameter of test_1. The fresh client's init installs Git hooks (src/forge/init.py:356), but this helper creates fix/feature-guidance directly without a Forge state record. The commit here therefore fails: pre_commit rejects unregistered branches (src/forge/githooks.py:128), so the worker brief assertions never run. The subsequent push to main at line 364 is independently refused by pre_push (src/forge/githooks.py:157); the adopted fixture also installs these hooks through sync. Prepare the fixture history with hooks explicitly disabled for those setup operations, while retaining the real forge work call being tested.",
-        "file": "tests/test_feature_command.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 359,
-        "priority": "P1",
-        "title": "Gate: test_1_a_plan_line_builds_the_feature_in_one_step",
-        "work": 2
-      }
-    ],
-    "id": "fcccecec-1bd4-4a5a-a864-f8c33813a01c",
-    "status": "blocked"
+    "findings": [],
+    "id": "2f468af7-79e2-46b7-aa13-b52825c2606f",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T06:21:36.470631+00:00",
@@ -53,6 +42,10 @@
     },
     {
       "at": "2026-10-27T06:29:12.026221+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T06:31:57.726019+00:00",
       "step": "review"
     }
   ],
