@@ -1,5 +1,5 @@
 {
-  "allow_large": "The owner approved the v1.2.23 release; a version bump touches every pin, installer, plugin and version test, as v1.2.22 did",
+  "allow_large": "The owner approved the v1.2.23 release. The change is the version bump in every pin, installer, plugin and version test, plus the guides that forge sync rewrote because close requires synced guides for a version change",
   "base": "44686c923e254ffa75a6d0eb2a2981078420e012",
   "branch": "fix/release-forge-v1-2-23-with-the-client-si",
   "chat": {
