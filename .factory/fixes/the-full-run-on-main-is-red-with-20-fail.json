@@ -43,11 +43,11 @@
       {
         "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - verifying that v1.2.23 is unblocked after the merged changes.\nThe proof list explicitly records the full CI run after close and merge as missing. The pull-request workflow runs `forge test --change` (.github/workflows/forge.yml:77), so its pending checks do not establish that the full suite passes on main. Obtain a successful full-suite run on main before treating this release-blocking repair as complete.",
         "file": ".factory/fixes/the-full-run-on-main-is-red-with-20-fail.json",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
         "gain": 5,
         "harm": 3,
         "line": 11,
         "priority": "P1",
-        "required_done_when": true,
         "title": "Not done: The full test suite passes on main",
         "work": 2
       }
@@ -55,7 +55,7 @@
     "id": "8ceef67a-8c2d-4454-ac3a-2617e8b09ef1",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
