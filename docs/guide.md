@@ -79,19 +79,16 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
-Make each app's design from the brief's `## Summary`, `## Users` and `## Things it keeps track of`,
-including all fields and choice-list options. Run impeccable's init when PRODUCT.md is missing.
-Use impeccable and emil-design-eng to write the app's theme tokens, type and colours in DESIGN.md.
-Make a Claude Design artifact with a shadcn design system and named shadcn components.
-On a Codex-only host without artifact tools, use HTML artboards in the repo.
-Save artboards and images under `docs/design/prototype/` in a mechanical fix.
-Copy `.forge/design/support.js` beside the HTML and run it for a 1440 by 900 PNG per screen.
-Write SCREENS.md there, with one `## <screen>` per image, `Image: <file>`,
-`Components: <shadcn names>` and `Fields:`. List fields as `- <field>: <type>, required|optional`,
-with `, options: <a> | <b>` for choice lists, or use `Fields: none`.
-Before sign-off, run impeccable's critique and polish and the emil-design-eng checklist.
-Record notes and `Result: passed` in CHECKS.md under `## Critique`, `## Polish` and `## Emil checklist`.
-Commit the folder. Record approval with `forge decision new prototype-design` and
+Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
+options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
+emil-design-eng to shape and review the design. Make a Claude Design artifact with a shadcn design
+system and named shadcn components. On a Codex-only host without artifact tools, use HTML artboards
+in the repo. Keep the canvas available to show the customer and for sign-off review. New clients
+get this process at init; existing clients can use the brief and design they have after upgrade and
+sync. Client sign-off does not require a root DESIGN.md, SCREENS.md or CHECKS.md, or a specific
+`Things it keeps track of` heading.
+Before sign-off, run impeccable's critique and polish and the emil-design-eng checklist. The owner
+or FDE can approve the canvas with `forge decision new prototype-design` and
 `forge decision accept prototype-design --by "<name>"`.
 
 The customer can sign off on the canvas alone. A working prototype needs an FDE request to prove
@@ -109,25 +106,30 @@ prototype and answers strictly reviewed before the customer is asked: write the 
 the customer's named person for sign-off.
 The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
 `email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
-to record it. Put the folder and tree id under `## Signed design`, demo outcomes and their tests
-under `## Proof` for a working build, and settled choices under `## Decisions`.
+to record it. Put each demo step and its test under `## Proof` for a working build, and settled
+choices under `## Decisions`.
 
-Each sign-off checks the design records and the brief's nonempty `## Things it keeps track of`.
-Its completeness check compares SCREENS.md and the images against the brief's Summary, Users,
-Things it keeps track of and Key flows. Missing screens, fields, choice-list options or flows hold sign-off.
-The check uses `claude-opus-5-5` at high, independent of `[models.design]`.
+Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
+run on main is green. Its completeness review must pass after judging the screens against the whole
+brief, including its purpose, users, records, fields, choices and key flows. It needs no separate
+screen list. Missing screens, fields,
+choice-list options or flows hold sign-off. When a precondition is missing, the refusal lists every
+gap and the next action for each. An existing client can sign off after upgrade with the brief and
+design it has; no prototype design files are required for this gate.
+The completeness review uses `claude-opus-5-5` at high, independent of `[models.design]`.
 Without Claude it uses `gpt-6.1-sol` at high and reports the fallback.
-Fix gaps and approve the changed canvas again before another sign-off attempt.
-A canvas-only sign-off needs no build or code review. A working prototype gets one whole-product review.
+Fix gaps, then retry `forge decision accept client-signoff`.
+A canvas-only sign-off needs no working build. A working prototype gets one strict whole-product
+review with no serious findings.
 Forge reuses each passed result while what it checked stays unchanged.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
 use `forge roadmap add` when planning from a confirmed spec. Promotion from a fix keeps its
 existing route: its roadmap entry must already be committed in the fix's branch. In a client
 repo, trying either command early tells you to build and demo the prototype and run `forge next`.
-Every new story copies the sign-off's Signed design, Proof and Decisions into
+Every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. The plan and cold read treat this as settled evidence and cover
-only new work or production risks. Start from the signed canvas or a newer design approved with the plan.
+only new work or production risks. Start from the prototype canvas or a newer design approved with the plan.
 Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
 [decision 0095](decisions/0095-prototype-before-stories.md).
@@ -210,7 +212,7 @@ A working prototype also needs its strict whole-product review.
    One plan approval covers that exact design. A folder change needs a new tree id and approval.
    Small changes to existing screens that add no screen and change no flow use `Design: none (<why>)`.
    Backend-only stories need no canvas. Earlier approved stories keep working.
-   The build applies DESIGN.md to the starter and includes every listed component and field from SCREENS.md.
+   The build applies any app theme already in place and follows the approved story design, including its components and fields.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.

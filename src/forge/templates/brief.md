@@ -42,7 +42,7 @@ $start_here
 $design_context
 
 <!-- if user-facing -->
-Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
+If the app has a DESIGN.md, apply its theme tokens, type and colours to the app's theme file$theme_file.
 <!-- end -->
 <!-- if screen-design -->
 Build each screen you touch with the components and fields its section of
@@ -505,5 +505,7 @@ $prototype_proof
 For this unsigned prototype, test only the demo workflow steps, security and data boundaries.
 Map those tests in the commit's Proof list. No per-function proof is due in these rounds.
 This replaces the broader test and proof requirements above. The full proof is due at sign-off.
+For a working prototype, the sign-off Proof section lists each demo step and its test. The full
+run on main must be green.
 The light review checks only demo breakage, security and data loss. Its model and effort come
 from `[models.light_review]`, or the review model at medium effort when that setting is absent.

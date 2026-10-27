@@ -23,47 +23,33 @@ MUST = ("Sign-off person", "Demo workflow", "Users and roles", "Existing systems
         "Sign-in", "Personal data", "Production host")
 
 
-def _brief_text(answers, design_gap=None):
-    things = ("" if design_gap == "missing-brief-things" else
-              "## Things it keeps track of\n" +
-              ("<!-- Add the records here. -->\n\n" if design_gap == "empty-brief-things" else
-               "- Order: name and status.\n\n"))
+def _brief_text(answers):
     return ("# Brief\n\n## Summary\nSalespeople keep track of customer orders.\n\n"
-            "## Users\n- Salespeople review submitted orders.\n\n" + things +
+            "## Users\n- Salespeople review submitted orders.\n\n"
+            "## Things it keeps track of\n- Order: name and status.\n\n" +
             "## Key flows\n- Create an order, then review its status.\n\n" + answers)
 
 
-def _design_records(top, answers, gap=None):
+def _design_records(top, answers):
     (top / "docs/product").mkdir(parents=True, exist_ok=True)
-    (top / "docs/product/BRIEF.md").write_text(_brief_text(answers, gap), encoding="utf-8")
+    (top / "docs/product/BRIEF.md").write_text(_brief_text(answers), encoding="utf-8")
     (top / "DESIGN.md").write_text("# Design\n\nUse a calm, clear order list.\n", encoding="utf-8")
-    if gap != "missing-product":
-        (top / "PRODUCT.md").write_text(
-            "# Order book\n\nSalespeople track customer orders.\n", encoding="utf-8")
-    else:
-        (top / "PRODUCT.md").unlink(missing_ok=True)
-    if gap == "missing-design":
-        (top / "DESIGN.md").unlink(missing_ok=True)
+    (top / "PRODUCT.md").write_text(
+        "# Order book\n\nSalespeople track customer orders.\n", encoding="utf-8")
     folder = top / "docs/design/prototype"
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "order-list.svg").write_text(
         '<svg xmlns="http://www.w3.org/2000/svg"><text>Orders</text></svg>\n', encoding="utf-8")
-    screens = ("## Order list\nImage: order-list.svg\n" +
-               ("" if gap == "missing-components" else "Components: Card, Badge, Button\n") +
-               ("" if gap == "missing-fields" else
-                "Fields:\n- order name: text, required\n- status: choice, required, options: Open | Submitted\n"))
-    if gap != "missing-screens":
-        (folder / "SCREENS.md").write_text(
-            "# Screens\n\n" + ("" if gap == "image-no-section" else screens), encoding="utf-8")
-    checks = {
-        "Critique": "## Critique\nNotes: The order list is clear.\nResult: passed\n",
-        "Polish": "## Polish\nNotes: The layout is consistent.\nResult: passed\n",
-        "Emil checklist": "## Emil checklist\nNotes: Buttons have clear feedback.\nResult: passed\n",
-    }
-    if gap in ("critique", "polish", "emil"):
-        section = {"critique": "Critique", "polish": "Polish", "emil": "Emil checklist"}[gap]
-        checks[section] = checks[section].replace("Result: passed", "Result: needs work")
-    (folder / "CHECKS.md").write_text("\n".join(checks.values()), encoding="utf-8")
+    (folder / "SCREENS.md").write_text(
+        "# Screens\n\n## Order list\nImage: order-list.svg\n"
+        "Components: Card, Badge, Button\n"
+        "Fields:\n- order name: text, required\n- status: choice, required, options: Open | Submitted\n",
+        encoding="utf-8")
+    (folder / "CHECKS.md").write_text(
+        "## Critique\nNotes: The order list is clear.\nResult: passed\n"
+        "## Polish\nNotes: The layout is consistent.\nResult: passed\n"
+        "## Emil checklist\nNotes: Buttons have clear feedback.\nResult: passed\n",
+        encoding="utf-8")
 
 
 def _review_tools(repo, tmp_path, monkeypatch):
@@ -97,8 +83,8 @@ def _green_full_run(repo):
         stdout=json.dumps([{"context": "forge-full-suite", "state": "success"}]))
 
 
-def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_gap=None,
-            design_model=None, seed_starter=False):
+def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_model=None,
+            seed_starter=False):
     version = repo.forge("--version").stdout.split()[-1]
     stage = "" if working_build else 'stage = "prototype"\n'
     model = (f'\n[models.design.claude]\nmodel = {json.dumps(design_model[0])}\n'
@@ -108,7 +94,7 @@ def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_gap=None,
     answers = "## Answers\n" + "".join(
         f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
         f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
-    _design_records(repo.path, answers, design_gap)
+    _design_records(repo.path, answers)
     if working_build:
         repo.write("app.py", "print('prototype')\n")
     if seed_starter:

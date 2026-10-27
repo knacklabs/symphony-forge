@@ -1,9 +1,9 @@
-"""Canvas sign-off checks the complete signed design before it accepts it.
+"""Client sign-off sends the full brief and prototype images to completeness review.
 
 Test audit:
-1. Protect design admission and the checker's sign-off record, score protocol and screen images.
-2. Missing records, an unreadable finding or an omitted screen image can defeat completeness review.
-3. Existing prompt-name assertions did not prove image contents in the external review snapshot.
+1. Protect brief delivery, design-check recording, score protocol, missing-screen findings and image review.
+2. A regression can omit the brief or image, skip recording the check, or allow a reported gap.
+3. No other command-boundary test checks these behaviors together on new and adopted clients.
 4. Drive the real decision commands and replace only Autoreview at its command boundary.
 """
 from __future__ import annotations
@@ -46,6 +46,8 @@ def _pins_the_completeness_check_and_records_what_it_checked(
     page.write_text(page.read_text("utf-8") + "\n## Owner confirmation\n" + confirmation + "\n", encoding="utf-8")
     image = fix / "docs/design/prototype/order-list.svg"
     expected_image = image.read_text("utf-8")
+    app = fix / "app.py"
+    expected_app = app.read_text("utf-8") if app.is_file() else None
     # Observe the reviewer's actual checkout, including a generated screen image.
     # Prompt filenames alone cannot prove that the engine can inspect the canvas.
     helper = Path(os.environ["AUTOREVIEW"])
@@ -60,9 +62,14 @@ if "# Canvas completeness check" in prompt:
     image = Path("docs/design/prototype/order-list.svg")
     snapshot = subprocess.run(["git", "show", "HEAD:docs/design/prototype/order-list.svg"],
                               capture_output=True, text=True, encoding="utf-8")
+    app = Path("app.py")
+    snapshot_app = subprocess.run(["git", "show", "HEAD:app.py"],
+                                  capture_output=True, text=True, encoding="utf-8")
     Path(os.environ["AUTOREVIEW_STUB"]).with_suffix(".canvas.json").write_text(
         json.dumps({{"image": image.read_text("utf-8") if image.is_file() else None,
-                    "snapshot image": snapshot.stdout if snapshot.returncode == 0 else None}}), encoding="utf-8")
+                    "snapshot image": snapshot.stdout if snapshot.returncode == 0 else None,
+                    "app": app.read_text("utf-8") if app.is_file() else None,
+                    "snapshot app": snapshot_app.stdout if snapshot_app.returncode == 0 else None}}), encoding="utf-8")
 runpy.run_path({str(original)!r}, run_name="__main__")
 ''', encoding="utf-8")
 
@@ -78,45 +85,22 @@ runpy.run_path({str(original)!r}, run_name="__main__")
     assert args[args.index("--model") + 1] == "claude=claude-opus-5-5"
     assert args[args.index("--thinking") + 1] == "claude=high"
     prompt = "\n".join(check["prompt_files"].values())
-    for text in ("## Summary", "## Users", "## Things it keeps track of", "## Key flows",
-                 "SCREENS.md", "Order list", "order-list.svg"):
+    for text in ("## Summary", "## Users", "## Key flows",
+                 "Compare the screens with the whole app brief below",
+                 "Read the prototype screen images", "Salespeople keep track of customer orders.",
+                 "Create an order, then review its status."):
         assert text in prompt
     canvas = json.loads(queue.with_suffix(".canvas.json").read_text("utf-8"))
     assert {
         "screen image": canvas["image"],
         "snapshot image": canvas["snapshot image"],
+        "app": canvas["app"],
+        "snapshot app": canvas["snapshot app"],
         "owner confirmation": confirmation in prompt,
         "score protocol": "Gain <g>, Work <w>, Harm <h>" in prompt,
     } == {"screen image": expected_image, "snapshot image": expected_image,
+          "app": expected_app, "snapshot app": expected_app,
           "owner confirmation": True, "score protocol": True}
-
-
-def _names_each_missing_design_record(repo, tmp_path, monkeypatch, gap, named_gap):
-    fix, answers, queue = _client(repo, tmp_path, monkeypatch, design_gap=gap)
-    page = _decision(fix, answers)
-
-    refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-
-    assert refused.returncode == 1, refused.stdout + refused.stderr
-    assert named_gap in refused.stderr
-    assert "Next:" in refused.stderr
-    assert "status: proposed" in page.read_text("utf-8")
-    assert not _calls(queue)
-
-
-DESIGN_GAPS = [
-    ("missing-brief-things", "Things it keeps track of"),
-    ("empty-brief-things", "Things it keeps track of"),
-    ("missing-product", "PRODUCT.md"),
-    ("missing-design", "DESIGN.md"),
-    ("missing-screens", "SCREENS.md"),
-    ("image-no-section", "SCREENS.md"),
-    ("missing-components", "Components"),
-    ("missing-fields", "Fields"),
-    ("critique", "Critique"),
-    ("polish", "Polish"),
-    ("emil", "Emil checklist"),
-]
 
 
 def _holds_canvas_gaps_reported_by_completeness_check(
@@ -134,13 +118,15 @@ def _holds_canvas_gaps_reported_by_completeness_check(
 
     assert refused.returncode == 1, refused.stdout + refused.stderr
     assert title in refused.stderr and detail in refused.stderr
-    assert "prototype-design" in refused.stderr
+    assert "client-signoff" in refused.stderr
     assert "status: proposed" in page.read_text("utf-8")
     calls = _calls(queue)
     assert len(calls) == 1
     prompt = "\n".join(calls[0]["prompt_files"].values())
-    for text in ("## Summary", "## Users", "## Things it keeps track of", "## Key flows",
-                 "SCREENS.md", "order-list.svg"):
+    for text in ("## Summary", "## Users", "## Key flows",
+                 "Compare the screens with the whole app brief below",
+                 "Read the prototype screen images", "Salespeople keep track of customer orders.",
+                 "Create an order, then review its status."):
         assert text in prompt
 
 
@@ -156,23 +142,6 @@ def _refuses_app_code_until_a_build_is_requested(repo, tmp_path, monkeypatch, st
 
     assert refused.returncode == 1, refused.stdout + refused.stderr
     assert "forge decision new prototype-build" in refused.stderr
-    assert "status: proposed" in page.read_text("utf-8")
-    assert not _calls(queue)
-
-
-def _refuses_a_changed_signed_design(repo, tmp_path, monkeypatch):
-    fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
-    page = _decision(fix, answers)
-    image = fix / "docs/design/prototype/order-list.svg"
-    image.write_text(image.read_text("utf-8").replace("Orders", "Submitted orders"), encoding="utf-8")
-    repo.git("add", "docs/design/prototype/order-list.svg", cwd=fix)
-    repo.git("commit", "-q", "-m", "Change the signed canvas", cwd=fix)
-
-    refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-
-    assert refused.returncode == 1, refused.stdout + refused.stderr
-    assert "approve the changed canvas again" in refused.stderr.lower()
-    assert "prototype-design" in refused.stderr
     assert "status: proposed" in page.read_text("utf-8")
     assert not _calls(queue)
 
@@ -217,15 +186,12 @@ def _new_signoff_decision_names_the_pinned_sections(repo, tmp_path, monkeypatch)
 @pytest.mark.parametrize(("check", "args"), [
     pytest.param(_pins_the_completeness_check_and_records_what_it_checked, (False,), id="new-client"),
     pytest.param(_pins_the_completeness_check_and_records_what_it_checked, (True,), id="earlier-release"),
-    *(pytest.param(_names_each_missing_design_record, (gap, name), id=gap)
-      for gap, name in DESIGN_GAPS),
     pytest.param(_holds_canvas_gaps_reported_by_completeness_check,
                  ("Missing field", "The order screen omits the customer field."), id="missing-field"),
     pytest.param(_holds_canvas_gaps_reported_by_completeness_check,
                  ("Missing flow", "No screen shows how a salesperson submits an order."), id="missing-flow"),
     pytest.param(_refuses_app_code_until_a_build_is_requested, (False,), id="new-code"),
     pytest.param(_refuses_app_code_until_a_build_is_requested, (True,), id="starter-screen"),
-    pytest.param(_refuses_a_changed_signed_design, (), id="changed-design"),
     pytest.param(_falls_back_to_codex_when_claude_is_missing, (), id="codex-fallback"),
     pytest.param(_old_accepted_signoff_needs_no_new_design_check, (), id="old-signoff"),
     pytest.param(_new_signoff_decision_names_the_pinned_sections, (), id="decision-sections"),
