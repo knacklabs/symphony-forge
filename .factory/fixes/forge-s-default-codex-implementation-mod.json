@@ -1,0 +1,15 @@
+{
+  "base": "7acec9e61a9d3dc59e941c841c4df1f9c5d9fcc3",
+  "branch": "fix/forge-s-default-codex-implementation-mod",
+  "done_when": "A new repo from forge init and Forge's own forge.toml use gpt-6.1-terra at high effort for build, fix, lite and explore, and the guides say so",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T18:02:49.601250+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's default Codex implementation model is gpt-6.1-sol at medium effort; the owner wants gpt-6.1-terra at high effort for build, fix, lite and explore (owner request 27 Oct 2026)"
+}
