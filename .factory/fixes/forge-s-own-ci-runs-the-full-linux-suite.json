@@ -11,12 +11,27 @@
   "done_when": "forge-next.yml runs only the Windows platform tests and the Windows installer and plugin checks, the full Linux suite runs only in forge.yml, and the release steps name one Linux full run plus the Windows platform run",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5cafd32f19267a2113e1d087ba1b14ff8b6c027d7d1d398e5d25672b93fe2666",
+    "changed": "b67aed4abe9bff9b62dd3c6d9290bf0dfa77229ea2bd90050a6a7c84f075bced",
+    "commit": "d7cd97b39552d15605423e2bafcf432de70b5fac",
+    "dismissals": [],
+    "findings": [],
+    "id": "a2418590-b76f-482c-bdf5-37a85fca22c1",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T18:33:58.542619+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T18:38:01.692658+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
