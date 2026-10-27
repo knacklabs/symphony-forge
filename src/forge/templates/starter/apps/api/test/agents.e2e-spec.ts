@@ -87,6 +87,9 @@ describe('agent accounts', () => {
   it('an agent account cannot sign in with a password', async () => {
     const { client, csrf } = await signedUpAdmin();
     const agent = (await client.post('/api/v1/agents').set('x-csrf-token', csrf).send({ name: 'gantry', role: 'admin' }).expect(201)).body.data;
+    expect(agent.role).toBe('admin');
+    const history = await client.get('/api/v1/history').expect(200);
+    expect(history.body.data[0].summary).toBe(`Added the agent account ${agent.email} as Admin`);
     await client.post(`/api/v1/members/${agent.accountId}/key`).set('x-csrf-token', csrf).expect(201);
     for (const password of ['correct-horse-battery-staple', 'x'.repeat(12)]) {
       await request(apiBaseUrl).post('/api/v1/auth/sign-in').send({ email: agent.email, password }).expect(401)

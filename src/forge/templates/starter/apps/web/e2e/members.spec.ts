@@ -86,23 +86,62 @@ test('an admin adds an agent account, creates its key once and revokes it', asyn
   await name.fill('Gantry');
   await expect(addDialog.getByText('Use 2 to 40 lower-case letters, numbers or hyphens, starting with a letter.')).toBeVisible();
   await name.fill('gantry');
-  await expect(addDialog.getByRole('combobox', { name: 'Role' })).toHaveText('Member');
+  // Role starts on Member; the admin chooses Admin, and the saved row keeps it.
+  const role = addDialog.getByRole('combobox', { name: 'Role' });
+  await expect(role).toHaveText('Member');
+  await role.click();
+  await page.getByRole('option', { name: 'Admin' }).click();
   await addDialog.getByRole('button', { name: 'Add agent account' }).click();
   await expect(addDialog).toBeHidden();
   await expect(page.getByText('Agent account added.')).toBeVisible();
   const row = page.getByRole('row', { name: /gantry-[a-z0-9]{6}@agents\.invalid/ });
   await expect(row).toContainText('No key');
   const email = (await row.getByRole('cell').first().textContent()) ?? '';
+  await expect(row.getByRole('combobox', { name: `Role for ${email}` })).toHaveText('Admin');
+  await page.reload();
+  await expect(row.getByRole('combobox', { name: `Role for ${email}` })).toHaveText('Admin');
 
-  await page.getByRole('button', { name: `Create key for ${email}` }).click();
+  // Offline, Create key fails at once with its message and Try again, and the row keeps No key.
+  const createKey = page.getByRole('button', { name: `Create key for ${email}` });
   const keyDialog = page.getByRole('dialog', { name: 'Agent key' });
+  await context.setOffline(true);
+  await createKey.click();
+  await expect(keyDialog.getByRole('alert')).toContainText('Could not create a key. Try again.');
+  await context.setOffline(false);
+  await page.keyboard.press('Escape');
+  await expect(row).toContainText('No key');
+
+  // A slow answer for an earlier opening never replaces the key that the dialog shows now.
+  const keyRoute = '**/api/v1/members/*/key';
+  let release: () => Promise<void> = async () => undefined;
+  const held = new Promise<void>((resolve) => {
+    void page.route(keyRoute, async (route) => {
+      const response = await route.fetch();
+      release = () => route.fulfill({ response });
+      resolve();
+    }, { times: 1 });
+  });
+  await createKey.click();
+  await held;
+  await page.keyboard.press('Escape');
+  // The second key refreshes the member list; wait for that reply before the late answer arrives.
+  const settled = page.waitForResponse((response) => response.url().includes('/api/v1/members?page=1'));
+  await createKey.click();
   const keyField = keyDialog.getByLabel('Key');
   await expect(keyField).toHaveValue(/^agent_/);
   const key = await keyField.inputValue();
+  await settled;
+  // The late answer refreshes the member list, so its reply comes after the dialog has handled the answer.
+  const refreshed = page.waitForResponse((response) => response.url().includes('/api/v1/members?page=1'));
+  await release();
+  await refreshed;
+  await expect(keyField).toHaveValue(key);
   await keyDialog.getByRole('button', { name: 'Copy' }).click();
   await expect(page.getByText('Key copied.')).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(key);
   await expect(keyDialog.getByRole('status')).toHaveText('Copy this key now. You cannot see it again.');
+  // Axe reads colours once the dialog's entry animation has finished.
+  await keyDialog.evaluate((element) => Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)));
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
   await keyDialog.getByRole('button', { name: 'Done' }).click();
@@ -115,7 +154,6 @@ test('an admin adds an agent account, creates its key once and revokes it', asyn
   await page.getByRole('button', { name: `Revoke key for ${email}` }).click();
   const revokeDialog = page.getByRole('alertdialog', { name: 'Revoke this key?' });
   await expect(revokeDialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
-  const keyRoute = '**/api/v1/members/*/key';
   await page.route(keyRoute, (route) => route.abort());
   await revokeDialog.getByRole('button', { name: 'Revoke key' }).click();
   await expect(page.getByText('Could not revoke the key. Try again.')).toBeVisible();

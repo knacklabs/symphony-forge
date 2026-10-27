@@ -3,15 +3,25 @@ import type { AddAgentInput, AgentKey, ChangeRoleInput, Member } from '@app/orga
 import type { InviteInput } from '@app/auth-contracts';
 import { apiRequest } from '@app/core-web';
 
-type MemberList = { items: Member[] };
+type MemberList = { items: Member[]; pagination: { totalPages: number } };
 
 const membersKey = ['members'] as const;
+/** The API's page limit. */
+const MEMBERS_PER_PAGE = 100;
 
 export function useMembers() {
   return useQuery({
     queryKey: membersKey,
-    // ponytail: the first 100 members, the API's page limit; add paging when an organisation outgrows it.
-    queryFn: () => apiRequest<MemberList>('/members?page=1&limit=100'),
+    // Every page, so people and agent accounts past the first 100 members show too.
+    // ponytail: one request per 100 members; add a paged table when an organisation outgrows a few pages.
+    queryFn: async () => {
+      const items: Member[] = [];
+      for (let page = 1; ; page += 1) {
+        const list = await apiRequest<MemberList>(`/members?page=${page}&limit=${MEMBERS_PER_PAGE}`);
+        items.push(...list.items);
+        if (page >= list.pagination.totalPages) return { items };
+      }
+    },
   });
 }
 

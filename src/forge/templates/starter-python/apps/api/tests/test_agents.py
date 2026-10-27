@@ -152,6 +152,9 @@ def test_an_agent_account_cannot_sign_in_with_a_password(client: httpx.Client) -
     # would give a session to anyone who guesses one.
     _, csrf = sign_up(client)
     agent = _add_agent(client, csrf, "gantry", "admin")
+    assert agent["role"] == "admin"
+    history = client.get("/api/v1/history").json()["data"]
+    assert history[0]["summary"] == f"Added the agent account {agent['email']} as Admin"
     created = client.post(
         f"/api/v1/members/{agent['accountId']}/key", headers={"x-csrf-token": csrf}
     )

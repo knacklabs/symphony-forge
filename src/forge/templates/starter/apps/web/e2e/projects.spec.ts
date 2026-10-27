@@ -367,6 +367,8 @@ test('an admin turns on agent delete and restore for projects', async ({ page })
   for (const tool of ['Search projects', 'Create projects', 'Edit projects']) {
     await expect(dialog.getByRole('listitem').filter({ hasText: tool })).toContainText('Always on');
   }
+  // Axe reads colours once the dialog's entry animation has finished.
+  await dialog.evaluate((element) => Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)));
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
 

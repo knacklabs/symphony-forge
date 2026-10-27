@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Member } from '@app/organisations-contracts';
@@ -14,11 +14,15 @@ export function AgentKeyDialog({ agent }: { agent: Member }) {
   const createKey = useCreateAgentKey();
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState('');
+  // Each request and each close gets a new number; an answer for an older number is from a closed or retried opening.
+  const request = useRef(0);
 
   async function create() {
     setKey('');
+    const current = ++request.current;
     try {
-      setKey((await createKey.mutateAsync(agent.accountId)).key);
+      const created = await createKey.mutateAsync(agent.accountId);
+      if (current === request.current) setKey(created.key);
     } catch {
       // The dialog shows the failure; the row keeps its old key.
     }
@@ -28,6 +32,7 @@ export function AgentKeyDialog({ agent }: { agent: Member }) {
     setOpen(nextOpen);
     if (nextOpen) void create();
     else {
+      request.current += 1;
       setKey('');
       createKey.reset();
     }
