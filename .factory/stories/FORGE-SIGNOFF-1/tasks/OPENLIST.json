@@ -52,17 +52,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "138cf76c51d5207a658804c4f3517be23ab65041676bceb7025ee59f7da1ebc9",
-    "changed": "e7f6c16e84152b8e0cfb6b1f4a6b628d6150769542265d451827a4bf940adb1d",
-    "commit": "cb0cf61b2f81db74fedb7a2e89e7d0be4966a61a",
+    "branch_diff": "34f0a3b3cd48df8b866ed8c3d33e2fc19a016368ea1101a9f8a6512a40a19d70",
+    "changed": "3ac4e71042413f2dea7b7437e4a2882cd2b05518211d86027abd4a2341ece040",
+    "commit": "92d5a0f3c0c61c7503100cfc82088441880fc1f3",
     "dismissals": [],
     "findings": [],
-    "id": "580ed74b-720f-4371-87c9-4ded1fde0811",
+    "id": "59ad28bd-30ef-421a-8fdd-56cea16fe4a8",
     "status": "clean"
   },
   "round": 3,
   "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T09:23:33.615101+00:00",
@@ -74,6 +74,10 @@
     },
     {
       "at": "2026-10-27T09:56:11.919386+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T10:13:58.429167+00:00",
       "step": "review"
     }
   ],
