@@ -1,6 +1,13 @@
 {
   "base": "0d5ea6249dd4ed3a361b897519c3d2994d36b6ac",
   "branch": "fix/the-full-run-on-main-is-red-after-the-wi",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17ed7-2a03-7341-a756-6d836a183472",
+    "head": null,
+    "start": "1c5782855e47f96494b63c61484ebced0870293d"
+  },
   "done_when": "tests/test_rules.py and tests/test_signoff_reuse.py pass on this branch",
   "fix_kind": "mechanical",
   "kind": "fix",
