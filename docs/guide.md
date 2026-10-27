@@ -508,14 +508,15 @@ For Forge's maintainers:
 
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Start the full test run with `gh workflow run forge.yml --ref main` and confirm it is green.
-   Start the platform run with `gh workflow run forge-next.yml --ref main` and confirm it is green
-   on Linux, Mac and Windows before tagging. Pull requests and merges to main run only the Linux
-   test groups; they do not prove the other platforms ready for release.
+2. Start one Linux full run with `gh workflow run forge.yml --ref main`.
+   Confirm it is green. This workflow posts the full-run status that sign-off and release read.
+   Start the Windows platform run with `gh workflow run forge-next.yml --ref main`.
+   Confirm it is green before you tag the release.
 3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.
-   The tag push runs the full matrix again; confirm that run is green too.
+   The tag push runs the Windows checks again or reuses passed proof for the same tree.
+   Confirm that run is green too.
 4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
 
 What the switch to this Forge removed from the repo, and where to find it, is in
