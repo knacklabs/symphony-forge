@@ -92,7 +92,7 @@
     "id": "6a151f3a-b58c-4a55-9e51-50dab10f8fe3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-SPECRULES-1/SPECRULES",
   "status": "fixing",
   "steps": [
@@ -106,10 +106,13 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7af84bd1c3e681375a9687c0033f256a94ed9256",
-    "keys": {},
-    "round": null
+    "close": "f57aa06a-d512-48dc-9bee-ebfc2deeac07",
+    "head": "5e3fcc4b3db33ba433bfd591efaa87be257d28e6",
+    "keys": {
+      "the open P0 gate: unrelated spec-rule changes exceed the openlist scope in src/forge/sync.py": 1,
+      "the open P0 prevent source updates from following links outside the checkout in src/forge/open_decisions.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
