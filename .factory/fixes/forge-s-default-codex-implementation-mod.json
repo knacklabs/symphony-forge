@@ -1,6 +1,13 @@
 {
   "base": "7acec9e61a9d3dc59e941c841c4df1f9c5d9fcc3",
   "branch": "fix/forge-s-default-codex-implementation-mod",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17e87-c6ab-7bb2-b63b-0d47e1a8427a",
+    "head": null,
+    "start": "03defba07c7dfcdf728abde0456612def34213e4"
+  },
   "done_when": "A new repo from forge init and Forge's own forge.toml use gpt-6.1-terra at high effort for build, fix, lite and explore, and the guides say so",
   "fix_kind": "mechanical",
   "kind": "fix",
