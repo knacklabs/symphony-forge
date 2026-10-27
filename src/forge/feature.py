@@ -12,7 +12,8 @@ from forge import repo
 COMMANDS = [{"words": "task feature", "help": "Build a feature from the starter.",
              "args": [(["plural"], {}), (["--one"], {"required": True}),
                       (["--field"], {"action": "append", "required": True})],
-             "run": "build", "changes_state": True}]
+             "run": "build", "changes_state": True, "position": 105,
+             "listing": "| `forge task feature <plural> --one <singular> --field '<name>:<kind>'` | Builds a feature from the starter |"}]
 
 STARTER = Path(__file__).parent / "templates/starter"
 RESERVED = {"id", "organisationId", "createdAtUtc", "updatedAtUtc", "createdByAccountId",

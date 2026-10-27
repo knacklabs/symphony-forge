@@ -20,6 +20,7 @@
 | `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. After round two, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"` |
 | `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a developer and publishes the plan |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
+| `forge task feature <plural> --one <singular> --field '<name>:<kind>'` | Builds a feature from the starter |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |
 | `forge fix drop <fix> --because "<reason>"` / `--undo` | Drops a fix with your reason, or brings it back, keeping its remote branch |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |

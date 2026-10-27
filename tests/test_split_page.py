@@ -29,6 +29,10 @@ def test_4_sync_keeps_the_command_page_current(repo):
     assert "[command list](commands.md)" in guide
     assert "| Command | What it does |" not in guide
     assert b"| `forge sync` |" in generated
+    # The feature command must join the public page; a CLI-only declaration can
+    # parse help while breaking sync's listing. This real sync test owns that
+    # publication contract and needs no production test seam.
+    assert b"| `forge task feature <plural> --one <singular> --field '<name>:<kind>'` |" in generated
 
 
 def test_5_new_owners_join_the_page_and_shipped_files(repo, tmp_path):
