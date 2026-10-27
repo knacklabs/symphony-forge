@@ -151,7 +151,8 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         assert built.returncode == 0, built.stdout + built.stderr
         assert "This app has no MCP server, so jobs get no agent tools." in built.stdout
         written = _written_paths(built, client)
-        forbidden = ("forge:feature:mcp", "JobsTools", "AgentAccessDialog", "agentClient", "afterCreate", "_search")
+        # SQL search indexes also end in _search; only the MCP tool name is forbidden.
+        forbidden = ("forge:feature:mcp", "JobsTools", "AgentAccessDialog", "agentClient", "afterCreate", "jobs_search")
         for path in written:
             text = (client / path).read_text("utf-8")
             assert all(value not in text for value in forbidden), path
