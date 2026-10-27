@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 38,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "161f1333cdfb886b275d80de861c5611e0367275c5ad8f7c9f5b906b7bda259e",
-    "changed": "35b969725288c9e1b99f139d905eac5f409d4c125860903a7731047ad1e767f2",
-    "commit": "b0e9a5d747155503cea631c786326b9c0b18b992",
+    "branch_diff": "c92221326379ee3cf51a1ba3d65d6c8880c5801c28d9e30693c9b69d44ee844e",
+    "changed": "8ceb9902a36c7aabe91cd18081f0171d8c5e391e997533a53d9981ab2a21d5cf",
+    "commit": "da8174c6ef5aa0ffde1ffc03e244d3e19274e909",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - opening Codex in Forge's checkout and invoking the explorer role.\nThe new configuration selects Terra high, but `.codex/agents/explorer.toml:4-5` still pins Sol medium, so the explorer continues using the old settings. This mismatch also causes `tests/test_subagent_roles.py:163-172`, which compares checked-in roles with freshly synced roles, to fail. Both checked-in Forge skills also retain the old defaults at line 1492. Regenerate and commit the adapters with `forge sync`.",
-        "file": "forge.toml",
-        "gain": 4,
-        "harm": 3,
-        "line": 38,
-        "priority": "P1",
-        "title": "Sync Forge's checked-in adapters with the new defaults",
-        "work": 1
-      }
-    ],
-    "id": "882d4a6a-d2ff-48ea-b937-c33423440763",
-    "status": "blocked"
+    "findings": [],
+    "id": "dbd46f82-15ce-4cb3-849a-7324c5d94e71",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-27T18:02:49.601250+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-10-27T18:08:45.883063+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T18:12:03.322836+00:00",
       "step": "review"
     }
   ],
