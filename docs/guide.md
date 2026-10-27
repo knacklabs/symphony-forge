@@ -145,6 +145,26 @@ work as JSON, and `--out <path>` writes every item's facts, finished ones includ
 
 ## How a story runs
 
+When a plan adds a feature to a TypeScript or Python starter app, the planner names its plural,
+singular and fields. The worker's first step runs `forge task feature`; you never type it or
+make technical choices. Every `--field` value is single-quoted, for example:
+
+```sh
+forge task feature clients --one client --field 'name:text'
+forge task feature jobs --one job --field 'name:text' --field 'description?:long-text' --field 'status:status(planned|active|done)' --field 'client?:link(clients)' --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date' --field 'contactEmail?:email' --field 'billable:yes-no'
+```
+
+The command copies the installed starter's projects feature with the plan's fields, including
+its organisation checks, change history and permissions. Admins can view, create, edit, delete
+and restore; members can view, create and edit and never see deleted items. The plan can change
+the roles in one permission mapping per feature. Fields can be text, long text, number, money,
+date, yes or no, email, a status list or a link to one other feature's item; `?` makes one
+optional, and a text field is required for the name. Workers add other kinds by hand. New repos
+get this guidance at init; existing repos get it on upgrade and sync, with no app code changes.
+An existing app from the current starter can use the command. A non-starter or an older starter
+missing required parts gets a refusal naming what is missing and no file changes; the worker
+builds the feature by hand in that app's layout.
+
 In a client repo, finish the canvas checks and customer sign-off above before starting here.
 A working prototype also needs its strict whole-product review.
 

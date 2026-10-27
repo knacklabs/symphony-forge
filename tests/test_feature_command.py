@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from test_setup import _fresh_client
+from test_worker import calls, install_claude
 
 ROOT = Path(__file__).resolve().parents[1]
 STARTER = ROOT / "src/forge/templates/starter"
@@ -336,6 +337,51 @@ SHELLS = [shutil.which("bash"), *([shutil.which("zsh")] if shutil.which("zsh") e
 assert SHELLS[0], "The planner command must run through bash -c."
 
 
+def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
+    # Audit: (1) delivered planner/worker instructions are a prompt contract;
+    # (2) omitting them from init/sync or work breaks it; (3) generation checks
+    # do not cover prompts, so extend their new/adopted owner test;
+    # (4) this uses real commands, with no new production seam or model result.
+    for host in (".claude", ".codex"):
+        skill = (client / host / "skills/forge/SKILL.md").read_text("utf-8")
+        assert CLIENT_LINE in skill
+        assert JOBS_LINE in skill.replace("\n", " ")
+        assert "When a plan adds a new feature" in skill
+
+    # Publish this fixture's current starter and settings so work's main merge
+    # sees the same app. Only the external worker is stubbed, not brief rendering.
+    if repo.git("branch", "--show-current", cwd=client) == "main":
+        repo.git("switch", "-qc", "fix/feature-guidance", cwd=client)
+    config = client / "forge.toml"
+    config.write_text(re.sub(r'workers = "[^"]+"', 'workers = "claude"',
+                             config.read_text("utf-8")), "utf-8")
+    repo.git("add", "-A", cwd=client)
+    repo.git("commit", "-q", "-m", "Keep the starter and its generated features", cwd=client)
+    if repo.git("branch", "--show-current", cwd=client) != "main":
+        branch = repo.git("branch", "--show-current", cwd=client)
+        repo.git("switch", "main", cwd=client)
+        repo.git("merge", "--ff-only", branch, cwd=client)
+    repo.git("push", "-q", "origin", "main", cwd=client)
+    started = repo.forge("fix", "start", "Add a starter feature", "--done",
+                         "The new feature works", "--kind", "mechanical", cwd=client)
+    assert started.returncode == 0, started.stdout + started.stderr
+    previous_calls = len(calls(log))
+    built = repo.forge("work", "add-a-starter-feature", cwd=client)
+    assert built.returncode == 0, built.stdout + built.stderr
+    delivered = calls(log)
+    assert len(delivered) == previous_calls + 1
+    brief = delivered[-1]["brief"]
+    assert "As your first step" in brief
+    assert "forge task feature <plural> --one <singular> --field '<field>:<kind>'" in brief
+    assert "view, create, edit, delete and restore" in brief
+    assert "Members can view, create and edit" in brief
+    assert "cannot delete or restore" in brief
+    assert "see deleted items" in brief
+    assert "Admins have all five" in brief
+    assert "keep that mapping in one place" in brief
+    assert "every screen and API call" in brief
+
+
 @pytest.mark.platform
 @pytest.mark.parametrize("shell", SHELLS)
 def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell):
@@ -343,6 +389,7 @@ def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell)
     new_client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     adopted_client = _adopted_starter(repo)
+    log = install_claude(repo)
 
     outputs = {}
     for label, client in (("new", new_client), ("adopted", adopted_client)):
@@ -356,6 +403,7 @@ def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell)
                 rel: (client / rel).read_bytes() for rel in written
             }
             assert migration in [client / rel for rel in written]
+        _assert_feature_guidance(repo, client, log)
 
     for plural in ("clients", "jobs"):
         assert _normalized_outputs(outputs["new"][plural]) == _normalized_outputs(
