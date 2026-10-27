@@ -94,7 +94,8 @@ test('an admin adds an agent account, creates its key once and revokes it', asyn
   await addDialog.getByRole('button', { name: 'Add agent account' }).click();
   await expect(addDialog).toBeHidden();
   await expect(page.getByText('Agent account added.')).toBeVisible();
-  const row = page.getByRole('row', { name: /gantry-[a-z0-9]{6}@agents\.invalid/ });
+  // The open key dialog hides the background table from the accessibility tree.
+  const row = page.getByRole('row', { name: /gantry-[a-z0-9]{6}@agents\.invalid/, includeHidden: true });
   await expect(row).toContainText('No key');
   const email = (await row.getByRole('cell').first().textContent()) ?? '';
   await expect(row.getByRole('combobox', { name: `Role for ${email}` })).toHaveText('Admin');
