@@ -29,11 +29,10 @@ export class ToolError extends Error {
 export function toolFailure(error: ToolError): CallToolResult {
   return {
     isError: true,
-    content: [{ type: 'text', text: error.message }],
-    structuredContent: { error: { kind: error.kind, message: error.message, retryable: error.retryable,
+    content: [{ type: 'text', text: JSON.stringify({ error: { kind: error.kind, message: error.message, retryable: error.retryable,
       ...(error.retryAfterSeconds === undefined ? {} : { retry_after_seconds: error.retryAfterSeconds }),
       ...(error.details === undefined ? {} : { details: error.details }),
-    } },
+    } }) }],
   };
 }
 

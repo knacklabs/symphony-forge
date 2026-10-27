@@ -111,7 +111,9 @@ describe('MCP tools', () => {
       await vi.advanceTimersByTimeAsync(10_000);
       const result = await resultPromise;
       expect(result.isError).toBe(true);
-      expect(result.structuredContent).toMatchObject({
+      const content = result.content[0];
+      if (content.type !== 'text') throw new Error('The tool error has no text content.');
+      expect(JSON.parse(content.text)).toMatchObject({
         error: { kind: 'unavailable', retryable: true, retry_after_seconds: 5 },
       });
     } finally {

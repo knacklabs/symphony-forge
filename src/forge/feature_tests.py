@@ -280,10 +280,13 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
     return result.structuredContent;
   }
 
-  function resultError(result: { isError?: boolean; structuredContent?: Record<string, unknown> }): Record<string, unknown> {
-    if (!result.isError || !result.structuredContent || typeof result.structuredContent.error !== 'object'
-      || result.structuredContent.error === null) throw new Error('The MCP tool did not return an error.');
-    return result.structuredContent.error as Record<string, unknown>;
+  function resultError(result: { isError?: boolean; content?: unknown }): Record<string, unknown> {
+    if (!result.isError || !Array.isArray(result.content) || result.content[0]?.type !== 'text') {
+      throw new Error('The MCP tool did not return an error.');
+    }
+    const data = JSON.parse(result.content[0].text);
+    if (typeof data.error !== 'object' || data.error === null) throw new Error('The MCP tool did not return an error.');
+    return data.error as Record<string, unknown>;
   }
 
   function expectFeatureFields(actual: Record<string, unknown>, input: Record<string, unknown>, detailed = false): void {
@@ -483,7 +486,7 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
       const id = await createFeature(client, csrf, await featureInput(client, csrf, mark, 'sample'));
       const refused = await mcp.callTool({ name: '@@FEATURE@@_delete', arguments: { '@@ITEM_ID@@': id } });
       expect(refused.isError).toBe(true);
-      expect((refused.structuredContent as Record<string, unknown>).error).toMatchObject({
+      expect(resultError(refused)).toMatchObject({
         kind: 'not_allowed', retryable: false,
       });
 

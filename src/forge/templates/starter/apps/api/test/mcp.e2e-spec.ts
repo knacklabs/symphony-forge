@@ -95,7 +95,11 @@ describe('MCP server', () => {
 
         const failed = await mcp.callTool({ name: tool.name, arguments: { unexpected_argument: true } });
         expect(failed.isError).toBe(true);
-        expect(failed.structuredContent).toMatchObject({
+        expect(failed.structuredContent).toBeUndefined();
+        if (!Array.isArray(failed.content) || failed.content[0]?.type !== 'text') {
+          throw new Error('The tool error has no text content.');
+        }
+        expect(JSON.parse(failed.content[0].text)).toMatchObject({
           error: { kind: 'invalid_input', retryable: false, message: expect.any(String) },
         });
       }

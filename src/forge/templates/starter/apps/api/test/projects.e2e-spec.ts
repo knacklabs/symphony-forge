@@ -486,7 +486,7 @@ function resultData(result: unknown): Record<string, unknown> {
 }
 
 function resultError(result: unknown): Record<string, unknown> {
-  const data = resultData(result);
+  const data = JSON.parse(resultText(result));
   if (typeof data.error !== 'object' || data.error === null) throw new Error('The MCP result has no tool error.');
   return data.error as Record<string, unknown>;
 }
