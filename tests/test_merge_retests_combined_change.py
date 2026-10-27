@@ -93,7 +93,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
 
     if case.startswith("dirty"):
         assert merged.returncode != 0, merged.stdout + merged.stderr
-        assert "The worktree has uncommitted changes:" in merged.stderr
+        assert "The worktree has uncommitted changes:\n" in merged.stderr
         assert dirty.name in merged.stderr
         assert f"Next: commit or set aside these changes, then forge merge {item}" in merged.stderr
         assert not log.exists()
@@ -118,7 +118,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         return
     if case == "red":
         assert merged.returncode != 0
-        assert "The combined change failed its tests." in merged.stderr
+        assert "The combined change failed its tests.\n" in merged.stderr
         assert "tests/test_limits.py::test_combined_limit" in merged.stdout + merged.stderr
         assert f"Next: forge work {item}" in merged.stderr
         assert not env.gh_calls("pr", "merge")
