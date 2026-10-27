@@ -150,6 +150,9 @@ merge base. It pushes and merges only after the tests pass. A failure names the 
 and gives `forge work <item>` as the next step. This is always on, with no setting. With no
 default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
 get it on upgrade and sync.
+Before the retest, Forge refuses uncommitted changes and names their files. After tests and
+checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
+and gives `forge merge <item>` as the next step.
 
 Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
 the item's merge base with its head, so an older branch can merge after the owner enables agent
