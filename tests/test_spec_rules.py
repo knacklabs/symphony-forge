@@ -14,6 +14,8 @@ from conftest import ROOT, FORGE_SHIM, _install
 from test_setup import _fresh_client, _version
 from test_worker import calls, install_claude
 
+STORY = "FORGE-SPECRULES-1"
+
 
 @pytest.fixture(params=["new", "previous-release adoption"])
 def client(repo, gh, tmp_path, request):

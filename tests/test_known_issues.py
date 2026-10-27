@@ -158,7 +158,7 @@ def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch,
     assert fetches[1] == [], fetches
 
 
-def test_15_board_refresh_uses_the_current_saved_list(kept_history, monkeypatch):
+def test_16_board_refresh_uses_the_current_saved_list(kept_history, monkeypatch):
     # Audit: the public board JSON must reveal immutable old PR evidence after its landed
     # state stops saving a known list. Before the fix, the first read caches an empty
     # historical result because the saved list shadows that PR; removing the field then

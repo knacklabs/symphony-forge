@@ -13,6 +13,7 @@ from test_score_notes import _client_repo as setup_client
 from test_setup import _fresh_client
 
 
+STORY = "FORGE-SERVICES-1"
 SERVICE = {"name": "app", "dockerfile": "Dockerfile", "port": 3000,
            "health": "/health", "expose": "main"}
 

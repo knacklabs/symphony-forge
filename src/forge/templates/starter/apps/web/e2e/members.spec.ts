@@ -131,10 +131,11 @@ test('an admin adds an agent account, creates its key once and revokes it', asyn
   await expect(keyField).toHaveValue(/^agent_/);
   const key = await keyField.inputValue();
   await settled;
-  // The late answer refreshes the member list, so its reply comes after the dialog has handled the answer.
-  const refreshed = page.waitForResponse((response) => response.url().includes('/api/v1/members?page=1'));
+  // Wait for the held key reply itself; a member-list refetch is not the dialog's contract.
+  const lateReply = page.waitForResponse((response) =>
+    response.url().endsWith('/key') && response.request().method() === 'POST');
   await release();
-  await refreshed;
+  await (await lateReply).finished();
   await expect(keyField).toHaveValue(key);
   await keyDialog.getByRole('button', { name: 'Copy' }).click();
   await expect(page.getByText('Key copied.')).toBeVisible();
