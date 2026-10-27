@@ -1,6 +1,13 @@
 {
   "base": "44686c923e254ffa75a6d0eb2a2981078420e012",
   "branch": "fix/release-forge-v1-2-23-with-the-client-si",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17db8-72c7-7092-8f96-b5c16bcb5a6c",
+    "head": null,
+    "start": "b77f384dc8729836d1b8641193af4c557574b70b"
+  },
   "done_when": "src/forge/__init__.py says version 1.2.23",
   "fix_kind": "mechanical",
   "kind": "fix",
