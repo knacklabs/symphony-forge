@@ -56,6 +56,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tThe terminal pane test timed out after five seconds in the plugin CI job.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 30,
+      "text": "The terminal pane test timed out after five seconds in the plugin CI job.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_feature_command.py\tGate: generated Python API and browser proofs never run in CI\tFORGE-FEATURE-1/PY",
       "kind": "bug",
       "path": "tests/test_feature_command.py",
