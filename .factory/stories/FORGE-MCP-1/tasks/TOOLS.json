@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed every MCP story part to go over the line limit (25 Oct)",
   "branch": "task/FORGE-MCP-1-TOOLS",
   "chat": {
     "approval": "1f115deaacad6f96cad786da78b6bc3172cc164cd891d26f118e71c6b3381bdf",
