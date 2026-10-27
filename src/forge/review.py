@@ -925,10 +925,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
                      ".factory", "plans", "docs/decisions", cwd=tree)
-            if item == "design-check":
-                repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", ".",
-                         ":(exclude)docs/design/prototype/**", ":(exclude)docs/product/BRIEF.md",
-                         ":(exclude)PRODUCT.md", ":(exclude)DESIGN.md", cwd=tree)
             review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
                                    cwd=tree)
             snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", review_base,
@@ -1025,7 +1021,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 problem = ("The canvas completeness check did not finish: " + reason + "." if reason else
                            "The canvas completeness check found gaps: " + "; ".join(
                                f["title"] + ": " + f["body"] for _, f in serious) + ".")
-                action = "change the canvas and approve it again with forge decision accept prototype-design"
+                action = "fix the prototype screens"
             repo.refuse((problem, f'{action}, then forge decision accept client-signoff --by "<name>"'))
     base = repo.resolve_commit(top, base)
     return {"id": identity, "commit": head, **result,
