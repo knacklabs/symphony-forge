@@ -1,11 +1,14 @@
 """Sign-off reuses its review and completeness result while their inputs stay unchanged.
 
 Test audit:
-1. Protect the command-visible reuse and invalidation rules for prototype sign-off on new and
-   earlier-adopted clients.
-2. A lost saved result repeats expensive checks, while a stale result can accept changed work.
+1. Protect command-visible reuse and invalidation for prototype sign-off on new and earlier-adopted
+   clients: app or answer changes rerun completeness review, while proof, decision, and signed-design
+   changes do not.
+2. A lost saved result repeats expensive checks, while a stale completeness result can accept a
+   changed app or customer answer.
 3. Existing sign-off tests cover review and acceptance separately, but not reuse across them,
-   unchanged canvas acceptance, or changes to each saved input.
+   unchanged canvas acceptance, or completeness invalidation for app and answer changes alongside
+   reuse after other saved-input changes.
 4. Drive `forge decision accept`; replace only Autoreview at its external command boundary.
 """
 
@@ -111,7 +114,7 @@ def _working_signoff_repeats_review_when_a_saved_input_changes(
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
     assert _count_engine(queue, "codex") == 2
-    assert _count_engine(queue, "claude") == 1
+    assert _count_engine(queue, "claude") == (2 if changed_input in ("answers", "product") else 1)
 
 
 def _canvas_signoff_reuses_or_rechecks_completeness(
