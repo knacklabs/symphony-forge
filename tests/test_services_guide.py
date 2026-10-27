@@ -63,7 +63,8 @@ def test_3_the_guides_name_the_services_list(repo, gh, tmp_path, setup):
 
     brief = " ".join(calls(log)[-1]["brief"].split())
     for instruction in (
-        "when a change adds, moves or removes a Dockerfile, or changes a service's port, health path or start command, update `services.toml` in the same change",
+        # MCP paths now join the existing service changes that require a list update.
+        "when a change adds, moves or removes a Dockerfile, or changes a service's port, health path or start command or MCP path, update `services.toml` in the same change",
         "Close refuses a `services.toml` that names a Dockerfile the branch does not have",
         'exactly one service with `expose = "main"`',
         "In a repo without `services.toml`, do not create one: the coordinator writes the first list with the owner's confirmation",

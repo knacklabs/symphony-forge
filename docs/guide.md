@@ -165,6 +165,35 @@ An existing app from the current starter can use the command. A non-starter or a
 missing required parts gets a refusal naming what is missing and no file changes; the worker
 builds the feature by hand in that app's layout.
 
+Only starter apps get an MCP server inside the API at `/mcp`, marked with `mcp = "/mcp"`
+in `services.toml`. Each feature has six tools: `<feature>_search`, `<feature>_get`,
+`<feature>_create`, `<feature>_update`, `<feature>_delete` and `<feature>_restore`.
+An admin adds an agent account with a role on the Members screen, creates its key (shown
+once), and can revoke it at once. Agents use that account's permissions and write change
+history as that account. Delete and restore stay off until an admin turns on the feature's
+Agent access switch; the role still applies. Each key has a limit of 120 calls a minute per
+running API copy, and each call has a 10-second time limit. The feature command writes the
+one tools file, `libs/<plural>/server/src/<plural>.tools.ts` (Python
+`apps/api/app/<plural>/tools.py`), where developers can add tools or hide defaults with `hide`.
+Following [Anthropic's tool guidance](https://www.anthropic.com/research/writing-tools-for-agents)
+and the [MCP tools specification, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/server/tools),
+every tool has a feature-prefixed name, a description of what it does, when to use it and
+related tools, clear snake-case arguments such as `project_id`, strict input and output
+schemas from the feature's schemas, one permission, and all four annotations (`readOnlyHint`,
+`destructiveHint`, `idempotentHint`, `openWorldHint`). Search takes `query`, filters, `limit`
+(20 by default, up to 100) and `cursor`, returns `next_cursor`, the total matching count and
+how to narrow. Results give useful fields with names beside ids, `response_format` `concise`
+by default or `detailed` on request, `structuredContent` with an `outputSchema`, and a short
+summary. Tool failures use `isError`, a message with a fix and an example where useful,
+`kind`, `retryable` and `retry_after_seconds`, never HTTP statuses or traces. Unknown tools
+and malformed requests are protocol errors; missing or revoked keys are HTTP 401 before a
+tool call. A timeout is retryable `unavailable`, and timeout and rate-limit errors say how
+many seconds to wait. A create accepts `idempotency_key`; update, delete and restore are
+safe to repeat. One contract case in each starter checks every tool, including hand-made
+tools. New repos get the guide text at init; existing repos get it on upgrade and sync,
+with no MCP server, `services.toml` change or app files. In an older starter without MCP
+support, the feature command builds the feature without tools and says so.
+
 In a client repo, finish the canvas checks and customer sign-off above before starting here.
 A working prototype also needs its strict whole-product review.
 
