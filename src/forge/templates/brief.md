@@ -407,6 +407,13 @@ Existing code needs no conversion.
 In an app with a database, follow the database skill (.codex/skills/database/SKILL.md) for each
 table, column, index, constraint, migration or extension that you add. Existing tables stay as
 they are. A review holds new schema that breaks the skill.
+Every migration must work with the previous release: expand, then contract. Add a new table or
+column before code uses it. Keep the old table or column for two releases, and remove it only
+when no live release uses it. Close checks only migrations added by the change and skips the
+check in a prototype repo with no live release. To allow a migration that drops or renames a
+table or column, or changes a column's type, add a `-- Contract: ...` comment to Prisma SQL or
+`# Contract: ...` to Alembic Python. Explain why the live release no longer reads the table or
+column; close allows the migration when the line is present, and review reads the explanation.
 
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
