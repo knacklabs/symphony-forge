@@ -285,6 +285,13 @@ code writes. Other modules reach those tables only through its public service. A
 default branch already has is not a finding, and neither is app code outside the modules, such
 as the demo-data loader.
 
+In an app with a database, report a foreign key that this change adds between two
+business-module Postgres schemas as a P1 finding titled `Module foreign key: <the link>`.
+A link between business modules stores an indexed id without a foreign key and is checked
+through the other module's public service. Links within a module and links to core keep their
+foreign key. A foreign key the default branch already has is not a finding; existing apps
+keep their tables and schemas.
+
 In an app with a database, report a table that this change adds, or a column, constraint, index
 or trigger on such a table, that breaks the database skill (.codex/skills/database/SKILL.md) as
 a P1 finding titled `Database: <the table or column>`. Report a Postgres extension that this
