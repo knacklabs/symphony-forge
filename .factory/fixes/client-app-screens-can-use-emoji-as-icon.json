@@ -48,7 +48,7 @@
     "id": "5dda5585-ab63-4c45-99e9-74b311acbc1b",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -70,10 +70,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "1b54cfce89691336efcc1f9c77724702d86e56a7",
+    "close": "459a95aa-68dd-41b9-a400-96d6b283005f",
+    "head": "9455e283622d241c2eb7fc502c5a375dde0fe64d",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Client app screens can use emoji as icons, which clash with the lucide icons the starter and shadcn use, and nothing shipped stops it or makes review report it.",
   "worker": "codex"
