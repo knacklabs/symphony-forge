@@ -789,7 +789,8 @@ New clients get these steps at init; existing clients get the same guide after u
 
 In a new client repo, follow the FDE route: start with discovery of the customer's job,
 workaround, cost, people, frequency and evidence. Start with a canvas, as described below.
-The customer can sign off on the canvas alone. Build a working prototype only when the FDE
+The canvas in Play mode is the default clickable prototype: the customer clicks through it,
+and can sign off on it alone. Build a working prototype only when the FDE
 requests one to prove something the canvas cannot, such as real data or speed. Record that
 request with `forge decision new prototype-build`; the owner accepts it with
 `forge decision accept prototype-build --by "<name>"`. Then build the smallest working demo that proves
@@ -838,7 +839,7 @@ When `forge next` says to connect the repo to our deploy platform, explain what 
 that reminder does not authorize deployment. When the user explicitly requests deployment, use
 Mainline Deploy as above. After the requested deployment is verified, record its address under
 `## Demo` in `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off
-decision.
+decision. A canvas-only prototype needs no demo address.
 
 **The demo.** Every demo follows five steps, in order:
 
@@ -895,6 +896,9 @@ without an artifact tool, make HTML artboards in the repo. Keep the canvas avail
 customer and the sign-off review. New clients get this process at init; existing clients can use
 their current brief and design after upgrade and sync. Client sign-off does not require a root
 DESIGN.md, SCREENS.md or CHECKS.md, or a specific `Things it keeps track of` heading.
+When the canvas has a SCREENS.md screen list, add `Build: now` or `Build: later` to each screen.
+Put the whole product on the canvas, every screen, state and flow, later ones too, and mark
+`Build: now` only what the first stories build.
 Before sign-off, use impeccable's critique and polish and the emil-design-eng checklist. The owner
 or FDE can approve the canvas with `forge decision new prototype-design` and
 `forge decision accept prototype-design --by "<name>"`.
@@ -958,6 +962,8 @@ Full proof is due at sign-off.
 After sign-off, every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work
 or production risks. Start from the prototype canvas or a newer design approved with the plan.
+Plan the first stories only from screens marked `Build: now`. A `Build: later` screen stays on
+the signed canvas as the source for a later story.
 
 When a later story needs a topic marked later, its cold read reports `Decide first: <topic>`.
 Ask that one question, put the answer in the finding's disposition and the story's Notes as

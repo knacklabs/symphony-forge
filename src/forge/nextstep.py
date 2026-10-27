@@ -437,6 +437,8 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
 
 def _needs_demo_address(top: Path) -> bool:
     """Read the fetched default branch, not a demo address still being edited here."""
+    from forge import design
+
     if not (top / "forge.toml").is_file():
         return False
     ref = story.landed_ref(top)
@@ -446,7 +448,8 @@ def _needs_demo_address(top: Path) -> bool:
         return False
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
-    return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
+    return ((not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M))
+            and design.has_app_code(top, ref))
 
 
 def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
