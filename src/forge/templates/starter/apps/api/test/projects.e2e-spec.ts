@@ -626,9 +626,11 @@ describe('projects MCP tools', () => {
       await client.post('/api/v1/projects').set('x-csrf-token', csrf)
         .send({ name: `MCP page ${mark} ${index}`, status: 'active' }).expect(201);
     }
+    const excluded = (await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+      .send({ name: `MCP page ${mark} archived`, status: 'archived' }).expect(201)).body.data;
     const mcp = await agentClient(agent.key);
     try {
-      const firstResult = await mcp.callTool({ name: 'projects_search', arguments: { query: mark } });
+      const firstResult = await mcp.callTool({ name: 'projects_search', arguments: { query: mark, status: 'active' } });
       const first = resultData(firstResult);
       expect(first.items).toHaveLength(20);
       expect(first).toMatchObject({ total: 25, total_is_capped: false, next_cursor: expect.any(String) });
@@ -636,10 +638,13 @@ describe('projects MCP tools', () => {
       expect(resultText(firstResult)).toContain('narrow with query');
 
       const next = resultData(await mcp.callTool({ name: 'projects_search', arguments: {
-        query: mark, cursor: first.next_cursor,
+        query: mark, status: 'active', cursor: first.next_cursor,
       } }));
       expect(next.items).toHaveLength(5);
       expect(next.next_cursor).toBeNull();
+      for (const page of [first, next]) {
+        expect(page.items).not.toEqual(expect.arrayContaining([expect.objectContaining({ project_id: excluded.id })]));
+      }
 
       const invalid = await mcp.callTool({ name: 'projects_search', arguments: { query: mark, limit: 101 } });
       expect(resultError(invalid)).toMatchObject({ kind: 'invalid_input', retryable: false });

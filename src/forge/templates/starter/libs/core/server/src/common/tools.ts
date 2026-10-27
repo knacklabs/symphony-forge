@@ -143,8 +143,15 @@ export function defineFeatureTools<I extends Record<string, unknown>, R extends 
   const fields = Object.fromEntries(Object.entries(config.input.shape).map(([field, schema]) => [snake(field), schema]));
   const itemShape: Shape = { [idField]: z.string().uuid(), updated_at_utc: z.string() };
   for (const [field, schema] of Object.entries(config.input.shape)) {
-    itemShape[snake(field)] = config.concise.includes(field) ? schema : schema.optional();
-    if (z.toJSONSchema(schema).enum) itemShape[`${snake(field)}_label`] = config.concise.includes(field) ? z.string() : z.string().optional();
+    const document = z.toJSONSchema(schema);
+    // Omitted optional inputs become null in service responses; booleans keep their false default.
+    const nullable = schema.safeParse(undefined).success && document.type !== 'boolean';
+    const responseSchema = nullable ? schema.nonoptional().nullable() : schema;
+    itemShape[snake(field)] = config.concise.includes(field) ? responseSchema : responseSchema.optional();
+    if (document.enum) {
+      const labelSchema = nullable ? z.string().nullable() : z.string();
+      itemShape[`${snake(field)}_label`] = config.concise.includes(field) ? labelSchema : labelSchema.optional();
+    }
   }
   for (const field of Object.keys(config.links)) itemShape[snake(field).replace(/_id$/, '_name')] = z.string().nullable().optional();
   for (const field of ['created_at_utc', 'created_by_email', 'modified_by_email', 'deleted_at_utc', 'deleted_by_email']) itemShape[field] = z.string().nullable().optional();
@@ -157,7 +164,7 @@ export function defineFeatureTools<I extends Record<string, unknown>, R extends 
     for (const [field, schema] of Object.entries(config.input.shape)) {
       if (!detailed && !config.concise.includes(field) && !(field in config.links)) continue;
       result[snake(field)] = source[field];
-      if (z.toJSONSchema(schema).enum && typeof source[field] === 'string') result[`${snake(field)}_label`] = title(source[field]);
+      if (z.toJSONSchema(schema).enum) result[`${snake(field)}_label`] = typeof source[field] === 'string' ? title(source[field]) : null;
     }
     for (const [field, token] of Object.entries(config.links)) {
       const id = source[field];
@@ -167,12 +174,18 @@ export function defineFeatureTools<I extends Record<string, unknown>, R extends 
         if (id === null || id === undefined) names.set(key, null);
         else {
           if (!config.resolve) throw new Error('A linked tool needs the target public service.');
-          const linked = await config.resolve(token).get(context.account, String(id));
-          const label = TOOLS.find((tool) => tool.api === token)?.label;
-          if (!label || !(label in linked) || typeof (linked as Record<string, unknown>)[label] !== 'string') {
-            throw new Error('The linked feature needs its display field in its tools file.');
+          try {
+            const linked = await config.resolve(token).get(context.account, String(id));
+            const label = TOOLS.find((tool) => tool.api === token)?.label;
+            if (!label || !(label in linked) || typeof (linked as Record<string, unknown>)[label] !== 'string') {
+              throw new Error('The linked feature needs its display field in its tools file.');
+            }
+            names.set(key, String((linked as Record<string, unknown>)[label]));
+          } catch (error) {
+            if (!(error instanceof HttpException) || ![403, 404].includes(error.getStatus())) throw error;
+            // The parent remains readable. Keep the target id without exposing a restricted name.
+            names.set(key, null);
           }
-          names.set(key, String((linked as Record<string, unknown>)[label]));
         }
       }
       result[snake(field).replace(/_id$/, '_name')] = names.get(key);

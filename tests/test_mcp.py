@@ -1,5 +1,7 @@
 """Client apps ship an MCP server, with agent accounts and a switch for agent delete and restore."""
+import ast
 import json
+import re
 import shlex
 import shutil
 import tomllib
@@ -176,13 +178,15 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
             if plural == "jobs":
                 tools = (client / "libs/jobs/server/src/jobs.tools.ts").read_text("utf-8")
                 assert "feature: 'jobs'" in tools and "JOB_PERMISSIONS" in tools
-                assert "concise: ['name', 'status']" in tools
+                concise = re.search(r"\bconcise:\s*(\[[^\]]*\])", tools)
+                assert concise and ast.literal_eval(concise[1]) == ["name", "status"]
                 assert "links: {}" in tools
             if plural == "work-orders":
                 tools = (client / "libs/work-orders/server/src/work-orders.tools.ts").read_text("utf-8")
                 assert "import { CLIENTS_API } from '@app/clients-contracts';" in tools
                 assert "clientId: CLIENTS_API" in tools
-                assert "concise: ['name', 'clientId']" in tools
+                concise = re.search(r"\bconcise:\s*(\[[^\]]*\])", tools)
+                assert concise and ast.literal_eval(concise[1]) == ["name", "clientId"]
     if LIVE:
         _require_cases(_live(starter, request)["browser"], (ACCESS_FLOW.format(plural="projects"),))
         if starter == "typescript":
@@ -192,6 +196,15 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
                 "an agent searches, reads, creates and updates jobs through MCP as its account",
                 "a member agent cannot delete or restore a job through MCP",
                 "job delete and restore tools stay off until an admin turns them on",
+                "omitted optional fields stay valid in concise and detailed MCP results",
+            ))
+            require_feature_cases(live["api"], "tasks.e2e-spec.ts", (
+                "omitted optional fields stay valid in concise and detailed MCP results",
+                "a deleted linked item does not stop parent reads or bypass the member role",
+            ))
+            require_feature_cases(live["api"], "notes.e2e-spec.ts", (
+                "an agent searches, reads, creates and updates notes through MCP as its account",
+                "a member agent cannot delete or restore a note through MCP",
             ))
             require_feature_cases(live["api"], "projects.e2e-spec.ts", (
                 "an agent searches, reads, creates and updates projects through MCP as its account",

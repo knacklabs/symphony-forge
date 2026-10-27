@@ -57,10 +57,207 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
     concise = [_snake(_column(field)) for field in fields if kinds["kinds"][field["kind"]]["column"]]
     numbers = [_snake(_column(field)) for field in fields
                if field["kind"] == "number" and kinds["kinds"][field["kind"]]["column"]]
-    statuses = [_snake(_column(field)) for field in fields
-                if field["kind"] == "status" and kinds["kinds"][field["kind"]]["column"]]
-    links = [_snake(_column(field)) for field in fields
-             if field["kind"] == "link" and kinds["kinds"][field["kind"]]["column"]]
+    statuses = [_snake(_column(field)) for field in fields if field["kind"] == "status"]
+    links = [_snake(_column(field)) for field in fields if field["kind"] == "link"]
+    optional_input_fields = [_column(field) for field in fields if field.get("optional")]
+    optional_fields = []
+    nullable_optional_fields = []
+    optional_concise_fields = []
+    for field in fields:
+        if not field.get("optional"):
+            continue
+        value = _snake(_column(field))
+        optional_fields.append(value)
+        if field["kind"] != "yes-no":
+            nullable_optional_fields.append(value)
+        if kinds["kinds"][field["kind"]]["column"] or field["kind"] == "link":
+            optional_concise_fields.append(value)
+        if field["kind"] == "link":
+            name = value[:-3] + "_name" if value.endswith("_id") else value + "_name"
+            optional_fields.append(name)
+            nullable_optional_fields.append(name)
+            optional_concise_fields.append(name)
+        if field["kind"] == "status":
+            label_field = value + "_label"
+            optional_fields.append(label_field)
+            nullable_optional_fields.append(label_field)
+            if kinds["kinds"][field["kind"]]["column"]:
+                optional_concise_fields.append(label_field)
+    detail_only = [_snake(_column(field)) for field in fields
+                   if not kinds["kinds"][field["kind"]]["column"] and field["kind"] != "link"]
+    filter_fields = [field for field in fields if field["kind"] in ("link", "yes-no")
+                     or (field["kind"] == "status" and len(field.get("options", [])) > 1)]
+    filter_cases = []
+    for field in filter_fields:
+        column = _column(field)
+        arg = _snake(column)
+        if field["kind"] == "status":
+            change_filter = (
+                f"excludedInput[{json.dumps(column)}] = FIELD_CASES[{json.dumps(column)}].options"
+                f".find((option) => option !== matchingInput[{json.dumps(column)}])!;"
+            )
+            filter_value = f"matchingInput[{json.dumps(column)}]"
+        elif field["kind"] == "yes-no":
+            change_filter = f"excludedInput[{json.dumps(column)}] = !(matchingInput[{json.dumps(column)}] as boolean);"
+            filter_value = f"matchingInput[{json.dumps(column)}] ? 'yes' : 'no'"
+        else:
+            change_filter = (
+                f"excludedInput[{json.dumps(column)}] = await linkedItem(client, csrf, "
+                f"FIELD_CASES[{json.dumps(column)}].target as string, `${{mark}}-other-{arg}`);"
+            )
+            filter_value = f"matchingInput[{json.dumps(column)}]"
+        filter_cases.append(f'''      {{
+        const mark = randomUUID();
+        const matchingInput = await featureInput(client, csrf, mark, 'sample');
+        const excludedInput = {{ ...matchingInput }};
+        {change_filter}
+        const matchingItem = resultData(await mcp.callTool({{ name: '@@FEATURE@@_create', arguments: featureArguments(matchingInput) }}));
+        const excludedItem = resultData(await mcp.callTool({{ name: '@@FEATURE@@_create', arguments: featureArguments(excludedInput) }}));
+        const filtered = resultData(await mcp.callTool({{ name: '@@FEATURE@@_search', arguments: {{
+          query: mark, {json.dumps(arg)}: {filter_value},
+        }} }}));
+        const filteredIds = (filtered.items as Record<string, unknown>[]).map((item) => item['@@ITEM_ID@@']);
+        expect(filteredIds).toContain(matchingItem['@@ITEM_ID@@']);
+        expect(filteredIds).not.toContain(excludedItem['@@ITEM_ID@@']);
+      }}''')
+    filter_cases_text = "\n".join(filter_cases)
+    optional_case = ""
+    if optional_fields:
+        optional_case = r'''  it('omitted optional fields stay valid in concise and detailed MCP results', async () => {
+    // Audit: protects nullable service responses at the real MCP boundary for every optional feature field.
+    // Omission is accepted by the API but returns null from storage; REST tests cannot catch MCP output parsing, and no test-only production seam is used.
+    const { client, csrf } = await signedIn();
+    const memberPermissions = await featurePermissions(client, 'member');
+    const role = FEATURE_MAIN_ACTIONS.every((action) => memberPermissions.includes(FEATURE_PERMISSIONS[action]))
+      ? 'member' : 'admin';
+    const permissions = role === 'member' ? memberPermissions : await featurePermissions(client, 'admin');
+    const { mcp } = await featureAgent(client, csrf, role);
+    const mark = randomUUID();
+    try {
+      expect((await mcp.listTools()).tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
+        .toEqual(featureToolNames(permissions));
+      const optionalInput = await featureInput(client, csrf, mark, 'sample');
+      for (const field of FEATURE_OPTIONAL_INPUT_FIELDS) delete optionalInput[field];
+      const input = featureArguments(optionalInput);
+
+      const createdResult = await mcp.callTool({ name: '@@FEATURE@@_create', arguments: input });
+      expect(('isError' in createdResult) ? createdResult.isError : false).toBe(false);
+      const created = resultData(createdResult);
+      const id = String(created['@@ITEM_ID@@']);
+      const fetchedResult = await mcp.callTool({ name: '@@FEATURE@@_get', arguments: { '@@ITEM_ID@@': id } });
+      expect(('isError' in fetchedResult) ? fetchedResult.isError : false).toBe(false);
+      const fetched = resultData(fetchedResult);
+      const searchedResult = await mcp.callTool({ name: '@@FEATURE@@_search', arguments: { query: mark } });
+      expect(('isError' in searchedResult) ? searchedResult.isError : false).toBe(false);
+      const searched = resultData(searchedResult);
+      const conciseSearchItem = (searched.items as Record<string, unknown>[])
+        .find((item) => item['@@ITEM_ID@@'] === id);
+      expect(conciseSearchItem).toBeDefined();
+      const detailedGetResult = await mcp.callTool({ name: '@@FEATURE@@_get', arguments: {
+        '@@ITEM_ID@@': id, response_format: 'detailed',
+      } });
+      expect(('isError' in detailedGetResult) ? detailedGetResult.isError : false).toBe(false);
+      const detailedGet = resultData(detailedGetResult);
+      const detailedSearchResult = await mcp.callTool({ name: '@@FEATURE@@_search', arguments: {
+        query: mark, response_format: 'detailed',
+      } });
+      expect(('isError' in detailedSearchResult) ? detailedSearchResult.isError : false).toBe(false);
+      const detailedSearch = resultData(detailedSearchResult);
+      const detailedSearchItem = (detailedSearch.items as Record<string, unknown>[])
+        .find((item) => item['@@ITEM_ID@@'] === id);
+      expect(detailedSearchItem).toBeDefined();
+
+      for (const row of [created, fetched, conciseSearchItem ?? {}]) {
+        for (const field of FEATURE_OPTIONAL_CONCISE_FIELDS) {
+          expect(row).toHaveProperty(field, FEATURE_OPTIONAL_NULL_FIELDS.includes(field) ? null : false);
+        }
+        for (const field of FEATURE_DETAIL_ONLY_FIELDS) expect(row).not.toHaveProperty(field);
+      }
+      for (const row of [detailedGet, detailedSearchItem ?? {}]) {
+        for (const field of FEATURE_OPTIONAL_FIELDS) {
+          expect(row).toHaveProperty(field, FEATURE_OPTIONAL_NULL_FIELDS.includes(field) ? null : false);
+        }
+        for (const field of FEATURE_DETAIL_ONLY_FIELDS) expect(row).toHaveProperty(field);
+      }
+      const nullableInputField = FEATURE_OPTIONAL_INPUT_FIELDS
+        .map((field) => field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`))
+        .find((field) => FEATURE_OPTIONAL_NULL_FIELDS.includes(field));
+      if (nullableInputField) {
+        const invalid = await mcp.callTool({ name: '@@FEATURE@@_create', arguments: { ...input, [nullableInputField]: null } });
+        expect(resultError(invalid)).toMatchObject({ kind: 'invalid_input', retryable: false });
+      }
+    } finally {
+      await mcp.close();
+    }
+  });
+'''
+    deleted_link_case = ""
+    if any(field["kind"] == "link" for field in fields):
+        link_checks = []
+        for field in fields:
+            if field["kind"] != "link":
+                continue
+            column = _column(field)
+            arg = _snake(column)
+            target = field["target"]
+            target_feature = target.replace("-", "_")
+            target_view = f"{target}.view"
+            target_restore = f"{target}.restore"
+            link_name = arg[:-3] + "_name" if arg.endswith("_id") else arg + "_name"
+            link_checks.append(f'''      {{
+        const mark = randomUUID();
+        const targetId = await linkedItem(client, csrf, {json.dumps(target)}, `${{mark}}-{arg}`);
+        const input = await featureInput(client, csrf, mark, 'sample');
+        input[{json.dumps(column)}] = targetId;
+        const parent = await client.post('@@ROOT@@').set('x-csrf-token', csrf).send(input).expect(201);
+        const parentId = parent.body.data.id as string;
+        await client.delete(`/api/v1/{target}/${{targetId}}`).set('x-csrf-token', csrf).expect(200);
+        const canReadDeletedTarget = memberPermissions.includes({json.dumps(target_view)})
+          && memberPermissions.includes({json.dumps(target_restore)});
+        const expectedName = canReadDeletedTarget
+          ? expect.any(String) : null;
+
+        const fetchedResult = await mcp.callTool({{ name: '@@FEATURE@@_get', arguments: {{ '@@ITEM_ID@@': parentId }} }});
+        expect(('isError' in fetchedResult) ? fetchedResult.isError : false).toBe(false);
+        const fetched = resultData(fetchedResult);
+        expect(fetched).toMatchObject({{ {arg}: targetId, {link_name}: expectedName }});
+        const searchedResult = await mcp.callTool({{ name: '@@FEATURE@@_search', arguments: {{ query: mark }} }});
+        expect(('isError' in searchedResult) ? searchedResult.isError : false).toBe(false);
+        const searched = resultData(searchedResult);
+        expect(searched.items).toEqual(expect.arrayContaining([
+          expect.objectContaining({{ '@@ITEM_ID@@': parentId, {arg}: targetId, {link_name}: expectedName }}),
+        ]));
+
+        const availableTools = (await mcp.listTools()).tools;
+        if (memberPermissions.includes({json.dumps(target_view)})) {{
+          const targetPrefix = {json.dumps(target_feature)};
+          const targetTool = availableTools.find((tool) => tool.name === `${{targetPrefix}}_get`);
+          if (!targetTool) throw new Error('The linked feature get tool is missing for a permitted role.');
+          const properties = (targetTool.inputSchema as {{ properties?: Record<string, unknown> }}).properties ?? {{}};
+          const targetIdField = Object.keys(properties).find((property) => property.endsWith('_id'));
+          if (!targetIdField) throw new Error('The linked feature get tool has no id field.');
+          const targetResult = await mcp.callTool({{ name: `${{targetPrefix}}_get`, arguments: {{ [targetIdField]: targetId }} }});
+          if (canReadDeletedTarget) expect(resultData(targetResult)[targetIdField]).toBe(targetId);
+          else expect(resultError(targetResult)).toMatchObject({{ kind: 'not_found', retryable: false }});
+        }} else expect(availableTools.map((tool) => tool.name)).not.toContain({json.dumps(target_feature + '_get')});
+            }}''')
+        deleted_link_case = f'''  it('a deleted linked item does not stop parent reads or bypass the member role', async () => {{
+    // Audit: protects parent reads through MCP when a link target is no longer readable to this member.
+    // Deleted targets must not fail the parent response or bypass target permissions; REST tests cannot reach MCP name resolution, and no test-only production seam is used.
+    const {{ client, csrf }} = await signedIn();
+    const memberPermissions = await featurePermissions(client, 'member');
+    const {{ mcp }} = await featureAgent(client, csrf, 'member');
+    try {{
+      if (!memberPermissions.includes(FEATURE_PERMISSIONS.view)) {{
+        expect((await mcp.listTools()).tools.map((tool) => tool.name)).not.toContain('@@FEATURE@@_get');
+        return;
+      }}
+{chr(10).join(link_checks)}
+    }} finally {{
+      await mcp.close();
+    }}
+  }});
+'''
     template = r'''describe('@@PLURAL@@ MCP tools', () => {
   async function featureAgent(client: ApiClient, csrf: string, role: 'admin' | 'member') {
     const name = `feature-${randomUUID().slice(0, 8)}`;
@@ -89,12 +286,13 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
     return result.structuredContent.error as Record<string, unknown>;
   }
 
-  function expectFeatureFields(actual: Record<string, unknown>, input: Record<string, unknown>): void {
+  function expectFeatureFields(actual: Record<string, unknown>, input: Record<string, unknown>, detailed = false): void {
     for (const field of FEATURE_CONCISE_FIELDS) {
       if (FEATURE_NUMBER_FIELDS.includes(field)) expect(Number(actual[field])).toBe(Number(input[field]));
       else expect(actual[field]).toEqual(input[field]);
     }
     for (const field of FEATURE_STATUS_FIELDS) {
+      if (!detailed && !FEATURE_CONCISE_FIELDS.includes(field)) continue;
       const value = String(input[field]);
       expect(actual[`${field}_label`]).toBe(value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' '));
     }
@@ -103,22 +301,62 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
       expect(typeof actual[nameField]).toBe('string');
       expect(actual[nameField]).not.toBe(input[field]);
     }
+    if (detailed) {
+      for (const [column, definition] of Object.entries(FIELD_CASES)) {
+        const field = column.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+        if (FEATURE_CONCISE_FIELDS.includes(field)) continue;
+        if (definition.kind === 'number') expect(Number(actual[field])).toBe(Number(input[field]));
+        else expect(actual[field]).toEqual(input[field]);
+      }
+    }
   }
 
   const FEATURE_CONCISE_FIELDS: string[] = @@CONCISE@@;
   const FEATURE_NUMBER_FIELDS: string[] = @@NUMBERS@@;
   const FEATURE_STATUS_FIELDS: string[] = @@STATUSES@@;
   const FEATURE_LINK_FIELDS: string[] = @@LINKS@@;
-  const FEATURE_TOOLS = ['@@FEATURE@@_search', '@@FEATURE@@_get', '@@FEATURE@@_create', '@@FEATURE@@_update'];
-  const ALL_FEATURE_TOOLS = [...FEATURE_TOOLS, '@@FEATURE@@_delete', '@@FEATURE@@_restore'];
+  const FEATURE_OPTIONAL_INPUT_FIELDS: string[] = @@OPTIONAL_INPUT@@;
+  const FEATURE_OPTIONAL_FIELDS: string[] = @@OPTIONAL@@;
+  const FEATURE_OPTIONAL_NULL_FIELDS: string[] = @@OPTIONAL_NULL@@;
+  const FEATURE_OPTIONAL_CONCISE_FIELDS: string[] = @@OPTIONAL_CONCISE@@;
+  const FEATURE_DETAIL_ONLY_FIELDS: string[] = @@DETAIL_ONLY@@;
+  const FEATURE_PERMISSIONS = {
+    view: '@@SLUG@@.view', create: '@@SLUG@@.create', edit: '@@SLUG@@.edit',
+    delete: '@@SLUG@@.delete', restore: '@@SLUG@@.restore',
+  };
+  const FEATURE_MAIN_ACTIONS = ['view', 'create', 'edit'] as const;
+  const FEATURE_TOOL_ACTIONS: { action: string; permission: keyof typeof FEATURE_PERMISSIONS }[] = [
+    { action: 'search', permission: 'view' }, { action: 'get', permission: 'view' },
+    { action: 'create', permission: 'create' }, { action: 'update', permission: 'edit' },
+    { action: 'delete', permission: 'delete' }, { action: 'restore', permission: 'restore' },
+  ];
+
+  function featureToolNames(permissions: readonly string[], includeDeleteAndRestore = false): string[] {
+    return FEATURE_TOOL_ACTIONS.filter(({ action, permission }) => permissions.includes(FEATURE_PERMISSIONS[permission])
+      && (includeDeleteAndRestore || (action !== 'delete' && action !== 'restore')))
+      .map(({ action }) => `@@FEATURE@@_${action}`);
+  }
+
+  async function featurePermissions(client: ApiClient, role: 'admin' | 'member'): Promise<string[]> {
+    if (role === 'member') return (await sharedMemberSignedIn()).permissions;
+    return (await client.get('/api/v1/auth/me').expect(200)).body.data.permissions as string[];
+  }
+
+  async function featureRoleForMainActions(client: ApiClient): Promise<'admin' | 'member'> {
+    const permissions = await featurePermissions(client, 'member');
+    return FEATURE_MAIN_ACTIONS.every((action) => permissions.includes(FEATURE_PERMISSIONS[action]))
+      ? 'member' : 'admin';
+  }
 
   it('an agent searches, reads, creates and updates @@PLURAL@@ through MCP as its account', async () => {
     const { client, csrf } = await signedIn();
-    const { email, mcp } = await featureAgent(client, csrf, 'member');
+    const role = await featureRoleForMainActions(client);
+    const permissions = await featurePermissions(client, role);
+    const { email, mcp } = await featureAgent(client, csrf, role);
     try {
       const listed = await mcp.listTools();
       expect(listed.tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
-        .toEqual(FEATURE_TOOLS);
+        .toEqual(featureToolNames(permissions));
 
       const mark = randomUUID();
       const input = featureArguments(await featureInput(client, csrf, mark, 'sample'));
@@ -137,7 +375,11 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
         '@@ITEM_ID@@': id, response_format: 'detailed',
       } }));
       expect(detailed.created_by_email).toBe(email);
-      expectFeatureFields(detailed, input);
+      expectFeatureFields(detailed, input, true);
+      for (const field of FEATURE_DETAIL_ONLY_FIELDS) {
+        expect(createdData).not.toHaveProperty(field);
+        expect(detailed).toHaveProperty(field);
+      }
 
       const searched = resultData(await mcp.callTool({ name: '@@FEATURE@@_search', arguments: { query: mark } }));
       expect(searched.items).toEqual(expect.arrayContaining([
@@ -152,6 +394,13 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
         expectFeatureFields(found, input);
         expect(found).not.toHaveProperty('created_by_email');
       }
+      const detailedSearch = resultData(await mcp.callTool({ name: '@@FEATURE@@_search', arguments: {
+        query: mark, response_format: 'detailed',
+      } }));
+      const detailedFound = (detailedSearch.items as Record<string, unknown>[])
+        .find((item) => item['@@ITEM_ID@@'] === id);
+      expect(detailedFound).toBeDefined();
+      if (detailedFound) expectFeatureFields(detailedFound, input, true);
 
       const changedInput = featureArguments(await featureInput(client, csrf, mark, 'changed'));
       const updated = resultData(await mcp.callTool({ name: '@@FEATURE@@_update', arguments: {
@@ -183,13 +432,21 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
       const agentChanges = history.filter((entry) => entry.actorEmail === email
         && (entry.summary.includes('Created the @@ONE@@') || entry.summary.includes(' changed from ')));
       expect(agentChanges).toHaveLength(2);
+      // Audit: protects permission-filtered MCP discovery and filters plus concise/detailed projections.
+      // Hard-coded role grants or ignored filters/missing fields would fail; REST tests cannot reach MCP list/call behavior, and no test-only production seam is used.
+@@FILTER_CASES@@
     } finally {
       await mcp.close();
     }
   });
 
+@@OPTIONAL_CASE@@
+
+@@DELETED_LINK_CASE@@
+
   it('a member agent cannot delete or restore a @@ONE@@ through MCP', async () => {
     const { client, csrf } = await signedIn();
+    const memberPermissions = await featurePermissions(client, 'member');
     const { mcp } = await featureAgent(client, csrf, 'member');
     try {
       await client.put('/api/v1/agent-tools/@@SLUG@@').set('x-csrf-token', csrf)
@@ -198,15 +455,18 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
       const id = await createFeature(client, csrf, await featureInput(client, csrf, mark, 'sample'));
       const listed = await mcp.listTools();
       const names = listed.tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name);
-      expect(names).toEqual(FEATURE_TOOLS);
+      expect(names).toEqual(featureToolNames(memberPermissions, true));
       for (const action of ['delete', 'restore']) {
         const result = await mcp.callTool({ name: `@@FEATURE@@_${action}`, arguments: { '@@ITEM_ID@@': id } });
-        expect(result.isError).toBe(true);
-        expect((result.structuredContent as Record<string, unknown>).error).toMatchObject({
-          kind: 'not_allowed', retryable: false,
-        });
+        const permission = FEATURE_PERMISSIONS[action as 'delete' | 'restore'];
+        if (memberPermissions.includes(permission)) expect(result.isError).not.toBe(true);
+        else expect(resultError(result)).toMatchObject({ kind: 'not_allowed', retryable: false });
       }
-      await client.get(`@@ROOT@@/${id}`).expect(200);
+      const after = await client.get(`@@ROOT@@/${id}`).expect(200);
+      if (memberPermissions.includes(FEATURE_PERMISSIONS.delete)
+        && !memberPermissions.includes(FEATURE_PERMISSIONS.restore)) {
+        expect(after.body.data.deletedAtUtc).toEqual(expect.any(String));
+      } else expect(after.body.data.deletedAtUtc).toBeNull();
     } finally {
       await mcp.close();
     }
@@ -214,10 +474,11 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
 
   it('@@ONE@@ delete and restore tools stay off until an admin turns them on', async () => {
     const { client, csrf } = await signedIn();
+    const adminPermissions = await featurePermissions(client, 'admin');
     const { email, mcp } = await featureAgent(client, csrf, 'admin');
     try {
       expect((await mcp.listTools()).tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
-        .toEqual(FEATURE_TOOLS);
+        .toEqual(featureToolNames(adminPermissions));
       const mark = randomUUID();
       const id = await createFeature(client, csrf, await featureInput(client, csrf, mark, 'sample'));
       const refused = await mcp.callTool({ name: '@@FEATURE@@_delete', arguments: { '@@ITEM_ID@@': id } });
@@ -229,7 +490,7 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
       await client.put('/api/v1/agent-tools/@@SLUG@@').set('x-csrf-token', csrf)
         .send({ deleteAndRestore: true }).expect(200);
       expect((await mcp.listTools()).tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
-        .toEqual(ALL_FEATURE_TOOLS);
+        .toEqual(featureToolNames(adminPermissions, true));
       for (let attempt = 0; attempt < 2; attempt += 1) {
         expect(resultData(await mcp.callTool({ name: '@@FEATURE@@_delete', arguments: { '@@ITEM_ID@@': id } })).deleted)
           .toBe(true);
@@ -250,13 +511,16 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
       await client.put('/api/v1/agent-tools/@@SLUG@@').set('x-csrf-token', csrf)
         .send({ deleteAndRestore: false }).expect(200);
       expect((await mcp.listTools()).tools.filter((tool) => tool.name.startsWith('@@FEATURE@@_')).map((tool) => tool.name))
-        .toEqual(FEATURE_TOOLS);
+        .toEqual(featureToolNames(adminPermissions));
     } finally {
       await mcp.close();
     }
   });
 });
 '''
+    template = template.replace("@@FILTER_CASES@@", filter_cases_text)
+    template = template.replace("@@OPTIONAL_CASE@@", optional_case)
+    template = template.replace("@@DELETED_LINK_CASE@@", deleted_link_case)
     replacements = {
         "@@PLURAL@@": display_plural,
         "@@SLUG@@": plural,
@@ -268,6 +532,11 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
         "@@NUMBERS@@": json.dumps(numbers),
         "@@STATUSES@@": json.dumps(statuses),
         "@@LINKS@@": json.dumps(links),
+        "@@OPTIONAL_INPUT@@": json.dumps(optional_input_fields),
+        "@@OPTIONAL@@": json.dumps(optional_fields),
+        "@@OPTIONAL_NULL@@": json.dumps(nullable_optional_fields),
+        "@@OPTIONAL_CONCISE@@": json.dumps(optional_concise_fields),
+        "@@DETAIL_ONLY@@": json.dumps(detail_only),
         "@@LABEL@@": label,
     }
     for marker, value in replacements.items():
