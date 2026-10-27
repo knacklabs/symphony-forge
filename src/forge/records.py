@@ -85,6 +85,7 @@ REFUSALS = {
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 LANE = re.compile(r"fix/(?P<fix>[a-z0-9][a-z0-9-]*)|story/(?P<key>[A-Z][A-Z0-9-]*)")
 SPEC_SECTIONS = ("Why", "Behaviour", "Acceptance criteria")
+RULE_ID = re.compile(r"\bR-\d+\b")
 DECISION_SECTIONS = ("Context", "Decision", "Consequences")
 SIGNOFF_SECTIONS = ("Signed design", "Proof", "Decisions")
 DESIGN_BRIEF_SECTIONS = ("Summary", "Users", "Things it keeps track of", "Key flows")
@@ -237,6 +238,20 @@ def decision_new(args: argparse.Namespace) -> None:
           f'confirms in chat: forge decision accept {args.slug} --by "<name>"')
 
 
+def _spec_lines(top: Path) -> list[tuple[str, int, str]]:
+    return [(path.relative_to(top).as_posix(), number, line)
+            for path in sorted((top / "docs/specs").rglob("*.md"))
+            if path.name != "README.md" and not path.name.endswith(".read.md")
+            for number, line in enumerate(_text(path).splitlines(), 1)]
+
+
+def old_spec_lines(top: Path) -> list[str]:
+    # ponytail: misses unnumbered checks and repeated BR rules; widen when a client needs it.
+    return [f"{rel}:{number}: {line}" for rel, number, line in _spec_lines(top)
+            if re.match(r"[\s>*|-]*(?:\d+\.\s*)?\**(?:VAL|UAT|AC)-\d+\b", line)
+            and not RULE_ID.search(line)]
+
+
 def decision_accept(args: argparse.Namespace) -> None:
     top = _start(args, args.slug)
     by = _name(args, args.slug)
@@ -367,6 +382,16 @@ def decision_accept(args: argparse.Namespace) -> None:
     repo.commit_state(f"Accept the {args.slug} decision", *changed, top=top)
     also = f"; {changed[1]} is now superseded" if old else ""
     print(f"Accepted {rel}, confirmed by {by}{also}.")
+    rules = sorted(set(RULE_ID.findall(re.sub(r"<!--.*?-->", "", body, flags=re.S))),
+                   key=lambda rule: int(rule[2:]))
+    if rules:
+        # ponytail: IDs repeat across specs; read only named specs if this gets noisy.
+        lines = [f"{path}:{number}: {line}" for path, number, line in _spec_lines(top)
+                 if any(re.search(rf"\b{re.escape(rule)}\b", line) for rule in rules)]
+        if lines:
+            print(f"These spec lines name {', '.join(rules)}; in this change, update each one "
+                  "that no longer fits the decision:")
+            print("\n".join(lines))
 
 
 def tested_product(top: Path, *, clean: bool = False) -> str:
@@ -731,7 +756,7 @@ COMMANDS = [
      "help": "Accept a decision after the human confirms in chat",
      "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"})],
      "position": 220,
-     "listing": "| `forge decision accept <slug> --by \"<name>\"` | Accepts a decision after the human confirms it in chat |"},
+     "listing": "| `forge decision accept <slug> --by \"<name>\"` | Accepts a decision after the human confirms it in chat, and lists the spec lines that name a rule ID it names |"},
     {"words": "roadmap add", "run": "roadmap_add", "changes_state": True,
      "help": "Add roadmap items from a confirmed spec", "args": [(('spec',), {})],
      "position": 230,
