@@ -4,12 +4,20 @@
   "done_when": "tests/test_rules.py and tests/test_signoff_reuse.py pass on this branch",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T19:29:35.115746+00:00",
       "step": "start"
     }
   ],
-  "why": "The full run on main is red after the Windows completeness hotfix: review.py is 1,215 lines (over the 1,200 ceiling), a new test name cites no rule, and the sign-off reuse test still expects the completeness check on Claude"
+  "stuck": {
+    "close": null,
+    "head": "2a05e5abe97294eca329b2e862d82600a5143491",
+    "keys": {},
+    "round": null
+  },
+  "why": "The full run on main is red after the Windows completeness hotfix: review.py is 1,215 lines (over the 1,200 ceiling), a new test name cites no rule, and the sign-off reuse test still expects the completeness check on Claude",
+  "worker": "codex"
 }
