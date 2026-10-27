@@ -481,6 +481,8 @@ Say in plain English what each Done-when item you cover now does and which test 
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
 
+When a forge command refuses, say in your last message what it refused, why, and the fix it named, in plain words. Say so when the refusal looks like a fault in Forge itself.
+
 Write text that people read with the simplified-technical-english skill: a story's What changes
 for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
 human, and board and `forge next` lines. Briefs, guides and code stay as they are.
