@@ -1,3 +1,4 @@
+# forge:feature:schema-imports:start
 from datetime import datetime
 from enum import StrEnum
 from typing import Literal
@@ -5,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 from pydantic.alias_generators import to_camel
+# forge:feature:schema-imports:end
 
 
 class ProjectSchema(BaseModel):
@@ -16,22 +18,28 @@ class ProjectSchema(BaseModel):
     )
 
 
+# forge:feature:status-type:start
 class ProjectStatus(StrEnum):
     active = "active"
     archived = "archived"
+# forge:feature:status-type:end
 
 
 class ProjectInput(ProjectSchema):
+    # forge:feature:input-fields:start
     name: str = Field(min_length=1, max_length=120)
     status: ProjectStatus
+    # forge:feature:input-fields:end
 
 
 class Project(ProjectSchema):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    # forge:feature:response-fields:start
     name: str = Field(max_length=120)
     status: ProjectStatus
+    # forge:feature:response-fields:end
     created_at_utc: datetime
     updated_at_utc: datetime
     created_by_account_id: UUID
@@ -50,7 +58,9 @@ class ProjectExportQuery(ProjectSchema):
     """The list's search and filter, so the export downloads what the list shows."""
 
     search: str | None = Field(default=None, max_length=200)
+    # forge:feature:filter-fields:start
     status: ProjectStatus | None = None
+    # forge:feature:filter-fields:end
     deleted: Literal["yes"] | None = Field(
         default=None,
         description="Show deleted projects too; only for a caller with the restore permission.",
@@ -60,7 +70,9 @@ class ProjectExportQuery(ProjectSchema):
 
 class ProjectListQuery(ProjectExportQuery):
     limit: int = Field(default=20, ge=1, le=100)
+    # forge:feature:sort-fields:start
     sort_by: Literal["name", "status", "createdAtUtc", "updatedAtUtc"] = "updatedAtUtc"
+    # forge:feature:sort-fields:end
     sort_order: Literal["asc", "desc"] = "desc"
     after: str | None = Field(default=None, pattern=CURSOR_PATTERN)
     before: str | None = Field(default=None, pattern=CURSOR_PATTERN)

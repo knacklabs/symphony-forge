@@ -6,8 +6,17 @@ from pathlib import Path
 
 import pytest
 
-from test_feature_command import (CLIENT_LINE, JOBS_LINE, NOTES_LINE, SHELLS, _run_line, feature_live_run,
-                                  require_feature_cases)
+from test_feature_command import (
+    CLIENT_LINE,
+    JOBS_LINE,
+    NOTES_LINE,
+    SHELLS,
+    _run_line,
+    feature_live_run,
+    feature_python_client,
+    feature_python_live_run,
+    require_feature_cases,
+)
 from test_setup import _fresh_client
 from test_starter_tree import LIVE, STARTER, _require_cases, live_run
 
@@ -60,22 +69,21 @@ def _python_routes(text: str) -> dict[tuple[str, str], list[str]]:
     for block in re.split(r"\n(?=@router\.)", text):
         verb = re.match(r'@router\.(get|post|put|delete)\(\s*"([^"]*)"', block)
         if verb:
-            path = verb.group(2).strip("/").replace("{project_id}", ":id")
+            path = re.sub(r"\{\w+_id\}", ":id", verb.group(2).strip("/"))
             routes[(verb.group(1), path)] = re.findall(
-                r"require_permission\(\w+\.(\w+)\)", block)
+                r"require_permission\(\s*\w+\.(\w+)\s*\)", block)
     return routes
 
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
 @pytest.mark.parametrize("starter", ["projects-typescript", "projects-python", "feature-typescript",
-                                     "earlier adopted"])
+                                     "feature-python", "earlier adopted"])
 def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, request):
-    # Audit: a projects route with no permission check, two checks or the wrong permission fails
-    # the static check; a guard that lets a member delete or restore, a deleted project shown to
-    # a member, or a restore with no history row fails the live cases. The starters' own reports
-    # own the behaviour; this test names the cases and checks each route's one permission. Sync
-    # must leave an earlier-adopted app's own permissions files and controllers as they are.
+    # Audit: a route with a missing, duplicate or wrong permission, or a member who can reach a
+    # denied endpoint, fails the route or live check. Projects-only tests and generated
+    # TypeScript tests do not exercise generated Python routes. The generated API and browser are
+    # the behavior boundary, with no production seam. Sync must preserve earlier app permissions.
     if starter == "earlier adopted":
         # An app adopted on an earlier release that has since edited its own permissions.
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
@@ -122,6 +130,43 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
             require_feature_cases(live["api"], "jobs.e2e-spec.ts", ("an admin restores a deleted job",))
             require_feature_cases(live["browser"], "jobs.spec.ts",
                                   ("an admin shows deleted jobs and restores one",))
+        return
+
+    if starter == "feature-python":
+        # A generated Python module must use the same role-to-route mapping as the projects
+        # module. Notes has no member permissions, so its live case exercises denied view,
+        # create and edit as well as delete and restore.
+        client = feature_python_client(repo, gh, tmp_path)
+        for plural in ("clients", "jobs", "notes", "tasks"):
+            routes = _python_routes(
+                (client / f"apps/api/app/{plural}/routes.py").read_text("utf-8"))
+            assert routes == {route: [permission] for route, permission in ROUTE_PERMISSIONS.items()}
+            mapping = (client / f"apps/api/app/{plural}/permissions.py").read_text("utf-8")
+            assert re.search(
+                r'"admin"\s*:\s*\["view",\s*"create",\s*"edit",\s*"delete",\s*"restore"\]',
+                mapping,
+            ), mapping
+            expected_member = '"member": []' if plural == "notes" else (
+                '"member": ["view", "create", "edit"]'
+            )
+            assert expected_member in mapping, mapping
+        if LIVE:
+            live = feature_python_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
+            for plural, one in (("jobs", "job"), ("notes", "note")):
+                require_feature_cases(
+                    live["api"], f"test_{plural}",
+                    (f"test_each_{plural}_endpoint_refuses_a_member_without_its_permission",),
+                )
+                require_feature_cases(
+                    live["browser"], f"{plural}.spec.ts",
+                    (f"a member does not see the {one} actions they lack",),
+                )
+            require_feature_cases(
+                live["api"], "test_jobs", ("test_an_admin_restores_a_deleted_job",)
+            )
+            require_feature_cases(
+                live["browser"], "jobs.spec.ts", ("an admin shows deleted jobs and restores one",)
+            )
         return
 
     typescript = starter == "projects-typescript"

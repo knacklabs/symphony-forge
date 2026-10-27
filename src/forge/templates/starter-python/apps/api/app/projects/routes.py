@@ -28,12 +28,14 @@ from app.projects.service import ProjectService
 
 router = APIRouter(prefix="/api/v1/projects", tags=["Projects"])
 
+# forge:feature:csv-fields:start
 PROJECT_CSV_COLUMNS: tuple[CsvColumn[Project], ...] = (
     ("Name", lambda project: project.name),
     ("Status", lambda project: project.status.value),
     ("Created (UTC)", lambda project: utc_date_time(project.created_at_utc)),
     ("Updated (UTC)", lambda project: utc_date_time(project.updated_at_utc)),
 )
+# forge:feature:csv-fields:end
 
 
 @router.get(

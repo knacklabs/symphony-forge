@@ -2,6 +2,7 @@
 
 from app.core import define_permissions
 
+# forge:feature:permission-map:start
 PROJECT_PERMISSIONS = define_permissions(
     "projects",
     {
@@ -9,3 +10,4 @@ PROJECT_PERMISSIONS = define_permissions(
         "member": ["view", "create", "edit"],
     },
 )
+# forge:feature:permission-map:end
