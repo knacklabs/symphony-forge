@@ -1,6 +1,13 @@
 {
   "base": "10bb6caffc0afcb3fe11ea62c62e089d59cd4f54",
   "branch": "fix/client-app-screens-can-use-emoji-as-icon",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17d35-d142-7dc0-bd1b-626b1eafa087",
+    "head": null,
+    "start": "5197749c618465a414e7e61b35e31acd0e025351"
+  },
   "done_when": "Review reports an emoji used as an icon on a client app screen as a finding.",
   "fix_kind": "mechanical",
   "kind": "fix",
