@@ -446,6 +446,11 @@ that does not have exactly one service with `expose = "main"`. In a repo without
 `services.toml`, do not create one: the coordinator writes the first list with the owner's
 confirmation.
 
+In `docs/specs/`, state each rule once, on an `R-<n>:` line. Validation (VAL), UAT and
+acceptance (AC) lines name the rule that they check by its ID, for example
+`VAL-11 checks R-13`, and do not say the rule again. When a change edits a rule, update the
+lines that name its ID in the same change.
+
 ## When you finish
 
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you

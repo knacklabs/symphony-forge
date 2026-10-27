@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "improve\t.claude/skills/forge/standards.md\tBoth checked-in standards copies differ from the existing shared template.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/standards.md",
+      "line": 1,
+      "text": "Both checked-in standards copies differ from the existing shared template.",
+      "from": "worker",
+      "item": "FORGE-SPECRULES-1/SPECRULES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
