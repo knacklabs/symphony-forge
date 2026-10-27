@@ -4,34 +4,21 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Every story plan names where each screen, field, endpoint, tool and setting came from: a client note, a brief answer, a decision record, or a screen marked Build now at sign-off.
+- Cold reads and reviews report an addition with no source as not asked for, and that blocks. The canvas may show the full product; code is checked against the signed Build now scope.
+- A worker that thinks of a useful extra writes one line in the repo's idea list and builds nothing for it.
+- New client repos get the rule at init, and existing client repos get it with forge sync.
 
 ## Why
 
-Build only what was asked
-
-
+Plans and builds add screens, fields, endpoints, tools and settings that nobody asked for. Today the cold read and the review flag only work that no Done-when item needs, so an extra that a Done-when line can be stretched to cover gets through.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **Every story plan names a source for each screen, field, endpoint, tool and setting it adds.**
+2. **A plan or build with an unsourced addition gets a blocking note saying it was not asked for.**
+3. **A worker's useful extra becomes one idea-list line, not code.**
+4. **New and existing client repos each get the rule, with a test for each side.**
 
 ## Risks
 
