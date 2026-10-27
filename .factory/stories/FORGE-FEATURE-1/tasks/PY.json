@@ -8,13 +8,191 @@
     "head": null,
     "start": "a282f7183462bf27dec4955ea18fc0a0d485ecd2"
   },
+  "known": [
+    {
+      "area": "_schema_source() in src/forge/feature_python.py",
+      "file": "src/forge/feature_python.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 300,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Validate numeric precision and money bounds before writing",
+      "work": 2
+    },
+    {
+      "area": "render_python_contracts() in src/forge/feature_python_contracts.py",
+      "file": "src/forge/feature_python_contracts.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 105,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Align Python sort keys with the shared web renderer",
+      "work": 2
+    },
+    {
+      "area": "render_python_tests() in src/forge/feature_python_tests.py",
+      "file": "src/forge/feature_python_tests.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 325,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Emit Python tests that pass the starter's formatter check",
+      "work": 2
+    },
+    {
+      "area": "_build_python() in src/forge/feature.py",
+      "file": "src/forge/feature.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 304,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the Python table inventory when generating a feature",
+      "work": 2
+    },
+    {
+      "area": "_python_rename() in src/forge/feature_python.py",
+      "file": "src/forge/feature_python.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 64,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve hyphens in generated permission names",
+      "work": 2
+    },
+    {
+      "area": "test_4_the_feature_keeps_history_and_its_tests_pass_at_once() in tests/test_feature_command.py",
+      "file": "tests/test_feature_command.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 545,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python]",
+      "work": 2
+    },
+    {
+      "area": "test_2_the_new_feature_works_like_projects() in tests/test_feature_command.py",
+      "file": "tests/test_feature_command.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 406,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: generated Python API and browser proofs never run in CI",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4017412bfbd0285facb7732e95776d02886304a5e552981a84223d2f6789c549",
+    "changed": "d97604993f79eb2759c5c6d01c07ed7997cc653dafc75714030fc6bf468b4a3a",
+    "commit": "097a45e2309c7d6590ff055554bcbd559a603790",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Data loss. Case: normal use - an API client submits a number with more than four decimal places. Number and money fields fall through to unconstrained Decimal/int declarations. Consequently, hoursBudget=\"1.23456\" passes validation but NUMERIC(19,4) stores 1.2346; budget=2147483648 reaches INTEGER storage and fails with a 500. The shared validators in src/forge/feature_api.py::_input_expr already enforce four decimal places and the signed 32-bit money range. Apply those constraints to the Python request models so invalid values receive field errors before persistence.",
+        "file": "src/forge/feature_python.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 300,
+        "priority": "P1",
+        "title": "Validate numeric precision and money bounds before writing",
+        "work": 2
+      },
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional. Case: normal use - generate the documented nine-field jobs feature. This contract excludes kinds whose column flag is false, including hoursBudget, contactEmail and billable. However, feature_web.py:219-222 includes every non-long-text field in the typed JobSortBy[] SORT_KEYS array. Those three entries therefore fail TypeScript checking. The Python query schema and service repeat the narrower selection. Derive compatible sort keys across the web renderer, contracts and Python API so the documented command produces a buildable app.",
+        "file": "src/forge/feature_python_contracts.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 105,
+        "priority": "P1",
+        "title": "Align Python sort keys with the shared web renderer",
+        "work": 2
+      },
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional. Case: normal use - generate even the minimal clients feature and run its app test command. After textwrap.dedent, the star and keyword-only parameters here are at column zero while the preceding parameters are indented four spaces. Ruff reformats that signature, so the generated file fails ruff format --check. The Python starter's package.json:11 includes that check, and line 17 runs it before the tests. Emit formatted source so generation does not immediately break the required app command.",
+        "file": "src/forge/feature_python_tests.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 325,
+        "priority": "P1",
+        "title": "Emit Python tests that pass the starter's formatter check",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - generate clients in a fresh Python starter and run its API suite. The Python build adds clients.client without updating apps/api/tests/test_module_schemas.py. That shipped test lists exactly the original eight tables at lines 10-19, queries every application table at lines 49-54, and requires the complete result to equal that inventory at lines 57-59. Every generated feature makes the assertion fail. Update the inventory alongside the generated table while retaining the schema-ownership check.",
+        "file": "src/forge/feature.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 304,
+        "priority": "P1",
+        "title": "Update the Python table inventory when generating a feature",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional. Case: normal use - generate a supported multiword feature such as sales-orders. The replacement changes the permission-map string \"projects\" into \"sales_orders\", so auth/me advertises sales_orders.view. Web wiring uses sales-orders.view, and the shared useCan implementation compares permission strings exactly (starter/libs/core/web/src/permissions.ts:7-8). Thus even admins lose the sidebar entry and receive the not-found page. Keep the public feature slug in permission strings while using underscores for Python identifiers.",
+        "file": "src/forge/feature_python.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 64,
+        "priority": "P1",
+        "title": "Preserve hyphens in generated permission names",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test. Case: normal use - run the newly added Python test_4 parameter. The preceding regex stops at the first newline, while _schema_source emits status annotations across multiple lines (feature_python.py:287-289). For status, annotation[1] is therefore only \"Literal[\", and this ast.parse call raises SyntaxError. The required non-live proof cannot pass even when the generated annotation is valid. Read the complete annotation from the schema's AST instead of parsing its first line.",
+        "file": "tests/test_feature_command.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 545,
+        "priority": "P1",
+        "title": "Gate: test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python]",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test. Case: normal use - this branch's pull-request checks run. The new Python live proofs require LIVE, which test_starter_tree.py:20 enables only through FORGE_STARTER_LIVE=1. The smoke workflow's first job excludes Python parameters with -k \"not python\" (.github/workflows/starter-smoke.yml:42); its Python job omits both test_feature_command.py and test_feature_access.py entirely (line 56). Thus test_2, test_4 and feature-python permission coverage never execute their generated API/database/browser runs in CI. Include these cases in the Python smoke job.",
+        "file": "tests/test_feature_command.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 406,
+        "priority": "P1",
+        "title": "Gate: generated Python API and browser proofs never run in CI",
+        "work": 2
+      }
+    ],
+    "id": "1231b4b9-c385-4b1c-9572-b7fcf0240b5f",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T08:36:21.945925+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-27T09:41:00.426207+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
