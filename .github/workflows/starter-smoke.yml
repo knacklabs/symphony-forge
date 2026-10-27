@@ -54,4 +54,18 @@ jobs:
       - name: Run the Python starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py -k python -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py -k python -q -n 0 --timeout=1800
+
+  python-feature-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run the Python feature stack and browser flows
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py tests/test_feature_access.py -k python -q -n 0 --timeout=1800
