@@ -1,6 +1,13 @@
 {
   "base": "930f7311b9eac452fd8c8dd9f9d64d26113411e4",
   "branch": "fix/two-items-that-each-passed-close-merged",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17db3-e69d-7a30-883d-7e4c7587cda1",
+    "head": null,
+    "start": "1bd7c43747c43bbc1d97a1bc1537c24d72a0a213"
+  },
   "done_when": "When the default branch has moved, a merge retests the combined change first, and it refuses with the names of the failing tests when that retest fails.",
   "fix_kind": "backend",
   "kind": "fix",
