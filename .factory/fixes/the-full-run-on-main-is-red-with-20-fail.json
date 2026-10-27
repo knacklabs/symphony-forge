@@ -1,6 +1,13 @@
 {
   "base": "ae5cc0561e40412a7782e71b59978bd0a963e158",
   "branch": "fix/the-full-run-on-main-is-red-with-20-fail",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17e47-0ca8-78a0-ac6e-a954adb50a0d",
+    "head": null,
+    "start": "e5e3bdb5c689b64e8a3b5313516aa41d00f22861"
+  },
   "done_when": "The full test suite passes on main",
   "fix_kind": "mechanical",
   "kind": "fix",
