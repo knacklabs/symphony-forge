@@ -6,6 +6,8 @@ model Organisation {
   modifiedByAccountId String       @db.Uuid
   deletedAtUtc        DateTime?    @db.Timestamptz(3)
   deletedByAccountId  String?      @db.Uuid
+  // The features whose delete and restore tools agents may use.
+  agentDeleteRestore  String[]     @default([])
   memberships         Membership[]
   projects            Project[]
   invites             Invite[]
@@ -42,6 +44,9 @@ model Membership {
   organisationId      String         @db.Uuid
   email               String
   role                String
+  isAgent             Boolean        @default(false)
+  // The SHA-256 of the agent's one key; null when it has none.
+  agentKeyHash        String?        @unique
   createdAtUtc        DateTime       @default(now()) @db.Timestamptz(3)
   updatedAtUtc        DateTime       @updatedAt @db.Timestamptz(3)
   createdByAccountId  String         @db.Uuid

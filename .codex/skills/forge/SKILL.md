@@ -86,6 +86,8 @@ the next merge.
 | "Record the check-back result" | In a fix: `forge spec measure <slug> --result "<result>"` |
 | "Record a decision" | `forge decision new <slug>` |
 | "The decision is accepted" | `forge decision accept <slug> --by "<name>"` |
+| "What does the client still need to decide?" | `forge decision open` |
+| "Record the client's answers" | In a fix: `forge decision answer --from <file> --by "<name>"` |
 | "Add it to the roadmap" | `forge roadmap add <spec>` |
 | "The new spec replaces this roadmap item" | In a fix: `forge roadmap retire <KEY> --by <spec>` |
 | "Change a finished story's outcome" | On an existing work branch: `forge story done <KEY> "<outcome>"` |
@@ -805,6 +807,28 @@ from `## Words they use` in `docs/product/DISCOVERY.md` for screen labels. Tell 
 they can point at the screen: click an element in the demo build, write what's wrong and paste the
 output to the agent.
 
+**Open decisions.** Write each question only the client can answer in this form, in the decision
+record under `## To confirm`, the spec, or the plan's Notes where it belongs:
+
+```text
+- Open question: <question>
+  Touches: <screen or rule>
+  Why we ask: <what the answer changes>
+  Default: <choice>
+  Why this default: <reason>
+  If the default stands: <what happens>
+  Due: <YYYY-MM-DD>
+  Gain <1-5>, Work <1-5>, Harm <1-5>
+```
+
+Pick the default, due date and scores with the review bar before you ask. Copy a cold-read or
+review note that needs the client into this form. `forge decision open` prints the ranked list;
+go through the whole list with the client in one sitting, then record the answers with
+`forge decision answer`. When `forge next` says a due date passed, record the defaults with
+`forge decision answer --defaults` and tell the client each default and that a new decision can
+change it. After an upgrade, rewrite each existing to-confirm list and open question in this form
+once in a mechanical fix.
+
 For each demo round, gather all requests from one conversation into one prototype fix. Build,
 test, review and merge that round before starting another. Tell the salesperson what changed in
 the demo: "the next version is ready to demo" or "the reviewer found a missing error message".
@@ -889,8 +913,9 @@ The build applies the app's DESIGN.md theme, type and colours to the starter and
 components and fields from SCREENS.md. Workers and reviewers receive that design context.
 
 **Sign-off.** Before anyone asks for sign-off, hold one read-back call with the customer that
-goes through every answer on the answers page: our defaults, the agent's guesses and the topics
-marked later. Settle every open must-answer topic in that call: `forge next` lists those still
+goes through every item from `forge decision open` and every answer on the answers page: our
+defaults, the agent's guesses and the topics marked later. Settle every open must-answer topic
+in that call: `forge next` lists those still
 missing, malformed, or marked ask the client or later, and sign-off also refuses one answered by
 our default or the agent, so record each as the client, salesperson or developer answered it. Then
 write `forge decision new

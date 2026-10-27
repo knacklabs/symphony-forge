@@ -528,6 +528,88 @@
         }
       }
     },
+    "/api/v1/agents": {
+      "post": {
+        "tags": [
+          "Organisations"
+        ],
+        "summary": "Add an agent account to your organisation.",
+        "description": "Only admins can add agent accounts. The account\u2019s email is the name with six random characters at agents.invalid, and it has no password. Create its key next.",
+        "operationId": "add_agent_api_v1_agents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAgentInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_Agent_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects": {
       "get": {
         "tags": [
@@ -1507,6 +1589,284 @@
         }
       }
     },
+    "/api/v1/members/{account_id}/key": {
+      "post": {
+        "tags": [
+          "Organisations"
+        ],
+        "summary": "Create a key for an agent account.",
+        "description": "Only admins can create keys. The key shows this one time only. A new key replaces the old one, which stops working at once.",
+        "operationId": "create_agent_key_api_v1_members__account_id__key_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_AgentKey_"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Organisations"
+        ],
+        "summary": "Revoke an agent account\u2019s key.",
+        "description": "Only admins can revoke keys. Agents that use the key stop working at once.",
+        "operationId": "revoke_agent_key_api_v1_members__account_id__key_delete",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_NoneType_"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-tools": {
+      "get": {
+        "tags": [
+          "Organisations"
+        ],
+        "summary": "List the features whose delete and restore tools agents can use.",
+        "description": "Only admins can read it. Every feature\u2019s search, get, create and update tools are always on.",
+        "operationId": "list_agent_tools_api_v1_agent_tools_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_AgentTools_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-tools/{feature}": {
+      "put": {
+        "tags": [
+          "Organisations"
+        ],
+        "summary": "Turn agent delete and restore on or off for one feature.",
+        "description": "Only admins can change it. The agent account\u2019s role still applies.",
+        "operationId": "change_agent_tools_api_v1_agent_tools__feature__put",
+        "parameters": [
+          {
+            "name": "feature",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "The feature\u2019s plural in kebab case.",
+              "examples": [
+                "projects"
+              ],
+              "title": "Feature"
+            },
+            "description": "The feature\u2019s plural in kebab case."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentToolsChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope_AgentTools_"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/history": {
       "get": {
         "tags": [
@@ -1751,6 +2111,143 @@
           "permissions"
         ],
         "title": "Account"
+      },
+      "AddAgentInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,39}$",
+            "title": "Name",
+            "description": "The start of the agent account\u2019s email: lower-case letters, numbers and hyphens.",
+            "examples": [
+              "gantry"
+            ]
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role",
+            "description": "The agent account\u2019s role.",
+            "examples": [
+              "member"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "role"
+        ],
+        "title": "AddAgentInput"
+      },
+      "Agent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Accountid"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "examples": [
+              "gantry-k3x9p2@agents.invalid"
+            ]
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "isAgent": {
+            "type": "boolean",
+            "title": "Isagent",
+            "description": "Always true for an agent account."
+          },
+          "hasKey": {
+            "type": "boolean",
+            "title": "Haskey",
+            "description": "Whether the agent account has a working key; false until you create one."
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdatutc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "accountId",
+          "email",
+          "role",
+          "isAgent",
+          "hasKey",
+          "createdAtUtc"
+        ],
+        "title": "Agent"
+      },
+      "AgentKey": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "The agent\u2019s key. It shows this one time only.",
+            "examples": [
+              "agent_Vb3Qm9xT2kLr8sYw4Nc6Hd1Fj7Pz0Ae5Gu3Ki9Ob2Wl"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "AgentKey"
+      },
+      "AgentTools": {
+        "properties": {
+          "deleteAndRestore": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Deleteandrestore",
+            "description": "The features whose delete and restore tools agents can use.",
+            "examples": [
+              [
+                "projects"
+              ]
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "deleteAndRestore"
+        ],
+        "title": "AgentTools"
+      },
+      "AgentToolsChange": {
+        "properties": {
+          "deleteAndRestore": {
+            "type": "boolean",
+            "title": "Deleteandrestore",
+            "description": "Whether agents can use the feature\u2019s delete and restore tools.",
+            "examples": [
+              true
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "deleteAndRestore"
+        ],
+        "title": "AgentToolsChange"
       },
       "ApiErrorBody": {
         "properties": {
@@ -2071,6 +2568,16 @@
           "role": {
             "$ref": "#/components/schemas/Role"
           },
+          "isAgent": {
+            "type": "boolean",
+            "title": "Isagent",
+            "description": "Whether the member is an agent account."
+          },
+          "hasKey": {
+            "type": "boolean",
+            "title": "Haskey",
+            "description": "Whether the agent account has a working key."
+          },
           "createdAtUtc": {
             "type": "string",
             "format": "date-time",
@@ -2084,6 +2591,8 @@
           "accountId",
           "email",
           "role",
+          "isAgent",
+          "hasKey",
           "createdAtUtc"
         ],
         "title": "Member"
@@ -2392,6 +2901,93 @@
           "data"
         ],
         "title": "SuccessEnvelope[Account]"
+      },
+      "SuccessEnvelope_AgentKey_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentKey"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[AgentKey]"
+      },
+      "SuccessEnvelope_AgentTools_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentTools"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[AgentTools]"
+      },
+      "SuccessEnvelope_Agent_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true,
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Agent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "null",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessEnvelope[Agent]"
       },
       "SuccessEnvelope_AuthOptions_": {
         "properties": {

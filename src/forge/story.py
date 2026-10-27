@@ -651,8 +651,6 @@ def _numbered(body: str, name: str) -> dict[int, str]:
 def approval_hash(text: str) -> str | None:
     """What an approval binds: sha256 of the stripped "What changes for you" body, a newline, and the
     stripped "Done when" body. None when the text lacks either section.
-
-    ponytail: WORK's task.approval_hash is the same function; collapse the two once both land.
     """
     found = sections(text)
     if not all(name in found for name in APPROVED):
