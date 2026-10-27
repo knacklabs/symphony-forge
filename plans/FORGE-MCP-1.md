@@ -46,7 +46,7 @@
   and no app file. In an app made from an older starter, the feature command builds the feature
   without tools and says so.
 
-Design: docs/design/FORGE-MCP-1/ (a1de7c1d7f5c5bf9a059d738f91383c384bea40b)
+Design: docs/design/FORGE-MCP-1/ (b800165588033c51e1590c71ec39ddb319ecff97)
 
 ## Why
 
