@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-27T11:26:04.478598+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Client apps ship an MCP server so agents can use their features: The MCP server and tools in the TypeScript starter is stuck. It should deliver: The core tools list with `callTool` (checks, results, errors, annotations, time limit), the `libs/mcp/server` module at `/mcp` with the key check, the rate limit and the idempotency table, the projects tools file, the starter's `services.toml`, the contract and behaviour cases, and the feature command's tools copy with its no-MCP rule.\nIt changes 888 lines outside tests, over its limit of 400.\nThe worker tried: Serve feature tools through the starter API.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "7857bd1e-65a5-43e4-ba1d-bfdb9e5fefd4"
+  },
   "stuck": {
     "close": null,
     "head": "bfa38d0f512ec8dec845329a254c5af17b7e8d22",
