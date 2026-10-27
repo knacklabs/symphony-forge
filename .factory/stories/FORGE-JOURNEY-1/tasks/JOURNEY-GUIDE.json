@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-JOURNEY-1-JOURNEY-GUIDE",
+  "chat": {
+    "approval": "e63c414f21e31b411f4d0800a0818da44ca68b334f73fb57a3c6cf9e13e4ac94",
+    "claude": null,
+    "conversation": "01a17dc9-2de9-7cd0-9e4c-0ceea539e603",
+    "head": null,
+    "start": "f864aadf2c1af917b240960a59bac0da6990bd9c"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
