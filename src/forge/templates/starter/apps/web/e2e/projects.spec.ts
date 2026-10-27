@@ -1,17 +1,60 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { csrfToken, inviteUrlsSince, logEvents, newEmail, password, signUp } from './helpers';
 
-async function addProjects(page: Page, names: string[], status = 'active') {
+// forge:feature:flow-fields:start
+const NAME = 'Name';
+const NAME_KEY = 'name';
+
+/** A project the API accepts, with this name. */
+function projectData(name: string): Record<string, unknown> {
+  return { name, status: 'active' };
+}
+
+/** Fills the form's fields other than the name; the Details card then shows each SHOWN text. */
+async function fillProjectForm(page: Page, dialog: Locator) {
+  await dialog.getByRole('combobox', { name: 'Status' }).click();
+  await page.getByRole('option', { name: 'Active' }).click();
+}
+const SHOWN = ['StatusActive'];
+
+/** The list filter that a reloaded link keeps, and the values that leave a project out of it. */
+const LIST_FILTER: { choose(page: Page): Promise<void>; expectChosen(page: Page): Promise<void>; address: RegExp; exportQuery: string; leftOut: Record<string, unknown> } | null = {
+  async choose(page) {
+    await page.getByRole('combobox', { name: 'Status' }).click();
+    await page.getByRole('option', { name: 'Active' }).click();
+  },
+  async expectChosen(page) {
+    await expect(page.getByRole('combobox', { name: 'Status' })).toHaveText('Active');
+  },
+  address: /status=active/,
+  exportQuery: '&status=active',
+  leftOut: { status: 'archived' },
+};
+
+/** Five changes after the create, and the text of the oldest two of the five entries shown. */
+const CHANGES = [{ name: 'Website relaunch', status: 'archived' }, { name: 'Website relaunch', status: 'active' }, { name: 'Second', status: 'active' }, { name: 'Third', status: 'active' }, { name: 'Fourth', status: 'active' }];
+const OLDEST_SHOWN = [/^Status changed from archived to active/, /^Name changed from Website redesign to Website relaunch; Status changed from active to archived/];
+// forge:feature:flow-fields:end
+
+async function addProjects(page: Page, names: string[], values: Record<string, unknown> = {}) {
   const token = await csrfToken(page);
   const projectUrl = new URL('/api/v1/projects', page.url()).toString();
   for (const name of names) {
     const response = await page.context().request.post(projectUrl, {
-      data: { name, status },
+      data: { ...projectData(name), ...values },
       headers: { 'x-csrf-token': token },
     });
     expect(response.ok()).toBeTruthy();
   }
+}
+
+/** Signs up, which opens Projects, then opens this list, so a copied feature's flows start on their own list. */
+async function signUpOnProjects(page: Page): Promise<string> {
+  const email = await signUp(page);
+  await page.goto('/projects');
+  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+  return email;
 }
 
 function paginationNames(count: number) {
@@ -23,10 +66,10 @@ function breadcrumb(page: Page) {
 }
 
 test('create, view, edit, and delete a project', async ({ page }) => {
-  const email = await signUp(page);
+  const email = await signUpOnProjects(page);
   await page.getByRole('button', { name: 'New project' }).click();
   const createDialog = page.getByRole('dialog', { name: 'New project' });
-  await createDialog.getByLabel('Name').fill('Unsaved project');
+  await createDialog.getByLabel(NAME, { exact: true }).fill('Unsaved project');
   await page.keyboard.press('Escape');
   const discardDialog = page.getByRole('alertdialog', { name: 'Discard project changes?' });
   await expect(discardDialog).toBeVisible();
@@ -36,17 +79,16 @@ test('create, view, edit, and delete a project', async ({ page }) => {
   // A new project opens on its detail screen, with every field and who made it.
   await page.getByRole('button', { name: 'New project' }).click();
   const newProjectDialog = page.getByRole('dialog', { name: 'New project' });
-  await newProjectDialog.getByLabel('Name').fill('Migration review');
-  await newProjectDialog.getByRole('combobox', { name: 'Status' }).click();
-  await page.getByRole('option', { name: 'Active' }).click();
+  await newProjectDialog.getByLabel(NAME, { exact: true }).fill('Migration review');
+  await fillProjectForm(page, newProjectDialog);
   await newProjectDialog.getByRole('button', { name: 'Create project' }).click();
   await expect(page.getByText('Project created.')).toBeVisible();
   await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Migration review' })).toBeVisible();
   await expect(breadcrumb(page)).toContainText('Migration review');
   const details = page.getByRole('region', { name: 'Details' });
-  await expect(details).toContainText('NameMigration review');
-  await expect(details).toContainText('StatusActive');
+  await expect(details).toContainText(`${NAME}Migration review`);
+  for (const shown of SHOWN) await expect(details).toContainText(shown);
   await expect(details).toContainText(new RegExp(`Created\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} by ${email.replace(/[.]/g, '\\.')}`));
   await expect(details).toContainText(`by ${email}`);
   await breadcrumb(page).getByRole('link', { name: 'Projects' }).click();
@@ -54,7 +96,7 @@ test('create, view, edit, and delete a project', async ({ page }) => {
 
   // The row opens the detail screen, and its breadcrumb goes back to the same page of the list.
   await addProjects(page, paginationNames(20));
-  await page.getByRole('button', { name: 'Name' }).click();
+  await page.getByRole('button', { name: NAME, exact: true }).click();
   await expect(page).toHaveURL(/sortOrder=asc/);
   // Wait for the sorted rows: a click while the old rows are swapped out can land on another row.
   await expect(page.getByRole('row').nth(2)).toContainText('Pagination project 00');
@@ -62,13 +104,13 @@ test('create, view, edit, and delete a project', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Migration review' })).toBeVisible();
   await page.getByRole('button', { name: 'Edit' }).click();
   const editDialog = page.getByRole('dialog', { name: 'Edit project' });
-  await expect(editDialog.getByLabel('Name')).toHaveValue('Migration review');
-  await editDialog.getByLabel('Name').fill('Migration review updated');
+  await expect(editDialog.getByLabel(NAME, { exact: true })).toHaveValue('Migration review');
+  await editDialog.getByLabel(NAME, { exact: true }).fill('Migration review updated');
   await editDialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByText('Project updated.')).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Migration review updated' })).toBeVisible();
   await breadcrumb(page).getByRole('link', { name: 'Projects' }).click();
-  await expect(page).toHaveURL(/sortBy=name&sortOrder=asc/);
+  await expect(page).toHaveURL(new RegExp(`sortBy=${NAME_KEY}&sortOrder=asc`));
   await expect(page.getByRole('row', { name: /Migration review updated/ })).toBeVisible();
 
   await page.getByRole('button', { name: 'Next' }).click();
@@ -118,14 +160,14 @@ test('create, view, edit, and delete a project', async ({ page }) => {
 });
 
 test("a project's detail screen shows its recent changes", async ({ page }) => {
-  const email = await signUp(page);
+  const email = await signUpOnProjects(page);
   await addProjects(page, ['Website redesign']);
   const token = await csrfToken(page);
   await page.reload();
   const href = await page.getByRole('link', { name: 'Website redesign' }).getAttribute('href');
   const projectUrl = new URL(`/api/v1${href}`, page.url()).toString();
-  for (const [name, status] of [['Website relaunch', 'archived'], ['Website relaunch', 'active'], ['Second', 'active'], ['Third', 'active'], ['Fourth', 'active']]) {
-    const changed = await page.context().request.put(projectUrl, { data: { name, status }, headers: { 'x-csrf-token': token } });
+  for (const change of CHANGES) {
+    const changed = await page.context().request.put(projectUrl, { data: { ...projectData(''), ...change }, headers: { 'x-csrf-token': token } });
     expect(changed.ok()).toBeTruthy();
   }
 
@@ -133,7 +175,7 @@ test("a project's detail screen shows its recent changes", async ({ page }) => {
   const changesRoute = '**/api/v1/projects/*/changes';
   await page.route(changesRoute, (route) => route.abort());
   await page.goto(href ?? '');
-  await expect(page.getByRole('region', { name: 'Details' })).toContainText('NameFourth');
+  await expect(page.getByRole('region', { name: 'Details' })).toContainText(`${NAME}Fourth`);
   const recent = page.getByRole('region', { name: 'Recent changes' });
   await expect(recent.getByRole('alert')).toContainText('Could not load the recent changes.');
   await page.unroute(changesRoute);
@@ -142,10 +184,10 @@ test("a project's detail screen shows its recent changes", async ({ page }) => {
   await expect(recent).toContainText('The last 5 changes to this project.');
   const entries = recent.getByRole('listitem');
   await expect(entries).toHaveCount(5);
-  await expect(entries.first()).toContainText('Name changed from Third to Fourth');
+  await expect(entries.first()).toContainText(`${NAME} changed from Third to Fourth`);
   await expect(entries.first()).toContainText(new RegExp(`${email.replace(/[.]/g, '\\.')} · \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}`));
-  await expect(entries.nth(3)).toHaveText(/^Status changed from archived to active/);
-  await expect(entries.nth(4)).toHaveText(/^Name changed from Website redesign to Website relaunch; Status changed from active to archived/);
+  await expect(entries.nth(3)).toHaveText(OLDEST_SHOWN[0]);
+  await expect(entries.nth(4)).toHaveText(OLDEST_SHOWN[1]);
   await expect(page.getByRole('region', { name: 'Details' })).toContainText(`Last changed`);
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
@@ -153,39 +195,40 @@ test("a project's detail screen shows its recent changes", async ({ page }) => {
   // The admin's link opens the whole Change history, which names the project of each change.
   await recent.getByRole('link', { name: 'Open the change history' }).click();
   await expect(page.getByRole('heading', { name: 'Change history' })).toBeVisible();
-  await expect(page.getByRole('row', { name: /Fourth: Name changed from Third to Fourth/ })).toBeVisible();
+  await expect(page.getByRole('row', { name: new RegExp(`Fourth: ${NAME} changed from Third to Fourth`) })).toBeVisible();
   await expect(page.getByRole('row', { name: /Website redesign: Created the project/ })).toBeVisible();
 });
 
 test('a reloaded projects list link keeps its search, filters and page', async ({ page }) => {
-  await signUp(page);
+  await signUpOnProjects(page);
   await addProjects(page, paginationNames(21));
   await addProjects(page, ['Unrelated work']);
-  await addProjects(page, ['Pagination archived'], 'archived');
+  if (LIST_FILTER) await addProjects(page, ['Pagination archived'], LIST_FILTER.leftOut);
   await page.reload();
 
   await page.getByRole('searchbox', { name: 'Search projects' }).fill('pagination');
   await expect(page).toHaveURL(/search=pagination/);
-  await page.getByRole('combobox', { name: 'Status' }).click();
-  await page.getByRole('option', { name: 'Active' }).click();
-  await expect(page).toHaveURL(/status=active/);
-  await page.getByRole('button', { name: 'Name' }).click();
-  await expect(page).toHaveURL(/sortBy=name/);
+  if (LIST_FILTER) {
+    await LIST_FILTER.choose(page);
+    await expect(page).toHaveURL(LIST_FILTER.address);
+  }
+  await page.getByRole('button', { name: NAME, exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`sortBy=${NAME_KEY}`));
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page).toHaveURL(/after=/);
 
   async function expectSecondPage(view: Page) {
     await expect(view).toHaveURL(/search=pagination/);
-    await expect(view).toHaveURL(/status=active/);
+    if (LIST_FILTER) await expect(view).toHaveURL(LIST_FILTER.address);
     await expect(view).toHaveURL(/sortOrder=asc/);
     await expect(view).toHaveURL(/after=/);
     await expect(view.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('pagination');
-    await expect(view.getByRole('combobox', { name: 'Status' })).toHaveText('Active');
+    if (LIST_FILTER) await LIST_FILTER.expectChosen(view);
     await expect(view.getByRole('row', { name: /Pagination project 20/ })).toBeVisible();
     await expect(view.getByRole('row', { name: /Pagination project/ })).toHaveCount(1);
     await expect(view.getByText('21 projects')).toBeVisible();
     // Playwright reads a th without scope as a cell, so find the Name header by its sort button.
-    await expect(view.locator('th', { has: view.getByRole('button', { name: 'Name' }) })).toHaveAttribute('aria-sort', 'ascending');
+    await expect(view.locator('th', { has: view.getByRole('button', { name: NAME, exact: true }) })).toHaveAttribute('aria-sort', 'ascending');
   }
 
   await page.reload();
@@ -194,12 +237,12 @@ test('a reloaded projects list link keeps its search, filters and page', async (
   const shared = await page.context().newPage();
   await shared.goto(page.url());
   await expectSecondPage(shared);
-  await expect(page.getByRole('link', { name: 'Export CSV' })).toHaveAttribute('href', '/api/v1/projects/export?search=pagination&status=active');
+  await expect(page.getByRole('link', { name: 'Export CSV' })).toHaveAttribute('href', `/api/v1/projects/export?search=pagination${LIST_FILTER?.exportQuery ?? ''}`);
 
   // The only project on this page stops matching: the page empties, but earlier pages still match.
   const href = await page.getByRole('link', { name: 'Pagination project 20' }).getAttribute('href');
   const changed = await page.context().request.put(new URL(`/api/v1${href}`, page.url()).toString(), {
-    data: { name: 'Pagination project 20', status: 'archived' },
+    data: { ...projectData('Pagination project 20'), ...(LIST_FILTER?.leftOut ?? { [NAME_KEY]: 'Renamed project 20' }) },
     headers: { 'x-csrf-token': await csrfToken(page) },
   });
   expect(changed.ok()).toBeTruthy();
@@ -208,7 +251,7 @@ test('a reloaded projects list link keeps its search, filters and page', async (
   await page.getByRole('button', { name: 'Go to the first page' }).click();
   await expect(page).not.toHaveURL(/after=/);
   await expect(page).toHaveURL(/search=pagination/);
-  await expect(page).toHaveURL(/status=active/);
+  if (LIST_FILTER) await expect(page).toHaveURL(LIST_FILTER.address);
   await expect(page.getByRole('row', { name: /Pagination project 00/ })).toBeVisible();
   await expect(page.getByText('20 projects')).toBeVisible();
 
@@ -217,16 +260,17 @@ test('a reloaded projects list link keeps its search, filters and page', async (
   await expect(page).not.toHaveURL(/after=/);
   await expect(page.getByText('No projects match this search.')).toBeVisible();
   await page.getByRole('button', { name: 'Clear search and filters' }).click();
-  await expect(page).not.toHaveURL(/search=|status=/);
+  await expect(page).not.toHaveURL(/search=/);
+  if (LIST_FILTER) await expect(page).not.toHaveURL(LIST_FILTER.address);
   await expect(page.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('');
-  await expect(page.getByText('23 projects')).toBeVisible();
+  await expect(page.getByText(`${LIST_FILTER ? 23 : 22} projects`)).toBeVisible();
 });
 
 test('keyboard sorting a cached order keeps focus on the header', async ({ page }) => {
-  await signUp(page);
+  await signUpOnProjects(page);
   await addProjects(page, paginationNames(2));
   await page.reload();
-  const nameHeader = page.getByRole('button', { name: 'Name' });
+  const nameHeader = page.getByRole('button', { name: NAME, exact: true });
   await nameHeader.click();
   await expect(page).toHaveURL(/sortOrder=asc/);
   await nameHeader.click();
@@ -244,7 +288,7 @@ test('keyboard sorting a cached order keeps focus on the header', async ({ page 
 });
 
 test('a member does not see the project actions they lack', async ({ page, browser }) => {
-  await signUp(page);
+  await signUpOnProjects(page);
   await addProjects(page, ['Team project']);
   const token = await csrfToken(page);
   const apiUrl = (path: string) => new URL(`/api/v1${path}`, page.url()).toString();
@@ -302,7 +346,7 @@ test('a member does not see the project actions they lack', async ({ page, brows
 });
 
 test('an admin shows deleted projects and restores one', async ({ page }) => {
-  const email = await signUp(page);
+  const email = await signUpOnProjects(page);
   await addProjects(page, ['Kept project', 'Old project']);
   const token = await csrfToken(page);
   const listed = await (await page.context().request.get(new URL('/api/v1/projects', page.url()).toString())).json();

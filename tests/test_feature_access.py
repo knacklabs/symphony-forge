@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from test_feature_command import (CLIENT_LINE, JOBS_LINE, NOTES_LINE, _run_line, feature_live_run,
+                                  require_feature_cases)
 from test_setup import _fresh_client
 from test_starter_tree import LIVE, STARTER, _require_cases, live_run
 
@@ -66,7 +68,8 @@ def _python_routes(text: str) -> dict[tuple[str, str], list[str]]:
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["projects-typescript", "projects-python", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["projects-typescript", "projects-python", "feature-typescript",
+                                     "earlier adopted"])
 def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, request):
     # Audit: a projects route with no permission check, two checks or the wrong permission fails
     # the static check; a guard that lets a member delete or restore, a deleted project shown to
@@ -95,6 +98,30 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
                  for path in (repo.path / "libs").rglob("*") if path.is_file()}
         assert after == before
         assert "member: []" in (repo.path / TS_PERMISSIONS).read_text("utf-8")
+        return
+
+    if starter == "feature-typescript":
+        # A feature the command builds names the right permission on each route, and its
+        # copied cases pass: notes, whose members get no permission, proves view, create and edit.
+        client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+        for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE):
+            built = _run_line(repo, client, "bash", line)
+            assert built.returncode == 0, built.stdout + built.stderr
+        for plural in ("clients", "jobs", "notes"):
+            routes = _typescript_routes(
+                (client / f"libs/{plural}/server/src/{plural}.controller.ts").read_text("utf-8"))
+            assert routes == {route: [permission] for route, permission in ROUTE_PERMISSIONS.items()}
+        if LIVE:
+            live = feature_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
+            for plural, one in (("jobs", "job"), ("notes", "note")):
+                require_feature_cases(live["api"], f"{plural}.e2e-spec.ts",
+                                      (f"each {plural} endpoint refuses a member without its permission",))
+                require_feature_cases(live["browser"], f"{plural}.spec.ts",
+                                      (f"a member does not see the {one} actions they lack",))
+            require_feature_cases(live["api"], "jobs.e2e-spec.ts", ("an admin restores a deleted job",))
+            require_feature_cases(live["browser"], "jobs.spec.ts",
+                                  ("an admin shows deleted jobs and restores one",))
         return
 
     typescript = starter == "projects-typescript"

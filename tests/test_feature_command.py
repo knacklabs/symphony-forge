@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from test_setup import _fresh_client
+from test_starter_tree import _LIVE_RUNS, LIVE, _junit_cases, _run_live_starter
 
 ROOT = Path(__file__).resolve().parents[1]
 STARTER = ROOT / "src/forge/templates/starter"
@@ -24,6 +25,7 @@ JOBS_LINE = (
     "--field 'budget?:money' --field 'dueDate?:date' "
     "--field 'contactEmail?:email' --field 'billable:yes-no'"
 )
+NOTES_LINE = "forge task feature notes --one note --field 'title:text'"
 
 
 def _run_line(repo, client: Path, shell: str, line: str) -> subprocess.CompletedProcess[str]:
@@ -198,6 +200,76 @@ assert.deepEqual(failures, []);
     assert checked.returncode == 0, checked.stdout + checked.stderr
 
 
+def feature_live_run(repo, gh, tmp_path_factory) -> dict:
+    """Run one new starter app with the item 1 features and a notes feature whose members get no
+    permission, once per pytest session; the run cleans up before it returns."""
+    if "feature" not in _LIVE_RUNS:
+        client, initialized = _fresh_client(repo, gh, tmp_path_factory.mktemp("feature-app"),
+                                            "--starter", "react")
+        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+        for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE):
+            built = repo.forge(*shlex.split(line)[1:], cwd=client)
+            assert built.returncode == 0, built.stdout + built.stderr
+        permissions = client / "libs/notes/server/src/notes.permissions.ts"
+        mapping = permissions.read_text("utf-8")
+        assert "member: ['view', 'create', 'edit']" in mapping
+        permissions.write_text(mapping.replace("member: ['view', 'create', 'edit']", "member: []"),
+                               encoding="utf-8")
+        _LIVE_RUNS["feature"] = _run_live_starter(
+            tmp_path_factory, ((client, Path(".")),), ("GET /health returned 200",))
+    return _LIVE_RUNS["feature"]
+
+
+def require_feature_cases(cases: list[str], report: str, expected) -> None:
+    """Each expected case passed in the named generated test file of the run's report."""
+    for name in expected:
+        assert any(report.casefold() in case and name.casefold() in case for case in cases), (
+            f"no passing case {name!r} in {report}; cases: {cases}")
+
+
+@pytest.mark.platform
+@pytest.mark.timeout(1800)
+@pytest.mark.parametrize("starter", ["typescript"])
+def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_factory, starter):
+    # Audit: the item 1 lines must give the feature its screens, wiring and tests, and the app's
+    # own run must pass them through the real API, database and browser. A missing route,
+    # sidebar or search item, a form without a field's control, a list that forgets its
+    # filters on reload, or a detail screen without its recent changes fails the live flows.
+    # The app's reports own the behaviour; this test names the cases.
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    written = set()
+    for line in (CLIENT_LINE, JOBS_LINE):
+        result = _run_line(repo, client, "bash", line)
+        assert result.returncode == 0, result.stdout + result.stderr
+        written |= _written_paths(result, client)
+    assert {
+        "libs/jobs/web/package.json", "libs/jobs/web/project.json", "libs/jobs/web/tsconfig.json",
+        "libs/jobs/web/src/index.ts", "libs/jobs/web/src/hooks/jobs-hooks.ts",
+        "libs/jobs/web/src/hooks/jobs-hooks.test.tsx", "libs/jobs/web/src/pages/jobs-page.tsx",
+        "libs/jobs/web/src/pages/job-detail-page.tsx", "libs/jobs/web/src/pages/job-form-dialog.tsx",
+        "apps/web/e2e/jobs.spec.ts", "apps/web/src/app.tsx", "apps/web/src/components/app-shell.tsx",
+        "apps/web/package.json",
+    } <= written
+    web = json.loads((client / "libs/jobs/web/project.json").read_text("utf-8"))
+    assert web["tags"] == ["type:web", "scope:jobs"]
+    if LIVE:
+        live = feature_live_run(repo, gh, tmp_path_factory)
+        require_feature_cases(live["api"], "jobs.e2e-spec.ts", (
+            "creates, lists, reads, updates, soft-deletes, and restores",
+            "pages forward and backward by every sortable field",
+            "searches and filters the feature list",
+            "keeps another organisation from reading or changing",
+            "rejects bad fields, unknown inputs, and unknown list parameters",
+            "keeps formula-leading text safe in CSV",
+        ))
+        require_feature_cases(live["browser"], "jobs.spec.ts", (
+            "create, view, edit, and delete a job",
+            "a reloaded jobs list link keeps its search, filters and page",
+            "a job's detail screen shows its recent changes",
+        ))
+
+
 def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, field: dict) -> None:
     kind = kinds["kinds"][field["kind"]]
     column = field.get("column", field["name"] + ("Id" if field["kind"] == "link" else ""))
@@ -211,7 +283,8 @@ def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, f
 
 
 @pytest.mark.platform
-def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(repo, gh, tmp_path):
+@pytest.mark.timeout(1800)
+def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(repo, gh, tmp_path, tmp_path_factory):
     """The shipped kind table controls generated SQL, indexes and linked API contracts."""
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -285,6 +358,13 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(repo, gh, tmp_pa
         project = json.loads((client / f"libs/jobs/{kind}/project.json").read_text("utf-8"))
         assert project["tags"] == [scope, "scope:jobs"]
     assert "sourceTag: 'scope:jobs'" in (client / "eslint.config.mjs").read_text("utf-8")
+    if LIVE:
+        live = feature_live_run(repo, gh, tmp_path_factory)
+        for plural, one in (("clients", "client"), ("jobs", "job"), ("notes", "note")):
+            require_feature_cases(live["api"], f"{plural}.e2e-spec.ts",
+                                  (f"records each {one} change in the change history",))
+            require_feature_cases(_junit_cases(live["folder"] / "test-results/formats.xml"),
+                                  f"{plural}-hooks.test.tsx", (f"{one} hooks",))
 
 
 @pytest.mark.platform
@@ -390,6 +470,7 @@ def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell)
     for plural, one, expected in (
         ("classrooms", "class", "reserved"),
         ("assignments", "project", "already exists"),
+        ("pages", "page", "already a name in the feature's screens"),
     ):
         before = repo.git("status", "--porcelain", cwd=new_client)
         refused = _run_line(

@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Link, useLocation, useMatch, useNavigate, useOutletContext } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+// forge:feature:detail-imports:start
 import { formatDate, formatDateTime } from '@app/shared-util';
+import { STATUS_LABELS } from './projects-page';
+// forge:feature:detail-imports:end
 import type { Project, ProjectInput } from '@app/projects-contracts';
 import { ApiError, useCan } from '@app/core-web';
 import { Alert, AlertDescription } from '@app/shared-ui/components/ui/alert';
@@ -21,7 +24,6 @@ import { BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } f
 import { Button } from '@app/shared-ui/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@app/shared-ui/components/ui/card';
 import { ProjectFormDialog } from './project-form-dialog';
-import { STATUS_LABELS } from './projects-page';
 import { useDeleteProject, useProject, useProjectChanges, useRestoreProject, useUpdateProject } from '../hooks/projects-hooks';
 
 /** The list's search, filters, sort and page that the person came from, so going back keeps them. */
@@ -47,9 +49,9 @@ export function ProjectCrumbs() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className={className}>
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
       <dd className="mt-1 tabular-nums">{children}</dd>
     </div>
@@ -134,7 +136,9 @@ function ProjectDetails({ project, isAdmin }: { project: Project; isAdmin: boole
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight break-words">{project.name}</h1>
+          {/* forge:feature:heading-badge:start */}
           <Badge variant="outline">{STATUS_LABELS[project.status]}</Badge>
+          {/* forge:feature:heading-badge:end */}
           {deleted && <Badge variant="secondary">Deleted</Badge>}
         </div>
         {!deleted && (
@@ -162,8 +166,10 @@ function ProjectDetails({ project, isAdmin }: { project: Project; isAdmin: boole
           <CardHeader><CardTitle><h2 id="details-title">Details</h2></CardTitle></CardHeader>
           <CardContent className="space-y-5">
             <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+              {/* forge:feature:detail-fields:start */}
               <Field label="Name"><span className="break-words">{project.name}</span></Field>
               <Field label="Status">{STATUS_LABELS[project.status]}</Field>
+              {/* forge:feature:detail-fields:end */}
             </dl>
             <dl className="grid gap-x-6 gap-y-5 border-t pt-5 sm:grid-cols-2">
               <Field label="Created"><When utc={project.createdAtUtc} /> by <span className="break-all">{project.createdByEmail}</span></Field>

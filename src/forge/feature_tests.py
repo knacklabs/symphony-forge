@@ -317,9 +317,12 @@ describe('@@PLURAL@@ API', () => {
     const withDeleted = await client.get(`@@ROOT@@?search=${mark}&deleted=yes`).expect(200);
     expect(featureItems(withDeleted).map((item) => item.id)).toEqual([id]);
     const member = await sharedMemberSignedIn();
-    expect(featureItems(await member.client.get(`@@ROOT@@?search=${mark}&deleted=yes`).expect(200))).toEqual([]);
-    await member.client.get(`@@ROOT@@/${id}`).expect(404);
-    await member.client.get(`@@ROOT@@/${id}/changes`).expect(404);
+    // A member who may view never sees the deleted item; one who may not gets 403, as the endpoint case checks.
+    if (member.permissions.includes(FEATURE_PERMISSIONS.view)) {
+      expect(featureItems(await member.client.get(`@@ROOT@@?search=${mark}&deleted=yes`).expect(200))).toEqual([]);
+      await member.client.get(`@@ROOT@@/${id}`).expect(404);
+      await member.client.get(`@@ROOT@@/${id}/changes`).expect(404);
+    }
     const restored = await client.post(`@@ROOT@@/${id}/restore`).set('x-csrf-token', csrf).expect(200);
     expect(restored.body.data).toMatchObject({ id, deletedAtUtc: null, deletedByEmail: null });
   });
@@ -431,6 +434,21 @@ describe('@@PLURAL@@ API', () => {
     ]));
   });
 
+  it('an admin restores a deleted @@ONE@@', async () => {
+    const { client, csrf } = await sharedSignedIn();
+    const mark = randomUUID();
+    const kept = await createFeature(client, csrf, await featureInput(client, csrf, mark, 'sample'));
+    const id = await createFeature(client, csrf, await featureInput(client, csrf, mark, 'sample'));
+    await client.delete(`@@ROOT@@/${id}`).set('x-csrf-token', csrf).expect(200);
+    const withDeleted = await client.get(`@@ROOT@@?search=${mark}&deleted=yes`).expect(200);
+    expect(featureItems(withDeleted).map((item) => item.id).sort()).toEqual([kept, id].sort());
+    await client.post(`@@ROOT@@/${id}/restore`).set('x-csrf-token', csrf).expect(200);
+    const listed = await client.get(`@@ROOT@@?search=${mark}`).expect(200);
+    expect(featureItems(listed).map((item) => item.id).sort()).toEqual([kept, id].sort());
+    const changes = (await client.get(`@@ROOT@@/${id}/changes`).expect(200)).body.data as { summary: string }[];
+    expect(changes[0].summary).toBe('Restored the @@ONE@@');
+  });
+
   it('keeps another organisation from reading or changing a feature item', async () => {
     const owner = await sharedSignedIn();
     const mark = randomUUID();
@@ -448,7 +466,7 @@ describe('@@PLURAL@@ API', () => {
     await other.client.post(`@@ROOT@@/${id}/restore`).set('x-csrf-token', other.csrf).expect(404);
   });
 
-  it('checks every feature endpoint against the role permissions', async () => {
+  it('each @@PLURAL@@ endpoint refuses a member without its permission', async () => {
     const admin = await sharedSignedIn();
     const member = await sharedMemberSignedIn();
     const adminPermissions = (await admin.client.get('/api/v1/auth/me').expect(200)).body.data.permissions as string[];
