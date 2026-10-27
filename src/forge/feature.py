@@ -86,8 +86,9 @@ def _before(text: str, anchor: str, addition: str, path: str) -> str:
     return _insert(text, anchor, "", path).replace(anchor, addition + anchor, 1)
 
 
-def _link_names(fields: list[dict], root: Path) -> dict[str, str]:
-    """The field that names each linked feature's items: the first required text in its schema."""
+def _link_names(fields: list[dict], root: Path) -> dict[str, dict[str, str]]:
+    """For each linked feature: the field that names its items (the first required text in its
+    schema) and its required fields' examples, which the browser flows send to make one."""
     names = {}
     for target in sorted({field["target"] for field in fields if field["kind"] == "link"}):
         contract = (root / f"libs/{target}/contracts/src/index.ts").read_text(encoding="utf-8")
@@ -95,7 +96,9 @@ def _link_names(fields: list[dict], root: Path) -> dict[str, str]:
         if not match:
             _refuse(f"The linked feature {target!r} has no required text field for its name.",
                     "build the linked feature with this command first, then run this line again.")
-        names[target] = match[1]
+        required = re.findall(r"^\s+(\w+): (?!.*\.optional\(\)).*\.meta\(\{ description: .*, example: (.+) \}\),$", contract, re.M)
+        names[target] = {"name": match[1], "examples": ", ".join(
+            f"{column}: {example}" for column, example in required if column != match[1])}
     return names
 
 

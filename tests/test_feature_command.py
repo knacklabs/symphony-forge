@@ -27,6 +27,9 @@ JOBS_LINE = (
     "--field 'contactEmail?:email' --field 'billable:yes-no'"
 )
 NOTES_LINE = "forge task feature notes --one note --field 'title:text'"
+# The first text field is not the one called name, a status is optional and a link is required.
+TASKS_LINE = ("forge task feature tasks --one task --field 'code:text' --field 'name:text' "
+              "--field 'stage?:status(open|closed)' --field 'job:link(jobs)'")
 
 
 def _run_line(repo, client: Path, shell: str, line: str) -> subprocess.CompletedProcess[str]:
@@ -202,13 +205,15 @@ assert.deepEqual(failures, []);
 
 
 def feature_live_run(repo, gh, tmp_path_factory) -> dict:
-    """Run one new starter app with the item 1 features and a notes feature whose members get no
-    permission, once per pytest session; the run cleans up before it returns."""
+    """Run one new starter app with the item 1 features, a notes feature whose members get no
+    permission and a tasks feature with a code before its name, an optional status and a
+    required link, once per pytest session; the run cleans
+    up before it returns."""
     if "feature" not in _LIVE_RUNS:
         client, initialized = _fresh_client(repo, gh, tmp_path_factory.mktemp("feature-app"),
                                             "--starter", "react")
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-        for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE):
+        for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE, TASKS_LINE):
             built = repo.forge(*shlex.split(line)[1:], cwd=client)
             assert built.returncode == 0, built.stdout + built.stderr
         permissions = client / "libs/notes/server/src/notes.permissions.ts"
@@ -234,7 +239,8 @@ def require_feature_cases(cases: list[str], report: str, expected) -> None:
 def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_factory, starter):
     # Audit: the item 1 lines must give the feature its screens, wiring and tests, and the app's
     # own run must pass them through the real API, database and browser. A missing route,
-    # sidebar or search item, a form without a field's control, a list that forgets its
+    # sidebar or search item, a form without a field's control or that shows no field's error and
+    # focus, a required link the form cannot fill, a list that forgets its
     # filters on reload, or a detail screen without its recent changes fails the live flows.
     # The app's reports own the behaviour; this test names the cases.
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
@@ -269,6 +275,8 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
             "a reloaded jobs list link keeps its search, filters and page",
             "a job's detail screen shows its recent changes",
         ))
+        # A required link: the form checks and focuses it, and the flows link each task to a job.
+        require_feature_cases(live["browser"], "tasks.spec.ts", ("create, view, edit, and delete a task",))
 
 
 def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, field: dict) -> None:

@@ -40,8 +40,15 @@ export function LinkPicker({ path, nameField, label, noun, emptyChoice, value, o
     setOpen(false);
   }
 
+  // Each opening loads the list again: after a failed load, as its error message says, and after
+  // items were added elsewhere. The last list stays on screen while it loads.
+  function openChange(next: boolean) {
+    if (next) void items.refetch();
+    setOpen(next);
+  }
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={openChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" role="combobox" aria-expanded={open} aria-label={label} className={cn('justify-between font-normal', className)} {...trigger}>
           <span className="truncate">{value ? chosen.data?.name ?? '' : emptyChoice ?? `Search ${noun}…`}</span>

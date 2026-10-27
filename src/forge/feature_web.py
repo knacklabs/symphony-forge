@@ -140,7 +140,7 @@ class _Web:
     """The generated text for each mark, from the feature's fields and the kind table."""
 
     def __init__(self, fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any],
-                 link_names: dict[str, str]):
+                 link_names: dict[str, dict[str, str]]):
         self.fields, self.one, self.plural, self.kinds = fields, one, plural, kinds["kinds"]
         self.model, self.item = _pascal(one), _camel(one)
         self.full_kinds = kinds
@@ -162,7 +162,7 @@ class _Web:
                 for template in self.kind(field, "filter_options")]
 
     def link_target(self, field: dict[str, Any]) -> str:
-        return f"path={_attr(field['target'])} nameField={_attr(self.link_names[field['target']])}"
+        return f"path={_attr(field['target'])} nameField={_attr(self.link_names[field['target']]['name'])}"
 
     def link_props(self, field: dict[str, Any]) -> str:
         return (f"{self.link_target(field)} label={_attr(_words(field['name']))} "
@@ -433,12 +433,17 @@ class _Web:
                 continue
             if kind == "select":
                 options = "\n".join(f"        <SelectItem value={_attr(option)}>{_words(option)}</SelectItem>" for option in field["options"])
-                control = (f"    <Select value={{field.value}} onValueChange={{field.onChange}}>\n"
-                           f"      <FormControl><SelectTrigger aria-label={_attr(label)} className=\"w-full\"><SelectValue placeholder={_attr('Choose a ' + label.lower())} /></SelectTrigger></FormControl>\n"
+                # An optional status can go back to none; a Select item cannot have an empty value.
+                value, change = "field.value", "field.onChange"
+                if field.get("optional"):
+                    options = "        <SelectItem value=\"_none\">None</SelectItem>\n" + options
+                    value, change = "field.value || '_none'", "(value) => field.onChange(value === '_none' ? '' : value)"
+                control = (f"    <Select value={{{value}}} onValueChange={{{change}}}>\n"
+                           f"      <FormControl><SelectTrigger ref={{field.ref}} aria-label={_attr(label)} className=\"w-full\"><SelectValue placeholder={_attr('Choose a ' + label.lower())} /></SelectTrigger></FormControl>\n"
                            f"      <SelectContent>\n{options}\n      </SelectContent>\n    </Select>")
             elif kind == "combobox":
                 empty = " emptyChoice=\"None\"" if field.get("optional") else ""
-                control = (f"    <FormControl><LinkPicker {self.link_props(field)}{empty} className=\"w-full\" value={{field.value || undefined}} "
+                control = (f"    <FormControl><LinkPicker {self.link_props(field)}{empty} className=\"w-full\" ref={{field.ref}} value={{field.value || undefined}} "
                            f"onChange={{(id) => field.onChange(id ?? '')}} /></FormControl>")
             elif kind == "money":
                 control = ("    <div className=\"flex\">\n"
@@ -514,15 +519,31 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
         name, name_label = _column(self.name), _words(self.name["name"])
         data, fills, shown = {}, [], []
         for field in self.fields:
-            if field is self.name or field["kind"] == "link":
+            if field is self.name or (field["kind"] == "link" and field.get("optional")):
                 continue
             column, label, kind = _column(field), _words(field["name"]), self.kind(field, "input")
-            value = data[column] = _sample(field, self.full_kinds)
             box = f"dialog.getByLabel({_js(label)}, {{ exact: true }})"
+            if kind == "combobox":
+                # A required link points at an item that the flow makes through the other feature's API.
+                target_words = field["target"].replace("-", " ")
+                data[column] = f"await linked{_pascal(column)}(page)"
+                # The item comes after the form loaded its list: opening the list loads it again.
+                fills += [f"await linked{_pascal(column)}(page);",
+                          f"await dialog.getByRole('combobox', {{ name: {_js(label)} }}).click();",
+                          f"await page.getByRole('option', {{ name: {_js('Linked ' + target_words)} }}).first().click();"]
+                shown.append(_js(label + "Linked " + target_words))
+                continue
+            value = data[column] = _sample(field, self.full_kinds)
             if kind == "select":
                 fills += [f"await dialog.getByRole('combobox', {{ name: {_js(label)} }}).click();",
                           f"await page.getByRole('option', {{ name: {_js(_words(value))}, exact: true }}).click();"]
-                shown.append(_js(label + _words(value)))
+                if field.get("optional"):
+                    # An optional status goes back to none, and the item saves with no status.
+                    fills += [f"await dialog.getByRole('combobox', {{ name: {_js(label)} }}).click();",
+                              "await page.getByRole('option', { name: 'None', exact: true }).click();"]
+                    shown.append(_js(label + "None"))
+                else:
+                    shown.append(_js(label + _words(value)))
             elif kind == "checkbox":
                 fills.append(f"await {box}.{'check' if value else 'uncheck'}();")
                 shown.append(_js(label + ("Yes" if value else "No")))
@@ -539,11 +560,14 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
                 shown.append(_js(label + str(value)))
         # With no other field to fill, the function still checks the dialog it got.
         fills = fills or ["await expect(dialog.getByLabel(NAME, { exact: true })).not.toHaveValue('');"]
-        values = ", ".join([f"{name}: name"] + [f"{column}: {_js(value)}" for column, value in data.items()])
+        values = ", ".join([f"{name}: name"] + [f"{column}: {value if str(value).startswith('await ') else _js(value)}"
+                                                for column, value in data.items()])
         lines = [
             f"const NAME = {_js(name_label)};", f"const NAME_KEY = {_js(name)};", "",
+            *self.linked_helpers(),
             f"/** A {self.one.replace('-', ' ')} the API accepts, with this name. */",
-            f"function {self.item}Data(name: string): Record<string, unknown> {{", f"  return {{ {values} }};", "}", "",
+            f"async function {self.item}Data(page: Page, name: string): Promise<Record<string, unknown>> {{", f"  return {{ {values} }};", "}", "",
+            *self.form_check(),
             "/** Fills the form's fields other than the name; the Details card then shows each SHOWN text. */",
             f"async function fill{self.model}Form(page: Page, dialog: Locator) {{", *("  " + line for line in fills), "}",
             f"const SHOWN: (string | RegExp)[] = [{', '.join(shown)}];", "",
@@ -551,13 +575,16 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
             "type ListFilter = { choose(page: Page): Promise<void>; expectChosen(page: Page): Promise<void>; "
             "address: RegExp; exportQuery: string; leftOut: Record<string, unknown> };",
         ]
-        chosen = next((field for field in self.filters if field["kind"] in ("status", "yes-no")), None)
+        chosen = next((field for field in self.filters if field["kind"] == "yes-no"
+                       or (field["kind"] == "status" and len(field["options"]) > 1)), None)
         if chosen is None:
             lines.append("const LIST_FILTER = null as ListFilter | null;")
         else:
             column, label, sample = _column(chosen), _words(chosen["name"]), _sample(chosen, self.full_kinds)
             if chosen["kind"] == "status":
-                option, parameter, left_out = _words(sample), sample, _sample(chosen, self.full_kinds, changed=True)
+                # Another option than the sample, whatever the kind table's own sample is.
+                left_out = next(option for option in chosen["options"] if option != sample)
+                option, parameter = _words(sample), sample
             else:
                 option, parameter, left_out = self.options(chosen)[1 if sample else 2], "yes" if sample else "no", not sample
             lines += [
@@ -573,6 +600,64 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
                   f"const OLDEST_SHOWN = [/^{re.escape(name_label)} changed from Website redesign to Website relaunch/, /^Created the {self.one.replace('-', ' ')}/];"]
         return "\n".join(lines)
 
+    def linked_helpers(self) -> list[str]:
+        lines = []
+        for field in self.links:
+            if field.get("optional"):
+                continue
+            target, column = field["target"], _column(field)
+            target_words = target.replace("-", " ")
+            info = self.link_names[target]
+            data = ", ".join(filter(None, [info["examples"], f"{info['name']}: {_js('Linked ' + target_words)}"]))
+            lines += [
+                f"// One linked item from {target_words} for each page, so every {self.one.replace('-', ' ')} in a flow links to the same one.",
+                f"const linked{_pascal(column)}Items = new WeakMap<Page, Promise<string>>();",
+                f"function linked{_pascal(column)}(page: Page): Promise<string> {{",
+                f"  let id = linked{_pascal(column)}Items.get(page);",
+                "  if (!id) {",
+                "    id = (async () => {",
+                f"      const response = await page.context().request.post(new URL('/api/v1/{target}', page.url()).toString(), {{",
+                f"        data: {{ {data} }}, headers: {{ 'x-csrf-token': await csrfToken(page) }},",
+                "      });",
+                "      expect(response.ok()).toBeTruthy();",
+                "      return (await response.json()).data.id as string;",
+                "    })();",
+                f"    linked{_pascal(column)}Items.set(page, id);",
+                "  }",
+                "  return id;",
+                "}", ""]
+        return lines
+
+    def form_check(self) -> list[str]:
+        bad = {"number": ("many", "Enter a number."), "money": ("lots", "Enter an amount, such as 1,250.00."),
+               "date": ("2026-02-30", "Enter a real date as YYYY-MM-DD."), "email": ("not-an-email", "Enter a valid email address.")}
+        locate = lambda field: (f"dialog.getByRole('combobox', {{ name: {_js(_words(field['name']))} }})"
+                                if self.kind(field, "input") == "combobox"
+                                else f"dialog.getByLabel({_js(_words(field['name']))}, {{ exact: true }})")
+        steps = [f"  const submit = dialog.getByRole('button', {{ name: {_js('Create ' + self.one.replace('-', ' '))} }});",
+                 "  await submit.click();", "  await expect(dialog.getByText('Enter a name.').first()).toBeVisible();",
+                 "  await expect(dialog.getByLabel(NAME, { exact: true })).toBeFocused();"]
+        wrong, messages = [], []
+        for field in self.fields:
+            kind = self.kind(field, "input")
+            if field is self.name:
+                continue
+            if kind in bad:
+                steps.append(f"  await {locate(field)}.fill({_js(bad[kind][0])});")
+                wrong.append(field)
+                messages.append(bad[kind][1])
+            elif not field.get("optional") and kind in ("input", "textarea", "combobox"):
+                wrong.append(field)
+                label = _words(field["name"]).lower()
+                messages.append(f"Choose a {label}." if kind == "combobox" else f"Enter a {label}.")
+        if wrong:
+            steps = steps[:4] + ["  await dialog.getByLabel(NAME, { exact: true }).fill('Checked name');"] + steps[4:]
+            steps += ["  await submit.click();", *(f"  await expect(dialog.getByText({_js(message)}).first()).toBeVisible();" for message in messages),
+                      f"  await expect({locate(wrong[0])}).toBeFocused();"]
+        return ["/** Submits the form with an empty name, then with bad values: each message shows,",
+                " * and the focus moves to the first field with an error. */",
+                f"async function check{self.model}Form(page: Page, dialog: Locator) {{", *steps, "}", ""]
+
     def bodies(self) -> dict[str, str]:
         return {
             "link-hooks": self.link_hooks(), "list-imports": self.list_imports(), "list-fields": self.list_fields(),
@@ -585,18 +670,19 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
 
 
 def render_feature_web(fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any],
-                       link_names: dict[str, str]) -> dict[str, str]:
+                       link_names: dict[str, dict[str, str]]) -> dict[str, str]:
     """Return the renamed web library, its hooks test and its browser flows."""
     bodies = _Web(fields, one, plural, kinds, link_names).bodies()
     name = _column(next(field for field in fields if field["kind"] == "text" and not field.get("optional")))
     files = {}
     for path in WEB_FILES:
         text = _rename((STARTER / path).read_text(encoding="utf-8"), one, plural)
-        for match in list(MARK.finditer(text)):
-            text = _replace_mark(text, match["name"], bodies[match["name"]])
         if name != "name":
+            # Only the starter's own text names the item's name field; the bodies below use the real columns.
             text = re.sub(rf"\b({_camel(one)}(?:\.data\?)?)\.name\b", rf"\1.{name}", text)
             text = text.replace("{ id: string; name: string }[]", f"{{ id: string; {name}: string }}[]")
+        for match in list(MARK.finditer(text)):
+            text = _replace_mark(text, match["name"], bodies[match["name"]])
         target = re.sub(r"projects|project", lambda match: plural if match[0] == "projects" else one, path)
         files[target] = text
     if any(field["kind"] == "link" for field in fields):

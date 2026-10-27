@@ -7,8 +7,15 @@ const NAME = 'Name';
 const NAME_KEY = 'name';
 
 /** A project the API accepts, with this name. */
-function projectData(name: string): Record<string, unknown> {
+async function projectData(page: Page, name: string): Promise<Record<string, unknown>> {
   return { name, status: 'active' };
+}
+
+/** Submits the form with an empty name: the name shows its error and gets the focus. */
+async function checkProjectForm(page: Page, dialog: Locator) {
+  await dialog.getByRole('button', { name: 'Create project' }).click();
+  await expect(dialog.getByLabel(NAME, { exact: true })).toHaveAttribute('aria-invalid', 'true');
+  await expect(dialog.getByLabel(NAME, { exact: true })).toBeFocused();
 }
 
 /** Fills the form's fields other than the name; the Details card then shows each SHOWN text. */
@@ -42,14 +49,14 @@ async function addProjects(page: Page, names: string[], values: Record<string, u
   const projectUrl = new URL('/api/v1/projects', page.url()).toString();
   for (const name of names) {
     const response = await page.context().request.post(projectUrl, {
-      data: { ...projectData(name), ...values },
+      data: { ...(await projectData(page, name)), ...values },
       headers: { 'x-csrf-token': token },
     });
     expect(response.ok()).toBeTruthy();
   }
 }
 
-/** Signs up, which opens Projects, then opens this list, so a copied feature's flows start on their own list. */
+/** Signs up, which opens the app's first screen, then opens this list, so a copied feature's flows start on their own list. */
 async function signUpOnProjects(page: Page): Promise<string> {
   const email = await signUp(page);
   await page.goto('/projects');
@@ -79,6 +86,7 @@ test('create, view, edit, and delete a project', async ({ page }) => {
   // A new project opens on its detail screen, with every field and who made it.
   await page.getByRole('button', { name: 'New project' }).click();
   const newProjectDialog = page.getByRole('dialog', { name: 'New project' });
+  await checkProjectForm(page, newProjectDialog);
   await newProjectDialog.getByLabel(NAME, { exact: true }).fill('Migration review');
   await fillProjectForm(page, newProjectDialog);
   await newProjectDialog.getByRole('button', { name: 'Create project' }).click();
@@ -167,7 +175,7 @@ test("a project's detail screen shows its recent changes", async ({ page }) => {
   const href = await page.getByRole('link', { name: 'Website redesign' }).getAttribute('href');
   const projectUrl = new URL(`/api/v1${href}`, page.url()).toString();
   for (const change of CHANGES) {
-    const changed = await page.context().request.put(projectUrl, { data: { ...projectData(''), ...change }, headers: { 'x-csrf-token': token } });
+    const changed = await page.context().request.put(projectUrl, { data: { ...(await projectData(page, '')), ...change }, headers: { 'x-csrf-token': token } });
     expect(changed.ok()).toBeTruthy();
   }
 
@@ -242,7 +250,7 @@ test('a reloaded projects list link keeps its search, filters and page', async (
   // The only project on this page stops matching: the page empties, but earlier pages still match.
   const href = await page.getByRole('link', { name: 'Pagination project 20' }).getAttribute('href');
   const changed = await page.context().request.put(new URL(`/api/v1${href}`, page.url()).toString(), {
-    data: { ...projectData('Pagination project 20'), ...(LIST_FILTER?.leftOut ?? { [NAME_KEY]: 'Renamed project 20' }) },
+    data: { ...(await projectData(page, 'Pagination project 20')), ...(LIST_FILTER?.leftOut ?? { [NAME_KEY]: 'Renamed project 20' }) },
     headers: { 'x-csrf-token': await csrfToken(page) },
   });
   expect(changed.ok()).toBeTruthy();
