@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-27T09:17:14.671414+00:00
-seconds: 376.544
-read_hash: aff4b8736ebed322ffe359df2479558303ab04fb
-round: 1
-passed: no
-doc_seen: aff4b8736ebed322ffe359df2479558303ab04fb
+read_at: 2026-10-27T09:22:11.699202+00:00
+seconds: 145.653
+read_hash: d487c5906dd505df4530f4d698e71244feb666fd
+round: 2
+passed: yes
+doc_seen: d487c5906dd505df4530f4d698e71244feb666fd
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 299ec0ad78175fd5061677e26255cd15d2894e5f
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a17ca0-8c89-7622-9ac0-8572d3f81dd8
 session:
@@ -80,4 +80,13 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - work queues behind occupied machine places, or a CI check starts running.
    The prescribed cases at `plans/FORGE-JOURNEY-1.md:148` exercise neither condition. Queue placement has its own admission rules (`src/forge/machine.py:170`), and the plan distinguishes queued from running CI at line 132. An implementation omitting queue reporting and always describing unfinished CI as queued would pass every listed test.
    Gain 3, Work 2, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+## Round 2
+
+8. Advisory: The amended rules omit the wait line while a review is running.
+   Raise: Not done.
+   Case: normal use - an item’s first review is still running after CI passes.
+   `plans/FORGE-JOURNEY-1.md:125–129` now handles capacity retries, existing findings, live workers and CI, but removes the previous live-review case. Reviews have their own recorded run (`src/forge/review.py:978`), with no worker running or findings yet. Every condition therefore fails, producing no wait line despite Done-when 4’s promise for each running item. The revised tests exercise no running review.
+   Gain 3, Work 2, Harm 1
    Disposition: keep - below the bar (follow-up)
