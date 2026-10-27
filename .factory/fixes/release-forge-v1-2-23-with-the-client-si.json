@@ -48,7 +48,7 @@
     "id": "72e2045b-9bbd-4421-8661-b125ba763c5e",
     "status": "blocked"
   },
-  "round": 5,
+  "round": 6,
   "status": "fixing",
   "steps": [
     {
@@ -70,10 +70,10 @@
     "worker_round": 4
   },
   "stuck": {
-    "close": "19404976-ef31-4cb2-bb63-c7437cdc4a9b",
-    "head": "7953127a0569120568dc82c825cc5a825d08f51c",
+    "close": "26c94530-a329-4909-9904-ee6ee9c21bce",
+    "head": "858b5951a8cd8fd321fe15467602a8b91e3d150b",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "Release Forge v1.2.23 with the client sign-off hotfix",
   "worker": "codex"
