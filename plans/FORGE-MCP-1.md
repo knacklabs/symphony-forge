@@ -82,9 +82,6 @@ time only, the app keeps only its hash, and a revoke stops it at once.
 Trade-off: the rate limit is counted in each running copy of the API. With two copies, an agent
 can make up to 240 calls a minute.
 
-Trade-off: two creates with the same key at the same moment can make two items. A retry after
-a lost answer or a time-out makes one.
-
 Trade-off: a call that passes the time limit gets the retry message, but its work can still
 finish in the database. A create with a key is still safe to retry.
 
@@ -282,10 +279,11 @@ The part named first owns each name; later parts use it and list that part under
   A JSON-RPC error is only for an unknown tool name or a malformed request, as the MCP library
   sends them. If the MCP library's client checks error results against `outputSchema`, make the
   output schema accept the `error` object too.
-- **Annotations (TOOLS).** Every tool has `annotations` with all four hints: search and get
+- **Annotations (TOOLS).** Every tool has `annotations` with a `title` in plain words and all
+  four hints, each true or false. The six generated tools: search and get
   `readOnlyHint: true`; delete `destructiveHint: true`; update, delete and restore
-  `idempotentHint: true`; every tool `openWorldHint: false`; and a `title` in plain words
-  (`Search projects`). The others are `false`.
+  `idempotentHint: true`; `openWorldHint: false`; and `Search projects` as the title. The
+  others are `false`. A hand-written tool states its own four hints, as they are true for it.
 - **Which tools an agent sees (TOOLS).** `tools/list` returns only the tools that the agent's
   role has the permission for and that are on. A call checks the same two things, in this
   order, and refuses with `not_allowed`. The permission for each action is the feature's REST
@@ -294,14 +292,22 @@ The part named first owns each name; later parts use it and list that part under
   call.
 - **Safe retries (TOOLS).** create with `idempotency_key`: the MCP module looks up
   `(account, tool, key)` in its own table first; when it is there, it returns the stored item
-  through `<feature>_get`; when not, it creates the item and stores its id. Table:
+  through `<feature>_get`. When not, the key row is written in the same database transaction as
+  the item: the feature service's `create(account, input, options?)` takes
+  `options.afterCreate(tx, id)`, which it calls inside its transaction after the insert
+  (Python: the MCP module adds the key row to the caller's session before the one `commit()`).
+  So a failed create leaves no key row, and a retry that runs while the first create is still
+  open waits on the unique key: when the first one commits, the retry's insert fails, its own
+  transaction rolls back, and it returns the first item; when it waits past the time limit, it
+  gets the retryable `unavailable` error, and the next retry finds the item. Table:
   `mcp."IdempotencyKey"` (`id` uuidv7, `accountId` with its foreign key to `core."Account"`,
   `tool` text, `key` text with a named length check of 1 to 200, `itemId` uuid,
   `createdAtUtc`), unique `(accountId, tool, key)`, in a new `mcp` Postgres schema (Python
   `mcp.idempotency_key`), in each starter's MCP migration. A `ponytail:` comment names the
-  ceilings: two creates with the same key at the same moment are not guarded, and rows are kept
-  with no clean-up job. update is a full replace, so a second same call changes nothing and adds
-  no history row. delete reads the item first: one that is already deleted returns the delete
+  ceiling: rows are kept with no clean-up job. update: the feature service compares the input
+  with the stored item and, when no field changes, returns the item with no write, so a repeated
+  update keeps `updatedAtUtc` and adds no history row (in both starters; the feature command's
+  service copy carries it). delete reads the item first: one that is already deleted returns the delete
   result with no change. restore reads it first: one that is not deleted returns the item with
   no change. (A role with delete and without restore cannot read a deleted item, so its second
   delete gets `not_found`; the default roles give both to admins.)
@@ -343,6 +349,7 @@ The part named first owns each name; later parts use it and list that part under
   `project delete and restore tools stay off until an admin turns them on`,
   `project search pages with a cursor and says how many match`,
   `a retried project create with the same idempotency key makes one project`,
+  `a repeated project update changes nothing`,
   `an invalid project input gets a non-retryable error with an example`, and the flow
   `an admin turns on agent delete and restore for projects`. The starter-wide cases:
   `an admin adds an agent account and creates and revokes its key`,
@@ -423,7 +430,8 @@ The part named first owns each name; later parts use it and list that part under
    - TOOLS: the core tools list, `projects.tools.ts`, and the projects cases in
      `apps/api/test/projects.e2e-spec.ts`, outside the marks that the feature command fills:
      - `an agent searches, reads, creates and updates projects through MCP as its account`: a
-       Member agent's `tools/list` holds exactly `projects_search`, `projects_get`,
+       Member agent's `tools/list`, filtered to the names that start with `projects_` (other
+       features' tools can be in the list too), holds exactly `projects_search`, `projects_get`,
        `projects_create` and `projects_update`, each with its description, its four hints, and
        an input schema with `project_id` (not `id`) where it takes one; create, get, search
        (with `query`) and update each return the item with `status_label`, and
@@ -433,22 +441,33 @@ The part named first owns each name; later parts use it and list that part under
        Member agent's list has no delete or restore tool, and a call to `projects_delete` gets
        `not_allowed`, not retryable, and leaves the project.
      - `project delete and restore tools stay off until an admin turns them on`: an Admin
-       agent's list has four tools and its `projects_delete` call gets `not_allowed`; after the
-       admin's `PUT /api/v1/agent-tools/projects`, the list has six; delete, a second delete,
-       restore and a second restore each succeed; the history shows one `Deleted the project`
-       and one `Restored the project`, with the agent as actor; after the admin turns it off,
-       the list has four again.
+       agent's `projects_` tools are the four and its `projects_delete` call gets
+       `not_allowed`; after the admin's `PUT /api/v1/agent-tools/projects`, its `projects_`
+       tools are the six; delete, a second delete, restore and a second restore each succeed;
+       the history shows one `Deleted the project` and one `Restored the project`, with the
+       agent as actor; after the admin turns it off, its `projects_` tools are the four again.
+       Every tool-list check in the projects cases filters by the `projects_` prefix in the
+       same way, so the copies stay true in an app with many features.
    - `src/forge/feature_api.py`: add `libs/projects/server/src/projects.tools.ts` to the copies
      beside `projects.permissions.ts`, with the `tool-fields` marks filled: `concise` with the
      fields whose kind has a list `column` in `kinds.toml`, and `links` with each link field's
-     target token (and its contracts import). When the app has no
-     `libs/core/server/src/common/tools.ts`, the command writes no tools file, leaves out the
-     lines between `// forge:feature:tools:start` and `// forge:feature:tools:end` in the copied
-     module (the `ProjectsTools` import and provider; TOOLS adds these marks to
-     `projects.module.ts`), and prints
-     `This app has no MCP server, so <plural> get no agent tools.` after the files it wrote. It
-     still exits 0. `src/forge/feature_tests.py` renders the copied MCP cases with the kind
-     table's `sample`, `changed` and `bad` values, as it renders the other API cases.
+     target token (and its contracts import). `src/forge/feature_tests.py` renders the copied
+     MCP cases with the kind table's `sample`, `changed` and `bad` values, as it renders the
+     other API cases.
+   - The older-starter fallback. When the app has no `libs/core/server/src/common/tools.ts`
+     (Python `apps/api/app/core/tools.py`), the copy holds nothing from this story: no tools
+     file, and none of the lines between the marks `// forge:feature:mcp:start` and
+     `// forge:feature:mcp:end` (`#` in Python, `{/* ... */}` in JSX) in any copied file. The
+     marks go around: the `ProjectsTools` import and provider in `projects.module.ts` and the
+     `afterCreate` and no-change update lines in `projects.service.ts` (TOOLS; Python
+     `app/projects/__init__.py` and `service.py`, TOOLSPY); the `AgentAccessDialog` import and
+     line in `projects-page.tsx` and the Agent access flow in `apps/web/e2e/projects.spec.ts`
+     (AGENTS); and the MCP cases in `apps/api/test/projects.e2e-spec.ts` (TOOLS; Python
+     `tests/test_projects.py`, TOOLSPY). One check, the core tools file, decides for every file,
+     because all four parts ship in one release. The command prints
+     `This app has no MCP server, so <plural> get no agent tools.` after the files it wrote, and
+     still exits 0. TOOLS adds the fallback to the API, test and web copies in
+     `src/forge/feature*.py`; TOOLSPY adds it to the Python copy.
    - Hide and hand-made tools: the app's own unit case `a tools file can hide a default tool and add its own`,
      in `libs/core/server/src/common/tools.test.ts` (run by `test:hooks`, whose include list
      takes `libs/*/*/src/**/*.test.ts`) and Python `tests/test_tools.py` (imports `app.core`,
@@ -471,8 +490,10 @@ The part named first owns each name; later parts use it and list that part under
      feature and the flow `an admin turns on agent delete and restore for jobs`.
      `earlier adopted`: after upgrade and sync, the projects files are unchanged.
      `older starter` (TOOLS): the adopted starter app with `libs/core/server/src/common/tools.ts`
-     and `libs/mcp` removed: the same line exits 0, writes no tools file, the copied module has
-     no `JobsTools` line, and the output has the no-MCP line.
+     and `libs/mcp` removed: the same line exits 0, writes no tools file, and the output has the
+     no-MCP line; no file that the command wrote has `forge:feature:mcp`, `JobsTools`,
+     `AgentAccessDialog`, `agentClient`, `afterCreate` or `_search`, so the copy needs nothing
+     that an app made before this story lacks.
 4. Search, results, errors and safe retries (TOOLS for TypeScript, TOOLSPY for Python).
    - All in `callTool` and the MCP module, as **Inputs**, **Results**, **Errors**,
      **Annotations**, **Safe retries**, **The time limit** and **The rate limit** above say.
@@ -480,8 +501,10 @@ The part named first owns each name; later parts use it and list that part under
      in `mcp.e2e-spec.ts` (Python `test_mcp.py`): an Admin agent turns on delete and restore for
      every feature that `tools/list` names (each `<feature>_search` tool), lists again, and for
      every tool, generated or hand-written, checks: a description of at least two sentences; a
-     `title` and all four hints, with `openWorldHint: false`, `readOnlyHint` true only for
-     search and get, `destructiveHint` true only for delete; an `inputSchema` and an
+     `title` and all four hints, each true or false; for the six generated tools of each
+     feature (the names that end in `_search`, `_get`, `_create`, `_update`, `_delete` or
+     `_restore`), the values that **Annotations** gives; for a hand-written tool, only that the
+     hints are there, because its author states them; an `inputSchema` and an
      `outputSchema` of type `object`, the input with `additionalProperties: false`; and a call
      with one unknown argument returns `isError` with `kind: 'invalid_input'`,
      `retryable: false` and a message. Because the case reads the tool list, it covers each
@@ -491,6 +514,8 @@ The part named first owns each name; later parts use it and list that part under
      the summary; the second page from `cursor` has 5 and no `next_cursor`; `limit: 101` is
      `invalid_input`); `a retried project create with the same idempotency key makes one project`
      (two creates with one key return the same `project_id`, and search finds one);
+     `a repeated project update changes nothing` (the same update two times returns the same
+     `updated_at_utc`, and the project's changes have one row for it);
      `an invalid project input gets a non-retryable error with an example` (a bad status:
      `invalid_input`, `retryable: false`, the field in `details`, and `Example:` in the
      message); `an agent key over its rate limit gets a retryable error` (121
@@ -585,9 +610,9 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
-| AGENTS | Agent accounts and the delete and restore switch | Agent accounts, their keys and the agent access list in both APIs, with their migrations, history rows and `agentForKey`; the Members screen's agent dialogs and rows; the Agent access dialog in core web and on the projects list; the app's own cases and flows. | 2, 3 | `starter/libs/organisations/**`, `starter/libs/auth/server/**` (the agents route only), `starter/libs/core/web/src/agent-access-dialog.tsx` (new), `starter/libs/core/web/src/index.ts`, `starter/libs/projects/web/src/pages/projects-page.tsx` (the dialog line only), `starter/apps/api/prisma/schema/organisations.prisma`, `starter/apps/api/prisma/migrations/<new>_agents/` (new), `starter/apps/api/test/agents.e2e-spec.ts` (new), `starter/apps/web/e2e/members.spec.ts`, `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/app/organisations/**`, `starter-python/apps/api/app/auth/**` (the agents route only), `starter-python/apps/api/migrations/versions/<next>_agents.py` (new), `starter-python/apps/api/tests/test_agents.py` (new), `starter-python/libs/organisations/contracts/**`, `starter-python/libs/shared/api-types/**` (regenerated), `.github/workflows/starter-smoke.yml`, `tests/test_mcp.py` (new) | `tests/test_mcp.py` (`test_2`; `test_3` with the flow, `typescript`, `python`, `earlier adopted`) | FORGE-FEATURE-1/WEB | yes | |
-| TOOLS | The MCP server and tools in the TypeScript starter | The core tools list with `callTool` (checks, results, errors, annotations, time limit), the `libs/mcp/server` module at `/mcp` with the key check, the rate limit and the idempotency table, the projects tools file, the starter's `services.toml`, the contract and behaviour cases, and the feature command's tools copy with its no-MCP rule. | 1, 3, 4 | `starter/libs/core/server/src/common/tools.ts` and `tools.test.ts` (new), `starter/libs/core/server/src/index.ts`, `starter/libs/mcp/server/**` (new), `starter/libs/projects/server/src/projects.tools.ts` (new), `starter/libs/projects/server/src/projects.module.ts`, `starter/apps/api/prisma/schema/mcp.prisma` (new), `starter/apps/api/prisma/schema/base.prisma` and `auth.prisma` (the schema name and the back-relation only), `starter/apps/api/prisma/migrations/<new>_mcp/` (new), `starter/apps/api/src/app.module.ts`, `starter/apps/api/src/main.ts`, `starter/apps/api/package.json`, `starter/apps/api/tsconfig.json`, `starter/package.json`, `starter/pnpm-lock.yaml`, `starter/eslint.config.mjs`, `starter/scripts/test-build.mjs`, `starter/services.toml` (new), `starter/apps/api/test/helpers.ts`, `starter/apps/api/test/mcp.e2e-spec.ts` (new), `starter/apps/api/test/projects.e2e-spec.ts` (the MCP cases), `src/forge/feature_api.py`, `src/forge/feature_tests.py`, `tests/test_mcp.py`, `tests/test_services_list.py` (`test_1`, `react`) | `tests/test_mcp.py` (`test_1` `typescript`, `plain`, `earlier adopted`; `test_3` `typescript`, `older starter`; `test_4` `typescript`, `earlier adopted`) | AGENTS, FORGE-FEATURE-1/WEB | no | |
-| TOOLSPY | The MCP server and tools in the Python starter | The same in the Python starter: the core tools list with `call_tool`, the `app/mcp` package at `/mcp` with the key check, the rate limit and the idempotency table, the projects tools file, the starter's `services.toml`, the contract and behaviour cases, and the Python feature copy's tools file. | 1, 3, 4 | `starter-python/apps/api/app/core/tools.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/core/security.py`, `starter-python/apps/api/app/mcp/**` (new), `starter-python/apps/api/app/main.py`, `starter-python/apps/api/app/projects/tools.py` (new), `starter-python/apps/api/app/projects/__init__.py`, `starter-python/apps/api/migrations/env.py`, `starter-python/apps/api/migrations/versions/<next>_mcp.py` (new), `starter-python/apps/api/pyproject.toml`, `starter-python/apps/api/uv.lock`, `starter-python/services.toml` (new), `starter-python/apps/api/tests/conftest.py`, `starter-python/apps/api/tests/test_mcp.py`, `test_tools.py` (new) and `test_projects.py` (the MCP cases), `src/forge/feature*.py` (the Python copy only), `tests/test_mcp.py`, `tests/test_services_list.py` (`test_1`, `python`) | `tests/test_mcp.py` (`test_1`, `test_3`, `test_4`, `python`) | TOOLS, FORGE-FEATURE-1/PY | no | |
+| AGENTS | Agent accounts and the delete and restore switch | Agent accounts, their keys and the agent access list in both APIs, with their migrations, history rows and `agentForKey`; the Members screen's agent dialogs and rows; the Agent access dialog in core web and on the projects list; the app's own cases and flows. | 2, 3 | `starter/libs/organisations/**`, `starter/libs/auth/server/**` (the agents route only), `starter/libs/core/web/src/agent-access-dialog.tsx` (new), `starter/libs/core/web/src/index.ts`, `starter/libs/projects/web/src/pages/projects-page.tsx` (the dialog line and its marks only), `starter/apps/api/prisma/schema/organisations.prisma`, `starter/apps/api/prisma/migrations/<new>_agents/` (new), `starter/apps/api/test/agents.e2e-spec.ts` (new), `starter/apps/web/e2e/members.spec.ts`, `starter/apps/web/e2e/projects.spec.ts`, `starter-python/apps/api/app/organisations/**`, `starter-python/apps/api/app/auth/**` (the agents route only), `starter-python/apps/api/migrations/versions/<next>_agents.py` (new), `starter-python/apps/api/tests/test_agents.py` (new), `starter-python/libs/organisations/contracts/**`, `starter-python/libs/shared/api-types/**` (regenerated), `.github/workflows/starter-smoke.yml`, `tests/test_mcp.py` (new) | `tests/test_mcp.py` (`test_2`; `test_3` with the flow, `typescript`, `python`, `earlier adopted`) | FORGE-FEATURE-1/WEB | yes | |
+| TOOLS | The MCP server and tools in the TypeScript starter | The core tools list with `callTool` (checks, results, errors, annotations, time limit), the `libs/mcp/server` module at `/mcp` with the key check, the rate limit and the idempotency table, the projects tools file, the starter's `services.toml`, the contract and behaviour cases, and the feature command's tools copy with its no-MCP rule. | 1, 3, 4 | `starter/libs/core/server/src/common/tools.ts` and `tools.test.ts` (new), `starter/libs/core/server/src/index.ts`, `starter/libs/mcp/server/**` (new), `starter/libs/projects/server/src/projects.tools.ts` (new), `starter/libs/projects/server/src/projects.module.ts` and `projects.service.ts` (the `afterCreate` option, the no-change update and the marks), `starter/apps/api/prisma/schema/mcp.prisma` (new), `starter/apps/api/prisma/schema/base.prisma` and `auth.prisma` (the schema name and the back-relation only), `starter/apps/api/prisma/migrations/<new>_mcp/` (new), `starter/apps/api/src/app.module.ts`, `starter/apps/api/src/main.ts`, `starter/apps/api/package.json`, `starter/apps/api/tsconfig.json`, `starter/package.json`, `starter/pnpm-lock.yaml`, `starter/eslint.config.mjs`, `starter/scripts/test-build.mjs`, `starter/services.toml` (new), `starter/apps/api/test/helpers.ts`, `starter/apps/api/test/mcp.e2e-spec.ts` (new), `starter/apps/api/test/projects.e2e-spec.ts` (the MCP cases), `src/forge/feature_api.py`, `src/forge/feature_tests.py`, the web copy in `src/forge/feature*.py` (the fallback only), `tests/test_mcp.py`, `tests/test_services_list.py` (`test_1`, `react`) | `tests/test_mcp.py` (`test_1` `typescript`, `plain`, `earlier adopted`; `test_3` `typescript`, `older starter`; `test_4` `typescript`, `earlier adopted`) | AGENTS, FORGE-FEATURE-1/WEB | no | |
+| TOOLSPY | The MCP server and tools in the Python starter | The same in the Python starter: the core tools list with `call_tool`, the `app/mcp` package at `/mcp` with the key check, the rate limit and the idempotency table, the projects tools file, the starter's `services.toml`, the contract and behaviour cases, and the Python feature copy's tools file. | 1, 3, 4 | `starter-python/apps/api/app/core/tools.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/core/security.py`, `starter-python/apps/api/app/mcp/**` (new), `starter-python/apps/api/app/main.py`, `starter-python/apps/api/app/projects/tools.py` (new), `starter-python/apps/api/app/projects/__init__.py` and `service.py` (the key row, the no-change update and the marks), `starter-python/apps/api/migrations/env.py`, `starter-python/apps/api/migrations/versions/<next>_mcp.py` (new), `starter-python/apps/api/pyproject.toml`, `starter-python/apps/api/uv.lock`, `starter-python/services.toml` (new), `starter-python/apps/api/tests/conftest.py`, `starter-python/apps/api/tests/test_mcp.py`, `test_tools.py` (new) and `test_projects.py` (the MCP cases), `src/forge/feature*.py` (the Python copy only), `tests/test_mcp.py`, `tests/test_services_list.py` (`test_1`, `python`) | `tests/test_mcp.py` (`test_1`, `test_3`, `test_4`, `python`) | TOOLS, FORGE-FEATURE-1/PY | no | |
 | MCPGUIDE | The guides name the MCP server and the tool rules | The constitution's Built in line, the services, tools-file and tool-rules text in the agent's guide, the worker brief's tool rules, the deploy guide's `mcp` sentence, the guide paragraph and the synced skill copies, on new and existing repos. | 5 | `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `src/forge/templates/conventions/deploy.md`, `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `docs/guide.md`, `tests/test_mcp_guide.py` (new) | `tests/test_mcp_guide.py::test_5` (new) | FORGE-FEATURE-1/GUIDE | no | |
 
 MCPGUIDE shares no file with the other parts and needs no code from them, so it can run beside
@@ -615,9 +640,10 @@ service, store or cache.
 - **Migration order.** This story's migrations and any other open migration can merge in either
   order. The part that merges later gives its Prisma folder a later timestamp and chains its
   Alembic revision to the head on main.
-- **Part sizes.** AGENTS and TOOLS may pass 400 lines; split the regenerated `openapi.json` and
-  `api-types.ts` out of the count, and ask for `forge fix allow-large` with that reason before
-  you split a part.
+- **Part sizes.** AGENTS, TOOLS and TOOLSPY can each pass the 400-line limit. Do not split them.
+  As for FORGE-FEATURE-1, the owner will be asked to allow these parts over the line limit
+  (`forge fix allow-large`, with this reason), and the regenerated `openapi.json` and
+  `api-types.ts` stay out of the count.
 - **Owner decisions (27 Oct 2026, settled).** Every client app built with Forge ships an MCP
   server from the start, so agents, such as Gantry Cloud agents through Mainline's gateway, can
   use the app's features as tools. Tools come from each feature's zod or Pydantic schemas:
@@ -668,8 +694,8 @@ service, store or cache.
   because the MCP authorization rule sets it and it comes before any tool call. (10) Search says
   how many items match in all (more than 10,000 when capped), not how many come after the
   current page, because keyset paging does not count the pages before. (11) The time limit is
-  10 seconds. (12) Idempotency keys are kept with no clean-up, and two creates with the same key
-  at the same moment are not guarded. (13) The short result holds the fields that the list
+  10 seconds. (12) The idempotency key row is written in the same transaction as the item, and
+  the rows are kept with no clean-up. (13) The short result holds the fields that the list
   screen shows as columns.
 - **For Mainline (context only).** Assumptions: Mainline reads the `mcp` field to show the
   server under Connectors, and its gateway sends `Authorization: Bearer <agent key>` to
