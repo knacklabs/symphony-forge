@@ -4,34 +4,24 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- The client is led through five steps (brief, canvas design, clickable prototype, open decisions, sign-off), each ending with a short check-in, instead of a pile of questions at the end.
+- The canvas in Play mode is the default clickable prototype; a coded working prototype is optional and needs a demo address only when built.
+- One open-decisions list for the whole repo collects every item that needs the client, each scored on Gain, Work and Harm, with a pre-picked default and a due date.
+- When a due date passes, the default applies, is recorded as decided by default, and the client is told.
+- forge next and the board show a sign-off readiness line, such as Decisions 3 open (1 blocks).
 
 ## Why
 
-Client apps reach sign-off through five guided steps and one list of open decisions
-
-
+Clients are asked many questions at the end of a project, so sign-off comes late and the client cannot see what they are approving (client issue 1145).
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **The five steps run in order, and each step ends with a short client check-in.**
+2. **Forge asks for open decisions at the end of each step and at least weekly, and each item shows its default and due date.**
+3. **A passed due date applies the default, records it as decided by default, and tells the client.**
+4. **forge next and the board show a readiness line for brief, screens and decisions.**
+5. **Sign-off is refused while the signed canvas is missing or a blocking decision is open, and the refusal names the next step.**
+6. **A new client repo and an existing client repo that adopted an earlier release each get the path, with at least one existing-repo test case.**
 
 ## Risks
 
