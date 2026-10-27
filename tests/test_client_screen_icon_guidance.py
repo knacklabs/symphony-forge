@@ -12,6 +12,7 @@ import pytest
 
 from test_close import CLEAN, GREEN, env  # noqa: F401
 from test_score_notes import _client_repo as setup_client
+from test_shadcn_only import _commit_main
 from test_worker import calls, install_claude
 
 STORY = "FIX-CLIENT-APP-SCREENS-CAN-USE-EMOJI-AS-ICON"
@@ -28,15 +29,26 @@ REVIEW_RULE = (
     "such as the Command key symbol (⌘) are not emojis. Apply this rule to new and existing "
     "client repos; do not report unchanged screen code."
 )
+PROTOTYPE_ICON_RULE = (
+    "On client app screens, report emoji icons or decoration and icons outside `lucide-react` "
+    "as a finding titled `Icons: <the screen>`. Keyboard key labels such as the Command key "
+    "symbol (⌘) are not emojis."
+)
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_1_workers_and_reviews_receive_the_client_screen_icon_rule(env, tmp_path, adopted):
+@pytest.mark.parametrize("adopted,prototype", [(False, False), (True, False), (False, True)],
+                         ids=["new-client", "adopted-v1.2.2", "unsigned-prototype"])
+def test_1_workers_and_reviews_receive_the_client_screen_icon_rule(env, tmp_path, adopted, prototype):
     setup_client(env, tmp_path, adopted)
+    if prototype:
+        config = (env.repo.path / "forge.toml").read_text(encoding="utf-8")
+        env.repo.write("forge.toml", config + '\nstage = "prototype"\n')
+        _commit_main(env.repo, tmp_path, "Review an unsigned prototype")
     env.checks(GREEN)
     item, _ = env.start("screen-icons", "fix/screen-icons", ".factory/fixes/screen-icons.json",
                         {"kind": "fix", "why": "Keep screen icons consistent",
-                         "done_when": "Review reports emoji icons on client screens"},
+                         "done_when": "Review reports emoji icons on client screens",
+                         **({"allow_large": "Prototype before sign-off"} if prototype else {})},
                         {"apps/web/src/pages/home.tsx":
                          "export function Home() { return <main>🚀 Home <kbd>⌘</kbd></main>; }\n"})
     log = install_claude(env.repo)
@@ -53,4 +65,9 @@ def test_1_workers_and_reviews_receive_the_client_screen_icon_rule(env, tmp_path
     env.reviews(CLEAN)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    assert REVIEW_RULE in " ".join(env.prompt().split())
+    prompt = " ".join(env.prompt().split())
+    if prototype:
+        assert "Review this unsigned working prototype." in prompt
+        assert PROTOTYPE_ICON_RULE in prompt
+    else:
+        assert REVIEW_RULE in prompt

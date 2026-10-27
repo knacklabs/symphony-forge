@@ -471,6 +471,8 @@ the strength of a template or a test stub alone. Give concrete file and line evi
 Report a query in one module on a table another module owns as a P1 finding titled
 `Module tables: <the query>`.
 
+On client app screens, report emoji icons or decoration and icons outside `lucide-react` as a finding titled `Icons: <the screen>`. Keyboard key labels such as the Command key symbol (⌘) are not emojis.
+
 ## Scores
 Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your
 judgement, not measurement. Write them as one line, exactly `Gain <g>, Work <w>, Harm <h>`,
