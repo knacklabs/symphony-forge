@@ -1,0 +1,15 @@
+{
+  "base": "4f70eedef923759c587cbb74f5d53a3c35aaabbc",
+  "branch": "fix/forge-s-own-ci-runs-the-full-linux-suite",
+  "done_when": "forge-next.yml runs only the Windows platform tests and the Windows installer and plugin checks, the full Linux suite runs only in forge.yml, and the release steps name one Linux full run plus the Windows platform run",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-27T18:33:58.542619+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge's own CI runs the full Linux suite twice: forge.yml runs it nightly and on demand, and forge-next.yml runs it again on every merge to main, every tag, nightly and on demand, beside its Windows platform tests; the release steps also still name Mac, which has no runner"
+}
