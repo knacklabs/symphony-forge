@@ -432,6 +432,12 @@
       "title": "Client apps ship an MCP server so agents can use their features",
       "status": "pending",
       "order": 102
+    },
+    {
+      "key": "FORGE-SPECRULES-1",
+      "title": "Client specs state each rule once",
+      "status": "pending",
+      "order": 103
     }
   ],
   "epics": [
