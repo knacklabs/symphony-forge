@@ -73,9 +73,9 @@
     "id": "365a99bb-dc79-44ce-b713-2edaa3f6bee4",
     "status": "clean"
   },
-  "round": 3,
+  "round": 4,
   "stacked_on": "FORGE-SIGNOFF-1/OPENLIST",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T11:14:40.036459+00:00",
@@ -95,10 +95,10 @@
     }
   ],
   "stuck": {
-    "close": "673b02e0-e4fc-47f6-81a0-938bbae222a5",
-    "head": "a9119406f94921a65339a28c24ed15e8896c0f08",
+    "close": "01855075-6abb-41a6-ae73-d194c684534c",
+    "head": "40d64594f0a57bd6717a5ef5b8612104eaf1d726",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "worker": "codex"
 }
