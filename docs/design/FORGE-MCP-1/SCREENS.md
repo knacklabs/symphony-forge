@@ -93,7 +93,7 @@ Fields:
 - Agents can delete and restore projects: yes or no, optional
 
 - Title `Agent access`, text `Choose which project tools agents can use.`
-- A list of the tools: `List projects`, `View a project`, `Create projects` and `Edit projects`,
+- A list of the tools: `Search projects`, `View a project`, `Create projects` and `Edit projects`,
   each with a check and `Always on`. The last row is a Switch, `Agents can delete and restore
   projects`, off by default.
 - Under the list: `The agent account's role still applies. A Member agent cannot delete or
