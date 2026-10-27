@@ -1,10 +1,11 @@
 # Canvas completeness check
 
 Check the signed canvas against the app's brief. This is a design check, not a code review.
-Read `docs/design/prototype/SCREENS.md` and every screen image it names in this checkout.
-Compare the screens with the brief's Summary, Users, Things it keeps track of and Key flows below.
-Every thing, field and choice-list option in Things it keeps track of must appear on a screen.
-Report each key flow that no screen in SCREENS.md carries.
+Read the prototype screen images and app screens in this checkout.
+Compare the screens with the whole app brief below, including its entities, fields, options and key flows.
+Report each required screen, field, choice-list option or key flow that the prototype omits.
+Judge completeness inside this review. No separate screen list, check record, root DESIGN.md,
+exact brief heading or Signed design section is required.
 Report a missing screen, field, option, flow or other checklist gap as P0 or P1.
 Give the file, line and concrete evidence for each gap. Do not infer completeness from a passed
 skill result. Apply each checklist item to the app's stated scope and explain an explicit exception.
@@ -76,4 +77,4 @@ The scores are your judgement, not measurement. Put the evidence after this scor
 - Use only shadcn/ui components. List each custom piece and its reason.
 - Include notification, settings, profile and sign-in screens.
 - Check the copy: no jargon, and verbs on buttons, such as "Save client".
-- Confirm that the sign-off record states the owner's entities, dropdown lists and screen list in plain words.
+- Check the owner's entities, dropdown lists and screens against the brief, without a separate record.

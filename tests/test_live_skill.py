@@ -45,7 +45,7 @@ def test_6_skill_adopts_a_live_app_and_repo_rules_win(repo):
                  "who approves stories, who merges", "what must never be touched",
                  "one at a time", "`## House rules` in AGENTS.md, outside Forge's",
                  "first add a test that pins today's behaviour",
-                 "Migrations only add", "previous version of the app",
+                 "Migrations work with the previous release still running: expand, then contract.",
                  "the team's own feature flags", "No production credentials on this machine"):
         assert step in adopt, step
     assert ("The repo's own rules, its AGENTS.md House rules and conventions, win where they "

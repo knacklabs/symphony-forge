@@ -49,6 +49,12 @@ Store a sign-in email in lower case, with `<table>_email_lower CHECK (email = lo
 The shared `set_updated_at()` BEFORE UPDATE trigger sets the last-changed time, including raw SQL updates. Use `updatedAtUtc` in Prisma and `updated_at_utc` in Python.
 Every tenant table has the organisation column. One data layer scopes each query to the caller's organisation, with one refusal test per endpoint. Row-level security is not a default; a regulated client gets it as its own story.
 
+## Migrations
+
+Expand, then contract. Add a new table or column before code uses it. Keep the old table or column for two releases, and remove it only when no live release uses it. Mainline rollback restores the previous release's code and keeps the database, so every migration must work with that code still running.
+
+Close checks only migrations added by the change. It skips this check in a prototype repo with no live release. A new migration that drops or renames a table or column, or changes a column's type, needs a comment that explains why the live release no longer reads it: `-- Contract: the live release no longer reads "Project"."legacyName".` in Prisma SQL or `# Contract: the live release no longer reads project.legacy_name.` in Alembic Python. Close allows the migration when this line is present; review reads the explanation.
+
 ## Indexes for lists
 
 Use `(organisation_id, <filter columns>, <sort column> DESC, id DESC) WHERE deleted_at IS NULL`.
