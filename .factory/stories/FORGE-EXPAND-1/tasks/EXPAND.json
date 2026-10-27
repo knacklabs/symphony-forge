@@ -115,7 +115,7 @@
     "id": "285e002d-669e-424e-9ac3-06b0d5088d14",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-SIGNOFF-1/OPENLIST",
   "status": "fixing",
   "steps": [
@@ -129,10 +129,14 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d2e537c1d495fe4b314a071a35bdfd2a8ea6b4f0",
-    "keys": {},
-    "round": null
+    "close": "d08e0396-1aa5-44dc-96ae-311bffbc0980",
+    "head": "dc43c4294c3af7304675cb6dbcd9c650561621fb",
+    "keys": {
+      "the open P0 follow-up: check prisma migrations at the repository root in src/forge/app_baseline.py": 1,
+      "the open P0 gate: test_4_one_test_per_rule in tests/test_migrations_keep_previous_release.py": 1,
+      "the open P0 gate: unrelated open-decision commands exceed the migration scope in src/forge/cli.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
