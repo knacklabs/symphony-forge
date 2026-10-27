@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-ASKED-1-PRINCIPLES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-27T14:34:44.105580+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d7063a2290b53af91a50c2cfb7f4f5ec573300b2",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
