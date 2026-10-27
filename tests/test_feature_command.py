@@ -247,7 +247,7 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     written = set()
     for line in (CLIENT_LINE, JOBS_LINE):
-        result = _run_line(repo, client, "bash", line)
+        result = _run_line(repo, client, SHELLS[0], line)
         assert result.returncode == 0, result.stdout + result.stderr
         written |= _written_paths(result, client)
     assert {

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from test_feature_command import (CLIENT_LINE, JOBS_LINE, NOTES_LINE, _run_line, feature_live_run,
+from test_feature_command import (CLIENT_LINE, JOBS_LINE, NOTES_LINE, SHELLS, _run_line, feature_live_run,
                                   require_feature_cases)
 from test_setup import _fresh_client
 from test_starter_tree import LIVE, STARTER, _require_cases, live_run
@@ -106,7 +106,7 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
         client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE):
-            built = _run_line(repo, client, "bash", line)
+            built = _run_line(repo, client, SHELLS[0], line)
             assert built.returncode == 0, built.stdout + built.stderr
         for plural in ("clients", "jobs", "notes"):
             routes = _typescript_routes(
