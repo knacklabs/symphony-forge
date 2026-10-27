@@ -4,34 +4,21 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Each client app built from the starters offers read-only resources for every feature: one item at an address such as app://projects/{id}, a field guide that lists each field with its kind and allowed values, and lists of allowed values such as statuses, with change notices.
+- At setup the agent asks which tasks people will repeat, and writes one prompt per answer in the feature's tools file; with no answer there are no prompts.
+- No elicitation is added, and sampling is never used.
+- The guide, the worker brief and the feature command carry these rules; new repos get them at init and existing repos get the guide text on upgrade, with no app files, like the MCP tools story.
 
 ## Why
 
-Client apps offer MCP resources and prompts too
-
-
+An agent using a Forge client app through MCP can only call tools. It cannot read a record at a stable address, look up a field's allowed values without trial and error, or reuse a repeated workflow without a fresh request. The data already exists in the feature command's kinds table and schemas, so resources can be generated from the same schemas as the tools. This depends on the MCP tools story landing first.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client app built from the starter serves, for each feature, one resource per record address, a field guide, and allowed-value lists, each with change notices.**
+2. **Prompts exist only for the tasks the owner names at setup; with no answer, the app has none.**
+3. **The generated app contains no elicitation and no sampling.**
+4. **The guide, the worker brief and the feature command state these rules; an existing repo gets the text on upgrade with no app files, with a test for a new repo and an adopted repo.**
 
 ## Risks
 
