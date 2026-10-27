@@ -356,12 +356,16 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
     config.write_text(re.sub(r'workers = "[^"]+"', 'workers = "claude"',
                              config.read_text("utf-8")), "utf-8")
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-q", "-m", "Keep the starter and its generated features", cwd=client)
+    # Fixture history bypasses branch and default-push gates for these two
+    # setup commands only. The real fix start and work below keep their hooks.
+    hooks = f"core.hooksPath={(client.parent / 'no-fixture-hooks').as_posix()}"
+    repo.git("-c", hooks, "commit", "-q", "-m",
+             "Keep the starter and its generated features", cwd=client)
     if repo.git("branch", "--show-current", cwd=client) != "main":
         branch = repo.git("branch", "--show-current", cwd=client)
         repo.git("switch", "main", cwd=client)
         repo.git("merge", "--ff-only", branch, cwd=client)
-    repo.git("push", "-q", "origin", "main", cwd=client)
+    repo.git("-c", hooks, "push", "-q", "origin", "main", cwd=client)
     started = repo.forge("fix", "start", "Add a starter feature", "--done",
                          "The new feature works", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
