@@ -40,8 +40,9 @@
   without a reason that they can act on. (Source: your request, 27 Oct 2026)
 - Forge checks plans and code against the screens marked Build now at sign-off, never against the
   canvas. Until sign-off can mark screens Build now, the Build now screens are the ones that the
-  story's Done-when items name. Workers build, and reviews check, only the fields of those
-  screens. The canvas can still show the whole product, with its later screens.
+  story's Done-when items name. Workers build, and reviews check, every field that those
+  screens show, because the client's sign-off is their source. The canvas can still show the
+  whole product, with its later screens.
   (Source: your request, 27 Oct 2026)
 - When a worker or planner thinks of something useful that nobody asked for, it adds one line to
   the repo's idea list (`plans/ideas.md`) and builds nothing for it. The starter's fixed defaults
@@ -87,8 +88,8 @@ commit that names a real client note, brief answer, decision or Build now screen
 approved items do not change, so no new approval is needed. The reviewer opens the named source.
 
 Trade-off: until sign-off can mark screens Build now (the sign-off story adds that mark), the
-Build now screens are the ones that the story's Done-when items name. A field that the canvas
-shows on such a screen, and that no source asks for, is not built.
+Build now screens are the ones that the story's Done-when items name. Every field that such a
+screen shows is in scope, because the sign-off of that screen is its source.
 
 Trade-off: two branches that each add an idea line can conflict on `plans/ideas.md` at merge.
 `forge start` already carries idea lines into branches, so this is not new. Keep both lines.
