@@ -935,6 +935,8 @@ Without Claude it uses Codex's `gpt-6.1-sol` at high and says it fell back.
 Fix gaps, then retry `forge decision accept client-signoff`.
 A canvas-only sign-off needs no working build. A working build also gets one strict whole-product
 review with no serious findings. Forge reuses passed results while what they checked stays unchanged.
+The product review uses the green full run as test evidence. It needs no separate `forge test` run.
+If the product or completeness review cannot finish, the refusal names its saved raw report when one exists.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
 Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
@@ -1021,6 +1023,12 @@ Use this outline, and do not copy product facts from the brief into the constitu
 
 The product facts are in docs/product/BRIEF.md.
 
+## Principles
+- Is it needed at all? Deleting beats fixing.
+- Add work only when F x H >= 2 x C. F, for the first 1,000 users: 1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or flag.
+- Choose the simplest option.
+- Rules are stated, not policed.
+
 ## Defaults
 - <the question in plain words>: <the default or the person's answer>
 
@@ -1043,6 +1051,10 @@ The product facts are in docs/product/BRIEF.md.
 ## Architecture choices
 - <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
 ```
+
+Copy `## Principles` into every app's constitution word for word, and ask nothing about it. Do not
+add it to an approved constitution: the principles reach that app through its briefs, cold reads
+and reviews.
 
 Make each architecture choice yourself, from the answers and the code, and write it as one plain
 line with its reason and its decision record. Record the stack that the code already uses. For

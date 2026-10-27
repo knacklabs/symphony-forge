@@ -97,6 +97,26 @@ An edge case is inside the boundary only when a Done-when item names it, when th
 realistic scenario that makes it likely in normal use, or when it falls under Security or Data
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
+Four principles govern every change.
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
+Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
+or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
+than 2 x C, score its Gain 2 or less: it is a known limit and does not hold the work. A review
+keeps it in Known issues; a cold read keeps it with its disposition in the read notes. A finding
+under Security or Data loss, or one that names a migration, keeps its Harm floor and still holds
+the work. A check that a Done-when item promises is not added work: report it missing as
+`Not done: <the item>`, which holds the work at any score. Never title an added-work finding
+`Not done`.
+
 Prefer one blunt fail-closed rule with one test over listing every case.
 
 In a client app, report a plan whose part has one module query a table another module owns as a

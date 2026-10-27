@@ -360,12 +360,25 @@ $checks
 Record this paragraph in an empty commit before you edit code:
 
 Before coding:
-Need: <the job or problem that needs this change>
-Simplest option: <the first rung of the ladder that works, and why>
+Need: <the job or problem that needs this change, and why deleting code or a step does not solve it>
+Simplest option: <the first rung of the ladder that works, and why; for each check, retry, guard or flag you add, its F x H and 2 x C>
 Existing code reused: <the existing code you will use, or none and why>
 
 Use `git commit --allow-empty` with that paragraph in the commit body. Keep the original
 three lines. Forge copies them into the pull request summary and gives them to the reviewer.
+Answer these principles in the three lines:
+
+Four principles govern every change.
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
 If evidence changes your approach, explain the change in a later commit instead of rewriting
 the original lines. Add an abstraction layer only at the edge to an outside service.
 Keep business logic in the existing domain services and pure computation in helpers.
