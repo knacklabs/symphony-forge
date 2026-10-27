@@ -631,7 +631,10 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
     repo.forge = checked
     walk(env, claude_payload, monkeypatch)  # a story from story new to story done
     ready(repo, "ASSIGN")
+    # Include the feature command in this command-wide default-checkout invariant;
+    # its own tests cover the non-starter refusal text and successful starter copy.
     for args in (("assign", "ASSIGN", "alice"), ("init",), ("sync",), ("migrate",),
+                 ("task", "feature", "jobs", "--one", "job", "--field", "name:text"),
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
