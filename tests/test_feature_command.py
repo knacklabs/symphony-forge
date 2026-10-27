@@ -203,7 +203,7 @@ def _assert_python_api_output(
     assert f"from app.{plural} import router as {plural}_router" in api_module
     assert f"app.include_router({plural}_router)" in api_module
     environment = (client / "apps/api/migrations/env.py").read_text("utf-8")
-    assert f"import app.{plural}" in environment
+    assert f"from app import {plural} as {plural}" in environment
     pyproject = tomllib.loads((client / "apps/api/pyproject.toml").read_text("utf-8"))
     assert any(
         contract.get("name") == f"{plural} internals"
@@ -491,6 +491,12 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
         # existing non-live checks only parse output. Use the real pinned formatter after the
         # real feature commands, with no production seam or substitute formatter.
         written = _written_paths(clients, client) | _written_paths(built, client)
+        # A module after projects alphabetically makes Ruff's implicit namespace-import
+        # usage move to that module. Clients/jobs alone cannot expose lost Alembic imports
+        # or an unused starter noqa; the real lint check below owns this regression.
+        tasks = repo.forge(*_feature_args("tasks", "task", ["name:text"]), cwd=client)
+        assert tasks.returncode == 0, tasks.stdout + tasks.stderr
+        written |= _written_paths(tasks, client)
         python_files = sorted("../../" + path for path in written if path.endswith(".py"))
         formatted = subprocess.run(
             ["uv", "run", "ruff", "format", "--check", *python_files],

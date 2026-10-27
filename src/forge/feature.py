@@ -311,8 +311,9 @@ def _build_python(args, root: Path) -> int:
     files[main] = _insert(files[main], "app.include_router(organisations_router)",
                           f"\napp.include_router({module}_router)", main)
     env = "apps/api/migrations/env.py"
+    # The explicit alias preserves model registration under Ruff's unused-import check.
     files[env] = _insert(current[env], "import app.organisations",
-                         f"\nimport app.{module}", env)
+                         f"\nfrom app import {module} as {module}", env)
     config = "apps/api/pyproject.toml"
     contract = (f'[[tool.importlinter.contracts]]\nname = "{plural} internals"\n'
                 f'type = "protected"\nprotected_modules = ["app.{module}.*"]\n'
