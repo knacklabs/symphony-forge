@@ -377,6 +377,16 @@ asks for it; keep that mapping in one place. Add unsupported field kinds by hand
 refuses a non-starter or an older starter, follow its named missing parts and build the feature
 by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
 
+In an app with `libs/core/server/src/common/tools.ts` (Python `app/core/tools.py`), a
+feature's agent tools are in its tools file. Add a tool there only when your part names
+it, with `defineTool`, one permission, strict `input` and `output` schemas, all four
+annotations, and a description that says what it does, when to use it and how it relates
+to the other tools. Throw `ToolError` with a `kind` and a message that says how to fix the
+input; never return an HTTP status. Make a tool that changes data safe to run again. Hide a
+default tool only with `hide`. Never call a feature's service from the MCP module. The
+contract case `every tool has a description, annotations, schemas and the error shape`
+must pass.
+
 In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a
@@ -430,7 +440,7 @@ Where the repo's own rules (its AGENTS.md House rules and conventions) differ, t
 conventions apply only to a repo on the default stack.
 
 In a repo that has `services.toml`, when a change adds, moves or removes a Dockerfile, or
-changes a service's port, health path or start command, update `services.toml` in the same
+changes a service's port, health path or start command or MCP path, update `services.toml` in the same
 change. Close refuses a `services.toml` that names a Dockerfile the branch does not have, or
 that does not have exactly one service with `expose = "main"`. In a repo without
 `services.toml`, do not create one: the coordinator writes the first list with the owner's

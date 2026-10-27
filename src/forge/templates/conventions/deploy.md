@@ -17,7 +17,10 @@ Each `[[service]]` has a `name`, a `dockerfile` path, a container `port`, a `hea
 answers HTTP 200 when the service is ready, and an `expose` value: `main` for the app's main
 address, `subdomain` for its own subdomain, named by its `subdomain` prefix (for example
 `api`), or `internal` for a service with no address, such as a worker, which needs no port or
-health path. An optional `command` replaces the Dockerfile's start command. Exactly one
+health path. An optional `command` replaces the Dockerfile's start command.
+An optional `mcp` is the path where the service serves its MCP server, such as `/mcp`;
+Mainline shows it under Connectors, and its gateway sends the agent key that an admin creates
+in the app. Exactly one
 service is `main`. One release builds every service, and a rollback rolls them all back. The
 platform provides Postgres through `DATABASE_URL`. Forge's starters list one `main` service:
 the root Dockerfile on port 3000 with `GET /health`.

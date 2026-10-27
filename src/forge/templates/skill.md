@@ -22,13 +22,15 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
 
 Our deploy platform reads `services.toml` at the repo root: one `[[service]]` per service,
 with `name`, `dockerfile`, `port`, `health`, `expose` (`main`, `subdomain` or `internal`) and,
-when needed, `subdomain` and `command`; deploy.md in Forge's conventions has the details.
+when needed, `subdomain` and `command`, and `mcp` with the path of the service's MCP server;
+deploy.md in Forge's conventions has the details.
 Close refuses a list that names a Dockerfile the branch does not have or does not have
 exactly one `main` service. When a client repo has a Dockerfile and no `services.toml`, write
 it before the first deployment the owner asks for: one service per Dockerfile the app runs,
 the port from its `EXPOSE` line and the health path from the code. Show it to the owner and
 ask with options: confirm it, or change a service's exposure. Then merge it in a fix. The
 owner picks the main subdomain on the platform, so the list does not hold it.
+In a starter app, the API service has mcp = "/mcp".
 
 The first deployment that the owner asks for in a client repo is its deploy setup, and that
 request is the explicit request above. Follow the installed Mainline Deploy skill in this
@@ -962,6 +964,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
+- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 
 In any other app, record the
 stack, package manager and folder layout that the app already uses, and leave out ## Fixed rules.
@@ -993,6 +996,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: admins invite people by email; members cannot invite people or change roles.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
+- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each UI or API crash writes one error report to the logs.
 
 ## Growth notes
@@ -1248,6 +1252,36 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   changes the role permissions, name that change for the worker to make in the feature's
   permission mapping. A non-starter or older starter missing the required parts gets a refusal
   naming what is missing; build that feature by hand in its existing layout.
+- In a starter app, each feature's agent tools are in its one tools file
+  (`libs/<plural>/server/src/<plural>.tools.ts`, Python `apps/api/app/<plural>/tools.py`),
+  and the feature command writes it. When a story adds a route that agents need, the part
+  names the hand-made tool, its name in the form `<feature>_<verb>`, its permission and its
+  annotations. When the owner wants a default tool hidden, the part says so.
+  Every generated or hand-made tool follows these rules:
+  - Names start with the feature. A description says what the tool does, when to use it and
+    how it relates to the other tools, as for a new user.
+  - Arguments use snake-case names, with `<singular>_id` for an id. Strict input and output
+    schemas come from the feature's own schemas.
+  - Use a search tool, not a list tool: `query`, the feature's filters, `limit` (20 by default,
+    up to 100) and `cursor`. Return `next_cursor`, how many match in all (more than 10,000
+    when capped), and how to narrow the search.
+  - Return useful fields with names beside ids, `response_format` set to `concise` by default
+    and `detailed` on request, `structuredContent` with an `outputSchema`, and a short summary.
+  - Return failures as tool results with `isError`, a plain message with the fix and an example
+    where useful, `kind`, `retryable` and `retry_after_seconds`. Never return HTTP statuses or
+    traces for tool failures; protocol errors are only for an unknown tool or malformed request.
+    A missing or revoked agent key is an HTTP 401 before any tool call.
+  - A create accepts `idempotency_key`; update, delete and restore are safe to run again.
+  - Set all four annotations: `readOnlyHint`, `destructiveHint`, `idempotentHint` and
+    `openWorldHint`, to describe what the tool does.
+  - Limit each call to 10 seconds, then return a retryable `unavailable` error. Limit each key
+    to 120 calls a minute per running API copy. Both errors say how many seconds to wait.
+    Work can still finish after the time limit, so a create's retry uses the same key.
+  - Keep the contract case `every tool has a description, annotations, schemas and the error
+    shape` passing for every tool, including tools added by hand.
+  Only starter apps get the MCP server. Upgrade and sync deliver this guidance without app
+  files or a `services.toml` change. In an older starter without MCP support, the feature
+  command builds the feature without tools and says so.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
