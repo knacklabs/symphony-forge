@@ -12,13 +12,38 @@ export const memberListQuerySchema = z.object({
 
 export type MemberListQuery = z.infer<typeof memberListQuerySchema>;
 
-export type Member = { id: string; accountId: string; email: string; role: Role; createdAtUtc: string };
+/** `isAgent` marks an agent account; `hasKey` says whether it has a working key. */
+export type Member = { id: string; accountId: string; email: string; role: Role; isAgent: boolean; hasKey: boolean; createdAtUtc: string };
 
 export const changeRoleSchema = z.object({
   role: roleSchema.meta({ description: 'The member’s new role.', example: 'member' }),
 }).strict();
 
 export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;
+
+export const addAgentSchema = z.object({
+  name: z.string().min(1, 'Enter a name.')
+    .regex(/^[a-z][a-z0-9-]{1,39}$/, 'Use 2 to 40 lower-case letters, numbers or hyphens, starting with a letter.')
+    .meta({ description: 'The start of the agent account’s email: lower-case letters, numbers and hyphens.', example: 'gantry' }),
+  role: roleSchema.meta({ description: 'The agent account’s role.', example: 'member' }),
+}).strict();
+
+export type AddAgentInput = z.infer<typeof addAgentSchema>;
+
+/** The agent's new key, which the API returns this one time only. */
+export type AgentKey = { key: string };
+
+export const agentToolsChangeSchema = z.object({
+  deleteAndRestore: z.boolean().meta({ description: 'Whether agents can use the feature’s delete and restore tools.', example: true }),
+}).strict();
+
+export type AgentToolsChange = z.infer<typeof agentToolsChangeSchema>;
+
+/** A feature's plural in kebab case, such as `projects` or `work-orders`. */
+export const agentToolsFeatureSchema = z.string().max(100).regex(/^[a-z][a-z0-9-]*$/, 'Use the feature’s plural in lower-case letters, numbers and hyphens, such as projects.');
+
+/** The features whose delete and restore tools agents can use. */
+export type AgentTools = { deleteAndRestore: string[] };
 export { ORGANISATIONS_API } from './service';
 export type {
   OrganisationAccount,

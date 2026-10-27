@@ -1,0 +1,109 @@
+{
+  "allow_large": "The owner allows this story's parts over the line limit, because each part spans an API, the screen and tests",
+  "branch": "task/FORGE-MCP-1-AGENTS",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/libs/organisations/web/src/pages/members-page.tsx",
+      "file": "src/forge/templates/starter/libs/organisations/web/src/pages/members-page.tsx",
+      "gain": 4,
+      "harm": 3,
+      "line": 148,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Load agent accounts beyond the first members page",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/libs/organisations/web/src/pages/agent-key-dialog.tsx",
+      "file": "src/forge/templates/starter/libs/organisations/web/src/pages/agent-key-dialog.tsx",
+      "gain": 4,
+      "harm": 3,
+      "line": 21,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Ignore key responses from earlier dialog openings",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/libs/organisations/web/src/hooks/members-hooks.ts",
+      "file": "src/forge/templates/starter/libs/organisations/web/src/hooks/members-hooks.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 48,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Handle offline agent mutations instead of leaving them pending",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 89,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: adding an agent with the Admin role",
+      "work": 2
+    },
+    {
+      "area": "test_3_each_feature_has_its_tools() in tests/test_mcp.py",
+      "file": "tests/test_mcp.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 109,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: TOOLS and TOOLSPY must complete the feature-tool contract",
+      "work": 5
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ead5f0f30c3510aa5991a7b10b26c6653f6ce6ade5d5eb718601fd970fc2fbde",
+    "changed": "6c9d94c0a402e1914258f470aadca33de32089692862bd434ebffef94882faa9",
+    "commit": "ec68e1b8e5a24061f48d645d5065924a88e1bec0",
+    "dismissals": [],
+    "findings": [],
+    "id": "60d229d8-5695-454a-8d3a-850d9daaec94",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T08:36:16.518590+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T10:32:07.342616+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T10:45:10.364813+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9108bb44-0734-41d7-b922-1157139cc145",
+    "head": "111620bd4238c3cc68f3a88e0a090115552b1801",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

@@ -1,4 +1,4 @@
-import type { Role } from './index';
+import type { Member, Role } from './index';
 
 export const ORGANISATIONS_API = 'OrganisationsApi';
 
@@ -19,4 +19,8 @@ export interface OrganisationsApi {
   openInvite(token: string): Promise<OrganisationInvite>;
   joinFromInvite(invite: OrganisationInvite, account: OrganisationAccount): Promise<{ role: Role }>;
   membershipFor(accountId: string): Promise<OrganisationMembership | null>;
+  /** Makes the new account an agent of the admin's organisation, with its Change history row. */
+  addAgent(account: OrganisationAccount, role: Role, admin: OrganisationPrincipal): Promise<Member>;
+  /** The agent with this key hash and its organisation's agent delete and restore list. */
+  agentForKey(keyHash: string): Promise<{ principal: OrganisationPrincipal & { role: Role }; deleteAndRestore: string[] } | null>;
 }
