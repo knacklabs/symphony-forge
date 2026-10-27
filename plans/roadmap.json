@@ -432,6 +432,12 @@
       "title": "Client apps ship an MCP server so agents can use their features",
       "status": "pending",
       "order": 102
+    },
+    {
+      "key": "FORGE-JOURNEY-1",
+      "title": "Agents teach the seven-step journey to new users",
+      "status": "pending",
+      "order": 103
     }
   ],
   "epics": [
