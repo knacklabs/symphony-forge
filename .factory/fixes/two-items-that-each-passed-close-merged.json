@@ -95,7 +95,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-27T14:11:28.595728+00:00",
@@ -108,8 +108,12 @@
   ],
   "stop": {
     "at": "2026-10-27T14:23:09.510645+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/merge.py",
-    "wait_id": "d048232b-9656-4c28-bc9c-cda49602ac52"
+    "reason": "Owner: fix findings 1 and 2 this round; finding 3 (review not redone after main merges in) is accepted as a known issue because the combined tests already pass and a new review would add minutes to every such merge",
+    "wait_id": "d048232b-9656-4c28-bc9c-cda49602ac52",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
