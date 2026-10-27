@@ -94,7 +94,7 @@
     "id": "4db2f4ef-063d-4b68-94ce-5f1e3bb3435a",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -116,10 +116,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "280c4ac7ae733b3ec7510f23422c41fbf39e4edb",
+    "close": "de629345-c0d8-49be-8b72-2acc2205ffe6",
+    "head": "073b4ffe6f0e2d3f4e29921f284d50ee09b4ed32",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Two items that each passed close merged one after the other and left the default branch red.",
   "worker": "codex"
