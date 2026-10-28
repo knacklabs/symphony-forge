@@ -59,17 +59,19 @@ console.log(JSON.stringify({{headless, wide, compact, machine}}));
 
 @pytest.mark.parametrize("cores,capacity", [(8, 2), (4, 1)])
 def test_2_pane_and_machine_show_test_lane_capacity_and_every_running_test(
-        env, tmp_path, packaged_mod, release_server, cores, capacity):
+        env, tmp_path, packaged_mod, release_server, cores, capacity, monkeypatch):
     # Admission is covered separately. This guards transport and rendering:
     # a first-running-entry shortcut must not hide a second real running test.
     repo = env.repo
     machine_cores(repo, cores)
+    monkeypatch.setenv("FORGE_TEST_CPUS", "2")
+    budget = cores // 2
     server, connections = release_server
     configure(env, server)
     idle = rendered(repo, packaged_mod, tmp_path)
     for surface in ("headless", "wide", "machine"):
-        assert f"Tests 0/{capacity} (0 waiting)" in idle[surface]
-    assert f"Tests 0/{capacity}" in idle["compact"]
+        assert f"Tests 0/{budget} (0 waiting)" in idle[surface]
+    assert f"Tests 0/{budget}" in idle["compact"]
     processes = []
     titles = ["First client check", "Second client check"][:capacity]
     try:
@@ -89,9 +91,9 @@ def test_2_pane_and_machine_show_test_lane_capacity_and_every_running_test(
         _until(all_reported, "Forge to publish every running client test")
         active = rendered(repo, packaged_mod, tmp_path)
         for surface in ("headless", "wide", "machine"):
-            assert f"Tests {capacity}/{capacity} (0 waiting)" in active[surface]
+            assert f"Tests {budget}/{budget} (0 waiting)" in active[surface]
         assert f"{capacity} running, 0+0 waiting" in active["compact"]
-        assert f"Tests {capacity}/{capacity}" in active["compact"]
+        assert f"Tests {budget}/{budget}" in active["compact"]
         for title in titles:
             assert title in active["machine"]
     finally:

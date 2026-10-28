@@ -17,7 +17,8 @@
     }
   },
   "tags": [
-    "type:web"
+    "type:app-web",
+    "scope:app"
   ],
   "sourceRoot": "apps/web/src"
 }

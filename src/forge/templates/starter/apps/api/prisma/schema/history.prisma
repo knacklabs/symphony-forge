@@ -1,13 +1,18 @@
 // Change history is a log: keep the actor's email as it was when the action happened.
 model ChangeRecord {
-  id             String   @id @default(uuid()) @db.Uuid
+  id             String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
   organisationId String   @db.Uuid
   actorAccountId String   @db.Uuid
   actorEmail     String
   action         String
   summary        String
-  createdAtUtc   DateTime @default(now())
+  // The changed item, such as a project, so its detail screen can list its own changes.
+  subjectId      String?  @db.Uuid
+  subjectName    String?
+  createdAtUtc   DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([organisationId, createdAtUtc], map: "idx_ChangeRecord_organisationId_createdAtUtc")
   @@index([actorAccountId], map: "idx_ChangeRecord_actorAccountId")
+  @@index([organisationId, subjectId, createdAtUtc(sort: Desc)], map: "idx_ChangeRecord_organisationId_subjectId_createdAtUtc")
+  @@schema("history")
 }

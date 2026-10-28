@@ -13,12 +13,13 @@ import re
 import shlex
 import shutil
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, machine, migration_warnings,
-                   native, records, repo, review, spotted, story, score, task, time_records, upgrade)
+                   journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, waits_for
 from forge.task import rows as task_rows
 
@@ -113,15 +114,48 @@ def open_must_answer_topics(top: Path) -> list[str]:
             or answers[topic][0][0] in ("ask the client", "later")]
 
 
+@repo.command_cache(snapshot=True)
 def next_step(args: Any) -> int:
     top = repo.root()
     from forge import fullrun
 
-    notice = upgrade.release_notice(top) + fullrun.notices(top)
-    history = board._machine_history(top) if args.json else None
-    lines = migration_warnings.warnings(top) + _report(top, history, schedules=True)[0]
+    if (top / "forge.toml").is_file():
+        try:
+            repo.config(top)
+        except repo.Refused as refusal:
+            if refusal.entry == repo.REFUSALS["added_work_min_gain"]:
+                raise
+    notice = upgrade.release_notice(top) + fullrun.notices(top) if not args.json else []
+    # Populate shared facts before concurrent readers can race on their first lookup.
+    repo.forge_dir(top)
+    repo.default_branch(top)
+    story.worktrees(top)
+    # Independent network reads overlap each other and the bulk local history.
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        open_fields = "headRefName,headRefOid,body,url,isDraft"
+        open_read = (pool.submit(board_facts._listing, top, "open", fields=open_fields)
+                     if not args.json else None)
+        github_read = pool.submit(board_facts.prs, top, fresh=not args.json,
+                                  merged_fields="headRefName",
+                                  open_fields=open_fields, open_read=open_read)
+        def checks():
+            if open_read is not None and open_read.result() == []:
+                return []  # A complete empty inventory has no open PR checks to read.
+            return board._machine_prs(top)
+        pending = {"alerts": pool.submit(_failed_schedules, top),
+                   "checks": pool.submit(checks), "github": github_read}
+        activity = pool.submit(board._event_history, top)
+        warning_read = pool.submit(migration_warnings.warnings, top)
+        history = board._machine_history(top)
+        warnings = warning_read.result()
+        activity.result()
+        facts = {name: future.result() for name, future in pending.items()}
+    lines = warnings + _report(
+        top, history, schedules=True, numbers=not args.json, facts=facts)[0]
+    step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
+            if not args.json and (top / "forge.toml").is_file() else [])
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
-          if args.json else "\n".join(notice + lines))
+          if args.json else "\n".join(step + notice + lines))
     return 0
 
 
@@ -160,8 +194,11 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
 
 
 def context_hook(args: Any) -> int:
-    lines, states = _report(repo.root())
-    print("\n".join(lines + states))
+    top = repo.root()
+    lines, states = _report(top)
+    step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
+            if (top / "forge.toml").is_file() else [])
+    print("\n".join(step + lines + states))
     return 0
 
 
@@ -171,7 +208,10 @@ def handoff_hook(args: Any) -> int:
     old = path.read_text(encoding="utf-8") if path.is_file() else ""
     heading = "## Decisions and lessons\n"
     notes = old[old.index(heading):] if heading in old else heading
-    current = "\n".join(_report(top)[0])
+    lines = _report(top)[0]
+    step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
+            if (top / "forge.toml").is_file() else [])
+    current = "\n".join(step + lines)
     temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent,
                                        prefix="handoff-", suffix=".tmp", delete=False)
     try:
@@ -185,23 +225,28 @@ def handoff_hook(args: Any) -> int:
 
 
 def _report(top: Path, history: dict[str, Any] | None = None,
-            schedules: bool = False) -> tuple[list[str], list[str]]:
+            schedules: bool = False, numbers: bool = False,
+            facts: dict[str, Any] | None = None) -> tuple[list[str], list[str]]:
     """The lines `forge next` prints, and one state line per story and fix with its human touches."""
     lines: list[str] = []
     states: list[str] = []
     refusals: dict[Path, str] = {}
     # Only forge next asks GitHub for scheduled runs; hooks stay offline. An open fix for a
     # failed run shows its own lines under it.
-    alerts = _failed_schedules(top) if schedules else {}
+    alerts = (facts["alerts"] if facts is not None else _failed_schedules(top)) if schedules else {}
     pinned: list[str] = []
 
     def claim(state: dict[str, Any]) -> list[str] | None:  # by the workflow file the fix's why names
         key = next((key for key in alerts if key in str(state.get("why") or "")), None)
         return alerts.pop(key) if key else None
     trees = story.worktrees(top)
-    # A machine view (history given) reads the board's lists, kept a minute; forge next asks GitHub.
-    github = board_facts.prs(top) if history is not None else None
-    if github is None and history is not None:  # the board's one try failed: unknown, no live call per item
+    for branch, path in trees.items():
+        if branch.startswith(board.PREFIXES):
+            _report_config(path, refusals)
+    # Bulk Git history is independent of the machine view's minute-long GitHub cache.
+    cached_prs = history is not None
+    github = (facts["github"] if facts is not None else board_facts.prs(top)) if cached_prs else None
+    if github is None and cached_prs:  # the board's one try failed: unknown, no live call per item
         merged_prs, opened = set(), []
     elif github is None:
         merged_prs = {pr["headRefName"] for pr in _prs(top, "merged", "headRefName")} if trees else set()
@@ -212,7 +257,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     prs = {pr["headRefName"]: pr for pr in opened if isinstance(pr.get("url"), str)}
     if trees:
         prs.update({pr["headRefName"]: {**pr, **prs.get(pr["headRefName"], {})}
-                    for pr in board._machine_prs(top)
+                    for pr in (facts["checks"] if facts is not None else board._machine_prs(top))
                     if isinstance(pr.get("headRefName"), str)})
     stories = _stories(top, history)
     if history is not None and any(
@@ -231,7 +276,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
                             and (part := _task(top, key, name, trees, merged_prs, history, prs)).get("from_fix"))
             continue
         title = state.get("title") or key
-        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history)
+        readiness: dict[str, Any] = {}
+        found, tasks = _story(top, key, path, text, title, trees, merged_prs, prs, refusals, history, readiness)
+        if history is not None:
+            history.setdefault("story advice", {})[key] = found, readiness
         promoted.update(state["from_fix"] for state in tasks if state.get("from_fix"))
         assignments = {f"{key}/{tid}": developer(row) or owner(text)
                        for tid, row in task.rows(task.sections(text)).items()}
@@ -306,6 +354,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
+        if cfg["repo"] == "client":
+            from forge import open_decisions
+
+            lines += open_decisions.due_lines(top)
         if repo.is_prototype(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:
@@ -317,7 +369,7 @@ def _report(top: Path, history: dict[str, Any] | None = None,
         lines += ["Next: connect the repo on our deploy platform, pick a subdomain, and record its "
                   "address in docs/product/BRIEF.md under ## Demo as - Address: <url>."]
     # Appended statistics never enter machine_next's first line or command.
-    if history is None and repo.now()[:10] >= board.CHECK_DATE:
+    if (history is None or numbers) and repo.now()[:10] >= board.CHECK_DATE:
         lines.append(board.numbers_line(top, _report_config(top, refusals)["checks"]))
     lines += [f"{path}: {reason}" for path, reason in refusals.items()]
     if ((top / "forge.toml").is_file() and cfg["repo"] == "client"
@@ -385,6 +437,8 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
 
 def _needs_demo_address(top: Path) -> bool:
     """Read the fetched default branch, not a demo address still being edited here."""
+    from forge import design
+
     if not (top / "forge.toml").is_file():
         return False
     ref = story.landed_ref(top)
@@ -394,7 +448,8 @@ def _needs_demo_address(top: Path) -> bool:
         return False
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
-    return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
+    return ((not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M))
+            and design.has_app_code(top, ref))
 
 
 def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
@@ -525,10 +580,6 @@ def _story(top: Path, key: str, path: Path | None, text: str,
               for name in task_rows(sections(text)) if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)}
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={})
-    if held := _native_round(top, key, title, "Grill"):
-        return held, list(states.values())
-    if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
-        return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], list(states.values())
     if history is None:
         notes, saved = story.show(top, ref, f"plans/{key}.read.md") or "", story.show(top, ref, repo.state_path(key))
     else:  # the board's one read of every ref
@@ -539,6 +590,13 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
+    held = _native_round(top, key, title, "Grill")
+    if held or any(run.get("kind") == "read" for run in board.active_runs(top, key)):
+        record, _ = story._record(notes)
+        began = journey.started(top, key, {}, "read")
+        wait = journey.wait_line(top, key, record, began, {}, "unknown", "read")
+        lines = held or [f"A reader is reading {title}.", "Next: wait for the reader to finish"]
+        return lines[:1] + ([wait] if wait else []) + lines[1:], list(states.values())
     doc_hash = repo.blob_hash(text)
     try:
         doc = story.parse(text, top, history=history, key=key)
@@ -703,11 +761,13 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
+        wait = [f"Cold read round {done} of 2: {len(story._latest(record, findings))} notes to answer."]
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
         why = f"plans/{key}.md changed after round {done} of its cold read"
+        wait = []
     else:
         return []
-    return [f"Planning {title}: {why}, so round {done + 1} is next.",
+    return [f"Planning {title}: {why}, so round {done + 1} is next.", *wait,
             f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
             f"forge read {key}"]
 
@@ -928,7 +988,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     if held := _native_round(top, item, label, "Build"):
-        return held
+        wait = journey.wait_line(top, item, state, journey.started(top, item, state, "build"),
+                                 {}, "unknown", "build")
+        return held[:1] + ([wait] if wait else []) + held[1:]
     pr = (prs or {}).get(state.get("branch", "")) or {}
     state = at_ref(top, item, state, pr)
     if state.get("status") == "dropped":
@@ -1021,7 +1083,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     built = _builder(item, state, path or top, refusals) if step == "forge work {item}" else ""
     if step == "forge work {item}" and not built and state.get("tool"):
         built = f"  # {state['tool'].title()} builds it"
-    return answered + [sentence.format(**values), f"Next: {step.format(**values)}{built}"]
+    wait = journey.wait_line(top, item, state, journey.started(top, item, state, "build"),
+                             pr, checks, "build")
+    return answered + [sentence.format(**values), *([wait] if wait else []),
+                       f"Next: {step.format(**values)}{built}"]
 
 
 def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path, str]) -> str:

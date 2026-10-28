@@ -4,4 +4,5 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["core", "history", "mcp", "projects"]
 }

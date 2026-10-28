@@ -17,14 +17,22 @@ pytest_plugins = ("test_notes_first_discovery",)
 from test_setup import _fresh_client
 from test_defaults_formats import DOWNLOAD_FLOW, FORMAT_FLOW, PYTHON_CSV_API_CASES
 from test_defaults_organisations import PYTHON_ORGANISATION_API_CASES
-from test_starter_tree import BROWSER_FLOWS, _pnpm_root_importer, _require_cases, _run_live_starter
+from test_starter_tree import (
+    BROWSER_FLOWS,
+    PYTHON_REACT_PATHS,
+    _assert_first_commit_has,
+    _files_under,
+    _pnpm_root_importer,
+    _require_cases,
+    live_python_run,
+)
 
 STORY = "FORGE-FASTAPI-1"
 
 ROOT = Path(__file__).resolve().parents[1]
 REACT_STARTER = ROOT / "src/forge/templates/starter"
 PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
-REACT_PATHS = (Path("apps/web"), Path("tsconfig.base.json"), Path(".npmrc"))
+REACT_PATHS = PYTHON_REACT_PATHS
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 API_SECURITY_TESTS = (
     "production_forgot_password_does_not_log_a_reset_link",
@@ -45,28 +53,6 @@ PYTHON_GUIDANCE = (
 )
 
 
-def _files_under(path: Path):
-    if path.is_file():
-        return [path]
-    return sorted(candidate for candidate in path.rglob("*") if candidate.is_file())
-
-
-def _assert_first_commit_has(client: Path, source: Path, target: Path):
-    files = _files_under(source)
-    assert files, f"missing starter files under {source}"
-    [first_commit] = subprocess.run(
-        ["git", "rev-list", "HEAD"], cwd=client, capture_output=True, text=True, check=True
-    ).stdout.splitlines()
-    for source_file in files:
-        relative = source_file.relative_to(source) if source.is_dir() else Path(source.name)
-        destination = target / relative if source.is_dir() else target
-        copied = subprocess.run(
-            ["git", "show", f"{first_commit}:{destination.as_posix()}"],
-            cwd=client, capture_output=True, check=True,
-        ).stdout
-        assert copied == source_file.read_bytes(), destination
-
-
 def _assert_python_guidance(client: Path):
     for host in (".claude", ".codex"):
         guide = (client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
@@ -85,7 +71,8 @@ def _assert_python_tree(client: Path):
     )
 
     assert not (client / "apps/api/src").exists()
-    assert not (client / "libs/auth").exists()
+    for module in ("auth", "projects", "organisations", "history"):
+        assert not (client / "libs" / module / "server").exists()
     assert not (client / "prisma.config.ts").exists()
     assert not (client / "nx.json").exists()
 
@@ -148,7 +135,7 @@ def _assert_python_tree(client: Path):
     assert "mypy" in scripts["typecheck"]
     assert "api-types" in scripts["test"] and "test:imports" in scripts["test"]
     assert scripts["test"].index("api-types") < scripts["test"].index("typecheck")
-    assert "./api-types" in (client / "libs/shared/src/index.ts").read_text(encoding="utf-8")
+    assert (client / "libs/shared/api-types/src/api-types.ts").is_file()
 
     dockerfile = (client / "Dockerfile").read_text(encoding="utf-8")
     for line in (
@@ -186,13 +173,7 @@ def _assert_python_tree(client: Path):
 
 @pytest.fixture(scope="module")
 def live_python_starter(tmp_path_factory):
-    if not shutil.which("uv"):
-        pytest.skip("uv is required for the Python starter smoke run")
-    sources = tuple((REACT_STARTER / rel, rel) for rel in REACT_PATHS) + (
-        (PYTHON_STARTER, Path(".")),
-        (ROOT / "src/forge/templates/skeleton/.dockerignore", Path(".dockerignore")),
-    )
-    return _run_live_starter(tmp_path_factory, sources, ("GET /health returned 200",))
+    return live_python_run(tmp_path_factory)
 
 
 @pytest.mark.platform
@@ -396,11 +377,12 @@ def test_3_the_tests_fail_when_the_api_changes_a_field_the_web_app_uses(case, re
     # Audit: the generated OpenAPI types must reach the web type checker. A stale or disconnected
     # generation step lets API response changes compile. Existing React starter tests do not have
     # a Python OpenAPI source. The test runs the root commands, with no test-only production seam.
-    shared = (PYTHON_STARTER / "libs/shared/src/index.ts").read_text(encoding="utf-8")
-    assert "./api-types" in shared
     scripts = json.loads((PYTHON_STARTER / "package.json").read_text(encoding="utf-8"))["scripts"]
     assert "api-types" in scripts["test"] and scripts["test"].index("api-types") < scripts["test"].index("typecheck")
-    assert "openapi-typescript" in scripts["api-types"]
+    assert "../../libs/shared/api-types/openapi.json" in scripts["api-types"]
+    assert "openapi-typescript libs/shared/api-types/openapi.json -o libs/shared/api-types/src/api-types.ts" in scripts["api-types"]
+    project_contracts = (PYTHON_STARTER / "libs/projects/contracts/src/index.ts").read_text(encoding="utf-8")
+    assert "@app/shared-api-types" in project_contracts
     if not LIVE:
         return
 
@@ -415,6 +397,6 @@ def test_3_the_tests_fail_when_the_api_changes_a_field_the_web_app_uses(case, re
         checked = _run_api_types_and_typecheck(folder)
         output = checked.stdout + checked.stderr
         assert checked.returncode != 0, output
-        assert re.search(r"apps[/\\]+web[/\\]+src[/\\]+features[/\\]+projects[/\\]+", output), output
+        assert re.search(r"libs[/\\]+projects[/\\]+web[/\\]+src[/\\]+", output), output
     finally:
         schema_path.write_text(original, encoding="utf-8")

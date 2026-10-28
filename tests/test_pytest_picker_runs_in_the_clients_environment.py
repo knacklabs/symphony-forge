@@ -86,6 +86,44 @@ def test_1_pytest_picker_runs_related_tests_and_shared_inputs_in_a_plain_pytest_
         repo.git("revert", "--no-edit", "HEAD")
 
 
+@pytest.mark.parametrize("location,adopted", [
+    ("tests/local", False), ("templates/app/tests", False),
+    ("templates/app/tests", True),
+], ids=["nested-fixture", "embedded-app", "embedded-app-earlier-adoption"])
+def test_7_a_nested_fixture_selects_its_tests_and_consumers_without_the_whole_suite(
+        repo, monkeypatch, location, adopted):
+    # Audit: a fixture belongs to its subtree, including an embedded app's copied tests;
+    # its Forge consumer must still run. A basename-only global invalidation runs unrelated
+    # tests, while ignoring nested fixtures loses their descendants. The root fixture case
+    # belongs to test_1 above. This uses the real picker and pytest with no production seam.
+    version = repo.forge("--version").stdout.split()[-1]
+    if adopted:
+        shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
+                        dirs_exist_ok=True)
+    python, dependencies = _pytest_environment(repo)
+    monkeypatch.setenv("PYTHONPATH", str(dependencies))
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
+    repo.write("forge.toml", f'version = "{version}"\ntest = ' + json.dumps(
+        f'"{python.as_posix()}" -m pytest tests -q -n 0') + "\n")
+    fixture = f"{location}/conftest.py"
+    before = "import pytest\n@pytest.fixture\ndef value():\n    return 'old'\n"
+    repo.write(fixture, before)
+    repo.write(f"{location}/test_local.py",
+               "def test_local(value):\n    assert value == 'new'\n")
+    repo.write("tests/test_consumer.py", "from pathlib import Path\n"
+               f"def test_consumer():\n    assert \"return 'new'\" in Path({fixture!r}).read_text()\n")
+    repo.write("tests/test_unrelated.py",
+               "def test_unrelated():\n    assert False, 'This fixture cannot affect this test'\n")
+    repo.git("add", "-A")
+    repo.git("commit", "-qm", "Keep local and embedded fixtures")
+    base = repo.git("rev-parse", "HEAD")
+    repo.write(fixture, before.replace("'old'", "'new'"))
+    result = repo.forge("test", "--pytest", base)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert ("2 passed" if location.startswith("tests/") else "1 passed") in result.stdout
+    assert "Shared test inputs changed" not in result.stdout
+
+
 def test_2_doctor_names_the_replacement_for_the_old_module_command(repo):
     repo.write("forge.toml", 'version = "v1.2.6"\nfast_test = "uv run python -m forge.fasttest {base}"\n')
     result = repo.forge("doctor")

@@ -37,7 +37,7 @@ describe('error reports', () => {
     const account = credentials();
     const constraintName = `crash_${randomUUID().replaceAll('-', '')}`;
     const added = psql(
-      `ALTER TABLE "Account" ADD CONSTRAINT "${constraintName}" CHECK (email <> '${account.email}') NOT VALID;`,
+      `ALTER TABLE core."Account" ADD CONSTRAINT "${constraintName}" CHECK (email <> '${account.email}') NOT VALID;`,
     );
     expect(added.status, added.output).toBe(0);
 
@@ -65,7 +65,7 @@ describe('error reports', () => {
       expect(JSON.stringify(reports[0])).not.toContain(account.email);
       expect(JSON.stringify(reports[0])).not.toContain('violates check constraint');
     } finally {
-      const dropped = psql(`ALTER TABLE "Account" DROP CONSTRAINT IF EXISTS "${constraintName}";`);
+      const dropped = psql(`ALTER TABLE core."Account" DROP CONSTRAINT IF EXISTS "${constraintName}";`);
       expect(dropped.status, dropped.output).toBe(0);
     }
   });

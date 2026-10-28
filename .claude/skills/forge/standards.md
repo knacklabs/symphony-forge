@@ -29,8 +29,10 @@ run in the cold reads, the review's Simpler rule, the functional check and the c
 8. **Measure then check back.** Success means the client's number moved, not that a feature
    shipped. Every spec has a metric, baseline, target and check date. At the check-back the choice
    is to stop, change the slice or remove it; adding more is never the default.
-9. **Reversible.** Every change is a pull request a revert undoes. Prefer migrations that only add,
-   keep data rather than drop it, and list any one-way step under Risks for the human to decide.
+9. **Reversible.** Every change is a pull request a revert undoes. Expand, then contract: add a new
+   table or column before code uses it, keep the old table or column for two releases, and remove
+   it only when no live release uses it. Keep data rather than drop it, and list any one-way step
+   under Risks for the human to decide.
 10. **Runnable by a non-technical client.** Errors and empty states say in plain words what
     happened and what to do next, and the README keeps a short, current "How it works".
 11. **Security and accessibility never simplified away.** Input is checked where it enters, every
@@ -80,6 +82,9 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
 ## Structure only where its concern exists
 
 Structure earns its place by solving a problem the code has today. These rules say where.
+Add an abstraction layer only at the edge to an outside service. Keep business logic in domain
+services and pure computation in helpers. Required module boundaries, controllers and data
+access below keep their roles; do not wrap them in extra layers.
 
 - **One deployable app.** Build a modular monolith: one backend, one database, one module per
   business domain. No microservices, and no planning or abstractions for future growth: one app is
@@ -99,11 +104,13 @@ Structure earns its place by solving a problem the code has today. These rules s
   can fail, change or be swapped, and tests need a fake. The provider handles authentication,
   timeouts and retries, maps vendor errors to our error codes, returns our own types and holds no
   business logic. Pure computation is a helper, not a provider.
-- **An interface only for an external service or a real second implementation.** One class with
-  one implementation needs no interface, factory or base class; add one when the second arrives.
-- **Shared code.** Types and validators that both the backend and the frontend use live in the
-  shared package, so both sides agree. Add a typed API client there only when the frontend calls
-  that API, and a notification module only when a Done-when item sends a notification.
+- **An interface only at an external-service edge.** Internal code needs no extra interface,
+  factory or base class, except for a module's public service contract when another module needs
+  that service. Use the domain service or helper directly.
+- **Shared code.** A module's types and validators live in its contracts package, so its backend
+  and frontend agree. General helpers live in `libs/shared/util`. Add a typed API client only when
+  the frontend calls that API, and a notification module only when a Done-when item sends a
+  notification.
 - **File size.** Split a file when it holds two unrelated jobs. Never split a file by line count.
 - **Names say the role.** Files are kebab-case with a role suffix (`user.controller.ts`,
   `user.service.ts`, `create-user.dto.ts`, `stripe.provider.ts`, `date.helper.ts`); classes are
@@ -111,14 +118,16 @@ Structure earns its place by solving a problem the code has today. These rules s
 
 ## The client stack
 
-A new client app starts on the smallest stack that runs its first story: a pnpm workspace with
-NestJS, Prisma and Postgres behind a React app built with Vite and React Router. Nx builds
-`apps/web` and `apps/api`; `libs/auth`, `libs/projects`, `libs/organisations`, `libs/history`,
-`libs/core` and `libs/shared` hold the modules and shared code. Forge's `tests` check runs the test
-command. An existing app keeps its package manager, lockfile, Dockerfile, test command and folder
-layout. Anything else arrives only when a story's `New moving parts` line names it, and that
-includes Redis and job queues, Terraform,
-OIDC sign-in and a monitoring stack.
+The starter's modules are `libs/auth`, `libs/projects`, `libs/organisations` and `libs/history`.
+
+A new client app uses the smallest stack that runs its first story: a pnpm workspace with NestJS,
+Prisma and Postgres behind a React app built with Vite and React
+Router. Nx builds `apps/web` and `apps/api`; each module has a `contracts` library for its schemas
+and types and a `server` library for its Nest code. `libs/core/server` holds shared Nest code, and
+`libs/shared/util` holds general helpers. Forge's `tests` check runs the test command. An existing
+app keeps its package manager, lockfile, Dockerfile, test command and folder layout. Anything else
+arrives only when a story's `New moving parts` line names it, and that includes Redis and job queues,
+Terraform, OIDC sign-in and a monitoring stack.
 
 Forge's package ships a short how-to per concern for this stack in `forge/templates/conventions/`:
 `stack.md`, `backend.md`, `api.md`, `database.md`, `frontend.md`, `testing.md` and `security.md`,
@@ -188,7 +197,8 @@ A Python app writes these names in snake_case (payment_transaction, created_at_u
 - Index every foreign key and every column a frequent query filters on, as `idx_<Table>_<column>`, and every unique field.
 - Many-to-many uses an explicit join table named with both tables in alphabetical order (`RoleUser`).
 - Every schema change is a migration with a timestamped name. Never edit a merged migration.
-  Prefer migrations that only add; a destructive one goes under the story's Risks.
+  Expand, then contract: add a new table or column before code uses it, keep the old table or
+  column for two releases, and remove it only when no live release uses it.
 - Use Postgres full-text search before adding a search engine.
 - When a story does add in-process events: name them `<Domain><Action>Event`, give each payload an
   `id`, `version`, `timestampUtc`, `initiatedByAccountId` and `data`, keep secrets out of it, and

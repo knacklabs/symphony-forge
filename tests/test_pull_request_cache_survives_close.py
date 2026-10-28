@@ -1,6 +1,7 @@
 """Closing work keeps the minute cache; next refreshes default and peer branches once per run.
 
 Includes shared fetch reuse for src/forge/migration_warnings.py.
+src/forge/nextstep.py must avoid redundant checks reads after a complete empty open-PR list.
 Commit resolution in src/forge/repo.py must also work through the counting git.cmd launcher.
 """
 import json

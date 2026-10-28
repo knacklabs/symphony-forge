@@ -117,7 +117,13 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert checkout.resolve() == folder.resolve()
         assert "Start a new worker subagent with" in given.stdout
         assert calls(claude_log) == [] and not (repo.bin / "codex-app-server.jsonl").exists()
-        assert "subagent" in repo.forge("next").stdout
+        next_result = repo.forge("next")
+        assert next_result.returncode == 0, next_result.stderr
+        next_lines = next_result.stdout.splitlines()
+        held_line = next_lines.index(
+            "The session holds a round for BOARD/HELP; wait for its subagent to finish.")
+        assert next_lines[held_line + 1].startswith("The worker is building it, ")
+        assert next_lines[held_line + 2].startswith("Next: forge handback BOARD/HELP --round ")
         board = repo.forge("board", "--json")
         assert board.returncode == 0, board.stdout + board.stderr
         [part] = [child for entry in json.loads(board.stdout)["items"]

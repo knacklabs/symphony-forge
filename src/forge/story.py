@@ -598,22 +598,24 @@ def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] |
         return local if local is not None else published or read(landed_ref(top)) or ""
     base_ref = repo.git("merge-base", local_ref, remote, cwd=top)
     base = show(top, base_ref, rel) or ""
-    tables = [task.rows(task.sections(text)) for text in (base, local, published)]
-    before, ours, theirs = [{tid: task.developer(row) for tid, row in table.items()} for table in tables]
-    assignments = {tid: ours.get(tid) if ours.get(tid) != before.get(tid) else theirs.get(tid)
-                   for tid in ours.keys() | theirs.keys()}
-    owner = task.owner(local) if task.owner(local) != task.owner(base) else task.owner(published)
-    columns = [any("Developer" in row for row in table.values()) for table in tables]
-    with tempfile.TemporaryDirectory(prefix="forge-plan-") as folder:
-        files = [Path(folder) / name for name in ("local", "base", "published")]
-        for file, text in zip(files, (local, base, published)):
-            text = re.sub(r"(?m)^Owner:[^\n]*\n?", f"Owner: {owner}\n" if owner else "", text)
-            file.write_text(_with_developers(text, assignments, columns[1] if columns[1] != columns[0] else columns[2]), encoding="utf-8")
-        merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
-    if merged.returncode:
-        raise repo.Refused(f"Local and published edits to plans/{key}.md conflict; reconcile them before continuing.",
-                           f"git diff story/{key} origin/story/{key} -- plans/{key}.md")
-    return merged.stdout
+    def merge():
+        tables = [task.rows(task.sections(text)) for text in (base, local, published)]
+        before, ours, theirs = [{tid: task.developer(row) for tid, row in table.items()} for table in tables]
+        assignments = {tid: ours.get(tid) if ours.get(tid) != before.get(tid) else theirs.get(tid)
+                       for tid in ours.keys() | theirs.keys()}
+        owner = task.owner(local) if task.owner(local) != task.owner(base) else task.owner(published)
+        columns = [any("Developer" in row for row in table.values()) for table in tables]
+        with tempfile.TemporaryDirectory(prefix="forge-plan-") as folder:
+            files = [Path(folder) / name for name in ("local", "base", "published")]
+            for file, text in zip(files, (local, base, published)):
+                text = re.sub(r"(?m)^Owner:[^\n]*\n?", f"Owner: {owner}\n" if owner else "", text)
+                file.write_text(_with_developers(text, assignments, columns[1] if columns[1] != columns[0] else columns[2]), encoding="utf-8")
+            merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
+        if merged.returncode:
+            raise repo.Refused(f"Local and published edits to plans/{key}.md conflict; reconcile them before continuing.",
+                               f"git diff story/{key} origin/story/{key} -- plans/{key}.md")
+        return merged.stdout
+    return repo.command_fact(("merged plan", key, base, local, published), top, merge)
 
 
 def _task_ids(text: str) -> set[str]:
@@ -649,8 +651,6 @@ def _numbered(body: str, name: str) -> dict[int, str]:
 def approval_hash(text: str) -> str | None:
     """What an approval binds: sha256 of the stripped "What changes for you" body, a newline, and the
     stripped "Done when" body. None when the text lacks either section.
-
-    ponytail: WORK's task.approval_hash is the same function; collapse the two once both land.
     """
     found = sections(text)
     if not all(name in found for name in APPROVED):

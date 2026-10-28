@@ -1,0 +1,9 @@
+{
+  "name": "@app/projects-contracts",
+  "projectType": "library",
+  "sourceRoot": "libs/projects/contracts/src",
+  "tags": [
+    "type:contracts",
+    "scope:projects"
+  ]
+}

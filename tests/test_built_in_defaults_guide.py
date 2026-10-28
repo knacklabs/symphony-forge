@@ -63,6 +63,10 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
         _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=top)
 
+    # Audit: init and sync must copy the built-in schema and link rule into fixed rules.
+    # A missing line lets new and adopted apps omit this database contract.
+    # Existing starter database tests prove schema behavior, not guidance delivery.
+    # This checks real init/sync output; no production test seam is needed.
     # Both starter layouts supply these defaults; the interview must skip them for either.
     outline_sentence = (
         "In an app that has libs/organisations or apps/api/app/organisations, "
@@ -74,9 +78,13 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         "query is scoped to that organisation.\n"
         "- Built in: admins invite people by email; members cannot invite people or change roles.\n"
         "- Built in: dates and times are stored in UTC and shown in the person's time zone, and "
-        "money is stored in cents; the helpers in @app/shared format them.\n"
+        "money is stored as an exact decimal with its currency code; the helpers in @app/shared-util "
+        "format them.\n"
         "- Built in: each table has a CSV export, admin actions write change history, and records "
         "are soft deleted.\n"
+        "- Built in: each module keeps its tables in its own Postgres schema, with core tables in core; "
+        "links between business modules store an indexed id without a foreign key, and links to core "
+        "keep their foreign key.\n"
         "- Built in: each UI or API crash writes one error report to the logs."
     )
     for host in (".claude", ".codex"):
@@ -122,7 +130,7 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         "In an app that has libs/organisations, scope every query to the caller's organisation "
         "(organisationId on the principal), guard admin actions with @AdminOnly() and record them "
         "with HistoryService.record, format dates, times, numbers and money only with the helpers "
-        "in @app/shared, export a table only with sendCsv from @app/core, and let crashes reach "
+        "in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach "
         "the one error report. An app without libs/organisations keeps the code it has."
     )
     assert worker_rule in " ".join(brief.split())
@@ -140,14 +148,14 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
             "Record admin actions through `HistoryService.record`",
         ),
         "frontend.md": (
-            "format dates, times, numbers and money only with the helpers in `@app/shared`",
+            "format dates, times, numbers and money only with the helpers in `@app/shared-util`",
             "Show dates and times in the person's time zone, from their browser",
             "Each table has an `Export CSV` link", "the route error page reports the crash once",
         ),
         "backend.md": (
             "libs/organisations", "libs/history",
-            "`type:module` for auth, projects, organisations and history",
-            "Export a table only with `sendCsv` from `@app/core`",
+            "`type:contracts` or `type:server` with a `scope:<module>` tag",
+            "Export a table only with `sendCsv` from `@app/core-server`",
             "the filter writes one error report per crash",
         ),
         "api.md": ("each list has a `GET /<list>/export` route",),

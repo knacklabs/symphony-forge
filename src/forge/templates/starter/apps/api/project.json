@@ -10,7 +10,7 @@
       },
       "outputs": [
         "{workspaceRoot}/apps/api/dist",
-        "{workspaceRoot}/libs/*/dist"
+        "{workspaceRoot}/libs/*/*/dist"
       ]
     },
     "typecheck": {
@@ -21,6 +21,7 @@
     }
   },
   "tags": [
-    "type:api"
+    "type:api",
+    "scope:app"
   ]
 }

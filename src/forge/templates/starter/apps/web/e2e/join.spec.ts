@@ -5,11 +5,12 @@ import { inviteUrlsSince, logEvents, newEmail, password, signUp } from './helper
 test('an admin invites a person who joins and sees the same projects', async ({ page, browser }) => {
   await signUp(page);
   const projectName = `Shared project ${newEmail()}`;
-  await page.getByRole('button', { name: 'Create project' }).click();
-  const createDialog = page.getByRole('dialog', { name: 'Create project' });
+  await page.getByRole('button', { name: 'New project' }).click();
+  const createDialog = page.getByRole('dialog', { name: 'New project' });
   await createDialog.getByLabel('Name').fill(projectName);
   await createDialog.getByRole('button', { name: 'Create project' }).click();
-  await expect(page.getByRole('row', { name: new RegExp(projectName) })).toBeVisible();
+  // A new project opens on its detail screen.
+  await expect(page.getByRole('heading', { level: 1, name: projectName })).toBeVisible();
 
   const memberEmail = newEmail();
   await page.getByRole('link', { name: 'Members' }).click();

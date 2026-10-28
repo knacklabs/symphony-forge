@@ -1,6 +1,7 @@
 services:
   database:
-    image: postgres:17.6-alpine
+    image: postgres:18.6-alpine
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements"]
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: test-password
@@ -10,17 +11,37 @@ services:
       interval: 1s
       timeout: 5s
       retries: 60
-    tmpfs: /var/lib/postgresql/data
+    tmpfs: /var/lib/postgresql
   api:
     build: .
     environment:
       DATABASE_URL: postgresql://postgres:test-password@database:5432/starter_test
       APP_ENV: test
       APP_ORIGIN: http://127.0.0.1:${APP_TEST_PORT:-3000}
+      # Each built feature adds its own sign-ups and calls to one test run; production-api keeps the defaults.
+      AUTH_RATE_LIMIT_PER_MINUTE: "1000"
+      RATE_LIMIT_PER_MINUTE: "10000"
       PORT: "3000"
     ports: ["127.0.0.1:${APP_TEST_PORT:-3000}:3000"]
     depends_on:
       database:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]
+      interval: 1s
+      timeout: 5s
+      retries: 90
+  one-company-api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:test-password@database:5432/starter_test
+      APP_ENV: test
+      APP_COMPANIES: one
+      APP_ORIGIN: http://127.0.0.1:${ONE_COMPANY_TEST_PORT:-3002}
+      PORT: "3000"
+    ports: ["127.0.0.1:${ONE_COMPANY_TEST_PORT:-3002}:3000"]
+    depends_on:
+      api:
         condition: service_healthy
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"]

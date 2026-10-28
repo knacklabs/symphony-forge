@@ -1,22 +1,24 @@
-import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, matchPath, useLocation, useMatches } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
-import { RouteErrorPage } from '@/components/route-error-page';
-import { AcceptInvitePage } from '@/features/auth/pages/accept-invite-page';
-import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page';
-import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
-import { SignInPage } from '@/features/auth/pages/sign-in-page';
-import { SignUpPage } from '@/features/auth/pages/sign-up-page';
-import { useAccount } from '@/features/auth/hooks/auth-hooks';
-import { HistoryPage } from '@/features/history/pages/history-page';
-import { MembersPage } from '@/features/members/pages/members-page';
-import { NotFoundPage } from '@/features/not-found/pages/not-found-page';
-import { ProjectsPage } from '@/features/projects/pages/projects-page';
-import { SettingsPage } from '@/features/settings/pages/settings-page';
-import { Button } from '@/components/ui/button';
+import { RouteErrorPage } from '@app/core-web';
+import { AcceptInvitePage } from '@app/auth-web';
+import { ForgotPasswordPage } from '@app/auth-web';
+import { ResetPasswordPage } from '@app/auth-web';
+import { SignInPage } from '@app/auth-web';
+import { SignUpPage } from '@app/auth-web';
+import { useAccount } from '@app/auth-web';
+import { HistoryPage } from '@app/history-web';
+import { MembersPage } from '@app/organisations-web';
+import { NotFoundPage } from '@/pages/not-found-page';
+import { ProjectCrumbs, ProjectDetailPage, ProjectsPage } from '@app/projects-web';
+import { SettingsPage } from '@/pages/settings-page';
+import { Button } from '@app/shared-ui/components/ui/button';
 
 function ProtectedLayout() {
   const account = useAccount();
   const location = useLocation();
+  // A screen names the permission it needs in its route handle; without it the screen reads as an unknown address.
+  const needed = useMatches().map((match) => (match.handle as { permission?: string } | undefined)?.permission).find(Boolean);
 
   if (account.isPending) {
     return <main id="main-content" className="flex min-h-screen items-center justify-center p-6"><p role="status">Loading your account…</p></main>;
@@ -31,6 +33,7 @@ function ProtectedLayout() {
     );
   }
   if (!account.data) return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />;
+  if (needed && !account.data.permissions.includes(needed)) return <NotFoundPage />;
 
   return <AppShell account={account.data} />;
 }
@@ -48,7 +51,7 @@ export function App() {
     '/members': 'Members',
     '/history': 'Change history',
     '/settings': 'Settings',
-  } as Record<string, string>)[location.pathname] ?? 'Page not found';
+  } as Record<string, string>)[location.pathname] ?? (matchPath('/projects/:id', location.pathname) ? 'Project' : 'Page not found');
   return (
     <>
       <title>{`${title} | Starter app`}</title>
@@ -69,7 +72,8 @@ export const router = createBrowserRouter(createRoutesFromElements(
     <Route path="/reset-password" element={<ResetPasswordPage />} errorElement={<RouteErrorPage />} />
     <Route path="/accept-invite" element={<AcceptInvitePage />} errorElement={<RouteErrorPage />} />
     <Route element={<ProtectedLayout />} errorElement={<RouteErrorPage />}>
-      <Route path="/projects" element={<ProjectsPage />} errorElement={<RouteErrorPage />} />
+      <Route path="/projects" element={<ProjectsPage />} handle={{ permission: 'projects.view' }} errorElement={<RouteErrorPage />} />
+      <Route path="/projects/:id" element={<ProjectDetailPage />} handle={{ crumbs: <ProjectCrumbs />, permission: 'projects.view' }} errorElement={<RouteErrorPage />} />
       <Route path="/members" element={<MembersPage />} errorElement={<RouteErrorPage />} />
       <Route path="/history" element={<HistoryPage />} errorElement={<RouteErrorPage />} />
       <Route path="/settings" element={<SettingsPage />} errorElement={<RouteErrorPage />} />

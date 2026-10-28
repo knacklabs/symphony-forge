@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router-dom';
 import { FolderKanban, HistoryIcon, Search, Settings, UserRound, Users, Sun, Moon, Monitor } from 'lucide-react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { toast } from 'sonner';
-import type { Account } from '@app/shared';
-import { useTheme } from '@/components/theme-provider';
-import { useSignOut } from '@/features/auth/hooks/auth-hooks';
-import { Button } from '@/components/ui/button';
+import type { Account } from '@app/auth-contracts';
+import { useTheme } from '@app/shared-ui/components/theme-provider';
+import { useSignOut } from '@app/auth-web';
+import { PermissionsContext, useCan } from '@app/core-web';
+import { Button } from '@app/shared-ui/components/ui/button';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
-} from '@/components/ui/breadcrumb';
+} from '@app/shared-ui/components/ui/breadcrumb';
 import {
   CommandDialog,
   CommandEmpty,
@@ -20,7 +21,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from '@app/shared-ui/components/ui/command';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,8 +32,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
+} from '@app/shared-ui/components/ui/dropdown-menu';
+import { Separator } from '@app/shared-ui/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -47,7 +48,7 @@ import {
   SidebarRail,
   SidebarTrigger,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from '@app/shared-ui/components/ui/sidebar';
 
 function AppSidebar({ account, ...props }: ComponentProps<typeof Sidebar> & { account: Account }) {
   const pathname = useLocation().pathname;
@@ -58,11 +59,13 @@ function AppSidebar({ account, ...props }: ComponentProps<typeof Sidebar> & { ac
         <SidebarGroup>
           <SidebarGroupLabel>Workspace</SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/projects'} tooltip="Projects">
-                <Link to="/projects"><FolderKanban /><span>Projects</span></Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {useCan('projects.view') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === '/projects' || pathname.startsWith('/projects/')} tooltip="Projects">
+                  <Link to="/projects"><FolderKanban /><span>Projects</span></Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={pathname === '/members'} tooltip="Members">
                 <Link to="/members"><Users /><span>Members</span></Link>
@@ -139,6 +142,7 @@ function UserMenu({ account }: { account: Account }) {
 }
 
 function SearchBox({ account }: { account: Account }) {
+  const canViewProjects = useCan('projects.view');
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -169,7 +173,7 @@ function SearchBox({ account }: { account: Account }) {
         <CommandList>
           <CommandEmpty>No matching pages.</CommandEmpty>
           <CommandGroup heading="Pages">
-            <CommandItem onSelect={() => goTo('/projects')}>Projects</CommandItem>
+            {canViewProjects && <CommandItem onSelect={() => goTo('/projects')}>Projects</CommandItem>}
             <CommandItem onSelect={() => goTo('/members')}>Members</CommandItem>
             {account.role === 'admin' && <CommandItem onSelect={() => goTo('/history')}>Change history</CommandItem>}
             <CommandItem onSelect={() => goTo('/settings')}>Settings</CommandItem>
@@ -182,6 +186,8 @@ function SearchBox({ account }: { account: Account }) {
 
 function ShellContent({ account }: { account: Account }) {
   const location = useLocation();
+  // A detail route names its own breadcrumb, such as Projects › <name>, in its route handle.
+  const crumbs = useMatches().map((match) => (match.handle as { crumbs?: ReactNode } | undefined)?.crumbs).find(Boolean);
   const { open, openMobile, isMobile } = useSidebar();
   const pageTitle = ({ '/settings': 'Settings', '/members': 'Members', '/history': 'Change history' } as Record<string, string>)[location.pathname] ?? 'Projects';
 
@@ -192,7 +198,7 @@ function ShellContent({ account }: { account: Account }) {
         <Separator orientation="vertical" className="h-5" />
         <Breadcrumb>
           <BreadcrumbList>
-            <BreadcrumbItem><BreadcrumbPage>{pageTitle}</BreadcrumbPage></BreadcrumbItem>
+            {crumbs ?? <BreadcrumbItem><BreadcrumbPage>{pageTitle}</BreadcrumbPage></BreadcrumbItem>}
           </BreadcrumbList>
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-2">
@@ -210,9 +216,11 @@ function ShellContent({ account }: { account: Account }) {
 export function AppShell({ account }: { account: Account }) {
   const savedSidebarState = document.cookie.split('; ').find((cookie) => cookie.startsWith('sidebar_state='))?.split('=')[1];
   return (
-    <SidebarProvider defaultOpen={savedSidebarState !== 'false'}>
-      <AppSidebar account={account} />
-      <ShellContent account={account} />
-    </SidebarProvider>
+    <PermissionsContext value={account.permissions}>
+      <SidebarProvider defaultOpen={savedSidebarState !== 'false'}>
+        <AppSidebar account={account} />
+        <ShellContent account={account} />
+      </SidebarProvider>
+    </PermissionsContext>
   );
 }

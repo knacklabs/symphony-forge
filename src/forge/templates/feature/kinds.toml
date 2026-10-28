@@ -1,0 +1,162 @@
+[table]
+list_index = 'CREATE INDEX "idx_{table}_list" ON "{schema}"."{table}" ("organisationId", "updatedAtUtc" DESC, "id" DESC) WHERE "deletedAtUtc" IS NULL;'
+filter_index = 'CREATE INDEX "idx_{table}_{column}" ON "{schema}"."{table}" ("organisationId", "{column}", "updatedAtUtc" DESC, "id" DESC) WHERE "deletedAtUtc" IS NULL;'
+search_index = 'CREATE INDEX "idx_{table}_{column}_search" ON "{schema}"."{table}" USING gin ("organisationId", "{column}" gin_trgm_ops) WHERE "deletedAtUtc" IS NULL;'
+index = 'CREATE INDEX "idx_{table}_{column}_link" ON "{schema}"."{table}" ("{column}");'
+updated_at_trigger = 'CREATE TRIGGER "{table}_set_updated_at" BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE FUNCTION set_updated_at();'
+soft_delete_trigger = 'CREATE TRIGGER soft_delete_only BEFORE DELETE ON "{table}" FOR EACH ROW EXECUTE FUNCTION soft_delete_only();'
+
+# Web keys: input is the form control, cell how a value shows, column whether the list shows it,
+# filter_options the list filter's choices before the field's own ({Label}, {label}, {labels}).
+[kinds.text]
+sql = "TEXT"
+prisma = "String"
+sqlalchemy = "Text"
+pydantic = "str"
+check = 'CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") BETWEEN 1 AND 200)'
+sample = "Example"
+changed = "Changed"
+bad = ""
+filter_index = false
+search_index = true
+index = false
+input = "input"
+cell = "text"
+column = true
+filter_options = []
+
+[kinds.long-text]
+sql = "TEXT"
+prisma = "String"
+sqlalchemy = "Text"
+pydantic = "str"
+check = 'CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") <= 10000)'
+sample = "Example description"
+changed = "Updated description"
+bad = 123
+filter_index = false
+search_index = false
+index = false
+input = "textarea"
+cell = "long-text"
+column = false
+filter_options = []
+
+[kinds.number]
+sql = "NUMERIC(19,4)"
+prisma = "Decimal @db.Decimal(19, 4)"
+sqlalchemy = "Numeric(19, 4)"
+pydantic = "Decimal"
+check = ""
+sample = "42.5000"
+changed = "96.2500"
+bad = "not-a-number"
+filter_index = false
+search_index = false
+index = false
+input = "number"
+cell = "number"
+column = false
+filter_options = []
+
+[kinds.money]
+sql = "INTEGER"
+prisma = "Int"
+sqlalchemy = "Integer"
+pydantic = "int"
+check = ""
+sample = 125000
+changed = 180000
+bad = "not-money"
+filter_index = false
+search_index = false
+index = false
+input = "money"
+cell = "money"
+column = true
+filter_options = []
+
+[kinds.date]
+sql = "DATE"
+prisma = "DateTime @db.Date"
+sqlalchemy = "Date"
+pydantic = "date"
+check = ""
+sample = "2026-10-02"
+changed = "2026-10-24"
+bad = "2026-02-30"
+filter_index = false
+search_index = false
+index = false
+input = "date"
+cell = "date"
+column = true
+filter_options = []
+
+[kinds.yes-no]
+sql = "BOOLEAN"
+prisma = "Boolean"
+sqlalchemy = "Boolean, server_default=false()"
+pydantic = "bool"
+check = ""
+sample = true
+changed = false
+bad = "maybe"
+filter_index = true
+search_index = false
+index = false
+input = "checkbox"
+cell = "yes-no"
+column = false
+filter_options = ["{Label} or not", "{Label}", "Not {label}"]
+
+[kinds.email]
+sql = "TEXT"
+prisma = "String"
+sqlalchemy = "Text"
+pydantic = "str"
+check = "CONSTRAINT \"{table}_{column}_format\" CHECK (char_length(\"{column}\") <= 254 AND \"{column}\" ~ '^[^@[:space:]]+@[^@[:space:]]+$')"
+sample = "ada@example.com"
+changed = "grace@example.com"
+bad = "not-an-email"
+filter_index = false
+search_index = true
+index = false
+input = "email"
+cell = "email"
+column = false
+filter_options = []
+
+[kinds.status]
+sql = "TEXT"
+prisma = "String"
+sqlalchemy = "Text"
+pydantic = "str"
+check = 'CONSTRAINT "{table}_{column}_allowed" CHECK ("{column}" IN ({options}))'
+sample = "planned"
+changed = "active"
+bad = "unknown"
+filter_index = true
+search_index = false
+index = false
+input = "select"
+cell = "badge"
+column = true
+filter_options = ["All {labels}"]
+
+[kinds.link]
+sql = "UUID"
+prisma = "String @db.Uuid"
+sqlalchemy = "Uuid"
+pydantic = "UUID"
+check = ""
+sample = "0189f01c-0000-7000-8000-000000000001"
+changed = "0189f01c-0000-7000-8000-000000000002"
+bad = "not-a-uuid"
+filter_index = true
+search_index = false
+index = true
+input = "combobox"
+cell = "link"
+column = true
+filter_options = ["All {labels}"]

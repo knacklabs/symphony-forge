@@ -11,6 +11,9 @@ from app.auth.models import Session as SessionModel
 from app.auth.schema import (
     AcceptInviteInput,
     Account,
+    AddAgentInput,
+    Agent,
+    AuthOptions,
     CredentialsInput,
     ForgotPasswordInput,
     MessageResponse,
@@ -26,12 +29,15 @@ from app.core import (
     SuccessEnvelope,
     admin_only,
     get_db,
+    permissions_for,
     verify_csrf,
 )
 from app.history import HistoryService
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 invites_router = APIRouter(prefix="/api/v1/invites", tags=["Organisations"])
+# In auth, because it makes the account, as sign-up and invites do.
+agents_router = APIRouter(prefix="/api/v1/agents", tags=["Organisations"])
 
 
 def _settings(request: Request) -> Settings:
@@ -130,12 +136,25 @@ def _clear_session_cookies(response: Response, settings: Settings) -> None:
     )
 
 
+@router.get(
+    "/options",
+    response_model=SuccessEnvelope[AuthOptions],
+    summary="Read the public sign-up options.",
+    description="One-company apps accept accounts only through an admin invite.",
+)
+def options(
+    request: Request, db: Annotated[DbSession, Depends(get_db)]
+) -> SuccessEnvelope[AuthOptions]:
+    return SuccessEnvelope(data=_service(request, db).options())
+
+
 @router.post(
     "/sign-up",
     status_code=201,
     response_model=SuccessEnvelope[Account],
     responses={
         400: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
         409: {"model": ErrorEnvelope},
         429: {"model": ErrorEnvelope},
     },
@@ -176,6 +195,23 @@ def invite(
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[MessageResponse]:
     return SuccessEnvelope(data=_service(request, db).invite(input_data.email, account))
+
+
+@agents_router.post(
+    "",
+    status_code=201,
+    response_model=SuccessEnvelope[Agent],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 401, 403, 409)},
+    summary="Add an agent account to your organisation.",
+    description="Only admins can add agent accounts. The account’s email is the name with six random characters at agents.invalid, and it has no password. Create its key next.",
+)
+def add_agent(
+    request: Request,
+    input_data: AddAgentInput,
+    account: Annotated[AccountPrincipal, Depends(admin_only)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[Agent]:
+    return SuccessEnvelope(data=_service(request, db).add_agent(input_data, account))
 
 
 @router.post(
@@ -241,7 +277,12 @@ def me(
     account: Annotated[AccountPrincipal, Depends(current_account)],
 ) -> SuccessEnvelope[Account]:
     return SuccessEnvelope(
-        data=Account(id=account.id, email=account.email, role=account.role)
+        data=Account(
+            id=account.id,
+            email=account.email,
+            role=account.role,
+            permissions=permissions_for(account.role),
+        )
     )
 
 

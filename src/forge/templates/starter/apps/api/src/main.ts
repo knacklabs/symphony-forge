@@ -7,7 +7,7 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { join } from 'node:path';
 import { AppModule } from './app.module';
-import { correlationMiddleware, JsonLogger } from '@app/core';
+import { correlationMiddleware, JsonLogger } from '@app/core-server';
 
 async function bootstrap(): Promise<void> {
   const logger = new JsonLogger();
@@ -24,11 +24,11 @@ async function bootstrap(): Promise<void> {
   const webRoot = join(process.cwd(), 'apps/web/dist');
   const expressApp: Express = app.getHttpAdapter().getInstance();
   expressApp.use(express.static(webRoot));
-  expressApp.get(/^(?!\/api(?:\/|$)|\/health(?:\/|$)).*/, (request, response, next) => {
+  expressApp.get(/^(?!\/api(?:\/|$)|\/health(?:\/|$)|\/mcp(?:\/|$)).*/, (request, response, next) => {
     if (request.method !== 'GET' || !request.accepts('html')) return next();
     return response.sendFile(join(webRoot, 'index.html'));
   });
-  app.setGlobalPrefix('api/v1', { exclude: [{ path: 'health', method: RequestMethod.GET }] });
+  app.setGlobalPrefix('api/v1', { exclude: [{ path: 'health', method: RequestMethod.GET }, { path: 'mcp', method: RequestMethod.ALL }] });
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Starter API')
     .setDescription('Account sign-in and project management API.')

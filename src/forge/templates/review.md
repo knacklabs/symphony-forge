@@ -119,6 +119,16 @@ when another finding already blocks; a case the Done-when doesn't name is a P2 `
 (What blocks the merge, below). A missing list or entry is a P1 `Gate: proof list`; judge missing or hollow
 proof by the test-audit rules below.
 
+<!-- approach -->
+## Approach before code
+$before_coding
+
+Compare the diff with these three lines within this review's scope. Check git history: the
+worker records them in an empty commit before code changes. Check that the need justifies
+the code, the simplest option holds, and existing code is reused. Read later commit
+explanations when evidence changes the approach. Report missing lines or unjustified
+complexity under the normal Simpler rule.
+
 <!-- rules -->
 ## Tests on the close run
 $test_run
@@ -164,6 +174,26 @@ that makes it likely in normal use:
 An edge case is inside the boundary only when a Done-when item names it, when the finding names a
 realistic scenario that makes it likely in normal use, or when it falls under Security or Data
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
+
+Four principles govern every change.
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
+Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
+or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
+than 2 x C, score its Gain 2 or less: it is a known limit and does not hold the work. A review
+keeps it in Known issues; a cold read keeps it with its disposition in the read notes. A finding
+under Security or Data loss, or one that names a migration, keeps its Harm floor and still holds
+the work. A check that a Done-when item promises is not added work: report it missing as
+`Not done: <the item>`, which holds the work at any score. Never title an added-work finding
+`Not done`.
 
 ## What blocks the merge
 A finding blocks only when it names a case that happens in normal use. Include
@@ -237,6 +267,10 @@ titled `Not done: <the item>`, quoting the owner-approved item. Never ask for un
 ## Build simple
 $moving_parts
 
+An added abstraction layer belongs only at the edge to an outside service. Keep business logic
+in domain services and pure computation in helpers. Required module boundaries, controllers
+and data access keep their roles, without extra wrappers.
+
 Complexity the diff adds that no Done-when item needs is a defect, not a style preference:
 - report it as a P2 finding titled `Simpler: <what to cut> → <what replaces it>`;
 - make it P1 when the diff adds a new dependency, service, datastore, queue, background job or
@@ -264,6 +298,12 @@ emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
 
+On client app screens, report an emoji that this change adds as an icon or decoration as a
+finding titled `Icons: <the screen>`. Report an icon from outside the starter's `lucide-react`
+library the same way; shadcn/ui is set to `lucide`. Keyboard key labels such as the Command key
+symbol (⌘) are not emojis. Apply this rule to new and existing client repos; do not report
+unchanged screen code.
+
 In an app with a database, report a query that this change adds in one module on a table another
 module owns as a P1 finding titled `Module tables: <the query>`. A module owns the tables in its
 own schema file; in an app without one schema file per module, it owns the tables that only its
@@ -271,12 +311,27 @@ code writes. Other modules reach those tables only through its public service. A
 default branch already has is not a finding, and neither is app code outside the modules, such
 as the demo-data loader.
 
+In an app with a database, report a foreign key that this change adds between two
+business-module Postgres schemas as a P1 finding titled `Module foreign key: <the link>`.
+A link between business modules stores an indexed id without a foreign key and is checked
+through the other module's public service. Links within a module and links to core keep their
+foreign key. A foreign key the default branch already has is not a finding; existing apps
+keep their tables and schemas.
+
+In an app with a database, report a table that this change adds, or a column, constraint, index
+or trigger on such a table, that breaks the database skill (.codex/skills/database/SKILL.md) as
+a P1 finding titled `Database: <the table or column>`. Report a Postgres extension that this
+change turns on and that is not on the skill's allowed list the same way, unless the app's
+constitution has a line "Postgres extension <name>:" with the owner's OK. A change to a table
+that the default branch already has is not a finding.
+
 In a TypeScript app with `zod` in a `package.json`, report a request body or query that this
 change adds and that no zod schema checks as a P1 finding titled `Zod: <the endpoint>`. Request
-input has one zod schema in the app's shared package, which the web form and the API both use,
-and the API documentation comes from that schema. A class-validator rule or an `@ApiProperty`
+input has one zod schema in the module's contracts package, which the web form and the API both
+use, and the API documentation comes from that schema. A class-validator rule or an `@ApiProperty`
 on request input that this change adds is a finding. Input the default branch already has is
 not a finding, and neither is a path parameter that a Nest parse pipe checks.
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 Apply the frontend convention's motion rules: stagger only when a list appears as a list; keep
 routine app-screen motion under 300 ms; reserve longer timing for one authored landing page moment;
@@ -369,6 +424,21 @@ files are there to read; the standard note that the sandbox is empty does not ap
 When a finding depends on code the diff doesn't show, open that file and cite the line you read
 in the finding's body. Pin every finding to a line in a file this branch changes (for something
 missing, the changed line nearest the gap).
+<!-- added-work -->
+## Added work
+This repo sets a minimum Gain of $minimum for findings that ask for added work, such as another
+check, retry, guard or flag for a rarer case. Mark each such finding with a body line
+`Adds work: <what>`. Score it as usual. Forge keeps an unfloored fix-now finding below this
+minimum as a follow-up. Harm 4 or more, Gain 5 and every score floor still hold the work.
+
+<!-- always-block -->
+## Kinds a change must not miss
+The owner requires these kinds of work at any score:
+$kinds
+
+Title a finding of a listed kind `Must: <kind>: <gap>`. It holds the work even for a rare case
+or in a light review. The worker cannot decline it. Only the owner can accept it.
+
 <!-- repair-review -->
 ## Repair review
 The previous review checked commit $reviewed. From this second or later round, check each
@@ -420,6 +490,8 @@ the strength of a template or a test stub alone. Give concrete file and line evi
 
 Report a query in one module on a table another module owns as a P1 finding titled
 `Module tables: <the query>`.
+
+On client app screens, report emoji icons or decoration and icons outside `lucide-react` as a finding titled `Icons: <the screen>`. Keyboard key labels such as the Command key symbol (⌘) are not emojis.
 
 ## Scores
 Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your

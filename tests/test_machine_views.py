@@ -2,6 +2,7 @@
 
 The old HTML/text tests do not exercise JSON, expiry across processes, or GitHub event ids.
 Only GitHub is faked; commands read real repositories and their owned state fixtures.
+Owns src/forge/board.py and src/forge/nextstep.py's machine output contract.
 """
 import copy
 import json

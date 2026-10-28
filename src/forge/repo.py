@@ -41,6 +41,7 @@ REFUSALS = {
     "no_github": ("GitHub did not answer. Rerun the command.", ""),
     "no_config": ("This repo has no forge.toml.", "forge init"),
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
+    "added_work_min_gain": ("forge.toml is not usable: added_work_min_gain must be 3, 4 or 5.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
     "bad_local": ("forge.local.toml is not usable: {problem}.", "ask your agent to fix forge.local.toml"),
@@ -87,13 +88,24 @@ _blob_lock = RLock()
 
 
 @contextmanager
-def command_cache():
+def command_cache(*, snapshot: bool = False):
     """Repository facts and worker history live only for this command, never the next one."""
     global _command_cache
     previous = _command_cache
+    if snapshot and previous is not None:
+        nested = ("read snapshot",) in previous
+        previous.setdefault(("read snapshot",), {})
+        try:
+            yield
+        finally:
+            if not nested:
+                previous.pop(("read snapshot",), None)
+        return
     try:
         with ExitStack() as resources:
             _command_cache = {("resources",): resources}
+            if snapshot:
+                _command_cache[("read snapshot",)] = {}
             yield
     finally:
         _command_cache = previous
@@ -148,12 +160,17 @@ def read_blob(top: Path, name: str) -> str | None:
 
 
 def blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
+    return {spec: data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+            for spec, data in blob_bytes(top, specs).items()}
+
+
+def blob_bytes(top: Path, specs: list[str]) -> dict[str, bytes]:
     """Share one byte-framed Git reader across this command's file and history reads."""
     if not specs:
         return {}
     if _command_cache is None:
         with command_cache():
-            return blob_texts(top, specs)
+            return blob_bytes(top, specs)
 
     def start():
         process = _command_cache[("resources",)].enter_context(subprocess.Popen(
@@ -192,7 +209,7 @@ def blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
             data = process.stdout.read(int(size))
             process.stdout.read(1)
             if kind == b"blob":
-                texts[spec] = data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+                texts[spec] = data
     return texts
 
 
@@ -216,6 +233,14 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
     # bounded pull request body past GitHub's limit and changes messages and hashes.
     def execute():
+        snapshots = (_command_cache.get(("read snapshot",)) if _command_cache is not None
+                     and env is None and input is None else None)
+        # Board/next read one snapshot. Normal commands still resolve mutable refs
+        # on every read, and a fetch below invalidates the snapshot's Git answers.
+        key = (args, Path(cwd or Path.cwd()).absolute())
+        reading = args[0] == "git" and args[1] in ("merge-base", "rev-parse", "ls-tree", "log", "diff")
+        if reading and snapshots is not None and key in snapshots:
+            return snapshots[key]
         done = subprocess.run([exe, *args[1:]], cwd=cwd, input=(input or "").encode("utf-8"),
                               capture_output=True,
                               # Git hooks need the caller's worker identity.
@@ -224,6 +249,10 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         # Text mode's universal newlines, the same on every OS.
         done.stdout, done.stderr = (data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
                                     for data in (done.stdout, done.stderr))
+        if reading and snapshots is not None:
+            snapshots[key] = done
+        elif snapshots is not None and args[:2] == ("git", "fetch"):
+            snapshots.clear()
         return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
@@ -533,7 +562,8 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
         "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
-        "always_test": list, "groups": int, "models": dict}
+        "always_test": list, "groups": int, "models": dict,
+        "added_work_min_gain": int, "always_block": list}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
@@ -590,7 +620,7 @@ def pytest_split(top: Path, command: str) -> bool:
 
 
 def grouped(top: Path, command: str) -> str:
-    """Fill the CI group's numbers; local and nightly runs use group 1 of 1."""
+    """Fill the CI group's numbers; local runs default to group 1 of 1."""
     if (int(os.environ.get("FORGE_GROUPS", "1")) > 1 and "{group}" not in command
             and pytest_split(top, command)):
         command += " --splits {groups} --group {group} --splitting-algorithm least_duration"
@@ -642,6 +672,14 @@ def default_config(top: Path) -> dict[str, Any]:
     return _config_text(found.stdout)
 
 
+def review_settings(top: Path) -> dict[str, Any]:
+    """Review settings from the same landed branch as the repository's review rules."""
+    from forge import story
+
+    text = story.show(top, story.landed_ref(top), "forge.toml")
+    return _config_text(text) if text is not None else {}
+
+
 def merge_setting(top: Path) -> str:
     """Use agent merges for client prototypes until the fetched default branch signs off."""
     cfg = default_config(top)
@@ -686,6 +724,9 @@ def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+    if "added_work_min_gain" in data and (type(data["added_work_min_gain"]) is not int
+                                         or data["added_work_min_gain"] not in (3, 4, 5)):
+        refuse(REFUSALS["added_work_min_gain"])
     problem = _config_problem(data)
     if problem:
         refuse(REFUSALS["bad_config"], problem=problem)
@@ -831,6 +872,8 @@ def _config_problem(data: dict[str, Any]) -> str:
         kind = KEYS.get(key)
         if kind is None:
             return f"{key!r} is not a forge.toml key"
+        if key == "added_work_min_gain" and (type(value) is not int or value not in (3, 4, 5)):
+            return "added_work_min_gain must be 3, 4 or 5"
         if kind is str and not isinstance(value, str):
             return f"{key} must be a string"
         if kind is int and not (type(value) is int and value >= 1):

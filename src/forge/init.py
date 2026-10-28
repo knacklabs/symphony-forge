@@ -154,6 +154,11 @@ def _starter_files(starter: str) -> dict[str, Path]:
     if starter == "python":
         sources = {path.relative_to(react).as_posix(): path
                    for path in sorted((react / "apps/web").rglob("*")) if path.is_file()}
+        sources.update({path.relative_to(react).as_posix(): path
+                        for path in sorted((react / "libs/shared/util").rglob("*")) if path.is_file()})
+        for library in (react / "libs/shared/ui", *sorted((react / "libs").glob("*/web"))):
+            sources.update({path.relative_to(react).as_posix(): path
+                            for path in sorted(library.rglob("*")) if path.is_file()})
         sources.update({name: react / name for name in ("tsconfig.base.json", ".npmrc")})
         root = sync.TEMPLATES / "starter-python"
     else:
@@ -178,7 +183,7 @@ def _scaffold(top: Path, actions: str, runner: str = "ubuntu-latest",
                                 INTERFACES, runner=runner),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()
-           and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
+           and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore", "services.toml"))},
         **({rel: path.read_bytes().decode("utf-8")
             for rel, path in _starter_files(starter).items()}
            if starter else {}),
@@ -337,6 +342,8 @@ def init(args: argparse.Namespace) -> None:
     repo.check_pin(top)
     branch = repo.current_branch(top)
     scaffold = _scaffold(top, args.actions, args.runner, args.starter)
+    if (top / "Dockerfile").exists():
+        scaffold.pop("services.toml", None)
     for rel, text in scaffold.items():
         if not (top / rel).exists():  # init never overwrites a file that is already there
             sync.write_file(top, rel, text)
@@ -352,6 +359,7 @@ def init(args: argparse.Namespace) -> None:
           "skeleton, and the adapters for Claude Code and Codex.")
     print(f"Pushed {branch} to origin and installed the git hooks that check each commit and push.")
     protect(top, branch, cfg["checks"])
+    print("Tell the person the seven steps in the Forge guide's journey, then ask for the client notes or the idea.")
     print("Next: forge next")
 
 

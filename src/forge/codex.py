@@ -18,6 +18,7 @@ import sys
 import tempfile
 import time
 from collections.abc import Callable, Iterator
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -712,6 +713,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "retry" in said:  # Codex was at capacity: the driver sends the turn again
                     _record(record, pending=pending)
                     recorded()
+                    if ran.get("run_id"):
+                        repo.record_progress(checkout, item, ran["run_id"], retry_at=(
+                            datetime.fromisoformat(repo.now()) + timedelta(seconds=said["retry"])).isoformat())
                     text = (f"Codex is at capacity, so Forge tries the turn again in "
                             f"{said['retry']:g} seconds (attempt {said['attempt']} of {said['of']}).")
                 elif "declined" in said:

@@ -30,12 +30,12 @@ BROWSER_FLOWS = (
     "forgot-password request confirms delivery",
     "Ctrl+B collapses and expands the sidebar",
     "Ctrl+K opens search and goes to Projects",
-    "create, edit, and delete a project",
+    "create, view, edit, and delete a project",
     "switching accounts does not show the previous account projects",
     "theme changes in settings",
     "unknown address shows the 404 page",
     "axe finds no serious problem on the shell",
-    "a reloaded or shared list link shows the same view",
+    "a reloaded projects list link keeps its search, filters and page",
     "keyboard sorting a cached order keeps focus on the header",
     "a crash on one screen shows its error page and the other screens still work",
 )
@@ -266,6 +266,38 @@ def _run_live_starter(tmp_path_factory, sources, required_output=()):
 
 
 _LIVE_RUNS = {}
+PYTHON_REACT_PATHS = (
+    Path("apps/web"),
+    Path("libs/shared/util"),
+    Path("libs/shared/ui"),
+    Path("libs/core/web"),
+    *(Path("libs") / module / "web" for module in
+      ("auth", "history", "organisations", "projects")),
+    Path("tsconfig.base.json"),
+    Path(".npmrc"),
+)
+
+
+def _files_under(path: Path):
+    if path.is_file():
+        return [path]
+    return sorted(candidate for candidate in path.rglob("*") if candidate.is_file())
+
+
+def _assert_first_commit_has(client: Path, source: Path, target: Path):
+    files = _files_under(source)
+    assert files, f"missing starter files under {source}"
+    [first_commit] = subprocess.run(
+        ["git", "rev-list", "HEAD"], cwd=client, capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+    for source_file in files:
+        relative = source_file.relative_to(source) if source.is_dir() else Path(source.name)
+        destination = target / relative if source.is_dir() else target
+        copied = subprocess.run(
+            ["git", "show", f"{first_commit}:{destination.as_posix()}"],
+            cwd=client, capture_output=True, check=True,
+        ).stdout
+        assert copied == source_file.read_bytes(), destination
 
 
 def live_run(tmp_path_factory):
@@ -280,6 +312,22 @@ def live_run(tmp_path_factory):
             ("Cached API build and lint after web build passed", "GET /health returned 200"),
         )
     return _LIVE_RUNS["starter"]
+
+
+def live_python_run(tmp_path_factory):
+    """Run the Python starter once with the shared React web libraries."""
+    if "python" not in _LIVE_RUNS:
+        if not shutil.which("uv"):
+            pytest.skip("uv is required for the Python starter smoke run")
+        python_starter = ROOT / "src" / "forge" / "templates" / "starter-python"
+        sources = tuple((STARTER / rel, rel) for rel in PYTHON_REACT_PATHS) + (
+            (python_starter, Path(".")),
+            (ROOT / "src" / "forge" / "templates" / "skeleton" / ".dockerignore",
+             Path(".dockerignore")),
+        )
+        _LIVE_RUNS["python"] = _run_live_starter(
+            tmp_path_factory, sources, ("GET /health returned 200",))
+    return _LIVE_RUNS["python"]
 
 
 @pytest.fixture(scope="module")
@@ -300,12 +348,13 @@ def test_1_the_starter_is_a_runnable_stack(request):
         Path(".env.example"), Path("package.json"), Path("pnpm-lock.yaml"),
         Path("pnpm-workspace.yaml"), Path("Dockerfile"), Path("nx.json"),
         Path("compose.test.yml"), Path("scripts") / "test.mjs",
-        Path("scripts") / "test-build.mjs", Path("README.md"),
+        Path("scripts") / "test-build.mjs", Path("README.md"), Path("services.toml"),
         Path("apps") / "api" / "prisma" / "schema" / "base.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "auth.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "organisations.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "projects.prisma",
         Path("apps") / "api" / "test" / "api.e2e-spec.ts",
+        Path("apps") / "api" / "test" / "mcp.e2e-spec.ts",
         Path("apps") / "api" / "test" / "organisations.e2e-spec.ts",
         Path("apps") / "api" / "vitest.config.ts",
         Path("apps") / "web" / "e2e" / "starter-shell.spec.ts",
@@ -316,7 +365,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert (STARTER / rel).is_file(), rel
     assert not (STARTER / "package-lock.json").exists(), "the starter still uses npm's lockfile"
     for rel in (Path("apps") / "web", Path("apps") / "api", *(Path("libs") / name for name in
-                                                               ("auth", "core", "history", "organisations", "projects", "shared"))):
+                                                               ("auth", "core", "history", "mcp", "organisations", "projects", "shared"))):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
@@ -349,16 +398,13 @@ def test_1_the_starter_is_a_runnable_stack(request):
                      lock_text), "playwright-core is not pinned to @playwright/test's version"
 
     workspace = (STARTER / "pnpm-workspace.yaml").read_text(encoding="utf-8")
-    for project in ("apps/*", "libs/*"):
+    for project in ("apps/*", "libs/*/*"):
         assert project in workspace, project
-    for name in ("auth", "core", "history", "organisations", "projects", "shared"):
-        project = _json(STARTER / "libs" / name / "project.json")
-        tags = project.get("tags", [])
-        type_tags = [tag for tag in tags if tag.startswith("type:")]
-        assert len(type_tags) == 1, (name, tags)
+    # The module library layout and its type/scope tags have one owner in test_libs_layout.
 
     schemas = {path.name for path in (STARTER / "apps" / "api" / "prisma" / "schema").glob("*.prisma")}
-    assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "organisations.prisma", "projects.prisma"}, schemas
+    assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "mcp.prisma",
+                       "organisations.prisma", "projects.prisma"}, schemas
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
     assert command in (STARTER / "README.md").read_text(encoding="utf-8")
@@ -381,8 +427,13 @@ def test_1_the_starter_is_a_runnable_stack(request):
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
 def test_2_the_starter_shell_comes_from_shadcn_components(request):
+    # Audit: this protects the browser starter's shell, route table, and new shadcn home.
+    # A misplaced copy or stale alias can break generated screens after `shadcn add`.
+    # Existing layout tests check libraries, but not this shell-and-router contract together.
+    # It reads the shipped starter directly and uses no test-only seam.
     web = STARTER / "apps" / "web" / "src"
-    ui = web / "components" / "ui"
+    shared_ui = STARTER / "libs" / "shared" / "ui"
+    ui = shared_ui / "src" / "components" / "ui"
     shell_file = web / "components" / "app-shell.tsx"
     assert shell_file.is_file(), "the app shell is missing"
     shell = shell_file.read_text(encoding="utf-8")
@@ -390,6 +441,22 @@ def test_2_the_starter_shell_comes_from_shadcn_components(request):
     assert 'collapsible="icon"' in shell
     assert "SidebarTrigger" in shell
     assert "SidebarRail" in shell
+    shadcn = _json(shared_ui / "components.json")
+    assert shadcn["tailwind"]["css"] == "../../../apps/web/src/index.css"
+    assert shadcn["aliases"] == {
+        "components": "@app/shared-ui/components",
+        "utils": "@app/shared-ui/lib/utils",
+        "ui": "@app/shared-ui/components/ui",
+        "lib": "@app/shared-ui/lib",
+        "hooks": "@app/shared-ui/hooks",
+    }
+    frontend = (ROOT / "src/forge/templates/conventions/frontend.md").read_text(
+        encoding="utf-8")
+    assert "npx shadcn@4.21.4 add <name> --cwd libs/shared/ui" in frontend
+    assert 'import { cn } from "../../lib/utils"' in (ui / "button.tsx").read_text(
+        encoding="utf-8")
+    assert 'import { useIsMobile } from "../../hooks/use-mobile"' in (
+        ui / "sidebar.tsx").read_text(encoding="utf-8")
 
     router = web / "app.tsx"
     assert router.is_file(), "the React Router configuration is missing"
@@ -401,13 +468,13 @@ def test_2_the_starter_shell_comes_from_shadcn_components(request):
     ui_stems = {path.stem for path in ui.rglob("*.tsx")}
     assert ui_stems, "shadcn/ui source components are missing"
     duplicates = [
-        path for path in web.rglob("*.tsx")
+        path for path in STARTER.rglob("*.tsx")
         if not path.is_relative_to(ui) and path.stem in ui_stems
     ]
     assert not duplicates, f"shadcn components were copied outside components/ui: {duplicates}"
 
-    hooks = STARTER / "apps" / "web" / "src" / "features" / "projects" / "hooks"
-    assert hooks.is_dir(), "project hooks must live in the projects feature folder"
+    hooks = STARTER / "libs" / "projects" / "web" / "src" / "hooks"
+    assert hooks.is_dir(), "project hooks must live in the projects web library"
 
     css = (web / "index.css").read_text(encoding="utf-8")
     light = _theme_block(css, ":root")

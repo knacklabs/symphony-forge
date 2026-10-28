@@ -631,7 +631,10 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
     repo.forge = checked
     walk(env, claude_payload, monkeypatch)  # a story from story new to story done
     ready(repo, "ASSIGN")
+    # Include the feature command in this command-wide default-checkout invariant;
+    # its own tests cover the non-starter refusal text and successful starter copy.
     for args in (("assign", "ASSIGN", "alice"), ("init",), ("sync",), ("migrate",),
+                 ("task", "feature", "jobs", "--one", "job", "--field", "name:text"),
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
@@ -642,7 +645,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
-                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
+                 ("decision", "accept", "carts", "--by", "Ravi"),
+                 ("decision", "answer", "--defaults"), ("roadmap", "add", "carts"),
                  ("roadmap", "retire", "CARTS-1", "--by", "carts")):
         done = repo.forge(*args)
         if args[:2] == ("fix", "drop"):
@@ -652,6 +656,10 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
             # Exercise a published assignment, not only a refusal that leaves main alone.
             assert done.returncode == 0, done.stdout + done.stderr
             assert "Owner: alice" in repo.git("show", "origin/story/ASSIGN:plans/ASSIGN.md")
+        if args[:2] == ("decision", "answer"):
+            # Valid command arguments must reach the branch guard, not a usage refusal.
+            assert done.returncode == 1, done.stdout + done.stderr
+            assert "Forge changes nothing on main" in done.stderr
     # Intake holds its place outside the checkout; handback writes each draft on its own branch.
     with monkeypatch.context() as host:
         host.delenv("CLAUDECODE", raising=False)

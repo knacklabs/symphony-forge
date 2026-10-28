@@ -35,6 +35,13 @@ from test_testplace_workflow import _jobs
 STORY = "FORGE-TESTPLACE-1"
 
 
+@pytest.fixture(autouse=True)
+def ungrouped_full_runs(monkeypatch):
+    # These cases exercise standalone full runs, not the surrounding CI matrix group.
+    monkeypatch.delenv("FORGE_GROUP", raising=False)
+    monkeypatch.delenv("FORGE_GROUPS", raising=False)
+
+
 def _status_endpoint(sha: str) -> str:
     return f"repos/{{owner}}/{{repo}}/commits/{sha}/statuses"
 
@@ -214,7 +221,7 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     assert f"uv tool install git+https://github.com/knacklabs/symphony-forge@{version}" in full_job
     assert "github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'" in full_job
     for name, body in _jobs(ci_workflow.split("\njobs:\n", 1)[1]).items():
-        if name != "full-suite":
+        if name not in {"full-suite", "full-suite-result"}:
             condition = next(line for line in body.splitlines() if line.strip().startswith("if:"))
             assert "github.event_name" in condition and "pull_request" in condition
     local_tmp = tmp_path / "local-init"

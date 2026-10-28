@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from test_modular_starter import lint_starter  # noqa: F401 - a module fixture, installed once here
+from test_libs_layout import lint_starter  # noqa: F401 - a module fixture, installed once here
 from test_starter_tree import LIVE, STARTER, _require_cases, live_run
 
 STORY = "FORGE-DEFAULTS-1"
 
-LINT_MESSAGE = "Format dates, times, numbers and money with the helpers in @app/shared."
+LINT_MESSAGE = "Format dates, times, numbers and money with the helpers in @app/shared-util."
 FORMAT_FLOW = "dates show in the person's time zone and the constitution's format"
 DOWNLOAD_FLOW = "Export CSV downloads the projects list"
 CSV_API_CASES = ("projects export as CSV", "members export as CSV", "change history exports as CSV")
@@ -22,25 +22,29 @@ PYTHON_CSV_API_CASES = (
 )
 HAND_FORMAT_CASES = {
     "a web file formats a date by hand": (
-        Path("apps") / "web" / "src" / "features" / "hand-format.ts",
+        Path("libs") / "projects" / "web" / "src" / "pages" / "hand-format.tsx",
         "export const today = new Intl.DateTimeFormat('en').format(new Date());\n",
     ),
     "an API module formats money by hand": (
-        Path("libs") / "projects" / "src" / "hand-format.ts",
+        Path("libs") / "projects" / "server" / "src" / "hand-format.ts",
         "export const total = (1234).toLocaleString();\n",
     ),
     "a web file formats cents by hand": (
-        Path("apps") / "web" / "src" / "features" / "hand-money.ts",
+        Path("libs") / "projects" / "web" / "src" / "hooks" / "hand-money.tsx",
         "export const total = (1234 / 100).toFixed(2);\n",
     ),
 }
-FORMAT_HELPERS = STARTER / "libs" / "shared" / "src" / "format.ts"
-PYTHON_STARTER = STARTER.parent / "starter-python"
-CSV_WRITER = STARTER / "libs" / "core" / "src" / "common" / "csv.ts"
+FORMAT_HELPERS = STARTER / "libs" / "shared" / "util" / "src" / "format.ts"
+CSV_WRITER = STARTER / "libs" / "core" / "server" / "src" / "common" / "csv.ts"
 
 
 def _app_sources():
-    for pattern in ("apps/*/src/**/*.ts", "apps/*/src/**/*.tsx", "libs/*/src/**/*.ts"):
+    for pattern in (
+        "apps/*/src/**/*.ts",
+        "apps/*/src/**/*.tsx",
+        "libs/*/*/src/**/*.ts",
+        "libs/*/*/src/**/*.tsx",
+    ):
         for path in STARTER.glob(pattern):
             if not {"node_modules", "dist"}.intersection(path.parts):
                 yield path
@@ -50,9 +54,7 @@ def _app_sources():
 @pytest.mark.timeout(1800)
 def test_3_dates_times_and_money_come_from_the_shared_helpers(tmp_path_factory, lint_starter):
     assert FORMAT_HELPERS.is_file(), "the starter has no shared format helpers"
-    # The Python starter builds the same web app, so its shared package holds the same helpers.
-    python_helpers = PYTHON_STARTER / "libs" / "shared" / "src" / "format.ts"
-    assert python_helpers.read_bytes() == FORMAT_HELPERS.read_bytes()
+    # Python init copies this canonical util library. The Python first-commit test owns that copy contract.
     assert LINT_MESSAGE in (STARTER / "eslint.config.mjs").read_text(encoding="utf-8")
     for path in _app_sources():
         if path == FORMAT_HELPERS:
@@ -90,12 +92,15 @@ def test_4_each_table_exports_csv_from_one_shared_code_path(tmp_path_factory):
     writers = [path.relative_to(STARTER).as_posix() for path in _app_sources()
                if "text/csv" in path.read_text(encoding="utf-8")]
     assert writers == [CSV_WRITER.relative_to(STARTER).as_posix()], writers
-    pages = [path for path in (STARTER / "apps" / "web" / "src").rglob("*-page.tsx")
+    web_sources = [STARTER / "apps" / "web" / "src", *STARTER.glob("libs/*/web/src")]
+    pages = [path for source in web_sources for path in source.rglob("*-page.tsx")
              if "<Table" in path.read_text(encoding="utf-8")]
     assert pages, "no list screen renders a table"
     for page in pages:
         text = page.read_text(encoding="utf-8")
-        assert re.search(r'href="/api/v1/[a-z-]+/export"\s+download', text), page.name
+        # The link may carry the list's search and filters as a query.
+        assert re.search(r'href=(?:"/api/v1/[a-z-]+/export"|\{`/api/v1/[a-z-]+/export\?[^`]*`\})\s+download',
+                         text), page.name
 
     if LIVE:
         live = live_run(tmp_path_factory)

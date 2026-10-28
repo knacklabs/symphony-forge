@@ -16,6 +16,9 @@ FLOORS = ((re.compile(r"^[ \t]*Raise:[ \t]*Security\b", re.I | re.M), "security"
           (re.compile(r"\bmigrations?\b", re.I), "migration"))
 ADVISORY = re.compile(r"^[ \t]*Advisory:[ \t]*\S", re.I)
 RARE = re.compile(r"^[ \t]*Case:[ \t]*rare\b", re.I | re.M)
+ADDS_WORK = re.compile(r"^[ \t]*Adds work:[ \t]*\S", re.I | re.M)
+MUST = re.compile(r"^Must:[ \t]*([^:]+):[ \t]*\S", re.I)
+ADDED_WORK_REASON = "Adds work below this repo's minimum Gain "
 DECLINED = "Declined as not worth the code: "
 HOLD = ("block", "fix now")
 Scores = tuple[int, int, int]
@@ -28,7 +31,7 @@ def parse(text: str) -> Scores | None:
 
 
 def normalise(title: str, body: str) -> tuple[Scores | None, str]:
-    """Apply the Harm, constitution, shadcn and module tables floors, except to work marked Later."""
+    """Apply the Harm, constitution, shadcn, module tables and database floors, except to work marked Later."""
     scores = parse(body)
     if not scores or title.startswith("Later:"):
         return scores, body
@@ -36,7 +39,8 @@ def normalise(title: str, body: str) -> tuple[Scores | None, str]:
     constitution = re.match(r"^(?:\d+\.[ \t]*)?(?:(?:Blocking|Advisory):[ \t]*)?Constitution: ", title.strip())
     shadcn = title.startswith("shadcn: ")
     module_tables = re.match(r"^(?:\d+\.[ \t]*)?(?:(?:Blocking|Advisory):[ \t]*)?Module tables: ", title.strip())
-    if constitution or shadcn or module_tables:
+    database = re.match(r"^(?:\d+\.[ \t]*)?(?:(?:Blocking|Advisory):[ \t]*)?Database: ", title.strip())
+    if constitution or shadcn or module_tables or database:
         gain, work = max(gain, 4), min(work, 2)
     why = next((name for pattern, name in FLOORS
                 if pattern.search(body if name != "migration" else f"{title}\n{body}")), "")
@@ -49,6 +53,8 @@ def normalise(title: str, body: str) -> tuple[Scores | None, str]:
         line += " (floor: shadcn)"
     if module_tables:
         line += " (floor: module tables)"
+    if database:
+        line += " (floor: database)"
     return (gain, work, harm), LINE.sub(lambda match: match[1] + line, body, count=1)
 
 
@@ -84,6 +90,14 @@ def bar(scores: Scores | None) -> str | None:
     if gain == 3:
         return "follow-up"
     return "live with"
+
+
+def below_added_work_minimum(finding: dict[str, Any], minimum: int) -> bool:
+    """Only an unfloored fix-now finding marked as added work can use the repo's minimum."""
+    scores, body = normalise(finding["title"], finding["body"])
+    line = LINE.search(body)
+    return bool(scores and scores[0] < minimum and bar(scores) == "fix now"
+                and ADDS_WORK.search(body) and line and "(floor:" not in line[0])
 
 
 def who(_rows: list[tuple[int, str, Scores | None]], ask: str) -> str:
@@ -158,7 +172,8 @@ def remember(known: list[dict[str, Any]], result: dict[str, Any], round_number: 
                 "title": f["title"], "file": f["file"], "line": f["line"], "gain": f.get("gain"),
                 "work": f.get("work"), "harm": f.get("harm"), "outcome": outcome, "reason": reason,
                 "round": round_number, "area": areas.get(key, f["file"]), "security": bool(FLOORS[0][0].search(f["body"]))}))
-        elif by[key]["outcome"] == "open" or any(d.get("accepted") and d["finding"] == n for d in result["dismissals"]):
+        elif (by[key]["outcome"] == "open" or by[key]["reason"].startswith(ADDED_WORK_REASON)
+              or any(d.get("accepted") and d["finding"] == n for d in result["dismissals"])):
             by[key].update(outcome=outcome, reason=reason)
     for key, entry in by.items():
         if entry["outcome"] == "open" and key not in raised:

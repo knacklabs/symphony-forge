@@ -57,9 +57,26 @@ def test_4_a_worker_in_a_python_app_reads_the_python_page(
                     "Migrations", "Security", "Tests", "Deploy"):
         assert f"## {heading}" in page
     for term in ('extra="forbid"', "errorId", "x-correlation-id", "Uuid", "_at_utc",
-                 "_in_cents", "deleted_at_utc", "alembic upgrade head", "lint-imports",
+                 "_currency", "deleted_at_utc", "alembic upgrade head", "lint-imports",
                  "ruff format --check", "mypy", "pytest"):
         assert term in page
+    for term in ("libs/shared/util/", "libs/shared/api-types/", "libs/<module>/contracts/",
+                 "libs/*/*", "@app/shared-api-types",
+                 "An app made before this layout keeps its own folders and schema; follow the folders it has."):
+        assert term in page
+    # Audit: the Python fixed rules must retain schema ownership in both setup paths.
+    # The existing general guide checks do not cover the Python-specific replacement block.
+    # This is a shipped instruction contract, checked without a new production seam.
+    for host in (".claude", ".codex"):
+        guide = (client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
+        python_rules = guide.split("whose tests run import-linter", 1)[1].split(
+            "In any other app", 1
+        )[0]
+        assert (
+            "each module keeps its tables in its own Postgres schema, with core tables in core; "
+            "links between business modules store an indexed id without a foreign key, "
+            "and links to core keep their foreign key."
+        ) in python_rules
     for host in (".claude", ".codex"):
         standards = (client / host / "skills/forge/standards.md").read_text(encoding="utf-8")
         assert "`python.md`" in standards

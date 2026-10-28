@@ -15,20 +15,32 @@ apps/api/
   app/auth/                  sign-in: __init__.py, models.py, schema.py, routes.py, service.py, mail.py
   app/projects/              example records: __init__.py, models.py, schema.py, routes.py, service.py
   tests/                     pytest HTTP tests against the running API
-apps/web/                    the React starter's web app and Playwright flows
-libs/shared/                 zod form schemas, openapi.json and src/api-types.ts
-pnpm-workspace.yaml          apps/web and libs/shared; Python dependencies stay in uv
+apps/web/                    route table, app shell, theme CSS and Playwright flows
+libs/<module>/contracts/     zod schemas and types, exported as @app/<module>-contracts
+libs/<module>/web/           module screens and hooks, exported as @app/<module>-web
+libs/core/web/               API client, query client and route error page
+libs/shared/ui/              shadcn/ui components and shared screen parts
+libs/shared/api-types/       openapi.json and src/api-types.ts, exported as @app/shared-api-types
+libs/shared/util/            general helpers copied from the TypeScript starter
+pnpm-workspace.yaml          apps/web and libs/*/*; Python dependencies stay in uv
 compose.test.yml             Postgres and test API instances
 scripts/test.mjs             installs, builds and tests both sides
 Dockerfile, .env.example     one image; dummy values for every variable
 ```
+
+An app made before this layout keeps its own folders and schema; follow the folders it has.
+
+The Python API stays in `apps/api`. Its React app uses the same module web libraries, shared UI
+and core web libraries as the TypeScript starter. OpenAPI types stay in `libs/shared/api-types`.
 
 ## Modules
 
 Each module owns its tables in its own `models.py`; auth owns account, session and
 password_reset_token, and projects owns project. Its public entry is `__init__.py`.
 Import another module only through that entry's public service and types, never its internal
-files or tables. Cross-module foreign keys name the table as a string, with no model import.
+files or tables. Links to core name the foreign key as a schema-qualified string, with no model import.
+A link between business modules stores an indexed id without a foreign key and uses the other
+module's public service to check it. Links within a module and links to core keep their foreign key.
 A service queries its own data; move shared queries or raw SQL into a repository file.
 
 ```python
@@ -171,10 +183,16 @@ Lists accept page from 1, limit 20 by default and at most 100, sortBy from an al
 and sortOrder asc or desc. Return `data.items` and `data.pagination` with page, limit,
 totalItems and totalPages. Follow api.md's versioning and Idempotency-Key rules.
 
-After an API change, run `pnpm run api-types`. Commit both `libs/shared/openapi.json` and
-`libs/shared/src/api-types.ts`; the web app imports these generated types through `@app/shared`.
+After an API change, run `pnpm run api-types`. Commit both `libs/shared/api-types/openapi.json` and
+`libs/shared/api-types/src/api-types.ts`; module contract libraries import these generated types
+through `@app/shared-api-types`.
 
 ## Database
+
+The database skill (`.codex/skills/database/SKILL.md`) has the rules for new tables, columns,
+constraints, indexes and queries. This section has the SQLAlchemy and Alembic how-to. Existing
+tables keep their current rules unless a story asks to change them. If the app's constitution
+differs, follow it.
 
 Use SQLAlchemy 2 typed models and synchronous sessions over psycopg on Postgres. Table and column
 names are snake_case, tables singular. A model in its owning module's `models.py` looks like:
@@ -182,18 +200,37 @@ names are snake_case, tables singular. A model in its owning module's `models.py
 ```python
 class Project(Base):
     __tablename__ = "project"
-    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
-    total_in_cents: Mapped[int] = mapped_column(BigInteger)
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, server_default=text("uuidv7()"))
+    total: Mapped[Decimal] = mapped_column(Numeric(19, 4))
+    total_currency: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, server_default="draft")
     is_archived: Mapped[bool] = mapped_column(default=False)
     created_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                    default=lambda: datetime.now(UTC))
+    updated_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True),
+                                                   default=lambda: datetime.now(UTC))
     deleted_at_utc: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        CheckConstraint("status IN ('draft', 'active')", name="project_status_allowed"),
+        {"schema": "projects"},
+    )
 ```
 
-Money is an integer in the smallest unit (`*_in_cents`), never float. Booleans have defaults.
+Use a named CHECK constraint for the allowed status values. For money and other field types,
+follow the database skill: an exact decimal with its own `*_currency` column.
+
+Each module keeps its tables in its own Postgres schema. Organisation, account and sign-in
+tables live in `core`; projects live in `projects`, and change history lives in `history`.
+Set `__table_args__ = {"schema": "<schema>"}` on each model, or put that dictionary last in
+the tuple when the model has constraints or indexes. Schema-qualify foreign keys, for example
+`ForeignKey("core.account.id")`. Give an existing Postgres enum its owning `schema=` too.
+New status fields use the named CHECK rule above.
+
+Booleans have defaults.
 Every domain table has id, created_at_utc and updated_at_utc; once there are accounts, add
 created_by_account_id, modified_by_account_id and deleted_by_account_id. Updates set the time
-and account; automated jobs use a system account. Store `*_at_utc` in UTC.
+and account; the shared `set_updated_at()` trigger sets updated_at_utc, and automated jobs use a
+system account. Store `*_at_utc` in UTC. Follow the database skill for search and its indexes.
 Soft delete sets deleted_at_utc; filter it in the query itself, together with the caller's scope:
 
 ```python
@@ -204,7 +241,7 @@ statement = select(Project).where(Project.id == project_id,
 
 Hard delete is only for logs, temporary tables and data the client asked to erase.
 Raw SQL belongs in a repository file and uses only `text()` with bound values, for example
-`session.execute(text("SELECT id FROM project WHERE id = :id"), {"id": project_id})`.
+`session.execute(text("SELECT id FROM projects.project WHERE id = :id"), {"id": project_id})`.
 Index foreign keys, frequent filter columns and unique fields; name indexes
 `idx_<table>_<column>`, for example `idx_project_created_by_account_id`.
 
@@ -217,8 +254,19 @@ and uses Base.metadata from core. Generate a revision, then read and commit it:
 uv --directory apps/api run alembic revision --autogenerate -m "<what>"
 ```
 
-Never edit a merged migration. Put a data change in its own migration. Prefer additions; a drop
-or rewrite goes under the story's Risks with recovery steps. Apply with `alembic upgrade head`.
+Never edit a merged migration. Put a data change in its own migration. Expand, then contract:
+add a new table or column before code uses it, keep the old table or column for two releases, and
+remove it only when no live release uses it. Mainline rollback restores the previous release's
+code and keeps the database, so each migration must work with that code still running. Apply with
+`alembic upgrade head`.
+Close checks only migrations added by the change, and skips the check in a prototype repo with no
+live release. A migration that drops or renames a table or column, or changes a column's type,
+needs a `# Contract: ...` comment explaining why the live release no longer reads it. Close allows
+the migration when the line is present; review reads the explanation.
+Pass `include_schemas=True` to Alembic's `context.configure` in both online and offline modes.
+Move tables and existing enums with `ALTER TABLE ... SET SCHEMA` and `ALTER TYPE ... SET SCHEMA`.
+Indexes, foreign keys and triggers move with the table; shared trigger functions stay in `public`.
+Run `alembic check` after migrations to check that autogenerate finds no model changes.
 
 ## Security
 

@@ -57,6 +57,37 @@ class Account(AuthSchema):
     id: UUID
     email: Email
     role: Role
+    permissions: list[str] = Field(
+        description="What the account's role may do, such as projects.delete.",
+        examples=[["projects.view", "projects.create"]],
+    )
+
+
+class AddAgentInput(AuthSchema):
+    name: str = Field(
+        pattern=r"^[a-z][a-z0-9-]{1,39}$",
+        description="The start of the agent account’s email: lower-case letters, numbers and hyphens.",
+        examples=["gantry"],
+    )
+    role: Role = Field(description="The agent account’s role.", examples=["member"])
+
+
+class Agent(AuthSchema):
+    id: UUID
+    account_id: UUID
+    email: str = Field(examples=["gantry-k3x9p2@agents.invalid"])
+    role: Role
+    is_agent: bool = Field(description="Always true for an agent account.")
+    has_key: bool = Field(
+        description="Whether the agent account has a working key; false until you create one."
+    )
+    created_at_utc: datetime
+
+
+class AuthOptions(AuthSchema):
+    sign_up_open: bool = Field(
+        description="Whether anyone can create an account.", examples=[True]
+    )
 
 
 class MessageResponse(AuthSchema):

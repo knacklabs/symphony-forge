@@ -1,0 +1,126 @@
+{
+  "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
+  "branch": "task/FORGE-FEATURE-1-WEB",
+  "known": [
+    {
+      "area": "_Web.flow_fields() in src/forge/feature_web.py",
+      "file": "src/forge/feature_web.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 517,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: its tests pass as soon as the command runs",
+      "work": 3
+    },
+    {
+      "area": "render_feature_web() in src/forge/feature_web.py",
+      "file": "src/forge/feature_web.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 598,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve real name fields when replacing heading placeholders",
+      "work": 2
+    },
+    {
+      "area": "_Web.form_fields() in src/forge/feature_web.py",
+      "file": "src/forge/feature_web.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 435,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allow optional status selections to be cleared",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/feature/link-picker.tsx",
+      "file": "src/forge/templates/feature/link-picker.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 56,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Make the linked-list retry instruction trigger a request",
+      "work": 2
+    },
+    {
+      "area": "_Web.form_fields() in src/forge/feature_web.py",
+      "file": "src/forge/feature_web.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 441,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Register linked-field triggers for validation error focus",
+      "work": 2
+    },
+    {
+      "area": "test_2_the_new_feature_works_like_projects() in tests/test_feature_command.py",
+      "file": "tests/test_feature_command.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 266,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: functional check",
+      "work": 3
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "59050e45e15d6ba526e36bdfeefe53517a05c101ba7c4989428c47022fc054f1",
+    "changed": "f893dbff456ee41141a72f25c6e392ab16c970caa7e4d8a608e0bd70eb1b15da",
+    "commit": "f80a7f9a5165bed614f2c95ebcda9198c5fc5efc",
+    "dismissals": [],
+    "findings": [],
+    "id": "fa642f20-4567-4b64-bc71-e4eb8e854905",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T05:34:20.147444+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T06:54:25.090944+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T07:34:25.491331+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T08:10:47.881171+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e12d20fe-63e2-40d4-b736-06af1ca9a0c4",
+    "head": "83e92c577e38e6de99b87721060a006fcc9bb59a",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "claude"
+}

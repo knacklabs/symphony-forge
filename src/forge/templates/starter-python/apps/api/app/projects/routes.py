@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session as DbSession
 
-from app.auth import current_account, require_csrf
+from app.auth import require_csrf
 from app.core import (
     AccountPrincipal,
     CsvColumn,
@@ -12,10 +12,14 @@ from app.core import (
     SuccessEnvelope,
     csv_response,
     get_db,
+    require_permission,
     utc_date_time,
 )
+from app.history import HistoryEntry
+from app.projects.permissions import PROJECT_PERMISSIONS
 from app.projects.schema import (
     Project,
+    ProjectExportQuery,
     ProjectInput,
     ProjectListQuery,
     ProjectListResponse,
@@ -24,22 +28,30 @@ from app.projects.service import ProjectService
 
 router = APIRouter(prefix="/api/v1/projects", tags=["Projects"])
 
+# forge:feature:csv-fields:start
 PROJECT_CSV_COLUMNS: tuple[CsvColumn[Project], ...] = (
     ("Name", lambda project: project.name),
     ("Status", lambda project: project.status.value),
     ("Created (UTC)", lambda project: utc_date_time(project.created_at_utc)),
     ("Updated (UTC)", lambda project: utc_date_time(project.updated_at_utc)),
 )
+# forge:feature:csv-fields:end
 
 
 @router.get(
     "",
     response_model=SuccessEnvelope[ProjectListResponse],
-    responses={400: {"model": ErrorEnvelope}, 401: {"model": ErrorEnvelope}},
+    responses={
+        400: {"model": ErrorEnvelope},
+        401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
+    },
     summary="List your organisation’s projects.",
 )
 def list_projects(
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
     query: Annotated[ProjectListQuery, Query()],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[ProjectListResponse]:
@@ -59,7 +71,9 @@ def list_projects(
 )
 def create_project(
     input_data: ProjectInput,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.create))
+    ],
     _csrf: Annotated[None, Depends(require_csrf)],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
@@ -72,16 +86,21 @@ def create_project(
     response_class=Response,
     responses={
         200: {"description": "The projects.csv file, newest first."},
+        400: {"model": ErrorEnvelope},
         401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
     },
-    summary="Download every project of your organisation as a CSV file.",
+    summary="Download the projects that match the list's search and filter as CSV.",
 )
 def export_projects(
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
+    query: Annotated[ProjectExportQuery, Query()],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> Response:
     return csv_response(
-        "projects.csv", PROJECT_CSV_COLUMNS, ProjectService(db).list_all(account)
+        "projects.csv", PROJECT_CSV_COLUMNS, ProjectService(db).list_all(account, query)
     )
 
 
@@ -91,16 +110,40 @@ def export_projects(
     responses={
         400: {"model": ErrorEnvelope},
         401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
         404: {"model": ErrorEnvelope},
     },
     summary="Read one project in your organisation.",
 )
 def get_project(
     project_id: UUID,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
     return SuccessEnvelope(data=ProjectService(db).get(account, project_id))
+
+
+@router.get(
+    "/{project_id}/changes",
+    response_model=SuccessEnvelope[list[HistoryEntry]],
+    responses={
+        400: {"model": ErrorEnvelope},
+        401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
+        404: {"model": ErrorEnvelope},
+    },
+    summary="List the newest 5 changes to one project in your organisation.",
+)
+def list_project_changes(
+    project_id: UUID,
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.view))
+    ],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[list[HistoryEntry]]:
+    return SuccessEnvelope(data=ProjectService(db).changes(account, project_id))
 
 
 @router.put(
@@ -117,7 +160,9 @@ def get_project(
 def update_project(
     project_id: UUID,
     input_data: ProjectInput,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.edit))
+    ],
     _csrf: Annotated[None, Depends(require_csrf)],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[Project]:
@@ -138,9 +183,32 @@ def update_project(
 )
 def delete_project(
     project_id: UUID,
-    account: Annotated[AccountPrincipal, Depends(current_account)],
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.delete))
+    ],
     _csrf: Annotated[None, Depends(require_csrf)],
     db: Annotated[DbSession, Depends(get_db)],
 ) -> SuccessEnvelope[None]:
     ProjectService(db).delete(account, project_id)
     return SuccessEnvelope(data=None)
+
+
+@router.post(
+    "/{project_id}/restore",
+    response_model=SuccessEnvelope[Project],
+    responses={
+        401: {"model": ErrorEnvelope},
+        403: {"model": ErrorEnvelope},
+        404: {"model": ErrorEnvelope},
+    },
+    summary="Restore a deleted project in your organisation.",
+)
+def restore_project(
+    project_id: UUID,
+    account: Annotated[
+        AccountPrincipal, Depends(require_permission(PROJECT_PERMISSIONS.restore))
+    ],
+    _csrf: Annotated[None, Depends(require_csrf)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[Project]:
+    return SuccessEnvelope(data=ProjectService(db).restore(account, project_id))

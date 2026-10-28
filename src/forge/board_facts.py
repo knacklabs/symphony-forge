@@ -6,10 +6,12 @@ its own. Keys a later part fills stay null until then.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import shutil
-from concurrent.futures import ThreadPoolExecutor
+from collections import Counter
+from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import ExitStack
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -21,7 +23,73 @@ Item = dict[str, Any]
 STORY_STATES = ("done", "building", "approved, not started", "waiting for approval", "planning", "no plan yet")
 IN_PROGRESS_STATES = ("building", "in progress", "ready to merge")  # the board page's In progress group
 WORK_STATES = ("done", "ready to merge", "in progress", "to do")
-FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft,files"
+FIELDS = "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,author,number,url,isDraft,updatedAt,files"
+
+
+# The explicit query retains GitHub's own occurrence ids; gh pr list's default rollup does not.
+CHECKS_QUERY = """query($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(first: 25, states: OPEN, orderBy: {field: CREATED_AT, direction: DESC}) {
+      nodes { number headRefName headRefOid title url isDraft body
+        commits(last: 1) { nodes { commit { oid statusCheckRollup {
+          contexts(first: 100) { pageInfo { hasNextPage } nodes {
+            __typename
+            ... on CheckRun { databaseId name status conclusion startedAt completedAt
+              checkSuite { status conclusion workflowRun { workflow { id name } } } }
+            ... on StatusContext { id context state createdAt }
+          } }
+        } } } }
+      }
+    }
+  }
+}"""
+
+
+def machine_prs(top: Path) -> list[Item]:
+    """One request for the newest 25 open PRs, cached across command invocations for 60s."""
+    from forge.board import _rollup, _when
+
+    cache = repo.forge_dir(top) / "checks-cache.json"
+    fetched_at = repo.now()
+    now = _when(fetched_at)
+    try:
+        saved = json.loads(cache.read_text(encoding="utf-8"))
+        at = _when(saved.get("fetched_at"))
+        if now and at and 0 <= (now - at).total_seconds() < 60 and isinstance(saved.get("prs"), list):
+            return [{**pr, "checks_fetched_at": saved["fetched_at"]} for pr in saved["prs"]]
+    except (OSError, ValueError, AttributeError):
+        pass
+    done = repo.run("gh", "api", "graphql", "-F", "owner={owner}", "-F", "name={repo}",
+                    "-f", f"query={' '.join(CHECKS_QUERY.split())}", cwd=top) if shutil.which("gh") else None
+    try:
+        response = json.loads(done.stdout) if done and done.returncode == 0 else {}
+        prs = response["data"]["repository"]["pullRequests"]["nodes"]
+        if response.get("errors") or not isinstance(prs, list) or not all(isinstance(p, dict) for p in prs):
+            return []
+    except (ValueError, KeyError, TypeError):
+        return []  # An expired answer must not hide a failed check while GitHub is unreachable.
+    for pr in prs:
+        for check in _rollup(pr):
+            if check.get("conclusion") != "CANCELLED" or not isinstance(check.get("databaseId"), int):
+                continue
+            annotations = repo.run("gh", "api", "--paginate", "--slurp",
+                f"repos/{{owner}}/{{repo}}/check-runs/{check['databaseId']}/annotations?per_page=100", cwd=top)
+            try:
+                pages = json.loads(annotations.stdout) if annotations.returncode == 0 else []
+                check["timeout"] = any("has exceeded the maximum execution time of" in str(a.get("message", ""))
+                                       for page in pages if isinstance(page, list)
+                                       for a in page if isinstance(a, dict))
+            except (ValueError, TypeError):
+                pass  # Without GitHub's annotation, a cancellation is a failure, not a guessed timeout.
+    temp = cache.with_name(f"checks-cache-{os.getpid()}.tmp")
+    try:
+        temp.write_text(json.dumps({"fetched_at": fetched_at, "prs": prs}), encoding="utf-8")
+        os.replace(temp, cache)
+    except OSError:
+        pass  # A read-only/full Git directory must not prevent a view.
+    finally:
+        temp.unlink(missing_ok=True)
+    return [{**pr, "checks_fetched_at": fetched_at} for pr in prs]
 
 
 def item_key(branch: str, paths: list[str]) -> str | None:
@@ -57,7 +125,7 @@ def full_weeks(now: datetime, count: int) -> list[datetime]:
     return [monday - timedelta(weeks=n) for n in range(count, 0, -1)]
 
 
-def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: int = 60) -> Any:
+def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: float = 60) -> Any:
     """Serialize readers through the fetch and write, then let waiters reuse the answer."""
     from forge import codex
     with ExitStack() as guard:
@@ -68,7 +136,7 @@ def _cached(top: Path, name: str, fetch: Any, *, stale: bool = False, seconds: i
         return _read_cached(top, name, fetch, stale=stale, seconds=seconds)
 
 
-def _read_cached(top: Path, name: str, fetch: Any, *, stale: bool, seconds: int) -> Any:
+def _read_cached(top: Path, name: str, fetch: Any, *, stale: bool, seconds: float) -> Any:
     cache = repo.forge_dir(top) / f"{name}.json"
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     previous = None
@@ -105,33 +173,123 @@ def _listing(top: Path, state: str, *args: str, fields: str = FIELDS, limit: str
     return rows if isinstance(rows, list) and all(isinstance(r, dict) for r in rows) else None
 
 
-def prs(top: Path, *, fresh: bool = False, people: bool = False) -> Item | None:
+def prs(top: Path, *, fresh: bool = False, people: bool = False,
+        merged_fields: str = FIELDS, open_fields: str = FIELDS,
+        open_read: Future[list[Item] | None] | None = None) -> Item | None:
     """Open pull requests, and the merged ones searched one week at a time for six full weeks and
     this one. Past weeks live a day; open and current-week lists live a minute.
-    Only people may use expired records during an outage."""
+    Only people may use expired records during an outage. Fresh reads can select only the fields
+    their caller uses; cached reads always keep the complete board records.
+    A caller may share its pending open-list read with its checks query."""
     # ponytail: a week over 1,000 merges shows unknown, search by day if a team needs it.
     def fetch(now: datetime) -> Item | None:
-        opened = _listing(top, "open")
-        if opened is None:
-            return None  # GitHub is unreachable: one call, not eight
+        # Validate each body's revision against GitHub; file lists also require
+        # the same immutable PR head. People and other metadata always refresh.
+        previous_rows = {}
+        if not fresh:
+            try:
+                previous = json.loads((repo.forge_dir(top) / "prs-cache.json").read_text("utf-8"))["data"]
+                previous_rows = {(pr["number"], pr["headRefOid"]): pr
+                         for week in previous["weeks"] for pr in week["prs"]
+                         if isinstance(pr.get("number"), int) and pr.get("headRefOid")
+                         and isinstance(pr.get("files"), list)}
+            except (OSError, ValueError, KeyError, TypeError):
+                pass
+        day_counts = Counter(str(pr.get("mergedAt") or "")[:10] for pr in previous_rows.values())
         # Board restoration and backfill share these windows. The first Monday
         # is at least 42 days ago, including the cutoff on a Sunday (48 days).
         starts = [*full_weeks(now, 6), full_weeks(now + timedelta(weeks=1), 1)[0]]
         def week(start: datetime) -> list[Item] | None:
             def listing(_now: datetime) -> list[Item] | None:
-                return _listing(top, "merged", "--search",
-                                f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}")
+                query = f"merged:{start:%Y-%m-%d}..{start + timedelta(days=6):%Y-%m-%d}"
+                if previous_rows:
+                    # The last read tells us where pagination would serialize a
+                    # busy week. Cover the same seven days in parallel ranges
+                    # sized for GitHub's 100-row pages; never truncate a range.
+                    ranges, low, count = [], start, 0
+                    for offset in range(7):
+                        day = start + timedelta(days=offset)
+                        size = day_counts.get(f"{day:%Y-%m-%d}", 0)
+                        if count and count + size > 100:
+                            ranges.append((low, day - timedelta(days=1)))
+                            low, count = day, 0
+                        count += size
+                    ranges.append((low, start + timedelta(days=6)))
+                    def metadata(bounds: tuple[datetime, datetime]) -> list[Item] | None:
+                        return _listing(top, "merged", "--search",
+                                        f"merged:{bounds[0]:%Y-%m-%d}..{bounds[1]:%Y-%m-%d}",
+                                        fields=FIELDS.replace(",body", "").removesuffix(",files"))
+                    with ThreadPoolExecutor(len(ranges)) as pages:
+                        found = list(pages.map(metadata, ranges))
+                    if None in found:
+                        return None
+                    rows = [pr for page in found if page is not None for pr in page]
+                    if len(rows) >= 1000:  # Preserve the weekly ceiling and its unknown counts.
+                        rows = metadata((start, start + timedelta(days=6)))
+                    elif len(ranges) > 1:
+                        rows.sort(key=lambda pr: pr.get("number", 0), reverse=True)
+                    if rows is None:
+                        return None
+                    restored, missing = [], []
+                    for pr in rows:
+                        old = previous_rows.get((pr.get("number"), pr.get("headRefOid")), {})
+                        if (pr.get("updatedAt") and pr["updatedAt"] == old.get("updatedAt")
+                                and isinstance(old.get("body"), str)):
+                            restored.append({**pr, "body": old["body"], "files": old["files"]})
+                        else:
+                            missing.append(pr)
+                    if not missing:
+                        return restored
+                    if len(missing) == 1 and isinstance(missing[0].get("number"), int):
+                        done = repo.run("gh", "pr", "view", str(missing[0]["number"]), "--json", FIELDS, cwd=top)
+                        try:
+                            record = json.loads(done.stdout) if done.returncode == 0 else None
+                        except ValueError:
+                            return None
+                        if not (isinstance(record, dict) and isinstance(record.get("body"), str)
+                                and isinstance(record.get("files"), list)
+                                and record.get("number") == missing[0]["number"]
+                                and record.get("headRefName") == missing[0].get("headRefName")):
+                            return None
+                        by_number = {pr["number"]: pr for pr in [*restored, record]}
+                        return [by_number[pr["number"]] for pr in rows]
+                    updates = [pr.get("updatedAt") for pr in missing]
+                    if all(isinstance(at, str) and time_records.when(at) for at in updates):
+                        # Several changed bodies need only their updated slice, not every
+                        # large historical body in the week. Require every missing row.
+                        changed = _listing(top, "merged", "--search",
+                                           query + f" updated:{min(updates)}..*")
+                        records = {pr.get("number"): pr for pr in changed or []
+                                   if isinstance(pr.get("body"), str) and isinstance(pr.get("files"), list)}
+                        if all(pr.get("number") in records and
+                               records[pr["number"]].get("headRefName") == pr.get("headRefName") for pr in missing):
+                            by_number = {pr["number"]: pr for pr in restored}
+                            by_number.update(records)
+                            return [by_number[pr["number"]] for pr in rows]
+                return _listing(top, "merged", "--search", query, fields=merged_fields if fresh else FIELDS)
             return (listing(now) if fresh or start == starts[-1] else
                     _cached(top, f"prs-week-{start:%Y-%m-%d}", listing, seconds=86400))
-        with ThreadPoolExecutor(len(starts)) as pool:  # the weeks at once; one at a time took ~7x as long
+        opened = (open_read.result() if open_read is not None else
+                  _listing(top, "open", fields=open_fields if fresh else FIELDS.removesuffix(",files")))
+        if opened is None and not fresh:
+            return None
+        with ThreadPoolExecutor(len(starts) + 2) as pool:
+            # Repositories that needed older parts before will usually need them
+            # again. Refresh that small inventory beside the weekly requests.
+            older_read = (pool.submit(merged_before_weeks, top)
+                          if any(repo.forge_dir(top).glob("prs-older-*-cache.json")) else None)
             lists = list(pool.map(week, starts))
-        if None in lists:
+            if older_read is not None:
+                older_read.result()
+        if not fresh and (opened is None or None in lists):
             return None
         weeks = []
         for start, found in zip(starts, lists):
             # A capped week need not hold all of its rows, so its counts are unknown.
-            weeks.append({"start": start.isoformat(), "prs": found, "complete": len(found) < 1000})
-        return {"open": opened, "open_complete": len(opened) < 1000, "weeks": weeks}
+            weeks.append({"start": start.isoformat(), "prs": found or [],
+                          "complete": found is not None and len(found) < 1000})
+        return {"open": opened or [], "open_complete": opened is not None and len(opened) < 1000,
+                "weeks": weeks}
     if fresh:
         return fetch(time_records.when(repo.now()) or datetime.now(timezone.utc))
     current = repo.command_fact("github prs", top, lambda: _cached(top, "prs-cache", fetch))  # one try a command
@@ -160,17 +318,31 @@ def person(record: Item | str | None = None, name: str | None = None, *, field: 
     return {"name": display, "login": login}
 
 
-def merged_before_weeks(top: Path) -> dict[str, Item]:
-    """Pull requests merged before the weekly searches, by branch: one request of at most 1,000,
-    kept for a day. Only asked when an unfinished story has parts merged that long ago."""
-    # ponytail: one capped request; a part beyond its newest 1,000 shows its time as unknown.
+def merged_before_weeks(top: Path, branches: set[str] | None = None) -> dict[str, Item]:
+    """Older merged names, with bodies only for the parts the board still needs.
+    The list keeps its original 1,000-PR ceiling and daily lifetime."""
     now = time_records.when(repo.now()) or datetime.now(timezone.utc)
     cutoff = full_weeks(now, 6)[0] - timedelta(days=1)
-    def fetch(_now: datetime) -> list[Item] | None:
-        # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
-        return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}")
-    return {pr["headRefName"]: pr for pr in _cached(top, f"prs-older-cache-{cutoff:%Y-%m-%d}", fetch, seconds=86400) or []
-            if isinstance(pr.get("headRefName"), str)}
+    def names(_now: datetime) -> list[Item] | None:
+        return _listing(top, "merged", "--search", f"merged:*..{cutoff:%Y-%m-%d}",
+                        fields="headRefName,number,mergedAt")
+    found = {pr["headRefName"]: pr for pr in _cached(
+        top, f"prs-older-{cutoff:%Y-%m-%d}-cache", names, seconds=86400) or []
+        if isinstance(pr.get("headRefName"), str)}
+    if branches is None:
+        return found
+    needed = {branch: pr for branch, pr in found.items() if branch in branches}
+    def read(branch: str) -> tuple[str, Item]:
+        if "body" in needed[branch]:
+            return branch, needed[branch]  # An unexpired full record from an earlier release.
+        def fetch(_now: datetime) -> list[Item] | None:
+            # "*..day" rather than "<day": cmd.exe reads "<" in a gh.cmd argument as a redirect.
+            return _listing(top, "merged", "--head", branch, "--search", f"merged:*..{cutoff:%Y-%m-%d}")
+        rows = _cached(top, f"prs-older-{cutoff:%Y-%m-%d}-{branch.replace('/', '-')}-cache",
+                       fetch, seconds=86400) or []
+        return branch, next((pr for pr in reversed(rows) if pr.get("headRefName") == branch), needed[branch])
+    with ThreadPoolExecutor(4) as pool:
+        return dict(pool.map(read, sorted(needed)))
 
 
 def details(top: Path) -> list[Item]:
@@ -189,18 +361,20 @@ def failed_schedules(top: Path) -> list[Item]:
     def fetch(now: datetime) -> list[Item] | None:
         # ponytail: the newest 100 scheduled runs; a frequent schedule can crowd out a daily one.
         # Separate query fields avoid cmd.exe interpreting an ampersand in a gh.cmd argument.
-        done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
-                        "--raw-field", "event=schedule", "--raw-field", f"branch={branch}",
-                        "--raw-field", "per_page=100", cwd=top)
+        with ThreadPoolExecutor(2) as pool:
+            manual_read = pool.submit(repo.run, "gh", "api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+                                      "--method", "GET", "--raw-field", "event=workflow_dispatch",
+                                      "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
+            done = repo.run("gh", "api", "repos/{owner}/{repo}/actions/runs", "--method", "GET",
+                            "--raw-field", "event=schedule", "--raw-field", f"branch={branch}",
+                            "--raw-field", "per_page=100", cwd=top)
+            manual = manual_read.result()
         try:
             runs = json.loads(done.stdout).get("workflow_runs") if done.returncode == 0 else None
         except (ValueError, AttributeError):
             return None
         if not isinstance(runs, list) or not all(isinstance(run, dict) for run in runs):
             return None
-        manual = repo.run("gh", "api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
-                          "--method", "GET", "--raw-field", "event=workflow_dispatch",
-                          "--raw-field", f"branch={branch}", "--raw-field", "per_page=100", cwd=top)
         try:
             manual_runs = json.loads(manual.stdout).get("workflow_runs", []) if not manual.returncode else []
         except (ValueError, AttributeError):
@@ -211,21 +385,27 @@ def failed_schedules(top: Path) -> list[Item]:
         latest: dict[Any, Item] = {}
         for run in runs:  # newest first
             latest.setdefault(run.get("workflow_id"), run)
-        failed = []
-        for run in latest.values():
-            if run.get("conclusion") != "failure":
-                continue
-            log = repo.run("gh", "run", "view", str(run.get("id")), "--log-failed", cwd=top)
-            if log.returncode != 0:
-                return None
-            lines = log.stdout.splitlines()
-            failed.append({"workflow": str(run.get("name") or "workflow"), "branch": branch,
-                           "event": run.get("event", "schedule"),
-                           "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
-                           "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
-                           "tests": sorted({found[1] for line in lines if (found := re.search(
-                               r"(?:FAILED|ERROR|-) (\S+?::[^\s\[]+(?:\[.*?\])?|\S+\.py)(?= - |$)", line))})})
-        return sorted(failed, key=lambda run: (run["workflow"], run["file"]))
+        def failure(run: Item) -> Item | None:
+            def read(_now: datetime) -> Item | None:
+                log = repo.run("gh", "run", "view", str(run.get("id")), "--log-failed", cwd=top)
+                if log.returncode != 0:
+                    return None
+                lines = log.stdout.splitlines()
+                return {"workflow": str(run.get("name") or "workflow"), "branch": branch,
+                        "event": run.get("event", "schedule"),
+                        "file": str(run.get("path") or run.get("workflow_id")).rsplit("/", 1)[-1],
+                        "jobs": sorted({line.split("\t", 1)[0] for line in lines if "\t" in line}),
+                        "tests": sorted({found[1] for line in lines if (found := re.search(
+                            r"(?:FAILED|ERROR|-) (\S+?::[^\s\[]+(?:\[.*?\])?|\S+\.py)(?= - |$)", line))})}
+            # A completed attempt's log is immutable; reruns reuse the id with a new attempt.
+            if type(run.get("id")) is int and type(run.get("run_attempt")) is int and run["run_attempt"] > 0:
+                return _cached(top, f"run-{run['id']}-{run['run_attempt']}-failure-cache", read, seconds=math.inf)
+            return read(now)  # Missing attempt information cannot establish an immutable answer.
+        with ThreadPoolExecutor(4) as pool:
+            failed = list(pool.map(failure, [run for run in latest.values() if run.get("conclusion") == "failure"]))
+        if None in failed:
+            return None
+        return sorted((run for run in failed if run is not None), key=lambda run: (run["workflow"], run["file"]))
     return _cached(top, "schedule-cache", fetch, seconds=600) or []
 
 

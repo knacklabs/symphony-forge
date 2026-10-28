@@ -7,20 +7,35 @@ changes a screen.
 
 ```
 apps/web/src/
-  app.tsx           React Router routes
+  app.tsx           React Router route table
   main.tsx
-  features/
-    <feature>/
-      hooks/
-      pages/        screens for the feature
-  components/ui/    shadcn/ui components (generated; change them through shadcn)
-  components/       shared app components
-  lib/              API client and utilities
+  components/app-shell.tsx
+  index.css         app theme
+  pages/            not-found and settings screens
+libs/<module>/web/src/
+  hooks/
+  pages/            screens for the module
+libs/core/web/src/
+  api-client.ts
+  query-client.ts
+  route-error-page.tsx
+libs/shared/ui/src/
+  components/ui/    shadcn/ui components
+  components/       shared screen parts
+  hooks/
+  lib/utils.ts
 ```
 
-Error codes and their user messages live in `libs/shared`, imported through `@app/shared`.
-Use one fetch wrapper for the base URL and auth header. It unwraps the response envelope,
+An app made before this layout keeps its own folders and schema; follow the folders it has.
+
+Each module's error codes, user messages, request schemas and types live in its contracts library.
+General helpers live in `libs/shared/util`, imported through `@app/shared-util`. Shared screen parts
+live in `libs/shared/ui`, imported through `@app/shared-ui/components/*`. Add shadcn/ui components with
+`npx shadcn@4.21.4 add <name> --cwd libs/shared/ui` when the app has that library. Use one fetch
+wrapper from `libs/core/web` for the base URL and auth header. It unwraps the response envelope,
 throws errors, and sends an `x-correlation-id` header.
+Module web libraries use other modules only through their contracts; they do not import another
+module's web or server library.
 
 Start with React Router for the app shell, sign-in, protected routes, and 404/403
 pages.
@@ -48,7 +63,8 @@ already caches it and tracks loading and errors.
 ## Components
 
 - React Compiler is on (`babel-plugin-react-compiler` in the Vite config) and memoizes. Do not add
-  `useMemo`, `useCallback` or `React.memo`. The shadcn/ui copies in `components/ui/` keep theirs.
+  `useMemo`, `useCallback` or `React.memo`. The shadcn/ui copies in
+  `libs/shared/ui/src/components/ui/` keep theirs.
 - Pass layout content as `children`.
 - Build parts that share state as a compound component: one parent holds the state in a context,
   and its parts (`<Filters>`, `<Filters.Status>`) read it.
@@ -83,7 +99,7 @@ crash reach that page instead of reporting it again in the component.
   in one place.
 
 In an app that has `libs/organisations`, format dates, times, numbers and money only with the
-helpers in `@app/shared`. Show dates and times in the person's time zone, from their browser.
+helpers in `@app/shared-util`. Show dates and times in the person's time zone, from their browser.
 Each table has an `Export CSV` link to its `GET /<list>/export` route; use the shared export path.
 
 ## Pointing at the screen in a demo
@@ -110,6 +126,9 @@ const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Age
 
 ## Design and accessibility
 
+- Use no emojis on client app screens, including icons and decoration. Every icon comes from
+  the starter's icon library, `lucide-react`; shadcn/ui is set to `lucide`. Keyboard key labels
+  such as the Command key symbol (⌘) are not emojis.
 - impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
   visual design: layout, type, colour, states and copy. Shape the screen before building, then use
   one batched inspection to audit and polish before a demo, with at most one more round. Run

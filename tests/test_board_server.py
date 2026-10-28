@@ -1,7 +1,9 @@
 """`forge board` serves a live page on this computer only: a server on 127.0.0.1 that answers only
 with its run's token, serves a fresh snapshot after any change and the same one when nothing
 changed, rebuilds only the rows that changed, tells the page through its events stream, and shows
-a teammate's pushed work after its next fetch. The real command and HTTP are all the tests use."""
+a teammate's pushed work after its next fetch. The real command and HTTP are all the tests use.
+Exercises src/forge/board.py and src/forge/board_server.py through their live HTTP boundary.
+"""
 from __future__ import annotations
 
 import http.client

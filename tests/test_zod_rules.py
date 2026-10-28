@@ -20,7 +20,7 @@ STORY = "FORGE-ZOD-1"
 
 
 REQUEST_RULE = (
-    "Request input is a zod schema in `@app/shared`: one for each body and one for each list "
+    "Request input is a zod schema in `@app/<module>-contracts`: one for each body and one for each list "
     "query, and the web form uses the same schema. Check it with "
     "`@Body(new ZodValidationPipe(schema))` or `@Query(new ZodValidationPipe(schema))`, and "
     "document it with `@ApiZodBody(schema)` or `@ApiZodQuery(schema)`. Each schema is "
@@ -29,13 +29,13 @@ REQUEST_RULE = (
     "documentation cannot show one."
 )
 MODULE_RULE = (
-    "Request input is checked by zod schemas from `@app/shared`, as api.md says; the app has "
+    "Request input is checked by zod schemas from the module's contracts package, as api.md says; the app has "
     "no global ValidationPipe."
 )
 REVIEW_RULE = (
     "In a TypeScript app with `zod` in a `package.json`, report a request body or query that "
     "this change adds and that no zod schema checks as a P1 finding titled `Zod: <the endpoint>`. "
-    "Request input has one zod schema in the app's shared package, which the web form and the "
+    "Request input has one zod schema in the module's contracts package, which the web form and the "
     "API both use, and the API documentation comes from that schema. A class-validator rule or "
     "an `@ApiProperty` on request input that this change adds is a finding. Input the default "
     "branch already has is not a finding, and neither is a path parameter that a Nest parse "
@@ -43,7 +43,7 @@ REVIEW_RULE = (
 )
 WORKER_RULE = (
     "In a TypeScript app with zod in a package.json, check each request body and query that "
-    "you add with a zod schema in the shared package, through ZodValidationPipe, and document "
+    "you add with a zod schema in the module's contracts package, through ZodValidationPipe, and document "
     "it from the same schema, as the API convention says. Do not add class-validator rules or "
     "@ApiProperty to request input. Review flags new request input that no zod schema checks."
 )
@@ -94,8 +94,8 @@ def test_4_the_api_and_backend_pages_name_zod_for_request_input(env, tmp_path, a
     assert "path and query param" in api
     assert MODULE_RULE in backend
     assert "Name request schemas `createXSchema` and `updateXSchema`" in backend
-    assert "list queries `xListQuerySchema`, in `@app/shared`; name response DTOs `XResponseDto`." in backend
-    assert "zod schemas for request input, and shared types" in backend
+    assert "list queries `xListQuerySchema`, in `@app/<module>-contracts`; name response DTOs `XResponseDto`." in backend
+    assert "Request input is checked by zod schemas from the module's contracts package" in backend
     assert "start-up: validation" not in backend
     assert "Each request schema is `.strict()`, so `ZodValidationPipe` from api.md rejects unknown fields." in security
 

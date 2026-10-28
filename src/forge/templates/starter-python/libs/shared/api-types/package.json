@@ -1,0 +1,14 @@
+{
+  "name": "@app/shared-api-types",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "@app/source": "./src/api-types.ts",
+      "types": "./dist/api-types.d.ts",
+      "default": "./dist/api-types.js"
+    }
+  },
+  "main": "./dist/api-types.js",
+  "types": "./dist/api-types.d.ts"
+}

@@ -20,6 +20,7 @@
 | `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. After round two, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human's choice>"` |
 | `forge assign <KEY or KEY/TASK> <login>` | Gives a story or part to a developer and publishes the plan |
 | `forge task start <KEY>/<TASK>` | Starts a task in its own branch and worktree |
+| `forge task feature <plural> --one <singular> --field '<name>:<kind>'` | Builds a feature from the starter |
 | `forge fix start "<why>" --done "<done when>"` | Starts a small fix in its own branch and worktree (`--slug <name>` names it) |
 | `forge fix drop <fix> --because "<reason>"` / `--undo` | Drops a fix with your reason, or brings it back, keeping its remote branch |
 | `forge fix allow-large "<reason>"` | Records the human's permission for a fix to go over the fix limit |
@@ -34,7 +35,9 @@
 | `forge spec measure <slug> --result "<text>"` | Records the measured result in a confirmed spec's Success measure, dated today; the spec stays confirmed. `forge next` lists the check once every story from the spec is done and its check date has passed |
 | `forge spec payback --build-days <n> --day-rate <n> <value>` | Says whether a build pays back: build (three months or less), smallest slice first (up to twelve), don't build, or find out first when no value can be estimated. The value is any of `--hours-per-month`, `--people` and `--hourly-rate`; `--revenue-per-month`; `--incident-cost` and `--incident-chance`, weighed by `--confidence measured`, `estimated` or `guessed` (the default). Use rounded rates, never real salaries. It changes nothing |
 | `forge decision new <slug>` | Writes a decision record |
-| `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat |
+| `forge decision accept <slug> --by "<name>"` | Accepts a decision after the human confirms it in chat, and lists the spec lines that name a rule ID it names |
+| `forge decision open` | Lists open decisions, highest first |
+| `forge decision answer --from <file> --by "<name>"` or `forge decision answer --defaults` | Records client answers or past-due defaults and marks each source |
 | `forge roadmap add <spec>` | Adds roadmap items from a confirmed spec |
 | `forge roadmap retire <KEY> --by <spec>` | Marks a pending roadmap item superseded by the spec that replaces it; `forge next` and the board stop showing it |
 | `forge hook context` | Session start: prints `forge next` and the story's state |

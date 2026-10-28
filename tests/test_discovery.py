@@ -60,7 +60,7 @@ def test_2_a_new_project_keeps_an_empty_card_and_sends_new_ideas_through_start(r
     problems = notes.split("\n## Problems\n")[1].split("\n## ")[0]
     assert re.findall(r"^### .+$", problems, re.M) == ["### <short problem title>"]
     assert re.findall(r"^- (.+?): (.*)$", problems, re.M) == [(field, "unknown") for field in FIELDS]
-    assert _ok(repo.forge("next", cwd=client)).splitlines()[:2] == START
+    assert _ok(repo.forge("next", cwd=client)).splitlines()[1:3] == START
 
     # The card lands in the discovery notes, named in the brief and the spec's Why.
     section = _discovery(client)

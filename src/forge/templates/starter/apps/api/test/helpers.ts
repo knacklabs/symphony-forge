@@ -1,12 +1,24 @@
 import { randomUUID } from 'node:crypto';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { execFileSync, spawnSync } from 'node:child_process';
 import type request from 'supertest';
 
 export const apiBaseUrl = process.env.API_TEST_URL ?? 'http://127.0.0.1:3000';
 export const productionApiBaseUrl = process.env.PRODUCTION_API_TEST_URL ?? 'http://127.0.0.1:3001';
 
+/** Connects an MCP client as the agent account that owns this key. */
+export async function agentClient(key: string) {
+  const client = new Client({ name: 'starter-e2e', version: '1.0.0' });
+  await client.connect(new StreamableHTTPClientTransport(new URL('/mcp', apiBaseUrl), {
+    requestInit: { headers: { Authorization: `Bearer ${key}` } },
+  }));
+  return client;
+}
+
 export type LogEvent = { message: string; context?: Record<string, unknown>; [field: string]: unknown };
 type ApiClient = ReturnType<typeof request.agent>;
+type LogService = 'api' | 'production-api' | 'one-company-api';
 
 export function credentials() {
   return { email: `starter-${randomUUID()}@example.test`, password: 'correct-horse-battery-staple' };
@@ -19,15 +31,15 @@ export function csrfToken(response: request.Response): string {
   return cookie.slice('starter_csrf='.length).split(';', 1)[0];
 }
 
-export async function invite(client: ApiClient, csrf: string, email: string): Promise<string> {
-  const previousLogCount = logEvents('api').length;
+export async function invite(client: ApiClient, csrf: string, email: string, service: LogService = 'api'): Promise<string> {
+  const previousLogCount = logEvents(service).length;
   await client
     .post('/api/v1/invites')
     .set('x-csrf-token', csrf)
     .send({ email })
     .expect(201);
 
-  const event = logEvents('api').slice(previousLogCount).reverse()
+  const event = logEvents(service).slice(previousLogCount).reverse()
     .find(({ context }) => typeof context?.inviteUrl === 'string');
   if (!event) throw new Error('The API did not log a test invite link.');
   const token = new URL(String(event.context?.inviteUrl)).searchParams.get('token');
@@ -36,7 +48,7 @@ export async function invite(client: ApiClient, csrf: string, email: string): Pr
 }
 
 /** The JSON log lines of one compose service, oldest first. */
-export function logEvents(service: 'api' | 'production-api'): LogEvent[] {
+export function logEvents(service: LogService): LogEvent[] {
   const logs = execFileSync('docker', ['compose', '-f', 'compose.test.yml', 'logs', '--no-color', service], { encoding: 'utf8' });
   return logs.split(/\r?\n/).flatMap((line) => {
     const jsonStart = line.indexOf('{');
@@ -52,9 +64,11 @@ export function logEvents(service: 'api' | 'production-api'): LogEvent[] {
 
 /** Runs one SQL statement in the test database and returns its exit status and output. */
 export function psql(sql: string): { status: number; output: string } {
+  // A blocked Docker/SQL call must return even while Vitest's event loop is blocked.
+  const sqlTimeoutMilliseconds = 10_000;
   const result = spawnSync('docker', [
     'compose', '-f', 'compose.test.yml', 'exec', '-T', 'database',
     'psql', '-U', 'postgres', '-d', 'starter_test', '-v', 'ON_ERROR_STOP=1', '-c', sql,
-  ], { encoding: 'utf8' });
-  return { status: result.status ?? 1, output: `${result.stdout}${result.stderr}` };
+  ], { encoding: 'utf8', timeout: sqlTimeoutMilliseconds, killSignal: 'SIGKILL' });
+  return { status: result.status ?? 1, output: `${result.error?.message ?? ''}${result.stdout}${result.stderr}` };
 }

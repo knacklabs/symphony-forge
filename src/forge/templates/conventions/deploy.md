@@ -12,11 +12,28 @@ successful test or review, demo preparation, or Forge next step does not by itse
 Do not install Mainline or start OAuth sign-in for those requests. An explicit request such as
 "deploy this to staging" or "publish this on Mainline" needs no separate routine deployment approval.
 
-Our platform builds the repository's root Dockerfile and provides Postgres through `DATABASE_URL`.
+`services.toml` at the repo root lists the services our platform runs from this repository.
+Each `[[service]]` has a `name`, a `dockerfile` path, a container `port`, a `health` path that
+answers HTTP 200 when the service is ready, and an `expose` value: `main` for the app's main
+address, `subdomain` for its own subdomain, named by its `subdomain` prefix (for example
+`api`), or `internal` for a service with no address, such as a worker, which needs no port or
+health path. An optional `command` replaces the Dockerfile's start command.
+An optional `mcp` is the path where the service serves its MCP server, such as `/mcp`;
+Mainline shows it under Connectors, and its gateway sends the agent key that an admin creates
+in the app. Exactly one
+service is `main`. One release builds every service, and a rollback rolls them all back. The
+platform provides Postgres through `DATABASE_URL`. Forge's starters list one `main` service:
+the root Dockerfile on port 3000 with `GET /health`.
 For a requested deployment, follow the installed Mainline Deploy skill to connect the client
-GitHub repository and choose its subdomain.
-The platform routes traffic to container port 3000 and checks `GET /health` for HTTP 200. Keep
-one instance running while migrations are made.
+GitHub repository and choose its main subdomain; the list does not hold it.
+Keep one instance running while migrations are made.
+
+The first deployment that the owner asks for is the deploy setup, once for each repository:
+browser sign-in with Google or GitHub, then the repository, `services.toml`, the main
+subdomain, the variables that `.env.example` names, and dev first. After the setup, Mainline
+deploys dev at each merge to the default branch and a preview for each pull request.
+Production changes only when a person presses Promote in Mainline. An agent does not run
+these deploys, and an agent never deploys or promotes production.
 
 The root `package.json` and committed `pnpm-lock.yaml` hold the app scripts and dependencies.
 The Dockerfile installs from the lockfile, runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run build`,
@@ -30,4 +47,7 @@ the image; keep deployment secrets in the platform's secret store.
 At every container start, `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` runs before the backend listens. If it
 fails, the container exits without serving traffic. Check `DATABASE_URL` and the failed migration
 in the platform logs, fix the cause, and redeploy; the previous healthy version should keep
-serving. Keep migrations additive so restarting a container cannot remove production data.
+serving. Expand, then contract: add a new table or column before code uses it, keep the old table
+or column for two releases, and remove it only when no live release uses it. A Mainline rollback
+restores the previous release's code and keeps the database, so each migration must work with
+that code still running.

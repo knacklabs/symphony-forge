@@ -23,6 +23,9 @@ only against an owner-approved Done-when item (the fix's whole Done-when line or
 are guidance and never block as `Not done`.
 Close blocks a `Not done` on the item's own Done-when even below the score bar or in a light
 review. Each non-blocking finding close lists shows its own reason with its Gain, Work and Harm scores.
+The default branch's added_work_min_gain can keep added-work findings below its minimum as Known
+issues; a `Must: <kind>: <gap>` of a kind in always_block holds at any score, even when rare or
+in a light review, and only the owner can accept it; the worker cannot decline it.
 
 Forge records the "Prototype before sign-off" allowance. It covers any size and interface
 changes. Reviewers do not check this allowance against the diff. Other agent-recorded
@@ -39,7 +42,7 @@ $start_here
 $design_context
 
 <!-- if user-facing -->
-Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
+If the app has a DESIGN.md, apply its theme tokens, type and colours to the app's theme file$theme_file.
 <!-- end -->
 <!-- if screen-design -->
 Build each screen you touch with the components and fields its section of
@@ -57,6 +60,10 @@ Deploy only the requested app to the requested environment. A build, fix, merge,
 successful test or review, demo preparation, or Forge next step does not by itself authorize deployment.
 Do not install Mainline or start OAuth sign-in for those requests. An explicit request such as
 "deploy this to staging" or "publish this on Mainline" needs no separate routine deployment approval.
+
+A worker never deploys. After a client repo's one-time deploy setup, Mainline deploys dev at
+each merge to the default branch and a preview for each pull request, and production changes
+only when a person presses Promote in Mainline. Never deploy or promote production.
 
 $review_loop
 
@@ -121,7 +128,9 @@ $delegation
   waiting for CI results or timings.
 - Close and doctor cancel only this pull request's older forge.yml runs when they block its newest queued run. Client workflows stay untouched. If a run stays active after cancellation, Forge prints GitHub's force-cancel command for the operator. It never calls that command automatically. Close keeps waiting for the new run.
 - If close reports that the tests ran out of time, rerun the tests job or split the suite.
-  This timeout does not send the item to a worker. Node client tests get 30 minutes in CI.
+  This timeout does not send the item to a worker. Generated pull request and nightly test jobs
+  get 30 and 60 minutes, respectively. The nightly run uses the repo's groups and records one
+  combined result for the default branch after all groups finish.
 - Run any test command you start in the foreground and wait for it to finish. Never end your turn
   while a command you started still runs in the background. Commit your work before your turn ends:
   the review reads only what is committed.
@@ -306,6 +315,12 @@ mode and Emil's restraint. Scale popovers from their trigger with shadcn/Radix's
 variable. Do not animate keyboard-driven or very frequent actions.
 
 <!-- end -->
+When your work needs a choice only the client can make, do not guess and do not stop. Build with
+a sensible default, and name it in your handback as an open question: what it touches, why it is
+asked, the default, why you picked it and what happens if it stands. The coordinator adds it to
+the open-decisions list.
+Build the screens marked `Build: now` in SCREENS.md. Build a `Build: later` screen only when the plan names it.
+
 <!-- if fix-round -->
 ## Fix round
 
@@ -319,6 +334,7 @@ If a finding is not worth the code, change nothing for it and write this line in
 with its exact title and file: `Declined: <title> (<file>): not worth the code - <reason>`.
 An empty commit is fine. Close applies declines on every run, including a reused review, and
 records them as follow-ups. A P0 or `Not done` on this item's own Done-when stays open.
+An owner-required `Must:` kind also stays open.
 Only the human dismisses findings.
 Forge records findings below the bar as follow-ups or lived with; leave those alone.
 
@@ -333,6 +349,32 @@ $checks
 <!-- end -->
 ## Build simple
 
+Record this paragraph in an empty commit before you edit code:
+
+Before coding:
+Need: <the job or problem that needs this change, and why deleting code or a step does not solve it>
+Simplest option: <the first rung of the ladder that works, and why; for each check, retry, guard or flag you add, its F x H and 2 x C>
+Existing code reused: <the existing code you will use, or none and why>
+
+Use `git commit --allow-empty` with that paragraph in the commit body. Keep the original
+three lines. Forge copies them into the pull request summary and gives them to the reviewer.
+Answer these principles in the three lines:
+
+Four principles govern every change.
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
+If evidence changes your approach, explain the change in a later commit instead of rewriting
+the original lines. Add an abstraction layer only at the edge to an outside service.
+Keep business logic in the existing domain services and pure computation in helpers.
+
 Reproduce the bug before you change the code. Find the first place the code goes wrong.
 Fix it in the shared function that every affected caller uses. Check sibling callers for the
 same fault. A guard is a fix only when it handles a valid state.
@@ -340,22 +382,66 @@ same fault. A guard is a fix only when it handles a valid state.
 Do not hard-code expected values to make tests pass. Do not add a branch that detects a test.
 Do not add a silent default that hides a broken rule.
 
-In a client app with shadcn/ui set up, use shadcn/ui only. Close refuses a new UI component library and a new file outside components/ui/ named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
+When the plan adds a new feature to a TypeScript or Python starter app, use its plural,
+singular and fields. As your first step, run the plan's line:
+`forge task feature <plural> --one <singular> --field '<field>:<kind>'`.
+Keep every `--field` value in single quotes, such as `'name:text'`,
+`'description?:long-text'`, `'status:status(planned|active|done)'` and `'client?:link(clients)'`.
+The command copies the installed starter's projects feature, not the app's projects code.
+Keep its organisation scoping, soft delete, restore and transactional change history.
+Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
+Admins have all five. Members can view, create and edit, but cannot delete or restore and never
+see deleted items. Change the role mapping in the feature's permissions file only when the plan
+asks for it; keep that mapping in one place. Add unsupported field kinds by hand. If the command
+refuses a non-starter or an older starter, follow its named missing parts and build the feature
+by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
+
+In an app with `libs/core/server/src/common/tools.ts` (Python `app/core/tools.py`), a
+feature's agent tools are in its tools file. Add a tool there only when your part names
+it, with `defineTool`, one permission, strict `input` and `output` schemas, all four
+annotations, and a description that says what it does, when to use it and how it relates
+to the other tools. Throw `ToolError` with a `kind` and a message that says how to fix the
+input; never return an HTTP status. Make a tool that changes data safe to run again. Hide a
+default tool only with `hide`. Never call a feature's service from the MCP module. The
+contract case `every tool has a description, annotations, schemas and the error shape`
+must pass.
+
+A feature's resources come from `defineFeatureTools`; add none by hand. Add a prompt with
+`definePrompt` only when your part names it, with a strict `arguments` schema and one
+permission. Never send an elicitation or a sampling request.
+
+In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a
 table it owns. The tests' module-boundary lint fails an import across modules, and a review holds
 a new query on another module's tables.
+Each module keeps its tables in its own Postgres schema, with organisation, account and sign-in
+tables in `core`. A link between business modules stores an indexed id without a foreign key
+and is checked through the other module's public service. Links within a module and links to
+core keep their foreign key. A review reports a foreign key between two business-module schemas.
 For new module calls and events, follow backend.md's "Call a service or send an event" rule.
 Existing code needs no conversion.
+
+In an app with a database, follow the database skill (.codex/skills/database/SKILL.md) for each
+table, column, index, constraint, migration or extension that you add. Existing tables stay as
+they are. A review holds new schema that breaks the skill.
+Every migration must work with the previous release: expand, then contract. Add a new table or
+column before code uses it. Keep the old table or column for two releases, and remove it only
+when no live release uses it. Close checks only migrations added by the change and skips the
+check in a prototype repo with no live release. To allow a migration that drops or renames a
+table or column, or changes a column's type, add a `-- Contract: ...` comment to Prisma SQL or
+`# Contract: ...` to Alembic Python. Explain why the live release no longer reads the table or
+column; close allows the migration when the line is present, and review reads the explanation.
 
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
-in @app/shared, export a table only with sendCsv from @app/core, and let crashes reach
+in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
 the one error report. An app without libs/organisations keeps the code it has.
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add
-with a zod schema in the shared package, through ZodValidationPipe, and document it from the
+with a zod schema in the module's contracts package, through ZodValidationPipe, and document it from the
 same schema, as the API convention says. Do not add class-validator rules or @ApiProperty to
 request input. Review flags new request input that no zod schema checks.
 
@@ -383,6 +469,18 @@ and Prisma code does not.
 Where the repo's own rules (its AGENTS.md House rules and conventions) differ, they win; these
 conventions apply only to a repo on the default stack.
 
+In a repo that has `services.toml`, when a change adds, moves or removes a Dockerfile, or
+changes a service's port, health path or start command or MCP path, update `services.toml` in the same
+change. Close refuses a `services.toml` that names a Dockerfile the branch does not have, or
+that does not have exactly one service with `expose = "main"`. In a repo without
+`services.toml`, do not create one: the coordinator writes the first list with the owner's
+confirmation.
+
+In `docs/specs/`, state each rule once, on an `R-<n>:` line. Validation (VAL), UAT and
+acceptance (AC) lines name the rule that they check by its ID, for example
+`VAL-11 checks R-13`, and do not say the rule again. When a change edits a rule, update the
+lines that name its ID in the same change.
+
 ## When you finish
 
 Before close, put a `Proof list:` paragraph in your last commit message: each Done-when item you
@@ -399,6 +497,8 @@ heredoc (`git commit -F - <<'EOF'`); the shell-command guard checks an unquoted 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+When a forge command refuses, say in your last message what it refused, why, and the fix it named, in plain words. Say so when the refusal looks like a fault in Forge itself.
 
 Write text that people read with the simplified-technical-english skill: a story's What changes
 for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
@@ -425,5 +525,7 @@ $prototype_proof
 For this unsigned prototype, test only the demo workflow steps, security and data boundaries.
 Map those tests in the commit's Proof list. No per-function proof is due in these rounds.
 This replaces the broader test and proof requirements above. The full proof is due at sign-off.
+For a working prototype, the sign-off Proof section lists each demo step and its test. The full
+run on main must be green.
 The light review checks only demo breakage, security and data loss. Its model and effort come
 from `[models.light_review]`, or the review model at medium effort when that setting is absent.

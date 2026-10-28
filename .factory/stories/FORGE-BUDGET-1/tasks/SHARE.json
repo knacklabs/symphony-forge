@@ -1,0 +1,89 @@
+{
+  "branch": "task/FORGE-BUDGET-1-SHARE",
+  "chat": {
+    "approval": "b3e62639f0fb3006787d6db020a010b27b116e6391233e92ea74f1189c3abca6",
+    "claude": null,
+    "conversation": "01a18052-da5d-7a20-8255-2f337e2aafef",
+    "head": null,
+    "start": "a3676a5b2a840bf81da00ed18a112b2cf1418e53"
+  },
+  "known": [
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 473,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: All concurrent test runs on the machine share one budget of test processes.",
+      "work": 3
+    },
+    {
+      "area": "test_4_waiting_test_polls_once_a_second_then_backs_off_after_a_minute() in tests/test_machine_shared_test_budget.py",
+      "file": "tests/test_machine_shared_test_budget.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 125,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: preserve unique test criterion keys",
+      "work": 2
+    },
+    {
+      "area": "test_4_doctor_and_board_show_the_machine_split_and_agent_entries() in tests/test_lanes_view.py",
+      "file": "tests/test_lanes_view.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 150,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update remaining assertions for the process-budget contract",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a80b024adcf02f4ab64909befa16b0a616db10983a55f25b6196ef3551e9b3bb",
+    "changed": "e558a06e52a09a4ba7f72af9f0b3821b147454c29cf99527ba561376a06eb3b5",
+    "commit": "1986ed4321b08af6372da02855695cd97a88ec8a",
+    "dismissals": [],
+    "findings": [],
+    "id": "8a1ebc9c-7bc1-409c-aa66-7c3b79394b42",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T02:23:54.752767+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T02:51:57.703064+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T02:59:20.062480+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T03:08:18.223892+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9a790067-777c-4944-a5cb-bb9bb3fe4595",
+    "head": "0cbe6fcc328735971ff122e3209e1befb41805e1",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}
