@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-MCPRES-1-RES",
+  "chat": {
+    "approval": "b23151bacdd143484238e81352971aa4440d27330b0225e2a39304899195beae",
+    "claude": null,
+    "conversation": "01a1812b-de23-7f80-a737-ff86b27fd49d",
+    "head": null,
+    "start": "afa78cd80392af04fc76c1528fe1b4de82a9a007"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
