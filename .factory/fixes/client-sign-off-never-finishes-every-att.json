@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T19:05:19.996666+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-10-28T19:19:40.026660+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_signoff_review_rounds.py",
-    "wait_id": "92fb7cda-382c-4063-80e9-d8532622ae1f"
+    "reason": "The owner chose one more round to fix both findings",
+    "wait_id": "92fb7cda-382c-4063-80e9-d8532622ae1f",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
