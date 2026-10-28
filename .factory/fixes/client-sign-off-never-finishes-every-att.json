@@ -49,8 +49,8 @@
     "id": "ed45cd25-7bb0-471c-b9bf-4494c9895b0e",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T19:05:19.996666+00:00",
@@ -75,10 +75,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "d23924d1-489a-40f3-ab25-6f3a352e5db0",
-    "head": "ad8b10a1f36009ecfe1dfcaac7a4d17325231856",
+    "close": "e868a352-0e5c-4a46-8e2a-5170856f471c",
+    "head": "3932c9989650f1c8a23d112382fc72b004d45359",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Client sign-off never finishes: every attempt re-reviews all product files with no memory of earlier findings and no round limit, so a client saw 23, 15, 12, 33, 3, 2 and 3 new findings over seven attempts.",
   "worker": "codex"
