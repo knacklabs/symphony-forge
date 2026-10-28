@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-ASKED-1-SOURCES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T03:04:56.362862+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0acf83d479ba985619b6e9b4ccf3b7632af67614",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
