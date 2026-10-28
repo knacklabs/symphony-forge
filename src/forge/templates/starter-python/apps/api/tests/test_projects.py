@@ -144,7 +144,7 @@ def test_a_project_create_sent_again_with_the_same_idempotency_key_makes_one_pro
             ),
         },
     )
-    assert preflight.status_code == 200, preflight.text
+    assert preflight.status_code == 204, preflight.text
     allowed_headers = {
         header.strip().lower()
         for header in preflight.headers["access-control-allow-headers"].split(",")

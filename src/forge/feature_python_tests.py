@@ -1127,7 +1127,7 @@ def render_python_tests(
                     "Access-Control-Request-Headers": "content-type,x-csrf-token,idempotency-key",
                 },
             )
-            assert preflight.status_code == 200, preflight.text
+            assert preflight.status_code == 204, preflight.text
             assert "idempotency-key" in preflight.headers["access-control-allow-headers"].lower()
         ''').replace("__ONE__", _snake(one))
         test_source += "\n\n" + _mcp_case_source(fields, one, plural, kinds, linked_fields)
