@@ -54,7 +54,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
     env.commit(repo.path, "forge.toml", config, "Use the current release")
     repo.git("push", "-q", "origin", "main")
     doctor = repo.forge("doctor")
-    assert f"This machine: {cores or 2} cores, so {agents} agents at once and 1 test runs at once, each on {agents} cores." in doctor.stdout
+    assert f"This machine: {cores or 2} cores, so {agents} agents at once and {agents} test processes shared by all runs." in doctor.stdout
     # Native OS inputs, not Forge's derived dictionary: changing measurements must
     # reach both commands, so null or constant placeholders cannot satisfy this proof.
     shim = repo.bin / "forge"
@@ -147,7 +147,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         _until(lambda: (repo.bin / f"started-{first_name}").exists(), "first agent")
         _until(lambda: len([r for r in lanes(repo)["agents"]["entries"] if r["started_at"]]) == agents, "running agents")
         view = lanes(repo)
-        assert view["agents"]["size"] == agents and view["tests"]["size"] == 1
+        assert view["agents"]["size"] == agents and view["tests"]["size"] == agents
         rows = view["agents"]["entries"]
         assert len({r["id"] for r in rows}) == agents + 1
         for index, row in enumerate(rows):

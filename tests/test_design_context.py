@@ -115,6 +115,9 @@ def test_1_workers_and_reviewers_receive_the_apps_design(env, monkeypatch, sdk_d
         context(prompt, folder)
         assert f"{folder}{'canvas' if none else 'screen'}.svg" in prompt
         if not none:
+            # Both briefs now scope fields to Build now / named Done-when screens.
+            assert "that your Done-when items name" in prompt
+            assert "Build nothing for any other screen or field" in prompt
             # Full and continued briefs phrase the same theme requirement differently.
             for text in ("### frontend", "impeccable", "emil-design-eng",
                          "theme tokens, type and colours", "app's theme file"):
@@ -135,6 +138,7 @@ def test_1_workers_and_reviewers_receive_the_apps_design(env, monkeypatch, sdk_d
     if not none:
         assert "starter's neutral tokens" in prompt
         assert "component or field" in prompt
+        assert "Do not report a field missing from any other screen" in prompt
 
 
 def test_2_unsigned_prototype_fix_receives_its_own_screen_requirements(env, monkeypatch, sdk_data):

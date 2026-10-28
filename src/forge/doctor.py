@@ -496,15 +496,18 @@ def doctor(args: argparse.Namespace) -> int:
     runners = machine.busy_runners()
     budget = machine.half_cores(runners)
     print(f"This machine: {cores} cores, so {budget} agents at once and "
-          f"{machine.test_slots(runners)} test runs at once, each on {budget} cores.")
+          f"{machine.test_slots(runners)} test processes shared by all runs.")
     memory = machine.memory()
     free = memory["available_bytes"]
     available = "unknown" if free is None else f"{free / 1e9:.1f} GB"
     print(f"Memory: {available} free, floor {machine.memory_floor(memory) / 1e9:.1f} GB.")
-    allocations = [run.get("test_cpus") for run in machine.entries()
-                   if run["kind"] == "test" and run.get("started_at")]
-    processes = "unknown" if None in allocations else str(sum(allocations))
+    tests = [run for run in machine.entries() if run["kind"] == "test"]
+    processes = machine.test_allocation(tests)
     print(f"Test processes in use: {processes}. Busy runners: {runners} ({runners} cores reserved).")
+    for run in tests:
+        if "processes" not in run:
+            print(f"Older-release test run: {run.get('title') or run.get('item') or run['repo_name']}; "
+                  f"counts as {machine.half_cores(0)} test processes.")
     if os.name != "nt":
         processes = repo.run("ps", "-axo", "command=")
         if processes.returncode == 0 and re.search(

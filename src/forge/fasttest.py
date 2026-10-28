@@ -59,8 +59,17 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
+def node_worker_environment(environment: dict[str, str]) -> None:
+    """Enforce the allocation when a Node runner starts, including inside package scripts."""
+    preload = "--require " + json.dumps(Path(__file__).with_name("node_workers.cjs").as_posix(),
+                                       ensure_ascii=False)
+    options = environment.get("NODE_OPTIONS", "")
+    if preload not in options:
+        environment["NODE_OPTIONS"] = f"{options} {preload}".strip()
+
+
 def node_worker_budget(command: str, workers: str) -> str:
-    """Budget direct Vitest/Jest commands; preserve scripts and explicit worker options."""
+    """Add missing direct runner caps; the Node preload bounds explicit and scripted caps."""
     segment = re.compile(r'''(?:[^;&|<>()"']|"[^"]*"|'[^']*')+''')
     replacements = []
     for part in segment.finditer(command):
@@ -324,7 +333,6 @@ def test(args) -> int:
     item = review.branch_item(repo.current_branch(top), top)
     entry = machine.join("test", top, item[0] if item else None, None, None)
     try:
-        entry["test_cpus"] = int(machine.test_cpus())
         return pytest_tests(args.base, command, entry)
     finally:
         machine.leave(entry)
@@ -339,8 +347,10 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                                             "--exclude-standard")
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
              and name.endswith(".py") and Path(name).is_file()]
+    fixtures = [Path(name).parent for name in changed if Path(name).name == "conftest.py"]
     shared = [name for name in changed
-              if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
+              if name == "conftest.py"
+              or Path(name).name in {"pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
     shared_changed = any(not manifest_test_inputs_unchanged(Path(name), base)
@@ -364,6 +374,7 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
         return everything, everything, True, missed
     selected = sorted(path.as_posix() for path in tests
                       if path.as_posix() in changed
+                      or any(path.is_relative_to(folder) for folder in fixtures)
                       or any(mentions(path, module, source) for module, source in modules))
     return selected, everything, False, missed
 
@@ -549,9 +560,14 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
     worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
-    workers = machine.test_cpus()
+    allocation = entry
+    if allocation is None and (parent := environment.get("FORGE_TEST_LANE")):
+        allocation = next((run for run in machine.entries() if run["id"] == parent
+                           and run["kind"] == "test"), None)
+    workers = machine.test_cpus(allocation)
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
+    node_worker_environment(environment)
     if entry is not None:
         environment["FORGE_TEST_LANE"] = entry["id"]
     excluded = []

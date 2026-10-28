@@ -167,7 +167,10 @@ recommendation first. Save the answer before moving to the next question.
   same change, before close, update each line that no longer fits. On upgrade, the first
   `forge sync` lists the old spec lines that seem to repeat a rule, with a fix to start. Show
   the list to the owner and ask with options: rewrite those specs now in that fix, or later.
-- `forge start` keeps `plans/ideas.md`, a short dated list, only when the owner says later, and carries waiting entries into the next fix or story.
+- `forge start` keeps `plans/ideas.md`, a short dated list, when the owner says later, and
+  carries waiting entries into the next fix or story. When you, a planner or a worker think of
+  something useful that nothing needs, add one line `- <YYYY-MM-DD>: <the idea>` to
+  `plans/ideas.md` in the branch in hand and build nothing for it.
   Remove an entry when the owner says to do it now, as the command table explains.
 
 ## Merges and settings
@@ -334,12 +337,12 @@ tests, reviews and plan reads, waits while the machine's
 one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
 (Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
-lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. A run of Forge's pytest picker that selects five or fewer test files takes no
-place when the whole command is the picker, optionally run through `uv run`. It still waits for load and memory.
-Compound commands, including the picker's underlying `test` command, keep their place.
-Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
-and the per-test budget, free memory and its floor, test processes in use, and busy runners.
+lane makes all test runs share one process budget: the cores left after the agent share and busy
+local CI jobs, with at least one process. Small selections count too. Each run takes its allocation
+from the remaining budget. A worker's test runs use at most two processes. Nested pytest pickers
+keep the parent run's allocation. Older-release entries without an allocation count as the old
+default share, half the machine's cores. `forge doctor` names these older runs and shows both lane
+budgets, free memory and its floor, test processes in use, and busy runners.
 Every run waits when free memory is below 1.5 GB or ten percent of RAM, whichever is larger.
 An unreadable memory source does not block work. Each busy local `Runner.Worker` reserves one core
 from Forge's half-core budget, with at least one core left for Forge. Waiting runs check memory
@@ -1277,6 +1280,19 @@ on the fix's branch and commit it. Promotion adds no entry or separate roadmap c
 Forge refuses promotion while the fix's roadmap has uncommitted changes.
 New repos get this guide at init; existing repos get it after upgrading Forge and running sync.
 
+End each item of a plan's What changes for you with its source in plain words, such as
+`(Source: the client's note on late orders, 12 Oct)`, or with the sourced item that needs it,
+such as `(Needed by: the Customers screen)`. A source is a client note in
+`docs/product/DISCOVERY.md`, an answer in `docs/product/BRIEF.md`, a decision in
+`docs/decisions/`, a screen marked Build now at sign-off, a fixed rule in
+`docs/product/CONSTITUTION.md`, or the human's own request with its date. An item that has a
+source needs what it cannot work without: its validation, an error or empty state, an index for a
+filter that a list shows, or accessibility basics. Name each screen, field, endpoint, tool and
+setting that the plan adds in one of these items. Plan nothing that a source asks for but the
+work does not need: Is it needed at all? Deleting beats fixing. The canvas can show
+later screens; plan only the screens marked Build now. The starter's fixed rules are the base:
+plan nothing beyond them just in case.
+
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
 accepts replies with at least one no-findings line when every numbered or bulleted item says
 there are no findings, ignoring other note lines. A numbered or bulleted blocking finding in round one still
@@ -1431,6 +1447,9 @@ existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
+- `Not needed: <what>` on a large addition: name the item's source or the sourced item that
+  needs it, or cut the addition and add one line for it to `plans/ideas.md`. On a small addition it is advice: act on it only when
+  that is cheap.
 - A finding inside the cold read's "What counts" boundary is cut (fix the doc) or deferred, never
   kept as unnecessary. `keep` only a finding outside the boundary or factually wrong, and give
   the reason as the Leave out line it falls under, the Raise line it lacks, the cited fact that
@@ -1854,13 +1873,16 @@ set (using pytest selection when supported), with `{base}` as the merge base wit
 It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
-and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
-a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
+and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
+requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
 Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
-Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
+Forge caps explicit `--maxWorkers` values to the run's allocation, including percentage values.
+Lower caps and Jest's serial options `--runInBand` and `-i` stay as written.
 Forge does not change npm, pnpm or yarn scripts to set their worker budget.
+It keeps existing `NODE_OPTIONS` and adds a Node preload that caps the actual runner's arguments,
+so package scripts keep their lifecycle hooks and share the same process budget.
 Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
 with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
 for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap

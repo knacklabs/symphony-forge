@@ -4,7 +4,12 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon.>
+<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
+item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
+or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
+client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
+the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
+setting that the plan adds in one of these items.>
 
 <!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
 in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.

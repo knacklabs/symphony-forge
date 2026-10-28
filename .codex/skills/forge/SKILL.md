@@ -167,7 +167,10 @@ recommendation first. Save the answer before moving to the next question.
   same change, before close, update each line that no longer fits. On upgrade, the first
   `forge sync` lists the old spec lines that seem to repeat a rule, with a fix to start. Show
   the list to the owner and ask with options: rewrite those specs now in that fix, or later.
-- `forge start` keeps `plans/ideas.md`, a short dated list, only when the owner says later, and carries waiting entries into the next fix or story.
+- `forge start` keeps `plans/ideas.md`, a short dated list, when the owner says later, and
+  carries waiting entries into the next fix or story. When you, a planner or a worker think of
+  something useful that nothing needs, add one line `- <YYYY-MM-DD>: <the idea>` to
+  `plans/ideas.md` in the branch in hand and build nothing for it.
   Remove an entry when the owner says to do it now, as the command table explains.
 
 ## Merges and settings
@@ -1277,6 +1280,19 @@ on the fix's branch and commit it. Promotion adds no entry or separate roadmap c
 Forge refuses promotion while the fix's roadmap has uncommitted changes.
 New repos get this guide at init; existing repos get it after upgrading Forge and running sync.
 
+End each item of a plan's What changes for you with its source in plain words, such as
+`(Source: the client's note on late orders, 12 Oct)`, or with the sourced item that needs it,
+such as `(Needed by: the Customers screen)`. A source is a client note in
+`docs/product/DISCOVERY.md`, an answer in `docs/product/BRIEF.md`, a decision in
+`docs/decisions/`, a screen marked Build now at sign-off, a fixed rule in
+`docs/product/CONSTITUTION.md`, or the human's own request with its date. An item that has a
+source needs what it cannot work without: its validation, an error or empty state, an index for a
+filter that a list shows, or accessibility basics. Name each screen, field, endpoint, tool and
+setting that the plan adds in one of these items. Plan nothing that a source asks for but the
+work does not need: Is it needed at all? Deleting beats fixing. The canvas can show
+later screens; plan only the screens marked Build now. The starter's fixed rules are the base:
+plan nothing beyond them just in case.
+
 Readers should return plain `No findings.` alone when a read finds nothing. `forge read` also
 accepts replies with at least one no-findings line when every numbered or bulleted item says
 there are no findings, ignoring other note lines. A numbered or bulleted blocking finding in round one still
@@ -1431,6 +1447,9 @@ existing repos, including earlier adopted ones, get it on upgrade and sync.
 
 - `Unproven: item <n>: <case>` or `Trap: <trap>: item <n>`: add the case to that Done-when item
   and its test to the Tests cell of the task that owns it. Never resolve one only in Notes.
+- `Not needed: <what>` on a large addition: name the item's source or the sourced item that
+  needs it, or cut the addition and add one line for it to `plans/ideas.md`. On a small addition it is advice: act on it only when
+  that is cheap.
 - A finding inside the cold read's "What counts" boundary is cut (fix the doc) or deferred, never
   kept as unnecessary. `keep` only a finding outside the boundary or factually wrong, and give
   the reason as the Leave out line it falls under, the Raise line it lacks, the cited fact that
