@@ -1,0 +1,38 @@
+{
+  "base": "72d72e85d521ffeef89c21a70d9efc49de6f4fa3",
+  "branch": "fix/the-web-api-client-reads-every-reply-as",
+  "done_when": "A non-JSON reply, such as a proxy error page, raises the client's normal request error with the HTTP status instead of a parse error.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "16e7f156929a5f3b4ba8309e25e69e61e19ffc92f92a3d728a62dd40aac1792c",
+    "changed": "14794048118a4ec082995e886253042f55623b69d0b249a3a53adc8138a07b30",
+    "commit": "2f20be6a2b24d39d3f586b83101851064aa3c2c8",
+    "dismissals": [],
+    "findings": [],
+    "id": "e3b74813-f3cb-4205-b85c-7ea78adb5e98",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T10:55:16.063868+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T12:20:34.493760+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "63ebf2c9038652da4264e94c55b684ffd90564ad",
+    "keys": {},
+    "round": null
+  },
+  "why": "The web API client reads every reply as JSON before it checks the status, so a proxy error page throws a raw parse error instead of the client's normal request error, and the HTTP status is lost.",
+  "worker": "claude"
+}

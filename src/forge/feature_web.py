@@ -163,6 +163,9 @@ class _Web:
     def kind(self, field: dict[str, Any], key: str) -> Any:
         return self.kinds[field["kind"]][key]
 
+    def cell_kind(self, field: dict[str, Any]) -> str:
+        return "money" if field["kind"] == "money" else self.kind(field, "cell")
+
     def options(self, field: dict[str, Any]) -> list[str]:
         label = _words(field["target"] if field["kind"] == "link" else field["name"])
         plural = field["target"].replace("-", " ") if field["kind"] == "link" else _plural(label.lower())
@@ -178,11 +181,14 @@ class _Web:
 
     # The value as the person reads it on the list and the detail screen.
     def shown(self, field: dict[str, Any], value: str) -> str:
-        cell = self.kind(field, "cell")
+        cell = self.cell_kind(field)
         if cell == "badge":
             return f"{_labels_const(field)}[{value}]"
         if cell == "money":
-            return f"formatMoney(String({value} / 100), DEFAULT_CURRENCY)"
+            column = _column(field)
+            currency = f"{value.rsplit('.', 1)[0]}.{column}Currency"
+            return (self.kind(field, "cell").replace("row.{name}Currency", currency)
+                    .replace("row.{name}", value))
         if cell == "number":
             return f"numberText({value})"
         if cell == "date":
@@ -194,13 +200,13 @@ class _Web:
     def util_imports(self, fields: list[dict[str, Any]], always: set[str]) -> str:
         names = set(always)
         for field in fields:
-            cell = self.kind(field, "cell")
-            names |= {"money": {"formatMoney", "DEFAULT_CURRENCY"}, "number": {"formatNumber"},
+            cell = self.cell_kind(field)
+            names |= {"money": {"formatMoney"}, "number": {"formatNumber"},
                       "date": {"formatDate"}}.get(cell, set())
         return f"import {{ {', '.join(sorted(names, key=str.lower))} }} from '@app/shared-util';"
 
     def number_helper(self) -> str:
-        if not any(self.kind(field, "cell") == "number" for field in self.fields):
+        if not any(self.cell_kind(field) == "number" for field in self.fields):
             return ""
         return ("\n/** A number as the API keeps it, with its own decimals: 42.5000 shows as 42.5. */\n"
                 "export function numberText(value: string): string {\n"
@@ -253,7 +259,7 @@ class _Web:
     def columns_body(self) -> str:
         blocks = []
         for field in self.columns:
-            column, label, cell = _column(field), _words(field["name"]), self.kind(field, "cell")
+            column, label, cell = _column(field), _words(field["name"]), self.cell_kind(field)
             value = f"row.original.{column}"
             right = cell == "money"
             button = [f"<Button variant=\"ghost\" size=\"sm\" className=\"{'-mr-3 ml-auto' if right else '-ml-3'} h-8 gap-2\" "
@@ -334,7 +340,7 @@ class _Web:
         ordered = ([field for field in self.fields if field["kind"] != "long-text"]
                    + [field for field in self.fields if field["kind"] == "long-text"])
         for field in ordered:
-            value, cell = f"{self.item}.{_column(field)}", self.kind(field, "cell")
+            value, cell = f"{self.item}.{_column(field)}", self.cell_kind(field)
             span = " className=\"sm:col-span-2\"" if cell == "long-text" else ""
             if cell == "link":
                 shown = (f"<Link className=\"underline underline-offset-4\" to={{`/{field['target']}/${{{value}}}`}}>"
@@ -358,7 +364,7 @@ class _Web:
         lines = ["import { z } from 'zod';", self.contract_imports(*names)]
         inputs = {self.kind(field, "input") for field in self.fields}
         if "money" in inputs:
-            lines.append("import { DEFAULT_CURRENCY, formatNumber } from '@app/shared-util';")
+            lines.append("import { DEFAULT_CURRENCY } from '@app/shared-util';")
         if "textarea" in inputs:
             lines.append("import { Textarea } from '@app/shared-ui/components/ui/textarea';")
         if "checkbox" in inputs:
@@ -387,10 +393,8 @@ class _Web:
                 value, data = f"{item} ?? ''", f"values.{column}"
             elif kind == "money":
                 helpers.add("money")
-                rule = f"z.string().trim(){required}.regex(MONEY, 'Enter an amount, such as 1,250.00.')"
-                value = f"{item} == null ? '' : formatNumber({item} / 100, 2)"
-                # The schema needs an amount in a required box, so only an optional one gives undefined.
-                data = f"toCents(values.{column})" + ("" if optional else " as number")
+                rule = f"z.string().trim(){required}.regex(MONEY, 'Enter an amount, such as 1250.0000.')"
+                value, data = f"{item} ?? ''", f"values.{column}"
             elif kind == "date":
                 helpers.add("date")
                 rule = f"z.string().trim(){required}.refine((value) => value === '' || isRealDate(value), 'Enter a real date as YYYY-MM-DD.')"
@@ -405,19 +409,13 @@ class _Web:
                 choose = f".min(1, {_js('Choose a ' + label + '.')})" if not optional else ""
                 rule, value, data = f"z.string(){choose}", f"{item} ?? ''", f"values.{column}"
             if optional and kind != "checkbox":
-                data = f"{data} || undefined" if kind != "money" else data
+                data = f"{data} || undefined"
             schema.append(f"  {column}: {rule},")
             values.append(f"    {column}: {value},")
             inputs.append(f"    {column}: {data},")
         lines = []
         if "money" in helpers:
-            lines += ["const MONEY = /^(-?(\\d{1,3}(,\\d{3})*|\\d+)(\\.\\d{1,2})?)?$/;", "",
-                      "/** `1,250.50` is 125050 cents; an empty box is no amount. */",
-                      "function toCents(text: string): number | undefined {",
-                      "  if (text === '') return undefined;",
-                      "  const [whole, fraction = ''] = text.replace(/[,-]/g, '').split('.');",
-                      "  return (text.startsWith('-') ? -1 : 1) * (Number(whole) * 100 + Number(fraction.padEnd(2, '0')));",
-                      "}", ""]
+            lines += ["const MONEY = /^(-?\\d{1,15}(\\.\\d{1,4})?)?$/;", ""]
         if "date" in helpers:
             lines += ["function isRealDate(value: string): boolean {",
                       "  const date = new Date(`${value}T00:00:00.000Z`);",
@@ -455,7 +453,7 @@ class _Web:
                            f"onChange={{(id) => field.onChange(id ?? '')}} /></FormControl>")
             elif kind == "money":
                 control = ("    <div className=\"flex\">\n"
-                           "      <span className=\"inline-flex items-center rounded-l-md border border-r-0 border-input px-3 text-sm text-muted-foreground\">{DEFAULT_CURRENCY}</span>\n"
+                           f"      <span className=\"inline-flex items-center rounded-l-md border border-r-0 border-input px-3 text-sm text-muted-foreground\">{{{self.item}?.{column}Currency ?? DEFAULT_CURRENCY}}</span>\n"
                            "      <FormControl><Input inputMode=\"decimal\" autoComplete=\"off\" className=\"rounded-l-none tabular-nums\" {...field} /></FormControl>\n"
                            "    </div>")
             else:
@@ -502,7 +500,9 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
 
     def test_fields(self) -> str:
         return "\n".join(f"{_column(field)}: {_js(_sample(field, self.full_kinds))}"
-                         f"{' as const' if field['kind'] == 'status' else ''}," for field in self.fields)
+                         f"{' as const' if field['kind'] == 'status' else ''}," +
+                         (f"\n{_column(field)}Currency: 'INR'," if field["kind"] == "money" else "")
+                         for field in self.fields)
 
     def test_input(self) -> str:
         sample = {_column(field): _sample(field, self.full_kinds) for field in self.fields}
@@ -556,13 +556,11 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
                 fills.append(f"await {box}.{'check' if value else 'uncheck'}();")
                 shown.append(_js(label + ("Yes" if value else "No")))
             elif kind == "money":
-                # The sample in cents is what the person types as an amount.
-                fills.append(f"await {box}.fill('1,250.00');")
+                fills.append(f"await {box}.fill({_js(value)});")
                 shown.append(f"/{re.escape(label)}[A-Z]{{3}} 1,250\\.00/")
-                data[column] = 125000
             elif kind == "number":
-                fills.append(f"await {box}.fill('42.5');")
-                shown.append(_js(label + "42.5"))
+                fills.append(f"await {box}.fill({_js(value)});")
+                shown.append(_js(label + str(value).rstrip('0').rstrip('.')))
             else:
                 fills.append(f"await {box}.fill({_js(value)});")
                 shown.append(_js(label + str(value)))
@@ -637,7 +635,7 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
         return lines
 
     def form_check(self) -> list[str]:
-        bad = {"number": ("many", "Enter a number."), "money": ("lots", "Enter an amount, such as 1,250.00."),
+        bad = {"number": ("many", "Enter a number."), "money": ("lots", "Enter an amount, such as 1250.0000."),
                "date": ("2026-02-30", "Enter a real date as YYYY-MM-DD."), "email": ("not-an-email", "Enter a valid email address.")}
         locate = lambda field: (f"dialog.getByRole('combobox', {{ name: {_js(_words(field['name']))} }})"
                                 if self.kind(field, "input") == "combobox"

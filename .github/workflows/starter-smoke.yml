@@ -23,6 +23,7 @@ on:
       - tests/test_feature_access.py
       - tests/test_mcp.py
       - tests/test_mcp_resources.py
+      - tests/test_proxy_error_pages.py
       - .github/workflows/starter-smoke.yml
 
 permissions:
@@ -41,7 +42,7 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_mcp_resources.py -k "not python" -q -x -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_mcp_resources.py tests/test_proxy_error_pages.py -k "not python" -q -x -n 0 --timeout=1800
 
   python-starter-smoke:
     runs-on: ubuntu-latest
@@ -55,7 +56,21 @@ jobs:
       - name: Run the Python starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py tests/test_mcp_resources.py -k python -q -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py tests/test_mcp_resources.py -k "python and not test_5_feature_columns_come_from_the_kind_table" -q -n 0 --timeout=1800
+
+  python-database-kinds-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run the Python field-kind stack and browser flows
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest 'tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table[python]' -q -n 0 --timeout=1800
 
   python-feature-screens-smoke:
     runs-on: ubuntu-latest
