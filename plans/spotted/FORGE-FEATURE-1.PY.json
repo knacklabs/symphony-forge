@@ -98,6 +98,17 @@
       "item": "FORGE-FEATURE-1/PY",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_hook_generated_check_speed.py\tWindows group 1 measured a 0.523-second hook median against the 0.4-second limit.",
+      "kind": "bug",
+      "path": "tests/test_hook_generated_check_speed.py",
+      "line": 93,
+      "text": "Windows group 1 measured a 0.523-second hook median against the 0.4-second limit.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
