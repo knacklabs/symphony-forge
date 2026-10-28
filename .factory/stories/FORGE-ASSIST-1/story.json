@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-ASSIST-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-28T14:12:39.033253+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client apps get an optional in-app assistant",
+  "touches": 0
+}

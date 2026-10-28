@@ -468,6 +468,12 @@
       "title": "Client apps offer MCP resources and prompts too",
       "status": "pending",
       "order": 106
+    },
+    {
+      "key": "FORGE-ASSIST-1",
+      "title": "Client apps get an optional in-app assistant",
+      "status": "pending",
+      "order": 107
     }
   ],
   "epics": [
