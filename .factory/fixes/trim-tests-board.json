@@ -4,12 +4,20 @@
   "done_when": "The cases named in batch 4 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T17:17:18.151950+00:00",
       "step": "start"
     }
   ],
-  "why": "Trim repeated earlier-adopted cases in the board state and history tests (audit batch 4)"
+  "stuck": {
+    "close": null,
+    "head": "4d045a663631ea0292cf763df18aed5e9d69dc97",
+    "keys": {},
+    "round": null
+  },
+  "why": "Trim repeated earlier-adopted cases in the board state and history tests (audit batch 4)",
+  "worker": "codex"
 }
