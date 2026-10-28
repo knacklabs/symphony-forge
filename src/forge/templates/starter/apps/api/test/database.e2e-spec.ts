@@ -118,7 +118,7 @@ describe('database', () => {
     expect(JSON.parse(catalog!)).toEqual({
       Account: 'core', Session: 'core', PasswordResetToken: 'core',
       Organisation: 'core', Membership: 'core', Invite: 'core',
-      Project: 'projects', ChangeRecord: 'history',
+      Project: 'projects', ChangeRecord: 'history', IdempotencyKey: 'mcp',
     });
     const foreignKeys = psql(`
       SELECT count(*) FROM pg_constraint c

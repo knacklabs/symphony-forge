@@ -42,7 +42,7 @@ $start_here
 $design_context
 
 <!-- if user-facing -->
-Apply DESIGN.md's theme tokens, type and colours to the app's theme file$theme_file.
+If the app has a DESIGN.md, apply its theme tokens, type and colours to the app's theme file$theme_file.
 <!-- end -->
 <!-- if screen-design -->
 Build each screen you touch with the components and fields its section of
@@ -315,6 +315,12 @@ mode and Emil's restraint. Scale popovers from their trigger with shadcn/Radix's
 variable. Do not animate keyboard-driven or very frequent actions.
 
 <!-- end -->
+When your work needs a choice only the client can make, do not guess and do not stop. Build with
+a sensible default, and name it in your handback as an open question: what it touches, why it is
+asked, the default, why you picked it and what happens if it stands. The coordinator adds it to
+the open-decisions list.
+Build the screens marked `Build: now` in SCREENS.md. Build a `Build: later` screen only when the plan names it.
+
 <!-- if fix-round -->
 ## Fix round
 
@@ -346,12 +352,25 @@ $checks
 Record this paragraph in an empty commit before you edit code:
 
 Before coding:
-Need: <the job or problem that needs this change>
-Simplest option: <the first rung of the ladder that works, and why>
+Need: <the job or problem that needs this change, and why deleting code or a step does not solve it>
+Simplest option: <the first rung of the ladder that works, and why; for each check, retry, guard or flag you add, its F x H and 2 x C>
 Existing code reused: <the existing code you will use, or none and why>
 
 Use `git commit --allow-empty` with that paragraph in the commit body. Keep the original
 three lines. Forge copies them into the pull request summary and gives them to the reviewer.
+Answer these principles in the three lines:
+
+Four principles govern every change.
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
 If evidence changes your approach, explain the change in a later commit instead of rewriting
 the original lines. Add an abstraction layer only at the edge to an outside service.
 Keep business logic in the existing domain services and pure computation in helpers.
@@ -377,6 +396,16 @@ asks for it; keep that mapping in one place. Add unsupported field kinds by hand
 refuses a non-starter or an older starter, follow its named missing parts and build the feature
 by hand in the app's existing layout. Existing apps keep their code on upgrade and sync.
 
+In an app with `libs/core/server/src/common/tools.ts` (Python `app/core/tools.py`), a
+feature's agent tools are in its tools file. Add a tool there only when your part names
+it, with `defineTool`, one permission, strict `input` and `output` schemas, all four
+annotations, and a description that says what it does, when to use it and how it relates
+to the other tools. Throw `ToolError` with a `kind` and a message that says how to fix the
+input; never return an HTTP status. Make a tool that changes data safe to run again. Hide a
+default tool only with `hide`. Never call a feature's service from the MCP module. The
+contract case `every tool has a description, annotations, schemas and the error shape`
+must pass.
+
 In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a
@@ -392,6 +421,13 @@ Existing code needs no conversion.
 In an app with a database, follow the database skill (.codex/skills/database/SKILL.md) for each
 table, column, index, constraint, migration or extension that you add. Existing tables stay as
 they are. A review holds new schema that breaks the skill.
+Every migration must work with the previous release: expand, then contract. Add a new table or
+column before code uses it. Keep the old table or column for two releases, and remove it only
+when no live release uses it. Close checks only migrations added by the change and skips the
+check in a prototype repo with no live release. To allow a migration that drops or renames a
+table or column, or changes a column's type, add a `-- Contract: ...` comment to Prisma SQL or
+`# Contract: ...` to Alembic Python. Explain why the live release no longer reads the table or
+column; close allows the migration when the line is present, and review reads the explanation.
 
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
@@ -430,11 +466,16 @@ Where the repo's own rules (its AGENTS.md House rules and conventions) differ, t
 conventions apply only to a repo on the default stack.
 
 In a repo that has `services.toml`, when a change adds, moves or removes a Dockerfile, or
-changes a service's port, health path or start command, update `services.toml` in the same
+changes a service's port, health path or start command or MCP path, update `services.toml` in the same
 change. Close refuses a `services.toml` that names a Dockerfile the branch does not have, or
 that does not have exactly one service with `expose = "main"`. In a repo without
 `services.toml`, do not create one: the coordinator writes the first list with the owner's
 confirmation.
+
+In `docs/specs/`, state each rule once, on an `R-<n>:` line. Validation (VAL), UAT and
+acceptance (AC) lines name the rule that they check by its ID, for example
+`VAL-11 checks R-13`, and do not say the rule again. When a change edits a rule, update the
+lines that name its ID in the same change.
 
 ## When you finish
 
@@ -452,6 +493,8 @@ heredoc (`git commit -F - <<'EOF'`); the shell-command guard checks an unquoted 
 Say in plain English what each Done-when item you cover now does and which test or check proves
 it, and name anything you left out on purpose. Report the work done only when every item you cover
 is.
+
+When a forge command refuses, say in your last message what it refused, why, and the fix it named, in plain words. Say so when the refusal looks like a fault in Forge itself.
 
 Write text that people read with the simplified-technical-english skill: a story's What changes
 for you, Why and Done when, a fix's why and Done when, pull request summaries, questions to the
@@ -478,5 +521,7 @@ $prototype_proof
 For this unsigned prototype, test only the demo workflow steps, security and data boundaries.
 Map those tests in the commit's Proof list. No per-function proof is due in these rounds.
 This replaces the broader test and proof requirements above. The full proof is due at sign-off.
+For a working prototype, the sign-off Proof section lists each demo step and its test. The full
+run on main must be green.
 The light review checks only demo breakage, security and data loss. Its model and effort come
 from `[models.light_review]`, or the review model at medium effort when that setting is absent.

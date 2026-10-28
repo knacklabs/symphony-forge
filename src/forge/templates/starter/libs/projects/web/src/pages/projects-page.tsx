@@ -9,14 +9,19 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
+// forge:feature:list-imports:start
 import { formatDate, formatNumber } from '@app/shared-util';
 import { projectStatusSchema, type Project, type ProjectInput, type ProjectStatus } from '@app/projects-contracts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
+// forge:feature:list-imports:end
 import { useCan } from '@app/core-web';
+// forge:feature:mcp:start
+import { AgentAccessDialog } from '@app/core-web';
+// forge:feature:mcp:end
 import { Badge } from '@app/shared-ui/components/ui/badge';
 import { Button } from '@app/shared-ui/components/ui/button';
 import { Input } from '@app/shared-ui/components/ui/input';
 import { Label } from '@app/shared-ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
 import { Switch } from '@app/shared-ui/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@app/shared-ui/components/ui/table';
 import { ProjectFormDialog } from './project-form-dialog';
@@ -24,15 +29,21 @@ import type { ProjectListState } from './project-detail-page';
 import { useCreateProject, useProjects, type ProjectListQuery, type ProjectSortBy } from '../hooks/projects-hooks';
 
 const SEARCH_DELAY_MS = 300;
+// forge:feature:list-fields:start
 const SORT_KEYS: ProjectSortBy[] = ['name', 'status', 'createdAtUtc', 'updatedAtUtc'];
+/** The list's filters other than the search and Show deleted. */
+const FILTER_KEYS: (keyof ProjectListQuery)[] = ['status'];
+const SEARCH_PLACEHOLDER = 'Search by name';
 export const STATUS_LABELS: Record<ProjectStatus, string> = { active: 'Active', archived: 'Archived' };
+// forge:feature:list-fields:end
 
 function readListQuery(params: URLSearchParams): ProjectListQuery {
   const requestedSort = params.get('sortBy') as ProjectSortBy;
-  const status = projectStatusSchema.safeParse(params.get('status'));
   return {
     search: params.get('search')?.trim() || undefined,
-    status: status.success ? status.data : undefined,
+    // forge:feature:read-filters:start
+    status: projectStatusSchema.safeParse(params.get('status')).data,
+    // forge:feature:read-filters:end
     deleted: params.get('deleted') === 'yes' ? 'yes' : undefined,
     sortBy: SORT_KEYS.includes(requestedSort) ? requestedSort : 'updatedAtUtc',
     sortOrder: params.get('sortOrder') === 'asc' ? 'asc' : 'desc',
@@ -60,6 +71,7 @@ function SortLabel({ label, sorted }: { label: string; sorted: false | 'asc' | '
 type RowMeta = { listState: ProjectListState };
 
 const columns: ColumnDef<Project>[] = [
+  // forge:feature:columns:start
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -83,6 +95,7 @@ const columns: ColumnDef<Project>[] = [
     ),
     cell: ({ row }) => <Badge variant="outline">{STATUS_LABELS[row.original.status]}</Badge>,
   },
+  // forge:feature:columns:end
   {
     accessorKey: 'updatedAtUtc',
     header: ({ column }) => (
@@ -139,7 +152,7 @@ export function ProjectsPage() {
 
   function clearSearchAndFilters() {
     setSearchText('');
-    setQuery({ search: undefined, status: undefined, deleted: undefined });
+    setQuery({ search: undefined, deleted: undefined, ...Object.fromEntries(FILTER_KEYS.map((key) => [key, undefined])) });
   }
 
   const currentSorting: SortingState = [{ id: query.sortBy, desc: query.sortOrder === 'desc' }];
@@ -161,13 +174,13 @@ export function ProjectsPage() {
   const paging = projects.data?.paging;
   // Malformed list data must reach the screen's error page, so no fallback for a missing items array.
   const items = projects.data ? projects.data.items : [];
-  const filtered = Boolean(query.search || query.status);
+  const filtered = Boolean(query.search) || FILTER_KEYS.some((key) => Boolean(query[key]));
   const paged = Boolean(query.after || query.before);
   // While a new sort or filter loads, the old rows stay on screen, but their cursors belong to
   // the old query, so Previous and Next wait for the new page.
   const stale = projects.isPlaceholderData;
   // Export CSV downloads what the list shows: the same search and filter, every page.
-  const exportParameters = new URLSearchParams(Object.entries({ search: query.search, status: query.status, deleted: query.deleted })
+  const exportParameters = new URLSearchParams(Object.entries({ search: query.search, ...Object.fromEntries(FILTER_KEYS.map((key) => [key, query[key]])), deleted: query.deleted })
     .filter((entry): entry is [string, string] => Boolean(entry[1])));
 
   return (
@@ -178,6 +191,9 @@ export function ProjectsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Create and manage your projects.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {/* forge:feature:mcp:start */}
+          <AgentAccessDialog feature="projects" one="project" label="projects" />
+          {/* forge:feature:mcp:end */}
           <Button variant="outline" asChild><a href={`/api/v1/projects/export?${exportParameters.toString()}`} download><Download aria-hidden="true" />Export CSV</a></Button>
           {canCreate && <Button onClick={() => setFormOpen(true)}><Plus aria-hidden="true" />New project</Button>}
         </div>
@@ -189,13 +205,14 @@ export function ProjectsPage() {
           <Input
             type="search"
             aria-label="Search projects"
-            placeholder="Search by name"
+            placeholder={SEARCH_PLACEHOLDER}
             className="pl-8"
             maxLength={200}
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
           />
         </div>
+        {/* forge:feature:filter-controls:start */}
         <Select value={query.status ?? 'all'} onValueChange={(value) => setQuery({ status: value === 'all' ? undefined : value as ProjectStatus })}>
           <SelectTrigger aria-label="Status" className="w-full sm:w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -203,6 +220,7 @@ export function ProjectsPage() {
             {projectStatusSchema.options.map((status) => <SelectItem key={status} value={status}>{STATUS_LABELS[status]}</SelectItem>)}
           </SelectContent>
         </Select>
+        {/* forge:feature:filter-controls:end */}
         {canRestore && (
           <div className="flex items-center gap-2 sm:ml-2">
             <Switch id="show-deleted" checked={query.deleted === 'yes'} onCheckedChange={(checked) => setQuery({ deleted: checked ? 'yes' : undefined })} />

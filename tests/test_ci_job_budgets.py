@@ -19,10 +19,7 @@ WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/forge-next.y
 
 
 @pytest.mark.parametrize("runner,count,minutes,windows_timings", [
-    # Main's full run only, not the merge gate: groups ran past 10 minutes (Linux) and 18 of 20
-    # (Windows) on 12 October, so the limits leave room for the suite to grow. macOS left the
-    # full run on 18 October: its groups timed out and found no macOS-only product bug.
-    ("ubuntu-latest", 5, 20, False),
+    # Windows groups ran past 18 of 20 minutes on 12 October, so the limits leave room to grow.
     ("windows-latest", 5, 45, False),
     ("windows-latest", 5, 45, True),
 ])
@@ -30,7 +27,7 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(
         runner, count, minutes, windows_timings, tmp_path):
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
-    # Nightly runs use the same Linux suite and Windows subset as pull requests.
+    # Nightly runs use the same Windows subset as pull requests.
     rows = [(row["group"], row["groups"], row.get("timeout"))
             for row in matrix_rows("schedule") if row["os"] == runner]
     assert sorted((int(group), int(groups)) for group, groups, _ in rows) == [
@@ -77,7 +74,7 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(
         "${{ matrix.group }}", "1")
     tokens = shlex.split(command)
     options = tokens[tokens.index("pytest") + 1:]
-    # Windows now covers only the marked OS boundary; Linux still covers every test.
+    # This workflow covers only the marked Windows boundary.
     assert (options[options.index("-m") + 1] if "-m" in options else None) == (
         "platform" if runner == "windows-latest" else None)
     parser = argparse.ArgumentParser()

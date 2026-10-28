@@ -180,18 +180,19 @@ builds the smallest working prototype that tests it. A salesperson can start thi
 developer can take over using the discovery notes and answers page. To start one, follow the
 [prototype checklist](docs/start-a-prototype.md).
 
-| Stage | What happens | Who | Where it's kept |
-|---|---|---|---|
-| 1. Find the problem | The agent interviews you (and, through you, the customer) about what really happens today, and writes it as a problem card: the job, today's workaround, what it costs, who feels it | Agent asks, you answer | `docs/product/DISCOVERY.md` |
-| 2. Pick an option | Two to four options, always including "don't build" and "smallest slice", each with an estimate of when it pays back | Agent proposes, you choose | `forge spec payback` |
-| 3. Build the prototype | The agent asks each question when it first affects the build, records the answer and who gave it, confirms specs as they emerge, and builds the smallest working slice through fixes | Agent, with you and the customer | `docs/product/BRIEF.md`, `docs/specs/`, `forge spec save`, `forge read`, `forge spec confirm`, `forge fix start`, `forge work`, `forge close` |
-| 4. Demo and review | The customer tries the prototype; a strict review checks the whole prototype and its answers before sign-off | Client and agent | Demo address, `forge decision accept` |
-| 5. Client sign-off | The customer's named person approves the demo and answers; no client story or roadmap entry can be created before this | Client approves, agent records | `forge decision new client-signoff`, `forge decision accept` |
-| 6. Plan the stories | Start from a problem in the plan's Why; the story's branch adds it to the roadmap. Specs stay optional. Build the smallest usable slice first, with no setup-only stories | Agent plans, one story read loop and one approval | `forge story new`, or `forge roadmap add` for a confirmed spec |
-| 7. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
-| 8. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
-| 9. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge, or the agent if you allow it | GitHub, `forge merge` |
-| 10. Close the loop | The last task's merge records the story's outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge merge --outcome`, `forge spec measure` |
+1. **Ideas and client notes.** You give the agent the client notes or an idea, and it saves each note in `docs/context/` and reads them all before it asks anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
+2. **Brief.** The agent writes `docs/product/BRIEF.md` from your notes and asks only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
+3. **Canvas design.** The agent makes the screens on a design canvas for the client to click through in Play mode, and you or the FDE approve the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
+4. **Sign-off.** The client's named person approves the canvas and the answers, and you choose Build now or Later. You can say: "The client approved it; build now" or "The client approved it; build it later".
+5. **Build.** The agent plans stories and fixes, builds each one with its tests and a review, and merges it. You can say: "Build this next: <idea>" or "What is ready to merge?".
+6. **Deploy on Mainline.** When you ask, the agent sets up Mainline and deploys dev, and a person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
+7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
+
+**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. The agent fixes the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and you choose: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
+
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
 
 Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
 Each still goes through tests, review and a pull request. The agent confirms specs during this
@@ -229,7 +230,7 @@ where things are in one sentence and gives the exact next step.
 ### Install
 
 ```sh
-uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.22"
+uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.23"
 ```
 
 Check it worked with `forge --version`. Each project pins the Forge version it uses, and Forge

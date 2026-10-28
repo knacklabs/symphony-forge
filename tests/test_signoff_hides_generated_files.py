@@ -16,15 +16,18 @@ from test_setup import _autoreview, _fresh_client
 
 STORY = "signoff-hide-generated"
 
+# Test audit: retain all sign-off diff and prompt assertions. A separate stub process lost
+# the Windows engine adapter and failed before those checks. The existing new/adopted cases
+# own this contract; running the stand-in in the helper process adds no production seam.
 RECORDER = '''#!{python}
-import os, subprocess, sys
+import os, runpy, subprocess, sys
 args = sys.argv[1:]
 base = args[args.index("--base") + 1]
 git = lambda *a: subprocess.run(["git", *a], capture_output=True, encoding="utf-8", errors="replace", check=True).stdout
 start = git("merge-base", base, "HEAD").strip()
 with open(os.environ["AUTOREVIEW_STUB"] + ".diff", "a", encoding="utf-8") as out:
     out.write(git("diff-tree", "-r", "--patch", "--no-renames", start, "HEAD"))
-sys.exit(subprocess.run([sys.executable, {stub}, *args]).returncode)
+runpy.run_path({stub}, run_name="__main__")
 '''
 
 

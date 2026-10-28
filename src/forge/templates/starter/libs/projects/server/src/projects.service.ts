@@ -207,7 +207,11 @@ export class ProjectsService implements ProjectsApi {
   // forge:feature:link-validation:start
   // forge:feature:link-validation:end
 
-  async create(account: AccountPrincipal, input: ProjectInput) {
+  async create(account: AccountPrincipal, input: ProjectInput,
+    // forge:feature:mcp:start
+    options?: { afterCreate: (tx: Prisma.TransactionClient, id: string) => Promise<void> },
+    // forge:feature:mcp:end
+  ) {
     // forge:feature:link-validation-create:start
     // forge:feature:link-validation-create:end
     return this.prisma.$transaction(async (tx) => {
@@ -227,6 +231,9 @@ export class ProjectsService implements ProjectsApi {
         name: project.name,
         // forge:feature:history-created-name:end
       }, tx);
+      // forge:feature:mcp:start
+      await options?.afterCreate(tx, project.id);
+      // forge:feature:mcp:end
       return this.response(project);
     });
   }
@@ -237,6 +244,9 @@ export class ProjectsService implements ProjectsApi {
     return this.prisma.$transaction(async (tx) => {
       const before = await tx.project.findFirst({ where: liveProject(account, id) });
       if (!before) throw this.notFound();
+      // forge:feature:mcp:start
+      if (!changeSummary(before, input)) return this.response(before);
+      // forge:feature:mcp:end
       const project = await tx.project.update({
         where: { id },
         data: {

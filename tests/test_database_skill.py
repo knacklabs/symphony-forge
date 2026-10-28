@@ -51,7 +51,7 @@ def test_1_new_and_existing_repos_get_the_database_skill(repo, gh, tmp_path, ado
         skill = target.read_text("utf-8")
         headings = [line for line in skill.splitlines() if line.startswith("## ")]
         assert headings == [f"## {heading}" for heading in (
-            "Columns by kind of data", "Keys and constraints", "Indexes for lists", "List paging",
+            "Columns by kind of data", "Keys and constraints", "Migrations", "Indexes for lists", "List paging",
             "Dashboards and reports", "Change history", "Job tables", "jsonb", "Extensions",
             "Speed without a cache", "Prisma and SQLAlchemy")]
         assert ("pgvector, ltree, pg_trgm, unaccent, fuzzystrmatch, citext, PostGIS, "

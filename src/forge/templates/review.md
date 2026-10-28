@@ -175,6 +175,26 @@ An edge case is inside the boundary only when a Done-when item names it, when th
 realistic scenario that makes it likely in normal use, or when it falls under Security or Data
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
+Four principles govern every change.
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
+Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
+or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
+than 2 x C, score its Gain 2 or less: it is a known limit and does not hold the work. A review
+keeps it in Known issues; a cold read keeps it with its disposition in the read notes. A finding
+under Security or Data loss, or one that names a migration, keeps its Harm floor and still holds
+the work. A check that a Done-when item promises is not added work: report it missing as
+`Not done: <the item>`, which holds the work at any score. Never title an added-work finding
+`Not done`.
+
 ## What blocks the merge
 A finding blocks only when it names a case that happens in normal use. Include
 `Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each finding that
@@ -277,6 +297,12 @@ and when not to animate). Report a missing impeccable pass on a UI change or a f
 emil-design-eng checklist item on the changed screens as P1 `Gate: UI check`.
 
 In an app with shadcn/ui set up (a `components.json`), report a new UI component that hand-builds what a shadcn/ui component or block already does as a P1 finding titled `shadcn: <the component>`, unless a `Not shadcn: <why>` comment at the component says why shadcn/ui cannot do it. A composite built from shadcn/ui components is not a finding, and neither is a library or component the default branch already has.
+
+On client app screens, report an emoji that this change adds as an icon or decoration as a
+finding titled `Icons: <the screen>`. Report an icon from outside the starter's `lucide-react`
+library the same way; shadcn/ui is set to `lucide`. Keyboard key labels such as the Command key
+symbol (⌘) are not emojis. Apply this rule to new and existing client repos; do not report
+unchanged screen code.
 
 In an app with a database, report a query that this change adds in one module on a table another
 module owns as a P1 finding titled `Module tables: <the query>`. A module owns the tables in its
@@ -464,6 +490,8 @@ the strength of a template or a test stub alone. Give concrete file and line evi
 
 Report a query in one module on a table another module owns as a P1 finding titled
 `Module tables: <the query>`.
+
+On client app screens, report emoji icons or decoration and icons outside `lucide-react` as a finding titled `Icons: <the screen>`. Keyboard key labels such as the Command key symbol (⌘) are not emojis.
 
 ## Scores
 Score every finding on Gain, Work and Harm, each an integer from 1 to 5. The scores are your

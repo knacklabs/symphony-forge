@@ -1,17 +1,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Project, ProjectChange, ProjectInput, ProjectStatus } from '@app/projects-contracts';
+import type { Project, ProjectChange, ProjectInput, ProjectListQuery as ProjectApiListQuery } from '@app/projects-contracts';
 import { apiRequest } from '@app/core-web';
 
-export type ProjectSortBy = 'name' | 'status' | 'createdAtUtc' | 'updatedAtUtc';
-export type ProjectListQuery = {
-  search?: string;
-  status?: ProjectStatus;
-  deleted?: 'yes';
-  sortBy: ProjectSortBy;
-  sortOrder: 'asc' | 'desc';
-  after?: string;
-  before?: string;
-};
+/** The list's search, filters, sort and cursor, as the API reads them; the API sets the page size. */
+export type ProjectListQuery = Omit<ProjectApiListQuery, 'limit'>;
+export type ProjectSortBy = ProjectListQuery['sortBy'];
 export type ProjectList = {
   items: Project[];
   paging: { limit: number; nextCursor: string | null; previousCursor: string | null; total: number; totalCapped: boolean };
@@ -93,3 +86,6 @@ export function useRestoreProject() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: projectKeys.all }),
   });
 }
+
+// forge:feature:link-hooks:start
+// forge:feature:link-hooks:end

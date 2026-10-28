@@ -29,6 +29,7 @@ export default ts.config(
           { sourceTag: 'scope:projects', onlyDependOnLibsWithTags: ['scope:projects', 'scope:core', 'scope:shared', 'type:contracts'] },
           { sourceTag: 'scope:organisations', onlyDependOnLibsWithTags: ['scope:organisations', 'scope:core', 'scope:shared', 'type:contracts'] },
           { sourceTag: 'scope:history', onlyDependOnLibsWithTags: ['scope:history', 'scope:core', 'scope:shared', 'type:contracts'] },
+          { sourceTag: 'scope:mcp', onlyDependOnLibsWithTags: ['scope:mcp', 'scope:core', 'scope:organisations', 'scope:shared', 'type:contracts'] },
           { sourceTag: 'scope:app', onlyDependOnLibsWithTags: ['*'] },
         ],
       }],

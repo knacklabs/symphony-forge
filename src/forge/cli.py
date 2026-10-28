@@ -29,6 +29,7 @@ ROUTES = {
     "work": "worker", "handback": "native", "close": "close", "merge": "merge", "land": "land",
     "spec save": "records", "spec confirm": "records", "spec measure": "records",
     "spec payback": "payback", "decision new": "records", "decision accept": "records",
+    "decision open": "open_decisions", "decision answer": "open_decisions",
     "roadmap add": "records", "roadmap retire": "records",
     "hook context": "nextstep", "hook handoff": "nextstep", "hook approval": "approval",
     "hook deny": "deny", "hook pre-commit": "githooks", "hook pre-push": "githooks",

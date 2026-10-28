@@ -4,7 +4,7 @@ import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { ApiEnvelope, ApiErrors, ApiZodBody, Public, ZodValidationPipe } from '@app/core-server';
-import { CurrentAccount, permissionsFor, type AccountPrincipal } from '@app/core-server';
+import { CurrentAccount, getRateLimits, permissionsFor, type AccountPrincipal } from '@app/core-server';
 import { sessionOptions } from './session.guard';
 import { AuthService, type SessionCookies } from './auth.service';
 import { AccountResponseDto, AuthOptionsResponseDto, MessageResponseDto } from './auth.dto';
@@ -26,7 +26,7 @@ export class AuthController {
 
   @Public()
   @Post('sign-up')
-  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Throttle({ default: { limit: () => getRateLimits().auth, ttl: 60_000 } })
   @ApiZodBody(signUpSchema)
   @ApiOperation({ summary: 'Create an account and start a session.' })
   @ApiEnvelope(AccountResponseDto, 201)
@@ -42,7 +42,7 @@ export class AuthController {
 
   @Public()
   @Post('accept-invite')
-  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Throttle({ default: { limit: () => getRateLimits().auth, ttl: 60_000 } })
   @ApiZodBody(acceptInviteSchema)
   @ApiOperation({ summary: 'Join an organisation with an email invite.', description: 'The seven-day invite must match the email and can be used only once. Creates an account and starts a session.' })
   @ApiEnvelope(AccountResponseDto, 201)
@@ -59,7 +59,7 @@ export class AuthController {
   @Public()
   @Post('sign-in')
   @HttpCode(200)
-  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Throttle({ default: { limit: () => getRateLimits().auth, ttl: 60_000 } })
   @ApiZodBody(signInSchema)
   @ApiOperation({ summary: 'Sign in and start a server session.' })
   @ApiEnvelope(AccountResponseDto, 200)
@@ -104,7 +104,7 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @HttpCode(200)
-  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Throttle({ default: { limit: () => getRateLimits().auth, ttl: 60_000 } })
   @ApiZodBody(forgotPasswordSchema)
   @ApiOperation({ summary: 'Request a password reset link.' })
   @ApiEnvelope(MessageResponseDto, 200)
@@ -116,7 +116,7 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @HttpCode(200)
-  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @Throttle({ default: { limit: () => getRateLimits().auth, ttl: 60_000 } })
   @ApiZodBody(resetPasswordSchema)
   @ApiOperation({ summary: 'Set a new password with a single-use reset link.' })
   @ApiEnvelope(MessageResponseDto, 200)

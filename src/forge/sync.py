@@ -652,6 +652,7 @@ def sync(args: argparse.Namespace) -> None:
     top = repo.root()
     cfg = repo.config(top)
     raw_config = tomllib.loads((top / "forge.toml").read_text(encoding="utf-8"))
+    first = "`R-<n>:`" not in read(top / ".claude/skills/forge/SKILL.md")
     changed = write(top, cfg)
     if cfg.get("repo") == "forge-source":
         page = command_page()
@@ -661,6 +662,15 @@ def sync(args: argparse.Namespace) -> None:
             changed.append("docs/commands.md")
     for rel in changed:
         print(f"Wrote {rel}")
+    if first:
+        from forge import records
+
+        lines = records.old_spec_lines(top)
+        if lines:
+            print("These spec lines seem to repeat a rule instead of naming its R- ID:")
+            print("\n".join(lines))
+            print('Next: forge fix start "Specs state each rule once" --done '
+                  '"Each VAL, UAT and AC line in docs/specs names the R- rule it checks" --kind mechanical')
     if (cfg["repo"] == "client" and cfg["codex_fast"] == "needed"
             and ".codex/skills/forge/SKILL.md" in changed):
         print("Codex Fast is now on for quick work: every fix, after the first repair round, "

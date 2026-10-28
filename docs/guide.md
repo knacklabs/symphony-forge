@@ -16,7 +16,7 @@ or the coordinating session's `reader` subagent when the other tool is unavailab
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.22
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.23
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -79,19 +79,16 @@ the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
-Make each app's design from the brief's `## Summary`, `## Users` and `## Things it keeps track of`,
-including all fields and choice-list options. Run impeccable's init when PRODUCT.md is missing.
-Use impeccable and emil-design-eng to write the app's theme tokens, type and colours in DESIGN.md.
-Make a Claude Design artifact with a shadcn design system and named shadcn components.
-On a Codex-only host without artifact tools, use HTML artboards in the repo.
-Save artboards and images under `docs/design/prototype/` in a mechanical fix.
-Copy `.forge/design/support.js` beside the HTML and run it for a 1440 by 900 PNG per screen.
-Write SCREENS.md there, with one `## <screen>` per image, `Image: <file>`,
-`Components: <shadcn names>` and `Fields:`. List fields as `- <field>: <type>, required|optional`,
-with `, options: <a> | <b>` for choice lists, or use `Fields: none`.
-Before sign-off, run impeccable's critique and polish and the emil-design-eng checklist.
-Record notes and `Result: passed` in CHECKS.md under `## Critique`, `## Polish` and `## Emil checklist`.
-Commit the folder. Record approval with `forge decision new prototype-design` and
+Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
+options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
+emil-design-eng to shape and review the design. Make a Claude Design artifact with a shadcn design
+system and named shadcn components. On a Codex-only host without artifact tools, use HTML artboards
+in the repo. Keep the canvas available to show the customer and for sign-off review. New clients
+get this process at init; existing clients can use the brief and design they have after upgrade and
+sync. Client sign-off does not require a root DESIGN.md, SCREENS.md or CHECKS.md, or a specific
+`Things it keeps track of` heading.
+Before sign-off, run impeccable's critique and polish and the emil-design-eng checklist. The owner
+or FDE can approve the canvas with `forge decision new prototype-design` and
 `forge decision accept prototype-design --by "<name>"`.
 
 The customer can sign off on the canvas alone. A working prototype needs an FDE request to prove
@@ -102,32 +99,38 @@ fix started before sign-off can exceed the usual fix size and change an interfac
 tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows which required answers are still open. Its light rounds prove the demo steps,
 security and data boundaries, with `[models.light_review]`. Full proof is due at sign-off.
-Resolve the answers, then have the whole working
-prototype and answers strictly reviewed before the customer is asked: write the record with
-`forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
-`forge decision accept`, which runs the review and either names the gaps or says you can now ask
-the customer's named person for sign-off.
+Resolve the answers, then run the sign-off checks before the customer is asked. Write the record
+with `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
+`forge decision accept`. Forge checks the copied Answers section and full test run, then reviews
+the canvas against the whole brief. A working prototype also gets one strict whole-product review;
+a canvas-only sign-off does not need that review. If the checks pass, Forge says you can ask the
+customer's named person for sign-off.
 The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
 `email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
-to record it. Put the folder and tree id under `## Signed design`, demo outcomes and their tests
-under `## Proof` for a working build, and settled choices under `## Decisions`.
+to record it. Put each demo step and its test under `## Proof` for a working build, and settled
+choices under `## Decisions`.
 
-Each sign-off checks the design records and the brief's nonempty `## Things it keeps track of`.
-Its completeness check compares SCREENS.md and the images against the brief's Summary, Users,
-Things it keeps track of and Key flows. Missing screens, fields, choice-list options or flows hold sign-off.
-The check uses `claude-opus-5-5` at high, independent of `[models.design]`.
+Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
+run on main is green. Its completeness review must pass after judging the screens against the whole
+brief, including its purpose, users, records, fields, choices and key flows. It needs no separate
+screen list. Missing screens, fields,
+choice-list options or flows hold sign-off. When a precondition is missing, the refusal lists every
+gap and the next action for each. An existing client can sign off after upgrade with the brief and
+design it has; no prototype design files are required for this gate.
+The completeness review uses `claude-opus-5-5` at high, independent of `[models.design]`.
 Without Claude it uses `gpt-6.1-sol` at high and reports the fallback.
-Fix gaps and approve the changed canvas again before another sign-off attempt.
-A canvas-only sign-off needs no build or code review. A working prototype gets one whole-product review.
+Fix gaps, then retry `forge decision accept client-signoff`.
+A canvas-only sign-off needs no working build. A working prototype gets one strict whole-product
+review with no serious findings.
 Forge reuses each passed result while what it checked stays unchanged.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
 use `forge roadmap add` when planning from a confirmed spec. Promotion from a fix keeps its
 existing route: its roadmap entry must already be committed in the fix's branch. In a client
 repo, trying either command early tells you to build and demo the prototype and run `forge next`.
-Every new story copies the sign-off's Signed design, Proof and Decisions into
+Every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. The plan and cold read treat this as settled evidence and cover
-only new work or production risks. Start from the signed canvas or a newer design approved with the plan.
+only new work or production risks. Start from the prototype canvas or a newer design approved with the plan.
 Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
 [decision 0095](decisions/0095-prototype-before-stories.md).
@@ -165,6 +168,35 @@ An existing app from the current starter can use the command. A non-starter or a
 missing required parts gets a refusal naming what is missing and no file changes; the worker
 builds the feature by hand in that app's layout.
 
+Only starter apps get an MCP server inside the API at `/mcp`, marked with `mcp = "/mcp"`
+in `services.toml`. Each feature has six tools: `<feature>_search`, `<feature>_get`,
+`<feature>_create`, `<feature>_update`, `<feature>_delete` and `<feature>_restore`.
+An admin adds an agent account with a role on the Members screen, creates its key (shown
+once), and can revoke it at once. Agents use that account's permissions and write change
+history as that account. Delete and restore stay off until an admin turns on the feature's
+Agent access switch; the role still applies. Each key has a limit of 120 calls a minute per
+running API copy, and each call has a 10-second time limit. The feature command writes the
+one tools file, `libs/<plural>/server/src/<plural>.tools.ts` (Python
+`apps/api/app/<plural>/tools.py`), where developers can add tools or hide defaults with `hide`.
+Following [Anthropic's tool guidance](https://www.anthropic.com/research/writing-tools-for-agents)
+and the [MCP tools specification, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/server/tools),
+every tool has a feature-prefixed name, a description of what it does, when to use it and
+related tools, clear snake-case arguments such as `project_id`, strict input and output
+schemas from the feature's schemas, one permission, and all four annotations (`readOnlyHint`,
+`destructiveHint`, `idempotentHint`, `openWorldHint`). Search takes `query`, filters, `limit`
+(20 by default, up to 100) and `cursor`, returns `next_cursor`, the total matching count and
+how to narrow. Results give useful fields with names beside ids, `response_format` `concise`
+by default or `detailed` on request, `structuredContent` with an `outputSchema`, and a short
+summary. Tool failures use `isError`, a message with a fix and an example where useful,
+`kind`, `retryable` and `retry_after_seconds`, never HTTP statuses or traces. Unknown tools
+and malformed requests are protocol errors; missing or revoked keys are HTTP 401 before a
+tool call. A timeout is retryable `unavailable`, and timeout and rate-limit errors say how
+many seconds to wait. A create accepts `idempotency_key`; update, delete and restore are
+safe to repeat. One contract case in each starter checks every tool, including hand-made
+tools. New repos get the guide text at init; existing repos get it on upgrade and sync,
+with no MCP server, `services.toml` change or app files. In an older starter without MCP
+support, the feature command builds the feature without tools and says so.
+
 In a client repo, finish the canvas checks and customer sign-off above before starting here.
 A working prototype also needs its strict whole-product review.
 
@@ -181,7 +213,7 @@ A working prototype also needs its strict whole-product review.
    One plan approval covers that exact design. A folder change needs a new tree id and approval.
    Small changes to existing screens that add no screen and change no flow use `Design: none (<why>)`.
    Backend-only stories need no canvas. Earlier approved stories keep working.
-   The build applies DESIGN.md to the starter and includes every listed component and field from SCREENS.md.
+   The build applies any app theme already in place and follows the approved story design, including its components and fields.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.
@@ -476,14 +508,15 @@ For Forge's maintainers:
 
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Start the full test run with `gh workflow run forge.yml --ref main` and confirm it is green.
-   Start the platform run with `gh workflow run forge-next.yml --ref main` and confirm it is green
-   on Linux, Mac and Windows before tagging. Pull requests and merges to main run only the Linux
-   test groups; they do not prove the other platforms ready for release.
+2. Start one Linux full run with `gh workflow run forge.yml --ref main`.
+   Confirm it is green. This workflow posts the full-run status that sign-off and release read.
+   Start the Windows platform run with `gh workflow run forge-next.yml --ref main`.
+   Confirm it is green before you tag the release.
 3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.
-   The tag push runs the full matrix again; confirm that run is green too.
+   The tag push runs the Windows checks again or reuses passed proof for the same tree.
+   Confirm that run is green too.
 4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
 
 What the switch to this Forge removed from the repo, and where to find it, is in

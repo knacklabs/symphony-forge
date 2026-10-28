@@ -5,13 +5,21 @@ import { useCreateProject, useDeleteProject, useProject, useProjects, useUpdateP
 
 const project = {
   id: 'project-1',
+  // forge:feature:test-fields:start
   name: 'Migration review',
   status: 'active' as const,
+  // forge:feature:test-fields:end
   createdAtUtc: '2026-10-23T00:00:00.000Z',
   updatedAtUtc: '2026-10-23T00:00:00.000Z',
   createdByAccountId: 'account-1',
   modifiedByAccountId: 'account-1',
 };
+// forge:feature:test-input:start
+const input = { name: project.name, status: project.status };
+const changed = { ...input, name: 'Updated review' };
+const listQuery = { search: 'migration', status: 'active' as const, sortBy: 'name' as const };
+const listPath = '/api/v1/projects?search=migration&status=active&sortBy=name&sortOrder=asc&after=cursor-1';
+// forge:feature:test-input:end
 
 function response(data: unknown, status = 200) {
   return new Response(JSON.stringify({ success: true, data, error: null }), {
@@ -20,9 +28,9 @@ function response(data: unknown, status = 200) {
   });
 }
 
-function wrapper(client: QueryClient) {
+function wrapper(queries: QueryClient) {
   return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queries}>{children}</QueryClientProvider>
   );
 }
 
@@ -37,15 +45,15 @@ describe('project hooks', () => {
       .mockResolvedValueOnce(response({ items: [project], paging: { limit: 20, nextCursor: null, previousCursor: null, total: 1, totalCapped: false } }))
       .mockResolvedValueOnce(response(project));
     vi.stubGlobal('fetch', fetch);
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const queryWrapper = wrapper(client);
+    const queries = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const queryWrapper = wrapper(queries);
 
-    const list = renderHook(() => useProjects({ search: 'migration', status: 'active', sortBy: 'name', sortOrder: 'asc', after: 'cursor-1' }), { wrapper: queryWrapper });
+    const list = renderHook(() => useProjects({ ...listQuery, sortOrder: 'asc', after: 'cursor-1' }), { wrapper: queryWrapper });
     await waitFor(() => expect(list.result.current.data?.items).toEqual([project]));
     const detail = renderHook(() => useProject(project.id), { wrapper: queryWrapper });
     await waitFor(() => expect(detail.result.current.data).toEqual(project));
 
-    expect(String(fetch.mock.calls[0][0])).toContain('/api/v1/projects?search=migration&status=active&sortBy=name&sortOrder=asc&after=cursor-1');
+    expect(String(fetch.mock.calls[0][0])).toContain(listPath);
     expect(String(fetch.mock.calls[1][0])).toBe(`/api/v1/projects/${project.id}`);
   });
 
@@ -53,17 +61,17 @@ describe('project hooks', () => {
     document.cookie = 'starter_csrf=csrf-token; path=/';
     const fetch = vi.fn()
       .mockResolvedValueOnce(response(project, 201))
-      .mockResolvedValueOnce(response({ ...project, name: 'Updated review' }))
+      .mockResolvedValueOnce(response({ ...project, ...changed }))
       .mockResolvedValueOnce(response(null));
     vi.stubGlobal('fetch', fetch);
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const queryWrapper = wrapper(client);
+    const queries = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const queryWrapper = wrapper(queries);
     const create = renderHook(() => useCreateProject(), { wrapper: queryWrapper });
     const update = renderHook(() => useUpdateProject(), { wrapper: queryWrapper });
     const remove = renderHook(() => useDeleteProject(), { wrapper: queryWrapper });
 
-    await act(async () => create.result.current.mutateAsync({ name: project.name, status: project.status }));
-    await act(async () => update.result.current.mutateAsync({ id: project.id, input: { name: 'Updated review', status: project.status } }));
+    await act(async () => create.result.current.mutateAsync(input));
+    await act(async () => update.result.current.mutateAsync({ id: project.id, input: changed }));
     await act(async () => remove.result.current.mutateAsync(project.id));
 
     expect(fetch).toHaveBeenCalledTimes(3);

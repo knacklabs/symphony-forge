@@ -14,8 +14,10 @@ export { definePermissions, hasPermission, permissionsFor, RequirePermission, ty
 export { PUBLIC_ROUTE, Public } from './common/public.decorator';
 export { ZodValidationPipe } from './common/zod-validation.pipe';
 export type { AuthenticatedRequest } from './common/authenticated-request';
-export { validateEnvironment } from './config/environment';
+export { getRateLimits, validateEnvironment } from './config/environment';
 export { MAIL_PROVIDER, type MailProvider } from './mail/mail.provider';
 export { MailModule } from './mail/mail.module';
 export { PrismaModule } from './prisma/prisma.module';
 export { PrismaService } from './prisma/prisma.service';
+export { defineTool, defineFeatureTools, listTools, callTool, ToolError, toolFailure, type ToolContext } from './common/tools';
+export { ErrorReporter } from './common/error-report';

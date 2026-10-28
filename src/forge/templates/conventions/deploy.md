@@ -17,7 +17,10 @@ Each `[[service]]` has a `name`, a `dockerfile` path, a container `port`, a `hea
 answers HTTP 200 when the service is ready, and an `expose` value: `main` for the app's main
 address, `subdomain` for its own subdomain, named by its `subdomain` prefix (for example
 `api`), or `internal` for a service with no address, such as a worker, which needs no port or
-health path. An optional `command` replaces the Dockerfile's start command. Exactly one
+health path. An optional `command` replaces the Dockerfile's start command.
+An optional `mcp` is the path where the service serves its MCP server, such as `/mcp`;
+Mainline shows it under Connectors, and its gateway sends the agent key that an admin creates
+in the app. Exactly one
 service is `main`. One release builds every service, and a rollback rolls them all back. The
 platform provides Postgres through `DATABASE_URL`. Forge's starters list one `main` service:
 the root Dockerfile on port 3000 with `GET /health`.
@@ -44,4 +47,7 @@ the image; keep deployment secrets in the platform's secret store.
 At every container start, `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` runs before the backend listens. If it
 fails, the container exits without serving traffic. Check `DATABASE_URL` and the failed migration
 in the platform logs, fix the cause, and redeploy; the previous healthy version should keep
-serving. Keep migrations additive so restarting a container cannot remove production data.
+serving. Expand, then contract: add a new table or column before code uses it, keep the old table
+or column for two releases, and remove it only when no live release uses it. A Mainline rollback
+restores the previous release's code and keeps the database, so each migration must work with
+that code still running.

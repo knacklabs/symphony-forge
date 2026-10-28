@@ -1,7 +1,9 @@
 """Ship client app skills, check shadcn/ui additions and validate services lists."""
 from __future__ import annotations
 
+import ast
 import json
+import re
 import tomllib
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -9,6 +11,9 @@ from typing import Any
 from forge import repo
 
 REFUSALS = {
+    "contract": ("These new migrations can break the previous release: {problems}.",
+                 "add a Contract: comment in each migration explaining why the live release "
+                 "no longer reads the table or column, then forge close {item}"),
     "services": ("services.toml {problem}.",
                  "fix services.toml to match the Dockerfiles, then forge close {item}"),
     "shadcn": ("This app uses shadcn/ui only, and this change adds {problems}.",
@@ -92,6 +97,53 @@ def services(top: Path, cfg: dict[str, Any]) -> None:
         problems.append(f'has {main} services with expose = "main"; it needs exactly one')
     if problems:
         repo.refuse(REFUSALS["services"], problem="; ".join(problems), item=item)
+
+
+def migrations(top: Path, cfg: dict[str, Any], base: str) -> None:
+    """Hold destructive additions until their migration states the contract decision."""
+    if cfg.get("repo") != "client" or repo.is_prototype(top, cfg, refs=(base, "HEAD")):
+        return
+    destructive_sql = re.compile(
+        r"\bDROP\s+TABLE\b|\bALTER\s+TABLE\b.*?\b(?:DROP\s+COLUMN\b|"
+        r"RENAME\s+(?:COLUMN\b|TO\b)|ALTER\s+(?:COLUMN\s+)?\S+\s+(?:SET\s+DATA\s+)?TYPE\b)",
+        re.I | re.S)
+    problems = []
+    for path in repo.git("diff", "--name-only", "-z", "--no-renames", "--diff-filter=A",
+                         base, "HEAD", cwd=top).split("\0"):
+        file = PurePosixPath(path)
+        sql = file.match("prisma/migrations/*/migration.sql")
+        python = (file.suffix == ".py" and file.parent.name == "versions"
+                  and file.parent.parent.name == "migrations")
+        if not (sql or python):
+            continue
+        text = repo.git("show", f"HEAD:{path}", cwd=top)
+        comment = "--" if sql else "#"
+        if re.search(rf"^\s*{comment}\s*Contract:[^\S\n]*\S", text, re.M):
+            continue
+        statements = []
+        if sql:
+            uncommented = re.sub(r"--[^\n]*|/\*.*?\*/", "", text, flags=re.S)
+            statements = [statement.strip() for statement in uncommented.split(";")
+                          if destructive_sql.search(statement)]
+        else:
+            for function in ast.parse(text).body:
+                if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)) or function.name != "upgrade":
+                    continue
+                for node in ast.walk(function):
+                    if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                            and isinstance(node.func.value, ast.Name) and node.func.value.id == "op"):
+                        continue
+                    source = ast.get_source_segment(text, node) or ""
+                    method = node.func.attr
+                    if (method in {"drop_column", "drop_table", "rename_table"}
+                            or (method == "alter_column" and any(
+                                keyword.arg in {"type_", "new_column_name"} for keyword in node.keywords))
+                            or (method == "execute" and destructive_sql.search(source))):
+                        statements.append(source)
+        problems.extend(f"{path}: {' '.join(statement.split())}" for statement in statements)
+    if problems:
+        repo.refuse(REFUSALS["contract"], problems="; ".join(problems),
+                    item=repo.current_branch(top).partition("/")[2])
 
 
 def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
