@@ -8,6 +8,7 @@ import { HealthModule } from './health/health.module';
 import { ProjectsModule } from '@app/projects-server';
 import { HistoryModule } from '@app/history-server';
 import { OrganisationsModule } from '@app/organisations-server';
+import { McpModule } from '@app/mcp-server';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { OrganisationsModule } from '@app/organisations-server';
     AuthModule,
     ProjectsModule,
     OrganisationsModule,
+    McpModule,
     HistoryModule,
     HealthModule,
   ],

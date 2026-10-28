@@ -1,9 +1,20 @@
 import { randomUUID } from 'node:crypto';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { execFileSync, spawnSync } from 'node:child_process';
 import type request from 'supertest';
 
 export const apiBaseUrl = process.env.API_TEST_URL ?? 'http://127.0.0.1:3000';
 export const productionApiBaseUrl = process.env.PRODUCTION_API_TEST_URL ?? 'http://127.0.0.1:3001';
+
+/** Connects an MCP client as the agent account that owns this key. */
+export async function agentClient(key: string) {
+  const client = new Client({ name: 'starter-e2e', version: '1.0.0' });
+  await client.connect(new StreamableHTTPClientTransport(new URL('/mcp', apiBaseUrl), {
+    requestInit: { headers: { Authorization: `Bearer ${key}` } },
+  }));
+  return client;
+}
 
 export type LogEvent = { message: string; context?: Record<string, unknown>; [field: string]: unknown };
 type ApiClient = ReturnType<typeof request.agent>;
