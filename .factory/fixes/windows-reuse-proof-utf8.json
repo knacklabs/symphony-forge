@@ -1,0 +1,15 @@
+{
+  "base": "829bb3379019c1b6d587f41b97961f9ff5e86d03",
+  "branch": "fix/windows-reuse-proof-utf8",
+  "done_when": ".github/reuse-test-proof.py decodes command output as UTF-8, so the tag run's Windows jobs get past the reuse step",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T00:54:25.052323+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The v1.2.23 tag run fails on every Windows job: .github/reuse-test-proof.py reads gh output with the Windows default code page and crashes on a non-ASCII byte"
+}
