@@ -28,6 +28,11 @@ $covered
 The story's other Done-when items are context only; never report them as `Not done`:
 $context
 
+## What changes for you
+The owner approved these items with the plan. Each ends with its source or the sourced item
+that needs it:
+$changes
+
 ## Builder guidance
 These details guide implementation. They are not owner-approved acceptance criteria and never
 produce a blocking `Not done` finding:
@@ -64,8 +69,10 @@ $design_context
 
 <!-- design-screens -->
 Report as P1 a built screen that lacks a component or field its section of
-`${design_folder}SCREENS.md` lists. Check only screens listed in this item's own approved
-design folder. Other design folders are context only.
+`${design_folder}SCREENS.md` lists, when that screen is a screen marked Build now at sign-off,
+or, until sign-off can mark screens Build now, a screen that this story's Done-when items name.
+Do not report a field missing from any other screen. Check only screens listed in this item's own
+approved design folder. Other design folders are context only.
 
 <!-- design-theme -->
 Check that the worker follows this instruction:
@@ -151,6 +158,14 @@ Raise, under one of these lines:
 - Test: a missing or hollow test for a Done-when item's own behaviour.
 - Moving part: a new dependency, service, datastore, queue, background job or abstraction layer
   that the plan's `New moving parts` line doesn't name or, in a plan, that no Done-when item needs.
+- Not needed: a large addition that no source asks for and that no sourced item needs: a new
+  table, background job, workflow or settings flag, or about 150 lines or more. A source is a
+  client note in
+  `docs/product/DISCOVERY.md`, an answer in `docs/product/BRIEF.md`, a decision in
+  `docs/decisions/`, a screen marked Build now at sign-off, a fixed rule in
+  `docs/product/CONSTITUTION.md`, or the human's own request: a dated source on a plan item, or a
+  fix's Why and Done-when line. An item that has a source needs what it cannot work without. The
+  canvas is not a source.
 - Gate: a P1 this page names elsewhere: a broken Standard, a Promote, the proof list, the
   functional check, the UI skills, an allowance that doesn't match, a file outside Scope the work
   doesn't need, or a weakened test.
@@ -195,6 +210,21 @@ the work. A check that a Done-when item promises is not added work: report it mi
 `Not done: <the item>`, which holds the work at any score. Never title an added-work finding
 `Not done`.
 
+Title an addition that no source asks for and that no sourced item needs
+`Not needed: <what was added>`. Write its evidence in plain words for the developer and the client:
+what the change adds, with its file and line or plan item; which sources and sourced items you
+checked and found silent; and the two ways forward: name its source or the sourced item that needs
+it, or remove it and add one line for it to `plans/ideas.md`. Check plans and code against the screens marked Build
+now at sign-off, never against the canvas, which can show later screens. Until sign-off can mark
+screens Build now, the Build now screens are the ones that the story's Done-when items name. What
+the app's fixed rules or the starter already give is not an addition. A large addition goes under
+the Raise line above: say that it is large and why, score it Gain 4, and Work 1 or 2, because
+either way forward is small, so it holds the work, and include `Case: normal use - <the addition>`.
+A smaller addition is advice: in a cold read start it with `Advisory:`, in a review report it as
+P2, and score it Gain 1 or 2. When a source asks for an addition that the work does not need, ask
+whether it can be cut: Is it needed at all? Deleting beats fixing. Report it as advice,
+`Cut or defer: <what>` in a cold read or `Simpler: <what> → cut` in a review, scored Gain 1 or 2.
+
 ## What blocks the merge
 A finding blocks only when it names a case that happens in normal use. Include
 `Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each finding that
@@ -208,7 +238,7 @@ finding is a follow-up fix, even a Gain 3 finding with Harm 1 or 2 and Work 1 or
 Gain 1 or 2 is lived with. Findings below the bar let the merge go on.
 Every finding under a Raise line is P0 or P1. P2 and P3 are only the advice
 forms this page names (`Simpler:`, `Later:`, `Follow-up:`,
-`Simpler (existing):`), which need no Raise line
+`Simpler (existing):`, a small `Not needed:`), which need no Raise line
 and, scored Gain 1 or 2, never block the merge or start another round. Report nothing else.
 
 A `Not done` finding is P1 only when this branch can meet it. Two cases are P2 advice instead:

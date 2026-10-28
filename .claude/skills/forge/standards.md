@@ -14,11 +14,17 @@ run in the cold reads, the review's Simpler rule, the functional check and the c
    costs. A spec's Why names that problem and its cost, so we can tell whether building paid off.
 2. **Smallest slice.** Build the thinnest end-to-end path that moves the success measure, deployed
    where the client can use it. Everything else waits for evidence; no story is only setup.
-3. **Only what Done-when needs.** Every task, screen, field, setting, role and integration traces
-   to a Done-when item. Anything else is cut, or goes under the spec's Out of scope.
+3. **Only what is needed.** Every task, screen, field, endpoint, tool, setting, role and
+   integration traces to a Done-when item and is needed: a source asks for it (a client note, a
+   brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of the app, or the
+   owner's own request), or an item that has a source cannot work without it. An idea that
+   nothing needs goes as one line to `plans/ideas.md`, and nothing is built for it. Anything else
+   is cut, or goes under the spec's Out of scope.
 4. **Fewest moving parts.** Climb the ladder below on every change. A new dependency, service,
    datastore, queue, background job or abstraction layer comes last, and only when the story's
-   `New moving parts` line names it, because the client pays for it as long as the app runs.
+   `New moving parts` line names it, because the client pays for it as long as the app runs. The
+   starter's fixed rules are the base of each app. Build nothing beyond them just in case: modules,
+   contracts, a schema per module and `services.toml` already leave room to grow.
 5. **Delete before adding.** Prefer the change that removes a step, screen, field or workaround.
    Replacing behaviour deletes the old path, its tests and its docs in the same change.
 6. **One home per fact.** Store each piece of data once; everything else reads or derives it.

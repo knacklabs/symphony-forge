@@ -342,6 +342,7 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         scope, tests = cells(row.get("scope", "")), cells(row.get("tests", ""))
         values.update(
             name=row.get("name", ""), delivers=row.get("what it delivers", ""),
+            changes=doc.get("What changes for you", "none"),
             scope=_bullets(scope), tests=_bullets(tests),
             outside=_bullets(p for p in changed if not any(
                 p.startswith(s.rstrip("/") + "/") or fnmatch(p, s) for s in scope + tests)),
