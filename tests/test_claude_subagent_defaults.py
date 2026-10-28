@@ -42,7 +42,7 @@ effort = "low"
 
 
 @pytest.mark.parametrize("models,planning", [
-    (None, ("claude-opus-5-5", "high")),
+    (None, ("claude-sonnet-5-5", "high")),
     (CODEX_MODELS, ("claude-opus-5-5", "high")),
     (CODEX_MODELS + CLAUDE_MODELS, ("custom-opus", "medium")),
 ], ids=["new-repo", "missing-claude-entries", "configured-grill-and-old-review"])
@@ -68,7 +68,8 @@ def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
     assert result.returncode == 0, result.stdout + result.stderr
 
     for name in ("worker", "coder", "frontend", "tester", "refactorer"):
-        assert _settings(top, name)[1] == ("claude-sonnet-5-5", "xhigh"), name
+        effort = "xhigh" if models is not None or name == "frontend" else "low"
+        assert _settings(top, name)[1] == ("claude-sonnet-5-5", effort), name
     # Fresh init separates read-only explore; configs without explore retain lite.
     assert _settings(top, "explorer")[1] == (
         ("claude-haiku-5-5", "high") if models is None else ("claude-sonnet-5-5", "xhigh"))

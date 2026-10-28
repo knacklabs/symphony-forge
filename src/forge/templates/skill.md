@@ -1550,7 +1550,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
 and explorers use their host's entry. Workers and Claude plan readers with no entry use Forge's defaults.
-Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses its design default.
+Codex build, fix and lite default to `gpt-6.1-sol` at low effort; design uses its design default.
 Claude workers use model and effort
 and ignore the Codex-only subagents and subagent_effort keys.
 
@@ -1560,25 +1560,27 @@ come from build's Codex `subagents` and `subagent_effort`, falling back to lite'
 build has none. With neither pair, sync leaves the defaults unset. Hands-on Codex roles use
 that same pair when set, so their worker model does not override the subagent budget.
 
-Claude implementation (build, fix, lite and design, including frontend) defaults to
-`claude-sonnet-5-5` at `xhigh` effort. Claude plan reads (grill) default to
+Claude build, fix and lite default to `claude-sonnet-5-5` at `low` effort.
+Claude design, including frontend, keeps `xhigh` effort. Claude plan reads with no entry use
 `claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.
-`forge init` writes these Claude entries explicitly; omitted entries use the same built-in
-defaults. Claude planner and architect roles use the plan-read entry; debugger, security
-and performance roles use Opus 5.5 at high effort. Autoreview owns every review's model
-and effort, including prototype sign-off.
+`forge init` writes Sonnet at high for Claude plan reads and reviews.
+Existing model and effort entries stay unchanged after upgrade and sync.
+Claude planner and architect roles use the plan-read entry; debugger, security
+and performance roles use Opus 5.5 at high effort. Reviews, including prototype sign-off,
+use the selected tool's `models.review` entry, or Autoreview's defaults when unset.
 
 Existing model entries stay unchanged on upgrade. To opt in, set each of
-`[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]`,
-`[models.design.claude]` to Sonnet at xhigh. Set `[models.grill.claude]` to Opus at high.
+`[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]` to Sonnet at low.
+Keep `[models.design.claude]` at Sonnet xhigh. Set `[models.grill.claude]` and
+`[models.review.claude]` to Sonnet at high.
 For a missing implementation entry,
 add a top-level line before the first table, replacing `build` with each kind:
-`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "low" }`.
 For plan reads, use this line:
-`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+`models.grill.claude = { model = "claude-sonnet-5-5", effort = "high" }`.
 If build, fix or lite has a single entry, move it to its family's table before adding the
-Claude entry. Then run `forge sync` to refresh subagent roles. Legacy review entries stay
-in existing settings but no longer override Autoreview's defaults.
+Claude entry. Then run `forge sync` to refresh subagent roles. Existing review entries stay
+unchanged and still set the review model and effort.
 
 With `tools = "both"`, `forge.toml`'s `workers` says who builds each task and fix.
 `forge work` prints the worker,
@@ -1632,12 +1634,12 @@ The diagnosing and planning roles change no files. Building an item still goes t
 and run `forge sync`; Claude diagnostic roles keep Opus at high effort.
 Codex roles use their host's entry when the kind has per-tool entries. With a single entry, a model
 from the other tool is omitted so the Codex role uses the session's model. Claude building
-roles use their implementation entry or Sonnet xhigh; Claude planning uses grill or Opus high,
+roles use their implementation entry or Sonnet low; Claude planning uses grill or Opus high,
 and Claude diagnosing always uses Opus high.
 
 The explorer role uses the read-only `explore` kind; `lite` keeps a fix's first
 build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
-`[models.explore.codex]` with the same settings as the initial lite Codex entry. Existing repos
+`[models.explore.codex]` with `gpt-6.1-sol` at medium effort. Existing repos
 without explore keep using lite for read-only work after upgrading and syncing. To choose
 separate read-only settings there, add the explore entries in a fix and run `forge sync`.
 
