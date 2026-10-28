@@ -1,0 +1,13 @@
+{
+  "base": "9f92a377629f0df72c97306f911e88252d6f2812",
+  "branch": "task/FORGE-GUIDES-1-GUIDES",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-REQLOG-1/GUIDE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T19:40:56.665298+00:00",
+      "step": "start"
+    }
+  ]
+}
