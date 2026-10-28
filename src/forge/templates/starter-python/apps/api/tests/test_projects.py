@@ -784,11 +784,12 @@ def test_project_delete_and_restore_tools_stay_off_until_an_admin_turns_them_on(
     actions = [
         entry
         for entry in changes.json()["data"]
-        if entry["summary"] in {"Deleted the project", "Restored the project"}
+        if entry["summary"]
+        in {f"Deleted the {MCP_SINGULAR}", f"Restored the {MCP_SINGULAR}"}
     ]
     assert [(entry["actorEmail"], entry["summary"]) for entry in actions] == [
-        (agent["email"], "Restored the project"),
-        (agent["email"], "Deleted the project"),
+        (agent["email"], f"Restored the {MCP_SINGULAR}"),
+        (agent["email"], f"Deleted the {MCP_SINGULAR}"),
     ]
 
 
