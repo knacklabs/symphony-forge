@@ -10,7 +10,7 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T17:18:13.243221+00:00",
@@ -18,10 +18,14 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "Client apps are ready for agents from day one: Retry keys and the history value in the Python starter is stuck. It should deliver: The same in the Python starter: `app/core/retry_keys.py` with the moved model and `create_once`, the header on the projects create and the member invite, `via_agent` on the principal and history, the Python copy's marks and no-MCP line, and the app's own cases.\nIt changes 488 lines outside tests, over its limit of 400.\nThe worker tried: Make Python creates and invites safe to retry.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "The owner allowed it over the line limit",
     "size": true,
     "tool": "codex",
-    "wait_id": "26c95e22-b718-43aa-8faa-268b23085510"
+    "wait_id": "26c95e22-b718-43aa-8faa-268b23085510",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
