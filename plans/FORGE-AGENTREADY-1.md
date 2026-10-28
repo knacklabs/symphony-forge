@@ -1,59 +1,173 @@
 # Client apps are ready for agents from day one
 
-<n> parts · Risks: ... · New moving parts: ...
+3 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
-- Every action in a client app goes through its service and permission check, whether it comes from a screen, an agent over MCP, or a later in-app agent.
-- Every change records the person, and for an agent it also records the agent acting for that person.
-- Every write takes a retry key, so a repeated request makes no second record.
-- Reports come from summary tables built from the main tables, and typed results name their units.
-- The rules sit in the conventions and the database skill, each with its cheapest check, and the FDE is not asked about them.
+- Every action in a client app goes through one door: its feature's service, with that feature's permission check. The screens, the API, the MCP tools and a later in-app agent all use this door. The starters already work this way. The guides now state it as a rule, and every review checks new code against it. (Source: your decision, 28 Oct 2026)
+- Agent accounts stay for team agents, such as Gantry. A team agent acts as its own account, with its role, as today. An agent that a person signs in, such as an MCP client with a person's sign-in or a later in-app assistant, acts as that person, with that person's permissions. This replaces the rule from the MCP server story that an agent always acts as its own account. The guide and the agent's guide get the new text. (Source: your decision, 28 Oct 2026)
+- The change history keeps one more value from day one: the agent that acted for the person. The story that first lets a person sign an agent in fills this value. That story also shows the row as, for example, "Meera, via the assistant". Until then, no screen changes and the value stays empty. (Source: your decision, 28 Oct 2026; the screen text waits for that story, the planner's choice)
+- Every feature's create takes a retry key. It works from the screen, through the API in the `Idempotency-Key` header, and through the MCP create tools in `idempotency_key`, as today. When a request is sent again with the same key, the app makes no second item and gives back the first one. The new-item form keeps one key until its create succeeds, so a retry after a network failure is safe. An update that sets values takes no key. (Source: your decision, 28 Oct 2026)
+- One shared helper in each starter gives every create its retry key. It uses the table that the MCP create tools use today, so there is one mechanism, not two. (Source: your decision, 28 Oct 2026)
+- Every action with a side effect (send, pay, notify) that a story adds takes a retry key in the same way. The starters' invite and agent-account dialogs keep their current form. (Source: your decision, 28 Oct 2026; leaving those two admin dialogs as they are is the planner's choice)
+- Every report is a named, typed read in its feature's report service. Its results have plain names and carry their units, such as `revenueInr` or `durationSeconds`. A report starts as a live query. It moves to a summary table only when a measurement shows it is slow, as the database guide says, and its callers do not change. The starters have no report, so this is a rule in the guides. (Source: your decision, 28 Oct 2026)
+- The rules are on the standards page. Every worker brief and every review carries that page, so each review checks a change against the rules. The backend and Python guides give each starter's names. The starters' own tests check retry keys and the history value. The constitution lists the rules as built in, so nobody asks the FDE about them. (Source: your decision, 28 Oct 2026)
+- A feature that the feature command adds takes a retry key on create, as the projects feature does. (Source: your decision, 28 Oct 2026)
+- A new client repo gets all of this at `forge init`. An existing client repo gets the guide text with `forge sync` and keeps its app code. In an app made before this release, the feature command builds a new feature without retry keys or agent tools, and says so. (Source: your decision, 28 Oct 2026)
+
+Design: none (no new screen; the new-item form looks the same and sends a retry key)
 
 ## Why
 
-Much already ships, but change records name only the agent account, only MCP creates take a retry key, units are not stated, and the rules are spread across several guides. Three points conflict with shipped rules and need the owner's choice first: agents acting for a person, retry keys on every write, and reports always from summary tables.
+Much of this exists. The MCP tools call each feature's service and check its permission, and an MCP create takes a retry key. But a create from a screen or the API can make a second item when the request is sent again. The change history has no place for an agent that acts for a person. So a later in-app assistant would need a new column and a change to each service. No rule says where a report lives or how it names its units. The guides do not state these rules, so a new feature can drift from them.
 
 ## Done when
 
-1. **A new client app and an existing client app each show every rule in the conventions and database skill, each rule with a named check, and the FDE is never asked about them.**
+1. **In a new app from either starter, a create sent again with the same retry key makes one item and gives back the first one. This is true from the screen, the API and an agent tool. The new-item form keeps its key until the create succeeds. An update takes no key. An existing app's code does not change.**
+2. **In a new app from either starter, each change history row stores the agent that acted for the person when there is one. It stores nothing when there is none.**
+3. **A feature that the feature command adds takes a retry key on create, as the projects feature does. In an app made before this release, the command builds the feature without retry keys or agent tools and says so.**
+4. **The standards page, the backend and Python guides, the agent's guide and the worker brief state the four rules: one door, agents that act for a person, retry keys and reports. The constitution lists them as built in. A new repo gets this text at init. An existing repo gets it with forge sync, and its app code does not change.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request. The one new migration in each starter adds one empty column and changes no value.
 
-Risks: none
+Trade-off: when a request comes again with the same key and different input, the app gives back the first item. The app does not compare the input.
+
+Trade-off: the app keeps retry keys with no clean-up, as it keeps the MCP keys today.
+
+Trade-off: the retry-key table stays where it started, in the MCP part of the database, although every create now uses it. A move is a migration with no gain for the user.
+
+Trade-off: until a story lets a person sign an agent in, the new history value stays empty and no screen shows it.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Each new test file starts with `STORY = "FORGE-AGENTREADY-1"`. Tests run the forge command and never import forge. For app behaviour, they name the cases that the app's own run reports, through `live_run`, `live_python_starter` and `_require_cases`, as `tests/test_mcp.py` does. Live tests carry `@pytest.mark.platform` and `@pytest.mark.timeout(1800)`. `.github/workflows/starter-smoke.yml` lists and runs `tests/test_agent_ready.py` in both jobs, as it does `tests/test_mcp.py`. The existing-repo case uses `_adopted_files_after_sync` from `tests/test_mcp.py`. The older-starter case uses the adopted starter app as `tests/test_mcp.py::test_3` (`older starter`) does.
+
+### What exists (evidence)
+
+- One door. `ProjectsController` routes carry `@RequirePermission(PROJECT_PERMISSIONS.<action>)` (`starter/libs/core/server/src/common/permissions.ts`) and call `ProjectsService`. `callTool` in `starter/libs/core/server/src/common/tools.ts` checks `hasPermission` before each tool, and `defineFeatureTools` calls the same service. Python has `require_permission` in `app/core/permissions.py` and `call_tool` in `app/core/tools.py`. The code needs no change.
+- Retry keys. `McpController.createOnce` in `starter/libs/mcp/server/src/mcp.controller.ts` works over `mcp."IdempotencyKey"` (`starter/apps/api/prisma/schema/mcp.prisma`, unique `(accountId, tool, key)`). It is reached through `ToolContext.createOnce` and `ProjectsService.create(account, input, options?)` with `options.afterCreate`. Python has `_create_once` in `app/mcp/server.py` over `IdempotencyKey` in `app/mcp/models.py` (`mcp.idempotency_key`). `POST /api/v1/projects` takes no key in either starter.
+- History. `HistoryService.record(principal, action, summary, subject?, tx?)` writes `actorAccountId` and `actorEmail` from the principal (`starter/libs/history/server/src/history.service.ts`; Python `app/history/service.py`). It has no value for an agent that acts for a person.
+- Reports. Neither starter has a report. `src/forge/templates/skills/database/SKILL.md` "Dashboards and reports" holds the live-query-first rule, which stays.
+- Standards. `src/forge/standards.md` (APIs) says: "Payments, webhooks and retried actions accept an `Idempotency-Key`; the values are stored, so a replay is refused." The review checks every standards rule as a P1 `Standard: <rule>` (`src/forge/templates/review.md`, Standards block). So a rule on that page gets its review check with no new review text and no score floor.
+- The MCP story's rule text. `docs/guide.md` says "Agents use that account's permissions and write change history as that account." `src/forge/templates/skill.md` has two `- Built in: the API serves an MCP server at /mcp. ...` lines, one in each starter's constitution outline. The merged plan `plans/FORGE-MCP-1.md` stays as it is, because it is history.
+
+### Words this story pins
+
+RETRY pins each name. RETRYPY follows it.
+
+- **Retry key.**
+  - The REST header is `Idempotency-Key`. It is optional and 1 to 200 characters long. A bad key gets `400 VALIDATION_ERROR` with the field `Idempotency-Key`. MCP keeps `idempotency_key`.
+  - Key space: `(accountId, action, key)` in the existing table. The `tool` column holds the action name `<feature in snake form>_create` (`projects_create`), which is the same name the MCP create tool uses. So one account's REST create and MCP create with one key make one item. Add a comment on the column that says it holds the action name, and a `ponytail:` comment that the table keeps its `mcp` schema because a move is a migration with no gain.
+  - TypeScript: `libs/core/server/src/common/retry-keys.ts` exports `retryKeySchema = z.string().min(1).max(200)` and `@Injectable() class RetryKeys` with `once(account: AccountPrincipal, action: string, key: string, create: (afterCreate: (tx: Prisma.TransactionClient, id: string) => Promise<void>) => Promise<string>): Promise<string>`. Its body is `McpController.createOnce`, moved without change. The global `PrismaModule` provides and exports it, and `@app/core-server` exports both. `McpController` deletes `createOnce` and passes `(tool, key, create) => this.retryKeys.once(agent.principal, tool, key, create)` as `ToolContext.createOnce`.
+  - Python: `app/core/retry_keys.py` holds the `IdempotencyKey` model, moved from `app/mcp/models.py` with the same table, schema and constraints, so there is no migration. The model must move because `app.core` cannot import `app.mcp`. The file also holds `create_once(db, account, action, key, create)`, moved from `app/mcp/server.py::_create_once`. `app.core` exports both and `app.mcp` imports them. Delete `app/mcp/models.py` when it is empty. `tests/test_module_schemas.py` keeps `mcp.idempotency_key`.
+  - Projects create, TypeScript: `ProjectsController.create` reads the `idempotency-key` header, checks it with `retryKeySchema.optional()` through `ZodValidationPipe`, and documents it with `@ApiHeader({ name: 'Idempotency-Key', required: false, description: 'Send the same key to retry this create. A repeat gives back the first project and makes no second one.' })`. With a key, it returns `this.projects.get(account, await this.retryKeys.once(account, 'projects_create', key, async (afterCreate) => (await this.projects.create(account, input, { afterCreate })).id))`. With no key, it works as today. Both answer 201.
+  - Projects create, Python: `create_project` takes `idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key", min_length=1, max_length=200)] = None` and does the same through `create_once` and `ProjectService(db, after_create=...)`. Regenerate `starter-python/libs/shared/api-types` (both `openapi.json` and `api-types.ts`).
+  - Marks: put the new controller and route lines (the import, the injection, the header parameter, its documentation and the keyed branch) between `// forge:feature:retry-key:start` and `// forge:feature:retry-key:end` (`#` in Python). `_feature_mcp` in `src/forge/feature_api.py` and `src/forge/feature_python.py` treats `retry-key` as it treats `mcp`. In `src/forge/feature.py`, `include_mcp` also needs the helper file: `libs/core/server/src/common/retry-keys.ts`, or Python `apps/api/app/core/retry_keys.py`. Both no-MCP lines become `This app has no MCP server or retry keys, so {plural} get no agent tools, resources or retry keys.`
+  - Web: `useCreateProject` in `libs/projects/web/src/hooks/projects-hooks.ts` keeps one key in `useRef(crypto.randomUUID())`. It sends that key as `Idempotency-Key` on each create and makes a new key in `onSuccess`. The web copy needs no mark, because an API without the helper ignores the header. The feature command's web copy carries the hook as it is.
+- **The agent for a person.**
+  - TypeScript `AccountPrincipal` and `HistoryPrincipal` get `viaAgent?: string`, with the comment "The agent that acts for this person, such as `the assistant`. Unset when the person acts, or when a team agent acts as its own account." Python `AccountPrincipal` gets `via_agent: str | None = None` as its last field. Check for tuple unpacking of the principal.
+  - Database: `history."ChangeRecord"."viaAgent" text NULL` with a named length check of 1 to 200, as the database skill's text rule says. It comes in a new migration `<UTC yyyyMMddHHmmss>_via_agent`. Python: `history.change_record.via_agent`, in the next Alembic revision `<next>_via_agent.py`, chained to the head on main.
+  - `HistoryService.record` writes `viaAgent: principal.viaAgent ?? null` (Python `via_agent=account.via_agent`). No caller changes. No response, screen or CSV changes.
+  - Nothing in the starters sets this value yet. A later story's person sign-in for an agent builds the person's principal with `viaAgent` and calls `callTool` (Python `call_tool`) with it.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. Retry keys on create. RETRY does the TypeScript API and the web, RETRYPY does the Python API.
+   - TypeScript app case, in `apps/api/test/projects.e2e-spec.ts` outside the marks that the feature command fills: `a project create sent again with the same Idempotency-Key makes one project`.
+     - Two POSTs with one key both answer 201 with the same id, and the list total grows by one.
+     - A new key makes a second project.
+     - A key of 201 characters gets 400 `VALIDATION_ERROR` that names `Idempotency-Key`.
+     - A PUT that sends the header still updates.
+   - Python app case, in `tests/test_projects.py`: `test_a_project_create_sent_again_with_the_same_idempotency_key_makes_one_project`, with the same steps.
+   - Web unit case, in `libs/projects/web/src/hooks/projects-hooks.test.tsx`: `the create hook keeps one Idempotency-Key until a create succeeds`. A failed create and its retry send the same header. The next create after a success sends a new one.
+   - The existing MCP case `a retried project create with the same idempotency key makes one project` must keep passing through the moved helper.
+   - Test `tests/test_agent_ready.py::test_1_a_create_sent_again_with_its_retry_key_makes_one_item`, parameters `typescript` (RETRY), `python` (RETRYPY) and `earlier adopted` (RETRY).
+     - Live: the reports hold the API case and the MCP case, plus the web case for `typescript`.
+     - `earlier adopted`: after upgrade and sync, the files under `libs/` and `apps/` are unchanged, and the repo has no `retry-keys.ts` or `retry_keys.py`.
+2. The history value.
+   - TypeScript unit case, in `libs/history/server/src/history.service.test.ts` (new; `test:hooks` runs `libs/*/*/src/**/*.test.ts`): `history records the agent that acts for a person`. `record` with a principal that has `viaAgent: 'the assistant'` passes `viaAgent: 'the assistant'` to the given transaction client's `changeRecord.create`. A principal without it passes `null`.
+   - Python unit case, in `tests/test_history.py`: `test_history_records_the_agent_that_acts_for_a_person`. It uses `HistoryService` over a stub session that keeps what `add` gets, as `tests/test_tools.py` imports `app.core` without HTTP. No production seam is needed, because `record` already takes the caller's transaction or session.
+   - The column needs no extra test. Without the migration, every history write in the existing e2e cases fails, and the TypeScript typecheck fails without the Prisma field.
+   - Test `tests/test_agent_ready.py::test_2_history_keeps_the_agent_that_acts_for_a_person`, parameters `typescript`, `python` and `earlier adopted`.
+     - Live: the reports hold the unit case and the existing history cases.
+     - `earlier adopted`: after upgrade and sync, no new file is under `apps/api/prisma/migrations` or `apps/api/migrations/versions`.
+3. The feature command's copy.
+   - Test `tests/test_agent_ready.py::test_3_a_new_feature_takes_a_retry_key_on_create`, parameters `typescript` (RETRY), `python` (RETRYPY) and `older starter` (RETRY for TypeScript, RETRYPY adds the Python half).
+     - New starter app: `FEATURE_LINE` from `tests/test_mcp.py` exits 0. `libs/jobs/server/src/jobs.controller.ts` has `Idempotency-Key` and `'jobs_create'` and no `forge:feature:retry-key`. Python `apps/api/app/jobs/routes.py` has `Idempotency-Key` and `"jobs_create"`. `libs/jobs/web/src/hooks/jobs-hooks.ts` has `Idempotency-Key`.
+     - The feature live runs that `tests/test_feature_command.py` caches (`feature_live_run`, `feature_python_live_run`) build and pass with the copy.
+     - `older starter`: remove the core tools file, the retry-key helper and the MCP module from the starter app. The same line exits 0 and prints the new no-MCP line once. No written file has `retry-key`, `RetryKeys` or `retryKeys`.
+   - Change both asserts of the old no-MCP line in `tests/test_mcp.py::test_3` to the new line.
+4. The guides (GUIDE). The text is pinned below. Compare with whitespace collapsed.
+   - `src/forge/standards.md`, APIs section. Replace "Payments, webhooks and retried actions accept an `Idempotency-Key`; the values are stored, so a replay is refused." with these three bullets. The text "a replay is refused" stays, because `tests/test_standards.py` `CARRIED_OVER_RULES` pins it.
+     - "- Every create, and every action with a side effect (send, pay, notify), accepts an `Idempotency-Key`. A repeat with the same key from the same account makes no second record and gives back the first result. An update that sets values takes no key. A webhook stores the sender's event id, so a replay is refused."
+     - "- Screens, the API, agent tools and any later in-app agent use the same module service for each action, with the same permission check. No route, tool or job changes a module's data around its service."
+     - "- An agent account, for a team agent, acts as itself with its role. An agent that a person signs in acts as that person, with that person's permissions, and its principal names the agent, so the change history records both."
+   - `src/forge/standards.md`, Data section, add: "- A report is a named, typed read in its module's report service. Each result field has a plain name with its unit (`revenueInr`, `durationSeconds`). Start with a live query, and move it to a summary table only when the database skill's measure shows it slow, with no change for its callers."
+   - `src/forge/templates/conventions/backend.md`: add `## Ready for agents` after "Call a service or send an event", with three bullets.
+     - "Routes check their permission with `@RequirePermission`, and agents reach the same services through `callTool`, which checks the same permission. A later in-app agent calls `callTool` with the person's principal and `viaAgent` set, never a service directly."
+     - "In an app with `libs/core/server/src/common/retry-keys.ts`, a create or a send, pay or notify action reads the `Idempotency-Key` header with `retryKeySchema` and runs through `RetryKeys.once(account, '<feature>_<action>', key, ...)`, as `ProjectsController.create` does. The MCP tools use the same helper."
+     - "Put each report in `libs/<module>/server/src/<module>.reports.ts`, one method per report, with its result schema in the module's contracts package. Give agents a report with `defineTool` in the feature's tools file."
+   - `src/forge/templates/conventions/python.md`: the same section with `require_permission`, `call_tool`, `via_agent`, `app/core/retry_keys.py`, `create_once`, `app/<module>/reports.py` with Pydantic result models, and `define_tool`. Also change "Follow api.md's versioning and Idempotency-Key rules." to "Follow the standards page's versioning and Idempotency-Key rules."
+   - `src/forge/templates/conventions/api.md`, after the status-codes bullet: "A create sent again with the same `Idempotency-Key` answers 201 with the first item. Document the header with `@ApiHeader`."
+   - `src/forge/templates/skill.md`, after each of the two MCP Built in lines: "- Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service."
+   - `src/forge/templates/skill.md`, in Planning a story after the tools-file paragraph: "When a part adds a create or a send, pay or notify action, it says that the action takes a retry key. When it adds a report, it names the report, its result fields and their units. When it lets a person sign an agent in, the agent acts as that person, and the part names the agent's `viaAgent` text."
+   - `src/forge/templates/brief.md`, after the tools paragraph: "In an app with `libs/core/server/src/common/retry-keys.ts` (Python `app/core/retry_keys.py`), a create or a send, pay or notify action that you add takes the `Idempotency-Key` header through `RetryKeys.once` (Python `create_once`), as the projects create does. An update takes no key. Put a report in its module's report service, with named, typed results that carry their units. Never change a module's data around its service, from a route, a tool or a job."
+   - `docs/guide.md`: replace "Agents use that account's permissions and write change history as that account." with "An agent account acts as itself, with its role's permissions, and writes change history as that account. An agent that a person signs in acts as that person, and the change history records the person and the agent." Add one paragraph after it on retry keys and reports.
+   - `forge sync` rewrites `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/standards.md` and `.codex/skills/forge/standards.md`.
+   - Test `tests/test_agent_ready_guide.py::test_4_the_guides_state_the_agent_ready_rules`, parameters `new init` and `previous release`, with the setup of `tests/test_mcp_resources_guide.py::test_3`.
+     - Both synced skill copies have the new Built in line two times and the planning sentence.
+     - Both synced standards copies have the four standards bullets.
+     - The brief from `forge work` has the retry-key sentence.
+     - The conventions folder that the brief names has the `## Ready for agents` section in `backend.md` and in `python.md`.
+     - `previous release`: after `forge sync`, `git status --porcelain` lists only `LISTED` files.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+### New and existing repos
+
+- **New repos** (`forge init --starter`, `forge init --starter python`): the retry key on the projects create in the screen, the API and MCP; the `viaAgent` principal field and history column; a feature command that copies both; and the guide text. Plain `forge init` and a newly adopted app get the guide text only.
+- **Existing repos** (on upgrade, after `forge sync`): the standards, skill, brief and convention text. They get no app file and no migration. In an app made before this release, the feature command builds without retry keys or agent tools and prints the no-MCP line. Each item has a test on the adopted earlier-release fixture, and item 3 also on the older starter app.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
-share a function, field, file format or command, the first task pins it: it commits the shared
-names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
-to one task or a small last wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| RETRY | Retry keys and the history value in the TypeScript starter | The core `RetryKeys` helper moved from the MCP module, the `Idempotency-Key` header on the projects create, the create hook's key, the `viaAgent` field, column and record line, the feature command's marks and no-MCP line, and the app's own cases. | 1, 2, 3 | `src/forge/templates/starter/libs/core/server/src/common/retry-keys.ts` (new), `starter/libs/core/server/src/common/account-principal.ts`, `starter/libs/core/server/src/prisma/prisma.module.ts`, `starter/libs/core/server/src/index.ts`, `starter/libs/mcp/server/src/mcp.controller.ts`, `starter/libs/projects/server/src/projects.controller.ts`, `starter/libs/projects/web/src/hooks/projects-hooks.ts` and `projects-hooks.test.tsx`, `starter/libs/history/contracts/src/service.ts`, `starter/libs/history/server/src/history.service.ts` and `history.service.test.ts` (new), `starter/apps/api/prisma/schema/history.prisma`, `starter/apps/api/prisma/schema/mcp.prisma` (comments only), `starter/apps/api/prisma/migrations/<UTC>_via_agent/` (new), `starter/apps/api/test/projects.e2e-spec.ts` (the retry case), `src/forge/feature.py` (the TypeScript `include_mcp` and no-MCP lines), `src/forge/feature_api.py` (`_feature_mcp` names), `.github/workflows/starter-smoke.yml`, `tests/test_agent_ready.py` (new), `tests/test_mcp.py` (the TypeScript no-MCP assert) | `tests/test_agent_ready.py` (`test_1`, `test_2`, `test_3`: `typescript`, `earlier adopted`, `older starter`), `tests/test_mcp.py` (`test_3` assert) | | no | |
+| RETRYPY | Retry keys and the history value in the Python starter | The same in the Python starter: `app/core/retry_keys.py` with the moved model and `create_once`, the header on the projects create, `via_agent` on the principal and history, the Python copy's marks and no-MCP line, and the app's own cases. | 1, 2, 3 | `src/forge/templates/starter-python/apps/api/app/core/retry_keys.py` (new), `starter-python/apps/api/app/core/__init__.py`, `starter-python/apps/api/app/core/principal.py`, `starter-python/apps/api/app/mcp/__init__.py`, `starter-python/apps/api/app/mcp/server.py`, `starter-python/apps/api/app/mcp/models.py` (removed), `starter-python/apps/api/app/projects/routes.py`, `starter-python/apps/api/app/history/models.py`, `starter-python/apps/api/app/history/service.py`, `starter-python/apps/api/migrations/env.py` (only if the model import needs it), `starter-python/apps/api/migrations/versions/<next>_via_agent.py` (new), `starter-python/apps/api/tests/test_projects.py` (the retry case), `starter-python/apps/api/tests/test_history.py`, `starter-python/libs/shared/api-types/**` (regenerated), `src/forge/feature.py` (the Python `include_mcp` and no-MCP lines), `src/forge/feature_python.py` (`_feature_mcp` names), `tests/test_agent_ready.py`, `tests/test_mcp.py` (the Python no-MCP assert) | `tests/test_agent_ready.py` (`test_1`, `test_2`, `test_3`: `python`, `older starter` Python half), `tests/test_mcp.py` (`test_3` assert) | RETRY, FORGE-MCPRES-1/RESPY | no | |
+| GUIDE | The guides state the agent-ready rules | The standards bullets, the `## Ready for agents` sections in the backend and Python guides, the api guide line, the Built in and planning lines in the agent's guide, the brief sentence, the changed MCP text in the guide and the synced copies, on new and existing repos. | 4 | `src/forge/standards.md`, `src/forge/templates/conventions/backend.md`, `src/forge/templates/conventions/python.md`, `src/forge/templates/conventions/api.md`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `docs/guide.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `.claude/skills/forge/standards.md`, `.codex/skills/forge/standards.md` (rewritten by `forge sync`), `tests/test_agent_ready_guide.py` (new) | `tests/test_agent_ready_guide.py::test_4` (new) | | no | |
 
-New moving parts: none
+GUIDE shares no file with the other two parts and needs no code from them, so it can start now. RETRYPY waits for RETRY because they share `tests/test_agent_ready.py`, `tests/test_mcp.py` and `src/forge/feature.py`, and because RETRY pins the names.
+
+New moving parts: none. The retry keys reuse the MCP idempotency table (item 1). The history gets one nullable column (item 2).
 
 ## Notes
+
+- **Order with other work.**
+  - FORGE-MCPRES-1/RESPY is open, and RETRYPY changes the same `app/mcp/server.py`, so RETRYPY waits for it.
+  - FORGE-DATABASE-1/KINDS changes `src/forge/feature.py` on other lines. That is a merge, not a code dependency.
+  - Migrations: the part that merges later gives its Prisma folder a later timestamp and chains its Alembic revision to the head on main.
+  - This story ships in the same release as FORGE-MCP-1's tools parts, which are not released yet (v1.2.23 has agent accounts only). The `include_mcp` check covers the case where a release comes in between.
+- **Scores (F x H >= 2 x C).**
+  - One door as a standards rule: 2 x 3 = 6 >= 2. Kept.
+  - Agents acting for a person, as rule text: 1 x 3 = 3 >= 2. Kept.
+  - History value, stored and written only: 1 x 2 = 2 >= 2. Kept. A screen and CSV display now: 2 < 4, so it moves to the story that first sets the value.
+  - Retry keys on screen and API creates, with the helper moved and the feature copy, in each starter: 2 x 2 = 4 >= 4. Kept.
+  - Retry keys on the starters' invite and add-agent dialogs: 1 x 1 = 1 < 4. Cut.
+  - Reports as a standards rule: 2 x 2 = 4 >= 2. Kept. An example report in the starters: cut.
+  - Moving the key table to the core schema: cut.
+  - A new review paragraph or score floor: not needed, because the standards block already gives a P1 `Standard:` check.
+- **Owner decisions (28 Oct 2026, settled).** These are the six decisions in the brief: one door; agent accounts for team agents and person-signed-in agents acting as the person, with one history column; retry keys on every create and side-effect action through one helper that reuses the MCP table, and no key on updates; reports as named typed reads, live first; rules stated once with their cheapest check; new repos get everything at init, and existing repos get the guide text and the starter changes only for new modules.
+- **Planner choices the owner did not make.**
+  1. The rules live on the standards page, which every brief and review carries. The conventions give only each stack's names.
+  2. Permission checks stay at the edges (`@RequirePermission`, `callTool`), not in each service method. A later in-app agent calls `callTool`.
+  3. The REST and MCP creates share one key space through the action name `<feature>_create`.
+  4. The table keeps its `mcp` schema, and the Python model moves into `app.core`.
+  5. The web hook keeps one key until a create succeeds.
+  6. The history value is stored but not shown until a story sets it.
+  7. The starters' invite and add-agent dialogs keep their current form.
+  8. A key reused with different input gets the first item back.
+  9. An app made before this release gets one combined no-MCP line.
+- No client repo is named in this story's code, tests, texts or commits.
