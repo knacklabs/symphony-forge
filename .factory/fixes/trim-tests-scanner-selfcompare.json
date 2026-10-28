@@ -4,12 +4,20 @@
   "done_when": "The scanner case and its support, and the sync expected-value program, are removed; the executable refusal triggers and the independent shipped-byte checks stay",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T17:17:27.196849+00:00",
       "step": "start"
     }
   ],
-  "why": "Remove the refusal source scanner and the sync self-comparison that prove no behaviour (audit batches 9 and 10)"
+  "stuck": {
+    "close": null,
+    "head": "6bd9e70e39ca3fee7ff823ba332c87d69c5b51fd",
+    "keys": {},
+    "round": null
+  },
+  "why": "Remove the refusal source scanner and the sync self-comparison that prove no behaviour (audit batches 9 and 10)",
+  "worker": "codex"
 }
