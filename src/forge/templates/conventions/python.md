@@ -74,6 +74,17 @@ allowed_importers = ["app.projects"]
 broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
 ```
 
+## Ready for agents
+
+- Routes check their permission with `require_permission`, and agents reach the same services
+  through `call_tool`, which checks the same permission. A later in-app agent calls `call_tool`
+  with the person's principal and `via_agent` set, never a service directly.
+- In an app with `app/core/retry_keys.py`, a create or a send, pay or notify action reads the
+  `Idempotency-Key` header and runs through `create_once`, as the projects create does.
+  The MCP tools use the same helper.
+- Put each report in `app/<module>/reports.py`, one method per report, with Pydantic result
+  models. Give agents a report with `define_tool` in the feature's tools file.
+
 ## Config
 
 Only `app/core/config.py` reads environment variables. Validate `DATABASE_URL`, `APP_ENV`,
@@ -181,7 +192,7 @@ account's record; 409 conflict; 429 rate limit; 500 our fault. GET never changes
 PUT replaces a resource; PATCH changes part. Use plain query filters and `?search=`.
 Lists accept page from 1, limit 20 by default and at most 100, sortBy from an allowed column list,
 and sortOrder asc or desc. Return `data.items` and `data.pagination` with page, limit,
-totalItems and totalPages. Follow api.md's versioning and Idempotency-Key rules.
+totalItems and totalPages. Follow the standards page's versioning and Idempotency-Key rules.
 
 After an API change, run `pnpm run api-types`. Commit both `libs/shared/api-types/openapi.json` and
 `libs/shared/api-types/src/api-types.ts`; module contract libraries import these generated types

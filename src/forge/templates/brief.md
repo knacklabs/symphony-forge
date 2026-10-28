@@ -423,6 +423,12 @@ default tool only with `hide`. Never call a feature's service from the MCP modul
 contract case `every tool has a description, annotations, schemas and the error shape`
 must pass.
 
+In an app with `libs/core/server/src/common/retry-keys.ts` (Python `app/core/retry_keys.py`),
+a create or a send, pay or notify action that you add takes the `Idempotency-Key` header
+through `RetryKeys.once` (Python `create_once`), as the projects create does. An update takes
+no key. Put a report in its module's report service, with named, typed results that carry
+their units. Never change a module's data around its service, from a route, a tool or a job.
+
 A feature's resources come from `defineFeatureTools`; add none by hand. Add a prompt with
 `definePrompt` only when your part names it, with a strict `arguments` schema and one
 permission. Never send an elicitation or a sampling request.
