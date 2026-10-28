@@ -21,3 +21,5 @@ export { PrismaModule } from './prisma/prisma.module';
 export { PrismaService } from './prisma/prisma.service';
 export { defineTool, defineFeatureTools, listTools, callTool, ToolError, toolFailure, type ToolContext } from './common/tools';
 export { ErrorReporter } from './common/error-report';
+export { listResources, listResourceTemplates, readResource } from './common/resources';
+export { definePrompt, listPrompts, getPrompt } from './common/prompts';

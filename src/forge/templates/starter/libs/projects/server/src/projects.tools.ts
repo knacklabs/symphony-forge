@@ -10,6 +10,9 @@ import { PROJECT_PERMISSIONS } from './projects.permissions';
 @Injectable()
 export class ProjectsTools {
   constructor(projects: ProjectsService, moduleRef: ModuleRef) {
+    // Resources come from these schemas. Add a definePrompt here only for a repeated project
+    // task in the constitution's Agent tasks section, with strict arguments and one permission.
+    // Never send elicitation or sampling requests.
     defineFeatureTools({
       feature: 'projects', one: 'project', permissions: PROJECT_PERMISSIONS,
       api: PROJECTS_API,
