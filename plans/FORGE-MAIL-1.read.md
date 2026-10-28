@@ -87,7 +87,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Gate. [Plan:16](plans/FORGE-MAIL-1.md:16) claims the small-existing-screen exception, but line 98 adds `/verify-email` and replaces immediate signup navigation with an email-confirmation flow. The current route table at `starter/apps/web/src/app.tsx:66-81` has no verification screen. The cold-read rule explicitly requires design for this scope.
    Case: normal use - every new public signup follows the new screen and flow.
    Gain 4, Work 2, Harm 3
-   Disposition: accept - owner decision 28 Oct 2026: starter screens take each client app's design; no Forge design
+   Disposition: keep - owner decision 28 Oct 2026: starter screens take each client app's design; no Forge design
 
 9. Blocking: Split: VERIFY → verification support; coordinated activation.
    Raise: Plan gap. [Plan:170](plans/FORGE-MAIL-1.md:170) puts both APIs’ token and session changes, two migrations, mail changes, a new page, shared auth hooks, dozens of test-call changes and feature-generation compatibility into one task. Its Scope plainly exceeds the approximately 400-line task limit. Shared web requires coordinated activation, but does not require dormant token support and migrations to ship in that same task.
