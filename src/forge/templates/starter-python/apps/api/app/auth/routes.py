@@ -2,7 +2,7 @@ import hashlib
 from datetime import UTC, datetime
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Header, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
@@ -193,8 +193,14 @@ def invite(
     input_data: ForgotPasswordInput,
     account: Annotated[AccountPrincipal, Depends(admin_only)],
     db: Annotated[DbSession, Depends(get_db)],
+    idempotency_key: Annotated[
+        str | None,
+        Header(alias="Idempotency-Key", min_length=1, max_length=200),
+    ] = None,
 ) -> SuccessEnvelope[MessageResponse]:
-    return SuccessEnvelope(data=_service(request, db).invite(input_data.email, account))
+    return SuccessEnvelope(
+        data=_service(request, db).invite(input_data.email, account, idempotency_key)
+    )
 
 
 @agents_router.post(
