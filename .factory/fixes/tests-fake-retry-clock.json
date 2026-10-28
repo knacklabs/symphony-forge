@@ -1,0 +1,15 @@
+{
+  "base": "7d626406f2579d3d001312612968f9f701b2e2ec",
+  "branch": "fix/tests-fake-retry-clock",
+  "done_when": "The retry and queue tests named in the profiling report use a shared fake clock, keep their retry, deadline and write-once assertions, and one case still uses the real backoff",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T20:34:26.483050+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Tests wait out real retry and queue backoffs (one close test spends 28 s in sleeps)"
+}
