@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 3,
       "line": 473,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -27,7 +27,7 @@
       "gain": 4,
       "harm": 3,
       "line": 125,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -40,7 +40,7 @@
       "gain": 4,
       "harm": 3,
       "line": 150,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,48 +51,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e6e5c0259bd9f6450efe2d0d02437177883657eae7b26425ac1e61331163540f",
-    "changed": "a5a54c9514b4657aaad46afbcefd6879367769c3be1bd8a2fce4fb698a5bf631",
-    "commit": "72d5df0d0f5dd7cded4de89bb25e527878755a5b",
+    "branch_diff": "7421fde52ec1694fbc13ba61e0d0b4a9069b4e60dfeded0d164f916578055da1",
+    "changed": "03e830c8901480f8fa80c7ab913b5b1f432bd5a01b5919f83696cde181b2d238",
+    "commit": "4091c22b5aac432a760cab1a53b0c72823c0d674",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a client runs Jest or Vitest with an explicit worker count. The command receives its allocated budget here, but fasttest.node_worker_budget() preserves explicit --maxWorkers values unchanged (src/forge/fasttest.py:81\u201383). On eight cores, two worker sessions can each reserve two processes while each launches four workers, exceeding the shared four-process budget. Package scripts have the same gap. Admission must account for or enforce the actual runner allocation; setting FORGE_TEST_CPUS alone does not constrain these commands.",
-        "file": "src/forge/review.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 473,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: All concurrent test runs on the machine share one budget of test processes.",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - running the repository's full test suite. tests/test_rules.py:49\u201353 rejects duplicate (STORY, criterion number) keys. This new function duplicates criterion 4 in test_machine_shared_test_budget.py. Both capacity functions also use criterion 2 with STORY=\"FIX-TWO-TEST-SLOTS\", colliding with each other and the existing pane test. Consequently test_4_one_test_per_rule deterministically fails. Consolidate the cases under their owning tests while retaining their behavioral coverage.",
-        "file": "tests/test_machine_shared_test_budget.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 125,
-        "priority": "P1",
-        "title": "Gate: preserve unique test criterion keys",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - running the existing lane and upgrade tests. This assertion still requires a test-lane size of 1 on the six-core fixture, but test_slots() now returns 3. Two sibling assertions also retain the old doctor output: tests/test_lanes_upgrade.py:69 and tests/test_upgrade_doctor.py:85. The former is executed through test_lanes_tests.py's upgrade case. These tests deterministically fail under the new behavior; update all three expectations to the shared-process contract.",
-        "file": "tests/test_lanes_view.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 150,
-        "priority": "P1",
-        "title": "Gate: update remaining assertions for the process-budget contract",
-        "work": 2
-      }
-    ],
-    "id": "b92648f4-f754-4bc7-bb99-a9cef8f936a9",
-    "status": "blocked"
+    "findings": [],
+    "id": "ab410ec0-288c-459e-8373-a0c54b323d36",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T02:23:54.752767+00:00",
@@ -100,6 +68,10 @@
     },
     {
       "at": "2026-10-28T02:51:57.703064+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T02:59:20.062480+00:00",
       "step": "review"
     }
   ],
