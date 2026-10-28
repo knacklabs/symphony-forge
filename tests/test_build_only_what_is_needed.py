@@ -67,6 +67,17 @@ def test_1_plans_name_a_source_or_a_need_for_each_item(client):
 def test_2_additions_that_nothing_needs_get_a_not_needed_note(client):
     env, adopted = client
     repo = env.repo
+    if not adopted:
+        # Seed the approved story before sync installs the shared git hooks;
+        # the approval fixture writes its sign-off and roadmap on main.
+        source = "Shoppers can save a basket and come back to it. (Source: the owner's request, 27 Oct)"
+        doc = STORY_DOC.replace("Shoppers can save a basket and come back to it.", source)
+        assert source in doc
+        item, _ = env.start_approved_task(doc)
+        closed = env.close(item)
+        assert closed.returncode == 0, closed.stdout + closed.stderr
+        assert "## What changes for you" in env.prompt()
+        assert source in env.prompt()
     item, where = env.start_fix()
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
@@ -95,15 +106,6 @@ def test_2_additions_that_nothing_needs_get_a_not_needed_note(client):
                        "Deleting beats fixing", "say that it is large and why",
                        "A smaller addition is advice", "never against the canvas"):
             assert phrase in prompt, phrase
-    if not adopted:
-        source = "Shoppers can save a basket and come back to it. (Source: the owner's request, 27 Oct)"
-        doc = STORY_DOC.replace("Shoppers can save a basket and come back to it.", source)
-        assert source in doc
-        item, _ = env.start_approved_task(doc)
-        closed = env.close(item)
-        assert closed.returncode == 0, closed.stdout + closed.stderr
-        assert "## What changes for you" in env.prompt()
-        assert source in env.prompt()
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new init", "previous release"])
