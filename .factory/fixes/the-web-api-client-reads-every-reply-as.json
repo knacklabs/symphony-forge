@@ -1,0 +1,15 @@
+{
+  "base": "72d72e85d521ffeef89c21a70d9efc49de6f4fa3",
+  "branch": "fix/the-web-api-client-reads-every-reply-as",
+  "done_when": "A non-JSON reply, such as a proxy error page, raises the client's normal request error with the HTTP status instead of a parse error.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T10:55:16.063868+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The web API client reads every reply as JSON before it checks the status, so a proxy error page throws a raw parse error instead of the client's normal request error, and the HTTP status is lost."
+}
