@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiBaseUrl, credentials, csrfToken, logEvents, productionApiBaseUrl } from './helpers';
+import { apiBaseUrl, credentials, csrfToken, logEvents, productionApiBaseUrl, type LogEvent } from './helpers';
 
 function latestResetToken(service: 'api' | 'production-api'): string {
   const event = logEvents(service).reverse().find(({ context }) => typeof context?.resetUrl === 'string');
@@ -12,7 +12,116 @@ function latestResetToken(service: 'api' | 'production-api'): string {
   return token;
 }
 
+function apiRequestLog(correlationId: string): LogEvent {
+  const matches = logEvents('api').filter(
+    (event) => event.message === 'API request' && event.correlationId === correlationId,
+  );
+  expect(matches).toHaveLength(1);
+  const [event] = matches;
+  if (!event) throw new Error('The API did not write one request log line.');
+  return event;
+}
+
 describe('starter API', () => {
+  // Test audit:
+  // 1. Protects the observable API request line, safe route fields and excluded health/web paths.
+  // 2. Fails if a request is omitted or duplicated, a real path or query is logged, or exclusions log a line.
+  // 3. Existing tests cover API responses, not request logs or their path filtering.
+  // 4. Uses the running API and needs no production test seam.
+  it('each API request writes one log line without its query string', async () => {
+    const searchWord = `project-search-${randomUUID()}`;
+    const missingWord = `missing-route-${randomUUID()}`;
+    const successSearchWord = `account-search-${randomUUID()}`;
+    const unauthorizedCorrelationId = randomUUID();
+    const projectCorrelationId = randomUUID();
+    const missingCorrelationId = randomUUID();
+    const successCorrelationId = randomUUID();
+    const preflightCorrelationId = randomUUID();
+    const healthCorrelationId = randomUUID();
+    const webCorrelationId = randomUUID();
+
+    await request(apiBaseUrl)
+      .get(`/api/v1/projects?search=${encodeURIComponent(searchWord)}`)
+      .set('x-correlation-id', unauthorizedCorrelationId)
+      .expect(401);
+    const unauthorizedLog = apiRequestLog(unauthorizedCorrelationId);
+    expect(unauthorizedLog).toMatchObject({
+      message: 'API request',
+      level: 'info',
+      correlationId: unauthorizedCorrelationId,
+    });
+    expect(unauthorizedLog.context).toEqual({
+      method: 'GET',
+      route: '/api/v1/projects',
+      status: 401,
+      durationMs: expect.any(Number),
+    });
+    expect(Number.isInteger(unauthorizedLog.context?.durationMs)).toBe(true);
+    expect(Number(unauthorizedLog.context?.durationMs)).toBeGreaterThanOrEqual(0);
+
+    await request(apiBaseUrl)
+      .get(`/api/v1/projects/${randomUUID()}`)
+      .set('x-correlation-id', projectCorrelationId)
+      .expect(401);
+    expect(apiRequestLog(projectCorrelationId).context).toMatchObject({
+      method: 'GET',
+      route: '/api/v1/projects/:id',
+      status: 401,
+    });
+
+    await request(apiBaseUrl)
+      .get(`/api/v1/${missingWord}`)
+      .set('x-correlation-id', missingCorrelationId)
+      .expect(404);
+    expect(apiRequestLog(missingCorrelationId).context).toMatchObject({
+      method: 'GET',
+      route: null,
+      status: 404,
+    });
+
+    const client = request.agent(apiBaseUrl);
+    await client.post('/api/v1/auth/sign-up').send(credentials()).expect(201);
+    await client
+      .get(`/api/v1/auth/me?search=${encodeURIComponent(successSearchWord)}`)
+      .set('x-correlation-id', successCorrelationId)
+      .expect(200);
+    expect(apiRequestLog(successCorrelationId).context).toMatchObject({
+      method: 'GET',
+      route: '/api/v1/auth/me',
+      status: 200,
+    });
+
+    await request(apiBaseUrl)
+      .options('/api/v1/projects')
+      .set('Origin', new URL(apiBaseUrl).origin)
+      .set('Access-Control-Request-Method', 'POST')
+      .set('x-correlation-id', preflightCorrelationId)
+      .expect(204);
+    expect(apiRequestLog(preflightCorrelationId).context).toMatchObject({
+      method: 'OPTIONS',
+      route: null,
+      status: 204,
+    });
+
+    await request(apiBaseUrl)
+      .get('/health')
+      .set('x-correlation-id', healthCorrelationId)
+      .expect(200);
+    await request(apiBaseUrl)
+      .get('/')
+      .set('Accept', 'text/html')
+      .set('x-correlation-id', webCorrelationId)
+      .expect(200);
+    expect(logEvents('api').filter((event) =>
+      event.correlationId === healthCorrelationId || event.correlationId === webCorrelationId,
+    )).toEqual([]);
+
+    const logs = execFileSync('docker', ['compose', '-f', 'compose.test.yml', 'logs', '--no-color', 'api'], { encoding: 'utf8' });
+    for (const word of [searchWord, missingWord, successSearchWord]) {
+      expect(logs).not.toContain(word);
+    }
+  });
+
   // Audit: inspect the real container user, which a compose override can change even
   // with a non-root Dockerfile. The template check cannot reach that runtime contract.
   // A root-user regression fails here without a production seam or a fake process.
