@@ -31,6 +31,7 @@ marker.with_suffix(".tmp").replace(marker)
 '''
 
 
+@pytest.mark.platform
 def test_4_a_crashed_overlap_worker_reports_and_stops_its_registered_children(tmp_path):
     child_pid = tmp_path / "child-pid"
     crashy = tmp_path / "test_crashy.py"
@@ -113,9 +114,10 @@ with socket.create_connection({address!r}) as connection:
         env.commit(repo.path, "client-tests.py", suite)
         config = (repo.path / "forge.toml").read_text("utf-8")
         config = "\n".join(line for line in config.splitlines()
-            if line.partition("=")[0].strip() not in ("test", "fast_test"))
+            if line.partition("=")[0].strip() not in ("test", "fast_test", "test_place"))
         command = f'"{Path(sys.executable).as_posix()}" client-tests.py'
-        env.commit(repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config + "\n")
+        env.commit(repo.path, "forge.toml", 'test_place = "local"\n'
+                   + "test = " + json.dumps(command) + "\n" + config + "\n")
         repo.git("push", "-q", "origin", "main")
         helper = Path(os.environ["AUTOREVIEW"])
         helper.write_text(helper.read_text("utf-8").replace(
@@ -181,8 +183,10 @@ with socket.create_connection({address!r}) as connection:
                 left = _end_left(env.tmp)
                 assert not left, f"Close left processes running: {left}"
         assert roles == {b"tests", b"review"}, f"Started: {roles!r}\n" + output + errors
-    assert process.returncode == (1 if red or priority else 0), output + errors
-    assert ("Ready:" in output) == (not red and not priority)
+    # Both P1 and P0 hold the fix; a P1 reaches the owner review stop.
+    blocked_review = priority in ("P1", "P0")
+    assert process.returncode == (1 if red or blocked_review else 0), output + errors
+    assert ("Ready:" in output) == (not red and not blocked_review)
     assert ("client test failed" if red else "client tests passed") in output + errors
     if priority:
         assert "Greeting loses the basket" in output + errors
@@ -191,11 +195,11 @@ with socket.create_connection({address!r}) as connection:
         # Failed output is durable for the next worker even when review also blocked.
         assert "client test failed" in (where / f".factory/fixes/{item}.json").read_text("utf-8")
     # Red tests or a serious finding turn the pull request back to a draft, and forge-pr-check refuses it.
-    assert any("--undo" in call for call in env.gh_calls("pr", "ready")) == bool(red or priority)
+    assert any("--undo" in call for call in env.gh_calls("pr", "ready")) == bool(red or blocked_review)
     checked = repo.forge("hook", "pr-check", "--base", repo.git("rev-parse", "HEAD"), "--head",
                          repo.git("rev-parse", "HEAD", cwd=where), "--branch",
                          repo.git("branch", "--show-current", cwd=where))
-    assert (checked.returncode == 0) == (not red and not priority), checked.stdout + checked.stderr
+    assert (checked.returncode == 0) == (not red and not blocked_review), checked.stdout + checked.stderr
     if red and not priority:
         assert "local tests that failed" in checked.stderr
     for host in (".claude", ".codex"):
@@ -208,9 +212,10 @@ def test_2_accepting_findings_still_refuses_failed_tests(env):
 
     command = f'"{Path(sys.executable).as_posix()}" verify.py'
     env.commit(env.repo.path, "verify.py", "from pathlib import Path\n"
-               "assert Path('app.py').read_text() != 'print(3)\\n', 'client test failed'\n")
+               "assert Path('app.py').read_text() != 'print(2)\\n', 'client test failed'\n")
     config = (env.repo.path / "forge.toml").read_text("utf-8")
-    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n'
+               + "test = " + json.dumps(command) + "\n" + config)
     env.repo.git("push", "-q", "origin", "main")
     item, where = _stop_with_remaining_findings(env)
     before = len(env.review_calls())
@@ -236,7 +241,8 @@ def test_3_failed_review_keeps_failed_tests_for_the_next_worker(land):
                "capture_output=True, text=True)\n"
                "assert actual.stdout == 'hello\\n', 'client greeting missing'\n")
     config = (env.repo.path / "forge.toml").read_text("utf-8")
-    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n'
+               + "test = " + json.dumps(command) + "\n" + config)
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix({"app.py": "print('goodbye')\n"})
     env.reviews(FAILED)
@@ -260,14 +266,15 @@ def test_5_tests_passing_later_keep_a_blocked_review_blocked(env):
     marker = env.tmp / "tests-pass"
     command = f'"{Path(sys.executable).as_posix()}" -c "import pathlib, sys; sys.exit(not pathlib.Path({str(marker)!r}).exists())"'
     config = (env.repo.path / "forge.toml").read_text("utf-8")
-    env.commit(env.repo.path, "forge.toml", "test = " + json.dumps(command) + "\n" + config)
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n'
+               + "test = " + json.dumps(command) + "\n" + config)
     env.repo.git("push", "-q", "origin", "main")
     env.checks(GREEN)
     env.reviews(blocked(finding("P1", "Greeting loses the basket")))
-    item, where = env.start_fix()
+    item, where = env.start_task()
     assert env.close(item).returncode == 1
     marker.write_text("", "utf-8")  # the same tests pass on the next close, with no branch change
     again = env.close(item)
     assert again.returncode == 1 and "Greeting loses the basket" in again.stdout + again.stderr
-    state = json.loads((where / f".factory/fixes/{item}.json").read_text("utf-8"))
+    state = json.loads((where / ".factory/stories/SHOP/tasks/T1.json").read_text("utf-8"))
     assert state["status"] == "fixing"

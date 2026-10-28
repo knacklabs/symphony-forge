@@ -17,6 +17,8 @@ from test_codex_worker import ROOT, _toml
 from test_codex_worker import sdk_data  # noqa: F401
 from test_story import DOC, new_story, setup
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-MERGE-1"
 
 

@@ -1,0 +1,83 @@
+{
+  "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
+  "branch": "task/FORGE-FEATURE-1-ACCESS",
+  "known": [
+    {
+      "area": "test_3_each_feature_checks_its_permissions() in tests/test_feature_access.py",
+      "file": "tests/test_feature_access.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 75,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: earlier-adopted permissions survive sync",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx",
+      "file": "src/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 150,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: UI check",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter-python/apps/api/app/projects/models.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/projects/models.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 79,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Module tables: projects query the deleting account directly",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9ed512293a92ee961b7c2dae6def443514877147104f8694301d89f8d7894a60",
+    "changed": "93d9ce8faba33ad42db757054f981762b2432613c83aa8a12312ea2b64266c53",
+    "commit": "af98594aea9df58eb8071d86a8dc7f6d1a8554b0",
+    "dismissals": [],
+    "findings": [],
+    "id": "ea875568-fd13-4097-89f9-807f238f9384",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T14:14:00.630030+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T14:48:45.524541+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T16:40:29.837343+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "5d89b2f0-0c8e-4682-b5ca-b3f03adc69db",
+    "head": "db1e807c393f9b68c0ccdae28349d320f7c1865d",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

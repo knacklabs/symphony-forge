@@ -1,0 +1,49 @@
+{
+  "base": "8cf1abddd9cd3c6d6e3fab022c386202eef3aa10",
+  "branch": "fix/with-groups-above-1-and-a-non-pytest-tes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a173b1-eea7-74e1-801d-1ed7c7116483",
+    "head": null,
+    "start": "5540b0bc866d82ec54913ae671c1ebb0e18b913d"
+  },
+  "done_when": "With groups above 1 and such a command, forge doctor and the generated CI workflow each show one warning line, and neither refuses.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "78b3bbb9fe60ea98460ce70b129d95784241d23166bf10f7a674fa94c3bc7ebe",
+    "changed": "7ca6381b31b6864082a4e85e1e12ce1320a6e6476018fc91673c041780a79fbe",
+    "commit": "6962db1bb28311cf24b9386af720ad27954f773d",
+    "dismissals": [],
+    "findings": [],
+    "id": "2814c05e-1418-4f76-bc5a-538307ae1bf6",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T15:33:06.585213+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T15:38:03.862822+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T16:05:31.833833+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2b329099-5cdd-47b9-a9f7-fcff5d6d18d4",
+    "head": "5e411d01c8bd2d49ea9c507cb48367a92be3beda",
+    "keys": {},
+    "round": 1
+  },
+  "why": "With groups above 1 and a non-pytest test command that has no group placeholder, every CI group runs the whole suite, so the extra groups cost runner time with no speedup and nothing tells the client.",
+  "worker": "codex"
+}

@@ -30,7 +30,7 @@ def _with_test_command(env) -> Path:
     log, script = env.tmp / "runs.log", env.tmp / "suite.py"
     script.write_text(SUITE.format(log=str(log)), "utf-8")
     toml = env.repo.path / "forge.toml"
-    env.commit(env.repo.path, "forge.toml", toml.read_text("utf-8")
+    env.commit(env.repo.path, "forge.toml", 'test_place = "local"\n' + toml.read_text("utf-8")
                + f"test = {f'{sys.executable} {script}'!r}\n".replace("'", '"')
                + "fast_test = " + json.dumps(f"{sys.executable} {script}") + "\n")
     env.repo.git("push", "-q", "origin", "main")
@@ -108,7 +108,7 @@ def test_3_land_reviews_each_changed_round_and_fixes_failing_tests(land):
     env.reviews(CLEAN)
     done = _land(env)
     assert done.returncode == 0, done.stdout + done.stderr
-    assert _steps(done) == [f"Closing {ITEM}.", "Fix round 1 of 3: the worker fixes the failing tests.",
+    assert _steps(done) == [f"Closing {ITEM}.", "Fix round 1 of 1: the worker fixes the failing tests.",
                             f"Closing {ITEM}.", f"Merging {ITEM}."]
     assert log.read_text("utf-8").splitlines() == ["run", "run"]
     # Both rounds review their own changed head, rather than waiting for passing tests.

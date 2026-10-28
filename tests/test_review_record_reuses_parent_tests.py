@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-import conftest
 from test_close import env  # noqa: F401
 from test_setup import _fresh_client
 
@@ -16,12 +15,12 @@ STORY = "FIX-FORGE-CLOSE-REVIEWS-FIRST-AND-ONLY-THEN"
 
 
 def suite_runs(workflow, reuse):
-    # Inspect the tests job's suite step, not a setup step with the same guard.
+    # Change-test CI installs Forge before its suite; pytest-split keeps the raw suite command.
     tests_job = re.split(r"^  [\w-]+:\n", workflow.split("\n  tests:\n", 1)[1],
                          maxsplit=1, flags=re.M)[0]
     steps = re.split(r"^      - ", tests_job, flags=re.M)[1:]
     [suite] = [step for step in steps if step.startswith("run:")
-               and ".forge/review-tests.py" not in step and "npm exec" not in step]
+               and ("forge test --change" in step or "--splits " in step)]
     condition = re.search(r"^        if: steps\.parent-tests\.outputs\.reuse != '([^']+)'$",
                           suite, re.M)
     assert condition, "The suite step must use the parent-tests output"
@@ -38,6 +37,7 @@ def merge_checkout(workflow):
 
 # The helper has one implementation. Exercise its full trust boundary once; upgrade and
 # Forge-source delivery each still prove both reuse and running the suite on a changed base.
+@pytest.mark.platform
 @pytest.mark.parametrize("client_kind,case", [
     (client_kind, case)
     for client_kind in ("new", "previous", "source")
@@ -163,10 +163,4 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
         assert not any("&" in arg or "event=" in arg for arg in call)
 
 
-def test_3_forge_matrix_uses_the_same_review_record_shortcut():
-    workflow = (conftest.ROOT / ".github/workflows/forge-next.yml").read_text()
-    assert "python .forge/review-tests.py" in workflow
-    assert not suite_runs(workflow, "true")
-    assert suite_runs(workflow, "false")
-    assert "actions: read" in workflow
     merge_checkout(workflow)

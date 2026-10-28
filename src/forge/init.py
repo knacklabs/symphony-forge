@@ -16,7 +16,11 @@ COMMANDS = [{
     # False: init checks the pin itself, after adoption lists a forge.toml Forge didn't write.
     "words": "init", "run": "init", "changes_state": False,
     "help": "Set up a new repo: forge.toml, the docs skeleton, the first commit, then sync",
-    "args": [(("--test",), {"help": "a repo with history: the test command CI runs"}),
+    "args": [(("--starter",), {"nargs": "?", "const": "react", "choices": ["react", "python"],
+                                 "help": "start a new app from a starter: react (the default) or python (a FastAPI backend)"}),
+             (("--actions",), {"choices": ["yes", "no"],
+                               "help": "whether this repo runs GitHub Actions"}),
+             (("--test",), {"help": "a repo with history: its test command"}),
              (("--runner",), {"default": "ubuntu-latest",
                               "help": "GitHub Actions runner label (default: ubuntu-latest)"}),
              (("--checks",), {"action": "append", "metavar": "CHECK",
@@ -32,9 +36,16 @@ COMMANDS = [{
 }]
 
 REFUSALS = {
+    "starter_history": ("This repo already has commits, so forge init --starter cannot set it up.",
+                        "use a new repo for the starter"),
+    "starter_app": ("forge init --starter found an existing app file: {path}.",
+                    "use a new folder for the starter, or forge init to keep this app"),
+    "actions": ("Forge needs to know: Does this repo run GitHub Actions? Check "
+                "gh api repos/{{owner}}/{{repo}}/actions/permissions (enabled), then choose "
+                "--actions yes or --actions no.", "forge init --actions yes|no"),
     "answers": ("This repo already has commits, so forge init adopts it on a fix branch, and it "
                 "needs the answers you confirmed: {missing}.",
-                'forge init --test "<command>" --checks <check> --interfaces "<glob>" '
+                'forge init --actions yes|no --test "<command>" --checks <check> --interfaces "<glob>" '
                 '--approver "<who>" --merger "<who>" --never-touch "<path>"'),
     "not_current": ("This checkout isn't clean at {ref}, which forge init adopts, so it can't check "
                     "that tree here.", "commit or set aside your changes, git switch {default} && "
@@ -119,32 +130,63 @@ effort = "high"
 ROADMAP = '{\n  "items": []\n}\n'
 ADOPT_BRANCH, ADOPT_ITEM = "fix/adopt-forge", "adopt-forge"
 ADOPT_WHY = "Adopt Forge in this repo, which already has history."
-ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, checks and interface "
+ADOPT_DONE = ("Forge runs this repo as a live app: forge.toml names its tests, any checks and interface "
               "folders, and AGENTS.md keeps the team's lines and its house rules.")
 
 
-def _settings(stage: str, test: str, checks: list[str], interfaces: list[str],
+def _settings(stage: str, test_place: str, test: str, checks: list[str], interfaces: list[str],
               merge: str = "", runner: str = "ubuntu-latest") -> str:
     return ("# Forge's settings. Your coding agent keeps this file: ask it to change a setting or "
             "upgrade Forge.\n"
             f'version = "v{__version__}"\nrepo = "client"\nstage = "{stage}"\n'
             + (f'merge = "{merge}"\n' if merge else "") + 'workers = "split"\n'
+            f'test_place = "{test_place}"\n'
+            'groups = 1\n'
             f"test = {json.dumps(test)}\n"
             f"checks = {json.dumps(checks)}\n"
             f"runner = {json.dumps(runner)}\n"
             f"interfaces = {json.dumps(interfaces)}\n{MODELS}")
 
 
-def _scaffold(top: Path, runner: str = "ubuntu-latest") -> dict[str, str]:
+def _starter_files(starter: str) -> dict[str, Path]:
+    """The selected starter's source files, keyed by their client-relative paths."""
+    react = sync.TEMPLATES / "starter"
+    if starter == "python":
+        sources = {path.relative_to(react).as_posix(): path
+                   for path in sorted((react / "apps/web").rglob("*")) if path.is_file()}
+        sources.update({path.relative_to(react).as_posix(): path
+                        for path in sorted((react / "libs/shared/util").rglob("*")) if path.is_file()})
+        for library in (react / "libs/shared/ui", *sorted((react / "libs").glob("*/web"))):
+            sources.update({path.relative_to(react).as_posix(): path
+                            for path in sorted(library.rglob("*")) if path.is_file()})
+        sources.update({name: react / name for name in ("tsconfig.base.json", ".npmrc")})
+        root = sync.TEMPLATES / "starter-python"
+    else:
+        sources = {}
+        root = react
+    sources.update({path.relative_to(root).as_posix(): path
+                    for path in sorted(root.rglob("*")) if path.is_file()})
+    caches = {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".import_linter_cache"}
+    return {rel: path for rel, path in sources.items()
+            if path.suffix not in {".pyc", ".pyo"} and not caches.intersection(Path(rel).parts)}
+
+
+def _scaffold(top: Path, actions: str, runner: str = "ubuntu-latest",
+              starter: str | None = None) -> dict[str, str]:
     """forge.toml, the docs skeleton and an empty roadmap: repo-relative path -> text."""
     skeleton = sync.TEMPLATES / "skeleton"
-    test = next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST)
+    test = ("node scripts/test.mjs" if starter else
+            next((command for marker, command in STACKS if (top / marker).is_file()), NODE_TEST))
     return {
-        "forge.toml": _settings("prototype", test, ["tests", "forge-pr-check"], INTERFACES,
-                                runner=runner),
+        "forge.toml": _settings("prototype", "ci" if actions == "yes" else "local", test,
+                                ["tests", "forge-pr-check"] if actions == "yes" else [],
+                                INTERFACES, runner=runner),
         **{path.relative_to(skeleton).as_posix(): path.read_text(encoding="utf-8")
            for path in sorted(skeleton.rglob("*")) if path.is_file()
-           and (test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore"))},
+           and (starter or test == NODE_TEST or path.name not in ("Dockerfile", ".dockerignore", "services.toml"))},
+        **({rel: path.read_bytes().decode("utf-8")
+            for rel, path in _starter_files(starter).items()}
+           if starter else {}),
         "plans/roadmap.json": ROADMAP,
     }
 
@@ -180,8 +222,9 @@ def protect(top: Path, branch: str, checks: list[str]) -> None:
     done = repo.run(*args, cwd=top)
     if done.returncode:
         _protect_failed(done, branch, args)
-    print(f"Branch protection is on for {branch}: changes arrive only through a pull request whose "
-          f"{' and '.join(checks)} checks pass, and nobody can push to it directly."
+    protection = (f"changes arrive only through a pull request whose {' and '.join(checks)} checks pass"
+                  if checks else "changes arrive only through a pull request; no checks are required")
+    print(f"Branch protection is on for {branch}: {protection}, and nobody can push to it directly."
           + (" Its other rules stay as they were." if current else ""))
 
 
@@ -192,6 +235,10 @@ def no_protection_plan(done: subprocess.CompletedProcess[str]) -> bool:
 
 
 def skipped(branch: str, checks: list[str]) -> str:
+    if not checks:
+        return (f"Branch protection on {branch} was skipped: this repository's GitHub plan doesn't "
+                "offer it. Forge's own close and merge still use a clean review and local tests; "
+                "no GitHub checks are required.")
     return (f"Branch protection on {branch} was skipped: this repository's GitHub plan doesn't "
             f"offer it. Forge's own close and merge still wait for the {' and '.join(checks)} "
             "checks.")
@@ -274,15 +321,29 @@ def _stronger(current: dict[str, Any], checks: list[str], removed: set[str]) -> 
 
 def init(args: argparse.Namespace) -> None:
     top = repo.root()
+    history = repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0
+    if args.actions is None and not history:
+        repo.refuse(REFUSALS["actions"])
+    if args.starter:
+        if history:
+            repo.refuse(REFUSALS["starter_history"])
+        for marker in ("package.json", "pyproject.toml", "go.mod"):
+            if (top / marker).exists():
+                repo.refuse(REFUSALS["starter_app"], path=marker)
+        for rel in _starter_files(args.starter):
+            if (top / rel).exists():
+                repo.refuse(REFUSALS["starter_app"], path=rel)
     if repo.run("git", "remote", "get-url", "origin", cwd=top).returncode:
         repo.refuse(REFUSALS["no_origin"])
     if not shutil.which("gh"):
         repo.refuse(repo.REFUSALS["missing_tool"], tool="gh")
-    if repo.run("git", "rev-parse", "--verify", "-q", "HEAD", cwd=top).returncode == 0:
+    if history:
         return _adopt(top, args)
     repo.check_pin(top)
     branch = repo.current_branch(top)
-    scaffold = _scaffold(top, args.runner)
+    scaffold = _scaffold(top, args.actions, args.runner, args.starter)
+    if (top / "Dockerfile").exists():
+        scaffold.pop("services.toml", None)
     for rel, text in scaffold.items():
         if not (top / rel).exists():  # init never overwrites a file that is already there
             sync.write_file(top, rel, text)
@@ -298,6 +359,7 @@ def init(args: argparse.Namespace) -> None:
           "skeleton, and the adapters for Claude Code and Codex.")
     print(f"Pushed {branch} to origin and installed the git hooks that check each commit and push.")
     protect(top, branch, cfg["checks"])
+    print("Tell the person the seven steps in the Forge guide's journey, then ask for the client notes or the idea.")
     print("Next: forge next")
 
 
@@ -306,8 +368,15 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
     fetched, which the checkout must be at, before anything changes; then one commit on
     fix/adopt-forge in its own worktree. The default branch changes only when its pull request
     merges."""
-    missing = [f"--{name}" for name in ("test", "checks", "interfaces", "approver", "merger")
-               if not getattr(args, name)]
+    missing = []
+    if not args.actions:
+        missing.append("--actions")
+    if not args.test:
+        missing.append("--test")
+    if args.actions != "no" and not args.checks:
+        missing.append("--checks")
+    missing.extend(f"--{name}" for name in ("interfaces", "approver", "merger")
+                   if not getattr(args, name))
     if missing:
         repo.refuse(REFUSALS["answers"], missing=", ".join(missing))
     ref, default = story.landed_ref(top), repo.default_branch(top)
@@ -318,8 +387,11 @@ def _adopt(top: Path, args: argparse.Namespace) -> None:
                 cwd=top).returncode == 0:
         repo.refuse(REFUSALS["adopting"])
     # Forge's own check gates each pull request once Forge is on the default branch.
-    checks = [*args.checks, *(["forge-pr-check"] if "forge-pr-check" not in args.checks else [])]
-    toml = _settings("live", args.test, checks, args.interfaces, merge="human", runner=args.runner)
+    checks = [] if args.actions == "no" else [*(args.checks or [])]
+    if args.actions != "no" and "forge-pr-check" not in checks:
+        checks.append("forge-pr-check")
+    toml = _settings("live", "ci" if args.actions == "yes" else "local", args.test,
+                     checks, args.interfaces, merge="human", runner=args.runner)
     cfg = repo._config_text(toml)  # pyright: ignore[reportPrivateUsage]
     # Files sync merges into keep the team's lines; any other file Forge writes whole, so one
     # already there with other text is the team's, and adoption stops before changing anything.

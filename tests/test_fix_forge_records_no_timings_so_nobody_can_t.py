@@ -83,18 +83,17 @@ def test_1_work_and_close_append_step_timings(env, request, monkeypatch, scenari
     assert closed.returncode == 0, closed.stderr
 
     lines = [json.loads(line) for line in timings.read_text("utf-8").splitlines()]
-    # Close now also records its test stage, even when no command is configured. The worker,
-    # review and CI durations retain the original contract; a skipped stage has no minimum.
+    # CI close leaves change tests to the pull request, so it records no local test-run stage.
+    # The worker, review and CI durations retain the original contract.
     assert [(line["item"], line["step"], line["outcome"]) for line in lines] == [
-        (item, "worker round", "completed"), (item, "test run", "skipped"), (item, "review", "clean"),
+        (item, "worker round", "completed"), (item, "review", "clean"),
         (item, "CI wait", "passed")]
     assert [(line.get("model"), line.get("effort")) for line in lines] == [
-        ("sonnet", "medium"), (None, None), (review_model, "high"), (None, None)]
-    for line, earliest, latest in zip(lines, [work_start, close_start, close_start, close_start],
-                                      [work_end, close_end, close_end, close_end]):
+        ("sonnet", "medium"), (review_model, "high"), (None, None)]
+    for line, earliest, latest in zip(lines, [work_start, close_start, close_start],
+                                      [work_end, close_end, close_end]):
         assert earliest - timedelta(seconds=1) <= datetime.fromisoformat(line["start"]) <= latest
-        assert (0 if line["step"] == "test run" else 0.15) <= line["seconds"] <= (
-            latest - earliest).total_seconds()
+        assert 0.15 <= line["seconds"] <= (latest - earliest).total_seconds()
     assert not repo.git("status", "--porcelain", cwd=repo.path)
 
 
@@ -136,14 +135,14 @@ def _failed_close(env, failure):
         env.reviews(CLEAN)
         env.checks([run("tests", "failure"), run("forge-pr-check")])
         expected = [("review", "clean"), ("CI wait", "failed")]
-    item, _ = env.start_fix()
+    item, _ = env.start_task() if failure == "blocked" else env.start_fix()
     timings = env.repo.path / ".git" / "forge" / "timings.jsonl"
 
     closed = env.close(item)
     assert closed.returncode != 0
     lines = [json.loads(line) for line in timings.read_text("utf-8").splitlines()]
     assert [(line["item"], line["step"], line["outcome"]) for line in lines] == [
-        (item, step, outcome) for step, outcome in [("test run", "skipped"), *expected]]
+        (item, step, outcome) for step, outcome in expected]
 
 
 def test_2_timing_write_failure_does_not_fail_work(env):

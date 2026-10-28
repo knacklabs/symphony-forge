@@ -12,6 +12,7 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 STORY = "FIX-THE-QUICK-TEST-PICKER-BREAKS-ON-CLIENT-R"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("version", ["7.4.4", "8.1.2", "8.2.2"])
 def test_1_picker_narrows_old_and_new_pytest_without_installing_forge(repo, version, monkeypatch):
     # Real pinned pytest: before 8.2, @selection.txt is treated as a missing test path.
@@ -43,7 +44,7 @@ def test_1_picker_narrows_old_and_new_pytest_without_installing_forge(repo, vers
 def _assert_external_setup(client):
     for host in (".codex", ".claude"):
         skill = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
-        setup = skill.split("8. Propose a `fast_test`", 1)[1].split("On a live app", 1)[0]
+        setup = skill.split("9. Propose a `fast_test`", 1)[1].split("On a live app", 1)[0]
         assert "forge test --pytest {base}" in setup
         assert "Forge installed" not in setup
         assert "repo's Python runner" in setup
@@ -52,7 +53,7 @@ def _assert_external_setup(client):
 
 def test_2_init_ships_consistent_external_picker_setup(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     _assert_external_setup(client)
 

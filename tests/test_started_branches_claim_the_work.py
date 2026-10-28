@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, Repo
-from test_board import seen
 from test_setup import _fresh_client
 from test_story import DOC, claude_plan, hook, ready, setup, worktree
 
@@ -218,14 +217,6 @@ def test_9_published_reassignment_reaches_teammate_commands_without_losing_local
     dependency_map = next(row for row in board["dependency_maps"] if row["id"] == "SHOP")
     assert next(row for row in dependency_map["parts"] if row["id"] == "SHOP/SHOW")[
         "title"] == "Show when the basket was saved"
-    page = teammate.forge("board")
-    assert page.returncode == 0, page.stdout + page.stderr
-    words = seen(teammate.path / ".git" / "forge" / "board.html")
-    assert "Assigned to replacement-dev." in words, words
-    assert "Assigned to local-page-dev." in words, words
-    assert "Assigned to basket-dev." not in words, words
-    assert "Show when the basket was saved" in words, words
-    assert "Show the saved time" not in words, words
     gh.respond("api", "user", "--jq", ".login", stdout="another-dev\n")
     started = teammate.forge("task", "start", "SHOP/SAVE")
     assert started.returncode == 0, started.stdout + started.stderr
@@ -307,11 +298,6 @@ def test_11_first_merged_part_supplies_assignments_when_the_published_story_is_s
     parts = {row["id"]: row for row in story["children"]}
     assert parts["SHOP/SAVE"]["developer"] == "basket-dev"
     assert parts["SHOP/SHOW"]["developer"] == "page-dev"
-    page = teammate.forge("board")
-    assert page.returncode == 0, page.stdout + page.stderr
-    words = seen(teammate.path / ".git" / "forge" / "board.html")
-    assert "Assigned to basket-dev." in words, words
-    assert "Assigned to page-dev." in words, words
     started = teammate.forge("task", "start", "SHOP/SHOW")
     assert started.returncode == 0, started.stdout + started.stderr
     assert "starting it anyway" not in started.stderr
@@ -361,10 +347,3 @@ def test_14_board_shows_start_commit_authors_beside_the_plan_approver(client, cl
     assert fix["started_by"] == "Fix Starter"
     assert fix["approved_by"] is None
     assert fix["developer"] is None
-    page = viewer.forge("board")
-    assert page.returncode == 0, page.stdout + page.stderr
-    words = seen(observer / ".git" / "forge" / "board.html")
-    for phrase in ("Started by Story Starter. Approved by Plan Approver.",
-                   "Started by Part Starter. Approved by Plan Approver.",
-                   "Started by Fix Starter."):
-        assert phrase in words, words

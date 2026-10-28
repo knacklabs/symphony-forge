@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from conftest import FORGE_SHIM, ROOT, _install
+from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_task import story
 from test_worker import calls, install_claude
 from test_workers_leave_settings_to_coordinator import client  # noqa: F401
@@ -27,6 +27,8 @@ def brief(client, request, tmp_path):
         old_src = tmp_path / "before-worker-guidance"
         shutil.copytree(ROOT / "src/forge", old_src / "forge",
                         ignore=shutil.ignore_patterns("__pycache__"))
+        patient(lambda: shutil.copytree(ROOT / ".codex/skills/test-audit",
+                                        old_src / "forge/templates/skills/test-audit", dirs_exist_ok=True))
         shutil.copyfile(ROOT / "tests/fixtures/worker-brief-before-delegation.md",
                         old_src / "forge/templates/brief.md")
         _install(client.bin, "forge", FORGE_SHIM.format(python=sys.executable, src=str(old_src)))
@@ -61,8 +63,8 @@ def test_1_brief_answers_worker_questions_and_ends_with_the_reviewers_checklist(
             "search the rest of the repo only for what they call or what calls them.") in text
     assert "`src/api/**`" in text and "`tests/test_api.py`" in text
     assert "`tests/test_existing_api.py`" in text
-    assert ("Otherwise, fix the findings inside your Done-when in this round, including new "
-            "findings after a recorded narrow or split;") in text
+    # Review limits wait on findings below P0; repeated P0s use the stuck-worker stop.
+    assert "At the round limit (review round two for a story part, round one for a fix), close stops when findings below P0 are still open. Wait for the owner's recorded choice of one more round, split or accept. An open P0 never stops for the owner: fix it in this round. When the same P0 stays open two rounds in a row, Forge stops and asks the owner." in text
     assert "Otherwise, fix the findings in this round" not in text
     assert ("Never ask whether a problem needs a separate fix: a problem outside your Done-when "
             "is a `Spotted:` line.") in text

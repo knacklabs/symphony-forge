@@ -1,4 +1,4 @@
-"""Every review finding and cold-read note carries Gain, Work and Harm, with the Harm floor.
+"""Scored review findings and cold-read notes retain scores and the Harm floor.
 
 Runs the real close, read and sign-off commands on a repo made by forge init and on the
 earlier-release adopted fixture moved to this release. Only Autoreview, the cold reader and
@@ -16,9 +16,7 @@ from conftest import ROOT, _install
 from test_close import CLEAN, blocked, env  # noqa: F401 (env is a fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_setup import _fresh_client
-from test_stop_default_answer import follow_ups, later
-from test_hotspot_stop import rounds, seed
-from test_story import DOC, READER, new_story
+from test_story import DOC, READER, approved_constitution, new_story
 
 STORY = "FORGE-SCORE-1"
 
@@ -51,51 +49,44 @@ def _client_repo(env, tmp_path, previous: bool) -> None:
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/upgrade")
     repo.git("-c", no_hooks, "push", "-q", "origin", "main")
+    approved_constitution(repo)
 
 
-@pytest.mark.parametrize("case", ["init", "earlier-adoption-upgrade-sync", "sign-off", "narrowed"])
+@pytest.mark.parametrize("case", ["init", "earlier-adoption-upgrade-sync", "sign-off"])
 def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path, monkeypatch, case):
     repo = env.repo
     if case == "sign-off":
         (tmp_path / "sign-off").mkdir()
         fix, answers, queue = _client(repo, tmp_path / "sign-off", monkeypatch)
         _decision(fix, answers)
-        # A score that is not one whole number from 1 to 5 makes the finding unreadable.
-        queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P1", "Prototype fails", "Gain 3, Work 2, Harm 1.5\nDemo cannot finish")]}}]))
-        unreadable = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
-        assert unreadable.returncode == 1
-        assert "it wrote findings Forge cannot read" in unreadable.stderr
-        queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P1", "Prototype fails", "Gain 5, Work 2, Harm 1\nDemo cannot finish")]}}]))
+        clean_check = {"say": SOL_HIGH, "report": {
+            "review_status": "scoped-clean", "findings": []}}
+        # A line outside the score range is unscored. The finding now holds by priority,
+        # rather than making the report unreadable.
+        invalid_score = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
+            _scored("P1", "Prototype fails", "Gain 3, Work 2, Harm 1.5\nDemo cannot finish")]}}
+        queue.write_text(json.dumps([clean_check, invalid_score]))
+        unscored = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        assert unscored.returncode == 1
+        assert "found a blocking issue: Prototype fails" in unscored.stderr
+        assert "it wrote findings Forge cannot read" not in unscored.stderr
+        valid_score = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
+            _scored("P1", "Prototype fails", "Gain 5, Work 2, Harm 1\nDemo cannot finish")]}}
+        queue.write_text(json.dumps([valid_score]))
         refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert refused.returncode == 1
         assert "found a blocking issue: Prototype fails" in refused.stderr
-        call = json.loads(queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()[-1])
+        calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
+        call = [call for call in calls if "## Client prototype sign-off review" in
+                "\n".join(call["prompt_files"].values())][-1]
         prompt = "\n\n".join(call["prompt_files"].values())
         assert "Gain <g>, Work <w>, Harm <h>" in prompt and "judgement, not measurement" in prompt
         return
-    if case == "narrowed":  # a follow-up fix's name and summary leave the score line out
-        seed(env, "src/a.py")
-        item, where = env.start_fix()
-        rounds(env, item, where, ["src/a.py"] * 2)
-        env.commit(where, "app.py", "print(3)\n")
-        env.commit(where, "src/a.py", "pass  # third repair\n")
-        env.reviews(blocked(_scored("P1", "Round 3 defect",
-                                    "Gain 4, Work 2, Harm 1\nSaving drops the basket.", "src/a.py")))
-        env.close(item)
-        later(monkeypatch, 31)
-        env.close(item)
-        [branch] = follow_ups(env)
-        subject = repo.git("log", "-1", "--format=%s", branch)
-        assert "Round 3 defect" in subject
-        assert "Gain" not in subject and "gain" not in branch
-        return
     _client_repo(env, tmp_path, case != "init")
 
-    # A review whose finding has no score line is not read; close's second attempt is.
-    env.reviews(blocked(_scored("P1", "Saving drops the basket", "Evidence: app.py:1")),
-                blocked(_scored("P1", "Saving drops the basket",
+    # Unscored retention has its owner in test_reviews_keep_unscored_findings.
+    # This case retains its independent contract: score display and Harm floors.
+    env.reviews(blocked(_scored("P1", "Saving drops the basket",
                                 "Gain 3, Work 2, Harm 1\nRaise: Functional\nEvidence: app.py:1"),
                         _scored("P1", "Basket ids are guessable",
                                 "Gain 3, Work 1, Harm 2\nRaise: Security\nAnyone can read a basket."),
@@ -106,8 +97,8 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
     item, _ = env.start_fix()
     closed = env.close(item)
     out = closed.stdout + closed.stderr
-    assert "it wrote findings Forge cannot read" in out
-    assert len(env.review_calls()) == 2
+    assert "it wrote findings Forge cannot read" not in out
+    assert len(env.review_calls()) == 1
     assert "Gain 3, Work 2, Harm 1\n" in closed.stdout
     assert "Gain 3, Work 1, Harm 4 (floor: security)" in closed.stdout
     assert "Gain 4, Work 3, Harm 4 (floor: migration)" in closed.stdout

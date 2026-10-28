@@ -85,4 +85,4 @@ def test_5_only_named_tests_job_ships_and_doctor_compares_protection(repo, gh, t
     assert repo.forge("sync").returncode == 0
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     assert "\n  tests:\n" in workflow
-    assert '- run: "make check"' in workflow
+    assert '- run: "forge test --change"' in workflow

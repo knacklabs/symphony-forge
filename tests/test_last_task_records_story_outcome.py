@@ -6,7 +6,6 @@ import sys
 import pytest
 
 from conftest import GH_STUB, ROOT, _install
-from test_board import seen
 from test_close import GREEN, STORY_DOC, env  # noqa: F401
 
 STORY = "recording-that-a-story-is-done-opens-a-s"
@@ -71,7 +70,7 @@ def test_1_last_task_merge_records_story_done_without_another_pull_request(
         repo.git("init", "-q", "-b", "main", str(client))
         repo.git("remote", "add", "origin", str(remote), cwd=client)
         env.gh.respond("api", stdout="{}")
-        initialized = repo.forge("init", cwd=client)
+        initialized = repo.forge("init", "--actions", "yes", cwd=client)
         assert initialized.returncode == 0, initialized.stderr
         # Start the scenario from a fresh clone of the landed release's client files.
         checkout = env.tmp / "new-checkout"
@@ -139,18 +138,18 @@ def test_1_last_task_merge_records_story_done_without_another_pull_request(
     assert repo.git("log", "-1", "--format=%P", "origin/main") == repo.git(
         "rev-parse", "origin/main^"), "completion must share the task's squash commit"
     assert head in env.gh_calls("pr", "merge")[0], "the reviewed head stays unchanged"
-    page = env.tmp / "board.html"
+    page = env.tmp / "board.json"
     board = repo.forge("board", "--out", str(page))
     assert board.returncode == 0, board.stderr
-    text = seen(page)
+    shop = next(row for row in json.loads(page.read_text("utf-8"))["items"] if row["id"] == "SHOP")
     expected = "The original outcome." if already_done else outcome or "Shoppers can save a basket"
-    assert "The story was finished. " + " ".join(expected.split()) in text
-    assert "All parts finished; record the outcome" not in text
+    assert shop["stage"] == "done" and shop["waits_on"] is None
+    assert shop["outcome"] == " ".join(expected.split())
     guidance = repo.forge("next").stdout
     assert "forge story done SHOP" not in guidance
     assert 'Next: forge spec measure basket --result "<measured result>"' in guidance
     if already_done:
-        assert "Finished on 1 September 2026" in text
+        assert shop["status"] == "Finished on 1 September 2026"
 
 
 def test_2_story_done_changes_outcome_on_the_existing_work_branch(env):

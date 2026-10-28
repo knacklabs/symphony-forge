@@ -30,6 +30,9 @@ def test_6_close_uses_repository_tool_with_its_model_and_effort(env, family, lig
     assert options["--engine"] == family
     assert options["--max-priority"] == "P3"  # the light review's level applies after scoring
     model, effort = (("gpt-6-astra", "xhigh") if family == "codex" else ("custom-claude", "low"))
+    # The working-prototype contract keeps the review model but defaults its effort to medium.
+    if light:
+        effort = "medium"
     assert options["--model"] == f"{family}={model}"
     assert options["--thinking"] == f"{family}={effort}"
 
@@ -46,7 +49,9 @@ def test_7_signoff_uses_repository_tool_and_accepts_autoreview_default_selection
     result = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    [call] = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
+    calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
+    [call] = [call for call in calls if "## Client prototype sign-off review" in
+              "\n".join(call["prompt_files"].values())]
     options = dict(zip(call["args"][::2], call["args"][1::2]))
     assert options["--engine"] == family
     assert "--model" not in options and "--thinking" not in options

@@ -9,8 +9,8 @@ from test_worker import calls
 
 STORY = "workers-keep-ending-their-round-while-th"
 WARNING = "Warning: the worker ended its round with changes left uncommitted"
-NUDGE = ("in the foreground and wait for them to finish; never leave them running in the background. "
-         "Then commit any fixes on this branch")
+NUDGE = ("run the change's related tests through `forge test` in the foreground once, at the end "
+         "of your turn")
 
 
 def test_1_a_claude_worker_that_left_changes_uncommitted_is_asked_once_and_commits(
@@ -24,8 +24,8 @@ def test_1_a_claude_worker_that_left_changes_uncommitted_is_asked_once_and_commi
     assert built.returncode == 0, built.stdout + built.stderr
     first, nudged = calls(log)
     assert _session(nudged, "--resume") == _session(first, "--session-id")
-    assert NUDGE in " ".join(nudged["brief"].split())
-    assert "Run the change's related tests through `forge test` in the foreground" in nudged["brief"]
+    assert "commit your work on this branch first, then" in nudged["brief"].lower()
+    assert NUDGE in " ".join(nudged["brief"].split()).lower()
     assert repo.git("status", "--porcelain", "-uall", cwd=first["cwd"]) == ""
     assert repo.git("log", "-1", "--format=%s", "--name-only", cwd=first["cwd"]).split() == [
         "Worker", "round", "login.txt"]

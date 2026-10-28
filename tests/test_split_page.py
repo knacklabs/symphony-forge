@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def _source_repo(repo):
     repo.git("checkout", "-q", "-b", "fix/command-page")
     # Exercise this checkout's sync, rather than routing to a historical release.
-    repo.write("forge.toml", 'version = "v1.2.13"\nrepo = "forge-source"\n')
+    repo.write("forge.toml", 'version = "v1.2.23"\nrepo = "forge-source"\n')
     return repo
 
 
@@ -29,6 +29,10 @@ def test_4_sync_keeps_the_command_page_current(repo):
     assert "[command list](commands.md)" in guide
     assert "| Command | What it does |" not in guide
     assert b"| `forge sync` |" in generated
+    # The feature command must join the public page; a CLI-only declaration can
+    # parse help while breaking sync's listing. This real sync test owns that
+    # publication contract and needs no production test seam.
+    assert b"| `forge task feature <plural> --one <singular> --field '<name>:<kind>'` |" in generated
 
 
 def test_5_new_owners_join_the_page_and_shipped_files(repo, tmp_path):

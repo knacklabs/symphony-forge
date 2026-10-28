@@ -1,0 +1,16 @@
+model IdempotencyKey {
+  id             String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organisationId String       @db.Uuid
+  accountId      String       @db.Uuid
+  tool           String
+  key            String
+  itemId         String       @db.Uuid
+  createdAtUtc   DateTime     @default(now()) @db.Timestamptz(3)
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@unique([accountId, tool, key], map: "uq_IdempotencyKey_account_tool_key")
+  @@index([organisationId], map: "idx_IdempotencyKey_organisationId")
+  @@index([itemId], map: "idx_IdempotencyKey_itemId")
+  @@schema("mcp")
+}

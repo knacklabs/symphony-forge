@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, doctor, machine, native, repo, score, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -24,15 +24,15 @@ HERE = Path(__file__).parent
 CONVENTIONS = (HERE / "templates" / "conventions").resolve()
 TEST_PATHS = repo.TEST_PATHS
 REVIEW_LOOP = (
-    "Close holds the fourth review after three blocked rounds only when a finding at the bar comes "
-    "back or a finding with Harm 3 or more is open. The existing same-file stop still applies from the third round. "
-    "Wait for a recorded choice only after close has stopped the review loop. "
-    "Otherwise, fix the findings inside your Done-when in this round, including new findings "
-    "after a recorded narrow or split; do not ask for another choice unless close stops the loop again. "
-    "Read also stops after three blocked cold-read rounds only when a note at the bar has no scores or is a "
-    "disputed keep, or a note with Harm 3 or more is open. At a stop where every open note has Harm 1 or 2, "
-    "the coordinator chooses accept or narrow itself and tells the owner after; otherwise the owner chooses. The coordinator "
-    "records that choice with forge read <target> --resolve <accept|narrow|split> --reason \"<human's choice>\".")
+    "At the round limit (review round two for a story part, round one for a fix), close stops when "
+    "findings below P0 are still open. Wait for the owner's recorded choice of one more round, "
+    "split or accept. An open P0 never stops for the owner: fix it in this round. "
+    "When the same P0 stays open two rounds in a row, Forge stops and asks the owner. "
+    "A cold read stops after round two when notes below P0 are still open, or when P0 notes are "
+    "open in two rounds in a row. The coordinator records the owner's choice with "
+    "forge read <target> --resolve <accept|more|split> --reason \"<human's choice>\".")
+LIVE_RUN = ("Before review round two, run the real flow once (not tests or stubs). "
+            "Add `Live run: <what you ran> - <what you saw>` to your `Functional check:` paragraph.")
 # The bytes of change a continued conversation is shown in full; a larger one is listed by file.
 LARGE = 200 * 1024
 NUDGING = "The worker left changes uncommitted, so Forge asks it once to commit, test and commit any fixes."
@@ -40,17 +40,30 @@ SETTINGS = ("Workers never edit `forge.toml`. Never edit it even temporarily. It
             "coordinator, through a settings fix the owner asked for. Report a needed settings "
             "change in your last message instead. To run an extra suite, run its command directly "
             "alongside `forge test`.")
+TEST_STEPS = {
+    "local": ("run the change's related tests through `forge test` in the foreground once, at the "
+              "end of your turn. Wait for it to finish; rerun only what failed. Run tests only "
+              "through `forge test`: it runs forge.toml's `fast_test`, "
+              "or `test` when none is set, in the machine's one test lane with `{base}` as the "
+              "merge base with `origin/<default branch>`, on at most two test processes; a picker "
+              "run of five or fewer related test files skips the lane's wait unless the test "
+              "command or pytest config has a doctest option. It always runs, including uncommitted "
+              "changes. Then commit any fixes. The nightly full run covers the rest."),
+    "ci": ("the pull request's CI runs the change's related tests, lint and type checks, so do not "
+           "run them here; run `forge test` only for a test you are writing, to watch it fail. "
+           "The nightly full run covers the rest."),
+}
 START_HERE = ("Do not read the coordinator guide (the forge skill's `SKILL.md`): this brief has "
               "everything a worker needs. Start from the files and tests this brief names, and "
               "search the rest of the repo only for what they call or what calls them.")
 # Sent once, in the same conversation, when a round ends with changes left uncommitted.
 COMMIT_NUDGE = ("Your turn ended with changes left uncommitted, so the review can't see them. "
-                "Commit your work on this branch first. Run "
-                "the change's related tests through `forge test` in the foreground and wait for them to finish; never "
-                "leave them running in the background. Then commit any fixes on this branch, and end "
-                "your turn only once nothing is left uncommitted.\n")
+                "Commit your work on this branch first, then $test_step "
+                "End your turn only once nothing is left uncommitted.\n")
 
 REFUSALS = {
+    "merged": ("The pull request for {item} is already merged. Start a new fix for follow-up work.",
+               'forge fix start "<why>" --done "<done when>"'),
     "no_checkout": ("{item} has no checkout here, so it hasn't been started.", "forge next"),
     "merge": ("Resolve the merge conflicts, if any, in {top}, then commit the merge.",
               "forge work {item}"),
@@ -76,6 +89,11 @@ def checkout(item: str) -> tuple[re.Match[str], Path]:
     if not match or not (match["task"] or match["fix"]):
         refuse(repo.REFUSALS["bad_item"], item=item)
     branches = [f"task/{match['key']}-{match['task']}"] if match["task"] else [f"fix/{item}", f"forge/{item}"]
+    top = repo.root()
+    default = repo.default_branch(top)
+    git("fetch", "-q", "origin", default, cwd=top)
+    if task._merged(f"origin/{default}", item, top):
+        refuse(REFUSALS["merged"], item=item)
     trees = story.worktrees(Path.cwd())
     top = next((trees[branch] for branch in branches if branch in trees), None)
     if top is None:
@@ -90,15 +108,36 @@ def work(args: argparse.Namespace) -> None:
         _work(argparse.Namespace(**{**vars(args), "fallback": "codex"}))
 
 
+def prepare(item: str) -> tuple[re.Match[str], Path, str]:
+    """Merge before even the pin check reads settings; work consumes this one-shot result."""
+    pending = repo.command_fact("prepared work", Path.cwd(), dict)
+    if item not in pending:
+        match, top = checkout(item)
+        default = repo.default_branch(top)
+        first = ""
+        with codex.hold(top, item, "Build"):
+            merged = repo.run("git", "merge", "-q", "--no-edit", f"origin/{default}", cwd=top)
+            if merged.returncode:
+                if not git("diff", "--name-only", "--diff-filter=U", cwd=top):
+                    merged.check_returncode()
+                # Round records cannot commit during an unfinished merge. The full brief retries it.
+                git("merge", "--abort", cwd=top)
+                first = (f"First, finish the merge of origin/{default}: run git merge origin/{default}, "
+                         "resolve conflicts, and commit it before other work.\n\n")
+        pending[item] = match, top, first
+    return pending[item]
+
+
 def _work(args: argparse.Namespace) -> bool:
     item = args.item
     note = getattr(args, "note", None)
     if note is not None and not note.strip():
         refuse(REFUSALS["empty_note"], item=item)
-    match, top = checkout(item)
+    match, top, merge_first = prepare(item)
+    repo.command_fact("prepared work", top, dict).pop(item)
     config = repo.config(top)  # the item's own forge.toml, not the caller's
     state = repo.read_state(item, top) or {}
-    from forge import close, nextstep, time_records  # close imports story, which imports this module
+    from forge import close, nextstep, review, time_records  # close imports story, which imports this module
     # GitHub is read only when this round answers or ends a wait on a person, never just to queue.
     asking = note is not None or codex.record(top, item).get("question") or time_records.pending_merge_wait(top, item)
     pr = close.branch_pr(top, state) if asking else None
@@ -135,7 +174,7 @@ def _work(args: argparse.Namespace) -> bool:
     kind = "Fix" if later else "Build" if match["task"] else "Lite"
     if not match["task"] and state.get("fix_kind"):
         kind = "Build" if state["fix_kind"] == "backend" else "Lite"
-    # Every check refuses before the status commit, so a refused call changes nothing.
+    # Readiness checks run before the round's status commit.
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
@@ -194,22 +233,14 @@ def _work(args: argparse.Namespace) -> bool:
             elif not on_codex and previous:
                 fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
+        review.bound_review(top, item, state, state.get("review") or {})
         findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
-        if note is None and stop.get("by") == "default" and stop.get("worker_round") == state.get("round"):
-            note = ("Nobody answered the review loop stop in 30 minutes, so Forge recorded the repo's default "
-                    "choice: narrow this part to its Done-when lines. Follow-up fixes own the open findings ("
-                    + (", ".join(stop.get("fixes") or []) or "none") + "); remove what goes beyond the "
-                    "Done-when lines instead of fixing those findings here.")
-        elif note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
-            note = (f"The owner replaced the repo's default choice with {stop['choice']}: {stop['reason']}. "
-                    "Follow the owner's choice, not the earlier default narrowing." if "fixes" in stop else
-                    f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice.")
-            if stop.get("area"):
-                note += f" Proposed for {stop['area']}: {stop['proposed']}."
+        if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
+            note = f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice."
         from forge import close  # close imports story, which imports this module
 
-        close.stuck_round(top, item, state, config, findings)
+        close.stuck_round(top, item, state, config)
         if "round" in state:
             round_number = state["round"] + 1
         elif session:
@@ -224,11 +255,14 @@ def _work(args: argparse.Namespace) -> bool:
             saved = session_record if is_native else session or codex.record(top, item)
             changes = _changes(top, saved.get("head") or saved["start"])
         brief, subject = _brief(match, top, state, findings, failing, note, question, round_number,
-                                continued=bool(thread), changes=changes)
+                                continued=bool(thread) and not merge_first, changes=changes)
         fresh_brief = None
         if thread:
             fresh_brief, _ = _brief(match, top, state, findings, failing, note, question,
                                    round_number)
+        brief = merge_first + brief
+        if fresh_brief:
+            fresh_brief = merge_first + fresh_brief
         state["status"] = "fixing" if findings or failing else "working"
         state["worker"] = family
         state["round"] = round_number
@@ -247,7 +281,7 @@ def _work(args: argparse.Namespace) -> bool:
                             fresh_brief or brief, thread, fresh, chosen, family)
             return False
         start, clock = repo.now(), time.monotonic()
-        nudge = COMMIT_NUDGE
+        nudge = commit_nudge(config["test_place"])
         outcome = "failed"
         final = None
         asked = ""
@@ -296,7 +330,7 @@ def _work(args: argparse.Namespace) -> bool:
                     repo.commit_state(f"{item} fell back to Codex",
                                       repo.write_state(item, state, top), top=top)
                     brief, fresh_brief = fresh_brief or brief, None
-                    if thread:
+                    if thread and not merge_first:
                         saved = codex.record(top, item)
                         fresh_brief = brief
                         brief, _ = _brief(match, top, state, findings, failing, note, question,
@@ -368,8 +402,10 @@ def questions(*answers: str) -> str:
 def _restore_settings(item: str, top: Path, state: dict[str, Any]) -> None:
     if (git("status", "--porcelain", "--", "forge.toml", cwd=top)
             and not task.settings_allowed(item, top, state)):
-        git("restore", "--source=HEAD", "--staged", "--worktree", "--", "forge.toml", cwd=top)
-        print("Restored uncommitted forge.toml changes from this branch; settings change in their own fix.",
+        merging = repo.run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode == 0
+        source, name = ("MERGE_HEAD", "the incoming merge") if merging else ("HEAD", "this branch")
+        git("restore", f"--source={source}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+        print(f"Restored uncommitted forge.toml changes from {name}; settings change in their own fix.",
               flush=True)
 
 
@@ -451,11 +487,12 @@ def _fix_round(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[tuple[
     """The open findings at the bar and the failing checks, close's own test run among them, once
     close has run."""
     tests = [("Tests on the close run", state["tests"])] if state.get("tests") else []
-    review = state.get("review")
-    if not review:  # no review yet: no pull request to read checks from
+    result = state.get("review")
+    if not result:  # no review yet: no pull request to read checks from
         return [], tests
-    findings = [finding for finding in score.open_findings(review)
-                if score.holds(finding, review.get("blocking_level"))]
+    from forge import review
+
+    findings = [finding for _, finding in review.blocking(result)]
     return findings, tests + _failing(state.get("branch", ""))
 
 
@@ -481,11 +518,14 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
     """The brief from templates/brief.md, where `<!-- if NAME -->` blocks stay only when NAME is
     on, and its subject: the task's name, or the fix's why."""
     on: set[str] = set()
+    design_text = ""
     values: dict[str, str] = {
         "settings": SETTINGS,
+        "test_step": TEST_STEPS[repo.config(top)["test_place"]],
         "checkout": top.resolve().as_posix(),
         "start_here": START_HERE,
         "review_loop": REVIEW_LOOP,
+        "live_run": LIVE_RUN,
         "handover": (HERE / "templates" / "handover.md").read_text(encoding="utf-8").strip(),
         "delegation": (HERE / "templates" / "delegation.md").read_text(encoding="utf-8").strip()}
     if note is not None:
@@ -496,13 +536,14 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         values.update(question=question, answer=note or "")
     if match["task"]:
         text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
+        design_text = text
         doc, parsed = task.sections(text), story.parse(text)
         row = task.rows(doc).get(match["task"], {})
         covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
         subject = row.get("Name", "")
         moving = re.search(r"^New moving parts:.*", doc.get("Tasks", ""), re.M | re.S)
-        on |= {"task"} | ({"user-facing"} if row.get("User-facing", "").lower() in ("yes", "true")
-                          else set())
+        on.add("task")
+        user_facing = row.get("User-facing", "").lower() in ("yes", "true")
         values.update(
             title=doc["#"], what=doc.get("What changes for you", ""), why=doc.get("Why", ""),
             done="\n".join(story.item(parsed, n, n in covers) for n in parsed["done"]),
@@ -514,11 +555,26 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             existing_tests=_existing_tests(top, task.cell_list(row.get("Scope", ""))))
     else:
         on.add("fix")
+        user_facing = state.get("fix_kind") == "ui"
         subject = state.get("why", "")
         values.update(why=subject, done=state.get("done_when", ""),
                       interfaces=", ".join(f"`{pattern}`" for pattern in
                                            repo.config(top)["interfaces"]) or "none",
                       allowance=state.get("allow_large") or "No recorded allowance")
+    values["prototype_proof"] = ""
+    if not match["task"] and repo.is_prototype(top):
+        from forge import design
+
+        if design.working_build(top, story.landed_ref(top)):
+            values["prototype_proof"] = (HERE / "templates" / "brief.md").read_text(
+                encoding="utf-8").split("<!-- prototype-proof -->\n", 1)[1].strip()
+    if user_facing:
+        on.add("user-facing")
+    values["design_context"], owned_design = design_context(top, design_text, user_facing)
+    values["theme_file"] = " (`apps/web/src/index.css`)" if (top / "apps/web/src/index.css").is_file() else ""
+    if owned_design:
+        on.add("screen-design")
+        values["design_folder"] = owned_design
     values["summary"] = (f"Fix round {round_number} on {subject}." if round_number > 1 else
                          f"Build {subject} for {match['key']}." if match["task"] else
                          f"Fix: {subject}.")
@@ -535,6 +591,13 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief = values["summary"] + "\n\nThe earlier brief in this conversation still applies.\n"
         brief += f"Work in the checkout at `{values['checkout']}`.\n"
         brief += "\n" + START_HERE + "\n"
+        brief += "\n" + values["design_context"] + "\n"
+        if user_facing:
+            brief += ("\nApply DESIGN.md's theme tokens, type and colours to the app's theme file"
+                      + values["theme_file"] + ".\n")
+            if owned_design:
+                brief += (f"Build each screen you touch with the components and fields its section of "
+                          f"`{owned_design}SCREENS.md` lists.\n")
         if match["task"]:
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
                       f"Existing related tests: {values['existing_tests']}.\n")
@@ -542,9 +605,9 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         brief += "\n" + SETTINGS + "\n"
         brief += "\nNever run `forge stop`: only a person can stop a run, after confirmation in the host.\n"
         brief += "\n" + REVIEW_LOOP + "\n"
-        brief += ("\nCommit your work on this branch first. Run the change's related tests through `forge test`, "
-                  "then commit any fixes before you stop. "
-                  "This replaces any earlier full-suite instruction; CI runs the full suite.\n")
+        if user_facing:
+            brief += "\n" + LIVE_RUN + "\n"
+        brief += ("\nBefore you stop, commit your work first, then " + values["test_step"] + "\n")
         brief += ("\n`forge close` pushes the committed branch and runs CI on every platform. "
                   "CI output reaches you in your next round. If you need CI evidence, commit and "
                   "stop instead of asking the coordinator to push or run CI. CI is the merge gate. "
@@ -556,14 +619,54 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
         if findings or failing:
             brief += (f"\n## Fix round\n\n### Open serious findings\n\n{values['findings']}\n"
                       f"\n### Failing checks\n\n{values['checks']}\n")
-        return brief + changes + "\n" + values["handover"] + "\n", subject
+        return brief + changes + "\n" + values["handover"] + "\n" + values["prototype_proof"] + "\n", subject
     on.add("standards")
     values["standards"] = (HERE / "standards.md").read_text(encoding="utf-8").strip()
     values["conventions"] = str(CONVENTIONS)
     text = (HERE / "templates" / "brief.md").read_text(encoding="utf-8")
+    text = text.split("<!-- prototype-proof -->\n", 1)[0]
     text = re.sub(r"<!-- if ([\w-]+) -->\n(.*?)<!-- end -->\n",
                   lambda block: block[2] if block[1] in on else "", text, flags=re.S)
     return Template(text).safe_substitute(values), subject
+
+
+def commit_nudge(test_place: str) -> str:
+    """Ask the worker to finish the round using its repo's selected test place."""
+    return Template(COMMIT_NUDGE).safe_substitute(test_step=TEST_STEPS[test_place])
+
+
+def design_context(top: Path, text: str, user_facing: bool) -> tuple[str, str]:
+    """The same design and short skill guidance on both hosts; only an owned canvas sets a gate."""
+    from forge import roles, sync
+
+    body = task.sections(text).get("What changes for you", "")
+    named = re.search(r"^Design: (docs/design/[^/\s]+/) \(", body, re.M)
+    folder = owned = named[1] if named else ""
+    if not text and repo.config(top)["stage"] == "prototype":
+        folder = "docs/design/prototype/"
+        owned = folder if repo.is_prototype(top) else ""
+    elif re.search(r"^Design: none \(", body, re.M):
+        folder = "docs/design/prototype/" if (top / "docs/design/prototype").is_dir() else ""
+    parts = ["## Design context"]
+    if folder:
+        parts.append(("Approved design: " if owned else "Design context only: ") + folder)
+        if not owned:
+            parts.append("Use this signed canvas as context only; its listed components and fields add no requirement.")
+        files = sorted(path.relative_to(top).as_posix() for path in (top / folder).rglob("*") if path.is_file())
+        parts.append("Screens, images and design files (open the images when checking screens):\n"
+                     + "\n".join(f"- `{path}`" for path in files))
+    for name in ["PRODUCT.md", "DESIGN.md", *([folder + "SCREENS.md"] if folder else [])]:
+        path = top / name
+        parts.append(f"### {name}\n\n" + (path.read_text(encoding="utf-8").strip() if path.is_file() else "Missing."))
+    if user_facing:
+        parts += ["### impeccable and emil-design-eng\n\n"
+                  "impeccable owns layout, type, colour, states and copy: shape before building, then audit and polish. "
+                  "Run emil-design-eng's checklist inside one batched inspection, with at most one more round. "
+                  "Invoke it with a specific interaction task; preserve press feedback, deliberate easing and restraint.",
+                  "### frontend\n\n" + roles.ROLES["frontend"][2].removeprefix(roles.BUILD).strip()]
+    audit = sync._synced_text(".codex/skills/test-audit/SKILL.md", "skills/test-audit/SKILL.md")
+    parts.append("### test-audit\n\n" + audit.split("## Authoring gate\n", 1)[1].split("## Junk patterns", 1)[0].strip())
+    return "\n\n".join(parts), owned
 
 
 def _existing_tests(top: Path, scope: list[str]) -> str:

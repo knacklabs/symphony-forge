@@ -10,11 +10,13 @@ from pathlib import Path
 
 import pytest
 
-from conftest import ROOT, _install, machine_cores
+from conftest import ROOT, _install, machine_cores, machine_runners
 from test_close import env  # noqa: F401
 from test_codex_worker import sdk_data  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import finish, hold_agents, lane_adapter, make_work, person, start  # noqa: F401
+
+pytestmark = pytest.mark.platform
 
 STORY = "admit-by-load"
 BUSY = "This machine is busy (load 1.5 per core), so this work round waits until it is under 1.5."
@@ -86,6 +88,7 @@ def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person,
     repo = env.repo
     _release(env, adopted, lane_adapter)
     machine_cores(repo, 8)
+    machine_runners(repo)
     pytest_args = ["-m", "pytest", "-q", "-p", "no:cacheprovider", "probe"]
     argv = [sys.executable, *pytest_args, "-n", "4"]  # a fixed count the budget must still cap
     command = subprocess.list2cmdline(argv) if os.name == "nt" else shlex.join(argv)
@@ -99,6 +102,10 @@ def test_2_a_worker_s_test_runs_use_at_most_two_processes(env, tmp_path, person,
     # The worker runs tests the sanctioned way, then calls pytest -n auto directly; each probe
     # test records the xdist process it ran in.
     record = ("_bin = pathlib.Path({bin!r})\n"
+              # Bare forge test selects the item's tests, so the worker must
+              # touch its probe rather than depend on an unrestricted run.
+              "_probe = pathlib.Path({cwd} or os.getcwd()) / 'probe/test_probe.py'\n"
+              "_probe.write_text(_probe.read_text('utf-8') + '\\n# Worker test change\\n', encoding='utf-8')\n"
               "_out = __import__('subprocess').run([{python!r}, str(_bin / 'forge'), 'test'], cwd={cwd},\n"
               "    env=dict(os.environ, PROBE_OUT=str(_bin / 'via-forge')), capture_output=True, text=True)\n"
               "_direct = __import__('subprocess').run([{python!r}, *{args!r}, '-n', 'auto'], cwd={cwd},\n"

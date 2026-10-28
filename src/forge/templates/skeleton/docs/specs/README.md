@@ -22,3 +22,20 @@ Every spec says how success will be measured, or save and confirm refuse it:
 ```
 
 A field may wrap onto indented lines.
+
+State each rule once, on one line with an ID, under `## Behaviour`. Validation (VAL), UAT and
+acceptance (AC) lines name the rule that they check by its ID and say how it is checked. They
+do not say the rule again:
+
+```markdown
+## Behaviour
+
+- R-1: An invoice goes out by email when it is issued.
+
+## Acceptance criteria
+
+- AC-1 checks R-1: issue a test invoice; the client's inbox has it within a minute.
+```
+
+A decision that changes a rule names its ID. `forge decision accept` then lists every spec
+line that names that ID, so you update them in the same change.

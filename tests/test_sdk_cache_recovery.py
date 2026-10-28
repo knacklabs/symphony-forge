@@ -14,6 +14,7 @@ from test_codex_worker import PIN, ROOT
 STORY = "sdk-cache-after-restart"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("damage", ["missing-python", "half-installed"])
 def test_1_cached_sdk_recovers_without_manual_cleanup(tmp_path, damage):
     # Existing worker tests start with a healthy shared cache. Exercise pytest's

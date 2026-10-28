@@ -10,7 +10,7 @@ app.use(helmet());
 app.enableCors({ origin: config.corsOrigins, credentials: true });  // a named list, never '*'
 ```
 
-- The global `ValidationPipe` from api.md strips and rejects unknown fields.
+- Each request schema is `.strict()`, so `ZodValidationPipe` from api.md rejects unknown fields.
 - `@nestjs/throttler` limits sign-in, password reset and other sensitive routes (for example 10
   requests a minute); `/health` skips it.
 - Production serves HTTPS only.
@@ -22,6 +22,8 @@ app.enableCors({ origin: config.corsOrigins, credentials: true });  // a named l
 - Every service method that reads or changes data takes the caller's account and scopes its query
   to what that account may see. A role check alone is not enough: an order id from someone else's
   account must still come back as 404.
+- In an app that has `libs/organisations`, scope every query to `organisationId` on the caller's
+  principal. Guard each admin action with `@AdminOnly()`; it still needs the organisation scope.
 - Tokens carry ids and roles only, never personal data.
 - If the app ever stores its own API keys, keep only a hash and show the key once.
 

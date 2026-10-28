@@ -3,21 +3,29 @@
 How the standards page's test rules look on this stack. Read it when your task adds tests or
 changes how they run.
 
+Tests check behaviour at the boundary the user touches, never internal record formats or private
+calls. A behaviour-preserving refactor must not break a test; use the owning boundary instead.
+
 ## The one test command
 
-The root `package.json` runs everything CI needs:
+The root `package.json` runs the lint, type-check, API, hook and browser tests:
 
 ```json
-{ "scripts": { "test": "npm run lint --workspaces --if-present && npm run typecheck --workspaces --if-present && npm run test --workspaces --if-present && playwright test" } }
+{ "scripts": { "test": "corepack pnpm run lint && corepack pnpm run typecheck && corepack pnpm run test:api && corepack pnpm run test:hooks && corepack pnpm run test:browser" } }
 ```
 
-Once the app has a database, use a test-only Compose project that starts a fresh database and
-the running API and web app. Set forge.toml's `test` to install dependencies and Playwright's
-browser, start the app, and run the whole root test script. Then run `forge sync` to write this
-into the one `tests` check:
+Nx builds and type-checks `apps/web` and `apps/api`. The API tests use a real Postgres database.
+The browser tests use Playwright against the running web app.
+
+Run `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm test` for lint, type checks and the API, hook
+and browser tests. Set forge.toml's `test` to `node scripts/test.mjs`. This script installs
+dependencies and builds the apps. It runs
+`COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec playwright install --with-deps chromium`.
+It starts a fresh test database and app, then runs the root test script. Run `forge sync` to write
+this into the one `tests` check:
 
 ```toml
-test = "npm ci && npx playwright install --with-deps chromium && docker compose -p forge-tests -f compose.test.yml down --volumes && docker compose -p forge-tests -f compose.test.yml up -d --build --wait && npm test"
+test = "node scripts/test.mjs"
 ```
 
 ## End-to-end tests
@@ -73,7 +81,7 @@ export default defineConfig({
 ```
 
 The test command above starts the app with Compose. If the app starts outside Compose, configure
-Playwright's `webServer` instead. A client's generated `tests` job has a 10-minute cap; split a
+Playwright's `webServer` instead. A Node client's generated `tests` job has a 30-minute cap; split a
 suite that outgrows it into groups within the same check.
 
 For an existing app, add a browser test for each new or changed flow. An untouched old flow gets

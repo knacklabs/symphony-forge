@@ -22,7 +22,7 @@ NOW = datetime(2026, 11, 18, 12, tzinfo=timezone.utc)
 def setup(repo, gh, monkeypatch, history):
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
     client(repo, gh, history)
-    gh.respond("api", "--paginate", stdout="")
+    gh.respond("api", "--include", stdout="HTTP/2.0 200 OK\n\n")
     gh.respond("api", "user", stdout="builder\n")
     gh.respond("api", "repos/{owner}/{repo}/actions/runs", stdout='{"workflow_runs": []}')
     # An unfinished story retains a part older than the six-week window.
@@ -49,11 +49,12 @@ def reads(calls):
         sum("open" in call for call in lists),
         sum(any(arg.startswith("merged:") and not arg.startswith("merged:*") for arg in call) for call in lists),
         sum(any(arg.startswith("merged:*") for arg in call) for call in lists),
-        sum(call[:2] == ["api", "--paginate"] for call in calls),
+        sum(call[:2] == ["api", "--include"] for call in calls),
         sum("repos/{owner}/{repo}/actions/runs" in call for call in calls),
     )
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
 def test_1_next_reuses_github_until_each_data_lifetime_ends(repo, gh, monkeypatch, history):
     # Old contract refreshed all seven weeks and history each minute. The new
@@ -82,10 +83,11 @@ sys.exit(subprocess.run([{json.dumps(real_git)}, *sys.argv[1:]]).returncode)
 
     # Lifetimes are elapsed seconds from each fetch, not calendar boundaries.
     # The open/current-week lists live 60 seconds, schedules 600 seconds,
-    # and past weeks, older merges and known issues 86400 seconds.
+    # and past weeks and older merges 86400 seconds. A complete recent window
+    # extends the historical inventory without another whole-repo request.
     for seconds, expected in [(59, (0, 0, 0, 0, 0)), (60, (1, 1, 0, 0, 0)),
                               (599, (1, 1, 0, 0, 0)), (600, (0, 0, 0, 0, 1)),
-                              (86400, (1, 7, 1, 1, 1)), (86401, (0, 0, 0, 0, 0))]:
+                              (86400, (1, 7, 1, 0, 1)), (86401, (0, 0, 0, 0, 0))]:
         monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=seconds)).isoformat())
         before = len(gh.calls())
         read(repo)

@@ -20,7 +20,7 @@ ENABLE = "let-the-agent-merge"
 REFUSALS = {
     "disabled": ("forge merge is disabled by merge = \"human\" in the default branch's forge.toml.",
                  "the repo owner runs forge merge enable in their own terminal"),
-    "owner_only": ("Only the repo owner switches on agent merges, on {default}, from their own terminal.", "the repo owner runs forge merge enable on {default} in their own terminal"),
+    "owner_only": ("Only the repo owner switches on agent merges, on {default}, from a terminal outside Claude Code or Codex.", "the repo owner runs forge merge enable on {default} in a terminal outside Claude Code or Codex"),
     "enabled": ("The default branch's forge.toml already lets the agent merge.", "forge next"),
     "taken": ("The fix let-the-agent-merge holds other work, so Forge left it alone.", "finish or remove that fix, then forge merge enable"),
     "owner_merges": ("{item} changes the merge setting in forge.toml, so only the repo owner merges its pull request.", "the repo owner merges its pull request, then forge next"),
@@ -77,14 +77,17 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
         try:
-            checks.wait(worktree, item, head, config["checks"],
-                        branch=branch, progress=getattr(args, "wait_for_progress", False))
+            if config["test_place"] == "ci":
+                checks.wait(worktree, item, head, config["checks"],
+                            branch=branch, progress=getattr(args, "wait_for_progress", False),
+                            slot=getattr(args, "check_slot", None))
         except repo.Refused as error:
             if error.entry is not checks.REFUSALS["conflict"] or refreshed:
                 raise
             print("GitHub reports a clash. Forge will run close again, then retry the merge.", flush=True)
             close.close(argparse.Namespace(item=item, dismiss=None, because=None,
                         wait_for_progress=getattr(args, "wait_for_progress", False),
+                        check_slot=getattr(args, "check_slot", None),
                         land_rounds=getattr(args, "land_rounds", None),
                         pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
             return merge(args, refreshed=True)
@@ -127,6 +130,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                               "close again and retrying the merge.", flush=True)
                         close.close(argparse.Namespace(item=item, dismiss=None, because=None,
                                     wait_for_progress=getattr(args, "wait_for_progress", False),
+                                    check_slot=getattr(args, "check_slot", None),
                                     land_rounds=getattr(args, "land_rounds", None),
                                     pin_before=["close", item] if not hasattr(args, "land_rounds") else None))
                         return merge(args, refreshed=True)

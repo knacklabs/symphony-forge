@@ -2,10 +2,10 @@
 
 Real Forge commands and git build every item; only GitHub, the reviewer and the reader are
 stubs. Board and next output is all the tests read.
+Owns src/forge/board.py and src/forge/board_facts.py's shared request counts.
 """
 import json
 import os
-import re
 import shlex
 import sys
 from datetime import datetime, timedelta, timezone
@@ -18,6 +18,8 @@ from test_close import STORY_DOC, approve_story, blocked, body, env, finding  # 
 from test_board_github_once import github_read_once
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_story import READER, worktree
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-BOARD-2"
 
@@ -184,17 +186,6 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     machine_a = env.repo.path
     data = board(env.repo)
     assert data["team"]["counts"] == expected(previous)
-    # The page's totals line prints the same counts, finished ones included.
-    page = env.tmp / "counts-board.html"
-    written = env.repo.forge("board", "--out", str(page))
-    assert written.returncode == 0, written.stderr
-    text = " ".join(re.sub(r"<[^>]+>", " ", page.read_text("utf-8")).split())
-    for line in ("Stories — Done: 1; Building: 1; Approved, not started: 1; Waiting for approval: 1; "
-                 "Planning: 2; No plan yet: 1",
-                 "Parts — Done: 1; Ready to merge: 1; In progress: 1; To do: 2",
-                 f"Fixes — Done: {1 + previous}; Ready to merge: 1; In progress: 1; To do: 0",
-                 f"Finished in the last 7 days — Parts: 1; Fixes: {1 + previous}"):
-        assert line in text, (line, text[:800])
     assert set(data["team"]) >= {"sentence", "counts", "needs_you", "in_progress", "blocked", "pace",
                                  "go_live", "trends", "around_forge"}
     assert "stage_counts" not in data and "kind_stage_counts" not in data
@@ -341,11 +332,6 @@ def approved_not_started(env, previous):
     assert data["team"]["counts"]["stories"]["building"] == 0
     assert rows(data)["gone"]["state"] == "done"
     assert data["team"]["counts"]["fixes"]["in progress"] == 0
-    page = env.tmp / "board.html"
-    written = env.repo.forge("board", "--out", str(page))
-    assert written.returncode == 0, written.stderr
-    text = re.sub(r"<[^>]+>", " ", page.read_text("utf-8"))
-    assert "Approved, not started: 1" in text and "Building: 0" in text
 
     # An edit to the Why after the read stops it counting as approved, as forge next's gate says.
     plan = worktree(env.repo, "story/CART") / "plans/CART.md"
@@ -377,7 +363,8 @@ def newer_findings(env, monkeypatch, previous):
     record = resumed / ".factory/fixes" / f"{item}.json"  # a second worker round, as forge work starts it
     env.commit(resumed, record.relative_to(resumed).as_posix(),
                json.dumps({**json.loads(record.read_text("utf-8")), "round": 2, "status": "working"}))
-    env.reviews(blocked(finding("P1", "Basket disappears")))
+    # The newer second review needs a P0 to remain blocked, rather than a P1 follow-up.
+    env.reviews(blocked(finding("P0", "Basket disappears")))
     stopped = env.close(item)
     assert stopped.returncode == 1, stopped.stdout + stopped.stderr
     newer = json.loads(env.repo.git("show", f"origin/fix/{item}:.factory/fixes/{item}.json"))

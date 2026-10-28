@@ -14,13 +14,14 @@ from test_setup import _fresh_client, _version
 STORY = "FIX-CLIENT-SETUP-AND-MIGRATION"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", ["new", "adopt", "adopt with alternate path spelling",
                                   "previous adoption"])
 def test_1_init_and_sync_ship_setup_migration_and_advisory_pr_size(repo, gh, tmp_path, case):
     if case == "new":
         client, done = _fresh_client(repo, gh, tmp_path)
     elif case.startswith("adopt"):
-        done = repo.forge("init", "--test", "true", "--checks", "tests",
+        done = repo.forge("init", "--actions", "yes", "--test", "true", "--checks", "tests",
                           "--interfaces", "**/routes/**", "--approver", "Owner",
                           "--merger", "Owner")
         if case == "adopt with alternate path spelling":

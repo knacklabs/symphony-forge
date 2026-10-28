@@ -3,7 +3,7 @@
 Forge sends one JSON request after recording this driver's process id. The driver records the
 app-server and thread ids with Forge before it acts, emits progress as JSON lines, and stops the
 app-server if Forge closes stdin. A read, archive or attachment request runs no turn. A worker or
-cold-read turn may assign its chat to the main checkout's Codex project after start or resume.
+cold-read turn may assign its chat to the main checkout's Codex project after its first turn ends.
 A turn Codex ends as failed because the model is at capacity is sent again, up to three times,
 waiting twice as long each time, once Forge has the next turn on record as pending.
 """
@@ -72,6 +72,12 @@ class Client(CodexClient):
     speed_thread: str = ""
 
     def _coerce_notification(self, method, params):
+        if method == "thread/tokenUsage/updated" and isinstance(params, dict):
+            thread, turn = params["threadId"], params["turnId"]
+            # Resume reports the earlier turn's totals before this turn's notifications.
+            # Rate-limit and compaction updates can repeat usage without a model response.
+            self.usage_before_turn.setdefault((thread, turn), self.usage_by_thread.get(thread, {}))
+            self.usage_by_thread[thread] = params["tokenUsage"]["total"]
         # Settings receipts are thread-scoped, so the SDK's turn stream omits them.
         if (method == "thread/settings/updated" and isinstance(params, dict)
                 and self.speed_thread and params.get("threadId") == self.speed_thread):
@@ -83,6 +89,8 @@ class Client(CodexClient):
         return super()._coerce_notification(method, params)
 
     def start(self) -> None:
+        self.usage_by_thread = {}
+        self.usage_before_turn = {}
         with STARTING:
             super().start()
             SERVER.append(self._proc.pid)
@@ -244,7 +252,9 @@ def main() -> int:
                     except JsonRpcError as retry_error:
                         reason = retry_error.message
                 if resumed is None:
-                    if reason == (f"session {request['thread']} is archived. Run "
+                    if "already has an active writer" in reason:
+                        emit(fresh="another program holds the earlier conversation")
+                    elif reason == (f"session {request['thread']} is archived. Run "
                                   f"`codex unarchive {request['thread']}` to unarchive it first."):
                         emit(fresh="the earlier Codex conversation was archived")
                     else:
@@ -257,35 +267,6 @@ def main() -> int:
         thread = resumed or codex.thread_start(**settings)
         emit(thread=thread.id, continued=resumed is not None)
         RECORDED.acquire()
-        try:
-            matches = set()
-            cursor = None
-            root = Path(request["root"]).resolve()
-            while True:
-                page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
-                for project in page["data"]:
-                    if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
-                            or not project["id"] or not isinstance(project.get("roots"), list)):
-                        continue
-                    for path in project["roots"]:
-                        path = path.get("path") if isinstance(path, dict) else path
-                        if isinstance(path, str) and path and Path(path).resolve() == root:
-                            matches.add(project["id"])
-                            break
-                cursor = page.get("nextCursor")
-                if not cursor:
-                    break
-            if len(matches) == 1:
-                project_id = next(iter(matches))
-                client._request_raw("thread/metadata/update", {
-                    "threadId": thread.id, "projectId": project_id})
-                emit(project=project_id)
-            else:
-                emit(project_skipped="no matching project" if not matches else
-                     "several matching projects")
-        except Exception as error:
-            emit(project_skipped=f"Codex could not update the chat project: {error}. "
-                 "Check Codex and try again")
         if resumed is None:
             thread.set_name(request["name"])
         prompt = (request["prompt"] if resumed is not None else
@@ -305,7 +286,9 @@ def main() -> int:
                 if isinstance(payload, ItemCompletedNotification):
                     items.append(payload.item)
                 elif isinstance(payload, ThreadTokenUsageUpdatedNotification):
-                    usage = params["tokenUsage"]["last"]
+                    before = client.usage_before_turn[(thread.id, turn.id)]
+                    usage = {key: count - before.get(key, 0)
+                             for key, count in params["tokenUsage"]["total"].items()}
                 elif isinstance(payload, TurnCompletedNotification):
                     error = payload.turn.error
                     busy = payload.turn.status.value == "failed" and overloaded(
@@ -315,6 +298,37 @@ def main() -> int:
                     # The same final text as the SDK's TurnResult.final_response.
                     emit(status=payload.turn.status.value, error=error and error.message,
                          text=_final_assistant_response_from_items(items), usage=usage)
+            if attempt == 0:
+                # Drain turn events before another request so live progress cannot wait on it.
+                try:
+                    matches = set()
+                    cursor = None
+                    root = Path(request["root"]).resolve()
+                    while True:
+                        page = client._request_raw("project/list", {"cursor": cursor} if cursor else {})
+                        for project in page["data"]:
+                            if (not isinstance(project, dict) or not isinstance(project.get("id"), str)
+                                    or not project["id"] or not isinstance(project.get("roots"), list)):
+                                continue
+                            for path in project["roots"]:
+                                path = path.get("path") if isinstance(path, dict) else path
+                                if isinstance(path, str) and path and Path(path).resolve() == root:
+                                    matches.add(project["id"])
+                                    break
+                        cursor = page.get("nextCursor")
+                        if not cursor:
+                            break
+                    if len(matches) == 1:
+                        project_id = next(iter(matches))
+                        client._request_raw("thread/metadata/update", {
+                            "threadId": thread.id, "projectId": project_id})
+                        emit(project=project_id)
+                    else:
+                        emit(project_skipped="no matching project" if not matches else
+                             "several matching projects")
+                except Exception as error:
+                    emit(project_skipped=f"Codex could not update the chat project: {error}. "
+                         "Check Codex and try again")
             if not busy or attempt == RETRIES:
                 break
             wait = RETRY_WAIT * 2 ** attempt

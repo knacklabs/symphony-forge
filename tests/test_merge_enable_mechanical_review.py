@@ -16,6 +16,8 @@ from test_merge_enable import (FIX, OWNER_MERGES, enable, owner, raw,
                                worktree)  # noqa: F401
 from test_setup import _fresh_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "enable-no-review"
 REFUSED = ("The merge switch must change only forge.toml's top-level merge setting to agent; "
            "it contains another change.\n"
@@ -78,7 +80,8 @@ def test_1_merge_enable_checks_the_final_published_change_runs_tests_and_waits_f
     stopped = enable(client)
     assert stopped.returncode != 0, stopped.stdout + stopped.stderr
     assert not client.review_calls()
-    assert (client.tmp / "tested.txt").read_text("utf-8") == "passed"
+    assert not (client.tmp / "tested.txt").exists()
+    assert "tests" in stopped.stdout + stopped.stderr
     published = [call for call in client.gh_calls("pr") if "--body-file" in call]
     assert "Review: clean, 0 dismissed, 0 advice." in body(published[-1])
     check_published_change()
@@ -136,6 +139,10 @@ def test_3_other_fix_with_the_same_purpose_still_runs_model_review(owner):
                               done_when='The default branch\'s forge.toml sets merge = "agent".')
     owner.reviews(blocked(finding("P1", "Keep the normal review")))
     closed = owner.close(item)
-    assert closed.returncode != 0
+    # An ordinary fix still invokes the model; its P1 stops at the review limit.
+    assert closed.returncode == 1, closed.stdout + closed.stderr
+    assert "reached the round limit with open findings" in closed.stderr
     assert "Keep the normal review" in closed.stderr
+    assert "Keep the normal review" in body(owner.gh_calls("pr", "edit")[-1])
+    assert "blocks the merge" in body(owner.gh_calls("pr", "edit")[-1])
     assert len(owner.review_calls()) == 1

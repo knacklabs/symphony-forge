@@ -17,7 +17,9 @@ from conftest import _install
 from test_codex_worker import ROOT, _codex_repo, _sent, _stub, _toml, sdk_data  # noqa: F401
 from test_story import DOC, new_story, setup
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
-from test_live_adopt import ANSWERS
+from test_live_adopt import OLD_ANSWERS
+
+pytestmark = pytest.mark.platform
 
 STORY = "codex-hook-trust"
 GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
@@ -214,19 +216,23 @@ def test_3_reader_turns_trust_forge_s_own_hooks_and_stop_on_a_changed_one(
         line = [line for line in text.splitlines() if line.startswith(("1. ", "2. "))][-1]
         notes.write_text(text.replace(line, f"{line}\n   Disposition: cut"), encoding="utf-8")
 
-    # The next round resumes the reader's conversation, again with each hook's current hash.
+    # Round two resumes with current hook hashes, then waits for the owner's read choice.
     dispose()
     monkeypatch.setenv("STUB_CODEX_RESUME", "1")
     before = len(_stub(calls))
     again = repo.forge("read", "SHOP")
 
-    assert again.returncode == 0, again.stdout + again.stderr
+    assert again.returncode == 1 and "One more round, split or accept?" in again.stderr, (
+        again.stdout + again.stderr)
     [resume] = _sent(calls, "thread/resume")
     assert resume["threadId"] == "thr-stub-1" and resume["sandbox"] == "read-only"
     assert resume["config"]["hooks"] == _trusted(calls, before)
     assert len(_sent(calls, "thread/start")) == 1
 
     # A foreign untrusted hook stops a round that would resume: neither the resume nor a turn.
+    chosen = repo.forge("read", "SHOP", "--resolve", "more", "--reason",
+                        "The owner wants one more read")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     dispose()
     text, named = _edits(forge_own)[2]
     hooks_file.write_text(text, encoding="utf-8")
@@ -243,7 +249,7 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
         repo, gh, tmp_path, monkeypatch, sdk_data, lifecycle, claude_session):
     client = _new_repo(repo, gh, tmp_path)
     if lifecycle == "new":
-        made = repo.forge("init", cwd=client)
+        made = repo.forge("init", "--actions", "yes", cwd=client)
         assert made.returncode == 0, made.stdout + made.stderr
         started = repo.forge("fix", "start", "Hook trust", "--done", "Forge hooks are trusted",
                              "--kind", "mechanical", cwd=client)
@@ -257,7 +263,7 @@ def test_5_new_and_upgraded_clients_trust_forge_hooks_and_refuse_changed_or_fore
         repo.git("push", "-q", "-u", "origin", "main", cwd=client)
         made = subprocess.run(
             ["uv", "tool", "run", "--from",
-             "git+https://github.com/knacklabs/symphony-forge@v1.2.2", "forge", "init", *ANSWERS],
+             "git+https://github.com/knacklabs/symphony-forge@v1.2.2", "forge", "init", *OLD_ANSWERS],
             cwd=client, capture_output=True, text=True, encoding="utf-8", timeout=120)
         assert made.returncode == 0, made.stdout + made.stderr
         repo.git("merge", "-q", "--ff-only", "fix/adopt-forge", cwd=client)

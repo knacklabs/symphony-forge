@@ -3,10 +3,10 @@ permission for a fix to go over the fix limit. Also the story-doc reading that w
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +42,8 @@ REFUSALS = {
                  'forge fix start "<why>" --done "<done when>" --slug <name>'),
     "amend_lines": ("A new done-when needs one line of text and a one-line reason.",
                     'forge fix amend {fix} --done "<done when>" --because "<why>"'),
+    "amend_choice": ("Use either --done to replace the Done-when or --append to add to it.",
+                     'forge fix amend {fix} --append "<text>" --because "<why>"'),
 }
 
 
@@ -75,11 +77,11 @@ def cell_list(cell: str) -> list[str]:
     return [item for item in items if item.lower() not in ("", "none", "—", "-")]
 
 
-def approval_hash(text: str) -> str:
+def approval_hash(text: str) -> str | None:
     """The hash an approval binds: "What changes for you" and "Done when", nothing else."""
-    doc = sections(text)
-    both = f"{doc.get('What changes for you', '')}\n{doc.get('Done when', '')}"
-    return hashlib.sha256(both.encode("utf-8")).hexdigest()
+    from forge import story
+
+    return story.approval_hash(text)
 
 
 # --- branches, checkouts and the default branch ----------------------------------------
@@ -99,6 +101,28 @@ def branch_item(branch: str, top: Path) -> tuple[str, dict[str, Any]] | None:
     return None
 
 
+def restore_default_settings(item: str, top: Path, state: dict[str, Any], default: str) -> None:
+    """Close keeps the default branch's settings unless this item's Done-when permits edits."""
+    if state.get("kind") in ("migrate", "adopt") or settings_allowed(item, top, state) or not git(
+            "diff", f"origin/{default}...HEAD", "--", "forge.toml", cwd=top):
+        return
+    head = git("show", "HEAD:forge.toml", cwd=top)
+    current = tomllib.loads(head)
+    incoming = tomllib.loads(git("show", f"origin/{default}:forge.toml", cwd=top))
+    current.pop("version", None)
+    incoming.pop("version", None)
+    if current == incoming:
+        return
+    pin = re.search(r"^version[ \t]*=.*$", head, re.M)[0]
+    git("restore", f"--source=origin/{default}", "--staged", "--worktree", "--", "forge.toml", cwd=top)
+    path = top / "forge.toml"
+    text = re.sub(r"^version[ \t]*=[^\r\n]*", lambda _: pin, path.read_bytes().decode("utf-8"),
+                  count=1, flags=re.M)
+    path.write_bytes(text.encode("utf-8"))
+    if repo.commit_state(f"Keep {default}'s settings", "forge.toml", top=top):
+        print(f"Kept {default}'s settings in forge.toml and this branch's version pin.", flush=True)
+
+
 def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
     """Only this item's own Done-when can permit forge.toml edits."""
     done = state.get("done_when", "")
@@ -108,7 +132,10 @@ def settings_allowed(item: str, top: Path, state: dict[str, Any]) -> bool:
         text = (top / "plans" / f"{match['key']}.md").read_text(encoding="utf-8")
         row = rows(sections(text)).get(match["task"], {})
         covers = {int(n) for n in re.findall(r"\d+", row.get("Covers", ""))}
-        parsed = story.parse(text)
+        try:
+            parsed = story.parse(text)
+        except ValueError as exc:
+            refuse(story.REFUSALS["bad_doc"], doc=f"plans/{match['key']}.md", problem=exc)
         done = "\n".join(story.item(parsed, n, True) for n in parsed["done"] if n in covers)
     return "forge.toml" in done
 
@@ -266,7 +293,7 @@ def start(args: argparse.Namespace) -> None:
     if not match or not match["task"]:
         refuse(REFUSALS["bad_task"], item=item)
     key, task = match["key"], match["task"]
-    from forge import story  # story imports this module's helpers
+    from forge import design, story  # story imports this module's helpers
     main = main_ref()
     top, doc_rel, story_branch = repo.root(), f"plans/{key}.md", f"story/{key}"
     published = story.plan_ref(top, key)
@@ -294,6 +321,7 @@ def start(args: argparse.Namespace) -> None:
         story.parse(text, repo.root(), key=key)
     except ValueError as exc:
         refuse(story.REFUSALS["bad_doc"], doc=doc_rel, problem=exc)
+    design_folder = design.check(top, text, source, required=False)
     notes = show(source, notes_rel)
     if story.rounds(notes, show(source, state_rel)):
         checkout = story.stories_here(repo.root()).get(key)
@@ -371,7 +399,7 @@ def start(args: argparse.Namespace) -> None:
     if assigned and (login := github_login(top)) and assigned.casefold() != login.casefold():
         print(f"This part was assigned to {assigned}; starting it anyway.", file=sys.stderr)
     base = stacked or start_base(main, key, tasks[task])
-    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel) if show(source, rel) is not None]
+    carry = (source, [rel for rel in (doc_rel, notes_rel, state_rel, design_folder) if rel and show(source, rel) is not None]
              ) if source != base else None
     # Earlier approvals keep their agreed parts, including ones not started yet.
     state = {"part_line_limit": approval["part_line_limit"]} if approval.get("part_line_limit") else {}
@@ -491,8 +519,11 @@ def _one_line(text: str) -> bool:
     return bool(text.strip()) and "\n" not in text.strip()
 
 
-def require_prototype_design(top: Path) -> None:
-    """Unsigned-prototype UI gate: DESIGN fills this hook with the approved-design check."""
+def require_prototype_design(top: Path, base: str = "HEAD") -> None:
+    """Unsigned-prototype UI fixes wait for the accepted design decision."""
+    from forge import design
+
+    design.require_prototype(top, base)
 
 
 def fix_start(args: argparse.Namespace) -> None:
@@ -515,12 +546,12 @@ def fix_start(args: argparse.Namespace) -> None:
     fix_kind = args.kind
     if prototype and fix_kind is None:
         refuse(REFUSALS["fix_kind"])
-    if prototype and fix_kind == "ui":
-        require_prototype_design(top)
     parent = branch_item(repo.current_branch(top), top)
     if parent:
         require_active(parent[0], top)
     base = "HEAD" if parent and not _merged(main, parent[0]) else main
+    if prototype and fix_kind == "ui":
+        require_prototype_design(top, base)
     state = {"kind": "fix", "why": why, "done_when": done, "base": git("rev-parse", base),
              "fix_kind": fix_kind or "mechanical"}
     if base == "HEAD":
@@ -531,7 +562,7 @@ def fix_start(args: argparse.Namespace) -> None:
     print(f"Started fix {name} on fix/{name} in {path}")
     if name != slug:
         print(f"Fix name {slug} is already taken; using {name}.")
-    print(f"Next: forge work {name}")
+    print(f"Next: forge {getattr(args, 'next', 'work')} {name}")
 
 
 def allow_large(args: argparse.Namespace) -> None:
@@ -551,18 +582,24 @@ def allow_large(args: argparse.Namespace) -> None:
 
 
 def amend(args: argparse.Namespace) -> None:
-    if not (_one_line(args.done) and _one_line(args.because)):
+    if (args.done is None) == (args.append is None):
+        refuse(REFUSALS["amend_choice"], fix=args.item)
+    text = args.done if args.done is not None else args.append
+    if not (_one_line(text) and _one_line(args.because)):
         refuse(REFUSALS["amend_lines"], fix=args.item)
     from forge import close  # close imports story, which imports this module
     top = close._worktree(args.item)
     state = repo.read_state(args.item, top) or {}
+    old = state.get("done_when", "")
+    new = text.strip() if args.done is not None else f"{old} {text.strip()}"
+    print(f"Old Done-when:\n{old}\nNew Done-when:\n{new}", flush=True)
     # The old text and the reason stay in the record; the next review reads only done_when.
     state.setdefault("amendments", []).append(
-        {"done_when": state.get("done_when", ""), "because": args.because.strip(), "at": repo.now()})
-    state["done_when"] = args.done.strip()
+        {"done_when": old, "because": args.because.strip(), "at": repo.now()})
+    state["done_when"] = new
     # The review reads Ruling: lines from the branch's commits, so it drops findings on the old text.
-    ruling = (f'Ruling: Done-when changed from "{state["amendments"][-1]["done_when"]}" to '
-              f'"{state["done_when"]}" because {args.because.strip()}; judge the new text.')
+    ruling = (f'Ruling: Done-when changed from "{old}" to '
+              f'"{new}" because {args.because.strip()}; judge the new text.')
     repo.commit_state(f"Change the fix's done-when\n\n{ruling}",
                       repo.write_state(args.item, state, top), top=top)
     print(f"Fix {args.item} is now done when: {state['done_when']}")
@@ -715,10 +752,11 @@ COMMANDS = [
      "args": [(('reason',), {})], "position": 120,
      "listing": '| `forge fix allow-large "<reason>"` | Records the human\'s permission for a fix to go over the fix limit |'},
     {"words": "fix amend", "run": "amend", "changes_state": True,
-     "help": "Replace a fix's done-when, keeping the old text and the reason in its record",
-     "args": [(('item',), {"metavar": "FIX"}), (('--done',), {"required": True, "metavar": "DONE_WHEN"}),
+     "help": "Show the old and new Done-when, then replace it with --done or add text with --append",
+     "args": [(('item',), {"metavar": "FIX"}), (('--done',), {"metavar": "DONE_WHEN"}),
+              (('--append',), {"metavar": "TEXT"}),
               (('--because',), {"required": True, "metavar": "WHY"})], "position": 125,
-     "listing": '| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Replaces a fix\'s done-when; the old text and the reason stay in its record, and the next review judges the new text |'},
+     "listing": '| `forge fix amend <fix> --done "<done when>" --because "<why>"` | Shows the old and new Done-when before it writes. Use --append "<text>" instead of --done to add text. The old text and reason stay in its record |'},
 ]
 
 GROUP_HELP = {

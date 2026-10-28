@@ -1,4 +1,9 @@
-"""Closing work keeps the shared minute cache; next fetches default settings once per run."""
+"""Closing work keeps the minute cache; next refreshes default and peer branches once per run.
+
+Includes shared fetch reuse for src/forge/migration_warnings.py.
+src/forge/nextstep.py must avoid redundant checks reads after a complete empty open-PR list.
+Commit resolution in src/forge/repo.py must also work through the counting git.cmd launcher.
+"""
 import json
 import os
 import shutil
@@ -12,6 +17,9 @@ from conftest import _install
 from test_board_github_once import lists, row
 from test_close import body, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_prototype_build import _accept_build_decision
+
+pytestmark = pytest.mark.platform
 
 STORY = "keep-pr-cache"
 NOW = datetime(2026, 10, 14, 15, tzinfo=timezone.utc)
@@ -33,6 +41,9 @@ sys.exit(subprocess.run([{json.dumps(real)}, *sys.argv[1:]]).returncode)
 def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env, monkeypatch, previous):
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
     client(env, previous)
+    if not previous:
+        # The fresh client is an unsigned prototype, so its app change needs an accepted build request.
+        _accept_build_decision(env.repo)
     item, where = env.start_fix()
     git_calls = count_git(env.repo)
     warmed = env.repo.forge("next", "--json")
@@ -79,6 +90,9 @@ def test_1_close_from_a_worktree_keeps_cached_lists_until_the_minute_expires(env
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
 def test_2_next_fetches_default_settings_once_and_fetches_again_on_the_next_run(env, monkeypatch, previous):
     client(env, previous)
+    if not previous:
+        # Keep the fixture within the new-client prototype gate before closing its app change.
+        _accept_build_decision(env.repo)
     monkeypatch.setenv("FORGE_NOW", NOW.isoformat())
     # Both ready-to-merge advice and the demo check read the default branch's settings.
     env.commit(env.repo.path, "Dockerfile", "FROM scratch\n")
@@ -97,7 +111,10 @@ def test_2_next_fetches_default_settings_once_and_fetches_again_on_the_next_run(
         assert item in shown.stdout and "ready" in shown.stdout, shown.stdout
         calls = git_calls()[before[0]:]
         fetches = [call for call in calls if call[0] == "fetch"]
-        assert fetches == [["fetch", "-q", "origin", "main"]], fetches
+        # The old contract fetched only main. Migration warnings now need peer
+        # branches too; that one snapshot must also supply default settings.
+        assert fetches == [["fetch", "-q", "--prune", "origin",
+                            "+refs/heads/*:refs/remotes/origin/*"]], fetches
         assert len(calls) <= 180
         assert len(env.gh.calls()) - before[1] <= 12
         assert elapsed < (90 if os.name == "nt" else 30), elapsed

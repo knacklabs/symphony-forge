@@ -12,4 +12,7 @@
 **/*.p12
 **/*.pfx
 **/node_modules
+**/.nx
 **/dist
+**/.venv
+**/__pycache__

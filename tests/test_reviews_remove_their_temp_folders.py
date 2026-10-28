@@ -13,12 +13,18 @@ import pytest
 
 from test_close import CLEAN, FAILED, env  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-REVIEWS-LEAVE-THEIR-FORGE-REVIEW-TEMPORA"
 
 # Answers as the stub Autoreview does, after what $REVIEW_DO says: "hang" records its id and
 # waits to be stopped; "lock" leaves a folder in the review tree that nobody may write to.
+# Test audit: keep the cleanup and ownership assertions at the real close boundary. These
+# failures came from spawning the stub outside the Windows engine adapter, not from cleanup.
+# Run the stand-in in the helper's process, as the pinned helper runs its engine calls.
+# The existing cases cover the regression; no extra test or production seam is needed.
 HELPER = '''#!{python}
-import os, subprocess, sys, threading
+import os, runpy, threading
 do = os.environ.get("REVIEW_DO", "")
 if do == "hang":
     with open(os.environ["AUTOREVIEW_STUB"] + ".hanging", "w", encoding="utf-8") as out:
@@ -29,7 +35,7 @@ if do == "lock":
     open("locked/inner/file", "w").close()
     os.chmod("locked/inner", 0o500)
     os.chmod("locked", 0o500)
-sys.exit(subprocess.run([sys.executable, {stub!r}, *sys.argv[1:]]).returncode)
+runpy.run_path({stub!r}, run_name="__main__")
 '''
 
 
@@ -135,6 +141,10 @@ def test_4_the_next_review_removes_a_leftover_folder_older_than_a_day(env, temp)
     for folder in (old, recent):
         (folder / "tree").mkdir(parents=True)
         (folder / "tree" / "file").write_text("left behind\n", "utf-8")
+    # Git pack files are read-only on Windows. A read-only parent also makes
+    # the same cleanup error observable on POSIX, where unlink ignores file mode.
+    os.chmod(old / "tree" / "file", stat.S_IREAD)
+    os.chmod(old / "tree", stat.S_IREAD | stat.S_IEXEC)
     two_days_ago = time.time() - 2 * 24 * 3600
     os.utime(old, (two_days_ago, two_days_ago))
 

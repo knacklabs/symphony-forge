@@ -12,6 +12,7 @@ from test_close_holds_after_three_blocked_reviews import client_item
 from test_close_test_runs_wait_in_line import Close, ONE, SUITE, _fix, _release, _running, _with_test_command
 from test_worker import install_claude
 from test_last_task_records_story_outcome import github_merge
+from test_upgrade_command import Upgrade
 
 STORY = "FIX-WHERE-TIME-WENT"
 CATEGORIES = {"building", "own_tests", "reviewing", "fixing_findings", "waiting_for_ci",
@@ -36,7 +37,7 @@ def queued_first_close(env, item, where):
     machine_cores(env.repo, 4)
     log = env.tmp / "runs.log"
     held = subprocess.Popen([sys.executable, str(env.repo.bin / "forge"), "test"], cwd=where,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                             encoding="utf-8")
     waiting = None
     try:
@@ -69,7 +70,7 @@ def queued_first_close(env, item, where):
 def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_history(
         env, tmp_path, previous, monkeypatch):
     # Review reports are third-party inputs; Forge itself must retain and classify the history.
-    item, where = client_item(env, tmp_path, previous)
+    item, where = client_item(env, tmp_path, previous, part=True)
     if not previous:
         # Init starts a prototype; the owner moves its fetched default branch to live.
         live = tmp_path / "live-default"
@@ -81,52 +82,52 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
         env.repo.git("push", "-q", "origin", "main", cwd=live)
         env.repo.git("fetch", "-q", "origin", "main")
         env.repo.git("merge", "--no-edit", "origin/main", cwd=where)
-    if previous:
-        # Upgrading an old adoption also changes the installed generated files.
-        allowed = env.repo.forge("fix", "allow-large", "Upgrade the earlier adoption in this fix", cwd=where)
-        assert allowed.returncode == 0, allowed.stderr
     install_claude(env.repo)
     version = env.repo.forge("--version").stdout.split()[-1]
     suite = env.tmp / "suite.py"
     suite.write_text(SUITE.format(tmp=env.tmp.as_posix()), "utf-8")
     command = f'"{sys.executable}" "{suite}"'
-    env.commit(where, "forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
+    # Close now restores main's settings; install the coordinator's test command there.
+    env.repo.git("merge", "--ff-only", "origin/main")
+    Upgrade(env, tmp_path).on_main("forge.toml", f'version = "{version}"\nstage = "live"\nworkers = "claude"\n'
+               'test_place = "local"\n'
                'checks = ["tests", "forge-pr-check"]\n'
                'models.lite = { model = "sonnet", effort = "medium" }\n'
+               'models.build = { model = "sonnet", effort = "medium" }\n'
                + f'test = {json.dumps(command)}\n')
+    env.repo.git("fetch", "-q", "origin", "main")
+    env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     if previous:
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stderr
         env.commit(where, "app.py", "print('upgraded client configuration')\n")
     for number in (1, 2, 3):
         env.commit(where, "app.py", f"print('round {number}')\n")
-        if number == 3:  # a frozen clock: the stuck stop below adds no owner wait
-            monkeypatch.setenv("FORGE_NOW", datetime.now(timezone.utc).isoformat())
-        worked = env.repo.forge("work", item)
-        if number == 3 and worked.returncode == 1:
-            # Two rounds left the same finding, so the worker is stuck; the owner keeps the tool for one
-            # more round at once.
-            assert "Two rounds in a row left the review finding" in worked.stderr, worked.stderr
-            chosen = env.close(item, "--resolve", "same", "--reason", "One more round")
+        if number == 3:
+            # The owner grants one further review after the review stop in round two.
+            # Give this earlier choice no elapsed wait; the later stop below owns the 30 seconds.
+            first_wait = next(event for event in reversed(records(env.repo, "events.jsonl"))
+                              if event["event"] == "owner wait start" and event.get("reason") == "review loop")
+            monkeypatch.setenv("FORGE_NOW", first_wait["at"])
+            chosen = env.close(item, "--resolve", "more", "--reason", "One more round")
             assert chosen.returncode == 0, chosen.stdout + chosen.stderr
-            worked = env.repo.forge("work", item)
-        monkeypatch.delenv("FORGE_NOW", raising=False)
+            monkeypatch.delenv("FORGE_NOW")
+        worked = env.repo.forge("work", item)
         assert worked.returncode == 0, worked.stdout + worked.stderr
         title = "Basket disappears" if number < 3 else "Basket loses quantities"
-        # Harm 3 in round 3 keeps the any-file hold by the bar.
-        env.reviews(blocked({**finding("P1", title, "app.py"),
-                             **({"body": "Gain 3, Work 2, Harm 3\nEvidence"} if number == 3 else {})}))
+        # P1s at the bar retain the blocked-history contract at the round limit.
+        env.reviews(blocked({**finding("P1", title, "app.py"), "body": "Gain 4, Work 1, Harm 2\nSaving loses basket contents."}))
         if number == 1:
             queued_first_close(env, item, where)
         else:
             closed = env.close(item)
             assert closed.returncode == 1, closed.stdout + closed.stderr
-    # app.py was introduced on this branch, so the separate any-file hold applies before round 4.
+    # The new P1 in the owner's extra round records another stop before review four.
     env.commit(where, "app.py", "print('attempt another review')\n")
     closed = env.close(item)
     assert closed.returncode == 1, closed.stdout + closed.stderr
     assert len(env.review_calls()) == 3
-    assert "narrow the part, split it, or accept" in closed.stderr
+    assert "One more round, split or accept?" in closed.stderr
     held = row(env.repo, item)
     assert set(held["time_breakdown"]) == CATEGORIES
     for category in ("building", "own_tests", "fixing_findings", "waiting_in_line", "waiting_for_owner"):
@@ -149,6 +150,11 @@ def test_1_looping_item_retains_findings_ci_give_up_owner_wait_and_pull_request_
                      if event["event"] == "owner wait start" and event.get("reason") == "review loop")
     wait_started = datetime.fromisoformat(loop_wait["at"])
     monkeypatch.setenv("FORGE_NOW", (wait_started + timedelta(seconds=30)).isoformat())
+    config = env.repo.path / "forge.toml"
+    Upgrade(env, tmp_path).on_main("forge.toml", config.read_text("utf-8").replace(
+        'test_place = "local"', 'test_place = "ci"'), "Leave accepted changes to CI")
+    env.repo.git("fetch", "-q", "origin", "main")
+    env.repo.git("merge", "-X", "theirs", "--no-edit", "origin/main", cwd=where)
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     # Acceptance in src/forge/close.py must retain the historical commit of a review still on this branch.
     accepted = env.close(item, "--resolve", "accept", "--reason", "The owner accepts this version")
@@ -377,8 +383,11 @@ def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(
 
 
 def test_9_closes_without_another_worker_turn_keep_separate_review_rounds(env):
-    item, where = env.start_fix(round=1)
-    env.reviews(blocked(finding("P1", "Basket disappears", "app.py")))
+    item, where = env.start("SHOP/T1", "task/SHOP-T1", ".factory/stories/SHOP/tasks/T1.json",
+                            {"round": 1}, {"app.py": "print('saved')\n"})
+    # Keep two blocked reviews without another worker; the second P1 stops for the owner.
+    env.reviews(blocked({**finding("P1", "Basket disappears", "app.py"),
+                         "body": "Gain 4, Work 1, Harm 2\nSaving loses basket contents."}))
     first = env.close(item)
     assert first.returncode == 1, first.stderr
     env.commit(where, "app.py", "print('attempt to keep basket')\n")

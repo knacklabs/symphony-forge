@@ -15,7 +15,7 @@ def _client(repo, gh, tmp_path):
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    made = repo.forge("init", cwd=client)
+    made = repo.forge("init", "--actions", "yes", cwd=client)
     assert made.returncode == 0, made.stderr
     return client
 
@@ -70,7 +70,9 @@ def test_2_new_client_keeps_their_words_and_gets_guarded_demo_data(repo, gh, tmp
                  "Otherwise it refuses, logs why and inserts nothing",
                  "the app tables already hold rows. Point DATABASE_URL at an empty demo database, "
                  "or empty it, then start the app again",
-                 "`npx prisma migrate deploy` before `node dist/main.js`",
+                 # pnpm replaces npx; migrations still precede the root server command.
+                 "`COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` "
+                 "before `corepack pnpm run start:prod`",
                  "await app.get(DemoDataService).loadIfAllowed(); await app.listen(port);"):
         assert rule in demo, rule
     assert ("Shared seed data stays out of tests, the demo loader's too: demo data is allowed on "

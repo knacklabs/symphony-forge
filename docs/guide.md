@@ -16,7 +16,7 @@ or the coordinating session's `reader` subagent when the other tool is unavailab
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.0.0
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.23
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -70,28 +70,67 @@ exact next command. The same text appears when a Claude Code or Codex session st
 
 ### A new client project
 
+New clients get this flow at init; existing clients get the same guide after upgrade and sync.
+
 Start with FDE discovery: ask about the customer's job, current workaround, its cost and the
-evidence. Choose the smallest working prototype that tests the riskiest part of that problem.
+evidence. Start with a canvas that shows the app's screens.
 A salesperson can lead at first; a developer can take over from `docs/product/DISCOVERY.md` and
 the answers in `docs/product/BRIEF.md`. Ask each build-changing question when it first matters,
 one at a time, and record the answer and who gave it. If a requested feature does not help test
 the problem, say why and offer to note it for after sign-off.
 
-Build and demo the prototype through `forge fix start`, `forge work` and `forge close`. A prototype
+Make each app's design from the whole brief: its purpose, users, records, fields, choice-list
+options and key flows. Run impeccable's init when PRODUCT.md is missing. Use impeccable and
+emil-design-eng to shape and review the design. Make a Claude Design artifact with a shadcn design
+system and named shadcn components. On a Codex-only host without artifact tools, use HTML artboards
+in the repo. Keep the canvas available to show the customer and for sign-off review. New clients
+get this process at init; existing clients can use the brief and design they have after upgrade and
+sync. Client sign-off does not require a root DESIGN.md, SCREENS.md or CHECKS.md, or a specific
+`Things it keeps track of` heading.
+Before sign-off, run impeccable's critique and polish and the emil-design-eng checklist. The owner
+or FDE can approve the canvas with `forge decision new prototype-design` and
+`forge decision accept prototype-design --by "<name>"`.
+
+The customer can sign off on the canvas alone. A working prototype needs an FDE request to prove
+something the canvas cannot, such as real data or speed. Record it with `forge decision new prototype-build`.
+The owner accepts it with `forge decision accept prototype-build --by "<name>"`.
+Build and demo the prototype only after that acceptance, through `forge fix start`, `forge work` and `forge close`. A prototype
 fix started before sign-off can exceed the usual fix size and change an interface; it still gets
 tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
-`forge next` shows which required answers are still open. Resolve those, then have the whole
-prototype and answers strictly reviewed before the customer is asked: write the record with
-`forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
-`forge decision accept`, which runs the review and either names the gaps or says you can now ask
-the customer's named person for sign-off.
-The customer's named person approves the demo and the quoted answers; fill in their reply and run
-`forge decision accept` again to record it.
+`forge next` shows which required answers are still open. Its light rounds prove the demo steps,
+security and data boundaries, with `[models.light_review]`. Full proof is due at sign-off.
+Resolve the answers, then run the sign-off checks before the customer is asked. Write the record
+with `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
+`forge decision accept`. Forge checks the copied Answers section and full test run, then reviews
+the canvas against the whole brief. A working prototype also gets one strict whole-product review;
+a canvas-only sign-off does not need that review. If the checks pass, Forge says you can ask the
+customer's named person for sign-off.
+The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
+`email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
+to record it. Put each demo step and its test under `## Proof` for a working build, and settled
+choices under `## Decisions`.
+
+Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
+run on main is green. Its completeness review must pass after judging the screens against the whole
+brief, including its purpose, users, records, fields, choices and key flows. It needs no separate
+screen list. Missing screens, fields,
+choice-list options or flows hold sign-off. When a precondition is missing, the refusal lists every
+gap and the next action for each. An existing client can sign off after upgrade with the brief and
+design it has; no prototype design files are required for this gate.
+The completeness review uses `claude-opus-5-5` at high, independent of `[models.design]`.
+Without Claude it uses `gpt-6.1-sol` at high and reports the fallback.
+Fix gaps, then retry `forge decision accept client-signoff`.
+A canvas-only sign-off needs no working build. A working prototype gets one strict whole-product
+review with no serious findings.
+Forge reuses each passed result while what it checked stays unchanged.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
 use `forge roadmap add` when planning from a confirmed spec. Promotion from a fix keeps its
 existing route: its roadmap entry must already be committed in the fix's branch. In a client
 repo, trying either command early tells you to build and demo the prototype and run `forge next`.
+Every new story carries forward the available canvas, Proof and Decisions into
+`## Proven by the prototype`. The plan and cold read treat this as settled evidence and cover
+only new work or production risks. Start from the prototype canvas or a newer design approved with the plan.
 Forge's own repo keeps its existing story flow. For the full sign-off contract, see the
 [prototype sign-off spec](specs/prototype-signoff.md) and
 [decision 0095](decisions/0095-prototype-before-stories.md).
@@ -102,9 +141,64 @@ See the [command list](commands.md) for every Forge command.
 
 You never run the hook commands yourself: git, the host hooks and CI call them.
 
+`forge board` opens the board as a live page on this computer. It serves the page on 127.0.0.1
+with a per-run token in the address, so only this computer can open it, and the page refreshes by
+itself when the work changes. Press Ctrl-C to stop it. `forge board --json` prints the current
+work as JSON, and `--out <path>` writes every item's facts, finished ones included, as JSON.
+
 ## How a story runs
 
-In a client repo, finish the prototype review and customer sign-off above before starting here.
+When a plan adds a feature to a TypeScript or Python starter app, the planner names its plural,
+singular and fields. The worker's first step runs `forge task feature`; you never type it or
+make technical choices. Every `--field` value is single-quoted, for example:
+
+```sh
+forge task feature clients --one client --field 'name:text'
+forge task feature jobs --one job --field 'name:text' --field 'description?:long-text' --field 'status:status(planned|active|done)' --field 'client?:link(clients)' --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date' --field 'contactEmail?:email' --field 'billable:yes-no'
+```
+
+The command copies the installed starter's projects feature with the plan's fields, including
+its organisation checks, change history and permissions. Admins can view, create, edit, delete
+and restore; members can view, create and edit and never see deleted items. The plan can change
+the roles in one permission mapping per feature. Fields can be text, long text, number, money,
+date, yes or no, email, a status list or a link to one other feature's item; `?` makes one
+optional, and a text field is required for the name. Workers add other kinds by hand. New repos
+get this guidance at init; existing repos get it on upgrade and sync, with no app code changes.
+An existing app from the current starter can use the command. A non-starter or an older starter
+missing required parts gets a refusal naming what is missing and no file changes; the worker
+builds the feature by hand in that app's layout.
+
+Only starter apps get an MCP server inside the API at `/mcp`, marked with `mcp = "/mcp"`
+in `services.toml`. Each feature has six tools: `<feature>_search`, `<feature>_get`,
+`<feature>_create`, `<feature>_update`, `<feature>_delete` and `<feature>_restore`.
+An admin adds an agent account with a role on the Members screen, creates its key (shown
+once), and can revoke it at once. Agents use that account's permissions and write change
+history as that account. Delete and restore stay off until an admin turns on the feature's
+Agent access switch; the role still applies. Each key has a limit of 120 calls a minute per
+running API copy, and each call has a 10-second time limit. The feature command writes the
+one tools file, `libs/<plural>/server/src/<plural>.tools.ts` (Python
+`apps/api/app/<plural>/tools.py`), where developers can add tools or hide defaults with `hide`.
+Following [Anthropic's tool guidance](https://www.anthropic.com/research/writing-tools-for-agents)
+and the [MCP tools specification, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/server/tools),
+every tool has a feature-prefixed name, a description of what it does, when to use it and
+related tools, clear snake-case arguments such as `project_id`, strict input and output
+schemas from the feature's schemas, one permission, and all four annotations (`readOnlyHint`,
+`destructiveHint`, `idempotentHint`, `openWorldHint`). Search takes `query`, filters, `limit`
+(20 by default, up to 100) and `cursor`, returns `next_cursor`, the total matching count and
+how to narrow. Results give useful fields with names beside ids, `response_format` `concise`
+by default or `detailed` on request, `structuredContent` with an `outputSchema`, and a short
+summary. Tool failures use `isError`, a message with a fix and an example where useful,
+`kind`, `retryable` and `retry_after_seconds`, never HTTP statuses or traces. Unknown tools
+and malformed requests are protocol errors; missing or revoked keys are HTTP 401 before a
+tool call. A timeout is retryable `unavailable`, and timeout and rate-limit errors say how
+many seconds to wait. A create accepts `idempotency_key`; update, delete and restore are
+safe to repeat. One contract case in each starter checks every tool, including hand-made
+tools. New repos get the guide text at init; existing repos get it on upgrade and sync,
+with no MCP server, `services.toml` change or app files. In an older starter without MCP
+support, the feature command builds the feature without tools and says so.
+
+In a client repo, finish the canvas checks and customer sign-off above before starting here.
+A working prototype also needs its strict whole-product review.
 
 1. Start from the problem you want to solve. A spec is optional; if using a confirmed spec,
    add its stories with `forge roadmap add <spec>` as before.
@@ -112,6 +206,14 @@ In a client repo, finish the prototype review and customer sign-off above before
    changes for the client, why, when it's done, the tasks, any new moving parts and the risks.
    Its own branch adds a missing roadmap entry. The title seeds Why; write the problem,
    today's workaround and its cost there, without a separate spec read or confirmation.
+   Before the cold read, design each added screen or changed flow with the process above.
+   Save the artboards, images, SCREENS.md and CHECKS.md in `docs/design/<KEY>/`.
+   End `## What changes for you` with `Design: docs/design/<KEY>/ (<tree id>)`.
+   Get the tree id with `git rev-parse HEAD:docs/design/<KEY>` after committing the folder.
+   One plan approval covers that exact design. A folder change needs a new tree id and approval.
+   Small changes to existing screens that add no screen and change no flow use `Design: none (<why>)`.
+   Backend-only stories need no canvas. Earlier approved stories keep working.
+   The build applies any app theme already in place and follows the approved story design, including its components and fields.
 3. `forge read <KEY>` runs an independent cold read. Answer every finding (cut, defer or keep),
    amend the doc, then run `forge read <KEY>` again; the same reader reads the whole doc again,
    and this repeats until a round finds nothing.
@@ -212,6 +314,10 @@ use `Grill · <story or spec> · <name>`. A later turn continues the item's conv
 can. For conversations you start yourself, names such as `Review`, `Explore` and `Debug` make
 them easier to find in the Codex app.
 
+If another program holds the earlier Codex conversation, Forge retries once. If it is still
+held, work starts a new conversation with the whole brief and says why in one line.
+New repos get this behavior at init. Existing repos get it on upgrade.
+
 ### Notes, worker questions and quick answers
 
 Use `forge work <item> --note "<text>"` when one sentence of guidance would help the worker in
@@ -271,27 +377,49 @@ GitHub has not yet determined whether this head can merge.
 If GitHub refuses a pull request body update, close stops after one attempt, including during a
 history retry. Wait for a rate limit to reset, or fix the reported problem, then retry the command.
 
-Close runs `forge.toml`'s `test` command before the review, and the pull request's `tests` check
-runs it again. When that check runs the full suite, ask your agent to set `fast_test` too: a
-command close runs instead of `test`, with `{base}` replaced by the merge base with the default
-branch, so it runs only the tests related to the changed files plus fast checks (for example
-`npx vitest run --changed {base} && npm run lint`). The `tests` check keeps running the full
-`test`, and new repos leave `fast_test` unset. `forge doctor` says when it is set.
-The `tests` check runs the suite as parallel groups and passes only when every group passes:
-six groups when `test` calls pytest directly (not through make or tox) and the repo lists
-pytest-split, otherwise one.
+Each change's related tests, lint and type checks run once, in the repo's chosen test place.
+In a local-test repo, set `fast_test` in `forge.toml` when close needs a narrower command; it
+runs instead of `test`, with `{base}` replaced by the merge base with the default branch (for
+example `npx vitest run --changed {base} && npm run lint`). In a CI-test repo, the pull request's
+`tests` check runs the related tests and close waits for it. The nightly full run covers the rest.
+New repos leave `fast_test` unset. `forge doctor` says when it is set.
+The generated `forge.yml` runs one `tests` job with `forge test --change`. Set `groups = 4` in
+`forge.toml` to run four parallel jobs with any test runner. Each job runs the tests related to the
+pull request. Put `{group}` and `{groups}` in the `test` or `fast_test` command where the runner
+expects its shard number and total, for example `vitest run --shard={group}/{groups}`. Forge fills
+these values for each job and uses `1` for both outside CI. Without a shard flag, each job repeats
+the same related tests; this is correct but slower. For a direct pytest command with pytest-split,
+Forge adds the split options automatically.
+
+Init writes `groups = 1` for new and adopted repos. An upgrade adds no `groups` setting, so an
+existing repo with a direct pytest command and pytest-split keeps its six groups. Each group then
+runs its share of the related tests through `forge test --change`.
+The required `tests` check passes only when every job passes.
 New repos get this at init and earlier adopted repos after upgrading Forge and syncing; the
 required check keeps its `tests` name, so branch protection doesn't change.
-For a client with a `windows-*` runner, the generated check runs the configured test command
-again once if it fails. A second failure fails the check. New clients get this at init; existing
-clients get it after upgrading Forge and running `forge sync`. Windows keeps PowerShell as its
-test shell, so configured PowerShell syntax and `.ps1` scripts still work. Linux, Mac and the trusted
-`forge-pr-check` gate keep their commands. Forge's own Windows full-suite job instead reruns
-each failed pytest test once and gives the known slow tests longer timeouts on Windows.
-When the pytest selection would cover more than a third of the repo's Python test files
-(shared test inputs select them all), close skips the local run, says so in one line, and
-relies on the pull request's required checks. `forge test` still runs its tests. New repos
-get this from init; existing repos get it on upgrade.
+In CI mode, `forge.yml` also runs `forge test --full` once a day on the default branch and supports
+`workflow_dispatch`. Start a full run with `gh workflow run forge.yml --ref <default>`. In local
+mode, `forge next` says when the daily run is due; run `forge test --full` in the main checkout
+when the machine is quiet. A green full run on the latest default-branch commit gates release tags
+and client sign-off. Everyday merges do not wait for it.
+A failed scheduled or manual full run appears in `forge next` with its failed test names.
+On a `windows-*` runner, the generated related-test job wraps `forge test --change` in PowerShell
+and retries it once after a failure. The command runs the configured test command with the same
+shell as a local close on Windows. Use `pwsh -File "<path>"` to run a PowerShell script. A second
+failure fails the check; Linux and Mac run it once, and the trusted `forge-pr-check` gate keeps
+its command. New clients get this at init; existing clients get it after upgrading Forge and
+running `forge sync`. Forge's own Windows full-suite job instead reruns each failed pytest test
+once and gives the known slow tests longer timeouts on Windows.
+Close runs the full related-test selection, even when it covers more than a third of the Python
+test files. Shared test inputs select every test. Bare
+`forge test` keeps worker runs bounded: when the pytest selection would cover more than a third
+of the repo's Python test files, it runs only the part's Tests column or the fix's touched test
+files, plus `always_test`, and says "The nightly full run covers the rest." With no named tests
+it runs only `always_test`. An explicit `forge test --pytest <base>` keeps the full selection.
+In a grouped pytest run, each `always_test` entry runs in one group; the other groups do not fail
+because they did not run it. A missing file or node still fails. A mark or `-k` filter that removes
+an entry is not reported as missing in a grouped run.
+New repos get this bound from init; existing repos get it on upgrade.
 
 Other workflows can use the same rule. Init and `forge sync` ship `.forge/records-only`.
 After checkout, add this one step: `- {id: forge-records, uses: ./.forge/records-only}`.
@@ -360,12 +488,16 @@ You never edit `forge.toml` by hand. Ask your coding agent to upgrade Forge, or 
 other setting such as the workers or the test command; it asks you first, with options, then
 makes the change in a fix like any other.
 
+Before an upgrade, wait until no Forge runs are in progress anywhere on the machine.
+Let workers, plan reads, tests and close finish first. An install during a close can mix two releases.
+
 To upgrade, the agent asks which release you want, recommending the newest, then runs
 `forge upgrade <release>` (or `forge upgrade` for the newest) from the default branch with
 nothing uncommitted. The command starts a fix, changes only `version` in `forge.toml`, installs
 that release, has it rewrite Forge's generated files for Claude Code and Codex, and closes the
 fix. Close's last line says who merges, as described in Merging a ready item. When the command
 refuses, follow its `Next:` line; running it again picks up where it stopped.
+If the machine's lanes still have runs, the command names them and asks you to wait.
 
 A repo pinned to a release older than the command upgrades once with
 `uvx --from git+https://github.com/knacklabs/symphony-forge@vX.Y.Z forge upgrade vX.Y.Z`.
@@ -376,13 +508,15 @@ For Forge's maintainers:
 
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Start a full run on the merge commit with `gh workflow run forge-next.yml --ref main`, and
-   confirm it is green on Linux, Mac and Windows before tagging. Pull requests and merges to
-   main run only the Linux test groups; they do not prove the other platforms ready for release.
+2. Start one Linux full run with `gh workflow run forge.yml --ref main`.
+   Confirm it is green. This workflow posts the full-run status that sign-off and release read.
+   Start the Windows platform run with `gh workflow run forge-next.yml --ref main`.
+   Confirm it is green before you tag the release.
 3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.
-   The tag push runs the full matrix again; confirm that run is green too.
+   The tag push runs the Windows checks again or reuses passed proof for the same tree.
+   Confirm that run is green too.
 4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
 
 What the switch to this Forge removed from the repo, and where to find it, is in

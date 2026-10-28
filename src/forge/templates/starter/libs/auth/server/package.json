@@ -1,0 +1,19 @@
+{
+  "name": "@app/auth-server",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "@app/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@app/auth-contracts": "workspace:*",
+    "@app/core-server": "workspace:*",
+    "@app/organisations-contracts": "workspace:*"
+  }
+}

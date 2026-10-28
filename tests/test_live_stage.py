@@ -10,7 +10,7 @@ import pytest
 from test_close import CLEAN, GREEN, env  # noqa: F401  (env is a fixture)
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401  (sdk_data is a fixture)
 from test_setup import _fresh_client
-from test_story import DOC, GRILL, claude_plan, hook, ready, setup
+from test_story import DOC, GRILL, approved_constitution, claude_plan, hook, ready, setup
 from test_worker import calls, install_claude
 
 STORY = "FORGE-LIVE-1"
@@ -53,6 +53,8 @@ def test_1_live_or_prototype_is_one_setting(repo, gh, tmp_path, case, lines, gat
         repo.git("add", "-A")
         repo.git("commit", "-q", "-m", "The client signed off")
         repo.git("push", "-q", "origin", "main")
+    if case in ("live", "unset", "signed off"):
+        approved_constitution(repo)
     made = _story(repo)
     if case == "other stage":
         assert made.returncode == 1
@@ -67,6 +69,7 @@ def test_2_live_repo_gets_no_prototype_rules(request, repo, rule):
     """In a live repo a story is created and approved, and no prototype rule applies."""
     if rule == "story and approval":
         _setup(repo, 'repo = "client"\nstage = "live"\n')
+        approved_constitution(repo)
         ready(repo, "SHOP")  # the story gate lets it through with no sign-off on record
         assert "sign-off" not in repo.forge("next").stdout  # forge next's approval step
         recorded = hook(repo, claude_plan(request.getfixturevalue("claude_payload"), DOC))

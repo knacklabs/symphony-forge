@@ -9,7 +9,7 @@ import subprocess
 
 import pytest
 from test_aha_prepare import HOSTS, _synced
-from test_proto_signoff import SOL_HIGH, _client, _decision
+from test_proto_signoff import SOL_HIGH, _client, _decision, _green_full_run
 
 STORY = "FORGE-AHA-1"
 
@@ -23,7 +23,7 @@ def _initialized(repo, gh, tmp_path) -> str:
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    made = repo.forge("init", cwd=client)
+    made = repo.forge("init", "--actions", "yes", cwd=client)
     assert made.returncode == 0, made.stderr
     copies = {(client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
               for host in HOSTS}
@@ -85,19 +85,26 @@ def test_5_reactions_are_kept_after_each_demo(skill):
 
 
 def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
-    # Old contract: the agent drafted a sign-off email and the review ran only at accept, after
-    # the reply. New contract (owner, 2026-09-29): read-back call, then accept before any reply
-    # (the strict review alone), then the salesperson asks in their own way, then record and accept.
-    section = _prototype(skill)
+    # Canvas-first replaces the old strict-review-only instruction with a completeness check
+    # and a whole-product review only for a working build. Both still precede the customer's reply.
+    # Test audit: protect the shipped pre-reply sequence, which could otherwise ask for approval
+    # too soon. Existing runtime sign-off tests do not check the guide delivered by init/sync.
+    # Keep this owner-boundary guide check and real accept command; add no seam or duplicate test.
+    section = " ".join(_prototype(skill).split())
     steps = (
         "Before anyone asks for sign-off, hold one read-back call",
-        "goes through every answer on the answers page: our defaults, the agent's guesses and "
-        "the topics marked later",
+        "goes through every item from `forge decision open` and every answer on the answers page: "
+        "our defaults, the agent's guesses and the topics marked later",
         "Settle every open must-answer topic in that call",
-        "Then run the strict sign-off review before anyone asks for sign-off:",
+        "Then write",
         "`forge decision new client-signoff`",
         'run `forge decision accept client-signoff --by "<name>"` before any reply is recorded',
-        "it runs the strict review alone and stops",
+        "Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md`",
+        "Its completeness review must pass",
+        "A canvas-only sign-off needs no working build.",
+        "A working build also gets one strict whole-product review with no serious findings.",
+        "Forge reuses passed results while what they checked stays unchanged.",
+        "Before the customer's reply, the command runs these checks and stops without accepting sign-off.",
         "Once it passes, tell the salesperson to ask the customer's named person for sign-off "
         "their own way.",
         "When they bring the reply back, record it in `approved_via` and `approved_on`",
@@ -116,11 +123,13 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
     fix, answers, queue = signoff
     for topic, source in examples.items():
         answers = re.sub(rf"(- {topic}: .+) \([^,()]+, ", rf"\1 ({source}, ", answers)
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers)
+    brief = fix / "docs/product/BRIEF.md"
+    brief.write_text(brief.read_text("utf-8").split("## Answers", 1)[0] + answers, encoding="utf-8")
     repo.git("commit", "-qam", "Record the recap reply", cwd=fix)
     _decision(fix, answers, via="", on="")
     queue.write_text(json.dumps(
         [{"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}]))
+    _green_full_run(repo)
     reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert reviewed.returncode == 0, reviewed.stderr
     assert "The sign-off review passed" in reviewed.stdout

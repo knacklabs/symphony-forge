@@ -16,6 +16,8 @@ from test_codex_worker import _started
 from test_fix_agent_runs_wait_in_line import _other_repo, _until
 from test_lanes_agents import alive, finish, hold_agents, make_work, start
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-LANES-1"
 
 
@@ -134,8 +136,10 @@ def check_worker_and_close_share_the_lane_and_dirty_tests_always_run(env, tmp_pa
     closing_home.mkdir()
     closing = Forge(other, env.gh, closing_home)
     cfg = (other.path / "forge.toml").read_text("utf-8")
-    closing.commit(other.path, "forge.toml", cfg + 'checks = ["tests", "forge-pr-check"]\n',
-                   "Name the client's CI checks")
+    # Named checks now imply CI tests; lane sharing exercises close's laptop mode.
+    closing.commit(other.path, "forge.toml",
+                   cfg + 'test_place = "local"\nchecks = ["tests", "forge-pr-check"]\n',
+                   "Run close tests on the laptop")
     configure(closing, server)
     item, folder = closing.start_fix({"app.py": 'print("close passed")\n'})
     processes = []
@@ -366,6 +370,11 @@ def check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monk
                "def test_current_app():\n    assert VALUE == 1\n")
     repo.write("tests/test_unrelated.py", "def test_unrelated():\n"
                "    assert False, 'unrelated test was selected'\n")
+    # One related file out of four stays below the broad-selection threshold,
+    # so this still proves dirty source runs rather than the item's fallback.
+    for number in range(2):
+        repo.write(f"tests/test_other_{number}.py", f"def test_other_{number}():\n"
+                   "    assert False, 'unrelated test was selected'\n")
     cfg = (repo.path / "forge.toml").read_text("utf-8")
     cfg += "test = " + json.dumps(shell([sys.executable, "-m", "pytest", "tests", "-q"])) + "\n"
     cfg += 'fast_test = "forge test --pytest {base}"\n'
@@ -381,13 +390,14 @@ def check_worker_picker_tests_dirty_code_even_with_only_docs_committed(env, monk
     assert "test_current_app" in result.stdout and "1 failed" in result.stdout
     assert "unrelated test was selected" not in result.stdout
     assert "exited with status 1" in result.stdout
-    # Dirty shared pytest settings must select the full suite, even with no dirty source.
+    # Shared inputs make the selection broad. The worker keeps its run bounded;
+    # the nightly full run covers the rest.
     (folder / "app.py").write_text("VALUE = 1\n", "utf-8")
     project = folder / "pyproject.toml"
     project.write_text(project.read_text("utf-8") + '\n[tool.pytest.ini_options]\naddopts = "-ra"\n',
                        "utf-8")
     result = repo.forge("test", cwd=folder)
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert "Shared test inputs changed" in result.stdout
-    assert "unrelated test was selected" in result.stdout
-    assert "1 failed, 1 passed" in result.stdout
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.count("The nightly full run covers the rest.") == 1, result.stdout
+    assert "No changed or module-related test files to run." in result.stdout
+    assert "unrelated test was selected" not in result.stdout

@@ -101,6 +101,17 @@ serious. Only Harm 4 or more can stop the work for such a note.
 The Harm 4 or 5 and Gain 5 stop rule comes first. Below that rule, Gain 3 holds work only at
 Harm 3 with Work 1 or 2.
 
+A note with `Case: rare` never stops the work, whatever its scores. A note that stops work
+must name a case in normal use. A security hole or data loss that any user can reach is normal use.
+
+From code review round two, the review checks each earlier finding and raises new findings only for P0s in normal use.
+A fix that breaks the main path is a P0. At the round limit, open findings below P0 need your choice.
+Accept puts them in Known issues as follow-ups with your reason.
+
+A worker can decline a finding as "not worth the code" with a reason in a commit message.
+Forge records it as a follow-up, even if no code changed. A P0 stays open.
+Review rules and recorded owner decisions settle a question for later readers and reviewers.
+
 ### Who decides
 
 - **The reader gives the scores.** The worker and the agent do not change a score.
@@ -125,24 +136,26 @@ Harm 3 with Work 1 or 2.
 
 ### When a loop stops
 
-Forge stops a change after three rounds only in two conditions:
+A fix gets one review round. A story part gets two. At the limit, open findings below P0 stop the change.
+Forge asks: "One more round, split or accept?" Close, land and work show the same question until you answer.
 
-1. A note at the bar comes back.
-2. A note with Harm 3 or more is open.
+One more round gives the worker one more attempt. Split moves the open findings to a follow-up fix.
+Accept puts them in Known issues as follow-ups with your reason.
+A merge of the default branch or a clean review does not clear an unanswered stop.
 
-Then Forge asks you a question. The question shows the open notes in one table, in the order of
-their scores. A note that an earlier release saved has no scores; then the question shows
-the notes as plain lines. It tells you the result of accept, of narrow, and of split.
+An open P0 returns to the worker. A P0 is a security hole, data loss or a broken main path.
+If the same P0 stays open for two worker rounds in a row, Forge stops with the stuck question.
+Work waits for your recorded choice of switch, same, narrow or split.
 
-If you do not answer a code review stop in 30 minutes, Forge can narrow the change. Forge does
-this only when each open note has Harm 1 or 2. A repo can set `stop_default = "off"` in
-`forge.toml`. Then Forge always waits for you.
+`forge land` runs at most one fix round, including across session handbacks. If findings, tests
+or checks still need a worker, land stops. A review stop exits with status 3 and prints the
+question. Record the choice with `forge close <item> --resolve <more|split|accept> --reason
+"<human's choice>"`, then run land again.
 
-The code review also stops at the third note in one area. An area is one function, or one
-file when the note is outside a function. The question names the area and proposes one
-structural change: cut the code, use one general rule, narrow that "Done when" item, or make the
-code fail closed. After your answer, a new note in that area stops the work only when it is at
-the bar and has Harm 3 or more.
+A cold read stops after round two when notes below P0 are still open, or when P0 notes are open
+in two rounds in a row. Forge asks: "One more round, split or accept?"
+Forge waits for your choice and never starts a third round by itself. Record your choice with
+`forge read <KEY or spec or decision> --resolve <accept|more|split> --reason "<human's choice>"`.
 
 A note from an earlier release of Forge has no scores. Forge judges that note as before, until
 the next read or review gives new scores.
@@ -167,18 +180,19 @@ builds the smallest working prototype that tests it. A salesperson can start thi
 developer can take over using the discovery notes and answers page. To start one, follow the
 [prototype checklist](docs/start-a-prototype.md).
 
-| Stage | What happens | Who | Where it's kept |
-|---|---|---|---|
-| 1. Find the problem | The agent interviews you (and, through you, the customer) about what really happens today, and writes it as a problem card: the job, today's workaround, what it costs, who feels it | Agent asks, you answer | `docs/product/DISCOVERY.md` |
-| 2. Pick an option | Two to four options, always including "don't build" and "smallest slice", each with an estimate of when it pays back | Agent proposes, you choose | `forge spec payback` |
-| 3. Build the prototype | The agent asks each question when it first affects the build, records the answer and who gave it, confirms specs as they emerge, and builds the smallest working slice through fixes | Agent, with you and the customer | `docs/product/BRIEF.md`, `docs/specs/`, `forge spec save`, `forge read`, `forge spec confirm`, `forge fix start`, `forge work`, `forge close` |
-| 4. Demo and review | The customer tries the prototype; a strict review checks the whole prototype and its answers before sign-off | Client and agent | Demo address, `forge decision accept` |
-| 5. Client sign-off | The customer's named person approves the demo and answers; no client story or roadmap entry can be created before this | Client approves, agent records | `forge decision new client-signoff`, `forge decision accept` |
-| 6. Plan the stories | Start from a problem in the plan's Why; the story's branch adds it to the roadmap. Specs stay optional. Build the smallest usable slice first, with no setup-only stories | Agent plans, one story read loop and one approval | `forge story new`, or `forge roadmap add` for a confirmed spec |
-| 7. Build | Each task runs in its own branch and folder, built by a Codex worker (or Claude, if the project chooses) with its tests | Agent | `forge task start`, `forge work` |
-| 8. Check | An automatic review plus green tests; anything serious goes back to the worker | Agent | `forge close` |
-| 9. Ship | The pull request is merged, and the change goes out through your project's own deployment | You merge, or the agent if you allow it | GitHub, `forge merge` |
-| 10. Close the loop | The last task's merge records the story's outcome, and on the spec's check date its success measure is measured and recorded | Agent, with your numbers | `forge merge --outcome`, `forge spec measure` |
+1. **Ideas and client notes.** You give the agent the client notes or an idea, and it saves each note in `docs/context/` and reads them all before it asks anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
+2. **Brief.** The agent writes `docs/product/BRIEF.md` from your notes and asks only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
+3. **Canvas design.** The agent makes the screens on a design canvas for the client to click through in Play mode, and you or the FDE approve the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
+4. **Sign-off.** The client's named person approves the canvas and the answers, and you choose Build now or Later. You can say: "The client approved it; build now" or "The client approved it; build it later".
+5. **Build.** The agent plans stories and fixes, builds each one with its tests and a review, and merges it. You can say: "Build this next: <idea>" or "What is ready to merge?".
+6. **Deploy on Mainline.** When you ask, the agent sets up Mainline and deploys dev, and a person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
+7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
+
+**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. The agent fixes the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and you choose: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
+
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks you, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
 
 Before sign-off, the prototype uses fixes even when the work is larger than an ordinary fix.
 Each still goes through tests, review and a pull request. The agent confirms specs during this
@@ -216,7 +230,7 @@ where things are in one sentence and gives the exact next step.
 ### Install
 
 ```sh
-uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.13"
+uv tool install --python 3.11 "git+https://github.com/knacklabs/symphony-forge@v1.2.23"
 ```
 
 Check it worked with `forge --version`. Each project pins the Forge version it uses, and Forge
@@ -269,6 +283,7 @@ Your agent runs these for you. You'll see them in its messages.
 
 | Command | What it does |
 |---|---|
+| `forge start "<idea>"` | Chooses a fix, a plan, discovery or the idea list |
 | `forge next` | Says where things stand and gives the exact next step |
 | `forge board` | Opens a plain-English page showing the work and its progress |
 | `forge story new` | Starts a new story and its plan |

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fullrun.py\tNot done: A failed full run opens a fix that names the failing tests.\tFORGE-TESTPLACE-1/FULLRUN",
+      "kind": "bug",
+      "path": "src/forge/fullrun.py",
+      "line": 63,
+      "text": "Not done: A failed full run opens a fix that names the failing tests.",
+      "from": "blocking",
+      "item": "FORGE-TESTPLACE-1/FULLRUN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tInitialize origin/HEAD before running the full suite in Actions\tFORGE-TESTPLACE-1/FULLRUN",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 277,
+      "text": "Initialize origin/HEAD before running the full suite in Actions",
+      "from": "blocking",
+      "item": "FORGE-TESTPLACE-1/FULLRUN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

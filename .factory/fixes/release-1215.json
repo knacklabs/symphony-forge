@@ -1,0 +1,32 @@
+{
+  "allow_large": "Release version bump: the version is recorded in eight code files; no behaviour changes",
+  "base": "e012b9860190381dc9837139d057ae973357f92c",
+  "branch": "fix/release-1215",
+  "done_when": "Forge's version is 1.2.15 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "73557e61e7757dedf4377245522f780047aede14b5282cf3d2f78f31a6ae6152",
+    "changed": "39225781096b80978dca9f9b40b401109a81a1254376d48c56cc1692d0f237b7",
+    "commit": "25b04fe0845c93e977242e686411d15c01f1d426",
+    "dismissals": [],
+    "findings": [],
+    "id": "55861a09-7737-4418-b53d-fb5c0c282b52",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T05:00:56.053944+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T05:02:59.415097+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients need v1.2.15 now: a merge commit in a linked worktree across a Forge pin change can turn their whole repo bare, so no git command works"
+}

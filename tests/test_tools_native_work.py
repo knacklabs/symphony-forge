@@ -3,6 +3,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,7 @@ MODELS = {"claude": ('[models.build]\nmodel = "sonnet"\neffort = "medium"\n'
                     '[models.lite]\nmodel = "gpt-6-mini"\neffort = "medium"\n')}
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted"])
 @pytest.mark.parametrize("tool", ["claude", "codex"])
 def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path, tool, history):
@@ -48,7 +50,11 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
     # An earlier-adopted repo may have no [models] table: built-in models apply.
     models = MODELS[tool] if history == "new" else ""
     repo.write("forge.toml", f'version = "{version}"\nrepo = "client"\n{setting}\n'
+                             'test_place = "ci"\nchecks = ["tests"]\n'
                              f'test = "pytest -q"\n{models}')
+    # Exercise Windows settings bytes on every host, including the later main merge.
+    config = repo.path / "forge.toml"
+    config.write_bytes(config.read_text("utf-8").replace("\n", "\r\n").encode("utf-8"))
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "BOARD"}]}))
     repo.write(".factory/fixes/settings.json", json.dumps({
         "kind": "fix", "branch": "fix/settings", "status": "working",
@@ -111,7 +117,13 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert checkout.resolve() == folder.resolve()
         assert "Start a new worker subagent with" in given.stdout
         assert calls(claude_log) == [] and not (repo.bin / "codex-app-server.jsonl").exists()
-        assert "subagent" in repo.forge("next").stdout
+        next_result = repo.forge("next")
+        assert next_result.returncode == 0, next_result.stderr
+        next_lines = next_result.stdout.splitlines()
+        held_line = next_lines.index(
+            "The session holds a round for BOARD/HELP; wait for its subagent to finish.")
+        assert next_lines[held_line + 1].startswith("The worker is building it, ")
+        assert next_lines[held_line + 2].startswith("Next: forge handback BOARD/HELP --round ")
         board = repo.forge("board", "--json")
         assert board.returncode == 0, board.stdout + board.stderr
         [part] = [child for entry in json.loads(board.stdout)["items"]
@@ -128,7 +140,12 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         nudged = handback("BOARD/HELP", number, "Built it.")
         assert nudged.returncode == 0, nudged.stdout + nudged.stderr
         assert "Send this to subagent w1, then hand back again:" in nudged.stdout
-        assert "Commit your work on this branch first." in nudged.stdout
+        assert "commit your work on this branch first, then" in nudged.stdout.lower()
+        assert ("the pull request's ci runs the change's related tests, lint and type checks, "
+                "so do not run them here; run `forge test` only for a test you are writing, "
+                "to watch it fail.") in nudged.stdout.lower()
+        assert ("run the change's related tests through `forge test` in the foreground"
+                not in nudged.stdout.lower())
         assert lane("BOARD/HELP")
         done = handback("BOARD/HELP", number, "Still not committed.")
         assert done.returncode == 0, done.stdout + done.stderr
@@ -159,6 +176,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert str(folder.resolve().as_posix()) in short.read_text("utf-8")
         assert "If this session can't reach it, start a new worker subagent with" in given.stdout
         settings = (folder / "forge.toml").read_text("utf-8")
+        settings_bytes = (folder / "forge.toml").read_bytes()
         before = repo.git("rev-parse", "HEAD", cwd=folder)
         (folder / "forge.toml").write_text(settings + "[[[ not settings\n", "utf-8")
         # The item's pull request is published, so its record is refreshed with the question.
@@ -211,6 +229,34 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         assert repo.git("log", "-1", "--format=%s", cwd=folder) == (
             "Restore forge.toml; settings change in their own fix")
         assert repo.git("rev-list", "--count", f"{handed}..HEAD", cwd=folder) == "2"
+        assert (folder / "forge.toml").read_bytes() == settings_bytes
+
+        # A round that merges the default branch after main's forge.toml changed keeps main's
+        # settings: only the worker's own edits come back (issue 921).
+        _, _, number = handout("BOARD/HELP", "worker")
+        main = repo.git("rev-parse", "origin/main", cwd=folder)
+        newer = settings_bytes + b"# A setting main changed\r\n"
+        index = tmp_path / "main-index"
+        plumbing = {**os.environ, "GIT_INDEX_FILE": str(index)}
+        # Raw Git objects must keep the fixture bytes; text stdin translates Windows newlines.
+        git = lambda *args, **kw: subprocess.run(["git", *args], cwd=folder, env=plumbing,
+                                                 capture_output=True, check=True, **kw).stdout.decode("ascii").strip()
+        git("read-tree", main)
+        blob = git("hash-object", "-w", "--stdin", input=newer)
+        git("update-index", "--cacheinfo", f"100644,{blob},forge.toml")
+        moved = git("commit-tree", git("write-tree"), "-p", main, "-m", "Main changes a setting")
+        repo.git("update-ref", "refs/remotes/origin/main", moved, cwd=folder)
+        no_hooks = tmp_path / "no-hooks"
+        no_hooks.mkdir()
+        repo.git("-c", f"core.hooksPath={no_hooks.as_posix()}", "merge", "-q", "--no-edit", "origin/main", cwd=folder)
+        merged = handback("BOARD/HELP", number, "Merged main.", cwd=folder)
+        assert merged.returncode == 0, merged.stdout + merged.stderr
+        assert "Restored forge.toml" not in merged.stdout
+        assert (folder / "forge.toml").read_bytes() == newer
+        assert repo.git("log", "-1", "--format=%s", cwd=folder) != (
+            "Restore forge.toml; settings change in their own fix")
+        repo.git("update-ref", "refs/remotes/origin/main", main, cwd=folder)
+        repo.git("-c", f"core.hooksPath={no_hooks.as_posix()}", "reset", "-q", "--hard", "HEAD~1", cwd=folder)
 
         # A fix uses the fixer role; land stops at the handout and closes after the hand-back.
         made = repo.forge("fix", "start", "Tidy the words", "--done", "The words read well",

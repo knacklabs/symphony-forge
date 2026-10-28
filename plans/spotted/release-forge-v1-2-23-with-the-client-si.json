@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\t.codex/skills/forge/standards.md\tGate: release allowance does not cover unrelated guidance changes\trelease-forge-v1-2-23-with-the-client-si",
+      "kind": "bug",
+      "path": ".codex/skills/forge/standards.md",
+      "line": 85,
+      "text": "Gate: release allowance does not cover unrelated guidance changes",
+      "from": "blocking",
+      "item": "release-forge-v1-2-23-with-the-client-si",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.claude/skills/forge/SKILL.md\tThe synced guide differs from its source template outside this release update.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 1,
+      "text": "The synced guide differs from its source template outside this release update.",
+      "from": "worker",
+      "item": "release-forge-v1-2-23-with-the-client-si",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.claude/skills/forge/standards.md\tThe synced standards differ from their source template outside this release update.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/standards.md",
+      "line": 1,
+      "text": "The synced standards differ from their source template outside this release update.",
+      "from": "worker",
+      "item": "release-forge-v1-2-23-with-the-client-si",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/SKILL.md\tThe synced guide differs from its source template outside this release update.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 1,
+      "text": "The synced guide differs from its source template outside this release update.",
+      "from": "worker",
+      "item": "release-forge-v1-2-23-with-the-client-si",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/standards.md\tThe synced standards differ from their source template outside this release update.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/standards.md",
+      "line": 1,
+      "text": "The synced standards differ from their source template outside this release update.",
+      "from": "worker",
+      "item": "release-forge-v1-2-23-with-the-client-si",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

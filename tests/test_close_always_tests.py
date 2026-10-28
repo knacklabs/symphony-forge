@@ -39,7 +39,7 @@ def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
     # The test command names only tests/unit; an always_test entry may sit outside it.
     command = subprocess.list2cmdline([sys.executable, "-m", "pytest", "tests/unit", "-q", *options])
     settings = re.sub(r"^test = .*\n", "", (env.repo.path / "forge.toml").read_text("utf-8"), flags=re.M)
-    settings = "test = " + json.dumps(command) + "\n" + settings
+    settings = 'test_place = "local"\n' + "test = " + json.dumps(command) + "\n" + settings
     listed = ("always_test = " + (always if isinstance(always, str) else json.dumps(always)) + "\n"
               if always is not None else "# no always_test\n")
     # changed=0: the fix changes only forge.toml, adding always_test there.
@@ -59,7 +59,8 @@ def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
         env.repo.git("merge", "-q", "--ff-only", "fix/adopt")
     env.repo.git("-c", "core.hooksPath=/dev/null", "push", "-q", "origin", "main")
     item, _ = env.start_fix({f"tests/unit/test_case_{number}.py": f"def test_case_{number}():\n    assert 2 + 2 == 4\n"
-                             for number in range(changed)} or {"forge.toml": listed + settings})
+                             for number in range(changed)} or {"forge.toml": listed + settings},
+                            **({"done_when": "forge.toml lists the tests that always run"} if changed == 0 else {}))
     env.checks([run("tests"), run("forge-pr-check")])
     return item, log
 
@@ -70,14 +71,13 @@ def set_up(env, monkeypatch, adopted, always, changed=1, options=()):
                          ids=["unset", "set"])
 @pytest.mark.parametrize("changed", [1, 4, 0], ids=["small", "large", "settings-only"])
 def test_1_close_runs_always_test_beside_the_picked_tests(env, monkeypatch, adopted, always, changed):
-    # A large or settings-only change skips the picked tests, but the listed ones still run.
+    # Close runs the picked tests and any listed always_test cases.
     item, log = set_up(env, monkeypatch, adopted, always, changed)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
-    expected = ({"test_case_0"} if changed == 1 else set()) | (
+    expected = {f"test_case_{number}" for number in range(changed)} | (
         {"test_case_5", "test_other_5", "test_other_6", "test_rule"} if always else set())
     assert {path.name for path in log.iterdir()} == expected
-    assert ("More than a third of the test files selected" in closed.stdout) == (changed > 1)
 
 
 @pytest.mark.parametrize("value, options, problem", [

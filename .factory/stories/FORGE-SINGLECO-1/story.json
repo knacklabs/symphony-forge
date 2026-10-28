@@ -1,0 +1,34 @@
+{
+  "approval": {
+    "at": "2026-10-25T17:51:18.645932+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01Au7q4qiBZK1ZEBJzwJKuYX",
+    "hash": "0d08757b739604620f35179a62a256cd5855426df6dc569487a239533d4478c8",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-SINGLECO-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-25T17:28:13.781867+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T17:42:21.644315+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-25T17:48:29.251587+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-25T17:51:18.649802+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "One-company client apps",
+  "touches": 1
+}

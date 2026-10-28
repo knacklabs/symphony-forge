@@ -17,9 +17,10 @@ import sys
 import time
 import tomllib
 import uuid
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import RLock
 from typing import Any, NoReturn
 
 from forge import __version__
@@ -40,6 +41,7 @@ REFUSALS = {
     "no_github": ("GitHub did not answer. Rerun the command.", ""),
     "no_config": ("This repo has no forge.toml.", "forge init"),
     "bad_config": ("forge.toml is not usable: {problem}.", "forge doctor"),
+    "added_work_min_gain": ("forge.toml is not usable: added_work_min_gain must be 3, 4 or 5.", "forge doctor"),
     "models": ("forge.toml's [models] table is not usable: {problem}.",
                "ask your agent to fix forge.toml's [models] table"),
     "bad_local": ("forge.local.toml is not usable: {problem}.", "ask your agent to fix forge.local.toml"),
@@ -82,15 +84,29 @@ def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
 
 
 _command_cache: dict[tuple, Any] | None = None
+_blob_lock = RLock()
 
 
 @contextmanager
-def command_cache():
+def command_cache(*, snapshot: bool = False):
     """Repository facts and worker history live only for this command, never the next one."""
     global _command_cache
-    previous, _command_cache = _command_cache, {}
+    previous = _command_cache
+    if snapshot and previous is not None:
+        nested = ("read snapshot",) in previous
+        previous.setdefault(("read snapshot",), {})
+        try:
+            yield
+        finally:
+            if not nested:
+                previous.pop(("read snapshot",), None)
+        return
     try:
-        yield
+        with ExitStack() as resources:
+            _command_cache = {("resources",): resources}
+            if snapshot:
+                _command_cache[("read snapshot",)] = {}
+            yield
     finally:
         _command_cache = previous
 
@@ -131,11 +147,70 @@ def blob_hash(text: str) -> str:
 
 
 def read_blob(top: Path, name: str) -> str | None:
-    """A git blob's text or None. The board's one batched read fills it for every story's notes."""
+    """A blob's text or None; only object IDs can reuse text after a ref moves."""
     def read() -> str | None:
-        done = run("git", "cat-file", "blob", name, cwd=top)
+        if ":" in name and not re.fullmatch(r"[\w./-]+(?:[~^]\d*)*", name.partition(":")[0]):
+            done = run("git", "show", name, cwd=top)
+        elif _command_cache is not None and "\n" not in name and "\r" not in name:
+            return blob_texts(top, [name]).get(name)
+        else:
+            done = run("git", "cat-file", "blob", name, cwd=top)
         return done.stdout if done.returncode == 0 else None
-    return command_fact(("read blob", name), top, read)
+    return command_fact(("read blob", name), top, read) if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", name) else read()
+
+
+def blob_texts(top: Path, specs: list[str]) -> dict[str, str]:
+    return {spec: data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+            for spec, data in blob_bytes(top, specs).items()}
+
+
+def blob_bytes(top: Path, specs: list[str]) -> dict[str, bytes]:
+    """Share one byte-framed Git reader across this command's file and history reads."""
+    if not specs:
+        return {}
+    if _command_cache is None:
+        with command_cache():
+            return blob_bytes(top, specs)
+
+    def start():
+        process = _command_cache[("resources",)].enter_context(subprocess.Popen(
+            [shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+        _command_cache[("resources",)].callback(process.communicate)
+        return process
+
+    texts = {}
+    with _blob_lock:
+        process = command_fact("blob reader", top, start)
+        assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+        for spec in dict.fromkeys(specs):
+            if "\n" in spec or "\r" in spec:
+                continue  # These paths use the original Git command, outside the line protocol.
+            request = spec
+            if re.match(r"HEAD(?:[:~^]|$)", spec):
+                # HEAD belongs to a checkout, while this process serves all linked worktrees.
+                dot = root(top) / ".git"
+                if dot.is_file():
+                    gitdir = (dot.parent / dot.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")).resolve()
+                    prefix = f"worktrees/{gitdir.name}"
+                else:
+                    prefix = "main-worktree"
+                request = prefix + "/" + spec
+            process.stdin.write((request + "\n").encode("utf-8"))
+            process.stdin.flush()
+            header = process.stdout.readline()
+            if header.endswith((b" missing\n", b" ambiguous\n")):
+                continue
+            if not header:
+                process.wait()
+                raise subprocess.CalledProcessError(process.returncode or 1, process.args,
+                                                    stderr=process.stderr.read().decode("utf-8", errors="replace"))
+            _, kind, size = header.split()
+            data = process.stdout.read(int(size))
+            process.stdout.read(1)
+            if kind == b"blob":
+                texts[spec] = data
+    return texts
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
@@ -144,10 +219,28 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     exe = shutil.which(args[0])
     if exe is None:
         refuse(REFUSALS["missing_tool"], tool=args[0])
+    if _command_cache is not None and env is None and input is None:
+        spec = (args[2] if len(args) == 3 and args[:2] == ("git", "show")
+                and ":" in args[2] and not args[2].startswith("-")
+                and re.fullmatch(r"[\w./-]+(?:[~^]\d*)*", args[2].split(":", 1)[0])
+                else args[3] if len(args) == 4 and args[:3] == ("git", "cat-file", "blob") else None)
+        if spec is not None:
+            text = blob_texts(Path(cwd or Path.cwd()), [spec]).get(spec)
+            if text is not None:
+                return subprocess.CompletedProcess([exe, *args[1:]], 0, text, "")
+            # Keep Git's exact diagnostics for a missing object, non-blob, or unusual path.
     # An empty stdin, never the terminal: a prompt would hang instead of failing.
     # Bytes, not text mode: Windows text-mode stdin turns each "\n" into "\r\n", which pushes a
     # bounded pull request body past GitHub's limit and changes messages and hashes.
     def execute():
+        snapshots = (_command_cache.get(("read snapshot",)) if _command_cache is not None
+                     and env is None and input is None else None)
+        # Board/next read one snapshot. Normal commands still resolve mutable refs
+        # on every read, and a fetch below invalidates the snapshot's Git answers.
+        key = (args, Path(cwd or Path.cwd()).absolute())
+        reading = args[0] == "git" and args[1] in ("merge-base", "rev-parse", "ls-tree", "log", "diff")
+        if reading and snapshots is not None and key in snapshots:
+            return snapshots[key]
         done = subprocess.run([exe, *args[1:]], cwd=cwd, input=(input or "").encode("utf-8"),
                               capture_output=True,
                               # Git hooks need the caller's worker identity.
@@ -156,9 +249,15 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         # Text mode's universal newlines, the same on every OS.
         done.stdout, done.stderr = (data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
                                     for data in (done.stdout, done.stderr))
+        if reading and snapshots is not None:
+            snapshots[key] = done
+        elif snapshots is not None and args[:2] == ("git", "fetch"):
+            snapshots.clear()
         return done
     if args == ("git", "rev-parse", "--path-format=absolute", "--git-common-dir"):
         return command_fact("common directory", cwd, execute)
+    if args == ("git", "worktree", "list", "--porcelain") and env is None and input is None:
+        return command_fact("worktree listing", cwd, execute)
     if args == ("git", "rev-parse", "--show-toplevel") and env is None and _command_cache is not None:
         # A linked worktree has its own root, even though command_fact shares its git directory.
         key = ("checkout root", Path(cwd or Path.cwd()).absolute())
@@ -194,6 +293,7 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and (args[1] in ("switch", "checkout", "worktree", "branch"))):
         _command_cache.pop(("worktrees", _common_path(cwd)), None)  # a checkout's branch or folder changed
+        _command_cache.pop(("worktree listing", _common_path(cwd)), None)
     if (_command_cache is not None and done.returncode == 0 and args[0] == "git"
             and args[1] in ("fetch", "merge", "switch", "checkout")):
         common = _common_path(cwd)
@@ -227,7 +327,7 @@ def _immutable_git_read(args: tuple[str, ...]) -> bool:
 def resolve_commit(top: Path, ref: str) -> str:
     """Resolve names on every ask; callers can reuse the resulting immutable commit ID."""
     return ref if re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", ref) else git(
-        "rev-parse", "--verify", f"{ref}^{{commit}}", cwd=top)
+        "rev-parse", "--verify", f"{ref}~0", cwd=top)
 
 
 def _github_read(args: tuple[str, ...], execute) -> subprocess.CompletedProcess[str]:
@@ -377,46 +477,15 @@ def record_event(top: Path, item: str, event: str, **fields: Any) -> str:
     identity = str(uuid.uuid4())
     line = {"id": identity, "item": item, "event": event, "at": now(),
             "round": (read_state(item, top) or {}).get("round", 0), **fields}
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")), path.open("a", encoding="utf-8") as out:
-        out.write(json.dumps(line) + "\n")
+    from forge import event_log
+    event_log.append(top, line)
     return identity
 
 
 def record_progress(top: Path, item: str, run_id: str, **fields: Any) -> None:
     """Coalesce a run's live updates into at most one record per ten seconds."""
-    from forge import codex
-    path = forge_dir(top) / "events.jsonl"
-    with codex._one_at_a_time(path.with_suffix(".lock")):
-        rows = path.read_text(encoding="utf-8").splitlines()
-        parsed = [json.loads(row) for row in rows]
-        previous = next((n for n in range(len(rows) - 1, -1, -1)
-                         if parsed[n].get("run_id") == run_id and
-                         parsed[n].get("event") == "progress"), None)
-        start = next(row for row in parsed if row.get("id") == run_id)
-        # ponytail: rewrite this diagnostic log to coalesce; split progress out if it grows large.
-        line = {"id": str(uuid.uuid4()), "item": item, "event": "progress", "run_id": run_id,
-                "kind": "progress", "round": start.get("round"), "at": now(), **fields}
-        if previous is not None:
-            old = parsed[previous]
-            line = {**old, **line}
-            if (datetime.fromisoformat(now()) - datetime.fromisoformat(old["recorded_at"])).total_seconds() < 10:
-                rows[previous] = json.dumps({**line, "id": old["id"]})
-            else:
-                rows.append(json.dumps({**line, "recorded_at": now()}))
-        else:
-            rows.append(json.dumps({**line, "recorded_at": now()}))
-        temp = path.with_suffix(".new")
-        temp.write_text("\n".join(rows) + "\n", encoding="utf-8")
-        for wait in (0.05,) * 40 + (0,):  # Windows readers can briefly hold the events file open.
-            try:
-                return os.replace(temp, path)
-            except PermissionError:
-                if not wait:
-                    temp.unlink(missing_ok=True)
-                    refuse(codex.REFUSALS["record"], record=path)
-                time.sleep(wait)
+    from forge import event_log
+    event_log.progress(top, item, run_id, fields)
 
 
 def worker_step(name: str, inputs: dict[str, Any]) -> str:
@@ -489,17 +558,22 @@ def record_run(top: Path, item: str, kind: str, **fields: Any):
 
 # --- forge.toml, the pin and the roadmap -----------------------------------------------
 
+# ponytail: stop_default only loads settings from earlier releases; stops always wait for the owner.
 KEYS = {"version": str, "repo": str, "stage": str, "workers": str, "tools": str, "test": str, "fast_test": str,
         "signoff": str, "runner": str, "codex_fast": str, "stop_default": str,
-        "merge": str, "stack": str, "checks": list, "interfaces": list, "always_test": list, "models": dict}
+        "merge": str, "stack": str, "test_place": str, "checks": list, "interfaces": list,
+        "always_test": list, "groups": int, "models": dict,
+        "added_work_min_gain": int, "always_block": list}
 # A client repo without a stage counts as live: prototype rules never reach an app by default.
 DEFAULTS = {"repo": "client", "stage": "live", "workers": "codex", "tools": "both", "test": "", "fast_test": "",
             "signoff": "", "runner": "ubuntu-latest", "codex_fast": "needed",
             "stop_default": "narrow", "merge": "human", "stack": "on", "checks": [], "interfaces": [], "always_test": [],
             "models": {}}
+# ponytail: retain stop_default's old values so existing forge.toml files still load.
 CHOICES = {"repo": ("client", "forge-source"), "stage": ("live", "prototype"),
            "workers": ("claude", "codex", "split"), "tools": ("both", "claude", "codex"), "merge": ("agent", "human"),
-           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off")}
+           "codex_fast": ("needed", "off", "always"), "stop_default": ("narrow", "off"), "stack": ("on", "off"),
+           "test_place": ("ci", "local")}
 # signoff pins the client's sign-off record: a decision directly under docs/decisions whose slug
 # ends in client-signoff, as `forge decision new` names it and the old Forge accepted it.
 SIGNOFF = re.compile(r"docs/decisions/[0-9]{4,}-[a-z0-9-]*client-signoff\.md")
@@ -509,7 +583,7 @@ VERSION = re.compile(r"v?[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.]+)?")
 # effort is optional); build, fix, lite and explore may add their subagents' model and effort,
 # as a pair.
 # The cold read and design work have one entry per family.
-KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review")
+KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review", "light_review")
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 # A worker's models when forge.toml has no entry for its family, so Forge always names them.
@@ -529,6 +603,38 @@ def config(top: Path | None = None) -> dict[str, Any]:
         return _config_text(path.read_text(encoding="utf-8"), path.parent)
     except UnicodeDecodeError as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+
+
+def test_place(cfg: dict[str, Any]) -> str:
+    """The explicit place, or the old config's place based on whether it names checks."""
+    return cfg.get("test_place", "ci" if cfg.get("checks") else "local")
+
+
+def pytest_split(top: Path, command: str) -> bool:
+    """Only direct pytest commands in repos listing pytest-split can split automatically."""
+    # ponytail: wrappers such as `make pytest` keep their own command semantics.
+    direct = r"(?:(?:uv|poetry|pipenv) run(?: -\S+| [\d.]+)* |python3? -m )?pytest\b"
+    return bool(re.match(direct, command) and not re.search(r"[;&|]", command)
+                and any(path.is_file() and "pytest-split" in path.read_text(encoding="utf-8")
+                        for path in [top / "pyproject.toml", *top.glob("requirements*.txt")]))
+
+
+def grouped(top: Path, command: str) -> str:
+    """Fill the CI group's numbers; local runs default to group 1 of 1."""
+    if (int(os.environ.get("FORGE_GROUPS", "1")) > 1 and "{group}" not in command
+            and pytest_split(top, command)):
+        command += " --splits {groups} --group {group} --splitting-algorithm least_duration"
+    return command.replace("{group}", os.environ.get("FORGE_GROUP", "1")).replace(
+        "{groups}", os.environ.get("FORGE_GROUPS", "1"))
+
+
+def group_warning(top: Path, cfg: dict[str, Any]) -> str:
+    """Advice only: groups cannot divide this test command automatically."""
+    if (cfg.get("groups", 1) > 1 and "{group}" not in cfg["test"]
+            and not pytest_split(top, cfg["test"])):
+        return ("Each CI group runs the same tests because the test command has no {group} placeholder. "
+                "Set groups to 1 or add the runner's shard options with {group} and {groups}.")
+    return ""
 
 
 LOCAL = "forge.local.toml"
@@ -566,6 +672,14 @@ def default_config(top: Path) -> dict[str, Any]:
     return _config_text(found.stdout)
 
 
+def review_settings(top: Path) -> dict[str, Any]:
+    """Review settings from the same landed branch as the repository's review rules."""
+    from forge import story
+
+    text = story.show(top, story.landed_ref(top), "forge.toml")
+    return _config_text(text) if text is not None else {}
+
+
 def merge_setting(top: Path) -> str:
     """Use agent merges for client prototypes until the fetched default branch signs off."""
     cfg = default_config(top)
@@ -587,14 +701,21 @@ def is_prototype(top: Path, cfg: dict[str, Any] | None = None, refs: tuple[str, 
     def wanted(name: str) -> bool:
         return name == pinned if pinned else name.endswith("client-signoff.md")
 
-    texts = [] if refs else [path.read_text(encoding="utf-8")
-                             for path in top.glob("docs/decisions/*.md")
-                             if wanted(path.relative_to(top).as_posix())]
-    for ref in refs or (story.landed_ref(top),):
-        names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
-        texts += [story.show(top, ref, name) or "" for name in names if wanted(name)]
+    local_names = [path.relative_to(top).as_posix() for path in top.glob("docs/decisions/*.md")
+                   if wanted(path.relative_to(top).as_posix())]
+
+    def texts():
+        if not refs:
+            yield from ((top / name).read_text(encoding="utf-8") for name in local_names)
+        for ref in refs or (story.landed_ref(top),):
+            # Probe known names on the requested ref; local acceptance never stands in for it.
+            yield from (story.show(top, ref, name) or "" for name in local_names)
+            names = git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
+            yield from (story.show(top, ref, name) or "" for name in names
+                        if name not in local_names and wanted(name))
+
     return not any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
-                   for text in texts if text.startswith("---"))
+                   for text in texts() if text.startswith("---"))
 
 
 def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
@@ -603,13 +724,18 @@ def _config_text(text: str, top: Path | None = None) -> dict[str, Any]:
         data = tomllib.loads(text)
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         refuse(REFUSALS["bad_config"], problem=exc)
+    if "added_work_min_gain" in data and (type(data["added_work_min_gain"]) is not int
+                                         or data["added_work_min_gain"] not in (3, 4, 5)):
+        refuse(REFUSALS["added_work_min_gain"])
     problem = _config_problem(data)
     if problem:
         refuse(REFUSALS["bad_config"], problem=problem)
     problem = _models_problem(data.get("models", {}))
     if problem:
         refuse(REFUSALS["models"], problem=problem)
-    return _with_local({**DEFAULTS, **data}, top) if top else {**DEFAULTS, **data}
+    config = {**DEFAULTS, **data}
+    config["test_place"] = test_place(config)
+    return _with_local(config, top) if top else config
 
 
 def ready_path(item: str, top: Path) -> Path:
@@ -731,7 +857,7 @@ def _models_problem(table: Any) -> str:
                     return f"models.{name} can't set {key}"
                 if not isinstance(value, str):
                     return f"models.{name}.{key} must be a string"
-            for key in ("model",) if kind == "review" else ("model", "effort"):
+            for key in ("model",) if kind in ("review", "light_review") else ("model", "effort"):
                 if key not in entry:
                     return f"models.{name} has no {key}"
             if (SUBAGENTS[0] in entry) != (SUBAGENTS[1] in entry):
@@ -746,8 +872,12 @@ def _config_problem(data: dict[str, Any]) -> str:
         kind = KEYS.get(key)
         if kind is None:
             return f"{key!r} is not a forge.toml key"
+        if key == "added_work_min_gain" and (type(value) is not int or value not in (3, 4, 5)):
+            return "added_work_min_gain must be 3, 4 or 5"
         if kind is str and not isinstance(value, str):
             return f"{key} must be a string"
+        if kind is int and not (type(value) is int and value >= 1):
+            return f"{key} must be a whole number of 1 or more"
         if kind is list and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
             return f"{key} must be a list of strings"
         if key in CHOICES and value not in CHOICES[key]:
@@ -774,8 +904,8 @@ def check_pin(cwd: str | os.PathLike[str] | None = None, item: str = "", words: 
     fetched still pins an older one, and a fix worktree pins the installed one.
     """
     if words == "work":
-        from forge.worker import checkout
-        checkout(item)  # A conflicted forge.toml cannot supply a release pin yet.
+        from forge.worker import prepare
+        prepare(item)  # Merge the default before even the release pin reads settings.
     done = run("git", "rev-parse", "--show-toplevel", cwd=cwd)
     top = Path(done.stdout.strip())
     if done.returncode or not (top / "forge.toml").is_file():
@@ -850,7 +980,15 @@ def run_release(release: str, args: list[str], cwd: str | os.PathLike[str] | Non
     return subprocess.run(
         [shutil.which("uv") or "uv", "tool", "run", "--from",
          f"git+https://github.com/knacklabs/symphony-forge@{release}", "forge", *args],
-        cwd=cwd, env={**os.environ, "FORGE_PINNED_RUN": release}).returncode
+        cwd=cwd, env={**uv_env(), "FORGE_PINNED_RUN": release}).returncode
+
+
+def uv_env() -> dict[str, str]:
+    """This environment for uv, without a git hook's repository: uv fetches a git+ source with
+    its own `git init` and `git reset --hard`, which would turn this repo bare or overwrite its
+    index. The program uv starts finds the repository from its folder."""
+    return {key: value for key, value in os.environ.items()
+            if key not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE")}
 
 
 def set_version(text: str, release: str) -> str:

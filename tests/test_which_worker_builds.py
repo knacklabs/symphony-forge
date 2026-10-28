@@ -259,6 +259,7 @@ def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and
     assert "## Tests first" in sent and "Board misses a story" in sent
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="no Ctrl-C to send a process there")
 def test_10_a_codex_start_cut_short_after_a_claude_round_leaves_the_retry_fresh(
         repo, monkeypatch, sdk_data, claude_session):

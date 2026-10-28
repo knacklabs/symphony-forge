@@ -1,11 +1,11 @@
 {
   "approval": {
-    "at": "2026-10-15T10:59:35.631401+00:00",
+    "at": "2026-10-23T16:09:26.253865+00:00",
     "by": "human-via-Claude",
-    "event": "toolu_017DrEb7VEtW44iU8Dpx2rbp",
-    "hash": "d4d8358328732737d1c7870ab4fb844c6487ec5e7e7775ba471afc64804839c1",
+    "event": "toolu_01RJ9ihwcytZXnmXfcHv5iyJ",
+    "hash": "51e0f4e4a6720442fc4ec33ec41947f91aa0f2983eb5a8744faa23abc39aaeb4",
     "part_line_limit": 400,
-    "round": 4,
+    "round": 10,
     "runtime": "claude",
     "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
   },
@@ -35,8 +35,40 @@
     {
       "at": "2026-10-15T10:59:35.632219+00:00",
       "step": "approved"
+    },
+    {
+      "at": "2026-10-16T16:07:43.806556+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-16T17:15:04.881667+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-16T18:41:52.875186+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-16T18:43:38.042786+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-16T18:50:02.946941+00:00",
+      "step": "approved"
+    },
+    {
+      "at": "2026-10-23T14:41:37.316273+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-23T16:03:27.997674+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-23T16:09:26.254091+00:00",
+      "step": "approved"
     }
   ],
   "title": "Prototypes start from an approved design and reach sign-off faster, and signed-off work ships without redoing it",
-  "touches": 1
+  "touches": 3
 }

@@ -1,21 +1,9 @@
 """Story docs: `story new` (and promotion from a fix), the cold read's rounds, `story done`, the
 doc's shape checks and the story-doc part of forge-pr-check.
 
-A story is `plans/<KEY>.md` on its own `story/<KEY>` branch and worktree. Each round of the cold
-read of a doc adds to its notes beside it (`plans/<KEY>.read.md`, `docs/specs/<slug>.read.md`), the
-same format RECORDS reads for `spec confirm`. The frontmatter is the latest round's:
-
-    ---
-    reader: <who read it>
-    read_at: <when>
-    read_hash: <git hash-object of the doc as read>
-    round, passed: <n>, and yes when that round has no blocking notes
-    doc_seen, spec_seen, notes_seen, answers_seen: <what its reader saw, kept by git hash-object -w>
-    ---
-    ## Round <n>
-
-    <n>. <finding, numbered after the earlier rounds'>
-       Disposition: cut | defer | keep <one-line reason>
+A story is `plans/<KEY>.md` on its own branch. Its cold-read notes beside it keep each
+round's reader, inputs, hashes, findings and dispositions. The approved text binds the
+named design folder's Git tree as well as the client-visible outcomes.
 
 A task is merged once its state file is on origin/<default>: its pull request carried it there.
 """
@@ -38,7 +26,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, machine, native, repo, review, score, task, worker
+from forge import codex, design, machine, native, repo, review, score, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -66,15 +54,17 @@ REFUSALS = {
     "changed": ("{doc} changed after its last round of cold read.", "forge read {target}"),
     "not_passed": ("Round {round} of the cold read of {doc} hasn't passed, so it needs another round.",
                    "forge read {target}"),
-    "read_loop": ("Three consecutive cold-read rounds of {target} still have blocking notes. {question}",
-                  'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
+    "read_loop": ("Round {round} of the cold read of {target} stopped with open notes, so Forge asks the owner. {question}",
+                  'forge read {target} --resolve <accept|more|split> --reason "<human\'s choice>"'),
     "bad_choice": ("Record the human's choice only on a stopped cold-read loop, with a non-empty --reason.",
-                   'forge read {target} --resolve <accept|narrow|split> --reason "<human\'s choice>"'),
+                   'forge read {target} --resolve <accept|more|split> --reason "<human\'s choice>"'),
     "no_disposition": ("Finding {number} in {notes} has no disposition: cut, defer, or keep with a "
                        "reason.", "edit {notes}, then forge next"),
     "not_finished": ("{key} isn't finished: {problem}.", "git fetch origin, then forge next"),
     "prototype": ("Stories wait for the customer's sign-off. Build and demo the prototype first.",
                   "forge next"),
+    "constitution": ("New stories wait for this app's approved constitution in docs/product/CONSTITUTION.md.",
+                     'forge fix start "Write the app constitution" --done "The owner approved docs/product/CONSTITUTION.md"'),
 }
 
 TEMPLATES = Path(__file__).parent / "templates"
@@ -82,7 +72,7 @@ KEY = re.compile(r"[A-Z][A-Z0-9-]*")
 COLUMNS = ("ID", "Name", "What it delivers", "Covers", "Scope", "Tests", "After", "User-facing")
 APPROVED = ("What changes for you", "Done when")  # the sections an approval binds
 RECORD = ("reader", "read_at", "seconds", "read_hash", "round", "passed", "doc_seen", "spec_seen", "notes_seen",
-          "answers_seen", "conversation", "session", "blocked_rounds", "loop_choice", "loop_reason")
+          "answers_seen", "conversation", "session", "loop_choice", "loop_reason")
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 FINDING = re.compile(r"^(\d+)\.[ \t]", re.M)
 NUMBERED = re.compile(r"^(\d+)\.\s+", re.M)
@@ -98,6 +88,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 
     skill = (TEMPLATES / "skill.md").read_text(encoding="utf-8")
     return {
+        ".forge/design/support.js": (TEMPLATES / "design/support.js").read_text(encoding="utf-8"),
         ".claude/skills/forge/SKILL.md": skill,
         ".codex/skills/forge/SKILL.md": skill,
         **{f"{host}/skills/forge/standards.md":
@@ -121,6 +112,9 @@ def new(args: Any) -> int:
         repo.refuse(REFUSALS["bad_key"], key=key)
     if (top / "forge.toml").is_file() and repo.is_prototype(top):
         repo.refuse(REFUSALS["prototype"])
+    from forge import records
+    if (top / "forge.toml").is_file() and repo.config(top)["repo"] == "client" and not records.constitution(top):
+        repo.refuse(REFUSALS["constitution"])
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
     done = "Something anyone can observe once this is done."
     if fix:
@@ -148,7 +142,7 @@ def new(args: Any) -> int:
     path = add_worktree(top, f"story/{key}", repo.default_branch(top))
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
-    _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
+    _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row, **design.handoff(path)))
     changed = [doc]
     if not fix and key not in {item["key"] for item in repo.roadmap(path)}:
         changed += add_to_roadmap(path, [{"key": key, "title": title}])
@@ -164,6 +158,7 @@ def new(args: Any) -> int:
 
 
 def read(args: Any) -> int:
+    from forge import records  # records imports story
     target = args.target
     top, doc, notes, is_story = _paths(target)
     # ponytail: CORE's branch rule, so a read never writes on the default branch.
@@ -173,11 +168,11 @@ def read(args: Any) -> int:
         repo.route(config, config["tools"], command="read", item=target)
     rel, old = _rel(top, doc), _text(notes)
     record, findings = _record(old)
-    blocked_rounds = _blocked_reads(top, record, findings)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     if choice or reason is not None:
-        if not choice or not reason or not reason.strip() or blocked_rounds < 3:
+        if not choice or not reason or not reason.strip() or not stopped(record, findings):
             repo.refuse(REFUSALS["bad_choice"], target=target)
+        folder = design.check(top, _text(doc)) if choice == "accept" and is_story else None
         reason = " ".join(reason.split())
         record.update(loop_choice=choice, loop_reason=reason)
         if choice == "accept":
@@ -188,24 +183,29 @@ def read(args: Any) -> int:
                     findings = findings.replace(block, settled + f"\n   Disposition: keep - {reason}", 1)
             record["read_hash"] = _store(top, doc.read_bytes(), rel)
         _write(notes, _notes(record, findings))
-        repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes), top=top)
+        repo.commit_state(f"Record the human's cold-read choice: {choice}", rel, _rel(top, notes),
+                          *([folder] if folder else []), top=top)
         print(f"Recorded the human's choice: {choice}. " + (
             "Next: forge next" if choice == "accept" else
+            f"Next: forge read {target}" if choice == "more" else
             f"{choice.capitalize()} the part as agreed, then forge read {target}."))
         return 0
-    if blocked_rounds >= 3:
-        repo.refuse(REFUSALS["read_loop"], target=target, question=read_question(_text(doc), old))
+    if stopped(record, findings):
+        repo.refuse(REFUSALS["read_loop"], target=target, round=record["round"],
+                    question=read_question(_text(doc), old))
     later = bool(record.get("read_hash"))
+    if is_story:
+        parsed = _parsed(_text(doc), rel)
     doc_hash = repo.git("hash-object", "--", str(doc), cwd=top)
     if (later and is_story and doc_hash != record["read_hash"] and passed(record, findings)
             and not changed_since_read(record["read_hash"], doc_hash, _text(doc), top)):
         repo.refuse(REFUSALS["builders_only"], doc=rel)  # an edit that needs no new approval
     if is_story:
         text = _text(doc)
-        parsed = _parsed(text, rel)
         approval = (repo.read_state(target, top) or {}).get("approval") or {}
         if len(parsed["done"]) > 6 and approval.get("hash") != approval_hash(text):
             repo.refuse(REFUSALS["too_many_results"])
+        design.check(top, text)
     number = undisposed(findings) if later else ""
     if number:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
@@ -233,8 +233,8 @@ def read(args: Any) -> int:
     if gone:
         codex._record(codex._item_file(top, target, ".json", "Grill"),
                       **{"conversation" if recorded == "codex" else "claude": None})
-    first, again, edit, look, cap, head = re.split(r"<!-- forge:(?:round|edit|look|cap|notes) -->\n",
-                                                   (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
+    first, again, head = re.split(r"<!-- forge:(?:round|notes) -->\n",
+                                 (TEMPLATES / "cold-read.md").read_text(encoding="utf-8"))
     before = _snapshot(top)  # first, so any change from here on discards the read
 
     def remember_reader(chat: str) -> None:
@@ -270,15 +270,7 @@ def read(args: Any) -> int:
                                 _diff(saw_answers.stdout, answers, "docs/product/BRIEF.md"))
         if any(done.returncode for done in seen.values()):
             diff = spec_diff = "(not available)"
-        old_sections, new_sections = sections(seen["doc_seen"].stdout), sections(text.decode("utf-8"))
-        touched = [f"`## {name}`" for name in dict.fromkeys([*old_sections, *new_sections])
-                   if old_sections.get(name) != new_sections.get(name)]
-        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1,
-                    touched="(not available)" if diff == "(not available)" else
-                    ", ".join(touched) or "the title")
-        # Only story plans cap notes on unchanged text; specs still get a full read.
-        again = edit if passed(record, findings) else again.replace(
-            "${look}", cap if is_story and round_number >= 3 else look)
+        fill.update(round=round_number, diff=diff, spec_diff=spec_diff, next=max(blocks, default=0) + 1)
         blocking = {n: block for n, block in blocks.items() if DISPOSITION.search(block)}
         fresh_prompt += "\n" + Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()))
         prompt = Template(again).safe_substitute(fill, dispositions="\n".join(blocking.values()) or "None.")
@@ -291,6 +283,10 @@ def read(args: Any) -> int:
         prompt, why = fresh_prompt, ""
     context = "\n\nEarlier rounds' notes and answers:\n" + (findings or "None.")
     context += "\n\nThe doc's Notes and decisions:\n" + sections(text.decode("utf-8")).get("Notes", "None.")
+    if constitution := records.constitution(top):
+        context += ("\n\nThis app's approved constitution, from the default branch, follows. In any round, "
+                    "report a plan that goes against it as a note titled "
+                    "`Constitution: <the line it breaks>`; this is not limited to P0.\n\n" + constitution)
     prompt += context
     fresh_prompt += context
     result = {"before": before, "read_hash": read_hash, "round": round_number,
@@ -299,7 +295,7 @@ def read(args: Any) -> int:
               "answers_seen": _store(top, answers.encode("utf-8")),
               "notes_seen": _store(top, old.encode("utf-8")), "head": head,
               "reader": reader, "left": left,
-              "blocked_rounds": blocked_rounds, "native": is_native,
+              "native": is_native,
               "model": repo.models(config, "grill", reader).get("model", "its own default model"),
               "reason": f"forge.toml's tools is {reader}" if config["tools"] != "both" else
                         "the reader is this session's tool"}
@@ -358,7 +354,7 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
     blocks, later = _findings(findings), bool(record.get("read_hash"))
     before, read_hash, round_number = result["before"], result["read_hash"], result["round"]
     reader, left, head = result["reader"], result["left"], result["head"]
-    recorded, blocked_rounds = record.get("reader", "").split(" ")[0], result["blocked_rounds"]
+    recorded = record.get("reader", "").split(" ")[0]
     ran = ran or {}
     said = _repo_root_paths(said, {str(top), str(top.resolve())})
     if _snapshot(top) != before or failed or not said:
@@ -400,7 +396,6 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
               # A session subagent's read has no measured time, so it records none.
               "read_at": repo.now(), "seconds": str(result.get("seconds", "")), "read_hash": read_hash,
               "round": str(round_number), "passed": "yes" if clean else "no",
-              "blocked_rounds": str(0 if clean else blocked_rounds + 1),
               "doc_seen": read_hash, "spec_seen": _store(top, spec_text.encode("utf-8")),
               "answers_seen": result.get("answers_seen", ""),
               "notes_seen": _store(top, old.encode("utf-8")),
@@ -414,6 +409,9 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
               f"as it is, because {NAMES[recorded]} is no longer installed.")
     changed = [rel, _rel(top, notes)]
     if is_story:
+        folder = design.check(top, text.decode("utf-8"))
+        if folder:
+            changed.append(folder)
         state = repo.read_state(target, top) or {}
         if (state.get("approval") or {}).get("hash") != approval_hash(text.decode("utf-8")):
             state["status"] = "read"
@@ -422,8 +420,8 @@ def read_result(top: Path, target: str, result: dict[str, Any], said: str,
         outcome = "found nothing" if said == "No findings." else "had no blocking notes"
         repo.commit_state(f"Round {round_number} of the cold read of {rel} {outcome}", *changed,
                           top=top)
-    if not clean and blocked_rounds + 1 >= 3 and score.read_stops(list(_findings(said).values())):
-        repo.refuse(REFUSALS["read_loop"], target=target,
+    if stopped(record, f"{kept}\n\n## Round {round_number}\n\n{said}\n"):
+        repo.refuse(REFUSALS["read_loop"], target=target, round=round_number,
                     question=read_question(text.decode("utf-8"), _text(notes)))
     print(f"Round {round_number} of the cold read of {rel} {outcome}.\nNext: forge next" if clean else
           f"Wrote round {round_number} of the cold read to {_rel(top, notes)}.\n"
@@ -600,22 +598,24 @@ def _plan(top: Path, key: str, ref: str | None = None, history: dict[str, Any] |
         return local if local is not None else published or read(landed_ref(top)) or ""
     base_ref = repo.git("merge-base", local_ref, remote, cwd=top)
     base = show(top, base_ref, rel) or ""
-    tables = [task.rows(task.sections(text)) for text in (base, local, published)]
-    before, ours, theirs = [{tid: task.developer(row) for tid, row in table.items()} for table in tables]
-    assignments = {tid: ours.get(tid) if ours.get(tid) != before.get(tid) else theirs.get(tid)
-                   for tid in ours.keys() | theirs.keys()}
-    owner = task.owner(local) if task.owner(local) != task.owner(base) else task.owner(published)
-    columns = [any("Developer" in row for row in table.values()) for table in tables]
-    with tempfile.TemporaryDirectory(prefix="forge-plan-") as folder:
-        files = [Path(folder) / name for name in ("local", "base", "published")]
-        for file, text in zip(files, (local, base, published)):
-            text = re.sub(r"(?m)^Owner:[^\n]*\n?", f"Owner: {owner}\n" if owner else "", text)
-            file.write_text(_with_developers(text, assignments, columns[1] if columns[1] != columns[0] else columns[2]), encoding="utf-8")
-        merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
-    if merged.returncode:
-        raise repo.Refused(f"Local and published edits to plans/{key}.md conflict; reconcile them before continuing.",
-                           f"git diff story/{key} origin/story/{key} -- plans/{key}.md")
-    return merged.stdout
+    def merge():
+        tables = [task.rows(task.sections(text)) for text in (base, local, published)]
+        before, ours, theirs = [{tid: task.developer(row) for tid, row in table.items()} for table in tables]
+        assignments = {tid: ours.get(tid) if ours.get(tid) != before.get(tid) else theirs.get(tid)
+                       for tid in ours.keys() | theirs.keys()}
+        owner = task.owner(local) if task.owner(local) != task.owner(base) else task.owner(published)
+        columns = [any("Developer" in row for row in table.values()) for table in tables]
+        with tempfile.TemporaryDirectory(prefix="forge-plan-") as folder:
+            files = [Path(folder) / name for name in ("local", "base", "published")]
+            for file, text in zip(files, (local, base, published)):
+                text = re.sub(r"(?m)^Owner:[^\n]*\n?", f"Owner: {owner}\n" if owner else "", text)
+                file.write_text(_with_developers(text, assignments, columns[1] if columns[1] != columns[0] else columns[2]), encoding="utf-8")
+            merged = repo.run("git", "merge-file", "-p", *(str(file) for file in files), cwd=top)
+        if merged.returncode:
+            raise repo.Refused(f"Local and published edits to plans/{key}.md conflict; reconcile them before continuing.",
+                               f"git diff story/{key} origin/story/{key} -- plans/{key}.md")
+        return merged.stdout
+    return repo.command_fact(("merged plan", key, base, local, published), top, merge)
 
 
 def _task_ids(text: str) -> set[str]:
@@ -651,8 +651,6 @@ def _numbered(body: str, name: str) -> dict[int, str]:
 def approval_hash(text: str) -> str | None:
     """What an approval binds: sha256 of the stripped "What changes for you" body, a newline, and the
     stripped "Done when" body. None when the text lacks either section.
-
-    ponytail: WORK's task.approval_hash is the same function; collapse the two once both land.
     """
     found = sections(text)
     if not all(name in found for name in APPROVED):
@@ -669,9 +667,10 @@ def check_read(target: str, top: Path | None = None) -> None:
     Notes written before rounds count as round 1, which never passed."""
     top, doc, notes, is_story = _paths(target, top)
     rel = _rel(top, doc)
-    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
     if is_story:
         _parsed(_text(doc), rel)
+        design.check(top, _text(doc), required=False)
+    gate(target, rel, _text(notes), repo.git("hash-object", "--", str(doc), cwd=top), _text(doc), top)
 
 
 def gate(target: str, rel: str, notes: str, doc_hash: str, text: str | None = None,
@@ -722,20 +721,15 @@ def passed(record: dict[str, str], findings: str) -> bool:
             and not any(score.note_holds(body) for body in parts[2::2]))
 
 
-def _blocked_reads(top: Path, record: dict[str, str], findings: str) -> int:
-    """Earlier releases' snapshots supply the streak until the first new read records it."""
-    count = _streak(top, record, findings)
-    return 2 if count >= 3 and not score.read_stops(list(_latest(record, findings).values())) else count
-
-
-def _streak(top: Path, record: dict[str, str], findings: str) -> int:
-    count = 0
-    while count < 3 and record.get("round") and not passed(record, findings) and not record.get("loop_choice"):
-        if record.get("blocked_rounds"):
-            return min(3, count + int(record["blocked_rounds"]))
-        count += 1
-        record, findings = _record(repo.read_blob(top, record.get("notes_seen") or "-") or "")
-    return count
+def stopped(record: dict[str, str], findings: str) -> bool:
+    """At the limit, P0s get a round before a repeated P0 stop; other open notes stop."""
+    latest = _latest(record, findings)
+    previous = {n: b for n, b in _latest(
+        {"round": str(int(record.get("round") or 0) - 1)}, findings).items() if n not in latest}
+    p0 = lambda notes: any(score.note_holds(FINDING.sub("", block, count=1))
+                           and score.bar(score.parse(block)) == "block" for block in notes.values())
+    return (int(record.get("round") or 0) >= 2 and not passed(record, findings)
+            and not record.get("loop_choice") and (not p0(latest) or p0(previous)))
 
 
 def rounds(notes: str | None, state: str | None = None) -> bool:
@@ -862,8 +856,7 @@ def plan_behind(top: Path, key: str, ref: str, history: dict[str, Any] | None = 
 
 def show(top: Path, ref: str, path: str) -> str | None:
     """A file's text at a commit, or None when it isn't there."""
-    done = repo.run("git", "show", f"{ref}:{path}", cwd=top)
-    return done.stdout if done.returncode == 0 else None
+    return repo.read_blob(top, f"{ref}:{path}")
 
 
 def merged_at(top: Path, ref: str, path: str) -> str:
@@ -917,15 +910,15 @@ def json_of(text: str | None) -> dict[str, Any]:
 
 
 def _paths(target: str, top: Path | None = None) -> tuple[Path, Path, Path, bool]:
-    """The checkout, doc and notes file of a story key or a spec slug, and whether it's a story."""
+    """The checkout, doc and notes of a story, spec or decision, and whether it's a story."""
+    from forge import records
+
     if KEY.fullmatch(target):
         top = story_checkout(target, top)
         return top, top / "plans" / f"{target}.md", top / "plans" / f"{target}.read.md", True
     top = top or repo.root()
-    doc = top / "docs" / "specs" / f"{target}.md"
-    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", target) or not doc.is_file():
-        repo.refuse(REFUSALS["no_spec"], slug=target)
-    return top, doc, doc.with_name(f"{target}.read.md"), False
+    doc = records.read_path(top, target)
+    return top, doc, doc.with_suffix(".read.md"), False
 
 
 def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
@@ -1034,8 +1027,8 @@ def read_question(doc: str, notes: str) -> str:
     found = sections(doc)
     gives = review.plain(found.get("What changes for you") or found.get("Behaviour", ""))
     return review.question(review.plain(title[1]) if title else "", gives, score.table(flagged),
-                           score.who(flagged, "Ask the human to accept, narrow or split before reading "
-                                              "again, in these words:"),
+                           "Ask the human to choose one more round, split or accept before another read, "
+                           "in these words:",
                          "keep these problems as known and mark the read accepted; approving or "
                          "confirming the doc is still a separate step.",
                          "Done when" if "What changes for you" in found else
@@ -1136,9 +1129,11 @@ def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> st
     tracked = repo.run("git", "ls-files", "--error-unmatch", "--", old, cwd=fix_top).returncode == 0
     (fix_top / old).unlink()
     state = {name: value for name, value in fix_state.items() if name != "kind"}
-    new = repo.write_state(task, {**state, "branch": branch}, fix_top)
+    new = repo.write_state(task, {**state, "branch": branch, "from_fix": fix}, fix_top)
     repo.commit_state("Turn the fix into the first part of its story", *([old] if tracked else []), new,
                       top=fix_top)
+    from forge.task import publish_start
+    publish_start(fix_top, branch)
     return f"The fix {fix} is now the story's first task, {task}, in {fix_top}."
 
 
@@ -1189,12 +1184,12 @@ COMMANDS = [
      "args": [(('key',), {}), (('outcome',), {})], "position": 80,
      "listing": '| `forge story done <KEY> "<outcome>"` | Corrects a finished story\'s outcome on an existing work branch; opens no separate pull request |'},
     {"words": "read", "run": "read", "changes_state": True,
-     "help": "Run a round of the cold read of a story doc or spec",
-     "args": [(('target',), {"help": "a story key or a spec slug"}),
-              (('--resolve',), {"choices": ["accept", "narrow", "split"]}),
+     "help": "Run a round of the cold read of a story doc, spec or decision",
+     "args": [(('target',), {"help": "a story key, spec slug or decision slug"}),
+              (('--resolve',), {"choices": ["accept", "more", "split"]}),
               (('--reason',), {})],
      "position": 90,
-     "listing": '| `forge read <KEY or spec>` | Runs the next round of the cold read of a story doc or spec, until a round finds nothing |'},
+     "listing": '| `forge read <KEY or spec or decision>` | Reads a story doc, spec or decision. After round two, open notes below P0, or P0 notes in two rounds in a row, wait for `--resolve more`, `split` or `accept` with `--reason "<human\'s choice>"` |'},
 ]
 
 GROUP_HELP = {"story": "Start a story, or record its outcome"}

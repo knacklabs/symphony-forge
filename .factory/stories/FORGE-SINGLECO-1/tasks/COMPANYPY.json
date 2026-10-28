@@ -1,0 +1,82 @@
+{
+  "base": "743ca69ff3bd5b5dd7ebdb35d639038d788a5672",
+  "branch": "task/FORGE-SINGLECO-1-COMPANYPY",
+  "chat": {
+    "approval": "0d08757b739604620f35179a62a256cd5855426df6dc569487a239533d4478c8",
+    "claude": null,
+    "conversation": "01a1748a-88f4-7cd3-9ba9-061ba35c0b96",
+    "head": null,
+    "start": "7e650c0e77d93ef1986c136eef9eb8fac35c0154"
+  },
+  "known": [
+    {
+      "area": "upgrade() in src/forge/templates/starter-python/apps/api/migrations/versions/0006_extensions.py",
+      "file": "src/forge/templates/starter-python/apps/api/migrations/versions/0006_extensions.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 14,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: remove the unrelated database upgrade from the selected change",
+      "work": 2
+    },
+    {
+      "area": "test_3_a_one_company_app_is_invite_only() in tests/test_one_company.py",
+      "file": "tests/test_one_company.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 38,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: COMPANYWEB must complete the invite-only browser behavior",
+      "work": 4
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a1bbf23039c2ab3a744a2e4e47556ed77b387f519512a5a5bd62ced23616b810",
+    "changed": "e0919f59aa03e647f21a717235555b1c1cf99007840c03e40a9aa660eef32cdc",
+    "commit": "bb47c00f081936950a24f06cfb0cd2c039494195",
+    "dismissals": [],
+    "findings": [],
+    "id": "e5738514-a6f9-4de9-a26c-2848d70b9273",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "FORGE-DATABASE-1/PG18",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T19:29:06.370661+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T19:40:55.241194+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T19:44:45.532568+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T20:25:31.147312+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T20:41:48.205687+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e7298e21-7b10-4c2e-aad7-7ec49be5117c",
+    "head": "38a9c77ae62b91135c819782e3af20c50dc58f43",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

@@ -1,6 +1,6 @@
 Cold read of $target.
 
-You are doing the one cold read of a story doc or a spec before a human approves it. You have
+You are doing the one cold read of a story doc, spec or decision before a human approves it. You have
 not seen it before. Read it as a skeptical senior engineer who wants the smallest thing that works.
 
 Do not change any file. This read is discarded if any file in the repository changes.
@@ -20,7 +20,34 @@ that one question, record the answer in the finding's disposition and the story'
 `Decided: <topic>: <answer> (<source>, <date>)`, and make the story's first task update the answers
 page. Do not call a deferred topic open when no Done-when item needs it.
 
+When a note needs a choice only the client can make, put this block inside the note, indented
+under it, just before the note's score line. The block has no score line of its own: the note's
+score line scores the question too.
+
+```text
+  - Open question: <question>
+    Touches: <screen or rule>
+    Why we ask: <what the answer changes>
+    Default: <choice>
+    Why this default: <reason>
+    If the default stands: <what happens>
+    Due: <one week after today>
+```
+
 A story with no linked confirmed spec is not a finding.
+
+Treat `## Proven by the prototype` as settled evidence from the accepted sign-off. Read only
+the rest for new work and production risks. Do not ask the plan to prove those outcomes again.
+Its parts list only new work or production risks.
+
+Report as P1 a `Design: none (<why>)` story if a part adds a screen or changes a flow.
+That choice covers only small changes to existing screens.
+
+A note blocks only when it names a case that happens in normal use. Include
+`Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each note that would
+block. A rare case never blocks. A security hole or data loss that any user can reach is normal
+use. Do not raise a finding that this repo's Review rules or a recorded owner decision
+(a decision in `docs/decisions/`, a `Decided:` line or a `Ruling:` line) already settles.
 
 Your scores (see Scores below) decide: Harm 4 or 5, or Gain 5 holds the plan. Otherwise, Gain 4,
 or Gain 3 with Harm 3, holds the plan only with Work 1 or 2. Every other Gain 3 or 4 note is a
@@ -70,7 +97,30 @@ An edge case is inside the boundary only when a Done-when item names it, when th
 realistic scenario that makes it likely in normal use, or when it falls under Security or Data
 loss. Every finding you raise names its line as `Raise: <line>` at the start of its evidence.
 
+Four principles govern every change.
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
+Mark each finding that asks for added work beyond the Done-when items (another check, retry, guard
+or flag) with a body line `Adds work: <what>; F <f> x H <h> = <p>; 2 x C = <c>`. When p is less
+than 2 x C, score its Gain 2 or less: it is a known limit and does not hold the work. A review
+keeps it in Known issues; a cold read keeps it with its disposition in the read notes. A finding
+under Security or Data loss, or one that names a migration, keeps its Harm floor and still holds
+the work. A check that a Done-when item promises is not added work: report it missing as
+`Not done: <the item>`, which holds the work at any score. Never title an added-work finding
+`Not done`.
+
 Prefer one blunt fail-closed rule with one test over listing every case.
+
+In a client app, report a plan whose part has one module query a table another module owns as a
+note titled `Module tables: <the part>`.
 
 Check:
 
@@ -118,6 +168,10 @@ Check:
    This repository's own known traps, from its AGENTS.md:
 
 $traps
+
+For a decision, check its Context, Decision and Consequences for gaps, contradictions and
+tradeoffs the human needs to settle. Skip story and spec checks about tasks, Done when,
+success measures and `New moving parts`.
 
 If the doc is a spec (it has no Tasks table), skip the checks about tasks and `New moving parts`.
 Instead, check that the Why or the success measure needs every behaviour line, variant, role,
@@ -169,9 +223,17 @@ whole doc again yourself. Its diff since your last round:
 
 $diff
 
+Keep `## Proven by the prototype` settled. Read only the rest for new work and production risks.
+The P1 rule for `Design: none (<why>)` still applies when a part adds a screen or changes a flow.
+
 All earlier rounds' settled notes, each with its scores and its disposition:
 
 $dispositions
+
+Include `Case: normal use - <the scenario>` or `Case: rare - <the scenario>` in each note that
+would block. A rare case never blocks. A security hole or data loss that any user can reach is
+normal use. Do not raise a finding that this repo's Review rules or a recorded owner decision
+(a decision in `docs/decisions/`, a `Decided:` line or a `Ruling:` line) already settles.
 
 These are known and accepted. A settled note comes back only with new evidence of harm, as
 `Disputed keep <n>: <the new harm>`, where `<n>` is its number.
@@ -196,66 +258,18 @@ Check:
    - Raise a kept finding again only with new evidence of a distinct defect, as
      `Disputed keep <n>: <why>`, where `<n>` is the kept finding's number.
    - Never raise again a finding whose disposition cites a `Decided:` line. The human settled it.
-${look}Write only your new findings, as a numbered list starting at $next, in your first round's format.
-End each finding with its score line, scored as in your first round.
-Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
-Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
-advisory notes need no disposition or another round.
-If there is nothing to report, write exactly `No findings.` and nothing else.
+2. Block on anything new only for a P0 that happens in normal use: a security hole, data loss or
+   a broken main path. A fix for an earlier finding that breaks the main path counts as a P0.
+   Score a P0 with Harm 4 or 5, or Gain 5. Forge asks the owner about every other open note after round two.
 
-<!-- forge:edit -->
-Round $round of your cold read of `$path`: you are continuing your own earlier read.
-
-Your last round passed, and the doc changed since. Do not change any file. This read is
-discarded if any file in the repository changes. Its diff since your last round:
-
-$diff
-
-It touches these sections: $touched.
-
-For a story, the confirmed spec's diff since your last round, empty when it is unchanged:
-
-$spec_diff
-
-For a story, the diff of the `## Answers` section of `docs/product/BRIEF.md` since your last
-round, empty when it is unchanged:
-
-$answers_diff
-
-Check only this diff and the sections it touches, not the rest of the doc, which passed, plus
-any spec or Answers diff above: apply your first round's checks and What counts to them,
-including Forge's general traps and this repository's own known traps:
-
-$traps
-
-For a story from round 3 on, block only on changed text in the diff, the spec's diff or the
-Answers diff, or on an earlier blocking finding that remains open. Other gaps in unchanged text are `Advisory:`, even inside a touched
-section.
+This includes the diff, the spec and Answers diffs, and known traps: $traps
 
 Write only your new findings, as a numbered list starting at $next, in your first round's format.
 End each finding with its score line, scored as in your first round.
-Block only when the plan is wrong, contradicts itself, or a builder could not act on it.
+Block only on an earlier finding that is not closed or a new P0 that happens in normal use.
 Prefix blocking findings with `Blocking:` and other notes with `Advisory:` after the number;
 advisory notes need no disposition or another round.
 If there is nothing to report, write exactly `No findings.` and nothing else.
-
-<!-- forge:look -->
-2. Look for new gaps anywhere in the doc, not only in the diff, with your first round's checks
-   and What counts: each "Done when" item's rules and the test that proves each, shared
-   names no earlier task pins, task size, and Forge's general traps and this repository's own
-   known traps:
-
-$traps
-
-<!-- forge:cap -->
-2. This is round $round: the text the diff does not touch has had its two rounds of notes.
-   Block only on changed text in the diff, the spec's diff or the Answers diff, or on one of
-   those findings that is not closed.
-   Any other note on unchanged text is `Advisory:`, even inside a touched section. Apply your first
-   round's checks and What counts to the diff, including Forge's general traps and this
-   repository's own known traps:
-
-$traps
 
 <!-- forge:notes -->
 # Cold read notes
@@ -269,7 +283,8 @@ doc, then run `forge read <doc>` again until a round has no blocking notes. Note
 - `Disposition: keep <one-line reason>` otherwise.
 
 A finding inside What counts is cut or deferred. Keep one only when it falls outside that boundary
-or is factually wrong, and give as the reason the Leave out line, the missing Raise line, the
-cited fact that disproves it, or the human's `Decided:` line.
+or is factually wrong or not worth the change, and give as the reason the Leave out line, the
+missing Raise line, the cited fact that disproves it, why it is not worth the change, or the
+human's `Decided:` line.
 
 Only a genuine trade-off goes to the human, as a question with options.

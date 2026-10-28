@@ -8,6 +8,8 @@ import pytest
 from test_upgrade_command import (NAME, RELEASE, assert_ready, ours, up, unsynced_up)  # noqa: F401
 from test_close import env  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "fix-upgrade-stale-fix"
 NEXT, NEXT_NAME = "v9.10.0", "upgrade-forge-to-v9-10-0"
 

@@ -19,7 +19,8 @@ def test_1_the_worker_brief_says_run_tests_in_the_foreground_and_commit_before_t
     assert built.returncode == 0, built.stdout + built.stderr
     [call] = calls(log)
     brief = " ".join(call["brief"].split())
-    assert "Run tests in the foreground" in brief
+    assert ("run the change's related tests through `forge test` in the foreground once, "
+            "at the end of your turn" in brief)
     assert "Never end your turn while a command you started still runs in the background" in brief
     assert "Commit your work before your turn ends" in brief
 

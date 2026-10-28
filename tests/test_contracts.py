@@ -19,7 +19,6 @@ import pytest
 
 import conftest
 from test_approval import _digest
-from test_board import seen as page_text
 from test_close import PIN, body, env, finding, report, run  # noqa: F401 (env is a fixture)
 from test_setup import _executable, _hook_commands, _version
 from test_story import DOC, READER, claude_plan, codex_question, ready, setup, worktree
@@ -27,6 +26,9 @@ from test_codex_worker import _codex_repo, sdk_data  # noqa: F401 (sdk_data is a
 from test_walkthrough import DOC as CART_DOC
 from test_walkthrough import walk, with_models
 from test_worker import calls, install_claude
+from test_tools_session_hold import Session
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-NEXT-1"
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,19 +113,34 @@ def _codex_sdk_install_fails(repo, gh, tmp_path, monkeypatch, request):
 def _init_with_commits(repo, gh, tmp_path, monkeypatch, request):
     # FORGE-LIVE-1: a repo with history is adopted on a fix branch, not refused; without the
     # human's confirmed answers it names the ones it needs.
-    return (("init",), None, "",
+    return (("init", "--actions", "yes"), None, "",
             "This repo already has commits, so forge init adopts it on a fix branch, and it needs "
             "the answers you confirmed: --test, --checks, --interfaces, --approver, --merger.\n"
-            'Next: forge init --test "<command>" --checks <check> --interfaces "<glob>" '
+            'Next: forge init --actions yes|no --test "<command>" --checks <check> --interfaces "<glob>" '
             '--approver "<who>" --merger "<who>" --never-touch "<path>"\n')
 
 
 def _init_without_origin(repo, gh, tmp_path, monkeypatch, request):
     fresh = tmp_path / "fresh"
     repo.git("init", "-q", "-b", "main", str(fresh))
-    return (("init",), fresh, "",
+    return (("init", "--actions", "yes"), fresh, "",
             "This repo has no origin remote, so Forge can't push the first commit or protect the "
             "default branch.\nNext: gh repo create <name> --private --source . --remote origin\n")
+
+
+def _init_starter_with_commits(repo, gh, tmp_path, monkeypatch, request):
+    return (("init", "--actions", "yes", "--starter"), None, "",
+            "This repo already has commits, so forge init --starter cannot set it up.\n"
+            "Next: use a new repo for the starter\n")
+
+
+def _init_starter_with_app(repo, gh, tmp_path, monkeypatch, request):
+    fresh = tmp_path / "fresh"
+    repo.git("init", "-q", "-b", "main", str(fresh))
+    (fresh / "package.json").write_text("{}\n", encoding="utf-8")
+    return (("init", "--actions", "yes", "--starter"), fresh, "",
+            "forge init --starter found an existing app file: package.json.\n"
+            "Next: use a new folder for the starter, or forge init to keep this app\n")
 
 
 def _protection_fails(repo, gh, tmp_path, monkeypatch, request):
@@ -135,7 +152,7 @@ def _protection_fails(repo, gh, tmp_path, monkeypatch, request):
     # The branch has no rule yet, so reading it works; setting Forge's rule fails.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    return (("init",), client, "", re.compile(
+    return (("init", "--actions", "yes"), client, "", re.compile(
         r"Branch protection on main was not set: gh exited with code 1\.\n"
         r"Next: gh api --method PUT 'repos/\{owner\}/\{repo\}/branches/main/protection' "
         r"--input \S+branch-protection\.json'?\n"))
@@ -297,7 +314,8 @@ def _two_own_hooks(repo, gh, tmp_path, monkeypatch, request):
 LINKS = pytest.mark.skipif(os.name == "nt", reason="making a symlink needs extra rights on Windows")
 TRIGGERS = [_bad_hook_input, _approval_outside_the_contract, _approval_with_no_session,
             _codex_sdk_install_fails, _codex_handler_moved, _init_with_commits,
-            _init_without_origin, _protection_fails, _not_a_repo, _unknown_setting, _roadmap_without_items, _not_an_item, _unreadable_state,
+            _init_without_origin, _init_starter_with_commits, _init_starter_with_app,
+            _protection_fails, _not_a_repo, _unknown_setting, _roadmap_without_items, _not_an_item, _unreadable_state,
             _lower_case_key, _no_title, _no_story, _no_spec, _reader_fails, _story_not_finished,
             pytest.param(_adapter_linked_outside, marks=LINKS), _unreadable_settings,
             _broken_block, pytest.param(_hook_linked_outside, marks=LINKS), _two_own_hooks]
@@ -379,9 +397,9 @@ def test_6_third_party_contracts(env, claude_payload, codex_payload, tool):
             "statusCheckRollup": [{"__typename": "CheckRun", "name": "tests", "status": "COMPLETED",
                                    "conclusion": "SUCCESS", "completedAt": "2026-09-24T09:00:00Z",
                                    **EXTRA}], **EXTRA}]))
-        page = env.tmp / "board.html"
-        assert repo.forge("board", "--out", str(page)).returncode == 0
-        assert "Readme greets new readers Fix Done Finished on 24 September 2026" in page_text(page)
+        fix = _rows(_facts(env))["tidy-readme"]
+        assert (fix["title"], fix["state"], fix["status"]) == (
+            "Readme greets new readers", "done", "Finished on 24 September 2026")
     else:
         # The host's hook payloads, with fields Forge doesn't use at every level.
         setup(repo, keys=("WISH",))  # SHOP is the close fixture's story, already on main
@@ -480,6 +498,18 @@ JARGON = {"a hash": r"\b[0-9a-f]{7,}\b", "a UUID": r"\b[0-9a-f]{8}-[0-9a-f]{4}-"
 IDS = ("SHOP", "CART", "T1", "T2", "tidy-readme")
 
 
+def _facts(env):
+    """Every item's facts, finished ones included, as `forge board --out` writes them."""
+    out = env.tmp / "board.json"
+    written = env.repo.forge("board", "--out", str(out))
+    assert written.returncode == 0, written.stdout + written.stderr
+    return json.loads(out.read_text("utf-8"))
+
+
+def _rows(data):
+    return {row["id"]: row for parent in data["items"] for row in [parent, *parent["children"]]}
+
+
 def _not_plain(text: str) -> list[str]:
     return [name for name, pattern in JARGON.items() if re.search(pattern, text)] + [
         f"the ID {name}" for name in IDS
@@ -518,18 +548,17 @@ def test_8_plain_english(env):
          "title": call[call.index("--title") + 1], "body": body(call),
          "mergedAt": "2026-09-25T10:00:00Z", "files": [], "statusCheckRollup": []}
         for call in creates]))
-    page = env.tmp / "board.html"
-    assert repo.forge("board", "--out", str(page)).returncode == 0
-    text = page_text(page)
-    for line in ("Save a basket", "Shoppers can share a cart CART",
-                 "Readme greets new readers Fix Done Finished on 25 September 2026"):
-        assert line in text, text
-    # The one ID the board shows is a story's own key, small beside its title.
-    unkeyed = env.tmp / "board-unkeyed.html"
-    unkeyed.write_text(re.sub(r'<span class="key">[^<]*</span>', "", page.read_text("utf-8")), "utf-8")
-    assert not _not_plain(page_text(unkeyed)), (_not_plain(page_text(unkeyed)), text)
-    # Inline SVG geometry also preserves the page's no-hash contract.
-    assert not re.search(JARGON["a hash"], page.read_text("utf-8")), "a hash is in the page"
+    data = _facts(env)
+    rows = _rows(data)
+    assert rows["SHOP/T1"]["title"] == "Save a basket"
+    assert rows["CART"]["title"] == "Shoppers can share a cart"
+    fix = rows["tidy-readme"]
+    assert (fix["title"], fix["state"], fix["status"]) == (
+        "Readme greets new readers", "done", "Finished on 25 September 2026")
+    # Every title, state and status line a person reads, and the team's sentence, are plain.
+    shown = [data["team"]["sentence"]] + [row[field] for row in rows.values()
+                                          for field in ("title", "state", "status")]
+    assert not [(text, _not_plain(text)) for text in shown if _not_plain(text)]
 
     # Ctrl-C ends a command quietly: no traceback, just the usual exit code. A gh that waits
     # stands in for a slow step. ponytail: POSIX only; Windows has no SIGINT to send one process.
@@ -580,7 +609,7 @@ def _commands() -> dict[str, bool]:
     return commands
 
 
-def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypatch):
+def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypatch, tmp_path):
     repo, commands = env.repo, _commands()
     groups = {words.split()[0] for words in commands if " " in words}
     ran: set[str] = set()
@@ -602,7 +631,10 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
     repo.forge = checked
     walk(env, claude_payload, monkeypatch)  # a story from story new to story done
     ready(repo, "ASSIGN")
+    # Include the feature command in this command-wide default-checkout invariant;
+    # its own tests cover the non-starter refusal text and successful starter copy.
     for args in (("assign", "ASSIGN", "alice"), ("init",), ("sync",), ("migrate",),
+                 ("task", "feature", "jobs", "--one", "job", "--field", "name:text"),
                  ("fix", "start", "Tidy the readme", "--done", "The readme greets readers"),
                  ("fix", "amend", "tidy-the-readme", "--done", "The readme greets new readers",
                   "--because", "returning readers moved to another fix"),
@@ -613,7 +645,8 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
                  ("spec", "save", "carts"),
                  ("spec", "confirm", "carts", "--by", "Ravi"),
                  ("spec", "measure", "carts", "--result", "72%"), ("decision", "new", "carts"),
-                 ("decision", "accept", "carts", "--by", "Ravi"), ("roadmap", "add", "carts"),
+                 ("decision", "accept", "carts", "--by", "Ravi"),
+                 ("decision", "answer", "--defaults"), ("roadmap", "add", "carts"),
                  ("roadmap", "retire", "CARTS-1", "--by", "carts")):
         done = repo.forge(*args)
         if args[:2] == ("fix", "drop"):
@@ -623,6 +656,41 @@ def test_9_nothing_changes_outside_a_pull_request(env, claude_payload, monkeypat
             # Exercise a published assignment, not only a refusal that leaves main alone.
             assert done.returncode == 0, done.stdout + done.stderr
             assert "Owner: alice" in repo.git("show", "origin/story/ASSIGN:plans/ASSIGN.md")
+        if args[:2] == ("decision", "answer"):
+            # Valid command arguments must reach the branch guard, not a usage refusal.
+            assert done.returncode == 1, done.stdout + done.stderr
+            assert "Forge changes nothing on main" in done.stderr
+    # Intake holds its place outside the checkout; handback writes each draft on its own branch.
+    with monkeypatch.context() as host:
+        host.delenv("CLAUDECODE", raising=False)
+        host.setenv("CODEX_THREAD_ID", "intake-contract-session")
+        owner = Session(repo, tmp_path / "intake-host", "codex-contract-session")
+        try:
+            forge = owner.forge
+            for idea, reply, branch in (
+                ("Correct the welcome typo",
+                 "Lane: fix\nReason: The change is small and clear.\n"
+                 "Why: Correct the welcome typo\nDone: The welcome page says Welcome.\nKind: backend",
+                 "fix/correct-the-welcome-typo"),
+                ("Save baskets for later",
+                 "Lane: plan\nReason: Shoppers need a new way to save baskets.\n"
+                 "Key: IDEA\nTitle: Save baskets\nChange: Shoppers can save baskets.\n"
+                 "Problem: Shoppers lose baskets.\nDone: A saved basket returns.",
+                 "story/IDEA"),
+            ):
+                offered = repo.forge("start", idea)
+                assert offered.returncode == 0, offered.stdout + offered.stderr
+                pending = json.loads(offered.stdout)
+                done = repo.forge("handback", pending["target"], "--round", str(pending["round"]),
+                                  "--subagent", "idea-explorer", "--text", reply)
+                assert done.returncode == 0, done.stdout + done.stderr
+                assert repo.git("branch", "--list", branch)
+            # Dropping the intake plan publishes its state without changing main.
+            dropped = repo.forge("story", "drop", "IDEA", "--because", "Move this plan to a fix")
+            assert dropped.returncode == 0, dropped.stdout + dropped.stderr
+            assert repo.git("show", "origin/story/IDEA:plans/IDEA.md")
+        finally:
+            owner.close()
     changing = {words for words, changes in commands.items() if changes}
     assert not changing - ran, f"state-changing commands not run: {sorted(changing - ran)}"
 

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_signoff_reuse.py\tGate: unchanged-canvas and earlier-adopted sign-off reuse\tFORGE-PACE-1/SIGNOFF",
+      "kind": "bug",
+      "path": "tests/test_signoff_reuse.py",
+      "line": 129,
+      "text": "Gate: unchanged-canvas and earlier-adopted sign-off reuse",
+      "from": "blocking",
+      "item": "FORGE-PACE-1/SIGNOFF",
+      "status": "done",
+      "closed_by": "the-full-run-on-main-is-red-after-the-wi"
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tFollow-up: preserve literal matches for bracketed scope paths",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 347,
+      "text": "Follow-up: preserve literal matches for bracketed scope paths",
+      "from": "review",
+      "item": "the-full-run-on-main-is-red-after-the-wi",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

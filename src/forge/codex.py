@@ -18,6 +18,7 @@ import sys
 import tempfile
 import time
 from collections.abc import Callable, Iterator
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -568,7 +569,7 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                           {**settings(config, kind),
                            **{OVERRIDES[key]: value for key, value in chosen.items()}} if chosen else
                           settings(config, kind)),
-               "thread": thread, "read": read, "archive": archive_thread,
+               "thread": thread, "read": read, "archive": archive_thread, "kind": kind,
                "hooks": FORGE_HOOKS}
     if not (read or archive_thread or attach_request):
         request["fast"] = fast_needed(checkout, item, kind, config)
@@ -712,6 +713,9 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                 elif "retry" in said:  # Codex was at capacity: the driver sends the turn again
                     _record(record, pending=pending)
                     recorded()
+                    if ran.get("run_id"):
+                        repo.record_progress(checkout, item, ran["run_id"], retry_at=(
+                            datetime.fromisoformat(repo.now()) + timedelta(seconds=said["retry"])).isoformat())
                     text = (f"Codex is at capacity, so Forge tries the turn again in "
                             f"{said['retry']:g} seconds (attempt {said['attempt']} of {said['of']}).")
                 elif "declined" in said:
@@ -724,8 +728,11 @@ def run(checkout: Path, item: str, kind: str, name: str, prompt: str, sandbox: s
                         "input_tokens": usage.get("inputTokens"),
                         "cached_input_tokens": usage.get("cachedInputTokens"),
                         "output_tokens": usage.get("outputTokens")})
-                    ran.update(chat=result["conversation"], **result["usage"],
-                               reasoning_output_tokens=usage.get("reasoningOutputTokens"))
+                    ran.update(chat=result["conversation"])
+                    for key, count in {**result["usage"], "reasoning_output_tokens":
+                                       usage.get("reasoningOutputTokens")}.items():
+                        ran[key] = ((ran.get(key) or 0) + count if isinstance(count, int)
+                                    else ran.get(key))
                     _append(turns, {**started, **continued, "status": said["status"],
                                     "ended": repo.now(), **result["usage"]})
                     _record(record, head=repo.git("rev-parse", "HEAD", cwd=checkout))
@@ -1057,10 +1064,12 @@ def hold(checkout: Path, item: str, kind: str) -> Iterator[None]:
 def _take(lock: Path, me: dict[str, Any]) -> tuple[dict[str, Any], bool | None] | None:
     """Take the lock for `me` by an exclusive create, clearing a stale one first. None once taken;
     else the owner keeping it, and True, or None when Forge can't tell, which counts as running."""
+    from forge import native
+
     with _one_at_a_time(lock):
         if lock.exists():
             owner = _json(lock)
-            alive = _alive(owner)
+            alive = native.lock_alive(lock)
             if alive is not False:
                 return owner, alive
             lock.unlink(missing_ok=True)

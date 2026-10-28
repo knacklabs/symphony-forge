@@ -1,0 +1,45 @@
+{
+  "base": "2e441d3b330ca4a0bb1042cb540b152f6ca9cf4c",
+  "branch": "fix/the-nightly-full-run-on-main-is-red-with",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17647-ef89-75a0-8c59-1dbd83337f5e",
+    "head": null,
+    "start": "40a93922ae4c62662df686c7d8d00ef382732ed0"
+  },
+  "done_when": "The nightly full run on main passes every test, and the shipped client files stay the same.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "df14e7339961ce79c9003cddbf6452b82d00fc9bb56f1bb9f8bd99b79027f449",
+    "changed": "7851f4344586cb0429f6e2b3131fc81e7e2faa79957d023d2ba94848bc1cabbd",
+    "commit": "6248a612181890759d534727f3919f7cb0b8427a",
+    "dismissals": [],
+    "findings": [],
+    "id": "7aa7285a-dca1-486f-889b-4fa55bc4204a",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T03:36:11.836960+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T03:55:24.680735+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "eb58e9f8f100108ecf0e431cc6bfde5abf624749",
+    "keys": {},
+    "round": null
+  },
+  "why": "The nightly full run on main is red with 13 failing tests, which blocks the release and client sign-off.",
+  "worker": "codex"
+}

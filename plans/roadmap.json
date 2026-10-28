@@ -306,6 +306,162 @@
       "title": "One machine budget for workers, reviews, tests and CI runners, counting memory",
       "status": "pending",
       "order": 87
+    },
+    {
+      "key": "FORGE-BOARD-4",
+      "title": "The board shows a team what moves, what needs them and when it ships, at a glance",
+      "status": "pending",
+      "order": 84
+    },
+    {
+      "key": "FORGE-INTAKE-1",
+      "title": "Forge sorts every new idea into a fix, a plan, discovery or the idea list",
+      "status": "pending",
+      "order": 88
+    },
+    {
+      "key": "FORGE-ROUNDS-1",
+      "title": "Reads and reviews end after two rounds",
+      "status": "pending",
+      "order": 88
+    },
+    {
+      "key": "FORGE-ROUNDS-2",
+      "title": "Owner decides before open findings drop at the round limit",
+      "status": "pending",
+      "order": 89
+    },
+    {
+      "key": "FORGE-CONSTITUTION-1",
+      "title": "Setup interview and app constitution for client repos",
+      "status": "pending",
+      "order": 90
+    },
+    {
+      "key": "FORGE-STARTER-1",
+      "title": "Starter app for new client React apps",
+      "status": "pending",
+      "order": 91
+    },
+    {
+      "key": "FORGE-MODULAR-1",
+      "title": "New client apps start from the client notes and a fixed modular stack",
+      "status": "pending",
+      "order": 92
+    },
+    {
+      "key": "FORGE-FASTAPI-1",
+      "title": "FastAPI starter for Python backends",
+      "status": "pending",
+      "order": 93
+    },
+    {
+      "key": "FORGE-REACTDEFAULTS-1",
+      "title": "Four frontend defaults for new client React apps",
+      "status": "pending",
+      "order": 92
+    },
+    {
+      "key": "FORGE-ZOD-1",
+      "title": "One zod schema checks every client app input",
+      "status": "pending",
+      "order": 93
+    },
+    {
+      "key": "FORGE-DEFAULTS-1",
+      "title": "New client apps start with the constitution's built-in defaults",
+      "status": "pending",
+      "order": 94
+    },
+    {
+      "key": "FORGE-TESTPLACE-1",
+      "title": "Tests run once per change, in one place per repo, and CI is optional",
+      "status": "pending",
+      "order": 95
+    },
+    {
+      "key": "FORGE-GROUPS-1",
+      "title": "Split any test runner's CI tests into parallel groups",
+      "status": "pending",
+      "order": 96
+    },
+    {
+      "key": "FORGE-DATABASE-1",
+      "title": "Database rules for every client app",
+      "status": "pending",
+      "order": 97
+    },
+    {
+      "key": "FORGE-SINGLECO-1",
+      "title": "One-company client apps",
+      "status": "pending",
+      "order": 97
+    },
+    {
+      "key": "FORGE-LIBS-1",
+      "title": "Client apps can split into services and frontends later without a rewrite",
+      "status": "pending",
+      "order": 98
+    },
+    {
+      "key": "FORGE-BAR-1",
+      "title": "Clients choose which added-work review notes hold their work",
+      "status": "pending",
+      "order": 99
+    },
+    {
+      "key": "FORGE-SERVICES-1",
+      "title": "Client apps can deploy several services from one repo",
+      "status": "pending",
+      "order": 100
+    },
+    {
+      "key": "FORGE-FEATURE-1",
+      "title": "Build a client feature from the starter in one step",
+      "status": "pending",
+      "order": 100
+    },
+    {
+      "key": "FORGE-DEPLOY-1",
+      "title": "Client apps deploy to dev and preview on their own, and production waits for a person's Promote",
+      "status": "pending",
+      "order": 101
+    },
+    {
+      "key": "FORGE-MCP-1",
+      "title": "Client apps ship an MCP server so agents can use their features",
+      "status": "pending",
+      "order": 102
+    },
+    {
+      "key": "FORGE-ASKED-1",
+      "title": "Build only what is needed",
+      "status": "pending",
+      "order": 103
+    },
+    {
+      "key": "FORGE-SPECRULES-1",
+      "title": "Client specs state each rule once",
+      "status": "pending",
+      "order": 103
+    },
+    {
+      "key": "FORGE-SIGNOFF-1",
+      "title": "Client apps reach sign-off through five guided steps and one list of open decisions",
+      "status": "pending",
+      "order": 104
+    },
+    {
+      "key": "FORGE-EXPAND-1",
+      "title": "Client migrations keep the previous release working",
+      "status": "pending",
+      "order": 105
+    },
+    {
+      "key": "FORGE-JOURNEY-1",
+      "title": "Agents teach the seven-step journey to new users",
+      "status": "pending",
+      "order": 103
     }
   ],
   "epics": [

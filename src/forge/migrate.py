@@ -631,7 +631,7 @@ def _apply(top: Path, path: Path, plan: dict[str, Any], report: str) -> None:
         sync.write_file(path, entry["dest"], entry["text"])
         touched += [entry["dest"], *(repo.write_state(item, data, path)
                                      for item, data in entry["states"].items())]
-    toml = init._scaffold(path)["forge.toml"]  # pyright: ignore[reportPrivateUsage]
+    toml = init._scaffold(path, "yes")["forge.toml"]  # pyright: ignore[reportPrivateUsage]
     if plan["test"]:  # the old verify commands, not the stack's default
         toml = re.sub(r"^test = .*$", lambda _: f"test = {json.dumps(plan['test'])}", toml,
                       count=1, flags=re.M)

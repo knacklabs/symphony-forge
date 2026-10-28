@@ -9,8 +9,9 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 
 ### The flow
 
-1. A story starts as one short doc: `forge story new <KEY> "<title>"`.
-2. It gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
+1. Every idea starts with `forge start "<idea>"`. Forge picks a fix, a plan, discovery or the idea list.
+   Never ask the human whether it is a story or a fix.
+2. A plan gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
    approval from the human.
 3. Each task runs in its own branch and worktree: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`.
@@ -22,9 +23,20 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 
 ### The lanes
 
+Send every idea through `forge start "<idea>"`. Forge picks the lane.
+
 - **Story:** anything that changes an interface or needs more than five code files.
-- **Fix:** a small change, started with `forge fix start "<why>" --done "<done when>"`.
+- **Fix:** a small change with at most five code files and no interface change.
   Specs, decisions, the roadmap and discovery notes ship as fixes.
+- **Discovery:** one question when Forge cannot guess the problem.
+- **Idea list:** only when the owner says later. Forge keeps the idea in `plans/ideas.md`.
+
+| The human says | Run |
+|---|---|
+| "Make it a story" (a fix) | Add the key to the fix's roadmap and commit it, then `forge story new <KEY> --from-fix <fix>` |
+| "Make it a fix" or "Just fix it" (a plan in planning) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
+| "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
+| "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
 
 ### Who builds
 
@@ -36,6 +48,8 @@ each item:
 - `split`: user-facing story tasks on Claude, everything else on Codex.
 
 ### Rules
+
+- Before adding complexity for a speculative or vanishingly unlikely race or security edge case, explain the concrete failure mode, likelihood, and complexity cost to the user and get their buy-in. Do not silently expand scope for theoretical robustness.
 
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.

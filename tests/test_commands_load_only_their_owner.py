@@ -14,14 +14,16 @@ from test_upgrade_command import RELEASE, unsynced_up  # noqa: F401
 STORY = "FIX-EVERY-FORGE-PROCESS-INCLUDING-EACH-GIT-H"
 # The shared golden now includes fix drop; its help must keep the same lazy-owner contract.
 HELP = {**HELP_GOLDEN,
-        "test": "usage: forge test [-h] [--pytest BASE]\n\n"
-                "Run related tests in the machine test lane, or pick pytest tests with --pytest\n\n"
-                "options:\n  -h, --help     show this help message and exit\n  --pytest BASE\n",
-        "land": "usage: forge land [-h] [--all] [item]\n\n"
+        "test": "usage: forge test [-h] [--pytest BASE] [--full] [--change]\n\n"
+                "Run tests in the machine test lane; --change selects related tests and checks\n\n"
+                "options:\n  -h, --help     show this help message and exit\n"
+                "  --pytest BASE\n  --full\n  --change\n",
+        "land": "usage: forge land [-h] [--note TEXT] [--all] [item]\n\n"
                 "Build, close, fix and merge a task or fix\n\n"
-                "positional arguments:\n  item        the task or fix to land\n\n"
-                "options:\n  -h, --help  show this help message and exit\n"
-                "  --all       close and merge every change in close, oldest first\n",
+                "positional arguments:\n  item         the task or fix to land\n\n"
+                "options:\n  -h, --help   show this help message and exit\n"
+                "  --note TEXT  guide the first round this run starts\n"
+                "  --all        close and merge every change in close, oldest first\n",
         "hook handoff": "usage: forge hook handoff [-h]\n\n"
                         "Before compaction: save forge next beside the agent's decisions and lessons\n\n"
                         "options:\n  -h, --help  show this help message and exit\n",
@@ -75,13 +77,15 @@ def _assert_hooks_are_small(repo, client, log):
         assert len(run["sources"]) == 1, run["sources"]
 
 
+@pytest.mark.platform
 def test_1_new_clients_git_commit_and_push_build_only_their_hook(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     _assert_hooks_are_small(repo, client, tmp_path / "starts.jsonl")
 
 
+@pytest.mark.platform
 def test_2_earlier_adopted_clients_get_small_hooks_after_upgrade(unsynced_up):
     up = unsynced_up
     shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", up.repo.path, dirs_exist_ok=True)
@@ -99,6 +103,7 @@ def test_2_earlier_adopted_clients_get_small_hooks_after_upgrade(unsynced_up):
 
 
 @pytest.mark.parametrize("words,expected", HELP.items())
+@pytest.mark.platform
 def test_3_root_groups_and_commands_keep_their_help(repo, monkeypatch, words, expected):
     monkeypatch.setenv("COLUMNS", "80")
     result = repo.forge(*words.split(), "--help")
@@ -107,6 +112,7 @@ def test_3_root_groups_and_commands_keep_their_help(repo, monkeypatch, words, ex
 
 @pytest.mark.parametrize("words", [words for words, text in HELP.items()
                                    if words and "\ncommands:\n" not in text])
+@pytest.mark.platform
 def test_4_command_help_parses_only_its_owner_and_builds_only_its_command(repo, tmp_path, words):
     log = tmp_path / "starts.jsonl"
     _trace(repo, log)

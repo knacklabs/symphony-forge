@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\t.factory/fixes/the-full-run-on-main-is-red-with-20-fail.json\tNot done: The full test suite passes on main\tthe-full-run-on-main-is-red-with-20-fail",
+      "kind": "bug",
+      "path": ".factory/fixes/the-full-run-on-main-is-red-with-20-fail.json",
+      "line": 11,
+      "text": "Not done: The full test suite passes on main",
+      "from": "blocking",
+      "item": "the-full-run-on-main-is-red-with-20-fail",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

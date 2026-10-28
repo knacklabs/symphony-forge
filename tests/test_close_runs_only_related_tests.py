@@ -1,4 +1,4 @@
-"""Close uses small related selections; workers run shared inputs' full suite."""
+"""Close runs related tests, or all tests for shared inputs; workers stay bounded."""
 from __future__ import annotations
 
 import json
@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import machine_runners
 from test_close import env, run  # noqa: F401 (pytest fixture)
 
 STORY = "FIX-FORGE-S-OWN-CLOSES-STILL-RUN-THE-WHOLE-T"
@@ -19,12 +20,17 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.mark.parametrize("shared_input", [None, "conftest.py", "pyproject.toml", "uv.lock"])
 def test_1_close_runs_only_changed_and_module_related_tests_unless_shared_inputs_change(
         env, monkeypatch, shared_input):
+    machine_runners(env.repo)
     # Use this repo's commands and dependencies, with tiny real tests so closing cannot
-    # accidentally recurse into the enclosing suite. Only review and GitHub are faked.
+    # accidentally recurse into the enclosing suite. Only machine inputs, review and GitHub are faked.
     for rel in ("forge.toml", "pyproject.toml", "uv.lock"):
         source = ROOT / rel
         if source.exists():
             env.repo.write(rel, source.read_text("utf-8"))
+    settings_path = env.repo.path / "forge.toml"
+    settings = "\n".join(line for line in settings_path.read_text("utf-8").splitlines()
+                           if line.partition("=")[0].strip() != "test_place")
+    env.repo.write("forge.toml", 'test_place = "local"\n' + settings + "\n")
     monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", sys.prefix)
     monkeypatch.setenv("UV_NO_SYNC", "1")  # Reuse the enclosing run's installed test dependencies.
     log = env.tmp / "pytest-ran"
@@ -62,7 +68,7 @@ def record_run(request):
         if shared_input == "pyproject.toml":
             changes[shared_input] += '[tool.pytest.ini_options]\naddopts = "-q"\n'
         assert changes[shared_input] != original
-    item, where = env.start_fix(changes)
+    item, _ = env.start_fix(changes)
     settings = tomllib.loads((env.repo.path / "forge.toml").read_text("utf-8"))
     env.checks([run(name) for name in settings["checks"]])
 
@@ -71,12 +77,8 @@ def record_run(request):
     assert closed.returncode == 0, closed.stdout + closed.stderr
     expected = {"test_changed", "test_related"}
     if shared_input:
-        # The new close contract defers this full selection to required CI;
-        # the explicit worker command must still run it with the core cap.
-        assert not list(log.iterdir())
-        tested = env.repo.forge("test", cwd=where)
-        assert tested.returncode == 0, tested.stdout + tested.stderr
-        expected.update({"test_unrelated", *(f"test_other_{number}" for number in range(3))})
+        # Shared test inputs still select every file at close.
+        expected |= {"test_unrelated", "test_other_0", "test_other_1", "test_other_2"}
     assert {path.name for path in log.iterdir()} == expected
     assert {json.loads(path.read_text()) for path in log.iterdir()} == {
         max(1, (os.cpu_count() or 1) // 2)}

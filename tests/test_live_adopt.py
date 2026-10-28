@@ -14,9 +14,10 @@ from test_migrate import _review_and_checks
 STORY = "FORGE-LIVE-1"
 BRANCH, ITEM = "fix/adopt-forge", "adopt-forge"
 TEAM_AGENTS = "# Shop agents\n\nRun npm test before you push.\n"
-ANSWERS = ("--test", "npm ci && npm test", "--checks", "build", "--checks", "lint",
+ANSWERS = ("--actions", "yes", "--test", "npm ci && npm test", "--checks", "build", "--checks", "lint",
            "--interfaces", "api/routes/**", "--interfaces", "db/migrations/**",
            "--approver", "Priya", "--merger", "Sam", "--never-touch", "billing/")
+OLD_ANSWERS = ANSWERS[2:]
 ENDPOINT = "repos/{owner}/{repo}/branches/main/protection"
 
 
@@ -116,7 +117,9 @@ def _stops(repo, gh, case: str) -> None:
         repo.git("commit", "-q", "-m", "Our tools")
         repo.git("push", "-q", "origin", "main")
     elif case == "missing answers":
-        args = ANSWERS[:2]
+        args = ANSWERS[:4]
+    elif case == "missing actions":
+        args = ANSWERS[2:]
     elif case == "uncommitted":
         repo.write("notes.txt", "half done\n")
     else:  # a second run finds the first one's branch
@@ -143,11 +146,17 @@ def _stops(repo, gh, case: str) -> None:
         assert refused.stderr == (
             "fix/adopt-forge is already there, so Forge has started adopting this repo.\n"
             "Next: forge close adopt-forge\n"), refused.stderr
+    elif case == "missing actions":
+        assert refused.stderr == (
+            "This repo already has commits, so forge init adopts it on a fix branch, and it needs "
+            "the answers you confirmed: --actions.\n"
+            'Next: forge init --actions yes|no --test "<command>" --checks <check> '
+            '--interfaces "<glob>" --approver "<who>" --merger "<who>" --never-touch "<path>"\n')
     else:
         assert refused.stderr.startswith(
             "This repo already has commits, so forge init adopts it on a fix branch, and it needs "
             "the answers you confirmed: --checks, --interfaces, --approver, --merger.\n"
-            "Next: forge init --test"), refused.stderr
+            "Next: forge init --actions yes|no --test"), refused.stderr
     assert _snapshot(repo) == before and gh.calls() == []
 
 
@@ -167,8 +176,9 @@ def _keeps_gitattributes(repo) -> None:
 
 
 @pytest.mark.parametrize("case", ["adopts", "team gitattributes", "taken files", "state file",
-                                  "foreign forge.toml", "missing answers", "uncommitted",
+                                  "foreign forge.toml", "missing answers", "missing actions", "uncommitted",
                                   "adopting"])
+@pytest.mark.platform
 def test_4_a_repo_with_history_adopts_forge(repo, gh, tmp_path, monkeypatch, case):
     if case == "adopts":
         _adopts(repo, gh, tmp_path, monkeypatch)

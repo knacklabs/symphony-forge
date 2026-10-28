@@ -5,6 +5,7 @@ human reads and the calls the stubs recorded (spec criterion 4).
 """
 from __future__ import annotations
 
+import faulthandler
 import json
 import os
 import re
@@ -29,6 +30,32 @@ ROOT = Path(__file__).resolve().parents[1]
 REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
+_deadline_log = None
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Windows CI needs a native deadline even outside the per-test timeout."""
+    global _deadline_log
+    seconds = float(os.environ.get("PYTEST_SESSION_DEADLINE") or "0")
+    if not seconds:
+        return
+    # Keep a descriptor outside pytest capture: a stuck capture flush must not hide
+    # the stacks or prevent the native watchdog from terminating the process.
+    _deadline_log = os.fdopen(os.dup(sys.stderr.fileno()), "w", encoding="utf-8")
+    if hasattr(config, "workerinput"):
+        seconds -= min(60, seconds / 2)  # Workers dump before the controller exits.
+    faulthandler.dump_traceback_later(seconds, file=_deadline_log, exit=True)
+
+
+def pytest_runtest_logstart(nodeid: str, location: tuple) -> None:
+    if _deadline_log is not None:
+        print(f"Test started: {nodeid}", file=_deadline_log, flush=True)
+
+IDLE_MACHINE = """from forge import machine
+machine.memory = lambda: dict(total_bytes=16_000_000_000, available_bytes=8_000_000_000)
+machine.busy_runners = lambda: 0
+"""
+
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
 import os, signal, sys
@@ -39,16 +66,38 @@ signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
-"""
+""".replace("from forge.cli import main", IDLE_MACHINE + "from forge.cli import main")
 
 
 def machine_cores(repo, count, system_count=None):
     """Report a machine's CPU count at the command boundary, without a production test flag."""
+    override = (f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+                f"os.process_cpu_count = lambda: {count!r}\n")
     shim = repo.bin / "forge"
     source = shim.read_text("utf-8")
     shim.write_text(source.replace("from forge.cli import main",
-        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
-        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
+        override + "from forge.cli import main"), "utf-8")
+    # Inline Python test commands inherit PYTHONPATH, but do not use the Forge launcher.
+    startup = repo.bin / "sitecustomize.py"
+    startup.write_text((startup.read_text("utf-8") if startup.exists() else "") + override, "utf-8")
+
+
+def machine_runners(repo, count: int | Path = 0):
+    """Supply runner inventory to inline Python too; keep process identity queries real."""
+    command = "tasklist" if os.name == "nt" else "ps"
+    real = shutil.which(command)
+    args = ["/FO", "CSV", "/NH"] if os.name == "nt" else ["-axo", "comm="]
+    reading = (f"int(pathlib.Path({count.as_posix()!r}).read_text('utf-8'))"
+               if isinstance(count, Path) else repr(count))
+    worker = ('"Runner.Worker.exe","101","Console","1","100 K"\n'
+              if os.name == "nt" else "/runner/bin/Runner.Worker\n")
+    _install(repo.bin, command, f'''#!{sys.executable}
+import pathlib, subprocess, sys
+if sys.argv[1:] == {args!r}:
+    sys.stdout.write({worker!r} * {reading})
+else:
+    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]], timeout=60))
+''')
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
@@ -67,12 +116,15 @@ for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exist
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
-if args[:2] == ["pr", "view"] and args[-2:] == ["--json", "mergeable,headRefOid"]:
+if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
+        "mergeable,headRefOid", "mergeable,headRefOid,number,headRefName"):
     # Ordinary close fixtures have a mergeable pull request on the real pushed head.
     # Explicit responses above still own API errors and conflicting/unknown states.
     head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
-                                    "refs/heads/" + args[2]], text=True).split()[0]
-    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head}}))
+                                    "refs/heads/" + args[2]], text=True,
+                                   stdin=subprocess.DEVNULL, timeout=60).split()[0]
+    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head,
+                                 "number": 7, "headRefName": args[2]}}))
     sys.exit(0)
 sys.stderr.write("stub gh: no response for: gh " + " ".join(args) + "\\n")
 sys.exit(1)
@@ -133,13 +185,19 @@ def _cached_sdk(env: Path, pin: str):
                     fcntl.flock(lock, fcntl.LOCK_UN)
 
 
-def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
-    """A separate Python environment, with only the SDK's external edge replaced."""
-    pin = "0.2.161"
+def _claude_sdk_env(data: Path, pin: str = "0.2.161") -> None:
+    """The Claude Agent SDK's separate Python environment under this XDG_DATA_HOME."""
     env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
     with _cached_sdk(env, pin) as build:
         if build is not None:
-            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True)
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True,
+                           stdin=subprocess.DEVNULL, timeout=120)
+
+
+def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
+    """A separate Python environment, with only the SDK's external edge replaced."""
+    pin = "0.2.161"
+    _claude_sdk_env(data, pin)
     package = bin_dir / "claude_agent_sdk"
     package.mkdir(exist_ok=True)
     shutil.copyfile(ROOT / "tests/stubs/claude_agent_sdk.py", package / "__init__.py")
@@ -253,7 +311,7 @@ class Repo:
     def git(self, *args: str, cwd: Path | None = None) -> str:
         try:
             return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
-                                  text=True, encoding="utf-8").stdout.strip()
+                                  text=True, encoding="utf-8", stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
         except subprocess.CalledProcessError as error:
             error.add_note(error.stdout + error.stderr)
             raise
@@ -330,7 +388,8 @@ def _left(tmp_path: Path) -> list[str]:
 
 def _end_left(path: Path) -> list[str]:
     """Wait for the processes that name path to go, end any still there, and return those."""
-    for _ in range(20):  # a process the test just ended may take a moment to go
+    grace_seconds = float(os.environ.get("PYTEST_PROCESS_GRACE_SECONDS", "10"))
+    for _ in range(int(grace_seconds * 2)):  # a process the test just ended may take a moment to go
         left = _left(path)
         if not left:
             return []
@@ -399,10 +458,15 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     # Outer test-selection flags must not change a client's own pytest command.
     monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
+    # The checkout launcher exposes src through PYTHONPATH; clients and released tools must not.
+    monkeypatch.delenv("PYTHONPATH", raising=False)
     for name in list(os.environ):
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    # cmd.exe expands %CI% in a .cmd stub's arguments, case-insensitively: git's
+    # --format=%x00%cI%x00 would reach git as %x00truex00 on CI runners.
+    monkeypatch.delenv("CI", raising=False)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 
@@ -447,8 +511,10 @@ elif args == ["plugin", "list", "--json"]:
     monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)
 
     remote, path = tmp_path / "remote.git", tmp_path / "repo"
-    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
-    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True)
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True,
+                   stdin=subprocess.DEVNULL, timeout=60)
     made = Repo(path, bin_dir)
     # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
     (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")

@@ -362,7 +362,8 @@ def test_5_coordinator_guide_explains_chat_continuity(repo, gh, tmp_path, adopte
                 "Each task and fix keeps the same worker chat for each tool until merge.",
                 "Later rounds resume it after model or effort changes, restarts, missing local records or a fresh worktree.",
                 "Plan reads keep their reader chat across rounds too.",
-                "Forge starts a new chat only when the tool reports the old chat gone or archived or the item changes tools, and says why in one line.",
+                "Forge starts a new chat only when the tool reports the old chat gone or archived, another program keeps it held after one retry, or the item changes tools, and says why in one line.",
+                "A work round starts the new chat with the whole brief, as a cold read does.",
                 "Other resume errors stop the round and keep its chat.",
                 "Upgrade's sync commits earlier-release chat bindings in their owning work branches",
                 "Sync writes every generated file first, then keeps chats.",
@@ -648,6 +649,7 @@ def test_13_previous_release_spec_reader_survives_removed_owner_and_metadata(
     assert _reader_chat(reader, resumed=True) == first
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
 @pytest.mark.parametrize("change", ["rename", "delete"])
 def test_16_sync_skips_stale_spec_reader_in_registered_worktree(

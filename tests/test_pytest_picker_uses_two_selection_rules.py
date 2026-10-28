@@ -100,6 +100,7 @@ def _module_selection(repo, monkeypatch, launcher=None):
     assert "7 passed" in result.stdout
 
 
+@pytest.mark.platform
 def test_2_only_imports_dotted_names_and_file_paths_select_module_tests(repo, monkeypatch):
     # Replaces filename and arbitrary changed-input readers with module references.
     _module_selection(repo, monkeypatch)
@@ -107,7 +108,7 @@ def test_2_only_imports_dotted_names_and_file_paths_select_module_tests(repo, mo
 
 def test_3_new_clients_run_only_changed_tests_and_module_references(repo, gh, tmp_path, monkeypatch):
     client = _new_repo(repo, gh, tmp_path)
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     repo.path = client
     _module_selection(repo, monkeypatch)

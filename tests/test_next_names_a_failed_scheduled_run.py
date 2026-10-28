@@ -17,6 +17,9 @@ import pytest
 from conftest import ROOT
 from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git
 from test_setup import _fresh_client, _version
+from test_story import approved_constitution
+
+pytestmark = pytest.mark.platform
 
 RUNS = ("api", "repos/{owner}/{repo}/actions/runs")
 
@@ -64,7 +67,11 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
         repo.git("switch", "-q", "main")
         repo.git("merge", "-q", "--ff-only", "fix/upgrade-client")
         assert _git(repo, "push", "-q", "origin", "main").returncode == 0
+        approved_constitution(repo)
     assert made.returncode == 0, made.stdout + made.stderr
+    # No manual Forge full run accompanies these other workflows' scheduled runs.
+    gh.respond("api", "repos/{owner}/{repo}/actions/workflows/forge.yml/runs",
+               stdout=json.dumps({"workflow_runs": []}))
     monkeypatch.setenv("FORGE_NOW", "2030-01-01T10:00:00+00:00")
 
     gh.respond(*RUNS, exit=1, stderr="network unavailable")
@@ -113,9 +120,10 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     still = repo.forge("next", cwd=client)
     assert still.returncode == 0, still.stderr
     lines = still.stdout.splitlines()
-    assert lines[:2] == expected
-    assert lines[2].startswith(f"The fix {fix} ")
-    assert lines.count(lines[2]) == 1
+    # The journey heading now precedes the existing scheduled-run advice and fix lines.
+    assert lines[1:3] == expected
+    assert lines[3].startswith(f"The fix {fix} ")
+    assert lines.count(lines[3]) == 1
     assert "forge fix start" not in still.stdout
     machine = repo.forge("next", "--json", cwd=client)
     assert json.loads(machine.stdout)["next"]["command"] == f"forge work {fix}"
@@ -131,9 +139,9 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     elsewhere = repo.forge("next", cwd=client)
     assert elsewhere.returncode == 0, elsewhere.stderr
     lines = elsewhere.stdout.splitlines()
-    assert lines[:2] == expected
-    assert lines[2].startswith(f"The fix {fix} was started by ")
-    assert lines[2].endswith(" and runs on their machine.")
+    assert lines[1:3] == expected
+    assert lines[3].startswith(f"The fix {fix} was started by ")
+    assert lines[3].endswith(" and runs on their machine.")
     assert "forge fix start" not in elsewhere.stdout
 
     monkeypatch.setenv("FORGE_NOW", "2030-01-03T10:00:00+00:00")

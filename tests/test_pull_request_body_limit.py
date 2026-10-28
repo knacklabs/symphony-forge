@@ -86,7 +86,9 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
         message_file = env.tmp / "proof-message.txt"
         message_file.write_text(message, "utf-8")
         env.repo.git("commit", "-q", "--amend", "--file", str(message_file), cwd=where)
-    blocker = finding("P1", "Basket quantities disappear")
+    # A P1 at the bar preserves the blocked-to-repaired publication lifecycle.
+    blocker = {**finding("P1", "Basket quantities disappear"),
+               "body": "Gain 4, Work 1, Harm 2\nBasket quantities disappear during saving."}
     diagnostics = []
     if oversized == "diagnostics-and-history":
         diagnostics = [finding("P2", f"Basket diagnostic {n}: " + "Recorded quantity detail. " * 80)
@@ -97,7 +99,9 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
     reject_oversized_bodies(env)
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
-    assert "The review left serious findings open" in first.stderr, first.stderr
+    refusal = ("The review left serious findings open" if "/" in item
+               else "reached the round limit with open findings, so Forge stopped.")
+    assert refusal in first.stderr, first.stderr
     text = latest_body(env)
     assert "Basket quantities disappear" in text
     assert "Done when:" in text
@@ -112,6 +116,10 @@ def test_1_every_pull_request_write_fits_github_and_keeps_current_review_facts(e
                       lambda _: "## How it went\n\n" + "篮" * 12_000, text, flags=re.S)
         assert len((text + owner_note).encode("utf-8")) < LIMIT
     publish_snapshot(env, item, text + owner_note)
+    if "/" not in item:
+        resumed = env.close(item, "--resolve", "more", "--reason",
+                            "Repair the basket quantity loss before merging")
+        assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     env.commit(where, "app.py", "print('basket quantities survive')\n")
     env.reviews(CLEAN)
     second = env.close(item)

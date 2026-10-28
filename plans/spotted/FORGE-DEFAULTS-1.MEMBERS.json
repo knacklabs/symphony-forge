@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx\tRestore keyboard focus when the invite dialog closes\tFORGE-DEFAULTS-1/MEMBERS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx",
+      "line": 46,
+      "text": "Restore keyboard focus when the invite dialog closes",
+      "from": "blocking",
+      "item": "FORGE-DEFAULTS-1/MEMBERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/starter-shell.spec.ts\t\"keyboard sorting a cached order keeps focus on the header\" failed twice on the sortOrder=asc URL check (once in a full run, once in three repeats alone) and passed in other runs; this change does not touch the projects page.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/e2e/starter-shell.spec.ts",
+      "line": 154,
+      "text": "\"keyboard sorting a cached order keeps focus on the header\" failed twice on the sortOrder=asc URL check (once in a full run, once in three repeats alone) and passed in other runs; this change does not touch the projects page.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/MEMBERS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

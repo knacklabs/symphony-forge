@@ -31,6 +31,7 @@ def _compared(installed: str, pinned: str) -> str:
 # so a failing doctor with a matching pin never said which version it compared with. New
 # contract: it says so whenever it compared, drifted or clean, whatever else fails, and says it
 # couldn't compare, and why, when forge sync can't work out what it would write.
+@pytest.mark.platform
 @pytest.mark.parametrize("case", ["clean", "drifted", "old pin clean", "old pin drifted",
                                   "all is well", "can't compare"])
 def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, monkeypatch,
@@ -82,6 +83,8 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
         assert done.stdout == (f"Everything checks out for Forge {installed}.\n"
                                + _compared(installed, installed)
                                + "This machine: 6 cores, so 3 agents at once and 1 test runs at once, each on 3 cores.\n"
+                               + "Memory: 8.0 GB free, floor 1.6 GB.\n"
+                               + "Test processes in use: 0. Busy runners: 0 (0 cores reserved).\n"
                                + "- Codex Fast: on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\n"), done.stdout
         return
     assert done.returncode == 1, done.stdout + done.stderr

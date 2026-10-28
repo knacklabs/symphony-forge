@@ -39,13 +39,16 @@ def test_1_sync_gives_codex_full_access_and_drops_model_pins(repo):
     done = repo.forge("sync")
     assert done.returncode == 0, done.stderr
     text = (repo.path / ".codex/config.toml").read_text(encoding="utf-8")
-    assert tomllib.loads(text) == {
+    config = tomllib.loads(text)
+    agents = config.pop("agents")
+    assert config == {
         "sandbox_mode": "danger-full-access", "approval_policy": "never",
         "model_verbosity": "low",
-        "features": {"multi_agent": True, "hooks": True},
-        # A subagent's own model is the client's setting, not a top-level pin.
-        "agents": {"worker": {"config_file": "agents/worker.toml", "model": "gpt-6-luna"},
-                   "reader": {"config_file": "agents/reader.toml"}}}
+        "features": {"multi_agent": True, "hooks": True}}
+    # Sync now registers all shipped roles, while preserving the team's own role fields.
+    assert agents["worker"]["config_file"] == "agents/worker.toml"
+    assert agents["worker"]["model"] == "gpt-6-luna"
+    assert agents["reader"]["config_file"] == "agents/reader.toml"
     # The client's comments stay too.
     assert text.startswith("#:schema ") and "# the client's own choice" in text
 

@@ -6,6 +6,8 @@ import json
 import re
 from pathlib import Path
 
+from test_story import approved_constitution
+
 STORY = "FORGE-PROTO-1"
 REFUSAL = ("Stories wait for the customer's sign-off. Build and demo the prototype first.\n"
            "Next: forge next\n")
@@ -70,6 +72,7 @@ def test_2_stories_wait_for_client_signoff(repo):
     assert not (fix.parent / f"{repo.path.name}-story-SHOP").exists()
 
     _signed_off(repo)
+    approved_constitution(repo)
     # The accepted decision is present on the default branch, as after its fix merges.
     added = repo.forge("roadmap", "add", "shop", cwd=fix)
     assert added.returncode == 0, added.stderr

@@ -18,6 +18,8 @@ from test_codex_worker import _toml
 from test_fix_agent_runs_wait_in_line import _until
 from test_story import DOC, new_story, setup
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-TOOLS-1"
 
 # Only the host is a shim: every child runs the real command and real OS identity lookup.
@@ -246,7 +248,11 @@ def test_4_session_holds_handed_out_reads(repo, gh, monkeypatch, tmp_path, tool,
         assert "because the session that ran its last round has ended" in fresh["reason"]
         next_result = repo.forge("next")
         success(next_result)
-        assert "handback" in next_result.stdout and f'--round {fresh["round"]}' in next_result.stdout
+        lines = next_result.stdout.splitlines()
+        held_line = next(i for i, line in enumerate(lines) if "wait for its subagent to finish" in line)
+        assert lines[held_line + 1].startswith(
+            f'Cold read round {fresh["round"]} is running, ')
+        assert f'--round {fresh["round"]}' in lines[held_line + 2]
         assert "Next: forge read SHOP" not in next_result.stdout
         stopped = fresh_owner.forge("stop", "SHOP")
         success(stopped)

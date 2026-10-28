@@ -1,0 +1,120 @@
+{
+  "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
+  "branch": "task/FORGE-FEATURE-1-COMMAND",
+  "chat": {
+    "approval": "d87b61d57f1123509a4f6eaad642b89b43adac93703229702877cf41663496af",
+    "claude": null,
+    "conversation": "01a1792c-2296-73a1-b755-e78f9f60d519",
+    "head": null,
+    "start": "d5d41a7e04ad4a889a13481afc1b1ca884ef235e"
+  },
+  "known": [
+    {
+      "area": "_filters() in src/forge/feature_api.py",
+      "file": "src/forge/feature_api.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 228,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve the filters object declaration in generated contracts",
+      "work": 2
+    },
+    {
+      "area": "render_feature_api() in src/forge/feature_api.py",
+      "file": "src/forge/feature_api.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 504,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Rename indexed cursor references along with their parameter",
+      "work": 2
+    },
+    {
+      "area": "render_api_tests() in src/forge/feature_tests.py",
+      "file": "src/forge/feature_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 105,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Scope the generated validation case for each link field",
+      "work": 2
+    },
+    {
+      "area": "_target_helper() in src/forge/feature_tests.py",
+      "file": "src/forge/feature_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 63,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Create required linked dependencies instead of using example UUIDs",
+      "work": 2
+    },
+    {
+      "area": "render_api_tests() in src/forge/feature_tests.py",
+      "file": "src/forge/feature_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 134,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Choose a status filter fixture different from the matching value",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2395f8de111959bf4f17c43c4729543fdca5eb87e8a31c0f10699088e3631d37",
+    "changed": "482246fcc5c3af2cc927caed8291e658efbe34f46145667d4e61dbef981f8f88",
+    "commit": "2f9e29cd59ace5538e65505ec1afceaccece9f5e",
+    "dismissals": [],
+    "findings": [],
+    "id": "dc55c948-f644-4094-a061-625b4d58bf80",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T17:04:44.116978+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T04:17:35.315175+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T04:23:20.974694+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T04:44:45.687992+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T05:09:00.985262+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c24c63a3-0e98-419a-90a3-488d8fefcf38",
+    "head": "c6d75b23fd8ea27839fc82b9a87cd96eecb360e6",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

@@ -11,14 +11,17 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 import pytest
 
-from conftest import REAL_UV, _cached_sdk, _install, _install_claude_sdk, patient
+from conftest import REAL_UV, _cached_sdk, _claude_sdk_env, _install, _install_claude_sdk, patient
 from test_task import story
 from test_worker import calls as claude_calls, install_claude
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-WARM-1"
 PIN = "0.159.2"
@@ -74,12 +77,15 @@ def sdk_data(pytestconfig: pytest.Config) -> Path:
     if uv is None:
         pytest.skip("uv is missing, so the Codex SDK test environment can't be built")
     data = pytestconfig.cache.mkdir(f"codex-sdk-{PIN}")
+    # Forge checks both SDKs under one XDG_DATA_HOME, and many tests point it here directly.
+    _claude_sdk_env(data)
     env = data / "forge" / "codex-sdk" / f"openai-codex-{PIN}"
     with _cached_sdk(env, PIN) as build:
         if build is None:
             return data
         python = build / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-        subprocess.run([uv, "venv", "-q", "--python", "3.11", str(build)], check=True)
+        # The cache outlives repo fixtures and their private uv Python install homes.
+        subprocess.run([uv, "venv", "-q", "--python", sys.executable, str(build)], check=True)
         subprocess.run([uv, "pip", "install", "-q", "--python", str(python), "--no-deps",
                         f"openai-codex=={PIN}"], check=True)
         site = Path(subprocess.run([python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
@@ -310,7 +316,8 @@ def test_3_models_per_kind(repo, monkeypatch, sdk_data, claude_session):
             ({**MODELS, "fix": {**lite, "subagents": "gpt-6-luna"}},
              "models.fix sets only one of subagents and subagent_effort; set both or neither"),
             ({**MODELS, "debug": lite},
-             "debug is not a kind of work; the kinds are build, fix, lite, explore, grill, design and review")):
+             "debug is not a kind of work; the kinds are "
+             "build, fix, lite, explore, grill, design, review and light_review")):
         toml.write_text(_toml(version, "codex", models), encoding="utf-8")
         refused = repo.forge("work", "BOARD/PAGE")
         assert refused.stderr == MODELS_REFUSAL.format(problem), refused.stderr

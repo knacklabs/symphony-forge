@@ -70,7 +70,7 @@ def test_2_names_origin_repository_in_each_branch_protection_api_call(
     gh.respond("api", "--method", "PUT", "repos/acme/shop/branches/main/protection",
                stdout="{}")
 
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     if "other.example" in origin_url:
         assert initialized.returncode == 1
         assert initialized.stderr == ("Forge cannot identify a GitHub repository from origin.\n"

@@ -1,5 +1,6 @@
 """A hung test on CI names itself in the job log before the time cap cancels the job."""
 import re
+import tomllib
 from pathlib import Path
 
 # The suite job gives Windows runners longer limits (test_ci_job_budgets checks them); others keep these.
@@ -16,8 +17,13 @@ def test_1_every_ci_pytest_dumps_stacks_after_two_minutes():
         for command in re.findall(r"pytest tests[^\n\"]*", text):
             seen += 1
             assert "-o faulthandler_timeout=120" in command, f"{name}: {command}"
-    # Plugin, Windows installer and empty-group collection join the two suite jobs.
-    assert seen == 5
+    # The generated PR job now delegates to Forge's configured test command.
+    assert seen == 3
+    settings = tomllib.loads((Path(__file__).resolve().parents[1] / "forge.toml").read_text("utf-8"))
+    assert "-o faulthandler_timeout=120" in settings["test"]
+    workflow = (WORKFLOWS / "forge.yml").read_text(encoding="utf-8")
+    assert 'run: "forge test --change"' in workflow
+    assert "run: forge test --full" in workflow
 
 
 def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
@@ -30,7 +36,9 @@ def test_2_every_ci_pytest_times_out_a_hung_test_before_the_job_cap():
             uv_args = command.split("pytest tests", 1)[0]
             assert "--group" not in uv_args and "--with" not in uv_args, f"{name}: {command}"
             assert "--timeout=150 --timeout-method=thread" in command, f"{name}: {command}"
-    assert seen == 5  # The split workflow also collects the full suite for empty groups.
+    assert seen == 3
+    settings = tomllib.loads((Path(__file__).resolve().parents[1] / "forge.toml").read_text("utf-8"))
+    assert "--timeout=150 --timeout-method=thread" in settings["test"]
 
 
 def test_3_forge_sync_keeps_the_timeout_in_the_generated_workflow(repo):
@@ -45,5 +53,9 @@ def test_3_forge_sync_keeps_the_timeout_in_the_generated_workflow(repo):
     assert result.returncode == 0, result.stderr
     generated = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     committed = (top / ".github/workflows/forge.yml").read_text(encoding="utf-8")
-    run = lambda text: re.search(r"- run: \"uv run[^\n]*", text).group(0)
+    run = lambda text: re.search(r'^      - run: "forge test --change"$', text, re.M).group(0)
     assert run(generated) == run(committed)
+    settings = tomllib.loads((repo.path / "forge.toml").read_text(encoding="utf-8"))
+    assert settings["test"] == tomllib.loads((top / "forge.toml").read_text("utf-8"))["test"]
+    assert "-o faulthandler_timeout=120" in settings["test"]
+    assert "--timeout=150 --timeout-method=thread" in settings["test"]

@@ -208,7 +208,7 @@ wheels = [
 
 [[package]]
 name = "symphony-forge"
-version = "1.2.13"
+version = "1.2.23"
 source = { editable = "." }
 dependencies = [
     { name = "pillow" },

@@ -9,6 +9,8 @@ from conftest import ROOT, FORGE_SHIM, _install
 from test_setup import _fresh_client, _version
 from test_worker import calls, install_claude
 
+pytestmark = pytest.mark.platform
+
 STORY = "workers-build-on-macos-or-linux-so-windo"
 
 

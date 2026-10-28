@@ -21,7 +21,10 @@ STORY = "land-waits-ci"
 def clock(land, tmp_path, monkeypatch):
     folder = tmp_path / "clock"
     folder.mkdir()
-    (folder / "sitecustomize.py").write_text("""import time
+    (folder / "sitecustomize.py").write_text("""import subprocess, time
+from types import SimpleNamespace
+# Child-process deadlines and POSIX wait polling must use real elapsed time.
+subprocess.time = SimpleNamespace(sleep=time.sleep)
 real = time.monotonic
 elapsed = 0
 
@@ -76,7 +79,7 @@ def test_1_land_waits_through_a_long_run_with_progress(clock, history):
         repo.git("init", "-q", "-b", "main", str(client))
         repo.git("remote", "add", "origin", str(remote), cwd=client)
         env.gh.respond("api", stdout="{}")
-        made = repo.forge("init", cwd=client)
+        made = repo.forge("init", "--actions", "yes", cwd=client)
         assert made.returncode == 0, made.stderr
         repo.path = client
         _install(repo.bin, "gh", GH.format(python=sys.executable, remote=remote.as_posix(), url=URL)

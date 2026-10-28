@@ -7,6 +7,10 @@ from test_setup import _fresh_client
 from test_story import DOC, setup, worktree
 from test_worker import calls, install_claude
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-FIVE-PROCESS-GAPS-WASTE-ROUNDS-COLD-READ"
 
 

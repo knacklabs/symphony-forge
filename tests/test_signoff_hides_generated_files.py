@@ -11,23 +11,27 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT, _install
-from test_proto_signoff import MUST, _decision
+from test_proto_signoff import MUST, _decision, _design_records, _green_full_run, _request_build
 from test_setup import _autoreview, _fresh_client
 
 STORY = "signoff-hide-generated"
 
+# Test audit: retain all sign-off diff and prompt assertions. A separate stub process lost
+# the Windows engine adapter and failed before those checks. The existing new/adopted cases
+# own this contract; running the stand-in in the helper process adds no production seam.
 RECORDER = '''#!{python}
-import os, subprocess, sys
+import os, runpy, subprocess, sys
 args = sys.argv[1:]
 base = args[args.index("--base") + 1]
 git = lambda *a: subprocess.run(["git", *a], capture_output=True, encoding="utf-8", errors="replace", check=True).stdout
 start = git("merge-base", base, "HEAD").strip()
 with open(os.environ["AUTOREVIEW_STUB"] + ".diff", "a", encoding="utf-8") as out:
     out.write(git("diff-tree", "-r", "--patch", "--no-renames", start, "HEAD"))
-sys.exit(subprocess.run([sys.executable, {stub}, *args]).returncode)
+runpy.run_path({stub}, run_name="__main__")
 '''
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption-upgrade"])
 def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path, monkeypatch, adopted):
     if adopted:
@@ -67,7 +71,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
         f"- {topic}: {'Sam Lee, director' if topic == 'Sign-off person' else 'agreed'} "
         f"({sources.get(topic, 'client')}, 2026-09-28)\n" for topic in MUST)
     (fix / "docs/product").mkdir(parents=True, exist_ok=True)
-    (fix / "docs/product/BRIEF.md").write_text("# Brief\n\n" + answers, encoding="utf-8")
+    _design_records(fix, answers)
     (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
     with (fix / ".gitattributes").open("a", encoding="utf-8") as out:
         out.write("\nmedia/** linguist-generated\n")
@@ -88,6 +92,10 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
     _install(repo.bin, "codex", f"#!{sys.executable}\nimport sys\nsys.stdin.read()\n")
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / ("codex.cmd" if os.name == "nt" else "codex")))
     page = _decision(fix, answers)
+    _green_full_run(repo)
+    # This fixture builds app code on its branch, so the new canvas gate needs
+    # the owner's accepted working-build request before it can review the product.
+    _request_build(repo, fix)
 
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 
@@ -99,7 +107,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
     assert "BINARY-FILM-BYTES" not in diff
     assert "media/film.mp4" not in diff
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
-    assert len(calls) == 1
-    prompt = "\n\n".join(calls[0]["prompt_files"].values())
+    assert len(calls) == 2
+    prompt = "\n\n".join(calls[-1]["prompt_files"].values())
     assert "media/film.mp4: 1 added, 0 removed" in prompt
     assert "BINARY-FILM-BYTES" not in prompt

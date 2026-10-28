@@ -1,0 +1,59 @@
+{
+  "branch": "task/FORGE-GROUPS-1-ANYRUNNER",
+  "chat": {
+    "approval": "7f2e16f3bda17272d1fdced97bad81de5cde84846f80213e4f4c708e1dfd4a24",
+    "claude": null,
+    "conversation": "01a17348-b620-7253-b2fd-3252349c9366",
+    "head": null,
+    "start": "8da2cca67f8452461937a91f273686d8a049e21b"
+  },
+  "known": [
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 435,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A group with no tests to run passes.",
+      "work": 3
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dcad9b9be6654907e8220f14aeab708e92f8e62ae4f727f3cc0d924ad48436a6",
+    "changed": "acc8f2b277949e23fb3b15068077bedd6669ad8a0e0ad22908b99135884f058f",
+    "commit": "c30c9eb203a6cb1753d224cc9e23ebe2e83e4acb",
+    "dismissals": [],
+    "findings": [],
+    "id": "8389934e-1386-44a4-a1f6-a9e2e5409c06",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T13:38:13.466627+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T13:50:27.026266+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T14:06:27.041475+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2b236c69-7a4b-4450-96ee-fd46aa5cec26",
+    "head": "ca5a961e3823d3652e966b1b2847f8061c1e6808",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

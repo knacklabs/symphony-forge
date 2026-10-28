@@ -1,0 +1,46 @@
+{
+  "allow_large": "A pure move of the starter libraries; most lines are renames and import paths",
+  "branch": "task/FORGE-LIBS-1-SERVER",
+  "chat": {
+    "approval": "081b4c1ca3c424c7e9d2bf1579b5eae131a7c83b954864370db9315c493d59f5",
+    "claude": null,
+    "conversation": "01a175d6-ce78-7103-9791-0aa51d4e890b",
+    "head": null,
+    "start": "645df644043479c97945a1218c5d41ef6a5af876"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "86dc84dfb36e19bbcd4cd441982d11f1d2709a96fcdf15cdd104d0a671391747",
+    "changed": "84aee79debb1fc211c2a6dcac8680aae0363487410ba4e3ccefaf58b20e259f9",
+    "commit": "4b7c6170a04b1199075c93c789e07249576fa0b3",
+    "dismissals": [],
+    "findings": [],
+    "id": "925b2b3e-a023-4d34-b18b-02dd64d83140",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T01:32:36.420508+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T01:51:19.571120+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T01:55:16.971163+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "0aeefcf8-59a0-4cc5-9af5-8823808d8f99",
+    "head": "30bf78bec07acfdc8f12a0adf44f7747c6065dd1",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

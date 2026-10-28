@@ -1,4 +1,4 @@
-"""Shipped output stays compatible while new owners need no collector edit."""
+"""Shipped output, including src/forge/story.py's renderer, needs no collector edit."""
 
 import json
 import shutil
@@ -23,18 +23,19 @@ SOURCES = {
         "skills/forge/migrate-skill.md": "src/forge/templates/migrate-skill.md",
         "skills/forge/fde.md": ".codex/skills/forge/fde.md",
         "skills/app-baseline/SKILL.md": ".codex/skills/app-baseline/SKILL.md",
+        "skills/database/SKILL.md": "src/forge/templates/skills/database/SKILL.md",
         "skills/test-audit/NOTICE.md": ".codex/skills/test-audit/NOTICE.md",
         "skills/test-audit/SKILL.md": ".codex/skills/test-audit/SKILL.md",
         **{f"skills/simplified-technical-english/{name}":
            f"src/forge/templates/skills/simplified-technical-english/{name}" for name in PLAIN_ENGLISH},
     }.items()},
     ".claude/skills/remote-approval/SKILL.md": ".claude/skills/remote-approval/SKILL.md",
-    ".forge/review-tests.py": "src/forge/templates/review-tests.py",
     ".forge/records-only/action.yml": "src/forge/templates/records-only-action.yml",
+    ".forge/design/support.js": "src/forge/templates/design/support.js",
 }
 # Built from code rather than copied: each must match what Forge's own ship functions make for
 # the same repo in the same run, so a generator change is checked but needs no test edit.
-GENERATED = {"plain": {".gitattributes", ".gitignore", ".forge/hooks.sh", ".claude/settings.json", ".codex/hooks.json",
+GENERATED = {"plain": {".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".claude/settings.json", ".codex/hooks.json",
                        ".codex/config.toml", ".github/workflows/forge.yml", "git-hook/pre-commit",
                        "git-hook/pre-push", *ROLE_FILES}}
 GENERATED["claude_node"] = GENERATED["plain"] | {"CLAUDE.md"}
@@ -52,10 +53,11 @@ print(json.dumps(wanted))
 
 
 @pytest.mark.parametrize("case", ["plain", "claude_node"])
+@pytest.mark.platform
 def test_3_sync_keeps_previous_output_and_gathers_new_owner(repo, case, tmp_path):
     repo.git("checkout", "-q", "-b", "fix/sync-compatibility")
     # Exercise this checkout's sync, rather than routing to a historical release.
-    repo.write("forge.toml", 'version = "v1.2.13"\ntest = "echo ok"\n'
+    repo.write("forge.toml", 'version = "v1.2.23"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     if case == "claude_node":
         repo.write("CLAUDE.md", "# Team notes\n")

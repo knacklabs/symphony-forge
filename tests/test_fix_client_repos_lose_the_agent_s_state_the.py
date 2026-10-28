@@ -1,10 +1,17 @@
-"""Compaction keeps Forge's current state beside the agent's own notes."""
+"""Compaction keeps the full next report, including its journey step, beside notes.
+
+The shipped hooks own this persistence contract; checking only forge next cannot
+catch a handoff that drops its heading. Keep the complete report comparisons.
+"""
 import json
 import subprocess
+
+import pytest
 
 STORY = "FIX-CLIENT-REPOS-LOSE-THE-AGENT-S-STATE-THE"
 
 
+@pytest.mark.platform
 def test_1_sync_ships_precompact_handoff_and_hook_preserves_decisions(repo, monkeypatch):
     monkeypatch.setenv("FORGE_NOW", "2026-09-28T12:00:00+00:00")
     version = repo.forge("--version").stdout.split()[-1]

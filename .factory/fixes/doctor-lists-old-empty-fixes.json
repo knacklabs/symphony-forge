@@ -1,0 +1,49 @@
+{
+  "base": "a474c8635ced7801f9df00e753d6e5c1b954644e",
+  "branch": "fix/doctor-lists-old-empty-fixes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16f2c-8d97-78f0-996a-fbaf94713c0e",
+    "head": null,
+    "start": "f4deaf9241a96c3e92f5096c3865d3f8e76fda37"
+  },
+  "done_when": "forge doctor lists each started fix with no commits of its own that is older than seven days and gives the forge fix drop command for it",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "79315b041823815aab5a1800c83a0650fbaa295eb7bfec13364e29878dd14500",
+    "changed": "9cb9114b3f734373f4171f19a158fae643f904f33d52fa3822d243a8ca9f427e",
+    "commit": "fe5a563d42a19288d5ec580186bf4823616dc851",
+    "dismissals": [],
+    "findings": [],
+    "id": "886abb81-826a-4bb0-8bf5-81cc8f732d18",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T17:34:23.899186+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T18:37:48.869761+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T18:55:21.065206+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "27a54954-76bf-4e7d-b4a6-1e1fc96aab55",
+    "head": "d4d7ba18c1551515be93ea545488f2690c5c9ba0",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Fixes that were started but never built pile up as worktrees, and forge doctor does not list them",
+  "worker": "codex"
+}

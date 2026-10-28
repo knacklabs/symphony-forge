@@ -1,0 +1,49 @@
+{
+  "base": "ae5cc0561e40412a7782e71b59978bd0a963e158",
+  "branch": "fix/on-windows-the-client-sign-off-completen",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17e67-bfe1-7830-b0de-48b054db6ae2",
+    "head": null,
+    "start": "7d1e62c738fe7fdd667cfd8b5c2526c4f845d393"
+  },
+  "done_when": "The sign-off completeness check always runs on Codex, and on Windows it runs with a design folder of 80 screen images",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0590bb27017992d275a0cd032c66adbca2cdb5f85ec2d9a5c37f1d43f36d4cea",
+    "changed": "39501d831fad8728e9567029875c209fa5f360274121baa947e1a2e07a4637c8",
+    "commit": "71996da2591441337cbf20ce759b570d78b65e30",
+    "dismissals": [],
+    "findings": [],
+    "id": "45500855-6817-4200-9594-a0d2a3b73239",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T17:27:53.674749+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T17:39:52.331726+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T18:02:20.472419+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a64d44ea-2e12-49c7-a286-2c6559dda523",
+    "head": "390081fabefddd86aa1bee8fbdc2c1048dfd628e",
+    "keys": {},
+    "round": 1
+  },
+  "why": "On Windows the client sign-off completeness check cannot run: it picks Claude whenever Claude is installed, although only Codex can review the screen images (issue 1159), and on Codex the Windows launcher is a cmd shim, so passing one image flag per screen goes past the 8191-character command line limit (issue 1160)",
+  "worker": "codex"
+}

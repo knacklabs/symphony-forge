@@ -1,0 +1,61 @@
+{
+  "branch": "task/FORGE-CONSTITUTION-1-GATE",
+  "chat": {
+    "approval": "e9fa083a6fb277d0646d5688922f8a85d27238324e80e1a17c783908d6536ea6",
+    "claude": null,
+    "conversation": "01a16285-6f84-79b0-90ae-f93158bcca35",
+    "head": null,
+    "start": "20f73ccf43b82dd6e2f0a6385d85e5def86d87a1"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "beb60da62efd557189565b8be7542b7f39e37aab935595d4023d7234b7d9ffba",
+    "changed": "f30e75bad72a75ee7288877d85c5cb6e4f6e249b60a6119c585f88021fa2d26e",
+    "commit": "ddc9ab1ff49867b586c1d66d36ca07f92e118c78",
+    "dismissals": [],
+    "findings": [],
+    "id": "c97692ce-87fa-4e1b-9ea2-b9374c2a6e47",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-22T07:31:06.664397+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-22T08:22:35.902083+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-22T08:43:18.894883+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-22T09:05:38.862560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-22T09:30:39.702378+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-22T09:59:13.293336+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-22T10:23:07.477958+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c80091ef-488a-4763-b49c-5e9ae5bbc6e1",
+    "head": "e7ea2ca63f8b02647b40dd7256df8adfc4e6f33a",
+    "keys": {},
+    "round": 6
+  },
+  "worker": "codex"
+}

@@ -12,7 +12,7 @@ import sys
 import conftest
 import pytest
 from test_close import CLEAN, approve_story, env  # noqa: F401  (env is a fixture)
-from test_story import READER
+from test_story import READER, approved_constitution
 from test_worker import calls, install_claude
 
 STORY = "FORGE-SHORTPLAN-1"
@@ -141,6 +141,7 @@ def _repeated_done_when_number(env):
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# The client signed off\n')
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Sign-off and roadmap")
+    approved_constitution(repo)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     assert repo.forge("story", "new", "SHOP", "Shoppers can save a basket").returncode == 0
     where = re.search(r"^worktree (.+)\n[^\n]*\nbranch refs/heads/story/SHOP$",

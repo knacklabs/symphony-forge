@@ -1,0 +1,49 @@
+{
+  "base": "a1790c43a614cd9ecaab7b87c5a0ee308d22df4a",
+  "branch": "fix/a-cold-read-fails-with-codex-never-repor",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1695a-596e-7760-9d3f-aa8a8f8d55cb",
+    "head": null,
+    "start": "433d96ec445c37d8529faadd12b0ecf3e4ffd058"
+  },
+  "done_when": "When Codex still reports an active writer after the one retry, a cold read starts a new Codex conversation and prints one plain line saying why, and a work round refuses with a line that says another program holds the conversation and how to free it.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8b7438f47404437a84dbee1084646ea0799c54f4df37551f6fd3ad9658f724cb",
+    "changed": "059894834992e62709ea2d7eb0dfe29e39da3b3b4a377c3311596147a298b18e",
+    "commit": "987935676fd0e573703ed3fb2f3e751fd0f61129",
+    "dismissals": [],
+    "findings": [],
+    "id": "06f4995a-c958-4cde-84df-b66491fb862c",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-23T15:21:17.043459+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-23T15:28:05.161081+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T15:39:58.028025+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "360c65b2-a74c-4bc8-9d74-602d8c73d729",
+    "head": "c4992b361bdcae12fbc0c7da1912ecc2d9b518b2",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A cold read fails with 'Codex never reported the turn's end' when another program, such as the Codex desktop app, still holds its earlier Codex conversation open, and a work round in the same case gives the same misleading line.",
+  "worker": "codex"
+}

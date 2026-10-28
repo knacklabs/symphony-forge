@@ -31,7 +31,9 @@ def brief_of(repo) -> str:
 
 def test_1_worker_changes_needed_outside_scope_files_and_names_them(repo):
     brief = brief_of(repo)
-    rules = flat(brief.split("# Worker brief", 1)[1].split("\n## ", 1)[0])
+    # Design context is a subsection of the worker brief. Check its guidance before the
+    # separate standards page, rather than treating the first subsection as the end.
+    rules = flat(brief.split("# Worker brief", 1)[1].split("\n## Standards", 1)[0])
     assert ("You may change a file outside your Scope that the change needs, such as a caller, "
             "a type or an existing test it breaks; name each such file and why in your handoff."
             ) in rules

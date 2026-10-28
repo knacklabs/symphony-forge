@@ -1,0 +1,93 @@
+{
+  "branch": "task/FORGE-TESTPLACE-1-FULLRUN",
+  "chat": {
+    "approval": "be1165261ad8a6a7d238bbab779080eb05ad2981ece85f728185164184008de5",
+    "claude": null,
+    "conversation": "01a172e0-7979-73f1-98ac-33393328cd3a",
+    "head": null,
+    "start": "fed7d1d23fa4b0e7085739713b3c4745be5ff425"
+  },
+  "known": [
+    {
+      "area": "run() in src/forge/fullrun.py",
+      "file": "src/forge/fullrun.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 63,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A failed full run opens a fix that names the failing tests.",
+      "work": 3
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 277,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Initialize origin/HEAD before running the full suite in Actions",
+      "work": 2
+    },
+    {
+      "area": "test_5_release_and_signoff_wait_for_a_green_full_run() in tests/test_testplace_fullrun.py",
+      "file": "tests/test_testplace_fullrun.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 348,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_release_and_signoff_wait_for_a_green_full_run",
+      "work": 3
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9e4050a812c334646963df06279e92feb58668a6a6b518458d6773058a4a9ba8",
+    "changed": "074e3273d43195090abaf02a68f1b5dc849a6ea0f5cf6374c0faca6846f3dcb0",
+    "commit": "354b12c192e1a425a5192b45762fd32506b4a09c",
+    "dismissals": [],
+    "findings": [],
+    "id": "03890f44-25e2-454c-ba94-bc650c55a222",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T11:44:17.884700+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T12:20:34.316148+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T12:37:55.031721+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T13:01:46.568168+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T13:16:30.923876+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "198f0c43-c711-452e-b872-b39fa79de9a4",
+    "head": "29c9a80325e5d06422cc0895f8b758149f76853a",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

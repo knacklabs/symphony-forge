@@ -1,0 +1,84 @@
+{
+  "branch": "task/FORGE-PACE-1-BUILD",
+  "chat": {
+    "approval": "51e0f4e4a6720442fc4ec33ec41947f91aa0f2983eb5a8744faa23abc39aaeb4",
+    "claude": null,
+    "conversation": "01a169df-4f0d-72f1-b2b5-bcbc63b51744",
+    "head": null,
+    "start": "d9ea1b1f26fe31e49ef899d37b99e86c9eed37f1"
+  },
+  "known": [
+    {
+      "area": "has_app_code() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 22,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve scaffold exclusions when the app adds a stack marker",
+      "work": 2
+    },
+    {
+      "area": "signoff() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1099,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Supply passing-test evidence to the sign-off reviewer",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "164f93e5293a78ab4ef12b7eb27d7d3acee6959a301fdda85bdd4ffd1e82ae18",
+    "changed": "7b1369ffe1a8834f3943764d76b6b9309ae958c7f3a0f772d567da3e25a07514",
+    "commit": "8384b0240f97127f8aad8de353f7f7be104071f6",
+    "dismissals": [],
+    "findings": [],
+    "id": "93b0ee9f-078a-4b38-a113-03c883424ce6",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-23T17:46:23.072801+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-23T18:34:34.654016+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T19:17:41.849380+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T20:02:12.808721+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T20:27:55.078542+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T21:11:41.920307+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "5b366f7f-fee0-4c17-9280-620e4492098f",
+    "head": "862e5f3da0af7344ff661f58537dafa78b89e16e",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

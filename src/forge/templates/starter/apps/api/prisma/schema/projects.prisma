@@ -1,0 +1,23 @@
+model Project {
+  id                  String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organisationId      String        @db.Uuid
+  name                String
+  status              String        @default("active")
+  createdAtUtc        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime      @updatedAt @db.Timestamptz(3)
+  createdByAccountId  String        @db.Uuid
+  modifiedByAccountId String        @db.Uuid
+  deletedAtUtc        DateTime?     @db.Timestamptz(3)
+  deletedByAccountId  String?       @db.Uuid
+
+  organisation        Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  createdByAccount    Account  @relation("ProjectCreatedBy", fields: [createdByAccountId], references: [id], onDelete: Restrict)
+  modifiedByAccount   Account  @relation("ProjectModifiedBy", fields: [modifiedByAccountId], references: [id], onDelete: Restrict)
+  deletedByAccount    Account? @relation("ProjectDeletedBy", fields: [deletedByAccountId], references: [id], onDelete: Restrict)
+
+  @@index([organisationId], map: "idx_Project_organisationId")
+  @@index([createdByAccountId], map: "idx_Project_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_Project_modifiedByAccountId")
+  @@index([deletedByAccountId], map: "idx_Project_deletedByAccountId")
+  @@schema("projects")
+}

@@ -1,0 +1,57 @@
+name: Starter smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - src/forge/templates/starter/**
+      - src/forge/templates/starter-python/**
+      - src/forge/templates/skeleton/.dockerignore
+      - src/forge/templates/skeleton/Dockerfile
+      - src/forge/init.py
+      - src/forge/feature*.py
+      - src/forge/templates/feature/**
+      - tests/test_feature_command.py
+      - tests/test_starter_tree.py
+      - tests/test_python_starter.py
+      - tests/test_libs_layout.py
+      - tests/test_one_company.py
+      - tests/test_defaults_*.py
+      - tests/test_database_*.py
+      - tests/test_module_schemas.py
+      - tests/test_feature_projects.py
+      - tests/test_feature_access.py
+      - tests/test_mcp.py
+      - .github/workflows/starter-smoke.yml
+
+permissions:
+  contents: read
+
+jobs:
+  starter-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run the real starter stack and browser flows
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py -k "not python" -q -x -n 0 --timeout=1800
+
+  python-starter-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: astral-sh/setup-uv@v6
+      - name: Run the Python starter stack and browser flows
+        env:
+          FORGE_STARTER_LIVE: '1'
+        run: uv run --frozen --python 3.11 pytest tests/test_python_starter.py tests/test_libs_layout.py tests/test_database_*.py tests/test_feature_projects.py tests/test_mcp.py -k python -q -n 0 --timeout=1800

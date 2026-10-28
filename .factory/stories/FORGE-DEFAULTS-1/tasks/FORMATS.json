@@ -1,0 +1,58 @@
+{
+  "branch": "task/FORGE-DEFAULTS-1-FORMATS",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "gain": 5,
+      "harm": 3,
+      "line": 13,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve Python starter compatibility in the shared web app",
+      "work": 3
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "19a7e5d1e62482ad4077796bf13d4d810fec1cdc22265e1ea14cea95ac4e55fb",
+    "changed": "74a7a33f481e4de3a1f31c9401ba067ab8975b3d54a4113ea4af458da5f6ac4b",
+    "commit": "8a98bd47fb5bd91b8db7cafb59b0a41f4a083adc",
+    "dismissals": [],
+    "findings": [],
+    "id": "b6bd45ef-7b84-41d9-ac47-24497f646d69",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T13:07:45.820444+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T13:40:56.439700+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T14:49:01.091336+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "4aac364c-4cad-4205-8c7c-44517f74f119",
+    "head": "551a39f8c4af07aec6a44ab9f1c64a9f8e3fe229",
+    "keys": {
+      "the open P0 preserve python starter compatibility in the shared web app in src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx": 1
+    },
+    "round": 1
+  },
+  "worker": "claude"
+}

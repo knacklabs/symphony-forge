@@ -35,7 +35,7 @@ def test_2_new_client_skill_tells_the_agent_the_prototype_steps(repo, gh, tmp_pa
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    made = repo.forge("init", cwd=client)
+    made = repo.forge("init", "--actions", "yes", cwd=client)
     assert made.returncode == 0, made.stderr
     prototype = _prototype(client)
     for rule in RULES:

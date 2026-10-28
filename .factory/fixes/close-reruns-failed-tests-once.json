@@ -1,0 +1,89 @@
+{
+  "base": "a474c8635ced7801f9df00e753d6e5c1b954644e",
+  "branch": "fix/close-reruns-failed-tests-once",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16efa-a94b-7af3-bdf8-0de10878eca8",
+    "head": null,
+    "start": "91eb3e821926bd38f10864b5491abe5a3bf09d28"
+  },
+  "done_when": "When a close's local test run fails, close reruns only the failed test files once; if they pass, close notes them as flaky in its output and goes on, and if they fail again, close fails as before",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 418,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep retry file selection specific to its pytest invocation",
+      "work": 2
+    },
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 513,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Allow successful retries when passing always_test files are omitted",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c5bfd72dc78840ea752db5a8a6a17066f5da40c27ad3b1604f3b21ab759cbcfc",
+    "changed": "96233f65f7d10307948a7fc9b97b5017d3d98bb2631f21efb7cb9bb5322d207f",
+    "commit": "f4a64648bdcd684414da63d2a91d78405f447b96",
+    "dismissals": [],
+    "findings": [],
+    "id": "047229a5-14ce-4f52-8f89-98fb1218fa77",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T17:34:10.962169+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T17:48:38.898810+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T01:47:13.865572+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T02:09:11.108333+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-24T17:48:38.907782+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/fasttest.py",
+    "reason": "The owner chose one more round for the two retry cases",
+    "wait_id": "d7018819-59a1-4c61-8356-391dc6101400",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "1b8419a8-5214-4642-acf8-3ec182fe18e0",
+    "head": "4860256da0462b4fb5e6c5fa38260a4b0bce81ed",
+    "keys": {},
+    "round": 2
+  },
+  "why": "When close's local test run fails, it fails the item at once, so one flaky test that passes alone sends the item back and costs a whole new queued run",
+  "worker": "codex"
+}

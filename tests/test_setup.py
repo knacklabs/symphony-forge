@@ -31,6 +31,7 @@ PLAIN_ENGLISH = ("SKILL.md", "LICENSE", "NOTICE.md", "references/writing-rules.m
 LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forge/review-tests.py", ".forge/records-only/action.yml", ".claude/settings.json", ".claude/skills/forge/SKILL.md",
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
+          ".claude/skills/database/SKILL.md", ".codex/skills/database/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",
@@ -38,8 +39,9 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
             for name in ("SKILL.md", "NOTICE.md")),
           *(f"{host}/skills/simplified-technical-english/{name}" for host in (".claude", ".codex")
             for name in PLAIN_ENGLISH), *ROLE_FILES}
+LISTED.add(".forge/design/support.js")
 # The old first commit had only Forge docs and config; it now includes deploy files.
-SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
+SCAFFOLD = {"forge.toml", "Dockerfile", ".dockerignore", "services.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
 NO_IMPECCABLE = ("impeccable is required for UI work but isn't installed where the claude "
                  "worker reads skills.\n  Fix: npx skills add pbakaus/impeccable -g\n")
@@ -97,6 +99,7 @@ def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = 
     return log
 
 
+@pytest.mark.platform
 def test_28_sync(repo, tmp_path, monkeypatch):
     """Repos without Husky keep local shims and commit only the generated adapters."""
     _on_a_branch_with_forge_toml(repo)
@@ -131,10 +134,10 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert re.search(r'^cd <checkout> && exec claude remote-control --name "<name>"$', skill, re.M)
     assert "no IDs, hashes or branch names" in skill and "under about 30 characters" in skill
 
-    # The workflow runs the test command as tests, plus forge-pr-check from the base branch.
+    # The workflow selects change tests, plus forge-pr-check from the base branch.
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job, check_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")
-    assert '- run: "make check"' in tests_job
+    assert '- run: "forge test --change"' in tests_job
     assert "forge hook pr-check" in check_job
     assert "pull_request_target" in workflow
     assert "ref: ${{ github.event.pull_request.base.sha }}" in check_job
@@ -162,9 +165,16 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert OLD_FORGE_HOOK not in commands and "Stop" not in settings["hooks"]
     # The repo's own Codex settings stay; Codex gets full access and hooks, and the old model pin goes.
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    # Sync now registers every shipped role with its description, rather than only reader.
+    registered = config.pop("agents")
     assert config == {"sandbox_mode": "danger-full-access", "approval_policy": "never",
-                      "features": {"web_search": True, "hooks": True},
-                      "agents": {"reader": {"config_file": "agents/reader.toml"}}}
+                      "features": {"web_search": True, "hooks": True}}
+    codex_roles = [Path(rel) for rel in ROLE_FILES if rel.startswith(".codex/")]
+    assert set(registered) == {path.stem for path in codex_roles}
+    for path in codex_roles:
+        role = tomllib.loads((repo.path / path).read_text(encoding="utf-8"))
+        assert registered[path.stem] == {"config_file": f"agents/{path.name}",
+                                         "description": role["description"]}
 
     # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
     calls = _stub_forge(tmp_path, monkeypatch)
@@ -184,7 +194,7 @@ def test_28_sync(repo, tmp_path, monkeypatch):
     assert calls.read_text(encoding="utf-8") == forge_calls
 
 
-def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedProcess[str]]:
+def _fresh_client(repo, gh, tmp_path: Path, *init_args: str) -> tuple[Path, subprocess.CompletedProcess[str]]:
     """A repo with no commits and an empty origin, set up with forge init."""
     client, remote = tmp_path / "client", tmp_path / "client.git"
     subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
@@ -194,7 +204,9 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     # What GitHub answers for a branch with no protection yet.
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    initialized = repo.forge("init", cwd=client)
+    if "--actions" not in init_args:
+        init_args = ("--actions", "yes", *init_args)
+    initialized = repo.forge("init", *init_args, cwd=client)
     if initialized.returncode == 0:
         # Init has installed the required checks; later commands see that protection.
         gh.respond("api", "repos/{owner}/{repo}/branches/main/protection",
@@ -203,6 +215,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     return client, initialized
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case, rows", [
     ("fresh", ()),
     # Claude's mod is optional: absence is advice, rather than a failed doctor check.
@@ -226,8 +239,8 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
         "  Fix: ask your agent to set checks in forge.toml\n",
         "forge.toml has no test command.\n"
         "  Fix: ask your agent to set test in forge.toml, then run forge sync\n")),
-    ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
-                             "forge.toml's test command.",)),
+    ("workflow skips test", ("The tests check in .github/workflows/forge.yml does not run "
+                             "forge test --change.",)),
     ("codex doesn't trust the project", ()),
     ("no impeccable", (NO_IMPECCABLE,)),
     ("impeccable only for codex", (NO_IMPECCABLE,)),
@@ -293,11 +306,19 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     log = _stub_forge(tmp_path, monkeypatch, "hook deny" if case == "host hook fails" else "")
     edit = {"version mismatch": (r'version = ".*"', 'version = "v0.0.1"'),
             "no checks or test": (r'(?s)test = .*?\nchecks = .*?\n', 'test = ""\nchecks = []\n'),
-            "workflow skips test": (r"test = .*", 'test = "make test"'),
             "forge's own repo without git hooks": ('repo = "client"', 'repo = "forge-source"'),
             }.get(case)
     if edit:
         toml.write_text(re.sub(*edit, toml.read_text(encoding="utf-8"), count=1), encoding="utf-8")
+    if case == "workflow skips test":
+        workflow = client / ".github/workflows/forge.yml"
+        workflow.write_text(
+            workflow.read_text(encoding="utf-8").replace(
+                'run: "forge test --change"', 'run: "make check"'),
+            encoding="utf-8")
+        repo.git("add", ".github/workflows/forge.yml", cwd=client)
+        repo.git("-c", f"core.hooksPath={(tmp_path / 'no-hooks').as_posix()}",
+                 "commit", "-q", "-m", "Break the test workflow", cwd=client)
     if case == "forge's own repo without git hooks":  # the workflow installs Forge from its checkout
         repo.git("checkout", "-q", "-b", "fix/own", cwd=client)  # sync refuses on main
         assert repo.forge("sync", cwd=client).returncode == 0
@@ -371,15 +392,15 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
             assert log.read_text(encoding="utf-8").count("hook deny\n") == 1
 
 
+@pytest.mark.platform
 def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path):
     _on_a_branch_with_forge_toml(repo)
     assert repo.forge("sync").returncode == 0
-    # forge can't launch: the only forge on PATH names an interpreter that doesn't exist. Every
-    # other one comes off PATH, because dash (Ubuntu's sh) skips a forge it can't start and runs
-    # the next one.
+    # Fail inside an executable wrapper: dash must not skip a broken shebang and find a real
+    # Forge installation that the hook launcher restores to PATH.
     broken = tmp_path / "broken"
     broken.mkdir()
-    _executable(broken / "forge", "#!/nonexistent/forge-interpreter\n")
+    _executable(broken / "forge", '#!/bin/sh\nexec /nonexistent/forge-interpreter "$@"\n')
     path = [folder for folder in os.environ["PATH"].split(os.pathsep)
             if not (Path(folder) / "forge").is_file()]
     env = {**os.environ, "PATH": os.pathsep.join([str(broken), *path]),

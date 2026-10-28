@@ -6,17 +6,38 @@ changes a screen.
 ## Layout
 
 ```
-frontend/src/
+apps/web/src/
+  app.tsx           React Router route table
   main.tsx
-  api.ts            one fetch wrapper: base URL, auth header, unwraps the envelope, throws errors, sends an x-correlation-id
-  pages/            one file per screen
-  components/ui/    shadcn/ui components (generated; change them through shadcn)
-  components/       the app's own components, grouped by domain
+  components/app-shell.tsx
+  index.css         app theme
+  pages/            not-found and settings screens
+libs/<module>/web/src/
+  hooks/
+  pages/            screens for the module
+libs/core/web/src/
+  api-client.ts
+  query-client.ts
+  route-error-page.tsx
+libs/shared/ui/src/
+  components/ui/    shadcn/ui components
+  components/       shared screen parts
+  hooks/
+  lib/utils.ts
 ```
 
-Error codes and their user messages live in `packages/shared`.
+An app made before this layout keeps its own folders and schema; follow the folders it has.
 
-Start with a router (TanStack Router) for the app shell, sign-in, protected routes, and 404/403
+Each module's error codes, user messages, request schemas and types live in its contracts library.
+General helpers live in `libs/shared/util`, imported through `@app/shared-util`. Shared screen parts
+live in `libs/shared/ui`, imported through `@app/shared-ui/components/*`. Add shadcn/ui components with
+`npx shadcn@4.21.4 add <name> --cwd libs/shared/ui` when the app has that library. Use one fetch
+wrapper from `libs/core/web` for the base URL and auth header. It unwraps the response envelope,
+throws errors, and sends an `x-correlation-id` header.
+Module web libraries use other modules only through their contracts; they do not import another
+module's web or server library.
+
+Start with React Router for the app shell, sign-in, protected routes, and 404/403
 pages.
 
 ## Server data
@@ -39,6 +60,34 @@ export const useCancelOrder = () => {
 Never fetch in `useEffect`, and never copy server data into component state: TanStack Query
 already caches it and tracks loading and errors.
 
+## Components
+
+- React Compiler is on (`babel-plugin-react-compiler` in the Vite config) and memoizes. Do not add
+  `useMemo`, `useCallback` or `React.memo`. The shadcn/ui copies in
+  `libs/shared/ui/src/components/ui/` keep theirs.
+- Pass layout content as `children`.
+- Build parts that share state as a compound component: one parent holds the state in a context,
+  and its parts (`<Filters>`, `<Filters.Status>`) read it.
+- Put logic that renders no markup in a custom hook.
+- Do not add a boolean prop that switches a component between modes (`<Card compact>`,
+  `isEditing`). Make two components, or a compound component.
+
+## Web address
+
+Keep filters, tabs, sort order and the page number of a list in the web address. Read them through
+React Router's `useSearchParams`, and update the query parameters when the view changes. Reloading
+the page or sharing its link must show the same view. Keep local state only for values a shared
+link does not need to reproduce.
+
+## Route error pages
+
+Use React Router's data router (`createBrowserRouter` and `RouterProvider`). Give each route its
+own `errorElement`, so a crash on one screen shows that route's error page and the other screens
+keep working. The error page says what happened and how to try again or open another screen.
+Keep each screen's data-loading error state too.
+In an app that has `libs/organisations`, the route error page reports the crash once. Let the
+crash reach that page instead of reporting it again in the component.
+
 ## Screens
 
 - Each screen that loads data renders its loading, error and empty states. The error message comes
@@ -48,6 +97,10 @@ already caches it and tracks loading and errors.
   field errors next to their fields.
 - Style with Tailwind and the theme's tokens (`bg-primary`, not a raw colour), so the look changes
   in one place.
+
+In an app that has `libs/organisations`, format dates, times, numbers and money only with the
+helpers in `@app/shared-util`. Show dates and times in the person's time zone, from their browser.
+Each table has an `Export CSV` link to its `GET /<list>/export` route; use the shared export path.
 
 ## Pointing at the screen in a demo
 
@@ -73,6 +126,9 @@ const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Age
 
 ## Design and accessibility
 
+- Use no emojis on client app screens, including icons and decoration. Every icon comes from
+  the starter's icon library, `lucide-react`; shadcn/ui is set to `lucide`. Keyboard key labels
+  such as the Command key symbol (⌘) are not emojis.
 - impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
   visual design: layout, type, colour, states and copy. Shape the screen before building, then use
   one batched inspection to audit and polish before a demo, with at most one more round. Run
@@ -90,3 +146,9 @@ const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Age
 - Every control works with the keyboard and shows visible focus, every input has a label, every
   image has alt text, contrast meets WCAG AA, and anything clickable is a `<button>` or a link.
   shadcn/ui components handle most of this; don't override their accessibility attributes.
+
+## In an app set up before this release
+
+These rules apply to code that a change adds. The app's current code stays as it is, and the
+review does not flag it. An app without React Compiler keeps its own memoization, and an app on
+<BrowserRouter> keeps it.

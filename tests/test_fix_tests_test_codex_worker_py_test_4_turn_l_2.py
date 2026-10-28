@@ -13,9 +13,12 @@ import time
 from conftest import _install
 from test_codex_worker import ROOT, _left, _running, _started, _stub
 
+import pytest
+
 STORY = "tests-test-codex-worker-py-test-4-turn-l-2"
 
 
+@pytest.mark.platform
 def test_2_a_codex_process_left_running_fails_test_4_turn_log(tmp_path):
     # The stub app-server, started through its launcher as forge work starts it, left running: the
     # check test_4_turn_log makes of each app-server, with the stub's own start time as the cutoff,

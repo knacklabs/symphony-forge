@@ -16,55 +16,62 @@ hooks = true
 multi_agent = true
 
 [agents]
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "max"
 max_concurrent_threads_per_session = 6
 max_depth = 1
 
 [agents.architect]
 config_file = "agents/architect.toml"
-description = "Use for high-level system design and architecture decisions."
+description = "Weighs design choices against the repo's decisions and standards."
 
 [agents.coder]
 config_file = "agents/coder.toml"
-description = "Use for server-side APIs, data, and business logic implementation."
+description = "Builds server-side APIs, data and business logic for a bounded task."
 
 [agents.debugger]
 config_file = "agents/debugger.toml"
-description = "Use for difficult diagnosis and root-cause analysis."
+description = "Finds the root cause of a hard failure."
 
 [agents.explorer]
 config_file = "agents/explorer.toml"
-description = "Use for bounded read-only codebase exploration and dependency tracing."
+description = "Explores the codebase and traces dependencies without changing files."
 
 [agents.frontend]
 config_file = "agents/frontend.toml"
-description = "Use for frontend UI and UX implementation."
+description = "Builds frontend screens and interaction for a bounded task."
 
 [agents.performance]
 config_file = "agents/performance.toml"
-description = "Use for performance diagnosis and measurement."
+description = "Measures performance problems and finds the smallest fix."
 
 [agents.planner]
 config_file = "agents/planner.toml"
-description = "Use for implementation planning and contract reconciliation."
+description = "Turns an approved story into bounded tasks with their tests."
 
 [agents.reader]
 config_file = "agents/reader.toml"
+description = "Cold reads a plan for blocking defects without changing files."
 
 [agents.refactorer]
 config_file = "agents/refactorer.toml"
-description = "Use for behavior-preserving implementation refactors."
+description = "Makes behaviour-preserving refactors for a bounded task."
 
 [agents.security]
 config_file = "agents/security.toml"
-description = "Use for security diagnosis and remediation guidance."
+description = "Checks trust boundaries, validation, permissions and secrets."
 
 [agents.tester]
 config_file = "agents/tester.toml"
-description = "Use for writing and improving automated tests."
+description = "Writes and fixes automated tests for a bounded task."
 
 [agents.worker]
 config_file = "agents/worker.toml"
-description = "Use for bounded default implementation work."
+description = "Builds a bounded Forge task or fix end to end."
 
 [projects."/workspace"]
 trust_level = "trusted"
+
+[agents.fixer]
+config_file = "agents/fixer.toml"
+description = "Builds a bounded Forge fix end to end."

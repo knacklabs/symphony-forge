@@ -77,11 +77,13 @@ def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     return wanted
 
 
-def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
+def ships(top: Path, cfg: dict[str, Any], *, husky: str | None = None) -> dict[str, str]:
     from forge import sync
 
     hooks = {}
-    if folder := husky_folder(top):
+    # None discovers the folder; an empty string means the caller already found none.
+    folder = husky_folder(top) if husky is None else top / husky if husky else None
+    if folder:
         if not folder.resolve().is_relative_to(top.resolve()):
             repo.refuse(sync.REFUSALS["outside"], path=folder)
         for hook in ("pre-commit", "pre-push"):
@@ -100,7 +102,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
         **({"CLAUDE.md": ""} if (top / "CLAUDE.md").exists() or (top / "CLAUDE.md").is_symlink()
            else {}),  # a dangling link counts too
         **{rel: sync._hooks(top, rel, events, ALLOW.get(rel, [])) for rel, events in HOSTS.items()},
-        ".codex/config.toml": sync._codex_config(top),
+        ".codex/config.toml": sync._codex_config(top, cfg),
     }
 
 REFUSALS = {
@@ -110,6 +112,8 @@ REFUSALS = {
                 "with forge fix allow-large.", "forge story new <KEY> --from-fix {fix}"),
     "push_default": ("{branch} changes only through a merged pull request, so this push is refused.",
                      "forge close <item>"),
+    "release_tag": ("Release tag {tag} must point to the latest commit on {default}.",
+                    "create {tag} on the latest commit of {default}, then push it"),
     "worker_settings": ("Workers leave forge.toml to the coordinator; settings change in their own "
                         "fix whose Done-when names forge.toml.",
                         "report the needed settings change in your last message."),
@@ -128,7 +132,9 @@ def pre_commit(args: argparse.Namespace) -> None:
     if os.environ.get("FORGE_WORKER") and git(
             "diff", "--cached", "--name-only", "--no-renames", "--", "forge.toml", cwd=top):
         if not task.settings_allowed(item, top, state):
-            refuse(REFUSALS["worker_settings"])
+            incoming = run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD", cwd=top).returncode == 0
+            if not incoming or git("diff", "--cached", "MERGE_HEAD", "--", "forge.toml", cwd=top):
+                refuse(REFUSALS["worker_settings"])
     if branch.startswith(("fix/", "forge/")):
         # Finishing a merge: the default branch's changes coming in don't count against the fix.
         merging = ["MERGE_HEAD"] if run("git", "rev-parse", "-q", "--verify", "MERGE_HEAD").returncode == 0 else []
@@ -142,11 +148,28 @@ def pre_commit(args: argparse.Namespace) -> None:
 
 
 def pre_push(args: argparse.Namespace) -> None:
-    default = repo.default_branch()
+    top = repo.root()
+    default = repo.default_branch(top)
+    release_main: str | None = None
     for line in sys.stdin.read().splitlines():
         _, sha, remote_ref = (line.split() + ["", "", ""])[:3]
         if remote_ref == f"refs/heads/{default}":
             refuse(REFUSALS["push_default"], branch=default)
+        tag = remote_ref.removeprefix("refs/tags/")
+        if remote_ref.startswith("refs/tags/") and set(sha) != {"0"}:
+            from forge import fullrun, releases
+
+            if releases.VERSION.fullmatch(tag):
+                if release_main is None:
+                    reason = fullrun.green(top)
+                    if reason:
+                        refuse((reason, fullrun.next_run(top)))
+                    release_main = git(
+                        "rev-parse", "--verify", f"origin/{default}^{{commit}}", cwd=top)
+                tagged = git("rev-parse", "--verify", f"{sha}^{{commit}}", cwd=top)
+                if tagged != release_main:
+                    refuse(REFUSALS["release_tag"], tag=tag, default=default)
+                continue
         # The destination names the fix, whatever the source: a branch, a tag or a commit ID.
         kind, _, fix = remote_ref.removeprefix("refs/heads/").partition("/")
         if kind not in ("fix", "forge") or set(sha) == {"0"}:  # a deletion pushes no commits
@@ -192,7 +215,13 @@ def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, he
     if state.get("allow_large"):
         return
     diff = (base, head) if head else ("--cached", base)
-    changed = git("diff", "--name-only", "--no-renames", "-z", *diff).split("\0")
+    rows = git("diff", "--raw", "--no-abbrev", "--no-renames", "-z", *diff).split("\0")
+    changed, hashes = [], {}
+    for index in range(0, len(rows) - 1, 2):
+        path, digest = rows[index + 1], rows[index].split()[3]
+        changed.append(path)
+        if set(digest) != {"0"}:
+            hashes[path] = digest
     interfaces = cfg["interfaces"]
     # Markdown, state and planning documents never count.
     code = [path for path in changed if path and not (
@@ -208,7 +237,7 @@ def _promote(fix: str, state: dict[str, Any], cfg: dict[str, Any], base: str, he
     if len(code) > LIMIT:
         from forge import sync
 
-        output = sync.synced(repo.root(), cfg, base, head, code)
+        output = sync.synced(repo.root(), cfg, base, head, code, hashes=hashes)
         code = [path for path in code if path not in output]
     if len(code) > LIMIT:
         refuse(REFUSALS["promote"], fix=fix,

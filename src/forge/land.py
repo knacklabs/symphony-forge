@@ -18,16 +18,17 @@ from pathlib import Path
 
 from forge import board, checks, close, codex, machine, merge, nextstep, repo, review, score, spotted, story, task, worker
 
-ROUNDS = 3
 NEEDS_CHOICE = 3
 REFUSALS = {
     "rerun": ("GitHub has not started the re-run of {check}.", "forge land {item}"),
     "one_or_all": ("Give one change or --all, not both and not neither.",
                    "forge land <item>, or forge land --all"),
     "one_run": ("A land run already works in this repo.", "wait for it to end, then forge land --all"),
+    "note_all": ("Give one change with --note.", 'forge land <item> --note "<text>"'),
 }
 # A child of forge land --all: fix rounds off, so a change that needs a worker or the owner stops.
 QUEUED = "FORGE_LAND_QUEUED"
+SLOT_WAIT, SLOT_RESUME = "::forge-land-wait::", "::forge-land-resume::"
 IN_CLOSE = ("reviewing", "fixing", "waiting for checks", "ready")
 say = partial(print, flush=True)
 
@@ -36,6 +37,8 @@ def land(args: argparse.Namespace) -> int:
     if bool(args.item) == bool(getattr(args, "all", False)):
         repo.refuse(REFUSALS["one_or_all"])
     if args.item is None:
+        if getattr(args, "note", None) is not None:
+            repo.refuse(REFUSALS["note_all"])
         return _land_all()
     queued = os.environ.pop(QUEUED, "") == "1"
     item = args.item
@@ -47,13 +50,16 @@ def land(args: argparse.Namespace) -> int:
     top = close._worktree(item)
     pin = repo.config(top)["version"]
     state, branch = repo.read_state(item, top) or {}, repo.current_branch(top)
-    step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True)
+    step = argparse.Namespace(item=item, dismiss=None, because=None, wait_for_progress=True,
+                              note=getattr(args, "note", None))
+    if queued:
+        step.check_slot = _check_slot
     rounds = 0
     conflict_retry = False
     review_retry = False
     try:
         close.check_stop(item, state, top)
-        # A session round carries its count until ready or a recorded choice, including a default.
+        # A session round carries its count until ready or a recorded choice.
         saved = state.get("land") or {}
         rounds = int(os.environ.pop("FORGE_LAND_ROUNDS", "0")) or (
             saved.get("rounds", 0) if state.get("status") != "ready" and saved.get("stop") == state.get("stop")
@@ -70,7 +76,7 @@ def land(args: argparse.Namespace) -> int:
         # A completed session round handed back at this HEAD made no commit; it goes to close.
         handed = codex.record(top, item).get("native") or {}
         if not merged and state.get("kind") not in ("story-done", "migrate", "adopt") and (
-                status == "started" and head == start or
+                step.note is not None or status == "started" and head == start or
                 status == "working" and
                 repo.git("log", "-1", "--format=%s", cwd=top) == f"{item} is working" and
                 (handed.get("head"), handed.get("outcome")) != (head, "completed")):
@@ -113,23 +119,12 @@ def land(args: argparse.Namespace) -> int:
                 if queued:  # forge land <item> runs this change's fix rounds
                     raise repo.Refused(str(error).split("\nNext: ")[0], f"forge land {item}",
                                        error.code, error.entry) from None
-                if rounds == ROUNDS:
+                if rounds >= 1:
                     rounds += 1  # this stop says why itself, so no stop line
-                    say(f"Stopped after {ROUNDS} fix rounds: {item} still has {what}.")
-                    if error.entry is close.REFUSALS["blocked"]:
-                        # Recorded as a review-loop stop, so forge next repeats the question and
-                        # forge close --resolve records the human's choice.
-                        state = repo.read_state(item, top) or {}
-                        serious = review.blocking(state.get("review") or {})
-                        state.update(stop={"file": serious[0][1]["file"], "round": rounds},
-                                     status="hotspot")
-                        state["stop"]["wait_id"] = repo.record_event(top, item, "owner wait start",
-                                                                     reason="review loop")
-                        close._save(top, item, state, f"{item} stopped after {ROUNDS} fix rounds")
-                        close.check_stop(item, state, top)  # its question, then close --resolve
+                    say(f"Stopped after one fix round: {item} still has {what}.")
                     raise
                 rounds += 1
-                say(f"Fix round {rounds} of {ROUNDS}: the worker fixes {what}.")
+                say(f"Fix round {rounds} of 1: the worker fixes {what}.")
                 step.land_rounds = rounds
                 if _handed_out(step, top):
                     return 0
@@ -156,9 +151,9 @@ def land(args: argparse.Namespace) -> int:
                 conflict_retry = True
     except repo.Refused as error:
         _problems(top, item)
-        if rounds <= ROUNDS:
+        if rounds <= 1:
             say(f"Stopped: {item} needs you.")
-        if error.entry is close.REFUSALS["hotspot"]:
+        if error.entry == close.REFUSALS["hotspot"]:
             problem, _, next_step = str(error).partition("\nNext: ")
             raise repo.Refused(problem, f"{next_step}, then forge land {item}",
                                NEEDS_CHOICE, error.entry) from None
@@ -168,6 +163,7 @@ def land(args: argparse.Namespace) -> int:
 def _handed_out(step: argparse.Namespace, top: Path) -> bool:
     """Run a round; a round handed to the session's subagent stops land until its hand-back."""
     worker.work(step)
+    step.note = None
     if not _pending(top, step.item):
         return False
     _problems(top, step.item)
@@ -199,14 +195,12 @@ def _problems(top: Path, item: str) -> None:
 
 def _rerun(top: Path, item: str, branch: str) -> bool:
     """Re-run the pull request's failed checks once per pushed head, when every failure is a job
-    whose first attempt's log names none of the change's files and this machine's tests passed on
-    these committed files. Any gh call that fails means no re-run."""
+    whose first attempt's log names none of the change's files. Laptop repos never wait for
+    GitHub checks. Any gh call that fails means no re-run."""
     default = repo.default_branch(top)
-    # close records only the command it ran: fast_test, when set, else test
-    commands = {repo.config(top)["test"], review.close_test(top, f"origin/{default}")} - {""}
+    cfg = repo.config(top)
     marker = repo.forge_dir(top) / "reruns" / repo.git("rev-parse", "HEAD", cwd=top)
-    if not any((passed := review.passed_record(top, command)) and passed.exists()
-               for command in commands) or marker.exists():
+    if cfg["test_place"] != "ci" or marker.exists():
         return False
     try:  # gh exits non-zero when a check fails, so read what it printed either way
         listed = json.loads(repo.run("gh", "pr", "checks", branch, "--json", "name,bucket,link",
@@ -218,6 +212,10 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
                                          f"origin/{default}...HEAD", cwd=top).split("\0") if path]
     runs: dict[str, list[str]] = {}
     for check in failing:
+        # forge-pr-check verifies the review itself; replaying CI cannot repair its findings.
+        name = check.get("name", "")
+        if name == "forge-pr-check" or name.startswith("forge-pr-check ("):
+            return False
         job = re.search(r"/runs/(\d+)/job/(\d+)", check.get("link") or "")
         if check.get("bucket") != "fail" or not job:
             return False
@@ -234,8 +232,8 @@ def _rerun(top: Path, item: str, branch: str) -> bool:
     marker.touch()
     for names in runs.values():
         for name in names:
-            say(f"Re-running {name} once: its failure names none of this change's files and the "
-                "tests passed here.")
+            say(f"Re-running {name} once: its failure names none of this change's files and "
+                "CI runs this repo's tests.")
     for run in runs:
         if repo.run("gh", "run", "rerun", run, "--failed", cwd=top).returncode:
             return False
@@ -262,6 +260,13 @@ def _attempt(top: Path, run: str) -> int | None:
 
 def _merged(top: Path, branch: str) -> bool:
     return (close._pull_request(top, branch) or {}).get("state") == "MERGED"
+
+
+def _check_slot(waiting: bool) -> None:
+    """Lend this child's place during CI, then wait for the queue to return it."""
+    say(SLOT_WAIT if waiting else SLOT_RESUME)
+    if not waiting and not sys.stdin.readline():
+        raise SystemExit("The land queue ended before this close could resume.")
 
 
 def _land_all() -> int:
@@ -299,7 +304,7 @@ def _queue(top: Path) -> int:
             continue
         age = (int(repo.git("log", "-1", "--diff-filter=A", "--format=%ct", "--",
                             repo.state_path(item), cwd=tree) or 0), item)
-        if state.get("stop"):  # close decides: the owner's choice, its 30-minute default, or a stop
+        if state.get("stop"):  # close decides whether the owner recorded a choice
             try:
                 close.check_stop(item, state, tree)
             except repo.Refused as error:
@@ -340,8 +345,19 @@ def _queue(top: Path) -> int:
         available.extend(dependencies.get_ready())
     changes.sort(key=lambda change: order[change[1]])
     running: dict[str, tuple[subprocess.Popen, threading.Thread, list[str]]] = {}
+    slots: dict[str, str] = {}
     finished, waiting, retried, merged, ready_prs = set(), set(), set(), [], []
     while len(finished) < len(changes):
+        # A returning child takes a free place before any new close starts.
+        for item, (child, _, _) in running.items():
+            if slots[item] == SLOT_RESUME and child.poll() is None and (
+                    sum(value == "active" for value in slots.values()) < machine.half_cores()):
+                slots[item] = "active"
+                try:
+                    child.stdin.write("resume\n")
+                    child.stdin.flush()
+                except BrokenPipeError:  # The child ended after poll; the result below owns it.
+                    pass
         for index, (age, item, files, ready) in enumerate(changes):
             if item in running or item in finished:
                 continue
@@ -367,22 +383,24 @@ def _queue(top: Path) -> int:
                     waiting.add(item)
                 continue
             # Keep queue order: the next change starts once every started one has entered close.
-            if len(running) >= machine.half_cores() or any(
+            if sum(value == "active" for value in slots.values()) >= machine.half_cores() or any(
                     child.poll() is None and f"Closing {other}." not in lines
                     for other, (child, _, lines) in running.items()):
                 continue
             say(f"Starting {item}.")
-            running[item] = _child(top, item)
+            running[item] = _child(top, item, slots)
         for age, item, *_ in changes:
             if item not in running or running[item][0].poll() is None:
                 continue
             child, reader, lines = running.pop(item)
             reader.join()
+            slots.pop(item)
+            child.stdin.close()
             # Two closes fetching at the same moment can collide on git's lock of a shared ref.
             if child.returncode and item not in retried and any("cannot lock ref" in line for line in lines):
                 retried.add(item)
                 say(f"{item} met another change's git lock; starting it again once.")
-                running[item] = _child(top, item)
+                running[item] = _child(top, item, slots)
                 continue
             finished.add(item)
             url = next((line.rsplit(": ", 1)[1] for line in lines
@@ -411,19 +429,23 @@ def _queue(top: Path) -> int:
     return 1 if stopped else 0
 
 
-def _child(top: Path, item: str) -> tuple[subprocess.Popen, threading.Thread, list[str]]:
+def _child(top: Path, item: str, slots: dict[str, str]) -> tuple[subprocess.Popen, threading.Thread, list[str]]:
     """forge land <item> in its own process, since close and merge change the working folder; its
     lines come out prefixed with the change's name."""
     code = (f"import sys; sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r}); "
             "from forge.cli import main; raise SystemExit(main())")
     child = subprocess.Popen([sys.executable, "-c", code, "land", item], cwd=top,
-                             env={**os.environ, QUEUED: "1"}, stdin=subprocess.DEVNULL,
+                             env={**os.environ, QUEUED: "1"}, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                              encoding="utf-8", errors="replace")
     lines: list[str] = []
+    slots[item] = "active"
 
     def relay() -> None:
         for line in child.stdout:
+            if line.rstrip("\n") in (SLOT_WAIT, SLOT_RESUME):
+                slots[item] = line.rstrip("\n")
+                continue
             lines.append(line.rstrip("\n"))
             say(f"{item}: {lines[-1]}")
     reader = threading.Thread(target=relay, daemon=True)
@@ -435,10 +457,12 @@ COMMANDS = [{
     "words": "land", "run": "land", "changes_state": True,
     "help": "Build, close, fix and merge a task or fix",
     "args": [(('item',), {"nargs": "?", "help": "the task or fix to land"}),
+             (("--note",), {"metavar": "TEXT", "help": "guide the first round this run starts"}),
              (("--all",), {"action": "store_true",
                            "help": "close and merge every change in close, oldest first"})],
     "position": 165,
-    "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs fix rounds and merges a "
+    "listing": "| `forge land <item>` / `forge land --all` | Builds, closes, runs at most one fix round and merges a "
                "task or fix where the repo allows agent merges; `--all` closes and merges every change "
-               "in close, oldest first, several at a time; run it in the background |",
+               "in close, oldest first, several at a time; `--note \"<text>\"` guides one item's "
+               "first round; run it in the background |",
 }]

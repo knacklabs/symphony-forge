@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_gate_on_split_checks.py\tGate: repair tests broken by the workflow migration\tFORGE-GROUPS-1/PYGROUPS",
+      "kind": "bug",
+      "path": "tests/test_fix_gate_on_split_checks.py",
+      "line": 127,
+      "text": "Gate: repair tests broken by the workflow migration",
+      "from": "blocking",
+      "item": "FORGE-GROUPS-1/PYGROUPS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_groups_pytest.py\tGate: test_5_always_tests_pass_in_their_owning_group\tFORGE-GROUPS-1/PYGROUPS",
+      "kind": "bug",
+      "path": "tests/test_groups_pytest.py",
+      "line": 255,
+      "text": "Gate: test_5_always_tests_pass_in_their_owning_group",
+      "from": "blocking",
+      "item": "FORGE-GROUPS-1/PYGROUPS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

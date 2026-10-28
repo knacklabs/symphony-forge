@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+test-results/
+playwright-report/
+forge.local.toml
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

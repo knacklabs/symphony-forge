@@ -1,5 +1,4 @@
-"""Forge's own extra workflow runs the Linux groups on merges and every platform nightly, on release
-tags and on demand; pull requests run them once, in the gating workflow."""
+"""Linux runs the whole suite; Windows runs platform tests beside it on each pull request."""
 import json
 import re
 import tomllib
@@ -24,7 +23,7 @@ def expression(text, **github):
 def matrix_rows(event, ref="refs/heads/main"):
     workflow = WORKFLOW.read_text(encoding="utf-8")
     tests_job = workflow.split("  tests:\n", 1)[1].split("  net-lines:\n", 1)[0]
-    # The gating workflow runs the pull request's groups; this one runs only on other events.
+    # The gating workflow owns Linux's pull-request groups.
     if re.search(r"^    if: github.event_name != 'pull_request'$", tests_job, re.M) and (
             event == "pull_request"):
         return []
@@ -36,28 +35,28 @@ def matrix_rows(event, ref="refs/heads/main"):
 
 
 @pytest.mark.parametrize("event,counts", [
-    ("pull_request", {}),
-    ("push", {"ubuntu-latest": 5}),
-    ("tag", {"ubuntu-latest": 5, "windows-latest": 12}),
-    ("schedule", {"ubuntu-latest": 5, "windows-latest": 12}),
-    ("workflow_dispatch", {"ubuntu-latest": 5, "windows-latest": 12}),
+    ("pull_request", {"windows-latest": 5}),
+    ("tag", {"windows-latest": 5}),
+    ("schedule", {"windows-latest": 5}),
+    ("workflow_dispatch", {"windows-latest": 5}),
 ])
 def test_1_event_runs_every_required_platform_group_once(event, counts):
     rows = (matrix_rows("push", "refs/tags/v1.2.3") if event == "tag" else matrix_rows(event))
-    # Only a merge may reuse its parent's run: that run was Linux-only, so a full run never may.
+    # Tags can reuse proof. Nightly and manual runs always run every group.
     workflow = WORKFLOW.read_text(encoding="utf-8")
     step = workflow.split("      - id: parent-tests\n", 1)[1].split("\n      - ", 1)[0]
     guard = re.search(r"^        if: (.+)$", step, re.M)
     assert guard, "Guard the parent-tests reuse by event"
     event_name, ref = ("push", "refs/tags/v1.2.3") if event == "tag" else (event, "refs/heads/main")
     assert bool(expression("${{ " + guard[1] + " }}", event_name=event_name, ref=ref)) == (
-        event == "push")
+        event == "tag")
     assert sorted((row["os"], row["group"], row["groups"]) for row in rows) == sorted(
         (os, group, count) for os, count in counts.items() for group in range(1, count + 1))
     workflow = WORKFLOW.read_text(encoding="utf-8")
     triggers = workflow.split("\non:\n", 1)[1].split("\nconcurrency:", 1)[0]
     assert re.search(r"^  pull_request:$", triggers, re.M)
-    assert re.search(r"^  push:\n    branches: \[main\]\n    tags: \['v\*'\]$", triggers, re.M)
+    assert re.search(r"^  push:\n    tags: \['v\*'\]$", triggers, re.M)
+    assert "branches:" not in triggers, "Merges to main must not start another platform run"
     assert re.search(r"^  schedule:\n    - cron: '[\d*]+ [\d*]+ \* \* \*'$", triggers, re.M), "Run nightly"
     assert re.search(r"^  workflow_dispatch:$", triggers, re.M)
     # A job skipped on pull requests must not answer to the required tests check's name.
@@ -74,11 +73,15 @@ def test_2_pull_requests_keep_closes_named_checks():
     for name, event in (("tests", "pull_request"), ("forge-pr-check", "pull_request_target")):
         job = workflow.split(f"\n  {name}:\n", 1)[1].split("\n  forge-pr-check:", 1)[0]
         assert f"if: github.event_name == '{event}'" in job
-        assert f"&& '{name}' || '{name} (other event)'" in job
+        if name == "tests":
+            assert f"&& '{name}' || '{name} (other event)'" in job
+        else:
+            assert "name: Review pull request\n" in job
+            assert "-f context=forge-pr-check" in job
         assert 'runs-on: "ubuntu-latest"' in job
 
 
-def test_3_a_merge_cancels_the_main_run_it_supersedes_and_nothing_else():
+def test_3_only_a_pull_request_cancels_its_previous_run():
     workflow = WORKFLOW.read_text(encoding="utf-8")
     block = re.search(r"^concurrency:\n((?:  .+\n)+)", workflow, re.M)
     assert block, "Missing workflow-level concurrency"
@@ -91,13 +94,12 @@ def test_3_a_merge_cancels_the_main_run_it_supersedes_and_nothing_else():
                        settings["group"])
         return group, expression(settings["cancel-in-progress"], **github)
 
-    main, newer_main = run("push", "refs/heads/main", 1), run("push", "refs/heads/main", 2)
-    assert main[0] == newer_main[0] and newer_main[1], "A merge must cancel the older main run"
     pr, newer_pr = run("pull_request", "refs/pull/5/merge", 3, 5), run(
         "pull_request", "refs/pull/5/merge", 4, 5)
     assert pr[0] == newer_pr[0] and newer_pr[1]
     tag = run("push", "refs/tags/v1.2.3", 5)
-    assert tag[0] != main[0] and not tag[1], "A release tag run must never cancel or be cancelled"
+    newer_tag = run("push", "refs/tags/v1.2.3", 8)
+    assert tag[0] != newer_tag[0] and not tag[1], "Release tag runs must stay independent"
     for event in ("schedule", "workflow_dispatch"):
         first, second = run(event, "refs/heads/main", 6), run(event, "refs/heads/main", 7)
-        assert len({first[0], second[0], main[0], tag[0]}) == 4 and not second[1]
+        assert len({first[0], second[0], pr[0], tag[0]}) == 4 and not second[1]

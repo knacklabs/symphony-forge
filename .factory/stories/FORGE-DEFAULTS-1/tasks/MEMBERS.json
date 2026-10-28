@@ -1,0 +1,56 @@
+{
+  "branch": "task/FORGE-DEFAULTS-1-MEMBERS",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx",
+      "file": "src/forge/templates/starter/apps/web/src/features/members/pages/invite-dialog.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 46,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Restore keyboard focus when the invite dialog closes",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "22f969dc81a2681917a5169d04ae45dbe003ab5503f974644f31293dc881c6c5",
+    "changed": "9be01705fa4084457b03b93d3e41d82f7a3c782851ab19ada9e95f719ac582a2",
+    "commit": "3683147e70a76709d42ae97ab38936e985a30927",
+    "dismissals": [],
+    "findings": [],
+    "id": "88f1c569-ccf2-4b59-9918-02b8642c9020",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T03:16:21.604655+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T04:04:20.280451+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T04:18:01.215801+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "273e525e-16fe-406e-ad44-57db4b2a2fe6",
+    "head": "2f95de663caa0f3f969d3757f99e03ae615e1249",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

@@ -20,6 +20,7 @@ STORY = "FIX-RUNNER-SETTING"
 
 
 def test_4_copied_client_migration_keeps_default_ci_runner(repo, gh, tmp_path, monkeypatch):
+    # Include nightly jobs when checking that every migrated job uses the default runner.
     # Migration inventories generated adapters before forge.toml exists, then writes the jobs.
     _copied_client(repo, tmp_path, monkeypatch)
     migrated = repo.forge("migrate")
@@ -27,7 +28,7 @@ def test_4_copied_client_migration_keeps_default_ci_runner(repo, gh, tmp_path, m
     workflow = repo.git("show", "forge/migrate-v1:.github/workflows/forge.yml")
     labels = re.findall(r"^    runs-on: (.+)$", workflow, re.M)
     assert [json.loads(label) if label.startswith('"') else label for label in labels] == [
-        "ubuntu-latest", "ubuntu-latest", "ubuntu-latest"]
+        "ubuntu-latest"] * 6
 
 
 def _jobs(client: Path) -> tuple[str, str]:
@@ -62,7 +63,7 @@ def _tool_bootstrap(jobs: tuple[str, str]) -> None:
 def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_path, runner):
     client = _new_repo(repo, gh, tmp_path)
     args = ("--runner", runner) if runner else ()
-    initialized = repo.forge("init", *args, cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", *args, cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     settings = tomllib.loads((client / "forge.toml").read_text("utf-8"))
     selected = runner or "ubuntu-latest"

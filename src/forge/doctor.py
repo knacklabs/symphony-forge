@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tomllib
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -83,6 +84,25 @@ def _finished(top: Path, main: Path) -> list[tuple[Path, str, str]]:
                 line[:2] == "!!" and line.endswith("/") and Path(line[3:]).name in repo.CACHES)
                 for line in status.stdout.splitlines()): found.append((path, branch, state))
     return found
+def _unbuilt(top: Path) -> list[tuple[str, str]]:
+    rows = []
+    landed = story.landed_ref(top)
+    now = datetime.fromisoformat(repo.now())
+    for branch, path in story.worktrees(top).items():
+        if not branch.startswith("fix/"): continue
+        item = task.branch_item(branch, path)
+        if not item: continue
+        name, state = item
+        if state.get("status") != "started": continue
+        started = next((step["at"] for step in state.get("steps", []) if step["step"] == "start"), None)
+        if not started or now - datetime.fromisoformat(started) <= timedelta(days=7): continue
+        # The start record is a commit. Inherited work and merges of main are not this fix's work.
+        commits = repo.git("rev-list", "--count", "--no-merges", branch, "--not",
+                           state["base"], landed, cwd=top)
+        if commits == "1":
+            rows.append((f"Fix {name} started more than seven days ago and has no work commits.",
+                         f'forge fix drop {name} --because "<reason>"'))
+    return rows
 def _contents(top: Path, specs: list[str]) -> dict[str, str]:
     if not specs: return {}
     done = subprocess.run([shutil.which("git") or "git", "cat-file", "--batch"], cwd=top,
@@ -292,6 +312,8 @@ def _files(top: Path, cfg: dict[str, Any], wanted: dict[str, str], fix: bool) ->
 def doctor(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)
+    if warning := repo.group_warning(top, cfg):
+        print(f"- Warning: {warning}")
     install = sync.install_line(cfg["version"])
     rows: list[tuple[str, str]] = []
     def add(problem: str, fix: str = REPAIR) -> None: rows.append((problem, fix))
@@ -357,6 +379,7 @@ def doctor(args: argparse.Namespace) -> int:
                 problem, _, fix = str(refused).partition("\nNext: ")
                 add(problem, fix)
     main = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top)).resolve().parent
+    rows += _unbuilt(top)
     finished = _finished(top, main)
     if finished and not args.fix: add(f"{len(finished)} folders hold finished work: " f"{', '.join(str(path) for path, _, _ in finished)}.")
     for path, branch, state in finished if args.fix else []:
@@ -390,14 +413,16 @@ def doctor(args: argparse.Namespace) -> int:
                     said = (done.stderr.strip() or "it printed nothing").splitlines()
                     fix = next((line[6:] for line in said if line.startswith("Next: ")), install)
                     add(f"The {event} hook in {rel} fails with exit code " f"{done.returncode}{bare}: {said[0]}", fix)
-    if not cfg["checks"]: add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
+    if cfg["test_place"] == "ci" and not cfg["checks"]:
+        add("forge.toml names no checks, so close has nothing to wait for.", "ask your agent to set checks in forge.toml")
     if shutil.which("gh"):
-        prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state")
+        prs = _prs(top, repo.current_branch(top), "--json", "headRefOid,state,number,headRefName")
         for pr in prs if isinstance(prs, list) else []:
             if not isinstance(pr, dict) or pr.get("state") != "OPEN" or not pr.get("headRefOid"):
                 continue
             try:
-                if reason := checks.queued_reason(top, pr["headRefOid"]):
+                if reason := checks.queued_reason(top, pr["headRefOid"], number=pr.get("number"),
+                                                  branch=pr.get("headRefName") or ""):
                     add(reason, "make a matching runner available or correct runner in forge.toml, "
                         "then run forge sync only if you change the runner setting")
             except repo.Refused as error:
@@ -420,10 +445,12 @@ def doctor(args: argparse.Namespace) -> int:
         add("fast_test still runs python -m forge.fasttest in the client's environment.",
             'replace it with fast_test = "forge test --pytest {base}" in forge.toml')
     if not cfg["test"]: add("forge.toml has no test command.", "ask your agent to set test in forge.toml, then run forge sync")
-    # Test groups append their split options to the command.
-    elif "tests" in cfg["checks"] and not any(f"run: {json.dumps(cfg['test'])[:-1]}{end}" in sync.read(top / sync.WORKFLOW_PATH)
-                                              for end in ('"', " --splits ")):
-        add(f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test " "command.")
+    elif cfg["test_place"] == "ci" and "tests" in cfg["checks"]:
+        workflow = sync.read(top / sync.WORKFLOW_PATH)
+        tests_job = re.search(r"^  tests:\n(.*?)(?=^  [\w-]+:\n|\Z)", workflow, re.M | re.S)
+        tests_job = tests_job[1] if tests_job else ""
+        if "forge test --change" not in tests_job:
+            add(f"The tests check in {sync.WORKFLOW_PATH} does not run forge test --change.")
     codex_config = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted, trust = _codex_trust(top, codex_config)
     if on_codex and not trusted: add("Codex doesn't trust this project, so it would skip Forge's hooks and the "
@@ -453,8 +480,10 @@ def doctor(args: argparse.Namespace) -> int:
                for name, entry in entries]) + ".")
     if plan_note: print(f"- Note: {plan_note}")
     quicktest.suggest(top, cfg)
-    if cfg["fast_test"]: print(f"- Note: close runs fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
-              "the merge base with the default branch; the pull request's tests check still runs " "the full test command.")
+    if cfg["fast_test"]: print(f"- Note: change tests use fast_test ({cfg['fast_test']}) instead of test, with {{base}} as "
+              "the merge base with the default branch" + (". The pull request's tests check runs related tests. "
+              "The nightly full run covers the rest"
+              if cfg["test_place"] == "ci" else "") + ".")
     if on_codex: print("- Note: when Codex asks you to approve Forge's hooks, approve them; Forge can't see " "whether you did.")
     elif cfg["tools"] == "both" and not trusted: print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
               f"trust this one yet.\n  Fix: {trust}")
@@ -464,9 +493,18 @@ def doctor(args: argparse.Namespace) -> int:
         print(f"Everything {'checks' if trusted or cfg['tools'] == 'claude' else 'else checks'} out for Forge {cfg['version']}.")
         print(compared)
     cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
-    budget = machine.half_cores()
+    runners = machine.busy_runners()
+    budget = machine.half_cores(runners)
     print(f"This machine: {cores} cores, so {budget} agents at once and "
-          f"{machine.test_slots()} test runs at once, each on {budget} cores.")
+          f"{machine.test_slots(runners)} test runs at once, each on {budget} cores.")
+    memory = machine.memory()
+    free = memory["available_bytes"]
+    available = "unknown" if free is None else f"{free / 1e9:.1f} GB"
+    print(f"Memory: {available} free, floor {machine.memory_floor(memory) / 1e9:.1f} GB.")
+    allocations = [run.get("test_cpus") for run in machine.entries()
+                   if run["kind"] == "test" and run.get("started_at")]
+    processes = "unknown" if None in allocations else str(sum(allocations))
+    print(f"Test processes in use: {processes}. Busy runners: {runners} ({runners} cores reserved).")
     if os.name != "nt":
         processes = repo.run("ps", "-axo", "command=")
         if processes.returncode == 0 and re.search(
@@ -477,8 +515,8 @@ def doctor(args: argparse.Namespace) -> int:
                   "Its CPUs count against Forge's load limit.")
     fast = {"needed": "on for every fix, after the first repair round, or when other planned work waits",
             "off": "off", "always": "always on"}[cfg["codex_fast"]]
-    events = repo.forge_dir(top) / "events.jsonl"
-    history = [json.loads(row) for row in events.read_text("utf-8").splitlines()] if events.is_file() else []
+    from forge import event_log
+    history = event_log.read(top)
     last = next((row for row in reversed(history) if row.get("event") == "codex speed"), None)
     said = ("" if last is None else " The last Codex turn ran with Fast."
             if last["tier"] not in (None, "default") and last["tier"] == last["requested_tier"] else

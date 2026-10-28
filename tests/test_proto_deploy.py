@@ -13,6 +13,8 @@ import uuid
 
 import pytest
 
+pytestmark = pytest.mark.platform
+
 
 def _client(repo, gh, tmp_path):
     client = tmp_path / "client"
@@ -23,7 +25,7 @@ def _client(repo, gh, tmp_path):
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stderr
     return client
 
@@ -80,35 +82,42 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
     assert {"Dockerfile", ".dockerignore"} <= set(repo.git("ls-files", cwd=client).splitlines())
     (client / ".env").write_text("DATABASE_URL=private-local-secret\n")
     (client / ".npmrc").write_text("# private-token-marker\n")
-    (client / "backend").mkdir()
-    (client / "backend" / "private.pem").write_text("private-key-marker\n")
+    (client / "apps" / "api").mkdir(parents=True)
+    (client / "apps" / "api" / "private.pem").write_text("private-key-marker\n")
     (client / "secrets").mkdir()
     (client / "secrets" / "token.txt").write_text("local-token-marker\n")
-    (client / "frontend").mkdir()
-    (client / "backend" / "prisma" / "migrations" / "20260928000000_init").mkdir(parents=True)
+    (client / ".nx").mkdir()
+    (client / ".nx" / "local-cache.txt").write_text("host-build-cache-marker\n")
+    (client / "apps" / "web").mkdir()
+    (client / "prisma" / "migrations" / "20260928000000_init").mkdir(parents=True)
+    # This fake app proves the root-script, migration, and image-exclusion contract.
+    # test_starter_tree owns the real Nx, API, and browser proof.
     (client / "package.json").write_text(json.dumps({
-        "private": True, "workspaces": ["frontend", "backend"],
-        "devDependencies": {"prisma": "6.19.1"}}))
-    (client / "frontend" / "package.json").write_text(json.dumps({
-        "name": "frontend", "version": "1.0.0", "scripts": {
-            "build": "node -e \"require('fs').mkdirSync('dist',{recursive:true});require('fs').writeFileSync('dist/index.html','<h1>Prototype ready</h1>')\""}}))
-    (client / "backend" / "package.json").write_text(json.dumps({
-        "name": "backend", "version": "1.0.0", "scripts": {
-            "build": "node -e \"require('fs').mkdirSync('dist',{recursive:true})\"",
-            "start:prod": "node server.js"}}))
-    (client / "backend" / "server.js").write_text(
+        "private": True,
+        "scripts": {"build": "node build.js", "start:prod": "node apps/api/server.js"},
+        "devDependencies": {"prisma": "7.10.1"}}))
+    (client / "build.js").write_text(
+        "const fs=require('fs');"
+        "fs.mkdirSync('apps/web/dist',{recursive:true});"
+        "fs.mkdirSync('apps/api/dist',{recursive:true});"
+        "fs.writeFileSync('apps/web/dist/index.html','<h1>Prototype ready</h1>');\n")
+    (client / "prisma.config.ts").write_text(
+        "import { defineConfig, env } from 'prisma/config';\n"
+        "export default defineConfig({schema:'prisma/schema.prisma',"
+        "migrations:{path:'prisma/migrations'},datasource:{url:env('DATABASE_URL')}});\n")
+    (client / "apps" / "api" / "server.js").write_text(
         "const http=require('http'),fs=require('fs');"
         "http.createServer((req,res)=>{if(req.url==='/health'){res.end('ok');return;}"
         "res.setHeader('content-type','text/html');"
-        "res.end(fs.readFileSync(require('path').join(__dirname,'../frontend/dist/index.html')));})"
+        "res.end(fs.readFileSync(require('path').join(__dirname,'../web/dist/index.html')));})"
         ".listen(process.env.PORT||3000,'0.0.0.0');\n")
-    (client / "backend" / "prisma" / "schema.prisma").write_text(
-        'datasource db {\n  provider = "postgresql"\n  url = env("DATABASE_URL")\n}\n'
+    (client / "prisma" / "schema.prisma").write_text(
+        'datasource db {\n  provider = "postgresql"\n}\n'
         'generator client {\n  provider = "prisma-client-js"\n}\n'
         'model Ready {\n  id Int @id\n}\n')
-    (client / "backend" / "prisma" / "migrations" / "migration_lock.toml").write_text(
+    (client / "prisma" / "migrations" / "migration_lock.toml").write_text(
         'provider = "postgresql"\n')
-    (client / "backend" / "prisma" / "migrations" / "20260928000000_init" / "migration.sql").write_text(
+    (client / "prisma" / "migrations" / "20260928000000_init" / "migration.sql").write_text(
         'SELECT pg_advisory_lock(445566);\n'
         'CREATE TABLE "Ready" ("id" INTEGER NOT NULL PRIMARY KEY);\n')
     subprocess.run(["npm", "install", "--package-lock-only", "--ignore-scripts", "--no-audit"],
@@ -131,7 +140,8 @@ def test_10_new_client_deploys_only_after_migration(repo, gh, tmp_path, monkeypa
         _docker("build", "-t", tag, str(client))
         _docker("run", "--rm", "--label", label, "--entrypoint", "sh", tag, "-c",
                 "test ! -e /app/.env && test ! -e /app/.npmrc && "
-                "test ! -e /app/backend/private.pem && "
+                "test ! -e /app/apps/api/private.pem && "
+                "test ! -e /app/.nx && "
                 "test ! -e /app/secrets/token.txt && test ! -e /app/.git")
         holder = subprocess.Popen(
             ["docker", "exec", "-i", database, "psql", "-X", "-Atq", "-U", "postgres", "-d", "prototype"],

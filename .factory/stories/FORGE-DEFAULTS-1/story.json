@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-10-24T11:17:05.360195+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01FQMjPofkMYfjADy34cu1SJ",
+    "hash": "243290d63c20635ccb12255ffe4d18e627b2f609c9cf16680931584c7da8986e",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-DEFAULTS-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-24T09:06:30.157140+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:44:22.346884+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-24T09:49:59.551680+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-24T11:12:39.840081+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-24T11:17:05.360396+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "New client apps start with the constitution's built-in defaults",
+  "touches": 1
+}

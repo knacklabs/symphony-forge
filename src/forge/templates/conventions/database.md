@@ -1,7 +1,22 @@
 # Database (Prisma and Postgres)
 
-How the standards page's data rules look in Prisma. Read it when your task adds or changes a table,
-a migration or a query.
+The database skill (`.codex/skills/database/SKILL.md`) has the rules for new tables, columns,
+constraints, indexes and queries. This page has the Prisma how-to. Existing tables keep their
+current rules unless a story asks to change them. If the app's constitution differs, follow it.
+
+Each business module owns one schema file under `apps/api/prisma/schema/`. Keep its models in that
+file. `base.prisma` holds the generator and datasource; Prisma reads the directory to generate one
+client for the app.
+
+Each module keeps its tables in its own Postgres schema. Core tables (organisations, accounts
+and sign-in) live in `core`; projects live in `projects`, and change history lives in `history`.
+List these schemas in the datasource's `schemas` array and put `@@schema("<module>")` on each
+model and enum. Prisma 7 needs no `multiSchema` preview flag. Schema-qualified names are also
+required in raw SQL. Existing apps keep their own schemas unless a story asks to move them.
+
+A link between business modules stores an id with an index and no foreign key. Check the link
+through the other module's public service. Links within one module and links to core tables
+keep their foreign key. A review reports a foreign key between two business-module schemas.
 
 ## Schema
 
@@ -10,22 +25,27 @@ page names them and no `@@map` is needed:
 
 ```prisma
 model Order {
-  id                  String        @id @default(uuid()) @db.Uuid
+  id                  String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
   userId              String        @db.Uuid
-  paymentStatus       PaymentStatus @default(UNPAID)
-  totalInCents        Int
+  paymentStatus       String        @default("UNPAID")
+  total               Decimal       @db.Decimal(19, 4)
+  totalCurrency       String
   isGift              Boolean       @default(false)
-  cancelledAtUtc      DateTime?
-  createdAtUtc        DateTime      @default(now())
-  updatedAtUtc        DateTime      @updatedAt
-  deletedAtUtc        DateTime?
+  cancelledAtUtc      DateTime?     @db.Timestamptz(3)
+  createdAtUtc        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime      @default(now()) @db.Timestamptz(3)
+  deletedAtUtc        DateTime?     @db.Timestamptz(3)
   user                User          @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "idx_Order_userId")
 }
 ```
 
-- Money is an integer in the smallest unit (`totalInCents`), never a float.
+- Add the named status CHECK in migration SQL, for example
+  `CONSTRAINT "Order_paymentStatus_allowed" CHECK ("paymentStatus" IN ('UNPAID', 'PAID'))`.
+- The shared `set_updated_at()` trigger sets `updatedAtUtc` on each update.
+- Store dates and times in UTC.
+- For money, follow the database skill: use an exact decimal and a separate currency column.
 - A boolean has a default, so it never has a third, empty state.
 - Add `createdByAccountId`, `modifiedByAccountId` and `deletedByAccountId` once the app has
   accounts.
@@ -38,12 +58,16 @@ model Order {
   client asked to be erased.
 - Raw SQL goes through `$queryRaw` with tagged templates, so every value is a parameter, and lives
   in a repository file.
-- Search starts with Postgres full-text search (a `tsvector` column with a GIN index) in raw SQL.
+- For search queries and indexes, follow the database skill.
 
 ## Migrations
 
+In an app that has `libs/organisations`, each table with `deletedAtUtc` has a
+`soft_delete_only()` trigger that refuses a hard delete. Record admin actions through
+`HistoryService.record`, never by writing directly to the history table.
+
 ```
-npx prisma migrate dev --name add_paymentStatus_to_Order
+COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate dev --name add_paymentStatus_to_Order
 ```
 
 Prisma puts the timestamp in front of the name. Commit the generated SQL, never edit a migration
@@ -52,6 +76,6 @@ data goes under the story's Risks, with how to recover.
 
 ## Tests
 
-Tests run against a real Postgres from `docker-compose.yml`. The test setup creates a database with
-a unique name, runs `npx prisma migrate deploy` against it and drops it afterwards, so two
+Tests run against a real Postgres from `compose.test.yml`. The test setup creates a database with
+a unique name, runs `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` against it and drops it afterwards, so two
 checkouts can run their tests at the same time without sharing rows.
