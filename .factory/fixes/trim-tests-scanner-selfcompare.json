@@ -11,12 +11,27 @@
   "done_when": "The scanner case and its support, and the sync expected-value program, are removed; the executable refusal triggers and the independent shipped-byte checks stay",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aade7fe4996ddb32a3274584d5ecd9850c445ac09a49c06bc7173753389ff6f9",
+    "changed": "181b5e180d396d0e8aaf0e700d09d592540e2f15d518b29df02c70acb0c6722b",
+    "commit": "6a0b2362c66c4b4dba498daf15b1e636a0524b25",
+    "dismissals": [],
+    "findings": [],
+    "id": "74611f0b-35d0-483b-8f93-17fb05503a47",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T17:17:27.196849+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T17:26:48.266893+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
