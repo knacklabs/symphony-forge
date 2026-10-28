@@ -31,7 +31,7 @@
       "gain": 3,
       "harm": 3,
       "line": 80,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,38 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3ac44c8e6002ed63321362592c8e703f110cccf707be8d557bf63a61cdb51562",
-    "changed": "e5cf2ef93e47493f1cb7c9f99b8b434e24b34c07e1ac9d8eb1e989c271f1244b",
-    "commit": "2e37be590d27aeb335ad585b1c9cdd38f46afd08",
+    "branch_diff": "c0aef62f1a9424b09a9622a1e79893adbebdbd2d64b219afa758c293d3f39d4c",
+    "changed": "2faf8a0e96ca2d5ea8c05a491356b44308aa898f3bde03a4559021d5fd523a97",
+    "commit": "bf4b9695a7f652de9d2eec761e8c94726be10b63",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - retry sign-off while an earlier finding remains in an unchanged file.\nThe new baseline makes unchanged files disappear from the review target, including files containing outstanding findings. Passing those findings in the prompt does not expand Autoreview's allowed target: src/forge/autoreview.py:80\u201385 documents that findings outside changed files are rejected and a strict sign-off run becomes incomplete. Consequently, reporting an unresolved finding prevents the round from being saved or reaching the owner choice; omitting it permits a clean result without resolving it. Include the earlier open findings in the effective review target alongside changed files. The new test stub returns queued findings without enforcing this scope contract, masking the failure.",
-        "file": "src/forge/review.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 5,
-        "harm": 3,
-        "line": 887,
-        "priority": "P1",
-        "title": "Not done: Client sign-off finishes: a later attempt reviews only files changed since the last sign-off review plus its earlier findings, and",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - the owner accepts or splits the remaining sign-off findings.\nThe only assertion proving retention in Known issues reads private state fields and accepts a matching entry in any fix. It never verifies the owning item's public Known issues output. These cases would still pass if the finding were assigned to another fix, including the newly created split fix, instead of the sign-off item. Verify the accepted finding and its owning item through the public command output; the current assertion does not prove the promised behavior.",
-        "file": "tests/test_signoff_review_rounds.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 80,
-        "priority": "P1",
-        "title": "Gate: sign-off Known issues proof",
-        "work": 2
-      }
-    ],
-    "id": "fc8afbe6-478a-4ef3-b023-ec9992222ef3",
-    "status": "blocked"
+    "findings": [],
+    "id": "ed45cd25-7bb0-471c-b9bf-4494c9895b0e",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T19:05:19.996666+00:00",
@@ -80,6 +58,10 @@
     },
     {
       "at": "2026-10-28T19:19:40.008336+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T19:29:02.126315+00:00",
       "step": "review"
     }
   ],
