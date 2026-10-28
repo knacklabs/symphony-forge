@@ -9,12 +9,12 @@ from uuid import uuid4
 
 import httpx
 from sqlalchemy.orm import Session
+from test_api import credentials, sign_up
+from test_invites import invite
 
 from app.core import AccountPrincipal
 from app.history.models import ChangeRecord
 from app.history.service import HistoryService
-from test_api import credentials, sign_up
-from test_invites import invite
 
 
 class _RecordingSession:
