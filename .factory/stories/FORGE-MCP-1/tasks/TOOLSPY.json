@@ -1,6 +1,13 @@
 {
   "base": "d0e5f7838ea7eb0c40256fe6a897fc096fac0f43",
   "branch": "task/FORGE-MCP-1-TOOLSPY",
+  "chat": {
+    "approval": "1f115deaacad6f96cad786da78b6bc3172cc164cd891d26f118e71c6b3381bdf",
+    "claude": null,
+    "conversation": "01a18052-d76d-78d2-b1a1-89983813bb74",
+    "head": null,
+    "start": "5ef4a7a78cea320aa4336312cfccff1627e29f75"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-FEATURE-1/PY",
