@@ -1,0 +1,45 @@
+{
+  "base": "4f70eedef923759c587cbb74f5d53a3c35aaabbc",
+  "branch": "fix/forge-s-own-ci-runs-the-full-linux-suite",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17ea4-3aae-72f0-bfa9-323cb5017b42",
+    "head": null,
+    "start": "aa047e739d40d4740331e8130affa1449a705390"
+  },
+  "done_when": "forge-next.yml runs only the Windows platform tests and the Windows installer and plugin checks, the full Linux suite runs only in forge.yml, and the release steps name one Linux full run plus the Windows platform run",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5cafd32f19267a2113e1d087ba1b14ff8b6c027d7d1d398e5d25672b93fe2666",
+    "changed": "b67aed4abe9bff9b62dd3c6d9290bf0dfa77229ea2bd90050a6a7c84f075bced",
+    "commit": "d7cd97b39552d15605423e2bafcf432de70b5fac",
+    "dismissals": [],
+    "findings": [],
+    "id": "a2418590-b76f-482c-bdf5-37a85fca22c1",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T18:33:58.542619+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T18:38:01.692658+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "65bcf1f28a78f7cb4a9b4b46e2e7621e1f6e6956",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's own CI runs the full Linux suite twice: forge.yml runs it nightly and on demand, and forge-next.yml runs it again on every merge to main, every tag, nightly and on demand, beside its Windows platform tests; the release steps also still name Mac, which has no runner",
+  "worker": "codex"
+}

@@ -23,6 +23,7 @@ from test_starter_tree import LIVE, STARTER, _require_cases, live_run
 pytest_plugins = ("test_python_starter",)
 
 ROOT = Path(__file__).resolve().parents[1]
+STORY = "FORGE-FEATURE-1"
 PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
 TS_CONTROLLER = Path("libs/projects/server/src/projects.controller.ts")
 TS_PERMISSIONS = Path("libs/projects/server/src/projects.permissions.ts")

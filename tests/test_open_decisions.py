@@ -271,7 +271,7 @@ def test_3_a_passed_due_date_applies_the_default(repo, tmp_path, monkeypatch, se
     ("new-client", "record-directory", True),
     ("adopted-v1.2.2", "source", False),
 ])
-def test_4_answers_refuse_links_outside_the_checkout(repo, tmp_path, monkeypatch, setup, linked, defaults):
+def test_6_answers_refuse_links_outside_the_checkout(repo, tmp_path, monkeypatch, setup, linked, defaults):
     # Existing answer tests use ordinary files. This guards the distinct filesystem boundary:
     # a linked source or record directory must not cause any write before the refusal.
     fix = _client_checkout(setup, repo, tmp_path, monkeypatch)

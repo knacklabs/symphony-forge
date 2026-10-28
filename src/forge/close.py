@@ -293,7 +293,7 @@ def close(args: argparse.Namespace) -> int:
         requested[score.identity(finding["file"], finding["title"])] = because
     evidence = ("\n\n".join(part for part in (
                     review.before_coding(top, base, head),
-                    review.functional_check(top, f"origin/{default}")) if part),
+                    review.commit_paragraph(top, f"origin/{default}", "Functional check:")) if part),
                 review.proof_list(top, f"origin/{default}"))
     repo.record_event(top, item, "close result")  # a stuck worker counts failures once per close
     failed = 0

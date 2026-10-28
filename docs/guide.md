@@ -99,11 +99,12 @@ fix started before sign-off can exceed the usual fix size and change an interfac
 tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows which required answers are still open. Its light rounds prove the demo steps,
 security and data boundaries, with `[models.light_review]`. Full proof is due at sign-off.
-Resolve the answers, then have the whole working
-prototype and answers strictly reviewed before the customer is asked: write the record with
-`forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
-`forge decision accept`, which runs the review and either names the gaps or says you can now ask
-the customer's named person for sign-off.
+Resolve the answers, then run the sign-off checks before the customer is asked. Write the record
+with `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
+`forge decision accept`. Forge checks the copied Answers section and full test run, then reviews
+the canvas against the whole brief. A working prototype also gets one strict whole-product review;
+a canvas-only sign-off does not need that review. If the checks pass, Forge says you can ask the
+customer's named person for sign-off.
 The customer's named person approves the canvas or requested demo and the quoted answers. Set `approved_via` to
 `email`, `call` or `chat` and `approved_on` to the reply date. Run `forge decision accept` again
 to record it. Put each demo step and its test under `## Proof` for a working build, and settled
@@ -507,14 +508,15 @@ For Forge's maintainers:
 
 1. In a fix, set `__version__` in `src/forge/__init__.py` to the new version (without the `v`),
    close it and merge it.
-2. Start the full test run with `gh workflow run forge.yml --ref main` and confirm it is green.
-   Start the platform run with `gh workflow run forge-next.yml --ref main` and confirm it is green
-   on Linux, Mac and Windows before tagging. Pull requests and merges to main run only the Linux
-   test groups; they do not prove the other platforms ready for release.
+2. Start one Linux full run with `gh workflow run forge.yml --ref main`.
+   Confirm it is green. This workflow posts the full-run status that sign-off and release read.
+   Start the Windows platform run with `gh workflow run forge-next.yml --ref main`.
+   Confirm it is green before you tag the release.
 3. Tag the merge commit `vX.Y.Z` and push the tag: `git tag vX.Y.Z <merge commit>`, then
    `git push origin vX.Y.Z`. Check the tag's tree matches the default branch with
    `git diff --quiet vX.Y.Z origin/main`.
-   The tag push runs the full matrix again; confirm that run is green too.
+   The tag push runs the Windows checks again or reuses passed proof for the same tree.
+   Confirm that run is green too.
 4. Install from the tag and check that `forge --version` prints `vX.Y.Z`.
 
 What the switch to this Forge removed from the repo, and where to find it, is in

@@ -115,8 +115,9 @@ def test_1_workers_and_reviewers_receive_the_apps_design(env, monkeypatch, sdk_d
         context(prompt, folder)
         assert f"{folder}{'canvas' if none else 'screen'}.svg" in prompt
         if not none:
+            # Full and continued briefs phrase the same theme requirement differently.
             for text in ("### frontend", "impeccable", "emil-design-eng",
-                         "Apply DESIGN.md's theme tokens, type and colours", "theme file"):
+                         "theme tokens, type and colours", "app's theme file"):
                 assert text in prompt, text
             assert ("apps/web/src/index.css" in prompt) == starter
         else:

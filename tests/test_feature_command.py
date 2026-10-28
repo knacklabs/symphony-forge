@@ -21,6 +21,7 @@ PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
 ADOPTED = ROOT / "tests/fixtures/adopted-v1.2.2/client"
 
 CLIENT_LINE = "forge task feature clients --one client --field 'name:text'"
+STORY = "FORGE-FEATURE-1"
 JOBS_LINE = (
     "forge task feature jobs --one job --field 'name:text' "
     "--field 'description?:long-text' --field 'status:status(planned|active|done)' "
@@ -269,8 +270,7 @@ def _feature_args(plural: str, one: str, fields: list[str]) -> list[str]:
             *(argument for field in fields for argument in ("--field", field))]
 
 
-@pytest.mark.platform
-def test_1_generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path):
+def _generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path):
     # Audit: emitted code must parse and its cursor encoder must run. The file/wiring
     # checks do not execute output and missed broken declarations and renamed locals.
     # Node checks the public generated artifacts, with no Forge imports or test seam.
@@ -744,42 +744,47 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("adopted", [False, True], ids=["plain-init", "adopted-v1.2.2"])
-def test_6_outside_a_starter_app_the_command_refuses(repo, gh, tmp_path, adopted):
-    """Plain and earlier-adopted apps refuse before changing their worktree."""
-    if adopted:
-        shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
-        config = repo.path / "forge.toml"
-        version = repo.forge("--version").stdout.split()[-1]
-        config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
-                          encoding="utf-8")
-        repo.git("checkout", "-q", "-b", "fix/feature-command-refusal-adopted")
-        synced = repo.forge("sync")
-        assert synced.returncode == 0, synced.stdout + synced.stderr
-        client = repo.path
-    else:
-        client, initialized = _fresh_client(repo, gh, tmp_path)
-        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+@pytest.mark.parametrize("case", ["plain init", "earlier-adopted", "typescript", "python"],
+                         ids=["plain-init", "adopted-v1.2.2", "typescript", "python"])
+def test_6_unsupported_apps_refuse_without_changing_the_worktree(repo, gh, tmp_path, case):
+    """Non-starters and incomplete older starters get actionable, side-effect-free refusals.
 
-    before = repo.git("status", "--porcelain", cwd=client)
-    if not adopted:
-        assert before == ""
-    refused = repo.forge(*_feature_args("jobs", "job", ["name:text"]), cwd=client)
-    message = refused.stdout + refused.stderr
-    assert refused.returncode != 0
-    assert "needs a starter app" in message.lower(), message
-    assert "Next: build this feature by hand in this app." in message, message
-    assert repo.git("status", "--porcelain", cwd=client) == before
+    The command must leave both unsupported app types unchanged. New-init and earlier-adopted
+    apps prove the no-starter refusal; the incomplete starter proves that the missing module is
+    named. Neither overlap is covered by the feature behavior tests, and the real CLI needs no seam.
+    """
+    if case in {"plain init", "earlier-adopted"}:
+        adopted = case == "earlier-adopted"
+        if adopted:
+            shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
+            config = repo.path / "forge.toml"
+            version = repo.forge("--version").stdout.split()[-1]
+            config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
+                              encoding="utf-8")
+            repo.git("checkout", "-q", "-b", "fix/feature-command-refusal-adopted")
+            synced = repo.forge("sync")
+            assert synced.returncode == 0, synced.stdout + synced.stderr
+            client = repo.path
+        else:
+            client, initialized = _fresh_client(repo, gh, tmp_path)
+            assert initialized.returncode == 0, initialized.stdout + initialized.stderr
 
+        before = repo.git("status", "--porcelain", cwd=client)
+        if not adopted:
+            assert before == ""
+        refused = repo.forge(*_feature_args("jobs", "job", ["name:text"]), cwd=client)
+        message = refused.stdout + refused.stderr
+        assert refused.returncode != 0
+        assert "needs a starter app" in message.lower(), message
+        assert "Next: build this feature by hand in this app." in message, message
+        assert repo.git("status", "--porcelain", cwd=client) == before
+        return
 
-@pytest.mark.platform
-@pytest.mark.parametrize("starter", ["typescript", "python"])
-def test_6_an_older_starter_names_the_missing_history_module(repo, gh, tmp_path, starter):
+    starter = case
     # Audit: an older starter must name its missing history prerequisite and leave the worktree
     # unchanged. A Python check that looks only for TypeScript markers could generate a broken
     # feature in an older Python app; the existing case covered only the TypeScript starter.
     # This runs the real command against each starter without a production seam.
-    """A starter without history gets a precise, side-effect-free refusal."""
     starter_name = "react" if starter == "typescript" else "python"
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -890,14 +895,22 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("starter", ["typescript", "python"])
-@pytest.mark.parametrize("shell", SHELLS)
-def test_1_a_plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter):
-    # Audit: the observable contract is that the planner's quoted shell lines build the feature
-    # and report files in both new and upgraded starter apps. A Python dispatch or quoting
-    # regression can select the wrong renderer or change a field value; a hyphen-to-underscore
-    # regression can publish a permission name the web app cannot use. Existing coverage only
-    # exercised TypeScript. The real Forge command runs through bash/zsh, so this needs no seam.
+@pytest.mark.parametrize("starter,case", [("typescript", "parser"),
+                         *[(starter, shell) for starter in ("typescript", "python")
+                           for shell in SHELLS]],
+                         ids=["generated-contracts",
+                              *[f"{starter}-{Path(shell).name}"
+                                for starter in ("typescript", "python") for shell in SHELLS]])
+def test_1_feature_contracts_parse_and_plan_lines_build_in_one_step(repo, gh, tmp_path, starter, case):
+    # The command line is the contract; each shell preserves it, and generated source parses.
+    # Separate tests previously duplicated this criterion and let parser and command cases drift.
+    if case == "parser":
+        _generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path)
+    else:
+        _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, case, starter)
+
+
+def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter):
     """The shell lines work in new and adopted starters and report existing output files."""
     starter_name = "react" if starter == "typescript" else "python"
     new_path = tmp_path / "new"

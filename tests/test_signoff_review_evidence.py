@@ -18,7 +18,7 @@ STORY = "FIX-AFTER-THE-SIGN-OFF-HOTFIX-A-CLIENT-SIGN"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_signoff_uses_the_green_full_run_without_a_separate_test_run(
+def test_1_signoff_uses_the_green_full_run_without_a_separate_test_run(
         repo, tmp_path, monkeypatch, adopted):
     make = _adopted_client if adopted else _client
     fix, answers, queue = make(repo, tmp_path, monkeypatch)
@@ -45,7 +45,7 @@ def test_signoff_uses_the_green_full_run_without_a_separate_test_run(
     pytest.param(False, "completeness", id="new-completeness"),
     pytest.param(True, "signoff", id="earlier-release"),
 ])
-def test_failed_strict_review_names_the_saved_raw_report(
+def test_2_failed_strict_review_names_the_saved_raw_report(
         repo, tmp_path, monkeypatch, adopted, phase):
     make = _adopted_client if adopted else _client
     fix, answers, queue = make(repo, tmp_path, monkeypatch)

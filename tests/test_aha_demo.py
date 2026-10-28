@@ -90,21 +90,21 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
     # Test audit: protect the shipped pre-reply sequence, which could otherwise ask for approval
     # too soon. Existing runtime sign-off tests do not check the guide delivered by init/sync.
     # Keep this owner-boundary guide check and real accept command; add no seam or duplicate test.
-    section = _prototype(skill)
+    section = " ".join(_prototype(skill).split())
     steps = (
         "Before anyone asks for sign-off, hold one read-back call",
-        "goes through every answer on the answers page: our defaults, the agent's guesses and "
-        "the topics marked later",
+        "goes through every item from `forge decision open` and every answer on the answers page: "
+        "our defaults, the agent's guesses and the topics marked later",
         "Settle every open must-answer topic in that call",
         "Then write",
         "`forge decision new client-signoff`",
         'run `forge decision accept client-signoff --by "<name>"` before any reply is recorded',
-        "Sign-off checks the design records above",
-        "It runs one completeness check",
+        "Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md`",
+        "Its completeness review must pass",
         "A canvas-only sign-off needs no working build.",
-        "A working build also gets one strict whole-product review.",
-        "Forge reuses both passed results while what they checked stays unchanged.",
-        "the command runs these checks and stops without accepting sign-off.",
+        "A working build also gets one strict whole-product review with no serious findings.",
+        "Forge reuses passed results while what they checked stays unchanged.",
+        "Before the customer's reply, the command runs these checks and stops without accepting sign-off.",
         "Once it passes, tell the salesperson to ask the customer's named person for sign-off "
         "their own way.",
         "When they bring the reply back, record it in `approved_via` and `approved_on`",
