@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-EFFORT-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-28T17:44:24.878134+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Build and fix rounds raise their effort after a failure",
+  "touches": 0
+}

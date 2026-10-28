@@ -480,6 +480,12 @@
       "title": "Guides and starters agree",
       "status": "pending",
       "order": 107
+    },
+    {
+      "key": "FORGE-EFFORT-1",
+      "title": "Build and fix rounds raise their effort after a failure",
+      "status": "pending",
+      "order": 108
     }
   ],
   "epics": [
