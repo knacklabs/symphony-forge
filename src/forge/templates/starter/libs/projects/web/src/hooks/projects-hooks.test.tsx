@@ -86,4 +86,36 @@ describe('project hooks', () => {
       expect(init?.credentials).toBe('include');
     }
   });
+
+  // forge:feature:retry-key:start
+  it('the create hook keeps one Idempotency-Key until a create succeeds', async () => {
+    const failedResponse = new Response(JSON.stringify({
+      success: false,
+      data: null,
+      error: { code: 'REQUEST_FAILED', message: 'Try again.', details: null },
+    }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    });
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(failedResponse)
+      .mockResolvedValueOnce(response(project, 201))
+      .mockResolvedValueOnce(response({ ...project, id: 'project-2' }, 201));
+    vi.stubGlobal('fetch', fetch);
+    const queries = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    const create = renderHook(() => useCreateProject(), { wrapper: wrapper(queries) });
+
+    await act(async () => {
+      await expect(create.result.current.mutateAsync(input)).rejects.toMatchObject({ status: 500 });
+    });
+    await act(async () => create.result.current.mutateAsync(input));
+    await act(async () => create.result.current.mutateAsync(input));
+
+    const keys = fetch.mock.calls.map(([, init]) => new Headers(init?.headers).get('Idempotency-Key'));
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBe(keys[0]);
+    expect(keys[2]).toBeTruthy();
+    expect(keys[2]).not.toBe(keys[1]);
+  });
+  // forge:feature:retry-key:end
 });

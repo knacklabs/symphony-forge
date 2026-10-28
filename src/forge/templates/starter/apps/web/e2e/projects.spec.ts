@@ -168,6 +168,44 @@ test('create, view, edit, and delete a project', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
 });
 
+// forge:feature:retry-key:start
+test('a project form retries with its key after the create response is lost', async ({ page }) => {
+  await signUpOnProjects(page);
+  const requestKeys: string[] = [];
+  let firstResponseStatus: number | undefined;
+  await page.route('**/api/v1/projects', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    requestKeys.push(route.request().headers()['idempotency-key'] ?? '');
+    if (requestKeys.length === 1) {
+      const response = await route.fetch();
+      firstResponseStatus = response.status();
+      await route.abort();
+      return;
+    }
+    await route.continue();
+  });
+
+  const projectName = `Retry project ${newEmail()}`;
+  await page.getByRole('button', { name: 'New project' }).click();
+  const dialog = page.getByRole('dialog', { name: 'New project' });
+  await dialog.getByLabel(NAME, { exact: true }).fill(projectName);
+  await fillProjectForm(page, dialog);
+  await dialog.getByRole('button', { name: 'Create project' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText('Could not save this project. Check the details and try again.');
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Create project' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: projectName })).toBeVisible();
+  expect(firstResponseStatus).toBe(201);
+  expect(requestKeys).toHaveLength(2);
+  expect(requestKeys[0]).toBeTruthy();
+  expect(requestKeys[1]).toBe(requestKeys[0]);
+
+  await page.goto('/projects');
+  await expect(page.getByRole('row').filter({ hasText: projectName })).toHaveCount(1);
+});
+// forge:feature:retry-key:end
+
 test("a project's detail screen shows its recent changes", async ({ page }) => {
   const email = await signUpOnProjects(page);
   await addProjects(page, ['Website redesign']);

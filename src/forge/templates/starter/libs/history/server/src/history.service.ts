@@ -15,6 +15,7 @@ export class HistoryService implements HistoryApi {
       organisationId: principal.organisationId, actorAccountId: principal.id,
       actorEmail: principal.email, action, summary,
       subjectId: subject?.id, subjectName: subject?.name,
+      viaAgent: principal.viaAgent ?? null,
     } });
   }
 

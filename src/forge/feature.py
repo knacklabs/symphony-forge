@@ -156,7 +156,8 @@ def build(args) -> int:
     from forge.feature_schema import render_schema
     from forge.feature_web import render_feature_web
 
-    include_mcp = (root / "libs/core/server/src/common/tools.ts").is_file()
+    include_mcp = all((root / path).is_file() for path in (
+        "libs/core/server/src/common/tools.ts", "libs/core/server/src/common/retry-keys.ts"))
     files = render_feature_api(fields, one, plural, kinds, include_mcp=include_mcp)
     files.update(render_schema(plural, one, fields, kinds))
     files.update(render_feature_web(fields, one, plural, kinds, _link_names(fields, root), include_mcp=include_mcp))
@@ -232,7 +233,7 @@ def build(args) -> int:
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
     _write(root, current, files)
     if not include_mcp:
-        print(f"This app has no MCP server, so {plural} get no agent tools or resources.")
+        print(f"This app has no MCP server or retry keys, so {plural} get no agent tools, resources or retry keys.")
     return 0
 
 
@@ -386,7 +387,7 @@ def _build_python(args, root: Path) -> int:
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
     _write(root, current, files)
     if not include_mcp:
-        print(f"This app has no MCP server, so {plural} get no agent tools or resources.")
+        print(f"This app has no MCP server or retry keys, so {plural} get no agent tools, resources or retry keys.")
     python_files = sorted("../../" + path for path in files if path.endswith(".py"))
     # Keep F401 enabled so Ruff retains necessary model-import suppressions.
     for command in (("check", "--select", "I,F401,RUF100", "--fix"), ("format",)):

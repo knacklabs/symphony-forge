@@ -137,7 +137,7 @@ def _replace_mark(text: str, name: str, body: str) -> str:
 
 
 def _feature_mcp(text: str, include: bool) -> str:
-    matches = [match for match in MARK.finditer(text) if match["name"] == "mcp"]
+    matches = [match for match in MARK.finditer(text) if match["name"] in {"mcp", "retry-key"}]
     for match in reversed(matches):
         replacement = "".join(match.group(0).splitlines(keepends=True)[1:-1]) if include else ""
         text = text[:match.start()] + replacement + text[match.end():]
@@ -687,7 +687,7 @@ def render_feature_web(fields: list[dict[str, Any]], one: str, plural: str, kind
             # Only the starter's own text names the item's name field; the bodies below use the real columns.
             text = re.sub(rf"\b({_camel(one)}(?:\.data\?)?)\.name\b", rf"\1.{name}", text)
             text = text.replace("{ id: string; name: string }[]", f"{{ id: string; {name}: string }}[]")
-        for match in [match for match in MARK.finditer(text) if match["name"] != "mcp"]:
+        for match in [match for match in MARK.finditer(text) if match["name"] not in {"mcp", "retry-key"}]:
             text = _replace_mark(text, match["name"], bodies[match["name"]])
         text = _feature_mcp(text, include_mcp)
         # The Agent access dialog's feature is the plural's slug, as its route takes it.

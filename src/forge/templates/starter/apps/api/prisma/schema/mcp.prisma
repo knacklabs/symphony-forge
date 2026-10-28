@@ -1,7 +1,9 @@
+// ponytail: Keep this table in `mcp`; moving it needs a migration and adds no user value.
 model IdempotencyKey {
   id             String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
   organisationId String       @db.Uuid
   accountId      String       @db.Uuid
+  // The action name, such as `projects_create`, lets API and MCP creates share retry keys.
   tool           String
   key            String
   itemId         String       @db.Uuid
