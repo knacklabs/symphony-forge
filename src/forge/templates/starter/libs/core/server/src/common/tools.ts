@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { formatNumber } from '@app/shared-util';
 import type { AccountPrincipal } from './account-principal';
 import { hasPermission, type FeaturePermissions } from './permissions';
+import { defineFeatureResources } from './resources';
 
 export type ToolContext = {
   account: AccountPrincipal;
@@ -155,6 +156,10 @@ export function defineFeatureTools<I extends Record<string, unknown>, R extends 
   for (const field of Object.keys(config.links)) itemShape[snake(field).replace(/_id$/, '_name')] = z.string().nullable().optional();
   for (const field of ['created_at_utc', 'created_by_email', 'modified_by_email', 'deleted_at_utc', 'deleted_by_email']) itemShape[field] = z.string().nullable().optional();
   const itemOutput = z.object(itemShape).strict();
+  defineFeatureResources({
+    feature: config.feature, one: config.one, permission: config.permissions.view, input: config.input,
+    read: async (id, context) => itemOutput.parse(await item(await config.service.get(context.account, id), true, context, new Map())),
+  });
   const inputValue = (args: Record<string, unknown>): I => config.input.parse(Object.fromEntries(
     Object.keys(config.input.shape).map((field) => [field, args[snake(field)]]))) as I;
   async function item(row: R, detailed: boolean, context: ToolContext, names: Map<string, string | null>): Promise<Record<string, unknown>> {

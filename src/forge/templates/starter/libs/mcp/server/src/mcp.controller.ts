@@ -6,9 +6,9 @@ import { SkipThrottle, ThrottlerStorage, type ThrottlerStorage as ThrottlerStora
 import { Prisma } from '@prisma/client';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, GetPromptRequestSchema, ListPromptsRequestSchema, ListResourcesRequestSchema, ListResourceTemplatesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { Request, Response } from 'express';
-import { callTool, ErrorReporter, listTools, PrismaService, Public, ToolError, toolFailure, type AccountPrincipal, type ToolContext } from '@app/core-server';
+import { callTool, ErrorReporter, getPrompt, listPrompts, listResources, listResourceTemplates, listTools, PrismaService, Public, readResource, ToolError, toolFailure, type AccountPrincipal, type ToolContext } from '@app/core-server';
 import { ORGANISATIONS_API, type OrganisationsApi } from '@app/organisations-contracts';
 
 type Agent = NonNullable<Awaited<ReturnType<OrganisationsApi['agentForKey']>>>;
@@ -45,7 +45,12 @@ export class McpController {
     }
 
     const context = this.context(agent);
-    const server = new Server({ name: this.appName(), version: '1.0.0' }, { capabilities: { tools: {} } });
+    const server = new Server({ name: this.appName(), version: '1.0.0' }, { capabilities: { tools: {}, resources: {}, prompts: {} } });
+    server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources: listResources(context) }));
+    server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({ resourceTemplates: listResourceTemplates(context) }));
+    server.setRequestHandler(ReadResourceRequestSchema, async ({ params }) => readResource(params.uri, context));
+    server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: listPrompts(context) }));
+    server.setRequestHandler(GetPromptRequestSchema, async ({ params }) => getPrompt(params.name, params.arguments ?? {}, context));
     server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: listTools(context) }));
     server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
       const rate = await this.throttle.increment(`mcp:${keyHash}`, 60_000, CALLS_PER_MINUTE, 60_000, 'mcp');

@@ -226,7 +226,7 @@ def build(args) -> int:
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
     _write(root, current, files)
     if not include_mcp:
-        print(f"This app has no MCP server, so {plural} get no agent tools.")
+        print(f"This app has no MCP server, so {plural} get no agent tools or resources.")
     return 0
 
 
@@ -380,7 +380,7 @@ def _build_python(args, root: Path) -> int:
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
     _write(root, current, files)
     if not include_mcp:
-        print(f"This app has no MCP server, so {plural} get no agent tools.")
+        print(f"This app has no MCP server, so {plural} get no agent tools or resources.")
     python_files = sorted("../../" + path for path in files if path.endswith(".py"))
     # Keep F401 enabled so Ruff retains necessary model-import suppressions.
     for command in (("check", "--select", "I,F401,RUF100", "--fix"), ("format",)):
