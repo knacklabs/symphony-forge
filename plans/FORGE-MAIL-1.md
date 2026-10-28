@@ -1,62 +1,212 @@
 # Email and member removal for client apps
 
-<n> parts · Risks: ... · New moving parts: ...
+7 parts · Risks: one new library in the TypeScript starter · New moving parts: nodemailer (TypeScript starter), Mailpit (dev and test compose only)
 
 ## What changes for you
 
-- Deployed apps send password reset and invite emails through an SMTP connection set in one setting.
-- Deployed apps refuse to start until mail settings are present.
-- A dev setup runs Postgres and a local mail catcher together.
-- An Owner can remove a member, which ends their sessions, records it in history and cancels their pending invites.
-- Sign-up in many-company apps verifies the email address.
+- A deployed app sends its password reset and invite emails. It sends them through the SMTP server in one setting, `SMTP_URL`. Any provider that speaks SMTP works. The emails are plain text. `MAIL_FROM` sets the sender, and without it the sender is `no-reply@` and the app's own host name. Mainline will supply `SMTP_URL` later. Until then, the FDE sets it for each client in the host's settings. (Source: your decision, 28 Oct 2026)
+- In development and test without `SMTP_URL`, the app writes each link to the log, as today. (Source: your decision, 28 Oct 2026; the log stays by the planner's choice, because the starters' tests read links from it)
+- A deployed app does not start without `SMTP_URL`. It stops with the message "SMTP_URL must be set outside development and test, so the app can send invite and password reset emails." The "Email is not set up for this app yet" refusal on invites goes away. (Source: your decision, 28 Oct 2026)
+- Each new app has a `compose.yml` for local work. `docker compose up -d` starts Postgres and Mailpit. Mailpit catches every email the app sends, and you read them at http://localhost:8025. `.env.example` points `SMTP_URL` at it, and the README says how to use it. (Source: your decision, 28 Oct 2026)
+- An admin can remove a member on the Members screen, with a Remove button and a confirm step. Admin is the starters' owner role. The member's sessions end at once, so the next page they open asks them to sign in. The invites that the member sent are cancelled. The change history shows "Removed <email>". The API route is `DELETE /api/v1/members/{accountId}`. An admin cannot remove themself. (Source: your decision, 28 Oct 2026; "Owner" read as the starters' admin role, the planner's choice)
+- In a many-company app, a person who signs up gets an email with a link and must open it before they can use the app. The link works for 24 hours. When they sign in before they open it, the app sends a new link and says so. A password reset also counts as a check of the email. One-company apps, people who join from an invite, the first admin from the setup command and agent accounts need no extra step. The new page is `/verify-email`, and the new API route is `POST /api/v1/auth/verify-email`. (Source: your decision, 28 Oct 2026)
+- The agent's guide lists email and member removal as built in. Its question about the email provider now asks for the client's SMTP provider. (Needed by: the deployed app's start check)
+- A new client repo gets all of this at `forge init`. An existing client repo gets the guide text with `forge sync` and keeps its app code. (Source: the Forge review rules)
+
+Design: none (one Remove button and confirm dialog on the existing Members screen, as its Revoke key button has, and one short message panel on the sign-up page and the new verify page in the existing auth page layout)
 
 ## Why
 
-Deployed apps send no mail, because the starter's mail provider only logs links outside development and test, so invites and password resets never reach people, and no route removes a member, because the members route only changes roles.
+A deployed app made from either starter sends no email. The TypeScript mail module gives no provider outside development and test. The Python mail class sends nothing there, and refuses invites. So a deployed one-company app has one user, and nobody can reset a password. No route removes a member, so a person who leaves keeps their access. Local work needs a hand-run Postgres and gives no way to see an email. A public sign-up takes any email address, with no check that the person owns it.
 
 ## Done when
 
-1. **An Owner can remove a member, and that member's sessions end and their pending invites are cancelled.**
-2. **Each removal appears in the history.**
-3. **A deployed app with no SMTP setting refuses to start, with a clear message.**
-4. **A new client app starts with a dev setup that runs Postgres and a local mail catcher.**
+1. **In a new app from either starter with `SMTP_URL` set, password reset and invite emails go out through that SMTP server as plain text. In development and test without it, the links go to the log, as today.**
+2. **A new app from either starter does not start outside development and test without `SMTP_URL`, and its message names the setting.**
+3. **A new app from either starter has a dev setup that starts Postgres and Mailpit with one command, and its README says how to use it.**
+4. **In a new app from either starter, an admin removes a member from the Members screen. The member's sessions end at once, the invites they sent are cancelled, and the change history shows the removal.**
+5. **In a new many-company app from either starter, a person who signs up must open the link in their email before they get in. One-company apps, invites and the first admin need no extra step.**
+6. **The agent's guide states what is built in and asks for the SMTP provider. A new repo gets everything at init. An existing repo gets the guide text with forge sync, and its app code does not change.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: one new library, nodemailer, in the TypeScript starter. Python uses its standard library. Each part reverts with its pull request. The two migrations add one nullable column and one table. They change no existing value, except that they mark each existing account's email as checked.
 
-Risks: none
+Trade-off: a removed person keeps their account, and an invite to the same email is refused with "That person already has an account." A way to bring a removed member back waits for a story that needs it.
+
+Trade-off: when the SMTP server refuses an email, the app does not try again. The request fails with the usual error report, and the person tries again.
+
+Trade-off: every API test that signs up must now open the verify link. The starters' test helpers do this in one place each, but many test files change.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Each new test file starts with `STORY = "FORGE-MAIL-1"`. Tests run the forge command and never import forge. For app behaviour, they name the cases that the app's own run reports, through `live_run` (`tests/test_starter_tree.py`), `live_python_starter` (`tests/test_python_starter.py`) and `_require_cases`, as `tests/test_mcp.py` does. Live tests carry `@pytest.mark.platform` and `@pytest.mark.timeout(1800)`. `.github/workflows/starter-smoke.yml` lists and runs `tests/test_mail.py` in both jobs, as it does `tests/test_mcp.py`. The existing-repo case uses `_adopted_files_after_sync` from `tests/test_mcp.py`. The older-starter case uses the adopted starter app as `tests/test_mcp.py::test_3` (`older starter`) does.
+
+TS below means `src/forge/templates/starter`, and PY means `src/forge/templates/starter-python`. The PY web side (`apps/web`, `libs/*/web`) is copied from TS at init (`src/forge/init.py::_starter_files`), so one web change serves both.
+
+### What exists (evidence)
+
+- TS mail. `libs/core/server/src/mail/mail.module.ts` gives `LogMailProvider` when `APP_ENV` is `development` or `test`, and `null` otherwise. `mail.provider.ts` has `MAIL_PROVIDER` and `interface MailProvider { sendPasswordReset(email, resetUrl); sendInvite(email, inviteUrl) }`. `AuthService.forgotPassword` (`libs/auth/server/src/auth.service.ts`) returns the reset message and sends nothing when the provider is null. `OrganisationsService.invite` (`libs/organisations/server/src/organisations.service.ts`) throws `422 MAIL_NOT_CONFIGURED` when it is null. Both inject it with `@Optional()`.
+- PY mail. `apps/api/app/core/mail.py` has one `MailProvider(settings, correlation_id)` class. `send_password_reset` logs the link only in development and test. `send_invite` raises `422 MAIL_NOT_CONFIGURED` outside them. `app/auth/routes.py::_service` builds it per request.
+- Settings. TS `libs/core/server/src/config/environment.ts::validateEnvironment` throws a plain message for each bad value, so the app does not start. PY `app/core/config.py::load_settings` raises `RuntimeError` the same way and returns the frozen `Settings`. Their tests are `apps/api/test/environment.e2e-spec.ts` and `apps/api/tests/test_config.py`.
+- Compose. Each starter has only `compose.test.yml`, with services `database` (`postgres:18.6-alpine`, `pg_stat_statements`), `api` (`APP_ENV: test`), `one-company-api` and `production-api` (`APP_ENV: production`, no mail). `scripts/test.mjs` picks free ports and sets `PRODUCTION_API_TEST_URL`. The TS README says "Run Postgres, then run:". `.env.example` in each starter has no mail line.
+- Production tests today. TS `apps/api/test/invites.e2e-spec.ts` "production refuses an invite without a mail provider" and `apps/api/test/api.e2e-spec.ts` "production forgot-password does not log a reset link". PY `tests/test_invites.py::test_production_refuses_an_invite_without_a_mail_provider` and `tests/test_api.py::test_production_forgot_password_does_not_log_a_reset_link`.
+- Members. Roles are `admin` and `member` only (`libs/core/server/src/common/permissions.ts`). `Membership` (`apps/api/prisma/schema/organisations.prisma`) has `deletedAtUtc` and `deletedByAccountId`, and `accountId` is unique. `membershipFor` and `agentForKey` already skip a deleted membership, so the session guard (`libs/auth/server/src/session.guard.ts`) and agent keys already refuse a removed member. `OrganisationsController` (`@Controller('members')`) has change role, key create and revoke, list and export. `changeRole` refuses `CANNOT_CHANGE_OWN_ROLE` and gives `404 MEMBER_NOT_FOUND`. PY `app/organisations/routes.py` and `service.py` match. No route removes a member.
+- Module boundaries. `Session`, `PasswordResetToken` and `Account` are auth tables (`apps/api/prisma/schema/auth.prisma`; PY `app/auth/models.py`). The organisations module does not import auth. So the auth module owns any route that ends sessions, as `InvitesController` (`@Controller('invites')`) and `AgentsController` in `libs/auth/server/src` already do. PY `app/auth/routes.py` has `invites_router` and `agents_router` for the same reason, and `app/auth/__init__.py` includes them in its `router`.
+- Sign-up. `AuthService.signUp` refuses `403 SIGN_UP_CLOSED` when `APP_COMPANIES` is `one`, else calls `setUpCompany` and starts a session. `apps/api/src/setup-company.ts` also calls `setUpCompany`. PY `AuthService.sign_up` and `app/setup_company.py` match. The web `libs/auth/web/src/pages/sign-up-page.tsx` navigates to `/projects` on success.
+- Test helpers. TS `apps/api/test/helpers.ts` has `credentials()`, `csrfToken(response)`, `invite(...)` that reads `inviteUrl` from `logEvents(service)`, and `psql`. About 34 TS API calls post `/api/v1/auth/sign-up` directly across the spec files. PY `tests/test_api.py::sign_up(client)` returns `(account, csrf)`, and about ten other PY calls post sign-up directly. The web `apps/web/e2e/helpers.ts::signUp(page)` fills the sign-up page and waits for the Projects heading. `src/forge/feature_tests.py` writes two direct TS sign-up calls (`signedIn()` and the other account in the link case). `src/forge/feature_python_tests.py` imports `sign_up` from `test_api`.
+- Guide. `src/forge/templates/skill.md` has, in the constitution outline, "- Built in: admins invite people by email; members cannot invite people or change roles." Its intake table has the row "| Email or SMS | Which provider sends messages? | none yet; the client's provider | may wait |". `tests/test_proto_topics.py` pins the topic name "Email or SMS", which stays.
+
+### Words this story pins
+
+MAIL pins the settings, the mail interface and the email texts. MAILPY follows them. REMOVE pins the route, the codes and the history action. REMOVEPY follows them.
+
+- **Settings.**
+  - `SMTP_URL`: optional in `development` and `test`, required in every other `APP_ENV`. Its scheme is `smtp:` or `smtps:`. The user name and password come from the URL, percent-decoded. `smtps:` opens TLS at once (default port 465). `smtp:` upgrades with STARTTLS when the server offers it (default port 587). The connection, the greeting and the send each time out after 10 seconds.
+  - Messages: "SMTP_URL must be set outside development and test, so the app can send invite and password reset emails." and "SMTP_URL must be an smtp:// or smtps:// URL."
+  - `MAIL_FROM`: optional. Default `no-reply@<hostname of APP_ORIGIN>`. When set, it must hold one `@`, else "MAIL_FROM must be an email address."
+  - TS: `Environment` gets `SMTP_URL?: string` and `MAIL_FROM: string`. PY: `Settings` gets `smtp_url: str | None` and `mail_from: str` as its last fields.
+- **Mail interface.**
+  - TS `MailProvider` keeps `sendPasswordReset(email, resetUrl)` and `sendInvite(email, inviteUrl)`. VERIFY adds `sendEmailVerification(email, verifyUrl)`. `SmtpMailProvider` in `libs/core/server/src/mail/smtp-mail.provider.ts` calls `nodemailer.createTransport(SMTP_URL, { connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 10_000 })` once and `sendMail({ from, to, subject, text })`, with no `html`. `MailModule` gives `SmtpMailProvider` when `SMTP_URL` is set and `LogMailProvider` otherwise. The settings check makes the second case reachable only in development and test. `MAIL_PROVIDER` is never null, so remove `@Optional()`, the `| null` types, the null branch in `forgotPassword` and the `MAIL_NOT_CONFIGURED` throw.
+  - PY `MailProvider` keeps `send_password_reset` and `send_invite`, and VERIFY adds `send_email_verification`. A private `_send(to, subject, text)` uses `smtplib.SMTP_SSL` or `smtplib.SMTP` with `timeout=10`, calls `starttls()` when `has_extn("starttls")`, logs in when the URL has a user, and sends one `email.message.EmailMessage` with a plain-text body. With no `smtp_url`, each method logs its link as today. Remove the `MAIL_NOT_CONFIGURED` raise. The routes are sync, so the blocking call runs in FastAPI's thread pool.
+  - The log lines keep their messages and context keys: `resetUrl` and `inviteUrl`. VERIFY adds `verifyUrl` with "Email verification link created for local mail".
+- **Email texts** (the same in both starters; `<host>` is the link's host).
+  - Reset. Subject "Reset your password". Body: "Someone asked to reset the password for this email on <host>.\n\nOpen this link within one hour to choose a new password:\n<resetUrl>\n\nIf you did not ask, ignore this email. Your password stays the same.\n"
+  - Invite. Subject "You are invited to join a team". Body: "You are invited to join a team on <host>.\n\nOpen this link within seven days to create your account:\n<inviteUrl>\n\nIf you did not expect this, ignore this email.\n"
+  - Verify. Subject "Confirm your email". Body: "Open this link within 24 hours to finish signing up on <host>:\n<verifyUrl>\n\nIf you did not sign up, ignore this email.\n"
+- **Compose.**
+  - `compose.yml` (new, at each starter root): `database` (`postgres:18.6-alpine`, `pg_stat_statements` as in `compose.test.yml`, user `postgres`, password `local-password`, database `starter`, `127.0.0.1:5432:5432`, a named volume `database-data`) and `mailpit` (`axllent/mailpit` at an exact version tag at least two weeks old, `127.0.0.1:1025:1025` and `127.0.0.1:8025:8025`). The API is not in this file. It runs on the host, as the README says.
+  - `.env.example`: add `SMTP_URL=smtp://localhost:1025` with the comment "# Mailpit from compose.yml catches every email. Read them at http://localhost:8025." and a commented `# MAIL_FROM=no-reply@example.com`.
+  - `compose.test.yml`: add `mailpit` (the same image, ports `127.0.0.1:${MAILPIT_TEST_PORT:-8025}:8025`). `production-api` gets `SMTP_URL: smtp://mailpit:1025`, `MAIL_FROM: no-reply@example.test` and `depends_on` `mailpit` (`service_started`). `api` and `one-company-api` keep no `SMTP_URL`, so they keep logging links. `scripts/test.mjs` picks `MAILPIT_TEST_PORT` with `freePort()` and sets `MAILPIT_TEST_URL`.
+  - Test helper: TS `mailpitMessage(to: string): Promise<{ subject: string; text: string; html: string }>` in `apps/api/test/helpers.ts` reads `GET ${MAILPIT_TEST_URL}/api/v1/search?query=to:<email>` and then `GET /api/v1/message/<ID>`, and tries again for up to 5 seconds. PY `mailpit_message(to)` in `tests/test_api.py` does the same with httpx.
+- **Removal.**
+  - Route: `DELETE /api/v1/members/{accountId}`, admins only. It answers `200` with `data: null`, as the key revoke does. TS: `RemoveMemberController` with `@Controller('members')` and one `@Delete(':accountId')` in `libs/auth/server/src/members.controller.ts` (new), listed in `auth.module.ts`, with `@AdminOnly()`, `@HttpCode(200)`, `ParseUUIDPipe`, `@ApiOperation({ summary: 'Remove a member from your organisation.', description: 'Only admins can remove members. The member is signed out at once, and the invites they sent are cancelled. You cannot remove yourself.' })` and `@ApiErrors(401, 403, 404)`. PY: `remove_member_router = APIRouter(prefix="/api/v1/members", tags=["Organisations"])` in `app/auth/routes.py`, included in `app/auth/__init__.py` as `invites_router` and `agents_router` are.
+  - Codes: `403 CANNOT_REMOVE_SELF` "You cannot remove yourself." and `404 MEMBER_NOT_FOUND` "This member was not found." for an account that is not an active member of the admin's organisation.
+  - TS service: `AuthService.removeMember(admin: AccountPrincipal, accountId: string): Promise<void>` runs one `this.prisma.$transaction`. In it: `this.organisations.removeMember(admin, accountId, tx)`, then `tx.session.deleteMany({ where: { accountId } })` and `tx.passwordResetToken.deleteMany({ where: { accountId } })`. `OrganisationsApi` (`libs/organisations/contracts/src/service.ts`) gets `removeMember(admin: OrganisationPrincipal, accountId: string, tx: Prisma.TransactionClient): Promise<void>`. `OrganisationsService.removeMember` checks self first. It finds the active membership in `admin.organisationId`, sets `deletedAtUtc: new Date()`, `deletedByAccountId: admin.id` and `modifiedByAccountId: admin.id`, runs `tx.invite.deleteMany({ where: { organisationId: admin.organisationId, createdByAccountId: accountId } })`, and calls `this.history.record(admin, 'member.removed', 'Removed <email>', undefined, tx)`. An agent membership is removed the same way, and its key stops working because `agentForKey` skips deleted rows.
+  - PY service: `AuthService.remove_member(admin, account_id)` calls `OrganisationsService.remove_member(admin, account_id)`, deletes the account's `Session` and `PasswordResetToken` rows, and commits once. `OrganisationsService.remove_member` does the same steps as TS, without its own commit.
+  - Web: `useRemoveMember()` in `libs/organisations/web/src/hooks/members-hooks.ts` sends the DELETE and invalidates the members query. In `members-page.tsx`, each row except the admin's own shows, to admins only, an outline destructive `Remove` button with `aria-label="Remove <email>"`. It opens an `AlertDialog` with the title "Remove this member?", the description "<email> loses access at once. Invites they sent are cancelled." and the buttons "Cancel" and "Remove" ("Removing…" while pending). On success a toast says "Member removed." This follows `RevokeKeyDialog` in the same file.
+- **Email check on sign-up.**
+  - Data, TS: `Account.emailVerifiedAtUtc DateTime? @db.Timestamptz(3)` and a new `EmailVerificationToken` model in `auth.prisma`, shaped as `PasswordResetToken`: id, `accountId` with cascade, unique `tokenHash`, `expiresAtUtc`, `createdAtUtc`, indexes `idx_EmailVerificationToken_accountId` and `idx_EmailVerificationToken_expiresAtUtc`, schema `core`. Migration `<UTC yyyyMMddHHmmss>_email_verification` adds both and runs `UPDATE core."Account" SET "emailVerifiedAtUtc" = "createdAtUtc"`. PY: `email_verified_at_utc` and `EmailVerificationToken` (`core.email_verification_token`) in `app/auth/models.py`, in the next Alembic revision `<next>_email_verification.py`, chained to the head on main.
+  - Every way to make an account sets the value at once, except a many-company sign-up: the setup command, `acceptInvite` and `addAgent`. `setUpCompany` and `createAccount` (PY `set_up_company` and `_create_account`) take a `verified` flag for this, and only `signUp` passes `false`.
+  - `POST /api/v1/auth/sign-up` in many-company mode makes the account, its organisation and one token (24 hours). It sends the verify email with `<APP_ORIGIN>/verify-email?token=<token>`, and answers `201` with `{ message: 'Check your email for a link to finish signing up.' }` and no cookies. Its contract type and the PY response model change to match. A taken email still gets `409 EMAIL_ALREADY_REGISTERED`.
+  - `POST /api/v1/auth/verify-email` with `{ token }` is public and under the auth rate limit (`@Throttle`, as the other auth routes in `auth.controller.ts`). It claims the token as `resetPassword` does, sets `emailVerifiedAtUtc`, deletes the account's other tokens, starts a session and answers as sign-in does. A bad or expired token gets `400 VERIFY_TOKEN_INVALID` "This link has expired. Sign in to get a new one."
+  - Sign-in with the right password and no check yet deletes the old tokens, makes a new one, sends the email, and answers `403 EMAIL_NOT_VERIFIED` "Open the link in your email to finish signing up. We sent a new link." A wrong password answers as today.
+  - `resetPassword` sets `emailVerifiedAtUtc` when it is null.
+  - Web: on success, the sign-up page shows the API message in place of the form and does not navigate. The new `libs/auth/web/src/pages/verify-email-page.tsx` is at `/verify-email` in `apps/web/src/app.tsx`. Its "Finish signing up" button posts the token and navigates to `/projects`. An error shows the API message with a link to sign in. The page does not post on load, because mail scanners open links. `useSignUp` and a new `useVerifyEmail` live in `libs/auth/web/src/hooks/auth-hooks.ts`. The sign-in page already shows the API message.
+  - Test helpers: TS `signUp(client, account = credentials(), service: LogService = 'api')` in `apps/api/test/helpers.ts` posts sign-up, reads the newest `verifyUrl` from `logEvents(service)`, posts verify-email and returns that response, so `csrfToken(...)` works on it. Each direct sign-up call that needs a session uses it. PY `tests/test_api.py::sign_up` does the same with `compose_logs`, and so do the direct PY calls that need a session. The web `apps/web/e2e/helpers.ts::signUp(page)` waits for the check-email text, reads the newest `verifyUrl` with its `logEvents('api')`, opens it, clicks "Finish signing up" and waits for the Projects heading. Production cases that sign up only to test forgot-password keep the direct call.
+  - Feature command: in `src/forge/feature_tests.py`, `signedIn()` and the link case's other account use `await signUp(client)` and `await signUp(otherClient, other)` from `./helpers` when the app's `apps/api/test/helpers.ts` holds `export async function signUp`, and today's direct call otherwise. Where the command copies the projects spec, the copy carries what the app's own spec has. PY needs no change, because the generated tests import `sign_up` from `test_api`.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. Email through SMTP (MAIL, MAILPY).
+   - TS app case, in `apps/api/test/invites.e2e-spec.ts`: replace "production refuses an invite without a mail provider" with `production sends a plain-text invite email through SMTP`. An admin on `productionApiBaseUrl` invites a new email and gets 201. `mailpitMessage` for that email has the invite subject, a `text` with `/accept-invite?token=` and an empty `html`. The token opens the invite on the production API.
+   - TS app case, in `apps/api/test/api.e2e-spec.ts`: rename "production forgot-password does not log a reset link" to `production sends the reset link by email and never logs it`. Keep its log checks, and add that Mailpit has the reset subject and a `text` with `/reset-password?token=`.
+   - PY cases: `tests/test_invites.py::test_production_sends_a_plain_text_invite_email_through_smtp` replaces `test_production_refuses_an_invite_without_a_mail_provider`, and `tests/test_api.py::test_production_sends_the_reset_link_by_email_and_never_logs_it` replaces `test_production_forgot_password_does_not_log_a_reset_link`, with the same steps.
+   - The existing invite and reset cases on the `api` service keep passing through the log provider.
+   - Test `tests/test_mail.py::test_1_a_deployed_app_sends_reset_and_invite_emails_through_smtp`, parameters `typescript` (MAIL), `python` (MAILPY) and `earlier adopted` (MAIL).
+     - Live: the reports hold both cases.
+     - `typescript`: the app's `package.json` pins `nodemailer` and `@types/nodemailer` to exact versions.
+     - `earlier adopted`: after upgrade and sync, the files under `libs/` and `apps/` are unchanged, and the repo has no `smtp-mail.provider.ts` and no `compose.yml`.
+2. No start without mail settings (MAIL, MAILPY).
+   - TS app case, in `apps/api/test/environment.e2e-spec.ts`, `describe('mail settings')`: `a deployed app needs SMTP_URL`. `validateEnvironment` with `APP_ENV: 'production'` and no `SMTP_URL` throws the pinned message. `staging` throws it too. `development` and `test` pass without it. `ftp://x` throws the scheme message. `MAIL_FROM` defaults to `no-reply@127.0.0.1` for the test origin, and `MAIL_FROM: 'nobody'` throws.
+   - PY app case, in `tests/test_config.py`: `test_a_deployed_app_needs_smtp_url`, with the same steps through `load_settings` and `monkeypatch.setenv`.
+   - The `production-api` service in `compose.test.yml` starts with `SMTP_URL`, which proves the other side.
+   - Test `tests/test_mail.py::test_2_a_deployed_app_without_mail_settings_does_not_start`, parameters `typescript`, `python` and `earlier adopted`. Live: the reports hold the case. `earlier adopted`: after upgrade and sync, `.env.example` is unchanged.
+3. The dev setup (MAIL, MAILPY).
+   - Test `tests/test_mail.py::test_3_a_new_app_has_a_dev_setup_with_postgres_and_mailpit`, parameters `typescript`, `python` and `earlier adopted`.
+     - After `forge init --starter` (or `--starter python`), `compose.yml` names `postgres:18.6-alpine`, `pg_stat_statements` and an `axllent/mailpit:` image with an exact `v` version. `docker compose -f compose.yml config --quiet` exits 0.
+     - `.env.example` has `SMTP_URL=smtp://localhost:1025`.
+     - The README has `docker compose up -d` and `http://localhost:8025`, and the TS README no longer says "Run Postgres, then run:".
+     - `earlier adopted`: after upgrade and sync, there is no `compose.yml`.
+4. Member removal (REMOVE, REMOVEPY, REMOVEWEB).
+   - TS app case, in `apps/api/test/organisations.e2e-spec.ts`: `an admin removes a member, who is signed out at once`.
+     - An admin invites a member, who joins (the `invite` helper and accept-invite). The admin makes the member an admin, and the member sends one invite.
+     - The first admin's `DELETE /api/v1/members/<id>` answers 200. The removed member's next `GET /api/v1/auth/me` gets 401. The member list and the export no longer hold them.
+     - The invite that the removed member sent no longer opens (`400 INVITE_INVALID`).
+     - `GET /api/v1/history` holds `member.removed` with "Removed <email>".
+     - A second DELETE gets 404 `MEMBER_NOT_FOUND`. The admin's DELETE of their own id gets 403 `CANNOT_REMOVE_SELF`. A member's DELETE gets 403. An id from another organisation gets 404.
+     - A removed agent's key gets 401 at `/mcp`.
+   - PY app case, in `tests/test_organisations.py`: `test_an_admin_removes_a_member_who_is_signed_out_at_once`, with the same steps.
+   - Web case, in `apps/web/e2e/members.spec.ts`: `an admin removes a member, who loses access at once`. The admin removes a joined member through the dialog. On reload, the member's page shows the sign-in page. The History page shows the removal. The axe check of the page passes, as in the other members cases.
+   - Test `tests/test_mail.py::test_4_an_admin_removes_a_member`, parameters `typescript` (REMOVE, REMOVEWEB), `python` (REMOVEPY, REMOVEWEB) and `earlier adopted` (REMOVE). Live: the reports hold the API case and the web case. `earlier adopted`: after upgrade and sync, the files under `libs/` and `apps/` are unchanged.
+5. The email check on sign-up (VERIFY).
+   - TS app case, in `apps/api/test/api.e2e-spec.ts`: `a public sign-up must open its email link before it gets a session`.
+     - Sign-up answers 201 with the pinned message and no `starter_session` cookie.
+     - Sign-in with the right password gets 403 `EMAIL_NOT_VERIFIED`, and a new `verifyUrl` is in the log. The first link now gets 400 `VERIFY_TOKEN_INVALID`.
+     - The new link answers with a session. Sign-in then works.
+     - A second account that never opens its link but resets its password can then sign in.
+   - PY app case, in `tests/test_api.py`: `test_a_public_sign_up_must_open_its_email_link_before_it_gets_a_session`, with the same steps.
+   - The one-company cases, the invite cases and the setup command cases keep passing with no link step.
+   - Every browser case that calls `signUp(page)` proves the web flow, such as `an admin invites a person who joins and sees the same projects` in `apps/web/e2e/join.spec.ts`.
+   - Test `tests/test_mail.py::test_5_public_sign_up_checks_the_email`, parameters `typescript`, `python`, `earlier adopted` and `older starter`.
+     - Live: the reports hold the API case and the join case.
+     - `earlier adopted`: after upgrade and sync, no new file is under `apps/api/prisma/migrations` or `apps/api/migrations/versions`.
+     - `older starter`: in the adopted starter app with `signUp` removed from `apps/api/test/helpers.ts`, `FEATURE_LINE` from `tests/test_mcp.py` exits 0, and the generated jobs spec posts `/api/v1/auth/sign-up` directly. In a new starter app, the generated spec calls `signUp(`.
+     - The feature live runs that `tests/test_feature_command.py` caches (`feature_live_run`, `feature_python_live_run`) pass.
+6. The guide (GUIDE). Compare with whitespace collapsed.
+   - `src/forge/templates/skill.md`, constitution outline: change "- Built in: admins invite people by email; members cannot invite people or change roles." to "- Built in: admins invite people by email and remove members, which signs them out at once; members cannot invite, remove people or change roles." Add after it: "- Built in: the app sends invite, password reset and sign-up emails as plain text through the SMTP server in SMTP_URL; a deployed app does not start without it; compose.yml runs Postgres and Mailpit for local work; in a many-company app, a person who signs up opens an email link before they get in."
+   - `src/forge/templates/skill.md`, intake table: change the row to "| Email or SMS | Which SMTP provider sends the app's email, and is SMS needed? | the client's SMTP provider, set as SMTP_URL in the host's settings; no SMS | may wait |".
+   - `docs/guide.md`: one paragraph after the agent accounts paragraph. It says that a deployed app needs `SMTP_URL`, that the FDE sets it per client until Mainline supplies it, and that admins remove members on the Members screen.
+   - `forge sync` rewrites `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md`.
+   - Test `tests/test_mail_guide.py::test_6_the_guide_states_email_and_member_removal`, parameters `new init` and `previous release`, with the setup of `tests/test_mcp_resources_guide.py::test_3`. Both synced skill copies have the two Built in lines and the new row. `previous release`: after `forge sync`, `git status --porcelain` lists only `LISTED` files.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+### New and existing repos
+
+- **New repos** (`forge init --starter`, `forge init --starter python`): SMTP mail with the start check, `compose.yml` with Postgres and Mailpit, member removal in the API and on the Members screen, the email check on public sign-up, a feature command whose tests sign up through the helper, and the guide text. Plain `forge init` and a newly adopted app get the guide text only.
+- **Existing repos** (on upgrade, after `forge sync`): the skill text. They get no app file, no `compose.yml` and no migration. In an app made before this release, the feature command writes today's direct sign-up call. Each item has a test on the adopted earlier-release fixture, and item 5 also on the older starter app.
 
 ## Tasks
 
-<!-- One row per task. Covers: the Done-when numbers it delivers, at most three. Scope: the paths
-it may change. Tests: the tests it adds or changes. After: the tasks it waits for. When two tasks
-share a function, field, file format or command, the first task pins it: it commits the shared
-names and stubs plus one test that crosses both sides, and the tasks that use it list it under
-After. Split tasks so each owns its files; shared lines (command table, guide list, registry) go
-to one task or a small last wiring task; After only when a task needs another task's code. The
-Developer column is optional: the lead fills or changes a GitHub username here, below For the
-builders, without another approval. Leave it blank for an unassigned part. Forge next uses
-the caller's GitHub login; another developer may start it with a warning. Existing tables
-without Developer still work. The moving-parts line stays last: "none", or each new dependency, service, datastore,
-queue, background job or abstraction layer, with the Done-when item that needs it. -->
-
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| MAIL | Email through SMTP and the dev setup in the TypeScript starter | `SMTP_URL` and `MAIL_FROM` with the start check, `SmtpMailProvider` on nodemailer, the plain-text reset and invite texts, the null provider and `MAIL_NOT_CONFIGURED` removed, `compose.yml`, the Mailpit test service, the README and `.env.example` lines, and the app's cases. | 1, 2, 3 | `src/forge/templates/starter/libs/core/server/src/config/environment.ts`, `starter/libs/core/server/src/mail/mail.module.ts`, `starter/libs/core/server/src/mail/mail.provider.ts`, `starter/libs/core/server/src/mail/smtp-mail.provider.ts` (new), `starter/libs/auth/server/src/auth.service.ts` (the provider injection and the `forgotPassword` null branch only), `starter/libs/organisations/server/src/organisations.service.ts` (the provider injection and the `MAIL_NOT_CONFIGURED` throw only), `starter/package.json`, `starter/pnpm-lock.yaml`, `starter/compose.yml` (new), `starter/compose.test.yml`, `starter/scripts/test.mjs`, `starter/.env.example`, `starter/README.md` (the run steps and the mail lines only), `starter/apps/api/test/helpers.ts` (`mailpitMessage`), `starter/apps/api/test/environment.e2e-spec.ts`, `starter/apps/api/test/invites.e2e-spec.ts`, `starter/apps/api/test/api.e2e-spec.ts`, `.github/workflows/starter-smoke.yml`, `tests/test_mail.py` (new) | `tests/test_mail.py` (`test_1`, `test_2`, `test_3`: `typescript`, `earlier adopted`) | FORGE-AGENTREADY-1/RETRY | no | |
+| MAILPY | Email through SMTP and the dev setup in the Python starter | The same in the Python starter, with `smtplib` and `email.message` from the standard library. | 1, 2, 3 | `src/forge/templates/starter-python/apps/api/app/core/config.py`, `starter-python/apps/api/app/core/mail.py`, `starter-python/compose.yml` (new), `starter-python/compose.test.yml`, `starter-python/scripts/test.mjs`, `starter-python/.env.example`, `starter-python/README.md` (the run steps and the mail lines only), `starter-python/apps/api/tests/test_config.py`, `starter-python/apps/api/tests/test_invites.py`, `starter-python/apps/api/tests/test_api.py` (`mailpit_message` and the production case), `tests/test_mail.py` | `tests/test_mail.py` (`test_1`, `test_2`, `test_3`: `python`) | MAIL, FORGE-AGENTREADY-1/RETRYPY | no | |
+| REMOVE | Member removal in the TypeScript API | `DELETE /api/v1/members/{accountId}` in the auth module, `OrganisationsApi.removeMember`, the ended sessions and reset tokens, the cancelled invites, the `member.removed` history row, and the app's case. | 4 | `src/forge/templates/starter/libs/auth/server/src/members.controller.ts` (new), `starter/libs/auth/server/src/auth.module.ts`, `starter/libs/auth/server/src/auth.service.ts`, `starter/libs/organisations/contracts/src/service.ts`, `starter/libs/organisations/server/src/organisations.service.ts`, `starter/apps/api/test/organisations.e2e-spec.ts`, `tests/test_mail.py` | `tests/test_mail.py` (`test_4`: `typescript` API half, `earlier adopted`) | MAIL | no | |
+| REMOVEPY | Member removal in the Python API | The same route and steps in the Python starter, and its case. Regenerate `libs/shared/api-types`. | 4 | `src/forge/templates/starter-python/apps/api/app/auth/routes.py`, `starter-python/apps/api/app/auth/__init__.py`, `starter-python/apps/api/app/auth/service.py`, `starter-python/apps/api/app/organisations/service.py`, `starter-python/apps/api/tests/test_organisations.py`, `starter-python/libs/shared/api-types/**` (regenerated), `tests/test_mail.py` | `tests/test_mail.py` (`test_4`: `python` API half) | REMOVE, MAILPY | no | |
+| REMOVEWEB | The Remove button on the Members screen | `useRemoveMember`, the Remove button and dialog, and the browser case, for both starters. | 4 | `src/forge/templates/starter/libs/organisations/web/src/hooks/members-hooks.ts`, `starter/libs/organisations/web/src/pages/members-page.tsx`, `starter/apps/web/e2e/members.spec.ts`, `tests/test_mail.py` | `tests/test_mail.py` (`test_4`: the web case in `typescript` and `python`) | REMOVE, REMOVEPY | yes | |
+| VERIFY | The email check on public sign-up | The email-check column, token table and migrations in both starters; the sign-up, verify-email, sign-in and reset changes in both APIs; the verify email text; the sign-up and verify pages; the sign-up test helpers and the call sites that need a session; the feature command's helper choice; and the cases. It is one part, because the web is shared: a sign-up change in only one API, or only in the web, breaks the other starter's browser cases. | 5 | TS: `src/forge/templates/starter/apps/api/prisma/schema/auth.prisma`, `starter/apps/api/prisma/migrations/<UTC>_email_verification/` (new), `starter/libs/auth/contracts/src/index.ts`, `starter/libs/auth/server/src/auth.service.ts`, `starter/libs/auth/server/src/auth.controller.ts`, `starter/libs/auth/server/src/auth.dto.ts`, `starter/libs/core/server/src/mail/mail.provider.ts`, `starter/libs/core/server/src/mail/smtp-mail.provider.ts`, `starter/apps/api/src/setup-company.ts` (the verified flag only), `starter/apps/api/test/helpers.ts`, `starter/apps/api/test/*.e2e-spec.ts` (the sign-up calls only), `starter/apps/api/test/api.e2e-spec.ts` (the new case). PY: `starter-python/apps/api/app/auth/models.py`, `starter-python/apps/api/migrations/versions/<next>_email_verification.py` (new), `starter-python/apps/api/app/auth/schema.py`, `starter-python/apps/api/app/auth/service.py`, `starter-python/apps/api/app/auth/routes.py`, `starter-python/apps/api/app/core/mail.py`, `starter-python/apps/api/app/setup_company.py` (the verified flag only), `starter-python/apps/api/tests/test_api.py`, `starter-python/apps/api/tests/*.py` (the sign-up calls only), `starter-python/libs/shared/api-types/**` (regenerated). Web: `starter/libs/auth/web/src/hooks/auth-hooks.ts`, `starter/libs/auth/web/src/pages/sign-up-page.tsx`, `starter/libs/auth/web/src/pages/verify-email-page.tsx` (new), `starter/libs/auth/web/src/index.ts`, `starter/apps/web/src/app.tsx`, `starter/apps/web/e2e/helpers.ts`. Forge: `src/forge/feature_tests.py`, `tests/test_mail.py`. | `tests/test_mail.py` (`test_5`: all four parameters) | REMOVEPY, REMOVEWEB | yes | |
+| GUIDE | The guide states email and member removal | The two Built in lines, the intake row, the guide paragraph and the synced copies, on new and existing repos. | 6 | `src/forge/templates/skill.md`, `docs/guide.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `tests/test_mail_guide.py` (new) | `tests/test_mail_guide.py::test_6` (new) | FORGE-AGENTREADY-1/GUIDE | no | |
 
-New moving parts: none
+GUIDE shares no file with the other parts and needs no code from them. MAILPY waits for MAIL because they share `tests/test_mail.py` and because MAIL pins the names. REMOVE waits for MAIL because both change `auth.service.ts` and `organisations.service.ts`. VERIFY comes last because it changes `auth.service.ts`, `api.e2e-spec.ts`, `helpers.ts`, `test_api.py` and the PY auth files after every other part.
+
+New moving parts: nodemailer in the TypeScript starter (item 1). Mailpit in `compose.yml` and `compose.test.yml`, for local work and tests only (items 1 and 3). One table for email-check links in each starter (item 5).
 
 ## Notes
+
+- **Order with other work.**
+  - FORGE-AGENTREADY-1 changes the same files, so the parts that share them wait for its parts. RETRY changes `starter/libs/auth/server/src/auth.service.ts` (`invite`), `invites.controller.ts`, `libs/organisations/contracts/src/service.ts`, `libs/organisations/server/src/organisations.service.ts` (`invite` in one transaction), `libs/organisations/web/src/hooks/members-hooks.ts` (`useInvite`), `apps/api/test/invites.e2e-spec.ts` and `apps/api/test/projects.e2e-spec.ts`. RETRYPY changes `app/auth/routes.py`, `app/auth/service.py`, `app/organisations/service.py`, `tests/test_invites.py` and `tests/test_projects.py`. AGENTREADY's GUIDE changes `src/forge/templates/skill.md` and `docs/guide.md` on other lines. So MAIL waits for RETRY, MAILPY for RETRYPY, and GUIDE for AGENTREADY's GUIDE. REMOVE, REMOVEPY, REMOVEWEB and VERIFY then follow through MAIL and MAILPY.
+  - After RETRY, `OrganisationsService.invite` sends the email inside its transaction. MAIL keeps that order and only drops the null check.
+  - Migrations: VERIFY's Prisma folder takes a timestamp later than AGENTREADY's `_via_agent`, and its Alembic revision chains to the head on main.
+  - FORGE-GUIDES-1 adds a "when something breaks" section to both starter READMEs and changes both Dockerfiles, `standards.md`, the conventions and the constitution defaults in `skill.md`. MAIL and MAILPY change only the README run steps and mail lines, and GUIDE changes only the lines named above. These are merges, not code needs.
+  - FORGE-REQLOG-1 changes the logger (`libs/core/server/src/common/json-logger.ts`, PY `app/core/logging.py`), the correlation middleware, and `environment.ts` and `config.py` for `LOG_LEVEL`. MAIL and MAILPY add `SMTP_URL` and `MAIL_FROM` to the same two settings files on other lines. The part that merges later rebases on the other. REQLOG removes `token` values from log context. The local mail log lines stay readable, because their keys are `resetUrl`, `inviteUrl` and `verifyUrl`, not `token`.
+- **Scores (F x H >= 2 x C).**
+  - SMTP mail with the start check, per starter: 3 x 3 = 9 >= 4. Kept.
+  - `compose.yml` with Postgres and Mailpit: 3 x 1 = 3 >= 2. Kept.
+  - Mailpit in `compose.test.yml`, so the production cases prove SMTP: part of the SMTP score. It replaces two cases that test a refusal that goes away. Kept.
+  - Member removal in each API: 2 x 3 = 6 >= 4. Kept.
+  - The Remove button: 2 x 3 = 6 >= 4. Kept, because an owner who does not use the API cannot remove anyone without it.
+  - Email check on public sign-up: 2 x 2 = 4 against 2 x 3 = 6, because of the test helper changes. It fails the score, and your decision of 28 Oct 2026 keeps it. It is one part at the end, so it can move to a later story with no change to the others.
+  - A new try after a failed SMTP send, or a mail queue: 1 x 2 = 2 < 4. Cut. The request fails and the person tries again.
+  - HTML emails or a template engine: 1 x 1 = 1 < 4. Cut.
+  - A way to bring back a removed member: 1 x 2 = 2 < 4. Cut.
+  - A screen that lists and cancels pending invites: 2 x 1 = 2 < 4. Cut. A new invite already replaces an old one.
+  - A clean-up job for old email-check links: cut. FORGE-GUIDES-1 states the token clean-up rule for the first story that adds jobs.
+- **Owner decisions (28 Oct 2026, settled).** SMTP from `SMTP_URL`, with nodemailer in TypeScript and the standard library in Python. Plain-text reset and invite emails. A deployed app refuses to start with no mail settings, with a clear message. A dev compose with Postgres and Mailpit. An owner removes a member: sessions end, a history row, pending invites cancelled. An email check on public sign-up in many-company mode only. Mainline supplies `SMTP_URL` later, and the FDE sets it per client until then.
+- **Planner choices the owner did not make.**
+  1. "Owner" is the starters' `admin` role, because the starters have only admin and member.
+  2. "Production" means every `APP_ENV` other than `development` and `test`, as the code already treats it.
+  3. `MAIL_FROM` is optional and defaults to `no-reply@` and the app's host name.
+  4. Without `SMTP_URL`, development and test keep writing links to the log, because the starters' tests read them there. `compose.test.yml` points only `production-api` at Mailpit.
+  5. "Pending invites cancelled" means the invites that the removed member sent. A member has no pending invite of their own, because an invite to an email with an account is refused.
+  6. The removal route lives in the auth module, because sessions are auth tables and organisations does not import auth.
+  7. A removed person cannot be invited again in this story.
+  8. The email-check link lasts 24 hours. Sign-in before the check sends a new link, so no resend route or button is needed.
+  9. A password reset counts as an email check, so a person whose email someone else signed up with can take the account back.
+  10. The verify page asks for a click and does not post on load, because mail scanners open links.
+  11. The email check is one part across both APIs and the web, because the web is shared.
+  12. The emails name the app's host and not an app name, because the starters have no app-name setting.
+  13. The intake question about email now asks for the client's SMTP provider.
+- No client repo is named in this story's code, tests, texts or commits.
