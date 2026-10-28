@@ -474,6 +474,12 @@
       "title": "Client apps are ready for agents from day one",
       "status": "pending",
       "order": 107
+    },
+    {
+      "key": "FORGE-AGENTS-1",
+      "title": "Client apps with agents get agent must-haves before they build",
+      "status": "pending",
+      "order": 108
     }
   ],
   "epics": [
