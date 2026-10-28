@@ -10,7 +10,7 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T08:40:46.876334+00:00",
@@ -18,10 +18,14 @@
     }
   ],
   "stop": {
+    "by": "owner",
+    "choice": "same",
     "question": "Client apps offer MCP resources and prompts too: Resources and prompts in the Python starter is stuck. It should deliver: The same in the Python starter: `app/core/resources.py` and `prompts.py`, the `app/mcp` handlers, the tools file comment and the app's cases.\nIt changes 433 lines outside tests, over its limit of 400.\nThe worker tried: Add Python starter resources and optional prompts.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "reason": "The owner allowed every MCPRES-1 part to go over the line limit",
     "size": true,
     "tool": "codex",
-    "wait_id": "25b88391-5280-420d-adf8-3b91150d476f"
+    "wait_id": "25b88391-5280-420d-adf8-3b91150d476f",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
