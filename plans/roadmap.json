@@ -468,6 +468,12 @@
       "title": "Client apps offer MCP resources and prompts too",
       "status": "pending",
       "order": 106
+    },
+    {
+      "key": "FORGE-REQLOG-1",
+      "title": "Log every API request safely in client apps",
+      "status": "pending",
+      "order": 107
     }
   ],
   "epics": [
