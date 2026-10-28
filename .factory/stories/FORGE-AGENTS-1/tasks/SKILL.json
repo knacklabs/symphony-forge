@@ -34,9 +34,9 @@
     "id": "4b51b5b7-3b87-4504-92ae-dc64ddcfddc9",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "FORGE-AGENTREADY-1/GUIDE",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T14:53:58.904830+00:00",
@@ -52,10 +52,10 @@
     }
   ],
   "stuck": {
-    "close": "c640d772-232e-4207-bc4f-961d2a0a07de",
-    "head": "65faadb1b7ccb8e24f3dc2ddc810e30de9b2c37b",
+    "close": "698bdbd9-44e0-426c-b204-d738ce2b6258",
+    "head": "7bc88cc06fb1eab33ec2e22ebefc1560aa1dc8b5",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "worker": "codex"
 }
