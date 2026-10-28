@@ -1059,6 +1059,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - The tests run import-linter, so an import of another module's internal files fails them.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 
 In any other app, record the
 stack, package manager and folder layout that the app already uses, and leave out ## Fixed rules.
@@ -1098,6 +1099,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 - Built in: each UI or API crash writes one error report to the logs.
 
 ## Growth notes
@@ -1404,6 +1406,10 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   Only starter apps get the MCP server. Upgrade and sync deliver this guidance without app
   files or a `services.toml` change. In an older starter without MCP support, the feature
   command builds the feature without tools and says so.
+- When a part adds a create or a send, pay or notify action, it says that the action takes a
+  retry key. When it adds a report, it names the report, its result fields and their units.
+  When it lets a person sign an agent in, the agent acts as that person, and the part names
+  the agent's `viaAgent` text.
 - Each feature's resources come from its tools file's `defineFeatureTools` and need no code.
   When a story builds or changes a feature that a task under ## Agent tasks names, the part
   names its prompt: the name in the form `<feature>_<verb>`, its inputs and its permission.
