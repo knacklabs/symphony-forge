@@ -1,0 +1,15 @@
+{
+  "base": "1ef66b286cb84a45cb7ff09ec29f4db1a21928dd",
+  "branch": "fix/after-the-default-branch-moves-the-retes",
+  "done_when": "A retested item merges in one run, and it waits for checks a second time only when the new default-branch commits touch the item's changed files.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T13:05:12.960972+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After the default branch moves, the retest pushes a merge commit and skips the check wait, so GitHub refuses the merge until its required checks pass again and the merge fails."
+}
