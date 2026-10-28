@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { apiBaseUrl, credentials, csrfToken, logEvents, productionApiBaseUrl, type LogEvent } from './helpers';
@@ -120,6 +120,18 @@ describe('starter API', () => {
     for (const word of [searchWord, missingWord, successSearchWord]) {
       expect(logs).not.toContain(word);
     }
+  });
+
+  // Audit: inspect the real container user, which a compose override can change even
+  // with a non-root Dockerfile. The template check cannot reach that runtime contract.
+  // A root-user regression fails here without a production seam or a fake process.
+  it('the API container runs as a user that is not root', () => {
+    const result = spawnSync('docker', [
+      'compose', '-f', 'compose.test.yml', 'exec', '-T', 'api', 'id', '-u',
+    ], { encoding: 'utf8', timeout: 20_000, killSignal: 'SIGKILL' });
+    expect(result.status, `${result.error?.message ?? ''}${result.stdout}${result.stderr}`).toBe(0);
+    expect(result.stdout.trim()).toMatch(/^\d+$/);
+    expect(result.stdout.trim()).not.toBe('0');
   });
 
   it('signs up, signs in, and signs out with a server session', async () => {

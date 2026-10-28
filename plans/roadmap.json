@@ -486,6 +486,12 @@
       "title": "Log every API request safely in client apps",
       "status": "pending",
       "order": 108
+    },
+    {
+      "key": "FORGE-AGENTS-1",
+      "title": "Client apps with agents get agent must-haves before they build",
+      "status": "pending",
+      "order": 108
     }
   ],
   "epics": [

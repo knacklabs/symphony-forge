@@ -456,6 +456,8 @@ table or column, or changes a column's type, add a `-- Contract: ...` comment to
 `# Contract: ...` to Alembic Python. Explain why the live release no longer reads the table or
 column; close allows the migration when the line is present, and review reads the explanation.
 
+Before any agent, chat, voice or in-app assistant work, load the agents skill (.codex/skills/agents/SKILL.md) and follow it. Say which of its sections apply to your change. A review holds a broken Must rule.
+
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
