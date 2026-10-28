@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-28T06:58:27.396532+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Database rules for every client app: The field-kind table's database values is stuck. It should deliver: The final database values and new keys in kinds.toml, the money and number keys that follow the new helper, and the small `feature.py` changes they need.\nIt changes 618 lines outside tests, over its limit of 400.\nThe worker tried: Use the database field kinds in copied features.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "249a17e3-3ded-4474-8bef-11ac58cd308b"
+  },
   "stuck": {
     "close": null,
     "head": "34bf06052efe6809760dd621b3621efc2eec099b",
