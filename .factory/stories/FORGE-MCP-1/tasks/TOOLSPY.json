@@ -48,9 +48,9 @@
     "id": "40f7b784-82fa-4f13-8edc-3f13841e5437",
     "status": "clean"
   },
-  "round": 5,
+  "round": 6,
   "stacked_on": "FORGE-FEATURE-1/PY",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T02:23:37.185339+00:00",
@@ -78,10 +78,10 @@
     }
   ],
   "stuck": {
-    "close": "a4f82bb8-5939-4ebc-bf44-fb8bab56e6ab",
-    "head": "a33b632f6bb0091b6c15ce1c5e133deab30fb522",
+    "close": "4239aeba-b523-4240-9120-fa429563b655",
+    "head": "92b05a8f0891d7e6ce5425dde95dfe278e61ed06",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "worker": "codex"
 }
