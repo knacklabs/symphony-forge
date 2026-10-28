@@ -37,10 +37,12 @@ export function AddAgentDialog({ children }: { children: ReactNode }) {
     setOpen(false);
   }
 
-  // Esc, a click outside and Cancel ask first when the form has typed text.
+  // Esc, a click outside and Cancel ask first when the form has typed text; while it sends, the form stays open,
+  // so a failed send keeps the text.
   function changeOpen(nextOpen: boolean) {
     if (nextOpen) setOpen(true);
-    else if (isDirty && !form.formState.isSubmitting) setConfirmDiscard(true);
+    else if (form.formState.isSubmitting) return;
+    else if (isDirty) setConfirmDiscard(true);
     else close();
   }
 

@@ -51,10 +51,12 @@ test('the invite and add-agent forms ask before they close with unsaved text', a
   await page.getByRole('link', { name: 'Members' }).click();
 
   const forms = [
-    { opener: 'Invite person', field: 'Email', text: 'someone@example.com', question: 'Discard this invite?' },
-    { opener: 'Add agent account', field: 'Name', text: 'gantry', question: 'Discard this agent account?' },
+    { opener: 'Invite person', field: 'Email', text: 'someone@example.com', question: 'Discard this invite?',
+      send: 'Send invite', path: '/api/v1/invites', failed: 'Could not send the invite. Try again.' },
+    { opener: 'Add agent account', field: 'Name', text: 'gantry', question: 'Discard this agent account?',
+      send: 'Add agent account', path: '/api/v1/agents', failed: 'Could not add the agent account. Try again.' },
   ];
-  for (const { opener, field, text, question } of forms) {
+  for (const { opener, field, text, question, send, path, failed } of forms) {
     const openButton = page.getByRole('button', { name: opener });
     const dialog = page.getByRole('dialog', { name: opener });
     const discard = page.getByRole('alertdialog', { name: question });
@@ -87,7 +89,27 @@ test('the invite and add-agent forms ask before they close with unsaved text', a
     await expect(openButton).toBeFocused();
     await openButton.click();
     await expect(dialog.getByLabel(field)).toHaveValue('');
+
+    // Esc while the form sends keeps it open, so a failed send still shows the typed text and why.
+    await dialog.getByLabel(field).fill(text);
+    let failSend!: () => void;
+    const sendFails = new Promise<void>((resolve) => { failSend = resolve; });
+    const sendSeen = new Promise<void>((resolve) => {
+      void page.route((url) => url.pathname === path, async (route) => {
+        resolve();
+        await sendFails;
+        await route.abort();
+      }, { times: 1 });
+    });
+    await dialog.getByRole('button', { name: send }).click();
+    await sendSeen;
     await page.keyboard.press('Escape');
+    await expect(discard).toHaveCount(0);
+    failSend();
+    await expect(dialog.getByRole('alert')).toHaveText(failed);
+    await expect(dialog.getByLabel(field)).toHaveValue(text);
+    await page.keyboard.press('Escape');
+    await discard.getByRole('button', { name: 'Discard' }).click();
     await expect(dialog).toBeHidden();
   }
 });
