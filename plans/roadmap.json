@@ -468,6 +468,12 @@
       "title": "Client apps offer MCP resources and prompts too",
       "status": "pending",
       "order": 106
+    },
+    {
+      "key": "FORGE-GUIDES-1",
+      "title": "Guides and starters agree",
+      "status": "pending",
+      "order": 107
     }
   ],
   "epics": [
