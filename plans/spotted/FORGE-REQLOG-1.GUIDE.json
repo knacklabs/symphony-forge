@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_standards.py\tThe page already had 325 lines before this task, above this test's 320-line limit; adding the required bullets leaves this assertion unresolved.",
+      "kind": "bug",
+      "path": "tests/test_standards.py",
+      "line": 34,
+      "text": "The page already had 325 lines before this task, above this test's 320-line limit; adding the required bullets leaves this assertion unresolved.",
+      "from": "worker",
+      "item": "FORGE-REQLOG-1/GUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
