@@ -13,7 +13,7 @@
 - The agent's guide lists email and member removal as built in. Its question about the email provider now asks for the client's SMTP provider. (Needed by: the deployed app's start check)
 - A new client repo gets all of this at `forge init`. An existing client repo gets the guide text with `forge sync` and keeps its app code. (Source: the Forge review rules)
 
-Design: docs/design/FORGE-MAIL-1/ (the tree id goes here when the design is made, before approval; it shows the Remove button and dialog on the Members screen, the check-email message on the sign-up page, the new verify page and the sign-in page's new-link message)
+Design: none (starter screens built from the starter's existing dialog, alert and page components; each client app's own design covers them, and the starter has no look of its own)
 
 ## Why
 
@@ -105,15 +105,6 @@ MAIL pins the settings, the mail interface and the email texts. MAILPY follows t
     - Production cases that sign up only to test forgot-password keep the direct call.
   - Feature command: in `src/forge/feature_tests.py`, `signedIn()` and the link case's other account use `await signUp(client)` and `await signUp(otherClient, other)` from `./helpers` when the app's `apps/api/test/helpers.ts` holds `export async function signUp`, and today's direct call otherwise. Where the command copies the projects spec, the copy carries what the app's own spec has. PY needs no change, because the generated tests import `sign_up` from `test_api`.
 
-### Design
-
-The story adds a screen (`/verify-email`) and changes the sign-up flow, so it needs a design under the design process in the agent's guide, not `Design: none`. Make it before the owner approves the plan, and before REMOVEWEB and VERIFYON start. It goes in `docs/design/FORGE-MAIL-1/`, made as a Claude artifact and copied to the repo, and its tree id goes in the plan's Design line. It shows, in the existing app shell and auth page frame:
-- the Members screen with the Remove button on a member row, and the "Remove this member?" dialog;
-- the sign-up page after a sign-up, with the check-email message in place of the form;
-- the verify page with its "Finish signing up" button, and its error with the sign-in link;
-- the sign-in page with the "We sent a new link" alert.
-The texts in this plan are the design's texts. REMOVEWEB and VERIFYON build to the approved design.
-
 ### Done-when details
 
 1. Email through SMTP (MAIL, MAILPY).
@@ -191,7 +182,7 @@ The texts in this plan are the design's texts. REMOVEWEB and VERIFYON build to t
 | VERIFYON | The email check is required on public sign-up | In both APIs at once: sign-up answers with the check-email message and no session, and sign-in before the check sends a new link and answers `EMAIL_NOT_VERIFIED`. The sign-up page's message, the verify page, the sign-in page's message, the sign-up test helpers and the call sites that need a session, the feature command's helper choice, and the cases. One part, because the web is shared: the change in only one API, or only in the web, breaks the other starter's browser cases. | 5 | TS: `starter/libs/auth/contracts/src/index.ts` (the sign-up answer), `starter/libs/auth/server/src/auth.service.ts` (`signUp` and `signIn` only), `starter/libs/auth/server/src/auth.controller.ts` (the sign-up answer only), `starter/apps/api/test/helpers.ts`, `starter/apps/api/test/*.e2e-spec.ts` (the sign-up calls only), `starter/apps/api/test/api.e2e-spec.ts` (the new case). PY: `starter-python/apps/api/app/auth/schema.py`, `starter-python/apps/api/app/auth/service.py` and `routes.py` (`sign_up` and `sign_in` only), `starter-python/apps/api/tests/test_api.py`, `starter-python/apps/api/tests/*.py` (the sign-up calls only), `starter-python/libs/shared/api-types/**` (regenerated). Web: `starter/libs/auth/web/src/hooks/auth-hooks.ts`, `starter/libs/auth/web/src/pages/sign-up-page.tsx`, `starter/libs/auth/web/src/pages/sign-in-page.tsx`, `starter/libs/auth/web/src/pages/verify-email-page.tsx` (new), `starter/libs/auth/web/src/index.ts`, `starter/apps/web/src/app.tsx`, `starter/apps/web/e2e/helpers.ts`, `starter/apps/web/e2e/sign-up.spec.ts` (new). Forge: `src/forge/feature_tests.py`, `tests/test_mail.py`. | `tests/test_mail.py` (`test_5`: `typescript`, `python`, `older starter`) | VERIFYTS, VERIFYPY, REMOVEWEB | yes | |
 | GUIDE | The guide states email and member removal | The two Built in lines, the intake row, the guide paragraph and the synced copies, on new and existing repos. | 6 | `src/forge/templates/skill.md`, `docs/guide.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `tests/test_mail_guide.py` (new) | `tests/test_mail_guide.py::test_6` (new) | FORGE-AGENTREADY-1/GUIDE | no | |
 
-GUIDE shares no file with the other parts and needs no code from them. MAILPY waits for MAIL because they share `tests/test_mail.py` and because MAIL pins the names. REMOVE waits for MAIL because both change `auth.service.ts` and `organisations.service.ts`. VERIFYTS follows REMOVE, and VERIFYPY follows REMOVEPY and VERIFYTS, because they change the same auth files and VERIFYTS pins the names. VERIFYON comes last, because it changes `auth.service.ts`, `api.e2e-spec.ts`, `helpers.ts`, `test_api.py`, `app.tsx` and the PY auth files after every other part. REMOVEWEB and VERIFYON are the two screen parts, and both wait for the design (see Design).
+GUIDE shares no file with the other parts and needs no code from them. MAILPY waits for MAIL because they share `tests/test_mail.py` and because MAIL pins the names. REMOVE waits for MAIL because both change `auth.service.ts` and `organisations.service.ts`. VERIFYTS follows REMOVE, and VERIFYPY follows REMOVEPY and VERIFYTS, because they change the same auth files and VERIFYTS pins the names. VERIFYON comes last, because it changes `auth.service.ts`, `api.e2e-spec.ts`, `helpers.ts`, `test_api.py`, `app.tsx` and the PY auth files after every other part.
 
 New moving parts: nodemailer in the TypeScript starter (item 1). Mailpit in `compose.yml` and `compose.test.yml`, for local work and tests only (items 1 and 3). One table for email-check links in each starter (item 5).
 
