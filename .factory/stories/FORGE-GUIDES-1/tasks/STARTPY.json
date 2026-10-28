@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-GUIDES-1-STARTPY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T13:36:26.453364+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c04b56adde51abc9a3c3dc4f265caeb94d02819c",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
