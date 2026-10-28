@@ -11,6 +11,7 @@ export { CsrfGuard } from './common/csrf.guard';
 export { EnvelopeInterceptor } from './common/envelope.interceptor';
 export { JsonLogger } from './common/json-logger';
 export { definePermissions, hasPermission, permissionsFor, RequirePermission, type FeaturePermissions } from './common/permissions';
+export { RetryKeys, retryKeySchema } from './common/retry-keys';
 export { PUBLIC_ROUTE, Public } from './common/public.decorator';
 export { ZodValidationPipe } from './common/zod-validation.pipe';
 export type { AuthenticatedRequest } from './common/authenticated-request';

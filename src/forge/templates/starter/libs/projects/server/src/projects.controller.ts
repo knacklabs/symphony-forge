@@ -1,7 +1,19 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
-import { ApiCookieAuth, ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get,
+  // forge:feature:retry-key:start
+  Headers,
+  // forge:feature:retry-key:end
+  HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
+import { ApiCookieAuth, ApiExtraModels, ApiOkResponse, ApiOperation, ApiParam, ApiResponse,
+  // forge:feature:retry-key:start
+  ApiHeader,
+  // forge:feature:retry-key:end
+  ApiTags, getSchemaPath } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { ApiEnvelope, ApiErrors, ApiZodBody, ApiZodQuery, sendCsv, ZodValidationPipe, type CsvColumn } from '@app/core-server';
+import { ApiEnvelope, ApiErrors, ApiZodBody, ApiZodQuery, sendCsv, ZodValidationPipe,
+  // forge:feature:retry-key:start
+  RetryKeys, retryKeySchema,
+  // forge:feature:retry-key:end
+  type CsvColumn } from '@app/core-server';
 import { CurrentAccount, RequirePermission, type AccountPrincipal } from '@app/core-server';
 import { PROJECT_PERMISSIONS } from './projects.permissions';
 import { ProjectChangeResponseDto, ProjectListResponseDto, ProjectResponseDto } from './projects.dto';
@@ -30,7 +42,11 @@ const PROJECT_CSV_COLUMNS: CsvColumn<Project>[] = [
 @ApiCookieAuth('session')
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projects: ProjectsService) {}
+  constructor(private readonly projects: ProjectsService,
+    // forge:feature:retry-key:start
+    private readonly retryKeys: RetryKeys,
+    // forge:feature:retry-key:end
+  ) {}
 
   @Get()
   @RequirePermission(PROJECT_PERMISSIONS.view)
@@ -48,7 +64,21 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Create a project in your organisation.' })
   @ApiEnvelope(ProjectResponseDto, 201)
   @ApiErrors(400, 401, 403)
-  create(@CurrentAccount() account: AccountPrincipal, @Body(new ZodValidationPipe(projectSchema)) input: ProjectInput) {
+  // forge:feature:retry-key:start
+  @ApiHeader({ name: 'Idempotency-Key', required: false, description: 'Send the same key to retry this create. A repeat gives back the first project and makes no second one.' })
+  // forge:feature:retry-key:end
+  async create(
+    @CurrentAccount() account: AccountPrincipal,
+    @Body(new ZodValidationPipe(projectSchema)) input: ProjectInput,
+    // forge:feature:retry-key:start
+    @Headers('idempotency-key') idempotencyKey?: string,
+    // forge:feature:retry-key:end
+  ) {
+    // forge:feature:retry-key:start
+    const key = new ZodValidationPipe(retryKeySchema.optional(), 'Idempotency-Key').transform(idempotencyKey);
+    if (key) return this.projects.get(account, await this.retryKeys.once(account, 'projects_create', key,
+      async (afterCreate) => (await this.projects.create(account, input, { afterCreate })).id));
+    // forge:feature:retry-key:end
     return this.projects.create(account, input);
   }
 

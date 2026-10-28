@@ -1,4 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+// forge:feature:retry-key:start
+import { useRef } from 'react';
+// forge:feature:retry-key:end
 import type { Project, ProjectChange, ProjectInput, ProjectListQuery as ProjectApiListQuery } from '@app/projects-contracts';
 import { apiRequest } from '@app/core-web';
 
@@ -47,12 +50,23 @@ export function useProjectChanges(id: string) {
 
 export function useCreateProject() {
   const queryClient = useQueryClient();
+  // forge:feature:retry-key:start
+  const idempotencyKey = useRef(crypto.randomUUID());
+  // forge:feature:retry-key:end
   return useMutation({
     mutationFn: (input: ProjectInput) => apiRequest<Project>('/projects', {
       method: 'POST',
       body: JSON.stringify(input),
+      // forge:feature:retry-key:start
+      headers: { 'Idempotency-Key': idempotencyKey.current },
+      // forge:feature:retry-key:end
     }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectKeys.all }),
+    onSuccess: () => {
+      // forge:feature:retry-key:start
+      idempotencyKey.current = crypto.randomUUID();
+      // forge:feature:retry-key:end
+      return queryClient.invalidateQueries({ queryKey: projectKeys.all });
+    },
   });
 }
 

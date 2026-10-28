@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
   app.enableCors({
     origin: config.getOrThrow<string>('APP_ORIGIN'),
     credentials: true,
-    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'X-Correlation-Id'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'X-Correlation-Id', 'Idempotency-Key'],
   });
   app.use(cookieParser());
   app.use(correlationMiddleware);

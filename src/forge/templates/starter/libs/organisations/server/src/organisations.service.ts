@@ -14,6 +14,7 @@ function memberResponse(member: Membership): Member {
 }
 
 const ROLE_NAMES: Record<Role, string> = { admin: 'Admin', member: 'Member' };
+type InviteOptions = NonNullable<Parameters<OrganisationsApi['invite']>[2]>;
 
 function memberNotFound(): NotFoundException {
   return new NotFoundException({ code: 'MEMBER_NOT_FOUND', message: 'This member was not found.', details: null });
@@ -34,22 +35,26 @@ export class OrganisationsService implements OrganisationsApi {
     @Optional() @Inject(MAIL_PROVIDER) private readonly mailProvider: MailProvider | null = null,
   ) {}
 
-  async invite(email: string, account: OrganisationPrincipal): Promise<void> {
-    if (!this.mailProvider) {
+  async invite(email: string, account: OrganisationPrincipal, options?: InviteOptions): Promise<string> {
+    const mailProvider = this.mailProvider;
+    if (!mailProvider) {
       throw new UnprocessableEntityException({ code: 'MAIL_NOT_CONFIGURED', message: 'Email is not set up for this app yet.', details: null });
     }
     const token = randomBytes(32).toString('base64url');
     const credentials = { tokenHash: createHash('sha256').update(token).digest('hex'), expiresAtUtc: new Date(Date.now() + INVITE_LIFETIME_MS), modifiedByAccountId: account.id };
-    await this.prisma.invite.upsert({
-      where: { organisationId_email: { organisationId: account.organisationId, email } },
-      create: { organisationId: account.organisationId, email, createdByAccountId: account.id, ...credentials },
-      update: credentials,
+    return this.prisma.$transaction(async (tx) => {
+      const invite = await tx.invite.upsert({
+        where: { organisationId_email: { organisationId: account.organisationId, email } },
+        create: { organisationId: account.organisationId, email, createdByAccountId: account.id, ...credentials },
+        update: credentials,
+      });
+      await options?.afterCreate(tx, invite.id);
+      await this.history.record(account, 'member.invited', `Invited ${email}`, undefined, tx);
+      const inviteUrl = new URL('/accept-invite', this.config.getOrThrow<string>('APP_ORIGIN'));
+      inviteUrl.searchParams.set('token', token);
+      await mailProvider.sendInvite(email, inviteUrl.toString());
+      return invite.id;
     });
-    // ponytail: saving the invite and its history are two calls; use a shared transaction if atomic history becomes required.
-    await this.history.record(account, 'member.invited', `Invited ${email}`);
-    const inviteUrl = new URL('/accept-invite', this.config.getOrThrow<string>('APP_ORIGIN'));
-    inviteUrl.searchParams.set('token', token);
-    await this.mailProvider.sendInvite(email, inviteUrl.toString());
   }
 
   async openInvite(token: string): Promise<OrganisationInvite> {
