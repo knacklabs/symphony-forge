@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-AGENTS-1-REVIEW",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T17:29:30.287009+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a58a525e1ae9140c6324a69c2a7db2538b9f122b",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
