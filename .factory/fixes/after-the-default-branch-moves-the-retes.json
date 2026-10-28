@@ -1,6 +1,13 @@
 {
   "base": "1ef66b286cb84a45cb7ff09ec29f4db1a21928dd",
   "branch": "fix/after-the-default-branch-moves-the-retes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1829d-b5ef-7462-9ff4-72e7d94fee34",
+    "head": null,
+    "start": "9834bd495b29df2d9c279b52d9465f07f823c77f"
+  },
   "done_when": "A retested item merges in one run, and it waits for checks a second time only when the new default-branch commits touch the item's changed files.",
   "fix_kind": "backend",
   "kind": "fix",
