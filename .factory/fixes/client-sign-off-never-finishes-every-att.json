@@ -71,7 +71,7 @@
     "id": "fc8afbe6-478a-4ef3-b023-ec9992222ef3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -93,10 +93,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "2fb954308d300786c668cd18cd3b88cd1d3bb6e7",
+    "close": "d23924d1-489a-40f3-ab25-6f3a352e5db0",
+    "head": "ad8b10a1f36009ecfe1dfcaac7a4d17325231856",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Client sign-off never finishes: every attempt re-reviews all product files with no memory of earlier findings and no round limit, so a client saw 23, 15, 12, 33, 3, 2 and 3 new findings over seven attempts.",
   "worker": "codex"
