@@ -15,7 +15,7 @@
       "gain": 4,
       "harm": 3,
       "line": 147,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -26,27 +26,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "0b7b32014bb903db9f08e386799e07ac30d8495304986a83c2fb9c715032c0dd",
-    "changed": "de54d330840074e30bf5382111c4d263c4a23d5765f0db720b71b1b555ef3c7e",
-    "commit": "487806ba436d54709ca0cc88afd4090c9d28fe36",
+    "branch_diff": "a9c105466f5a227580f860c0e6a9b185ef024598f40183c482edc884208e41d1",
+    "changed": "339e4cc6e174c071cd502e6cb64e78e6252bc330c3362fe7d23ffea2a135154e",
+    "commit": "47d3adfea3b725dee6f1f3520d078d30b709a732",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - running the Python starter or generated-feature test suite.\nThis assertion requires HTTP 200, but `src/forge/templates/starter-python/apps/api/app/core/security.py:104\u2013105` returns HTTP 204 for every OPTIONS request. The same incorrect assertion appears in `src/forge/feature_python_tests.py:1130`, so it also propagates into generated features. Both retry cases therefore fail despite valid CORS headers, breaking the starter and feature smoke checks. Accept the existing 204 response in both places while retaining the header assertions.",
-        "file": "src/forge/templates/starter-python/apps/api/tests/test_projects.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 147,
-        "priority": "P1",
-        "title": "Gate: retry tests reject the API's successful preflight response",
-        "work": 2
-      }
-    ],
-    "id": "5bbad10f-d1fe-4b46-8449-2b44a13f2768",
-    "status": "blocked"
+    "findings": [],
+    "id": "c6947cdf-d761-4b1f-ae50-79cf10bc00e9",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T17:18:13.243221+00:00",
@@ -54,6 +43,10 @@
     },
     {
       "at": "2026-10-28T18:03:45.973054+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T18:15:08.437504+00:00",
       "step": "review"
     }
   ],
