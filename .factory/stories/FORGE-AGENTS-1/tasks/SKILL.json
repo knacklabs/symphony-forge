@@ -1,0 +1,13 @@
+{
+  "base": "02ba9c55424649133d95392db92305e788b4d64b",
+  "branch": "task/FORGE-AGENTS-1-SKILL",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-AGENTREADY-1/GUIDE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T14:53:58.904830+00:00",
+      "step": "start"
+    }
+  ]
+}
