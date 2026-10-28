@@ -56,14 +56,19 @@ responses = here / "gh-responses.json"
     gh.write_text(source, "utf-8")
 
 
-@pytest.mark.parametrize("answer", [
-    {"stderr": "invalid character '<' looking for beginning of value"},
-    {"stderr": "unexpected EOF"},
-    {"stderr": "invalid character '<' after object key:value pair"},
-    {"stderr": "HTTP 502: Bad Gateway"},
-    {"stdout": "<html>Bad Gateway</html>", "code": 0},
-    {"stdout": "<html>Bad Gateway</html>", "code": 1},
-])
+@pytest.mark.parametrize("client,answer", [
+    pytest.param(previous, answer, id=f"{history}-answer{index}")
+    for previous, history in [(False, "new-client"), (True, "adopted-v1.2.2")]
+    for index, answer in enumerate([
+        {"stderr": "invalid character '<' looking for beginning of value"},
+        {"stderr": "unexpected EOF"},
+        {"stderr": "invalid character '<' after object key:value pair"},
+        {"stderr": "HTTP 502: Bad Gateway"},
+        {"stdout": "<html>Bad Gateway</html>", "code": 0},
+        {"stdout": "<html>Bad Gateway</html>", "code": 1},
+    ])
+    if not previous or index in (2, 4)
+], indirect=["client"])
 def test_1_close_carries_on_after_one_bad_github_answer(client, answer):
     item, _ = client.start_fix()
     bad_answers(client, 1, **answer)
@@ -74,14 +79,19 @@ def test_1_close_carries_on_after_one_bad_github_answer(client, answer):
     assert f"Ready: {item} has a clean review and green checks." in done.stdout
 
 
-@pytest.mark.parametrize("answer", [
-    {"stderr": "invalid character '<' looking for beginning of value"},
-    {"stderr": "unexpected EOF"},
-    {"stderr": "invalid character '<' after object key:value pair"},
-    {"stderr": "HTTP 503: Service Unavailable"},
-    {"stdout": "<html>Bad Gateway</html>", "code": 0},
-    {"stdout": "<html>Bad Gateway</html>", "code": 1},
-])
+@pytest.mark.parametrize("client,answer", [
+    pytest.param(previous, answer, id=f"{history}-answer{index}")
+    for previous, history in [(False, "new-client"), (True, "adopted-v1.2.2")]
+    for index, answer in enumerate([
+        {"stderr": "invalid character '<' looking for beginning of value"},
+        {"stderr": "unexpected EOF"},
+        {"stderr": "invalid character '<' after object key:value pair"},
+        {"stderr": "HTTP 503: Service Unavailable"},
+        {"stdout": "<html>Bad Gateway</html>", "code": 0},
+        {"stdout": "<html>Bad Gateway</html>", "code": 1},
+    ])
+    if not previous or index in (2, 4)
+], indirect=["client"])
 def test_2_a_lasting_github_outage_stops_plainly_and_can_be_rerun(client, answer):
     item, _ = client.start_fix()
     bad_answers(client, 4, **answer)
@@ -99,7 +109,12 @@ def test_2_a_lasting_github_outage_stops_plainly_and_can_be_rerun(client, answer
     assert again.returncode == 0, again.stdout + again.stderr
 
 
-@pytest.mark.parametrize("error", ["HTTP 404: Not Found", "HTTP 403: Forbidden", "HTTP 401: Unauthorized"])
+@pytest.mark.parametrize("client,error", [
+    pytest.param(previous, error, id=f"{history}-{error}")
+    for previous, history in [(False, "new-client"), (True, "adopted-v1.2.2")]
+    for error in ["HTTP 404: Not Found", "HTTP 403: Forbidden", "HTTP 401: Unauthorized"]
+    if not previous or error == "HTTP 401: Unauthorized"
+], indirect=["client"])
 def test_3_intentional_github_refusals_are_not_retried(client, error):
     item, _ = client.start_fix()
     bad_answers(client, 4, stderr=error)
