@@ -641,6 +641,18 @@ def test_a_member_agent_cannot_delete_or_restore_a_project_through_mcp(
     # REST permission tests do not prove the tools/list and tools/call policy. No production seam.
     _, csrf = sign_up(client)
     _, key = _mcp_agent(client, csrf, "member")
+    with joined_member(client, csrf) as member:
+        me = member.get("/api/v1/auth/me")
+        assert me.status_code == 200, me.text
+        permissions = set(me.json()["data"]["permissions"])
+    tool_permissions = {
+        "search": "view",
+        "get": "view",
+        "create": "create",
+        "update": "edit",
+        "delete": "delete",
+        "restore": "restore",
+    }
     enabled = client.put(
         f"/api/v1/agent-tools/{MCP_FEATURE}",
         headers={"x-csrf-token": csrf},
@@ -665,12 +677,13 @@ def test_a_member_agent_cannot_delete_or_restore_a_project_through_mcp(
                 if tool.name.startswith(f"{MCP_TOOL_PREFIX}_")
             }
             assert names == {
-                f"{MCP_TOOL_PREFIX}_search",
-                f"{MCP_TOOL_PREFIX}_get",
-                f"{MCP_TOOL_PREFIX}_create",
-                f"{MCP_TOOL_PREFIX}_update",
+                f"{MCP_TOOL_PREFIX}_{action}"
+                for action, permission in tool_permissions.items()
+                if f"{MCP_FEATURE}.{permission}" in permissions
             }
             for action in ("delete", "restore"):
+                if f"{MCP_FEATURE}.{action}" in permissions:
+                    continue
                 refused = await session.call_tool(
                     f"{MCP_TOOL_PREFIX}_{action}", {MCP_ID_FIELD: project_id}
                 )

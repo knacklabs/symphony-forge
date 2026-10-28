@@ -114,6 +114,12 @@ def _mcp_case_source(
     lines = matches[0].group(0).splitlines(keepends=True)
     source = "".join(lines[1:-1])
     source = _python_rename(source, one, plural)
+    # Generated features can restrict Members; Admin still exercises successful CRUD.
+    source = source.replace(
+        'agent, key = _mcp_agent(client, csrf, "member")',
+        'agent, key = _mcp_agent(client, csrf, "admin")',
+        1,
+    )
     specs = _field_specs(fields, kinds)
     name_field = next(
         field for field in specs if field["kind"] == "text" and not field["optional"]

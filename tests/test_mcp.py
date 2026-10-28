@@ -168,7 +168,7 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         shutil.rmtree(client / "libs/mcp")
         built = repo.forge(*shlex.split(FEATURE_LINE)[1:], cwd=client)
         assert built.returncode == 0, built.stdout + built.stderr
-        assert "This app has no MCP server, so jobs get no agent tools." in built.stdout
+        assert built.stdout.count("This app has no MCP server, so jobs get no agent tools.") == 1
         written = _written_paths(built, client)
         # SQL search indexes also end in _search; only the MCP tool name is forbidden.
         forbidden = ("forge:feature:mcp", "JobsTools", "AgentAccessDialog", "agentClient", "afterCreate", "jobs_search")
@@ -187,7 +187,7 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         shutil.rmtree(python_client / "apps/api/app/mcp")
         built = repo.forge(*shlex.split(FEATURE_LINE)[1:], cwd=python_client)
         assert built.returncode == 0, built.stdout + built.stderr
-        assert "This app has no MCP server, so jobs get no agent tools." in built.stdout
+        assert built.stdout.count("This app has no MCP server, so jobs get no agent tools.") == 1
         written = _written_paths(built, python_client)
         assert "apps/api/app/jobs/tools.py" not in written
         python_forbidden = (

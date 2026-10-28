@@ -437,6 +437,12 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
             require_feature_cases(live["api"], "test_sales_orders", (
                 "test_each_sales_orders_endpoint_refuses_a_member_without_its_permission",
             ))
+            # Notes has no Member permissions: copied MCP cases must still exercise Admin
+            # CRUD and compare the Member's tool list and refusals with its public permissions.
+            require_feature_cases(live["api"], "test_notes", (
+                "test_an_agent_searches_reads_creates_and_updates_notes_through_mcp_as_its_account",
+                "test_a_member_agent_cannot_delete_or_restore_a_note_through_mcp",
+            ))
         require_feature_cases(live["browser"], "jobs.spec.ts", (
             "create, view, edit, and delete a job",
             "a reloaded jobs list link keeps its search, filters and page",
