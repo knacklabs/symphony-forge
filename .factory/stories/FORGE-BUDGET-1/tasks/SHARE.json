@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-BUDGET-1-SHARE",
+  "chat": {
+    "approval": "b3e62639f0fb3006787d6db020a010b27b116e6391233e92ea74f1189c3abca6",
+    "claude": null,
+    "conversation": "01a18052-da5d-7a20-8255-2f337e2aafef",
+    "head": null,
+    "start": "a3676a5b2a840bf81da00ed18a112b2cf1418e53"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
