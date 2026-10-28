@@ -83,6 +83,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.refuse(REFUSALS["changed"], item=item)
         checked_default = repo.git("rev-parse", f"origin/{default}", cwd=top)
         retested = checked_default != base
+        overlap = False
         if retested:
             status = repo.run("git", "status", "--porcelain", "-z", "--no-renames",
                               "--untracked-files=all", cwd=worktree)
@@ -91,6 +92,11 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             if any(changes):
                 repo.refuse(REFUSALS["dirty_retest"], item=item,
                             files="\n".join(f"- {entry[3:]}" for entry in changes if entry))
+            item_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base, head,
+                                      cwd=worktree).split("\0")) - {""}
+            default_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base,
+                                         checked_default, cwd=worktree).split("\0")) - {""}
+            overlap = bool(item_files & default_files)
             print(f"{default} moved; Forge will merge it into this branch and run the related tests.", flush=True)
             close._merge_default(worktree, item, branch, default,
                                  {**pr, "mergeStateStatus": "BEHIND"}, repo.config(worktree))
@@ -103,18 +109,22 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             if failed:
                 repo.refuse(REFUSALS["retest_failed"], item=item,
                             tests=tested.rsplit("Failed tests:\n", 1)[-1])
-            head = repo.git("rev-parse", "HEAD", cwd=worktree)
-            state = story.json_of(story.show(worktree, head, repo.state_path(item)))
-            state["review"].update(
-                changed=review.fingerprint(head, item, worktree, state, base),
-                branch_diff=review.fingerprint(head, item, worktree, state, base, branch_diff=True))
-            close._save(worktree, item, state, "Keep the review after the combined tests pass")
-            head = repo.git("rev-parse", "HEAD", cwd=worktree)
-            close._push(worktree, branch)
-            receipt["commit"] = head
-            _save_ready(path, receipt)
+            if overlap:
+                head = repo.git("rev-parse", "HEAD", cwd=worktree)
+                state = story.json_of(story.show(worktree, head, repo.state_path(item)))
+                state["review"].update(
+                    changed=review.fingerprint(head, item, worktree, state, base),
+                    branch_diff=review.fingerprint(head, item, worktree, state, base, branch_diff=True))
+                close._save(worktree, item, state, "Keep the review after the combined tests pass")
+                head = repo.git("rev-parse", "HEAD", cwd=worktree)
+                close._push(worktree, branch)
+                receipt["commit"] = head
+                _save_ready(path, receipt)
+            else:
+                # Only the local test needs this merge. Keep GitHub's already checked head.
+                repo.git("reset", "--keep", head, cwd=worktree)
         try:
-            if config["test_place"] == "ci" and not retested:
+            if config["test_place"] == "ci" and (not retested or overlap):
                 checks.wait(worktree, item, head, config["checks"],
                             branch=branch, progress=getattr(args, "wait_for_progress", False),
                             slot=getattr(args, "check_slot", None))
