@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-28T15:32:44.087414+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01JTUqYdM6bDdRDu1xv19FCB",
+    "hash": "7fd2e757a96e620cc124ab536b47db44a1a8fafa689b9504fc47f03e69987c9b",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-ASSIST-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-28T14:12:39.033253+00:00",
@@ -17,8 +27,12 @@
     {
       "at": "2026-10-28T14:55:06.304089+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-28T15:32:44.087583+00:00",
+      "step": "approved"
     }
   ],
   "title": "Client apps get an optional in-app assistant",
-  "touches": 0
+  "touches": 1
 }
