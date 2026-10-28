@@ -45,7 +45,7 @@
     "id": "91f80976-f341-4248-858f-09b8a7f6a40f",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -58,10 +58,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "a58a525e1ae9140c6324a69c2a7db2538b9f122b",
+    "close": "76cfb5b4-8adb-447b-9363-a5b282e349b4",
+    "head": "6084ac29ffbe41fc4013ba8c76ac4d0bcd1c1bb5",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
