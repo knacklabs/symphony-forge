@@ -17,7 +17,7 @@ STORY = "FIX-AFTER-THE-UPGRADE-TO-V1-2-22-CLIENT-SIGN"
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_signoff_passes_without_ritual_records(repo, tmp_path, monkeypatch, adopted):
+def test_1_signoff_passes_without_ritual_records(repo, tmp_path, monkeypatch, adopted):
     make = _adopted_client if adopted else _client
     fix, answers, queue = make(repo, tmp_path, monkeypatch)
     if adopted:
@@ -42,7 +42,7 @@ def test_signoff_passes_without_ritual_records(repo, tmp_path, monkeypatch, adop
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
-def test_signoff_lists_every_missing_precondition(repo, tmp_path, monkeypatch, adopted):
+def test_2_signoff_lists_every_missing_precondition(repo, tmp_path, monkeypatch, adopted):
     make = _adopted_client if adopted else _client
     fix, answers, queue = make(repo, tmp_path, monkeypatch)
     if adopted:

@@ -80,10 +80,10 @@ runpy.run_path({str(original)!r}, run_name="__main__")
     assert "status: accepted" in record
     assert "design_checked: " in record
     assert "brief_checked: " in record
-    check = _tool_call(queue, "claude")
+    check = _tool_call(queue, "codex")
     args = check["args"]
-    assert args[args.index("--model") + 1] == "claude=claude-opus-5-5"
-    assert args[args.index("--thinking") + 1] == "claude=high"
+    assert args[args.index("--model") + 1] == "codex=gpt-6.1-sol"
+    assert args[args.index("--thinking") + 1] == "codex=high"
     prompt = "\n".join(check["prompt_files"].values())
     for text in ("## Summary", "## Users", "## Key flows",
                  "Compare the screens with the whole app brief below",
@@ -146,7 +146,7 @@ def _refuses_app_code_until_a_build_is_requested(repo, tmp_path, monkeypatch, st
     assert not _calls(queue)
 
 
-def _falls_back_to_codex_when_claude_is_missing(repo, tmp_path, monkeypatch):
+def _uses_codex_when_claude_is_missing(repo, tmp_path, monkeypatch):
     fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     page = _decision(fix, answers)
     monkeypatch.setenv("CLAUDE_BIN", str(tmp_path / "missing-claude"))
@@ -154,7 +154,6 @@ def _falls_back_to_codex_when_claude_is_missing(repo, tmp_path, monkeypatch):
     accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
 
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
-    assert "fell back to Codex" in (accepted.stdout + accepted.stderr)
     check = _tool_call(queue, "codex")
     args = check["args"]
     assert args[args.index("--model") + 1] == "codex=gpt-6.1-sol"
@@ -192,7 +191,7 @@ def _new_signoff_decision_names_the_pinned_sections(repo, tmp_path, monkeypatch)
                  ("Missing flow", "No screen shows how a salesperson submits an order."), id="missing-flow"),
     pytest.param(_refuses_app_code_until_a_build_is_requested, (False,), id="new-code"),
     pytest.param(_refuses_app_code_until_a_build_is_requested, (True,), id="starter-screen"),
-    pytest.param(_falls_back_to_codex_when_claude_is_missing, (), id="codex-fallback"),
+    pytest.param(_uses_codex_when_claude_is_missing, (), id="codex-without-claude"),
     pytest.param(_old_accepted_signoff_needs_no_new_design_check, (), id="old-signoff"),
     pytest.param(_new_signoff_decision_names_the_pinned_sections, (), id="decision-sections"),
 ])

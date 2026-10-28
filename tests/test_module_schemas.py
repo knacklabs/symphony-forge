@@ -1,4 +1,4 @@
-"""A new React starter moves each module's tables into its own Postgres schema."""
+"""Both new client starters keep each module's tables in its own Postgres schema."""
 from pathlib import Path
 
 import pytest
@@ -24,8 +24,7 @@ PYTHON_MIGRATION = Path("apps/api/migrations/versions/0008_module_schemas.py")
 STORY = "FORGE-LIBS-1"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
-def test_4_review_reports_a_foreign_key_between_business_module_schemas(env, tmp_path, adopted):
+def _review_reports_a_foreign_key_between_business_module_schemas(env, tmp_path, adopted):
     # Audit: close must send the schema rule to the reviewer on both adoption paths.
     # A lost rule or exception would silently change review instructions. The live schema
     # case below checks the starter database, not prompt delivery. Only external edges are
@@ -52,10 +51,7 @@ def test_4_review_reports_a_foreign_key_between_business_module_schemas(env, tmp
     ) in " ".join(env.prompt().split())
 
 
-@pytest.mark.platform
-@pytest.mark.timeout(1800)
-@pytest.mark.parametrize("kind", ("react", "python"), ids=("react", "python"))
-def test_4_each_module_keeps_its_tables_in_its_own_schema(
+def _starter_keeps_each_module_tables_in_its_own_schema(
     repo, gh, tmp_path, tmp_path_factory, kind,
 ):
     # Audit: init must deliver each starter's schema migration to a new app. A missing or stale
@@ -72,3 +68,30 @@ def test_4_each_module_keeps_its_tables_in_its_own_schema(
     if LIVE:
         result = live_run(tmp_path_factory) if kind == "react" else live_python_run(tmp_path_factory)
         _require_cases(result["api"], ("each module keeps its tables in its own schema",))
+
+
+@pytest.mark.parametrize(
+    ("scenario", "value"),
+    [
+        pytest.param("review", False, id="review-new-client"),
+        pytest.param("review", True, id="review-adopted-v1.2.2"),
+        pytest.param("schema", "react", marks=(pytest.mark.platform, pytest.mark.timeout(1800)),
+                     id="react"),
+        pytest.param("schema", "python", marks=(pytest.mark.platform, pytest.mark.timeout(1800)),
+                     id="python"),
+    ],
+)
+def test_4_each_module_keeps_its_tables_in_its_own_schema(
+    request, tmp_path, tmp_path_factory, scenario, value,
+):
+    # Audit: one owner covers Done when 4 at both boundaries: starter delivery and review guidance.
+    # The scenarios share the criterion but keep their separate init/schema and close/review paths.
+    if scenario == "review":
+        _review_reports_a_foreign_key_between_business_module_schemas(
+            request.getfixturevalue("env"), tmp_path, value,
+        )
+    else:
+        _starter_keeps_each_module_tables_in_its_own_schema(
+            request.getfixturevalue("repo"), request.getfixturevalue("gh"),
+            tmp_path, tmp_path_factory, value,
+        )

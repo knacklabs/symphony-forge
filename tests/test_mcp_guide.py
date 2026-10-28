@@ -7,6 +7,8 @@ from conftest import ROOT
 from test_setup import LISTED, _fresh_client, _version
 from test_worker import calls, install_claude
 
+STORY = "FORGE-MCP-1"
+
 
 @pytest.mark.platform
 @pytest.mark.parametrize("setup", ["new init", "previous release"])

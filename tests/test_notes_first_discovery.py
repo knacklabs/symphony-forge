@@ -68,8 +68,8 @@ def test_5_the_constitution_starts_with_the_defaults_and_fixed_rules(client, ado
     # Defaults now start before the prototype; approval still happens once after sign-off.
     sentences = (
         "Before the prototype, take the product answers from the client notes: what the app is "
-        "for, who uses it, what it keeps track of with each thing's fields, and the options of "
-        "each choice list.",
+        "for, who uses it, the records and fields it needs, the options of each choice list, and "
+        "the key flows.",
         "After the customer's sign-off and before the first story, finish the app's "
         "constitution in docs/product/CONSTITUTION.md.",
         "At the start, write docs/product/CONSTITUTION.md with every default from Constitution "
@@ -83,6 +83,9 @@ def test_5_the_constitution_starts_with_the_defaults_and_fixed_rules(client, ado
         "## Fixed rules\n"
         "- One app on pnpm and Prisma, split into modules.\n"
         "- Each module owns its tables, in its own schema file.\n"
+        "- Built in: each module keeps its tables in its own Postgres schema, with core tables in "
+        "core; links between business modules store an indexed id without a foreign key, and "
+        "links to core keep their foreign key.\n"
         "- A module uses another module only through its public service, never through its tables.\n"
         "- The tests run Nx's module-boundary lint, so an import across modules fails them."
     )

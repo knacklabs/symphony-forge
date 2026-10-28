@@ -1,0 +1,45 @@
+{
+  "base": "281106209bc4b0d55f310e0f78fe2fb7fb721837",
+  "branch": "fix/full-run-red-guides-and-timings",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17f2b-9bfa-7f43-ac77-8988b184389f",
+    "head": null,
+    "start": "c4c1470dd7cc8528d7693fd67bf51d98d0be3139"
+  },
+  "done_when": "tests/test_tools_guide.py and tests/test_ci_timing_inventory.py pass on this branch: the synced guides match the template and .test_durations names only collected tests",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "12922cd16c55913cb014a780dfdc1a6ebbf0f3bb84d9dc2bf654131cf498db69",
+    "changed": "3e409c0bb72694cba98350abc4afff22f9aab8e818e890677861dc153bb5cf77",
+    "commit": "3604c4396fcfbfe53f21a5c680590428a695f0d4",
+    "dismissals": [],
+    "findings": [],
+    "id": "dbbc8ef0-ba8f-47a3-a071-06409634907b",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T21:01:52.242587+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T21:05:18.605833+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "07822e04dccc482af463c85d2efae0ecad8b8840",
+    "keys": {},
+    "round": null
+  },
+  "why": "The full run on main is red: the checked-in agent guides lag the guide template after the completeness hotfix, and .test_durations names 6 tests the CI fix deleted",
+  "worker": "codex"
+}

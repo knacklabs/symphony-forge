@@ -10,6 +10,9 @@ Test audit:
    unchanged canvas acceptance, or completeness invalidation for app and answer changes alongside
    reuse after other saved-input changes.
 4. Drive `forge decision accept`; replace only Autoreview at its external command boundary.
+
+Completeness now always uses Codex (issue 1159), alongside the working-build review.
+The counts still distinguish reuse from rerunning either check when its inputs change.
 """
 
 from __future__ import annotations
@@ -58,15 +61,15 @@ def _working_signoff_reuses_review_and_check_after_customer_reply(
     reviewed = _accept(repo, fix)
     assert reviewed.returncode == 0, reviewed.stderr
     assert "ask the customer's named person for sign-off" in reviewed.stdout
-    assert _count_engine(queue, "codex") == 1
-    assert _count_engine(queue, "claude") == 1
+    assert _count_engine(queue, "codex") == 2
+    assert _count_engine(queue, "claude") == 0
 
     _reply(page)
     accepted = _accept(repo, fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert _count_engine(queue, "codex") == 1
-    assert _count_engine(queue, "claude") == 1
+    assert _count_engine(queue, "codex") == 2
+    assert _count_engine(queue, "claude") == 0
 
 
 def _working_signoff_repeats_review_when_a_saved_input_changes(
@@ -76,8 +79,8 @@ def _working_signoff_repeats_review_when_a_saved_input_changes(
 
     reviewed = _accept(repo, fix)
     assert reviewed.returncode == 0, reviewed.stderr
-    assert _count_engine(queue, "codex") == 1
-    assert _count_engine(queue, "claude") == 1
+    assert _count_engine(queue, "codex") == 2
+    assert _count_engine(queue, "claude") == 0
 
     if changed_input == "answers":
         updated = answers.replace("Demo workflow: agreed (salesperson",
@@ -113,8 +116,8 @@ def _working_signoff_repeats_review_when_a_saved_input_changes(
     accepted = _accept(repo, fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert _count_engine(queue, "codex") == 2
-    assert _count_engine(queue, "claude") == (2 if changed_input in ("answers", "product") else 1)
+    assert _count_engine(queue, "codex") == (4 if changed_input in ("answers", "product") else 3)
+    assert _count_engine(queue, "claude") == 0
 
 
 def _canvas_signoff_reuses_or_rechecks_completeness(
@@ -127,8 +130,8 @@ def _canvas_signoff_reuses_or_rechecks_completeness(
     checked = _accept(repo, fix)
     assert checked.returncode == 0, checked.stderr
     assert "ask the customer's named person for sign-off" in checked.stdout
-    assert _count_engine(queue, "claude") == 1
-    assert _count_engine(queue, "codex") == 0
+    assert _count_engine(queue, "claude") == 0
+    assert _count_engine(queue, "codex") == 1
 
     if changed_brief:
         brief = fix / "docs/product/BRIEF.md"
@@ -142,8 +145,8 @@ def _canvas_signoff_reuses_or_rechecks_completeness(
     accepted = _accept(repo, fix)
     assert accepted.returncode == 0, accepted.stderr
     assert "status: accepted" in page.read_text("utf-8")
-    assert _count_engine(queue, "claude") == (2 if changed_brief else 1)
-    assert _count_engine(queue, "codex") == 0
+    assert _count_engine(queue, "claude") == 0
+    assert _count_engine(queue, "codex") == (2 if changed_brief else 1)
 
 
 @pytest.mark.parametrize(("check", "args"), [

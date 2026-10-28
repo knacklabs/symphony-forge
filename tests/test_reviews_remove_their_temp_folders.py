@@ -19,8 +19,12 @@ STORY = "FIX-REVIEWS-LEAVE-THEIR-FORGE-REVIEW-TEMPORA"
 
 # Answers as the stub Autoreview does, after what $REVIEW_DO says: "hang" records its id and
 # waits to be stopped; "lock" leaves a folder in the review tree that nobody may write to.
+# Test audit: keep the cleanup and ownership assertions at the real close boundary. These
+# failures came from spawning the stub outside the Windows engine adapter, not from cleanup.
+# Run the stand-in in the helper's process, as the pinned helper runs its engine calls.
+# The existing cases cover the regression; no extra test or production seam is needed.
 HELPER = '''#!{python}
-import os, subprocess, sys, threading
+import os, runpy, threading
 do = os.environ.get("REVIEW_DO", "")
 if do == "hang":
     with open(os.environ["AUTOREVIEW_STUB"] + ".hanging", "w", encoding="utf-8") as out:
@@ -31,7 +35,7 @@ if do == "lock":
     open("locked/inner/file", "w").close()
     os.chmod("locked/inner", 0o500)
     os.chmod("locked", 0o500)
-sys.exit(subprocess.run([sys.executable, {stub!r}, *sys.argv[1:]]).returncode)
+runpy.run_path({stub!r}, run_name="__main__")
 '''
 
 

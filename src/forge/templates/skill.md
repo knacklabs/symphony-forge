@@ -118,6 +118,34 @@ Forge's own repo follows its setting throughout. Never run `gh pr merge`; the ag
 through `forge merge`. Ask one question at a time: a decision gets options with your recommendation
 first, a question of fact gets neutral choices.
 
+## The journey
+
+Every client repo moves through seven steps. `forge next` names the current step in its first line.
+
+1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
+2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
+3. **Canvas design.** You make the screens on a design canvas, which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
+4. **Sign-off.** The client's named person approves the canvas and the answers, and the owner chooses Build now or Later. You can say: "The client approved it; build now" or "The client approved it; build it later".
+5. **Build.** You plan stories and fixes, build each one with its tests and a review, and merge it. You can say: "Build this next: <idea>" or "What is ready to merge?".
+6. **Deploy on Mainline.** When the person asks, you set up Mainline and deploy dev. A person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
+7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
+
+**The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
+
+**The build and review loop.** A worker builds the part and its tests, then a separate review checks the change. A serious problem goes back to the worker for another round. A task gets two review rounds and a fix gets one. At the limit Forge stops and asks the owner, but a P0 problem keeps the loop going. It exists because a reviewer sees problems that the worker cannot see in its own work.
+
+**The CI checks.** GitHub runs the repo's checks on the pull request. Close waits while they are queued or running, and a red check goes back to the worker. They exist because the checks run the tests on a clean machine, the same way for every change.
+
+`forge next` adds one line under each running item that says what it waits on, why and for how long. Give that line to the person when they ask why something takes time.
+
+After `forge init` in a new repo, tell the person the seven steps in one line each, then ask for the first input: the client notes or the idea.
+
+When a person asks what they can do, or seems unsure, run `forge next`, name the current step from its first line, and show that step's "You can say" phrases. Name no commands.
+
+When a Forge command refuses, tell the person in plain words what Forge stopped, why, and the fix that it names. Then do the fix, or ask the choice. When the refusal looks like a Forge fault (a wrong or confusing message, a refusal of a correct step, a crash, or a success that did nothing), say so and offer to file a Forge bug as Reporting a Forge bug, below, says. File it when the person agrees.
+
+Before sign-off FORGE-SIGNOFF-1 adds Build now and Later; until then, record "build it later" with `forge start "Do this later: <the first story's idea>"`.
+
 ## Save decisions and ideas
 
 Understand each human decision, direction and idea. Save each in the same turn;
@@ -940,9 +968,11 @@ separate screen list. Missing screens, fields, options or flows hold sign-off. W
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
 sign-off with the brief and design they have after upgrade and sync; they do not need to add
 prototype design files for this gate.
-The check uses Claude's `claude-opus-5-5` at high effort, independent of `[models.design]`.
-Without Claude it uses Codex's `gpt-6.1-sol` at high and says it fell back.
+The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
+Codex must be installed because only Codex can review the screen images.
+On Windows, large image folders use separate batches to fit the native command line limit.
 Fix gaps, then retry `forge decision accept client-signoff`.
+If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build also gets one strict whole-product
 review with no serious findings. Forge reuses passed results while what they checked stays unchanged.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
