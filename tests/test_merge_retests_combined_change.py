@@ -22,9 +22,10 @@ STORY = "FIX-MERGE-RETESTS-COMBINED-CHANGE"
 # Existing green cases touch separate files and stub the review status as green.
 # Run the real PR check at GitHub's check boundary; reuse the command cases and
 # assert no extra model review. No production seam or second test owner is needed.
-# A green local retest now replaces another CI wait. Keep CI unavailable after
-# close to detect that extra wait, on new and earlier-adopted clients. The real
-# PR check still validates the published review at the merge service boundary.
+# Audit: separate files keep the published head after local combined tests.
+# Shared files require checks on the new head. The old test required no wait
+# even after a push, so it missed GitHub's required-check refusal. Extend this
+# command test with head/check observations at GitHub's edge, without new seams.
 @pytest.mark.parametrize("previous,case,fast", [
     (False, "red", True), (True, "red", True),
     (False, "green", False),
@@ -82,6 +83,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     reviews = len(env.review_calls())
+    original = env.repo.git("rev-parse", "HEAD", cwd=where)
     assert not log.exists()  # CI owns close; merge must explicitly enter the test lane.
     env.repo.git("clone", "-q", remote, str(other))
     if case == "review":
@@ -91,6 +93,11 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
     env.repo.git("push", "-q", "origin", "main", cwd=other)
     advanced = env.repo.git("rev-parse", "main", cwd=remote)
     _github_moves_default(env, False, "CLEAN")
+    # GitHub allows an older head when the up-to-date branch rule is off.
+    stub = (env.repo.bin / "gh").read_text("utf-8")
+    stub = stub.replace('    subprocess.run(["git", "merge-base", "--is-ancestor", marker.read_text(), "FETCH_HEAD"],\n'
+                        '                   cwd=checkout, check=True)\n', '')
+    _install(env.repo.bin, "gh", stub)
     (env.repo.bin / "default-moved").write_text(advanced, encoding="utf-8")
     if case == "review":
         stub = (env.repo.bin / "gh").read_text("utf-8")
@@ -123,6 +130,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
             env.repo.git("add", "left.txt", cwd=where)
         before = env.repo.git("rev-parse", "HEAD", cwd=where)
 
+    before_checks = len(env.gh_calls("api"))
     merged = env.repo.forge("merge", item)
 
     if case.startswith("dirty"):
@@ -164,9 +172,15 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         attempts = env.gh_calls("pr", "merge")
         assert len(attempts) == 1
         published = attempts[0][attempts[0].index("--match-head-commit") + 1]
-        # A records-only commit can carry the unchanged review over the tested merge.
-        assert set(env.repo.git("diff", "--name-only", head, published).splitlines()) <= {
-            ".factory/fixes/tidy-readme.json"}
         if case == "review":
+            assert published != original
+            assert ["api", "--paginate", "--jq", ".check_runs[]",
+                    f"repos/{{owner}}/{{repo}}/commits/{published}/check-runs?per_page=100"] in env.gh_calls("api")[before_checks:]
+            # A records-only commit carries the review over the tested merge.
+            assert set(env.repo.git("diff", "--name-only", head, published).splitlines()) <= {
+                ".factory/fixes/tidy-readme.json"}
             assert "forge-pr-check passed for fix/tidy-readme." in (env.repo.bin / "pr-gate.log").read_text("utf-8")
             assert len(env.review_calls()) == reviews
+        else:
+            assert published == original
+            assert not env.gh_calls("api")[before_checks:]
