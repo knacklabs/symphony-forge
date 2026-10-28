@@ -11,12 +11,27 @@
   "done_when": "tests/conftest.py builds the seed repository and the empty SDK environment once per session and gives each test a private copy, with every test's isolation and the real init and adoption cases kept",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3847e0e0810792d5da1e57ed50bdb3a56faaec294ad7633997aa85ab813618ad",
+    "changed": "32cda11b35d0a6d440ce052eb411d7e33d3e2275f874e34f68f0477d024d87c8",
+    "commit": "2e0113a409eedd711c3dfee32bb22cffa62393be",
+    "dismissals": [],
+    "findings": [],
+    "id": "eee8a942-4828-47f9-adcd-cf64e13a0d32",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T20:34:21.922922+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T20:45:11.180845+00:00",
+      "step": "review"
     }
   ],
   "stuck": {

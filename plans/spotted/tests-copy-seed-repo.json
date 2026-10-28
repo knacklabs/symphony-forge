@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/conftest.py\tNested pytest inherits the outer run's selection options, so filtered runs can select the wrong tests or recurse.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 315,
+      "text": "Nested pytest inherits the outer run's selection options, so filtered runs can select the wrong tests or recurse.",
+      "from": "worker",
+      "item": "FORGE-PACE-1/ROUTING",
+      "status": "done",
+      "closed_by": "tests-copy-seed-repo"
+    },
+    {
+      "key": "bug\ttests/conftest.py\tNot done: a suite regression test for inherited coordinator and Forge defaults\tpin-test-defaults",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 303,
+      "text": "Not done: a suite regression test for inherited coordinator and Forge defaults",
+      "from": "blocking",
+      "item": "pin-test-defaults",
+      "status": "done",
+      "closed_by": "tests-copy-seed-repo"
+    },
+    {
+      "key": "bug\ttests/conftest.py\tNot done: the disappearing-file scan test\tci-npm-and-scan-flakes",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 217,
+      "text": "Not done: the disappearing-file scan test",
+      "from": "blocking",
+      "item": "ci-npm-and-scan-flakes",
+      "status": "done",
+      "closed_by": "tests-copy-seed-repo"
+    },
+    {
+      "key": "bug\ttests/conftest.py\tProcess cleanup can print secret environment values when it reports a leaked process.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 299,
+      "text": "Process cleanup can print secret environment values when it reports a leaked process.",
+      "from": "worker",
+      "item": "windows-rerun-flakes",
+      "status": "done",
+      "closed_by": "tests-copy-seed-repo"
+    },
+    {
+      "key": "bug\ttests/conftest.py\tProcess leak reports can print inherited secrets from the process environment.",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 386,
+      "text": "Process leak reports can print inherited secrets from the process environment.",
+      "from": "worker",
+      "item": "FORGE-ROUNDS-1/STOP",
+      "status": "done",
+      "closed_by": "tests-copy-seed-repo"
+    },
+    {
+      "key": "bug\ttests/conftest.py\tThe live Codex smoke test loses its opt-in in a nested pytest run\tpin-test-defaults",
+      "kind": "bug",
+      "path": "tests/conftest.py",
+      "line": 306,
+      "text": "The live Codex smoke test loses its opt-in in a nested pytest run",
+      "from": "blocking",
+      "item": "pin-test-defaults",
+      "status": "done",
+      "closed_by": "tests-copy-seed-repo"
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tThe baseline profiling run failed when a concurrent merge moved the default branch again, while the after run passed.",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 323,
+      "text": "The baseline profiling run failed when a concurrent merge moved the default branch again, while the after run passed.",
+      "from": "worker",
+      "item": "tests-copy-seed-repo",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
