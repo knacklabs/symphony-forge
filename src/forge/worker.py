@@ -596,8 +596,11 @@ def _brief(match: re.Match[str], top: Path, state: dict[str, Any],
             brief += ("\nApply DESIGN.md's theme tokens, type and colours to the app's theme file"
                       + values["theme_file"] + ".\n")
             if owned_design:
-                brief += (f"Build each screen you touch with the components and fields its section of "
-                          f"`{owned_design}SCREENS.md` lists.\n")
+                brief += (f"Build each screen you touch that is marked Build now at sign-off, or, "
+                          f"until sign-off can mark screens Build now, that your Done-when items "
+                          f"name, with the components and fields its section of "
+                          f"`{owned_design}SCREENS.md` lists. Build nothing for any other screen "
+                          f"or field.\n")
         if match["task"]:
             brief += (f"\nScope: {values['scope']}\nTests: {values['tests']}\n"
                       f"Existing related tests: {values['existing_tests']}.\n")

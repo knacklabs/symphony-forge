@@ -45,8 +45,10 @@ $design_context
 If the app has a DESIGN.md, apply its theme tokens, type and colours to the app's theme file$theme_file.
 <!-- end -->
 <!-- if screen-design -->
-Build each screen you touch with the components and fields its section of
+Build each screen you touch that is marked Build now at sign-off, or, until sign-off can mark
+screens Build now, that your Done-when items name, with the components and fields its section of
 `${design_folder}SCREENS.md` lists.
+Build nothing for any other screen or field.
 <!-- end -->
 
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
@@ -518,6 +520,15 @@ Note anything you spot outside your item instead of fixing it: end a commit mess
 one line each, `Spotted: <bug|simplify|edge|improve> <path>:<line> <one plain sentence>`. Never
 widen this change for one, and never edit the spotted records; Forge keeps them. The one
 exception is a bug that stops your item from working: fix it and name it in your handoff.
+
+Build only what your Done-when items and the story's What changes for you name, and what those
+items cannot work without, such as validation, error and empty states, an index for a listed
+filter, and accessibility basics. When you think of something useful that nothing needs, build
+nothing for it: add one line `- <YYYY-MM-DD>: <the idea in one plain sentence>` at the end of
+`plans/ideas.md` and name it in your handoff. When a review reports `Not needed: <what>` on a large
+addition, remove the addition and add its idea line, or, when a client note, brief answer,
+decision or Build now screen asks for it or a sourced item needs it, add
+`Source: <what>: <where it was asked, or the sourced item that needs it>` to your commit body.
 
 <!-- if standards -->
 ## Standards

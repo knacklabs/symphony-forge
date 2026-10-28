@@ -73,6 +73,14 @@ Raise, under one of these lines:
 - Test: a missing or hollow test for a Done-when item's own behaviour.
 - Moving part: a new dependency, service, datastore, queue, background job or abstraction layer
   that the plan's `New moving parts` line doesn't name or, in a plan, that no Done-when item needs.
+- Not needed: a large addition that no source asks for and that no sourced item needs: a new
+  table, background job, workflow or settings flag, or about 150 lines or more. A source is a
+  client note in
+  `docs/product/DISCOVERY.md`, an answer in `docs/product/BRIEF.md`, a decision in
+  `docs/decisions/`, a screen marked Build now at sign-off, a fixed rule in
+  `docs/product/CONSTITUTION.md`, or the human's own request: a dated source on a plan item, or a
+  fix's Why and Done-when line. An item that has a source needs what it cannot work without. The
+  canvas is not a source.
 - Gate: a P1 this page names elsewhere: a broken Standard, a Promote, the proof list, the
   functional check, the UI skills, an allowance that doesn't match, a file outside Scope the work
   doesn't need, or a weakened test.
@@ -116,6 +124,21 @@ under Security or Data loss, or one that names a migration, keeps its Harm floor
 the work. A check that a Done-when item promises is not added work: report it missing as
 `Not done: <the item>`, which holds the work at any score. Never title an added-work finding
 `Not done`.
+
+Title an addition that no source asks for and that no sourced item needs
+`Not needed: <what was added>`. Write its evidence in plain words for the developer and the client:
+what the change adds, with its file and line or plan item; which sources and sourced items you
+checked and found silent; and the two ways forward: name its source or the sourced item that needs
+it, or remove it and add one line for it to `plans/ideas.md`. Check plans and code against the screens marked Build
+now at sign-off, never against the canvas, which can show later screens. Until sign-off can mark
+screens Build now, the Build now screens are the ones that the story's Done-when items name. What
+the app's fixed rules or the starter already give is not an addition. A large addition goes under
+the Raise line above: say that it is large and why, score it Gain 4, and Work 1 or 2, because
+either way forward is small, so it holds the work, and include `Case: normal use - <the addition>`.
+A smaller addition is advice: in a cold read start it with `Advisory:`, in a review report it as
+P2, and score it Gain 1 or 2. When a source asks for an addition that the work does not need, ask
+whether it can be cut: Is it needed at all? Deleting beats fixing. Report it as advice,
+`Cut or defer: <what>` in a cold read or `Simpler: <what> → cut` in a review, scored Gain 1 or 2.
 
 Prefer one blunt fail-closed rule with one test over listing every case.
 
