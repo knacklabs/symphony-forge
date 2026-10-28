@@ -9,6 +9,10 @@
     {
       "at": "2026-10-28T12:25:14.237229+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-28T13:23:54.197102+00:00",
+      "step": "read"
     }
   ],
   "title": "Log every API request safely in client apps",
