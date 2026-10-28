@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: All concurrent test runs on the machine share one budget of test processes.\tFORGE-BUDGET-1/SHARE",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 473,
+      "text": "Not done: All concurrent test runs on the machine share one budget of test processes.",
+      "from": "blocking",
+      "item": "FORGE-BUDGET-1/SHARE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_lanes_view.py\tGate: update remaining assertions for the process-budget contract\tFORGE-BUDGET-1/SHARE",
+      "kind": "bug",
+      "path": "tests/test_lanes_view.py",
+      "line": 150,
+      "text": "Gate: update remaining assertions for the process-budget contract",
+      "from": "blocking",
+      "item": "FORGE-BUDGET-1/SHARE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_machine_shared_test_budget.py\tGate: preserve unique test criterion keys\tFORGE-BUDGET-1/SHARE",
+      "kind": "bug",
+      "path": "tests/test_machine_shared_test_budget.py",
+      "line": 125,
+      "text": "Gate: preserve unique test criterion keys",
+      "from": "blocking",
+      "item": "FORGE-BUDGET-1/SHARE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
