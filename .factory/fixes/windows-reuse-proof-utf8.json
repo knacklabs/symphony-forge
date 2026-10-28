@@ -1,6 +1,13 @@
 {
   "base": "829bb3379019c1b6d587f41b97961f9ff5e86d03",
   "branch": "fix/windows-reuse-proof-utf8",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18000-96c6-7622-8f89-035d5182fc1d",
+    "head": null,
+    "start": "ba0f219645482f1fc289f42f54252b9bdce21575"
+  },
   "done_when": ".github/reuse-test-proof.py decodes command output as UTF-8, so the tag run's Windows jobs get past the reuse step",
   "fix_kind": "mechanical",
   "kind": "fix",
