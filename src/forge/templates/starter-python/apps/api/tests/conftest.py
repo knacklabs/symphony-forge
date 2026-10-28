@@ -63,16 +63,18 @@ def production_client() -> Iterator[httpx.Client]:
 @asynccontextmanager
 async def agent_client(key: str) -> AsyncIterator[ClientSession]:
     """Connect to the running API through the official MCP Streamable HTTP client."""
-    async with httpx2.AsyncClient(
-        headers={"Authorization": f"Bearer {key}"}, timeout=15
-    ) as connection:
-        async with streamable_http_client(
+    async with (
+        httpx2.AsyncClient(
+            headers={"Authorization": f"Bearer {key}"}, timeout=15
+        ) as connection,
+        streamable_http_client(
             f"{os.environ['API_TEST_URL'].rstrip('/')}/mcp",
             http_client=connection,
-        ) as (read_stream, write_stream):
-            async with ClientSession(read_stream, write_stream) as session:
-                await session.initialize()
-                yield session
+        ) as (read_stream, write_stream),
+        ClientSession(read_stream, write_stream) as session,
+    ):
+        await session.initialize()
+        yield session
 
 
 def add_agent_key(

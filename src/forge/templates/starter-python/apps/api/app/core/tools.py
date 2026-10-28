@@ -71,13 +71,20 @@ class ToolResult:
 
 
 InputT = TypeVar("InputT", bound=BaseModel)
-OutputT = TypeVar("OutputT", bound=BaseModel)
-RowT = TypeVar("RowT", bound=BaseModel)
 RowT_co = TypeVar("RowT_co", bound=BaseModel, covariant=True)
 InputT_contra = TypeVar("InputT_contra", bound=BaseModel, contravariant=True)
 QueryT_contra = TypeVar("QueryT_contra", bound=BaseModel, contravariant=True)
-QueryT = TypeVar("QueryT", bound=BaseModel)
-ModelT = TypeVar("ModelT", bound=BaseModel)
+
+
+class _PagingInfo(Protocol):
+    @property
+    def total(self) -> int: ...
+
+    @property
+    def total_capped(self) -> bool: ...
+
+    @property
+    def next_cursor(self) -> str | None: ...
 
 
 class Paging(Protocol[RowT_co]):
@@ -85,7 +92,7 @@ class Paging(Protocol[RowT_co]):
     def items(self) -> Sequence[RowT_co]: ...
 
     @property
-    def paging(self) -> object: ...
+    def paging(self) -> _PagingInfo: ...
 
 
 class FeatureService(Protocol[InputT_contra, RowT_co, QueryT_contra]):
@@ -190,7 +197,7 @@ def tool_failure(error: ToolError) -> CallToolResult:
     )
 
 
-def define_tool(
+def define_tool[InputT: BaseModel, OutputT: BaseModel](
     name: str,
     permission: str,
     description: str,
@@ -253,7 +260,7 @@ def define_tool(
     return tool
 
 
-def _strict_model(model: type[ModelT]) -> type[ModelT]:
+def _strict_model[ModelT: BaseModel](model: type[ModelT]) -> type[ModelT]:
     config = cast(
         Any,
         {
@@ -436,7 +443,7 @@ def _example_value(field: FieldInfo) -> object:
     return "example"
 
 
-def define_feature_tools(
+def define_feature_tools[InputT: BaseModel, RowT: BaseModel, QueryT: BaseModel](
     *,
     feature: str,
     one: str,
@@ -724,7 +731,7 @@ def define_feature_tools(
         )
 
 
-def _feature_call(
+def _feature_call[InputT: BaseModel, QueryT: BaseModel, RowT: BaseModel](
     action: str,
     *,
     feature: str,
@@ -787,9 +794,9 @@ def _feature_call(
             query = query_model.model_validate(query_values)
             page = feature_service.list(account, query)
             paging = page.paging
-            total = cast(int, getattr(paging, "total"))
-            total_capped = cast(bool, getattr(paging, "total_capped"))
-            next_cursor = cast(str | None, getattr(paging, "next_cursor"))
+            total = paging.total
+            total_capped = paging.total_capped
+            next_cursor = paging.next_cursor
             link_cache: dict[tuple[str, str], str | None] = {}
             items = [
                 _item(
@@ -900,7 +907,7 @@ def _feature_call(
     return call
 
 
-def _item(
+def _item[RowT: BaseModel, InputT: BaseModel](
     row: RowT,
     account: AccountPrincipal,
     context: ToolContext,
