@@ -4,39 +4,22 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Build, fix and lite start at low effort by default: Codex gpt-6.1-sol at low and Claude claude-sonnet-5-5 at low.
+- A round after a verified failure (red tests, a blocking review finding or a failed check) runs at the top effort: Codex high, Claude xhigh.
+- A repo's own model choices stay; only the effort changes from round to round, in codex, claude and split worker modes, by the tool that runs the round.
+- Reviews, cold reads and sign-off keep their fixed effort; in Claude-only repos, cold reads and reviews default to claude-sonnet-5-5 at high instead of Opus.
 
 ## Why
 
-Build and fix rounds raise their effort after a failure
-
-
+Build and fix rounds run at one fixed effort, so a retry after a failure gets no more reasoning than the attempt that failed, while every first attempt pays for the higher effort.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A first build, fix or lite round runs at low effort, and a round after a failed test, blocking review finding or failed check runs at the top effort, in codex, claude and split modes.**
+2. **A repo's own model choices stay, and only the effort changes from round to round.**
+3. **Reviews, cold reads and sign-off keep their fixed effort.**
+4. **In a Claude-only repo, cold reads and reviews run on claude-sonnet-5-5 at high effort, not Opus.**
+5. **Each round's run record shows its effort and round number, so a week of cost and round counts can be compared.**
 
 ## Risks
 
