@@ -182,7 +182,7 @@ def _add_live_money_case(client: Path, starter: str) -> None:
         assert source.count(anchor) == 1
         path.write_text(source.replace(anchor, anchor + "\n" + case, 1), encoding="utf-8")
     else:
-        imports = "from test_api import credentials, sign_up"
+        imports = "from test_invites import invite"
         assert imports in source
         source = source.replace(imports, imports + "\nfrom test_soft_delete import psql", 1)
         case = r'''
