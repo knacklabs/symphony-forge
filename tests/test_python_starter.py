@@ -1,4 +1,8 @@
-"""The Python starter starts through Forge and keeps the API and web app aligned."""
+"""The Python starter starts through Forge and keeps the API and web app aligned.
+
+Python dependency contracts: src/forge/templates/starter-python/apps/api/pyproject.toml
+and src/forge/templates/starter-python/apps/api/uv.lock.
+"""
 import ast
 import json
 import os
@@ -39,7 +43,7 @@ API_SECURITY_TESTS = (
 )
 PYTHON_PACKAGES = {
     "fastapi", "pydantic", "sqlalchemy", "alembic", "uvicorn", "psycopg",
-    "pytest", "httpx", "import-linter", "ruff", "mypy",
+    "pytest", "httpx", "import-linter", "ruff", "mypy", "mcp",
 }
 PYTHON_GUIDANCE = (
     "forge init --starter python",

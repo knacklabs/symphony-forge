@@ -1,7 +1,7 @@
 import base64
 import binascii
 import json
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid7
@@ -125,9 +125,19 @@ _STORED_FIELDS = tuple(
 
 
 class ProjectService:
-    def __init__(self, db: DbSession) -> None:
+    def __init__(
+        self,
+        db: DbSession,
+        # forge:feature:mcp:start
+        *,
+        after_create: Callable[[DbSession, UUID], None] | None = None,
+        # forge:feature:mcp:end
+    ) -> None:
         self.db = db
         self.history = HistoryService(db)
+        # forge:feature:mcp:start
+        self.after_create = after_create
+        # forge:feature:mcp:end
 
     def _responses(self, projects: Sequence[ProjectModel]) -> list[Project]:
         """Auth owns the accounts, so their emails come through its public service."""
@@ -287,6 +297,10 @@ class ProjectService:
             "Created the project",
             Subject(project.id, project.name),
         )
+        # forge:feature:mcp:start
+        if self.after_create is not None:
+            self.after_create(self.db, project.id)
+        # forge:feature:mcp:end
         self.db.commit()
         self.db.refresh(project)
         return self._response(project)
@@ -296,14 +310,16 @@ class ProjectService:
     ) -> Project:
         project = self._live(account, project_id)
         summary = _change_summary(project, input_data)
+        # forge:feature:mcp:start
+        if not summary:
+            return self._response(project)
+        # forge:feature:mcp:end
         project.name = input_data.name
         project.status = input_data.status
         project.modified_by_account_id = account.id
-        # A replace that changes no field adds no history row.
-        if summary:
-            self.history.record(
-                account, "project.changed", summary, Subject(project.id, project.name)
-            )
+        self.history.record(
+            account, "project.changed", summary, Subject(project.id, project.name)
+        )
         self.db.commit()
         self.db.refresh(project)
         return self._response(project)

@@ -30,8 +30,16 @@ class ProjectStatus(StrEnum):
 
 class ProjectInput(ProjectSchema):
     # forge:feature:input-fields:start
-    name: str = Field(min_length=1, max_length=120)
-    status: ProjectStatus
+    name: str = Field(
+        min_length=1,
+        max_length=120,
+        description="The project's name.",
+        examples=["Quarterly planning"],
+    )
+    status: ProjectStatus = Field(
+        description="Whether the project is active or archived.",
+        examples=["active"],
+    )
     # forge:feature:input-fields:end
 
 
@@ -60,9 +68,18 @@ CURSOR_PATTERN = r"^[A-Za-z0-9_-]{1,2048}$"
 class ProjectExportQuery(ProjectSchema):
     """The list's search and filter, so the export downloads what the list shows."""
 
-    search: str | None = Field(default=None, max_length=200)
+    search: str | None = Field(
+        default=None,
+        max_length=200,
+        description="Text to find in project names.",
+        examples=["Quarterly planning"],
+    )
     # forge:feature:filter-fields:start
-    status: ProjectStatus | None = None
+    status: ProjectStatus | None = Field(
+        default=None,
+        description="Only include projects with this status.",
+        examples=["active"],
+    )
     # forge:feature:filter-fields:end
     deleted: Literal["yes"] | None = Field(
         default=None,

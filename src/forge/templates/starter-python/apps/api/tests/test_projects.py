@@ -8,6 +8,7 @@ status filter. All data enters through HTTP against the running app and database
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
+from uuid import uuid4
 
 import httpx
 from test_api import credentials, sign_up
@@ -464,3 +465,332 @@ def test_an_admin_restores_a_deleted_project(client: httpx.Client) -> None:
     seen = client.get(path)
     assert seen.status_code == 200, seen.text
     assert seen.json()["data"]["deletedAtUtc"] is not None
+
+
+# forge:feature:mcp:start
+MCP_FEATURE = "projects"
+MCP_TOOL_PREFIX = "projects"
+MCP_SINGULAR = "project"
+MCP_ID_FIELD = "project_id"
+MCP_SEARCH_FIELD = "query"
+MCP_NAME_FIELD = "name"
+MCP_BAD_VALUE = ""
+MCP_LINKS: dict[str, tuple[str, str]] = {}
+
+
+def _mcp_payload(
+    client: httpx.Client, csrf: str, *, changed: bool = False
+) -> dict[str, object]:
+    # forge:feature:mcp-input:start
+    return {
+        "name": f"Agent project {uuid4().hex[:8]}{' changed' if changed else ''}",
+        "status": "archived" if changed else "active",
+    }
+    # forge:feature:mcp-input:end
+
+
+def _mcp_agent(
+    client: httpx.Client, csrf: str, role: str
+) -> tuple[dict[str, object], str]:
+    from conftest import add_agent_key
+
+    return add_agent_key(client, csrf, f"agent-{uuid4().hex[:8]}", role)
+
+
+def _mcp_error(result: object) -> dict[str, object]:
+    from mcp.types import CallToolResult
+
+    assert isinstance(result, CallToolResult)
+    structured = result.structured_content
+    assert isinstance(structured, dict)
+    error = structured["error"]
+    assert isinstance(error, dict)
+    return error
+
+
+def test_an_agent_searches_reads_creates_and_updates_projects_through_mcp_as_its_account(
+    client: httpx.Client,
+) -> None:
+    # Audit: protects tool names, concise and detailed results, and agent attribution through the
+    # real MCP transport. REST cases do not call these tools; generated feature tests copy this
+    # boundary case with field-based payloads. No production test seam.
+    owner, csrf = sign_up(client)
+    agent, key = _mcp_agent(client, csrf, "member")
+
+    async def use_tools() -> str:
+        from conftest import agent_client
+
+        async with agent_client(key) as session:
+            tools = (await session.list_tools()).tools
+            project_tools = {
+                tool.name
+                for tool in tools
+                if tool.name.startswith(f"{MCP_TOOL_PREFIX}_")
+            }
+            assert project_tools == {
+                f"{MCP_TOOL_PREFIX}_search",
+                f"{MCP_TOOL_PREFIX}_get",
+                f"{MCP_TOOL_PREFIX}_create",
+                f"{MCP_TOOL_PREFIX}_update",
+            }
+            valid = _mcp_payload(client, csrf)
+            created = await session.call_tool(f"{MCP_TOOL_PREFIX}_create", valid)
+            assert created.is_error is False
+            assert created.structured_content is not None
+            project_id = created.structured_content[MCP_ID_FIELD]
+            assert created.structured_content[MCP_NAME_FIELD] == valid[MCP_NAME_FIELD]
+            assert created.structured_content.get("status_label")
+            assert "created_by_email" not in created.structured_content
+            # Linked ids retain their public display names in the concise MCP response.
+            for field, (target, label) in MCP_LINKS.items():
+                linked_id = valid[field]
+                name_field = field.removesuffix("_id") + "_name"
+                if linked_id is None:
+                    assert created.structured_content[name_field] is None
+                else:
+                    linked = client.get(f"/api/v1/{target}/{linked_id}")
+                    assert linked.status_code == 200, linked.text
+                    assert (
+                        created.structured_content[name_field]
+                        == linked.json()["data"][label]
+                    )
+
+            bad = _mcp_payload(client, csrf)
+            bad[MCP_NAME_FIELD] = MCP_BAD_VALUE
+            invalid = await session.call_tool(f"{MCP_TOOL_PREFIX}_create", bad)
+            assert invalid.is_error is True
+            invalid_error = _mcp_error(invalid)
+            assert invalid_error["kind"] == "invalid_input"
+            assert invalid_error["retryable"] is False
+            assert MCP_NAME_FIELD in str(invalid_error["details"])
+            message = invalid_error["message"]
+            assert isinstance(message, str)
+            assert "Example:" in message
+
+            fetched = await session.call_tool(
+                f"{MCP_TOOL_PREFIX}_get", {MCP_ID_FIELD: project_id}
+            )
+            assert fetched.is_error is False
+            assert fetched.structured_content is not None
+            assert fetched.structured_content[MCP_ID_FIELD] == project_id
+            assert fetched.structured_content[MCP_NAME_FIELD] == valid[MCP_NAME_FIELD]
+            assert fetched.structured_content.get("status_label")
+            assert "created_by_email" not in fetched.structured_content
+
+            detailed = await session.call_tool(
+                f"{MCP_TOOL_PREFIX}_get",
+                {MCP_ID_FIELD: project_id, "response_format": "detailed"},
+            )
+            assert detailed.structured_content is not None
+            assert detailed.structured_content["created_by_email"] == agent["email"]
+
+            found = await session.call_tool(
+                f"{MCP_TOOL_PREFIX}_search", {MCP_SEARCH_FIELD: valid[MCP_NAME_FIELD]}
+            )
+            assert found.is_error is False
+            assert found.structured_content is not None
+            item = found.structured_content["items"][0]
+            assert item[MCP_ID_FIELD] == project_id
+            assert item[MCP_NAME_FIELD] == valid[MCP_NAME_FIELD]
+            assert item.get("status_label")
+            assert "created_by_email" not in item
+
+            full = await session.call_tool(
+                f"{MCP_TOOL_PREFIX}_search",
+                {
+                    MCP_SEARCH_FIELD: valid[MCP_NAME_FIELD],
+                    "response_format": "detailed",
+                },
+            )
+            assert full.structured_content is not None
+            assert (
+                full.structured_content["items"][0]["created_by_email"]
+                == agent["email"]
+            )
+
+            changed = _mcp_payload(client, csrf, changed=True)
+            updated = await session.call_tool(
+                f"{MCP_TOOL_PREFIX}_update", {MCP_ID_FIELD: project_id, **changed}
+            )
+            assert updated.is_error is False
+            assert updated.structured_content is not None
+            assert updated.structured_content.get("status_label")
+            return str(project_id)
+
+    import asyncio
+
+    project_id = asyncio.run(use_tools())
+    changes = client.get(f"/api/v1/{MCP_FEATURE}/{project_id}/changes")
+    assert changes.status_code == 200, changes.text
+    assert [entry["actorEmail"] for entry in changes.json()["data"]] == [
+        agent["email"],
+        agent["email"],
+    ]
+    history = client.get("/api/v1/history").json()["data"]
+    summaries = [
+        entry["summary"] for entry in history if entry["actorEmail"] == agent["email"]
+    ]
+    assert any(summary.endswith(f"Created the {MCP_SINGULAR}") for summary in summaries)
+    assert any(" changed from " in summary for summary in summaries)
+    assert owner["email"] not in {
+        entry["actorEmail"] for entry in changes.json()["data"]
+    }
+
+
+def test_a_member_agent_cannot_delete_or_restore_a_project_through_mcp(
+    client: httpx.Client,
+) -> None:
+    # Audit: protects role filtering and the call boundary after the switch is enabled. Existing
+    # REST permission tests do not prove the tools/list and tools/call policy. No production seam.
+    _, csrf = sign_up(client)
+    _, key = _mcp_agent(client, csrf, "member")
+    with joined_member(client, csrf) as member:
+        me = member.get("/api/v1/auth/me")
+        assert me.status_code == 200, me.text
+        permissions = set(me.json()["data"]["permissions"])
+    tool_permissions = {
+        "search": "view",
+        "get": "view",
+        "create": "create",
+        "update": "edit",
+        "delete": "delete",
+        "restore": "restore",
+    }
+    enabled = client.put(
+        f"/api/v1/agent-tools/{MCP_FEATURE}",
+        headers={"x-csrf-token": csrf},
+        json={"deleteAndRestore": True},
+    )
+    assert enabled.status_code == 200, enabled.text
+    created_response = client.post(
+        f"/api/v1/{MCP_FEATURE}",
+        headers={"x-csrf-token": csrf},
+        json=_mcp_payload(client, csrf),
+    )
+    assert created_response.status_code == 201, created_response.text
+    project_id = created_response.json()["data"]["id"]
+
+    async def denied() -> None:
+        from conftest import agent_client
+
+        async with agent_client(key) as session:
+            names = {
+                tool.name
+                for tool in (await session.list_tools()).tools
+                if tool.name.startswith(f"{MCP_TOOL_PREFIX}_")
+            }
+            assert names == {
+                f"{MCP_TOOL_PREFIX}_{action}"
+                for action, permission in tool_permissions.items()
+                if f"{MCP_FEATURE}.{permission}" in permissions
+            }
+            for action in ("delete", "restore"):
+                if f"{MCP_FEATURE}.{action}" in permissions:
+                    continue
+                refused = await session.call_tool(
+                    f"{MCP_TOOL_PREFIX}_{action}", {MCP_ID_FIELD: project_id}
+                )
+                assert refused.is_error is True
+                error = _mcp_error(refused)
+                assert error["kind"] == "not_allowed"
+                assert error["retryable"] is False
+
+    import asyncio
+
+    asyncio.run(denied())
+    kept = client.get(f"/api/v1/{MCP_FEATURE}/{project_id}")
+    assert kept.status_code == 200, kept.text
+    assert kept.json()["data"]["deletedAtUtc"] is None
+
+
+def test_project_delete_and_restore_tools_stay_off_until_an_admin_turns_them_on(
+    client: httpx.Client,
+) -> None:
+    # Audit: protects the off-by-default switch, role-filtered tool list, idempotent soft delete
+    # and restore, and project change history at the running API. REST-only tests miss MCP policy.
+    _, csrf = sign_up(client)
+    agent, key = _mcp_agent(client, csrf, "admin")
+
+    async def admin_tools() -> str:
+        from conftest import agent_client
+
+        async with agent_client(key) as session:
+            expected = {
+                f"{MCP_TOOL_PREFIX}_search",
+                f"{MCP_TOOL_PREFIX}_get",
+                f"{MCP_TOOL_PREFIX}_create",
+                f"{MCP_TOOL_PREFIX}_update",
+            }
+            before = {
+                tool.name
+                for tool in (await session.list_tools()).tools
+                if tool.name.startswith(f"{MCP_TOOL_PREFIX}_")
+            }
+            assert before == expected
+            created = await session.call_tool(
+                f"{MCP_TOOL_PREFIX}_create", _mcp_payload(client, csrf)
+            )
+            assert created.is_error is False
+            assert created.structured_content is not None
+            project_id = created.structured_content[MCP_ID_FIELD]
+            refused = await session.call_tool(
+                f"{MCP_TOOL_PREFIX}_delete", {MCP_ID_FIELD: project_id}
+            )
+            assert refused.is_error is True
+            error = _mcp_error(refused)
+            assert error["kind"] == "not_allowed"
+            assert error["retryable"] is False
+
+            enabled = client.put(
+                f"/api/v1/agent-tools/{MCP_FEATURE}",
+                headers={"x-csrf-token": csrf},
+                json={"deleteAndRestore": True},
+            )
+            assert enabled.status_code == 200, enabled.text
+            on = {
+                tool.name
+                for tool in (await session.list_tools()).tools
+                if tool.name.startswith(f"{MCP_TOOL_PREFIX}_")
+            }
+            assert on == expected | {
+                f"{MCP_TOOL_PREFIX}_delete",
+                f"{MCP_TOOL_PREFIX}_restore",
+            }
+            for action in ("delete", "delete", "restore", "restore"):
+                result = await session.call_tool(
+                    f"{MCP_TOOL_PREFIX}_{action}", {MCP_ID_FIELD: project_id}
+                )
+                assert result.is_error is False
+
+            disabled = client.put(
+                f"/api/v1/agent-tools/{MCP_FEATURE}",
+                headers={"x-csrf-token": csrf},
+                json={"deleteAndRestore": False},
+            )
+            assert disabled.status_code == 200, disabled.text
+            off = {
+                tool.name
+                for tool in (await session.list_tools()).tools
+                if tool.name.startswith(f"{MCP_TOOL_PREFIX}_")
+            }
+            assert off == expected
+            return str(project_id)
+
+    import asyncio
+
+    project_id = asyncio.run(admin_tools())
+    changes = client.get(f"/api/v1/{MCP_FEATURE}/{project_id}/changes")
+    assert changes.status_code == 200, changes.text
+    actions = [
+        entry
+        for entry in changes.json()["data"]
+        if entry["summary"]
+        in {f"Deleted the {MCP_SINGULAR}", f"Restored the {MCP_SINGULAR}"}
+    ]
+    assert [(entry["actorEmail"], entry["summary"]) for entry in actions] == [
+        (agent["email"], f"Restored the {MCP_SINGULAR}"),
+        (agent["email"], f"Deleted the {MCP_SINGULAR}"),
+    ]
+
+
+# forge:feature:mcp:end

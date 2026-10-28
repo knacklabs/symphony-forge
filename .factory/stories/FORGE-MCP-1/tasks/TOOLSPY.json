@@ -1,0 +1,95 @@
+{
+  "allow_large": "The owner allowed every FEATURE-1, MCP-1 and MCPRES-1 part to go over the line limit",
+  "base": "d0e5f7838ea7eb0c40256fe6a897fc096fac0f43",
+  "branch": "task/FORGE-MCP-1-TOOLSPY",
+  "chat": {
+    "approval": "1f115deaacad6f96cad786da78b6bc3172cc164cd891d26f118e71c6b3381bdf",
+    "claude": null,
+    "conversation": "01a18052-d76d-78d2-b1a1-89983813bb74",
+    "head": null,
+    "start": "5ef4a7a78cea320aa4336312cfccff1627e29f75"
+  },
+  "known": [
+    {
+      "area": "_write() in src/forge/feature.py",
+      "file": "src/forge/feature.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 275,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Pass feature state into the extracted writer",
+      "work": 2
+    },
+    {
+      "area": "_mcp_case_source() in src/forge/feature_python_tests.py",
+      "file": "src/forge/feature_python_tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 116,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: generated Python MCP cases must honor feature permissions",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eea2a37b88e9ccd4764ff5dadab0b11ee9e34915b49c5671e8de117763ec6740",
+    "changed": "e7763d14311f3cfa438480ee54be3a46cae18dcf156f0eaeceee4488f488c23c",
+    "commit": "738d2b22a7ba2ffa2a69cdd837e932aee1dd98e5",
+    "dismissals": [],
+    "findings": [],
+    "id": "e94291d8-af1a-4f1d-bce3-e37c7a099c66",
+    "status": "clean"
+  },
+  "round": 7,
+  "stacked_on": "FORGE-FEATURE-1/PY",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T02:23:37.185339+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T03:09:51.843640+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T03:16:36.478935+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T04:17:02.821573+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T04:23:16.373832+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T04:32:05.562524+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T04:43:49.449365+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T05:55:51.276253+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b32b0800-7e16-4ccd-a948-1c2b048b4c5e",
+    "head": "1adacd50e7200db643676c2d0890575e87118215",
+    "keys": {},
+    "round": 6
+  },
+  "worker": "codex"
+}

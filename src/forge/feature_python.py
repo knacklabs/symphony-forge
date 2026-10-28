@@ -39,7 +39,12 @@ def _literal(value: Any) -> str:
 
 
 def _replace_mark(text: str, name: str, body: str) -> str:
-    matches = [match for match in MARKER.finditer(text) if match["name"] == name]
+    marker = re.compile(
+        rf"(?P<indent>^[ \t]*)# forge:feature:{re.escape(name)}:start\n"
+        rf".*?^[ \t]*# forge:feature:{re.escape(name)}:end\n?",
+        re.M | re.S,
+    )
+    matches = list(marker.finditer(text))
     if len(matches) != 1:
         raise ValueError(f"The Python projects starter needs one {name} feature marker.")
     match = matches[0]
@@ -52,9 +57,19 @@ def _remove_marks(text: str) -> str:
     return re.sub(r"^[ \t]*# forge:feature:[\w-]+:(?:start|end)\n", "", text, flags=re.M)
 
 
+def _feature_mcp(text: str, include: bool) -> str:
+    """Keep MCP-only code for a starter that ships the server."""
+    matches = [match for match in MARKER.finditer(text) if match["name"] in {"mcp", "mcp-cases"}]
+    for match in reversed(matches):
+        lines = match.group(0).splitlines(keepends=True)
+        replacement = "".join(lines[1:-1]) if include else ""
+        text = text[: match.start()] + replacement + text[match.end() :]
+    return text
+
+
 def _python_rename(text: str, one: str, plural: str) -> str:
     module, singular = _snake(plural), _snake(one)
-    text = text.replace("PROJECT_PERMISSIONS", module.upper() + "_PERMISSIONS")
+    text = text.replace("PROJECT_PERMISSIONS", singular.upper() + "_PERMISSIONS")
     text = text.replace("PROJECT_CSV_COLUMNS", module.upper() + "_CSV_COLUMNS")
     for old, new in (
         ("PROJECTS", module.upper()),
@@ -273,6 +288,14 @@ def _schema_source(
     for field in fields:
         kind, attr = field["kind"], _field_attr(field)
         optional = field.get("optional", False) and kind != "yes-no"
+        definition = definitions[kind]
+        sample = definition["sample"]
+        if kind == "status" and sample not in field["options"]:
+            sample = field["options"][0]
+        metadata = [
+            f"description={_literal(_words(field['name']) + '.')}",
+            f"examples=[{_literal(sample)}]",
+        ]
         constraints = []
         if kind == "text":
             constraints.extend(["min_length=1", "max_length=200"])
@@ -286,23 +309,24 @@ def _schema_source(
             constraints.extend(["ge=-2147483648", "le=2147483647"])
         if kind == "status":
             suffix = " | None" if optional else ""
-            default = " = None" if optional else f" = {_literal(field['options'][0])}"
+            default = "default=None" if optional else f"default={_literal(field['options'][0])}"
             input_fields.append(f"{attr}: Literal[")
             input_fields.extend(f"    {_literal(value)}," for value in field["options"])
-            input_fields.append(f"]{suffix}{default}")
+            input_fields.append(
+                f"]{suffix} = Field({default}, " + ", ".join(metadata) + ")"
+            )
         else:
             type_name = definitions[kind]["pydantic"]
             if optional:
                 type_name += " | None"
-            if constraints:
-                input_fields.append(f"{attr}: {type_name} = Field(")
-                if optional:
-                    input_fields.append("    default=None,")
-                input_fields.extend(f"    {constraint}," for constraint in constraints)
-                input_fields.append(")")
-            else:
-                default = " = None" if optional else " = False" if kind == "yes-no" else ""
-                input_fields.append(f"{attr}: {type_name}{default}")
+            arguments = metadata + constraints
+            if optional:
+                arguments.insert(0, "default=None")
+            elif kind == "yes-no":
+                arguments.insert(0, "default=False")
+            input_fields.append(f"{attr}: {type_name} = Field(")
+            input_fields.extend(f"    {argument}," for argument in arguments)
+            input_fields.append(")")
     response_fields = []
     for field in fields:
         kind, attr = field["kind"], _field_attr(field)
@@ -498,12 +522,12 @@ def downgrade() -> None:
     return revision + ".py", source
 
 
-def _permissions_source(plural: str) -> str:
+def _permissions_source(one: str, plural: str) -> str:
     template = (STARTER_PYTHON / "apps/api/app/projects/permissions.py").read_text(
         encoding="utf-8"
     )
     template = template.replace('"projects"', "@@FEATURE_SLUG@@")
-    return _remove_marks(_python_rename(template, plural, plural)).replace(
+    return _remove_marks(_python_rename(template, one, plural)).replace(
         "@@FEATURE_SLUG@@", _literal(plural)
     )
 
@@ -574,15 +598,23 @@ def _routes_source(
     return _remove_marks(template)
 
 
-def _module_source(one: str, plural: str) -> str:
+def _module_source(one: str, plural: str, *, include_mcp: bool) -> str:
     template = (STARTER_PYTHON / "apps/api/app/projects/__init__.py").read_text(
         encoding="utf-8"
     )
-    return _remove_marks(_python_rename(template, one, plural))
+    template = _python_rename(template, one, plural)
+    tools_import = (
+        f"from app.{_snake(plural)}.tools import register_tools\nregister_tools()"
+        if include_mcp
+        else ""
+    )
+    template = _replace_mark(template, "tools", tools_import)
+    return _remove_marks(template)
 
 
 def _service_source(
-    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any], root: Path
+    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any], root: Path,
+    *, include_mcp: bool,
 ) -> str:
     model, module = _pascal(one), _snake(plural)
     definitions = kinds["kinds"]
@@ -705,7 +737,7 @@ def _service_source(
         "import base64",
         "import binascii",
         "import json",
-        "from collections.abc import Sequence",
+        "from collections.abc import Callable, Sequence" if include_mcp else "from collections.abc import Sequence",
         "from datetime import UTC, datetime" + (", date" if search_import else ""),
         "from decimal import Decimal, InvalidOperation" if "decimal" in sort_types.values() else None,
         "from typing import Any, NoReturn",
@@ -719,7 +751,7 @@ def _service_source(
         "from app.history import HistoryEntry, HistoryService, Subject",
         *links,
         f"from app.{module}.models import {model} as Model",
-        f"from app.{module}.permissions import {module.upper()}_PERMISSIONS",
+        f"from app.{module}.permissions import {_snake(one).upper()}_PERMISSIONS",
         f"from app.{module}.schema import (",
         f"    {model},",
         f"    {model}ExportQuery,",
@@ -817,9 +849,18 @@ def _filters(account: AccountPrincipal, query: {model}ExportQuery) -> list[Any]:
 
 
 class {model}Service:
-    def __init__(self, db: DbSession) -> None:
+    def __init__(
+        self,
+        db: DbSession,
+        # forge:feature:mcp:start
+        after_create: Callable[[DbSession, UUID], None] | None = None,
+        # forge:feature:mcp:end
+    ) -> None:
         self.db = db
         self.history = HistoryService(db)
+        # forge:feature:mcp:start
+        self.after_create = after_create
+        # forge:feature:mcp:end
 
     def _responses(self, items: Sequence[Model]) -> list[{model}]:
         emails = account_emails(
@@ -1000,6 +1041,10 @@ class {model}Service:
             "Created the {one}",
             Subject(item.id, getattr(item, NAME_ATTRIBUTE)),
         )
+        # forge:feature:mcp:start
+        if self.after_create is not None:
+            self.after_create(self.db, item.id)
+        # forge:feature:mcp:end
         self.db.commit()
         self.db.refresh(item)
         return self._response(item)
@@ -1010,6 +1055,10 @@ class {model}Service:
         self._check_links(account, input_data)
         item = self._live(account, item_id)
         summary = _change_summary(item, input_data)
+        # forge:feature:mcp:start
+        if not summary:
+            return self._response(item)
+        # forge:feature:mcp:end
 {update_fields}
         item.modified_by_account_id = account.id
         if summary:
@@ -1055,7 +1104,7 @@ class {model}Service:
     def _not_found() -> ApiError:
         return ApiError(404, "{error_code}_NOT_FOUND", "The {one} was not found.")
 '''
-    return source.format(
+    rendered = source.format(
         imports="\n".join(import_lines), sort_columns=sort_map,
         sort_attributes=sort_attrs, nullable=nullable_set,
         field_labels=labels_source, name_attr=_literal(_field_attr(name_field)),
@@ -1065,9 +1114,10 @@ class {model}Service:
         ),
         search_clause=search_clause, filter_body="\n".join(filter_lines),
         link_body=link_body, create_fields=data_fields, update_fields=assigns,
-        module=module, one=one.replace("-", " "), permission=module.upper() + "_PERMISSIONS",
+        module=module, one=one.replace("-", " "), permission=_snake(one).upper() + "_PERMISSIONS",
         error_code=_snake(one).upper(),
     )
+    return _feature_mcp(rendered, include_mcp)
 
 
 def render_feature_python(
@@ -1076,25 +1126,30 @@ def render_feature_python(
     plural: str,
     kinds: dict[str, Any],
     root: Path,
+    *, include_mcp: bool = True,
 ) -> dict[str, str]:
     from forge.feature_python_contracts import render_python_contracts
     from forge.feature_python_tests import render_python_tests
+    from forge.feature_python_tools import render_feature_tools
 
     module = _snake(plural)
     migration_name, migration = _migration_source(fields, one, plural, kinds, root)
     api = f"apps/api/app/{module}"
-    return {
-        f"{api}/__init__.py": _module_source(one, plural),
+    files = {
+        f"{api}/__init__.py": _module_source(one, plural, include_mcp=include_mcp),
         f"{api}/models.py": _model_source(fields, one, plural, kinds),
         f"{api}/schema.py": _schema_source(fields, one, plural, kinds),
-        f"{api}/service.py": _service_source(fields, one, plural, kinds, root),
+        f"{api}/service.py": _service_source(fields, one, plural, kinds, root, include_mcp=include_mcp),
         f"{api}/routes.py": _routes_source(fields, one, plural, kinds),
-        f"{api}/permissions.py": _permissions_source(plural),
+        f"{api}/permissions.py": _permissions_source(one, plural),
         f"apps/api/migrations/versions/{migration_name}": migration,
         f"apps/api/tests/test_{module}.py": render_python_tests(
-            fields, one, plural, kinds, root
+            fields, one, plural, kinds, root, include_mcp=include_mcp
         ),
         f"libs/{plural}/contracts/src/index.ts": render_python_contracts(
             fields, one, plural, kinds
         ),
     }
+    if include_mcp:
+        files[f"{api}/tools.py"] = render_feature_tools(fields, one, plural, kinds, root)
+    return files

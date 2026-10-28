@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import FileResponse, HTMLResponse
+from starlette.routing import Route
 
 from app.auth import router as auth_router
 from app.core import (
@@ -18,6 +19,7 @@ from app.core import (
     load_settings,
 )
 from app.history import router as history_router
+from app.mcp import McpEndpoint, create_session_manager
 from app.organisations import router as organisations_router
 from app.projects import router as projects_router
 
@@ -29,7 +31,10 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     application.state.settings = settings
     application.state.session_factory = session_factory
     try:
-        yield
+        manager = create_session_manager()
+        application.state.mcp_manager = manager
+        async with manager.run():
+            yield
     finally:
         engine.dispose()
 
@@ -49,6 +54,8 @@ app.include_router(history_router)
 app.include_router(error_report_router)
 install_error_handlers(app)
 install_security_middleware(app)
+app.router.routes.append(Route("/mcp", endpoint=McpEndpoint()))
+app.router.routes.append(Route("/mcp/", endpoint=McpEndpoint()))
 
 
 @app.get("/api/docs", include_in_schema=False)
@@ -97,8 +104,8 @@ def web_app(request: Request, path: str) -> FileResponse:
             accepts_html = True
     if (
         accepts_html
-        and not path.startswith(("api/", "health/"))
-        and path not in {"api", "health"}
+        and not path.startswith(("api/", "health/", "mcp/"))
+        and path not in {"api", "health", "mcp"}
     ):
         return FileResponse(web_root / "index.html")
     raise HTTPException(status_code=404)

@@ -94,6 +94,91 @@ def _sample_values(
     return sample, changed
 
 
+def _mcp_case_source(
+    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any],
+    linked_fields: dict[str, tuple[dict[str, Any], ...]],
+) -> str:
+    from forge.feature_python import _python_rename
+
+    template = (Path(__file__).parent / "templates/starter-python/apps/api/tests/test_projects.py").read_text(
+        encoding="utf-8"
+    )
+    marker = re.compile(
+        r"(?P<indent>^[ \t]*)# forge:feature:mcp:start\n"
+        r".*?^[ \t]*# forge:feature:mcp:end\n?",
+        re.M | re.S,
+    )
+    matches = list(marker.finditer(template))
+    if len(matches) != 1:
+        raise ValueError("The Python projects tests need one mcp feature marker.")
+    lines = matches[0].group(0).splitlines(keepends=True)
+    source = "".join(lines[1:-1])
+    source = _python_rename(source, one, plural)
+    # Generated features can restrict Members; Admin still exercises successful CRUD.
+    source = source.replace(
+        'agent, key = _mcp_agent(client, csrf, "member")',
+        'agent, key = _mcp_agent(client, csrf, "admin")',
+        1,
+    )
+    specs = _field_specs(fields, kinds)
+    name_field = next(
+        field for field in specs if field["kind"] == "text" and not field["optional"]
+    )
+    input_marker = re.compile(
+        r"(?P<indent>^[ \t]*)# forge:feature:mcp-input:start\n"
+        r".*?^[ \t]*# forge:feature:mcp-input:end\n?",
+        re.M | re.S,
+    )
+    input_matches = list(input_marker.finditer(source))
+    if len(input_matches) != 1:
+        raise ValueError("The Python projects MCP payload needs one mcp-input feature marker.")
+    input_match = input_matches[0]
+    input_indent = input_match["indent"]
+    field_names = {
+        field["column"]: _snake(field["column"])
+        for field in specs
+    }
+    input_body = "\n".join(
+        input_indent + line if line else ""
+        for line in (
+            "values = _payload(client, csrf, changed=changed)",
+            f"field_names = {field_names!r}",
+            "return {field_names.get(name, name): value for name, value in values.items()}",
+        )
+    )
+    source = source[: input_match.start()] + input_body + "\n" + source[input_match.end() :]
+    status_field = next((field for field in specs if field["kind"] == "status"), None)
+    label_check = (
+        f"get({_literal(_snake(status_field['column']) + '_label')})"
+        if status_field is not None
+        else "get(MCP_NAME_FIELD)"
+    )
+    source = source.replace('get("status_label")', label_check)
+    values = {
+        "MCP_FEATURE": plural,
+        "MCP_TOOL_PREFIX": _snake(plural),
+        "MCP_SINGULAR": one.replace("-", " "),
+        "MCP_ID_FIELD": f"{_snake(one)}_id",
+        "MCP_SEARCH_FIELD": "query",
+        "MCP_NAME_FIELD": _snake(name_field["column"]),
+        "MCP_BAD_VALUE": kinds["kinds"][name_field["kind"]]["bad"],
+        "MCP_LINKS": {
+            _snake(field["column"]): (
+                field["target"],
+                next(target_field["column"] for target_field in linked_fields[field["target"]]
+                     if target_field["kind"] == "text" and not target_field["optional"]),
+            )
+            for field in specs if field["kind"] == "link"
+        },
+    }
+    for name, value in values.items():
+        pattern = re.compile(rf"(?m)^([ \t]*{name}(?:[ \t]*:[^=\n]+)?[ \t]*=[ \t]*)[^\n]*$")
+        source, count = pattern.subn(lambda match: match[1] + _literal(value), source)
+        if count != 1:
+            raise ValueError(f"The Python projects MCP cases need one {name} assignment.")
+    return source.rstrip() + "\n"
+
+
 def _is_none_type(node: ast.expr) -> bool:
     return isinstance(node, ast.Constant) and node.value is None or (
         isinstance(node, ast.Name) and node.id == "None"
@@ -248,7 +333,8 @@ def _marked_helper() -> str:
 
 
 def render_python_tests(
-    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any], root: Path
+    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any], root: Path,
+    *, include_mcp: bool = True,
 ) -> str:
     """Render generated tests at the HTTP boundary, reusing the starter's invite helper."""
     feature_fields = _field_specs(fields, kinds)
@@ -992,4 +1078,6 @@ def render_python_tests(
     }
     for token, value in replacements.items():
         test_source = test_source.replace(token, value)
+    if include_mcp:
+        test_source += "\n\n" + _mcp_case_source(fields, one, plural, kinds, linked_fields)
     return test_source

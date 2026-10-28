@@ -270,6 +270,8 @@ skill whenever you write or change a test. Before you stop, commit your work fir
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.
+Root dependency files select the full test command. A nested project's dependency files
+select that project's tests and test files that name those dependency paths.
 When the pytest picker selects more than a third of the test files, bare `forge test` runs
 only the part's Tests column or the fix's touched test files, plus `always_test`, and says
 "The nightly full run covers the rest." This includes shared-fixture changes. With no named

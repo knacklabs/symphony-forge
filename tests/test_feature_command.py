@@ -1,4 +1,8 @@
-"""The feature command builds starter API modules from the plan's shell line."""
+"""The feature command builds starter API modules from the plan's shell line.
+
+Python dependency contracts: src/forge/templates/starter-python/apps/api/pyproject.toml
+and src/forge/templates/starter-python/apps/api/uv.lock.
+"""
 import ast
 import json
 import os
@@ -436,6 +440,12 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
             ))
             require_feature_cases(live["api"], "test_sales_orders", (
                 "test_each_sales_orders_endpoint_refuses_a_member_without_its_permission",
+            ))
+            # Notes has no Member permissions: copied MCP cases must still exercise Admin
+            # CRUD and compare the Member's tool list and refusals with its public permissions.
+            require_feature_cases(live["api"], "test_notes", (
+                "test_an_agent_searches_reads_creates_and_updates_notes_through_mcp_as_its_account",
+                "test_a_member_agent_cannot_delete_or_restore_a_note_through_mcp",
             ))
         require_feature_cases(live["browser"], "jobs.spec.ts", (
             "create, view, edit, and delete a job",
@@ -958,12 +968,14 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
         permissions = ast.parse(
             (new_client / "apps/api/app/sales_orders/permissions.py").read_text("utf-8")
         )
+        # The singular permission symbol matches the starter's PROJECT_PERMISSIONS and the
+        # generated tools' JOB_PERMISSIONS contract; plural API paths remain unchanged.
         permission_assignment = next(
             node for node in permissions.body
             if isinstance(node, ast.Assign)
             and any(
                 isinstance(target, ast.Name)
-                and target.id == "SALES_ORDERS_PERMISSIONS"
+                and target.id == "SALES_ORDER_PERMISSIONS"
                 for target in node.targets
             )
         )
@@ -997,7 +1009,7 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             and isinstance(expression.value, ast.Name)
             and expression.attr in {"view", "create", "edit", "delete", "restore"}
         }
-        assert permission_names == {"SALES_ORDERS_PERMISSIONS"}
+        assert permission_names == {"SALES_ORDER_PERMISSIONS"}
 
     before = repo.git("status", "--porcelain", cwd=new_client)
     duplicate = _run_line(repo, new_client, shell, JOBS_LINE)

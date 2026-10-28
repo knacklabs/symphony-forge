@@ -348,15 +348,17 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
              and name.endswith(".py") and Path(name).is_file()]
     fixtures = [Path(name).parent for name in changed if Path(name).name == "conftest.py"]
-    shared = [name for name in changed
+    shared_names = [name for name in changed
               if name == "conftest.py"
               or Path(name).name in {"pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
-    shared_changed = any(not manifest_test_inputs_unchanged(Path(name), base)
+    shared = [Path(name) for name in shared_names if (
+           not manifest_test_inputs_unchanged(Path(name), base)
            if Path(name).name == "pyproject.toml" else
            Path(name).name not in {"uv.lock", "poetry.lock", "Pipfile.lock", "package-lock.json"}
-           or not own_version_only(Path(name), base) for name in shared)
+           or not own_version_only(Path(name), base))]
+    shared_changed = any(path.parent == Path(".") for path in shared)
     modules = []
     for name in changed:
         path = Path(name)
@@ -375,6 +377,8 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     selected = sorted(path.as_posix() for path in tests
                       if path.as_posix() in changed
                       or any(path.is_relative_to(folder) for folder in fixtures)
+                      or any(path.is_relative_to(source.parent) or mentions(path, "", source)
+                             for source in shared)
                       or any(mentions(path, module, source) for module, source in modules))
     return selected, everything, False, missed
 

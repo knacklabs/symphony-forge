@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tThe test picker rejects annotated task selectors as filenames and wrongly attributes them to settings; the current-release report is on issue 1060.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 407,
+      "text": "The test picker rejects annotated task selectors as filenames and wrongly attributes them to settings; the current-release report is on issue 1060.",
+      "from": "worker",
+      "item": "FORGE-MCP-1/TOOLSPY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature.py\tPass feature state into the extracted writer\tFORGE-MCP-1/TOOLSPY",
+      "kind": "bug",
+      "path": "src/forge/feature.py",
+      "line": 275,
+      "text": "Pass feature state into the extracted writer",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/TOOLSPY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_python_tests.py\tGate: generated Python MCP cases must honor feature permissions\tFORGE-MCP-1/TOOLSPY",
+      "kind": "bug",
+      "path": "src/forge/feature_python_tests.py",
+      "line": 116,
+      "text": "Gate: generated Python MCP cases must honor feature permissions",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/TOOLSPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
