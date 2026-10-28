@@ -156,9 +156,10 @@ def build(args) -> int:
     from forge.feature_schema import render_schema
     from forge.feature_web import render_feature_web
 
-    files = render_feature_api(fields, one, plural, kinds)
+    include_mcp = (root / "libs/core/server/src/common/tools.ts").is_file()
+    files = render_feature_api(fields, one, plural, kinds, include_mcp=include_mcp)
     files.update(render_schema(plural, one, fields, kinds))
-    files.update(render_feature_web(fields, one, plural, kinds, _link_names(fields, root)))
+    files.update(render_feature_web(fields, one, plural, kinds, _link_names(fields, root), include_mcp=include_mcp))
     title = "".join(word.capitalize() for word in plural.split("-"))
     names = {"projects": plural, "Projects": title, "PROJECTS": plural.replace("-", "_").upper(),
              "Project": model, "project": one}
@@ -271,6 +272,8 @@ def _write(root, current, files):
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(text, encoding="utf-8")
         print(f"Wrote {path}")
+    if not include_mcp:
+        print(f"This app has no MCP server, so {plural} get no agent tools.")
     return 0
 
 

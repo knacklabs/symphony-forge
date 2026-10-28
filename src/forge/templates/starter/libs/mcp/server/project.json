@@ -1,0 +1,9 @@
+{
+  "name": "@app/mcp-server",
+  "projectType": "library",
+  "sourceRoot": "libs/mcp/server/src",
+  "tags": [
+    "type:server",
+    "scope:mcp"
+  ]
+}

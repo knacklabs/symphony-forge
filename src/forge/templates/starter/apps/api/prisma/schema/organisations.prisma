@@ -11,6 +11,7 @@ model Organisation {
   memberships         Membership[]
   projects            Project[]
   invites             Invite[]
+  idempotencyKeys     IdempotencyKey[]
 
   @@index([createdByAccountId], map: "idx_Organisation_createdByAccountId")
   @@index([modifiedByAccountId], map: "idx_Organisation_modifiedByAccountId")

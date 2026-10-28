@@ -55,8 +55,9 @@ def test_1_new_apps_list_one_main_service(repo, gh, tmp_path, kind):
     init_args = ("--starter", kind) if kind in ("react", "python") else ()
     client, initialized = _fresh_client(repo, gh, tmp_path, *init_args)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    expected_service = {**SERVICE, "mcp": "/mcp"} if kind == "react" else SERVICE
     assert tomllib.loads((client / "services.toml").read_text(encoding="utf-8")) == {
-        "service": [SERVICE],
+        "service": [expected_service],
     }
     assert "EXPOSE 3000" in (client / "Dockerfile").read_text(encoding="utf-8")
     assert "services.toml" in repo.git("ls-files", cwd=client).splitlines()

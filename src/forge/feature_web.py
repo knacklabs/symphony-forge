@@ -136,6 +136,14 @@ def _replace_mark(text: str, name: str, body: str) -> str:
     return text[:match.start()] + "".join(line + "\n" for line in lines) + text[match.end():]
 
 
+def _feature_mcp(text: str, include: bool) -> str:
+    matches = [match for match in MARK.finditer(text) if match["name"] == "mcp"]
+    for match in reversed(matches):
+        replacement = "".join(match.group(0).splitlines(keepends=True)[1:-1]) if include else ""
+        text = text[:match.start()] + replacement + text[match.end():]
+    return text
+
+
 class _Web:
     """The generated text for each mark, from the feature's fields and the kind table."""
 
@@ -670,7 +678,7 @@ export function useLinkedItem(path: string, nameField: string, id: string | null
 
 
 def render_feature_web(fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any],
-                       link_names: dict[str, dict[str, str]]) -> dict[str, str]:
+                       link_names: dict[str, dict[str, str]], *, include_mcp: bool = True) -> dict[str, str]:
     """Return the renamed web library, its hooks test and its browser flows."""
     bodies = _Web(fields, one, plural, kinds, link_names).bodies()
     name = _column(next(field for field in fields if field["kind"] == "text" and not field.get("optional")))
@@ -681,9 +689,9 @@ def render_feature_web(fields: list[dict[str, Any]], one: str, plural: str, kind
             # Only the starter's own text names the item's name field; the bodies below use the real columns.
             text = re.sub(rf"\b({_camel(one)}(?:\.data\?)?)\.name\b", rf"\1.{name}", text)
             text = text.replace("{ id: string; name: string }[]", f"{{ id: string; {name}: string }}[]")
-        # The mcp marks keep their renamed lines; they mark what an app without an MCP server leaves out.
         for match in [match for match in MARK.finditer(text) if match["name"] != "mcp"]:
             text = _replace_mark(text, match["name"], bodies[match["name"]])
+        text = _feature_mcp(text, include_mcp)
         # The Agent access dialog's feature is the plural's slug, as its route takes it.
         text = text.replace(f'feature="{plural.replace("-", " ")}"', f'feature="{plural}"')
         target = re.sub(r"projects|project", lambda match: plural if match[0] == "projects" else one, path)
