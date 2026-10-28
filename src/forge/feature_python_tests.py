@@ -1079,5 +1079,56 @@ def render_python_tests(
     for token, value in replacements.items():
         test_source = test_source.replace(token, value)
     if include_mcp:
+        # Audit: the generated route's header and transaction wiring can drift from projects.
+        # Real HTTP and storage own the contract; helpers only provide valid feature inputs.
+        # Existing CRUD never repeats a key. No production test seam is needed.
+        test_source += textwrap.dedent('''
+
+
+        def test_a___ONE___create_sent_again_with_the_same_idempotency_key_makes_one___ONE__(
+            client: httpx.Client,
+        ) -> None:
+            _, csrf = sign_up(client)
+            body = _payload(client, csrf)
+            before = _list(client)["paging"]["total"]
+            headers = {"x-csrf-token": csrf, "Idempotency-Key": str(uuid4())}
+            first = client.post(FEATURE_PATH, headers=headers, json=body)
+            repeated = client.post(FEATURE_PATH, headers=headers, json=body)
+            assert first.status_code == repeated.status_code == 201
+            assert _body(first)["id"] == _body(repeated)["id"]
+            assert _list(client)["paging"]["total"] == before + 1
+            second = client.post(
+                FEATURE_PATH,
+                headers={**headers, "Idempotency-Key": str(uuid4())},
+                json=body,
+            )
+            assert second.status_code == 201, second.text
+            assert _body(second)["id"] != _body(first)["id"]
+            assert _list(client)["paging"]["total"] == before + 2
+            invalid = client.post(
+                FEATURE_PATH,
+                headers={**headers, "Idempotency-Key": "x" * 201},
+                json=body,
+            )
+            assert invalid.status_code == 400, invalid.text
+            assert invalid.json()["error"]["code"] == "VALIDATION_ERROR"
+            assert any(field["field"] == "Idempotency-Key"
+                       for field in invalid.json()["error"]["details"]["fieldErrors"])
+            changed = _payload(client, csrf, changed=True)
+            updated = client.put(
+                f"{FEATURE_PATH}/{_body(first)['id']}", headers=headers, json=changed,
+            )
+            assert updated.status_code == 200, updated.text
+            preflight = client.options(
+                FEATURE_PATH,
+                headers={
+                    "Origin": str(client.base_url).rstrip("/"),
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type,x-csrf-token,idempotency-key",
+                },
+            )
+            assert preflight.status_code == 200, preflight.text
+            assert "idempotency-key" in preflight.headers["access-control-allow-headers"].lower()
+        ''').replace("__ONE__", _snake(one))
         test_source += "\n\n" + _mcp_case_source(fields, one, plural, kinds, linked_fields)
     return test_source

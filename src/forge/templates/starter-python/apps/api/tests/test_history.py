@@ -4,10 +4,55 @@ import csv
 import io
 import re
 from datetime import datetime, timedelta
+from typing import cast
+from uuid import uuid4
 
 import httpx
+from sqlalchemy.orm import Session
+
+from app.core import AccountPrincipal
+from app.history.models import ChangeRecord
+from app.history.service import HistoryService
 from test_api import credentials, sign_up
 from test_invites import invite
+
+
+class _RecordingSession:
+    def __init__(self) -> None:
+        self.records: list[ChangeRecord] = []
+
+    def add(self, record: ChangeRecord) -> None:
+        self.records.append(record)
+
+
+def test_history_records_the_agent_that_acts_for_a_person() -> None:
+    # Audit: this owns the service mapping from a person-signed agent principal to the stored
+    # history value, including the empty case. HTTP history tests cannot supply such a principal;
+    # HistoryService already accepts the caller's session, so a recording stub needs no seam.
+    session = _RecordingSession()
+    service = HistoryService(cast(Session, session))
+    organisation_id = uuid4()
+    service.record(
+        AccountPrincipal(
+            uuid4(),
+            "person@example.test",
+            organisation_id,
+            "admin",
+            "the assistant",
+        ),
+        "project.created",
+        "Created a project",
+    )
+    service.record(
+        AccountPrincipal(uuid4(), "other@example.test", organisation_id, "admin"),
+        "project.created",
+        "Created another project",
+    )
+
+    assert [record.via_agent for record in session.records] == [
+        "the assistant",
+        None,
+    ]
 
 
 def test_an_invite_and_a_role_change_write_change_history(

@@ -81,6 +81,77 @@ def test_creates_lists_reads_updates_and_deletes_a_project(
     assert names(list_projects(client, "")) == []
 
 
+def test_a_project_create_sent_again_with_the_same_idempotency_key_makes_one_project(
+    client: httpx.Client,
+) -> None:
+    # Audit: this owns REST create replay, the key's length and browser preflight contract.
+    # The MCP case exercises a different transport, and the existing project API case never
+    # repeats a create. All requests use the running API and fresh database; no production seam.
+    _, csrf = sign_up(client)
+    key = f"project-{uuid4()}"
+    headers = {"x-csrf-token": csrf, "Idempotency-Key": key}
+    body = {"name": "Retry safe project", "status": "active"}
+
+    created = client.post("/api/v1/projects", headers=headers, json=body)
+    retried = client.post("/api/v1/projects", headers=headers, json=body)
+    assert created.status_code == retried.status_code == 201
+    project_id = created.json()["data"]["id"]
+    assert retried.json()["data"]["id"] == project_id
+    assert (
+        list_projects(client, "limit=20&sortBy=name&sortOrder=asc")["paging"]["total"]
+        == 1
+    )
+
+    another = client.post(
+        "/api/v1/projects",
+        headers={**headers, "Idempotency-Key": f"project-{uuid4()}"},
+        json=body,
+    )
+    assert another.status_code == 201, another.text
+    assert another.json()["data"]["id"] != project_id
+    assert (
+        list_projects(client, "limit=20&sortBy=name&sortOrder=asc")["paging"]["total"]
+        == 2
+    )
+
+    too_long = client.post(
+        "/api/v1/projects",
+        headers={**headers, "Idempotency-Key": "k" * 201},
+        json={"name": "Too long key", "status": "active"},
+    )
+    assert too_long.status_code == 400, too_long.text
+    assert too_long.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert any(
+        error["field"] == "Idempotency-Key"
+        for error in too_long.json()["error"]["details"]["fieldErrors"]
+    )
+
+    updated = client.put(
+        f"/api/v1/projects/{project_id}",
+        headers=headers,
+        json={"name": "Updated after retry", "status": "archived"},
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["data"]["name"] == "Updated after retry"
+
+    preflight = client.options(
+        "/api/v1/projects",
+        headers={
+            "Origin": str(client.base_url).rstrip("/"),
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": (
+                "content-type,x-csrf-token,idempotency-key"
+            ),
+        },
+    )
+    assert preflight.status_code == 200, preflight.text
+    allowed_headers = {
+        header.strip().lower()
+        for header in preflight.headers["access-control-allow-headers"].split(",")
+    }
+    assert "idempotency-key" in allowed_headers
+
+
 def test_rejects_a_whitespace_only_project_name(client: httpx.Client) -> None:
     _, csrf = sign_up(client)
     response = client.post(

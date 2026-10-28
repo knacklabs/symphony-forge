@@ -22,6 +22,7 @@ from app.core.permissions import (
 )
 from app.core.principal import AccountPrincipal, Role
 from app.core.prompts import define_prompt, get_prompt, list_prompts
+from app.core.retry_keys import IdempotencyKey, create_once
 from app.core.resources import list_resource_templates, list_resources, read_resource
 from app.core.schema import HealthResponse
 from app.core.security import _is_rate_limited as rate_limit_retry_after
@@ -46,6 +47,7 @@ __all__ = [
     "ErrorEnvelope",
     "FeaturePermissions",
     "HealthResponse",
+    "IdempotencyKey",
     "MailProvider",
     "Role",
     "Settings",
@@ -55,6 +57,7 @@ __all__ = [
     "ToolResult",
     "admin_only",
     "call_tool",
+    "create_once",
     "create_database",
     "csv_response",
     "define_feature_tools",
