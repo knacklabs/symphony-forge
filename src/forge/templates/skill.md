@@ -178,6 +178,8 @@ merge base. It pushes and merges only after the tests pass. A failure names the 
 and gives `forge work <item>` as the next step. This is always on, with no setting. With no
 default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
 get it on upgrade and sync.
+After a green retest, Forge reuses the existing review and commits its coverage of the combined
+change before the push.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
 checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
 and gives `forge merge <item>` as the next step.

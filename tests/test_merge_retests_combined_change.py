@@ -18,14 +18,20 @@ STORY = "FIX-MERGE-RETESTS-COMBINED-CHANGE"
 # base after tests or CI. Dirty edits can mask a broken committed combination;
 # another merge can invalidate a green retest. Existing cases have neither.
 # Extend this command boundary with real edits and remote commits, without seams.
+# Review transport audit: separate hunks of one reviewed file change its blob.
+# Existing green cases touch separate files and stub the review status as green.
+# Run the real PR check at GitHub's check boundary; reuse the command cases and
+# assert no extra model review. No production seam or second test owner is needed.
 @pytest.mark.parametrize("previous,case,fast", [
     (False, "red", True), (True, "red", True),
     (False, "green", False),
     (False, "dirty-unstaged", True), (False, "dirty-staged", True),
     (False, "dirty-untracked", True), (True, "dirty-unstaged", True),
     (False, "late-test", True), (False, "late-ci", True), (True, "late-test", True),
+    (False, "review", True), (True, "review", True),
 ], ids=["new-red", "adopted-red", "fallback-green", "dirty-unstaged",
-        "dirty-staged", "dirty-untracked", "adopted-dirty", "late-test", "late-ci", "adopted-late"])
+        "dirty-staged", "dirty-untracked", "adopted-dirty", "late-test", "late-ci", "adopted-late",
+        "review-new", "review-adopted"])
 def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previous, case, fast):
     _client(env, tmp_path, previous, fast_test=False)
     _, setup = env.start("test-setup", "fix/test-setup", ".factory/fixes/test-setup.json",
@@ -57,6 +63,8 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         + (advance if case == "late-test" else "") + "sys.exit(status)\n"))
     env.commit(setup, "left.txt", "0\n")
     env.commit(setup, "right.txt", "0\n")
+    if case == "review":
+        env.commit(setup, "app.py", "print('original')\n\n\nLIMIT = 0\n")
     env.commit(setup, "tests/test_limits.py", (
         "from pathlib import Path\n"
         "def test_combined_limit():\n"
@@ -64,17 +72,38 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
     env.repo.git("merge", "-q", "--ff-only", "fix/test-setup")
     remote = env.repo.git("remote", "get-url", "origin")
     env.repo.git("fetch", "-q", str(env.repo.path), "main:main", cwd=remote)
-    item, where = env.start_fix({"left.txt": "1\n", "app.py": "print('hello')\n"})
+    app = "print('hello')\n" + ("\n\nLIMIT = 0\n" if case == "review" else "")
+    item, where = env.start_fix({"left.txt": "1\n", "app.py": app})
     env.open_pr("")
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
+    reviews = len(env.review_calls())
     assert not log.exists()  # CI owns close; merge must explicitly enter the test lane.
     env.repo.git("clone", "-q", remote, str(other))
-    env.commit(other, "right.txt" if case == "red" or case.startswith("dirty") else "other.txt", "1\n")
+    if case == "review":
+        env.commit(other, "app.py", "print('original')\n\n\nLIMIT = 1\n")
+    else:
+        env.commit(other, "right.txt" if case == "red" or case.startswith("dirty") else "other.txt", "1\n")
     env.repo.git("push", "-q", "origin", "main", cwd=other)
     advanced = env.repo.git("rev-parse", "main", cwd=remote)
     _github_moves_default(env, False, "CLEAN")
     (env.repo.bin / "default-moved").write_text(advanced, encoding="utf-8")
+    if case == "review":
+        stub = (env.repo.bin / "gh").read_text("utf-8")
+        gate = (
+            "args = sys.argv[1:]\n"
+            "if args[:1] == ['api'] and '.check_runs[]' in args:\n"
+            f"    top = {env.repo.path.as_posix()!r}\n"
+            "    base = subprocess.check_output(['git', 'rev-parse', 'origin/main'], cwd=top, text=True).strip()\n"
+            "    head = subprocess.check_output(['git', 'ls-remote', 'origin', 'refs/heads/fix/tidy-readme'], cwd=top, text=True).split()[0]\n"
+            f"    checked = subprocess.run([sys.executable, {(env.repo.bin / 'forge').as_posix()!r}, 'hook', 'pr-check',\n"
+            "        '--base', base, '--head', head, '--branch', 'fix/tidy-readme'],\n"
+            "        cwd=top, capture_output=True, text=True)\n"
+            "    (here / 'pr-gate.log').write_text(checked.stdout + checked.stderr, encoding='utf-8')\n"
+            "    if checked.returncode:\n"
+            "        sys.stderr.write(checked.stderr)\n"
+            "        sys.exit(checked.returncode)\n")
+        _install(env.repo.bin, "gh", stub.replace("args = sys.argv[1:]", gate, 1))
     if case == "late-ci":
         stub = (env.repo.bin / "gh").read_text("utf-8")
         _install(env.repo.bin, "gh", stub.replace("args = sys.argv[1:]", (
@@ -127,4 +156,10 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         assert merged.returncode == 0, merged.stdout + merged.stderr
         attempts = env.gh_calls("pr", "merge")
         assert len(attempts) == 1
-        assert attempts[0][attempts[0].index("--match-head-commit") + 1] == head
+        published = attempts[0][attempts[0].index("--match-head-commit") + 1]
+        # A records-only commit can carry the unchanged review over the tested merge.
+        assert set(env.repo.git("diff", "--name-only", head, published).splitlines()) <= {
+            ".factory/fixes/tidy-readme.json"}
+        if case == "review":
+            assert "forge-pr-check passed for fix/tidy-readme." in (env.repo.bin / "pr-gate.log").read_text("utf-8")
+            assert len(env.review_calls()) == reviews

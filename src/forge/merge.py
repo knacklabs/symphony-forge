@@ -103,6 +103,12 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 repo.refuse(REFUSALS["retest_failed"], item=item,
                             tests=tested.rsplit("Failed tests:\n", 1)[-1])
             head = repo.git("rev-parse", "HEAD", cwd=worktree)
+            state = story.json_of(story.show(worktree, head, repo.state_path(item)))
+            state["review"].update(
+                changed=review.fingerprint(head, item, worktree, state, base),
+                branch_diff=review.fingerprint(head, item, worktree, state, base, branch_diff=True))
+            close._save(worktree, item, state, "Keep the review after the combined tests pass")
+            head = repo.git("rev-parse", "HEAD", cwd=worktree)
             close._push(worktree, branch)
             receipt["commit"] = head
             _save_ready(path, receipt)
