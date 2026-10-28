@@ -1,6 +1,13 @@
 {
   "base": "7d626406f2579d3d001312612968f9f701b2e2ec",
   "branch": "fix/tests-copy-seed-repo",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18438-f6e3-71b1-92e2-9e059a8d891c",
+    "head": null,
+    "start": "42f21e23eda197840a34229a0483af4bf4fc66f4"
+  },
   "done_when": "tests/conftest.py builds the seed repository and the empty SDK environment once per session and gives each test a private copy, with every test's isolation and the real init and adoption cases kept",
   "fix_kind": "mechanical",
   "kind": "fix",
