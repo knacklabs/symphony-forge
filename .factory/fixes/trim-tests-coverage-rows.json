@@ -4,12 +4,20 @@
   "done_when": "The 30 parameter rows listed in the coverage verification report are removed, each retained covering row stays, and every new-repo row stays",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T19:48:45.230241+00:00",
       "step": "start"
     }
   ],
-  "why": "Remove the 30 coverage-verified repeated earlier-adopted test rows (coverage audit batches 1 to 5)"
+  "stuck": {
+    "close": null,
+    "head": "7f83533a175196818056cab9d32d43f677bf256c",
+    "keys": {},
+    "round": null
+  },
+  "why": "Remove the 30 coverage-verified repeated earlier-adopted test rows (coverage audit batches 1 to 5)",
+  "worker": "codex"
 }
