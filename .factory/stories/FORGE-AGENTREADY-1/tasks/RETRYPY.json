@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-AGENTREADY-1-RETRYPY",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T17:18:13.243221+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d84b03ace6682263660fcdc29a1a84e1559e674d",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
