@@ -19,6 +19,10 @@
       "work": 2
     }
   ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
   "review": {
     "blocking_level": "P1",
     "branch_diff": "e1bf8c646065ef5ca1b03023ed224df2dba372e098e39711cba8a6bc9aefc03e",
@@ -41,7 +45,7 @@
     "id": "f7c1e2a2-6e3b-4fd1-8280-d645de8721a3",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -54,10 +58,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "4bea984b7f9901f6c31a74ba142b15633dbc555a",
-    "keys": {},
-    "round": null
+    "close": "c1fa155f-f80a-4ade-9b06-7c1091b1ec70",
+    "head": "90b145f006819080b329a0c24db28d710bdcebb8",
+    "keys": {
+      "the open P0 not done: the starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text. in src/forge/templates/starter/libs/organisations/web/src/pages/invite-dialog.tsx": 1
+    },
+    "round": 1
   },
   "why": "Typed text in the invite and add-agent forms is lost on a stray click, and the projects, members and change history lists show only a plain text line while loading instead of skeleton rows, so the starter misses the app baseline.",
   "worker": "claude"
