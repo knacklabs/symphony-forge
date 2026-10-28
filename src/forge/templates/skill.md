@@ -1126,6 +1126,7 @@ forge init --starter python.
 Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
 
 Follow the database skill (.codex/skills/database/SKILL.md) for new tables and extensions.
+Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voice or in-app assistant work. When a part adds one, the plan names the skill's sections that apply and the model service it uses.
 An extension outside its allowed list needs the owner's OK for this client. Ask the owner,
 then write `- Postgres extension <name>: the owner allows it on <date> (<why>)` under
 Architecture choices in `docs/product/CONSTITUTION.md`.
@@ -1278,6 +1279,8 @@ fix's folder:
    `forge test`; in CI mode, do not run them here. Commit, then `forge close <fix>`.
 
 ## Planning a story
+
+Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voice or in-app assistant work. When a part adds one, the plan names the skill's sections that apply and the model service it uses.
 
 A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
