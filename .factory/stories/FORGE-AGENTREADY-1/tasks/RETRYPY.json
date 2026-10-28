@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-AGENTREADY-1-RETRYPY",
+  "chat": {
+    "approval": "43a1abe4232ad43aa01e94ee3a69bf4d37f6699506428144937150471bf41e48",
+    "claude": null,
+    "conversation": "01a1838c-ef8a-7e52-849c-3c4c1dd112fe",
+    "head": null,
+    "start": "3534056c86e0f0432aa9b4d24548acb7f2298d8a"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
