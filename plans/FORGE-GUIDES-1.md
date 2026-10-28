@@ -4,39 +4,26 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- The paging, currency, UI library and environment name in the guides match what the starters actually use.
+- Prettier is removed from the starters, and the guides stop saying it runs.
+- The default setup notes name only the parts that are built, and each names the story that builds it.
+- Client apps get rules for background jobs and schedules, outgoing web calls, and uploads, with the upload settings left for Mainline to supply later.
+- Both starter READMEs get a when something breaks section.
+- Starter containers run the app as a non-root user.
+- Dependabot security alerts are on, with no update pull requests.
 
 ## Why
 
-Guides and starters agree
-
-
+The shipped guides and starters contradict each other, promise parts that are not built yet, and lack rules for jobs, outgoing calls and uploads.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client app's guides and starter code agree on paging, currency, the UI library pin and environment names.**
+2. **A new client app's starter containers run as a non-root user, and both starter READMEs have a when something breaks section.**
+3. **A new client app has no Prettier claim, and its setup notes name only built parts.**
+4. **A new client app gets rules for background jobs, schedules, outgoing web calls and uploads.**
+5. **An existing client app gets the same changes on upgrade, and each change has a test for a new app and for an existing app.**
+6. **Dependabot security alerts are on with no update pull requests.**
 
 ## Risks
 
