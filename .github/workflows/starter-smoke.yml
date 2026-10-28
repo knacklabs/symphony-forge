@@ -23,6 +23,7 @@ on:
       - tests/test_feature_access.py
       - tests/test_mcp.py
       - tests/test_mcp_resources.py
+      - tests/test_proxy_error_pages.py
       - .github/workflows/starter-smoke.yml
 
 permissions:
@@ -41,7 +42,7 @@ jobs:
       - name: Run the real starter stack and browser flows
         env:
           FORGE_STARTER_LIVE: '1'
-        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_mcp_resources.py -k "not python" -q -x -n 0 --timeout=1800
+        run: uv run --frozen --python 3.11 pytest tests/test_starter_tree.py tests/test_libs_layout.py tests/test_one_company.py tests/test_defaults_*.py tests/test_database_*.py tests/test_module_schemas.py tests/test_feature_projects.py tests/test_feature_command.py tests/test_feature_access.py tests/test_mcp.py tests/test_mcp_resources.py tests/test_proxy_error_pages.py -k "not python" -q -x -n 0 --timeout=1800
 
   python-starter-smoke:
     runs-on: ubuntu-latest
