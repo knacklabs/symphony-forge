@@ -1,6 +1,13 @@
 {
   "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
   "branch": "fix/trim-tests-retries-queues-pane",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18384-b665-7680-bf68-6f3611f10fe4",
+    "head": null,
+    "start": "b05e00f55e4b7e333fec90e4f2f7a456fca8d121"
+  },
   "done_when": "The cases named in batches 1, 2 and 3 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
   "fix_kind": "mechanical",
   "kind": "fix",
