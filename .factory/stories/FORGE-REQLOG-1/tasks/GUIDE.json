@@ -20,9 +20,9 @@
     "id": "a93f9c74-6842-4d69-a012-a0c18fa52b3c",
     "status": "clean"
   },
-  "round": 4,
+  "round": 5,
   "stacked_on": "FORGE-AGENTS-1/SKILL",
-  "status": "waiting for checks",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T17:18:25.536846+00:00",
@@ -46,10 +46,10 @@
     }
   ],
   "stuck": {
-    "close": "ae386b40-1039-42d7-975a-4ec542e6d32b",
-    "head": "f66c9ef93a4c48d9c28b72ddddb9c49946380be6",
+    "close": "1b889bfa-71aa-43d5-936f-998a83e28ba1",
+    "head": "b9cd33a36ec5c5365ad363116dbe5555e305aaf7",
     "keys": {},
-    "round": 3
+    "round": 4
   },
   "worker": "codex"
 }
