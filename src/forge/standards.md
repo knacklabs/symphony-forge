@@ -188,6 +188,11 @@ default-stack conventions, which apply only to a repo on the default stack.
 - Log validation failures (4xx) at debug, never as errors.
 - Error messages are static text with no interpolated values, so personal data can't slip in.
 - Never log passwords, tokens, one-time codes, secrets or personal data; mask what you must keep.
+- An app with `libs/core/server/src/common/request-log.middleware.ts` (TypeScript) or `set_log_level` in `apps/api/app/core/logging.py` (Python) has the next three rules built into its logger. Another app keeps its own logger: it may write every level and keep secret values, so never log a secret there, and add these parts only in a story that copies the starter's logger.
+- The logger removes the value of any context field whose name holds `password`, `token`, `secret`, `key` or `authorization`, at any depth, and writes `[removed]`. Still log only the ids you need.
+- Each API request writes one `info` line, `API request`, with `method`, the matched `route` pattern, `status` and `durationMs` in its context and the request's `correlationId`. It never holds the query string, the real path, headers or the body. Health checks and web pages write no line.
+- `LOG_LEVEL` (`debug`, `info`, `warn` or `error`; `info` when unset) picks the lowest level written.
+- Mainline sends error alerts from the `error` lines, each with its `errorId`. Add no error-tracking service to the app.
 - Levels: `debug` for detail, `info` for normal business events, `warn` for something unexpected
   that didn't fail, `error` for a failed operation, `fatal` when the app can't continue.
 - Environments are named `Local`, `Development`, `QA`, `UAT`, `Staging` and `Production`; a project

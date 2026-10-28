@@ -101,44 +101,12 @@ if not database_url:
 
 ## Logs
 
-Use stdlib `logging` with a JSON formatter in core, not print. Pass validated config to the
-formatter. Write the backend.md fields at the top level; include accountId, requestId or eventId
-when present. For example, the formatter's `format` method builds:
+Log with `log_event(request, level, message, module, context)` from `app.core` (`app/core/logging.py`), not print and not the stdlib `logging` module. It writes one JSON line to stdout with the backend.md fields at the top level: `timestampUtc`, `level`, `message`, `context`, `environment` (from `APP_ENV`), `serviceName`, `module` and `correlationId`. Code without a request passes `None` with `environment` and `correlation_id`. The security middleware in `app/core/security.py` takes `x-correlation-id` or makes a UUID, keeps it on `request.state.correlation_id`, and returns it in the response; `log_event` adds it to each line, and outgoing calls send it. An app made before this starter keeps its own logger; follow the one it has.
 
-```python
-entry = {
-    "timestampUtc": datetime.now(UTC).isoformat(),
-    "level": {"WARNING": "warn", "CRITICAL": "fatal"}.get(record.levelname, record.levelname.lower()),
-    "message": record.getMessage(), "context": getattr(record, "context", {}),
-    "environment": self.environment, "serviceName": "api", "module": record.name,
-    "correlationId": correlation_id.get(),
-}
-for field in ("accountId", "requestId", "eventId"):
-    if hasattr(record, field):
-        entry[field] = getattr(record, field)
-if record.exc_info:
-    entry["stack"] = self.formatException(record.exc_info)
-return json.dumps(entry)
-```
+Use fixed messages and ids only in context: `log_event(request, "info", "Project created", "app.projects", {"projectId": str(project.id)})`. Never log whole objects, passwords, tokens, one-time codes,
+secrets or personal data. Levels are debug, info, warn, error and fatal. Log 4xx at debug and failed operations at error.
 
-A middleware takes `x-correlation-id` or makes a UUID, returns it in the response and passes it
-to outgoing calls. Keep it in a `contextvars.ContextVar`; reset it in `finally` after the request:
-
-```python
-correlation_id: ContextVar[str | None] = ContextVar("correlation_id", default=None)
-token = correlation_id.set(request.headers.get("x-correlation-id") or str(uuid4()))
-try:
-    response = await call_next(request)
-    response.headers["x-correlation-id"] = correlation_id.get() or ""
-    return response
-finally:
-    correlation_id.reset(token)
-```
-
-Use fixed messages and ids only in context: `logger.info("Project created", extra={"context":
-{"projectId": str(project.id)}})`. Never log whole objects, passwords, tokens, one-time codes,
-secrets or personal data. Levels are debug, info, warn, error and fatal (logging WARNING and
-CRITICAL map to warn and fatal). Log 4xx at debug and failed operations at error.
+In an app whose `app/core/logging.py` has `set_log_level`, `log_event` removes secret values and writes nothing below `LOG_LEVEL`, which the lifespan sets at start with `set_log_level`. The security middleware writes the request line. Add no other request logging, redaction or error-tracking code.
 
 ## Errors
 
