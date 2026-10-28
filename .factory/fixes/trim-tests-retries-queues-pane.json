@@ -1,0 +1,15 @@
+{
+  "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
+  "branch": "fix/trim-tests-retries-queues-pane",
+  "done_when": "The cases named in batches 1, 2 and 3 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T17:17:13.395469+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Trim repeated earlier-adopted cases in the GitHub retry, queued-checks and pane-freshness tests (audit batches 1, 2 and 3)"
+}
