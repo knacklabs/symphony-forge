@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-28T13:33:45.033773+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01XW4gnqixbtEEjZtdxHpGTM",
+    "hash": "43a1abe4232ad43aa01e94ee3a69bf4d37f6699506428144937150471bf41e48",
+    "part_line_limit": 400,
+    "round": 4,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-AGENTREADY-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-28T09:18:31.527868+00:00",
@@ -21,8 +31,12 @@
     {
       "at": "2026-10-28T13:23:04.093081+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-28T13:33:45.033948+00:00",
+      "step": "approved"
     }
   ],
   "title": "Client apps are ready for agents from day one",
-  "touches": 0
+  "touches": 1
 }
