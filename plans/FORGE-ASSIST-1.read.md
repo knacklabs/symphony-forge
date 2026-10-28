@@ -130,8 +130,10 @@ Only a genuine trade-off goes to the human, as a question with options.
     Raise: Functional. [WEBBLOCKS:185](/plans/FORGE-ASSIST-1.md:185) waits only for ASSISTDB, but ASSISTDBPY owns the Python `@app/assistant-contracts` package. `src/forge/init.py:159` copies the shared web libraries into Python apps without copying TypeScript contracts. Consequently, WEBBLOCKS's promised Python install/typecheck encounters a missing workspace dependency unless ASSISTDBPY has already merged. This is a new ordering defect introduced by the split; WEBBLOCKS needs that code prerequisite.
     Case: normal use - WEBBLOCKS starts after ASSISTDB while ASSISTDBPY is still building, and generates a Python app containing the assistant blocks.
     Gain 5, Work 1, Harm 3
+    Disposition: cut - WEBBLOCKS now waits for ASSISTDB and ASSISTDBPY.
 
 17. Advisory: The Zod update is separated from the Python version alignment required by existing tests.
     Raise: Plan gap. [ASSISTDB:181](/plans/FORGE-ASSIST-1.md:181) raises TypeScript's Zod version, while only the later WEBBLOCKS task owns Python's package manifest and lockfile. `tests/test_python_starter.py:119–121` requires matching versions for dependencies shared by both starters. ASSISTDB therefore fails that existing check before WEBBLOCKS can start. Unlike the settled missing-web-dependency finding, this concerns the newly split first task's own verification.
     Case: normal use - running the required checks for ASSISTDB before merging it.
     Gain 4, Work 1, Harm 2
+    Disposition: cut - ASSISTDB now owns the Python package manifest and lockfile change for Zod, so both starters move together and WEBBLOCKS only adds its web libraries after it.

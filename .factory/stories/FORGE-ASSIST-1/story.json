@@ -9,6 +9,10 @@
     {
       "at": "2026-10-28T14:35:47.117850+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-28T14:47:51.539473+00:00",
+      "step": "read"
     }
   ],
   "title": "Client apps get an optional in-app assistant",
