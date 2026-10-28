@@ -4,39 +4,21 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Each client app writes one log line for every API request, with the method, route, status, duration and request id, and never the query string.
+- Each client app has a log level setting that decides which log lines are written.
+- Passwords, tokens, secrets, keys and authorization values are removed from log details in both the TypeScript and Python starters.
+- Error alerts come from Mainline reading error log lines by their error id, so client apps need no error-tracking vendor.
 
 ## Why
 
-Log every API request safely in client apps
-
-
+Client apps in both starters already write some log lines, but not one line per API request, there is no log level setting, and secret values are not removed from log details, so request outcomes cannot be seen safely.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client app in either starter writes one log line per API request, and that line holds no query string.**
+2. **Setting the log level to error hides the info lines in both starters.**
+3. **A password, token or authorization value sent in a request never appears in any log line in either starter.**
+4. **An existing client app gets the same request log line and value removal in both starters when it upgrades.**
 
 ## Risks
 
