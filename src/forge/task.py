@@ -3,7 +3,6 @@ permission for a fix to go over the fix limit. Also the story-doc reading that w
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import sys
@@ -78,11 +77,11 @@ def cell_list(cell: str) -> list[str]:
     return [item for item in items if item.lower() not in ("", "none", "—", "-")]
 
 
-def approval_hash(text: str) -> str:
+def approval_hash(text: str) -> str | None:
     """The hash an approval binds: "What changes for you" and "Done when", nothing else."""
-    doc = sections(text)
-    both = f"{doc.get('What changes for you', '')}\n{doc.get('Done when', '')}"
-    return hashlib.sha256(both.encode("utf-8")).hexdigest()
+    from forge import story
+
+    return story.approval_hash(text)
 
 
 # --- branches, checkouts and the default branch ----------------------------------------

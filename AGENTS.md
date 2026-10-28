@@ -115,6 +115,20 @@ change is dogfooded on Forge itself before clients get it.
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
 
+### Four simplicity principles
+
+These govern every change to Forge, as they govern every app that Forge builds.
+
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
+
 ### Forge's 13 principles
 
 These govern Forge itself. Each has a check: an acceptance criterion, a CI check or a review instruction.

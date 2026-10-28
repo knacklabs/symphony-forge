@@ -423,7 +423,7 @@ The part named first owns each name; later parts use it and list that part under
      `libs/<plural>/contracts` (the zod schemas, with types from `@app/shared-api-types`). The
      revision starts with `CREATE SCHEMA "<schema>"`. The web library and its wiring are the same
      as in a TypeScript app (WEB).
-   - Test `tests/test_feature_command.py::test_1_a_plan_line_builds_the_feature_in_one_step`,
+   - Test `tests/test_feature_command.py::test_1_feature_contracts_parse_and_plan_lines_build_in_one_step`,
      parameters `typescript` and `python`: in a new repo made with `forge init --starter` (or
      `--starter python`), the two lines `forge task feature clients --one client --field 'name:text'`
      and `forge task feature jobs --one job --field 'name:text' --field 'description?:long-text'
@@ -582,7 +582,7 @@ The part named first owns each name; later parts use it and list that part under
      DETAIL cases. Adopted case: after upgrade and sync, the adopted starter app's projects files
      are unchanged (sync writes no app file).
 6. Refusal (COMMAND; PY adds the Python check list).
-   - Test `tests/test_feature_command.py::test_6_outside_a_starter_app_the_command_refuses`:
+   - Test `tests/test_feature_command.py::test_6_unsupported_apps_refuse_without_changing_the_worktree`:
      in a new repo made with plain `forge init`, `forge task feature jobs --one job
      --field name:text` exits non-zero with the needs-a-starter-app line and
      `Next: build this feature by hand in this app.`, and `git status --porcelain` is empty.

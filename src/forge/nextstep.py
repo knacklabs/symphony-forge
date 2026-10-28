@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from forge import (__version__, approval, board, board_facts, close, codex, machine, migration_warnings,
-                   native, records, repo, review, spotted, story, score, task, time_records, upgrade)
+                   journey, native, records, repo, review, spotted, story, score, task, time_records, upgrade)
 from forge.task import _started, developer, github_login, owner, sections, stack_base, start_base, waits_for
 from forge.task import rows as task_rows
 
@@ -152,8 +152,10 @@ def next_step(args: Any) -> int:
         facts = {name: future.result() for name, future in pending.items()}
     lines = warnings + _report(
         top, history, schedules=True, numbers=not args.json, facts=facts)[0]
+    step = ([journey.step_line(top, _report_config(top, {}), history, idle=_idle(top)[0] in lines)]
+            if not args.json and (top / "forge.toml").is_file() else [])
     print(json.dumps({**board.machine_board(top, history), "next": machine_next(lines)})
-          if args.json else "\n".join(notice + lines))
+          if args.json else "\n".join(step + notice + lines))
     return 0
 
 
@@ -192,8 +194,11 @@ def machine_next(lines: list[str]) -> dict[str, str | None]:
 
 
 def context_hook(args: Any) -> int:
-    lines, states = _report(repo.root())
-    print("\n".join(lines + states))
+    top = repo.root()
+    lines, states = _report(top)
+    step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
+            if (top / "forge.toml").is_file() else [])
+    print("\n".join(step + lines + states))
     return 0
 
 
@@ -203,7 +208,10 @@ def handoff_hook(args: Any) -> int:
     old = path.read_text(encoding="utf-8") if path.is_file() else ""
     heading = "## Decisions and lessons\n"
     notes = old[old.index(heading):] if heading in old else heading
-    current = "\n".join(_report(top)[0])
+    lines = _report(top)[0]
+    step = ([journey.step_line(top, _report_config(top, {}), idle=_idle(top)[0] in lines)]
+            if (top / "forge.toml").is_file() else [])
+    current = "\n".join(step + lines)
     temp = tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent,
                                        prefix="handoff-", suffix=".tmp", delete=False)
     try:
@@ -346,6 +354,10 @@ def _report(top: Path, history: dict[str, Any] | None = None,
     lines = _refresh(top, trees) + (lines or ([] if pinned else _idle(top)))
     if (top / "forge.toml").is_file():
         cfg = _report_config(top, refusals)
+        if cfg["repo"] == "client":
+            from forge import open_decisions
+
+            lines += open_decisions.due_lines(top)
         if repo.is_prototype(top, cfg):
             open_topics = open_must_answer_topics(top)
             if open_topics:
@@ -425,6 +437,8 @@ def _hotspots(top: Path, trees: dict[str, Path]) -> list[str]:
 
 def _needs_demo_address(top: Path) -> bool:
     """Read the fetched default branch, not a demo address still being edited here."""
+    from forge import design
+
     if not (top / "forge.toml").is_file():
         return False
     ref = story.landed_ref(top)
@@ -434,7 +448,8 @@ def _needs_demo_address(top: Path) -> bool:
         return False
     brief = story.show(top, ref, "docs/product/BRIEF.md") or ""
     demo = re.search(r"^## Demo\s*$([\s\S]*?)(?=^## |\Z)", brief, re.M)
-    return not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M)
+    return ((not demo or not re.search(r"^- Address: https?://\S+\s*$", demo[1], re.M))
+            and design.has_app_code(top, ref))
 
 
 def _report_config(path: Path, refusals: dict[Path, str]) -> dict[str, Any]:
@@ -565,10 +580,6 @@ def _story(top: Path, key: str, path: Path | None, text: str,
               for name in task_rows(sections(text)) if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)}
     if readiness is not None:
         readiness.update(stage="planning", parts={}, waits={})
-    if held := _native_round(top, key, title, "Grill"):
-        return held, list(states.values())
-    if any(run.get("kind") == "read" for run in board.active_runs(top, key)):
-        return [f"A reader is reading {title}.", "Next: wait for the reader to finish"], list(states.values())
     if history is None:
         notes, saved = story.show(top, ref, f"plans/{key}.read.md") or "", story.show(top, ref, repo.state_path(key))
     else:  # the board's one read of every ref
@@ -579,6 +590,13 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     if path and ref == f"story/{key}" and (path / "plans" / f"{key}.md").is_file():
         notes = story._text(path / "plans" / f"{key}.read.md")  # pyright: ignore[reportPrivateUsage]
         required = story.rounds(notes, story._text(path / repo.state_path(key)))  # pyright: ignore[reportPrivateUsage]
+    held = _native_round(top, key, title, "Grill")
+    if held or any(run.get("kind") == "read" for run in board.active_runs(top, key)):
+        record, _ = story._record(notes)
+        began = journey.started(top, key, {}, "read")
+        wait = journey.wait_line(top, key, record, began, {}, "unknown", "read")
+        lines = held or [f"A reader is reading {title}.", "Next: wait for the reader to finish"]
+        return lines[:1] + ([wait] if wait else []) + lines[1:], list(states.values())
     doc_hash = repo.blob_hash(text)
     try:
         doc = story.parse(text, top, history=history, key=key)
@@ -743,11 +761,13 @@ def _next_round(key: str, text: str, doc_hash: str, title: str, required: bool, 
         return _read_loop(key, doc, text)
     if not story.passed(record, findings):
         why = f"round {done} of its cold read had findings"
+        wait = [f"Cold read round {done} of 2: {len(story._latest(record, findings))} notes to answer."]
     elif story.changed_since_read(record.get("read_hash"), doc_hash, doc):
         why = f"plans/{key}.md changed after round {done} of its cold read"
+        wait = []
     else:
         return []
-    return [f"Planning {title}: {why}, so round {done + 1} is next.",
+    return [f"Planning {title}: {why}, so round {done + 1} is next.", *wait,
             f"Next: {f'give finding {number} in {notes} a disposition, then ' if number else ''}"
             f"forge read {key}"]
 
@@ -968,7 +988,9 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
           path: Path | None, prs: dict[str, dict[str, Any]] | None,
           refusals: dict[Path, str], statuses: dict[str, str] | None = None) -> list[str]:
     if held := _native_round(top, item, label, "Build"):
-        return held
+        wait = journey.wait_line(top, item, state, journey.started(top, item, state, "build"),
+                                 {}, "unknown", "build")
+        return held[:1] + ([wait] if wait else []) + held[1:]
     pr = (prs or {}).get(state.get("branch", "")) or {}
     state = at_ref(top, item, state, pr)
     if state.get("status") == "dropped":
@@ -1061,7 +1083,10 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
     built = _builder(item, state, path or top, refusals) if step == "forge work {item}" else ""
     if step == "forge work {item}" and not built and state.get("tool"):
         built = f"  # {state['tool'].title()} builds it"
-    return answered + [sentence.format(**values), f"Next: {step.format(**values)}{built}"]
+    wait = journey.wait_line(top, item, state, journey.started(top, item, state, "build"),
+                             pr, checks, "build")
+    return answered + [sentence.format(**values), *([wait] if wait else []),
+                       f"Next: {step.format(**values)}{built}"]
 
 
 def _builder(item: str, state: dict[str, Any], folder: Path, refusals: dict[Path, str]) -> str:

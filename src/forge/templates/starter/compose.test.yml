@@ -18,6 +18,9 @@ services:
       DATABASE_URL: postgresql://postgres:test-password@database:5432/starter_test
       APP_ENV: test
       APP_ORIGIN: http://127.0.0.1:${APP_TEST_PORT:-3000}
+      # Each built feature adds its own sign-ups and calls to one test run; production-api keeps the defaults.
+      AUTH_RATE_LIMIT_PER_MINUTE: "1000"
+      RATE_LIMIT_PER_MINUTE: "10000"
       PORT: "3000"
     ports: ["127.0.0.1:${APP_TEST_PORT:-3000}:3000"]
     depends_on:

@@ -126,6 +126,9 @@ const Agentation = lazy(() => import('agentation').then((m) => ({ default: m.Age
 
 ## Design and accessibility
 
+- Use no emojis on client app screens, including icons and decoration. Every icon comes from
+  the starter's icon library, `lucide-react`; shadcn/ui is set to `lucide`. Keyboard key labels
+  such as the Command key symbol (⌘) are not emojis.
 - impeccable and emil-design-eng are required for every UI, prototypes included. impeccable owns
   visual design: layout, type, colour, states and copy. Shape the screen before building, then use
   one batched inspection to audit and polish before a demo, with at most one more round. Run

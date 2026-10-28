@@ -1,21 +1,20 @@
 name: forge-next
 
-# Reuse passed proof on identical merges and release tags.
+# Reuse passed proof on identical release tags.
 # Pull requests run Linux's full suite in forge.yml and the Windows platform subset here.
 
 on:
   pull_request:
   push:
-    branches: [main]
     tags: ['v*']
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
 
-# A newer merge cancels the older main run; a tag, nightly or manual run is never cancelled.
+# A newer pull request run cancels its predecessor; tags, nightly and manual runs stay independent.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.event_name == 'push' && github.ref || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' || github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -74,19 +73,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Linux pull request groups already run in forge.yml; Windows always runs its subset.
+        # forge.yml owns the full Linux suite for every event.
         include: >-
-          ${{ fromJSON(github.event_name == 'pull_request' && '[
-            {"os":"windows-latest","group":1,"groups":5},
-            {"os":"windows-latest","group":2,"groups":5},
-            {"os":"windows-latest","group":3,"groups":5},
-            {"os":"windows-latest","group":4,"groups":5},
-            {"os":"windows-latest","group":5,"groups":5}]' || '[
-            {"os":"ubuntu-latest","group":1,"groups":5},
-            {"os":"ubuntu-latest","group":2,"groups":5},
-            {"os":"ubuntu-latest","group":3,"groups":5},
-            {"os":"ubuntu-latest","group":4,"groups":5},
-            {"os":"ubuntu-latest","group":5,"groups":5},
+          ${{ fromJSON('[
             {"os":"windows-latest","group":1,"groups":5},
             {"os":"windows-latest","group":2,"groups":5},
             {"os":"windows-latest","group":3,"groups":5},

@@ -21,6 +21,36 @@ def _replace(text: str, name: str, body: str) -> str:
     return text[:match.start()] + body + "\n" + text[match.end():]
 
 
+def _feature_mcp(text: str, include: bool) -> str:
+    """Keep MCP code for an MCP starter and remove it from a feature built by an older one."""
+    matches = [match for match in MARKER.finditer(text) if match.group("name") in {"mcp", "mcp-cases"}]
+    for match in reversed(matches):
+        if include:
+            lines = match.group(0).splitlines(keepends=True)
+            replacement = "".join(lines[1:-1])
+        else:
+            replacement = ""
+        text = text[:match.start()] + replacement + text[match.end():]
+    return text
+
+
+def _tool_fields(fields: list[dict[str, Any]], kinds: dict[str, Any]) -> tuple[str, str]:
+    concise = [_column(field) for field in fields if kinds["kinds"][field["kind"]]["column"]]
+    links = [field for field in fields if field["kind"] == "link"]
+    imports = sorted({
+        f"import {{ {field['target'].replace('-', '_').upper()}_API }} from '@app/{field['target']}-contracts';"
+        for field in links
+    })
+    mapping = "\n".join(
+        f"  {_column(field)}: {field['target'].replace('-', '_').upper()}_API,"
+        for field in links
+    )
+    link_body = f"\n{mapping}\n" if mapping else ""
+    label = _column(next(field for field in fields if field["kind"] == "text" and not field.get("optional")))
+    body = f"label: {_literal(label)},\nconcise: [{', '.join(_literal(name) for name in concise)}],\nlinks: {{{link_body}}},"
+    return body, "\n".join(imports)
+
+
 def _pascal(value: str) -> str:
     return "".join(part[:1].upper() + part[1:] for part in value.split("-"))
 
@@ -426,7 +456,9 @@ def _renamed_source(text: str, one: str, plural: str) -> str:
     return renamed
 
 
-def render_feature_api(fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any]) -> dict[str, str]:
+def render_feature_api(
+    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any], *, include_mcp: bool = True
+) -> dict[str, str]:
     """Return the renamed contracts/server sources and generated API tests."""
     model, title = _pascal(one), _pascal(plural)
     statuses = _status_fields(fields)
@@ -436,7 +468,7 @@ def render_feature_api(fields: list[dict[str, Any]], one: str, plural: str, kind
     decode, after = _cursor_blocks(sort_fields, one)
     name_field = next(field for field in fields if field["kind"] == "text" and not field.get("optional"))
     filter_where = _field_filter_where(fields)
-    from forge.feature_tests import render_api_tests
+    from forge.feature_tests import render_api_tests, render_mcp_cases
 
     contract_imports = ", ".join([
         *(_status_name(one, field) for field in statuses),
@@ -478,14 +510,26 @@ def render_feature_api(fields: list[dict[str, Any]], one: str, plural: str, kind
             ("csv-fields", _csv_fields(fields)),
             ("csv-description", f"@ApiResponse({{ status: 200, description: {_literal(f'The {plural}.csv file: {csv_fields}, Created (UTC) and Updated (UTC).')} }})"),
         ],
-        "apps/api/test/projects.e2e-spec.ts": [("generated-tests", render_api_tests(fields, one, plural, kinds))],
+        "apps/api/test/projects.e2e-spec.ts": [
+            ("generated-tests", render_api_tests(fields, one, plural, kinds))
+        ],
     }
+    if include_mcp:
+        sources["apps/api/test/projects.e2e-spec.ts"].append(
+            ("mcp-cases", render_mcp_cases(fields, one, plural, kinds))
+        )
     for source_path in (
         "libs/projects/server/src/projects.module.ts",
         "libs/projects/server/src/projects.permissions.ts",
         "libs/projects/server/src/index.ts",
     ):
         sources[source_path] = []
+    if include_mcp:
+        tool_fields, link_imports = _tool_fields(fields, kinds)
+        sources["libs/projects/server/src/projects.tools.ts"] = [
+            ("link-imports", link_imports),
+            ("tool-fields", tool_fields),
+        ]
     result: dict[str, str] = {}
     for source_path, replacements in sources.items():
         source = (STARTER / source_path).read_text(encoding="utf-8")
@@ -507,6 +551,7 @@ def render_feature_api(fields: list[dict[str, Any]], one: str, plural: str, kind
         source = source.replace("__featureItems", "featureItems").replace("__featureItem", "featureItem")
         for marker, body in replacements:
             source = _replace(source, marker, body)
+        source = _feature_mcp(source, include_mcp)
         if source_path.endswith("projects.service.ts"):
             source = re.sub(r"import \{[^}]+\} from '@app/" + re.escape(plural) + r"-contracts';",
                             f"import {{ {contract_imports} }} from '@app/{plural}-contracts';", source, count=1)

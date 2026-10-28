@@ -91,6 +91,22 @@ describe('starter API', () => {
     expect(response.body.error.code).toBe('CSRF_CHECK_FAILED');
   });
 
+  it('production keeps the default rate limits on account routes and other routes', async () => {
+    // The test api service raises both limits; production-api keeps 30 and 120 a minute.
+    const signIns = [];
+    for (let attempt = 0; attempt < 31; attempt += 1) {
+      signIns.push((await request(productionApiBaseUrl).post('/api/v1/auth/sign-in').send({})).status);
+    }
+    expect(signIns.slice(0, 30)).not.toContain(429);
+    expect(signIns[30]).toBe(429);
+    const reads = [];
+    for (let attempt = 0; attempt < 121; attempt += 1) {
+      reads.push((await request(productionApiBaseUrl).get('/api/v1/auth/options')).status);
+    }
+    expect(reads.slice(0, 120)).not.toContain(429);
+    expect(reads[120]).toBe(429);
+  });
+
   it('production forgot-password does not log a reset link', async () => {
     const account = credentials();
     await request(productionApiBaseUrl).post('/api/v1/auth/sign-up').send(account).expect(201);

@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+// forge:feature:form-imports:start
 import { projectSchema, type Project, type ProjectInput } from '@app/projects-contracts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
+// forge:feature:form-imports:end
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,8 +19,20 @@ import { Button } from '@app/shared-ui/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@app/shared-ui/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@app/shared-ui/components/ui/form';
 import { Input } from '@app/shared-ui/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
 import { applyApiFieldErrors } from '@app/core-web';
+
+// forge:feature:form-values:start
+const formSchema = projectSchema;
+type FormValues = ProjectInput;
+
+function toValues(project?: Project): FormValues {
+  return { name: project?.name ?? '', status: project?.status ?? 'active' };
+}
+
+function toInput(values: FormValues): ProjectInput {
+  return values;
+}
+// forge:feature:form-values:end
 
 type ProjectFormDialogProps = {
   open: boolean;
@@ -29,22 +44,22 @@ type ProjectFormDialogProps = {
 export function ProjectFormDialog({ open, project, onOpenChange, onSave }: ProjectFormDialogProps) {
   const [error, setError] = useState('');
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const form = useForm<ProjectInput>({
-    resolver: zodResolver(projectSchema),
-    defaultValues: { name: '', status: 'active' },
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: toValues(),
   });
   const { isDirty } = form.formState;
 
   // The parent keeps the edited project fixed while the dialog is open, so this resets only on open.
   useEffect(() => {
-    if (open) form.reset({ name: project?.name ?? '', status: project?.status ?? 'active' });
-  }, [form, open, project?.id, project?.name, project?.status]);
+    if (open) form.reset(toValues(project));
+  }, [form, open, project]);
 
-  async function submit(input: ProjectInput) {
+  async function submit(values: FormValues) {
     setError('');
     try {
-      await onSave(input);
-      form.reset(input);
+      await onSave(toInput(values));
+      form.reset(values);
       onOpenChange(false);
     } catch (cause) {
       if (!applyApiFieldErrors(cause, form.setError)) {
@@ -67,13 +82,14 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
   return (
     <>
     <Dialog open={open} onOpenChange={requestOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{editing ? 'Change the project’s details.' : 'Add a project to your list.'}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(submit)}>
+            {/* forge:feature:form-fields:start */}
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem>
                 <FormLabel>Name</FormLabel>
@@ -94,6 +110,7 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
                 <FormMessage />
               </FormItem>
             )} />
+            {/* forge:feature:form-fields:end */}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => requestOpenChange(false)}>Cancel</Button>
@@ -117,7 +134,7 @@ export function ProjectFormDialog({ open, project, onOpenChange, onSave }: Proje
             event.preventDefault();
             setConfirmDiscard(false);
             setError('');
-            form.reset({ name: project?.name ?? '', status: project?.status ?? 'active' });
+            form.reset(toValues(project));
             onOpenChange(false);
           }}>Discard changes</AlertDialogAction>
         </AlertDialogFooter>

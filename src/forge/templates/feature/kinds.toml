@@ -6,6 +6,8 @@ index = 'CREATE INDEX "idx_{table}_{column}_link" ON "{schema}"."{table}" ("{col
 updated_at_trigger = 'CREATE TRIGGER "{table}_set_updated_at" BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE FUNCTION set_updated_at();'
 soft_delete_trigger = 'CREATE TRIGGER soft_delete_only BEFORE DELETE ON "{table}" FOR EACH ROW EXECUTE FUNCTION soft_delete_only();'
 
+# Web keys: input is the form control, cell how a value shows, column whether the list shows it,
+# filter_options the list filter's choices before the field's own ({Label}, {label}, {labels}).
 [kinds.text]
 sql = "TEXT"
 prisma = "String"
@@ -17,6 +19,10 @@ bad = ""
 filter_index = false
 search_index = true
 index = false
+input = "input"
+cell = "text"
+column = true
+filter_options = []
 
 [kinds.long-text]
 sql = "TEXT"
@@ -29,6 +35,10 @@ bad = 123
 filter_index = false
 search_index = false
 index = false
+input = "textarea"
+cell = "long-text"
+column = false
+filter_options = []
 
 [kinds.number]
 sql = "NUMERIC(19,4)"
@@ -41,6 +51,10 @@ bad = "not-a-number"
 filter_index = false
 search_index = false
 index = false
+input = "number"
+cell = "number"
+column = false
+filter_options = []
 
 [kinds.money]
 sql = "INTEGER"
@@ -53,6 +67,10 @@ bad = "not-money"
 filter_index = false
 search_index = false
 index = false
+input = "money"
+cell = "money"
+column = true
+filter_options = []
 
 [kinds.date]
 sql = "DATE"
@@ -65,6 +83,10 @@ bad = "2026-02-30"
 filter_index = false
 search_index = false
 index = false
+input = "date"
+cell = "date"
+column = true
+filter_options = []
 
 [kinds.yes-no]
 sql = "BOOLEAN"
@@ -77,6 +99,10 @@ bad = "maybe"
 filter_index = true
 search_index = false
 index = false
+input = "checkbox"
+cell = "yes-no"
+column = false
+filter_options = ["{Label} or not", "{Label}", "Not {label}"]
 
 [kinds.email]
 sql = "TEXT"
@@ -89,6 +115,10 @@ bad = "not-an-email"
 filter_index = false
 search_index = true
 index = false
+input = "email"
+cell = "email"
+column = false
+filter_options = []
 
 [kinds.status]
 sql = "TEXT"
@@ -101,6 +131,10 @@ bad = "unknown"
 filter_index = true
 search_index = false
 index = false
+input = "select"
+cell = "badge"
+column = true
+filter_options = ["All {labels}"]
 
 [kinds.link]
 sql = "UUID"
@@ -113,3 +147,7 @@ bad = "not-a-uuid"
 filter_index = true
 search_index = false
 index = true
+input = "combobox"
+cell = "link"
+column = true
+filter_options = ["All {labels}"]

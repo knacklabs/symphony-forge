@@ -29,6 +29,9 @@
       "path": "../../libs/history/server"
     },
     {
+      "path": "../../libs/mcp/server"
+    },
+    {
       "path": "../../libs/organisations/server"
     },
     {

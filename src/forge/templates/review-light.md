@@ -12,8 +12,12 @@ Check only these three things:
 2. Security: input, permissions or secrets allow unauthorized access or disclosure.
 3. Data loss: a demo operation loses or corrupts data.
 
+Also apply this screen icon rule:
+On client app screens, report emoji icons or decoration and icons outside `lucide-react` as a finding titled `Icons: <the screen>`. Keyboard key labels such as the Command key symbol (⌘) are not emojis.
+
 Only demo-step and boundary tests are due in these rounds. The full proof is due at sign-off.
-Do not audit production completeness, style, architecture or coverage beyond those three checks.
+Do not audit production completeness, style, architecture or coverage beyond those three checks
+and the screen icon rule.
 Use the screen list to assess demo breakage, not to start a separate design audit.
 
 ## Demo proof and close's test run
@@ -41,4 +45,4 @@ $accepted
 
 Settled findings stay settled. Do not repeat a fixed or dismissed title and file. A new finding
 needs distinct evidence of harm. The repository's reference material applies only within the
-three checks above.
+three checks and the screen icon rule above.
