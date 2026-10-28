@@ -9,6 +9,10 @@
     {
       "at": "2026-10-28T14:30:57.518791+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-28T14:45:29.909591+00:00",
+      "step": "read"
     }
   ],
   "title": "Client apps with agents get agent must-haves before they build",
