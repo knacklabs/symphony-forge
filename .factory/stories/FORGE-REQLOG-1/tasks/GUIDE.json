@@ -2,12 +2,20 @@
   "base": "39364b91f44cabedfe130c2ec6618c32d8a741fc",
   "branch": "task/FORGE-REQLOG-1-GUIDE",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-AGENTS-1/SKILL",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T17:18:25.536846+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0cacdeba66d632de90a7d96b09df95b5479096e0",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
