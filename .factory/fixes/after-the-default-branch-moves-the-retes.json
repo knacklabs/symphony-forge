@@ -11,12 +11,27 @@
   "done_when": "A retested item merges in one run, and it waits for checks a second time only when the new default-branch commits touch the item's changed files.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c0c26edd7f6a53b903f3c5b36b9d6689034ae45141a44b242b0ca4555ccef045",
+    "changed": "368344a9b21b0a2798e9dfce2d9b2eaa1564934cb0c2c3ecbf4e04409511337f",
+    "commit": "8425c0def8a3ac7f5d80bde3b053478e9e40a5a1",
+    "dismissals": [],
+    "findings": [],
+    "id": "57665c23-4bf2-49ff-8780-0c314c764e1f",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T13:05:12.960972+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T13:13:06.693379+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
