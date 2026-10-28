@@ -4,12 +4,27 @@
   "done_when": "A non-JSON reply, such as a proxy error page, raises the client's normal request error with the HTTP status instead of a parse error.",
   "fix_kind": "ui",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a4babd01ff00d10fb859789b5a37ea93025635f2a789a67e826ee5dc554f9cbd",
+    "changed": "9849f647f90f9b1a8b58f6f09563cc658a7839f06aa1f220199732251532df55",
+    "commit": "2f20be6a2b24d39d3f586b83101851064aa3c2c8",
+    "dismissals": [],
+    "findings": [],
+    "id": "e3b74813-f3cb-4205-b85c-7ea78adb5e98",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T10:55:16.063868+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T12:20:34.493760+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
