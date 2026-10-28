@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-AGENTS-1-REVIEW",
+  "chat": {
+    "approval": "02a8989119fb33011af49abdec1ea08219492f5fdd8d7c161df2bf7e0b75153b",
+    "claude": null,
+    "conversation": "01a18391-55dd-7c91-9261-1bea13ef6a68",
+    "head": null,
+    "start": "1591fd97a84e47ca82e655bf0e0f457596642f16"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
