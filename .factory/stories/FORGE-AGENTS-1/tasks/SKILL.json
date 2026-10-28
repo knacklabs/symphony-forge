@@ -2,12 +2,20 @@
   "base": "02ba9c55424649133d95392db92305e788b4d64b",
   "branch": "task/FORGE-AGENTS-1-SKILL",
   "part_line_limit": 400,
+  "round": 1,
   "stacked_on": "FORGE-AGENTREADY-1/GUIDE",
-  "status": "started",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T14:53:58.904830+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e4aecae98929d87e3dc5e1dc7a6b64a8f8b26e62",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
