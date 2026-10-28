@@ -4,12 +4,20 @@
   "done_when": "A non-JSON reply, such as a proxy error page, raises the client's normal request error with the HTTP status instead of a parse error.",
   "fix_kind": "ui",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T10:55:16.063868+00:00",
       "step": "start"
     }
   ],
-  "why": "The web API client reads every reply as JSON before it checks the status, so a proxy error page throws a raw parse error instead of the client's normal request error, and the HTTP status is lost."
+  "stuck": {
+    "close": null,
+    "head": "63ebf2c9038652da4264e94c55b684ffd90564ad",
+    "keys": {},
+    "round": null
+  },
+  "why": "The web API client reads every reply as JSON before it checks the status, so a proxy error page throws a raw parse error instead of the client's normal request error, and the HTTP status is lost.",
+  "worker": "claude"
 }
