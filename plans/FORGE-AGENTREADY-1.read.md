@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-28T09:47:43.488461+00:00
-seconds: 91.83
-read_hash: ca253d67c8f3ae870e74fa10dbc354cac89bf23c
-round: 2
-passed: yes
-doc_seen: ca253d67c8f3ae870e74fa10dbc354cac89bf23c
+read_at: 2026-10-28T10:56:36.657635+00:00
+seconds: 168.482
+read_hash: 4ff3c3cec08857ab2a2efb7065f159fd8e7d0e83
+round: 3
+passed: no
+doc_seen: 4ff3c3cec08857ab2a2efb7065f159fd8e7d0e83
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 8333696f4e1b85c52c31c9966e0a2081bf7bf9bc
+notes_seen: 3d69d160bdc2aac3f58632ce6ae57fe00029e5f8
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a181dc-b601-7d53-adb9-493ff97efc15
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose one more round: add a web test for the invite hook's retry key
 ---
 # Cold read notes
 
@@ -60,3 +60,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 ## Round 2
 
 No findings.
+
+## Round 3
+
+5. Advisory: Unproven: item 1’s invite hook has no retry-lifecycle coverage.
+   Raise: Test. `plans/FORGE-AGENTREADY-1.md:80` relies on the projects hook’s test, but that test imports only project hooks (`src/forge/templates/starter/libs/projects/web/src/hooks/projects-hooks.test.tsx:4`). `useInvite` is a separate implementation (`src/forge/templates/starter/libs/organisations/web/src/hooks/members-hooks.ts:39`). Omitting its header or generating a new key on every attempt would pass the planned API tests, which supply keys themselves, and the existing browser invite case, which never retries a failed response.
+   Case: normal use - an invite succeeds but its response is lost; retrying from the dialog sends another email because the hook supplies no stable key.
+   Gain 3, Work 2, Harm 3
