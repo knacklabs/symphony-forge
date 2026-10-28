@@ -1,6 +1,13 @@
 {
   "base": "5dceb4da70e513f613ccd93c0a89e5cceb9fe123",
   "branch": "fix/claude-work-on-sonnet",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a182c1-bce8-7080-a3e4-d0d36c4018af",
+    "head": null,
+    "start": "6928e93d17f782b87f348c9ebe95c13642c7192f"
+  },
   "done_when": "forge.toml's Claude entries for build, fix, lite, grill and design name claude-sonnet-5-5, and no Claude entry names claude-opus-5-5",
   "fix_kind": "mechanical",
   "kind": "fix",
