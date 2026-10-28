@@ -1,0 +1,15 @@
+{
+  "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
+  "branch": "fix/trim-tests-routing-stack-chats",
+  "done_when": "The cases named in batches 5 to 8 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T17:17:22.579730+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Trim repeated earlier-adopted cases in the fix routing, stack, chat continuity and doctor batching tests (audit batches 5 to 8)"
+}
