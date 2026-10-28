@@ -108,7 +108,8 @@ test('create, view, edit, and delete a project', async ({ page }) => {
   await expect(page).toHaveURL(/sortOrder=asc/);
   // Wait for the sorted rows: a click while the old rows are swapped out can land on another row.
   await expect(page.getByRole('row').nth(2)).toContainText('Pagination project 00');
-  await page.getByRole('link', { name: 'Migration review' }).click();
+  // Activate the named link directly while linked-field cells can still change the row layout.
+  await page.getByRole('link', { name: 'Migration review', exact: true }).press('Enter');
   await expect(page.getByRole('heading', { level: 1, name: 'Migration review' })).toBeVisible();
   await page.getByRole('button', { name: 'Edit' }).click();
   const editDialog = page.getByRole('dialog', { name: 'Edit project' });
