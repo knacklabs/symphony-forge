@@ -120,8 +120,13 @@ design it has; no prototype design files are required for this gate.
 The completeness review uses `claude-opus-5-5` at high, independent of `[models.design]`.
 Without Claude it uses `gpt-6.1-sol` at high and reports the fallback.
 Fix gaps, then retry `forge decision accept client-signoff`.
-A canvas-only sign-off needs no working build. A working prototype gets one strict whole-product
-review with no serious findings.
+A canvas-only sign-off needs no working build. A working prototype gets a full first product review.
+Later attempts review only product files changed since the last review and its open findings.
+Reviewers get earlier findings and answers. Settled findings stay settled.
+After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
+Use `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
+Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
+New clients and earlier-adopted clients get these rules on upgrade.
 Forge reuses each passed result while what it checked stays unchanged.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
