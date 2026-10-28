@@ -117,7 +117,7 @@ def pytest_probe(repo, marker, workers=None):
     ("picker", False), ("work", True),
 ], ids=["work", "read", "review", "small-test", "direct-picker", "earlier-adoption"])
 def test_1_every_lane_waits_for_memory_and_starts_when_it_recovers(env, tmp_path, kind, adopted):
-    # Reads, reviews and small selections skip capacity places, but must obey the memory floor.
+    # Reads and reviews skip capacity places; every selection obeys the memory floor.
     repo = client(env, tmp_path, adopted)
     machine_cores(repo, 8)
     marker = repo.bin / "test-started"
@@ -250,7 +250,8 @@ def test_3_busy_runners_reduce_budgets_and_idle_runners_release_waiters(
         publish(busy, "0")
         if kind == "test":
             _, observed = accepted(server, connections, jobs[-1], processes[-1], outputs[-1])
-            assert observed["cpus"] == observed["xdist"] == "4"
+            # The first run retains two processes; the waiter gets the two now free.
+            assert observed["cpus"] == observed["xdist"] == "2"
         else:
             _until(lambda: (repo.bin / f"started-{jobs[-1][1]}").exists(),
                    "the waiting worker to use an idle runner's room")

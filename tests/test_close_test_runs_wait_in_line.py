@@ -35,8 +35,7 @@ print("1 passed")
 
 
 def _with_test_command(env) -> Path:
-    # Queue ordering needs a one-place lane: four cores keep that contract while
-    # eight cores now deliberately admit two test runs (covered by the capacity tests).
+    # Queue ordering needs one run to hold the whole shared process budget.
     machine_cores(env.repo, 4)
     script = env.tmp / "suite.py"
     script.write_text(SUITE.format(tmp=str(env.tmp)), "utf-8")
@@ -91,13 +90,13 @@ class Close:
     def places(self) -> list[str]:
         # With four cores the review lane can also queue. This case owns the
         # test lane's FIFO messages, not admission to the separate agent lane.
-        return [line for line in self.said.splitlines() if "Forge test runs" in line and "waits its turn" in line]
+        return [line for line in self.said.splitlines() if "Forge test processes" in line and "waits its turn" in line]
 
 
 # Workers share close's queue; waiting messages name holders and count places in the lane.
-ONE = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 1 in line."
-TWO = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 2 in line."
-THREE = "1 Forge test runs already run on this machine, so this one waits its turn: it is number 3 in line."
+ONE = "2 Forge test processes already run on this machine, so this one waits its turn: it is number 1 in line."
+TWO = "2 Forge test processes already run on this machine, so this one waits its turn: it is number 2 in line."
+THREE = "2 Forge test processes already run on this machine, so this one waits its turn: it is number 3 in line."
 
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new", "earlier-adoption"])

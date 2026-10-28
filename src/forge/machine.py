@@ -39,9 +39,11 @@ def half_cores(runners: int | None = None) -> int:
     return max(1, cores - (busy_runners() if runners is None else runners))
 
 
-def test_cpus() -> str:
-    """The test processes for one test run: a worker's own budget, else half the cores."""
-    budget = half_cores()
+def test_cpus(entry: dict[str, Any] | None = None) -> str:
+    """Use the admitted allocation, or the worker's cap before admission."""
+    if entry is not None:
+        return str(entry.get("processes", half_cores(0)))
+    budget = test_slots()
     return str(min(int(os.environ.get("FORGE_TEST_CPUS") or budget), budget))
 
 
@@ -85,8 +87,15 @@ def _load_per_core() -> float | None:
 
 
 def test_slots(runners: int | None = None) -> int:
-    """One test run per four available cores, with at least one place."""
-    return max(1, half_cores(runners) // 2)
+    """Test processes share the cores left after the agent share and local CI jobs."""
+    cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
+    return max(1, cores - half_cores(0) - (busy_runners() if runners is None else runners))
+
+
+def test_allocation(runs: list[dict[str, Any]]) -> int:
+    """Running tests reserve their allocation; older entries reserve the old default share."""
+    return sum(run.get("processes", half_cores(0)) for run in runs
+               if run["kind"] == "test" and _admitted(run))
 
 
 def _repos_file() -> Path:
@@ -169,16 +178,22 @@ def _holder(run: dict[str, Any]) -> str:
 
 def _place(run: dict[str, Any], lane: list[dict[str, Any]], size: int) -> int:
     """Running rounds retain capacity, but do not become waiters when the budget shrinks."""
-    if run.get("free") or _admitted(run) or lane.index(run) < size:
+    if _admitted(run):
+        return 0
+    if run["kind"] == "test":
+        waiting = [row for row in lane if not _admitted(row)]
+        if waiting[0] == run and test_allocation(lane) < size:
+            return 0
+        return 1 + waiting.index(run)
+    if run.get("free") or lane.index(run) < size:
         return 0
     return 1 + sum(not _admitted(row) for row in lane[:lane.index(run)])
 
 
-def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None,
-         small: bool = False) -> dict[str, Any]:
+def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
     """Join a lane; prerequisite agents go first, with arrival order within each group.
 
-    Reviews, plan reads and small test runs take no place from anyone else, but every run
+    Reviews and plan reads take no place from anyone else, but every run
     waits for the machine's load and memory to allow a start."""
     from forge import codex, repo as repository  # codex imports machine
 
@@ -208,10 +223,13 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
              "agent": None, "round": round_number, "unblocks": unblocks,
-             "output_path": None, "progress": None, "free": small or kind in ("read", "review")}
+             "output_path": None, "progress": None, "free": kind in ("read", "review")}
+    if kind == "test":
+        entry["processes"] = 0
     with _queue() as runs:
         runs.append(entry)
     _lane_event(entry, "lane joined", at=entry["joined_at"])
+    waiting_since = time.monotonic()
     try:
         said: int | str | tuple = 0
         while True:
@@ -226,10 +244,10 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                 if mine is None:
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
                 lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")
-                        and not run.get("free")]
+                        and (kind == "test" or not run.get("free"))]
                 place = _place(mine, lane, size)
                 holders = [run for run in lane if _admitted(run)]
-                occupied = len(holders)
+                occupied = test_allocation(holders) if kind == "test" else len(holders)
                 waiting = (place, tuple(run["id"] for run in holders))
                 busy = None
                 # External jobs also drive load, even when no Forge run has started.
@@ -240,6 +258,9 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                     busy = busy if busy is not None and busy >= LOAD_LIMIT else None
                 if place <= 0 and busy is None and not low_memory:
                     # Admission holds the place before the model process is launched.
+                    if kind == "test":
+                        mine["processes"] = entry["processes"] = min(
+                            int(os.environ.get("FORGE_TEST_CPUS") or size), size - occupied)
                     mine["admitted"] = entry["admitted"] = True
             if place <= 0 and busy is None and not low_memory:
                 _lane_event(entry, "lane admitted")
@@ -258,14 +279,14 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
                 lines = []
                 # A holder handover can precede admission of the next run without moving us.
                 if not isinstance(said, tuple) or said[0] != place:
-                    lines.append(f"{max(size, occupied)} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
+                    lines.append(f"{max(size, occupied)} Forge {'test processes' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
                                  f"its turn: it is number {place} in line."
                                  + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""))
                 lines.extend(_holder(run) for run in holders)
                 if lines:
                     print("\n".join(lines), flush=True)
                 said = waiting
-            time.sleep(0.5)
+            time.sleep(1 if time.monotonic() - waiting_since < 60 else 2)
     except BaseException:
         leave(entry)
         raise
@@ -363,7 +384,8 @@ def view() -> dict[str, Any]:
         run["process"] = {key: value for key, value in run["process"].items()
                           if key in ("pid", "started")}
     runners = busy_runners()
-    return {name: {"size": size, "entries": [run for run in runs
+    return {name: {"size": size, **({"used": test_allocation(runs)} if name == "tests" else {}),
+            "entries": [run for run in runs
             if (run["kind"] == "test") == (name == "tests")]}
             for name, size in (("agents", half_cores(runners)), ("tests", test_slots(runners)))}
 
@@ -372,9 +394,9 @@ def lanes(args: Any) -> int:
     """Show this release, while older runs still count towards queue admission."""
     result = view()
     now = datetime.fromisoformat(repo.now())
-    for lane in result.values():
+    for name, lane in result.items():
         rows = []
-        counted = [run for run in lane["entries"] if not run.get("free")]
+        counted = [run for run in lane["entries"] if name == "tests" or not run.get("free")]
         for run in lane["entries"]:
             if run.get("version") != __version__:
                 continue
@@ -517,6 +539,7 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
             runs = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             runs = []
+        original = json.dumps(runs)
         # Runs launched by the previous release still hold their places during an upgrade.
         for run in runs:
             if "id" not in run:
@@ -531,17 +554,21 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
         # calls its live Forge process holds the admission. Tests hold only their command once
         # started. A reused child pid falls back to that Forge process, never to its new owner.
         before = list(runs)
+        pids = {process["pid"] for run in runs
+                for process in (run["process"], run.get("forge"))
+                if process and isinstance(process.get("pid"), int)}
+        identities = _identities(pids)
         retained = []
         for run in runs:
             recorded = run["process"]
-            current = codex.identity(recorded["pid"])
+            current = identities.get(recorded["pid"])
             # One OS observation decides both liveness and parent fallback. A second
             # lookup could see a reused pid after the first already reported it gone.
             if current is not None and ("started" not in recorded or "command" not in current
                                         or codex._legacy_identity(recorded)
                                         or current["started"] == recorded["started"]):
                 retained.append(run)
-            elif run["kind"] != "test" and _running(run.get("forge")):
+            elif run["kind"] != "test" and _running(run.get("forge"), identities):
                 run["process"] = run["forge"]
                 retained.append(run)
         runs[:] = retained
@@ -550,8 +577,10 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
             1 if run.get("unblocks") else 2))
         runs[:] = [run if run["kind"] == "test" else next(agents) for run in runs]
         yield runs
-        path.with_suffix(".new").write_text(json.dumps(runs), encoding="utf-8")
-        os.replace(path.with_suffix(".new"), path)
+        updated = json.dumps(runs)
+        if updated != original:
+            path.with_suffix(".new").write_text(updated, encoding="utf-8")
+            os.replace(path.with_suffix(".new"), path)
         remaining = {run["id"] for run in runs}
         live = {run["id"] for run in retained}
         for run in before:
@@ -559,12 +588,57 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                 _lane_event(run, "lane left", end_known=run["id"] in live)
 
 
-def _running(process: dict[str, Any] | None) -> bool:
+def _identities(pids: set[int]) -> dict[int, dict[str, Any] | None]:
+    """Observe each process once; POSIX can list the whole set with one ps call."""
+    from forge import codex
+
+    if os.name == "nt":
+        return {pid: codex.identity(pid) for pid in pids}
+    if not pids:
+        return {}
+    done = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-ww", "-o",
+                    "pid=,stat=,lstart=,command=", "-p", ",".join(map(str, sorted(pids))))
+    if done.returncode == 1 and not (done.stdout + done.stderr).strip():
+        return {pid: None for pid in pids}
+    if done.returncode:
+        return {pid: {"pid": pid} for pid in pids}
+    identities: dict[int, dict[str, Any] | None] = {}
+    malformed = False
+    for line in done.stdout.splitlines():
+        fields = line.split(None, 7)
+        try:
+            pid = int(fields[0])
+        except (IndexError, ValueError):
+            malformed = True
+            continue
+        if pid not in pids:
+            continue
+        if len(fields) > 1 and fields[1].startswith("Z"):
+            identities[pid] = None
+        elif len(fields) < 8 or not fields[7].strip():
+            identities[pid] = {"pid": pid}
+        else:
+            identities[pid] = {"pid": pid, "started": "UTC " + " ".join(fields[2:7]),
+                               "command": fields[7].strip()}
+    for pid in pids - identities.keys():
+        identities[pid] = {"pid": pid} if malformed else None
+    return identities
+
+
+def _running(process: dict[str, Any] | None,
+             identities: dict[int, dict[str, Any] | None] | None = None) -> bool:
     """Whether a recorded process still runs; one recorded by id alone runs while its id does."""
     from forge import codex
 
     if not process:
         return False
+    if identities is not None:
+        current = identities.get(process["pid"])
+        if "started" not in process:
+            return current is not None
+        if current is not None and ("command" not in current or codex._legacy_identity(process)):
+            return True
+        return current is not None and current["started"] == process["started"]
     if "started" not in process:
         return codex.identity(process["pid"]) is not None
     return codex._alive(process) is not False  # pyright: ignore[reportPrivateUsage]

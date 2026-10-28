@@ -334,12 +334,12 @@ tests, reviews and plan reads, waits while the machine's
 one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
 (Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
-lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. A run of Forge's pytest picker that selects five or fewer test files takes no
-place when the whole command is the picker, optionally run through `uv run`. It still waits for load and memory.
-Compound commands, including the picker's underlying `test` command, keep their place.
-Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
-and the per-test budget, free memory and its floor, test processes in use, and busy runners.
+lane makes all test runs share one process budget: the cores left after the agent share and busy
+local CI jobs, with at least one process. Small selections count too. Each run takes its allocation
+from the remaining budget. A worker's test runs use at most two processes. Nested pytest pickers
+keep the parent run's allocation. Older-release entries without an allocation count as the old
+default share, half the machine's cores. `forge doctor` names these older runs and shows both lane
+budgets, free memory and its floor, test processes in use, and busy runners.
 Every run waits when free memory is below 1.5 GB or ten percent of RAM, whichever is larger.
 An unreadable memory source does not block work. Each busy local `Runner.Worker` reserves one core
 from Forge's half-core budget, with at least one core left for Forge. Waiting runs check memory
@@ -1838,8 +1838,8 @@ set (using pytest selection when supported), with `{base}` as the merge base wit
 It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
-and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
-a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
+and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
+requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
 Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.

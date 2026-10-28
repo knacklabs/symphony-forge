@@ -324,7 +324,6 @@ def test(args) -> int:
     item = review.branch_item(repo.current_branch(top), top)
     entry = machine.join("test", top, item[0] if item else None, None, None)
     try:
-        entry["test_cpus"] = int(machine.test_cpus())
         return pytest_tests(args.base, command, entry)
     finally:
         machine.leave(entry)
@@ -549,7 +548,11 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         parts = quicktest.test_parts(Path.cwd(), command)
     environment = dict(os.environ)
     worker = environment.pop("FORGE_WORKER_TESTS", None) == "1"
-    workers = machine.test_cpus()
+    allocation = entry
+    if allocation is None and (parent := environment.get("FORGE_TEST_LANE")):
+        allocation = next((run for run in machine.entries() if run["id"] == parent
+                           and run["kind"] == "test"), None)
+    workers = machine.test_cpus(allocation)
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
     if entry is not None:

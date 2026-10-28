@@ -400,35 +400,6 @@ def close_test(top: Path, base: str, *, closing: bool = True, head: str = "HEAD"
     return command.replace("{base}", repo.git("merge-base", base, head, cwd=top)) if command else ""
 
 
-def few_tests(top: Path, command: str, base: str) -> bool:
-    """Forge's pytest picker narrowed to a few related test files ends in moments."""
-    if not re.fullmatch(r"(?:uv run(?: --frozen| --python [\w.-]+)* )?"
-                        r"forge test --pytest [0-9a-f]+", command.strip()):
-        return False
-    from forge import fasttest  # fasttest imports review in forge test
-
-    test = repo.config(top)["test"]
-    # Only Python tests are bounded by the picker's file count.
-    if re.search(r"[;&|<>\r\n`$]", test):
-        return False
-    test = re.sub(r"^uv run(?: --frozen| --python [\w.-]+)* ", "", test.strip())
-    try:
-        words = shlex.split(test, posix=os.name != "nt")
-    except ValueError:
-        return False
-    runner = Path(words[0].strip('"').replace("\\", "/")).name if words else ""
-    if runner not in {"pytest", "pytest.exe"} and not (
-            re.fullmatch(r"python[\d.]*(?:\.exe)?", runner) and words[1:3] == ["-m", "pytest"]):
-        return False
-    with contextlib.chdir(top):
-        # Doctests collect from every module, not only the picked test files.
-        if "doctest" in test or "doctest" in fasttest.pytest_options(words):
-            return False
-        picked = fasttest.related(repo.git("merge-base", base, "HEAD", cwd=top))
-    # ponytail: a fixed count of files, not a time estimate; tune it if small runs crowd the cores.
-    return not picked[2] and len(picked[0]) <= 5
-
-
 # Close shows these fasttest lines, which a later runner's output can push out of the tail.
 GAP = "No local test names "
 
@@ -462,22 +433,14 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
         if passed and passed.exists():
             results.write_text(passed.read_text("utf-8"), "utf-8")
             return 0, skipped
-        entry = machine.join("test", top, item, None, None, small=few_tests(top, command, base))
+        entry = machine.join("test", top, item, None, None)
         try:
             if passed and passed.exists():  # the close this one waited for passed the same files
                 results.write_text(passed.read_text("utf-8"), "utf-8")
                 return 0, skipped
             from forge import fasttest
 
-            workers = machine.test_cpus()
-            # The machine budget also caps fixed xdist counts outside worker sessions.
-            cap = f" --maxprocesses={workers}" if fasttest.XDIST.search(command) else ""
-            env = {**os.environ, "FORGE_WORKER": "1",
-                   "FORGE_TEST_LANE": entry["id"],
-                   "PYTEST_XDIST_AUTO_NUM_WORKERS": workers, "FORGE_TEST_CPUS": workers,
-                   "PYTEST_ADDOPTS": f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip()}
-            with contextlib.chdir(top):
-                capped = fasttest.narrow_command(command, [], workers, [], launchers=False)
+            env = {**os.environ, "FORGE_WORKER": "1"}
             # Every pytest the command starts, the client's own or Forge's picker, loads Forge's
             # results hook, which no command option can turn off.
             hook = repo.forge_dir(top) / "pytest"
@@ -495,12 +458,19 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                 product = (records.tested_product(top, clean=True) if not closing else
                            receipt.get("product", "") if isinstance(receipt, dict) else "")
                 log = repo.forge_dir(top) / f"test-{ran['run_id']}.log"
-                entry.update(output_path=log.as_posix(), test_cpus=int(workers))
+                entry.update(output_path=log.as_posix())
                 history, flaky = [], []
                 grouped_pytest = (int(os.environ.get("FORGE_GROUPS", "1")) > 1
                                   and any(repo.pytest_split(top, candidate) for candidate in
                                           (command, repo.config(top)["test"])))
                 for attempt in range(2):
+                    workers = machine.test_cpus(entry)
+                    cap = f" --maxprocesses={workers}" if fasttest.XDIST.search(command) else ""
+                    env.update(FORGE_TEST_LANE=entry["id"], FORGE_TEST_CPUS=workers,
+                               PYTEST_XDIST_AUTO_NUM_WORKERS=workers,
+                               PYTEST_ADDOPTS=f"{os.environ.get('PYTEST_ADDOPTS', '')} -rs{cap}".strip())
+                    with contextlib.chdir(top):
+                        capped = fasttest.narrow_command(command, [], workers, [], launchers=False)
                     done = fasttest.test_process(top, item, capped, env, entry, ran, log)
                     evidence = results.read_text("utf-8") if results.is_file() else ""
                     if (not attempt and done.returncode == 5 and grouped_pytest
@@ -518,9 +488,8 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
                         break  # A command failure without named tests cannot be retried by file.
                     # A test lane belongs to its command, which has now exited.
                     machine.leave(entry)
-                    entry = machine.join("test", top, item, None, None, small=len(failed) <= 5)
-                    entry.update(output_path=log.as_posix(), test_cpus=int(workers))
-                    env["FORGE_TEST_LANE"] = entry["id"]
+                    entry = machine.join("test", top, item, None, None)
+                    entry.update(output_path=log.as_posix())
                     with results.open("a", encoding="utf-8") as sink:
                         sink.write(fasttest.RETRY_HEADER)
                     env["FORGE_RETRY_FILES"] = str(results)
