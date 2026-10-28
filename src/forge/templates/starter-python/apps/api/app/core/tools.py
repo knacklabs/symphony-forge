@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session as DbSession
 from app.core.errors import ApiError
 from app.core.permissions import FeaturePermissions, has_permission
 from app.core.principal import AccountPrincipal
+from app.core.resources import define_feature_resources
 
 ToolErrorKind = Literal[
     "invalid_input",
@@ -659,6 +660,40 @@ def define_feature_tools[InputT: BaseModel, RowT: BaseModel, QueryT: BaseModel](
     delete_output = _make_model(
         f"{feature_name.title()}DeleteOutput",
         {id_field: (UUID, Field()), "deleted": (Literal[True], Field())},
+    )
+
+    detailed_read = _feature_call(
+        "get",
+        feature=feature,
+        one=one,
+        id_field=id_field,
+        input_model=input_model,
+        query_model=query_model,
+        concise=concise,
+        links=links,
+        service=service,
+        label=label,
+        resolve=resolve,
+    )
+
+    def read_resource_item(item_id: UUID, context: ToolContext) -> dict[str, object]:
+        args = id_input.model_validate(
+            {id_field: item_id, "response_format": "detailed"}
+        )
+        result = detailed_read(context.account, args, context)
+        return cast(
+            dict[str, object],
+            item_output.model_validate(result.data).model_dump(
+                mode="json", by_alias=False, exclude_unset=True
+            ),
+        )
+
+    define_feature_resources(
+        feature=feature,
+        one=one,
+        permission=permissions.view,
+        input_model=input_model,
+        read=read_resource_item,
     )
 
     descriptions = {

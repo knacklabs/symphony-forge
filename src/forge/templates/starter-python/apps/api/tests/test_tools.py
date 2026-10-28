@@ -8,7 +8,8 @@ from typing import Literal
 from uuid import UUID, uuid4
 
 import pytest
-from mcp.types import CallToolResult, ToolAnnotations
+from mcp.shared.exceptions import MCPError
+from mcp.types import CallToolResult, TextContent, ToolAnnotations
 from pydantic import BaseModel
 
 from app.core import (
@@ -18,14 +19,20 @@ from app.core import (
     call_tool,
     define_feature_tools,
     define_permissions,
+    define_prompt,
     define_tool,
+    get_prompt,
+    list_prompts,
+    list_resource_templates,
+    list_resources,
     list_tools,
+    read_resource,
 )
 
 
 @pytest.fixture(scope="module", autouse=True)
 def isolated_api() -> Iterator[None]:
-    # These cases only exercise the in-memory tool registry and timeout boundary.
+    # These cases only exercise the in-memory MCP registries and call boundary.
     yield
 
 
@@ -251,3 +258,138 @@ def test_a_tool_over_its_time_limit_gets_a_retryable_unavailable_error(
     assert error["kind"] == "unavailable"
     assert error["retryable"] is True
     assert error["retry_after_seconds"] == 5
+
+
+def test_a_resource_read_without_the_view_permission_is_refused() -> None:
+    # Audit: protects resource discovery and reads when a role lacks view permission. Tool
+    # permission coverage does not exercise the resource registry. This pure registry case needs
+    # no API or database seam.
+    feature = f"hidden_{uuid4().hex[:8]}"
+    permissions = define_permissions(feature, {"admin": ["view"], "member": []})
+    define_feature_tools(
+        feature=feature,
+        one="widget",
+        permissions=permissions,
+        input_model=_WidgetInput,
+        output_model=_Widget,
+        query_model=_WidgetQuery,
+        concise=("name",),
+        links={},
+        service=_WidgetService,
+        api=feature,
+        label="name",
+    )
+    admin = AccountPrincipal(uuid4(), "admin@example.test", uuid4(), "admin")
+    member = AccountPrincipal(uuid4(), "member@example.test", uuid4(), "member")
+    admin_context = ToolContext(account=admin)
+    member_context = ToolContext(account=member)
+    fields_uri = f"app://{feature}/fields"
+    item_template = f"app://{feature}/{{widget_id}}"
+
+    assert any(
+        str(resource.uri) == fields_uri for resource in list_resources(admin_context)
+    )
+    assert any(
+        template.uri_template == item_template
+        for template in list_resource_templates(admin_context)
+    )
+    assert all(
+        not str(resource.uri).startswith(f"app://{feature}/")
+        for resource in list_resources(member_context)
+    )
+    assert all(
+        not template.uri_template.startswith(f"app://{feature}/")
+        for template in list_resource_templates(member_context)
+    )
+
+    async def read_denied_resource() -> None:
+        with pytest.raises(MCPError) as denied:
+            await read_resource(fields_uri, member_context)
+        assert denied.value.code == -32002
+        assert isinstance(denied.value.data, dict)
+        assert denied.value.data["kind"] == "not_allowed"
+        assert denied.value.data["retryable"] is False
+        assert "view" in denied.value.data["message"].casefold()
+
+    asyncio.run(read_denied_resource())
+
+
+def test_a_tools_file_can_add_a_prompt_with_its_inputs() -> None:
+    # Audit: protects prompt role visibility, input requirements, rendered content, and duplicate
+    # rejection. No starter prompt exists to cover this registry contract; no production seam.
+    feature = f"prompt_{uuid4().hex[:8]}"
+    permissions = define_permissions(feature, {"admin": ["view"], "member": []})
+
+    class _ReviewPromptInput(BaseModel):
+        project_name: str
+        status: str | None = None
+
+    def render_review(args: _ReviewPromptInput) -> str:
+        return f"Review {args.project_name} in {args.status or 'the default'} mode."
+
+    prompt_name = f"{feature}_review"
+    define_prompt(
+        name=prompt_name,
+        description="Prepare a project review request for an agent.",
+        permission=permissions.view,
+        arguments=_ReviewPromptInput,
+        render=render_review,
+    )
+    admin = AccountPrincipal(uuid4(), "admin@example.test", uuid4(), "admin")
+    member = AccountPrincipal(uuid4(), "member@example.test", uuid4(), "member")
+    admin_context = ToolContext(account=admin)
+    member_context = ToolContext(account=member)
+
+    prompt = next(
+        entry for entry in list_prompts(admin_context) if entry.name == prompt_name
+    )
+    prompt_arguments = prompt.arguments
+    assert prompt_arguments is not None
+    arguments = {argument.name: argument for argument in prompt_arguments}
+    assert set(arguments) == {"project_name", "status"}
+    assert arguments["project_name"].required is True
+    assert arguments["status"].required is False
+    assert {name for name, argument in arguments.items() if argument.required} == {
+        "project_name"
+    }
+    assert all(entry.name != prompt_name for entry in list_prompts(member_context))
+
+    result = get_prompt(
+        prompt_name,
+        {"project_name": "Atlas", "status": "archived"},
+        admin_context,
+    )
+    assert len(result.messages) == 1
+    message = result.messages[0]
+    assert message.role == "user"
+    assert isinstance(message.content, TextContent)
+    assert message.content.text == "Review Atlas in archived mode."
+    omitted_optional = get_prompt(prompt_name, {"project_name": "Atlas"}, admin_context)
+    assert len(omitted_optional.messages) == 1
+    optional_message = omitted_optional.messages[0]
+    assert isinstance(optional_message.content, TextContent)
+    assert optional_message.content.text == "Review Atlas in the default mode."
+
+    with pytest.raises(MCPError, match="role cannot use this prompt"):
+        get_prompt(
+            prompt_name,
+            {"project_name": "Atlas", "status": "archived"},
+            member_context,
+        )
+
+    with pytest.raises(MCPError):
+        get_prompt(prompt_name, {}, admin_context)
+    with pytest.raises(MCPError):
+        get_prompt(
+            prompt_name,
+            {"project_name": "Atlas", "unexpected": True},
+            admin_context,
+        )
+    with pytest.raises(ValueError, match="Duplicate prompt"):
+        define_prompt(
+            name=prompt_name,
+            description="A duplicate prompt.",
+            permission=permissions.view,
+            arguments=_ReviewPromptInput,
+            render=render_review,
+        )

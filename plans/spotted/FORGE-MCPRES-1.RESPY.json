@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/templates/starter-python/apps/api/app/core/resources.py\tNot done: one allowed-value list for each choice field",
+      "kind": "edge",
+      "path": "src/forge/templates/starter-python/apps/api/app/core/resources.py",
+      "line": 76,
+      "text": "Not done: one allowed-value list for each choice field",
+      "from": "review",
+      "item": "FORGE-MCPRES-1/RESPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

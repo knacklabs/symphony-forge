@@ -1,4 +1,4 @@
-"""Render the Python starter's generated TypeScript contracts from marked project regions."""
+"""Render generated contracts for Python starter features."""
 from __future__ import annotations
 
 import re
@@ -127,3 +127,142 @@ def render_python_contracts(
     template = _replace(template, "status-type", status_types)
     plural_var = _camel(plural)
     return template.replace(f"@app/{plural_var}-", f"@app/{plural}-")
+
+
+def _schema_source(
+    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any]
+) -> str:
+    from forge.feature_python import (
+        STARTER_PYTHON,
+        _field_attr,
+        _literal,
+        _pydantic_type,
+        _python_rename,
+        _remove_marks,
+        _replace_mark,
+        _words,
+    )
+
+    definitions = kinds["kinds"]
+    imports = [
+        "from datetime import date, datetime"
+        if any(field["kind"] == "date" for field in fields)
+        else "from datetime import datetime",
+        "from typing import Literal",
+        "from uuid import UUID",
+        "",
+        "from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator",
+        "from pydantic.alias_generators import to_camel",
+    ]
+    input_fields = []
+    for field in fields:
+        kind, attr = field["kind"], _field_attr(field)
+        optional = field.get("optional", False) and kind != "yes-no"
+        definition = definitions[kind]
+        sample = definition["sample"]
+        if kind == "status" and sample not in field["options"]:
+            sample = field["options"][0]
+        metadata = [
+            f"description={_literal(_words(field['name']) + '.')}",
+            f"examples=[{_literal(sample)}]",
+        ]
+        constraints = []
+        if kind == "text":
+            constraints.extend(["min_length=1", "max_length=200"])
+        elif kind == "long-text":
+            constraints.append("max_length=10000")
+        elif kind == "email":
+            constraints.extend(["max_length=254", 'pattern=r"^[^@\\s]+@[^@\\s]+$"'])
+        elif kind in ("number", "money"):
+            constraints.append('pattern=r"^-?\\d{1,15}(?:\\.\\d{1,4})?$"')
+        if kind == "status":
+            suffix = " | None" if optional else ""
+            default = "default=None" if optional else f"default={_literal(field['options'][0])}"
+            input_fields.append(f"{attr}: Literal[")
+            input_fields.extend(f"    {_literal(value)}," for value in field["options"])
+            input_fields.append(
+                f"]{suffix} = Field({default}, " + ", ".join(metadata) + ")"
+            )
+        else:
+            type_name = definitions[kind]["pydantic"]
+            if optional:
+                type_name += " | None"
+            arguments = metadata + constraints
+            if optional:
+                arguments.insert(0, "default=None")
+            elif kind == "yes-no":
+                arguments.insert(0, "default=False")
+            input_fields.append(f"{attr}: {type_name} = Field(")
+            input_fields.extend(f"    {argument}," for argument in arguments)
+            input_fields.append(")")
+    response_fields = []
+    for field in fields:
+        kind, attr = field["kind"], _field_attr(field)
+        type_name = _pydantic_type(field, definitions)
+        if field.get("optional") and kind != "yes-no":
+            type_name += " | None"
+        if kind == "status":
+            response_fields.append(f"{attr}: Literal[")
+            response_fields.extend(f"    {_literal(value)}," for value in field["options"])
+            suffix = " | None" if field.get("optional") else ""
+            response_fields.append(f"]{suffix}")
+        elif kind in ("text", "long-text", "email"):
+            limits = {
+                "text": ["max_length=200"],
+                "long-text": ["max_length=10000"],
+                "email": ["max_length=254", 'pattern=r"^[^@\\s]+@[^@\\s]+$"'],
+            }[kind]
+            response_fields.append(f"{attr}: {type_name} = Field(")
+            response_fields.extend(f"    {limit}," for limit in limits)
+            response_fields.append(")")
+        elif kind in ("number", "money"):
+            response_fields.append(
+                f'{attr}: {type_name} = Field(pattern=r"^-?\\d{{1,15}}(?:\\.\\d{{1,4}})?$")'
+            )
+        else:
+            response_fields.append(f"{attr}: {type_name}")
+        if kind == "money":
+            response_fields.append(
+                f'{attr}_currency: str = Field(pattern=r"^[A-Z]{{3}}$")'
+            )
+    filter_fields = []
+    for field in fields:
+        kind, attr = field["kind"], _field_attr(field)
+        if not definitions[kind].get("filter_index"):
+            continue
+        if kind == "status":
+            filter_fields.append(f"{attr}: Literal[")
+            filter_fields.extend(f"    {_literal(value)}," for value in field["options"])
+            filter_fields.append("] | None = None")
+        else:
+            query_type = 'Literal["yes", "no"]' if kind == "yes-no" else "UUID"
+            filter_fields.append(f"{attr}: {query_type} | None = None")
+    sort_fields = [field for field in fields if field["kind"] != "long-text"]
+    sort_names = [field["column"] for field in sort_fields]
+    sort_names.extend(["createdAtUtc", "updatedAtUtc"])
+    sort_field = ["sort_by: Literal["]
+    sort_field.extend(f"    {_literal(value)}," for value in sort_names)
+    sort_field.append('] = "updatedAtUtc"')
+    template = (STARTER_PYTHON / "apps/api/app/projects/schema.py").read_text(
+        encoding="utf-8"
+    )
+    template = _python_rename(template, one, plural)
+    search_field = next(field for field in fields if field["kind"] in ("text", "email"))
+    template = template.replace(
+        "# Search reads the first text or email field: name.",
+        f"# Search reads the first text or email field: {_field_attr(search_field)}.",
+    )
+    template = template.replace(
+        "# A cursor holds a whole project name, which can be 120 characters of any script.",
+        "# A cursor holds one sort value and the item's id.",
+    )
+    for name, body in (
+        ("schema-imports", imports),
+        ("status-type", []),
+        ("input-fields", input_fields),
+        ("response-fields", response_fields),
+        ("filter-fields", filter_fields),
+        ("sort-fields", sort_field),
+    ):
+        template = _replace_mark(template, name, "\n".join(body))
+    return _remove_marks(template)
