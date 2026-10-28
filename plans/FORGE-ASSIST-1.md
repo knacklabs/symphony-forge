@@ -4,39 +4,27 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- New client apps from either starter can include an assistant page, where a signed-in person asks questions in plain words and the assistant works with that person's own permissions.
+- Reads run at once and show as a table, chart, stat tiles or a detail card, all from the app's design system. The assistant never writes page markup.
+- Every write shows a confirm card first, and nothing is saved until the person confirms it.
+- The agent loop uses LangGraph's prebuilt tool-calling agent in both starters, with its interrupt for the confirm card and its Postgres checkpointer for the 30-day chats.
+- Each change made through the assistant is logged as that person, marked as made through the assistant, using the agent-ready story's rule for agents that act for a person.
+- Analytics come from the app's report services. Models, the key and the spend budget come from Mainline.
+- Each person's chats are kept for 30 days, and no one else can read them.
+- A new app that opts in gets the assistant. An existing app gets nothing on upgrade, and adding the assistant later is a separate choice.
+- Building waits for the agent-ready story and follows the agents skill.
 
 ## Why
 
-Client apps get an optional in-app assistant
-
-
+Client apps cannot answer a person's question about their own data in plain words, and each client that wants this would build its own assistant with its own model keys, chat storage and write checks.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new app from either starter with the assistant on shows a page where a signed-in person's question gets an answer from the app's own tools.**
+2. **A question that only reads gets its answer at once, with no confirm card.**
+3. **A question that would change data shows a confirm card, and nothing changes until the person confirms.**
+4. **A chat disappears after 30 days, and no other person's chats ever show.**
+5. **The assistant's model, key and budget come from Mainline, and an app without the assistant has none of its code.**
 
 ## Risks
 
