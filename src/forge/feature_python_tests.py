@@ -220,6 +220,8 @@ def _field_kind(node: ast.expr, default: ast.expr | None, enums: dict[str, list[
             keywords = {keyword.arg: ast.literal_eval(keyword.value)
                         for keyword in default.keywords if keyword.arg and isinstance(keyword.value, ast.Constant)}
             if keywords.get("pattern"):
+                if keywords["pattern"].startswith(r"^-?\d"):
+                    return "number", []
                 return "email", []
             if keywords.get("max_length", 0) > 200:
                 return "long-text", []
@@ -429,10 +431,8 @@ def render_python_tests(
                 return f"{{value}} {{index}}"
             if kind == "email" and index:
                 return f"{{index}}-{{value}}"
-            if kind == "number":
+            if kind in ("number", "money"):
                 return str(Decimal(str(value)) + index)
-            if kind == "money":
-                return int(value) + index
             if kind == "yes-no" and index:
                 return index % 2 == 0
             return value
@@ -782,7 +782,7 @@ def render_python_tests(
 
             invalid_numeric_values = {{
                 "number": ("1.23456", "1000000000000000"),
-                "money": (2147483648, -2147483649),
+                "money": ("1.23456", "1000000000000000", 1250),
             }}
             for field in FEATURE_FIELDS:
                 for bad in invalid_numeric_values.get(field["kind"], ()):
