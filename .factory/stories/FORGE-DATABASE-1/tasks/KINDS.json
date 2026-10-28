@@ -34,8 +34,8 @@
     "id": "3074e07d-7bfa-4f66-afd3-3f06c1f6d4b2",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T06:58:27.396532+00:00",
@@ -51,12 +51,10 @@
     }
   ],
   "stuck": {
-    "close": "38c2cca9-757a-4200-a25e-af840aea0099",
-    "head": "749ac3e3736cc26dd27dcb244c944804d0c31011",
-    "keys": {
-      "the open P0 merge partialindexes into an existing previewfeatures list in src/forge/feature.py": 1
-    },
-    "round": 1
+    "close": "73865174-ec17-47c2-bf12-4bc183e4126a",
+    "head": "72e28633316a5a27156511ee524ddb773e8ab42a",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
