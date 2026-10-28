@@ -1,13 +1,14 @@
 # Build and fix rounds raise their effort after a failure
 
-3 parts · Risks: none one-way · New moving parts: none
+4 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
 - A build, fix or lite round starts at low effort: Codex `gpt-6.1-sol` at low, Claude `claude-sonnet-5-5` at low. A new repo gets these in its `forge.toml` at `forge init`. This repo's `forge.toml` gets them too. (Source: your decision, 28 Oct 2026)
 - A round after a verified failure runs at the top effort: Codex high, Claude xhigh. A verified failure is a red test run, a blocking review finding or a failed required check. The round runs in the same worker thread as before, with the failure as the round's brief. Only that turn's effort changes. It works in codex, claude and split modes, because the tool that runs the round sets the effort. (Source: your decision, 28 Oct 2026; the arXiv 2610.34491 result that starting low and rising after a failure matched fixed top effort at lower cost)
 - Your model choices stay. Only the effort changes from round to round. An existing repo keeps its `forge.toml` as it is. Its configured effort is the effort of a normal round. A round after a failure runs at the top effort, or at the configured effort when that is already higher. Forge writes nothing into the file. (Source: your decision, 28 Oct 2026; the exact upgrade rule is the planner's choice)
-- Codex subagents stay as they are: `gpt-6-luna` at max effort, set by `subagents` and `subagent_effort` in `forge.toml`. The ladder changes only the main worker's effort for each round, never a subagent's model or effort. (Source: your decision, 28 Oct 2026)
+- The Claude builder gets helpers of its own, as the Codex builder has. Claude build, fix and lite entries take `subagents` and `subagent_effort`, and the defaults are `claude-haiku-5-5` at high. A new repo gets them at `forge init`, and this repo's `forge.toml` gets them. An existing repo keeps the entries it has; a missing key uses the default. Forge hands them to the Claude builder only. It sets no `settings.json` value and no `CLAUDE_CODE_SUBAGENT_MODEL`, so no other Claude session changes. (Source: your decision, 28 Oct 2026; Haiku 5.5 scores well above Luna on Terminal-Bench at the same list price)
+- Subagent settings never change with the round. Codex subagents stay as they are: `gpt-6-luna` at max effort, set by `subagents` and `subagent_effort` in `forge.toml`. The ladder changes only the main worker's effort for each round, never the model or effort of a Codex or Claude subagent. (Source: your decision, 28 Oct 2026)
 - Reviews, cold reads and sign-off keep their fixed effort (Sol high). In a new Claude-only repo, cold reads and reviews run on `claude-sonnet-5-5` at high instead of `claude-opus-5-5`. An existing repo keeps its entry. (Source: your decision, 28 Oct 2026)
 - Each round's run record and the board show its effort and its round number. The per-round line on the board and in the story's record names the effort the round ran at, so one week of cost and round counts can be compared on this repo. (Source: your decision, 28 Oct 2026)
 - Forge never sets effort none. (Source: your decision, 28 Oct 2026)
@@ -25,6 +26,7 @@ Every build, fix and lite round runs at one fixed effort. A first attempt pays f
 3. **Reviews, cold reads, design rounds and sign-off keep their fixed effort.**
 4. **Each worker run's record and the board's round line show the round number and the effort that round ran at.**
 5. **Forge never sets effort none.**
+6. **The Claude builder's helpers run on the `subagents` model at the `subagent_effort` of its kind's entry, `claude-haiku-5-5` at high when the entry or key is missing. Forge passes them only to the Claude builder's own turn, through the SDK's options. They do not change on a failure round. Existing entries are kept.**
 
 ## Risks
 
@@ -57,12 +59,15 @@ Each new test file starts with `STORY = "FORGE-EFFORT-1"`. Tests run the forge c
 - This repo's `forge.toml` sets build and fix to Codex `medium` and Claude `high`, lite to `medium` and `medium`, grill on Claude to `claude-sonnet-5-5` at `high`.
 - Guide text: `src/forge/templates/skill.md` ("Codex build, fix and lite default to `gpt-6.1-sol` at medium effort"), `docs/guide.md` (the `[models]` paragraph) and `src/forge/templates/brief.md`.
 
+- Claude subagents. `repo.SUBAGENTS` and `_models_problem` already accept `subagents` and `subagent_effort` on any build, fix, lite or explore entry, including Claude's, and demand both or neither. Nothing reads them for Claude: `roles.subagent_defaults` and `sync.py` (`AGENT_PINS`) use only the Codex entry. `claude_turn.py` builds `ClaudeAgentOptions` with no `agents` option; it sets `setting_sources=["user","project","local"]`, so the roles in `.claude/agents/*.md` (written by `roles.ships` from the main model, not the budget) load for the builder. The SDK is pinned at 0.2.161 (`claude_sdk.SDK_PIN`) and is not installed on the planner's machine, so its types were not read.
+
 ### Words this story pins
 
 - **Top effort:** Codex `high`, Claude `xhigh`. Fixed in `repo.py` as `TOP_EFFORT`. It is not a setting (decision 28 Oct 2026; a setting would add a key and a check for no asked-for gain).
 - **Effort order:** `low`, `medium`, `high`, `xhigh`, `max`. A failure round runs at the higher of the round's own effort and the top effort. A value outside this list (such as `ultra`, which Forge already maps to `max`) counts as at least the top, so it is never lowered.
 - **Failed round:** the round where `_fix_round` returns findings or failing checks. A round that only answers a question or only has the owner's note is a normal round.
 - **Subagents:** the ladder never touches `subagents` or `subagent_effort`. `round_effort` changes the `effort` key only, and the Codex `agents.default_subagent_model` and `agents.default_subagent_reasoning_effort` settings (`codex.OVERRIDES`) stay as `forge.toml` has them.
+- **Claude subagents:** `repo.subagent_budget(cfg, kind, family)` returns `{model, effort}` from the kind's entry for the family, else from lite's (as `subagent_defaults` does for Codex), else the new `SUBAGENT_DEFAULT` (`claude-haiku-5-5` at high). A missing key falls back to the default; an entry with only one key is refused by the existing check. Forge sends it in the request to `claude_turn.py`, which sets it through `ClaudeAgentOptions` for that turn only. The pin is the SDK's `agents` option: redefine the helper roles of `roles.ROLES` that a builder delegates to (`explorer`, `tester`, `refactorer`) with the budget's model and effort. Builders read `claude_agent_sdk.types` at 0.2.161 first. If `AgentDefinition` has no effort field, or the `agents` option does not override a project role of the same name, that is a finding for the owner, and Forge sets the model only. `settings.json`, `CLAUDE_CODE_SUBAGENT_MODEL` and any other process-wide setting are out of scope. Those would change every Claude session and override the role pins.
 - **Applies to:** the kinds `Build`, `Fix` and `Lite` on both tools. It does not apply to design rounds, cold reads, reviews or sign-off.
 
 ### Done-when details
@@ -86,9 +91,16 @@ Each new test file starts with `STORY = "FORGE-EFFORT-1"`. Tests run the forge c
 5. Never none.
    - `round_effort` has no `none` in its order, and a configured `none` is refused by `forge.toml`'s existing model check or ignored by the order rules. Test `test_5_effort_none_is_never_sent`: no run record and no request to either fake tool holds `none` in any scenario of tests 1 to 3.
 
+6. Claude subagents, in SUBS.
+   - `MODELS` in `init.py` adds `subagents = "claude-haiku-5-5"` and `subagent_effort = "high"` to build, fix and lite on Claude. This repo's `forge.toml` does the same. `repo.subagent_budget` and `SUBAGENT_DEFAULT` are new in `repo.py`. `worker._run` adds the budget to the request, and `claude_turn.py` applies it. Design (frontend) rounds on Claude get the same budget, because they run through the same turn.
+   - Tests in `tests/test_claude_subagents.py`:
+     - `test_6_claude_builder_gets_haiku_helpers`: a new repo's Claude round sends the fake SDK `agents` for the helper roles with `claude-haiku-5-5` at high. A Codex round sends none. `test_6_no_process_wide_setting`: after a round, no `settings.json` under the repo or home and no `CLAUDE_CODE_SUBAGENT_MODEL` in the turn's environment holds a subagent value.
+     - `adopted`: an earlier `forge.toml` with its own Claude subagent keys keeps them. One with none gets the default. A later failure round (the ladder test's scenario) sends the same `agents` as round 1.
+
 ### New and existing repos
 
 - **New repo (`forge init`, adoption):** gets the low defaults, Sonnet-high cold reads in a Claude-only setup, and the ladder. Full cases: tests 1 to 5.
+- **Subagents:** a new repo's Claude entries carry the Haiku helpers. An existing repo keeps its entries; a missing key uses the default.
 - **Existing repo (upgrade):** keeps its `forge.toml`. Its configured effort is the normal-round effort. Failure rounds run at the top effort or its configured effort when higher. An entry-less kind gets the new low default. Cold reads keep their entry, or Opus when it has none. Existing-repo case: `adopted` in test 1 and `test_2_existing_forge_toml_is_not_changed`. The ladder is code, so it needs no sync step. The upgrade message tells the agent that new repos start at low effort and that the client edits its own `forge.toml` to match.
 - The version bump needs no upgrade test.
 
@@ -99,8 +111,9 @@ Each new test file starts with `STORY = "FORGE-EFFORT-1"`. Tests run the forge c
 | LADDER | Failure rounds raise effort | `repo.round_effort` and `TOP_EFFORT`, the raised entry in `forge work` for Codex, Claude and native rounds, and fixed effort elsewhere. | 1, 3, 5 | `src/forge/repo.py`, `src/forge/worker.py`, `src/forge/native.py`, `tests/test_effort_ladder.py` (new) | `tests/test_effort_ladder.py::test_1_a_failed_round_runs_at_top_effort_in_the_same_thread`, `::test_1_native_round_names_the_raised_effort`, `::test_3_reviews_reads_and_design_keep_their_effort`, `::test_5_effort_none_is_never_sent` | | no | |
 | DEFAULTS | Low defaults | Low effort in `MODELS` and `WORKER_DEFAULTS`, Sonnet-high Claude cold read in new repos, this repo's `forge.toml`. | 2 | `src/forge/init.py`, `forge.toml`, `tests/test_effort_defaults.py` (new) | `tests/test_effort_defaults.py::test_2_new_repos_start_low`, `::test_2_existing_forge_toml_is_not_changed` | | no | |
 | SHOWN | Round line and guides | The effort in each round line, and the guide, skill and brief text that states the ladder, the new defaults and the existing-repo rule. | 4 | `src/forge/time_records.py`, `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `docs/guide.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md`, `tests/test_effort_records.py` (new) | `tests/test_effort_records.py::test_4_round_line_and_run_records_show_effort_and_round` | LADDER, DEFAULTS | no | |
+| SUBS | Claude helpers | `subagent_budget` and its default, the Haiku entries in `MODELS` and this repo's `forge.toml`, and the SDK options that give the Claude builder its helpers. | 6 | `src/forge/repo.py`, `src/forge/init.py`, `forge.toml`, `src/forge/worker.py`, `src/forge/claude_turn.py`, `tests/test_claude_subagents.py` (new) | `tests/test_claude_subagents.py::test_6_claude_builder_gets_haiku_helpers`, `::test_6_no_process_wide_setting` | LADDER, DEFAULTS | no | |
 
-LADDER and DEFAULTS share no file and can start now. SHOWN waits for both because it states their rules, pins nothing they need, and owns the shared guide lines. The `.claude` and `.codex` skill copies are rewritten by `forge sync`.
+LADDER and DEFAULTS share no file and can start now. SUBS waits for both because it edits their files (`worker.py`, `repo.py`, `init.py`, `forge.toml`). SHOWN waits for LADDER and DEFAULTS because it states their rules, pins nothing they need, and owns the shared guide lines. The `.claude` and `.codex` skill copies are rewritten by `forge sync`.
 
 New moving parts: none.
 
@@ -114,6 +127,7 @@ New moving parts: none.
   - Changing `CLAUDE_GRILL_DEFAULT` for repos with no entry: owner said existing repos keep theirs. Cut.
 - **Thread and cache findings (Codex and Claude, 28 Oct).** Codex: the effort is set on the resume call of each round's driver, not on the turn call; the driver reports the applied effort back, and the test reads it from the run record. Claude: each round's `query()` takes `effort` together with `resume`, so one session can run rounds at two efforts. Neither path starts a new thread. What either tool does to its prompt cache is not stated in what Forge reads, so it stays unmeasured and the owner compares `cached_input_tokens` after a week.
 - **Planner choices the owner did not make.**
+  0. Claude helpers use the SDK's `agents` option for the helper roles, not a setting or an environment variable; the exact fields are pinned by the builders from the SDK's types.
   1. A failure round runs at the higher of its configured effort and the top effort, so a repo's high setting is never lowered.
   2. Top effort is fixed in code, not a `forge.toml` key.
   3. Entry-less kinds in an existing repo follow the new low `WORKER_DEFAULTS`; entries that are written stay.
