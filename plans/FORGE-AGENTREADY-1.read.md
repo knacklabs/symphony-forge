@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-28T10:56:36.657635+00:00
-seconds: 168.482
-read_hash: 4ff3c3cec08857ab2a2efb7065f159fd8e7d0e83
-round: 3
-passed: no
-doc_seen: 4ff3c3cec08857ab2a2efb7065f159fd8e7d0e83
+read_at: 2026-10-28T13:23:04.057439+00:00
+seconds: 76.355
+read_hash: 7af27ef299e9a6541db2b4c93a29974d5fd45f90
+round: 4
+passed: yes
+doc_seen: 7af27ef299e9a6541db2b4c93a29974d5fd45f90
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: 3d69d160bdc2aac3f58632ce6ae57fe00029e5f8
+notes_seen: 4d8ba2e2b781dd0dd373dd49a07dc817595821ac
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a181dc-b601-7d53-adb9-493ff97efc15
 session:
-loop_choice: more
-loop_reason: The owner chose one more round: add a web test for the invite hook's retry key
+loop_choice:
+loop_reason:
 ---
 # Cold read notes
 
@@ -68,3 +68,7 @@ No findings.
    Case: normal use - an invite succeeds but its response is lost; retrying from the dialog sends another email because the hook supplies no stable key.
    Gain 3, Work 2, Harm 3
    Disposition: cut - the owner chose one more round for this note; RETRY now adds the web unit case `the invite hook keeps one Idempotency-Key until an invite succeeds` in `libs/organisations/web/src/hooks/members-hooks.test.tsx`, in its Scope and Tests and in test_1's live reports.
+
+## Round 4
+
+No findings.
