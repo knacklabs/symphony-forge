@@ -187,37 +187,72 @@ def _add_live_money_case(client: Path, starter: str) -> None:
         source = source.replace(imports, imports + "\nfrom test_soft_delete import psql", 1)
         case = r'''
 
-def test_keeps_exact_decimal_strings_and_the_stored_currency(client: httpx.Client) -> None:
+def test_keeps_exact_decimal_strings_and_the_stored_currency(
+    client: httpx.Client,
+) -> None:
     _, csrf = sign_up(client)
     headers = {"x-csrf-token": csrf}
-    customer = client.post("/api/v1/customers", headers=headers, json={"name": "Currency customer"})
+    customer = client.post(
+        "/api/v1/customers", headers=headers, json={"name": "Currency customer"}
+    )
     assert customer.status_code == 201, customer.text
-    body = {"title": "Currency invoice", "total": "12345678901234.5650", "adjustment": "-42.5000",
-            "dueDate": "2026-10-28", "paid": False, "state": "draft", "customerId": customer.json()["data"]["id"]}
-    bad_number = client.post("/api/v1/invoices", headers=headers, json={**body, "total": 12345678901234.565})
+    body = {
+        "title": "Currency invoice",
+        "total": "12345678901234.5650",
+        "adjustment": "-42.5000",
+        "dueDate": "2026-10-28",
+        "paid": False,
+        "state": "draft",
+        "customerId": customer.json()["data"]["id"],
+    }
+    bad_number = client.post(
+        "/api/v1/invoices", headers=headers, json={**body, "total": 12345678901234.565}
+    )
     assert bad_number.status_code == 400, bad_number.text
-    bad_adjustment = client.post("/api/v1/invoices", headers=headers, json={**body, "adjustment": -42.5})
+    bad_adjustment = client.post(
+        "/api/v1/invoices", headers=headers, json={**body, "adjustment": -42.5}
+    )
     assert bad_adjustment.status_code == 400, bad_adjustment.text
-    bad_currency = client.post("/api/v1/invoices", headers=headers, json={**body, "totalCurrency": "USD"})
+    bad_currency = client.post(
+        "/api/v1/invoices", headers=headers, json={**body, "totalCurrency": "USD"}
+    )
     assert bad_currency.status_code == 400, bad_currency.text
     created = client.post("/api/v1/invoices", headers=headers, json=body)
     assert created.status_code == 201, created.text
     data = created.json()["data"]
     invoice_id = data["id"]
     assert data["totalCurrency"] == "INR"
-    assert isinstance(data["total"], str) and Decimal(data["total"]) == Decimal("12345678901234.5650")
-    assert isinstance(data["adjustment"], str) and Decimal(data["adjustment"]) == Decimal("-42.5000")
-    changed_currency = psql(f"UPDATE invoices.invoice SET total_currency = 'USD' WHERE id = '{invoice_id}'")
-    assert changed_currency.returncode == 0, changed_currency.stdout + changed_currency.stderr
-    invalid_currency = psql(f"UPDATE invoices.invoice SET total_currency = 'usd' WHERE id = '{invoice_id}'")
+    assert isinstance(data["total"], str) and Decimal(data["total"]) == Decimal(
+        "12345678901234.5650"
+    )
+    assert isinstance(data["adjustment"], str) and Decimal(
+        data["adjustment"]
+    ) == Decimal("-42.5000")
+    changed_currency = psql(
+        f"UPDATE invoices.invoice SET total_currency = 'USD' WHERE id = '{invoice_id}'"
+    )
+    assert changed_currency.returncode == 0, (
+        changed_currency.stdout + changed_currency.stderr
+    )
+    invalid_currency = psql(
+        f"UPDATE invoices.invoice SET total_currency = 'usd' WHERE id = '{invoice_id}'"
+    )
     assert invalid_currency.returncode != 0
-    assert "invoice_total_currency_code" in invalid_currency.stdout + invalid_currency.stderr
-    updated = client.put(f"/api/v1/invoices/{invoice_id}", headers=headers,
-                         json={**body, "total": "-0.0500"})
+    assert (
+        "invoice_total_currency_code"
+        in invalid_currency.stdout + invalid_currency.stderr
+    )
+    updated = client.put(
+        f"/api/v1/invoices/{invoice_id}",
+        headers=headers,
+        json={**body, "total": "-0.0500"},
+    )
     assert updated.status_code == 200, updated.text
     data = updated.json()["data"]
     assert data["totalCurrency"] == "USD"
-    assert isinstance(data["total"], str) and Decimal(data["total"]) == Decimal("-0.0500")
+    assert isinstance(data["total"], str) and Decimal(data["total"]) == Decimal(
+        "-0.0500"
+    )
 '''
         path.write_text(source + case, encoding="utf-8")
 
