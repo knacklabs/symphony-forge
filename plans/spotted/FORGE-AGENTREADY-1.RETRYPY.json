@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/tests/test_projects.py\tGate: retry tests reject the API's successful preflight response\tFORGE-AGENTREADY-1/RETRYPY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/tests/test_projects.py",
+      "line": 147,
+      "text": "Gate: retry tests reject the API's successful preflight response",
+      "from": "blocking",
+      "item": "FORGE-AGENTREADY-1/RETRYPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
