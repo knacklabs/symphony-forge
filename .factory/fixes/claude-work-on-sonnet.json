@@ -4,11 +4,26 @@
   "done_when": "forge.toml's Claude entries for build, fix, lite, grill and design name claude-sonnet-5-5, and no Claude entry names claude-opus-5-5",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "29cfc35b77475745bc5dc104a3ab1c0277f97a8152607c4d77885839c4899e7d",
+    "changed": "b0f33a5d2f203e4bbc60e850815eb81b4174bc1f914d32bb38d2a7839c1d74e6",
+    "commit": "d7df7463c18314a42906feee34092f2d4f400e94",
+    "dismissals": [],
+    "findings": [],
+    "id": "bc03432b-3f3f-4566-9c29-5e8ac107ec81",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T13:19:44.821898+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T13:21:54.135348+00:00",
+      "step": "review"
     }
   ],
   "why": "The owner wants Opus used as little as possible: user-facing work on Claude should run on Sonnet, and everything else stays on Codex Sol"
