@@ -259,11 +259,25 @@ def test_5_feature_columns_come_from_the_kind_table(repo, gh, tmp_path, tmp_path
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react" if starter == "typescript" else "python")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     _assert_kind_values(client)
+    if starter == "typescript":
+        # Audit: an existing Prisma preview must survive feature generation in one valid array.
+        # Fresh-generator coverage cannot catch duplicate properties. Exercise the same CLI,
+        # including a second feature, without a new production seam.
+        base = client / "apps/api/prisma/schema/base.prisma"
+        base.write_text(base.read_text("utf-8").replace(
+            "generator client {",
+            'generator client {\n  previewFeatures = [\n    "relationJoins",\n  ]',
+            1,
+        ), encoding="utf-8")
     written = set()
     for index, line in enumerate((CUSTOMERS_LINE, INVOICES_LINE)):
         result = _run_line(repo, client, SHELLS[index % len(SHELLS)], line)
         assert result.returncode == 0, result.stdout + result.stderr
         written |= _written_paths(result, client)
+        if starter == "typescript":
+            previews = re.findall(r"\bpreviewFeatures\s*=\s*\[([^\]]*)\]", base.read_text("utf-8"))
+            assert len(previews) == 1, previews
+            assert sorted(re.findall(r'"([^"\n]+)"', previews[0])) == ["partialIndexes", "relationJoins"]
 
     if starter == "typescript":
         migration_paths = [path for path in written if "_invoices/" in path and path.endswith("migration.sql")]

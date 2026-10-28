@@ -674,7 +674,7 @@ def _service_source(
         "import json",
         "from collections.abc import Callable, Sequence" if include_mcp else "from collections.abc import Sequence",
         "from datetime import UTC, datetime" + (", date" if search_import else ""),
-        "from decimal import Decimal, InvalidOperation" if "decimal" in sort_types.values() else None,
+        "from decimal import Decimal, InvalidOperation" if "decimal" in sort_types.values() else "from decimal import Decimal",
         "from typing import Any, NoReturn",
         "from uuid import UUID, uuid7",
         "",
