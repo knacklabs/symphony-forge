@@ -15,7 +15,7 @@
       "gain": 4,
       "harm": 4,
       "line": 185,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -26,27 +26,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "26ede02ce8da6570ce986234e872c5f6abe11821028d50734cca51e101de9514",
-    "changed": "7dffea616b0ef8582c689c6f4e783aeab29b33869a4b35495f95728fa6d8e3ab",
-    "commit": "62605c19f64bf08f06b0168b1096fad62935afd6",
+    "branch_diff": "d553d0943488d9e96a7f6f4af32092bf21ecb71395e298c94e2f085c0a7db34d",
+    "changed": "3f676bc721ac48c15f65c29fe59d6a9b258353f9c8f4718ce80776ea6aecf007",
+    "commit": "7503e79060ee41c7f4b6a7f3dc69ab963accbf8f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 4 (floor: migration)\nRaise: Functional.\nCase: normal use - generating a feature in a starter app that already enables another Prisma preview feature.\nThis insertion adds a second `previewFeatures` property when the generator already contains, for example, `previewFeatures = [\"relationJoins\"]`. That is a supported [Prisma configuration](https://www.prisma.io/docs/orm/v7/prisma-client/queries/relation-queries). The command writes an invalid generator block, so subsequent Prisma generation and migration commands fail. Append `partialIndexes` to the existing array, creating the property only when absent.",
-        "file": "src/forge/feature.py",
-        "gain": 4,
-        "harm": 4,
-        "line": 185,
-        "priority": "P1",
-        "title": "Merge partialIndexes into an existing previewFeatures list",
-        "work": 2
-      }
-    ],
-    "id": "cca151d7-8168-4970-8f75-0528dd801aa1",
-    "status": "blocked"
+    "findings": [],
+    "id": "3074e07d-7bfa-4f66-afd3-3f06c1f6d4b2",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T06:58:27.396532+00:00",
@@ -54,6 +43,10 @@
     },
     {
       "at": "2026-10-28T07:29:15.726881+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T07:33:59.475912+00:00",
       "step": "review"
     }
   ],
