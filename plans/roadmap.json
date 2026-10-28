@@ -492,6 +492,12 @@
       "title": "Client apps with agents get agent must-haves before they build",
       "status": "pending",
       "order": 108
+    },
+    {
+      "key": "FORGE-REQLOG-1",
+      "title": "Log every API request safely in client apps",
+      "status": "pending",
+      "order": 108
     }
   ],
   "epics": [
