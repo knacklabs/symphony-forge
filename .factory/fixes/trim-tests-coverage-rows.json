@@ -1,0 +1,15 @@
+{
+  "base": "6f2113bb5f3351d29874004ae6c4d9d67f057ac5",
+  "branch": "fix/trim-tests-coverage-rows",
+  "done_when": "The 30 parameter rows listed in the coverage verification report are removed, each retained covering row stays, and every new-repo row stays",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T19:48:45.230241+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Remove the 30 coverage-verified repeated earlier-adopted test rows (coverage audit batches 1 to 5)"
+}
