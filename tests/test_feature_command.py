@@ -1,4 +1,8 @@
-"""The feature command builds starter API modules from the plan's shell line."""
+"""The feature command builds starter API modules from the plan's shell line.
+
+Python dependency contracts: src/forge/templates/starter-python/apps/api/pyproject.toml
+and src/forge/templates/starter-python/apps/api/uv.lock.
+"""
 import ast
 import json
 import os

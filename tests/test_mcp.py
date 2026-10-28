@@ -1,4 +1,8 @@
-"""Client apps ship an MCP server, with agent accounts and a switch for agent delete and restore."""
+"""Client apps ship an MCP server, with agent accounts and a switch for agent delete and restore.
+
+Python dependency contracts: src/forge/templates/starter-python/apps/api/pyproject.toml
+and src/forge/templates/starter-python/apps/api/uv.lock.
+"""
 import ast
 import json
 import re
