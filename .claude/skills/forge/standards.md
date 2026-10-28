@@ -160,7 +160,17 @@ default-stack conventions, which apply only to a repo on the default stack.
   `data.items` with `data.pagination` (`page`, `limit`, `totalItems`, `totalPages`). Sorting uses
   `sortBy` and `sortOrder` (`asc` or `desc`).
 - A breaking change needs a new version while the old one has consumers; with no consumers yet,
-  change it in place. Payments, webhooks and retried actions accept an `Idempotency-Key`; the values are stored, so a replay is refused.
+  change it in place.
+- Every create, and every action with a side effect (send, pay, notify), accepts an
+  `Idempotency-Key`. A repeat with the same key from the same account makes no second record
+  and gives back the first result. An update that sets values takes no key. A webhook stores
+  the sender's event id, so a replay is refused.
+- Screens, the API, agent tools and any later in-app agent use the same module service for
+  each action, with the same permission check. No route, tool or job changes a module's data
+  around its service.
+- An agent account, for a team agent, acts as itself with its role. An agent that a person
+  signs in acts as that person, with that person's permissions, and its principal names the
+  agent, so the change history records both.
 - Browser clients that send credentials get CSRF protection.
 - Swagger documents every endpoint from its decorators at `/api/docs`: a summary, each field with
   an example, the error responses and the auth it needs. The docs stay true because they're code.
@@ -198,6 +208,10 @@ A Python app writes these names in snake_case (payment_transaction, created_at_u
   (`deletedAtUtc`, and `deletedByAccountId` once there are accounts), which protects against loss;
   logs, temporary tables and data the client asked to erase are the exceptions.
 - Automated jobs fill the audit fields with a system account.
+- A report is a named, typed read in its module's report service. Each result field has a
+  plain name with its unit (`revenueInr`, `durationSeconds`). Start with a live query, and
+  move it to a summary table only when the database skill's measure shows it slow, with no
+  change for its callers.
 - Keep tables normalised; copy data only for a measured performance need, and say why. Use a JSON
   column only for metadata that is never queried or joined.
 - Index every foreign key and every column a frequent query filters on, as `idx_<Table>_<column>`, and every unique field.

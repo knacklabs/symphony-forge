@@ -71,3 +71,15 @@ provider when needed.
 
 The Dockerfile builds the web app, applies migrations, and runs the API. The container needs
 `DATABASE_URL`, `APP_ENV`, `APP_ORIGIN`, and `PORT`. The host uses HTTPS in production.
+
+## When something breaks
+
+1. Find the error id shown by the app in Mainline's logs. Use that log entry to find the
+   cause. Mainline reads error log lines with their error id to send alerts.
+2. Roll back to the last working release in Mainline if a release breaks the app. A rollback
+   restores the code and keeps the database.
+3. Restore a snapshot if data is lost or damaged. Stop writes, choose a snapshot from before
+   the problem, and check the restored data before you open the app again. Changes made after
+   the snapshot must be entered again.
+4. Change a leaked secret in the host's secret store and restart the app. Revoke the old
+   secret at its provider. For an agent key, revoke it in the app and create a new key.

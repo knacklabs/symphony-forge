@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_mod_native.py\tThe pinned Claude plugin validator timed out without output after 120 seconds in CI.",
+      "kind": "bug",
+      "path": "tests/test_mod_native.py",
+      "line": 28,
+      "text": "The pinned Claude plugin validator timed out without output after 120 seconds in CI.",
+      "from": "worker",
+      "item": "FORGE-GUIDES-1/STARTPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
