@@ -137,9 +137,9 @@ New moving parts: none.
   - Redefining `general-purpose`: F 3, H 2, C 1. Kept.
 - **Cold read round 1 (28 Oct).** Findings 1 to 5 and 7 are cut: native routing (owner decision above), the review entry, the task order, the pair rule (kept as is), `general-purpose`, and the required-check filter (the code changes, not the plan's meaning). Finding 6 is kept below the bar: a repo's own `none` stays its choice.
 - **Planner choices the owner did not make.**
-  00. The ladder filters failed checks by the names in `forge.toml`'s `checks` and changes no brief text. Optional checks do not raise effort.
-  00. The one-key refusal stays; a missing pair uses the default.
-  00. Every Claude worker round, design rounds included, goes through the SDK when it is installed. A Codex session's own native rounds stay native with requested effort.
+  0. The ladder filters failed checks by the names in `forge.toml`'s `checks` and changes no brief text. Optional checks do not raise effort.
+  0. The one-key refusal stays; a missing pair uses the default.
+  0. Every Claude worker round, design rounds included, goes through the SDK when it is installed. A Codex session's own native rounds stay native with requested effort.
   0. Claude helpers use the SDK's `agents` option for the helper roles, not a setting or an environment variable; `ClaudeAgentOptions(agents=...)` with `AgentDefinition.model` and `.effort`, as pinned above.
   1. A failure round runs at the higher of its configured effort and the top effort, so a repo's high setting is never lowered.
   2. Top effort is fixed in code, not a `forge.toml` key.

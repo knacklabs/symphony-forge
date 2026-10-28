@@ -85,4 +85,4 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Functional.
    The plan defines verified check failures as required checks, but `src/forge/worker.py:502` fetches all checks and line 507 accepts every failed bucket. Using `_fix_round` unchanged therefore raises effort when an optional check fails and required checks pass. The proposed required-check test would still pass.
    Gain 3, Work 2, Harm 2
-   Disposition: keep - below the bar (follow-up)
+   Disposition: cut - only failed checks named in forge.toml checks raise effort
