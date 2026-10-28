@@ -4,12 +4,20 @@
   "done_when": "tests/conftest.py builds the seed repository and the empty SDK environment once per session and gives each test a private copy, with every test's isolation and the real init and adoption cases kept",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T20:34:21.922922+00:00",
       "step": "start"
     }
   ],
-  "why": "Every test builds the same seed git repository and empty Claude SDK environment from scratch (3,674 tests, about 0.11 s build against 0.02 s copy)"
+  "stuck": {
+    "close": null,
+    "head": "f48fe599c5871d4551cbbefabed9b1605ee9df80",
+    "keys": {},
+    "round": null
+  },
+  "why": "Every test builds the same seed git repository and empty Claude SDK environment from scratch (3,674 tests, about 0.11 s build against 0.02 s copy)",
+  "worker": "codex"
 }
