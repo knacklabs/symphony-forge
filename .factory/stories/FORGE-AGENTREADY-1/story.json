@@ -13,6 +13,10 @@
     {
       "at": "2026-10-28T09:47:43.503276+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-28T10:56:36.675186+00:00",
+      "step": "read"
     }
   ],
   "title": "Client apps are ready for agents from day one",
