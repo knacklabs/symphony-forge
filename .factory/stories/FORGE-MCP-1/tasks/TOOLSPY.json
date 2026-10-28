@@ -48,9 +48,9 @@
     "id": "cc46f3c9-97cc-488f-a1c4-c466b0e87bcf",
     "status": "clean"
   },
-  "round": 2,
+  "round": 3,
   "stacked_on": "FORGE-FEATURE-1/PY",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T02:23:37.185339+00:00",
@@ -66,12 +66,10 @@
     }
   ],
   "stuck": {
-    "close": "1583c8c8-b01c-4aa6-bc37-d9e96088e358",
-    "head": "2aa1ed07fa1ccfe6786a70177ecb2fcac78a7a6b",
-    "keys": {
-      "the open P0 pass feature state into the extracted writer in src/forge/feature.py": 1
-    },
-    "round": 1
+    "close": "cc5ec08a-3081-4308-b249-56dccdb8d850",
+    "head": "a0890c9e7e37acde6909546d4e989c1a4cb43775",
+    "keys": {},
+    "round": 2
   },
   "worker": "codex"
 }
