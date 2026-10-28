@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-GUIDES-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-28T10:54:54.555753+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T12:26:38.204853+00:00",
+      "step": "read"
     }
   ],
   "title": "Guides and starters agree",
