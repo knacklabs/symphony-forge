@@ -10,29 +10,29 @@ interfaces = ["**/routes/**", "**/*.controller.*", "**/migrations/**", "**/schem
 
 [models.build.codex]
 model = "gpt-6.1-sol"
-effort = "medium"
+effort = "low"
 
 [models.build.claude]
 model = "claude-sonnet-5-5"
-effort = "high"
+effort = "low"
 
 [models.fix.codex]
 model = "gpt-6.1-sol"
-effort = "medium"
+effort = "low"
 
 [models.fix.claude]
 model = "claude-sonnet-5-5"
-effort = "high"
+effort = "low"
 
 [models.lite.codex]
 model = "gpt-6.1-sol"
-effort = "medium"
+effort = "low"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
 [models.lite.claude]
 model = "claude-sonnet-5-5"
-effort = "medium"
+effort = "low"
 
 [models.explore.codex]
 model = "gpt-6.1-sol"
