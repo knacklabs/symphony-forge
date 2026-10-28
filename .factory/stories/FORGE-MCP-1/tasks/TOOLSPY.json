@@ -40,17 +40,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "699ecd2d7671cdc56f4e907d8ab11e3b2aea261b8039f3890f68ce3447bb7b1a",
-    "changed": "8462e5e1d2f0d4c25bcd261445211eefed23e4b7dc6ef9b6fe5bd5a6b62d80d1",
-    "commit": "ec54d35353b7d83b15f428cdca41f236970c8545",
+    "branch_diff": "b9d11f41c0ff88a0df0b9232d14288ccf146181666bd9ccaeeb1b9d7c540631e",
+    "changed": "b861e97cd2de6e93af99c2b77c5860e9a9ff9a8d064f349054f52b7bdaeef0f0",
+    "commit": "1d9fbfe4c1363a21a2471a2f1d8e0cbff03e9d10",
     "dismissals": [],
     "findings": [],
-    "id": "40f7b784-82fa-4f13-8edc-3f13841e5437",
+    "id": "6e024d71-54e5-4e40-9ab5-3cb13004c432",
     "status": "clean"
   },
   "round": 6,
   "stacked_on": "FORGE-FEATURE-1/PY",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T02:23:37.185339+00:00",
@@ -74,6 +74,10 @@
     },
     {
       "at": "2026-10-28T04:32:05.562524+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T04:43:49.449365+00:00",
       "step": "review"
     }
   ],
