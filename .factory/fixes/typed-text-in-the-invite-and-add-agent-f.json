@@ -1,0 +1,15 @@
+{
+  "base": "1ef66b286cb84a45cb7ff09ec29f4db1a21928dd",
+  "branch": "fix/typed-text-in-the-invite-and-add-agent-f",
+  "done_when": "The starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T12:18:48.030164+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Typed text in the invite and add-agent forms is lost on a stray click, and the projects, members and change history lists show only a plain text line while loading instead of skeleton rows, so the starter misses the app baseline."
+}
