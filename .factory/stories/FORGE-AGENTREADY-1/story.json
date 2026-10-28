@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-AGENTREADY-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-28T09:18:31.527868+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Client apps are ready for agents from day one",
+  "touches": 0
+}
