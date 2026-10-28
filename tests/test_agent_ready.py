@@ -4,23 +4,35 @@ import shutil
 
 import pytest
 
-from test_feature_command import _written_paths, feature_live_run, require_feature_cases
+from test_feature_command import (
+    _written_paths,
+    feature_live_run,
+    feature_python_live_run,
+    require_feature_cases,
+)
 from test_mcp import FEATURE_LINE, _adopted_files_after_sync
 from test_setup import _fresh_client
-from test_starter_tree import LIVE, _junit_cases, _require_cases, live_run
+from test_starter_tree import (
+    LIVE,
+    _junit_cases,
+    _require_cases,
+    live_python_run,
+    live_run,
+)
 
 STORY = "FORGE-AGENTREADY-1/RETRY"
 
 
-def _new_client(repo, gh, tmp_path):
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+def _new_client(repo, gh, tmp_path, starter="typescript"):
+    name = "react" if starter == "typescript" else "python"
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     return client
 
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_path, starter, request):
     # Audit: HTTP/MCP own storage and email delivery; hooks own key lifetime after transport
     # failure. Existing cases never retry REST creates or invites. Init/sync is the public
@@ -31,9 +43,25 @@ def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_p
         assert not list(repo.path.rglob("retry-keys.ts"))
         assert not list(repo.path.rglob("retry_keys.py"))
         return
-    client = _new_client(repo, gh, tmp_path)
-    assert (client / "libs/core/server/src/common/retry-keys.ts").is_file()
-    if LIVE:
+    client = _new_client(repo, gh, tmp_path, starter)
+    if starter == "python":
+        assert (client / "apps/api/app/core/retry_keys.py").is_file()
+        if LIVE:
+            live = live_python_run(request.getfixturevalue("tmp_path_factory"))
+            require_feature_cases(live["api"], "test_projects", (
+                "test_a_project_create_sent_again_with_the_same_idempotency_key_"
+                "makes_one_project",
+            ))
+            require_feature_cases(live["api"], "test_invites", (
+                "test_an_invite_sent_again_with_the_same_idempotency_key_sends_one_email_"
+                "and_makes_one_invitation",
+            ))
+            require_feature_cases(live["api"], "test_mcp", (
+                "test_a_retried_project_create_with_the_same_idempotency_key_makes_one_project",
+            ))
+    else:
+        assert (client / "libs/core/server/src/common/retry-keys.ts").is_file()
+    if LIVE and starter == "typescript":
         live = live_run(request.getfixturevalue("tmp_path_factory"))
         _require_cases(live["api"], (
             "a project create sent again with the same Idempotency-Key makes one project",
@@ -52,7 +80,7 @@ def test_1_a_create_sent_again_with_its_retry_key_makes_one_item(repo, gh, tmp_p
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_2_history_keeps_the_agent_that_acts_for_a_person(repo, gh, tmp_path, starter, request):
     # Audit: the transaction contract owns the optional principal value; existing history
     # HTTP cases detect migration failures. Sync must not migrate earlier apps. No new seam.
@@ -62,9 +90,18 @@ def test_2_history_keeps_the_agent_that_acts_for_a_person(repo, gh, tmp_path, st
         assert not (repo.path / "apps/api/prisma/migrations").exists()
         assert not (repo.path / "apps/api/migrations/versions").exists()
         return
-    client = _new_client(repo, gh, tmp_path)
-    assert (client / "libs/history/server/src/history.service.test.ts").is_file()
-    if LIVE:
+    client = _new_client(repo, gh, tmp_path, starter)
+    if starter == "python":
+        assert (client / "apps/api/tests/test_history.py").is_file()
+        if LIVE:
+            live = live_python_run(request.getfixturevalue("tmp_path_factory"))
+            require_feature_cases(live["api"], "test_history", (
+                "test_history_records_the_agent_that_acts_for_a_person",
+                "test_an_invite_and_a_role_change_write_change_history",
+            ))
+    else:
+        assert (client / "libs/history/server/src/history.service.test.ts").is_file()
+    if LIVE and starter == "typescript":
         live = live_run(request.getfixturevalue("tmp_path_factory"))
         _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"), (
             "history records the agent that acts for a person",
@@ -74,25 +111,80 @@ def test_2_history_keeps_the_agent_that_acts_for_a_person(repo, gh, tmp_path, st
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "older starter"])
+@pytest.mark.parametrize(
+    "starter", ["typescript", "python", "older starter"]
+)
 def test_3_a_new_feature_takes_a_retry_key_on_create(repo, gh, tmp_path, starter, request):
     # Audit: generated action names must agree across REST and MCP, including hyphenated
     # features. Older apps cannot compile references to the helper they lack. Existing
     # feature cases miss this compatibility boundary. No production seam is needed.
-    client = _new_client(repo, gh, tmp_path)
     if starter == "older starter":
-        (client / "libs/core/server/src/common/tools.ts").unlink()
-        (client / "libs/core/server/src/common/retry-keys.ts").unlink(missing_ok=True)
-        shutil.rmtree(client / "libs/mcp")
+        python_tmp = tmp_path / "python"
+        python_tmp.mkdir()
+        for client_tmp, client_starter in (
+            (tmp_path, "typescript"),
+            (python_tmp, "python"),
+        ):
+            client = _new_client(repo, gh, client_tmp, client_starter)
+            if client_starter == "typescript":
+                (client / "libs/core/server/src/common/tools.ts").unlink()
+                (client / "libs/core/server/src/common/retry-keys.ts").unlink(
+                    missing_ok=True
+                )
+                shutil.rmtree(client / "libs/mcp")
+            else:
+                (client / "apps/api/app/core/tools.py").unlink()
+                (client / "apps/api/app/core/retry_keys.py").unlink(missing_ok=True)
+                shutil.rmtree(client / "apps/api/app/mcp")
+            built = repo.forge(*shlex.split(FEATURE_LINE)[1:], cwd=client)
+            assert built.returncode == 0, built.stdout + built.stderr
+            assert built.stdout.count(
+                "This app has no MCP server or retry keys, so jobs get no agent tools, resources or retry keys."
+            ) == 1
+            written = _written_paths(built, client)
+            for path in written:
+                text = (client / path).read_text("utf-8")
+                assert all(
+                    word not in text for word in ("retry-key", "RetryKeys", "retryKeys")
+                ), path
+            api_test = (
+                "apps/api/test/jobs.e2e-spec.ts"
+                if client_starter == "typescript"
+                else "apps/api/tests/test_jobs.py"
+            )
+            assert "Idempotency-Key" not in (client / api_test).read_text("utf-8")
+        return
+
+    client = _new_client(repo, gh, tmp_path, starter)
     built = repo.forge(*shlex.split(FEATURE_LINE)[1:], cwd=client)
     assert built.returncode == 0, built.stdout + built.stderr
     written = _written_paths(built, client)
-    if starter == "older starter":
-        assert built.stdout.count("This app has no MCP server or retry keys, so jobs get no agent tools, resources or retry keys.") == 1
-        for path in written:
-            text = (client / path).read_text("utf-8")
-            assert all(word not in text for word in ("retry-key", "RetryKeys", "retryKeys")), path
-        assert "Idempotency-Key" not in (client / "apps/api/test/jobs.e2e-spec.ts").read_text("utf-8")
+    if starter == "python":
+        routes = (client / "apps/api/app/jobs/routes.py").read_text("utf-8")
+        assert "Idempotency-Key" in routes and '"jobs_create"' in routes
+        assert "Idempotency-Key" in (
+            client / "libs/jobs/web/src/hooks/jobs-hooks.ts"
+        ).read_text("utf-8")
+        built = repo.forge(
+            "task",
+            "feature",
+            "work-orders",
+            "--one",
+            "work-order",
+            "--field",
+            "name:text",
+            cwd=client,
+        )
+        assert built.returncode == 0, built.stdout + built.stderr
+        routes = (client / "apps/api/app/work_orders/routes.py").read_text("utf-8")
+        assert '"work_orders_create"' in routes and '"workOrders_create"' not in routes
+        if LIVE:
+            live = feature_python_live_run(
+                repo, gh, request.getfixturevalue("tmp_path_factory")
+            )
+            require_feature_cases(live["api"], "test_jobs", (
+                "test_a_job_create_sent_again_with_the_same_idempotency_key_makes_one_job",
+            ))
         return
     controller = (client / "libs/jobs/server/src/jobs.controller.ts").read_text("utf-8")
     assert "Idempotency-Key" in controller and "'jobs_create'" in controller
