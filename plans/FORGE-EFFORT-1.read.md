@@ -45,30 +45,35 @@ Only a genuine trade-off goes to the human, as a question with options.
      If the default stands: The approval text and tests distinguish requested native settings from applied SDK settings.
      Due: 4 November 2026.
    Gain 5, Work 2, Harm 3
+   Disposition: cut - Claude rounds run through the SDK when installed; native effort is labelled requested (owner decision, 28 Oct 2026)
 
 2. Blocking: Not done: changing the cold-read entry does not select Sonnet-high for reviews.
    Raise: Not done.
    Case: normal use - closing a change in a newly initialized Claude-only repo.
    DEFAULTS changes only `grill.claude` at `plans/FORGE-EFFORT-1.md:84`. Reviews independently read `models.review` in `src/forge/review.py:920`; `src/forge/repo.py:747` provides no grill fallback for reviews. Neither the implementation instructions nor the new-repo test selects or verifies the review model required by item 2.
    Gain 4, Work 2, Harm 3
+   Disposition: cut - new repos write models.review.claude and models.grill.claude at Sonnet high, with a test on the Autoreview request
 
 3. Blocking: Plan gap: LADDER and DEFAULTS are not independent as their task instructions claim.
    Raise: Plan gap.
    Case: normal use - either task builds and closes before the other.
    DEFAULTS must change `WORKER_DEFAULTS`, located at `src/forge/repo.py:590`, but its Scope excludes that file and LADDER’s delivery does not assign it this edit. Conversely, LADDER’s test requires freshly initialized low defaults, while `src/forge/init.py:77` still writes medium and DEFAULTS owns that change. Pin the fallback edit’s owner and resolve the test dependency before declaring these tasks independently buildable.
    Gain 4, Work 2, Harm 2
+   Disposition: cut - DEFAULTS goes first, owns the WORKER_DEFAULTS edit, and LADDER waits for it
 
 4. Blocking: Not done: the promised fallback for one missing Claude helper key is explicitly refused.
    Raise: Not done.
    Case: normal use - a developer sets the helper model and leaves its effort at the documented default.
    Item 6 promises a default when either key is missing, but `plans/FORGE-EFFORT-1.md:70` also preserves refusal of a single-key entry. `src/forge/repo.py:863` implements that refusal before a budget can be selected. The planned tests cover both keys present or both absent, so they miss this contradiction.
    Gain 3, Work 2, Harm 3
+   Disposition: cut - the pair rule stays as today (simpler, no code); the plan now says a kind with neither key uses the default
 
 5. Blocking: Unproven: item 6 leaves ordinary general-purpose delegation outside the helper budget.
    Raise: Test.
    Case: normal use - an SDK builder delegates without naming one of the three overridden roles.
    `plans/FORGE-EFFORT-1.md:70` overrides only `explorer`, `tester` and `refactorer`. The SDK also keeps its built-in `general-purpose` agent available when custom agents are supplied. That invocation receives none of these overrides, while the planned test can pass by inspecting only the three supplied definitions. The plan needs a budget rule and proof for this ordinary delegation path. [Claude SDK documentation](https://code.claude.com/docs/en/agent-sdk/subagents#filesystem-based-definition-alternative).
    Gain 3, Work 2, Harm 3
+   Disposition: cut - general-purpose gets the same Haiku budget and the test checks it
 
 6. Advisory: Unproven: item 5 assumes an effort validation rule that does not exist.
    Raise: Test.
