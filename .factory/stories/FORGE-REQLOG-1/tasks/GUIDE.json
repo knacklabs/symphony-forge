@@ -12,17 +12,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "461ae21d7594277d68cb9b3aab147d6647d4b3af15d91cb6362f8ec9184ad5de",
-    "changed": "7ce89cbfb40db5d85c973e894c4492face8bbb19e453d910cb086b856669dd45",
-    "commit": "2ed80d785002107afe736134bc2a5ec613f92cfb",
+    "branch_diff": "73d18448e3f1a0626b08929f414650ddae7783a81b27813d2289902e0e716501",
+    "changed": "fc2e14c1e5bf3ac982161b290650182b28307ae8db460245be96c75484af5677",
+    "commit": "45c536e19cf61a634cf78cbca5530d8465236155",
     "dismissals": [],
     "findings": [],
-    "id": "58afbe1e-20a6-46c4-85c7-fc80bdc8727a",
+    "id": "c846c3d4-2bc0-40b6-b216-f4f9cb1969fe",
     "status": "clean"
   },
   "round": 2,
   "stacked_on": "FORGE-AGENTS-1/SKILL",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T17:18:25.536846+00:00",
@@ -30,6 +30,10 @@
     },
     {
       "at": "2026-10-28T17:35:01.673451+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T17:52:35.419885+00:00",
       "step": "review"
     }
   ],
