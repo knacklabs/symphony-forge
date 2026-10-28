@@ -22,8 +22,8 @@
     "id": "0386ba26-7298-41ae-9ced-c43d113482df",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T13:19:44.821898+00:00",
@@ -39,10 +39,10 @@
     }
   ],
   "stuck": {
-    "close": "1a1ea1d4-7b16-4d98-bf6a-b6a7e9529829",
-    "head": "1f253eda4a252e13df600eea468831f10e55a1db",
+    "close": "b7a83830-eabb-4daf-883d-142e38f7bf38",
+    "head": "e866cea8499537e5e2dec873fefcffcbaf9b667a",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The owner wants Opus used as little as possible: user-facing work on Claude should run on Sonnet, and everything else stays on Codex Sol",
   "worker": "codex"
