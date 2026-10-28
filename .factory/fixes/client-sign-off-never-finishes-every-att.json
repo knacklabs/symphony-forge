@@ -1,0 +1,15 @@
+{
+  "base": "cd5b38dcd383d4f76c9ad4981f541edbd240b601",
+  "branch": "fix/client-sign-off-never-finishes-every-att",
+  "done_when": "Client sign-off finishes: a later attempt reviews only files changed since the last sign-off review plus its earlier findings, and after round 2 only P0 findings block.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T19:05:19.996666+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Client sign-off never finishes: every attempt re-reviews all product files with no memory of earlier findings and no round limit, so a client saw 23, 15, 12, 33, 3, 2 and 3 new findings over seven attempts."
+}
