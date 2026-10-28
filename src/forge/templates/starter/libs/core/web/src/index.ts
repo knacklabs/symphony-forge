@@ -3,3 +3,4 @@ export * from './form-errors';
 export * from './route-error-page';
 export * from './query-client';
 export * from './permissions';
+export * from './agent-access-dialog';

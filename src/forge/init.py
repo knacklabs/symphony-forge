@@ -359,6 +359,7 @@ def init(args: argparse.Namespace) -> None:
           "skeleton, and the adapters for Claude Code and Codex.")
     print(f"Pushed {branch} to origin and installed the git hooks that check each commit and push.")
     protect(top, branch, cfg["checks"])
+    print("Tell the person the seven steps in the Forge guide's journey, then ask for the client notes or the idea.")
     print("Next: forge next")
 
 

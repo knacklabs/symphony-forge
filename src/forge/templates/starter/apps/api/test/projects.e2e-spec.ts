@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { apiBaseUrl, credentials, csrfToken, invite } from './helpers';
+// forge:feature:mcp:start
+import { agentClient } from './helpers';
+// forge:feature:mcp:end
 
 // forge:feature:generated-tests:start
 type ApiClient = ReturnType<typeof request.agent>;
@@ -459,3 +462,280 @@ describe('projects API', () => {
   });
 });
 // forge:feature:generated-tests:end
+
+// forge:feature:mcp-cases:start
+async function addMcpAgent(
+  client: ApiClient,
+  csrf: string,
+  role: 'admin' | 'member',
+) {
+  const account = (await client.post('/api/v1/agents').set('x-csrf-token', csrf)
+    .send({ name: `mcp-${randomUUID().slice(0, 8)}`, role }).expect(201)).body.data;
+  const key = (await client.post(`/api/v1/members/${account.accountId}/key`)
+    .set('x-csrf-token', csrf).expect(201)).body.data.key as string;
+  return { email: account.email as string, accountId: account.accountId as string, key };
+}
+
+function resultData(result: unknown): Record<string, unknown> {
+  if (typeof result !== 'object' || result === null || !('structuredContent' in result)) {
+    throw new Error('The MCP call did not return structured content.');
+  }
+  const data = result.structuredContent;
+  if (typeof data !== 'object' || data === null) throw new Error('The MCP result is not an object.');
+  return data as Record<string, unknown>;
+}
+
+function resultError(result: unknown): Record<string, unknown> {
+  const data = JSON.parse(resultText(result));
+  if (typeof data.error !== 'object' || data.error === null) throw new Error('The MCP result has no tool error.');
+  return data.error as Record<string, unknown>;
+}
+
+function resultText(result: unknown): string {
+  if (typeof result !== 'object' || result === null || !('content' in result) || !Array.isArray(result.content)) {
+    throw new Error('The MCP call did not return text content.');
+  }
+  const first = result.content[0];
+  if (typeof first !== 'object' || first === null || !('text' in first) || typeof first.text !== 'string') {
+    throw new Error('The MCP call did not return a text summary.');
+  }
+  return first.text;
+}
+
+describe('projects MCP tools', () => {
+  it('an agent searches, reads, creates and updates projects through MCP as its account', async () => {
+    // Audit: protects the real agent path through search, get, create, update and history attribution.
+    // A wrong projection, role, or actor would fail here; REST project tests cannot exercise MCP calls.
+    const { client, csrf } = await signedIn();
+    const agent = await addMcpAgent(client, csrf, 'member');
+    const mcp = await agentClient(agent.key);
+    const mark = randomUUID();
+    try {
+      const listed = await mcp.listTools();
+      expect(listed.tools.filter(({ name }) => name.startsWith('projects_')).map(({ name }) => name).sort())
+        .toEqual(['projects_create', 'projects_get', 'projects_search', 'projects_update']);
+
+      const created = resultData(await mcp.callTool({ name: 'projects_create', arguments: {
+        name: `Agent project ${mark}`, status: 'active',
+      } }));
+      expect(created).toMatchObject({ name: `Agent project ${mark}`, status: 'active', status_label: 'Active' });
+      expect(created).not.toHaveProperty('created_by_email');
+      const projectId = created.project_id as string;
+
+      const searchResult = await mcp.callTool({ name: 'projects_search', arguments: { query: mark } });
+      const search = resultData(searchResult);
+      expect(search.items).toEqual([expect.objectContaining({ project_id: projectId, status_label: 'Active' })]);
+      expect(search.items).not.toEqual([expect.objectContaining({ created_by_email: expect.any(String) })]);
+
+      const detailed = resultData(await mcp.callTool({ name: 'projects_get', arguments: {
+        project_id: projectId, response_format: 'detailed',
+      } }));
+      expect(detailed).toMatchObject({ project_id: projectId, created_by_email: agent.email });
+
+      const updated = resultData(await mcp.callTool({ name: 'projects_update', arguments: {
+        project_id: projectId, name: `Agent project ${mark}`, status: 'archived',
+      } }));
+      expect(updated).toMatchObject({ name: `Agent project ${mark}`, status_label: 'Archived' });
+      expect(updated).not.toHaveProperty('created_by_email');
+
+      const history = await client.get('/api/v1/history').expect(200);
+      expect(history.body.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ actorEmail: agent.email, summary: `Agent project ${mark}: Created the project` }),
+        expect.objectContaining({ actorEmail: agent.email, summary: `Agent project ${mark}: Status changed from active to archived` }),
+      ]));
+      const changes = await client.get(`/api/v1/projects/${projectId}/changes`).expect(200);
+      expect(changes.body.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ actorEmail: agent.email, summary: 'Status changed from active to archived' }),
+        expect.objectContaining({ actorEmail: agent.email, summary: 'Created the project' }),
+      ]));
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('a member agent cannot delete or restore a project through MCP', async () => {
+    // Audit: checks both tool discovery and an unauthorized call after the admin turns the switch on.
+    // A permission leak would delete a real project; existing screen/API permission tests do not cover MCP.
+    const { client, csrf } = await signedIn();
+    const agent = await addMcpAgent(client, csrf, 'member');
+    const project = (await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+      .send({ name: `Member boundary ${randomUUID()}`, status: 'active' }).expect(201)).body.data;
+    await client.put('/api/v1/agent-tools/projects').set('x-csrf-token', csrf)
+      .send({ deleteAndRestore: true }).expect(200);
+
+    const mcp = await agentClient(agent.key);
+    try {
+      const tools = (await mcp.listTools()).tools.filter(({ name }) => name.startsWith('projects_')).map(({ name }) => name);
+      expect(tools).toEqual(expect.arrayContaining(['projects_search', 'projects_get', 'projects_create', 'projects_update']));
+      expect(tools).not.toContain('projects_delete');
+      expect(tools).not.toContain('projects_restore');
+      const denied = await mcp.callTool({ name: 'projects_delete', arguments: { project_id: project.id } });
+      expect(('isError' in denied) ? denied.isError : false).toBe(true);
+      expect(resultError(denied)).toMatchObject({ kind: 'not_allowed', retryable: false });
+      await client.get(`/api/v1/projects/${project.id}`).expect(200)
+        .expect(({ body }) => expect(body.data.deletedAtUtc).toBeNull());
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('project delete and restore tools stay off until an admin turns them on', async () => {
+    // Audit: verifies default-off, permission enforcement, repeat-safe delete/restore, history, and the switch off path.
+    // A default-on tool or a repeat that adds another history row would fail; the REST access tests cannot reach MCP.
+    const { client, csrf } = await signedIn();
+    const agent = await addMcpAgent(client, csrf, 'admin');
+    const project = (await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+      .send({ name: `Admin boundary ${randomUUID()}`, status: 'active' }).expect(201)).body.data;
+    const mcp = await agentClient(agent.key);
+    try {
+      const fourTools = ['projects_create', 'projects_get', 'projects_search', 'projects_update'];
+      const names = () => mcp.listTools().then(({ tools }) => tools.filter(({ name }) => name.startsWith('projects_'))
+        .map(({ name }) => name).sort());
+      expect(await names()).toEqual(fourTools);
+      const denied = await mcp.callTool({ name: 'projects_delete', arguments: { project_id: project.id } });
+      expect(resultError(denied)).toMatchObject({ kind: 'not_allowed', retryable: false });
+
+      await client.put('/api/v1/agent-tools/projects').set('x-csrf-token', csrf)
+        .send({ deleteAndRestore: true }).expect(200);
+      expect(await names()).toEqual([...fourTools, 'projects_delete', 'projects_restore'].sort());
+
+      for (const action of ['delete', 'delete', 'restore', 'restore']) {
+        const result = await mcp.callTool({ name: `projects_${action}`, arguments: { project_id: project.id } });
+        expect(('isError' in result) ? result.isError : false).toBe(false);
+      }
+      const history = await client.get('/api/v1/history').expect(200);
+      const agentChanges = history.body.data.filter((entry: { actorEmail: string }) => entry.actorEmail === agent.email);
+      expect(agentChanges.filter((entry: { summary: string }) => entry.summary === `${project.name}: Deleted the project`)).toHaveLength(1);
+      expect(agentChanges.filter((entry: { summary: string }) => entry.summary === `${project.name}: Restored the project`)).toHaveLength(1);
+
+      await client.put('/api/v1/agent-tools/projects').set('x-csrf-token', csrf)
+        .send({ deleteAndRestore: false }).expect(200);
+      expect(await names()).toEqual(fourTools);
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('project search pages with a cursor and says how many match', async () => {
+    // Audit: protects the search contract at the agent boundary: page size, total, cursor, and narrowing advice.
+    // Existing REST paging coverage cannot catch a tool that ignores or misnames MCP paging fields.
+    const { client, csrf } = await signedIn();
+    const agent = await addMcpAgent(client, csrf, 'member');
+    const mark = randomUUID();
+    for (let index = 0; index < 25; index += 1) {
+      await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+        .send({ name: `MCP page ${mark} ${index}`, status: 'active' }).expect(201);
+    }
+    const excluded = (await client.post('/api/v1/projects').set('x-csrf-token', csrf)
+      .send({ name: `MCP page ${mark} archived`, status: 'archived' }).expect(201)).body.data;
+    const mcp = await agentClient(agent.key);
+    try {
+      const firstResult = await mcp.callTool({ name: 'projects_search', arguments: { query: mark, status: 'active' } });
+      const first = resultData(firstResult);
+      expect(first.items).toHaveLength(20);
+      expect(first).toMatchObject({ total: 25, total_is_capped: false, next_cursor: expect.any(String) });
+      expect(resultText(firstResult)).toContain('25 matching projects');
+      expect(resultText(firstResult)).toContain('narrow with query');
+
+      const next = resultData(await mcp.callTool({ name: 'projects_search', arguments: {
+        query: mark, status: 'active', cursor: first.next_cursor,
+      } }));
+      expect(next.items).toHaveLength(5);
+      expect(next.next_cursor).toBeNull();
+      for (const page of [first, next]) {
+        expect(page.items).not.toEqual(expect.arrayContaining([expect.objectContaining({ project_id: excluded.id })]));
+      }
+
+      const invalid = await mcp.callTool({ name: 'projects_search', arguments: { query: mark, limit: 101 } });
+      expect(resultError(invalid)).toMatchObject({ kind: 'invalid_input', retryable: false });
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('a retried project create with the same idempotency key makes one project', async () => {
+    // Audit: checks that a client retry creates one database item and returns the same identity.
+    // REST creation has no idempotency key, so it cannot detect a duplicate MCP create.
+    const { client, csrf } = await signedIn();
+    const agent = await addMcpAgent(client, csrf, 'member');
+    const mark = randomUUID();
+    const mcp = await agentClient(agent.key);
+    try {
+      const args = { name: `Retry project ${mark}`, status: 'active', idempotency_key: `project-${mark}` };
+      const first = resultData(await mcp.callTool({ name: 'projects_create', arguments: args }));
+      const retried = resultData(await mcp.callTool({ name: 'projects_create', arguments: args }));
+      expect(retried.project_id).toBe(first.project_id);
+      const found = resultData(await mcp.callTool({ name: 'projects_search', arguments: { query: mark } }));
+      expect(found.items).toHaveLength(1);
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('a repeated project update changes nothing', async () => {
+    // Audit: verifies repeated updates leave one change event and a stable updated timestamp.
+    // The REST service's usual update case does not retry the same MCP call.
+    const { client, csrf } = await signedIn();
+    const agent = await addMcpAgent(client, csrf, 'member');
+    const mark = randomUUID();
+    const mcp = await agentClient(agent.key);
+    try {
+      const created = resultData(await mcp.callTool({ name: 'projects_create', arguments: {
+        name: `Update project ${mark}`, status: 'active',
+      } }));
+      const args = { project_id: created.project_id, name: `Updated project ${mark}`, status: 'archived' };
+      const first = resultData(await mcp.callTool({ name: 'projects_update', arguments: args }));
+      const repeated = resultData(await mcp.callTool({ name: 'projects_update', arguments: args }));
+      expect(repeated.updated_at_utc).toBe(first.updated_at_utc);
+      const changes = await client.get(`/api/v1/projects/${created.project_id}/changes`).expect(200);
+      expect(changes.body.data.filter((entry: { summary: string }) => entry.summary !== 'Created the project')).toHaveLength(1);
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('an invalid project input gets a non-retryable error with an example', async () => {
+    // Audit: protects the repair text and field detail for a schema rejection visible to the agent.
+    // REST validation returns a different envelope and cannot prove the MCP tool error is usable.
+    const { client, csrf } = await signedIn();
+    const agent = await addMcpAgent(client, csrf, 'member');
+    const mcp = await agentClient(agent.key);
+    try {
+      const result = await mcp.callTool({ name: 'projects_create', arguments: {
+        name: 'Invalid status', status: 'planned',
+      } });
+      const error = resultError(result);
+      expect(error).toMatchObject({ kind: 'invalid_input', retryable: false });
+      expect(JSON.stringify(error.details)).toContain('status');
+      expect(error.message).toContain('Example:');
+    } finally {
+      await mcp.close();
+    }
+  });
+
+  it('an agent key over its rate limit gets a retryable error', async () => {
+    // Audit: verifies a single key is throttled with a useful wait time while another key remains usable.
+    // The person-address throttle cannot prove the per-agent-key limit or independent keys.
+    const { client, csrf } = await signedIn();
+    const firstAgent = await addMcpAgent(client, csrf, 'member');
+    const secondAgent = await addMcpAgent(client, csrf, 'member');
+    const first = await agentClient(firstAgent.key);
+    const second = await agentClient(secondAgent.key);
+    try {
+      let last: unknown;
+      for (let attempt = 0; attempt < 121; attempt += 1) {
+        last = await first.callTool({ name: 'projects_search', arguments: { query: 'no matching project' } });
+      }
+      const limited = resultError(last);
+      expect(limited).toMatchObject({ kind: 'rate_limited', retryable: true });
+      expect(limited.retry_after_seconds).toEqual(expect.any(Number));
+      expect(limited.retry_after_seconds as number).toBeGreaterThanOrEqual(1);
+      expect(limited.retry_after_seconds as number).toBeLessThanOrEqual(60);
+      const stillWorks = await second.callTool({ name: 'projects_search', arguments: { query: 'no matching project' } });
+      expect(('isError' in stillWorks) ? stillWorks.isError : false).toBe(false);
+    } finally {
+      await Promise.all([first.close(), second.close()]);
+    }
+  });
+});
+// forge:feature:mcp-cases:end

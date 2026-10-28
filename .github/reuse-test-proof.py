@@ -10,7 +10,7 @@ from pathlib import Path
 
 def run(*args):
     return subprocess.run([shutil.which(args[0]) or args[0], *args[1:]], check=True,
-                          capture_output=True, text=True, timeout=60).stdout.strip()
+                          capture_output=True, text=True, encoding="utf-8", timeout=60).stdout.strip()
 
 
 def github(endpoint, selector, **fields):

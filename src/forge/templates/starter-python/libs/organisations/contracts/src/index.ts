@@ -17,3 +17,14 @@ export const changeRoleSchema = z.object({
 }).strict();
 
 export type ChangeRoleInput = z.infer<typeof changeRoleSchema>;
+
+export const addAgentSchema = z.object({
+  name: z.string().min(1, 'Enter a name.')
+    .regex(/^[a-z][a-z0-9-]{1,39}$/, 'Use 2 to 40 lower-case letters, numbers or hyphens, starting with a letter.')
+    .meta({ description: 'The start of the agent account’s email: lower-case letters, numbers and hyphens.', example: 'gantry' }),
+  role: z.enum(['admin', 'member']).meta({ description: 'The agent account’s role.', example: 'member' }),
+}).strict();
+
+export type AddAgentInput = z.infer<typeof addAgentSchema>;
+
+export type AgentKey = components['schemas']['AgentKey'];

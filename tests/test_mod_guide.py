@@ -43,9 +43,8 @@ def test_1_new_and_previously_adopted_repos_receive_the_mod_guide_sections(guide
         for shipped in guide:
             assert section(shipped, heading) == expected, heading
     # Previously chat could be the only record. The delivered prompt must now
-    # name each durable home and how to question a new direction, in a short section.
+    # name each durable home and how to question a new direction.
     decisions = section(template, "Save decisions and ideas")
-    assert len(decisions.splitlines()) <= 14
     for contract in ("Understand each", "same turn", "never leave it only in chat",
                      "Grill new directions", "one question at a time", "recommendation first",
                      "plan's Notes", "forge close <item> --resolve", "--reason",

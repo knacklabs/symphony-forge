@@ -83,6 +83,7 @@ def test_each_module_keeps_its_tables_in_its_own_schema(
             "api",
             "uv",
             "run",
+            "--no-sync",
             "alembic",
             "check",
         ],
@@ -91,6 +92,6 @@ def test_each_module_keeps_its_tables_in_its_own_schema(
         text=True,
         encoding="utf-8",
         check=False,
-        timeout=120,
+        timeout=30,
     )
     assert drift.returncode == 0, drift.stdout + drift.stderr

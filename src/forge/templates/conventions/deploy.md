@@ -47,4 +47,7 @@ the image; keep deployment secrets in the platform's secret store.
 At every container start, `COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm exec prisma migrate deploy` runs before the backend listens. If it
 fails, the container exits without serving traffic. Check `DATABASE_URL` and the failed migration
 in the platform logs, fix the cause, and redeploy; the previous healthy version should keep
-serving. Keep migrations additive so restarting a container cannot remove production data.
+serving. Expand, then contract: add a new table or column before code uses it, keep the old table
+or column for two releases, and remove it only when no live release uses it. A Mainline rollback
+restores the previous release's code and keeps the database, so each migration must work with
+that code still running.

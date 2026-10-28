@@ -348,12 +348,13 @@ def test_1_the_starter_is_a_runnable_stack(request):
         Path(".env.example"), Path("package.json"), Path("pnpm-lock.yaml"),
         Path("pnpm-workspace.yaml"), Path("Dockerfile"), Path("nx.json"),
         Path("compose.test.yml"), Path("scripts") / "test.mjs",
-        Path("scripts") / "test-build.mjs", Path("README.md"),
+        Path("scripts") / "test-build.mjs", Path("README.md"), Path("services.toml"),
         Path("apps") / "api" / "prisma" / "schema" / "base.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "auth.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "organisations.prisma",
         Path("apps") / "api" / "prisma" / "schema" / "projects.prisma",
         Path("apps") / "api" / "test" / "api.e2e-spec.ts",
+        Path("apps") / "api" / "test" / "mcp.e2e-spec.ts",
         Path("apps") / "api" / "test" / "organisations.e2e-spec.ts",
         Path("apps") / "api" / "vitest.config.ts",
         Path("apps") / "web" / "e2e" / "starter-shell.spec.ts",
@@ -364,7 +365,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert (STARTER / rel).is_file(), rel
     assert not (STARTER / "package-lock.json").exists(), "the starter still uses npm's lockfile"
     for rel in (Path("apps") / "web", Path("apps") / "api", *(Path("libs") / name for name in
-                                                               ("auth", "core", "history", "organisations", "projects", "shared"))):
+                                                               ("auth", "core", "history", "mcp", "organisations", "projects", "shared"))):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
@@ -402,7 +403,8 @@ def test_1_the_starter_is_a_runnable_stack(request):
     # The module library layout and its type/scope tags have one owner in test_libs_layout.
 
     schemas = {path.name for path in (STARTER / "apps" / "api" / "prisma" / "schema").glob("*.prisma")}
-    assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "organisations.prisma", "projects.prisma"}, schemas
+    assert schemas == {"base.prisma", "auth.prisma", "history.prisma", "mcp.prisma",
+                       "organisations.prisma", "projects.prisma"}, schemas
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
     assert command in (STARTER / "README.md").read_text(encoding="utf-8")
