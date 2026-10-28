@@ -103,7 +103,8 @@ It runs `fast_test`, or `test` when none is set, in the one test lane with `{bas
 merge base. It pushes and merges only after the tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. With no default-branch move, merge runs no extra tests.
 After a green retest, Forge reuses the existing review and commits its coverage of the combined
-change before the push.
+change before the push. It pushes and merges at once, without another pull-request CI wait.
+The nightly full run on the default branch covers the rest.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
 checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
 and gives `forge merge <item>` as the next step.

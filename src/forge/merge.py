@@ -82,7 +82,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
         checked_default = repo.git("rev-parse", f"origin/{default}", cwd=top)
-        if checked_default != base:
+        retested = checked_default != base
+        if retested:
             status = repo.run("git", "status", "--porcelain", "-z", "--no-renames",
                               "--untracked-files=all", cwd=worktree)
             status.check_returncode()
@@ -113,7 +114,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             receipt["commit"] = head
             _save_ready(path, receipt)
         try:
-            if config["test_place"] == "ci":
+            if config["test_place"] == "ci" and not retested:
                 checks.wait(worktree, item, head, config["checks"],
                             branch=branch, progress=getattr(args, "wait_for_progress", False),
                             slot=getattr(args, "check_slot", None))

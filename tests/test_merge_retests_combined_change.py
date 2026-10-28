@@ -22,16 +22,20 @@ STORY = "FIX-MERGE-RETESTS-COMBINED-CHANGE"
 # Existing green cases touch separate files and stub the review status as green.
 # Run the real PR check at GitHub's check boundary; reuse the command cases and
 # assert no extra model review. No production seam or second test owner is needed.
+# A green local retest now replaces another CI wait. Keep CI unavailable after
+# close to detect that extra wait, on new and earlier-adopted clients. The real
+# PR check still validates the published review at the merge service boundary.
 @pytest.mark.parametrize("previous,case,fast", [
     (False, "red", True), (True, "red", True),
     (False, "green", False),
     (False, "dirty-unstaged", True), (False, "dirty-staged", True),
     (False, "dirty-untracked", True), (True, "dirty-unstaged", True),
-    (False, "late-test", True), (False, "late-ci", True), (True, "late-test", True),
+    (False, "late-test", True), (False, "no-wait", True), (True, "late-test", True),
     (False, "review", True), (True, "review", True),
+    (True, "no-wait", True),
 ], ids=["new-red", "adopted-red", "fallback-green", "dirty-unstaged",
-        "dirty-staged", "dirty-untracked", "adopted-dirty", "late-test", "late-ci", "adopted-late",
-        "review-new", "review-adopted"])
+        "dirty-staged", "dirty-untracked", "adopted-dirty", "late-test", "no-wait", "adopted-late",
+        "review-new", "review-adopted", "adopted-no-wait"])
 def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previous, case, fast):
     _client(env, tmp_path, previous, fast_test=False)
     _, setup = env.start("test-setup", "fix/test-setup", ".factory/fixes/test-setup.json",
@@ -92,7 +96,7 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         stub = (env.repo.bin / "gh").read_text("utf-8")
         gate = (
             "args = sys.argv[1:]\n"
-            "if args[:1] == ['api'] and '.check_runs[]' in args:\n"
+            "if args[:2] == ['pr', 'merge']:\n"
             f"    top = {env.repo.path.as_posix()!r}\n"
             "    base = subprocess.check_output(['git', 'rev-parse', 'origin/main'], cwd=top, text=True).strip()\n"
             "    head = subprocess.check_output(['git', 'ls-remote', 'origin', 'refs/heads/fix/tidy-readme'], cwd=top, text=True).split()[0]\n"
@@ -104,13 +108,14 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
             "        sys.stderr.write(checked.stderr)\n"
             "        sys.exit(checked.returncode)\n")
         _install(env.repo.bin, "gh", stub.replace("args = sys.argv[1:]", gate, 1))
-    if case == "late-ci":
+    if case == "no-wait":
         stub = (env.repo.bin / "gh").read_text("utf-8")
         _install(env.repo.bin, "gh", stub.replace("args = sys.argv[1:]", (
             "args = sys.argv[1:]\n"
-            "if args[:1] == ['api'] and '.check_runs[]' in args and not (here / 'ci-moved').exists():\n"
-            f"    exec({advance!r})\n"
-            "    (here / 'ci-moved').write_text('done', encoding='utf-8')"), 1))
+            "if args[:1] == ['api'] and '.check_runs[]' in args:\n"
+            "    (here / 'ci-polled').write_text('CI is still queued', encoding='utf-8')\n"
+            "    sys.stderr.write('CI is still queued\\n')\n"
+            "    sys.exit(1)"), 1))
     if case.startswith("dirty"):
         dirty = where / ("local notes.txt" if case == "dirty-untracked" else "left.txt")
         dirty.write_bytes(b"0\n")
@@ -154,6 +159,8 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
         assert env.repo.git("rev-parse", "main", cwd=remote) == advanced
     else:
         assert merged.returncode == 0, merged.stdout + merged.stderr
+        if case == "no-wait":
+            assert not (env.repo.bin / "ci-polled").exists()
         attempts = env.gh_calls("pr", "merge")
         assert len(attempts) == 1
         published = attempts[0][attempts[0].index("--match-head-commit") + 1]
