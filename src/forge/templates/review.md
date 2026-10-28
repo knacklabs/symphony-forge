@@ -355,6 +355,13 @@ change turns on and that is not on the skill's allowed list the same way, unless
 constitution has a line "Postgres extension <name>:" with the owner's OK. A change to a table
 that the default branch already has is not a finding.
 
+Report agent, chat or assistant code that this change adds or changes, and that breaks a Must
+rule of the agents skill (.codex/skills/agents/SKILL.md), as a P1 finding titled
+`Agents: <the rule's heading>`. Report a broken Should rule as a P2 finding titled
+`Agents advice: <the rule's heading>` scored Gain 1 or 2, so it stays advice. Agent code,
+including its system prompts, tool descriptions and prompt versions, is agent code, so a change
+that only edits a prompt is checked. Agent code that the default branch already has is not a finding.
+
 In a TypeScript app with `zod` in a `package.json`, report a request body or query that this
 change adds and that no zod schema checks as a P1 finding titled `Zod: <the endpoint>`. Request
 input has one zod schema in the module's contracts package, which the web form and the API both
