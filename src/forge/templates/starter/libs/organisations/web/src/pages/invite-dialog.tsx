@@ -3,6 +3,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { inviteSchema, type InviteInput } from '@app/auth-contracts';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@app/shared-ui/components/ui/alert-dialog';
 import { Button } from '@app/shared-ui/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@app/shared-ui/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@app/shared-ui/components/ui/form';
@@ -23,12 +33,20 @@ export function InviteDialog({ children }: { children: ReactNode }) {
   const [error, setError] = useState('');
   const form = useForm<InviteInput>({ resolver: zodResolver(inviteSchema), defaultValues: { email: '' } });
 
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const { isDirty } = form.formState;
+
+  function close() {
+    form.reset();
+    setError('');
+    setOpen(false);
+  }
+
+  // Esc, a click outside and Cancel ask first when the form has typed text.
   function changeOpen(nextOpen: boolean) {
-    if (!nextOpen) {
-      form.reset();
-      setError('');
-    }
-    setOpen(nextOpen);
+    if (nextOpen) setOpen(true);
+    else if (isDirty && !form.formState.isSubmitting) setConfirmDiscard(true);
+    else close();
   }
 
   async function submit(input: InviteInput) {
@@ -36,7 +54,7 @@ export function InviteDialog({ children }: { children: ReactNode }) {
     try {
       await invite.mutateAsync(input);
       toast.success(`Invite sent to ${input.email}.`);
-      changeOpen(false);
+      close();
     } catch (cause) {
       if (applyApiFieldErrors(cause, form.setError)) return;
       setError((cause instanceof ApiError && INVITE_ERRORS[cause.code]) || 'Could not send the invite. Try again.');
@@ -44,6 +62,7 @@ export function InviteDialog({ children }: { children: ReactNode }) {
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={changeOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
@@ -71,5 +90,18 @@ export function InviteDialog({ children }: { children: ReactNode }) {
         </Form>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard this invite?</AlertDialogTitle>
+          <AlertDialogDescription>The text you typed will be lost.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep editing</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { setConfirmDiscard(false); close(); }}>Discard</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

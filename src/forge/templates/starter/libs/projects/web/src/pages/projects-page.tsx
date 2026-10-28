@@ -23,6 +23,7 @@ import { Button } from '@app/shared-ui/components/ui/button';
 import { Input } from '@app/shared-ui/components/ui/input';
 import { Label } from '@app/shared-ui/components/ui/label';
 import { Switch } from '@app/shared-ui/components/ui/switch';
+import { Skeleton } from '@app/shared-ui/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@app/shared-ui/components/ui/table';
 import { ProjectFormDialog } from './project-form-dialog';
 import type { ProjectListState } from './project-detail-page';
@@ -229,7 +230,11 @@ export function ProjectsPage() {
         )}
       </div>
 
-      {projects.isPending && <p role="status" className="text-sm text-muted-foreground">Loading projects…</p>}
+      {projects.isPending && (
+        <div role="status" aria-label="Loading projects" className="space-y-2">
+          {[0, 1, 2].map((row) => <Skeleton key={row} className="h-10 w-full" />)}
+        </div>
+      )}
       {projects.isError && (
         <div role="alert" className="space-y-3">
           <p>Could not load projects. Check your connection and try again.</p>
