@@ -224,7 +224,10 @@ def build(args) -> int:
             block = block.rstrip() + "\n" + "".join(f"      '@app/{target}-contracts':\n        specifier: workspace:*\n        version: link:../../{target}/contracts\n" for target in targets) + "\n"
         additions.append(block)
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
-    return _write(root, current, files)
+    _write(root, current, files)
+    if not include_mcp:
+        print(f"This app has no MCP server, so {plural} get no agent tools.")
+    return 0
 
 
 def _wire_web(current, plural, one, model, title):
@@ -272,8 +275,6 @@ def _write(root, current, files):
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(text, encoding="utf-8")
         print(f"Wrote {path}")
-    if not include_mcp:
-        print(f"This app has no MCP server, so {plural} get no agent tools.")
     return 0
 
 
