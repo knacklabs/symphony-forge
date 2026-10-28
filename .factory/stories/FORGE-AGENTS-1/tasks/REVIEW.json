@@ -7,13 +7,54 @@
     "head": null,
     "start": "1591fd97a84e47ca82e655bf0e0f457596642f16"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/review.md",
+      "file": "src/forge/templates/review.md",
+      "gain": 3,
+      "harm": 2,
+      "line": 363,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A review reports new agent work that breaks a Must rule as a must-fix finding, and work that breaks a Should rule as advice.",
+      "work": 3
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "87a8c27f5614bb04ea41eb959eaf6c57f59c8d61863bad144b8b4ab112784f23",
+    "changed": "6c1f07f99f01b5cd0cda1e3fdc296a99235fcc4ba990a12b0ae30d98680304c1",
+    "commit": "748b548e20bd1783625809287ba92aecd888506c",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 3, Harm 2\nRaise: Not done\nCase: normal use - a signed-off client changes its agent's Markdown system prompt without changing application code.\nThe new instruction promises to check prompt-only edits, but src/forge/review.py:43 excludes every Markdown file from code classification, and blocking_level at lines 210\u2013211 selects P0-only review for those changes. Unless the prompt is marked generated or directly referenced by a test, src/forge/docskip.py:17\u201357 treats it as documentation. The selected review-light.md omits this agents rule, and even an ordinary Agents finding with the new floor does not block at P0 level. Consequently a runtime prompt change that introduces a Must violation can pass close outside the approved prototype exception. The added test edits app.py, so it does not cover this path. Ensure runtime prompt edits receive the agents review and add a command-level case for a Markdown prompt.",
+        "file": "src/forge/templates/review.md",
+        "gain": 3,
+        "harm": 2,
+        "line": 363,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A review reports new agent work that breaks a Must rule as a must-fix finding, and work that breaks a Should rule as advice.",
+        "work": 3
+      }
+    ],
+    "id": "91f80976-f341-4248-858f-09b8a7f6a40f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T17:29:30.287009+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T17:40:08.995400+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
