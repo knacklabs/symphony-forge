@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-BUDGET-1-SHARE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T02:23:54.752767+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c1f8a28d86e69bc4748f992fef63f189a2d9ccdb",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
