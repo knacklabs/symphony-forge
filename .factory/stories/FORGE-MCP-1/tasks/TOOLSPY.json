@@ -16,7 +16,7 @@
       "gain": 5,
       "harm": 3,
       "line": 275,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -29,7 +29,7 @@
       "gain": 4,
       "harm": 3,
       "line": 116,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -40,38 +40,17 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "89483c947c774b6459399b782019ad68eae6574fa830bbb54839b84812fe85d9",
-    "changed": "4e0b701474f98da3f577bad5d60613e2f393d9c5f45326eacb77ab3a935007b7",
-    "commit": "bbe886c43ff6ebbb115b716f02ae2dc8a57ab992",
+    "branch_diff": "0f7006b526443d0bca871bddd6a908e96b02873f964dc88c82ee988f4d509044",
+    "changed": "ce11033bb91d47af1d9240db1624c4867f26f54a5153c61ea1c0eba869540b19",
+    "commit": "433545a064ed524c896f1b4274e9ee9599a32126",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - running `forge task feature` in either starter.\n`_write()` references `include_mcp` and `plural`, but neither is a parameter nor a module global. Every successful generation therefore writes its files and then raises `NameError` at this line. Python generation also stops before its formatting step. Retrying encounters the feature folders already written. Pass the required state into the writer or keep the notice in its callers.",
-        "file": "src/forge/feature.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 275,
-        "priority": "P1",
-        "title": "Pass feature state into the extracted writer",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - running the generated Python feature smoke suite with its admin-only notes feature.\nThe copied MCP cases retain the fixed Member agent and four-tool expectations from `apps/api/tests/test_projects.py:515\u2013532`, including the same assumption in the delete/restore refusal case. However, `tests/test_feature_command.py:353\u2013357` deliberately removes every Member permission from notes before running this suite. Its correctly filtered tool list is empty, so both generated notes cases fail even after the writer defect is repaired. Generate permission-aware expectations and use an authorized role for the successful CRUD case, while retaining the denied-role checks.",
-        "file": "src/forge/feature_python_tests.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 116,
-        "priority": "P1",
-        "title": "Gate: generated Python MCP cases must honor feature permissions",
-        "work": 2
-      }
-    ],
-    "id": "6aad0576-502d-47ea-98ff-7b224cb11f79",
-    "status": "blocked"
+    "findings": [],
+    "id": "cc46f3c9-97cc-488f-a1c4-c466b0e87bcf",
+    "status": "clean"
   },
   "round": 2,
   "stacked_on": "FORGE-FEATURE-1/PY",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T02:23:37.185339+00:00",
@@ -79,6 +58,10 @@
     },
     {
       "at": "2026-10-28T03:09:51.843640+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T03:16:36.478935+00:00",
       "step": "review"
     }
   ],
