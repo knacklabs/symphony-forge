@@ -66,6 +66,9 @@ export class OrderController {
   403 not allowed, 404 not found (including another account's record), 409 conflict, 429 too many
   requests, 500 our fault.
 
+A create sent again with the same `Idempotency-Key` answers 201 with the first item.
+Document the header with `@ApiHeader`.
+
 ## Lists
 
 ```ts

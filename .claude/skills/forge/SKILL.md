@@ -175,6 +175,19 @@ recommendation first. Save the answer before moving to the next question.
 
 ## Merges and settings
 
+If the default branch moved after close, `forge merge` first merges it into the item's branch.
+It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
+merge base. It pushes and merges only after the tests pass. A failure names the failed tests
+and gives `forge work <item>` as the next step. This is always on, with no setting. With no
+default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
+get it on upgrade and sync.
+After a green retest, Forge reuses the existing review and commits its coverage of the combined
+change before the push. It pushes and merges at once, without another pull-request CI wait.
+The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
+Before the retest, Forge refuses uncommitted changes and names their files. After tests and
+checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
+and gives `forge merge <item>` as the next step.
+
 Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
 the item's merge base with its head, so an older branch can merge after the owner enables agent
 merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
@@ -337,12 +350,12 @@ tests, reviews and plan reads, waits while the machine's
 one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
 (Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
-lane has one place per four available cores, at least one: two test runs at once on eight cores,
-one on four. A run of Forge's pytest picker that selects five or fewer test files takes no
-place when the whole command is the picker, optionally run through `uv run`. It still waits for load and memory.
-Compound commands, including the picker's underlying `test` command, keep their place.
-Only a single pytest command with no doctest option, such as `--doctest-modules`, in the command or the repo's pytest config gets the small-run exception. Each test run uses half the machine's cores; a worker's test runs use at most two. `forge doctor` shows both lane sizes
-and the per-test budget, free memory and its floor, test processes in use, and busy runners.
+lane makes all test runs share one process budget: the cores left after the agent share and busy
+local CI jobs, with at least one process. Small selections count too. Each run takes its allocation
+from the remaining budget. A worker's test runs use at most two processes. Nested pytest pickers
+keep the parent run's allocation. Older-release entries without an allocation count as the old
+default share, half the machine's cores. `forge doctor` names these older runs and shows both lane
+budgets, free memory and its floor, test processes in use, and busy runners.
 Every run waits when free memory is below 1.5 GB or ten percent of RAM, whichever is larger.
 An unreadable memory source does not block work. Each busy local `Runner.Worker` reserves one core
 from Forge's half-core budget, with at least one core left for Forge. Waiting runs check memory
@@ -1046,6 +1059,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - The tests run import-linter, so an import of another module's internal files fails them.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 
 In any other app, record the
 stack, package manager and folder layout that the app already uses, and leave out ## Fixed rules.
@@ -1085,6 +1099,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 - Built in: each UI or API crash writes one error report to the logs.
 
 ## Growth notes
@@ -1391,6 +1406,10 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   Only starter apps get the MCP server. Upgrade and sync deliver this guidance without app
   files or a `services.toml` change. In an older starter without MCP support, the feature
   command builds the feature without tools and says so.
+- When a part adds a create or a send, pay or notify action, it says that the action takes a
+  retry key. When it adds a report, it names the report, its result fields and their units.
+  When it lets a person sign an agent in, the agent acts as that person, and the part names
+  the agent's `viaAgent` text.
 - Each feature's resources come from its tools file's `defineFeatureTools` and need no code.
   When a story builds or changes a feature that a task under ## Agent tasks names, the part
   names its prompt: the name in the form `<feature>_<verb>`, its inputs and its permission.
@@ -1873,13 +1892,16 @@ set (using pytest selection when supported), with `{base}` as the merge base wit
 It prints the report close keeps and always runs, including docs-only and
 uncommitted changes. If the remote default branch is missing it says to fetch it; if forge.toml
 names no test command it says so and exits successfully. Forge sets `PYTEST_XDIST_AUTO_NUM_WORKERS`
-and `FORGE_TEST_CPUS` to half this machine's cores for every test command, and to at most two in
-a worker's session, so a worker's own `pytest -n auto` also stays at two; a fixed `-n` in
+and `FORGE_TEST_CPUS` to the run's allocation from the shared process budget. A worker's session
+requests at most two processes, so its own `pytest -n auto` also stays at two. A fixed `-n` in
 its test command is capped with `--maxprocesses`, also outside a worker session.
 Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
-Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
+Forge caps explicit `--maxWorkers` values to the run's allocation, including percentage values.
+Lower caps and Jest's serial options `--runInBand` and `-i` stay as written.
 Forge does not change npm, pnpm or yarn scripts to set their worker budget.
+It keeps existing `NODE_OPTIONS` and adds a Node preload that caps the actual runner's arguments,
+so package scripts keep their lifecycle hooks and share the same process budget.
 Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
 with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
 for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap
@@ -2140,8 +2162,9 @@ command as a close stop.
 
 When GitHub reports a clash during the check wait or refuses a merge because the branch is
 behind or conflicting, `forge merge` retries close and merge once. A mergeable pull request
-keeps its current head. When the branch is behind the default branch, `forge merge` and
-`forge land` say so in one line, run close again to merge the default branch and run the tests,
+keeps its current head when the default branch has not moved. When GitHub refuses a branch
+that fell behind during the merge, `forge merge` and `forge land` say so in one line,
+run close again to merge the default branch and run the tests,
 review and checks as close decides, then retry the merge. If that merge selects a different
 Forge release, close finishes under that release before the original command continues.
 A real conflict stops with close's existing resolution steps. Other GitHub refusals keep their

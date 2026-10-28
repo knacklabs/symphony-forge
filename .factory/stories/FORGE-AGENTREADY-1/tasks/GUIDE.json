@@ -1,0 +1,41 @@
+{
+  "branch": "task/FORGE-AGENTREADY-1-GUIDE",
+  "chat": {
+    "approval": "43a1abe4232ad43aa01e94ee3a69bf4d37f6699506428144937150471bf41e48",
+    "claude": null,
+    "conversation": "01a182b8-6d65-79e1-a25f-08e4533effd1",
+    "head": null,
+    "start": "c60abefe84a007229ebcd3d9f84c49f34075cc22"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "24a6d5f8a1e547413d9d5a5f1492bd517d10d9d8e6c4cc4c84a9cf068243a384",
+    "changed": "bd2c9d5d31aadb9fbf9adeee79b1c675d0c90c52626bc3cdb623364d889a544f",
+    "commit": "9aec8df8389cc4adf982519c1463619c2feedefc",
+    "dismissals": [],
+    "findings": [],
+    "id": "15c4f65f-5d43-43d2-85a7-7e0d5b5068eb",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T13:34:22.571219+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T13:42:21.480228+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "74d40e2813d56ff7fd7536046421e881e384c88f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}
