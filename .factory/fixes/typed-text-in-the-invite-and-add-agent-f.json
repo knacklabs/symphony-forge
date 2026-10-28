@@ -11,7 +11,7 @@
       "gain": 3,
       "harm": 4,
       "line": 48,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,28 +25,16 @@
   },
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e1bf8c646065ef5ca1b03023ed224df2dba372e098e39711cba8a6bc9aefc03e",
-    "changed": "79616a1b7724edb9159a9bdd35a3369d7369a35ac4151544d0798b4a76c5f85a",
-    "commit": "fff6d8b7003f8cbb6e76e3d4989fd56c168befd1",
+    "branch_diff": "1313fa18d96358cfd35fe20ee3bbe4d6b9089c8614beb842df55f2141cd3ead1",
+    "changed": "4b022e9cf2c614fea84b37c8bf3f8e4c17fd6a7a43f6cd13b9834f57e94446c1",
+    "commit": "ac721c63f0f8743bc5391ed0a5988782feb40d7f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 4\nRaise: Not done\nCase: normal use - dismissing a form while its submission is awaiting a response.\nThe `!form.formState.isSubmitting` condition bypasses confirmation during submission and calls `close()`, which immediately resets the typed text. If the request fails, the dialog has already closed and its input is gone. This affects both invite-dialog.tsx:48 and add-agent-dialog.tsx:43. Keep dirty input protected until submission succeeds; the success handlers already call `close()` directly. The browser test only dismisses forms before submission, so it misses this path.",
-        "file": "src/forge/templates/starter/libs/organisations/web/src/pages/invite-dialog.tsx",
-        "gain": 3,
-        "harm": 4,
-        "line": 48,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: The starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text.",
-        "work": 2
-      }
-    ],
-    "id": "f7c1e2a2-6e3b-4fd1-8280-d645de8721a3",
-    "status": "blocked"
+    "findings": [],
+    "id": "6ee6962b-b8d6-48df-a634-68b3e479addd",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T12:18:48.030164+00:00",
@@ -54,6 +42,10 @@
     },
     {
       "at": "2026-10-28T13:07:00.822821+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T13:35:56.430515+00:00",
       "step": "review"
     }
   ],
