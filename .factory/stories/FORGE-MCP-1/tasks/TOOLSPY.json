@@ -9,7 +9,66 @@
     "head": null,
     "start": "5ef4a7a78cea320aa4336312cfccff1627e29f75"
   },
+  "known": [
+    {
+      "area": "_write() in src/forge/feature.py",
+      "file": "src/forge/feature.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 275,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Pass feature state into the extracted writer",
+      "work": 2
+    },
+    {
+      "area": "_mcp_case_source() in src/forge/feature_python_tests.py",
+      "file": "src/forge/feature_python_tests.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 116,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: generated Python MCP cases must honor feature permissions",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "89483c947c774b6459399b782019ad68eae6574fa830bbb54839b84812fe85d9",
+    "changed": "4e0b701474f98da3f577bad5d60613e2f393d9c5f45326eacb77ab3a935007b7",
+    "commit": "bbe886c43ff6ebbb115b716f02ae2dc8a57ab992",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 3\nRaise: Functional\nCase: normal use - running `forge task feature` in either starter.\n`_write()` references `include_mcp` and `plural`, but neither is a parameter nor a module global. Every successful generation therefore writes its files and then raises `NameError` at this line. Python generation also stops before its formatting step. Retrying encounters the feature folders already written. Pass the required state into the writer or keep the notice in its callers.",
+        "file": "src/forge/feature.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 275,
+        "priority": "P1",
+        "title": "Pass feature state into the extracted writer",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - running the generated Python feature smoke suite with its admin-only notes feature.\nThe copied MCP cases retain the fixed Member agent and four-tool expectations from `apps/api/tests/test_projects.py:515\u2013532`, including the same assumption in the delete/restore refusal case. However, `tests/test_feature_command.py:353\u2013357` deliberately removes every Member permission from notes before running this suite. Its correctly filtered tool list is empty, so both generated notes cases fail even after the writer defect is repaired. Generate permission-aware expectations and use an authorized role for the successful CRUD case, while retaining the denied-role checks.",
+        "file": "src/forge/feature_python_tests.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 116,
+        "priority": "P1",
+        "title": "Gate: generated Python MCP cases must honor feature permissions",
+        "work": 2
+      }
+    ],
+    "id": "6aad0576-502d-47ea-98ff-7b224cb11f79",
+    "status": "blocked"
+  },
   "round": 1,
   "stacked_on": "FORGE-FEATURE-1/PY",
   "status": "fixing",
@@ -17,18 +76,12 @@
     {
       "at": "2026-10-28T02:23:37.185339+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T03:09:51.843640+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "Client apps ship an MCP server so agents can use their features: The MCP server and tools in the Python starter is stuck. It should deliver: The same in the Python starter: the core tools list with `call_tool`, the `app/mcp` package at `/mcp` with the key check, the rate limit and the idempotency table, the projects tools file, the starter's `services.toml`, the contract and behaviour cases, and the Python feature copy's tools file.\nIt changes 4711 lines outside tests, over its limit of 400.\nThe worker tried: Add agent tools to the Python starter.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "The owner allowed every MCP-1 part to go over the line limit",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "30cdb705-860a-4651-b566-f70cf8385ea9",
-    "worker_round": 1
-  },
   "stuck": {
     "close": null,
     "head": "836747dad9bf9c35e7747c409dcbfc40a6b44480",
