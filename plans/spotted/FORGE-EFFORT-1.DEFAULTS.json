@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "improve\tsrc/forge/templates/skill.md\tThe checked-in host guides need the coordinator to refresh their default guidance through sync.",
+      "kind": "improve",
+      "path": "src/forge/templates/skill.md",
+      "line": 1564,
+      "text": "The checked-in host guides need the coordinator to refresh their default guidance through sync.",
+      "from": "worker",
+      "item": "FORGE-EFFORT-1/DEFAULTS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
