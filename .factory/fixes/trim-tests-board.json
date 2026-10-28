@@ -11,12 +11,27 @@
   "done_when": "The cases named in batch 4 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c93897fea950acf2078c60e2f669c67953c81a230bbfa1e73a13552ba58ddccf",
+    "changed": "cb4d485a416dac0710e26340dae35bde1fd69d96717aa201fad33387c88f748d",
+    "commit": "8419ba07d228c100ec80910cbd86a6c3ebe727bc",
+    "dismissals": [],
+    "findings": [],
+    "id": "a0eda401-5d56-43bb-9119-f733a9048964",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T17:17:18.151950+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T17:29:49.488297+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
