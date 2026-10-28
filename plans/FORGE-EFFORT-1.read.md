@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-28T18:05:48.652673+00:00
-seconds: 317.724
-read_hash: c5f0eb6db2c45c76f5a189be085007365a276789
-round: 1
-passed: no
-doc_seen: c5f0eb6db2c45c76f5a189be085007365a276789
+read_at: 2026-10-28T18:17:41.783432+00:00
+seconds: 210.038
+read_hash: 29c0a5996e4d0502a5c593b92aaf87b57a727d28
+round: 2
+passed: yes
+doc_seen: 29c0a5996e4d0502a5c593b92aaf87b57a727d28
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: a4148686985e56e551781f8e6aa1332e72e46d85
+notes_seen: ba79f0b1143e0a0e067dd8be86d0e0f02761edd1
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1839f-f05c-79d1-87b0-8aa799b93083
 session:
@@ -86,3 +86,19 @@ Only a genuine trade-off goes to the human, as a question with options.
    The plan defines verified check failures as required checks, but `src/forge/worker.py:502` fetches all checks and line 507 accepts every failed bucket. Using `_fix_round` unchanged therefore raises effort when an optional check fails and required checks pass. The proposed required-check test would still pass.
    Gain 3, Work 2, Harm 2
    Disposition: cut - only failed checks named in forge.toml checks raise effort
+
+## Round 2
+
+8. Advisory: Test: the user-facing split case requires both low effort and fixed design effort.
+   Raise: Test.
+   Case: normal use - the ladder test runs its user-facing split parameter.
+   `plans/FORGE-EFFORT-1.md:85` requires low effort on its first round, but line 93 requires design effort to stay fixed. `src/forge/repo.py:762` classifies this parameter as design work, and line 779 selects its design entry. Give design parameters their fixed-effort expectations; keep the low-to-top assertions on non-design parameters.
+   Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
+
+9. Advisory: Plan gap: Claude’s lite fallback contradicts the promised default for a kind without helper settings.
+   Raise: Plan gap.
+   Case: normal use - an existing repo configures custom lite helpers but leaves build’s helper pair absent.
+   Item 6 at `plans/FORGE-EFFORT-1.md:30` promises Haiku-high for that build round. The selection rule at line 73 instead returns lite’s custom pair. These are separate kind entries in `src/forge/repo.py:753`; the cited precedent at `src/forge/roles.py:102` explicitly implements Codex’s cross-kind fallback. Remove that fallback from the Claude rule to match item 6.
+   Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
