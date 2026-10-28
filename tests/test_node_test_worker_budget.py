@@ -42,7 +42,7 @@ def client(repo, gh, upgrade):
                    "pnpm exec ", "yarn exec ")
     for options, expected in ((" run", ["run", "--maxWorkers=2"]),
                               (" --maxWorkers=1", ["--maxWorkers=1"]),
-                              (" --maxWorkers 8", ["--maxWorkers", "8"]))
+                              (" --maxWorkers 8", ["--maxWorkers", "2"]))
 ] + [
     (setting, command, script, [serial])
     for setting in ("test", "fast_test")
@@ -53,16 +53,16 @@ def client(repo, gh, upgrade):
     ("fast_test", "npm test", "jest " + serial, [serial])
     for serial in ("--runInBand", "-i")
 ] + [
-    ("fast_test", manager + " run check", runner + " run", ["run"])
+    ("fast_test", manager + " run check", runner + " run", ["run", "--maxWorkers=2"])
     for manager in ("npm", "pnpm", "yarn") for runner in ("vitest", "jest")
 ] + [
     ("fast_test", manager + " run check", runner + " run --maxWorkers=8",
-     ["run", "--maxWorkers=8"])
+     ["run", "--maxWorkers=2"])
     for manager in ("npm", "pnpm", "yarn") for runner in ("vitest", "jest")
 ] + [
     ("test", "npm test", "vitest --maxWorkers=1", ["--maxWorkers=1"]),
     ("test", "jest --maxWorkers=1%", None, ["--maxWorkers=1%"]),
-    ("fast_test", "vitest --maxWorkers=90%", None, ["--maxWorkers=90%"]),
+    ("fast_test", "vitest --maxWorkers=90%", None, ["--maxWorkers=2"]),
     ("test", "other vitest", None, ["vitest"]),
     ("test", "other --maxWorkers=8", None, ["--maxWorkers=8"]),
     ("test", "npm run check", "other vitest", ["vitest"]),
@@ -112,6 +112,9 @@ raise SystemExit(subprocess.call(command, shell=True))
     repo.write("forge.toml", config)
     if script:
         repo.write("package.json", json.dumps({"scripts": {"check": script, "test": script}}))
+    # Match the runner's OS measurement to the eight-core Forge measurement.
+    preload = repo.write("runner-cpus.cjs", "require('node:os').cpus = () => Array(8).fill({});\n")
+    monkeypatch.setenv("NODE_OPTIONS", "--require " + json.dumps(preload.as_posix()))
     ran = repo.forge("test")
     assert ran.returncode == 0, ran.stdout + ran.stderr
     assert json.loads((repo.path / "observed.json").read_text("utf-8")) == expected
@@ -144,7 +147,7 @@ def test_2_package_scripts_keep_arguments_and_lifecycle(repo, gh, monkeypatch, u
         "posttest": "node finish.cjs"}}))
     config = (repo.path / "forge.toml").read_text("utf-8")
     repo.write("forge.toml", re.sub(r'^test = .*$', 'test = "npm test"', config, flags=re.M))
-    # Package scripts retain their arguments and the client's own Node options.
+    # Package scripts keep lifecycle hooks and Node options while Forge caps workers.
     repo.write("client-preload.cjs", "process.env.CLIENT_PRELOAD = 'kept';\n")
     monkeypatch.setenv("NODE_OPTIONS", "--require " + json.dumps(
         (repo.path / "client-preload.cjs").as_posix()))
@@ -154,4 +157,4 @@ def test_2_package_scripts_keep_arguments_and_lifecycle(repo, gh, monkeypatch, u
     assert ran.returncode == 0, ran.stdout + ran.stderr
     assert (repo.path / "events").read_text("utf-8").splitlines() == ["pre", "test", "post"]
     assert not (repo.path / "fixture").exists()
-    assert json.loads((repo.path / "observed.json").read_text("utf-8")) == ["run", "--maxWorkers=8"]
+    assert json.loads((repo.path / "observed.json").read_text("utf-8")) == ["run", "--maxWorkers=2"]

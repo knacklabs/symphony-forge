@@ -82,7 +82,7 @@ def test_5_doctor_says_which_forge_version_it_compares_with(repo, gh, tmp_path, 
         # The verdict still leads; comparison, machine split and the Fast policy follow it.
         assert done.stdout == (f"Everything checks out for Forge {installed}.\n"
                                + _compared(installed, installed)
-                               + "This machine: 6 cores, so 3 agents at once and 1 test runs at once, each on 3 cores.\n"
+                               + "This machine: 6 cores, so 3 agents at once and 3 test processes shared by all runs.\n"
                                + "Memory: 8.0 GB free, floor 1.6 GB.\n"
                                + "Test processes in use: 0. Busy runners: 0 (0 cores reserved).\n"
                                + "- Codex Fast: on for every fix, after the first repair round, or when other planned work waits; models without Fast run normally.\n"), done.stdout

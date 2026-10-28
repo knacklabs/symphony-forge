@@ -1,4 +1,5 @@
 """The feature command builds starter API modules from the plan's shell line."""
+import ast
 import json
 import os
 import re
@@ -16,6 +17,7 @@ from test_worker import calls, install_claude
 
 ROOT = Path(__file__).resolve().parents[1]
 STARTER = ROOT / "src/forge/templates/starter"
+PYTHON_STARTER = ROOT / "src/forge/templates/starter-python"
 ADOPTED = ROOT / "tests/fixtures/adopted-v1.2.2/client"
 
 CLIENT_LINE = "forge task feature clients --one client --field 'name:text'"
@@ -28,6 +30,7 @@ JOBS_LINE = (
     "--field 'contactEmail?:email' --field 'billable:yes-no'"
 )
 NOTES_LINE = "forge task feature notes --one note --field 'title:text'"
+SALES_ORDERS_LINE = "forge task feature sales-orders --one sales-order --field 'name:text'"
 # The first text field is not the one called name, a status is optional and a link is required.
 TASKS_LINE = ("forge task feature tasks --one task --field 'code:text' --field 'name:text' "
               "--field 'stage?:status(open|closed)' --field 'job:link(jobs)'")
@@ -120,6 +123,96 @@ def _assert_api_output(client: Path, plural: str, one: str, shell_paths: set[str
     return client / migration_paths[0]
 
 
+def _assert_python_api_output(
+    client: Path, plural: str, one: str, shell_paths: set[str]
+) -> Path:
+    required = {
+        f"apps/api/app/{plural}/__init__.py",
+        f"apps/api/app/{plural}/models.py",
+        f"apps/api/app/{plural}/schema.py",
+        f"apps/api/app/{plural}/service.py",
+        f"apps/api/app/{plural}/routes.py",
+        f"apps/api/app/{plural}/permissions.py",
+        f"apps/api/tests/test_{plural}.py",
+        "apps/api/tests/test_module_schemas.py",
+        f"libs/{plural}/contracts/package.json",
+        f"libs/{plural}/contracts/tsconfig.json",
+        f"libs/{plural}/contracts/src/index.ts",
+        f"libs/{plural}/web/package.json",
+        f"libs/{plural}/web/project.json",
+        f"libs/{plural}/web/tsconfig.json",
+        f"libs/{plural}/web/src/hooks/{plural}-hooks.ts",
+        f"libs/{plural}/web/src/hooks/{plural}-hooks.test.tsx",
+        f"libs/{plural}/web/src/pages/{plural}-page.tsx",
+        f"apps/web/e2e/{plural}.spec.ts",
+        "apps/api/app/main.py",
+        "apps/api/migrations/env.py",
+        "apps/api/pyproject.toml",
+        "apps/web/src/app.tsx",
+        "apps/web/src/components/app-shell.tsx",
+        "apps/web/package.json",
+        "pnpm-lock.yaml",
+    }
+    assert required <= shell_paths
+    migration_paths = [
+        rel for rel in shell_paths
+        if re.fullmatch(rf"apps/api/migrations/versions/\d{{4}}_{re.escape(plural)}\.py", rel)
+    ]
+    assert len(migration_paths) == 1
+    assert all((client / rel).is_file() for rel in required)
+    migration_path = client / migration_paths[0]
+    contracts = json.loads((client / f"libs/{plural}/contracts/package.json").read_text("utf-8"))
+    assert contracts["dependencies"]["@app/shared-api-types"] == "workspace:*"
+    contract_source = (client / f"libs/{plural}/contracts/src/index.ts").read_text("utf-8")
+    assert "import type { components } from '@app/shared-api-types'" in contract_source
+    assert "z.object(" in contract_source
+    schema_test = (client / "apps/api/tests/test_module_schemas.py").read_text("utf-8")
+    assert f'"{plural}.{one.replace("-", "_")}"' in schema_test
+    filters = [
+        re.search(rf"{owner}_schema\.nspname IN \(([^)]*)\)", schema_test)
+        for owner in ("source", "target")
+    ]
+    assert all(filter_match and repr(plural) in filter_match[1] for filter_match in filters)
+    revisions = {}
+    migration_dir = client / "apps/api/migrations/versions"
+    for path in migration_dir.glob("[0-9][0-9][0-9][0-9]_*.py"):
+        module = ast.parse(path.read_text("utf-8"), filename=str(path))
+        assignments = {}
+        for node in module.body:
+            if isinstance(node, ast.Assign):
+                targets, value = node.targets, node.value
+            elif isinstance(node, ast.AnnAssign):
+                targets, value = [node.target], node.value
+            else:
+                continue
+            if value is not None:
+                for target in targets:
+                    if isinstance(target, ast.Name) and target.id in {"revision", "down_revision"}:
+                        assignments[target.id] = ast.literal_eval(value)
+        revisions[path] = (assignments["revision"], assignments["down_revision"])
+    generated_revision, generated_parent = revisions[migration_path]
+    prior = {path: (revision, parent) for path, (revision, parent) in revisions.items()
+             if path != migration_path}
+    prior_revisions = {revision: parent for revision, parent in prior.values()}
+    prior_parents = {parent for parent in prior_revisions.values() if parent is not None}
+    [current_head] = set(prior_revisions) - prior_parents
+    next_number = max(int(path.name[:4]) for path in prior) + 1
+    assert int(migration_path.name[:4]) == next_number
+    assert generated_revision not in prior_revisions
+    assert generated_parent == current_head
+    api_module = (client / "apps/api/app/main.py").read_text("utf-8")
+    assert f"from app.{plural} import router as {plural}_router" in api_module
+    assert f"app.include_router({plural}_router)" in api_module
+    environment = (client / "apps/api/migrations/env.py").read_text("utf-8")
+    assert f"import app.{plural}" in environment
+    pyproject = tomllib.loads((client / "apps/api/pyproject.toml").read_text("utf-8"))
+    assert any(
+        contract.get("name") == f"{plural} internals"
+        for contract in pyproject["tool"]["importlinter"]["contracts"]
+    )
+    return migration_path
+
+
 def _adopted_starter(repo) -> Path:
     shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
     shutil.copytree(STARTER, repo.path, dirs_exist_ok=True)
@@ -142,9 +235,32 @@ def _adopted_starter(repo) -> Path:
     return repo.path
 
 
+def _adopted_python_starter(repo) -> Path:
+    shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
+    shutil.copytree(STARTER, repo.path, dirs_exist_ok=True)
+    shutil.copytree(PYTHON_STARTER, repo.path, dirs_exist_ok=True)
+    permissions = repo.path / "apps/api/app/projects/permissions.py"
+    original_permissions = permissions.read_text("utf-8")
+    customised_permissions = original_permissions.replace(
+        '"member": ["view", "create", "edit"]', '"member": []'
+    )
+    assert customised_permissions != original_permissions
+    permissions.write_text(customised_permissions, encoding="utf-8")
+    expected_permissions = permissions.read_bytes()
+    config = repo.path / "forge.toml"
+    version = repo.forge("--version").stdout.split()[-1]
+    config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
+                      encoding="utf-8")
+    repo.git("checkout", "-q", "-b", "fix/feature-command-python-adopted")
+    synced = repo.forge("sync")
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    assert permissions.read_bytes() == expected_permissions
+    return repo.path
+
+
 def _normalized_outputs(outputs: dict[str, bytes]) -> dict[str, bytes]:
     return {
-        re.sub(r"migrations/\d{14}_", "migrations/<timestamp>_", rel): content
+        re.sub(r"migrations/(?:\d{14}|versions/\d{4})_", "migrations/<revision>_", rel): content
         for rel, content in outputs.items()
     }
 
@@ -226,6 +342,35 @@ def feature_live_run(repo, gh, tmp_path_factory) -> dict:
     return _LIVE_RUNS["feature"]
 
 
+def feature_python_client(repo, gh, tmp_path) -> Path:
+    """Build the Python API and web features used by generated live tests."""
+    if "feature-python-client" not in _LIVE_RUNS:
+        client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "python")
+        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+        for line in (CLIENT_LINE, JOBS_LINE, NOTES_LINE, TASKS_LINE, SALES_ORDERS_LINE):
+            built = repo.forge(*shlex.split(line)[1:], cwd=client)
+            assert built.returncode == 0, built.stdout + built.stderr
+        permissions = client / "apps/api/app/notes/permissions.py"
+        mapping = permissions.read_text("utf-8")
+        allowed = '"member": ["view", "create", "edit"]'
+        assert allowed in mapping
+        permissions.write_text(mapping.replace(allowed, '"member": []', 1), encoding="utf-8")
+        _LIVE_RUNS["feature-python-client"] = client
+    return _LIVE_RUNS["feature-python-client"]
+
+
+def feature_python_live_run(repo, gh, tmp_path_factory) -> dict:
+    """Run generated Python API and browser tests against their real app and database."""
+    if "feature-python" not in _LIVE_RUNS:
+        client = feature_python_client(
+            repo, gh, tmp_path_factory.mktemp("feature-python-app")
+        )
+        _LIVE_RUNS["feature-python"] = _run_live_starter(
+            tmp_path_factory, ((client, Path(".")),), ("GET /health returned 200",)
+        )
+    return _LIVE_RUNS["feature-python"]
+
+
 def require_feature_cases(cases: list[str], report: str, expected) -> None:
     """Each expected case passed in the named generated test file of the run's report."""
     for name in expected:
@@ -235,46 +380,72 @@ def require_feature_cases(cases: list[str], report: str, expected) -> None:
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript"])
+@pytest.mark.parametrize("starter", ["typescript", "python"])
 def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_factory, starter):
     # Audit: the item 1 lines must give the feature its screens, wiring and tests, and the app's
     # own run must pass them through the real API, database and browser. A missing route,
     # sidebar or search item, a form without a field's control or that shows no field's error and
     # focus, a required link the form cannot fill, a list that forgets its
     # filters on reload, or a detail screen without its recent changes fails the live flows.
-    # The app's reports own the behaviour; this test names the cases.
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    # The existing generated TypeScript feature run and Python projects run do not cover a
+    # generated Python feature or a public hyphenated slug crossing API permissions and web
+    # access. The app's reports own this behavior, with no test seam.
+    starter_name = "react" if starter == "typescript" else "python"
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     written = set()
     for line in (CLIENT_LINE, JOBS_LINE):
         result = _run_line(repo, client, SHELLS[0], line)
         assert result.returncode == 0, result.stdout + result.stderr
         written |= _written_paths(result, client)
-    assert {
+    web_paths = {
         "libs/jobs/web/package.json", "libs/jobs/web/project.json", "libs/jobs/web/tsconfig.json",
         "libs/jobs/web/src/index.ts", "libs/jobs/web/src/hooks/jobs-hooks.ts",
         "libs/jobs/web/src/hooks/jobs-hooks.test.tsx", "libs/jobs/web/src/pages/jobs-page.tsx",
         "libs/jobs/web/src/pages/job-detail-page.tsx", "libs/jobs/web/src/pages/job-form-dialog.tsx",
         "apps/web/e2e/jobs.spec.ts", "apps/web/src/app.tsx", "apps/web/src/components/app-shell.tsx",
         "apps/web/package.json",
-    } <= written
+    }
+    assert web_paths <= written
     web = json.loads((client / "libs/jobs/web/project.json").read_text("utf-8"))
     assert web["tags"] == ["type:web", "scope:jobs"]
+    if starter == "python":
+        _assert_python_api_output(client, "jobs", "job", written)
     if LIVE:
-        live = feature_live_run(repo, gh, tmp_path_factory)
-        require_feature_cases(live["api"], "jobs.e2e-spec.ts", (
-            "creates, lists, reads, updates, soft-deletes, and restores",
-            "pages forward and backward by every sortable field",
-            "searches and filters the feature list",
-            "keeps another organisation from reading or changing",
-            "rejects bad fields, unknown inputs, and unknown list parameters",
-            "keeps formula-leading text safe in CSV",
-        ))
+        live = (feature_live_run(repo, gh, tmp_path_factory) if starter == "typescript"
+                else feature_python_live_run(repo, gh, tmp_path_factory))
+        if starter == "typescript":
+            require_feature_cases(live["api"], "jobs.e2e-spec.ts", (
+                "creates, lists, reads, updates, soft-deletes, and restores",
+                "pages forward and backward by every sortable field",
+                "searches and filters the feature list",
+                "keeps another organisation from reading or changing",
+                "rejects bad fields, unknown inputs, and unknown list parameters",
+                "keeps formula-leading text safe in CSV",
+            ))
+        else:
+            require_feature_cases(live["api"], "test_jobs", (
+                "test_creates_lists_reads_updates_and_deletes_a_job",
+                "test_rejects_a_whitespace_only_name",
+                "test_requires_sign_in_and_csrf_before_jobs_changes",
+                "test_pages_jobs_with_next_and_previous_cursors",
+                "test_filters_jobs_by_search_and_filters",
+                "test_keeps_another_organisation_from_reading_or_changing_a_job",
+                "test_rejects_bad_fields_unknown_inputs_and_unknown_list_parameters",
+                "test_keeps_formula_leading_text_safe_in_csv",
+            ))
+            require_feature_cases(live["api"], "test_sales_orders", (
+                "test_each_sales_orders_endpoint_refuses_a_member_without_its_permission",
+            ))
         require_feature_cases(live["browser"], "jobs.spec.ts", (
             "create, view, edit, and delete a job",
             "a reloaded jobs list link keeps its search, filters and page",
             "a job's detail screen shows its recent changes",
         ))
+        if starter == "python":
+            require_feature_cases(live["browser"], "sales-orders.spec.ts", (
+                "create, view, edit, and delete a sales order",
+            ))
         # A required link: the form checks and focuses it, and the flows link each task to a job.
         require_feature_cases(live["browser"], "tasks.spec.ts", ("create, view, edit, and delete a task",))
 
@@ -293,9 +464,17 @@ def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, f
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(repo, gh, tmp_path, tmp_path_factory):
-    """The shipped kind table controls generated SQL, indexes and linked API contracts."""
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+@pytest.mark.parametrize("starter", ["typescript", "python"])
+def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
+    repo, gh, tmp_path, tmp_path_factory, starter
+):
+    # Audit: this protects the shipped kind table's storage, input-bound, sort and history
+    # contracts plus the real generated history flow. A renderer can omit an index or validation
+    # limit, advertise an unusable sort value, or skip a history row; the TypeScript case and the
+    # Python projects case do not cover this generated Python feature. The command and live app
+    # are the owning boundaries; no seam.
+    starter_name = "react" if starter == "typescript" else "python"
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     clients = repo.forge(*_feature_args("clients", "client", ["name:text"]), cwd=client)
     assert clients.returncode == 0, clients.stdout + clients.stderr
@@ -306,6 +485,194 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(repo, gh, tmp_pa
     assert built.returncode == 0, built.stdout + built.stderr
 
     kinds = tomllib.loads((ROOT / "src/forge/templates/feature/kinds.toml").read_text("utf-8"))
+    if starter == "python":
+        # Audit: generation must leave both minimal and nine-kind Python output ready for
+        # the starter's formatter check. Fixing one template layout misses other field mixes;
+        # existing non-live checks only parse output. Use the real pinned formatter after the
+        # real feature commands, with no production seam or substitute formatter.
+        written = _written_paths(clients, client) | _written_paths(built, client)
+        # A module after projects alphabetically makes Ruff's implicit namespace-import
+        # usage move to that module. Clients/jobs alone cannot expose lost Alembic imports
+        # or an unused starter noqa; the real lint check below owns this regression.
+        tasks = repo.forge(*_feature_args("tasks", "task", ["name:text"]), cwd=client)
+        assert tasks.returncode == 0, tasks.stdout + tasks.stderr
+        written |= _written_paths(tasks, client)
+        python_files = sorted("../../" + path for path in written if path.endswith(".py"))
+        formatted = subprocess.run(
+            ["uv", "run", "ruff", "format", "--check", *python_files],
+            cwd=client / "apps/api", capture_output=True, text=True, encoding="utf-8",
+            timeout=240,
+        )
+        assert formatted.returncode == 0, formatted.stdout + formatted.stderr
+        linted = subprocess.run(
+            ["uv", "run", "ruff", "check", *python_files],
+            cwd=client / "apps/api", capture_output=True, text=True, encoding="utf-8",
+            timeout=240,
+        )
+        assert linted.returncode == 0, linted.stdout + linted.stderr
+        migration_paths = list((client / "apps/api/migrations/versions").glob("*_jobs.py"))
+        assert len(migration_paths) == 1
+        migration_path = migration_paths[0]
+        migration = migration_path.read_text("utf-8")
+        migration_module = ast.parse(migration, filename=str(migration_path))
+        upgrade = next(
+            node for node in migration_module.body
+            if isinstance(node, ast.FunctionDef) and node.name == "upgrade"
+        )
+        sql_statements = [
+            node.args[0].value for node in ast.walk(upgrade)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute) and node.func.attr == "execute"
+            and node.args and isinstance(node.args[0], ast.Constant)
+            and isinstance(node.args[0].value, str)
+        ]
+        sql = "\n".join(sql_statements)
+        models = (client / "apps/api/app/jobs/models.py").read_text("utf-8")
+        schema_file = (client / "apps/api/app/jobs/schema.py").read_text("utf-8")
+        schema_tree = ast.parse(schema_file)
+        input_model = next(
+            node for node in schema_tree.body
+            if isinstance(node, ast.ClassDef) and node.name == "JobInput"
+        )
+        input_fields = {
+            node.target.id: node
+            for node in input_model.body
+            if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+        }
+        list_query = next(
+            node for node in schema_tree.body
+            if isinstance(node, ast.ClassDef) and node.name == "JobListQuery"
+        )
+        sort_annotation = next(
+            node.annotation for node in list_query.body
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "sort_by"
+        )
+        assert isinstance(sort_annotation, ast.Subscript)
+        assert isinstance(sort_annotation.value, ast.Name)
+        assert sort_annotation.value.id == "Literal"
+        sort_values = (
+            sort_annotation.slice.elts
+            if isinstance(sort_annotation.slice, ast.Tuple)
+            else [sort_annotation.slice]
+        )
+        assert [ast.literal_eval(value) for value in sort_values] == [
+            "name", "status", "clientId", "hoursBudget", "budget", "dueDate",
+            "contactEmail", "billable", "createdAtUtc", "updatedAtUtc",
+        ]
+        assert sql.lstrip().startswith('CREATE SCHEMA "jobs";')
+        assert 'CREATE TABLE "jobs"."job"' in sql
+        assert sql.index('CREATE SCHEMA "jobs";') < sql.index('CREATE TABLE "jobs"."job"')
+        assert '"organisation_id"' in sql
+        assert '"created_by_account_id"' in sql
+        assert '"modified_by_account_id"' in sql
+        assert '"deleted_at_utc"' in sql
+        assert '"deleted_by_account_id"' in sql
+        assert '{"schema": "jobs"}' in models
+        assert 'ForeignKey("core.organisation.id"' in models
+        assert 'ForeignKey("core.account.id"' in models
+        assert 'ForeignKey("clients.' not in models
+
+        def table_sql(template_name: str, column: str = "") -> str:
+            expected = (kinds["table"][template_name].replace("{table}", "job")
+                        .replace("{schema}", "jobs").replace("{column}", column)
+                        .replace("{options}", ""))
+            for camel, snake in (("organisationId", "organisation_id"),
+                                 ("updatedAtUtc", "updated_at_utc"),
+                                 ("deletedAtUtc", "deleted_at_utc")):
+                expected = expected.replace(camel, snake)
+            return expected
+
+        assert table_sql("list_index") in sql
+        assert table_sql("updated_at_trigger") in sql
+        assert table_sql("soft_delete_trigger") in sql
+        assert "CREATE TYPE" not in sql
+
+        declarations = {
+            "name": ("text", True, []),
+            "description": ("long-text", False, []),
+            "status": ("status", True, ["planned", "active", "done"]),
+            "client_id": ("link", False, []),
+            "hours_budget": ("number", False, []),
+            "budget": ("money", False, []),
+            "due_date": ("date", False, []),
+            "contact_email": ("email", False, []),
+            "billable": ("yes-no", True, []),
+        }
+        for column, (kind_name, required, options) in declarations.items():
+            kind = kinds["kinds"][kind_name]
+            declaration = next(
+                (line for line in sql.splitlines()
+                 if re.match(rf'^\s*"{re.escape(column)}"\s+', line)),
+                None,
+            )
+            assert declaration, column
+            assert kind["sql"] in declaration, (column, declaration)
+            assert ("NOT NULL" in declaration) is required, column
+            assert kind["sqlalchemy"].split(", server_default")[0] in models, column
+            schema_field = input_fields.get(column)
+            assert schema_field, column
+            if kind_name == "status":
+                literal = schema_field.annotation
+                assert isinstance(literal, ast.Subscript)
+                assert isinstance(literal.value, ast.Name) and literal.value.id == "Literal"
+                assert [ast.literal_eval(option) for option in literal.slice.elts] == options
+            else:
+                annotation = ast.unparse(schema_field.annotation)
+                assert kind["pydantic"] in annotation, (column, annotation)
+            if kind_name == "number":
+                assert isinstance(schema_field.value, ast.Call)
+                assert isinstance(schema_field.value.func, ast.Name)
+                assert schema_field.value.func.id == "Field"
+                constraints = {
+                    keyword.arg: ast.literal_eval(keyword.value)
+                    for keyword in schema_field.value.keywords
+                    if keyword.arg is not None
+                }
+                assert constraints["max_digits"] == 19
+                assert constraints["decimal_places"] == 4
+            if kind_name == "money":
+                assert isinstance(schema_field.value, ast.Call)
+                assert isinstance(schema_field.value.func, ast.Name)
+                assert schema_field.value.func.id == "Field"
+                constraints = {
+                    keyword.arg: ast.literal_eval(keyword.value)
+                    for keyword in schema_field.value.keywords
+                    if keyword.arg is not None
+                }
+                assert constraints["ge"] == -(2**31)
+                assert constraints["le"] == 2**31 - 1
+            if kind["check"]:
+                expected_check = (
+                    kind["check"].replace("{table}", "job")
+                    .replace("{column}", column)
+                    .replace("{options}", ", ".join(f"'{item}'" for item in options))
+                )
+                assert expected_check in sql, (column, expected_check)
+            for enabled, template_name in (("filter_index", "filter_index"),
+                                           ("search_index", "search_index"),
+                                           ("index", "index")):
+                if kind[enabled]:
+                    assert table_sql(template_name, column) in sql, (column, enabled)
+        assert '"client_id" UUID' in sql
+        assert 'idx_job_client_id_link' in sql
+        assert 'FOREIGN KEY ("client_id")' not in sql
+        assert "REFERENCES clients." not in sql
+        assert 'REFERENCES core.organisation("id")' in sql
+        assert 'REFERENCES core.account("id")' in sql
+        if LIVE:
+            live = feature_python_live_run(repo, gh, tmp_path_factory)
+            require_feature_cases(live["api"], "test_jobs", (
+                "test_records_each_job_change_in_the_change_history",
+            ))
+            require_feature_cases(
+                _junit_cases(live["folder"] / "test-results/formats.xml"),
+                "jobs-hooks.test.tsx",
+                ("job hooks",),
+            )
+        return
+
     migration_paths = list((client / "apps/api/prisma/migrations").glob("*_*jobs/migration.sql"))
     assert len(migration_paths) == 1
     migration = migration_paths[0].read_text("utf-8")
@@ -377,8 +744,8 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(repo, gh, tmp_pa
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("case", ["plain init", "earlier-adopted", "older-starter"],
-                         ids=["plain-init", "adopted-v1.2.2", "older-starter-missing-history"])
+@pytest.mark.parametrize("case", ["plain init", "earlier-adopted", "typescript", "python"],
+                         ids=["plain-init", "adopted-v1.2.2", "typescript", "python"])
 def test_6_unsupported_apps_refuse_without_changing_the_worktree(repo, gh, tmp_path, case):
     """Non-starters and incomplete older starters get actionable, side-effect-free refusals.
 
@@ -413,15 +780,63 @@ def test_6_unsupported_apps_refuse_without_changing_the_worktree(repo, gh, tmp_p
         assert repo.git("status", "--porcelain", cwd=client) == before
         return
 
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    starter = case
+    # Audit: an older starter must name its missing history prerequisite and leave the worktree
+    # unchanged. A Python check that looks only for TypeScript markers could generate a broken
+    # feature in an older Python app; the existing case covered only the TypeScript starter.
+    # This runs the real command against each starter without a production seam.
+    starter_name = "react" if starter == "typescript" else "python"
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    shutil.rmtree(client / "libs/history")
-    (client / "apps/api/prisma/schema/history.prisma").unlink()
+    if starter == "typescript":
+        shutil.rmtree(client / "libs/history")
+        (client / "apps/api/prisma/schema/history.prisma").unlink()
+        missing = "apps/api/prisma/schema/history.prisma"
+    else:
+        # Inventory wiring has its own prerequisite: missing anchors must refuse before
+        # any generated files are written. History-only coverage cannot reach this failure;
+        # these cases use the command boundary with no production seam.
+        inventory = client / "apps/api/tests/test_module_schemas.py"
+        original = inventory.read_text("utf-8")
+        for contents, expected in (
+            (None, "Missing apps/api/tests/test_module_schemas.py"),
+            (original.replace("EXPECTED_TABLE_SCHEMAS =", "OLD_TABLE_SCHEMAS ="),
+             "The expected table inventory is missing"),
+            (original.replace("target_schema.nspname IN", "target_schema.nspname NOT IN"),
+             "The schema ownership check is missing"),
+        ):
+            if contents is None:
+                inventory.unlink()
+            else:
+                inventory.write_text(contents, "utf-8")
+            before = repo.git("status", "--porcelain", cwd=client)
+            refused = repo.forge(*_feature_args("jobs", "job", ["name:text"]), cwd=client)
+            message = refused.stdout + refused.stderr
+            assert refused.returncode != 0 and expected in message, message
+            assert "Next: build this feature by hand in this app." in message, message
+            assert repo.git("status", "--porcelain", cwd=client) == before
+            inventory.write_text(original, "utf-8")
+        # A real formatter configuration error must report that files were already written
+        # and give a recovery command. The successful format check cannot cover this lifecycle.
+        pyproject = client / "apps/api/pyproject.toml"
+        project_source = pyproject.read_text("utf-8")
+        pyproject.write_text(project_source.replace('target-version = "py314"',
+                                                     'target-version = "invalid"'), "utf-8")
+        refused = repo.forge(*_feature_args("invoices", "invoice", ["name:text"]), cwd=client)
+        message = refused.stdout + refused.stderr
+        assert refused.returncode != 0, message
+        assert "The feature files were written, but Python formatting failed." in message
+        assert "Next: run uv --directory apps/api run ruff check --select I,F401,RUF100 --fix" in message
+        assert "then uv --directory apps/api run ruff format app migrations tests." in message
+        assert (client / "apps/api/app/invoices/schema.py").is_file()
+        pyproject.write_text(project_source, "utf-8")
+        shutil.rmtree(client / "apps/api/app/history")
+        missing = "apps/api/app/history/__init__.py"
     before = repo.git("status", "--porcelain", cwd=client)
     refused = repo.forge(*_feature_args("jobs", "job", ["name:text"]), cwd=client)
     message = refused.stdout + refused.stderr
     assert refused.returncode != 0
-    assert "apps/api/prisma/schema/history.prisma" in message, message
+    assert missing in message, message
     assert "Next: build this feature by hand in this app." in message, message
     assert repo.git("status", "--porcelain", cwd=client) == before
 
@@ -480,41 +895,109 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
 
 
 @pytest.mark.platform
-@pytest.mark.parametrize("case", ["parser", *SHELLS],
-                         ids=["generated-contracts", *[Path(shell).name for shell in SHELLS]])
-def test_1_feature_contracts_parse_and_plan_lines_build_in_one_step(repo, gh, tmp_path, case):
+@pytest.mark.parametrize("starter,case", [("typescript", "parser"),
+                         *[(starter, shell) for starter in ("typescript", "python")
+                           for shell in SHELLS]],
+                         ids=["generated-contracts",
+                              *[f"{starter}-{Path(shell).name}"
+                                for starter in ("typescript", "python") for shell in SHELLS]])
+def test_1_feature_contracts_parse_and_plan_lines_build_in_one_step(repo, gh, tmp_path, starter, case):
     # The command line is the contract; each shell preserves it, and generated source parses.
     # Separate tests previously duplicated this criterion and let parser and command cases drift.
     if case == "parser":
         _generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path)
     else:
-        _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, case)
+        _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, case, starter)
 
 
-def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell):
+def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter):
     """The shell lines work in new and adopted starters and report existing output files."""
-    new_client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    starter_name = "react" if starter == "typescript" else "python"
+    new_path = tmp_path / "new"
+    new_path.mkdir()
+    new_client, initialized = _fresh_client(repo, gh, new_path, "--starter", starter_name)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    adopted_client = _adopted_starter(repo)
-    log = install_claude(repo)
+    if starter == "typescript":
+        adopted_client = _adopted_starter(repo)
+        log = install_claude(repo)
+    else:
+        adopted_client = _adopted_python_starter(repo)
+        log = None
 
     outputs = {}
     for label, client in (("new", new_client), ("adopted", adopted_client)):
         outputs[label] = {}
-        for plural, line in (("clients", CLIENT_LINE), ("jobs", JOBS_LINE)):
+        for plural, one, line in (
+            ("clients", "client", CLIENT_LINE),
+            ("jobs", "job", JOBS_LINE),
+        ):
             result = _run_line(repo, client, shell, line)
             assert result.returncode == 0, result.stdout + result.stderr
             written = _written_paths(result, client)
-            migration = _assert_api_output(client, plural, "client" if plural == "clients" else "job", written)
+            migration = (
+                _assert_api_output(client, plural, "client" if plural == "clients" else "job", written)
+                if starter == "typescript" else _assert_python_api_output(
+                    client, plural, one, written
+                )
+            )
             outputs[label][plural] = {
                 rel: (client / rel).read_bytes() for rel in written
             }
             assert migration in [client / rel for rel in written]
-        _assert_feature_guidance(repo, client, log)
+        if log is not None:
+            _assert_feature_guidance(repo, client, log)
 
     for plural in ("clients", "jobs"):
         assert _normalized_outputs(outputs["new"][plural]) == _normalized_outputs(
             outputs["adopted"][plural])
+
+    if starter == "python":
+        result = _run_line(repo, new_client, shell, SALES_ORDERS_LINE)
+        assert result.returncode == 0, result.stdout + result.stderr
+        written = _written_paths(result, new_client)
+        permissions = ast.parse(
+            (new_client / "apps/api/app/sales_orders/permissions.py").read_text("utf-8")
+        )
+        permission_assignment = next(
+            node for node in permissions.body
+            if isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name)
+                and target.id == "SALES_ORDERS_PERMISSIONS"
+                for target in node.targets
+            )
+        )
+        permission_call = permission_assignment.value
+        assert isinstance(permission_call, ast.Call)
+        assert isinstance(permission_call.func, ast.Name)
+        assert permission_call.func.id == "define_permissions"
+        assert ast.literal_eval(permission_call.args[0]) == "sales-orders"
+
+        routes_path = new_client / "apps/api/app/sales_orders/routes.py"
+        assert routes_path.relative_to(new_client).as_posix() in written
+        routes = ast.parse(routes_path.read_text("utf-8"))
+        router = next(
+            node for node in ast.walk(routes)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "APIRouter"
+        )
+        assert next(
+            ast.literal_eval(keyword.value)
+            for keyword in router.keywords
+            if keyword.arg == "prefix"
+        ) == "/api/v1/sales-orders"
+        permission_names = {
+            expression.value.id
+            for call in ast.walk(routes)
+            if isinstance(call, ast.Call) and isinstance(call.func, ast.Name)
+            and call.func.id == "require_permission"
+            for expression in call.args
+            if isinstance(expression, ast.Attribute)
+            and isinstance(expression.value, ast.Name)
+            and expression.attr in {"view", "create", "edit", "delete", "restore"}
+        }
+        assert permission_names == {"SALES_ORDERS_PERMISSIONS"}
 
     before = repo.git("status", "--porcelain", cwd=new_client)
     duplicate = _run_line(repo, new_client, shell, JOBS_LINE)
@@ -539,6 +1022,17 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell):
         refused = _run_line(repo, new_client, shell, line)
         message = refused.stdout + refused.stderr
         assert refused.returncode != 0 and expected.lower() in message.lower(), message
+        assert "Next:" in message
+        assert repo.git("status", "--porcelain", cwd=new_client) == before
+
+    if starter == "python":
+        before = repo.git("status", "--porcelain", cwd=new_client)
+        refused = _run_line(
+            repo, new_client, shell,
+            "forge task feature samples --one sample --field 'name:text' --field 'lambda:text'",
+        )
+        message = refused.stdout + refused.stderr
+        assert refused.returncode != 0 and "lambda" in message.lower() and "reserved" in message.lower(), message
         assert "Next:" in message
         assert repo.git("status", "--porcelain", cwd=new_client) == before
 

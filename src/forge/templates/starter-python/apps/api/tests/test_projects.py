@@ -329,6 +329,7 @@ def test_records_each_project_change_in_the_change_history(
         assert refused.json()["error"]["code"] == "PROJECT_NOT_FOUND"
 
 
+# forge:feature:test-helper:start
 @contextmanager
 def joined_member(admin: httpx.Client, admin_csrf: str) -> Iterator[httpx.Client]:
     """A member the admin invites into its organisation, signed in on its own client."""
@@ -340,6 +341,9 @@ def joined_member(admin: httpx.Client, admin_csrf: str) -> Iterator[httpx.Client
         )
         assert joined.status_code == 201, joined.text
         yield member
+
+
+# forge:feature:test-helper:end
 
 
 # Every projects route and the permission it needs, as (method, path, permission).

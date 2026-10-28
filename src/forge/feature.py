@@ -59,7 +59,10 @@ def _fields(values: list[str], root: Path, kinds: dict) -> list[dict]:
             contract = root / f"libs/{detail}/contracts/src/index.ts"
             token = detail.replace("-", "_").upper() + "_API"
             contract_text = contract.read_text(encoding="utf-8") if contract.is_file() else ""
-            if token not in contract_text or not re.search(r"\bget\s*\(", contract_text):
+            entry = root / f"apps/api/app/{detail.replace('-', '_')}/__init__.py"
+            public_python = contract.is_file() and entry.is_file() and "Service" in entry.read_text(encoding="utf-8")
+            if not (public_python if (root / "apps/api/app/main.py").is_file() else
+                    token in contract_text and re.search(r"\bget\s*\(", contract_text)):
                 _refuse(f"The linked feature {detail!r} is missing its public API.",
                         "build the linked feature first, then run this line again.")
         columns.add(column)
@@ -92,6 +95,10 @@ def _link_names(fields: list[dict], root: Path) -> dict[str, dict[str, str]]:
     names = {}
     for target in sorted({field["target"] for field in fields if field["kind"] == "link"}):
         contract = (root / f"libs/{target}/contracts/src/index.ts").read_text(encoding="utf-8")
+        # Query examples (such as sortBy) are not fields accepted by create.
+        schema = re.search(r"export const \w+Schema = z\.object\(\{(.*?)^\}\)\.strict\(\);",
+                           contract, re.M | re.S)
+        contract = schema[1] if schema else ""
         match = re.search(r"^\s+(\w+): z\.string\(\)\.trim\(\)\.min\(1\)", contract, re.M)
         if not match:
             _refuse(f"The linked feature {target!r} has no required text field for its name.",
@@ -123,6 +130,8 @@ def build(args) -> int:
         _refuse(f"The name {name!r} is already a name in the feature's screens.", "choose another feature name.")
     if (root / "libs" / plural).exists():
         _refuse(f"The feature folder libs/{plural} already exists.", "choose a new feature name.")
+    if (root / "apps/api/app/main.py").is_file():
+        return _build_python(args, root)
     # Check what wiring needs before rendering anything. An app may remove its projects feature.
     required = ["apps/api/src/app.module.ts", "apps/api/prisma/schema/base.prisma",
                 "apps/api/prisma/schema/auth.prisma", "apps/api/prisma/schema/organisations.prisma",
@@ -200,6 +209,29 @@ def build(args) -> int:
     if (root / database_test).is_file() and anchor in (text := (root / database_test).read_text(encoding="utf-8")):
         current[database_test] = text
         files[database_test] = text.replace(anchor, anchor + f" {model}: '{plural.replace('-', '_')}',", 1)
+    files.update(_wire_web(current, plural, one, model, title))
+    lockpath = "pnpm-lock.yaml"
+    lock = current[lockpath]
+    api_importer = _importer(lock, "apps/api")
+    lock = lock.replace(api_importer, api_importer.rstrip() + f"\n      '@app/{plural}-server':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/server\n\n", 1)
+    web_importer = _importer(lock, "apps/web")
+    lock = lock.replace(web_importer, web_importer.rstrip() + f"\n      '@app/{plural}-web':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/web\n\n", 1)
+    shipped_lock = (STARTER / lockpath).read_text(encoding="utf-8")
+    additions = []
+    for kind in ("contracts", "server", "web"):
+        block = rename(_importer(shipped_lock, f"libs/projects/{kind}"))
+        if kind == "server":
+            block = block.rstrip() + "\n" + "".join(f"      '@app/{target}-contracts':\n        specifier: workspace:*\n        version: link:../../{target}/contracts\n" for target in targets) + "\n"
+        additions.append(block)
+    files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
+    _write(root, current, files)
+    if not include_mcp:
+        print(f"This app has no MCP server, so {plural} get no agent tools.")
+    return 0
+
+
+def _wire_web(current, plural, one, model, title):
+    files = {}
     words = plural.replace("-", " ")
     plural_title, one_title = words[:1].upper() + words[1:], one.replace("-", " ")[:1].upper() + one.replace("-", " ")[1:]
     route = f"/{plural}"
@@ -230,20 +262,10 @@ def build(args) -> int:
     data = json.loads(current[web_package])
     data["dependencies"][f"@app/{plural}-web"] = "workspace:*"
     files[web_package] = _dump(data)
-    lockpath = "pnpm-lock.yaml"
-    lock = current[lockpath]
-    api_importer = _importer(lock, "apps/api")
-    lock = lock.replace(api_importer, api_importer.rstrip() + f"\n      '@app/{plural}-server':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/server\n\n", 1)
-    web_importer = _importer(lock, "apps/web")
-    lock = lock.replace(web_importer, web_importer.rstrip() + f"\n      '@app/{plural}-web':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/web\n\n", 1)
-    shipped_lock = (STARTER / lockpath).read_text(encoding="utf-8")
-    additions = []
-    for kind in ("contracts", "server", "web"):
-        block = rename(_importer(shipped_lock, f"libs/projects/{kind}"))
-        if kind == "server":
-            block = block.rstrip() + "\n" + "".join(f"      '@app/{target}-contracts':\n        specifier: workspace:*\n        version: link:../../{target}/contracts\n" for target in targets) + "\n"
-        additions.append(block)
-    files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
+    return files
+
+
+def _write(root, current, files):
     # Refusals, rendering and anchor checks finish before the first write.
     for path in files:
         if (root / path).exists() and path not in current:
@@ -253,6 +275,114 @@ def build(args) -> int:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(text, encoding="utf-8")
         print(f"Wrote {path}")
-    if not include_mcp:
-        print(f"This app has no MCP server, so {plural} get no agent tools.")
+    return 0
+
+
+def _build_python(args, root: Path) -> int:
+    import keyword
+
+    from forge.feature_python import render_feature_python
+    from forge.feature_web import render_feature_web
+
+    plural, one = args.plural, args.one
+    module = plural.replace("-", "_")
+    model = "".join(word.capitalize() for word in one.split("-"))
+    title = "".join(word.capitalize() for word in plural.split("-"))
+    required = ["apps/api/app/main.py", "apps/api/app/organisations/__init__.py",
+                "apps/api/app/history/__init__.py", "apps/api/app/core/permissions.py",
+                "apps/api/migrations/env.py", "apps/api/pyproject.toml",
+                "apps/api/tests/test_module_schemas.py",
+                "libs/history/contracts/src/index.ts", "apps/web/src/app.tsx",
+                "apps/web/src/components/app-shell.tsx", "apps/web/package.json",
+                "package.json", "pnpm-lock.yaml"]
+    for path in required:
+        if not (root / path).is_file():
+            _refuse(f"This feature needs a starter app. Missing {path}.",
+                    "build this feature by hand in this app.")
+    current = {path: (root / path).read_text(encoding="utf-8") for path in required}
+    if (root / f"apps/api/app/{module}").exists():
+        _refuse(f"The feature folder apps/api/app/{module} already exists.", "choose a new feature name.")
+    for source in (root / "apps/api/app").glob("*/models.py"):
+        if re.search(r"^class\s+" + re.escape(model) + r"\s*\(", source.read_text(encoding="utf-8"), re.M):
+            _refuse(f"The model {model} already exists in {source.parent.name}.", "choose another singular name.")
+    kinds = tomllib.loads((Path(__file__).parent / "templates/feature/kinds.toml").read_text(encoding="utf-8"))
+    fields = _fields(args.field, root, kinds["kinds"])
+    for name in (module, one.replace("-", "_"), *(field["column"] for field in fields)):
+        if keyword.iskeyword(name):
+            _refuse(f"The name {name!r} is a reserved Python word.", "choose another name and run the line again.")
+    files = render_feature_python(fields, one, plural, kinds, root)
+    files.update(render_feature_web(fields, one, plural, kinds, _link_names(fields, root)))
+    files.update(_wire_web(current, plural, one, model, title))
+    main = "apps/api/app/main.py"
+    files[main] = _insert(current[main], "from app.organisations import router as organisations_router",
+                          f"\nfrom app.{module} import router as {module}_router", main)
+    files[main] = _insert(files[main], "app.include_router(organisations_router)",
+                          f"\napp.include_router({module}_router)", main)
+    env = "apps/api/migrations/env.py"
+    files[env] = _insert(current[env], "import app.organisations",
+                         f"\nimport app.{module}  # noqa: F401", env)
+    config = "apps/api/pyproject.toml"
+    contract = (f'[[tool.importlinter.contracts]]\nname = "{plural} internals"\n'
+                f'type = "protected"\nprotected_modules = ["app.{module}.*"]\n'
+                f'allowed_importers = ["app.{module}"]\n'
+                'broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."\n\n')
+    files[config] = _before(current[config], "[tool.mypy]", contract, config)
+    schema_tests = "apps/api/tests/test_module_schemas.py"
+    schema_source = current[schema_tests]
+    inventory = re.search(r"(?ms)^EXPECTED_TABLE_SCHEMAS = \(\n(.*?)^\)", schema_source)
+    if inventory is None:
+        _refuse(f"This feature needs a starter app. The expected table inventory is missing in {schema_tests}.",
+                "build this feature by hand in this app.")
+    table_schemas = set(re.findall(r'^\s*"([^"]+)",\s*$', inventory[1], re.M))
+    table_schemas.add(f"{module}.{one.replace('-', '_')}")
+    expected = "EXPECTED_TABLE_SCHEMAS = (\n" + "".join(
+        f'    "{value}",\n' for value in sorted(table_schemas)
+    ) + ")"
+    schema_source = schema_source[:inventory.start()] + expected + schema_source[inventory.end():]
+    module_schema_filters = re.compile(r"((?:source|target)_schema\.nspname IN \()([^)]*)(\))")
+
+    def include_feature_schema(match: re.Match[str]) -> str:
+        schemas = set(re.findall(r"'([^']+)'", match[2]))
+        schemas.add(module)
+        return match[1] + ", ".join(f"'{value}'" for value in sorted(schemas)) + match[3]
+
+    schema_source, filter_count = module_schema_filters.subn(include_feature_schema, schema_source)
+    if filter_count != 2:
+        _refuse(f"This feature needs a starter app. The schema ownership check is missing in {schema_tests}.",
+                "build this feature by hand in this app.")
+    files[schema_tests] = schema_source
+    python_starter = Path(__file__).parent / "templates/starter-python"
+    for kind in ("contracts", "web"):
+        source_root = python_starter if kind == "contracts" else STARTER
+        for source in (source_root / f"libs/projects/{kind}").glob("*.json"):
+            files[f"libs/{plural}/{kind}/{source.name}"] = source.read_text(encoding="utf-8").replace("projects", plural)
+        # Python contracts use OpenAPI types; the shared starter supplies the Nx metadata.
+        project = STARTER / f"libs/projects/{kind}/project.json"
+        files[f"libs/{plural}/{kind}/project.json"] = project.read_text(encoding="utf-8").replace("projects", plural)
+    package = "package.json"
+    data = json.loads(current[package])
+    anchor = "apps/web/tsconfig.json"
+    data["scripts"]["typecheck"] = _before(data["scripts"]["typecheck"], anchor,
+        f"libs/{plural}/contracts/tsconfig.json libs/{plural}/web/tsconfig.json ", package)
+    files[package] = _dump(data)
+    lockpath = "pnpm-lock.yaml"
+    lock = current[lockpath]
+    importer = _importer(lock, "apps/web")
+    lock = lock.replace(importer, importer.rstrip() + f"\n      '@app/{plural}-web':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/web\n\n", 1)
+    additions = []
+    for kind in ("contracts", "web"):
+        source = python_starter if kind == "contracts" else STARTER
+        shipped = (source / lockpath).read_text(encoding="utf-8")
+        additions.append(_importer(shipped, f"libs/projects/{kind}").replace("projects", plural))
+    files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
+    _write(root, current, files)
+    python_files = sorted("../../" + path for path in files if path.endswith(".py"))
+    # Keep F401 enabled so Ruff retains necessary model-import suppressions.
+    for command in (("check", "--select", "I,F401,RUF100", "--fix"), ("format",)):
+        formatted = repo.run("uv", "run", "ruff", *command, *python_files, cwd=root / "apps/api")
+        if formatted.returncode:
+            print(formatted.stdout + formatted.stderr, end="")
+            _refuse("The feature files were written, but Python formatting failed.",
+                    "run uv --directory apps/api run ruff check --select I,F401,RUF100 --fix app migrations tests, "
+                    "then uv --directory apps/api run ruff format app migrations tests.")
     return 0
