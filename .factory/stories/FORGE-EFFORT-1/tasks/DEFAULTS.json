@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-EFFORT-1-DEFAULTS",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T18:19:19.133353+00:00",
+      "step": "start"
+    }
+  ]
+}
