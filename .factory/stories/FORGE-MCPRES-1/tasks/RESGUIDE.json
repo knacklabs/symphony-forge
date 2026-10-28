@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-MCPRES-1-RESGUIDE",
+  "chat": {
+    "approval": "b23151bacdd143484238e81352971aa4440d27330b0225e2a39304899195beae",
+    "claude": null,
+    "conversation": "01a18052-d767-7cd2-8c28-2635c2ea6f5f",
+    "head": null,
+    "start": "d107946d94108349b4e05c31432b5080df585e79"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
