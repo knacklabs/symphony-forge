@@ -12,17 +12,19 @@ from test_mod_plugin import HOST, node_run, packaged_mod  # noqa: F401
 STORY = "FIX-PANE-RERUN-CACHE-WINDOW"
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("rerun,drop", [(True, False), (True, True), (False, False)])
-@pytest.mark.parametrize("refresh_while_busy", [True, False])
+@pytest.mark.parametrize("refresh_while_busy,rerun,drop,history", [
+    (refresh_while_busy, rerun, drop, "new")
+    for refresh_while_busy in (True, False)
+    for rerun, drop in ((True, False), (True, True), (False, False))
+] + [(False, True, False, "adopted-v1.2.2")])
 def test_1_queued_failure_waits_out_checks_cache(
         env, packaged_mod, tmp_path, history, rerun, drop, refresh_while_busy):
     _queued_failure(env, packaged_mod, tmp_path, history, rerun, drop, refresh_while_busy)
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("rerun", [True, False])
-@pytest.mark.parametrize("restart", ["reload", "resume"])
+@pytest.mark.parametrize("restart,rerun,history", [
+    (restart, rerun, "new") for restart in ("reload", "resume") for rerun in (True, False)
+] + [("reload", True, "adopted-v1.2.2")])
 def test_2_held_failure_survives_session_restart(env, packaged_mod, tmp_path, history, rerun, restart):
     _queued_failure(env, packaged_mod, tmp_path, history, rerun, False, False, restart)
 

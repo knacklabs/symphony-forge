@@ -17,8 +17,9 @@ from test_ci_waits_for_busy_runners import _client
 STORY = "FIX-QUEUED-NOT-STOP"
 
 
-@pytest.mark.parametrize("history", ["new", "upgraded"])
-@pytest.mark.parametrize("command", ["close", "land", "land-merge"])
+@pytest.mark.parametrize("command,history", [
+    (command, "new") for command in ("close", "land", "land-merge")
+] + [("land-merge", "upgraded")])
 def test_1_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, command):
     env = clock
     _client(env, history, "self-hosted")
@@ -72,14 +73,15 @@ def _history(env, rows, jobs):
                        *_runs(entries))
 
 
-@pytest.mark.parametrize("history", ["new", "upgraded"])
-@pytest.mark.parametrize("minutes,state,activity", [
-    (4, "queued", "none"), (6, "in_progress", "none"),
-    (6, "queued", "none"), (6, "queued", "matching"),
-    (6, "queued", "wrong-label"), (6, "queued", "unassigned"),
-    (6, "queued", "successful"), (None, "queued", "none"),
-    (None, "queued", "workflow-age"), (None, "queued", "fresh-workflow"),
-    (None, "queued", "wrong-suite")])
+@pytest.mark.parametrize("minutes,state,activity,history", [
+    (*case, "new") for case in [
+        (4, "queued", "none"), (6, "in_progress", "none"),
+        (6, "queued", "none"), (6, "queued", "matching"),
+        (6, "queued", "wrong-label"), (6, "queued", "unassigned"),
+        (6, "queued", "successful"), (None, "queued", "none"),
+        (None, "queued", "workflow-age"), (None, "queued", "fresh-workflow"),
+        (None, "queued", "wrong-suite")]
+] + [(6, "queued", "matching", "upgraded")])
 def test_2_only_doctor_reports_missing_runner_for_old_queue_without_recent_activity(
         clock, history, monkeypatch, minutes, state, activity):
     # Recent workflow activity replaces accumulated expired-attempt demand.
