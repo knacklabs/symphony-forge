@@ -4,39 +4,19 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Every action in a client app goes through its service and permission check, whether it comes from a screen, an agent over MCP, or a later in-app agent.
+- Every change records the person, and for an agent it also records the agent acting for that person.
+- Every write takes a retry key, so a repeated request makes no second record.
+- Reports come from summary tables built from the main tables, and typed results name their units.
+- The rules sit in the conventions and the database skill, each with its cheapest check, and the FDE is not asked about them.
 
 ## Why
 
-Client apps are ready for agents from day one
-
-
+Much already ships, but change records name only the agent account, only MCP creates take a retry key, units are not stated, and the rules are spread across several guides. Three points conflict with shipped rules and need the owner's choice first: agents acting for a person, retry keys on every write, and reports always from summary tables.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A new client app and an existing client app each show every rule in the conventions and database skill, each rule with a named check, and the FDE is never asked about them.**
 
 ## Risks
 
