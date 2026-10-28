@@ -1,10 +1,14 @@
 {
   "doc": "plans/FORGE-MAIL-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-28T10:54:50.373411+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T12:29:01.461947+00:00",
+      "step": "read"
     }
   ],
   "title": "Email and member removal for client apps",
