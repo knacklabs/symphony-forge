@@ -293,6 +293,8 @@ def _change_summary(fields: list[dict[str, Any]]) -> str:
     money_set = f"const MONEY_FIELDS = new Set<keyof FeatureInput>([{money_fields}]);" if money_fields else ""
     date_set = f"const DATE_FIELDS = new Set<keyof FeatureInput>([{date_fields}]);" if date_fields else ""
     boolean_set = f"const BOOLEAN_FIELDS = new Set<keyof FeatureInput>([{boolean_fields}]);" if boolean_fields else ""
+    record_parameter = ", record: FeatureRecord" if money_fields else ""
+    record_argument = ", before" if money_fields else ""
     return f"""const LINK_FIELDS = new Set<keyof FeatureInput>([{links}]);
 const NUMBER_FIELDS = new Set<keyof FeatureInput>([{number_fields}]);
 {money_set}
@@ -308,7 +310,7 @@ function changeValue(field: keyof FeatureInput, value: unknown): string | null {
   return String(value);
 }}
 
-function displayValue(field: keyof FeatureInput, value: unknown, record: FeatureRecord): string {{
+function displayValue(field: keyof FeatureInput, value: unknown{record_parameter}): string {{
   if (value === undefined && OPTIONAL_BOOLEAN_FIELDS.has(field)) value = false;
   if (value === null || value === undefined) return 'None';
   if (LINK_FIELDS.has(field)) return 'a linked item';
@@ -321,7 +323,7 @@ function changeSummary(before: FeatureRecord, input: FeatureInput): string {{
     .filter((field) => changeValue(field, before[field]) !== changeValue(field, input[field]))
     .map((field) => LINK_FIELDS.has(field)
       ? `${{FIELD_LABELS[field]}} changed`
-      : `${{FIELD_LABELS[field]}} changed from ${{displayValue(field, before[field], before)}} to ${{displayValue(field, input[field], before)}}`)
+      : `${{FIELD_LABELS[field]}} changed from ${{displayValue(field, before[field]{record_argument})}} to ${{displayValue(field, input[field]{record_argument})}}`)
     .join('; ');
 }}"""
 

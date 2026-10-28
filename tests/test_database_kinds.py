@@ -155,7 +155,7 @@ def _add_live_money_case(client: Path, starter: str) -> None:
     input.total = '12345678901234.5650';
     input.adjustment = '-42.5000';
     await client.post('/api/v1/invoices').set('x-csrf-token', csrf)
-      .send({ ...input, total: 12345678901234.565 }).expect(400);
+      .send({ ...input, total: 1250 }).expect(400);
     await client.post('/api/v1/invoices').set('x-csrf-token', csrf)
       .send({ ...input, adjustment: -42.5 }).expect(400);
     await client.post('/api/v1/invoices').set('x-csrf-token', csrf)
