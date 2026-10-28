@@ -480,6 +480,12 @@
       "title": "Guides and starters agree",
       "status": "pending",
       "order": 107
+    },
+    {
+      "key": "FORGE-REQLOG-1",
+      "title": "Log every API request safely in client apps",
+      "status": "pending",
+      "order": 108
     }
   ],
   "epics": [
