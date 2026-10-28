@@ -1,6 +1,13 @@
 {
   "base": "cd5b38dcd383d4f76c9ad4981f541edbd240b601",
   "branch": "fix/client-sign-off-never-finishes-every-att",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a183e7-5bb1-7fc1-9454-7a0612486940",
+    "head": null,
+    "start": "c7e4a4b2efcf632cc19dea035057e9c8216b25cf"
+  },
   "done_when": "Client sign-off finishes: a later attempt reviews only files changed since the last sign-off review plus its earlier findings, and after round 2 only P0 findings block.",
   "fix_kind": "backend",
   "kind": "fix",
