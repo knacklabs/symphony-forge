@@ -15,7 +15,8 @@
     "id": "bc03432b-3f3f-4566-9c29-5e8ac107ec81",
     "status": "clean"
   },
-  "status": "waiting for checks",
+  "round": 1,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T13:19:44.821898+00:00",
@@ -26,5 +27,12 @@
       "step": "review"
     }
   ],
-  "why": "The owner wants Opus used as little as possible: user-facing work on Claude should run on Sonnet, and everything else stays on Codex Sol"
+  "stuck": {
+    "close": "1a1ea1d4-7b16-4d98-bf6a-b6a7e9529829",
+    "head": "1f253eda4a252e13df600eea468831f10e55a1db",
+    "keys": {},
+    "round": null
+  },
+  "why": "The owner wants Opus used as little as possible: user-facing work on Claude should run on Sonnet, and everything else stays on Codex Sol",
+  "worker": "codex"
 }
