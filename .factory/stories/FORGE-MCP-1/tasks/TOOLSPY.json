@@ -69,7 +69,7 @@
     "id": "6aad0576-502d-47ea-98ff-7b224cb11f79",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-FEATURE-1/PY",
   "status": "fixing",
   "steps": [
@@ -83,10 +83,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "836747dad9bf9c35e7747c409dcbfc40a6b44480",
-    "keys": {},
-    "round": null
+    "close": "1583c8c8-b01c-4aa6-bc37-d9e96088e358",
+    "head": "2aa1ed07fa1ccfe6786a70177ecb2fcac78a7a6b",
+    "keys": {
+      "the open P0 pass feature state into the extracted writer in src/forge/feature.py": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
