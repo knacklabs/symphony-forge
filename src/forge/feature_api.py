@@ -93,10 +93,8 @@ def _sample(field: dict[str, Any], kinds: dict[str, Any], changed: bool = False)
         if changed and len(options) > 1:
             candidate = next((option for option in options if option != definition["sample"]), options[0])
         return candidate or options[0]
-    if field["kind"] == "number":
+    if field["kind"] in ("number", "money"):
         return str(value)
-    if field["kind"] == "money":
-        return int(value)
     return value
 
 
@@ -108,10 +106,8 @@ def _input_expr(field: dict[str, Any], one: str, kinds: dict[str, Any]) -> str:
         expr = "z.string().trim().min(1).max(200)"
     elif kind == "long-text":
         expr = "z.string().max(10000)"
-    elif kind == "number":
-        expr = "z.string().regex(/^-?\\d{1,15}(?:\\.\\d{1,4})?$/)"
-    elif kind == "money":
-        expr = "z.number().int().min(-2147483648).max(2147483647)"
+    elif kind in ("number", "money"):
+        expr = kinds["kinds"][kind]["zod"]
     elif kind == "date":
         expr = "z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).refine((value) => { const date = new Date(`${value}T00:00:00.000Z`); return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value; }, 'Enter a real date as YYYY-MM-DD.')"
     elif kind == "yes-no":
@@ -131,7 +127,7 @@ def _input_expr(field: dict[str, Any], one: str, kinds: dict[str, Any]) -> str:
 
 def _response_type(field: dict[str, Any], one: str) -> str:
     kind = field["kind"]
-    base = "string" if kind in ("text", "long-text", "email", "date", "link", "number") else "number" if kind == "money" else "boolean" if kind == "yes-no" else _status_type(one, field)
+    base = "string" if kind in ("text", "long-text", "email", "date", "link", "number", "money") else "boolean" if kind == "yes-no" else _status_type(one, field)
     return base + (" | null" if field.get("optional") and kind != "yes-no" else "")
 
 
@@ -145,7 +141,7 @@ def _response_value(field: dict[str, Any], one: str) -> str:
     if kind == "date":
         formatted = f"{value}.toISOString().slice(0, 10)"
         return f"{value}?.toISOString().slice(0, 10) ?? null" if field.get("optional") else formatted
-    if kind == "number":
+    if kind in ("number", "money"):
         return f"{value} === null ? null : {value}.toString()" if field.get("optional") else f"{value}.toString()"
     return value
 
@@ -157,7 +153,7 @@ def _data_value(field: dict[str, Any]) -> str:
         return f"{value} ? new Date({value}) : null" if field.get("optional") else f"new Date({value})"
     if kind == "yes-no":
         return f"{value} ?? false" if field.get("optional") else value
-    if kind == "number":
+    if kind in ("number", "money"):
         return f"{value} === undefined ? null : new Prisma.Decimal({value})" if field.get("optional") else f"new Prisma.Decimal({value})"
     if field.get("optional"):
         return f"{value} ?? null"
@@ -178,7 +174,7 @@ def _cursor_blocks(fields: list[dict[str, Any]], one: str) -> tuple[str, str]:
     for names, parser in (
         (date_fields, "if (typeof value === 'string' && !Number.isNaN(new Date(value).getTime())) return { value: new Date(value), id }"),
         (number_fields, "if (typeof value === 'string' && /^-?\\d{1,15}(?:\\.\\d{1,4})?$/.test(value)) return { value: new Prisma.Decimal(value), id }"),
-        (money_fields, "if (typeof value === 'number' && Number.isInteger(value)) return { value, id }"),
+        (money_fields, "if (typeof value === 'string' && /^-?\\d{1,15}(?:\\.\\d{1,4})?$/.test(value)) return { value: new Prisma.Decimal(value), id }"),
         (bool_fields, "if (typeof value === 'boolean') return { value, id }"),
         (uuid_fields, "if (typeof value === 'string' && UUID.test(value)) return { value, id }"),
     ):
@@ -286,7 +282,7 @@ def _change_summary(fields: list[dict[str, Any]]) -> str:
     optional_booleans = ", ".join(_literal(_column(field)) for field in fields if field["kind"] == "yes-no" and field.get("optional"))
     display_formats = []
     if money_fields:
-        display_formats.append("if (MONEY_FIELDS.has(field)) return formatMoney(new Prisma.Decimal(String(value)).div(100).toString(), DEFAULT_CURRENCY);")
+        display_formats.append("if (MONEY_FIELDS.has(field)) return formatMoney(String(value), record[`${field}Currency` as keyof FeatureRecord] as string);")
     if number_fields:
         display_formats.append("if (NUMBER_FIELDS.has(field)) return formatNumber(Number(value), 4);")
     if date_fields:
@@ -308,11 +304,11 @@ function changeValue(field: keyof FeatureInput, value: unknown): string | null {
   if (value === undefined && OPTIONAL_BOOLEAN_FIELDS.has(field)) value = false;
   if (value === null || value === undefined) return null;
   if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (NUMBER_FIELDS.has(field)) return new Prisma.Decimal(String(value)).toString();
+  if (NUMBER_FIELDS.has(field){' || MONEY_FIELDS.has(field)' if money_fields else ''}) return new Prisma.Decimal(String(value)).toString();
   return String(value);
 }}
 
-function displayValue(field: keyof FeatureInput, value: unknown): string {{
+function displayValue(field: keyof FeatureInput, value: unknown, record: FeatureRecord): string {{
   if (value === undefined && OPTIONAL_BOOLEAN_FIELDS.has(field)) value = false;
   if (value === null || value === undefined) return 'None';
   if (LINK_FIELDS.has(field)) return 'a linked item';
@@ -325,7 +321,7 @@ function changeSummary(before: FeatureRecord, input: FeatureInput): string {{
     .filter((field) => changeValue(field, before[field]) !== changeValue(field, input[field]))
     .map((field) => LINK_FIELDS.has(field)
       ? `${{FIELD_LABELS[field]}} changed`
-      : `${{FIELD_LABELS[field]}} changed from ${{displayValue(field, before[field])}} to ${{displayValue(field, input[field])}}`)
+      : `${{FIELD_LABELS[field]}} changed from ${{displayValue(field, before[field], before)}} to ${{displayValue(field, input[field], before)}}`)
     .join('; ');
 }}"""
 
@@ -374,7 +370,7 @@ def _dto_fields(fields: list[dict[str, Any]], one: str, kinds: dict[str, Any]) -
     for field in fields:
         kind, column = field["kind"], _column(field)
         label, sample = _label(field["name"]), _sample(field, kinds)
-        base = "Number" if kind == "money" else "Boolean" if kind == "yes-no" else "String"
+        base = "Boolean" if kind == "yes-no" else "String"
         extra = f", enum: {json.dumps(field['options'])}" if kind == "status" else ""
         nullable = field.get("optional") and kind != "yes-no"
         if nullable:
@@ -383,17 +379,23 @@ def _dto_fields(fields: list[dict[str, Any]], one: str, kinds: dict[str, Any]) -
             f"  @ApiProperty({{ description: {_literal('The ' + label.lower() + '.')}, type: {base}{extra}, example: {_literal(sample)} }})",
             f"  {column}!: {(' | '.join(_literal(option) for option in field['options']) if kind == 'status' else _response_type(field, one))}{' | null' if nullable and kind == 'status' else ''};",
         ])
+        if kind == "money":
+            output.extend([
+                "  @ApiProperty({ description: 'The stored currency code.', type: String, example: 'INR' })",
+                f"  {column}Currency!: string;",
+            ])
     return "\n".join(output)
 
 
-def _csv_fields(fields: list[dict[str, Any]]) -> str:
+def _csv_fields(fields: list[dict[str, Any]], kinds: dict[str, Any]) -> str:
     variable = "featureItem"
     output = []
     for field in fields:
         column, kind = _column(field), field["kind"]
         value = f"{variable}.{column}"
         if kind == "money":
-            value = f"{value} === null ? '' : formatMoney(String({value} / 100), DEFAULT_CURRENCY)"
+            formatted = kinds["kinds"][kind]["csv"].replace("{name}", column).replace("row.", variable + ".")
+            value = f"{value} === null ? '' : {formatted}"
         elif kind == "number":
             value = f"{value} === null ? '' : formatNumber(Number({value}), 4)"
         elif kind == "date":
@@ -414,7 +416,9 @@ def _format_imports(fields: list[dict[str, Any]], *, include_datetime: bool = Fa
         elif field["kind"] == "number":
             names.add("formatNumber")
         elif field["kind"] == "money":
-            names.update(("DEFAULT_CURRENCY", "formatMoney"))
+            names.add("formatMoney")
+            if not include_datetime:
+                names.add("DEFAULT_CURRENCY")
     return ", ".join(sorted(names))
 
 
@@ -487,17 +491,20 @@ def render_feature_api(
             ("filters", _filters(fields, one, kinds)),
             ("sort-fields", ", ".join(_literal(_column(field)) for field in sort_fields) + ","),
             ("status-type", "\n".join(f"export type {_status_type(one, field)} = z.infer<typeof {_status_name(one, field)}>;" for field in statuses)),
-            ("response-fields", "\n".join(f"  {_column(field)}: {_response_type(field, one)};" for field in fields)),
+            ("response-fields", "\n".join(f"  {_column(field)}: {_response_type(field, one)};" +
+                (f"\n  {_column(field)}Currency: string;" if field["kind"] == "money" else "") for field in fields)),
         ],
         "libs/projects/server/src/projects.service.ts": [
             ("link-imports", link_imports), ("field-labels", _field_labels(fields)),
             ("change-summary", _change_summary(fields)),
-            ("response-fields", "\n    ".join(f"{_column(field)}: {_response_value(field, one)}," for field in fields)),
+            ("response-fields", "\n    ".join(f"{_column(field)}: {_response_value(field, one)}," +
+                (f"\n    {_column(field)}Currency: featureItem.{_column(field)}Currency," if field["kind"] == "money" else "") for field in fields)),
             ("cursor-decode", decode), ("cursor-after", after),
             ("field-filters", filter_where),
             ("link-injections", injections), ("link-validation", link_validation),
             ("link-validation-create", link_call), ("link-validation-update", link_call),
-            ("create-fields", "\n          ".join(f"{_column(field)}: {_data_value(field)}," for field in fields)),
+            ("create-fields", "\n          ".join(f"{_column(field)}: {_data_value(field)}," +
+                (f"\n          {_column(field)}Currency: DEFAULT_CURRENCY," if field["kind"] == "money" else "") for field in fields)),
             ("update-fields", "\n          ".join(f"{_column(field)}: {_data_value(field)}," for field in fields)),
             ("history-created-name", f"name: featureItem.{_column(name_field)},"),
             ("history-changed-name", f"name: featureItem.{_column(name_field)},"),
@@ -507,7 +514,7 @@ def render_feature_api(
         ],
         "libs/projects/server/src/projects.dto.ts": [("dto-fields", _dto_fields(fields, one, kinds))],
         "libs/projects/server/src/projects.controller.ts": [
-            ("csv-fields", _csv_fields(fields)),
+            ("csv-fields", _csv_fields(fields, kinds)),
             ("csv-description", f"@ApiResponse({{ status: 200, description: {_literal(f'The {plural}.csv file: {csv_fields}, Created (UTC) and Updated (UTC).')} }})"),
         ],
         "apps/api/test/projects.e2e-spec.ts": [

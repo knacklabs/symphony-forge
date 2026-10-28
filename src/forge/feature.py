@@ -181,6 +181,8 @@ def build(args) -> int:
     files[app] = _insert(files[app], "    OrganisationsModule,", f"\n    {title}Module,", app)
     base = required[1]
     files[base] = _insert(current[base], '"core",', f' "{plural.replace("-", "_")}",', base)
+    if '"partialIndexes"' not in files[base]:
+        files[base] = _insert(files[base], 'generator client {', '\n  previewFeatures = ["partialIndexes"]', base)
     for path, model_name in ((required[2], "Account"), (required[3], "Organisation")):
         if model_name == "Account":
             lines = "\n".join(f'  {verb}{title} {model}[] @relation("{model}{relation}By")'
