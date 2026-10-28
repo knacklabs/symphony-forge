@@ -25,17 +25,15 @@ CONDITIONAL = (
     f'"{BUILT_IN}"'
 )
 STANDARDS = (
-    "- An app with `libs/core/server/src/common/request-log.middleware.ts` (TypeScript) or "
-    "`set_log_level` in `apps/api/app/core/logging.py` (Python) has the next three rules built "
-    "into its logger. Another app keeps its own logger: it may write every level and keep "
-    "secret values, so never log a secret there, and add these parts only in a story that "
-    "copies the starter's logger.",
-    "- The logger removes the value of any context field whose name holds `password`, "
-    "`token`, `secret`, `key` or `authorization`, at any depth, and writes `[removed]`. "
-    "Still log only the ids you need.",
-    "- Each API request writes one `info` line, `API request`, with `method`, the matched "
-    "`route` pattern, `status` and `durationMs` in its context and the request's "
-    "`correlationId`. It never holds the query string, the real path, headers or the body. "
+    "- With `libs/core/server/src/common/request-log.middleware.ts` (TypeScript) or "
+    "`set_log_level` in `apps/api/app/core/logging.py` (Python), the next three rules are "
+    "built in. Other apps keep their logger, which may write all levels and keep secrets: "
+    "never log secrets; add these rules only in a story that copies the starter's logger.",
+    "- At any depth, context fields whose names hold `password`, `token`, `secret`, `key` "
+    "or `authorization` get `[removed]` values. Log only needed ids.",
+    "- Each API request writes one `info` line, `API request`: context has `method`, matched "
+    "`route` pattern, `status`, `durationMs`; the line has the request's `correlationId`. "
+    "Never include query strings, real paths, headers or bodies. "
     "Health checks and web pages write no line.",
     "- `LOG_LEVEL` (`debug`, `info`, `warn` or `error`; `info` when unset) picks the lowest "
     "level written.",

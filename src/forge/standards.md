@@ -1,9 +1,7 @@
 # Standards
 
-Forge puts this page in every worker's brief, and reviewers judge each change against it. It carries
-the principles for the apps Forge builds and the engineering rules for client code. Each rule gives
-its reason, so you can apply it with judgement.
-If a rule here and the approved story doc disagree, follow the story doc and say so in your handoff.
+Workers and reviewers use these client-app principles and engineering rules, with their reasons.
+If the approved story disagrees, follow it and explain the difference in your handoff.
 
 ## The 11 client-app principles
 
@@ -177,26 +175,18 @@ default-stack conventions, which apply only to a repo on the default stack.
 
 ## Errors and logs
 
-- One global exception filter turns every error into the envelope, logs it with an `errorId` and
-  the request's `correlationId`, and hides internals. Never swallow an unexpected error: a caught
-  error that returns success hides the failure from everyone. Falling back on purpose (a cached
-  answer when a vendor times out) is allowed when the code says why and logs a warning.
-- Log through the framework's logger as structured JSON, never `console.log`. Each entry has
-  `timestampUtc`, `level`, a fixed `message`, a `context` object, `environment`, `serviceName`,
-  `module` and `correlationId`, plus `accountId`, `requestId` or `eventId` when there is one.
-  A fixed message makes logs searchable; the details go in `context`.
+- One global exception filter returns the envelope, hides internals and logs every error with `errorId` and the request's `correlationId`. Never swallow unexpected errors or return success for them. A deliberate fallback states why and logs a warning.
+- Use the framework logger for structured JSON, never `console.log`: `timestampUtc`, `level`, fixed `message`, `context`, `environment`, `serviceName`, `module`, `correlationId`. Add `accountId`, `requestId` or `eventId` when present. Keep messages searchable; put details in the `context` object.
 - Log validation failures (4xx) at debug, never as errors.
 - Error messages are static text with no interpolated values, so personal data can't slip in.
 - Never log passwords, tokens, one-time codes, secrets or personal data; mask what you must keep.
-- An app with `libs/core/server/src/common/request-log.middleware.ts` (TypeScript) or `set_log_level` in `apps/api/app/core/logging.py` (Python) has the next three rules built into its logger. Another app keeps its own logger: it may write every level and keep secret values, so never log a secret there, and add these parts only in a story that copies the starter's logger.
-- The logger removes the value of any context field whose name holds `password`, `token`, `secret`, `key` or `authorization`, at any depth, and writes `[removed]`. Still log only the ids you need.
-- Each API request writes one `info` line, `API request`, with `method`, the matched `route` pattern, `status` and `durationMs` in its context and the request's `correlationId`. It never holds the query string, the real path, headers or the body. Health checks and web pages write no line.
+- With `libs/core/server/src/common/request-log.middleware.ts` (TypeScript) or `set_log_level` in `apps/api/app/core/logging.py` (Python), the next three rules are built in. Other apps keep their logger, which may write all levels and keep secrets: never log secrets; add these rules only in a story that copies the starter's logger.
+- At any depth, context fields whose names hold `password`, `token`, `secret`, `key` or `authorization` get `[removed]` values. Log only needed ids.
+- Each API request writes one `info` line, `API request`: context has `method`, matched `route` pattern, `status`, `durationMs`; the line has the request's `correlationId`. Never include query strings, real paths, headers or bodies. Health checks and web pages write no line.
 - `LOG_LEVEL` (`debug`, `info`, `warn` or `error`; `info` when unset) picks the lowest level written.
 - Mainline sends error alerts from the `error` lines, each with its `errorId`. Add no error-tracking service to the app.
-- Levels: `debug` for detail, `info` for normal business events, `warn` for something unexpected
-  that didn't fail, `error` for a failed operation, `fatal` when the app can't continue.
-- Environments are named `Local`, `Development`, `QA`, `UAT`, `Staging` and `Production`; a project
-  has only the ones it uses. Logs go to the console locally and to the host's log service elsewhere.
+- Levels: `debug` for detail, `info` for normal business events, `warn` for unexpected events without failure, `error` for failure, `fatal` when the app cannot continue.
+- Use only needed environments: `Local`, `Development`, `QA`, `UAT`, `Staging`, `Production`. Log to the local console or the host's log service elsewhere.
 
 ## Data
 
