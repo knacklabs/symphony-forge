@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-MCPRES-1-RESGUIDE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T02:23:46.514182+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "5e6ef6c61d8722ced007ede52614467bd1fe6b3b",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
