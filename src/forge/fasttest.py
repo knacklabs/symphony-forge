@@ -339,8 +339,10 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                                             "--exclude-standard")
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
              and name.endswith(".py") and Path(name).is_file()]
+    fixtures = [Path(name).parent for name in changed if Path(name).name == "conftest.py"]
     shared = [name for name in changed
-              if Path(name).name in {"conftest.py", "pyproject.toml", "Pipfile", "package-lock.json"}
+              if name == "conftest.py"
+              or Path(name).name in {"pyproject.toml", "Pipfile", "package-lock.json"}
               or Path(name).name.endswith(".lock")
               or re.fullmatch(r"requirements.*\.txt|pylock.*\.toml", Path(name).name)]
     shared_changed = any(not manifest_test_inputs_unchanged(Path(name), base)
@@ -364,6 +366,7 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
         return everything, everything, True, missed
     selected = sorted(path.as_posix() for path in tests
                       if path.as_posix() in changed
+                      or any(path.is_relative_to(folder) for folder in fixtures)
                       or any(mentions(path, module, source) for module, source in modules))
     return selected, everything, False, missed
 
