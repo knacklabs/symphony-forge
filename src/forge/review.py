@@ -441,6 +441,7 @@ def test_run(top: Path, command: str, base: str, *, always: bool = False,
             from forge import fasttest
 
             env = {**os.environ, "FORGE_WORKER": "1"}
+            fasttest.node_worker_environment(env)
             # Every pytest the command starts, the client's own or Forge's picker, loads Forge's
             # results hook, which no command option can turn off.
             hook = repo.forge_dir(top) / "pytest"

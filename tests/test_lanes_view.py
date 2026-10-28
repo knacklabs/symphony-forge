@@ -147,7 +147,7 @@ def test_4_doctor_and_board_show_the_machine_split_and_agent_entries(env, tmp_pa
         _until(lambda: (repo.bin / f"started-{first_name}").exists(), "first agent")
         _until(lambda: len([r for r in lanes(repo)["agents"]["entries"] if r["started_at"]]) == agents, "running agents")
         view = lanes(repo)
-        assert view["agents"]["size"] == agents and view["tests"]["size"] == 1
+        assert view["agents"]["size"] == agents and view["tests"]["size"] == agents
         rows = view["agents"]["entries"]
         assert len({r["id"] for r in rows}) == agents + 1
         for index, row in enumerate(rows):

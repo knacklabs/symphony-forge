@@ -1843,8 +1843,11 @@ requests at most two processes, so its own `pytest -n auto` also stays at two. A
 its test command is capped with `--maxprocesses`, also outside a worker session.
 Direct Vitest and Jest commands use the same budget through `--maxWorkers`.
 This includes `npx` (with optional `--no-install`) and `npm exec`, `pnpm exec` or `yarn exec`.
-Commands with `--maxWorkers`, `--runInBand` or `-i` stay as written.
+Forge caps explicit `--maxWorkers` values to the run's allocation, including percentage values.
+Lower caps and Jest's serial options `--runInBand` and `-i` stay as written.
 Forge does not change npm, pnpm or yarn scripts to set their worker budget.
+It keeps existing `NODE_OPTIONS` and adds a Node preload that caps the actual runner's arguments,
+so package scripts keep their lifecycle hooks and share the same process budget.
 Those scripts can read `FORGE_TEST_CPUS`. If the test command runs Vitest through a script
 with Vitest projects, pass `--maxWorkers=${FORGE_TEST_CPUS:-2}` on the command line,
 for example `npm test -- --maxWorkers=${FORGE_TEST_CPUS:-2}`, instead of setting the cap

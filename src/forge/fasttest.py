@@ -59,8 +59,17 @@ def pytest_options(arguments: list[str]) -> str:
 XDIST = re.compile(r'''(?:^|[\s"'=])(?:-n(?:\s|\d|auto|logical)|--numprocesses(?:=|\s))''')
 
 
+def node_worker_environment(environment: dict[str, str]) -> None:
+    """Enforce the allocation when a Node runner starts, including inside package scripts."""
+    preload = "--require " + json.dumps(Path(__file__).with_name("node_workers.cjs").as_posix(),
+                                       ensure_ascii=False)
+    options = environment.get("NODE_OPTIONS", "")
+    if preload not in options:
+        environment["NODE_OPTIONS"] = f"{options} {preload}".strip()
+
+
 def node_worker_budget(command: str, workers: str) -> str:
-    """Budget direct Vitest/Jest commands; preserve scripts and explicit worker options."""
+    """Add missing direct runner caps; the Node preload bounds explicit and scripted caps."""
     segment = re.compile(r'''(?:[^;&|<>()"']|"[^"]*"|'[^']*')+''')
     replacements = []
     for part in segment.finditer(command):
@@ -555,6 +564,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     workers = machine.test_cpus(allocation)
     environment["PYTEST_XDIST_AUTO_NUM_WORKERS"] = workers
     environment["FORGE_TEST_CPUS"] = workers
+    node_worker_environment(environment)
     if entry is not None:
         environment["FORGE_TEST_LANE"] = entry["id"]
     excluded = []

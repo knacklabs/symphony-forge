@@ -66,7 +66,7 @@ def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_p
     path = repo.path / "forge.toml"
     machine_cores(repo, 8)
     doctor = repo.forge("doctor")
-    assert "This machine: 8 cores, so 4 agents at once and 2 test runs at once, each on 4 cores." in doctor.stdout
+    assert "This machine: 8 cores, so 4 agents at once and 4 test processes shared by all runs." in doctor.stdout
     item, name = make_work(repo, "Correct the client typo")
     where = worktree(repo, "fix/" + item)
     hold_agents(env)

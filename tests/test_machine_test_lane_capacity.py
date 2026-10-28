@@ -15,14 +15,10 @@ from test_lanes_tests import shell
 from test_machine_shared_test_budget import _run
 from test_setup import _fresh_client
 
-STORY = "FIX-TWO-TEST-SLOTS"
+STORY = "FORGE-BUDGET-1"
 
 
-@pytest.mark.parametrize("cores,budget,cap,adopted", [
-    (8, 4, 2, False), (8, 4, None, False), (4, 2, None, False),
-    (None, 1, None, False), (8, 4, 2, True)],
-    ids=["shared-new", "full-budget", "four-cores", "unknown-cores", "shared-adopted"])
-def test_2_test_runs_share_processes_across_repos(
+def _test_runs_share_processes_across_repos(
         env, tmp_path, release_server, adopted, cores, budget, cap, monkeypatch):
     # The old policy admitted two runs of four on eight cores. The shared
     # budget permits two runs of two, or one run of four, including close.
@@ -135,9 +131,7 @@ def test_2_test_runs_share_processes_across_repos(
         reap(processes, server, connections)
 
 
-@pytest.mark.parametrize("legacy,picker", [(True, False), (False, False), (False, True)],
-                         ids=["older-release", "small-nested-picker", "small-direct-picker"])
-def test_2_small_pytest_runs_use_remaining_processes_and_count_older_entries(
+def _small_pytest_runs_use_remaining_processes_and_count_older_entries(
         env, tmp_path, release_server, legacy, picker):
     # Mixed releases must reserve the old four-process default. Current entries
     # reserve their own allocation, so even one picked file gets only the room left.
@@ -203,3 +197,24 @@ def test_allocation(request):
         if holder.poll() is None:
             holder.communicate(b"x", timeout=10)
         reap(processes, server, connections)
+
+
+@pytest.mark.parametrize("scenario", [
+    pytest.param(("shared", 8, 4, 2, False), id="shared-new"),
+    pytest.param(("shared", 8, 4, None, False), id="full-budget"),
+    pytest.param(("shared", 4, 2, None, False), id="four-cores"),
+    pytest.param(("shared", None, 1, None, False), id="unknown-cores"),
+    pytest.param(("shared", 8, 4, 2, True), id="shared-adopted"),
+    pytest.param(("small", True, False), id="older-release"),
+    pytest.param(("small", False, False), id="small-nested-picker"),
+    pytest.param(("small", False, True), id="small-direct-picker"),
+])
+def test_2_test_runs_share_one_process_budget(env, tmp_path, release_server, monkeypatch, scenario):
+    if scenario[0] == "shared":
+        _, cores, budget, cap, adopted = scenario
+        _test_runs_share_processes_across_repos(
+            env, tmp_path, release_server, adopted, cores, budget, cap, monkeypatch)
+    else:
+        _, legacy, picker = scenario
+        _small_pytest_runs_use_remaining_processes_and_count_older_entries(
+            env, tmp_path, release_server, legacy, picker)

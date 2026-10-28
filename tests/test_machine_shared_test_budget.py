@@ -31,8 +31,7 @@ def _run(repo, version: str, item: str, pid: int, *, kind: str = "work", reused:
             "progress": None, "free": False, "admitted": True}
 
 
-@pytest.mark.platform
-def test_4_queue_checks_many_processes_in_one_pass_and_leaves_unchanged_queue_alone(
+def _queue_checks_many_processes_in_one_pass_and_leaves_unchanged_queue_alone(
         env, tmp_path, monkeypatch):
     processes = []
     try:
@@ -123,6 +122,8 @@ def test_4_queue_checks_many_processes_in_one_pass_and_leaves_unchanged_queue_al
 
 @pytest.mark.platform
 def test_4_waiting_test_polls_once_a_second_then_backs_off_after_a_minute(env, tmp_path, monkeypatch):
+    _queue_checks_many_processes_in_one_pass_and_leaves_unchanged_queue_alone(
+        env, tmp_path, monkeypatch)
     settings = (env.repo.path / "forge.toml").read_text("utf-8")
     env.commit(env.repo.path, "forge.toml", settings + '\nfast_test = "echo test"\n')
     registry = tmp_path / "config" / "forge" / "agent-runs.json"
