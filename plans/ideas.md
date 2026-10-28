@@ -1,0 +1,1 @@
+- 2026-10-28: Do this later: once a client app is built, an in-app assistant that acts for the signed-in user through the app's own MCP tools, shows analytics from the report services and draws generative UI from typed results with the design system's chart and table components; build when a client asks
