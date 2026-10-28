@@ -462,6 +462,12 @@
       "title": "Agents teach the seven-step journey to new users",
       "status": "pending",
       "order": 103
+    },
+    {
+      "key": "FORGE-MCPRES-1",
+      "title": "Client apps offer MCP resources and prompts too",
+      "status": "pending",
+      "order": 106
     }
   ],
   "epics": [
