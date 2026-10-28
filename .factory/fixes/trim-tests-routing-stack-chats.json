@@ -1,6 +1,13 @@
 {
   "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
   "branch": "fix/trim-tests-routing-stack-chats",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18384-ad81-7310-9c76-54cf7b0f0436",
+    "head": null,
+    "start": "77b049819f83ff7cee33a08b08d842fc160d9ab8"
+  },
   "done_when": "The cases named in batches 5 to 8 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
   "fix_kind": "mechanical",
   "kind": "fix",
