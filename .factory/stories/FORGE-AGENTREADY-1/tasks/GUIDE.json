@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-AGENTREADY-1-GUIDE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T13:34:22.571219+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "74d40e2813d56ff7fd7536046421e881e384c88f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
