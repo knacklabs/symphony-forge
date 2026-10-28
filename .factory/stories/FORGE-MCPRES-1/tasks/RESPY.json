@@ -1,0 +1,73 @@
+{
+  "allow_large": "The owner allowed every MCPRES-1 part to go over the line limit",
+  "branch": "task/FORGE-MCPRES-1-RESPY",
+  "chat": {
+    "approval": "b23151bacdd143484238e81352971aa4440d27330b0225e2a39304899195beae",
+    "claude": null,
+    "conversation": "01a181ae-9376-75d0-bd39-3b4c420706c7",
+    "head": null,
+    "start": "70f62ea5829105be54dc339e45c14f0967b0a675"
+  },
+  "known": [
+    {
+      "area": "test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one() in tests/test_mcp_resources.py",
+      "file": "tests/test_mcp_resources.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 160,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one[python]",
+      "work": 1
+    },
+    {
+      "area": "_field_guide() in src/forge/templates/starter-python/apps/api/app/core/resources.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/core/resources.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 76,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: one allowed-value list for each choice field",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "124092ecbfc31def786e02d971d7a3c64a57e26560c098896b53da23e5bbd909",
+    "changed": "7ac5de43679e737476b0d3c08dc507b4548f8be0ee1bab4bad1c399ae2e76a6b",
+    "commit": "847d909dc7b25cc50e936115c1974626a92372b6",
+    "dismissals": [],
+    "findings": [],
+    "id": "4d2c683d-b078-4f34-8036-42aa2943836b",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T08:40:46.876334+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T09:50:51.839705+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T10:03:41.518916+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "344bdbfe-1a7d-4b5a-ab0f-0582b992abfa",
+    "head": "8a02c2f8240b6bc77e8fa441fbeb861508ec1259",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}
