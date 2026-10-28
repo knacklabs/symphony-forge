@@ -16,6 +16,33 @@ from uuid import uuid4
 import httpx
 
 
+def test_the_api_container_runs_as_a_user_that_is_not_root() -> None:
+    # Audit: check the running image's user, not just its Dockerfile declaration.
+    # A root runtime user can pass the HTTP cases; no production seam is needed.
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            "compose.test.yml",
+            "exec",
+            "-T",
+            "api",
+            "id",
+            "-u",
+        ],
+        cwd="../..",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.strip().isdigit(), result.stdout
+    assert result.stdout.strip() != "0", result.stdout
+
+
 def credentials() -> dict[str, str]:
     return {
         "email": f"starter-{uuid4()}@example.test",
