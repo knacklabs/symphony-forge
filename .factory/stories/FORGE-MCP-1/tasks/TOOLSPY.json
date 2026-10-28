@@ -1,0 +1,13 @@
+{
+  "base": "d0e5f7838ea7eb0c40256fe6a897fc096fac0f43",
+  "branch": "task/FORGE-MCP-1-TOOLSPY",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-FEATURE-1/PY",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T02:23:37.185339+00:00",
+      "step": "start"
+    }
+  ]
+}
