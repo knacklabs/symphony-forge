@@ -8,7 +8,7 @@ from app.core.config import (
 from app.core.csv import CsvColumn, csv_response, utc_date_time
 from app.core.database import Base, create_database, get_db
 from app.core.envelope import ErrorEnvelope, SuccessEnvelope
-from app.core.error_report import router as error_report_router
+from app.core.error_report import report_error, router as error_report_router
 from app.core.errors import ApiError, install_error_handlers
 from app.core.logging import log_event
 from app.core.mail import MailProvider
@@ -21,7 +21,18 @@ from app.core.permissions import (
 )
 from app.core.principal import AccountPrincipal, Role
 from app.core.schema import HealthResponse
+from app.core.security import _is_rate_limited as rate_limit_retry_after
 from app.core.security import install_security_middleware, verify_csrf
+from app.core.tools import (
+    ToolContext,
+    ToolError,
+    ToolResult,
+    call_tool,
+    define_feature_tools,
+    define_tool,
+    list_tools,
+    tool_failure,
+)
 
 __all__ = [
     "DEFAULT_CURRENCY",
@@ -36,10 +47,16 @@ __all__ = [
     "Role",
     "Settings",
     "SuccessEnvelope",
+    "ToolContext",
+    "ToolError",
+    "ToolResult",
     "admin_only",
+    "call_tool",
     "create_database",
     "csv_response",
     "define_permissions",
+    "define_feature_tools",
+    "define_tool",
     "error_report_router",
     "get_db",
     "has_permission",
@@ -49,7 +66,11 @@ __all__ = [
     "load_settings",
     "log_event",
     "permissions_for",
+    "list_tools",
+    "rate_limit_retry_after",
+    "report_error",
     "require_permission",
     "utc_date_time",
     "verify_csrf",
+    "tool_failure",
 ]

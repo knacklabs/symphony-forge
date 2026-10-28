@@ -958,12 +958,14 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
         permissions = ast.parse(
             (new_client / "apps/api/app/sales_orders/permissions.py").read_text("utf-8")
         )
+        # The singular permission symbol matches the starter's PROJECT_PERMISSIONS and the
+        # generated tools' JOB_PERMISSIONS contract; plural API paths remain unchanged.
         permission_assignment = next(
             node for node in permissions.body
             if isinstance(node, ast.Assign)
             and any(
                 isinstance(target, ast.Name)
-                and target.id == "SALES_ORDERS_PERMISSIONS"
+                and target.id == "SALES_ORDER_PERMISSIONS"
                 for target in node.targets
             )
         )
@@ -997,7 +999,7 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             and isinstance(expression.value, ast.Name)
             and expression.attr in {"view", "create", "edit", "delete", "restore"}
         }
-        assert permission_names == {"SALES_ORDERS_PERMISSIONS"}
+        assert permission_names == {"SALES_ORDER_PERMISSIONS"}
 
     before = repo.git("status", "--porcelain", cwd=new_client)
     duplicate = _run_line(repo, new_client, shell, JOBS_LINE)

@@ -39,7 +39,7 @@ API_SECURITY_TESTS = (
 )
 PYTHON_PACKAGES = {
     "fastapi", "pydantic", "sqlalchemy", "alembic", "uvicorn", "psycopg",
-    "pytest", "httpx", "import-linter", "ruff", "mypy",
+    "pytest", "httpx", "import-linter", "ruff", "mypy", "mcp",
 }
 PYTHON_GUIDANCE = (
     "forge init --starter python",

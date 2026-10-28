@@ -809,8 +809,16 @@ export interface components {
         };
         /** ProjectInput */
         ProjectInput: {
-            /** Name */
+            /**
+             * Name
+             * @description The project's name.
+             * @example Quarterly planning
+             */
             name: string;
+            /**
+             * @description Whether the project is active or archived.
+             * @example active
+             */
             status: components["schemas"]["ProjectStatus"];
         };
         /** ProjectListResponse */
@@ -1557,7 +1565,9 @@ export interface operations {
     list_projects_api_v1_projects_get: {
         parameters: {
             query?: {
+                /** @description Text to find in project names. */
                 search?: string | null;
+                /** @description Only include projects with this status. */
                 status?: components["schemas"]["ProjectStatus"] | null;
                 /** @description Show deleted projects too; only for a caller with the restore permission. */
                 deleted?: "yes" | null;
@@ -1683,7 +1693,9 @@ export interface operations {
     export_projects_api_v1_projects_export_get: {
         parameters: {
             query?: {
+                /** @description Text to find in project names. */
                 search?: string | null;
+                /** @description Only include projects with this status. */
                 status?: components["schemas"]["ProjectStatus"] | null;
                 /** @description Show deleted projects too; only for a caller with the restore permission. */
                 deleted?: "yes" | null;

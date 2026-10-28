@@ -5,6 +5,7 @@ requires-python = ">=3.14"
 dependencies = [
     "alembic==1.20.0",
     "fastapi==0.143.0",
+    "mcp==2.3.0",
     "psycopg[binary]==3.3.6",
     "pydantic==2.14.0",
     "sqlalchemy==2.1.4",
@@ -56,6 +57,13 @@ name = "history internals"
 type = "protected"
 protected_modules = ["app.history.*"]
 allowed_importers = ["app.history"]
+broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
+
+[[tool.importlinter.contracts]]
+name = "mcp internals"
+type = "protected"
+protected_modules = ["app.mcp.*"]
+allowed_importers = ["app.mcp"]
 broken_contract_guidance = "A module uses another module only through its public service in its __init__.py, never through its internal files."
 
 [tool.mypy]

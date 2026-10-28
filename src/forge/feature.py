@@ -309,8 +309,11 @@ def _build_python(args, root: Path) -> int:
     for name in (module, one.replace("-", "_"), *(field["column"] for field in fields)):
         if keyword.iskeyword(name):
             _refuse(f"The name {name!r} is a reserved Python word.", "choose another name and run the line again.")
-    files = render_feature_python(fields, one, plural, kinds, root)
-    files.update(render_feature_web(fields, one, plural, kinds, _link_names(fields, root)))
+    include_mcp = (root / "apps/api/app/core/tools.py").is_file()
+    files = render_feature_python(fields, one, plural, kinds, root, include_mcp=include_mcp)
+    files.update(render_feature_web(
+        fields, one, plural, kinds, _link_names(fields, root), include_mcp=include_mcp
+    ))
     files.update(_wire_web(current, plural, one, model, title))
     main = "apps/api/app/main.py"
     files[main] = _insert(current[main], "from app.organisations import router as organisations_router",
@@ -375,6 +378,8 @@ def _build_python(args, root: Path) -> int:
         additions.append(_importer(shipped, f"libs/projects/{kind}").replace("projects", plural))
     files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
     _write(root, current, files)
+    if not include_mcp:
+        print(f"This app has no MCP server, so {plural} get no agent tools.")
     python_files = sorted("../../" + path for path in files if path.endswith(".py"))
     # Keep F401 enabled so Ruff retains necessary model-import suppressions.
     for command in (("check", "--select", "I,F401,RUF100", "--fix"), ("format",)):

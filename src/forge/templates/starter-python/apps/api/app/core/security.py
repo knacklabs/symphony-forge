@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import math
 import threading
 import time
 from uuid import uuid4
@@ -55,7 +56,7 @@ def _headers(correlation_id: str, script_nonce: str | None = None) -> dict[str, 
     return headers
 
 
-def _is_rate_limited(client: str, path: str) -> bool:
+def _is_rate_limited(client: str, path: str, limit: int = _RATE_LIMIT_COUNT) -> int:
     now = time.monotonic()
     key = (client, path)
     with _RATE_LIMIT_LOCK:
@@ -64,12 +65,12 @@ def _is_rate_limited(client: str, path: str) -> bool:
             for stamp in _RATE_LIMITS.get(key, [])
             if now - stamp < _RATE_LIMIT_SECONDS
         ]
-        if len(attempts) >= _RATE_LIMIT_COUNT:
+        if len(attempts) >= limit:
             _RATE_LIMITS[key] = attempts
-            return True
+            return max(1, math.ceil(_RATE_LIMIT_SECONDS - (now - attempts[0])))
         attempts.append(now)
         _RATE_LIMITS[key] = attempts
-    return False
+    return 0
 
 
 def verify_csrf(request: Request) -> None:
@@ -166,7 +167,7 @@ def install_security_middleware(app: FastAPI) -> None:
                 "GET, POST, PUT, PATCH, DELETE, OPTIONS"
             )
             response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, X-CSRF-Token, X-Correlation-Id"
+                "Content-Type, X-CSRF-Token, X-Correlation-Id, Authorization, MCP-Protocol-Version"
             )
             response.headers["Vary"] = "Origin"
         return response
