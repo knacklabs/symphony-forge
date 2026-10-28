@@ -1,6 +1,16 @@
 {
+  "approval": {
+    "at": "2026-10-28T13:36:10.860927+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_019gfLx6htYaWNsJoE7jGdBn",
+    "hash": "6065a662a327227a97aaadfc0991367f0d2f11a5f70a15f5c504e4ff5e5a5b75",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
   "doc": "plans/FORGE-GUIDES-1.md",
-  "status": "read",
+  "status": "approved",
   "steps": [
     {
       "at": "2026-10-28T10:54:54.555753+00:00",
@@ -13,8 +23,12 @@
     {
       "at": "2026-10-28T13:23:22.571566+00:00",
       "step": "read"
+    },
+    {
+      "at": "2026-10-28T13:36:10.861151+00:00",
+      "step": "approved"
     }
   ],
   "title": "Guides and starters agree",
-  "touches": 0
+  "touches": 1
 }
