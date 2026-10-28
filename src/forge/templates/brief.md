@@ -462,7 +462,9 @@ In an app that has libs/organisations, scope every query to the caller's organis
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
 in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
-the one error report. An app without libs/organisations keeps the code it has.
+the one error report.
+Add no error-tracking service; Mainline sends alerts from the error lines. In an app with `request-log.middleware.ts` or `set_log_level` in `app/core/logging.py`, the logger writes each API request's line and removes password, token, secret, key and authorization values from its context, so add no request logging or redaction there.
+An app without libs/organisations keeps the code it has.
 An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add
