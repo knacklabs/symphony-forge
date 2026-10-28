@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import httpx
 from conftest import add_agent_key, agent_client
-from mcp.types import TextContent
+from mcp.types import CallToolResult, TextContent
 from test_api import sign_up
 
 
@@ -15,16 +15,16 @@ def _agent(
     return add_agent_key(client, csrf, f"mcp-{uuid4().hex[:8]}", role)
 
 
-def _mcp_error(result: object) -> dict[str, object]:
-    structured = getattr(result, "structured_content")
+def _mcp_error(result: CallToolResult) -> dict[str, object]:
+    structured = result.structured_content
     assert isinstance(structured, dict)
     error = structured["error"]
     assert isinstance(error, dict)
     return error
 
 
-def _tool_text(result: object) -> str:
-    content = getattr(result, "content")
+def _tool_text(result: CallToolResult) -> str:
+    content = result.content
     assert content and isinstance(content[0], TextContent)
     return content[0].text
 

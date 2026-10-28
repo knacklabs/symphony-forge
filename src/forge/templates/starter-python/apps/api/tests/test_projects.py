@@ -498,7 +498,10 @@ def _mcp_agent(
 
 
 def _mcp_error(result: object) -> dict[str, object]:
-    structured = getattr(result, "structured_content")
+    from mcp.types import CallToolResult
+
+    assert isinstance(result, CallToolResult)
+    structured = result.structured_content
     assert isinstance(structured, dict)
     error = structured["error"]
     assert isinstance(error, dict)
