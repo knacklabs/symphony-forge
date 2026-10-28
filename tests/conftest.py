@@ -471,6 +471,38 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
+def fake_clock(repo, tmp_path, monkeypatch, request):
+    """Advance sleeps without waiting; Forge and its gh children share elapsed time.
+
+    An indirect parameter can jump the 15-second check polls across queue boundaries.
+    Subprocess deadlines and OS wait polling retain real time.
+    """
+    folder = tmp_path / "clock"
+    folder.mkdir()
+    offset = folder / "elapsed"
+    offset.write_text("0", encoding="utf-8")
+    (folder / "sitecustomize.py").write_text(f'''import subprocess, time
+from pathlib import Path
+from types import SimpleNamespace
+subprocess.time = SimpleNamespace(sleep=time.sleep)
+real = time.monotonic
+offset = Path({offset.as_posix()!r})
+poll_seconds = {getattr(request, "param", 15)!r}
+
+def monotonic():
+    return real() + float(offset.read_text("utf-8"))
+
+def sleep(seconds):
+    seconds = poll_seconds if seconds == 15 else seconds
+    offset.write_text(str(float(offset.read_text("utf-8")) + seconds), encoding="utf-8")
+
+time.sleep = sleep
+time.monotonic = monotonic
+''', encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(folder) + os.pathsep + os.environ.get("PYTHONPATH", ""))
+
+
+@pytest.fixture
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     # A launcher's marker and test budget, again: a module fixture may set them as a launcher would.
     monkeypatch.delenv("FORGE_WORKER", raising=False)

@@ -17,6 +17,12 @@ STORY = "gh-retry"
 
 @pytest.fixture(params=[False, True], ids=["new-client", "adopted-v1.2.2"])
 def client(env, request):
+    # Keep one real 1+2+4-second outage contract; the remaining cases share child time.
+    real_backoff = (not request.param
+                    and request.node.originalname == "test_2_a_lasting_github_outage_stops_plainly_and_can_be_rerun"
+                    and request.node.callspec.indices["answer"] == 0)
+    if not real_backoff:
+        request.getfixturevalue("fake_clock")
     env.repo.git("switch", "-q", "-c", "fix/setup")
     if request.param:
         settings = (env.repo.path / "forge.toml").read_text("utf-8")
