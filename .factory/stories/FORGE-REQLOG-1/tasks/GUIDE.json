@@ -1,0 +1,13 @@
+{
+  "base": "39364b91f44cabedfe130c2ec6618c32d8a741fc",
+  "branch": "task/FORGE-REQLOG-1-GUIDE",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-AGENTS-1/SKILL",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T17:18:25.536846+00:00",
+      "step": "start"
+    }
+  ]
+}
