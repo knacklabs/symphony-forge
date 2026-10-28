@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, repo, story, task
+from forge import checks, close, codex, githooks, repo, review, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -26,6 +26,11 @@ REFUSALS = {
     "owner_merges": ("{item} changes the merge setting in forge.toml, so only the repo owner merges its pull request.", "the repo owner merges its pull request, then forge next"),
     "not_ready": ("Forge has no clean ready record for {item}.", "forge close {item}"),
     "changed": ("The pull request's head changed since Forge recorded {item} ready.", "forge close {item}"),
+    "retest_failed": ("The combined change failed its tests.\n{tests}", "forge work {item}"),
+    "dirty_retest": ("The worktree has uncommitted changes:\n{files}",
+                     "commit or set aside these changes, then forge merge {item}"),
+    "base_moved": ("The default branch moved again. Run forge merge again to check the combined change.",
+                   "forge merge {item}"),
     "pr": ("Forge needs an open pull request for {item} targeting {default} from {branch}.",
            "open or correct its pull request, then forge close {item}"),
     "merge_failed": ("GitHub did not merge the pull request for {item}: {reason}.", "check the pull request, then forge merge {item}"),
@@ -76,8 +81,40 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             repo.refuse(REFUSALS["owner_merges"], item=item)
         if repo.git("rev-parse", branch, cwd=top) != head:
             repo.refuse(REFUSALS["changed"], item=item)
+        checked_default = repo.git("rev-parse", f"origin/{default}", cwd=top)
+        retested = checked_default != base
+        if retested:
+            status = repo.run("git", "status", "--porcelain", "-z", "--no-renames",
+                              "--untracked-files=all", cwd=worktree)
+            status.check_returncode()
+            changes = status.stdout.split("\0")
+            if any(changes):
+                repo.refuse(REFUSALS["dirty_retest"], item=item,
+                            files="\n".join(f"- {entry[3:]}" for entry in changes if entry))
+            print(f"{default} moved; Forge will merge it into this branch and run the related tests.", flush=True)
+            close._merge_default(worktree, item, branch, default,
+                                 {**pr, "mergeStateStatus": "BEHIND"}, repo.config(worktree))
+            base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
+            checked_default = base
+            cfg = repo.config(worktree)
+            command = (cfg["fast_test"] or cfg["test"]).replace("{base}", base)
+            failed, tested = review.test_run(worktree, command, f"origin/{default}", always=True)
+            print(tested, flush=True)
+            if failed:
+                repo.refuse(REFUSALS["retest_failed"], item=item,
+                            tests=tested.rsplit("Failed tests:\n", 1)[-1])
+            head = repo.git("rev-parse", "HEAD", cwd=worktree)
+            state = story.json_of(story.show(worktree, head, repo.state_path(item)))
+            state["review"].update(
+                changed=review.fingerprint(head, item, worktree, state, base),
+                branch_diff=review.fingerprint(head, item, worktree, state, base, branch_diff=True))
+            close._save(worktree, item, state, "Keep the review after the combined tests pass")
+            head = repo.git("rev-parse", "HEAD", cwd=worktree)
+            close._push(worktree, branch)
+            receipt["commit"] = head
+            _save_ready(path, receipt)
         try:
-            if config["test_place"] == "ci":
+            if config["test_place"] == "ci" and not retested:
                 checks.wait(worktree, item, head, config["checks"],
                             branch=branch, progress=getattr(args, "wait_for_progress", False),
                             slot=getattr(args, "check_slot", None))
@@ -107,6 +144,9 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 outcome = getattr(args, "outcome", None) or state.get("title") or doc.splitlines()[0].lstrip("# ")
                 body += "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
         body = close._bounded_body(body, suffix=f"\n\nForge-merged: {item}")
+        repo.git("fetch", "-q", "origin", default, cwd=top)
+        if repo.git("rev-parse", f"origin/{default}", cwd=top) != checked_default:
+            repo.refuse(REFUSALS["base_moved"], item=item)
         done = repo.run("gh", "pr", "merge", str(pr["number"]), "--squash",
                         "--subject", pr["title"], *completion, "--match-head-commit", head, cwd=top, input=body)
         after = repo.run("gh", "pr", "view", str(pr["number"]), "--json", "state", "--jq", ".state", cwd=top)

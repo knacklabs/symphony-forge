@@ -175,6 +175,19 @@ recommendation first. Save the answer before moving to the next question.
 
 ## Merges and settings
 
+If the default branch moved after close, `forge merge` first merges it into the item's branch.
+It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
+merge base. It pushes and merges only after the tests pass. A failure names the failed tests
+and gives `forge work <item>` as the next step. This is always on, with no setting. With no
+default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
+get it on upgrade and sync.
+After a green retest, Forge reuses the existing review and commits its coverage of the combined
+change before the push. It pushes and merges at once, without another pull-request CI wait.
+The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
+Before the retest, Forge refuses uncommitted changes and names their files. After tests and
+checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
+and gives `forge merge <item>` as the next step.
+
 Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
 the item's merge base with its head, so an older branch can merge after the owner enables agent
 merges. An already-merged pull request skips that check when tidying. Cleanup removes unchanged
@@ -2143,8 +2156,9 @@ command as a close stop.
 
 When GitHub reports a clash during the check wait or refuses a merge because the branch is
 behind or conflicting, `forge merge` retries close and merge once. A mergeable pull request
-keeps its current head. When the branch is behind the default branch, `forge merge` and
-`forge land` say so in one line, run close again to merge the default branch and run the tests,
+keeps its current head when the default branch has not moved. When GitHub refuses a branch
+that fell behind during the merge, `forge merge` and `forge land` say so in one line,
+run close again to merge the default branch and run the tests,
 review and checks as close decides, then retry the merge. If that merge selects a different
 Forge release, close finishes under that release before the original command continues.
 A real conflict stops with close's existing resolution steps. Other GitHub refusals keep their

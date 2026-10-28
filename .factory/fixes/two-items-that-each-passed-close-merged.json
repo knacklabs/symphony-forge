@@ -1,0 +1,118 @@
+{
+  "base": "930f7311b9eac452fd8c8dd9f9d64d26113411e4",
+  "branch": "fix/two-items-that-each-passed-close-merged",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17db3-e69d-7a30-883d-7e4c7587cda1",
+    "head": null,
+    "start": "1bd7c43747c43bbc1d97a1bc1537c24d72a0a213"
+  },
+  "done_when": "When the default branch has moved, a merge retests the combined change first, and it refuses with the names of the failing tests when that retest fails.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 80,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Retest when the default branch advances during tests or CI",
+      "work": 3
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 87,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Run the retest against the committed tree that will be pushed",
+      "work": 2
+    },
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 94,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh the committed review after merging changes to a reviewed file",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9702cc89e7dab2ff02fc0caa48a0787c15ab067fa1d26f1cf12b6c3709464f6c",
+    "changed": "79311c91ab18026535ac27934e4ecb52c4ace6c1dbf7a7d561c0b0cce1fcba04",
+    "commit": "a99d75620eb3929c3d5b918a0be1484be9c1df64",
+    "dismissals": [],
+    "findings": [],
+    "id": "51a78436-3ee3-47df-a6c7-c0011b28d12b",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T14:11:28.595728+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T14:23:09.495946+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T14:43:37.341576+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T15:13:30.256281+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T00:55:25.437299+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T01:27:09.222132+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T04:38:09.213596+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T07:04:14.479240+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-27T14:23:09.510645+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/merge.py",
+    "reason": "Owner: fix findings 1 and 2 this round; finding 3 (review not redone after main merges in) is accepted as a known issue because the combined tests already pass and a new review would add minutes to every such merge",
+    "wait_id": "d048232b-9656-4c28-bc9c-cda49602ac52",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "37f4a1f7-7ce8-4c09-b631-13dc3f38fd14",
+    "head": "9ed8471ac655f57057c9b7466f802672269f1a05",
+    "keys": {},
+    "round": 5
+  },
+  "why": "Two items that each passed close merged one after the other and left the default branch red.",
+  "worker": "codex"
+}
