@@ -1,6 +1,7 @@
 """Autoreview's process output and finding schema at the external tool boundary."""
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -12,6 +13,35 @@ from typing import Any
 from forge import machine, repo, score
 
 PRIORITIES = ("P0", "P1", "P2", "P3")
+TOKENS = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
+
+
+def spent(path: Path) -> dict[str, Any]:
+    """The review engine's token use summed over its runs (a chunked review has one per pass,
+    a retry one more) and its first chat, read once: Codex's `exec --json` events or Claude's
+    results."""
+    runs: list[dict[str, Any]] = []
+    with contextlib.suppress(OSError):
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            usage = event.get("usage")
+            if event.get("type") == "thread.started":
+                runs.append({"chat": event.get("thread_id")})
+            elif event.get("type") == "turn.completed" and isinstance(usage, dict) and runs:
+                # Codex reports the thread's running total, so its last turn holds the run's use.
+                runs[-1].update({key: usage.get(key) for key in TOKENS})
+            elif event.get("type") == "result" and isinstance(usage, dict):
+                runs.append({"chat": event.get("session_id"), **repo.claude_tokens(usage)})
+        path.unlink()
+    if not runs:
+        return {}
+    return {"chat": runs[0]["chat"], **{key: sum(counts) if (counts := [
+        run[key] for run in runs if isinstance(run.get(key), int)]) else None for key in TOKENS}}
 
 
 def attempt(argv: list[str], cwd: Path, out: Path,

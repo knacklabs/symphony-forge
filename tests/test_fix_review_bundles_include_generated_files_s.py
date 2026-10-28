@@ -12,16 +12,18 @@ STORY = "FIX-REVIEW-BUNDLES-INCLUDE-GENERATED-FILES-S"
 
 # Records the branch diff Autoreview builds its bundle from (merge base of --base and HEAD, to
 # HEAD, in the tree it was started in), then answers as the stub Autoreview does.
+# Test audit: retain the diff, prompt and re-review assertions. Like the sign-off recorder,
+# this stand-in must run engine calls in the helper's Windows adapter process. The existing
+# close cases own the contract, so reuse them without a new test or production seam.
 RECORDER = '''#!{python}
-import os, subprocess, sys
+import os, runpy, subprocess, sys
 args = sys.argv[1:]
 base = args[args.index("--base") + 1]
 git = lambda *a: subprocess.run(["git", *a], capture_output=True, encoding="utf-8", errors="replace", check=True).stdout
 start = git("merge-base", base, "HEAD").strip()
 with open(os.environ["AUTOREVIEW_STUB"] + ".diff", "a", encoding="utf-8") as out:
     out.write(git("diff-tree", "-r", "--patch", "--no-renames", start, "HEAD"))
-# Not os.execv: on Windows it joins the arguments unquoted, so the prompt splits into words.
-sys.exit(subprocess.run([sys.executable, {stub!r}, *args]).returncode)
+runpy.run_path({stub!r}, run_name="__main__")
 '''
 
 

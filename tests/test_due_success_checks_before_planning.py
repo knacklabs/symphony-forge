@@ -53,9 +53,12 @@ def test_1_due_success_check_precedes_planning_when_every_roadmap_story_is_done(
     repo.git("fetch", "-q", "origin")
     repo.git("worktree", "remove", str(plan))
 
-    # Completed entries retain their links: next offers planning rather than discovery.
-    # The crossing contract is that the due check precedes those next-step instructions.
+    # The journey adds a current-step header. The due check still precedes the
+    # next planning action; the header is not a competing action.
     expected = DUE + [
         "No story or fix is in progress.",
         'Next: forge start "<idea>"']
-    assert _ok(repo.forge("next")).splitlines()[:len(expected)] == expected
+    lines = _ok(repo.forge("next")).splitlines()
+    assert lines[0] == ("Step 1 of 7: ideas and client notes." if adoption == "new"
+                        else "Step 7 of 7: run and improve.")
+    assert lines[1:1 + len(expected)] == expected

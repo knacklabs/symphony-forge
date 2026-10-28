@@ -58,6 +58,11 @@ def test_1_ci_close_leaves_tests_to_ci_and_red_ci_returns_the_item(env, tmp_path
     failed["headRefOid"] = env.repo.git("rev-parse", "HEAD", cwd=where)
     failed["commits"]["nodes"][0]["commit"]["oid"] = failed["headRefOid"]
     github(env.gh, [failed])
+    # `next` reads the REST open-PR inventory before it asks for check details.
+    env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([{
+        "headRefName": f"fix/{item}", "headRefOid": failed["headRefOid"], "body": "",
+        "url": "https://github.com/acme/shop/pull/7", "isDraft": False,
+    }]))
     next_step = env.repo.forge("next")
     assert next_step.returncode == 0, next_step.stderr
     assert f"forge work {item}" in next_step.stdout
