@@ -11,13 +11,19 @@
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-FEATURE-1/PY",
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-28T02:23:37.185339+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Client apps ship an MCP server so agents can use their features: The MCP server and tools in the Python starter is stuck. It should deliver: The same in the Python starter: the core tools list with `call_tool`, the `app/mcp` package at `/mcp` with the key check, the rate limit and the idempotency table, the projects tools file, the starter's `services.toml`, the contract and behaviour cases, and the Python feature copy's tools file.\nIt changes 4711 lines outside tests, over its limit of 400.\nThe worker tried: Add agent tools to the Python starter.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "30cdb705-860a-4651-b566-f70cf8385ea9"
+  },
   "stuck": {
     "close": null,
     "head": "836747dad9bf9c35e7747c409dcbfc40a6b44480",
