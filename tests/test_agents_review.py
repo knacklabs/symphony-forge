@@ -22,8 +22,11 @@ REVIEW_RULE = (
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2"])
 def test_3_reviews_hold_agent_work_that_breaks_a_must_rule(env, tmp_path, monkeypatch, adopted):
     # Audit: real work delivers the rule and real close distinguishes Must, Should and demo.
-    # Missing prompt delivery or an absent/overbroad floor breaks this contract. Database
-    # coverage cannot detect agent titles or prompt-only edits. Only external tools are faked;
+    # A Markdown prompt read by production code must receive normal review even when no
+    # application code changes. The old docs classifier silently made its Must finding advice.
+    # Existing docs tests cover only test consumers, not runtime prompts. Extend this owner
+    # rather than repeat the inline-prompt scenario. Missing/overbroad floors also break it.
+    # Database coverage cannot detect agent titles or prompt-only edits. Only external tools are faked;
     # no production seam is needed. Prompt text is the reviewer's independent contract.
     setup_client(env, tmp_path, adopted)
     env.checks(GREEN)
@@ -39,16 +42,22 @@ def test_3_reviews_hold_agent_work_that_breaks_a_must_rule(env, tmp_path, monkey
 
     with monkeypatch.context() as patch:
         patch.setattr(repo, "git", fixture_git)
-        item, where = env.start_approved_task(STORY_DOC)
+        env.commit(repo.path, "app.py", "from pathlib import Path\n"
+                   "SYSTEM_PROMPT = Path('docs/booking.md').read_text(encoding='utf-8')\n",
+                   "Load the booking prompt")
+        env.commit(repo.path, "docs/booking.md", "Use the existing booking workflow.\n",
+                   "Keep the current booking prompt")
+        repo.git("push", "-q", "origin", "main")
+        item, where = env.start_approved_task(
+            STORY_DOC, changes={"docs/booking.md": "Use an open-ended loop for every request.\n"})
     log = install_claude(repo)
     worked = repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert BRIEF in " ".join(calls(log)[-1]["brief"].split())
-    env.commit(where, "app.py", "SYSTEM_PROMPT = 'Use an open-ended loop for every request'\n",
-               "Add the chat prompt")
     title = "Agents: Start with the simplest thing that works"
     env.reviews(blocked(_scored("P1", title,
-                               "Gain 2, Work 3, Harm 1\nKnown steps use a free agent loop.")))
+                               "Gain 2, Work 3, Harm 1\nKnown steps use a free agent loop.",
+                               "docs/booking.md")))
     closed = env.close(item)
     output = closed.stdout + closed.stderr
     assert closed.returncode == 1, output
@@ -57,11 +66,12 @@ def test_3_reviews_hold_agent_work_that_breaks_a_must_rule(env, tmp_path, monkey
     assert "Gain 4, Work 2, Harm 1 (floor: agents)" in output
     assert REVIEW_RULE in " ".join(env.prompt().split())
 
-    env.commit(where, "app.py", "SYSTEM_PROMPT = 'Follow the fixed booking workflow'\n",
+    env.commit(where, "docs/booking.md", "Follow the fixed booking workflow.\n",
                "Use the booking workflow")
     advice = "Agents advice: Route by difficulty"
     env.reviews(blocked(_scored("P2", advice,
-                               "Gain 2, Work 2, Harm 2\nEasy turns use the larger model.")))
+                               "Gain 2, Work 2, Harm 2\nEasy turns use the larger model.",
+                               "docs/booking.md")))
     released = env.close(item)
     output = released.stdout + released.stderr
     assert released.returncode == 0, output
@@ -78,9 +88,12 @@ def test_3_reviews_hold_agent_work_that_breaks_a_must_rule(env, tmp_path, monkey
             env.commit(repo.path, "forge.toml", config + 'repo = "client"\nstage = "prototype"\n',
                        "Return to the unsigned demo")
             repo.git("push", "-q", "origin", "main")
-        demo, _ = env.start_fix(allow_large="Prototype before sign-off")
+        demo, _ = env.start_fix(
+            {"docs/booking.md": "Use an open-ended loop for every request.\n"},
+            allow_large="Prototype before sign-off")
         env.reviews(blocked(_scored("P1", title,
-                                   "Gain 2, Work 3, Harm 1\nKnown steps use a free agent loop.")))
+                                   "Gain 2, Work 3, Harm 1\nKnown steps use a free agent loop.",
+                                   "docs/booking.md")))
         closed = env.close(demo)
         output = closed.stdout + closed.stderr
         assert closed.returncode == 0, output
