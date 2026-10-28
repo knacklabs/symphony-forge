@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/standards.md\tGate: Exclude unrelated agent-ready guidance from this part\tFORGE-AGENTS-1/SKILL",
+      "kind": "bug",
+      "path": "src/forge/standards.md",
+      "line": 164,
+      "text": "Gate: Exclude unrelated agent-ready guidance from this part",
+      "from": "blocking",
+      "item": "FORGE-AGENTS-1/SKILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\t.claude/skills/forge/SKILL.md\tThe guide already differs from the source template outside the agents additions.",
+      "kind": "simplify",
+      "path": ".claude/skills/forge/SKILL.md",
+      "line": 178,
+      "text": "The guide already differs from the source template outside the agents additions.",
+      "from": "worker",
+      "item": "FORGE-AGENTS-1/SKILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "simplify\t.codex/skills/forge/SKILL.md\tThe guide already differs from the source template outside the agents additions.",
+      "kind": "simplify",
+      "path": ".codex/skills/forge/SKILL.md",
+      "line": 178,
+      "text": "The guide already differs from the source template outside the agents additions.",
+      "from": "worker",
+      "item": "FORGE-AGENTS-1/SKILL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
