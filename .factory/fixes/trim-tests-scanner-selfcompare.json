@@ -1,6 +1,13 @@
 {
   "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
   "branch": "fix/trim-tests-scanner-selfcompare",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18384-b67c-72b0-a5c1-55fb39ec8707",
+    "head": null,
+    "start": "7a766b8ea9561a9785d1f363291367a57e77dc99"
+  },
   "done_when": "The scanner case and its support, and the sync expected-value program, are removed; the executable refusal triggers and the independent shipped-byte checks stay",
   "fix_kind": "mechanical",
   "kind": "fix",
