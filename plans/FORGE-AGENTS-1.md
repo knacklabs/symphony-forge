@@ -8,7 +8,7 @@
 - The skill covers web chat only. WhatsApp and phone calls are not covered, and neither are the rules that only join channels. Speech can be added to the same chat, so the skill has three rules for it: a spoken reply has no digits, symbols, links or emoji; a transcript follows the same storage and delete rules as typed text; speech calls log their cost per user. (Source: your decisions, 28 Oct 2026)
 - One new Must rule says every model call goes through Mainline. The language model, speech to text and text to speech all use the one Mainline client with `MAINLINE_AI_KEY`. The app never holds a provider key. The app's Can use list in Mainline says which models and voices it may use. Mainline counts the cost, and the app logs it per user too. (Source: your decision, 28 Oct 2026)
 - The skill's description makes the builder load it before any agent, chat, voice or in-app assistant work. The worker brief and the coordinator's guide say so too. (Source: your decision, 28 Oct 2026)
-- A review reports new agent work that breaks a Must rule as a must-fix finding titled `Agents: <the rule>`. A broken Should rule is advice. This is how the database skill works today. (Source: your decision, 28 Oct 2026)
+- A review reports new agent work that breaks a Must rule as a must-fix finding titled `Agents: <the rule>`. A broken Should rule is advice and never holds the work. A prototype before sign-off keeps its short review, which does not check these rules. This is how the database skill works today. (Source: your decision, 28 Oct 2026)
 - The skill keeps your closing note: defaults are starting points, a rule is deleted only for a stated reason, and the builder checks the current docs before it relies on an exact API. (Source: your agent must-haves page)
 - A new client repo gets the skill at `forge init`. An existing client repo gets it with `forge sync`, and its app code does not change. Agent code that exists is not moved to the rules. (Source: your decision, 28 Oct 2026; the last sentence is the planner's choice)
 
@@ -58,7 +58,7 @@ Each new test file starts with `STORY = "FORGE-AGENTS-1"`. Tests run the forge c
 The owner's page covers WhatsApp, voice and web. The owner's decisions of 28 Oct 2026 cut it to web chat with optional speech. The skill text below keeps the page's wording and defaults, and makes only these changes:
 
 - Left out: the whole section "One person, many agents" (a separate agent per channel, linked identities, the shared timeline, agents acting for each other, never two agents talking at once, hand-offs); barge-in on voice; the 24-hour message window; the channel tags on each rule (every rule is for web chat); the closing links, which stay as names only.
-- Reworded for one web chat: the "end to end" flow; "Acknowledge fast" (the chat request, not a webhook); "Identity comes from the signed-in session" (not the channel's number); "A speed target" (no voice figure); "Show that you are working" (typing and streaming, no read receipt); "One reply path with an idempotency key"; "A strict output contract" (no voice sentence); "Consent" (per user, not per channel); "Never take secrets by speech or chat"; the test harness default.
+- Reworded for one web chat: the "end to end" flow; "Acknowledge fast" (the chat request, not a webhook); "Identity comes from the signed-in session" (not the channel's number); "A speed target" (no voice figure); "Show that you are working" (typing and streaming, no read receipt); "One reply path with an idempotency key"; "A strict output contract" (no voice sentence); "Consent" (per user, not per channel); "Never take secrets by speech or chat"; the test layers rule and its harness default.
 - Added: the Must rule "Every model call goes through Mainline" under Cost and tracing, and the `Spoken chat` section with three Must rules.
 
 ### The skill text
@@ -293,7 +293,7 @@ LangGraph: store.search(namespace, query=...) is semantic search and needs an em
 
 Default: wait 80 ms ; a late result is held on the user's session and injected once into the next turn, then dropped.
 
-LangGraph: parallel branches join before the next step, so a slow recall branch delays the model. Start recall as a task before invoking the graph, wait with asyncio.wait_for(task, 0.08) , pass the result in the run context, and write a late result to a pending_memory state key the next turn reads once.
+LangGraph: parallel branches join before the next step, so a slow recall branch delays the model. Start recall as a task before invoking the graph, wait with asyncio.wait({task}, timeout=0.08) (not wait_for, which cancels the lookup when the wait ends and so loses the late result), pass the result in the run context, and write a late result to a pending_memory state key the next turn reads once.
 
 ### Label what was found; ask instead of guessing
 
@@ -489,7 +489,7 @@ Default: no "known failure" skips without an owner and a date.
 
 ### One job per test layer
 
-**Must.** Automated tests on every change; a live set against the real model on every prompt change and nightly; a multi-day persona run with an answer key before each release; people on real phones and real calls for edge cases only.
+**Must.** Automated tests on every change; a live set against the real model on every prompt change and nightly; a multi-day persona run with an answer key before each release; people using the real web chat, and the real speech providers when the app has speech, for edge cases only.
 
 Default: a harness that fakes the web chat endpoint and the speech providers.
 
@@ -528,9 +528,9 @@ Defaults are starting points, not limits: measure your own latencies and costs a
    - `src/forge/templates/skill.md`, after the database line: "Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voice or in-app assistant work. When a part adds one, the plan names the skill's sections that apply and the model service it uses." In Planning a story, the same sentence once.
    - Test `tests/test_agents_skill.py::test_2_the_brief_and_the_coordinator_name_the_skill`, parameters `new init` and `earlier adopted`. After init or sync, `forge work` writes the brief with the brief sentence, and both synced `forge/SKILL.md` copies hold the coordinator sentence. The skill's `description` line holds `agent, chat, voice or in-app assistant work`.
 3. Review.
-   - `src/forge/templates/review.md`, after the database rule: "Report agent, chat or assistant code that this change adds or changes, and that breaks a Must rule of the agents skill (.codex/skills/agents/SKILL.md), as a P1 finding titled `Agents: <the rule's heading>`. Report a broken Should rule as a P2 finding titled `Agents advice: <the rule's heading>`. Agent code that the default branch already has is not a finding."
-   - `src/forge/score.py` `normalise`: an `Agents: ` title gets the same floor as `Database: ` (Gain 4, Work 2) and the line ` (floor: agents)`. An `Agents advice: ` title gets no floor.
-   - Test `tests/test_agents_review.py::test_3_reviews_hold_agent_work_that_breaks_a_must_rule`, parameters `new-client` and `adopted-v1.2.2`, built like `tests/test_database_review.py::test_6`. `forge work` carries the brief sentence. A review finding titled `Agents: ...` with a low model score blocks `forge close` and shows the floor. A finding titled `Agents advice: ...` does not block.
+   - `src/forge/templates/review.md`, after the database rule: "Report agent, chat or assistant code that this change adds or changes, and that breaks a Must rule of the agents skill (.codex/skills/agents/SKILL.md), as a P1 finding titled `Agents: <the rule's heading>`. Report a broken Should rule as a P2 finding titled `Agents advice: <the rule's heading>` scored Gain 1 or 2, so it stays advice. Agent code, including its system prompts, tool descriptions and prompt versions, is agent code, so a change that only edits a prompt is checked. Agent code that the default branch already has is not a finding."
+   - `src/forge/score.py` `normalise`: an `Agents: ` title gets the same floor as `Database: ` (Gain 4, Work 2) and the line ` (floor: agents)`. An `Agents advice: ` title gets no floor. The prototype review (`review-light.md`, P0 only, chosen by `blocking_level`) gets no agents rule: a prototype before sign-off is a demo, and its three checks stay as they are.
+   - Test `tests/test_agents_review.py::test_3_reviews_hold_agent_work_that_breaks_a_must_rule`, parameters `new-client` and `adopted-v1.2.2`, built like `tests/test_database_review.py::test_6`. `forge work` carries the brief sentence. A review finding titled `Agents: ...` with a low model score blocks `forge close` and shows the floor. A finding titled `Agents advice: ...` scored Gain 2, Work 2, Harm 2 does not block. A prototype fix before sign-off (`adopted-v1.2.2` case) with an `Agents: ...` finding keeps its P0-only review and the finding does not block.
 
 ### New and existing repos
 
@@ -564,7 +564,7 @@ New moving parts: none.
   4. The words of the three speech rules and of the Mainline rule are the planner's, written from the owner's decisions of 28 Oct 2026. The other 56 rules keep the owner's words with the changes listed above.
   5. Nine rules are reworded for one web chat, as listed above.
   6. The review titles are `Agents: <rule>` (P1, with the Database floor) and `Agents advice: <rule>` (P2).
-  7. The review rule fires on agent, chat or assistant code that a change adds or changes. It does not fire on a change that only touches a prompt string.
+  7. The review rule fires on agent, chat or assistant code that a change adds or changes, including a change that only edits a prompt. It does not run in the prototype review before sign-off.
   8. The closing references are names only, with no links.
   9. Two parts: SKILL, then REVIEW.
 - No client repo is named in this story's code, tests, texts or commits.
