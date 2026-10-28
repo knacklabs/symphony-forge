@@ -101,7 +101,7 @@ logging library:
 export class JsonLogger implements LoggerService {
   private write(level: string, message: string, module?: string, context: object = {}) {
     process.stdout.write(JSON.stringify({ timestampUtc: new Date().toISOString(), level, message,
-      context, environment: process.env.NODE_ENV, serviceName: 'api', module,
+      context, environment: process.env.APP_ENV, serviceName: 'api', module,
       correlationId: correlationStore.getStore() }) + '\n');
   }
   log(message: string, module?: string, context?: object) { this.write('info', message, module, context); }
@@ -120,6 +120,8 @@ entry and outgoing call. Log a fixed message with only the fields needed in the 
 ```ts
 this.logger.log('Invoice paid', 'InvoiceService', { invoiceId });
 ```
+
+In an app with `libs/core/server/src/common/request-log.middleware.ts`, `requestLogMiddleware` writes the request line and `JsonLogger` removes secret values and reads `LOG_LEVEL` through `getLogLevel()`. Add no other request logging, redaction or error-tracking code.
 
 ## Errors
 
