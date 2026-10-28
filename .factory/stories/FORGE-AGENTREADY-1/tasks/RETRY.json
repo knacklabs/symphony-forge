@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-AGENTREADY-1-RETRY",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T13:34:17.770601+00:00",
+      "step": "start"
+    }
+  ]
+}
