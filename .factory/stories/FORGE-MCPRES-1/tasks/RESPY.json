@@ -8,25 +8,79 @@
     "head": null,
     "start": "70f62ea5829105be54dc339e45c14f0967b0a675"
   },
+  "known": [
+    {
+      "area": "test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one() in tests/test_mcp_resources.py",
+      "file": "tests/test_mcp_resources.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 160,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one[python]",
+      "work": 1
+    },
+    {
+      "area": "_field_guide() in src/forge/templates/starter-python/apps/api/app/core/resources.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/core/resources.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 76,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: one allowed-value list for each choice field",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b96fc2e06d59dc7934a46cd9d4d58223f18b983b490c6823943842bdf5d9cfeb",
+    "changed": "dc8e50f6f145ea7ae8ae952280417eb7252ff8656912958be516db3b10b9d0b4",
+    "commit": "efe4ad731ad8d11bc2ef5f83827079b806a3e1d3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Test.\nCase: normal use - CI checks a freshly initialized Python starter.\nThe Python expression only matches `define_prompt(`, but the sole production definition is `def define_prompt[InputT: BaseModel](` in app/core/prompts.py:31. Production contains no matching calls, so git grep returns 1 and the assertion on line 162 always fails, including before live checks run. Recognize the generic function declaration separately while retaining the check against default prompt registrations.",
+        "file": "tests/test_mcp_resources.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 160,
+        "priority": "P1",
+        "title": "Gate: test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one[python]",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done.\nCase: normal use - a developer builds a feature with `--field 'status:status(active)'`.\nThe feature command accepts a single status value (src/forge/feature.py:53), and its Python generator emits a single-value Literal (src/forge/feature_python.py:313). [Pydantic emits `const` for that schema](https://github.com/pydantic/pydantic/blob/main/pydantic/json_schema.py), whereas this branch recognizes only `enum`. Consequently, the guide omits allowed_values and values_uri, no status-value resource is listed, and reading its address fails. Normalize `const` into a one-element allowed-value list as well.",
+        "file": "src/forge/templates/starter-python/apps/api/app/core/resources.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 2,
+        "line": 76,
+        "priority": "P1",
+        "title": "Not done: one allowed-value list for each choice field",
+        "work": 2
+      }
+    ],
+    "id": "68d1b7f5-3120-4842-a96d-b8f415ec973d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-28T08:40:46.876334+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-28T09:50:51.839705+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "by": "owner",
-    "choice": "same",
-    "question": "Client apps offer MCP resources and prompts too: Resources and prompts in the Python starter is stuck. It should deliver: The same in the Python starter: `app/core/resources.py` and `prompts.py`, the `app/mcp` handlers, the tools file comment and the app's cases.\nIt changes 433 lines outside tests, over its limit of 400.\nThe worker tried: Add Python starter resources and optional prompts.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "reason": "The owner allowed every MCPRES-1 part to go over the line limit",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "25b88391-5280-420d-adf8-3b91150d476f",
-    "worker_round": 1
-  },
   "stuck": {
     "close": null,
     "head": "9aa8511bcebe7c71c2ab040bb465b1801a3edab5",
