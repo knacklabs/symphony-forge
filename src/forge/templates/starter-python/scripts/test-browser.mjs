@@ -28,6 +28,10 @@ for (const [index, file] of files.entries()) {
   const status = run(corepack, ['pnpm', 'exec', 'playwright', 'test', '--config', 'apps/web/playwright.config.ts',
     '--reporter=line,blob', '--output', `test-results/browser-artifacts/${index}`, pattern],
   { ...process.env, PLAYWRIGHT_BLOB_OUTPUT_FILE: report });
+  if (status !== 0) {
+    // The next file recreates the API, so the outer runner can no longer read this failure's logs.
+    run('docker', ['compose', '-f', 'compose.test.yml', 'logs', '--no-color', 'api']);
+  }
   failed ||= status !== 0;
 }
 const merged = run(corepack, ['pnpm', 'exec', 'playwright', 'merge-reports', '--reporter=junit', reports],
