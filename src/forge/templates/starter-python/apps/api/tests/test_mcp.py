@@ -1,11 +1,16 @@
 """The agent MCP endpoint and tool contract through the running API."""
 
 import asyncio
+import json
+from typing import cast
 from uuid import uuid4
 
 import httpx
+import pytest
 from conftest import add_agent_key, agent_client
-from mcp.types import CallToolResult, TextContent
+from mcp.client.session import ClientSession
+from mcp.shared.exceptions import MCPError
+from mcp.types import CallToolResult, TextContent, TextResourceContents
 from test_api import sign_up
 
 
@@ -27,6 +32,42 @@ def _tool_text(result: CallToolResult) -> str:
     content = result.content
     assert content and isinstance(content[0], TextContent)
     return content[0].text
+
+
+async def _read_json_resource(session: ClientSession, uri: str) -> object:
+    result = await session.read_resource(uri)
+    assert len(result.contents) == 1
+    content = result.contents[0]
+    assert isinstance(content, TextResourceContents)
+    assert content.mime_type == "application/json"
+    return cast(object, json.loads(content.text))
+
+
+def _has_sentence(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value.split()) >= 3
+        and value.rstrip().endswith((".", "!", "?"))
+    )
+
+
+def _schema_has_enum(schema: object, definitions: dict[str, object]) -> bool:
+    if not isinstance(schema, dict):
+        return False
+    if isinstance(schema.get("enum"), list):
+        return True
+    reference = schema.get("$ref")
+    if isinstance(reference, str) and _schema_has_enum(
+        definitions.get(reference.rsplit("/", 1)[-1]), definitions
+    ):
+        return True
+    for key in ("anyOf", "oneOf", "allOf"):
+        variants = schema.get(key)
+        if isinstance(variants, list) and any(
+            _schema_has_enum(variant, definitions) for variant in variants
+        ):
+            return True
+    return False
 
 
 def test_the_mcp_server_refuses_a_missing_or_revoked_agent_key(
@@ -166,6 +207,164 @@ def test_every_tool_has_a_description_annotations_schemas_and_the_error_shape(
                 assert _tool_text(result)
 
     asyncio.run(check_tools())
+
+
+def test_an_agent_reads_a_project_the_project_fields_and_the_status_values_as_resources(
+    client: httpx.Client,
+) -> None:
+    # Audit: a missing project registration, changed item data, or broken missing-id error fails.
+    # Existing tests only read project data as tools, and none exercise this MCP resource path.
+    # This uses the public HTTP/MCP boundary and needs no production seam.
+    _, csrf = sign_up(client)
+    _, key = _agent(client, csrf, "member")
+
+    async def read_project_resources() -> None:
+        async with agent_client(key) as session:
+            name = f"Resource project {uuid4().hex[:8]}"
+            created = await session.call_tool(
+                "projects_create", {"name": name, "status": "active"}
+            )
+            assert created.is_error is False
+            assert created.structured_content is not None
+            project_id = created.structured_content["project_id"]
+            assert isinstance(project_id, str)
+
+            templates = (await session.list_resource_templates()).resource_templates
+            assert any(
+                template.uri_template == "app://projects/{project_id}"
+                for template in templates
+            )
+
+            resources = (await session.list_resources()).resources
+            resource_uris = {str(resource.uri) for resource in resources}
+            fields_uri = "app://projects/fields"
+            values_uri = "app://projects/fields/status/values"
+            assert {fields_uri, values_uri} <= resource_uris
+
+            guide = await _read_json_resource(session, fields_uri)
+            assert isinstance(guide, dict)
+            fields = guide["fields"]
+            assert isinstance(fields, list)
+            name_field = next(field for field in fields if field["name"] == "name")
+            assert name_field["kind"] == "string"
+            assert name_field["required"] is True
+            assert name_field["description"]
+            assert name_field["example"] == "Quarterly planning"
+            status_field = next(field for field in fields if field["name"] == "status")
+            assert status_field["kind"] == "string"
+            assert status_field["required"] is True
+            assert status_field["description"]
+            assert status_field["example"] == "active"
+            assert status_field["allowed_values"] == ["active", "archived"]
+            assert status_field["values_uri"] == values_uri
+            assert all(
+                field["name"] not in {"response_format", "idempotency_key"}
+                for field in fields
+            )
+            assert await _read_json_resource(session, values_uri) == {
+                "values": [
+                    {"value": "active", "label": "Active"},
+                    {"value": "archived", "label": "Archived"},
+                ]
+            }
+
+            detailed = await session.call_tool(
+                "projects_get",
+                {"project_id": project_id, "response_format": "detailed"},
+            )
+            assert detailed.is_error is False
+            assert detailed.structured_content is not None
+            assert (
+                await _read_json_resource(session, f"app://projects/{project_id}")
+                == detailed.structured_content
+            )
+
+            missing_id = str(uuid4())
+            with pytest.raises(MCPError) as missing:
+                await session.read_resource(f"app://projects/{missing_id}")
+            assert missing.value.code == -32002
+            assert isinstance(missing.value.data, dict)
+            assert missing.value.data["kind"] == "not_found"
+            assert missing.value.data["retryable"] is False
+
+    asyncio.run(read_project_resources())
+
+
+def test_every_feature_has_its_resources_each_with_a_description_and_the_json_type(
+    client: httpx.Client,
+) -> None:
+    # Audit: missing feature registrations, enum lists, descriptions, JSON types, or readable JSON
+    # fail at the MCP boundary. Existing MCP coverage only checks tools; no seam is needed.
+    _, csrf = sign_up(client)
+    _, key = _agent(client, csrf)
+
+    async def check_feature_resources() -> None:
+        async with agent_client(key) as session:
+            tools = (await session.list_tools()).tools
+            features = {
+                tool.name.removesuffix("_search")
+                for tool in tools
+                if tool.name.endswith("_search")
+            }
+            resources = (await session.list_resources()).resources
+            templates = (await session.list_resource_templates()).resource_templates
+            resource_uris = {str(resource.uri) for resource in resources}
+            template_uris = {template.uri_template for template in templates}
+
+            assert features
+            for resource in resources:
+                assert _has_sentence(resource.description)
+                assert resource.mime_type == "application/json"
+                await _read_json_resource(session, str(resource.uri))
+            for template in templates:
+                assert _has_sentence(template.description)
+                assert template.mime_type == "application/json"
+
+            for feature in features:
+                create = next(
+                    (tool for tool in tools if tool.name == f"{feature}_create"), None
+                )
+                get = next(
+                    (tool for tool in tools if tool.name == f"{feature}_get"), None
+                )
+                assert create is not None
+                assert get is not None
+
+                get_properties = get.input_schema["properties"]
+                assert isinstance(get_properties, dict)
+                id_fields = [field for field in get_properties if field.endswith("_id")]
+                assert len(id_fields) == 1
+                feature_path = feature.replace("_", "-")
+                assert f"app://{feature_path}/{{{id_fields[0]}}}" in template_uris
+                assert f"app://{feature_path}/fields" in resource_uris
+
+                create_properties = create.input_schema["properties"]
+                assert isinstance(create_properties, dict)
+                definitions = create.input_schema.get("$defs", {})
+                assert isinstance(definitions, dict)
+                for field, schema in create_properties.items():
+                    if field in {"response_format", "idempotency_key"}:
+                        continue
+                    if _schema_has_enum(schema, definitions):
+                        assert (
+                            f"app://{feature_path}/fields/{field}/values"
+                            in resource_uris
+                        )
+
+    asyncio.run(check_feature_resources())
+
+
+def test_the_mcp_server_has_no_prompts_by_default(client: httpx.Client) -> None:
+    # Audit: accidentally registering a default prompt fails at the public MCP boundary. Existing
+    # tests only list tools; no production seam is needed.
+    _, csrf = sign_up(client)
+    _, key = _agent(client, csrf)
+
+    async def list_prompts() -> None:
+        async with agent_client(key) as session:
+            assert (await session.list_prompts()).prompts == []
+
+    asyncio.run(list_prompts())
 
 
 def test_project_search_pages_with_a_cursor_and_says_how_many_match(

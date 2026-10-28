@@ -1,12 +1,17 @@
 """The starter exposes feature data as MCP resources and permits explicit prompts."""
 import subprocess
+from pathlib import Path
 
 import pytest
 
-from test_feature_command import feature_live_run, require_feature_cases
+from test_feature_command import (
+    feature_live_run,
+    feature_python_live_run,
+    require_feature_cases,
+)
 from test_mcp import _adopted_files_after_sync
 from test_setup import _fresh_client
-from test_starter_tree import LIVE, _junit_cases, _require_cases, live_run
+from test_starter_tree import LIVE, _junit_cases, _require_cases, live_python_run, live_run
 
 
 RESOURCE_ITEM_CASE = "an agent reads a project, the project fields and the status values as resources"
@@ -31,12 +36,12 @@ def _git_grep(client, *args: str) -> subprocess.CompletedProcess[str]:
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_1_each_feature_offers_its_resources(repo, gh, tmp_path, tmp_path_factory, starter):
-    # Audit: this protects the installed and upgraded app boundary. It fails if a starter feature
-    # loses its item, field-guide or choice-value resources, if a feature built by the command is
-    # omitted, or if sync adds resource code to an earlier app. Existing MCP cases cover tools only.
-    # The app's API report owns resource reads; the format report owns the permission refusal.
+    # Audit: protects item, field-guide and choice-value reads, generated-feature coverage, and
+    # permission-filtered resource delivery. A missing resource, a resource omitted from a feature
+    # built by the command, or a resource visible without view permission fails it. Existing MCP
+    # cases cover tools only, so the API reports own reads and the tools report owns refusal.
     # No production seam is needed.
     if starter == "earlier adopted":
         before, after, status_before, status_after, sync_output = _adopted_files_after_sync(
@@ -57,37 +62,71 @@ def test_1_each_feature_offers_its_resources(repo, gh, tmp_path, tmp_path_factor
         assert paths_after <= sync_written
         return
 
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    client, initialized = _fresh_client(
+        repo,
+        gh,
+        tmp_path,
+        "--starter",
+        "react" if starter == "typescript" else "python",
+    )
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    assert (client / "apps/api/test/mcp.e2e-spec.ts").is_file()
+    if starter == "typescript":
+        assert (client / "apps/api/test/mcp.e2e-spec.ts").is_file()
+    else:
+        assert (client / "apps/api/app/core/resources.py").is_file()
+        assert (client / "apps/api/tests/test_mcp.py").is_file()
 
     if LIVE:
-        live = live_run(tmp_path_factory)
-        _require_cases(live["api"], (RESOURCE_ITEM_CASE, RESOURCE_CONTRACT_CASE))
-        _require_cases(
-            _junit_cases(live["folder"] / "test-results/formats.xml"),
-            (RESOURCE_PERMISSION_CASE,),
-        )
-        feature = feature_live_run(repo, gh, tmp_path_factory)
-        require_feature_cases(
-            feature["api"], "mcp.e2e-spec.ts", (RESOURCE_CONTRACT_CASE,)
-        )
-        require_feature_cases(
-            feature["api"], "jobs.e2e-spec.ts", (JOBS_SEARCH_CASE,)
-        )
+        if starter == "typescript":
+            live = live_run(tmp_path_factory)
+            _require_cases(live["api"], (RESOURCE_ITEM_CASE, RESOURCE_CONTRACT_CASE))
+            _require_cases(
+                _junit_cases(live["folder"] / "test-results/formats.xml"),
+                (RESOURCE_PERMISSION_CASE,),
+            )
+            feature = feature_live_run(repo, gh, tmp_path_factory)
+            require_feature_cases(
+                feature["api"], "mcp.e2e-spec.ts", (RESOURCE_CONTRACT_CASE,)
+            )
+            require_feature_cases(
+                feature["api"], "jobs.e2e-spec.ts", (JOBS_SEARCH_CASE,)
+            )
+        else:
+            live = live_python_run(tmp_path_factory)
+            require_feature_cases(
+                live["api"], "test_mcp", (
+                    "test_an_agent_reads_a_project_the_project_fields_and_the_status_values_as_resources",
+                    "test_every_feature_has_its_resources_each_with_a_description_and_the_json_type",
+                )
+            )
+            require_feature_cases(
+                live["api"], "test_tools", (
+                    "test_a_resource_read_without_the_view_permission_is_refused",
+                )
+            )
+            feature = feature_python_live_run(repo, gh, tmp_path_factory)
+            require_feature_cases(
+                feature["api"], "test_mcp", (
+                    "test_every_feature_has_its_resources_each_with_a_description_and_the_json_type",
+                )
+            )
+            require_feature_cases(
+                feature["api"], "test_jobs", (
+                    "test_an_agent_searches_reads_creates_and_updates_jobs_through_mcp_as_its_account",
+                )
+            )
 
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one(
     repo, gh, tmp_path, tmp_path_factory, starter
 ):
-    # Audit: this protects the default prompt list, custom prompt inputs, and the no-elicitation
-    # and no-sampling contract. It fails if defaults appear, custom prompts stop reaching agents,
-    # or the server starts asking either side for generated input. Existing tests cover tools only.
-    # The API and format reports own prompt delivery and argument behavior; no production seam is
-    # needed.
+    # Audit: protects the empty default prompt list, custom prompt arguments, and the absence of
+    # elicitation and sampling. Default prompts, missing custom inputs, or a new elicitation or
+    # sampling path fail it. Existing MCP tests cover tools only, so the API and tools reports own
+    # prompt delivery and argument behavior. No production seam is needed.
     if starter == "earlier adopted":
         before, after = _adopted_files_after_sync(repo)
         assert after == before
@@ -95,9 +134,19 @@ def test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one(
         assert not (repo.path / "apps/api/app/core/prompts.py").exists()
         return
 
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    client, initialized = _fresh_client(
+        repo,
+        gh,
+        tmp_path,
+        "--starter",
+        "react" if starter == "typescript" else "python",
+    )
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    prompts = client / "libs/core/server/src/common/prompts.ts"
+    prompts = (
+        client / "libs/core/server/src/common/prompts.ts"
+        if starter == "typescript"
+        else client / "apps/api/app/core/prompts.py"
+    )
     assert prompts.is_file()
 
     forbidden = _git_grep(
@@ -105,16 +154,38 @@ def test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one(
     )
     assert forbidden.returncode == 1, forbidden.stdout + forbidden.stderr
 
-    definitions = _git_grep(client, "-E", r"definePrompt\(")
+    definitions = _git_grep(
+        client,
+        "-E",
+        r"definePrompt\(" if starter == "typescript" else r"define_prompt\(",
+    )
     assert definitions.returncode == 0, definitions.stdout + definitions.stderr
-    assert {line.split(":", 1)[0] for line in definitions.stdout.splitlines()} == {
+    expected_path = Path(
         "libs/core/server/src/common/prompts.ts"
+        if starter == "typescript"
+        else "apps/api/app/core/prompts.py"
+    ).as_posix()
+    assert {line.split(":", 1)[0] for line in definitions.stdout.splitlines()} == {
+        expected_path
     }
 
     if LIVE:
-        live = live_run(tmp_path_factory)
-        _require_cases(live["api"], (NO_PROMPTS_CASE,))
-        _require_cases(
-            _junit_cases(live["folder"] / "test-results/formats.xml"),
-            (CUSTOM_PROMPT_CASE,),
-        )
+        if starter == "typescript":
+            live = live_run(tmp_path_factory)
+            _require_cases(live["api"], (NO_PROMPTS_CASE,))
+            _require_cases(
+                _junit_cases(live["folder"] / "test-results/formats.xml"),
+                (CUSTOM_PROMPT_CASE,),
+            )
+        else:
+            live = live_python_run(tmp_path_factory)
+            require_feature_cases(
+                live["api"], "test_mcp", (
+                    "test_the_mcp_server_has_no_prompts_by_default",
+                )
+            )
+            require_feature_cases(
+                live["api"], "test_tools", (
+                    "test_a_tools_file_can_add_a_prompt_with_its_inputs",
+                )
+            )

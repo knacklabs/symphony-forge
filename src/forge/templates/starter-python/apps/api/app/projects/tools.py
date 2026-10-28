@@ -8,6 +8,9 @@ from app.projects.service import ProjectService
 
 
 def register_tools() -> None:
+    # Resources come from these schemas. Add a prompt with define_prompt only for a
+    # repeated task in the constitution's Agent tasks section, with strict arguments
+    # and one permission. Send no elicitation or sampling requests.
     define_feature_tools(
         feature="projects",
         one="project",

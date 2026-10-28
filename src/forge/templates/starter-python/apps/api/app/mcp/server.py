@@ -13,8 +13,15 @@ from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.types import (
     CallToolRequestParams,
     CallToolResult,
+    GetPromptRequestParams,
+    GetPromptResult,
+    ListPromptsResult,
+    ListResourcesResult,
+    ListResourceTemplatesResult,
     ListToolsResult,
     PaginatedRequestParams,
+    ReadResourceRequestParams,
+    ReadResourceResult,
 )
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -28,9 +35,14 @@ from app.core import (
     ToolContext,
     ToolError,
     call_tool,
+    get_prompt,
+    list_prompts,
+    list_resources,
+    list_resource_templates,
     list_tools,
     rate_limit_retry_after,
     report_error,
+    read_resource,
     tool_failure,
 )
 from app.mcp.models import IdempotencyKey
@@ -129,8 +141,55 @@ def create_session_manager() -> StreamableHTTPSessionManager:
             )
         return await call_tool(params.name, params.arguments or {}, _context(request))
 
+    async def resources(
+        context: ServerRequestContext[Any], params: PaginatedRequestParams | None
+    ) -> ListResourcesResult:
+        return ListResourcesResult(
+            resources=list_resources(_context(cast(Request, context.request)))
+        )
+
+    async def templates(
+        context: ServerRequestContext[Any], params: PaginatedRequestParams | None
+    ) -> ListResourceTemplatesResult:
+        return ListResourceTemplatesResult(
+            resource_templates=list_resource_templates(
+                _context(cast(Request, context.request))
+            )
+        )
+
+    async def read(
+        context: ServerRequestContext[Any], params: ReadResourceRequestParams
+    ) -> ReadResourceResult:
+        return await read_resource(
+            str(params.uri), _context(cast(Request, context.request))
+        )
+
+    async def prompts(
+        context: ServerRequestContext[Any], params: PaginatedRequestParams | None
+    ) -> ListPromptsResult:
+        return ListPromptsResult(
+            prompts=list_prompts(_context(cast(Request, context.request)))
+        )
+
+    async def prompt(
+        context: ServerRequestContext[Any], params: GetPromptRequestParams
+    ) -> GetPromptResult:
+        return get_prompt(
+            params.name,
+            params.arguments or {},
+            _context(cast(Request, context.request)),
+        )
+
     server: Server[Any] = Server(
-        name, version="1.0.0", on_list_tools=tools, on_call_tool=call
+        name,
+        version="1.0.0",
+        on_list_tools=tools,
+        on_call_tool=call,
+        on_list_resources=resources,
+        on_list_resource_templates=templates,
+        on_read_resource=read,
+        on_list_prompts=prompts,
+        on_get_prompt=prompt,
     )
     return StreamableHTTPSessionManager(server, stateless=True, json_response=True)
 
