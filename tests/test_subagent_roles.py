@@ -180,7 +180,7 @@ def test_4_missing_design_leaves_codex_unpinned_and_claude_planning_uses_grill(r
 
     for name in ("planner", "architect"):
         assert _settings(repo.path, name) == ((None, None), ("opus", "high")), name
-    assert _settings(repo.path, "worker") == (("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium"))
+    assert _settings(repo.path, "worker") == (("gpt-6.1-sol", "low"), ("claude-opus-5-5", "medium"))
 
 
 def test_5_a_value_from_forge_toml_stays_one_setting_and_grill_keeps_its_own_model(repo):
