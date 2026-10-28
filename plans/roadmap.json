@@ -468,6 +468,12 @@
       "title": "Client apps offer MCP resources and prompts too",
       "status": "pending",
       "order": 106
+    },
+    {
+      "key": "FORGE-MAIL-1",
+      "title": "Email and member removal for client apps",
+      "status": "pending",
+      "order": 107
     }
   ],
   "epics": [
