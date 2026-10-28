@@ -85,7 +85,7 @@ def test_1_new_and_existing_repos_get_the_agents_skill(client):
 
 @pytest.mark.platform
 @pytest.mark.parametrize("adoption", ["new init", "earlier adopted"])
-def test_2_the_brief_and_the_coordinator_name_the_skill(repo, client):
+def test_2_the_brief_and_the_coordinator_name_the_skill(repo, client, adoption):
     # Audit: the worker's actual prompt and both delivered guides must name the skill.
     # A missing prompt paragraph is invisible to the delivery test. Only the host is faked.
     for host in (".claude", ".codex"):
@@ -97,6 +97,14 @@ def test_2_the_brief_and_the_coordinator_name_the_skill(repo, client):
                            .read_text("utf-8").splitlines() if line.startswith("description:"))
         assert "agent, chat, voice or in-app assistant work" in description
 
+    started = repo.forge("fix", "start", "Check agent guidance", "--done",
+                         "Agent guidance reaches the worker", "--kind", "mechanical", cwd=client)
+    assert started.returncode == 0, started.stdout + started.stderr
+    client = client.parent / f"{client.name}-fix-check-agent-guidance"
+    if adoption == "earlier adopted":
+        synced = repo.forge("sync", cwd=client)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+
     log = install_claude(repo)
     config = client / "forge.toml"
     config.write_text(config.read_text("utf-8").replace(
@@ -104,12 +112,6 @@ def test_2_the_brief_and_the_coordinator_name_the_skill(repo, client):
         'workers = "codex"', 'workers = "claude"'), encoding="utf-8")
     repo.git("add", "-A", cwd=client)
     repo.git("commit", "-q", "-m", "Use the current guidance", cwd=client)
-    # Work fetches the default branch, so publish only the fixture's local default branch.
-    repo.git("push", "-q", "origin", "HEAD:main", cwd=client)
-    started = repo.forge("fix", "start", "Check agent guidance", "--done",
-                         "Agent guidance reaches the worker", "--kind", "mechanical", cwd=client)
-    assert started.returncode == 0, started.stdout + started.stderr
-    where = client.parent / f"{client.name}-fix-check-agent-guidance"
-    worked = repo.forge("work", "check-agent-guidance", cwd=where)
+    worked = repo.forge("work", "check-agent-guidance", cwd=client)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert BRIEF in " ".join(calls(log)[-1]["brief"].split())
