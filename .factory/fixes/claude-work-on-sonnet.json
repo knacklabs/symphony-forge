@@ -1,0 +1,53 @@
+{
+  "base": "5dceb4da70e513f613ccd93c0a89e5cceb9fe123",
+  "branch": "fix/claude-work-on-sonnet",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a182c1-bce8-7080-a3e4-d0d36c4018af",
+    "head": null,
+    "start": "6928e93d17f782b87f348c9ebe95c13642c7192f"
+  },
+  "done_when": "forge.toml's Claude entries for build, fix, lite, grill and design name claude-sonnet-5-5, and no Claude entry names claude-opus-5-5",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "760a2c8b94c791968b62d7f6d780277cce65f3a34e9b31e570d572b84593397d",
+    "changed": "997830a510a83330eb2ffa985f364ecf1619c2166e8d3d42b13fe81290535806",
+    "commit": "10747b08d7d43ccf1b139545df4ca848b33a82f3",
+    "dismissals": [],
+    "findings": [],
+    "id": "f67f6faa-13c7-4674-b7fb-ec8e72a562c1",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T13:19:44.821898+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T13:21:54.135348+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T13:47:02.842876+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T14:36:43.944090+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b7a83830-eabb-4daf-883d-142e38f7bf38",
+    "head": "e866cea8499537e5e2dec873fefcffcbaf9b667a",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The owner wants Opus used as little as possible: user-facing work on Claude should run on Sonnet, and everything else stays on Codex Sol",
+  "worker": "codex"
+}
