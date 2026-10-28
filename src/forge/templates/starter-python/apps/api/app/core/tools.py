@@ -562,7 +562,7 @@ def define_feature_tools[InputT: BaseModel, RowT: BaseModel, QueryT: BaseModel](
     sort_options = tuple(
         _snake(str(value)) for value in _enum_values(query_fields["sort_by"].annotation)
     )
-    sort_literal = cast(object, Literal.__getitem__(sort_options))
+    sort_literal = Literal.__getitem__(sort_options)
     search_fields["sort_by"] = (
         sort_literal,
         Field(

@@ -662,13 +662,13 @@ def test_a_member_agent_cannot_delete_or_restore_a_project_through_mcp(
         json={"deleteAndRestore": True},
     )
     assert enabled.status_code == 200, enabled.text
-    project = client.post(
+    created_response = client.post(
         f"/api/v1/{MCP_FEATURE}",
         headers={"x-csrf-token": csrf},
         json=_mcp_payload(client, csrf),
     )
-    assert project.status_code == 201, project.text
-    project_id = project.json()["data"]["id"]
+    assert created_response.status_code == 201, created_response.text
+    project_id = created_response.json()["data"]["id"]
 
     async def denied() -> None:
         from conftest import agent_client
