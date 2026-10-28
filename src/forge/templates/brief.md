@@ -416,6 +416,10 @@ default tool only with `hide`. Never call a feature's service from the MCP modul
 contract case `every tool has a description, annotations, schemas and the error shape`
 must pass.
 
+A feature's resources come from `defineFeatureTools`; add none by hand. Add a prompt with
+`definePrompt` only when your part names it, with a strict `arguments` schema and one
+permission. Never send an elicitation or a sampling request.
+
 In a client app with shadcn/ui set up, use shadcn/ui only. If the app has `libs/shared/ui`, add components with `npx shadcn@4.21.4 add <name> --cwd libs/shared/ui`. Close refuses a new UI component library and a new file outside the app's shadcn components folder (`libs/shared/ui/src/components/ui/` when it has that library) named like a shadcn/ui component. Review holds a hand-built UI component unless a `Not shadcn: <why>` comment says why.
 
 In an app with modules, use another module only through its public service, and never query a

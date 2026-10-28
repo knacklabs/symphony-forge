@@ -1034,6 +1034,13 @@ only when the notes touch it and do not answer it, one question at a time. Write
 under ## Growth notes in the constitution. A later story reads these notes before it plans
 modules, jobs or links.
 
+In an app with libs/mcp or apps/api/app/mcp, check the client notes for tasks that people
+will ask an agent to do again and again. When the notes describe such a task and do not list
+them all, ask one question: "Which tasks will people ask an agent to do again and again?"
+Write each task under ## Agent tasks in the constitution as
+`- <task>: <feature>; inputs: <the inputs it needs>`. With no task, write `- None`.
+Ask it again only when the person wants to change the list.
+
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
 constitution's ## Fixed rules section, and ask nothing about them.
 In an app that has libs/organisations or apps/api/app/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
@@ -1047,6 +1054,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
+- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
 
 In any other app, record the
 stack, package manager and folder layout that the app already uses, and leave out ## Fixed rules.
@@ -1085,10 +1093,14 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
+- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
 - Built in: each UI or API crash writes one error report to the logs.
 
 ## Growth notes
 - <the growth topic>: <the answer from the client notes or the person>
+
+## Agent tasks
+- <the task>: <feature>; inputs: <the inputs it needs>, or None
 
 ## Architecture choices
 - <the choice>: <its reason, in one plain line> (docs/decisions/NNNN-<slug>.md)
@@ -1375,6 +1387,10 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   Only starter apps get the MCP server. Upgrade and sync deliver this guidance without app
   files or a `services.toml` change. In an older starter without MCP support, the feature
   command builds the feature without tools and says so.
+- Each feature's resources come from its tools file's `defineFeatureTools` and need no code.
+  When a story builds or changes a feature that a task under ## Agent tasks names, the part
+  names its prompt: the name in the form `<feature>_<verb>`, its inputs and its permission.
+  Write no other prompt. Add no elicitation and never use sampling.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
   task pins it. It commits the shared names and stubs plus one test that crosses both sides, and
   the tasks that use it list it under After.
