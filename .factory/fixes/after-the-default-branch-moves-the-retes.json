@@ -4,12 +4,20 @@
   "done_when": "A retested item merges in one run, and it waits for checks a second time only when the new default-branch commits touch the item's changed files.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T13:05:12.960972+00:00",
       "step": "start"
     }
   ],
-  "why": "After the default branch moves, the retest pushes a merge commit and skips the check wait, so GitHub refuses the merge until its required checks pass again and the merge fails."
+  "stuck": {
+    "close": null,
+    "head": "7e5db2d9ad109e7baad820762da564dc00208607",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the default branch moves, the retest pushes a merge commit and skips the check wait, so GitHub refuses the merge until its required checks pass again and the merge fails.",
+  "worker": "codex"
 }
