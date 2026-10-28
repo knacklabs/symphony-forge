@@ -178,6 +178,9 @@ Agent access switch; the role still applies. Each key has a limit of 120 calls a
 running API copy, and each call has a 10-second time limit. The feature command writes the
 one tools file, `libs/<plural>/server/src/<plural>.tools.ts` (Python
 `apps/api/app/<plural>/tools.py`), where developers can add tools or hide defaults with `hide`.
+Each feature also offers its items, its field guide and its allowed values as MCP resources;
+prompts come only from `## Agent tasks` in the constitution, and the server never uses
+elicitation or sampling.
 Following [Anthropic's tool guidance](https://www.anthropic.com/research/writing-tools-for-agents)
 and the [MCP tools specification, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/server/tools),
 every tool has a feature-prefixed name, a description of what it does, when to use it and
