@@ -884,6 +884,12 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 repo.git("read-tree", previous["commit"], cwd=tree)
                 repo.git("rm", "-r", "-f", "-q", "--cached", "--ignore-unmatch", "--",
                          ".factory", "plans", "docs/decisions", cwd=tree)
+                changed = set(repo.git("diff", "--name-only", "-z", previous["commit"], head, cwd=tree).split("\0"))
+                recheck = ({f["file"] for f in score.open_findings(previous)} & set(product)) - changed
+                if recheck:
+                    repo.git("rm", "-f", "-q", "--cached", "--", *sorted(recheck), cwd=tree)
+                    prompt += ("\n\nFiles with open earlier findings appear as additions so they remain review targets. "
+                               "They already exist in the product. Re-check their earlier findings: " + ", ".join(sorted(recheck)))
                 review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
                                        "-m", "Previous sign-off product", cwd=tree)
                 repo.git("read-tree", head, cwd=tree)

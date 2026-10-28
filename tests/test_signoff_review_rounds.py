@@ -1,9 +1,11 @@
 """Bound sign-off retries at the real decision command.
 
-Test audit: protects reviewer input and the durable owner stop. The regression
-is an empty-root retry or an unrestricted third review. Existing sign-off tests
-cover individual full reviews. Only Autoreview is faked at its external edge;
-the CLI, git snapshots, state and follow-up creation own the observed behavior.
+Test audit: protects reviewer input, the durable owner stop and the owning item's
+public Known issues. A changed-files-only retry drops an unresolved finding in an
+unchanged file. A misplaced accepted finding disappears from the owner's item.
+This is the command-level owner of those contracts, with no production test seam.
+Only Autoreview is faked at its external edge; the real CLI, git snapshots and
+board output own the observed behavior.
 """
 import json
 
@@ -46,15 +48,19 @@ def test_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch, 
     assert "Order submission fails" in first.stderr
     original = set((tmp_path / "reviewed-files.txt").read_text().splitlines())
     assert {"README.md", "forge.toml", "docs/product/BRIEF.md"} <= original
-    (fix / "app.py").write_text("print('changed order path')\n", encoding="utf-8")
-    repo.git("add", "app.py", cwd=fix)
-    repo.git("commit", "-q", "-m", "Repair the order path", cwd=fix)
+    changed = "README.md" if priority == "P0" else "app.py"
+    with (fix / changed).open("a", encoding="utf-8") as page_change:
+        page_change.write("\n# Explain the order path\n")
+    repo.git("add", changed, cwd=fix)
+    repo.git("commit", "-q", "-m", "Explain the order path", cwd=fix)
     # The product edit also invalidates the separate canvas completeness check.
     queue.write_text(json.dumps([
         {"report": {"review_status": "scoped-clean", "findings": []}}, _report(priority)]))
     second = accept()
     assert second.returncode == 1, second.stdout + second.stderr
-    assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {"app.py"}
+    # The earlier finding's file remains a review target even when only the
+    # README changed. Unrelated unchanged files stay outside that target.
+    assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {changed, "app.py"}
     calls = queue.with_suffix(".calls.jsonl")
     prior = [json.loads(line) for line in calls.read_text().splitlines()]
     prompt = "\n".join(prior[-1]["prompt_files"].values())
@@ -62,6 +68,7 @@ def test_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch, 
     third = accept()
     assert third.returncode == 1, third.stdout + third.stderr
     if priority == "P0":
+        assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {"app.py"}
         assert "Order submission fails" in third.stderr
         assert "Next: fix the prototype" in third.stderr
         assert len(calls.read_text().splitlines()) == len(prior) + 1
@@ -77,8 +84,15 @@ def test_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch, 
         assert resolved.returncode == 0, resolved.stdout + resolved.stderr
         assert "status: accepted" in page.read_text()
         assert len(calls.read_text().splitlines()) == len(prior)
-        states = [json.loads(path.read_text()) for path in (fix / ".factory/fixes").glob("*.json")]
-        assert any(entry["title"] == "Order submission fails" and entry["outcome"] == "follow-up"
-                   for state in states for entry in state.get("known", []))
+        shown = repo.forge("board", "--json", cwd=fix)
+        assert shown.returncode == 0, shown.stdout + shown.stderr
+        board = json.loads(shown.stdout)
+        item = repo.git("branch", "--show-current", cwd=fix).removeprefix("fix/")
+        kept = [entry for entry in board["known_issues"] if entry["title"] == "Order submission fails"]
+        assert len(kept) == 1
+        assert kept[0]["item"] == item
+        assert kept[0]["kept"] == "follow-up"
+        assert "The owner chose this outcome" in kept[0]["reason"]
         if choice == "split":
-            assert any("Order submission fails" in state.get("why", "") for state in states)
+            assert any(entry["id"] != item and "order submission fails" in entry["title"].lower()
+                       for entry in board["items"])
