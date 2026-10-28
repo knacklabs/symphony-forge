@@ -1,0 +1,15 @@
+{
+  "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
+  "branch": "fix/trim-tests-scanner-selfcompare",
+  "done_when": "The scanner case and its support, and the sync expected-value program, are removed; the executable refusal triggers and the independent shipped-byte checks stay",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-28T17:17:27.196849+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Remove the refusal source scanner and the sync self-comparison that prove no behaviour (audit batches 9 and 10)"
+}
