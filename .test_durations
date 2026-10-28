@@ -666,7 +666,6 @@
     "tests/test_contracts.py::test_3_every_refusal_is_tested[broken_block]": 0.5015141250005399,
     "tests/test_contracts.py::test_3_every_refusal_is_tested[codex_handler_moved]": 2.7550276680003662,
     "tests/test_contracts.py::test_3_every_refusal_is_tested[codex_sdk_install_fails]": 0.8226206259996616,
-    "tests/test_contracts.py::test_3_every_refusal_is_tested[every refusal has a test]": 3.2838943759998074,
     "tests/test_contracts.py::test_3_every_refusal_is_tested[hook_linked_outside]": 0.7487946680003006,
     "tests/test_contracts.py::test_3_every_refusal_is_tested[init_with_commits]": 0.2931080839994138,
     "tests/test_contracts.py::test_3_every_refusal_is_tested[init_without_origin]": 0.3450307919997613,
