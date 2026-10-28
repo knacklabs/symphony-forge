@@ -167,7 +167,7 @@ def install_security_middleware(app: FastAPI) -> None:
                 "GET, POST, PUT, PATCH, DELETE, OPTIONS"
             )
             response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, X-CSRF-Token, X-Correlation-Id, Authorization, MCP-Protocol-Version"
+                "Content-Type, X-CSRF-Token, X-Correlation-Id, Authorization, MCP-Protocol-Version, Idempotency-Key"
             )
             response.headers["Vary"] = "Origin"
         return response
