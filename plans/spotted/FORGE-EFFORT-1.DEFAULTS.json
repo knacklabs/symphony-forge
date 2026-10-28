@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "edge\tdocs/specs/codex-steering.md\tSync reports multiple worktrees for this spec and keeps its earlier reader conversation local.",
+      "kind": "edge",
+      "path": "docs/specs/codex-steering.md",
+      "line": 1,
+      "text": "Sync reports multiple worktrees for this spec and keeps its earlier reader conversation local.",
+      "from": "worker",
+      "item": "FORGE-EFFORT-1/DEFAULTS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "improve\tsrc/forge/templates/skill.md\tThe checked-in host guides need the coordinator to refresh their default guidance through sync.",
       "kind": "improve",
       "path": "src/forge/templates/skill.md",
