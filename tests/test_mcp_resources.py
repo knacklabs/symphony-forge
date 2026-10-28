@@ -154,10 +154,12 @@ def test_2_a_new_app_has_no_prompts_until_a_tools_file_adds_one(
     )
     assert forbidden.returncode == 1, forbidden.stdout + forbidden.stderr
 
+    # Python generic declarations have type parameters before the argument list.
+    # Match them and plain calls, so a new default registration still fails this check.
     definitions = _git_grep(
         client,
         "-E",
-        r"definePrompt\(" if starter == "typescript" else r"define_prompt\(",
+        r"definePrompt\(" if starter == "typescript" else r"define_prompt(\[[^]]+\])?\(",
     )
     assert definitions.returncode == 0, definitions.stdout + definitions.stderr
     expected_path = Path(
