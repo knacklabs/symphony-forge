@@ -1,0 +1,15 @@
+{
+  "base": "894fc7daf3fe9f4dcb4aa7cc2bc97ac76fe8085f",
+  "branch": "fix/full-run-retry-reruns-whole-group",
+  "done_when": "After one failed test in a grouped full run, the retry runs only the failed test files",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T06:13:41.980816+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A full test run reruns its whole group after one failed test: on the release run one test failed and the one retry ran all 627 tests of that group again, 29 minutes more, though the retry is meant to rerun only the failed files"
+}
