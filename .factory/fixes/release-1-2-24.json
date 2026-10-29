@@ -1,5 +1,5 @@
 {
-  "allow_large": "The owner instructed me to commit the prepared release after I reported that its eight code files exceed the fix limit. This permits the release references and the requested complete forge sync output.",
+  "allow_large": "A release version bump touches every version reference and the synced copies; the owner approved releasing v1.2.24 (29 Oct)",
   "base": "1967b96d9bf12bab966b66130ed34cb0d80739d3",
   "branch": "fix/release-1-2-24",
   "chat": {
