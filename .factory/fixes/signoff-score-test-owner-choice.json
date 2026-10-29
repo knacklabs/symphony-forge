@@ -1,0 +1,15 @@
+{
+  "base": "c12d6bfe2055067783f30c93e93d7b208e209b24",
+  "branch": "fix/signoff-score-test-owner-choice",
+  "done_when": "The sign-off score test expects the owner choice that lists the finding, and the full run is green",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T05:46:20.475337+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The release full run is red: a sign-off score test still expects a block on the second attempt, but the sign-off hotfix now asks the owner to choose after round 2"
+}
