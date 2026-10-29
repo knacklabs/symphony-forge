@@ -119,8 +119,10 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         for question, suffix in partial_answers.items():
             answer = next(line for line in fde if line.startswith(f"- {question}:"))
             assert answer.endswith(suffix)
+        # Alerts now come from Mainline reading error logs, with no app tracking service.
         assert ("- Who fixes problems, and how fast must it be back up if it breaks?: Daily managed "
-                "backups, error tracking, and no uptime promise.") in fde
+                "backups and no uptime promise. Each error is logged with its error id, and "
+                "Mainline alerts on the error log lines; the app has no error-tracking service.") in fde
 
     log = install_claude(repo)
     worked = repo.forge("work", "check-built-in-defaults-guide", cwd=top)

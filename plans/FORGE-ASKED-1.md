@@ -440,7 +440,7 @@ their own blocks and do not change: before sign-off the canvas is the scope.
      `Gain 2, Work 2, Harm 4` and the same `Adds work:` line still blocks.
 3. Plans name their sources (SOURCES).
    - Texts E and F (the planning paragraph).
-   - Test: `tests/test_build_only_what_is_needed.py::test_1_plans_name_a_source_or_a_need_for_each_item`,
+   - Test: `tests/test_build_only_what_is_needed.py::test_3_plans_name_a_source_or_a_need_for_each_item`,
      parametrised `new-client` and `adopted-v1.2.2` (the fixture copy and version move of
      `tests/test_fix_lean_review_prompts.py::test_1`, then `forge sync`). Each case: run
      `forge story new SHOP "Shoppers can save a basket"` as `tests/test_app_constitution.py` does,
@@ -450,7 +450,7 @@ their own blocks and do not change: before sign-off the canvas is the scope.
      that the plan adds in one of these items` and `plan only the screens marked Build now`.
 4. Additions that nothing needs are "Not needed" (SOURCES).
    - Texts B, C and D.
-   - Test: `tests/test_build_only_what_is_needed.py::test_2_additions_that_nothing_needs_get_a_not_needed_note`,
+   - Test: `tests/test_build_only_what_is_needed.py::test_4_additions_that_nothing_needs_get_a_not_needed_note`,
      parametrised `new-client` and `adopted-v1.2.2`, with the setup of test 2 in
      `tests/test_four_principles.py`. Both cases: each prompt's `## What counts` has text B's line,
      and each prompt has text C's phrases `Not needed: <what was added>`,
@@ -473,7 +473,7 @@ their own blocks and do not change: before sign-off the canvas is the scope.
      assertions (`Report as P1 a built screen`, `component or field`) stay true.
 5. Extras go to the idea list; the starter is the base (SOURCES).
    - Texts F (the idea-list line and the cold-read bullet), G and H.
-   - Test: `tests/test_build_only_what_is_needed.py::test_3_useful_extras_go_to_the_idea_list`,
+   - Test: `tests/test_build_only_what_is_needed.py::test_5_useful_extras_go_to_the_idea_list`,
      parametrised `new init` and `previous release`, set up as in test 1 of
      `tests/test_four_principles.py`. Each case: the worker brief has `build nothing for it`,
      `plans/ideas.md`, `the sourced item that needs it>` and, from the standards page,

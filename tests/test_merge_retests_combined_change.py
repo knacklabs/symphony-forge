@@ -151,13 +151,10 @@ def test_1_merge_retests_combined_change_and_names_failures(env, tmp_path, previ
     assert base == advanced and lane
     assert all(row[0] == head and row[1] == base and row[2] for row in tested)
     env.repo.git("merge-base", "--is-ancestor", advanced, head)
+    # The late change touches right.txt, outside the item's files. The new
+    # contract permits it immediately after the first combined test.
     if case.startswith("late"):
-        assert merged.returncode != 0, merged.stdout + merged.stderr
-        assert "The default branch moved again. Run forge merge again to check the combined change." in merged.stderr
-        assert f"Next: forge merge {item}" in merged.stderr
-        assert not env.gh_calls("pr", "merge")
-        assert env.repo.git("rev-parse", "main", cwd=remote) != advanced
-        return
+        assert len(tested) == 1
     if case == "red":
         assert merged.returncode != 0
         assert "The combined change failed its tests.\n" in merged.stderr

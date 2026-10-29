@@ -102,7 +102,7 @@ def test_6_signoff_is_read_back_and_reviewed_first(repo, signoff, skill):
         "Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md`",
         "Its completeness review must pass",
         "A canvas-only sign-off needs no working build.",
-        "A working build also gets one strict whole-product review with no serious findings.",
+        "A working build gets a full first product review.",
         "Forge reuses passed results while what they checked stays unchanged.",
         "Before the customer's reply, the command runs these checks and stops without accepting sign-off.",
         "Once it passes, tell the salesperson to ask the customer's named person for sign-off "

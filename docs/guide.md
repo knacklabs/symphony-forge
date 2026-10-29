@@ -290,29 +290,30 @@ Build, fix, lite, explore and grill set a model and reasoning effort.
 Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite and explore may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
-kind has no Claude implementation entry, Forge uses `claude-sonnet-5-5` at xhigh effort.
+build, fix or lite kind has no Claude entry, Forge uses `claude-sonnet-5-5` at low effort.
 Claude plan reads default to `claude-opus-5-5` at high effort, including when Claude is the only
 installed tool. Claude planner and architect roles use that plan-read entry; debugger,
 security and performance use Opus 5.5 at high effort. Codex build, fix and lite workers with
-no entry use Forge's `gpt-6.1-sol` at medium effort; Codex design uses its design default.
+no entry use Forge's `gpt-6.1-sol` at low effort; Codex design uses its design default.
 Ask your agent to change these settings in a fix.
 
-`forge init` writes Sonnet at xhigh for Claude build, fix, lite and design (frontend included),
-and Opus at high for Claude grill. Existing model entries stay unchanged on
-upgrade. To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"xhigh"` in those
-four implementation entries, and `"claude-opus-5-5"` at `"high"` in grill. A missing implementation entry
+`forge init` writes low effort for Codex and Claude build, fix and lite.
+Claude design keeps Sonnet at xhigh. Claude grill and review use Sonnet at high in new repos.
+Existing model and effort entries stay unchanged after upgrade and sync.
+To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"low"` in the three
+Claude implementation entries, and Sonnet at high in grill and review. A missing implementation entry
 can be added before the first table with one line per kind, replacing `build` below:
-`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "low" }`.
 For plan reads, use this line:
-`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+`models.grill.claude = { model = "claude-sonnet-5-5", effort = "high" }`.
 Move a single build, fix or lite entry to its family's table first. Run `forge sync` after
 changing settings to refresh subagent roles.
 
 Every normal, light and prototype sign-off review runs through the external Autoreview
 program on the repo's tool: Claude with `tools = "claude"`, Codex with `tools = "codex"`.
-With `tools = "both"`, reviews use Codex when installed and Claude otherwise. Autoreview chooses its own
-default model and effort; Forge passes neither. Legacy `[models.review]` entries stay in
-existing settings but no longer override Autoreview's defaults.
+With `tools = "both"`, reviews use Codex when installed and Claude otherwise.
+Forge passes the selected tool's `[models.review]` model and optional effort to Autoreview.
+An unset entry or effort uses Autoreview's default. Existing review entries stay unchanged.
 
 A story task marked User-facing or a client fix allowed as "Prototype before sign-off"
 uses its selected tool's design entry: `[models.design.codex]` on Codex and

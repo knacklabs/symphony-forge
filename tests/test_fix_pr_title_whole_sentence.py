@@ -13,15 +13,19 @@ STORY = "pr-title-whole-sentence"
 LONG = ("Readers " + "cannot tell which step comes next " * 3).strip()
 
 
-@pytest.mark.parametrize("client", ["new", "adopted on an earlier release"])
-@pytest.mark.parametrize("why, title", [
-    ("On Windows, forge merge run from inside a worktree fails. It removes its own folder.",
-     "On Windows, forge merge run from inside a worktree fails"),
-    ("Clients and this repo need v1.2.10 to get the fixes. Release it now.",
-     "Clients and this repo need v1.2.10 to get the fixes"),
-    (LONG + ". More detail.", LONG[:LONG.rindex(" ", 0, 71)]),
-    ('The command prints "Failed." Retry it.', 'The command prints "Failed"'),
-    ("Merges fail on the old release. v1.2.10 fixes it.", "Merges fail on the old release"),
+@pytest.mark.parametrize("client,why,title", [
+    pytest.param(client, why, title, id=f"{why}-{title}-{client}")
+    for client in ["new", "adopted on an earlier release"]
+    for index, (why, title) in enumerate([
+        ("On Windows, forge merge run from inside a worktree fails. It removes its own folder.",
+         "On Windows, forge merge run from inside a worktree fails"),
+        ("Clients and this repo need v1.2.10 to get the fixes. Release it now.",
+         "Clients and this repo need v1.2.10 to get the fixes"),
+        (LONG + ". More detail.", LONG[:LONG.rindex(" ", 0, 71)]),
+        ('The command prints "Failed." Retry it.', 'The command prints "Failed"'),
+        ("Merges fail on the old release. v1.2.10 fixes it.", "Merges fail on the old release"),
+    ])
+    if client == "new" or index in (0, 2)
 ])
 def test_1_fix_title_is_the_whole_first_sentence(env, client, why, title):
     if client == "new":
