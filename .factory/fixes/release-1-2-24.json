@@ -4,12 +4,20 @@
   "done_when": "Every version reference names v1.2.24, forge sync output is committed, and the version tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T02:59:48.441516+00:00",
       "step": "start"
     }
   ],
-  "why": "Release v1.2.24 with the client sign-off hotfix"
+  "stuck": {
+    "close": null,
+    "head": "f11972f37dd20574fa5d185ec51826895313b46a",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.24 with the client sign-off hotfix",
+  "worker": "codex"
 }
