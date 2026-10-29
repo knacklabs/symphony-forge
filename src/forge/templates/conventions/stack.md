@@ -11,7 +11,7 @@ already runs a different stack keeps its own.
 | Frontend | React with Vite, React Router and React Compiler | Widely known; fast builds with almost no config |
 | Server data | TanStack Query | Caching, loading and error states without hand-written effects |
 | UI | Tailwind with shadcn/ui | Accessible components you own as code |
-| Lint | ESLint and Prettier | The usual pair; both run in the one `test` script |
+| Lint | ESLint | The usual linter; it runs in the one `test` script |
 | Tests | Vitest, Supertest, Testing Library, Playwright | Unit and HTTP tests plus browser tests of user flows |
 | Workspace | Nx | One build tool for the web app and API; no Nx Cloud |
 | Package manager | pnpm through Corepack | The root package pins pnpm and the lockfile pins every dependency |

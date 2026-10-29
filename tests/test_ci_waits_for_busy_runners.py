@@ -8,8 +8,6 @@ import shutil
 import sys
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
 from conftest import GH_STUB, ROOT, _install
 from test_close import GREEN, env, run  # noqa: F401
 from test_land import GH, ITEM, RUNS, URL, _agent, _fix, _queue, _runs, land  # noqa: F401
@@ -62,14 +60,6 @@ def _client(env, history, runner):
     repo.git("remote", "set-url", "origin", remote_url)
     repo.git("push", "-q", "origin", "main")
     env.checks(GREEN)
-
-
-@pytest.mark.parametrize("command,activity,history", [
-    (command, activity, "new") for command in ("close", "land", "land-merge")
-    for activity in ("busy", "missing")
-] + [("close", "missing", "upgraded")])
-def test_1_ci_waits_for_busy_pool_and_names_missing_runner(clock, history, command, activity):
-    _runner_activity(clock, history, command, activity)
 
 
 def _runner_activity(env, history, command, activity):

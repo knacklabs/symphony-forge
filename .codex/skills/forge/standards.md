@@ -154,9 +154,7 @@ default-stack conventions, which apply only to a repo on the default stack.
   The field errors are `details.fieldErrors: [{field, reason}]`, so the UI can place them.
 - PUT replaces the whole resource and PATCH changes part; neither is used for an action.
 - Filters are plain query params; search is `?search=`.
-- Lists take `page` (from 1) and `limit` (20 by default, at most 100) and return
-  `data.items` with `data.pagination` (`page`, `limit`, `totalItems`, `totalPages`). Sorting uses
-  `sortBy` and `sortOrder` (`asc` or `desc`).
+- Lists use keyset paging. They take `limit` (20 by default, at most 100) and one cursor, `after` (the `nextCursor` of the page before) or `before` (the `previousCursor` of the page after). They return `data.items` with `data.paging` (`limit`, `nextCursor`, `previousCursor`, `total`, `totalCapped`); `total` stops at 10,000 and `totalCapped` says so. Sorting uses `sortBy` and `sortOrder` (`asc` or `desc`). Numbered pages are only for small admin screens.
 - A breaking change needs a new version while the old one has consumers; with no consumers yet,
   change it in place.
 - Every create, and every action with a side effect (send, pay, notify), accepts an
@@ -186,7 +184,7 @@ default-stack conventions, which apply only to a repo on the default stack.
 - `LOG_LEVEL` (`debug`, `info`, `warn` or `error`; `info` when unset) picks the lowest level written.
 - Mainline sends error alerts from the `error` lines, each with its `errorId`. Add no error-tracking service to the app.
 - Levels: `debug` for detail, `info` for normal business events, `warn` for unexpected events without failure, `error` for failure, `fatal` when the app cannot continue.
-- Use only needed environments: `Local`, `Development`, `QA`, `UAT`, `Staging`, `Production`. Log to the local console or the host's log service elsewhere.
+- `APP_ENV` holds the environment's name in lower case: `development` on a developer's machine, `test` in the test stack, and `demo`, `qa`, `uat`, `staging` or `production` where a project has them. A project has only the ones it uses. The starters treat every name other than `development` and `test` as deployed. Logs go to the console locally and to the host's log service elsewhere.
 
 ## Data
 

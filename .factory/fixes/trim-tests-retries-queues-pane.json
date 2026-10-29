@@ -1,0 +1,49 @@
+{
+  "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
+  "branch": "fix/trim-tests-retries-queues-pane",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18384-b665-7680-bf68-6f3611f10fe4",
+    "head": null,
+    "start": "b05e00f55e4b7e333fec90e4f2f7a456fca8d121"
+  },
+  "done_when": "The cases named in batches 1, 2 and 3 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "902b57b54617489b671b05a28117d7b498fe305a9c6cb31154fe892a5a8b9d6e",
+    "changed": "eadc4e258b661cb3f33df0d1fd1a5b60e9ba766849e68897ec4f07b310b858ec",
+    "commit": "d47ccbb17d704b1efd03d631a8a899fb51d990c9",
+    "dismissals": [],
+    "findings": [],
+    "id": "574b260d-082f-4a43-b40c-77dcd6b57c7b",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T17:17:13.395469+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T17:28:21.729621+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T12:09:47.935669+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0691075bb6cdadbb698a1d4a36dbd50e340eded9",
+    "keys": {},
+    "round": null
+  },
+  "why": "Trim repeated earlier-adopted cases in the GitHub retry, queued-checks and pane-freshness tests (audit batches 1, 2 and 3)",
+  "worker": "codex"
+}

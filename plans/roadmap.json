@@ -482,14 +482,20 @@
       "order": 107
     },
     {
-      "key": "FORGE-REQLOG-1",
-      "title": "Log every API request safely in client apps",
+      "key": "FORGE-EFFORT-1",
+      "title": "Build and fix rounds raise their effort after a failure",
       "status": "pending",
       "order": 108
     },
     {
       "key": "FORGE-AGENTS-1",
       "title": "Client apps with agents get agent must-haves before they build",
+      "status": "pending",
+      "order": 108
+    },
+    {
+      "key": "FORGE-REQLOG-1",
+      "title": "Log every API request safely in client apps",
       "status": "pending",
       "order": 108
     }

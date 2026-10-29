@@ -74,29 +74,29 @@ NODE_TEST = "[ ! -f package.json ] || (npm ci && npm test)"
 MODELS = """
 [models.build.codex]
 model = "gpt-6.1-sol"
-effort = "medium"
+effort = "low"
 
 [models.build.claude]
 model = "claude-sonnet-5-5"
-effort = "xhigh"
+effort = "low"
 
 [models.fix.codex]
 model = "gpt-6.1-sol"
-effort = "medium"
+effort = "low"
 
 [models.fix.claude]
 model = "claude-sonnet-5-5"
-effort = "xhigh"
+effort = "low"
 
 [models.lite.codex]
 model = "gpt-6.1-sol"
-effort = "medium"
+effort = "low"
 subagents = "gpt-6-luna"
 subagent_effort = "max"
 
 [models.lite.claude]
 model = "claude-sonnet-5-5"
-effort = "xhigh"
+effort = "low"
 
 [models.explore.codex]
 model = "gpt-6.1-sol"
@@ -113,7 +113,11 @@ model = "gpt-6.1-sol"
 effort = "high"
 
 [models.grill.claude]
-model = "claude-opus-5-5"
+model = "claude-sonnet-5-5"
+effort = "high"
+
+[models.review.claude]
+model = "claude-sonnet-5-5"
 effort = "high"
 
 [models.design.claude]
