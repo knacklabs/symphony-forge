@@ -1,0 +1,15 @@
+{
+  "base": "894fc7daf3fe9f4dcb4aa7cc2bc97ac76fe8085f",
+  "branch": "fix/signoff-owner-choice-only-at-the-bar",
+  "done_when": "After round 2, sign-off asks the owner only when findings at the blocking bar are open, and the full run on main is green",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T07:16:07.722256+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The release full run is red again: after round 2, client sign-off asks the owner to choose even when only notes below the blocking bar are open, and four tests still expect the old sign-off guide text, the old Opus Claude worker, timing entries for renamed tests, and a fixed minimum step time"
+}
