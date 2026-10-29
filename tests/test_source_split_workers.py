@@ -6,7 +6,7 @@ from test_worker import calls, install_claude
 STORY = "workers-split"
 
 
-def test_1_user_facing_source_task_uses_opus_medium_and_plain_task_uses_codex(
+def test_1_user_facing_source_task_uses_sonnet_high_and_plain_task_uses_codex_low(
         repo, monkeypatch, sdk_data, request):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data)
     text = (ROOT / "forge.toml").read_text("utf-8")
@@ -18,7 +18,7 @@ def test_1_user_facing_source_task_uses_opus_medium_and_plain_task_uses_codex(
 
     assert page.returncode == 0, page.stdout + page.stderr
     [call] = calls(claude_log)
-    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-opus-5-5", "medium")
+    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-sonnet-5-5", "high")
     assert _sent(codex_log, "turn/start") == []
 
     started = repo.forge("task", "start", "BOARD/HELP")
@@ -32,4 +32,4 @@ def test_1_user_facing_source_task_uses_opus_medium_and_plain_task_uses_codex(
     assert len(calls(claude_log)) == 1
     [codex] = _sent(codex_log, "thread/start")
     assert codex["config"]["model"] == "gpt-6.1-sol"
-    assert codex["config"]["model_reasoning_effort"] == "medium"
+    assert codex["config"]["model_reasoning_effort"] == "low"

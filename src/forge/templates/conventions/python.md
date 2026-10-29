@@ -158,9 +158,7 @@ Status codes: 200 read, update, action or delete (delete has an envelope with nu
 204); 201 create; 400 invalid input; 401 not signed in; 403 not allowed; 404 missing or another
 account's record; 409 conflict; 429 rate limit; 500 our fault. GET never changes data.
 PUT replaces a resource; PATCH changes part. Use plain query filters and `?search=`.
-Lists accept page from 1, limit 20 by default and at most 100, sortBy from an allowed column list,
-and sortOrder asc or desc. Return `data.items` and `data.pagination` with page, limit,
-totalItems and totalPages. Follow the standards page's versioning and Idempotency-Key rules.
+Lists take limit (20 by default, at most 100), one cursor (after or before), sortBy from an allowed column list, and sortOrder asc or desc. Return `data.items` and `data.paging` with limit, nextCursor, previousCursor, total and totalCapped, as `app/projects/service.py` does. Follow the standards page's versioning and Idempotency-Key rules.
 
 After an API change, run `pnpm run api-types`. Commit both `libs/shared/api-types/openapi.json` and
 `libs/shared/api-types/src/api-types.ts`; module contract libraries import these generated types
@@ -294,7 +292,7 @@ Cover invalid input, missing sign-in, CSRF and another account's records through
 Playwright walks new and changed UI flows as testing.md says, with zero retries and no sleeps.
 Fake only third-party services at their edge. Unit tests are only for pure logic with many cases.
 
-The root test script runs api-types before typecheck, lint (ESLint, Prettier, `ruff check` and
+The root test script runs api-types before typecheck, lint (ESLint, `ruff check` and
 `ruff format --check`), `mypy` with `strict = true`, `lint-imports`, pytest, hooks and
 Playwright. Run `node scripts/test.mjs` to install, build and run the whole check, as forge.toml's
 test command does.
