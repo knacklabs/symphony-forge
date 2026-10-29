@@ -1,0 +1,15 @@
+{
+  "base": "d81dea7acbd9b8a8842752550c1919c657cb3996",
+  "branch": "fix/effort-defaults-one-test",
+  "done_when": "The effort defaults rule has one test, with a new-repo case and an existing-repo case, and the rule check passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T15:21:49.016747+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The effort defaults task left two tests that claim the same rule, so the one-test-per-rule check fails on main"
+}
