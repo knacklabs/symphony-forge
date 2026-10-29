@@ -17,6 +17,7 @@ def expression(text, **github):
     assert inner, f"Not an expression: {text}"
     # ponytail: covers the ==, &&, || and fromJSON this workflow uses, not GitHub's full grammar.
     code = re.sub(r"github\.[\w.]+", lambda name: repr(github.get(name[0][7:])), inner[1])
+    code = code.replace("needs.selection.outputs.test-only", repr(github.get("test_only", "false")))
     return eval(code.replace("&&", " and ").replace("||", " or "), {"fromJSON": json.loads})
 
 

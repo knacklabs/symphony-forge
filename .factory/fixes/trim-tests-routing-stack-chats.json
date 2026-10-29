@@ -1,0 +1,45 @@
+{
+  "base": "8a0eae1c5535dba1dd4c7350c2b1ce70ca4e5331",
+  "branch": "fix/trim-tests-routing-stack-chats",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18384-ad81-7310-9c76-54cf7b0f0436",
+    "head": null,
+    "start": "77b049819f83ff7cee33a08b08d842fc160d9ab8"
+  },
+  "done_when": "The cases named in batches 5 to 8 of the test audit are removed, one earlier-adopted case per rule stays, and every new-repo case stays",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "37eef412d157912679e1fe5b462b17de4672db96a7c7fdf0443e6ed715d9f5f9",
+    "changed": "1677cb39687f464722b0e37df05af508f5dc67576b484fb99c7c9f8b2505267e",
+    "commit": "922c2bc918c4e2307ca7337600d091b2a3676bdb",
+    "dismissals": [],
+    "findings": [],
+    "id": "d0df6b17-1c1c-4326-9d43-84b6d8894915",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T17:17:22.579730+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T17:40:01.564708+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "ec534a0f45408fd0bf390cd204aef4c5f13dc74f",
+    "keys": {},
+    "round": null
+  },
+  "why": "Trim repeated earlier-adopted cases in the fix routing, stack, chat continuity and doctor batching tests (audit batches 5 to 8)",
+  "worker": "codex"
+}

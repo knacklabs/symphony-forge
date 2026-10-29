@@ -1,0 +1,50 @@
+{
+  "allow_large": "A release version bump touches every version reference and the synced copies; the owner approved releasing v1.2.24 (29 Oct)",
+  "base": "1967b96d9bf12bab966b66130ed34cb0d80739d3",
+  "branch": "fix/release-1-2-24",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18599-b16e-7ee0-953e-a09f538436d8",
+    "head": null,
+    "start": "2b7e6ec9d710153a80740015a2e6d70866aff8ea"
+  },
+  "done_when": "Every version reference names v1.2.24, forge sync output is committed, and the version tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "134dcf2df7ce99fc8a980f53716612f5376f501361866da2938cef5d875d4332",
+    "changed": "0c54cbae1d969777f811e054fca89ee471cb40b3c12e9ce5efef0bbd676970e3",
+    "commit": "8ae39e18a93c205ac63f83a1697ced5543e8fb1b",
+    "dismissals": [],
+    "findings": [],
+    "id": "6eaa0d51-f8fe-4566-b6e7-cdf255f67ba1",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T02:59:48.441516+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T03:07:52.677485+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T04:15:45.508107+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e925448a-f4e4-4b04-a969-00db509dbc3a",
+    "head": "4a9cbf9a5cc773fc9462031a13fa5317041ddf69",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Release v1.2.24 with the client sign-off hotfix",
+  "worker": "codex"
+}

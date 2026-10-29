@@ -107,9 +107,13 @@ If the file sets do not overlap, Forge restores the original head and merges wit
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
 The nightly full run on the default branch covers the rest.
+`forge test --full` fails if the whole run has no tests. Set `test` in `forge.toml` to run
+the whole suite. An empty group of a nonempty suite is valid.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
-checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
-and gives `forge merge <item>` as the next step.
+checks, Forge fetches the default branch again. If it moved again, Forge checks the new
+commits against the item's changed files. With no overlap, Forge merges at once. With an
+overlap, Forge repeats the combined tests and required checks. After five further moves,
+Forge stops and gives `forge merge <item>` as the next step.
 
 If another program holds the earlier Codex conversation, Forge retries once. If it is still
 held, work starts a new conversation with the whole brief and says why in one line.
@@ -275,6 +279,11 @@ test command without installing Forge in the project. This picker belongs in `fa
 workers run bare `forge test` to enter the lane.
 Root dependency files select the full test command. A nested project's dependency files
 select that project's tests and test files that name those dependency paths.
+A test module is shared setup when another test or conftest.py names it, including in a
+pytest_plugins string or a comment. The pytest picker also runs those readers and their readers;
+a conftest.py reference includes the tests below its folder. This plain text search can run
+extra tests. Only modules with no readers use the independent-test CI shortcut; shared modules
+keep the configured CI groups and Windows coverage.
 When the pytest picker selects more than a third of the test files, bare `forge test` runs
 only the part's Tests column or the fix's touched test files, plus `always_test`, and says
 "The nightly full run covers the rest." This includes shared-fixture changes. With no named
@@ -456,11 +465,15 @@ table or column, or changes a column's type, add a `-- Contract: ...` comment to
 `# Contract: ...` to Alembic Python. Explain why the live release no longer reads the table or
 column; close allows the migration when the line is present, and review reads the explanation.
 
+Before any agent, chat, voice or in-app assistant work, load the agents skill (.codex/skills/agents/SKILL.md) and follow it. Say which of its sections apply to your change. A review holds a broken Must rule.
+
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
 in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
-the one error report. An app without libs/organisations keeps the code it has.
+the one error report.
+Add no error-tracking service; Mainline sends alerts from the error lines. In an app with `request-log.middleware.ts` or `set_log_level` in `app/core/logging.py`, the logger writes each API request's line and removes password, token, secret, key and authorization values from its context, so add no request logging or redaction there.
+An app without libs/organisations keeps the code it has.
 An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add

@@ -382,7 +382,7 @@ def decision_accept(args: argparse.Namespace) -> None:
                                      story.agents_section(top, "Review rules"), constitution(top)]))
         if working and (fields.get("review_checked") != checked or not fields.get("reviewed_commit")):
             evidence = "\n\n".join(f"## {name}\n{sections.get(name, '')}" for name in SIGNOFF_SECTIONS)
-            text = _set(text, reviewed_commit=review.signoff(top, quote, evidence), review_checked=checked)
+            text = _set(text, reviewed_commit=_signoff_review(top, args, quote, evidence), review_checked=checked)
         if not replied:  # so the customer is only asked to approve a reviewed version
             _write(top / rel, text)
             repo.commit_state("Save the sign-off checks", rel, top=top)
@@ -443,6 +443,66 @@ def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]
     # Init's untouched starter is a canvas shell; edits to its source are app code.
     return [name for name in candidates if not (template := sync.TEMPLATES / "starter" / name).is_file()
             or (story.show(top, ref, name) if ref else _text(top / name)) != _text(template)]
+
+
+def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str) -> str:
+    """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
+    from forge import close, review, score
+
+    rel = ".factory/client-signoff.json"
+    saved = json.loads(_text(top / rel) or "{}")
+    previous = saved.get("review") or {}
+    history = review._history(top, "client-signoff", "", previous, path=rel)
+    choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
+    next_step = ('forge decision accept client-signoff --by "<name>" '
+                 '--resolve <accept|more|split> --reason "<human\'s choice>"')
+    if choice or reason is not None:
+        if not saved.get("stop") or not choice or not reason or not reason.strip():
+            repo.refuse(("Record the owner's choice only after sign-off stops, with a reason.", next_step))
+        if choice != "more":
+            item, state = review.branch_item(repo.current_branch(top), top)
+            opened = score.open_findings(previous)
+            if choice == "split":
+                details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})" for f in opened)
+                follow_up = close._start_follow_up(top, state, f"Sign-off findings: {details}",
+                                                   f"A review no longer finds: {details}")
+                for finding in opened:
+                    finding["follow_up"] = f"Split into follow-up fix {follow_up}"
+            previous.setdefault("dismissals", []).extend(
+                {"finding": number, "because": f"Human chose {choice}: {reason.strip()}", "accepted": True}
+                for number, finding in enumerate(previous["findings"], 1) if finding in opened)
+            known = score.remember([], previous, len(history), {})
+            identities = {score.identity(entry["file"], entry["title"]) for entry in known}
+            state["known"] = [entry for entry in state.get("known", [])
+                              if score.identity(entry["file"], entry["title"]) not in identities] + known
+            repo.write_state(item, state, top)
+            repo.commit_state("Record the owner's sign-off findings", repo.state_path(item), top=top)
+        saved["stop"] = False
+        saved["choice"] = {"resolve": choice, "reason": reason.strip()}
+        _write(top / rel, json.dumps(saved, indent=2) + "\n")
+        repo.commit_state("Record the owner's sign-off choice", rel, top=top)
+        if choice != "more" and not repo.git("diff", "--name-only", previous["commit"], "HEAD", "--", ".",
+                ":(exclude).factory/**", ":(exclude)plans/**", ":(exclude)docs/decisions/**", cwd=top):
+            return previous["commit"]
+        history = review._history(top, "client-signoff", "", previous, path=rel)
+    if saved.get("stop"):
+        repo.refuse((review.stop_question(top, "client-signoff", {
+            "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
+            accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
+    result = review.signoff(top, answers, evidence, previous=previous, history=history)
+    opened = score.open_findings(result)
+    critical = any(f["priority"] == "P0" for f in opened)
+    saved.update(review=result, stop=bool(review.blocking(result) and len(history) + 1 >= 2 and not critical))
+    _write(top / rel, json.dumps(saved, indent=2) + "\n")
+    repo.commit_state("Record the client sign-off review", rel, top=top)
+    if saved["stop"]:
+        repo.refuse((review.stop_question(top, "client-signoff", {
+            "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
+            accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
+    if critical or review.blocking(result):
+        repo.refuse(("Customer sign-off review found a blocking issue: " + "; ".join(
+            f["title"] for f in opened) + ".", 'fix the prototype, then forge decision accept client-signoff --by "<name>"'))
+    return result["commit"]
 
 
 def _working_build(top: Path) -> bool:
@@ -706,7 +766,9 @@ COMMANDS = [
      "listing": "| `forge decision new <slug>` | Writes a decision record |"},
     {"words": "decision accept", "run": "decision_accept", "changes_state": True,
      "help": "Accept a decision after the human confirms in chat",
-     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"})],
+     "args": [(('slug',), {}), (('--by',), {"required": True, "metavar": "NAME"}),
+              (('--resolve',), {"choices": ["accept", "more", "split"]}),
+              (('--reason',), {"help": "The owner's choice after a sign-off review stop"})],
      "position": 220,
      "listing": "| `forge decision accept <slug> --by \"<name>\"` | Accepts a decision after the human confirms it in chat, and lists the spec lines that name a rule ID it names |"},
     {"words": "roadmap add", "run": "roadmap_add", "changes_state": True,

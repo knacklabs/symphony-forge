@@ -1,0 +1,49 @@
+{
+  "base": "6f2113bb5f3351d29874004ae6c4d9d67f057ac5",
+  "branch": "fix/trim-tests-coverage-rows",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1840f-374d-7481-8c32-81aedcb261cd",
+    "head": null,
+    "start": "d2d90cd974c1d1eb6581bccfb9c1b63bd539ba4d"
+  },
+  "done_when": "The 30 parameter rows listed in the coverage verification report are removed, each retained covering row stays, and every new-repo row stays",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "173abbaab02df5ddac4cdf7a2604b58a2b0bcbd8e8b74e7dc0897d43838e6b61",
+    "changed": "0c3d45ec2a4e1db72704fbbc783a18a346273e87ce83df9c063d5d4262e13b1b",
+    "commit": "a5828846b738e61f47e49c05d0c2dc037d2e514b",
+    "dismissals": [],
+    "findings": [],
+    "id": "df78c739-6128-4e22-96d8-855d72130f40",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T19:48:45.230241+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T19:58:50.119039+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T14:00:22.045338+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b32d7c5d-2b4c-4341-b75f-ebd7ca1dfecc",
+    "head": "e18be923ad59655749227b2807b35def86faa592",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Remove the 30 coverage-verified repeated earlier-adopted test rows (coverage audit batches 1 to 5)",
+  "worker": "codex"
+}

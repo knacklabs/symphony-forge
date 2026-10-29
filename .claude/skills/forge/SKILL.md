@@ -175,18 +175,22 @@ recommendation first. Save the answer before moving to the next question.
 
 ## Merges and settings
 
-If the default branch moved after close, `forge merge` first merges it into the item's branch.
+If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
+It merges the default branch locally to check the combined change.
 It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
-merge base. It pushes and merges only after the tests pass. A failure names the failed tests
+merge base. It merges the pull request only after the tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. This is always on, with no setting. With no
 default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
 get it on upgrade and sync.
-After a green retest, Forge reuses the existing review and commits its coverage of the combined
-change before the push. It pushes and merges at once, without another pull-request CI wait.
+If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
+If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
+It pushes that commit, waits for its required checks, then merges.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
-checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
-and gives `forge merge <item>` as the next step.
+checks, Forge fetches the default branch again. If it moved again, Forge checks the new
+commits against the item's changed files. With no overlap, Forge merges at once. With an
+overlap, Forge repeats the combined tests and required checks. After five further moves,
+Forge stops and gives `forge merge <item>` as the next step.
 
 Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
 the item's merge base with its head, so an older branch can merge after the owner enables agent
@@ -243,6 +247,11 @@ to the fix's merge base. Extra changes are refused without review. Tests and CI 
 every other item keeps its model review.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
+
+Write each reply, summary and question for the human in plain English that a non-native speaker
+understands on the first read, as AGENTS.md says: everyday words in place of agent slang, each
+technical term explained once, three plain lines on what changed, what failed and what comes
+next, and status, numbers and uncertainty kept exact.
 
 ## Tools
 
@@ -979,8 +988,14 @@ Codex must be installed because only Codex can review the screen images.
 On Windows, large image folders use separate batches to fit the native command line limit.
 Fix gaps, then retry `forge decision accept client-signoff`.
 If the review engine fails, fix the engine problem and run the accept command again.
-A canvas-only sign-off needs no working build. A working build also gets one strict whole-product
-review with no serious findings. Forge reuses passed results while what they checked stays unchanged.
+A canvas-only sign-off needs no working build. A working build gets a full first product review.
+Each later attempt reviews only product files changed since the previous review and its open findings.
+Every reviewer gets earlier findings and answers. Settled findings stay settled.
+After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
+Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
+Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
+These rules apply to new clients and earlier-adopted clients after upgrade.
+Forge reuses passed results while what they checked stays unchanged.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
 If the product or completeness review cannot finish, the refusal names its saved raw report when one exists.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
@@ -1041,13 +1056,16 @@ modules, jobs or links.
 In an app with libs/mcp or apps/api/app/mcp, check the client notes for tasks that people
 will ask an agent to do again and again. When the notes describe such a task and do not list
 them all, ask one question: "Which tasks will people ask an agent to do again and again?"
-Write each task under ## Agent tasks in the constitution as
+Write each task under `## Agent tasks` in the constitution as
 `- <task>: <feature>; inputs: <the inputs it needs>`. With no task, write `- None`.
 Ask it again only when the person wants to change the list.
 
 In an app whose tests run Nx's module-boundary lint, copy the fixed rules into the
 constitution's ## Fixed rules section, and ask nothing about them.
 In an app that has libs/organisations or apps/api/app/organisations, also copy the built-in lines into ## Fixed rules, and ask nothing about the defaults they answer.
+
+In an app with libs/core/server/src/common/request-log.middleware.ts or set_log_level in apps/api/app/core/logging.py, also copy this line into ## Fixed rules: "- Built in: each API request writes one log line with its method, route, status, time taken and request id, never the query string; LOG_LEVEL picks the lowest level written; password, token, secret, key and authorization values are removed from log details; Mainline sends error alerts from the error lines, so the app has no error-tracking service."
+
 In an app whose .env.example has APP_COMPANIES, ask once: "Is the app for one company, or for many customer companies?" Write the answer under ## Defaults, set APP_COMPANIES to one or many in .env.example and in the host's settings, and ask it again only when the person wants to change it.
 When the answer is one company, also copy this line into ## Fixed rules: "- Built in: APP_COMPANIES=one makes a one-company app: corepack pnpm run setup:company (uv run --no-sync python -m app.setup_company in the Python starter) makes the company and its first admin, and people join only from an admin's invite."
 In an app made from the Python starter, whose tests run import-linter, copy these fixed rules into ## Fixed rules instead, and ask nothing about them:
@@ -1058,7 +1076,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
-- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 
 In any other app, record the
@@ -1098,7 +1116,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
-- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 - Built in: each UI or API crash writes one error report to the logs.
 
@@ -1124,6 +1142,7 @@ forge init --starter python.
 Each architecture choice names an accepted record in docs/decisions/NNNN-<slug>.md.
 
 Follow the database skill (.codex/skills/database/SKILL.md) for new tables and extensions.
+Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voice or in-app assistant work. When a part adds one, the plan names the skill's sections that apply and the model service it uses.
 An extension outside its allowed list needs the owner's OK for this client. Ask the owner,
 then write `- Postgres extension <name>: the owner allows it on <date> (<why>)` under
 Architecture choices in `docs/product/CONSTITUTION.md`.
@@ -1277,6 +1296,8 @@ fix's folder:
 
 ## Planning a story
 
+Follow the agents skill (.codex/skills/agents/SKILL.md) for any agent, chat, voice or in-app assistant work. When a part adds one, the plan names the skill's sections that apply and the model service it uses.
+
 A cold read passes when no note is at the bar (blocking): the plan is wrong, contradicts itself,
 or a builder could not act on it. Readers prefix numbered findings with `Blocking:` or
 `Advisory:`. Advisory and below-bar notes need no disposition from you or another round; unmarked
@@ -1411,7 +1432,7 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   When it lets a person sign an agent in, the agent acts as that person, and the part names
   the agent's `viaAgent` text.
 - Each feature's resources come from its tools file's `defineFeatureTools` and need no code.
-  When a story builds or changes a feature that a task under ## Agent tasks names, the part
+  When a story builds or changes a feature that a task under `## Agent tasks` names, the part
   names its prompt: the name in the form `<feature>_<verb>`, its inputs and its permission.
   Write no other prompt. Add no elicitation and never use sampling.
 - Shared seams first: when two tasks share a function, field, file format or command, the first
@@ -1545,7 +1566,7 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 `[models.build.codex]` and `[models.build.claude]`; a single entry counts only for its own model's
 tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
 and explorers use their host's entry. Workers and Claude plan readers with no entry use Forge's defaults.
-Codex build, fix and lite default to `gpt-6.1-sol` at medium effort; design uses its design default.
+Codex build, fix and lite default to `gpt-6.1-sol` at low effort; design uses its design default.
 Claude workers use model and effort
 and ignore the Codex-only subagents and subagent_effort keys.
 
@@ -1555,25 +1576,27 @@ come from build's Codex `subagents` and `subagent_effort`, falling back to lite'
 build has none. With neither pair, sync leaves the defaults unset. Hands-on Codex roles use
 that same pair when set, so their worker model does not override the subagent budget.
 
-Claude implementation (build, fix, lite and design, including frontend) defaults to
-`claude-sonnet-5-5` at `xhigh` effort. Claude plan reads (grill) default to
+Claude build, fix and lite default to `claude-sonnet-5-5` at `low` effort.
+Claude design, including frontend, keeps `xhigh` effort. Claude plan reads with no entry use
 `claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.
-`forge init` writes these Claude entries explicitly; omitted entries use the same built-in
-defaults. Claude planner and architect roles use the plan-read entry; debugger, security
-and performance roles use Opus 5.5 at high effort. Autoreview owns every review's model
-and effort, including prototype sign-off.
+`forge init` writes Sonnet at high for Claude plan reads and reviews.
+Existing model and effort entries stay unchanged after upgrade and sync.
+Claude planner and architect roles use the plan-read entry; debugger, security
+and performance roles use Opus 5.5 at high effort. Reviews, including prototype sign-off,
+use the selected tool's `models.review` entry, or Autoreview's defaults when unset.
 
 Existing model entries stay unchanged on upgrade. To opt in, set each of
-`[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]`,
-`[models.design.claude]` to Sonnet at xhigh. Set `[models.grill.claude]` to Opus at high.
+`[models.build.claude]`, `[models.fix.claude]`, `[models.lite.claude]` to Sonnet at low.
+Keep `[models.design.claude]` at Sonnet xhigh. Set `[models.grill.claude]` and
+`[models.review.claude]` to Sonnet at high.
 For a missing implementation entry,
 add a top-level line before the first table, replacing `build` with each kind:
-`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "low" }`.
 For plan reads, use this line:
-`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+`models.grill.claude = { model = "claude-sonnet-5-5", effort = "high" }`.
 If build, fix or lite has a single entry, move it to its family's table before adding the
-Claude entry. Then run `forge sync` to refresh subagent roles. Legacy review entries stay
-in existing settings but no longer override Autoreview's defaults.
+Claude entry. Then run `forge sync` to refresh subagent roles. Existing review entries stay
+unchanged and still set the review model and effort.
 
 With `tools = "both"`, `forge.toml`'s `workers` says who builds each task and fix.
 `forge work` prints the worker,
@@ -1627,12 +1650,12 @@ The diagnosing and planning roles change no files. Building an item still goes t
 and run `forge sync`; Claude diagnostic roles keep Opus at high effort.
 Codex roles use their host's entry when the kind has per-tool entries. With a single entry, a model
 from the other tool is omitted so the Codex role uses the session's model. Claude building
-roles use their implementation entry or Sonnet xhigh; Claude planning uses grill or Opus high,
+roles use their implementation entry or Sonnet low; Claude planning uses grill or Opus high,
 and Claude diagnosing always uses Opus high.
 
 The explorer role uses the read-only `explore` kind; `lite` keeps a fix's first
 build round. New repos get `[models.explore.claude]` with `claude-haiku-5-5` at high effort and
-`[models.explore.codex]` with the same settings as the initial lite Codex entry. Existing repos
+`[models.explore.codex]` with `gpt-6.1-sol` at medium effort. Existing repos
 without explore keep using lite for read-only work after upgrading and syncing. To choose
 separate read-only settings there, add the explore entries in a fix and run `forge sync`.
 

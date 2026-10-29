@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/adapters/AGENTS.md\tGate: update the coordinator or worker guidance\tplain-english-replies-rule",
+      "kind": "bug",
+      "path": "src/forge/templates/adapters/AGENTS.md",
+      "line": 80,
+      "text": "Gate: update the coordinator or worker guidance",
+      "from": "blocking",
+      "item": "plain-english-replies-rule",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_plain_english_replies_rule.py\tGate: proof list\tplain-english-replies-rule",
+      "kind": "bug",
+      "path": "tests/test_plain_english_replies_rule.py",
+      "line": 22,
+      "text": "Gate: proof list",
+      "from": "blocking",
+      "item": "plain-english-replies-rule",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

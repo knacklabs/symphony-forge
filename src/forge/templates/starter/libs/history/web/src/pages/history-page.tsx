@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 import { formatDateTime } from '@app/shared-util';
 import { type Account } from '@app/auth-contracts';
 import { Button } from '@app/shared-ui/components/ui/button';
+import { Skeleton } from '@app/shared-ui/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@app/shared-ui/components/ui/table';
 import { useHistory } from '../hooks/history-hooks';
 import { ApiError } from '@app/core-web';
@@ -24,7 +25,11 @@ export function HistoryPage() {
       </div>
 
       {forbidden && <p role="alert">Only an admin can see the change history.</p>}
-      {!forbidden && history.isPending && <p role="status" className="text-sm text-muted-foreground">Loading change history…</p>}
+      {!forbidden && history.isPending && (
+        <div role="status" aria-label="Loading change history" className="space-y-2">
+          {[0, 1, 2].map((row) => <Skeleton key={row} className="h-10 w-full" />)}
+        </div>
+      )}
       {!forbidden && history.isError && (
         <div role="alert" className="space-y-3">
           <p>Could not load the change history. Check your connection and try again.</p>

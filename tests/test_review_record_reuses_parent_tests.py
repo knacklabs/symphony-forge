@@ -147,8 +147,10 @@ def test_2_tests_workflow_reuses_only_a_review_record_on_a_tested_parent(env, tm
 
     assert done.returncode == 0, done.stderr
     assert env.repo.git("rev-parse", "HEAD", cwd=client) == checkout
-    assert output.read_text().strip() == ("reuse=true" if case in ("review", "push") else "reuse=false")
-    assert suite_runs(workflow, output.read_text().strip().split("=", 1)[1]) == (
+    # Runner-selection outputs are independent of the parent-proof reuse decision.
+    outputs = dict(line.split("=", 1) for line in output.read_text(encoding="utf-8").splitlines())
+    assert outputs["reuse"] == ("true" if case in ("review", "push") else "false")
+    assert suite_runs(workflow, outputs["reuse"]) == (
         case not in ("review", "push"))
     if case == "base-advanced":
         suite = subprocess.run([sys.executable, "check-merge.py"], cwd=client,

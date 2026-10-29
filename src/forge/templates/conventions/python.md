@@ -101,44 +101,12 @@ if not database_url:
 
 ## Logs
 
-Use stdlib `logging` with a JSON formatter in core, not print. Pass validated config to the
-formatter. Write the backend.md fields at the top level; include accountId, requestId or eventId
-when present. For example, the formatter's `format` method builds:
+Log with `log_event(request, level, message, module, context)` from `app.core` (`app/core/logging.py`), not print and not the stdlib `logging` module. It writes one JSON line to stdout with the backend.md fields at the top level: `timestampUtc`, `level`, `message`, `context`, `environment` (from `APP_ENV`), `serviceName`, `module` and `correlationId`. Code without a request passes `None` with `environment` and `correlation_id`. The security middleware in `app/core/security.py` takes `x-correlation-id` or makes a UUID, keeps it on `request.state.correlation_id`, and returns it in the response; `log_event` adds it to each line, and outgoing calls send it. An app made before this starter keeps its own logger; follow the one it has.
 
-```python
-entry = {
-    "timestampUtc": datetime.now(UTC).isoformat(),
-    "level": {"WARNING": "warn", "CRITICAL": "fatal"}.get(record.levelname, record.levelname.lower()),
-    "message": record.getMessage(), "context": getattr(record, "context", {}),
-    "environment": self.environment, "serviceName": "api", "module": record.name,
-    "correlationId": correlation_id.get(),
-}
-for field in ("accountId", "requestId", "eventId"):
-    if hasattr(record, field):
-        entry[field] = getattr(record, field)
-if record.exc_info:
-    entry["stack"] = self.formatException(record.exc_info)
-return json.dumps(entry)
-```
+Use fixed messages and ids only in context: `log_event(request, "info", "Project created", "app.projects", {"projectId": str(project.id)})`. Never log whole objects, passwords, tokens, one-time codes,
+secrets or personal data. Levels are debug, info, warn, error and fatal. Log 4xx at debug and failed operations at error.
 
-A middleware takes `x-correlation-id` or makes a UUID, returns it in the response and passes it
-to outgoing calls. Keep it in a `contextvars.ContextVar`; reset it in `finally` after the request:
-
-```python
-correlation_id: ContextVar[str | None] = ContextVar("correlation_id", default=None)
-token = correlation_id.set(request.headers.get("x-correlation-id") or str(uuid4()))
-try:
-    response = await call_next(request)
-    response.headers["x-correlation-id"] = correlation_id.get() or ""
-    return response
-finally:
-    correlation_id.reset(token)
-```
-
-Use fixed messages and ids only in context: `logger.info("Project created", extra={"context":
-{"projectId": str(project.id)}})`. Never log whole objects, passwords, tokens, one-time codes,
-secrets or personal data. Levels are debug, info, warn, error and fatal (logging WARNING and
-CRITICAL map to warn and fatal). Log 4xx at debug and failed operations at error.
+In an app whose `app/core/logging.py` has `set_log_level`, `log_event` removes secret values and writes nothing below `LOG_LEVEL`, which the lifespan sets at start with `set_log_level`. The security middleware writes the request line. Add no other request logging, redaction or error-tracking code.
 
 ## Errors
 
@@ -190,9 +158,7 @@ Status codes: 200 read, update, action or delete (delete has an envelope with nu
 204); 201 create; 400 invalid input; 401 not signed in; 403 not allowed; 404 missing or another
 account's record; 409 conflict; 429 rate limit; 500 our fault. GET never changes data.
 PUT replaces a resource; PATCH changes part. Use plain query filters and `?search=`.
-Lists accept page from 1, limit 20 by default and at most 100, sortBy from an allowed column list,
-and sortOrder asc or desc. Return `data.items` and `data.pagination` with page, limit,
-totalItems and totalPages. Follow the standards page's versioning and Idempotency-Key rules.
+Lists take limit (20 by default, at most 100), one cursor (after or before), sortBy from an allowed column list, and sortOrder asc or desc. Return `data.items` and `data.paging` with limit, nextCursor, previousCursor, total and totalCapped, as `app/projects/service.py` does. Follow the standards page's versioning and Idempotency-Key rules.
 
 After an API change, run `pnpm run api-types`. Commit both `libs/shared/api-types/openapi.json` and
 `libs/shared/api-types/src/api-types.ts`; module contract libraries import these generated types
@@ -326,7 +292,7 @@ Cover invalid input, missing sign-in, CSRF and another account's records through
 Playwright walks new and changed UI flows as testing.md says, with zero retries and no sleeps.
 Fake only third-party services at their edge. Unit tests are only for pure logic with many cases.
 
-The root test script runs api-types before typecheck, lint (ESLint, Prettier, `ruff check` and
+The root test script runs api-types before typecheck, lint (ESLint, `ruff check` and
 `ruff format --check`), `mypy` with `strict = true`, `lint-imports`, pytest, hooks and
 Playwright. Run `node scripts/test.mjs` to install, build and run the whole check, as forge.toml's
 test command does.

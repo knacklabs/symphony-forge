@@ -1,0 +1,89 @@
+{
+  "base": "cd5b38dcd383d4f76c9ad4981f541edbd240b601",
+  "branch": "fix/client-sign-off-never-finishes-every-att",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a183e7-5bb1-7fc1-9454-7a0612486940",
+    "head": null,
+    "start": "c7e4a4b2efcf632cc19dea035057e9c8216b25cf"
+  },
+  "done_when": "Client sign-off finishes: a later attempt reviews only files changed since the last sign-off review plus its earlier findings, and after round 2 only P0 findings block.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 887,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Client sign-off finishes: a later attempt reviews only files changed since the last sign-off review plus its earlier findings, and",
+      "work": 2
+    },
+    {
+      "area": "test_signoff_reviews_changes_and_bounds_rounds() in tests/test_signoff_review_rounds.py",
+      "file": "tests/test_signoff_review_rounds.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 80,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: sign-off Known issues proof",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "00922ca12218faadb8104ef8aba9bee0b536d4a71557dcf6a921544b85fd7b7c",
+    "changed": "a91987f7ad44b602dd1489051d0209b8f6d61a0cab2a9f137a698b198270402c",
+    "commit": "88f2ca2a6db9c18ee3eff1d357da214337ac1cc9",
+    "dismissals": [],
+    "findings": [],
+    "id": "dbfb97d8-3193-4886-afa8-31ead1fad9c1",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T19:05:19.996666+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T19:19:40.008336+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T19:29:02.126315+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T19:47:30.249988+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-28T19:19:40.026660+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_signoff_review_rounds.py",
+    "reason": "The owner chose one more round to fix both findings",
+    "wait_id": "92fb7cda-382c-4063-80e9-d8532622ae1f",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "e868a352-0e5c-4a46-8e2a-5170856f471c",
+    "head": "3932c9989650f1c8a23d112382fc72b004d45359",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Client sign-off never finishes: every attempt re-reviews all product files with no memory of earlier findings and no round limit, so a client saw 23, 15, 12, 33, 3, 2 and 3 new findings over seven attempts.",
+  "worker": "codex"
+}

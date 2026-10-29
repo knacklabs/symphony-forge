@@ -168,8 +168,8 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         # edit, even a broken one, is put back, and a closing question is recorded.
         given, _, number = handout("BOARD/HELP", "worker")
         model = {("claude", "new"): "sonnet, medium", ("codex", "new"): "gpt-6-sol, high",
-                 ("claude", "adopted"): "claude-sonnet-5-5, xhigh",
-                 ("codex", "adopted"): "gpt-6.1-sol, medium"}[tool, history]
+                 ("claude", "adopted"): "claude-sonnet-5-5, low",
+                 ("codex", "adopted"): "gpt-6.1-sol, low"}[tool, history]
         assert f"({model})" in given.stdout
         short = Path(re.search(r"Continue subagent w1 with: Read (.+) and follow it", given.stdout)[1])
         assert "The earlier brief in this conversation still applies." in short.read_text("utf-8")
