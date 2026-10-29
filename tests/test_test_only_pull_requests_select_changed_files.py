@@ -61,7 +61,7 @@ def test_1_test_only_pull_requests_select_changed_files(repo, gh, tmp_path, adop
         values = dict(line.split("=", 1) for line in output.read_text("utf-8").splitlines())
         assert values.get("test-only") == ("false" if name == "shared" else "true"), (
             name, values, repo.git("diff", "--name-only", base, cwd=client))
-        expected = [] if name == "score_notes" else ["tests/test_platform_case.py"]
+        expected = ["tests/test_platform_case.py"] if name == "platform_case" else []
         assert json.loads(values["platform-files"]) == expected
         assert values["run-windows"] == str(name == "shared" or bool(expected)).lower()
         workflow = (client / ".github/workflows/forge.yml").read_text("utf-8")

@@ -21,5 +21,5 @@ def test_1_forge_pr_groups_get_forty_five_minutes(repo):
 
     assert synced.returncode == 0, synced.stdout + synced.stderr
     jobs = _jobs((repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8"))
-    assert "group: [1, 2]" in jobs["tests"]
+    assert "|| '[1, 2]')" in jobs["tests"]
     assert "    timeout-minutes: 45\n" in jobs["tests"]
