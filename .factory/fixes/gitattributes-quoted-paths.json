@@ -1,0 +1,15 @@
+{
+  "base": "1967b96d9bf12bab966b66130ed34cb0d80739d3",
+  "branch": "fix/gitattributes-quoted-paths",
+  "done_when": "The three failing test_1 cases pass on this branch and the other test_generated_docs_run_tests cases still pass",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T03:46:44.647916+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Main is red before the v1.2.24 hotfix: the change classifier treats quoted .gitattributes paths as code consumers, so tests/test_generated_docs_run_tests.py test_1 fails three cases on origin/main"
+}
