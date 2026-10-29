@@ -79,5 +79,7 @@ def test_3_close_test_state_change_reuses_parent_ci(env, tmp_path, monkeypatch,
                           capture_output=True, text=True, timeout=30)
 
     assert done.returncode == 0, done.stderr
-    assert output.read_text(encoding="utf-8").strip() == "reuse=true"
-    assert not suite_runs(workflow, "true")
+    # CI also emits runner-selection outputs. This contract owns only parent reuse.
+    outputs = dict(line.split("=", 1) for line in output.read_text(encoding="utf-8").splitlines())
+    assert outputs["reuse"] == "true"
+    assert not suite_runs(workflow, outputs["reuse"])
