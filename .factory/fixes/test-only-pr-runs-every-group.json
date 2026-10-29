@@ -11,12 +11,27 @@
   "done_when": "A pull request that changes only a test file runs that test file and no unrelated Linux or Windows groups",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d82fc2ab65b69679dd6dea2d4a3641f0f22d1413706cdb06774a7af798765506",
+    "changed": "be8911521dd77a0c767db5e79761872c00fe84e723ad4adb0f6f64b628b07506",
+    "commit": "1129e5918e74da905538f1aa47e3b2f267da9178",
+    "dismissals": [],
+    "findings": [],
+    "id": "e3a26913-53b8-4f38-841a-ecd05adafaaf",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-29T06:13:46.766112+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-29T14:23:42.282792+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
