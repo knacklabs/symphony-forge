@@ -1864,7 +1864,7 @@
     "tests/test_pytest_picker_runs_in_the_clients_environment.py::test_4_forges_own_fast_command_works_with_an_older_release_on_path": 12.98324504600032,
     "tests/test_pytest_picker_runs_in_the_clients_environment.py::test_5_new_pytest_client_runs_the_proposed_picker_through_close": 4.014085293999415,
     "tests/test_pytest_picker_runs_in_the_clients_environment.py::test_6_previously_adopted_client_preserves_legacy_setting_until_owner_replaces_it_and_closes[LF]": 10.011018379000234,
-    "tests/test_pytest_picker_runs_in_the_clients_environment.py::test_7_large_pytest_repos_keep_the_shell_command_below_windows_limit": 0.8179133329995238,
+    "tests/test_pytest_picker_runs_in_the_clients_environment.py::test_8_large_pytest_repos_keep_the_shell_command_below_windows_limit": 0.8179133329995238,
     "tests/test_pytest_picker_supports_older_clients.py::test_1_picker_narrows_old_and_new_pytest_without_installing_forge[7.4.4]": 1.368363084000066,
     "tests/test_pytest_picker_supports_older_clients.py::test_1_picker_narrows_old_and_new_pytest_without_installing_forge[8.1.2]": 1.089821000000029,
     "tests/test_pytest_picker_supports_older_clients.py::test_1_picker_narrows_old_and_new_pytest_without_installing_forge[8.2.2]": 1.0552490430004582,
