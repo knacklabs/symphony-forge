@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-EFFORT-1-LADDER",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T23:45:20.927790+00:00",
+      "step": "start"
+    }
+  ]
+}
