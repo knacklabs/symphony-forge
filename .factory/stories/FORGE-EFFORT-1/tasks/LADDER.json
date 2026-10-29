@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-EFFORT-1-LADDER",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T23:45:20.927790+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8422c9fd5d0e1ff9c04c3ed53f88b4f930aaa9b3",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
