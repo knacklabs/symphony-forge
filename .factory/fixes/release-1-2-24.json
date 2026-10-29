@@ -12,7 +12,7 @@
   "done_when": "Every version reference names v1.2.24, forge sync output is committed, and the version tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 2,
+  "round": 3,
   "status": "working",
   "steps": [
     {
