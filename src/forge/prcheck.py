@@ -60,6 +60,7 @@ jobs:
     runs-on: <runner>
     outputs:
       docs-only: ${{ steps.docs.outputs.docs-only }}
+      test-only: ${{ steps.docs.outputs.test-only }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -78,16 +79,16 @@ jobs:
   tests:
     needs: docs-check
     if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
-    name: test group ${{ matrix.group }} of <groups>
+    name: test group ${{ matrix.group }} of ${{ needs.docs-check.outputs.test-only == 'true' && 1 || <groups> }}
     strategy:
       fail-fast: false
       matrix:
-        group: <group-list>
+        group: ${{ fromJSON(needs.docs-check.outputs.test-only == 'true' && '[1]' || '<group-list>') }}
     runs-on: <runner>
     env:
       UV_FROZEN: '1'
       FORGE_GROUP: ${{ matrix.group }}
-      FORGE_GROUPS: '<groups>'
+      FORGE_GROUPS: ${{ needs.docs-check.outputs.test-only == 'true' && '1' || '<groups>' }}
 <containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
@@ -309,7 +310,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 30\n")
+                .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 30}\n")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
                 .replace("<npm-cache>", npm_cache)

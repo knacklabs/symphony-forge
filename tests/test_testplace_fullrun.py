@@ -293,8 +293,10 @@ def test_3_full_run_is_nightly_and_daily(repo, gh, tmp_path, monkeypatch):
     _local_config(repo, "")
     before = len(_status_posts(gh))
     no_command = repo.forge("test", "--full")
-    assert no_command.returncode == 0, no_command.stderr
-    assert no_command.stdout == "forge.toml names no test command, so forge test ran none.\n"
+    # Full runs now require tests even when no command is configured.
+    assert no_command.returncode == 1, no_command.stderr
+    assert no_command.stdout == (
+        "The full run ran no tests. Set test in forge.toml to run the whole suite.\n")
     assert len(_status_posts(gh)) == before
 
 

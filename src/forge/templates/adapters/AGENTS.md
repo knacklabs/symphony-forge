@@ -69,10 +69,20 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
   `forge merge <item>` when the default branch allows it; `merge = "human"` is the default.
 - Ask the human only to approve a story, to choose between options, or to merge when the repo
   keeps the human merge setting.
-- No running commentary. Speak only when something lands, when a failure or finding needs the
+- No running commentary. Speak only when something merges, when a failure or finding needs the
   human, or when a decision is theirs, in a line or two.
-- Write for humans in plain English: no IDs, hashes or jargon in questions, pull request
-  summaries or the board, except story keys shown small beside titles on the board.
+- Write every reply, summary and question for a human in plain English that a non-native
+  speaker understands on the first read. Use everyday words, not agent slang: important, not
+  load-bearing; merge, not land; what it affects, not blast radius; easy mistake, not footgun;
+  start, not spin up. Explain each technical term the first time it comes up. Use no IDs,
+  hashes or jargon in questions, pull request summaries or the board, except story keys shown
+  small beside titles on the board. Notes and prompts for other agents are exempt.
+- Report progress in plain sentences: what changed, what failed, what comes next. Start with
+  three lines, and add detail only when it changes the next action. Use no emoji checkmarks,
+  no "Successfully", no "Perfect" and no wall of bullets.
+- Never make anything sound more certain or more finished than it is. Keep numbers, uncertainty
+  and status (planned, in progress, done) exact. A correlation stays a correlation, and a plan
+  stays a plan.
 - A story is approved through Plan Mode: exit Plan Mode with the text of the story doc that
   `forge next` names, unchanged, as the plan: from its title down to `## For the builders`, or the
   whole doc when it has no such heading. The approval matches its "What changes for you" and

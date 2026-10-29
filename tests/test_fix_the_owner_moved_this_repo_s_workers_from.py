@@ -1,5 +1,7 @@
-"""This repo's user-facing story parts build on Claude Opus, everything else on Codex at medium effort;
-reviews stay on Codex (owner, 2026-10-09: frontend code on Opus)."""
+"""This repo's Claude work uses Sonnet, with Codex Sol for other work and reviews.
+
+Owner, 2026-10-28: build, fix and lite use low effort; grill and design keep high.
+"""
 from __future__ import annotations
 
 import json
@@ -16,8 +18,12 @@ import pytest
 pytestmark = pytest.mark.platform
 
 STORY = "the-owner-moved-this-repo-s-workers-from"
-SOL = {"model": "gpt-6.1-sol", "effort": "medium"}
-OPUS = {"model": "claude-opus-5-5", "effort": "medium"}
+# Audit: these existing command tests own this repo's model settings and synced
+# roles accepted by doctor. The owner changed the Claude contract on 2026-10-28;
+# retain literal expectations so a model regression cannot validate itself.
+# No new test, duplicate boundary coverage or production seam is needed.
+SOL = {"model": "gpt-6.1-sol", "effort": "low"}
+SONNET = {"model": "claude-sonnet-5-5", "effort": "low"}
 
 
 def _codex(repo, monkeypatch, sdk_data):
@@ -34,20 +40,20 @@ def _codex(repo, monkeypatch, sdk_data):
     return repo.bin / "codex-app-server.jsonl"
 
 
-def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatch, sdk_data, claude_session):
+def test_1_this_repo_works_on_codex_low_and_reviews_on_codex(repo, monkeypatch, sdk_data, claude_session):
     text = (ROOT / "forge.toml").read_text(encoding="utf-8")
     config = tomllib.loads(text)
     assert config["workers"] == "split"
-    # Ordinary work stays on Codex; all Claude work overrides the shipped defaults for now.
+    # Ordinary work stays on Codex; both tools start implementation at low effort.
     assert config["models"]["build"] == config["models"]["fix"] == {
-        "codex": SOL, "claude": OPUS}
+        "codex": SOL, "claude": SONNET}
     assert config["models"]["lite"] == {
         "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
-        "claude": OPUS}
-    for kind, effort in (("design", "medium"), ("grill", "high")):
+        "claude": SONNET}
+    for kind in ("design", "grill"):
         assert config["models"][kind] == {
             "codex": {"model": "gpt-6.1-sol", "effort": "high"},
-            "claude": {**OPUS, "effort": effort}}
+            "claude": {**SONNET, "effort": "high"}}
     assert config["models"]["review"] == {"model": "gpt-6.1-sol", "effort": "high"}
     assert "stage" not in config and "signoff" not in config
 
@@ -65,7 +71,7 @@ def test_1_this_repo_works_on_codex_medium_and_reviews_on_codex(repo, monkeypatc
     [call] = _sent(log, "thread/start")
     # A fix's first turn uses lite; its helpers must reach the SDK too.
     assert call["config"] == {**QUIET, "features.multi_agent": True,
-        "model": "gpt-6.1-sol", "model_reasoning_effort": "medium",
+        "model": "gpt-6.1-sol", "model_reasoning_effort": "low",
         "agents.default_subagent_model": "gpt-6-luna",
         "agents.default_subagent_reasoning_effort": "max"}
 
@@ -84,8 +90,8 @@ def test_2_forge_doctor_passes_on_this_repos_forge_toml(repo, gh, tmp_path, monk
     for name in ("worker", "fixer", "coder", "frontend", "tester", "refactorer"):
         assert _settings(repo.path, name) == (
             ("gpt-6-luna", "max"),
-            ("claude-opus-5-5", "medium")), name
-    # Explorer now uses read-only explore settings; implementation roles still use Opus medium.
+            ("claude-sonnet-5-5", "high" if name == "frontend" else "low")), name
+    # Explorer uses read-only explore settings; implementation roles use Sonnet.
     assert _settings(repo.path, "explorer") == (
         ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
     # Codex replaces the Claude executable and UI skills prerequisites with the pinned SDK.

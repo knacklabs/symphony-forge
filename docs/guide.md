@@ -16,7 +16,7 @@ or the coordinating session's `reader` subagent when the other tool is unavailab
 Install the release a repo pins (uv brings Python 3.11 or later if you don't have it):
 
 ```
-uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.23
+uv tool install git+https://github.com/knacklabs/symphony-forge@v1.2.24
 ```
 
 `forge --version` prints the installed version. Each repo pins its release in `forge.toml`, and
@@ -120,8 +120,13 @@ design it has; no prototype design files are required for this gate.
 The completeness review uses `claude-opus-5-5` at high, independent of `[models.design]`.
 Without Claude it uses `gpt-6.1-sol` at high and reports the fallback.
 Fix gaps, then retry `forge decision accept client-signoff`.
-A canvas-only sign-off needs no working build. A working prototype gets one strict whole-product
-review with no serious findings.
+A canvas-only sign-off needs no working build. A working prototype gets a full first product review.
+Later attempts review only product files changed since the last review and its open findings.
+Reviewers get earlier findings and answers. Settled findings stay settled.
+After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
+Use `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
+Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
+New clients and earlier-adopted clients get these rules on upgrade.
 Forge reuses each passed result while what it checked stays unchanged.
 
 Only after accepted client sign-off, create stories with `forge story new`. Specs are optional;
@@ -172,8 +177,10 @@ Only starter apps get an MCP server inside the API at `/mcp`, marked with `mcp =
 in `services.toml`. Each feature has six tools: `<feature>_search`, `<feature>_get`,
 `<feature>_create`, `<feature>_update`, `<feature>_delete` and `<feature>_restore`.
 An admin adds an agent account with a role on the Members screen, creates its key (shown
-once), and can revoke it at once. Agents use that account's permissions and write change
-history as that account. Delete and restore stay off until an admin turns on the feature's
+once), and can revoke it at once. An agent account acts as itself, with its role's permissions,
+and writes change history as that account. An agent that a person signs in acts as that
+person, and the change history records the person and the agent. Delete and restore stay
+off until an admin turns on the feature's
 Agent access switch; the role still applies. Each key has a limit of 120 calls a minute per
 running API copy, and each call has a 10-second time limit. The feature command writes the
 one tools file, `libs/<plural>/server/src/<plural>.tools.ts` (Python
@@ -181,6 +188,17 @@ one tools file, `libs/<plural>/server/src/<plural>.tools.ts` (Python
 Each feature also offers its items, its field guide and its allowed values as MCP resources;
 prompts come only from `## Agent tasks` in the constitution, and the server never uses
 elicitation or sampling.
+
+Every create and every action with a side effect (send, pay, notify) takes a retry key:
+`Idempotency-Key` in the API and `idempotency_key` in an MCP create tool. A repeat from the
+same account with the same key returns the first result and makes no second record. The
+new-item form keeps its key until create succeeds; an update that sets values takes no key.
+Screens, the API and agents use the same feature service and permission check. Each report
+is a named, typed read in its feature's report service, with plain result names that carry
+their units. Start with a live query; use a summary table only after measuring it as slow,
+without changing callers. New repos get these rules at init; existing repos get the text
+with `forge sync` and keep their app code.
+
 Following [Anthropic's tool guidance](https://www.anthropic.com/research/writing-tools-for-agents)
 and the [MCP tools specification, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/server/tools),
 every tool has a feature-prefixed name, a description of what it does, when to use it and
@@ -272,29 +290,30 @@ Build, fix, lite, explore and grill set a model and reasoning effort.
 Build, fix, lite and explore can also set the subagents' model and effort. Build, fix, lite and explore may
 instead hold one entry per family, such as `[models.build.codex]` and `[models.build.claude]`. A
 single entry counts for its model's family: a gpt model is Codex's, any other is Claude's. When a
-kind has no Claude implementation entry, Forge uses `claude-sonnet-5-5` at xhigh effort.
+build, fix or lite kind has no Claude entry, Forge uses `claude-sonnet-5-5` at low effort.
 Claude plan reads default to `claude-opus-5-5` at high effort, including when Claude is the only
 installed tool. Claude planner and architect roles use that plan-read entry; debugger,
 security and performance use Opus 5.5 at high effort. Codex build, fix and lite workers with
-no entry use Forge's `gpt-6.1-sol` at medium effort; Codex design uses its design default.
+no entry use Forge's `gpt-6.1-sol` at low effort; Codex design uses its design default.
 Ask your agent to change these settings in a fix.
 
-`forge init` writes Sonnet at xhigh for Claude build, fix, lite and design (frontend included),
-and Opus at high for Claude grill. Existing model entries stay unchanged on
-upgrade. To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"xhigh"` in those
-four implementation entries, and `"claude-opus-5-5"` at `"high"` in grill. A missing implementation entry
+`forge init` writes low effort for Codex and Claude build, fix and lite.
+Claude design keeps Sonnet at xhigh. Claude grill and review use Sonnet at high in new repos.
+Existing model and effort entries stay unchanged after upgrade and sync.
+To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"low"` in the three
+Claude implementation entries, and Sonnet at high in grill and review. A missing implementation entry
 can be added before the first table with one line per kind, replacing `build` below:
-`models.build.claude = { model = "claude-sonnet-5-5", effort = "xhigh" }`.
+`models.build.claude = { model = "claude-sonnet-5-5", effort = "low" }`.
 For plan reads, use this line:
-`models.grill.claude = { model = "claude-opus-5-5", effort = "high" }`.
+`models.grill.claude = { model = "claude-sonnet-5-5", effort = "high" }`.
 Move a single build, fix or lite entry to its family's table first. Run `forge sync` after
 changing settings to refresh subagent roles.
 
 Every normal, light and prototype sign-off review runs through the external Autoreview
 program on the repo's tool: Claude with `tools = "claude"`, Codex with `tools = "codex"`.
-With `tools = "both"`, reviews use Codex when installed and Claude otherwise. Autoreview chooses its own
-default model and effort; Forge passes neither. Legacy `[models.review]` entries stay in
-existing settings but no longer override Autoreview's defaults.
+With `tools = "both"`, reviews use Codex when installed and Claude otherwise.
+Forge passes the selected tool's `[models.review]` model and optional effort to Autoreview.
+An unset entry or effort uses Autoreview's default. Existing review entries stay unchanged.
 
 A story task marked User-facing or a client fix allowed as "Prototype before sign-off"
 uses its selected tool's design entry: `[models.design.codex]` on Codex and

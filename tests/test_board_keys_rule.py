@@ -3,8 +3,8 @@ exception to the plain-English rule, in new repos and in repos adopted on an ear
 from test_board_dependency_timelines import _client
 
 STORY = "FORGE-BOARD-2"
-LINE = ("Write for humans in plain English: no IDs, hashes or jargon in questions, pull request "
-        "summaries or the board, except story keys shown small beside titles on the board.")
+LINE = ("Use no IDs, hashes or jargon in questions, pull request summaries or the board, "
+        "except story keys shown small beside titles on the board.")
 
 
 def agents_md_allows_story_keys(repo, gh, tmp_path, history):

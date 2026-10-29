@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/organisations/web/src/pages/invite-dialog.tsx\tNot done: The starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text.\ttyped-text-in-the-invite-and-add-agent-f",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/organisations/web/src/pages/invite-dialog.tsx",
+      "line": 48,
+      "text": "Not done: The starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text.",
+      "from": "blocking",
+      "item": "typed-text-in-the-invite-and-add-agent-f",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/feature/link-picker.tsx\tThe link picker still shows a plain loading line instead of skeleton rows.",
+      "kind": "improve",
+      "path": "src/forge/templates/feature/link-picker.tsx",
+      "line": 62,
+      "text": "The link picker still shows a plain loading line instead of skeleton rows.",
+      "from": "worker",
+      "item": "typed-text-in-the-invite-and-add-agent-f",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx\tThe project's recent changes list still shows a plain \"Loading changes\u2026\" line instead of skeleton rows.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/libs/projects/web/src/pages/project-detail-page.tsx",
+      "line": 74,
+      "text": "The project's recent changes list still shows a plain \"Loading changes\u2026\" line instead of skeleton rows.",
+      "from": "worker",
+      "item": "typed-text-in-the-invite-and-add-agent-f",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -220,6 +220,8 @@ def _field_kind(node: ast.expr, default: ast.expr | None, enums: dict[str, list[
             keywords = {keyword.arg: ast.literal_eval(keyword.value)
                         for keyword in default.keywords if keyword.arg and isinstance(keyword.value, ast.Constant)}
             if keywords.get("pattern"):
+                if keywords["pattern"].startswith(r"^-?\d"):
+                    return "number", []
                 return "email", []
             if keywords.get("max_length", 0) > 200:
                 return "long-text", []
@@ -429,10 +431,8 @@ def render_python_tests(
                 return f"{{value}} {{index}}"
             if kind == "email" and index:
                 return f"{{index}}-{{value}}"
-            if kind == "number":
+            if kind in ("number", "money"):
                 return str(Decimal(str(value)) + index)
-            if kind == "money":
-                return int(value) + index
             if kind == "yes-no" and index:
                 return index % 2 == 0
             return value
@@ -782,7 +782,7 @@ def render_python_tests(
 
             invalid_numeric_values = {{
                 "number": ("1.23456", "1000000000000000"),
-                "money": (2147483648, -2147483649),
+                "money": ("1.23456", "1000000000000000", 1250),
             }}
             for field in FEATURE_FIELDS:
                 for bad in invalid_numeric_values.get(field["kind"], ()):
@@ -1079,5 +1079,56 @@ def render_python_tests(
     for token, value in replacements.items():
         test_source = test_source.replace(token, value)
     if include_mcp:
+        # Audit: the generated route's header and transaction wiring can drift from projects.
+        # Real HTTP and storage own the contract; helpers only provide valid feature inputs.
+        # Existing CRUD never repeats a key. No production test seam is needed.
+        test_source += textwrap.dedent('''
+
+
+        def test_a___ONE___create_sent_again_with_the_same_idempotency_key_makes_one___ONE__(
+            client: httpx.Client,
+        ) -> None:
+            _, csrf = sign_up(client)
+            body = _payload(client, csrf)
+            before = _list(client)["paging"]["total"]
+            headers = {"x-csrf-token": csrf, "Idempotency-Key": str(uuid4())}
+            first = client.post(FEATURE_PATH, headers=headers, json=body)
+            repeated = client.post(FEATURE_PATH, headers=headers, json=body)
+            assert first.status_code == repeated.status_code == 201
+            assert _body(first)["id"] == _body(repeated)["id"]
+            assert _list(client)["paging"]["total"] == before + 1
+            second = client.post(
+                FEATURE_PATH,
+                headers={**headers, "Idempotency-Key": str(uuid4())},
+                json=body,
+            )
+            assert second.status_code == 201, second.text
+            assert _body(second)["id"] != _body(first)["id"]
+            assert _list(client)["paging"]["total"] == before + 2
+            invalid = client.post(
+                FEATURE_PATH,
+                headers={**headers, "Idempotency-Key": "x" * 201},
+                json=body,
+            )
+            assert invalid.status_code == 400, invalid.text
+            assert invalid.json()["error"]["code"] == "VALIDATION_ERROR"
+            assert any(field["field"] == "Idempotency-Key"
+                       for field in invalid.json()["error"]["details"]["fieldErrors"])
+            changed = _payload(client, csrf, changed=True)
+            updated = client.put(
+                f"{FEATURE_PATH}/{_body(first)['id']}", headers=headers, json=changed,
+            )
+            assert updated.status_code == 200, updated.text
+            preflight = client.options(
+                FEATURE_PATH,
+                headers={
+                    "Origin": str(client.base_url).rstrip("/"),
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type,x-csrf-token,idempotency-key",
+                },
+            )
+            assert preflight.status_code == 204, preflight.text
+            assert "idempotency-key" in preflight.headers["access-control-allow-headers"].lower()
+        ''').replace("__ONE__", _snake(one))
         test_source += "\n\n" + _mcp_case_source(fields, one, plural, kinds, linked_fields)
     return test_source

@@ -17,6 +17,7 @@ from app.core import (
     install_error_handlers,
     install_security_middleware,
     load_settings,
+    set_log_level,
 )
 from app.history import router as history_router
 from app.mcp import McpEndpoint, create_session_manager
@@ -27,6 +28,7 @@ from app.projects import router as projects_router
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     settings = load_settings()
+    set_log_level(settings.log_level)
     engine, session_factory = create_database(settings.database_url)
     application.state.settings = settings
     application.state.session_factory = session_factory

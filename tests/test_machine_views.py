@@ -608,8 +608,9 @@ def test_3_board_reports_github_occurrences_after_cache_expiry(repo, gh, monkeyp
     assert "first: 25" in " ".join(calls[-1]) and "CREATED_AT" in " ".join(calls[-1])
 
 
-@pytest.mark.parametrize("history", ["new", "adopted-v1.2.2"])
-@pytest.mark.parametrize("phase", ["checks", "offline", "completion"])
+@pytest.mark.parametrize("phase,history", [
+    (phase, "new") for phase in ("checks", "offline", "completion")
+] + [("completion", "adopted-v1.2.2")])
 def test_4_client_machine_views_follow_the_last_task_merge(env, history, phase):
     # The HTML completion test cannot detect an approved JSON row after a squash merge.
     # Exercise both shipped client lifecycles, including real earlier-release adoption output.

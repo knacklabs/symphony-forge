@@ -16,6 +16,7 @@ const RESET_MESSAGE = 'If an account exists, a reset link has been sent.';
 const AGENT_EMAIL_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
 // No password matches an empty hash, so an agent account cannot sign in.
 const NO_PASSWORD = '';
+type InviteOptions = NonNullable<Parameters<OrganisationsApi['invite']>[2]>;
 
 export type SessionCookies = { sessionToken: string; csrfToken: string; expiresAtUtc: Date };
 
@@ -86,12 +87,11 @@ export class AuthService implements AuthApi {
     return accountResponse(account, membership.role);
   }
 
-  async invite(email: string, account: AccountPrincipal): Promise<{ message: string }> {
+  async invite(email: string, account: AccountPrincipal, options?: InviteOptions): Promise<string> {
     if (await this.prisma.account.findUnique({ where: { email }, select: { id: true } })) {
       throw new ConflictException({ code: 'EMAIL_ALREADY_REGISTERED', message: 'That person already has an account.', details: null });
     }
-    await this.organisations.invite(email, account);
-    return { message: 'Invite sent.' };
+    return this.organisations.invite(email, account, options);
   }
 
   async acceptInvite(token: string, email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {

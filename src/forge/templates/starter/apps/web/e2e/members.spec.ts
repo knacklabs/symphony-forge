@@ -70,6 +70,41 @@ test('only an admin sees the invite and role controls', async ({ page, browser }
   }
 });
 
+test('an invite form retries with its key after the response is lost', async ({ page }) => {
+  await signUp(page);
+  await page.getByRole('link', { name: 'Members' }).click();
+  await expect(page.getByRole('heading', { name: 'Members' })).toBeVisible();
+  const email = newEmail();
+  const requestKeys: string[] = [];
+  let firstResponseStatus: number | undefined;
+  await page.route('**/api/v1/invites', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    requestKeys.push(route.request().headers()['idempotency-key'] ?? '');
+    if (requestKeys.length === 1) {
+      const response = await route.fetch();
+      firstResponseStatus = response.status();
+      await route.abort();
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.getByRole('button', { name: 'Invite person' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Invite person' });
+  await dialog.getByLabel('Email').fill(email);
+  await dialog.getByRole('button', { name: 'Send invite' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText('Could not send the invite. Try again.');
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole('button', { name: 'Send invite' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText(`Invite sent to ${email}.`)).toBeVisible();
+  expect(firstResponseStatus).toBe(201);
+  expect(requestKeys).toHaveLength(2);
+  expect(requestKeys[0]).toBeTruthy();
+  expect(requestKeys[1]).toBe(requestKeys[0]);
+});
+
 test('an admin adds an agent account, creates its key once and revokes it', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await signUp(page);

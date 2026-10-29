@@ -277,7 +277,7 @@ def question(name: str, delivers: str, flagged: list[str], who: str, accept: str
                       f"- Accept: {accept}"])
 
 
-def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
+def stop_question(top: Path, item: str, state: dict[str, Any], *, accept: str = "") -> str:
     """A stopped item's question for the human: what it is, its open serious findings, the choices."""
     from forge import story as story_  # story imports review
 
@@ -301,7 +301,7 @@ def stop_question(top: Path, item: str, state: dict[str, Any]) -> str:
     return question(name, delivers, score.table(rows), score.who(rows, (
                         "Ask the human to choose one more round, split or accept the remaining findings, "
                         "in these words:")),
-                               f"the {len(rows)} findings listed become follow-ups in Known issues with "
+                               accept or f"the {len(rows)} findings listed become follow-ups in Known issues with "
                                "your reason; close then goes on to the checks, and merging "
                                "is still a separate step.")
 
@@ -608,11 +608,12 @@ def _rulings(top: Path, base: str, history: list[dict[str, Any]]) -> str:
 
 
 def _history(top: Path, item: str, base: str, previous: dict[str, Any],
-             ref: str = "HEAD", *, state: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+             ref: str = "HEAD", *, state: dict[str, Any] | None = None,
+             path: str = "") -> list[dict[str, Any]]:
     """Git owns earlier reviews; later dismissals replace that round's original result."""
-    path = repo.state_path(item)
+    path = path or repo.state_path(item)
     rounds = {}
-    for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..{ref}", "--", path,
+    for sha in repo.git("rev-list", "--reverse", "--first-parent", f"{base}..{ref}" if base else ref, "--", path,
                         cwd=top).split():
         result = json.loads(repo.git("show", f"{sha}:{path}", cwd=top)).get("review") or {}
         if result.get("commit"):  # one per round: two rounds at one commit differ in their findings
@@ -877,6 +878,21 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
+            review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base", cwd=tree)
+            if previous.get("commit"):
+                repo.git("fetch", "-q", str(top), previous["commit"], cwd=tree)
+                repo.git("read-tree", previous["commit"], cwd=tree)
+                repo.git("rm", "-r", "-f", "-q", "--cached", "--ignore-unmatch", "--",
+                         ".factory", "plans", "docs/decisions", cwd=tree)
+                changed = set(repo.git("diff", "--name-only", "-z", previous["commit"], head, cwd=tree).split("\0"))
+                recheck = ({f["file"] for f in score.open_findings(previous)} & set(product)) - changed
+                if recheck:
+                    repo.git("rm", "-f", "-q", "--cached", "--", *sorted(recheck), cwd=tree)
+                    prompt += ("\n\nFiles with open earlier findings appear as additions so they remain review targets. "
+                               "They already exist in the product. Re-check their earlier findings: " + ", ".join(sorted(recheck)))
+                review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
+                                       "-m", "Previous sign-off product", cwd=tree)
+                repo.git("read-tree", head, cwd=tree)
             repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
                      ".factory", "plans", "docs/decisions", cwd=tree)
             if images is not None:
@@ -884,8 +900,6 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                            and name not in images]
                 if omitted:
                     repo.git("rm", "-q", "--cached", "--", *omitted, cwd=tree)
-            review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base",
-                                   cwd=tree)
             snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", review_base,
                                 "-m", "Product snapshot for sign-off", cwd=tree)
             repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
@@ -948,8 +962,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
             if not signoff_prompt:
                 repo.refuse(REFUSALS["failed"], reason=reason, item=item)
         result = {"findings": findings, "blocking_level": "P0" if light else "P1"}
-        if not signoff_prompt:
-            history = _history(top, item, base, previous, state=state)
+        if not signoff_prompt or item == "client-signoff":
+            history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
@@ -958,7 +972,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 for number, finding in enumerate(findings, 1)
                 if (settlement := settled.get(key := score.identity(finding["file"], finding["title"]), ""))
                 and not (settlement.startswith("dismissed because ") and _cited_changed(top, history, key, head))])
-            bound_review(top, item, state, result)
+            if not signoff_prompt:
+                bound_review(top, item, state, result)
         serious = blocking(result)
         if item == "design-check":
             serious = [(n, f) for n, f in enumerate(findings, 1) if f["priority"] in SERIOUS]
@@ -970,7 +985,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if signoff_prompt:
             if reason:
                 problem, action = "The sign-off review did not finish: " + reason + ".", "check Autoreview"
-            elif serious:
+            elif serious and item != "client-signoff":
                 problem = "Customer sign-off review found a blocking issue: " + "; ".join(
                     f["title"] for _, f in serious) + "."
                 action = "fix the prototype"
@@ -978,7 +993,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     "status", "--porcelain", "--", "docs/product/BRIEF.md", *product, cwd=top):
                 problem, action = "The prototype differs from the reviewed commit.", "commit the changes"
             else:
-                return {"commit": head}
+                return {"commit": head, **result}
             if item == "design-check" and (reason or serious):
                 problem = ("The canvas completeness check did not finish: " + reason + "." if reason else
                            "The canvas completeness check found gaps: " + "; ".join(
@@ -1098,13 +1113,16 @@ def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = Fa
                        for path in generated))
 
 
-def signoff(top: Path, answers: str, evidence: str = "") -> str:
-    """Review every tracked product file once, against an empty root, before client acceptance."""
+def signoff(top: Path, answers: str, evidence: str = "", *, previous: dict[str, Any],
+            history: list[dict[str, Any]]) -> dict[str, Any]:
+    """Review the product initially, then changes and earlier findings before client acceptance."""
     skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
     table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
     prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
+    prompt += "\n\n## Earlier review rounds\n" + ("\n\n".join(_previous(old) for old in history) or "- none")
+    prompt += "\n\nSettled findings:\n" + _accepted(top, "client-signoff", history)
     if evidence:
         prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
                    "Each step must name a passing test. Refuse a missing step, a missing test, "
@@ -1115,7 +1133,7 @@ def signoff(top: Path, answers: str, evidence: str = "") -> str:
                    "Use this green full run as passing evidence for the tests named in Proof. "
                    "No separate forge test run is required.")
     cfg = repo.config(top)
-    return run(top, "client-signoff", {}, cfg, "", {}, {}, signoff_prompt=prompt)["commit"]
+    return run(top, "client-signoff", {"signoff_history": history}, cfg, "", {}, previous, signoff_prompt=prompt)
 
 
 def design_check(top: Path, prompt: str) -> None:
