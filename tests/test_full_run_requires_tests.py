@@ -64,6 +64,7 @@ def test_1_full_run_fails_when_it_ran_no_tests(repo, gh, tmp_path, monkeypatch, 
     # A successful wrapper conceals pytest exit 5, leaving only header lines.
     monkeypatch.delenv("FORGE_GROUP")
     monkeypatch.delenv("FORGE_GROUPS")
+    monkeypatch.delenv("GITHUB_RUN_ID")
     _settings(client, test=command + ' -k absent || python -c "pass"')
     publish()
     selected_none = repo.forge("test", "--full", cwd=client)
