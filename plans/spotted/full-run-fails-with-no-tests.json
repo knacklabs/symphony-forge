@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tEmpty partitions of nonempty suites still fail\tfull-run-fails-with-no-tests",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 476,
+      "text": "Empty partitions of nonempty suites still fail",
+      "from": "blocking",
+      "item": "full-run-fails-with-no-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/fullrun.py\tGate: update the existing no-command full-run test\tfull-run-fails-with-no-tests",
+      "kind": "bug",
+      "path": "src/forge/fullrun.py",
+      "line": 51,
+      "text": "Gate: update the existing no-command full-run test",
+      "from": "blocking",
+      "item": "full-run-fails-with-no-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_full_run_requires_tests.py\tGate: the empty-group proof never creates an empty partition\tfull-run-fails-with-no-tests",
+      "kind": "bug",
+      "path": "tests/test_full_run_requires_tests.py",
+      "line": 32,
+      "text": "Gate: the empty-group proof never creates an empty partition",
+      "from": "blocking",
+      "item": "full-run-fails-with-no-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
