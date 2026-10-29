@@ -1,0 +1,15 @@
+{
+  "base": "bbfed490c2129010b97b8b5664ecf567941ef48f",
+  "branch": "fix/full-run-fails-with-no-tests",
+  "done_when": "forge test --full fails when it ran no tests, and its message says to set test to the whole suite",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T13:53:16.965309+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The nightly full run can pass on a clean default branch without running a test: when forge.toml's test is a change-only command, forge test --full selects nothing and reports success"
+}
