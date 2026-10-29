@@ -1,0 +1,15 @@
+{
+  "base": "894fc7daf3fe9f4dcb4aa7cc2bc97ac76fe8085f",
+  "branch": "fix/test-only-pr-runs-every-group",
+  "done_when": "A pull request that changes only a test file runs that test file and no unrelated Linux or Windows groups",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T06:13:46.766112+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "A pull request that changes only one test file runs all six Linux test groups and all five Windows groups, about 30 minutes of checks for one test"
+}
