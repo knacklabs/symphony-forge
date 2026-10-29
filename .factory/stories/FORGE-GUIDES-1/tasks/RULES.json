@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 2,
       "line": 77,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -25,27 +25,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "50e5a74331f106565178b51c1cfe6b1d30b2daaf0bf1d7feae5e92a9af1d558d",
-    "changed": "65035e184d2be70d6f7fed61b13aa54ca20f3a63b4031679235a05f3ee570fd6",
-    "commit": "60f5cc02245177e2b8ffe8f76163756a90a1abd6",
+    "branch_diff": "6e20bca04f992bdf0cf733e5c2e120bd117eade22ce32885747fd7726d794a88",
+    "changed": "2f8e6056e98f90164dae76c8016cdc766298c3c897b2748ff3d6eabe36d6db90",
+    "commit": "3ed2a6dfa4f92f1539a3593fe75817f7c7fc24eb",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Test.\nCase: normal use - running the existing standards proof or full test suite.\nThis revised bullet contains `queue` but removes `add when a story's New moving parts names it`. In tests/test_standards.py:60\u201364, every convention line mentioning `queue` must contain that exact phrase, so this test deterministically fails before reaching its documented logger check. Update the existing assertion to cover the approved worker/jobs-table rule while preserving the check that infrastructure is deferred until needed.",
-        "file": "src/forge/templates/conventions/stack.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 77,
-        "priority": "P1",
-        "title": "Gate: tests/test_standards.py::test_36_client_apps_simple",
-        "work": 2
-      }
-    ],
-    "id": "6b0de62c-b7a9-48a2-adc0-9b5314047f89",
-    "status": "blocked"
+    "findings": [],
+    "id": "89449f1f-373c-48f8-887d-4b40f6db92c3",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-29T23:45:15.927509+00:00",
@@ -53,6 +42,10 @@
     },
     {
       "at": "2026-10-29T23:51:27.841842+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T23:53:39.764181+00:00",
       "step": "review"
     }
   ],
