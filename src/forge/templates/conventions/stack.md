@@ -74,7 +74,7 @@ Each of these is a moving part the client pays for as long as the app runs, so n
 advance. The story that needs one names it, with the Done-when item it serves.
 
 - Redis, for a cache or limits shared by several app instances: add when a story's New moving parts names it.
-- A job queue (for example BullMQ) for work that must outlive a request: add when a story's New moving parts names it; until then the work happens inside the request.
+- Background jobs and schedules for work that must outlive a request: the story adds a worker in `services.toml` and a Postgres jobs table read with `FOR UPDATE SKIP LOCKED`, as the database skill says. No separate queue server; until that story, work happens inside the request.
 - Terraform, for the client's cloud infrastructure as code: add when a story's New moving parts names it.
 - OIDC sign-in through the client's identity provider: add when a story's New moving parts names it.
 - A monitoring stack (metrics, traces, dashboards): add when a story's New moving parts names it; until then the structured logs are the record.

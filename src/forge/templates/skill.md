@@ -1279,6 +1279,11 @@ use that release and its rules.
 
 ## Refresh dependencies
 
+Once in each new or existing repo, turn on GitHub's Dependabot security alerts with
+`gh api --method PUT repos/{owner}/{repo}/vulnerability-alerts`.
+Dependabot security updates stay off: add no Dependabot update pull requests and no
+`.github/dependabot.yml`. This is a repository setting, not a generated file.
+
 When the default branch's lockfiles and Dockerfiles are over a week old by git log, `forge next`
 lists a refresh fix with its `forge fix start` command; start it like any ready item. In the
 fix's folder:

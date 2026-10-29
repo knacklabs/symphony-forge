@@ -89,8 +89,12 @@ Partition history by month only past about 50 to 100 million rows or when old mo
 
 ## Job tables
 
-Use a jobs table read with `SELECT ... FOR UPDATE SKIP LOCKED`, or pg-boss in a Node app when the story names it.
-Use pg_cron only for scheduled SQL. No separate queue server at the start.
+When a story first adds background jobs or schedules, add a worker entry in `services.toml`
+and a jobs table read with `SELECT ... FOR UPDATE SKIP LOCKED`. Keep the attempt count and
+last error on the job row. A schedule only inserts job rows; the worker does the work through
+the owning module's public service. Make each job safe to run again after a worker stops.
+The first job is clean-up of old sessions, reset tokens and invites.
+Add these only with the story that needs jobs, not to the starters. No separate queue server.
 
 ## jsonb
 

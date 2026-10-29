@@ -122,8 +122,27 @@ Handlers return `{"success": false, "data": null, "error": {"code", "message", "
 "errorId"}}` with a new errorId, and log it with correlationId. Validation is 400 with
 `details.fieldErrors: [{field, reason}]`, never FastAPI's default 422. A 500 uses a fixed
 message; the stack goes to the log only. Never expose SQL, library errors or secrets.
-A provider wraps its vendor's errors with our codes and types, sets timeouts, and retries only
-failures that can succeed on retry; it holds no business logic. Never swallow unexpected errors.
+A provider wraps its vendor's errors with our codes and types and holds no business logic. For
+outgoing web calls, use a 10-second timeout and send the request's `x-correlation-id`. Retry at
+most twice, after 0.5 and 2 seconds, only for a network error, HTTP 429 or 5xx, and only for GET,
+PUT, DELETE or a POST with an idempotency key. Log each call's duration and outcome. Never swallow
+unexpected errors.
+
+```python
+started_at = time.perf_counter()
+outcome = "failure"
+try:
+    with httpx.Client(timeout=10.0) as client:
+        response = client.get(url, headers={"x-correlation-id": correlation_id})
+    outcome = "success" if response.is_success else "failure"
+    return response
+finally:
+    log_event(
+        None, "info", "Outgoing call finished", "app.providers",
+        {"durationMs": round((time.perf_counter() - started_at) * 1000), "outcome": outcome},
+        environment=environment, correlation_id=correlation_id,
+    )
+```
 
 ## API
 
