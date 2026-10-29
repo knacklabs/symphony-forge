@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from conftest import ROOT
-from test_groups_pytest import _adopted_client, _new_client, _settings
+from test_groups_pytest import _adopted_client, _branch, _new_client, _settings
 from test_ci_limits_pull_requests_to_linux import expression
 
 STORY = "FIX-TEST-ONLY-PR-RUNS-EVERY-GROUP"
@@ -24,6 +24,8 @@ STORY = "FIX-TEST-ONLY-PR-RUNS-EVERY-GROUP"
 def test_1_test_only_pull_requests_select_changed_files(repo, gh, tmp_path, adopted):
     client = (_adopted_client(repo, tmp_path, "client") if adopted
               else _new_client(repo, gh, tmp_path, "client"))
+    if not adopted:
+        _branch(repo, client, "ci-selection")
     _settings(client, test=json.dumps(Path(sys.executable).as_posix()) + " -m pytest tests -q")
     ignore = client / ".gitignore"
     ignore.write_text((ignore.read_text("utf-8") if ignore.exists() else "")
