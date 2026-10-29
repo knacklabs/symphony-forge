@@ -1,6 +1,7 @@
 """Merge checks each new default-branch move without another human command."""
 import json
 import sys
+import tomllib
 
 import pytest
 
@@ -34,7 +35,11 @@ def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, p
     config = (setup / "forge.toml").read_text("utf-8").replace(
         '"python verify.py"', json.dumps(command))
     if case == "disabled":
+        # New repos omit merge and permit agent merges only as prototypes.
+        # A live client's late revocation must start with explicit permission.
         config = config.replace('stage = "prototype"', 'stage = "live"')
+        if "merge" not in tomllib.loads(config):
+            config = 'merge = "agent"\n' + config
     env.commit(setup, "forge.toml", config)
     env.commit(setup, "verify.py", (
         "import json, pathlib, subprocess\n"
