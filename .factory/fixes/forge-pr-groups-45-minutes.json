@@ -1,6 +1,13 @@
 {
   "base": "4d9b77ad1b6aa77e5a85dd4a71ceb25a8c96d4bd",
   "branch": "fix/forge-pr-groups-45-minutes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18775-edb1-7bd1-9bc7-3d7a3e8a8ac1",
+    "head": null,
+    "start": "f1f80927b2e824982fb164004b14650d67b1d1f3"
+  },
   "done_when": "Forge's own pull request test groups have a 45-minute limit, and client repos keep 30 minutes",
   "fix_kind": "mechanical",
   "kind": "fix",
