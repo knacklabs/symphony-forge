@@ -187,8 +187,10 @@ If the file sets overlap, Forge keeps the local merge, reuses the existing revie
 It pushes that commit, waits for its required checks, then merges.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
-checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
-and gives `forge merge <item>` as the next step.
+checks, Forge fetches the default branch again. If it moved again, Forge checks the new
+commits against the item's changed files. With no overlap, Forge merges at once. With an
+overlap, Forge repeats the combined tests and required checks. After five further moves,
+Forge stops and gives `forge merge <item>` as the next step.
 
 Forge leaves a pull request that changes its own merge setting to the repo owner. It compares
 the item's merge base with its head, so an older branch can merge after the owner enables agent
