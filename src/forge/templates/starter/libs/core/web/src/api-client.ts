@@ -32,9 +32,10 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     headers,
     credentials: 'include',
   });
-  const envelope = await response.json() as ApiEnvelope<T>;
-  if (!response.ok || !envelope.success) {
-    const error = envelope.success ? undefined : envelope.error;
+  // A proxy or gateway error page is not JSON; it still becomes an ApiError with the reply's status.
+  const envelope = await response.json().catch(() => undefined) as ApiEnvelope<T> | undefined;
+  if (!response.ok || !envelope?.success) {
+    const error = envelope?.success ? undefined : envelope?.error;
     throw new ApiError(response.status, error?.message ?? 'The request failed. Try again.', error?.code ?? 'REQUEST_FAILED', error?.details);
   }
   return envelope.data;

@@ -15,6 +15,8 @@ from test_lanes_tests import shell
 from test_machine_shared_test_budget import _run
 from test_setup import _fresh_client
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-BUDGET-1"
 
 

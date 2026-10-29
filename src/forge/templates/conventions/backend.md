@@ -71,6 +71,19 @@ text.
 Reviews apply this call-or-event rule only to new code. Existing code needs no conversion.
 For work that must outlive a request, follow [stack.md](stack.md).
 
+## Ready for agents
+
+- Routes check their permission with `@RequirePermission`, and agents reach the same services
+  through `callTool`, which checks the same permission. A later in-app agent calls `callTool`
+  with the person's principal and `viaAgent` set, never a service directly.
+- In an app with `libs/core/server/src/common/retry-keys.ts`, a create or a send, pay or notify
+  action reads the `Idempotency-Key` header with `retryKeySchema` and runs through
+  `RetryKeys.once(account, '<feature>_<action>', key, ...)`, as `ProjectsController.create`
+  does. The MCP tools use the same helper.
+- Put each report in `libs/<module>/server/src/<module>.reports.ts`, one method per report,
+  with its result schema in the module's contracts package. Give agents a report with
+  `defineTool` in the feature's tools file.
+
 ## Config
 
 Use `@nestjs/config` with a `validate` function, so a missing or malformed variable stops the app
@@ -88,7 +101,7 @@ logging library:
 export class JsonLogger implements LoggerService {
   private write(level: string, message: string, module?: string, context: object = {}) {
     process.stdout.write(JSON.stringify({ timestampUtc: new Date().toISOString(), level, message,
-      context, environment: process.env.NODE_ENV, serviceName: 'api', module,
+      context, environment: process.env.APP_ENV, serviceName: 'api', module,
       correlationId: correlationStore.getStore() }) + '\n');
   }
   log(message: string, module?: string, context?: object) { this.write('info', message, module, context); }
@@ -107,6 +120,8 @@ entry and outgoing call. Log a fixed message with only the fields needed in the 
 ```ts
 this.logger.log('Invoice paid', 'InvoiceService', { invoiceId });
 ```
+
+In an app with `libs/core/server/src/common/request-log.middleware.ts`, `requestLogMiddleware` writes the request line and `JsonLogger` removes secret values and reads `LOG_LEVEL` through `getLogLevel()`. Add no other request logging, redaction or error-tracking code.
 
 ## Errors
 

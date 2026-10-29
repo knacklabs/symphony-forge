@@ -22,8 +22,8 @@ def _replace(text: str, name: str, body: str) -> str:
 
 
 def _feature_mcp(text: str, include: bool) -> str:
-    """Keep MCP code for an MCP starter and remove it from a feature built by an older one."""
-    matches = [match for match in MARKER.finditer(text) if match.group("name") in {"mcp", "mcp-cases"}]
+    """Keep tools and retry keys only when the app has their shared core helpers."""
+    matches = [match for match in MARKER.finditer(text) if match.group("name") in {"mcp", "mcp-cases", "retry-key"}]
     for match in reversed(matches):
         if include:
             lines = match.group(0).splitlines(keepends=True)
@@ -439,6 +439,7 @@ def _renamed_source(text: str, one: str, plural: str) -> str:
     renamed = renamed.replace(f"'/api/v1/{plural_var}", f"'/api/v1/{plural}")
     renamed = renamed.replace(f'"/api/v1/{plural_var}', f'"/api/v1/{plural}')
     renamed = renamed.replace(f"'{plural_var}'", f"'{plural}'")
+    renamed = renamed.replace(f"'{plural_var}_create'", f"'{plural.replace('-', '_')}_create'")
     renamed = renamed.replace(f"'{plural_var}.csv'", f"'{plural}.csv'")
     renamed = renamed.replace(f"'{singular_var}.created'", f"'{one}.created'")
     renamed = renamed.replace(f"'{singular_var}.changed'", f"'{one}.changed'")

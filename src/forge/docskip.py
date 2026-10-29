@@ -8,7 +8,7 @@ from pathlib import Path
 
 def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False,
               head: str = "HEAD") -> bool:
-    """Generated files and test inputs always need the full checks."""
+    """Generated files and inputs read by code always need the full checks."""
     def git(*args: str, input: str | None = None) -> str:
         return subprocess.run([shutil.which("git") or "git", *args], cwd=top, input=input,
                               check=True, capture_output=True, text=True,
@@ -34,7 +34,8 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         patterns = sorted({posixpath.basename(path) for path in changed})
         found = subprocess.run([shutil.which("git") or "git", "grep", "-I", "-l", "-z", "-F",
                                 *[arg for name in patterns for arg in ("-e", name)],
-                                base, head, "--", *tests], cwd=top, capture_output=True,
+                                base, head, "--", ".", *excludes,
+                                ":(exclude,glob)**/.gitattributes"], cwd=top, capture_output=True,
                                 text=True, encoding="utf-8")
         if found.returncode not in (0, 1):
             return False

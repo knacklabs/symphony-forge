@@ -98,16 +98,20 @@ Before every work round, Forge fetches and merges the default branch before it r
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
 
-If the default branch moved after close, `forge merge` first merges it into the item's branch.
+If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
+It merges the default branch locally to check the combined change.
 It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
-merge base. It pushes and merges only after the tests pass. A failure names the failed tests
+merge base. It merges the pull request only after the tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. With no default-branch move, merge runs no extra tests.
-After a green retest, Forge reuses the existing review and commits its coverage of the combined
-change before the push. It pushes and merges at once, without another pull-request CI wait.
+If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
+If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
+It pushes that commit, waits for its required checks, then merges.
 The nightly full run on the default branch covers the rest.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
-checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
-and gives `forge merge <item>` as the next step.
+checks, Forge fetches the default branch again. If it moved again, Forge checks the new
+commits against the item's changed files. With no overlap, Forge merges at once. With an
+overlap, Forge repeats the combined tests and required checks. After five further moves,
+Forge stops and gives `forge merge <item>` as the next step.
 
 If another program holds the earlier Codex conversation, Forge retries once. If it is still
 held, work starts a new conversation with the whole brief and says why in one line.
@@ -421,6 +425,12 @@ default tool only with `hide`. Never call a feature's service from the MCP modul
 contract case `every tool has a description, annotations, schemas and the error shape`
 must pass.
 
+In an app with `libs/core/server/src/common/retry-keys.ts` (Python `app/core/retry_keys.py`),
+a create or a send, pay or notify action that you add takes the `Idempotency-Key` header
+through `RetryKeys.once` (Python `create_once`), as the projects create does. An update takes
+no key. Put a report in its module's report service, with named, typed results that carry
+their units. Never change a module's data around its service, from a route, a tool or a job.
+
 A feature's resources come from `defineFeatureTools`; add none by hand. Add a prompt with
 `definePrompt` only when your part names it, with a strict `arguments` schema and one
 permission. Never send an elicitation or a sampling request.
@@ -448,11 +458,15 @@ table or column, or changes a column's type, add a `-- Contract: ...` comment to
 `# Contract: ...` to Alembic Python. Explain why the live release no longer reads the table or
 column; close allows the migration when the line is present, and review reads the explanation.
 
+Before any agent, chat, voice or in-app assistant work, load the agents skill (.codex/skills/agents/SKILL.md) and follow it. Say which of its sections apply to your change. A review holds a broken Must rule.
+
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
 in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
-the one error report. An app without libs/organisations keeps the code it has.
+the one error report.
+Add no error-tracking service; Mainline sends alerts from the error lines. In an app with `request-log.middleware.ts` or `set_log_level` in `app/core/logging.py`, the logger writes each API request's line and removes password, token, secret, key and authorization values from its context, so add no request logging or redaction there.
+An app without libs/organisations keeps the code it has.
 An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add

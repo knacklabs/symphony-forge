@@ -66,25 +66,32 @@ export class OrderController {
   403 not allowed, 404 not found (including another account's record), 409 conflict, 429 too many
   requests, 500 our fault.
 
+A create sent again with the same `Idempotency-Key` answers 201 with the first item.
+Document the header with `@ApiHeader`.
+
 ## Lists
 
 ```ts
 import { z } from 'zod';
 
 // In @app/projects-contracts; name the allowed sort fields for each resource.
+const cursorSchema = z.string().regex(/^[\w-]{1,2048}$/);
+
 export const listQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1)
-    .meta({ description: 'The one-based page number.', example: 1 }),
   limit: z.coerce.number().int().min(1).max(100).default(20)
     .meta({ description: 'The number of projects per page, up to 100.', example: 20 }),
-  sortBy: z.enum(['name', 'status', 'createdAtUtc', 'updatedAtUtc']).default('createdAtUtc')
-    .meta({ description: 'The project field used to sort the list.', example: 'createdAtUtc' }),
+  sortBy: z.enum(['name', 'status', 'createdAtUtc', 'updatedAtUtc']).default('updatedAtUtc')
+    .meta({ description: 'The project field used to sort the list.', example: 'updatedAtUtc' }),
   sortOrder: z.enum(['asc', 'desc']).default('desc')
     .meta({ description: 'The sort direction.', example: 'desc' }),
-}).strict();
+  after: cursorSchema.optional()
+    .meta({ description: 'The nextCursor of the page before, to read the next page.', example: 'WyJuYW1lIiwiQSJd' }),
+  before: cursorSchema.optional()
+    .meta({ description: 'The previousCursor of the page after, to read the previous page.', example: 'WyJuYW1lIiwiQSJd' }),
+}).strict().refine((query) => !(query.after && query.before), { path: ['before'], message: 'Use after or before, not both.' });
 ```
 
-A list returns `{ items, pagination: { page, limit, totalItems, totalPages } }` as its `data`.
+A list returns `{ items, paging: { limit, nextCursor, previousCursor, total, totalCapped } }` as its `data`. `ProjectsService.list` in the starter builds the cursors and the capped count.
 Allow `sortBy` only on the columns the endpoint names, since any other value reaches the query.
 
 In an app that has `libs/organisations`, each list has a `GET /<list>/export` route. It uses

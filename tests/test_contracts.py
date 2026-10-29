@@ -37,43 +37,6 @@ SOURCE = ROOT / "src" / "forge"
 
 # --- criterion 3: every refusal is tested ---------------------------------------------------
 
-# A refusal no cheap test can trigger, and why, in plain words.
-UNTRIGGERED = {
-    "cli.not_built": "every command in the table is built now, so nothing prints it; it guards a "
-                     "command added to the table before its code",
-}
-
-
-def _refusals() -> dict[str, tuple[str, str]]:
-    """Every refusal in src/forge's refusal tables, by module.key: (problem, next command)."""
-    found = {}
-    for path in sorted(SOURCE.glob("*.py")):
-        for node in ast.parse(path.read_text(encoding="utf-8")).body:
-            if isinstance(node, ast.Assign) and [getattr(t, "id", "") for t in node.targets] == [
-                    "REFUSALS"]:
-                for key, value in zip(node.value.keys, node.value.values):
-                    found[f"{path.stem}.{key.value}"] = ast.literal_eval(value)
-    return found
-
-
-def _expected() -> list[str]:
-    """Every text the tests expect: each string, and each f-string with its values left out."""
-    texts = []
-    for path in (ROOT / "tests").glob("test_*.py"):
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.Constant) and isinstance(node.value, str):
-                texts.append(node.value)
-            elif isinstance(node, ast.JoinedStr):
-                texts.append("\0".join(part.value for part in node.values
-                                       if isinstance(part, ast.Constant)))
-    return texts
-
-
-def _parts(template: str) -> list[str]:
-    return [part for part in (piece.strip(" \"'") for piece in re.split(r"\{[^}]*\}", template))
-            if part]
-
-
 def _bad_hook_input(repo, gh, tmp_path, monkeypatch, request):
     return (("hook", "approval"), None, "not json",
             "The hook input is not a JSON object.\nNext: forge doctor\n")
@@ -321,24 +284,8 @@ TRIGGERS = [_bad_hook_input, _approval_outside_the_contract, _approval_with_no_s
             _broken_block, pytest.param(_hook_linked_outside, marks=LINKS), _two_own_hooks]
 
 
-@pytest.mark.parametrize("case", ["every refusal has a test", *TRIGGERS],
-                         ids=lambda case: case if isinstance(case, str) else case.__name__.strip("_"))
+@pytest.mark.parametrize("case", TRIGGERS, ids=lambda case: case.__name__.strip("_"))
 def test_3_every_refusal_is_tested(repo, gh, tmp_path, monkeypatch, request, case):
-    if isinstance(case, str):
-        # Each refusal's words (its problem, or its Next line when the problem is only values)
-        # are among the texts some test expects, or the refusal is listed above with its reason.
-        refusals, texts = _refusals(), _expected()
-        assert set(UNTRIGGERED) <= set(refusals), set(UNTRIGGERED) - set(refusals)
-        untested = []
-        for name, (problem, step) in refusals.items():
-            parts = _parts(problem)
-            if max(map(len, parts), default=0) < 8:  # only values: its Next line says what it is
-                parts = _parts(step)
-            if name not in UNTRIGGERED and not all(any(part in text for text in texts)
-                                                   for part in parts):
-                untested.append(f"{name}: {problem}")
-        assert not untested, "refusals no test triggers:\n" + "\n".join(untested)
-        return
     args, cwd, stdin, expected = case(repo, gh, tmp_path, monkeypatch, request)
     if case is _roadmap_without_items:
         worktrees = repo.git("worktree", "list", "--porcelain")

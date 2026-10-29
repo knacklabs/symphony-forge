@@ -1,0 +1,30 @@
+{
+  "base": "33ab10e8bd99f2a1aef45e7353cde3d0ce079b51",
+  "branch": "fix/planning-heading-and-rule-numbers",
+  "done_when": "The planning guide names the heading in code style, each story rule has one test, and the full run on main is green",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bfa7bc97f35815525cb5d2703f4b834ca274ff92dacbc7049f7cd9acfa083d35",
+    "changed": "f4e90e2b7a5d6913cd3971e13eca4915c521cc1497ea60fb593bea8085f5b96e",
+    "commit": "be26259cc73304772d83a2036c03ddd758e231f4",
+    "dismissals": [],
+    "findings": [],
+    "id": "d77479ee-de4e-4940-86b6-fc8d0dc8def9",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T10:01:24.629971+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T10:07:43.006124+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The release full run is red a third time: the planning guide writes a heading name bare, which cuts the planning section short, and two test files number their tests for one story from 1, so two tests claim the same rule"
+}

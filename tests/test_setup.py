@@ -32,6 +32,7 @@ LISTED = {"AGENTS.md", ".gitattributes", ".gitignore", ".forge/hooks.sh", ".forg
           ".claude/skills/forge/standards.md", ".codex/skills/forge/standards.md",
           ".claude/skills/app-baseline/SKILL.md", ".codex/skills/app-baseline/SKILL.md",
           ".claude/skills/database/SKILL.md", ".codex/skills/database/SKILL.md",
+          ".claude/skills/agents/SKILL.md", ".codex/skills/agents/SKILL.md",
           ".claude/skills/remote-approval/SKILL.md", ".codex/hooks.json", ".codex/config.toml", ".codex/skills/forge/SKILL.md",
           ".claude/skills/forge/fde.md", ".codex/skills/forge/fde.md", ".github/workflows/forge.yml",
           ".claude/skills/forge/migrate-skill.md", ".codex/skills/forge/migrate-skill.md",

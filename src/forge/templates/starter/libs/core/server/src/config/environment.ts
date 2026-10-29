@@ -1,6 +1,8 @@
 export type AppEnvironment = string;
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 export type Environment = {
   APP_ENV: AppEnvironment;
+  LOG_LEVEL: LogLevel;
   APP_COMPANIES: 'one' | 'many';
   DATABASE_URL: string;
   APP_ORIGIN: string;
@@ -15,11 +17,16 @@ export type Environment = {
 };
 
 let activeEnvironment: AppEnvironment = 'development';
+let activeLogLevel: LogLevel = 'info';
 // Today's limits until the environment says otherwise; only the test stack raises them.
 let activeRateLimits = { auth: 30, other: 120 };
 
 export function getAppEnvironment(): AppEnvironment {
   return activeEnvironment;
+}
+
+export function getLogLevel(): LogLevel {
+  return activeLogLevel;
 }
 
 /** The rate limits a minute, read by the throttle decorators, which cannot inject config. */
@@ -34,6 +41,10 @@ function rateLimit(name: string, value: unknown, fallback: number): number {
 }
 
 export function validateEnvironment(values: Record<string, unknown>): Environment {
+  const logLevel = values.LOG_LEVEL ?? 'info';
+  if (logLevel !== 'debug' && logLevel !== 'info' && logLevel !== 'warn' && logLevel !== 'error') {
+    throw new Error('LOG_LEVEL must be debug, info, warn or error.');
+  }
   const companies = values.APP_COMPANIES ?? 'many';
   if (companies !== 'one' && companies !== 'many') {
     throw new Error('APP_COMPANIES must be one or many.');
@@ -74,9 +85,10 @@ export function validateEnvironment(values: Record<string, unknown>): Environmen
   const otherLimit = rateLimit('RATE_LIMIT_PER_MINUTE', values.RATE_LIMIT_PER_MINUTE, 120);
 
   activeEnvironment = appEnvironment;
+  activeLogLevel = logLevel;
   activeRateLimits = { auth: authLimit, other: otherLimit };
   return {
-    APP_ENV: appEnvironment, APP_COMPANIES: companies, DATABASE_URL: databaseUrl, APP_ORIGIN: appOrigin, PORT: port,
+    APP_ENV: appEnvironment, LOG_LEVEL: logLevel, APP_COMPANIES: companies, DATABASE_URL: databaseUrl, APP_ORIGIN: appOrigin, PORT: port,
     AUTH_RATE_LIMIT_PER_MINUTE: authLimit, RATE_LIMIT_PER_MINUTE: otherLimit,
     ADMIN_EMAIL: values.ADMIN_EMAIL, ADMIN_PASSWORD: values.ADMIN_PASSWORD,
   };
