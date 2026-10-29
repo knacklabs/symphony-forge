@@ -76,6 +76,17 @@
       "item": "tests-copy-seed-repo",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_zod_rules.py\tBoth client histories fail the API convention assertion on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_zod_rules.py",
+      "line": 88,
+      "text": "Both client histories fail the API convention assertion on the default branch.",
+      "from": "worker",
+      "item": "tests-copy-seed-repo",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
