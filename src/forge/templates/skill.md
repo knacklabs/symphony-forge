@@ -983,8 +983,14 @@ Codex must be installed because only Codex can review the screen images.
 On Windows, large image folders use separate batches to fit the native command line limit.
 Fix gaps, then retry `forge decision accept client-signoff`.
 If the review engine fails, fix the engine problem and run the accept command again.
-A canvas-only sign-off needs no working build. A working build also gets one strict whole-product
-review with no serious findings. Forge reuses passed results while what they checked stays unchanged.
+A canvas-only sign-off needs no working build. A working build gets a full first product review.
+Each later attempt reviews only product files changed since the previous review and its open findings.
+Every reviewer gets earlier findings and answers. Settled findings stay settled.
+After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
+Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
+Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
+These rules apply to new clients and earlier-adopted clients after upgrade.
+Forge reuses passed results while what they checked stays unchanged.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
 If the product or completeness review cannot finish, the refusal names its saved raw report when one exists.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.

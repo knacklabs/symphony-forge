@@ -518,9 +518,13 @@ repo's own AGENTS.md rules differ from the page, they win.
 $standards
 <!-- signoff -->
 ## Client prototype sign-off review
-Review the complete product snapshot against the customer's answers and the topic table below.
-The base is an empty root commit, so every tracked product file is in this diff. Check the
-working prototype as a whole: the demo workflow, data handling, sign-in, integrations, host,
+Review the product diff against the customer's answers and the topic table below.
+The first review includes every tracked product file against an empty root. Later reviews
+include only product files changed since the previous sign-off review, plus a re-check of its
+open findings. Earlier rounds and their answers appear below. Do not reopen a settled finding
+with the same title and file, including a `Not fixed:` prefix. A new defect needs a distinct
+title and new evidence. P0 means a security hole, data leak or data loss in normal use.
+Check the working prototype's demo workflow, data handling, sign-in, integrations, host,
 security, accessibility, and whether the implementation matches the answers. Report every
 blocking mismatch or missing working path as a P0 or P1 finding. Do not accept a sign-off on
 the strength of a template or a test stub alone. Give concrete file and line evidence.
