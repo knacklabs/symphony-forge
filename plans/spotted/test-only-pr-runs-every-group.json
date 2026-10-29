@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/docskip.py\tRetain coverage for pytest_plugins fixture consumers\ttest-only-pr-runs-every-group",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 24,
+      "text": "Retain coverage for pytest_plugins fixture consumers",
+      "from": "blocking",
+      "item": "test-only-pr-runs-every-group",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_zod_rules.py\tThe API guide test expects page-number input after the guide changed to cursor paging.",
       "kind": "bug",
       "path": "tests/test_zod_rules.py",
