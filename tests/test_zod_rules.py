@@ -85,7 +85,7 @@ def test_4_the_api_and_backend_pages_name_zod_for_request_input(env, tmp_path, a
     assert "class-validator rules" not in api
     assert "new ValidationPipe(" not in api
     assert "export const listQuerySchema = z.object({" in api
-    assert "z.coerce.number().int().min(1).default(1)" in api
+    assert "const cursorSchema = z.string().regex(" in api
     assert "z.coerce.number().int().min(1).max(100).default(20)" in api
     assert "ApiZodBody(schema: z.ZodType): MethodDecorator" in api
     assert "ApiZodQuery(schema: z.ZodObject): MethodDecorator" in api
