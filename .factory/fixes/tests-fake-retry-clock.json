@@ -22,8 +22,8 @@
     "id": "75cb0332-ac07-440e-9393-c088d2f77835",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T20:34:26.483050+00:00",
@@ -39,10 +39,10 @@
     }
   ],
   "stuck": {
-    "close": "5e7b3f9d-e673-4008-b135-996be088c1cb",
-    "head": "9afda3a30c7198f7edd08bd203cc7416f6cb098b",
+    "close": "fc551819-0b91-4307-9010-0c64a21a7304",
+    "head": "50b2436ac923d3ef37d68c9f95180b1b7befbaf3",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Tests wait out real retry and queue backoffs (one close test spends 28 s in sleeps)",
   "worker": "codex"
