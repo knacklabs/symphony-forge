@@ -1,6 +1,13 @@
 {
   "base": "894fc7daf3fe9f4dcb4aa7cc2bc97ac76fe8085f",
   "branch": "fix/full-run-retry-reruns-whole-group",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1864b-6b7c-7c32-91c3-e23de516dd24",
+    "head": null,
+    "start": "6b038d1a66356281790e87578d85e9686f5e8f41"
+  },
   "done_when": "After one failed test in a grouped full run, the retry runs only the failed test files",
   "fix_kind": "backend",
   "kind": "fix",
