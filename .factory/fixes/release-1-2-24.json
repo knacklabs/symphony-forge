@@ -23,8 +23,8 @@
     "id": "20028aaf-238c-4100-a8c8-b393e56f7277",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-29T02:59:48.441516+00:00",
@@ -36,10 +36,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "f11972f37dd20574fa5d185ec51826895313b46a",
+    "close": "e925448a-f4e4-4b04-a969-00db509dbc3a",
+    "head": "4a9cbf9a5cc773fc9462031a13fa5317041ddf69",
     "keys": {},
-    "round": null
+    "round": 3
   },
   "why": "Release v1.2.24 with the client sign-off hotfix",
   "worker": "codex"
