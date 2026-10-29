@@ -25,14 +25,10 @@ def test_2_new_repos_start_low(env, tmp_path):
             assert models[kind][family]["effort"] == "low"
     for kind in ("grill", "review"):
         assert models[kind]["claude"] == {"model": "claude-sonnet-5-5", "effort": "high"}
-    settings.write_text('tools = "claude"\n' + settings.read_text("utf-8").replace(
-        'workers = "split"', 'workers = "claude"'), "utf-8")
     repo.path = client
-    repo.git("switch", "-q", "-c", "settings")
-    repo.git("commit", "-qam", "Choose Claude workers")
-    repo.git("switch", "-q", "main")
-    repo.git("merge", "-q", "--ff-only", "settings")
-    repo.git("push", "-q", "origin", "main")
+    # Select the test's tool through the clone-local override. Keep init's actual
+    # defaults in forge.toml and avoid a settings commit on an unregistered branch.
+    repo.write("forge.local.toml", 'tools = "claude"\nworkers = "claude"\n')
     install_claude(repo)
     item, _ = env.start_fix()
     worked = repo.forge("work", item)
