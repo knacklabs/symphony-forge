@@ -1,6 +1,13 @@
 {
   "base": "bbfed490c2129010b97b8b5664ecf567941ef48f",
   "branch": "fix/full-run-fails-with-no-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a187ef-f522-79e3-bf6c-c234813307bc",
+    "head": null,
+    "start": "4af1fef22cbbafe4233b094205c7af238fe0f768"
+  },
   "done_when": "forge test --full fails when it ran no tests, and its message says to set test to the whole suite",
   "fix_kind": "backend",
   "kind": "fix",
