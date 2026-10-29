@@ -1,6 +1,13 @@
 {
   "base": "1fccb7cb61bc7cae8a884680facb9d225369e43b",
   "branch": "fix/merge-retries-when-main-moves",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18597-211c-78f3-abf7-2b47191e8023",
+    "head": null,
+    "start": "77cfc6ee257c882095e1b57797d801a92bb889b2"
+  },
   "done_when": "After a retest, when the default branch moved again, merge checks the new commits against the item's changed files again and merges at once when none overlap; with an overlap it retests again; it stops only after five moves, and a test covers two moves in a row",
   "fix_kind": "backend",
   "kind": "fix",
