@@ -4,12 +4,20 @@
   "done_when": "forge test --full fails when it ran no tests, and its message says to set test to the whole suite",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T13:53:16.965309+00:00",
       "step": "start"
     }
   ],
-  "why": "The nightly full run can pass on a clean default branch without running a test: when forge.toml's test is a change-only command, forge test --full selects nothing and reports success"
+  "stuck": {
+    "close": null,
+    "head": "8a5bbb0f79f563e1a3f3d6f0838fe20d5ec418a8",
+    "keys": {},
+    "round": null
+  },
+  "why": "The nightly full run can pass on a clean default branch without running a test: when forge.toml's test is a change-only command, forge test --full selects nothing and reports success",
+  "worker": "codex"
 }
