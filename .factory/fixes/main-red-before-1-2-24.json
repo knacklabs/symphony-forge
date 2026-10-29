@@ -1,0 +1,15 @@
+{
+  "base": "1967b96d9bf12bab966b66130ed34cb0d80739d3",
+  "branch": "fix/main-red-before-1-2-24",
+  "done_when": "Those four test files pass on this branch and every test the merged changes touched still passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T03:16:06.866584+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The nightly full run on main is red, which blocks the v1.2.24 hotfix release: tests/test_machine_tab_lanes.py, tests/test_platform_sensitive_selection.py, tests/test_small_test_runs_skip_the_test_line.py and tests/test_standards.py fail after the day's merges (nightly run 40662161886)"
+}
