@@ -492,7 +492,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     result = review.signoff(top, answers, evidence, previous=previous, history=history)
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
-    saved.update(review=result, stop=bool(opened and len(history) + 1 >= 2 and not critical))
+    saved.update(review=result, stop=bool(review.blocking(result) and len(history) + 1 >= 2 and not critical))
     _write(top / rel, json.dumps(saved, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
     if saved["stop"]:
