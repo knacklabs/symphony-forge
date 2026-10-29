@@ -457,6 +457,9 @@ def pytest_configure(config):
             config.args = previous["files"]
             config.option.file_or_dir = config.args
             config.option.splits = config.option.group = None
+            # Xdist workers reconstruct the original CLI args, losing this file selection.
+            # Run the failed files here instead of collecting the whole group again.
+            config.option.dist = "no"
             config._forge_prior_passed = previous["passed"]
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):

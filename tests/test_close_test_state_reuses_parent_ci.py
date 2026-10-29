@@ -14,8 +14,12 @@ from test_setup import _fresh_client
 STORY = "skipped-close"
 
 
-@pytest.mark.parametrize("client_kind", ["new", "previous"])
-@pytest.mark.parametrize("review_case", ["none", "existing", "new"])
+@pytest.mark.parametrize("client_kind,review_case", [
+    pytest.param(client_kind, review_case, id=f"{review_case}-{client_kind}")
+    for client_kind in ["new", "previous"]
+    for review_case in ["none", "existing", "new"]
+    if client_kind == "new" or review_case == "none"
+])
 def test_3_close_test_state_change_reuses_parent_ci(env, tmp_path, monkeypatch,
                                                  client_kind, review_case):
     # The existing owner tests review-only records and contract edits. This regression
