@@ -35,6 +35,9 @@ def _adopted_after_sync(repo):
     return before, after
 
 
+STORY = "FORGE-REQLOG-1"
+
+
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
 @pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])

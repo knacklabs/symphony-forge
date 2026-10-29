@@ -1049,7 +1049,7 @@ modules, jobs or links.
 In an app with libs/mcp or apps/api/app/mcp, check the client notes for tasks that people
 will ask an agent to do again and again. When the notes describe such a task and do not list
 them all, ask one question: "Which tasks will people ask an agent to do again and again?"
-Write each task under ## Agent tasks in the constitution as
+Write each task under `## Agent tasks` in the constitution as
 `- <task>: <feature>; inputs: <the inputs it needs>`. With no task, write `- None`.
 Ask it again only when the person wants to change the list.
 
@@ -1069,7 +1069,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
-- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 
 In any other app, record the
@@ -1109,7 +1109,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
-- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under ## Agent tasks; the MCP server never uses elicitation or sampling.
+- Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 - Built in: each UI or API crash writes one error report to the logs.
 
@@ -1425,7 +1425,7 @@ forge task feature jobs --one job --field 'name:text' --field 'description?:long
   When it lets a person sign an agent in, the agent acts as that person, and the part names
   the agent's `viaAgent` text.
 - Each feature's resources come from its tools file's `defineFeatureTools` and need no code.
-  When a story builds or changes a feature that a task under ## Agent tasks names, the part
+  When a story builds or changes a feature that a task under `## Agent tasks` names, the part
   names its prompt: the name in the form `<feature>_<verb>`, its inputs and its permission.
   Write no other prompt. Add no elicitation and never use sampling.
 - Shared seams first: when two tasks share a function, field, file format or command, the first

@@ -29,7 +29,7 @@ def _report(priority):
     (_client, "P1", "split"), (_client, "P0", None),
     (_adopted_client, "P1", "accept"),
 ], ids=["new-accept", "new-more", "new-split", "new-critical", "adopted-accept"])
-def test_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch, setup, priority, choice):
+def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch, setup, priority, choice):
     fix, answers, queue = setup(repo, tmp_path, monkeypatch)
     if setup is _adopted_client:
         _request_build(repo, fix)
