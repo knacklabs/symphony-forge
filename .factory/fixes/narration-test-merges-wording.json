@@ -1,0 +1,15 @@
+{
+  "base": "6d874c9c02dc2ea302994bda8dd244fede7d6a5d",
+  "branch": "fix/narration-test-merges-wording",
+  "done_when": "The narration test checks the merges wording, and passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T18:27:38.574968+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The plain-English rules changed AGENTS.md to say speak when something merges, but a narration test still looks for when something lands, so it fails on main"
+}
