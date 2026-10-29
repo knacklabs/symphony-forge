@@ -116,7 +116,7 @@
     "id": "ff5fd2a5-ee49-4164-80fd-b11747010a7c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -138,10 +138,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "8a5bbb0f79f563e1a3f3d6f0838fe20d5ec418a8",
+    "close": "92e1e866-32de-42b1-b626-23fe5549b363",
+    "head": "141482746669173b0c8c124d562bf81898f732f6",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The nightly full run can pass on a clean default branch without running a test: when forge.toml's test is a change-only command, forge test --full selects nothing and reports success",
   "worker": "codex"
