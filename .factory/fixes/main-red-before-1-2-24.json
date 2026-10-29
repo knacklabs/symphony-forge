@@ -4,12 +4,20 @@
   "done_when": "Those four test files pass on this branch and every test the merged changes touched still passes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T03:16:06.866584+00:00",
       "step": "start"
     }
   ],
-  "why": "The nightly full run on main is red, which blocks the v1.2.24 hotfix release: tests/test_machine_tab_lanes.py, tests/test_platform_sensitive_selection.py, tests/test_small_test_runs_skip_the_test_line.py and tests/test_standards.py fail after the day's merges (nightly run 40662161886)"
+  "stuck": {
+    "close": null,
+    "head": "85f5b4a512030c1b48f500c1dadec6b74e7a1686",
+    "keys": {},
+    "round": null
+  },
+  "why": "The nightly full run on main is red, which blocks the v1.2.24 hotfix release: tests/test_machine_tab_lanes.py, tests/test_platform_sensitive_selection.py, tests/test_small_test_runs_skip_the_test_line.py and tests/test_standards.py fail after the day's merges (nightly run 40662161886)",
+  "worker": "codex"
 }
