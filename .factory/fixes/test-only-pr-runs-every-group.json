@@ -1,4 +1,5 @@
 {
+  "allow_large": "The owner allowed 7 code files: two are copies that forge sync generates from the template and workflow code",
   "base": "894fc7daf3fe9f4dcb4aa7cc2bc97ac76fe8085f",
   "branch": "fix/test-only-pr-runs-every-group",
   "chat": {
