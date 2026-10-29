@@ -9,3 +9,4 @@ class AccountPrincipal(NamedTuple):
     email: str
     organisation_id: UUID
     role: Role
+    via_agent: str | None = None

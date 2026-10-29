@@ -1,0 +1,67 @@
+{
+  "base": "1fccb7cb61bc7cae8a884680facb9d225369e43b",
+  "branch": "fix/merge-retries-when-main-moves",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18597-211c-78f3-abf7-2b47191e8023",
+    "head": null,
+    "start": "77cfc6ee257c882095e1b57797d801a92bb889b2"
+  },
+  "done_when": "After a retest, when the default branch moved again, merge checks the new commits against the item's changed files again and merges at once when none overlap; with an overlap it retests again; it stops only after five moves, and a test covers two moves in a row",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 169,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "P1: Recheck merge permission after accepting a new default branch",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d514d8a1bf46799127dd060c5109ff5a01fe0aadcfa53068875531998aca24a8",
+    "changed": "993159f878e629d9ac6fb055d6ac0687ba79814dc974ea2da5896ebfd51faf65",
+    "commit": "8885809f6aece5875853af1d4c7d619be7bf767e",
+    "dismissals": [],
+    "findings": [],
+    "id": "74e299c5-3259-4096-9f52-3db77a0384d9",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T02:56:55.729392+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T10:40:34.581161+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T10:48:47.531847+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T11:01:40.982870+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "31f121d8-b092-4b5f-bb76-c2ac759c28d6",
+    "head": "12e615fafbce4e655cfb52ee985aae13d60c0d6d",
+    "keys": {},
+    "round": 2
+  },
+  "why": "On a busy day forge merge keeps stopping with 'The default branch moved again': after one retest it gives up when main moves during the retest, so items race each other and none merge (four in a row today, the sign-off hotfix among them)",
+  "worker": "codex"
+}

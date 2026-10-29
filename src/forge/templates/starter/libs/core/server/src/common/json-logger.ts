@@ -1,6 +1,13 @@
 import { Injectable, type LoggerService } from '@nestjs/common';
 import { correlationStorage } from './correlation.middleware';
-import { getAppEnvironment } from '../config/environment';
+import { getAppEnvironment, getLogLevel } from '../config/environment';
+
+const LEVELS = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 };
+
+function removeSecrets(key: string, value: unknown): unknown {
+  return /password|token|secret|key|authorization/.test(key.toLowerCase().replace(/[_-]/g, ''))
+    ? '[removed]' : value;
+}
 
 @Injectable()
 export class JsonLogger implements LoggerService {
@@ -28,7 +35,8 @@ export class JsonLogger implements LoggerService {
     this.write('fatal', message, parameters);
   }
 
-  private write(level: string, message: unknown, parameters: unknown[]): void {
+  private write(level: keyof typeof LEVELS, message: unknown, parameters: unknown[]): void {
+    if (LEVELS[level] < LEVELS[getLogLevel()]) return;
     const moduleName = parameters.find((value): value is string => typeof value === 'string') ?? 'api';
     if (moduleName === 'RoutesResolver' || moduleName === 'RouterExplorer') return;
     const contextValue = parameters.find((value) => typeof value === 'object' && value !== null);
@@ -43,7 +51,7 @@ export class JsonLogger implements LoggerService {
         serviceName: 'api',
         module: moduleName,
         correlationId: correlationStorage.getStore() ?? null,
-      })}\n`,
+      }, removeSecrets)}\n`,
     );
   }
 }

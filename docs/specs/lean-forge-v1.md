@@ -339,7 +339,7 @@ Planning documents (specs, decisions, the roadmap, discovery notes) ship through
 ### Client apps are built simple
 
 The apps Forge builds follow the 11 client-app principles on the standards page: problem first,
-smallest slice, only what Done-when needs, fewest moving parts, delete before adding, one home per
+smallest slice, only what is needed, fewest moving parts, delete before adding, one home per
 fact, the simplest UI, measure then check back, reversible, runnable by a non-technical client, and
 security and accessibility never simplified away. They add no gate, record or command. Their checks
 run inside steps Forge already has:

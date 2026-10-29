@@ -317,7 +317,8 @@ def _build_python(args, root: Path) -> int:
     for name in (module, one.replace("-", "_"), *(field["column"] for field in fields)):
         if keyword.iskeyword(name):
             _refuse(f"The name {name!r} is a reserved Python word.", "choose another name and run the line again.")
-    include_mcp = (root / "apps/api/app/core/tools.py").is_file()
+    include_mcp = all((root / path).is_file() for path in (
+        "apps/api/app/core/tools.py", "apps/api/app/core/retry_keys.py"))
     files = render_feature_python(fields, one, plural, kinds, root, include_mcp=include_mcp)
     files.update(render_feature_web(
         fields, one, plural, kinds, _link_names(fields, root), include_mcp=include_mcp

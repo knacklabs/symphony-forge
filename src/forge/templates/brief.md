@@ -108,8 +108,10 @@ If the file sets overlap, Forge keeps the local merge, reuses the existing revie
 It pushes that commit, waits for its required checks, then merges.
 The nightly full run on the default branch covers the rest.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
-checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
-and gives `forge merge <item>` as the next step.
+checks, Forge fetches the default branch again. If it moved again, Forge checks the new
+commits against the item's changed files. With no overlap, Forge merges at once. With an
+overlap, Forge repeats the combined tests and required checks. After five further moves,
+Forge stops and gives `forge merge <item>` as the next step.
 
 If another program holds the earlier Codex conversation, Forge retries once. If it is still
 held, work starts a new conversation with the whole brief and says why in one line.
@@ -462,7 +464,9 @@ In an app that has libs/organisations, scope every query to the caller's organis
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
 in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
-the one error report. An app without libs/organisations keeps the code it has.
+the one error report.
+Add no error-tracking service; Mainline sends alerts from the error lines. In an app with `request-log.middleware.ts` or `set_log_level` in `app/core/logging.py`, the logger writes each API request's line and removes password, token, secret, key and authorization values from its context, so add no request logging or redaction there.
+An app without libs/organisations keeps the code it has.
 An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add

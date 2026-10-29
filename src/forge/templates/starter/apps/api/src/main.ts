@@ -7,12 +7,14 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { join } from 'node:path';
 import { AppModule } from './app.module';
-import { correlationMiddleware, JsonLogger } from '@app/core-server';
+import { correlationMiddleware, JsonLogger, requestLogMiddleware } from '@app/core-server';
 
 async function bootstrap(): Promise<void> {
   const logger = new JsonLogger();
   const app = await NestFactory.create(AppModule, { logger });
   const config = app.get(ConfigService);
+  app.use(correlationMiddleware);
+  app.use(requestLogMiddleware);
   app.use(helmet());
   app.enableCors({
     origin: config.getOrThrow<string>('APP_ORIGIN'),
@@ -20,7 +22,6 @@ async function bootstrap(): Promise<void> {
     allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'X-Correlation-Id', 'Idempotency-Key'],
   });
   app.use(cookieParser());
-  app.use(correlationMiddleware);
   const webRoot = join(process.cwd(), 'apps/web/dist');
   const expressApp: Express = app.getHttpAdapter().getInstance();
   expressApp.use(express.static(webRoot));
