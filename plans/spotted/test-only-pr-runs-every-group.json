@@ -10,6 +10,17 @@
       "item": "test-only-pr-runs-every-group",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_zod_rules.py\tThe API guide test expects page-number input after the guide changed to cursor paging.",
+      "kind": "bug",
+      "path": "tests/test_zod_rules.py",
+      "line": 88,
+      "text": "The API guide test expects page-number input after the guide changed to cursor paging.",
+      "from": "worker",
+      "item": "test-only-pr-runs-every-group",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
