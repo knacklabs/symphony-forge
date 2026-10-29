@@ -45,7 +45,8 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         patterns = sorted({posixpath.basename(path) for path in changed})
         found = subprocess.run([shutil.which("git") or "git", "grep", "-I", "-l", "-z", "-F",
                                 *[arg for name in patterns for arg in ("-e", name)],
-                                base, head, "--", ".", *excludes], cwd=top, capture_output=True,
+                                base, head, "--", ".", *excludes,
+                                ":(exclude,glob)**/.gitattributes"], cwd=top, capture_output=True,
                                 text=True, encoding="utf-8")
         if found.returncode not in (0, 1):
             return False
