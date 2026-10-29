@@ -2,6 +2,8 @@
 import json
 import tomllib
 
+import pytest
+
 from test_close import GREEN, env  # noqa: F401
 from test_setup import _fresh_client
 from test_upgrade_command import (RELEASE, _repo_adopted_on_the_previous_release,
@@ -11,7 +13,7 @@ from test_worker import install_claude
 STORY = "FORGE-EFFORT-1"
 
 
-def test_2_new_repos_start_low(env, tmp_path):
+def _new_repos_start_low(env, tmp_path):
     repo = env.repo
     client, initialized = _fresh_client(repo, env.gh, tmp_path)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
@@ -47,7 +49,7 @@ def test_2_new_repos_start_low(env, tmp_path):
     assert args[args.index("--thinking") + 1] == "claude=high"
 
 
-def test_2_existing_forge_toml_is_not_changed(unsynced_up):
+def _existing_forge_toml_is_not_changed(unsynced_up):
     up = unsynced_up
     original = (up.repo.path / "forge.toml")
     # Upgrade a real earlier-adopted fixture, not current init with an old pin.
@@ -72,3 +74,11 @@ def test_2_existing_forge_toml_is_not_changed(unsynced_up):
         assert worked.returncode == 0, worked.stdout + worked.stderr
         assert "(claude-sonnet-5-5, low)" in worked.stdout
     assert upgraded.read_bytes() == before
+
+
+@pytest.mark.parametrize("case", ["new", "existing"])
+def test_2_new_repos_start_low_and_existing_forge_toml_is_kept(case, request):
+    if case == "new":
+        _new_repos_start_low(request.getfixturevalue("env"), request.getfixturevalue("tmp_path"))
+    else:
+        _existing_forge_toml_is_not_changed(request.getfixturevalue("unsynced_up"))
