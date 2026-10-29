@@ -4,12 +4,20 @@
   "done_when": "After a retest, when the default branch moved again, merge checks the new commits against the item's changed files again and merges at once when none overlap; with an overlap it retests again; it stops only after five moves, and a test covers two moves in a row",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T02:56:55.729392+00:00",
       "step": "start"
     }
   ],
-  "why": "On a busy day forge merge keeps stopping with 'The default branch moved again': after one retest it gives up when main moves during the retest, so items race each other and none merge (four in a row today, the sign-off hotfix among them)"
+  "stuck": {
+    "close": null,
+    "head": "44984deb11249553158c1038c58c7d4ee91076e9",
+    "keys": {},
+    "round": null
+  },
+  "why": "On a busy day forge merge keeps stopping with 'The default branch moved again': after one retest it gives up when main moves during the retest, so items race each other and none merge (four in a row today, the sign-off hotfix among them)",
+  "worker": "codex"
 }
