@@ -467,7 +467,9 @@ GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _
 
 
 @pytest.mark.parametrize("case", GATES, ids=lambda case: case.__name__.strip("_"))
-def test_2_gates_check_outcomes(env, case):
+def test_2_gates_check_outcomes(env, case, request):
+    if case is _github_api_error:
+        request.getfixturevalue("fake_clock")
     want = case(env)
     if want.get("draft"):  # a draft left by an earlier blocked review
         env.open_pr("", draft=True)

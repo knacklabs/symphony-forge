@@ -1,0 +1,61 @@
+{
+  "base": "7d626406f2579d3d001312612968f9f701b2e2ec",
+  "branch": "fix/tests-fake-retry-clock",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18438-fb01-7961-893d-2d0f7b89b57f",
+    "head": null,
+    "start": "257cc30e070c338f4b9035fb2789c9c161ec087f"
+  },
+  "done_when": "The retry and queue tests named in the profiling report use a shared fake clock, keep their retry, deadline and write-once assertions, and one case still uses the real backoff",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fa4833a0e90db9c7ee23abaddddb84d2ac5e92a2044ca2650c7c7545398e088d",
+    "changed": "9ff3c83bf543acf8cae1997401d1ce95aabd862b243bc84140fe1daa8642db77",
+    "commit": "fa87acf124d525bdd33e218f94153af76c962081",
+    "dismissals": [],
+    "findings": [],
+    "id": "c17806ca-3857-418d-9394-83f007f9f6b3",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T20:34:26.483050+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T20:46:15.899349+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T14:00:47.787652+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T18:59:41.744463+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T19:40:13.744854+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T20:12:32.988797+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "369145b6-3aab-459a-a51f-aecf752da29d",
+    "head": "acbf4d63721afbb7abee090ff954e512f9ed9d8c",
+    "keys": {},
+    "round": 4
+  },
+  "why": "Tests wait out real retry and queue backoffs (one close test spends 28 s in sleeps)",
+  "worker": "codex"
+}

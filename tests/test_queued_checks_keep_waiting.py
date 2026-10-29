@@ -20,6 +20,7 @@ STORY = "FIX-QUEUED-NOT-STOP"
 @pytest.mark.parametrize("command,history", [
     (command, "new") for command in ("close", "land", "land-merge")
 ] + [("land-merge", "upgraded")])
+@pytest.mark.parametrize("fake_clock", [900], indirect=True)
 def test_1_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, command):
     env = clock
     _client(env, history, "self-hosted")
@@ -27,8 +28,9 @@ def test_1_long_shared_pool_queue_keeps_waiting_then_passes(clock, history, comm
         _agent(env)
     where = _fix(env, "working", worked=True)
     queued = [run("tests", None, "queued"), run("forge-pr-check")]
-    # Fifteen minutes without activity in this repo: other repos own the pool.
-    looks = [queued] * 61 + [GREEN]
+    # Observe queued, still queued after both the deadline and 15-minute warning,
+    # then green. Other repos own the pool, so repeated snapshots add no coverage.
+    looks = [queued, queued, GREEN]
     if command == "land-merge":
         looks.insert(0, GREEN)
     _queue(env, RUNS, *_runs(*looks))
