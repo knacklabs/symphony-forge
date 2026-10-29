@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-GUIDES-1-RULES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T23:45:15.927509+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "5f59cbec0a813b278d6b7ba0adcb270aaa0b232f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
