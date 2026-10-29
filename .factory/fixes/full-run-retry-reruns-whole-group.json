@@ -11,12 +11,27 @@
   "done_when": "After one failed test in a grouped full run, the retry runs only the failed test files",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ecc7a4e888904b512831ee01c799131b67cf59682ec3f98c42b51fa90a162799",
+    "changed": "b534dd5eb4231ffba45751a8f3d4ed737bef934c076812673f8a2821291c80aa",
+    "commit": "3f5b5a6e748d3b31dbacda1b5cdb4af06fed4be9",
+    "dismissals": [],
+    "findings": [],
+    "id": "0745e4ae-63ee-41d8-b16f-7895652d8bce",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-29T06:13:41.980816+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-29T13:54:44.237405+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
