@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge.py\tP1: Recheck merge permission after accepting a new default branch\tmerge-retries-when-main-moves",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 169,
+      "text": "P1: Recheck merge permission after accepting a new default branch",
+      "from": "blocking",
+      "item": "merge-retries-when-main-moves",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
