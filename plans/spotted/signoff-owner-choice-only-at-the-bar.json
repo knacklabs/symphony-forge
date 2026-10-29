@@ -8,8 +8,8 @@
       "text": "Not done: After round 2, sign-off asks the owner only when findings at the blocking bar are open, and the full run on main is green",
       "from": "blocking",
       "item": "signoff-owner-choice-only-at-the-bar",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     }
   ]
 }
