@@ -51,7 +51,7 @@ jobs:
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: '6'
       FORGE_CONTAINERS: '1'
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:

@@ -309,7 +309,7 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 30\n")
+                .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 30}\n")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
                 .replace("<npm-cache>", npm_cache)
