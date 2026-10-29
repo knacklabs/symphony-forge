@@ -15,10 +15,15 @@ STORY = "FIX-MERGE-RETRIES-WHEN-MAIN-MOVES"
 # overlapping late commits, and stop at five moves. The old late-test cases only
 # require a refusal after one move. Real git commits cause the race and real
 # client assertions decide test success; only GitHub is faked. No new seam.
+# Permission audit: accepting a late disjoint forge.toml commit must honor the
+# owner's current merge setting. Prior cases never revoke permission. Extend
+# this same command boundary with real remote settings, without a new seam.
 @pytest.mark.parametrize("previous,case,moves", [
     (False, "unrelated", 1), (True, "unrelated", 1),
     (False, "overlap", 2), (False, "limit", 5), (False, "red", 1),
-], ids=["new-unrelated", "adopted-unrelated", "two-overlaps", "five-moves", "late-red"])
+    (False, "disabled", 1), (True, "disabled", 1),
+], ids=["new-unrelated", "adopted-unrelated", "two-overlaps", "five-moves", "late-red",
+        "new-disabled", "adopted-disabled"])
 def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, previous, case, moves):
     log = _client(env, tmp_path, previous)
     other = tmp_path / "other-change"
@@ -28,6 +33,8 @@ def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, p
     command = f'"{sys.executable}" verify.py'
     config = (setup / "forge.toml").read_text("utf-8").replace(
         '"python verify.py"', json.dumps(command))
+    if case == "disabled":
+        config = config.replace('stage = "prototype"', 'stage = "live"')
     env.commit(setup, "forge.toml", config)
     env.commit(setup, "verify.py", (
         "import json, pathlib, subprocess\n"
@@ -40,7 +47,10 @@ def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, p
         "count = len(log.read_text().splitlines())\n"
         f"other = pathlib.Path({json.dumps(other.as_posix())})\n"
         f"if count <= {moves}:\n"
-        + ("    path = other / 'other.txt'\n"
+        + ("    path = other / 'forge.toml'\n"
+           "    text = path.read_text().replace('merge = \"agent\"', 'merge = \"human\"')\n"
+           "    path.write_bytes(text.encode('utf-8'))\n" if case == "disabled" else
+           "    path = other / 'other.txt'\n"
            "    path.write_bytes(str(count).encode('utf-8'))\n" if case == "unrelated" else
            "    path = other / 'README.md'\n"
            "    lines = path.read_text().splitlines()\n"
@@ -81,7 +91,15 @@ def test_1_merge_rechecks_new_commits_until_clear_or_five_moves(env, tmp_path, p
     tested = [json.loads(line) for line in log.read_text("utf-8").splitlines()]
     attempts = env.gh_calls("pr", "merge")
     assert len(env.review_calls()) == reviews
-    if case in {"limit", "red"}:
+    if case == "disabled":
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert not attempts
+        assert len(tested) == 1
+        assert 'forge merge is disabled by merge = "human" in the default branch\'s forge.toml.' in result.stderr
+        assert "Next: the repo owner runs forge merge enable in their own terminal" in result.stderr
+        assert 'merge = "human"' in env.repo.git("show", "main:forge.toml", cwd=remote)
+        assert 'merge = "agent"' in (where / "forge.toml").read_text("utf-8")
+    elif case in {"limit", "red"}:
         assert result.returncode != 0, result.stdout + result.stderr
         assert not attempts
         assert len(tested) == (5 if case == "limit" else 2)

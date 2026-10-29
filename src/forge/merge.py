@@ -160,6 +160,8 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                     body += "\n\nForge-story-done: " + json.dumps({"key": key, "outcome": outcome})
             body = close._bounded_body(body, suffix=f"\n\nForge-merged: {item}")
             repo.git("fetch", "-q", "origin", default, cwd=top)
+            if repo.merge_setting(top) != "agent":
+                repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
             if repo.git("rev-parse", f"origin/{default}", cwd=top) == checked_default:
                 break
             if combined_tested:
