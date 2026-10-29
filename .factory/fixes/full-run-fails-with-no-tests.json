@@ -117,7 +117,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-29T13:53:16.965309+00:00",
@@ -130,8 +130,12 @@
   ],
   "stop": {
     "at": "2026-10-29T14:02:42.046446+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/fasttest.py",
-    "wait_id": "b9cfa36f-4d8e-4a45-80fc-7bf454733f22"
+    "reason": "The owner chose one more round: accepting would break the nightly full run for non-pytest client repos and for empty test groups",
+    "wait_id": "b9cfa36f-4d8e-4a45-80fc-7bf454733f22",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
