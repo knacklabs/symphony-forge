@@ -66,10 +66,10 @@ def test_1_groups_split_the_test_job(grouped_client):
     repo, _, settings, _ = grouped_client
     workflow = (repo.path / ".github/workflows/forge.yml").read_text("utf-8")
     job = _jobs(workflow)["tests"]
-    assert "group: [1, 2, 3]" in job
-    assert "of 3" in job
+    assert "|| '[1, 2, 3]')" in job
+    assert "&& 1 || 3" in job
     assert "FORGE_GROUP: ${{ matrix.group }}" in job
-    assert "FORGE_GROUPS: '3'" in job
+    assert "&& '1' || '3'" in job
     assert 'run: "forge test --change"' in job
     assert "--splits" not in job and "--collect-only" not in job
     doctor = repo.forge("doctor")
