@@ -4,12 +4,20 @@
   "done_when": "Forge's own pull request test groups have a 45-minute limit, and client repos keep 30 minutes",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T11:39:51.235700+00:00",
       "step": "start"
     }
   ],
-  "why": "The two test-speed fixes change setup that every Forge test uses, so their pull requests run the whole suite and each test group hits the 30-minute limit; the owner chose a 45-minute limit for Forge's own pull request test groups"
+  "stuck": {
+    "close": null,
+    "head": "c3df8f3eb8c340c5f9d19ebf7b3360bf3fcc9bc4",
+    "keys": {},
+    "round": null
+  },
+  "why": "The two test-speed fixes change setup that every Forge test uses, so their pull requests run the whole suite and each test group hits the 30-minute limit; the owner chose a 45-minute limit for Forge's own pull request test groups",
+  "worker": "codex"
 }
