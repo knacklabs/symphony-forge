@@ -434,6 +434,7 @@ RETRY_HEADER = "# forge pytest retry\n"
 RETRY_STEP = "# forge pytest retry invocation\n"
 RESULTS = """import json, os, pathlib, pytest
 FILE, ROOT = [], []
+COLLECTED = []
 FAILED, PASSED = set(), set()
 INVOCATION_HEADER = """ + repr(INVOCATION_HEADER) + """
 RETRY_HEADER = """ + repr(RETRY_HEADER) + """
@@ -468,6 +469,17 @@ def pytest_configure(config):
         with FILE[0].open("a", encoding="utf-8") as results:  # close emptied it before the command
             results.write(""" + repr(RESULTS_HEADER) + """)
     ROOT.append(pathlib.Path(str(config.rootdir)))
+def pytest_sessionstart(session):
+    # Register after pytest-split: equal-priority hooks run newest first. Count
+    # after normal deselection (-k/-m), but before split's trylast partition.
+    class SuiteSize:
+        @pytest.hookimpl(trylast=True)
+        def pytest_collection_modifyitems(self, items):
+            COLLECTED.append(len(items))
+    session.config.pluginmanager.register(SuiteSize())
+@pytest.hookimpl(optionalhook=True)
+def pytest_testnodedown(node):
+    COLLECTED.append(node.workeroutput.get("forge_collected", 0))
 def pytest_runtest_logreport(report):
     if not FILE or report.when != "call" and report.passed:
         return
@@ -492,8 +504,11 @@ def _write_result(outcome, nodeid):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_sessionfinish(session):
     yield  # Capture the final status, including always_test validation.
+    if hasattr(session.config, "workeroutput"):
+        session.config.workeroutput["forge_collected"] = sum(COLLECTED)
     if FILE:
-        invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus))
+        invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus),
+                          collected=sum(COLLECTED))
         with FILE[0].open("a", encoding="utf-8") as results:
             results.write(INVOCATION_HEADER + json.dumps(invocation) + "\\n")
 """

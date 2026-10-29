@@ -107,6 +107,8 @@ If the file sets do not overlap, Forge restores the original head and merges wit
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
 The nightly full run on the default branch covers the rest.
+`forge test --full` fails if the whole run has no tests. Set `test` in `forge.toml` to run
+the whole suite. An empty group of a nonempty suite is valid.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
 checks, Forge fetches the default branch again. If it moved again, Forge checks the new
 commits against the item's changed files. With no overlap, Forge merges at once. With an
