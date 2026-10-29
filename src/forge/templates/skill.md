@@ -248,6 +248,11 @@ every other item keeps its model review.
 
 Give status updates in one shape: `Ready to merge (n): ... · Needs you (n): ...`.
 
+Write each reply, summary and question for the human in plain English that a non-native speaker
+understands on the first read, as AGENTS.md says: everyday words in place of agent slang, each
+technical term explained once, three plain lines on what changed, what failed and what comes
+next, and status, numbers and uncertainty kept exact.
+
 ## Tools
 
 **Who does what.** The coordinator is the app the developer opens: Claude Code or Codex.
