@@ -4,12 +4,20 @@
   "done_when": "A pull request that changes only a test file runs that test file and no unrelated Linux or Windows groups",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-29T06:13:46.766112+00:00",
       "step": "start"
     }
   ],
-  "why": "A pull request that changes only one test file runs all six Linux test groups and all five Windows groups, about 30 minutes of checks for one test"
+  "stuck": {
+    "close": null,
+    "head": "f902c1cafdbba20c88be745a6a9f1deea82fc5c7",
+    "keys": {},
+    "round": null
+  },
+  "why": "A pull request that changes only one test file runs all six Linux test groups and all five Windows groups, about 30 minutes of checks for one test",
+  "worker": "codex"
 }
