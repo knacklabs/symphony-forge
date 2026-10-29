@@ -1,0 +1,15 @@
+{
+  "base": "ba0f3afca35fbfadc15147b7a85e51ade9245f0d",
+  "branch": "fix/zod-guide-test-cursor-paging",
+  "done_when": "The Zod guide test checks the cursor paging example the guide now shows, and passes on main",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T17:09:52.884254+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The guides task moved the API guide's list example from page numbers to cursor paging, but a Zod guide test still expects the old page-number line, so it fails on main"
+}
