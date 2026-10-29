@@ -22,8 +22,8 @@
     "id": "eee8a942-4828-47f9-adcd-cf64e13a0d32",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T20:34:21.922922+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "f48fe599c5871d4551cbbefabed9b1605ee9df80",
+    "close": "d674272a-b023-472e-bbb6-fdf60d326a90",
+    "head": "e72e654af3873d4bbb03c7db550770598eff599c",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Every test builds the same seed git repository and empty Claude SDK environment from scratch (3,674 tests, about 0.11 s build against 0.02 s copy)",
   "worker": "codex"
