@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\t.forge/review-tests.py\tPreserve Windows coverage for shared fixtures inside test modules\ttest-only-pr-runs-every-group",
+      "kind": "bug",
+      "path": ".forge/review-tests.py",
+      "line": 27,
+      "text": "Preserve Windows coverage for shared fixtures inside test modules",
+      "from": "blocking",
+      "item": "test-only-pr-runs-every-group",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
