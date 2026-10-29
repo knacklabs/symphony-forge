@@ -79,6 +79,74 @@ def latest_reset_token() -> str:
     raise AssertionError("The test mail provider did not log a reset link.")
 
 
+# Audit: real HTTP and compose stdout own request completion logs. Missing or
+# duplicate lines, raw paths, query leaks and early refusals regress this.
+# Existing response tests do not inspect request logs; no production seam.
+def test_each_api_request_writes_one_log_line_without_its_query_string(
+    client: httpx.Client,
+) -> None:
+    words = [str(uuid4()) for _ in range(3)]
+    expected: list[tuple[str, str, str | None, int]] = []
+
+    def send(
+        method: str, path: str, route: str | None, status: int, **headers: str
+    ) -> None:
+        correlation_id = str(uuid4())
+        response = client.request(
+            method, path, headers={"x-correlation-id": correlation_id, **headers}
+        )
+        assert response.status_code == status, response.text
+        expected.append((correlation_id, method, route, status))
+
+    send("GET", f"/api/v1/projects?search={words[0]}", "/api/v1/projects", 401)
+    send("GET", f"/api/v1/projects/{uuid4()}", "/api/v1/projects/{project_id}", 401)
+    send("GET", f"/api/v1/missing-{words[1]}", None, 404)
+    sign_up(client)
+    send("GET", f"/api/v1/auth/me?search={words[2]}", "/api/v1/auth/me", 200)
+    send(
+        "OPTIONS",
+        "/api/v1/projects",
+        None,
+        204,
+        Origin=str(client.base_url).rstrip("/"),
+        **{"Access-Control-Request-Method": "POST"},
+    )
+    send("POST", "/api/v1/projects", None, 403, Origin="https://foreign.example")
+    health_id, web_id = str(uuid4()), str(uuid4())
+    assert (
+        client.get("/health", headers={"x-correlation-id": health_id}).status_code
+        == 200
+    )
+    assert client.get("/", headers={"x-correlation-id": web_id}).status_code == 200
+
+    logs = compose_logs("api")
+    events = [
+        json.loads(line[line.index("{") :]) for line in logs.splitlines() if "{" in line
+    ]
+    for correlation_id, method, route, status in expected:
+        matches = [
+            event
+            for event in events
+            if event.get("message") == "API request"
+            and event.get("correlationId") == correlation_id
+        ]
+        assert len(matches) == 1, matches
+        event = matches[0]
+        assert event["level"] == "info"
+        duration = event["context"]["durationMs"]
+        assert type(duration) is int and duration >= 0
+        assert event["context"] == {
+            "method": method,
+            "route": route,
+            "status": status,
+            "durationMs": duration,
+        }
+    assert not any(
+        event.get("correlationId") in {health_id, web_id} for event in events
+    )
+    assert all(word not in logs for word in words)
+
+
 def test_signs_up_signs_in_and_signs_out_with_a_server_session(
     client: httpx.Client,
 ) -> None:

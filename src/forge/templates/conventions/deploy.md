@@ -51,3 +51,5 @@ serving. Expand, then contract: add a new table or column before code uses it, k
 or column for two releases, and remove it only when no live release uses it. A Mainline rollback
 restores the previous release's code and keeps the database, so each migration must work with
 that code still running.
+
+Mainline sends error alerts from the app's `error` log lines. Each carries an `errorId`, which the person sees on the error screen, so search the platform logs for it. In an app whose `.env.example` names `LOG_LEVEL`, set it in the platform's settings to change how much the app writes.

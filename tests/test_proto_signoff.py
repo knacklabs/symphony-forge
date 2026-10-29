@@ -345,10 +345,9 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "docs/product/BRIEF.md" in prompt
     assert "| Topic | Question | Options (default first) | Before sign-off |" in prompt
     assert "| Data import | Does data need to come in from today's tools?" in prompt
-    assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {
-        "README.md", "forge.toml", "app.py", "PRODUCT.md", "DESIGN.md",
-        "docs/product/BRIEF.md", "docs/design/prototype/CHECKS.md",
-        "docs/design/prototype/SCREENS.md", "docs/design/prototype/order-list.svg"}
+    # The first attempt reviews the whole product. This retry rechecks earlier
+    # findings without replaying unchanged product files (covered by signoff_review_rounds).
+    assert not (tmp_path / "reviewed-files.txt").read_text().splitlines()
 
 
 def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, monkeypatch):

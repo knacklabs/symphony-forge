@@ -1,4 +1,4 @@
-"""The TypeScript starter logs API requests safely, and sync leaves old apps alone."""
+"""The starters log API requests safely, and sync leaves old apps alone."""
 
 from pathlib import Path
 
@@ -6,7 +6,7 @@ import pytest
 
 from test_mcp import _adopted_files_after_sync
 from test_setup import _fresh_client
-from test_starter_tree import LIVE, _junit_cases, _require_cases, live_run
+from test_starter_tree import LIVE, _junit_cases, _require_cases, live_python_run, live_run
 
 
 REQUEST_CASE = "each API request writes one log line without its query string"
@@ -35,9 +35,12 @@ def _adopted_after_sync(repo):
     return before, after
 
 
+STORY = "FORGE-REQLOG-1"
+
+
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_1_each_api_request_writes_one_log_line(repo, gh, tmp_path, tmp_path_factory, starter):
     # Audit: protects the shipped-app request log contract and adopted-app preservation. A
     # missing middleware or a sync that edits app code can regress this; existing starter tests
@@ -47,17 +50,20 @@ def test_1_each_api_request_writes_one_log_line(repo, gh, tmp_path, tmp_path_fac
         _adopted_after_sync(repo)
         return
 
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "python" if starter == "python" else "react")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    assert (client / REQUEST_MIDDLEWARE).is_file()
+    if starter == "python":
+        assert '"API request"' in (client / "apps/api/app/core/security.py").read_text(encoding="utf-8")
+    else:
+        assert (client / REQUEST_MIDDLEWARE).is_file()
     if LIVE:
-        live = live_run(tmp_path_factory)
-        _require_cases(live["api"], (REQUEST_CASE,))
+        live = (live_python_run if starter == "python" else live_run)(tmp_path_factory)
+        _require_cases(live["api"], ("test_each_api_request_writes_one_log_line_without_its_query_string" if starter == "python" else REQUEST_CASE,))
 
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_2_the_log_level_picks_the_lowest_level_written(
     repo, gh, tmp_path, tmp_path_factory, starter
 ):
@@ -69,18 +75,25 @@ def test_2_the_log_level_picks_the_lowest_level_written(
         _adopted_after_sync(repo)
         return
 
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "python" if starter == "python" else "react")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     assert "LOG_LEVEL=info" in (client / ".env.example").read_text(encoding="utf-8").splitlines()
     if LIVE:
-        live = live_run(tmp_path_factory)
-        _require_cases(live["api"], LEVEL_CASES)
-        _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"), (LEVEL_UNIT_CASE,))
+        live = (live_python_run if starter == "python" else live_run)(tmp_path_factory)
+        if starter == "python":
+            _require_cases(live["api"], (
+                "test_log_level_defaults_to_info_and_accepts_debug_info_warn_or_error",
+                "test_log_level_refuses_an_unsupported_value",
+                "test_the_logger_writes_nothing_below_the_log_level",
+            ))
+        else:
+            _require_cases(live["api"], LEVEL_CASES)
+            _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"), (LEVEL_UNIT_CASE,))
 
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_3_secret_values_never_reach_the_logs(
     repo, gh, tmp_path, tmp_path_factory, starter
 ):
@@ -93,8 +106,11 @@ def test_3_secret_values_never_reach_the_logs(
         assert before[LOGGER] == after[LOGGER]
         return
 
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react")
+    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "python" if starter == "python" else "react")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     if LIVE:
-        live = live_run(tmp_path_factory)
-        _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"), (REMOVAL_UNIT_CASE,))
+        live = (live_python_run if starter == "python" else live_run)(tmp_path_factory)
+        if starter == "python":
+            _require_cases(live["api"], ("test_the_logger_removes_password_token_secret_key_and_authorization_values",))
+        else:
+            _require_cases(_junit_cases(live["folder"] / "test-results/formats.xml"), (REMOVAL_UNIT_CASE,))

@@ -2,7 +2,7 @@
 # Forge writes this role with forge sync from forge.toml's [models]; change forge.toml, not this file.
 name: reader
 description: "Cold reads a plan for blocking defects without changing files."
-model: "claude-opus-5-5"
+model: "claude-sonnet-5-5"
 effort: "high"
 ---
 

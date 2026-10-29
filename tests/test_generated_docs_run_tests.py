@@ -28,6 +28,7 @@ def test_1_generated_documentation_runs_close_and_synced_ci_tests(
     # Audit: real commits, Git attributes, close and the shipped CI command own the decision.
     # The old skip loses generated files; receipts from the actual test command expose it.
     # Existing docs-only coverage has no attributes. No production test seam is needed.
+    # A quoted attribute declaration is not code that consumes the documentation.
     _client(env.repo, env.gh, tmp_path, history)
     env.checks(GREEN)
     env.repo.git("switch", "-qc", "fix/configure-generated-docs")
