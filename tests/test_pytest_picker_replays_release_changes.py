@@ -18,6 +18,8 @@ def test_5_release_1_2_6_changes_select_fewer_than_71_test_files(repo):
     (repo.path / "tests").mkdir()
     for path in (ROOT / "tests").glob("*.py"):
         shutil.copy2(path, repo.path / "tests" / path.name)
+    # Text readers now include board tests that load this fixture at collection.
+    repo.write("tests/fixtures/board.json", (ROOT / "tests/fixtures/board.json").read_text("utf-8"))
     for phase in ("before", "after"):
         for name, snapshot in changes.items():
             if snapshot[phase] is not None:

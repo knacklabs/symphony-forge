@@ -1824,7 +1824,7 @@
     "tests/test_pytest_picker_supports_older_clients.py::test_1_picker_narrows_old_and_new_pytest_without_installing_forge[8.2.2]": 1.0552490430004582,
     "tests/test_pytest_picker_supports_older_clients.py::test_2_init_ships_consistent_external_picker_setup": 1.3303514999997788,
     "tests/test_pytest_picker_supports_older_clients.py::test_3_upgrade_ships_consistent_setup_to_a_previously_adopted_repo": 5.034853168999689,
-    "tests/test_pytest_picker_uses_two_selection_rules.py::test_1_changed_test_files_are_selected_without_their_readers": 0.4434019579998676,
+    "tests/test_pytest_picker_uses_two_selection_rules.py::test_1_changed_test_files_select_their_text_readers": 0.4434019579998676,
     "tests/test_pytest_picker_uses_two_selection_rules.py::test_2_only_imports_dotted_names_and_file_paths_select_module_tests": 0.5026367509994998,
     "tests/test_pytest_picker_uses_two_selection_rules.py::test_3_new_clients_run_only_changed_tests_and_module_references": 1.6906035010001688,
     "tests/test_pytest_picker_uses_two_selection_rules.py::test_4_earlier_adopted_clients_get_two_rule_selection_after_upgrade": 4.795559253000192,
