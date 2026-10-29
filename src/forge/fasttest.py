@@ -343,8 +343,8 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     the changed sources no test file names."""
     changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
-    tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
-                                            "--exclude-standard")
+    files = git_files("ls-files", "--cached", "--others", "--exclude-standard")
+    tests = [Path(name) for name in files
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
              and name.endswith(".py") and Path(name).is_file()]
     fixtures = [Path(name).parent for name in changed if Path(name).name == "conftest.py"]
@@ -380,12 +380,10 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                       or any(path.is_relative_to(source.parent) or mentions(path, "", source)
                              for source in shared)
                       or any(mentions(path, module, source) for module, source in modules)}
-    dependencies = docskip.test_dependencies(tests)
-    while True:
-        expanded = picked | {path for path, sources in dependencies.items() if sources & picked}
-        if expanded == picked:
-            return sorted(path.as_posix() for path in picked), everything, False, missed
-        picked = expanded
+    readers = tests + [Path(name) for name in files
+                       if Path(name).name == "conftest.py" and Path(name).is_file()]
+    picked = docskip.test_readers(readers, picked)
+    return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,

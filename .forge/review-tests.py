@@ -11,7 +11,6 @@ from urllib.parse import quote
 
 
 """The docs-only rule, also copied into the self-contained client CI script."""
-import ast
 import posixpath
 import re
 import shutil
@@ -19,30 +18,18 @@ import subprocess
 from pathlib import Path
 
 
-def test_dependencies(tests: list[Path]) -> dict[Path, set[Path]]:
-    """Resolve test-module imports, including bare names from pytest's test folders."""
-    modules: dict[str, set[Path]] = {}
-    for path in tests:
-        parts = path.with_suffix("").parts
-        for start in range(len(parts)):
-            modules.setdefault(".".join(parts[start:]), set()).add(path)
-    dependencies = {}
-    for path in tests:
-        try:
-            tree = ast.parse(path.read_text("utf-8-sig"))
-        except SyntaxError:
-            continue  # Let pytest report syntax errors in selected files.
-        names = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                names.update(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom):
-                names.add(node.module or "")
-                names.update(".".join(filter(None, (node.module, alias.name)))
-                             for alias in node.names)
-        dependencies[path] = {source for name in names for source in modules.get(name, ())
-                              if source != path}
-    return dependencies
+def test_readers(files: list[Path], picked: set[Path]) -> set[Path]:
+    """Keep every text reference, including plugin strings and scoped conftest users."""
+    texts = {path: path.read_text("utf-8-sig") for path in files}
+    while True:
+        names = {path.stem for path in picked}
+        fixtures = [path.parent for path in picked if path.name == "conftest.py"]
+        expanded = picked | {path for path, text in texts.items()
+                             if any(name in text for name in names)
+                             or any(path.is_relative_to(folder) for folder in fixtures)}
+        if expanded == picked:
+            return picked
+        picked = expanded
 
 
 def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False,
@@ -116,10 +103,11 @@ def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD")
         return False, []
     tests = [top / name for name in run("git", "ls-files", "-z").split("\0")
              if name.endswith(".py") and (Path(name).name.startswith("test_")
-                                          or name.endswith("_test.py"))
+                                          or name.endswith("_test.py")
+                                          or Path(name).name == "conftest.py")
              and (top / name).is_file()]
     changed_tests = {top / name for name in changed}
-    if any(sources & changed_tests for sources in test_dependencies(tests).values()):
+    if any(test_readers(tests, {path}) != {path} for path in changed_tests):
         return False, []
     platform = []
     for name in changed:

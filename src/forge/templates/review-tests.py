@@ -31,10 +31,11 @@ def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD")
         return False, []
     tests = [top / name for name in run("git", "ls-files", "-z").split("\0")
              if name.endswith(".py") and (Path(name).name.startswith("test_")
-                                          or name.endswith("_test.py"))
+                                          or name.endswith("_test.py")
+                                          or Path(name).name == "conftest.py")
              and (top / name).is_file()]
     changed_tests = {top / name for name in changed}
-    if any(sources & changed_tests for sources in test_dependencies(tests).values()):
+    if any(test_readers(tests, {path}) != {path} for path in changed_tests):
         return False, []
     platform = []
     for name in changed:

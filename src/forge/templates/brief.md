@@ -279,9 +279,11 @@ test command without installing Forge in the project. This picker belongs in `fa
 workers run bare `forge test` to enter the lane.
 Root dependency files select the full test command. A nested project's dependency files
 select that project's tests and test files that name those dependency paths.
-A test module that another test imports is shared setup. The pytest picker also runs its
-direct and indirect test importers. Only test modules with no test importers use the
-independent-test CI shortcut; shared modules keep the configured CI groups and Windows coverage.
+A test module is shared setup when another test or conftest.py names it, including in a
+pytest_plugins string or a comment. The pytest picker also runs those readers and their readers;
+a conftest.py reference includes the tests below its folder. This plain text search can run
+extra tests. Only modules with no readers use the independent-test CI shortcut; shared modules
+keep the configured CI groups and Windows coverage.
 When the pytest picker selects more than a third of the test files, bare `forge test` runs
 only the part's Tests column or the fix's touched test files, plus `always_test`, and says
 "The nightly full run covers the rest." This includes shared-fixture changes. With no named
