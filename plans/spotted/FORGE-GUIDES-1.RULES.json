@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/conventions/stack.md\tGate: tests/test_standards.py::test_36_client_apps_simple\tFORGE-GUIDES-1/RULES",
+      "kind": "bug",
+      "path": "src/forge/templates/conventions/stack.md",
+      "line": 77,
+      "text": "Gate: tests/test_standards.py::test_36_client_apps_simple",
+      "from": "blocking",
+      "item": "FORGE-GUIDES-1/RULES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
