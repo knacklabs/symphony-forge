@@ -20,9 +20,9 @@
     "id": "3f73c0e1-0ad4-4aa8-9c16-d32f5ccb9459",
     "status": "clean"
   },
-  "round": 1,
+  "round": 2,
   "stacked_on": "FORGE-REQLOG-1/GUIDE",
-  "status": "waiting for checks",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-28T19:40:56.665298+00:00",
@@ -34,10 +34,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "00410c4ee70eada284bf30b525a4d221d51f0abd",
+    "close": "aee047e1-3dfd-4b6c-9bd2-1cdd3d4709a9",
+    "head": "15e3fe84e0c7df1766b2954e77dabf7900e0f4ce",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "worker": "codex"
 }
