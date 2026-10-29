@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-29T06:13:46.766112+00:00",
@@ -65,8 +65,12 @@
   ],
   "stop": {
     "at": "2026-10-29T14:38:07.969247+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".forge/review-tests.py",
-    "wait_id": "900633a6-5c84-473c-b359-8412d759a75e"
+    "reason": "The owner chose one more round: a test file that other tests import is shared setup, so its users must still run on Windows",
+    "wait_id": "900633a6-5c84-473c-b359-8412d759a75e",
+    "worker_round": 2
   },
   "stuck": {
     "close": "63a5ef7d-f7e5-4c2a-99bc-dca04825cb5b",
