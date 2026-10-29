@@ -11,12 +11,52 @@
   "done_when": "After a retest, when the default branch moved again, merge checks the new commits against the item's changed files again and merges at once when none overlap; with an overlap it retests again; it stops only after five moves, and a test covers two moves in a row",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "merge() in src/forge/merge.py",
+      "file": "src/forge/merge.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 169,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "P1: Recheck merge permission after accepting a new default branch",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bcff648b821b0f6b66424740846227720a97d9b79c774ce118c96b6572f774b8",
+    "changed": "a76b0332c7050c2dcb6d9a05d21778ed5e82fb98cff846f1d9e4e90d40c5e2ad",
+    "commit": "2097d5a6afd070c15b14802551e90ef1ef16c3c0",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 4\nRaise: Security\nCase: normal use - the owner disables agent merges while combined tests or required checks are running in Forge's repo or a signed-off client.\nMerge permission is checked only at entry (lines 45\u201347). This loop accepts a newly fetched default branch without checking that permission again. If the new commit sets `merge = \"human\"` and the item does not touch `forge.toml`, it is treated as disjoint and the pull request still merges. `repo.merge_setting` (src/forge/repo.py:683\u2013686) derives permission from the default branch, but is never called again here. Recheck that existing permission before proceeding with the newly observed default.\nAdds work: recheck merge permission after a default-branch move; F 1 x H 2 = 2; 2 x C = 2",
+        "file": "src/forge/merge.py",
+        "gain": 4,
+        "harm": 4,
+        "line": 169,
+        "priority": "P1",
+        "title": "P1: Recheck merge permission after accepting a new default branch",
+        "work": 2
+      }
+    ],
+    "id": "1f89fc6d-886c-4fdf-a984-42ee02f7364f",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-29T02:56:55.729392+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-29T10:40:34.581161+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
