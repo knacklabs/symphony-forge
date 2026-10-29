@@ -41,13 +41,13 @@ effort = "low"
 """
 
 
-@pytest.mark.parametrize("models,planning", [
-    (None, ("claude-opus-5-5", "high")),
-    (CODEX_MODELS, ("claude-opus-5-5", "high")),
-    (CODEX_MODELS + CLAUDE_MODELS, ("custom-opus", "medium")),
+@pytest.mark.parametrize("models,planning,implementation_effort", [
+    (None, ("claude-sonnet-5-5", "high"), "low"),
+    (CODEX_MODELS, ("claude-opus-5-5", "high"), "low"),
+    (CODEX_MODELS + CLAUDE_MODELS, ("custom-opus", "medium"), "xhigh"),
 ], ids=["new-repo", "missing-claude-entries", "configured-grill-and-old-review"])
 def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
-        repo, gh, tmp_path, models, planning):
+        repo, gh, tmp_path, models, planning, implementation_effort):
     # Building stays on Sonnet. Planning follows grill rather than design, while diagnostic
     # roles use Opus independently of obsolete review pins owned by the external reviewer.
     top = repo.path
@@ -68,18 +68,23 @@ def test_5_init_and_sync_write_claude_role_defaults_and_preserve_codex_settings(
     assert result.returncode == 0, result.stdout + result.stderr
 
     for name in ("worker", "coder", "frontend", "tester", "refactorer"):
-        assert _settings(top, name)[1] == ("claude-sonnet-5-5", "xhigh"), name
+        # An omitted entry uses low effort. Explicit pins and design keep xhigh.
+        effort = "xhigh" if name == "frontend" else implementation_effort
+        assert _settings(top, name)[1] == ("claude-sonnet-5-5", effort), name
     # Fresh init separates read-only explore; configs without explore retain lite.
     assert _settings(top, "explorer")[1] == (
-        ("claude-haiku-5-5", "high") if models is None else ("claude-sonnet-5-5", "xhigh"))
+        ("claude-haiku-5-5", "high") if models is None else
+        ("claude-sonnet-5-5", implementation_effort))
     for name in ("planner", "architect"):
         assert _settings(top, name)[1] == planning, name
     for name in ("debugger", "security", "performance"):
         assert _settings(top, name)[1] == ("claude-opus-5-5", "high"), name
 
     if models is None:
+        # Init now writes a Claude-only review entry. Codex diagnostic roles inherit
+        # the session settings when that family has no entry in a per-tool table.
         for name in ("debugger", "security", "performance"):
-            assert _settings(top, name)[0] == ("gpt-6.1-sol", "high"), name
+            assert _settings(top, name)[0] == (None, None), name
 
     if models is not None:
         for name in ("worker", "coder", "tester", "refactorer"):

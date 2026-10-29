@@ -58,7 +58,10 @@ def test_1_init_gives_read_only_work_explore_defaults(repo, gh, tmp_path):
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     models = tomllib.loads((client / "forge.toml").read_text("utf-8"))["models"]
     assert models["explore"]["claude"] == {"model": "claude-haiku-5-5", "effort": "high"}
-    assert models["explore"]["codex"] == models["lite"]["codex"]
+    # Low implementation defaults do not change the fixed explore effort or helpers.
+    assert models["explore"]["codex"] == {
+        "model": "gpt-6.1-sol", "effort": "medium",
+        "subagents": "gpt-6-luna", "subagent_effort": "max"}
     assert _settings(client, "explorer") == (
         ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
 
@@ -91,7 +94,7 @@ def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert toml.read_bytes() == before
     assert _settings(up.folder, "explorer") == (
-        ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "xhigh"))
+        ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "low"))
 
 
 @pytest.mark.parametrize("host", ["codex", "claude"])

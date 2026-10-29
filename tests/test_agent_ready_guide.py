@@ -48,6 +48,8 @@ BRIEF = (
 )
 
 
+STORY = "FORGE-AGENTREADY-1"
+
 @pytest.mark.platform
 @pytest.mark.parametrize("setup", ["new init", "previous release"])
 def test_4_the_guides_state_the_agent_ready_rules(repo, gh, tmp_path, setup):

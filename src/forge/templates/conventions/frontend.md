@@ -45,8 +45,8 @@ pages.
 Each resource gets small hooks over TanStack Query, next to the screens that use them:
 
 ```tsx
-export const useOrders = (page: number) =>
-  useQuery({ queryKey: ['orders', { page }], queryFn: () => api.get(`/orders?page=${page}`) });
+export const useOrders = (after?: string) =>
+  useQuery({ queryKey: ['orders', { after }], queryFn: () => api.get(after ? `/orders?after=${after}` : '/orders') });
 
 export const useCancelOrder = () => {
   const client = useQueryClient();
@@ -74,7 +74,7 @@ already caches it and tracks loading and errors.
 
 ## Web address
 
-Keep filters, tabs, sort order and the page number of a list in the web address. Read them through
+Keep filters, tabs, sort order and the page cursor of a list in the web address. Read them through
 React Router's `useSearchParams`, and update the query parameters when the view changes. Reloading
 the page or sharing its link must show the same view. Keep local state only for values a shared
 link does not need to reproduce.

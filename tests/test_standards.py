@@ -110,7 +110,7 @@ CARRIED_OVER_RULES = {
                    "4xx at debug", "implements LoggerService"],
     "frontend.md": ["libs/shared", "x-correlation-id"],
     "testing.md": ["idempotency test", "failure test"],
-    "stack.md": ["ESLint", "Prettier", "Terraform"],
+    "stack.md": ["ESLint", "Terraform"],
 }
 
 
