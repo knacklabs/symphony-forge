@@ -1,0 +1,15 @@
+{
+  "base": "4d9b77ad1b6aa77e5a85dd4a71ceb25a8c96d4bd",
+  "branch": "fix/forge-pr-groups-45-minutes",
+  "done_when": "Forge's own pull request test groups have a 45-minute limit, and client repos keep 30 minutes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T11:39:51.235700+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The two test-speed fixes change setup that every Forge test uses, so their pull requests run the whole suite and each test group hits the 30-minute limit; the owner chose a 45-minute limit for Forge's own pull request test groups"
+}
