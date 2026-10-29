@@ -22,8 +22,8 @@
     "id": "14835362-7e9e-402b-b40f-d39b761be31a",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-28T19:48:45.230241+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "7f83533a175196818056cab9d32d43f677bf256c",
+    "close": "b32d7c5d-2b4c-4341-b75f-ebd7ca1dfecc",
+    "head": "e18be923ad59655749227b2807b35def86faa592",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Remove the 30 coverage-verified repeated earlier-adopted test rows (coverage audit batches 1 to 5)",
   "worker": "codex"
