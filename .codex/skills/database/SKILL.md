@@ -75,7 +75,7 @@ Other field kinds have no automatic filter or search index. Add no index that no
 ## List paging
 
 Use keyset paging by default: `WHERE (sort, id) < ($lastSort, $lastId) ORDER BY sort DESC, id DESC LIMIT <n + 1>`.
-Show next and previous links and an approximate total: cap the count at 1,000 and show "1,000+" above the cap. Reverse the comparison and order for the previous page, then reverse the returned rows.
+Show next and previous links and an approximate total: cap the count at 10,000 and show "More than 10,000" above the cap. Reverse the comparison and order for the previous page, then reverse the returned rows.
 Use numbered pages only on small admin screens. Existing lists keep their paging.
 
 ## Dashboards and reports
