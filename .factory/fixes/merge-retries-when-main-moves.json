@@ -47,7 +47,7 @@
     "id": "1f89fc6d-886c-4fdf-a984-42ee02f7364f",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -60,10 +60,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "44984deb11249553158c1038c58c7d4ee91076e9",
-    "keys": {},
-    "round": null
+    "close": "6720dfe4-d9d0-4bb6-85d1-f14f0c52c16a",
+    "head": "23fc7f347e5cd7d4210524bfc8f3f83467b90c8d",
+    "keys": {
+      "the open P0 p1: recheck merge permission after accepting a new default branch in src/forge/merge.py": 1
+    },
+    "round": 1
   },
   "why": "On a busy day forge merge keeps stopping with 'The default branch moved again': after one retest it gives up when main moves during the retest, so items race each other and none merge (four in a row today, the sign-off hotfix among them)",
   "worker": "codex"
