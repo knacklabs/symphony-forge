@@ -11,7 +11,7 @@ from app.core.envelope import ErrorEnvelope, SuccessEnvelope
 from app.core.error_report import report_error
 from app.core.error_report import router as error_report_router
 from app.core.errors import ApiError, install_error_handlers
-from app.core.logging import log_event
+from app.core.logging import log_event, set_log_level
 from app.core.mail import MailProvider
 from app.core.permissions import (
     FeaturePermissions,
@@ -82,6 +82,7 @@ __all__ = [
     "read_resource",
     "report_error",
     "require_permission",
+    "set_log_level",
     "tool_failure",
     "utc_date_time",
     "verify_csrf",
