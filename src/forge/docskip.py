@@ -1,9 +1,36 @@
 """The docs-only rule, also copied into the self-contained client CI script."""
+import ast
 import posixpath
 import re
 import shutil
 import subprocess
 from pathlib import Path
+
+
+def test_dependencies(tests: list[Path]) -> dict[Path, set[Path]]:
+    """Resolve test-module imports, including bare names from pytest's test folders."""
+    modules: dict[str, set[Path]] = {}
+    for path in tests:
+        parts = path.with_suffix("").parts
+        for start in range(len(parts)):
+            modules.setdefault(".".join(parts[start:]), set()).add(path)
+    dependencies = {}
+    for path in tests:
+        try:
+            tree = ast.parse(path.read_text("utf-8-sig"))
+        except SyntaxError:
+            continue  # Let pytest report syntax errors in selected files.
+        names = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                names.add(node.module or "")
+                names.update(".".join(filter(None, (node.module, alias.name)))
+                             for alias in node.names)
+        dependencies[path] = {source for name in names for source in modules.get(name, ())
+                              if source != path}
+    return dependencies
 
 
 def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False,

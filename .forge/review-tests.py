@@ -1,4 +1,5 @@
 """CI may reuse a successful parent workflow for a commit changing only close records."""
+import ast
 import json
 import os
 import re
@@ -18,23 +19,30 @@ import subprocess
 from pathlib import Path
 
 
-def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD") -> tuple[bool, list[str]]:
-    """Narrow CI only for existing Python test files, never shared test inputs."""
-    paths = subprocess.run([shutil.which("git") or "git", "diff", "--name-only", "-z",
-                            "--no-renames", f"{base}...{head}", "--", ".", *excludes],
-                           cwd=top, check=True, capture_output=True, text=True).stdout
-    changed = list(filter(None, paths.split("\0")))
-    if not changed or any(not (Path(name).name.startswith("test_") or name.endswith("_test.py"))
-                          or not name.endswith(".py") or not (top / name).is_file()
-                          for name in changed):
-        return False, []
-    platform = []
-    for name in changed:
-        tree = ast.parse((top / name).read_text("utf-8-sig"))
-        if any(isinstance(node, ast.Attribute) and ast.unparse(node) == "pytest.mark.platform"
-               for node in ast.walk(tree)):
-            platform.append(name)
-    return True, platform
+def test_dependencies(tests: list[Path]) -> dict[Path, set[Path]]:
+    """Resolve test-module imports, including bare names from pytest's test folders."""
+    modules: dict[str, set[Path]] = {}
+    for path in tests:
+        parts = path.with_suffix("").parts
+        for start in range(len(parts)):
+            modules.setdefault(".".join(parts[start:]), set()).add(path)
+    dependencies = {}
+    for path in tests:
+        try:
+            tree = ast.parse(path.read_text("utf-8-sig"))
+        except SyntaxError:
+            continue  # Let pytest report syntax errors in selected files.
+        names = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                names.add(node.module or "")
+                names.update(".".join(filter(None, (node.module, alias.name)))
+                             for alias in node.names)
+        dependencies[path] = {source for name in names for source in modules.get(name, ())
+                              if source != path}
+    return dependencies
 
 
 def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool = False,
@@ -94,6 +102,32 @@ def run(*args: str) -> str:
     # Resolve PATH first, including the .cmd shims used on Windows.
     return subprocess.run([shutil.which(args[0]) or args[0], *args[1:]], check=True,
                           capture_output=True, text=True).stdout.strip()
+
+
+def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD") -> tuple[bool, list[str]]:
+    """Narrow CI only for existing Python test files, never shared test inputs."""
+    paths = subprocess.run([shutil.which("git") or "git", "diff", "--name-only", "-z",
+                            "--no-renames", f"{base}...{head}", "--", ".", *excludes],
+                           cwd=top, check=True, capture_output=True, text=True).stdout
+    changed = list(filter(None, paths.split("\0")))
+    if not changed or any(not (Path(name).name.startswith("test_") or name.endswith("_test.py"))
+                          or not name.endswith(".py") or not (top / name).is_file()
+                          for name in changed):
+        return False, []
+    tests = [top / name for name in run("git", "ls-files", "-z").split("\0")
+             if name.endswith(".py") and (Path(name).name.startswith("test_")
+                                          or name.endswith("_test.py"))
+             and (top / name).is_file()]
+    changed_tests = {top / name for name in changed}
+    if any(sources & changed_tests for sources in test_dependencies(tests).values()):
+        return False, []
+    platform = []
+    for name in changed:
+        tree = ast.parse((top / name).read_text("utf-8-sig"))
+        if any(isinstance(node, ast.Attribute) and ast.unparse(node) == "pytest.mark.platform"
+               for node in ast.walk(tree)):
+            platform.append(name)
+    return True, platform
 
 
 def reuse() -> bool:

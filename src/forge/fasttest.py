@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import init, machine, quicktest, repo
+from forge import docskip, init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"}),
@@ -374,13 +374,18 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     everything = [path.as_posix() for path in tests]
     if shared_changed:
         return everything, everything, True, missed
-    selected = sorted(path.as_posix() for path in tests
+    picked = {path for path in tests
                       if path.as_posix() in changed
                       or any(path.is_relative_to(folder) for folder in fixtures)
                       or any(path.is_relative_to(source.parent) or mentions(path, "", source)
                              for source in shared)
-                      or any(mentions(path, module, source) for module, source in modules))
-    return selected, everything, False, missed
+                      or any(mentions(path, module, source) for module, source in modules)}
+    dependencies = docskip.test_dependencies(tests)
+    while True:
+        expanded = picked | {path for path, sources in dependencies.items() if sources & picked}
+        if expanded == picked:
+            return sorted(path.as_posix() for path in picked), everything, False, missed
+        picked = expanded
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,

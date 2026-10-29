@@ -29,6 +29,13 @@ def test_files(top: Path, base: str, excludes: list[str], *, head: str = "HEAD")
                           or not name.endswith(".py") or not (top / name).is_file()
                           for name in changed):
         return False, []
+    tests = [top / name for name in run("git", "ls-files", "-z").split("\0")
+             if name.endswith(".py") and (Path(name).name.startswith("test_")
+                                          or name.endswith("_test.py"))
+             and (top / name).is_file()]
+    changed_tests = {top / name for name in changed}
+    if any(sources & changed_tests for sources in test_dependencies(tests).values()):
+        return False, []
     platform = []
     for name in changed:
         tree = ast.parse((top / name).read_text("utf-8-sig"))
