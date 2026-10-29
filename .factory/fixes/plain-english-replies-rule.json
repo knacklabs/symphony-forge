@@ -11,7 +11,7 @@
       "gain": 4,
       "harm": 2,
       "line": 80,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -24,7 +24,7 @@
       "gain": 4,
       "harm": 2,
       "line": 22,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -34,36 +34,15 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "35d74f5d046b606719b37d9db4ff3aafbdc7972c47fc3ed82d8af7391d6892c7",
-    "changed": "c99386ebf4861ed3c05171f0a3a6fab7e81c84596480ab6eeab76e10ea62c38e",
-    "commit": "284aadcc40339c761231efea5ae231d465f68ee9",
+    "branch_diff": "e6f84dded7baa0a295902da8e8922838f765a21499c4aa43191f1d9afcadc61f",
+    "changed": "ebf4e69a41b7700ee3627237ecb7e16b27a2fe00bc293fc4c83f1817e257118d",
+    "commit": "e497b24fe2d2fdf9734536999f061dd0e523f2a0",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate.\nCase: normal use - a coordinator follows the shipped guide when reporting progress.\nThe change adds communication duties but updates neither src/forge/templates/skill.md nor src/forge/templates/brief.md, as the supplied repository review rule requires. The current skill.md:249 still prescribes a different status format: `Ready to merge (n): ... \u00b7 Needs you (n): ...`. Update the owning guide alongside these rules so agents receive consistent instructions.",
-        "file": "src/forge/templates/adapters/AGENTS.md",
-        "gain": 4,
-        "harm": 2,
-        "line": 80,
-        "priority": "P1",
-        "title": "Gate: update the coordinator or worker guidance",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate.\nCase: normal use - closing this fix for review.\nThe supplied proof list is explicitly missing, and the branch's commit messages contain no mapping from the Done-when requirement to its checks. The new test exercises new and earlier-adopted client repos, but that does not supply the required proof mapping. Record this test and the direct check of this repo's AGENTS.md against the three required rules.",
-        "file": "tests/test_plain_english_replies_rule.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 22,
-        "priority": "P1",
-        "title": "Gate: proof list",
-        "work": 1
-      }
-    ],
-    "id": "14162d77-6741-49e8-9917-4b2cde037bdd",
-    "status": "blocked"
+    "findings": [],
+    "id": "ccaa16f0-634f-437b-9e02-e992555ab785",
+    "status": "clean"
   },
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-29T15:17:22.870232+00:00",
@@ -71,6 +50,10 @@
     },
     {
       "at": "2026-10-29T15:25:49.343578+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T17:12:52.300246+00:00",
       "step": "review"
     }
   ],
