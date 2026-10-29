@@ -13,7 +13,7 @@ from pathlib import Path
 STORY = "tests-copy-seed-repo"
 
 
-def test_1_grouped_change_run_retries_only_failed_files_after_fixture_change(
+def test_2_grouped_change_run_retries_only_failed_files_after_fixture_change(
         repo, tmp_path, monkeypatch):
     command = (f'"{Path(sys.executable).as_posix()}" -m pytest "client tests" -q '
                '-n 2 --dist loadfile --splits {groups} --group {group}')

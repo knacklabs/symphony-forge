@@ -3,11 +3,14 @@ import os
 import subprocess
 import sys
 
+import pytest
+
 from conftest import ROOT
 
 STORY = "tests-copy-seed-repo"
 
 
+@pytest.mark.platform
 def test_1_session_seeds_give_each_test_private_git_and_sdk_files(tmp_path):
     # This is the harness lifecycle boundary: count real builds, then damage each
     # copy. Ordinary command tests cannot detect a seed that shares writable files.
