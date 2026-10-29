@@ -4,11 +4,26 @@
   "done_when": "The sign-off score test expects the owner choice that lists the finding, and the full run is green",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "33ad6e22ca32b0b156602da2d682cc74e54511af644717f72190f42d3079253f",
+    "changed": "56d9c741ac89c7ceb57225f81c68c08941a9fd33dd703845d9d78bf690eef265",
+    "commit": "c9487ce853ed9c46e8cd1cff008b6e5eec3c76d7",
+    "dismissals": [],
+    "findings": [],
+    "id": "bbc1189b-92ac-440a-b7a2-4b14836ffd1f",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-29T05:46:20.475337+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-29T05:48:17.384249+00:00",
+      "step": "review"
     }
   ],
   "why": "The release full run is red: a sign-off score test still expects a block on the second attempt, but the sign-off hotfix now asks the owner to choose after round 2"
