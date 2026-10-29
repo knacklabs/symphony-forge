@@ -1,0 +1,15 @@
+{
+  "base": "d81dea7acbd9b8a8842752550c1919c657cb3996",
+  "branch": "fix/plain-english-replies-rule",
+  "done_when": "AGENTS.md in a new client repo, an upgraded client repo and this repo states the plain-English, progress-report and exact-status rules",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-29T15:17:22.870232+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The owner wants every reply, summary and question for a human in plain English a non-native speaker gets on the first read, with plain progress reports and exact status, stated in AGENTS.md for this repo and every client repo"
+}
