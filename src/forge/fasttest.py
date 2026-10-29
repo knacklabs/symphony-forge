@@ -441,11 +441,6 @@ RETRY_HEADER = """ + repr(RETRY_HEADER) + """
 RETRY_STEP = """ + repr(RETRY_STEP) + """
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
-    # close's results file. xdist workers need neither; the controller records their reports.
-    plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
-                       if name.strip() not in ("", "_forge_test_results"))
-    os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
     retry = os.environ.pop("FORGE_RETRY_FILES", None)
     if retry:
         before, _, after = pathlib.Path(retry).read_text("utf-8").partition(RETRY_HEADER)
@@ -469,14 +464,17 @@ def pytest_configure(config):
         with FILE[0].open("a", encoding="utf-8") as results:  # close emptied it before the command
             results.write(""" + repr(RESULTS_HEADER) + """)
     ROOT.append(pathlib.Path(str(config.rootdir)))
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_sessionstart(session):
-    # Register after pytest-split: equal-priority hooks run newest first. Count
-    # after normal deselection (-k/-m), but before split's trylast partition.
-    class SuiteSize:
-        @pytest.hookimpl(trylast=True)
-        def pytest_collection_modifyitems(self, items):
-            COLLECTED.append(len(items))
-    session.config.pluginmanager.register(SuiteSize())
+    yield  # xdist starts workers with this plugin before we clear it for child tests.
+    plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
+                       if name.strip() not in ("", "_forge_test_results"))
+    os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(items):
+    # This hook registers before split's configure-time hook. Among trylast
+    # hooks, earlier registration runs first, after normal -k/-m deselection.
+    COLLECTED.append(len(items))
 @pytest.hookimpl(optionalhook=True)
 def pytest_testnodedown(node):
     COLLECTED.append(node.workeroutput.get("forge_collected", 0))

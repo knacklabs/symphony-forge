@@ -63,13 +63,16 @@ def run(top: Path) -> int:
     print(report)
     results = review.results_path(top)
     evidence = results.read_text("utf-8") if results.is_file() else ""
-    from forge.fasttest import INVOCATION_HEADER
+    from forge.fasttest import INVOCATION_HEADER, RESULTS_HEADER
 
     empty_group = (int(os.environ.get("FORGE_GROUPS", "1")) > 1
                    and any(json.loads(line[len(INVOCATION_HEADER):]).get("collected", 0) > 0
                            for line in evidence.splitlines() if line.startswith(INVOCATION_HEADER)))
-    if not empty_group and (status == 5 or not status and not re.search(
-            r"^(?:passed|failed|error|skipped|xfail|xpass) .+$", evidence, re.M)):
+    pytest_run = RESULTS_HEADER in evidence or re.search(r"\bpytest\b", command)
+    no_results = not re.search(r"^(?:passed|failed|error|skipped|xfail|xpass) .+$", evidence, re.M)
+    runner_empty = re.search(r"\bNo test(?: files|s)? found\b", report, re.I)
+    if not empty_group and (pytest_run and (status == 5 or not status and no_results)
+                            or not pytest_run and runner_empty):
         print("The full run ran no tests. Set test in forge.toml to run the whole suite.")
         status = 1
     # The workflow publishes one result after every matrix group, including timed-out jobs.
