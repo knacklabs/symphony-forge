@@ -61,7 +61,7 @@
     "id": "1b1b239a-65f4-4a26-811b-25b42f5d9739",
     "status": "blocked"
   },
-  "round": 6,
+  "round": 7,
   "status": "fixing",
   "steps": [
     {
@@ -99,10 +99,10 @@
     "worker_round": 6
   },
   "stuck": {
-    "close": "c65477a7-067d-402c-bdb7-9b04c4a3f762",
-    "head": "22631e7d744428f7302eecd77f1d15820bf6b5dc",
+    "close": "eb7dfa79-c0cc-49ed-bdcb-99d7aa2f8f1d",
+    "head": "15a2269ae07c2f0a5c4ad4008df55ea84ae67ad6",
     "keys": {},
-    "round": 5
+    "round": 6
   },
   "why": "A pull request that changes only one test file runs all six Linux test groups and all five Windows groups, about 30 minutes of checks for one test",
   "worker": "codex"
