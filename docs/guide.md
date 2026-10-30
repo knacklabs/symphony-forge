@@ -272,8 +272,10 @@ fix it sets `tools = "claude"` with `workers = "claude"`, `tools = "codex"` with
 `workers = "codex"`, or `tools = "both"`. Both is the default when the setting is absent;
 with one tool `workers` is ignored, including for design work. Upgrade Forge before adding
 `tools` to an older repo. The planning, approval, build, review, CI and merge process is the same
-with any choice. A round on the coordinating session's tool runs as its background subagent;
-the other tool uses its kit. Reviews use the repo's tool through Autoreview's own default model
+with any choice. Claude worker rounds use the Agent SDK whenever installed, including in
+a Claude coordinator. Without it, that coordinator uses its background subagent. Codex rounds
+in a Codex coordinator stay native; other Codex rounds use the app server. Plan reads on
+the coordinator's tool stay native. Reviews use the repo's tool through Autoreview's own default model
 and effort; with both they use Codex when installed, otherwise Claude. Existing review model
 entries are ignored and doctor shows a note; upgrading preserves the repo's settings.
 
@@ -300,6 +302,26 @@ Ask your agent to change these settings in a fix.
 `forge init` writes low effort for Codex and Claude build, fix and lite.
 Claude design keeps Sonnet at xhigh. Claude grill and review use Sonnet at high in new repos.
 Existing model and effort entries stay unchanged after upgrade and sync.
+After a red close test, a blocking review finding or a failed required check named
+in `checks`, the next build, fix or lite round uses at least high on Codex and
+xhigh on Claude, keeping a higher configured effort. Optional failed checks and
+owner notes do not raise it. The same worker thread continues with the same model;
+only that turn's effort changes. Design, cold reads, reviews and sign-off keep
+their fixed effort. Forge's defaults and ladder never choose none.
+
+Claude rounds use the Agent SDK when installed. Native rounds request effort in
+their instructions; their records and round lines label it requested because Forge
+cannot check that the host applied it. A continued native Codex helper can retain
+its first effort. Each run records its round number and effort. The board and
+story history show `built at <effort>` in the round line, and omit it for old
+records without effort.
+
+Claude build, fix and lite accept a `subagents` and `subagent_effort` pair, or use
+`claude-haiku-5-5` at high when neither is set. The SDK's `general-purpose` helper
+uses the same pair. These options affect only the Claude builder's turn, not
+other Claude sessions or settings. Codex helpers keep their pair, defaulting to
+`gpt-6-luna` at max. Neither tool's helpers change effort after a failure.
+
 To opt in, set `model` to `"claude-sonnet-5-5"` and `effort` to `"low"` in the three
 Claude implementation entries, and Sonnet at high in grill and review. A missing implementation entry
 can be added before the first table with one line per kind, replacing `build` below:
@@ -323,7 +345,7 @@ fallback applies only to Claude design rounds run through its kit. If the `claud
 is missing, or Claude fails before changing the checkout,
 Forge uses `[models.design.codex]` instead: `gpt-6.1-sol` at high effort by default. Forge prints
 and logs the fallback reason. If Claude changed the checkout before failing, Forge reports the
-failure without a Codex retry. When Claude Code coordinates the round, design work runs as
+failure without a Codex retry. When Claude Code coordinates without the SDK, design work runs as
 its native `frontend` subagent; a failed native round gets no automatic Codex retry.
 With one tool selected, Forge reports the failure without a Codex retry.
 Split routing also applies to User-facing story tasks in

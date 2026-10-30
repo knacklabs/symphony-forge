@@ -367,7 +367,8 @@ def test_8_answering_a_worker_question_keeps_the_owner_wait_in_the_item_history(
     assert question in asked.stdout
     waiting = row(env.repo, item)
     assert waiting["time_breakdown"]["waiting_for_owner"] is not None
-    assert waiting["rounds"][0]["round"] is None
+    # Before review, the observed worker turn supplies the visible round number.
+    assert waiting["rounds"][0]["round"] == 1
     assert waiting["rounds"][0]["worker_round"] == 1
     question_event = next(event for event in records(env.repo, "events.jsonl")
                           if event["event"] == "worker question")
