@@ -74,7 +74,7 @@ def read_usage(repo):
 
 def assert_read_usage(repo):
     end = run_end(repo, 'read')
-    spent = {**CLAUDE_SPENT, 'chat': calls(repo.bin / 'claude-sdk-calls.jsonl')[-1]['session_id']}
+    spent = {**CLAUDE_SPENT, 'chat': calls(repo.bin / 'claude-calls.jsonl')[-1]['session_id']}
     assert end | spent == end
 
 

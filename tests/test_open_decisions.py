@@ -155,9 +155,8 @@ def test_1_decision_open_ranks_every_open_question(repo, tmp_path, monkeypatch, 
         reader_log = install_claude(repo, worker=False)
         read = repo.forge("read", "orders", cwd=fix)
         assert read.returncode == 0, read.stdout + read.stderr
-        events = map(json.loads, calls(reader_log)[-1]["brief"].splitlines())
-        prompt = next(event["message"]["content"] for event in events if event["type"] == "user")
-        prompt = " ".join(prompt.split())
+        # The SDK receives prompt text directly, without the CLI's JSON envelope.
+        prompt = " ".join(calls(reader_log)[-1]["prompt"].split())
         for field in ("- Open question:", "Touches:", "Why we ask:", "Default:",
                       "Why this default:", "If the default stands:", "Due:",
                       "The block has no score line of its own",

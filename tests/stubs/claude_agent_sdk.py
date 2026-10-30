@@ -75,7 +75,8 @@ async def query(*, prompt, options):
     if options.agents is not None:
         values["agents"] = {name: dataclasses.asdict(definition)
                             for name, definition in options.agents.items()}
-    log = here / "claude-sdk-calls.jsonl"
+    # Keep read transcripts separate from worker turns, as the CLI fixtures did.
+    log = here / ("claude-calls.jsonl" if options.permission_mode == "plan" else "claude-sdk-calls.jsonl")
     session = options.resume or options.session_id
     with log.open("a", encoding="utf-8") as out:
         out.write(json.dumps({"options": values, "prompt": prompt, "cwd": os.getcwd(),
@@ -83,11 +84,6 @@ async def query(*, prompt, options):
                               "process_env": {"CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get(
                                   "CLAUDE_CODE_SUBAGENT_MODEL")},
                               "session_id": session}) + "\n")
-    if options.permission_mode == "plan":
-        # Existing read fixtures consume this reply and transcript across releases.
-        with (here / "claude-calls.jsonl").open("a", encoding="utf-8") as out:
-            out.write(json.dumps({"options": values, "prompt": prompt, "cwd": os.getcwd(),
-                                  "session_id": session}) + "\n")
     store = here / "claude-sdk-sessions.json"
     legacy = here / "claude-sessions.json"
     source = store if store.exists() else legacy

@@ -71,6 +71,7 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
         ready = sdk_env / "forge-sdk-ready"
         if regression == "read":
             # Reads share the SDK boundary, but must use plan permissions.
+            sdk_log = cli_log
             approved_constitution(repo)
             shop = new_story(repo, "SHOP")
             (shop / "forge.toml").write_text(
