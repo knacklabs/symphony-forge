@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-MAIL-1-GUIDE",
+  "chat": {
+    "approval": "f071d6b7e1dff37e47d16571828d708e1ebb4673c3c8cbb683c0d6e9709759b8",
+    "claude": null,
+    "conversation": "01a18cf2-22ee-72f0-b089-78fdd2d2bbeb",
+    "head": null,
+    "start": "6f001c8f6fb570e9c0615c85dff6f78fc7bc3f32"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
