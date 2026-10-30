@@ -9,6 +9,9 @@ Test-audit answers:
    helper definitions at the SDK request boundary or their init/adoption rules.
 4. The tests call Forge commands and inspect the SDK stub's external request; they add no
    production seam.
+Kind-selection cases distinguish lite from build and fix, and a design retry from fix.
+The earlier custom cases exercised only build, so either incorrect lookup could pass them.
+These cases extend the same command-level owner and keep the SDK as the only fake edge.
 """
 from __future__ import annotations
 
@@ -60,7 +63,8 @@ def _agent_budgets(agents: dict[str, dict[str, str]]) -> dict[str, dict[str, str
             for name, definition in agents.items()}
 
 
-@pytest.mark.parametrize("case", ["new-init-design", "new-configured-retry", "adopted-configured-retry"])
+@pytest.mark.parametrize("case", ["new-init-design", "new-configured-retry", "adopted-configured-retry",
+                                  "new-lite-retry", "new-design-retry"])
 def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sdk_data, case):
     if case == "new-init-design":
         client, folder, log = _new_claude_task(repo, gh, tmp_path, monkeypatch, sdk_data)
@@ -78,34 +82,47 @@ def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sd
 
     # Explicit helper pairs stay the same on new and earlier-adopted clients, including retries.
     history = "adopted" if case.startswith("adopted") else "new"
+    task = "PAGE" if case == "new-design-retry" else "HELP"
+    item = f"BOARD/{task}"
     env, folder, log = _round_client(repo, gh, tmp_path, monkeypatch, "claude", history=history,
-                                     sdk_data=sdk_data)
+                                     sdk_data=sdk_data, task=task)
+    if case == "new-lite-retry":
+        item = "keep-helper-settings"
+        started = repo.forge("fix", "start", "Keep helper settings", "--done",
+                             "The helper uses its requested settings", "--kind", "mechanical")
+        assert started.returncode == 0, started.stdout + started.stderr
+        folder = repo.path.parent / f"{repo.path.name}-fix-{item}"
     config = folder / "forge.toml"
     text = config.read_text("utf-8")
-    text = text.replace(
-        'models.build = { model = "claude-sonnet-5-5", effort = "low" }',
-        'models.build = { model = "claude-sonnet-5-5", effort = "low", '
-        'subagents = "custom-haiku", subagent_effort = "medium" }')
-    assert 'subagents = "custom-haiku", subagent_effort = "medium"' in text
+    budgets = {"build": ("custom-haiku", "medium"), "fix": ("claude-sonnet-5-5", "high"),
+               "lite": ("claude-haiku-5-5", "low")}
+    for kind, (model, effort) in budgets.items():
+        original = f'models.{kind} = {{ model = "claude-sonnet-5-5", effort = "low" }}'
+        assert original in text
+        text = text.replace(original, original[:-2] +
+                            f', subagents = "{model}", subagent_effort = "{effort}" }}')
     config.write_text(text, encoding="utf-8")
     repo.git("add", "forge.toml", cwd=folder)
     repo.git("commit", "-q", "-m", "Keep the Claude helper budget", cwd=folder)
     configured = config.read_bytes()
-    (folder / "web/help.py").parent.mkdir(parents=True, exist_ok=True)
-    (folder / "web/help.py").write_text("HELP = 'round one'\n", encoding="utf-8")
+    source = folder / ("app.py" if case == "new-lite-retry" else
+                       "web/board.py" if task == "PAGE" else "web/help.py")
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("HELP = 'round one'\n", encoding="utf-8")
     (folder / "fail_test.py").write_text(
         "print('intentional failed close test')\nraise SystemExit(1)\n", encoding="utf-8")
     monkeypatch.setenv("STUB_CLAUDE_COMMIT_FROM", "1")
-    first = repo.forge("work", "BOARD/HELP")
+    first = repo.forge("work", item)
     assert first.returncode == 0, first.stdout + first.stderr
-    failed = env.close("BOARD/HELP")
+    failed = env.close(item)
     assert failed.returncode == 1, failed.stdout + failed.stderr
     assert "intentional failed close test" in failed.stdout
     monkeypatch.delenv("STUB_CLAUDE_COMMIT_FROM", raising=False)
-    retry = repo.forge("work", "BOARD/HELP")
+    retry = repo.forge("work", item)
     assert retry.returncode == 0, retry.stdout + retry.stderr
     [initial, retried] = calls(log)
-    assert _agent_budgets(initial["options"]["agents"]) == _expected_agents("custom-haiku", "medium")
+    expected = budgets["lite" if case == "new-lite-retry" else "build"]
+    assert _agent_budgets(initial["options"]["agents"]) == _expected_agents(*expected)
     assert retried["options"]["agents"] == initial["options"]["agents"]
     assert config.read_bytes() == configured
 
