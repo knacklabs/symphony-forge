@@ -1,0 +1,15 @@
+{
+  "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
+  "branch": "fix/no-placeholder-fixes",
+  "done_when": "Sorting an idea never leaves a fix or branch named find-the-problem-to-solve behind",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-30T13:32:47.367514+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Fixes named Find the problem to solve appear by themselves and collect other fixes' commits (issue 819)"
+}
