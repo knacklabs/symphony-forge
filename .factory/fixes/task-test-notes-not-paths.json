@@ -11,12 +11,53 @@
   "done_when": "When a task's Tests column holds prose or annotated names, forge test runs the named test files and never reports the prose as a missing setting",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "pytest_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 614,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: When a task's Tests column holds prose or annotated names, forge test runs the named test files and never reports the prose as a m",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "addfe4c158b39414e9a78b335be2397619a3bc1232aaf54e8e2212844ca866b2",
+    "changed": "988ba967058164a9f7535933122af7a638c8434f8e9d4e1d966a77d49043efb1",
+    "commit": "d4435797081e70ba594d6f15eca3b463f069f632",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Not done\nCase: normal use - a Tests cell contains the sentence `Run tests/test_case_1.py::test_first_1.`\nThe node-name character class includes `.`, so extraction retains the sentence's final period. `narrow_command` then passes `tests/test_case_1.py::test_first_1.` to pytest (src/forge/fasttest.py:125), which cannot resolve the named test. Thus prose still prevents the requested tests from running. Exclude sentence punctuation from extracted node IDs and cover this sentence form in the command-level regression.",
+        "file": "src/forge/fasttest.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 3,
+        "harm": 2,
+        "line": 614,
+        "priority": "P1",
+        "title": "Not done: When a task's Tests column holds prose or annotated names, forge test runs the named test files and never reports the prose as a m",
+        "work": 2
+      }
+    ],
+    "id": "c3be46d4-e242-449e-9961-14af5192c62d",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T13:32:42.968278+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:40:06.345126+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
