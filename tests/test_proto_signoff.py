@@ -270,7 +270,10 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     missing_selection = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert missing_selection.returncode == 0, missing_selection.stderr
     assert "status: accepted" in page.read_text()
-    page = _decision(fix, answers)
+    # Test audit: these existing cases own strict external-review failures and
+    # model selection. Changed proof makes each reach the reviewer despite reuse;
+    # keep every failure assertion and the total call count. No new seam is needed.
+    page = _decision(fix, answers, proof="The order flow passes. Check automatic model fallback.")
 
     queue.write_text(json.dumps([{"say": SOL_HIGH + "\n"
                                    "codex model gpt-6.1-sol is unavailable for this account; "
@@ -279,14 +282,14 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert fallback.returncode == 0, fallback.stderr
     assert "status: accepted" in page.read_text()
-    page = _decision(fix, answers)
+    page = _decision(fix, answers, proof="The order flow passes. Check alternate effort.")
 
     queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: xhigh",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     other_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert other_effort.returncode == 0, other_effort.stderr
     assert "status: accepted" in page.read_text()
-    page = _decision(fix, answers)
+    page = _decision(fix, answers, proof="The order flow passes. Check strict review errors.")
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {

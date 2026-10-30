@@ -31,12 +31,21 @@ def _report(priority):
 ], ids=["new-accept", "new-more", "new-split", "new-critical", "adopted-accept"])
 def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch, setup, priority, choice):
     fix, answers, queue = setup(repo, tmp_path, monkeypatch)
+    recorder = tmp_path / "codex-stub"
+    recorder.write_text(recorder.read_text("utf-8") +
+                        "base = subprocess.check_output(['git', 'ls-tree', 'HEAD^', '--', 'app.py'], cwd=tree, text=True)\n"
+                        "pathlib.Path(os.environ['SIGNOFF_DIFF'] + '.base').write_text(base, encoding='utf-8')\n"
+                        "commit = subprocess.check_output(['git', 'rev-parse', 'HEAD^'], cwd=tree, text=True)\n"
+                        "pathlib.Path(os.environ['SIGNOFF_DIFF'] + '.commit').write_text(commit, encoding='utf-8')\n",
+                        encoding="utf-8")
     if setup is _adopted_client:
         _request_build(repo, fix)
         (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
         repo.git("add", "app.py", cwd=fix)
         repo.git("commit", "-q", "-m", "Build the adopted prototype", cwd=fix)
     page = _decision(fix, answers)
+    previous_app = repo.git("ls-tree", "HEAD", "--", "app.py", cwd=fix)
+    previous_commit = repo.git("rev-parse", "HEAD", cwd=fix)
     queue.write_text(json.dumps([
         {"report": {"review_status": "scoped-clean", "findings": []}}, _report(priority)]))
 
@@ -61,6 +70,13 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
     # The earlier finding's file remains a review target even when only the
     # README changed. Unrelated unchanged files stay outside that target.
     assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {changed, "app.py"}
+    # The review's actual base contains the last reviewed app revision, not
+    # an empty tree or the current app. Open unchanged files are removed only
+    # to recheck them (the P0 case), so they still appear in the diff above.
+    assert (tmp_path / "reviewed-files.txt.base").read_text("utf-8").strip() == (
+        "" if priority == "P0" else previous_app)
+    if priority != "P0":
+        assert (tmp_path / "reviewed-files.txt.commit").read_text("utf-8").strip() == previous_commit
     calls = queue.with_suffix(".calls.jsonl")
     prior = [json.loads(line) for line in calls.read_text().splitlines()]
     prompt = "\n".join(prior[-1]["prompt_files"].values())
@@ -96,3 +112,59 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
         if choice == "split":
             assert any(entry["id"] != item and "order submission fails" in entry["title"].lower()
                        for entry in board["items"])
+
+
+# Test audit: acceptance survives reviews of another file and Forge sync, but
+# expires on edits to its file and never hides P0. Existing coverage ends at
+# acceptance. Drive the real command and git; no production seam is needed.
+@pytest.mark.parametrize("setup,change,priority", [
+    (_client, "other", "P1"), (_client, "same", "P1"),
+    (_client, "other", "P0"), (_client, "sync", "P1"),
+    (_adopted_client, "other", "P1"),
+], ids=["reworded", "edited", "critical", "generated", "adopted"])
+def test_2_accepted_signoff_survives_only_unchanged_files(
+        repo, tmp_path, monkeypatch, setup, change, priority):
+    fix, answers, queue = setup(repo, tmp_path, monkeypatch)
+    if setup is _adopted_client:
+        _request_build(repo, fix)
+    (fix / "src").mkdir(exist_ok=True)
+    (fix / "src/orders.py").write_text("print('orders')\n", encoding="utf-8")
+    repo.git("add", "src/orders.py", cwd=fix)
+    repo.git("commit", "-qm", "Build order flow", cwd=fix)
+    _decision(fix, answers)
+    report = _report("P1")
+    report["report"]["findings"][0]["code_location"]["file_path"] = "src\\orders.py"
+
+    def accept(*args):
+        return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
+
+    queue.write_text(json.dumps([
+        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    assert accept().returncode == 1
+    assert accept().returncode == 1
+    assert set((tmp_path / "reviewed-files.txt").read_text("utf-8").splitlines()) == {"src/orders.py"}
+    calls = queue.with_suffix(".calls.jsonl")
+    before = len(calls.read_text("utf-8").splitlines())
+    if change == "sync":
+        synced = repo.forge("sync", cwd=fix)
+        assert synced.returncode == 0, synced.stdout + synced.stderr
+        repo.git("add", "-A", cwd=fix)
+        repo.git("commit", "-qm", "Refresh generated Forge files", cwd=fix)
+    resolved = accept("--resolve", "accept", "--reason", "The owner accepts this limitation")
+    assert resolved.returncode == 0, resolved.stdout + resolved.stderr
+    assert len(calls.read_text("utf-8").splitlines()) == before
+    if change == "sync":
+        return
+    target = "src/orders.py" if change == "same" else "README.md"
+    with (fix / target).open("a", encoding="utf-8") as out:
+        out.write("\n# Changed after acceptance\n")
+    repo.git("add", target, cwd=fix)
+    repo.git("commit", "-qm", "Update the prototype", cwd=fix)
+    finding = report["report"]["findings"][0]
+    finding.update(priority=priority, title=("Order submission fails" if priority == "P0"
+                                           else "Submitting an order still fails"))
+    queue.write_text(json.dumps([
+        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+    retried = accept()
+    assert retried.returncode == (0 if change == "other" and priority == "P1" else 1), retried.stdout + retried.stderr
+    assert set((tmp_path / "reviewed-files.txt").read_text("utf-8").splitlines()) == {target}
