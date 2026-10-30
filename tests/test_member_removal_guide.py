@@ -7,6 +7,8 @@ from conftest import ROOT
 from test_setup import LISTED, _fresh_client, _version
 from test_worker import install_claude
 
+STORY = "FORGE-MAIL-1/GUIDE"
+
 
 @pytest.mark.platform
 @pytest.mark.parametrize("setup", ["new init", "previous release"])
