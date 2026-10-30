@@ -29,6 +29,7 @@ from test_setup import _fresh_client
 from test_tools_session_hold import Session
 
 STORY = "FORGE-EFFORT-1"
+pytestmark = pytest.mark.platform
 
 
 def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HELP",
@@ -280,8 +281,9 @@ def test_3_reviews_reads_and_design_keep_their_effort(
         # Read the actual story worktree with its own settings, after its part failed.
         tree = tmp_path / "read-story"
         repo.git("worktree", "add", "-q", str(tree), "story/BOARD")
-        env.commit(tree, "forge.toml", (folder / "forge.toml").read_text("utf-8"),
-                   "Keep the cold reader effort")
+        failed_part = ".factory/stories/BOARD/tasks/HELP.json"
+        env.commit(tree, failed_part, (folder / failed_part).read_text("utf-8"),
+                   "Keep the failed part result for the cold read")
         _install(repo.bin, "claude", READER.format(python=sys.executable))
         read = repo.forge("read", "BOARD", cwd=tree)
         assert read.returncode == 0, read.stdout + read.stderr
@@ -389,6 +391,7 @@ def test_8_native_round_names_the_requested_effort(
 
     host = Session(repo, tmp_path / f"{family}-host", host_name)
     try:
+        before = calls(log)
         first = host.forge("work", "BOARD/HELP")
         assert first.returncode == 0, first.stdout + first.stderr
         assert f"Building BOARD/HELP with {family.title()} ({model}, low requested)" in first.stdout
@@ -398,11 +401,14 @@ def test_8_native_round_names_the_requested_effort(
                                  "--subagent", "worker-session", "--text", "Built it.",
                                  cwd=folder)
         assert handed_back.returncode == 0, handed_back.stdout + handed_back.stderr
+        assert calls(log) == before
 
         closed = env.close("BOARD/HELP")
         assert closed.returncode == 1, closed.stdout + closed.stderr
         assert "intentional native close failure" in closed.stdout
 
+        # Close may invoke the external reviewer; only the worker turns must stay native.
+        before = calls(log)
         retry = host.forge("work", "BOARD/HELP")
         assert retry.returncode == 0, retry.stdout + retry.stderr
         assert f"Building BOARD/HELP with {family.title()} ({model}, {raised} requested)" in retry.stdout
@@ -421,6 +427,6 @@ def test_8_native_round_names_the_requested_effort(
                   and event.get("event") == "run start" and event.get("kind") == "work"]
         assert [(event["round"], event["effort"], event["requested"]) for event in starts] == [
             (1, "low", True), (2, raised, True)]
-        assert calls(log) == []
+        assert calls(log) == before
     finally:
         host.close()

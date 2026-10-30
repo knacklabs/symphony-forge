@@ -59,6 +59,8 @@ def test_2_round_handoffs_show_findings_and_check_logs(land, monkeypatch):
     _red_checks(land)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
+    # This test owns native handoff evidence; installed SDK rounds finish in the driver.
+    monkeypatch.setenv("XDG_DATA_HOME", str(land.tmp / "without-claude-sdk"))
     host = Session(land.repo, land.tmp / "host", "claude-session")
     try:
         done = host.forge("land", item)
