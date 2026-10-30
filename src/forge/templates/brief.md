@@ -79,6 +79,7 @@ again. Other stops and session subagent handoffs also print the open findings an
 
 When the owner narrows or splits a stopped story part, close writes the choice into that part's
 builder details and merges the plan into the task branch. The next worker round gets those details.
+This plan update keeps the code review when no other reviewed input changed.
 For a fix, follow the printed `forge fix amend` step to update its Done when before more work.
 Narrow stays a choice at a stuck-worker stop. Review-loop stops use more, split or accept.
 

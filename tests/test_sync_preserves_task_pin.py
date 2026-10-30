@@ -12,6 +12,7 @@ from test_setup import _fresh_client, _version
 STORY = "no-wasted-rounds"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
 def test_4_sync_in_a_task_worktree_preserves_the_forge_pin(repo, gh, tmp_path, adopted):
     # Sync already regenerates adapters on any branch; this guards the distinct risk that
