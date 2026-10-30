@@ -14,7 +14,7 @@ def test_an_admin_removes_a_member_who_is_signed_out_at_once(
     # Audit: real HTTP and Postgres own removal, session/key revocation and side effects.
     # Missing cleanup or a wrong scope filter breaks this flow. Existing invite/role tests
     # never remove membership, so cannot catch these failures. No production seam is needed.
-    admin, csrf = sign_up(client)
+    _, csrf = sign_up(client)
     admin_id = client.get("/api/v1/auth/me").json()["data"]["id"]
     headers = {"x-csrf-token": csrf}
     invited = credentials()
