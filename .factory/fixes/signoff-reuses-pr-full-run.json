@@ -4,12 +4,20 @@
   "done_when": "Sign-off accepts a green full test run on a commit whose files match the latest default-branch commit, and still refuses when no such run passed",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T09:28:59.034039+00:00",
       "step": "start"
     }
   ],
-  "why": "Client sign-off waits for a new full test run on the default branch after every merge, although the merged pull request already passed the full tests on the same files"
+  "stuck": {
+    "close": null,
+    "head": "412d39cc53fad782c9f31d8ee465266cdfd3a601",
+    "keys": {},
+    "round": null
+  },
+  "why": "Client sign-off waits for a new full test run on the default branch after every merge, although the merged pull request already passed the full tests on the same files",
+  "worker": "codex"
 }
