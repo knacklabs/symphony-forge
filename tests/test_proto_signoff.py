@@ -206,7 +206,8 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     critical = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert critical.returncode == 1
     assert "Prototype exposes data" in critical.stderr
-    assert "Next: fix the prototype" in critical.stderr
+    # A P0 still blocks; its next step now starts one grouped repair fix.
+    assert "Next: forge fix start " in critical.stderr
     assert "status: proposed" in page.read_text()
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
 
