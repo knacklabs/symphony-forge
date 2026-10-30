@@ -758,7 +758,10 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             current = active_parts.get(item, {})
             task_state = nextstep._task(top, key, tid, trees, merged_prs, history)
             waits = list(dict.fromkeys(waits + readiness.get(key, {}).get("waits", {}).get(tid, [])))
+            stacked_status = (readiness.get(key, {}).get("parts", {}).get(tid)
+                              if task_state.get("stacked_on") else None)
             status = ("Merged" if key in completed or task_state.get("status") == "merged" else
+                      stacked_status if stacked_status else
                       "Running" if current.get("activity", {}).get("status") == "running"
                       or current.get("worker") or current.get("tests")
                       or current.get("gates", {}).get("ci", {}).get("status") == "running" else

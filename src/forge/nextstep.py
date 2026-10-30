@@ -628,9 +628,37 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     for task in doc["tasks"]:
         if states[task["id"]] and task["id"] not in merged:
             item = f"{key}/{task['id']}"
-            lines += _item(item, item, states[task["id"]], top,
-                           trees.get(f"task/{key}-{task['id']}"), prs, refusals,
-                           part_statuses if readiness is not None else None)
+            state = states[task["id"]]
+            found = _item(item, item, state, top,
+                          trees.get(f"task/{key}-{task['id']}"), prs, refusals, part_statuses)
+            if (base := state.get("stacked_on")) and "/" in base:
+                base_key, base_name = base.split("/")
+                base_state = _task(top, base_key, base_name, trees, merged_prs, history, prs)
+                built = part_statuses.get(item) == "ready" or (
+                    part_statuses.get(item) == "waiting for checks"
+                    and (state.get("review") or {}).get("status") == "clean"
+                    and state["review"].get("changed") == review.fingerprint(
+                        state["branch"], item, top, state, story.landed_ref(top)))
+                if base_state.get("status") == "merged":
+                    # Until close takes in the merged base, its old ready receipt
+                    # must not send this part straight to merge.
+                    if built and repo.run("git", "merge-base", "--is-ancestor",
+                                          story.landed_ref(top), state["branch"], cwd=top).returncode:
+                        found = [f"{item} needs close after {base} merged.", f"Next: forge close {item}"]
+                else:
+                    base_text = text if base_key == key else story._plan(top, base_key, history=history)
+                    base_title = task_rows(sections(base_text)).get(base_name, {}).get("Name") or base_name
+                    if readiness is not None:
+                        readiness["parts"][task["id"]] = (f"Waiting for {base_title} to merge" if built
+                                                         else f"Building on {base_title}")
+                    if built:
+                        base_lines = _item(base, base, base_state, top,
+                                           trees.get(f"task/{base_key}-{base_name}"), prs, refusals)
+                        found = [f"{item} is built and waits for {base} to merge.",
+                                 *[line for line in base_lines if line.startswith("Next: ")]]
+                    else:
+                        found = [f"{item} is building on {base}.", *found]
+            lines += found
     if behind:
         _blocker(top, key, ref, behind, readiness)
         if readiness is not None:
