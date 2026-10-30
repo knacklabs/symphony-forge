@@ -1133,7 +1133,8 @@ def signoff(top: Path, answers: str, evidence: str = "", *, previous: dict[str, 
                    "Use this green full run as passing evidence for the tests named in Proof. "
                    "No separate forge test run is required.")
     cfg = repo.config(top)
-    return run(top, "client-signoff", {"signoff_history": history}, cfg, "", {}, previous, signoff_prompt=prompt)
+    return run(top, "client-signoff", {"signoff_history": history}, cfg, "", {}, previous,
+               signoff_prompt=prompt, images=set())
 
 
 def design_check(top: Path, prompt: str) -> None:
