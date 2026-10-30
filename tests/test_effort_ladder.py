@@ -92,11 +92,13 @@ def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HEL
 @pytest.mark.parametrize(
     "mode,failure",
     [(mode, failure) for mode in ("codex", "claude", "split")
-     for failure in ("test", "finding", "required-check", "optional-check", "note")]
-    + [("codex", "test-medium"), ("claude", "test-xhigh")],
+     for failure in ("test", "finding", "required-check", "optional-check", "required-matrix-check",
+                     "optional-matrix-check", "similar-matrix-check", "note")]
+    + [("codex", "test-medium"), ("claude", "test-xhigh"), ("codex", "required-matrix-check-medium")],
     ids=[f"{mode}-{failure}" for mode in ("codex", "claude", "split")
-         for failure in ("test", "finding", "required-check", "optional-check", "note")]
-    + ["adopted-codex-medium", "adopted-claude-xhigh"])
+         for failure in ("test", "finding", "required-check", "optional-check", "required-matrix-check",
+                         "optional-matrix-check", "similar-matrix-check", "note")]
+    + ["adopted-codex-medium", "adopted-claude-xhigh", "adopted-required-matrix-check"])
 def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
         repo, gh, tmp_path, monkeypatch, sdk_data, claude_session, mode, failure):
     history = "adopted" if failure.startswith("test-") else "new"
@@ -104,10 +106,12 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
         history, effort, failure = "adopted", "medium", "test"
     elif failure == "test-xhigh":
         history, effort, failure = "adopted", "xhigh", "test"
+    elif failure == "required-matrix-check-medium":
+        history, effort, failure = "adopted", "medium", "required-matrix-check"
     else:
         effort = "low"
     expected_effort = ("xhigh" if mode == "claude" else "high") if failure in (
-        "test", "finding", "required-check") else effort
+        "test", "finding", "required-check", "required-matrix-check") else effort
     env, folder, log = _round_client(repo, gh, tmp_path, monkeypatch, mode, effort,
                                      history=history, sdk_data=sdk_data,
                                      test_place="ci" if failure.endswith("check") else "local")
@@ -130,16 +134,21 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
                            "\n\n" + question)
     elif failure == "finding":
         env.reviews(blocked(finding("P1", "The help file is incomplete", "web/help.py")))
-    elif failure in ("required-check", "optional-check"):
-        check = "lint" if failure == "optional-check" else "tests"
-        env.checks([run("tests", "failure" if check == "tests" else "success"),
-                    run("forge-pr-check"), run("lint", "failure" if check == "lint" else "success")])
+    elif failure.endswith("check"):
+        # Matrix jobs count as their required check; optional jobs and similar prefixes do not.
+        check = {"required-check": "tests", "optional-check": "lint",
+                 "required-matrix-check": "tests (ubuntu-latest)",
+                 "optional-matrix-check": "lint (ubuntu-latest)",
+                 "similar-matrix-check": "tests-extra (ubuntu-latest)"}[failure]
+        rows = [run(check, "failure"), run("forge-pr-check")]
+        if failure == "required-matrix-check":
+            rows.append(run("tests (windows-latest)"))
+        elif failure != "required-check":
+            rows.append(run("tests"))
+        env.checks(rows)
         gh.respond("pr", "checks", stdout=json.dumps([
-            {"name": "tests", "bucket": "fail" if check == "tests" else "pass",
-             "link": "https://github.com/acme/shop/actions/runs/1/job/42"},
-            {"name": "forge-pr-check", "bucket": "pass", "link": ""},
-            {"name": "lint", "bucket": "fail" if check == "lint" else "pass",
-             "link": "https://github.com/acme/shop/actions/runs/1/job/43"}]))
+            {"name": row["name"], "bucket": "fail" if row["conclusion"] == "failure" else "pass",
+             "link": "https://github.com/acme/shop/actions/runs/1/job/42"} for row in rows]))
         gh.respond("run", "view", stdout="failed check output\n")
 
     first = repo.forge("work", "BOARD/HELP")
@@ -151,13 +160,13 @@ def test_1_a_failed_round_runs_at_top_effort_in_the_same_thread(
                            raising=False)
     else:
         closed = env.close("BOARD/HELP")
-        if failure != "optional-check":
+        if failure in ("test", "finding", "required-check", "required-matrix-check"):
             assert closed.returncode == 1, closed.stdout + closed.stderr
         if failure == "test":
             assert "intentional failed close test" in closed.stdout
         elif failure == "finding":
             assert "The review left serious findings open" in closed.stderr
-        elif failure == "required-check":
+        elif failure in ("required-check", "required-matrix-check"):
             assert "tests" in closed.stdout + closed.stderr
 
     monkeypatch.delenv(commit_env, raising=False)

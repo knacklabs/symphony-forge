@@ -184,7 +184,8 @@ def _work(args: argparse.Namespace) -> bool:
     findings, failing = _fix_round(state)
     if not design:
         failed = bool(findings or state.get("tests") or
-                      any(name in config.get("checks", []) for name, _ in failing))
+                      any(name == required or name.startswith(required + " (")
+                          for name, _ in failing for required in config.get("checks", [])))
         chosen = repo.round_effort(chosen, family, failed)
     if claude:
         claude[claude.index("--effort") + 1] = chosen["effort"]
