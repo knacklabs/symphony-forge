@@ -4,12 +4,20 @@
   "done_when": "When a task's Tests column holds prose or annotated names, forge test runs the named test files and never reports the prose as a missing setting",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T13:32:42.968278+00:00",
       "step": "start"
     }
   ],
-  "why": "Task test notes are read as test file names, so related-test selection runs no tests and blames missing settings (issue 1227 and its duplicates)"
+  "stuck": {
+    "close": null,
+    "head": "a15cb9fce2ec078119bfde039928ae671d6d3174",
+    "keys": {},
+    "round": null
+  },
+  "why": "Task test notes are read as test file names, so related-test selection runs no tests and blames missing settings (issue 1227 and its duplicates)",
+  "worker": "codex"
 }
