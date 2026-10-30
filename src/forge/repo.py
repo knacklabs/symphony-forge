@@ -592,6 +592,16 @@ WORKER_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "low"},
 DESIGN_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
 CLAUDE_GRILL_DEFAULT = {"model": "claude-opus-5-5", "effort": "high"}
+TOP_EFFORT = {"codex": "high", "claude": "xhigh"}
+
+
+def round_effort(chosen: dict[str, str], family: str, failed: bool) -> dict[str, str]:
+    """Raise only the worker's effort after a verified failure, keeping higher repo choices."""
+    order = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
+    effort, top = chosen["effort"], TOP_EFFORT[family]
+    if failed and effort in order and order.index(effort) < order.index(top):
+        return {**chosen, "effort": top}
+    return chosen
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
