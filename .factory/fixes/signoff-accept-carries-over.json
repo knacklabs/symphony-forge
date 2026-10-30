@@ -47,8 +47,8 @@
     "id": "516ea538-c7a1-46e4-ba64-8ca1622270b2",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T08:44:48.749412+00:00",
@@ -60,10 +60,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "d253b3e33a63b2f37b97174ae82e97bced8e0a32",
+    "close": "cb75fefc-c88a-49cd-aacf-035c423628ae",
+    "head": "432d594baef513926fb48a1216da1325d3cae7f4",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "After the owner accepts a sign-off finding with --resolve accept, the next sign-off attempt reviews the whole app again and raises the accepted finding again, so client sign-off never finishes",
   "worker": "codex"
