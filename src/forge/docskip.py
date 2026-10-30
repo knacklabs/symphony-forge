@@ -1,4 +1,5 @@
 """The docs-only rule, also copied into the self-contained client CI script."""
+import ast
 import posixpath
 import re
 import shutil
@@ -9,10 +10,47 @@ PATH_LITERALS = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
 
 
 def reads_file_relative(source: str, basenames: set[str]) -> bool:
-    """Keep possible file-relative readers when literal path resolution is incomplete."""
-    return bool(re.search(r"\b__file__\b", source)) and any(
-        posixpath.basename(literal[2].replace("\\", "/")) in basenames
-        for literal in re.finditer(PATH_LITERALS, source))
+    """Match literals in file-relative paths, not unrelated content assertions."""
+    if not basenames or not re.search(r"\b__file__\b", source):
+        return False
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        # Embedded Python and newer syntax still get the conservative check.
+        return any(posixpath.basename(literal[2].replace("\\", "/")) in basenames
+                   for literal in re.finditer(PATH_LITERALS, source))
+    roots = {"__file__"}
+
+    def rooted(node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in roots
+        if isinstance(node, (ast.Attribute, ast.Subscript)):
+            return rooted(node.value)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Div, ast.Add)):
+            return rooted(node.left) or rooted(node.right)
+        if isinstance(node, ast.Call):
+            name = getattr(node.func, "id", getattr(node.func, "attr", ""))
+            return name in {"Path", "join", "dirname", "abspath", "realpath", "normpath",
+                            "resolve", "absolute", "joinpath", "with_name", "with_suffix"} and (
+                rooted(node.func) or any(rooted(arg) for arg in node.args))
+        return False
+
+    assignments = [node for node in ast.walk(tree) if isinstance(node, (ast.Assign, ast.AnnAssign))]
+    while True:
+        before = len(roots)
+        for node in assignments:
+            if rooted(node.value):
+                targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                roots.update(target.id for target in targets if isinstance(target, ast.Name))
+        if len(roots) == before:
+            break
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node) and any(
+                isinstance(part, ast.Constant) and isinstance(part.value, str)
+                and posixpath.basename(part.value.replace("\\", "/")) in basenames
+                for part in ast.walk(node)):
+            return True
+    return False
 
 
 def test_readers(files: list[Path], picked: set[Path]) -> set[Path]:

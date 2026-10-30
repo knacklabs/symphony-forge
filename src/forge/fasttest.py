@@ -22,7 +22,7 @@ COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
 
 def git_files(*args: str) -> list[str]:
     return subprocess.run(["git", *args, "-z"], check=True, capture_output=True,
-                          text=True).stdout.rstrip("\0").split("\0")
+                          text=True).stdout.split("\0")[:-1]
 
 
 def module_parts(path: Path) -> list[str]:
