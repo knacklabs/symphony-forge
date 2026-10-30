@@ -12,6 +12,8 @@ from conftest import _install
 from test_last_task_records_story_outcome import github_merge
 from test_stack_start import configured, start
 
+STORY = "FORGE-STACK-1/CLOSE"
+
 
 def _set_part_limit(repo):
     repo.git("switch", "-q", "story/STACK")
@@ -124,7 +126,17 @@ def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previ
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_4_forge_merge_retargets_and_replays_the_stacked_part(env, previous):
+@pytest.mark.parametrize("scenario", ["forge-merge", "manual-merge", "own-conflict"])
+def test_4_parts_follow_their_merged_base(env, previous, scenario, monkeypatch):
+    if scenario == "forge-merge":
+        _forge_merge_retargets_and_replays_the_stacked_part(env, previous)
+    elif scenario == "manual-merge":
+        _close_guides_a_manually_merged_base_before_replaying_the_child(env, previous, monkeypatch)
+    else:
+        _manual_merge_replay_stops_on_a_clash_in_the_stacked_part(env, previous)
+
+
+def _forge_merge_retargets_and_replays_the_stacked_part(env, previous):
     earlier_note = "Keep the saved child value readable"
     repo, base_head = _stacked_pair(env, previous, blocked(finding("P2", earlier_note, "use.py")))
 
@@ -183,8 +195,7 @@ def test_4_forge_merge_retargets_and_replays_the_stacked_part(env, previous):
     assert repo.git("show", "origin/main:use.py") == "B_VALUE = 1"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_4_close_guides_a_manually_merged_base_before_replaying_the_child(env, previous, monkeypatch):
+def _close_guides_a_manually_merged_base_before_replaying_the_child(env, previous, monkeypatch):
     repo, base_head = _stacked_pair(env, previous)
     _merge_base_by_hand(repo)
     _retarget_manual_child(env)
@@ -231,8 +242,7 @@ def test_4_close_guides_a_manually_merged_base_before_replaying_the_child(env, p
     assert repo.git("show", "origin/main:use.py") == "B_VALUE = 1"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_4_manual_merge_replay_stops_on_a_clash_in_the_stacked_part(env, previous):
+def _manual_merge_replay_stops_on_a_clash_in_the_stacked_part(env, previous):
     repo, _ = _stacked_pair(env, previous)
     _merge_base_by_hand(repo)
     _retarget_manual_child(env)
