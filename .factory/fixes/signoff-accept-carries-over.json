@@ -11,12 +11,52 @@
   "done_when": "After an owner's accept, a later sign-off attempt reviews only files changed since the last sign-off review plus files with open findings, and does not block again on a finding the owner accepted in the same file",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "_signoff_review() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 504,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_7_review_guards_client_signoff",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6020a98ac2081a38d75137f01966f603bc664f2e324b2b01eaac8d3c49c8d187",
+    "changed": "9a956cf1003ba93d4565ff635929fa4a4272fc88ff703f49e75cc97ad7e888a9",
+    "commit": "83b354663226c5d787014c84d134429a37385913",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 1\nRaise: Test\nCase: normal use - running the repository's sign-off tests.\nThe new reuse path makes the existing strict-review test fail. After its clean review at tests/test_proto_signoff.py:270, the test recreates the same decision without changing product files or review inputs. This condition then returns before invoking Autoreview, so the incomplete-report case returns success instead of the failure asserted at line 297. Subsequent strict-failure cases also cannot exercise the reviewer. Update their setup to invalidate review inputs before supplying each failure report, preserving coverage while allowing unchanged reviews to be reused.",
+        "file": "src/forge/records.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 504,
+        "priority": "P1",
+        "title": "Gate: test_7_review_guards_client_signoff",
+        "work": 2
+      }
+    ],
+    "id": "516ea538-c7a1-46e4-ba64-8ca1622270b2",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T08:44:48.749412+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T09:04:14.619968+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
