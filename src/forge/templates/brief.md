@@ -87,6 +87,7 @@ Close records a reused review against the current branch after a replay. Land re
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
 
+The client sign-off code review excludes images; the canvas completeness check reviews them.
 Normal reviews, reviews of docs and assets, and sign-off reviews use the selected tool's model and optional effort from
 `[models.review]` in `forge.toml`, including its per-tool entries. An unset entry or effort
 uses Autoreview's default. New and earlier-adopted repos get this behaviour on the current release.

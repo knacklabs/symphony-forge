@@ -6,6 +6,9 @@ unchanged file. A misplaced accepted finding disappears from the owner's item.
 This is the command-level owner of those contracts, with no production test seam.
 Only Autoreview is faked at its external edge; the real CLI, git snapshots and
 board output own the observed behavior.
+The earlier revision must remain an ancestor of the comparison base. Image
+exclusion can create a child snapshot, so exact base commit identity is not
+the contract; the earlier app contents and ancestry are.
 """
 import json
 
@@ -35,7 +38,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
     recorder.write_text(recorder.read_text("utf-8") +
                         "base = subprocess.check_output(['git', 'ls-tree', 'HEAD^', '--', 'app.py'], cwd=tree, text=True)\n"
                         "pathlib.Path(os.environ['SIGNOFF_DIFF'] + '.base').write_text(base, encoding='utf-8')\n"
-                        "commit = subprocess.check_output(['git', 'rev-parse', 'HEAD^'], cwd=tree, text=True)\n"
+                        "commit = subprocess.check_output(['git', 'rev-list', 'HEAD^'], cwd=tree, text=True)\n"
                         "pathlib.Path(os.environ['SIGNOFF_DIFF'] + '.commit').write_text(commit, encoding='utf-8')\n",
                         encoding="utf-8")
     if setup is _adopted_client:
@@ -76,7 +79,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
     assert (tmp_path / "reviewed-files.txt.base").read_text("utf-8").strip() == (
         "" if priority == "P0" else previous_app)
     if priority != "P0":
-        assert (tmp_path / "reviewed-files.txt.commit").read_text("utf-8").strip() == previous_commit
+        assert previous_commit in (tmp_path / "reviewed-files.txt.commit").read_text("utf-8").splitlines()
     calls = queue.with_suffix(".calls.jsonl")
     prior = [json.loads(line) for line in calls.read_text().splitlines()]
     prompt = "\n".join(prior[-1]["prompt_files"].values())

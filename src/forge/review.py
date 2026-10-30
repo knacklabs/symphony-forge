@@ -890,6 +890,13 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                                "They already exist in the product. Re-check their earlier findings: " + ", ".join(sorted(recheck)))
                     review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
                                            "-p", previous["commit"], "-m", "Open sign-off findings", cwd=tree)
+                if images is not None:
+                    omitted = [name for name in repo.git("ls-files", "-z", cwd=tree).split("\0")
+                               if Path(name).suffix.lower() in design.IMAGES and name not in images]
+                    if omitted:
+                        repo.git("rm", "-f", "-q", "--cached", "--", *omitted, cwd=tree)
+                        review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
+                                               "-p", review_base, "-m", "Previous sign-off without omitted images", cwd=tree)
                 repo.git("read-tree", head, cwd=tree)
                 # Keep bookkeeping identical to the base so it is not reviewed.
                 repo.git("reset", "-q", previous["commit"], "--", ".factory", "plans", "docs/decisions", cwd=tree)
