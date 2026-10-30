@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-MAIL-1-REMOVE",
+  "chat": {
+    "approval": "f071d6b7e1dff37e47d16571828d708e1ebb4673c3c8cbb683c0d6e9709759b8",
+    "claude": null,
+    "conversation": "01a18cf2-2234-7651-87af-cf76e23eecd7",
+    "head": null,
+    "start": "d2098d21fc68d7edab0bf4b5086a6b5857fc0055"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
