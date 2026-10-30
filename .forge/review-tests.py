@@ -17,6 +17,15 @@ import shutil
 import subprocess
 from pathlib import Path
 
+PATH_LITERALS = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
+
+
+def reads_file_relative(source: str, basenames: set[str]) -> bool:
+    """Keep possible file-relative readers when literal path resolution is incomplete."""
+    return bool(re.search(r"\b__file__\b", source)) and any(
+        posixpath.basename(literal[2].replace("\\", "/")) in basenames
+        for literal in re.finditer(PATH_LITERALS, source))
+
 
 def test_readers(files: list[Path], picked: set[Path]) -> set[Path]:
     """Keep every text reference, including plugin strings and scoped conftest users."""
@@ -66,7 +75,6 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         if found.returncode not in (0, 1):
             return False
         targets = {posixpath.normpath(posixpath.join(top.as_posix(), path)) for path in changed}
-        strings = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
         quoted = r'''(?:'[^'\r\n]*'|"[^"\r\n]*"|`[^`\r\n]*`)'''
         joined = re.compile(rf"\b(?:Path|join)\(\s*(?:__dirname\s*,\s*)?{quoted}"
                             rf"(?:\s*,\s*{quoted})*\s*\)(?:\s*/\s*{quoted})*")
@@ -76,14 +84,13 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
             source = git("show", consumer)
             # File-relative expressions cannot always be resolved from literals alone.
             # Prefer extra tests when a quoted basename could read the changed input.
-            if re.search(r"\b__file__\b", source) and any(
-                    literal[2] in patterns for literal in re.finditer(strings, source)):
+            if reads_file_relative(source, set(patterns)):
                 return False
             # A basename finds candidates, not consumers: resolve whole path literals.
             # Fold literal path joins so their components cannot match unrelated root files.
             source = joined.sub(lambda call: repr(posixpath.join(*(
-                value[2] for value in re.finditer(strings, call[0])))), source)
-            for literal in re.finditer(strings, source):
+                value[2] for value in re.finditer(PATH_LITERALS, call[0])))), source)
+            for literal in re.finditer(PATH_LITERALS, source):
                 name = literal[2].replace("\\", "/")
                 if any(posixpath.normpath(posixpath.join(root, name)) in targets for root in roots):
                     return False

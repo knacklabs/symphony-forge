@@ -382,6 +382,9 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                       or any(mentions(path, module, source) for module, source in modules)}
     readers = tests + [Path(name) for name in files
                        if Path(name).name == "conftest.py" and Path(name).is_file()]
+    inputs = {Path(name).name for name in changed if Path(name).suffix != ".py"}
+    picked |= {path for path in readers
+               if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
     picked = docskip.test_readers(readers, picked)
     return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
 
