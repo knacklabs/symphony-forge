@@ -186,12 +186,12 @@
     "id": "473a1ee9-a0bd-4418-9d34-9707f5f28d15",
     "status": "blocked"
   },
-  "round": 10,
+  "round": 11,
   "settled_areas": [
     "close() in src/forge/close.py",
     "src/forge/close.py"
   ],
-  "status": "fixing",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
@@ -244,12 +244,10 @@
     "worker_round": 10
   },
   "stuck": {
-    "close": "ee055a4e-3119-47e6-b289-3e60fb928e95",
-    "head": "7f421048131bedba5a9be3f0faf940942bb11ad1",
-    "keys": {
-      "the review finding \"A new ready pull request has no dated merge wait on other machines\" in src/forge/close.py": 1
-    },
-    "round": 9
+    "close": "6582bf32-061e-4ff6-8854-710c0fb2ec04",
+    "head": "8e069ae32b404ddc6d3064d7e6a2067e4e9217da",
+    "keys": {},
+    "round": 10
   },
   "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
   "worker": "codex"
