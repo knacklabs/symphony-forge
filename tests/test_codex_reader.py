@@ -155,12 +155,11 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     (repo.bin / "claude-says.md").write_text(f"1. see {wish.resolve()}/docs/b.md\n", encoding="utf-8")
     assert repo.forge("read", "WISH").returncode == 0
     [call] = claude_calls(claude)
-    # The old contract ran claude with no session; FORGE-READLOOP-1 starts it with a known session
-    # id, so the next round can continue it. Live status now consumes streamed tool events;
-    # Streaming input also requests applied settings for live status; the read-only mode,
-    # model, effort and known session remain part of this CLI contract.
-    assert call["args"][:-1] == ["-p", "--model", "opus", "--effort", "high", "--permission-mode",
-                                 "plan", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--session-id"]
+    # The SDK replaces the CLI transport and preserves the reader's settings and session.
+    assert call["options"]["permission_mode"] == "plan"
+    assert call["options"]["model"] == "opus"
+    assert call["options"]["effort"] == "high"
+    assert call["options"]["session_id"]
     assert Path(call["cwd"]).resolve() == wish.resolve()
     wished = (wish / "plans" / "WISH.read.md").read_text("utf-8")
     assert "reader: claude (opus)" in wished and "see /docs/b.md" in wished

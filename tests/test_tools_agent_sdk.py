@@ -15,6 +15,7 @@ from conftest import ROOT, _install
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import alive, person  # noqa: F401 (human stop fixture)
 from test_setup import _fresh_client
+from test_story import DOC, approved_constitution, new_story
 from test_task import story
 from test_tools_session_hold import Session
 from test_worker import calls, install_claude
@@ -26,7 +27,7 @@ PIN = "0.2.161"
 
 @pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted"])
-@pytest.mark.parametrize("regression", ["bundled-cli", "design-preflight"])
+@pytest.mark.parametrize("regression", ["bundled-cli", "design-preflight", "read"])
 def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
         repo, gh, monkeypatch, tmp_path, person, history, regression):
     version = repo.forge("--version").stdout.split()[-1]
@@ -68,6 +69,66 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
     try:
         sdk_env = Path(os.environ["XDG_DATA_HOME"]) / "forge/claude-sdk" / f"claude-agent-sdk-{PIN}"
         ready = sdk_env / "forge-sdk-ready"
+        if regression == "read":
+            # Reads share the SDK boundary, but must use plan permissions.
+            approved_constitution(repo)
+            shop = new_story(repo, "SHOP")
+            (shop / "forge.toml").write_text(
+                settings.replace('tools = "both"', 'tools = "claude"') +
+                'models.grill.claude = { model = "opus", effort = "high" }\n', encoding="utf-8")
+            repo.git("commit", "-qam", "Choose Claude reads", cwd=shop)
+            doc = shop / "plans/SHOP.md"
+            doc.write_bytes(DOC.encode("utf-8"))
+            monkeypatch.setenv("STUB_CLAUDE_RESULT", "No findings.\n")
+            ready.unlink()
+            try:
+                missing = host.forge("read", "SHOP", cwd=shop)
+                assert missing.returncode == 1, missing.stdout + missing.stderr
+                assert f"The Claude Agent SDK {PIN} isn't installed" in missing.stderr
+                assert "forge doctor --fix" in missing.stderr
+                assert calls(sdk_log) == []
+                assert not (shop / "plans/SHOP.read.md").exists()
+            finally:
+                ready.write_text(PIN + "\n", encoding="utf-8")
+            # Reads need only the SDK's bundled program, with no standalone CLI.
+            for name in ("claude", "claude.cmd"):
+                (repo.bin / name).unlink(missing_ok=True)
+            for round_number in range(3):
+                if round_number:
+                    doc.write_bytes(DOC.replace("People lose", f"People often {'still ' * round_number}lose")
+                                    .encode("utf-8"))
+                if round_number == 2:
+                    sessions.unlink()
+                read = host.forge("read", "SHOP", cwd=shop)
+                assert read.returncode == 0, read.stdout + read.stderr
+                requests = calls(sdk_log)
+                current = requests[-1]
+                assert current["options"]["permission_mode"] == "plan"
+                assert current["options"]["model"] == "opus"
+                assert current["options"]["effort"] == "high"
+                assert current["worker"] == "1"
+                streamed = repo.path / ".git/forge/threads/read/SHOP.sdk.log"
+                messages = [json.loads(line) for line in streamed.read_text("utf-8").splitlines()]
+                assert messages[-1]["session_id"] == current["session_id"]
+                assert messages[-1]["result"] == "No findings.\n"
+                assert "SDK worker output" in read.stdout
+                if round_number == 0:
+                    assert not current["options"]["resume"]
+                    first_session = current["session_id"]
+                    assert DOC in current["prompt"]
+                elif round_number == 1:
+                    assert current["options"]["resume"] == first_session
+                    assert DOC not in current["prompt"]
+                else:
+                    assert requests[-2]["options"]["resume"] == first_session
+                    assert not current["options"]["resume"]
+                    assert doc.read_text("utf-8") in current["prompt"]
+                    assert "Starting a new Claude session" in read.stdout
+                notes = (shop / "plans/SHOP.read.md").read_text("utf-8")
+                assert current["session_id"] in notes
+                assert "No findings." in notes
+            assert not any("-p" in call.get("args", []) for call in calls(cli_log))
+            return
         ready.unlink()
         head = repo.git("rev-parse", "HEAD", cwd=folder)
         state = (folder / f".factory/fixes/{ITEM}.json").read_bytes()

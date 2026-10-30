@@ -291,8 +291,7 @@ def test_3_reviews_reads_and_design_keep_their_effort(
         read = repo.forge("read", "BOARD", cwd=tree)
         assert read.returncode == 0, read.stdout + read.stderr
         [call] = calls(repo.bin / "claude-calls.jsonl")
-        args = call["args"]
-        assert args[args.index("--effort") + 1] == "medium"
+        assert call["options"]["effort"] == "medium"
 
 
 @pytest.mark.parametrize("family", ["claude", "codex"])
