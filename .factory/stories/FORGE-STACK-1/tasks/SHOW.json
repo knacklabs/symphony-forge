@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-STACK-1-SHOW",
+  "chat": {
+    "approval": "163c341206a7b61eb1165174f54268020096e3131854660f47f52ab7d21c8127",
+    "claude": null,
+    "conversation": "01a18d39-8f20-7171-af04-94ef31ed52c7",
+    "head": null,
+    "start": "a2a5f501c7473d1b8843c9636bc495e9afa0f41a"
+  },
   "round": 1,
   "status": "working",
   "steps": [
