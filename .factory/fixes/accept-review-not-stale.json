@@ -11,7 +11,7 @@
   "done_when": "After an accept at the round limit, the first forge close's clean review passes forge-pr-check on the commit it pushed",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
