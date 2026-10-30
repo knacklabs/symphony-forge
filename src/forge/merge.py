@@ -206,41 +206,42 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
         repo.record_event(top, item, "item finished", round=item_state.get("round"))
-    children = repo.run("gh", "pr", "list", "--base", branch, "--state", "open",
-                        "--limit", "1000", "--json", "number,headRefName", cwd=top)
-    if children.returncode:
-        if children.stderr.strip() == repo.REFUSALS["no_github"][0]:
-            repo.refuse(repo.REFUSALS["no_github"])
-        repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
-    try:
-        child_prs = json.loads(children.stdout)
-    except ValueError:
-        repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
-    if not isinstance(child_prs, list):
-        repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
-    trees = story.worktrees(top)
-    for child_pr in child_prs:
-        head_branch = child_pr.get("headRefName") if isinstance(child_pr, dict) else None
-        number = child_pr.get("number") if isinstance(child_pr, dict) else None
-        other = head_branch if isinstance(head_branch, str) else "a child"
-        if not isinstance(head_branch, str) or type(number) is not int:
-            repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
-        found = task.branch_item(head_branch, trees[head_branch]) if head_branch in trees else None
-        head_ref = f"refs/remotes/origin/{head_branch}"
-        if not found and not repo.run("git", "show-ref", "--verify", head_ref, cwd=top).returncode:
-            try:
-                found = prcheck._started(top, f"origin/{head_branch}", head_branch)
-            except repo.Refused:
-                pass
-        if found:
-            other = found[0]
-        retargeted = repo.run("gh", "pr", "edit", str(number), "--base", default, cwd=top)
-        if retargeted.returncode:
-            if retargeted.stderr.strip() == repo.REFUSALS["no_github"][0]:
+    if "/" in item:
+        children = repo.run("gh", "pr", "list", "--base", branch, "--state", "open",
+                            "--limit", "1000", "--json", "number,headRefName", cwd=top)
+        if children.returncode:
+            if children.stderr.strip() == repo.REFUSALS["no_github"][0]:
                 repo.refuse(repo.REFUSALS["no_github"])
-            repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
-        if found:
-            print(f"Next: forge close {other}")
+            repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+        try:
+            child_prs = json.loads(children.stdout)
+        except ValueError:
+            repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+        if not isinstance(child_prs, list):
+            repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+        trees = story.worktrees(top)
+        for child_pr in child_prs:
+            head_branch = child_pr.get("headRefName") if isinstance(child_pr, dict) else None
+            number = child_pr.get("number") if isinstance(child_pr, dict) else None
+            other = head_branch if isinstance(head_branch, str) else "a child"
+            if not isinstance(head_branch, str) or type(number) is not int:
+                repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
+            found = task.branch_item(head_branch, trees[head_branch]) if head_branch in trees else None
+            head_ref = f"refs/remotes/origin/{head_branch}"
+            if not found and not repo.run("git", "show-ref", "--verify", head_ref, cwd=top).returncode:
+                try:
+                    found = prcheck._started(top, f"origin/{head_branch}", head_branch)
+                except repo.Refused:
+                    pass
+            if found:
+                other = found[0]
+            retargeted = repo.run("gh", "pr", "edit", str(number), "--base", default, cwd=top)
+            if retargeted.returncode:
+                if retargeted.stderr.strip() == repo.REFUSALS["no_github"][0]:
+                    repo.refuse(repo.REFUSALS["no_github"])
+                repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
+            if found:
+                print(f"Next: forge close {other}")
     main_checkout = repo.forge_dir(top).parent.parent
     pending = receipt.get("pending_archives")
     if pending is None:
