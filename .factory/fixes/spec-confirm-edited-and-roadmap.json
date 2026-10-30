@@ -11,12 +11,27 @@
   "done_when": "spec confirm on an edited spec confirms the new text, and spec confirm refuses a spec with no Roadmap lines before the owner confirms it",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8fe24f37d7749e343f3a8a16968733bd0cc9ef43da002f50c66568c4cfedde9a",
+    "changed": "dd6ec91f555ce616d49c2c6d9ecde2d94fc42c0ab34704cdfe7dddabb5d47453",
+    "commit": "86ac4ce009bd3fcff21e91744b65e015ee8fa052",
+    "dismissals": [],
+    "findings": [],
+    "id": "bd917a22-6ddc-4c31-b5ee-ffd1cafd87d3",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T13:32:29.355751+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:36:50.727507+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
