@@ -37,20 +37,42 @@
       "security": false,
       "title": "Include relative subpaths in the conservative basename match",
       "work": 2
+    },
+    {
+      "area": "reads_file_relative.components() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": null,
+      "harm": null,
+      "line": 27,
+      "outcome": "open",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "Not done: A docs change that a test reads through a __file__-built path runs that test",
+      "work": null
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "93dce9e3480a2689ea175d13a005ff0fc70bc1fe15aa427031741d7258c4dd93",
+    "branch_diff": "2fb90d978cc35282e64486650dd58c92311d5e8b02b736af383bb0e7ac333d43",
     "changed": "8bbaa69cf8bbad42b13eb7cee115137cc4ef7bd9d1e8ada4805bf1a44fd3d138",
-    "commit": "bf6abf0f72acd864f870323770b11b64fb8f3503",
+    "commit": "bce6b4f86eff9de3f834f93e98441930b264c991",
     "dismissals": [],
-    "findings": [],
-    "id": "ae1bb6c4-2eb0-4507-9520-43de93417d95",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "A filename stored in a constant still makes the consuming test disappear from selection. For example, `NAME = 'guide.md'; GUIDE = Path(__file__).parents[1] / 'docs' / NAME` followed by `GUIDE.read_text()` reads `docs/guide.md`, but `components(NAME)` returns an empty list because only file-rooted assignments enter `roots`. The computed suffix is therefore just `docs`, which cannot match the changed document. The docs classifier's remaining literal checks also cannot resolve the separately quoted directory and basename, so CI skips the tests; the pytest selector likewise selects nothing. Preserve literal-valued path variables and cover this case through the existing command-level regression test. The copied implementation in `.forge/review-tests.py` has the same defect.",
+        "file": "src/forge/docskip.py",
+        "line": 27,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A docs change that a test reads through a __file__-built path runs that test"
+      }
+    ],
+    "id": "62091562-cba4-437d-a13a-8280c69250fb",
+    "status": "blocked"
   },
   "round": 5,
-  "status": "fixing",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-30T13:32:38.413143+00:00",
@@ -71,8 +93,17 @@
     {
       "at": "2026-10-30T17:21:40.217612+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:57:00.369892+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-30T18:57:00.370075+00:00",
+    "file": "src/forge/docskip.py",
+    "wait_id": "62dd1d32-cb2b-4b85-bea1-c793070c191f"
+  },
   "stuck": {
     "close": "2a122893-6730-4684-ab4f-b7773d3b3057",
     "head": "7ad0725dd4eb4ae3343edd1720b9809bfcde1ffd",
