@@ -1,10 +1,18 @@
 {
   "branch": "task/FORGE-TOOLS-1-SDKFIX",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T13:05:28.711482+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "638f6eb41ff24031e459860b335df781c0223ac3",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
