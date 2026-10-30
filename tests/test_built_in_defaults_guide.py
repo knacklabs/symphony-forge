@@ -76,7 +76,9 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
     fixed_rules = (
         "- Built in: each account belongs to one organisation, as an admin or a member, and every "
         "query is scoped to that organisation.\n"
-        "- Built in: admins invite people by email; members cannot invite people or change roles.\n"
+        # Member removal now joins invitations as a built-in admin action.
+        "- Built in: admins invite people by email and remove members, which signs them out at once; "
+        "members cannot invite, remove people or change roles.\n"
         "- Built in: dates and times are stored in UTC and shown in the person's time zone, and "
         "money is stored as an exact decimal with its currency code; the helpers in @app/shared-util "
         "format them.\n"
