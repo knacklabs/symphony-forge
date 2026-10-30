@@ -56,12 +56,21 @@ def test_36_client_apps_simple(repo, tmp_path):
             if re.search(concern, line, re.I):
                 assert re.search(r"\b(only|no|not|never)\b", line, re.I), line
 
-    # The stack conventions name Redis, queues, Terraform, OIDC and a monitoring stack only as added later.
+    # Audit: this prompt contract defers infrastructure until its story needs it.
+    # Immediate setup instructions are the regression. Guide-delivery tests check
+    # receipt, not this cross-page rule; no production test seam is needed.
+    # Jobs now use a worker and Postgres instead of a separate queue server.
     later = re.compile(r"\b(redis|queue|terraform|oidc|monitoring)s?\b", re.I)
     named = [line for p in CONVENTIONS for line in p.read_text(encoding="utf-8").splitlines()
              if later.search(line)]
     for line in named:
-        assert ADD_LATER in line.lower().replace("`", ""), line
+        if line.startswith("- Background jobs and schedules "):
+            assert "the story adds a worker in `services.toml`" in line, line
+            assert "Postgres jobs table read with `FOR UPDATE SKIP LOCKED`" in line, line
+            assert "No separate queue server" in line, line
+            assert "until that story, work happens inside the request." in line, line
+        else:
+            assert ADD_LATER in line.lower().replace("`", ""), line
     assert {match.lower() for line in named for match in later.findall(line)} == {
         "redis", "queue", "terraform", "oidc", "monitoring"}
 

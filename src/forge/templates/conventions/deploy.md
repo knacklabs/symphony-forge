@@ -28,6 +28,23 @@ For a requested deployment, follow the installed Mainline Deploy skill to connec
 GitHub repository and choose its main subdomain; the list does not hold it.
 Keep one instance running while migrations are made.
 
+Containers run as a user that is not root. Keep application files read-only at run time;
+uploads go in the private bucket described in security.md.
+
+When a story adds background jobs or schedules, add an internal worker service. It can use
+the app's image with a different start command; use the worker command that the story adds:
+
+```toml
+[[service]]
+name = "worker"
+dockerfile = "Dockerfile"
+expose = "internal"
+command = "corepack pnpm run start:worker"
+```
+
+A Python worker uses its own worker command instead. Internal workers need no port or
+health path. The database skill describes the jobs table; a schedule only inserts job rows.
+
 The first deployment that the owner asks for is the deploy setup, once for each repository:
 browser sign-in with Google or GitHub, then the repository, `services.toml`, the main
 subdomain, the variables that `.env.example` names, and dev first. After the setup, Mainline
