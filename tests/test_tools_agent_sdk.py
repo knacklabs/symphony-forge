@@ -127,6 +127,25 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
                 notes = (shop / "plans/SHOP.read.md").read_text("utf-8")
                 assert current["session_id"] in notes
                 assert "No findings." in notes
+            # The read launcher owns a separate process group from the worker launcher.
+            # Stop an unfinished read without accepting a new completed round.
+            accepted = (shop / "plans/SHOP.read.md").read_bytes()
+            doc.write_bytes(DOC.replace("People lose", "Shoppers lose").encode("utf-8"))
+            monkeypatch.setenv("STUB_CLAUDE_SDK_HOLD", str(release))
+            monkeypatch.setenv("STUB_CLAUDE_SDK_STARTED", str(marker))
+            held = host.start("read", "SHOP", cwd=shop)
+            _until(lambda: marker.exists() or held.done(), "the read SDK driver and child to start")
+            assert not held.done(), held.result().stdout if held.done() else ""
+            tree = json.loads(marker.read_text("utf-8"))
+            assert alive(tree["driver"]) and alive(tree["child"])
+            stopped = host.forge("stop", "SHOP", cwd=shop)
+            assert stopped.returncode == 0, stopped.stdout + stopped.stderr
+            assert stopped.stdout == "Stopped the run.\n"
+            _until(lambda: not alive(tree["driver"]) and not alive(tree["child"]),
+                   "stop to end the read SDK driver and child")
+            ended = held.result(timeout=30)
+            assert ended.returncode != 0, ended.stdout + ended.stderr
+            assert (shop / "plans/SHOP.read.md").read_bytes() == accepted
             assert not any("-p" in call.get("args", []) for call in calls(cli_log))
             return
         ready.unlink()
