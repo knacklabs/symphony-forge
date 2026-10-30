@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_member_removal_guide.py\tThe guide test has no STORY label and conflicts with the main spec's second test.",
+      "kind": "bug",
+      "path": "tests/test_member_removal_guide.py",
+      "line": 12,
+      "text": "The guide test has no STORY label and conflicts with the main spec's second test.",
+      "from": "worker",
+      "item": "approval-commit-title",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
