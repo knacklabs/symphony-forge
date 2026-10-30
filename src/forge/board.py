@@ -761,7 +761,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
             stacked_status = (readiness.get(key, {}).get("parts", {}).get(tid)
                               if task_state.get("stacked_on") else None)
             status = ("Merged" if key in completed or task_state.get("status") == "merged" else
-                      stacked_status if stacked_status else
+                      stacked_status if stacked_status and stacked_status.startswith(("Building on ", "Waiting for ")) else
                       "Running" if current.get("activity", {}).get("status") == "running"
                       or current.get("worker") or current.get("tests")
                       or current.get("gates", {}).get("ci", {}).get("status") == "running" else

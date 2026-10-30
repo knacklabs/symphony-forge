@@ -634,16 +634,19 @@ def _story(top: Path, key: str, path: Path | None, text: str,
             if (base := state.get("stacked_on")) and "/" in base:
                 base_key, base_name = base.split("/")
                 base_state = _task(top, base_key, base_name, trees, merged_prs, history, prs)
+                pr = prs.get(state["branch"], {})
+                head = review_ref(top, state["branch"], pr)
                 built = part_statuses.get(item) == "ready" or (
                     part_statuses.get(item) == "waiting for checks"
                     and (state.get("review") or {}).get("status") == "clean"
                     and state["review"].get("changed") == review.fingerprint(
-                        state["branch"], item, top, state, story.landed_ref(top)))
+                        head, item, top, state, story.landed_ref(top)))
                 if base_state.get("status") == "merged":
-                    # Until close takes in the merged base, its old ready receipt
-                    # must not send this part straight to merge.
-                    if built and repo.run("git", "merge-base", "--is-ancestor",
-                                          story.landed_ref(top), state["branch"], cwd=top).returncode:
+                    # A squash commit need not become an ancestor after a clean
+                    # close. The successful receipt records the base it checked.
+                    _, receipt = _item_readiness(item, state, top, pr=pr)
+                    closed_base = receipt.get("base")
+                    if built and (not closed_base or story.show(top, closed_base, repo.state_path(base)) is None):
                         found = [f"{item} needs close after {base} merged.", f"Next: forge close {item}"]
                 else:
                     base_text = text if base_key == key else story._plan(top, base_key, history=history)
@@ -846,7 +849,7 @@ def _item_readiness(item: str, state: dict[str, Any], top: Path,
     if ref and receipt.get("review") == "clean" and receipt.get("commit") == ref:
         evidence = receipt
     elif ref and (record.get("ready") or {}).get("commit") == ref:
-        evidence = {"commit": ref, "review": "clean", "shared": True}
+        evidence = {"commit": ref, "review": "clean", "base": record["ready"].get("base"), "shared": True}
     elif ref and checks == "pass" and any(r.get("commit") == ref for r in record.get("clean_reviews", [])):
         evidence = {"commit": ref, "review": "clean", "shared": True}
     elif ref and not receipt and not record and checks == "pass":
