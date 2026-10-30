@@ -1,0 +1,63 @@
+{
+  "branch": "task/FORGE-MAIL-1-GUIDE",
+  "chat": {
+    "approval": "f071d6b7e1dff37e47d16571828d708e1ebb4673c3c8cbb683c0d6e9709759b8",
+    "claude": null,
+    "conversation": "01a18cf2-22ee-72f0-b089-78fdd2d2bbeb",
+    "head": null,
+    "start": "6f001c8f6fb570e9c0615c85dff6f78fc7bc3f32"
+  },
+  "known": [
+    {
+      "area": "docs/specs/board-for-the-team.read.md",
+      "file": "docs/specs/board-for-the-team.read.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 11,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated board review metadata is outside Scope",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9d05b6a536fbfc9f5e13962a423dbb95319f8aca12879112a2d5bf7a8b00094d",
+    "changed": "985c161116d3049e72477691af1489d0eaa0404c971e6741555d6cba9cd613c2",
+    "commit": "3adc6ffdd3a2514f698732434b146fc5d1f19042",
+    "dismissals": [],
+    "findings": [],
+    "id": "02c4fc5f-d7aa-4b97-a221-23f55c4d1e1b",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:13:43.775217+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:18:11.557028+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T13:19:36.017802+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T14:17:25.948708+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "04e06364-a1db-4ddb-9c57-c697706c00ef",
+    "head": "8a24f34787d58eb72bcd343e87cce2e6e8287908",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

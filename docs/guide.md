@@ -176,6 +176,7 @@ builds the feature by hand in that app's layout.
 Only starter apps get an MCP server inside the API at `/mcp`, marked with `mcp = "/mcp"`
 in `services.toml`. Each feature has six tools: `<feature>_search`, `<feature>_get`,
 `<feature>_create`, `<feature>_update`, `<feature>_delete` and `<feature>_restore`.
+Admins remove members on the Members screen.
 An admin adds an agent account with a role on the Members screen, creates its key (shown
 once), and can revoke it at once. An agent account acts as itself, with its role's permissions,
 and writes change history as that account. An agent that a person signs in acts as that
