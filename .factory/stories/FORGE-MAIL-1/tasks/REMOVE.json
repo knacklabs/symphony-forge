@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-MAIL-1-REMOVE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T13:13:38.561119+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1ffd4d6bf07933e1f90e871b21349d317e8f7b2c",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
