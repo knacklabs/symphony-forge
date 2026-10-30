@@ -22,8 +22,8 @@
     "id": "772b8810-7d22-41fc-8dd3-614a955a7911",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:32:29.355751+00:00",
@@ -43,10 +43,10 @@
     }
   ],
   "stuck": {
-    "close": "4054bf77-a9c3-439a-aaca-c0862f6618f9",
-    "head": "491a77b2877556ae507854ece8955fc2085f57be",
+    "close": "a662d69a-6a6e-482f-8f51-532fe3a75f5f",
+    "head": "ae1ade8043ca1bf756c2c196dd8543446449e3f6",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "spec confirm says a spec is already confirmed after it was edited, and accepts a spec with no Roadmap lines, so the owner confirms twice (issues 817 and 820)",
   "worker": "codex"
