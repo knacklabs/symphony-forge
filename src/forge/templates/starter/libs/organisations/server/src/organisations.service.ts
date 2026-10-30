@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, Optional, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Membership } from '@prisma/client';
+import type { Membership, Prisma } from '@prisma/client';
 import { MAIL_PROVIDER, PrismaService, type AccountPrincipal, type MailProvider } from '@app/core-server';
 import { HISTORY_API, type HistoryApi } from '@app/history-contracts';
 import { roleSchema, type AgentKey, type AgentTools, type Member, type MemberListQuery, type OrganisationAccount, type OrganisationInvite, type OrganisationPrincipal, type OrganisationsApi, type Role } from '@app/organisations-contracts';
@@ -73,6 +73,25 @@ export class OrganisationsService implements OrganisationsApi {
       } });
       return { ...membership, role: roleSchema.parse(membership.role) };
     });
+  }
+
+  async removeMember(account: OrganisationPrincipal, accountId: string, tx: Prisma.TransactionClient): Promise<void> {
+    if (accountId.toLowerCase() === account.id.toLowerCase()) {
+      throw new ForbiddenException({ code: 'CANNOT_REMOVE_SELF', message: 'You cannot remove yourself.', details: null });
+    }
+    const where = { accountId, organisationId: account.organisationId, deletedAtUtc: null };
+    const member = await tx.membership.findFirst({ where });
+    if (!member) throw memberNotFound();
+    const removed = await tx.membership.updateMany({
+      where,
+      data: { deletedAtUtc: new Date(), deletedByAccountId: account.id, modifiedByAccountId: account.id, agentKeyHash: null },
+    });
+    if (removed.count !== 1) throw memberNotFound();
+    await tx.invite.deleteMany({ where: {
+      organisationId: account.organisationId,
+      OR: [{ createdByAccountId: accountId }, { modifiedByAccountId: accountId }],
+    } });
+    await this.history.record(account, 'member.removed', `Removed ${member.email}`, undefined, tx);
   }
 
   async changeRole(account: AccountPrincipal, accountId: string, role: Member['role']): Promise<Member> {
