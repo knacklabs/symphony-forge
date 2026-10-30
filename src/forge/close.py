@@ -358,7 +358,8 @@ def close(args: argparse.Namespace) -> int:
                     result = {"id": identity, "commit": head, "findings": [], "dismissals": [],
                               "changed": changed, "branch_diff": branch_diff, "mechanical": True}
                 else:
-                    result = review.run(top, item, state, cfg, review_ref, selected, previous,
+                    # Git retains earlier rounds; replay needs a full review of the integrated change.
+                    result = review.run(top, item, state, cfg, review_ref, selected, {} if replayed else previous,
                                         light=light, tested=test_note)
                 areas = _areas(top, result)
                 outcome = "blocked" if review.blocking(result) else "clean"

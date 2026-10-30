@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from test_close import env  # noqa: F401
+from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from conftest import _install
 from test_last_task_records_story_outcome import github_merge
 from test_stack_start import configured, start
@@ -25,7 +25,7 @@ def _set_part_limit(repo):
     repo.git("switch", "-q", "main")
 
 
-def _stacked_pair(env, previous):
+def _stacked_pair(env, previous, child_review=None):
     repo = configured(env, previous)
     base_work, _ = start(repo, "A")
     base_head = env.commit(base_work, "app.py", "A_VALUE = 1\n", "Build the base part")
@@ -34,6 +34,8 @@ def _stacked_pair(env, previous):
     child_work, _ = start(repo, "B")
     env.commit(child_work, "use.py", "B_VALUE = 1\n", "Build the stacked part")
     env.gh.respond("pr", "create", stdout="https://github.com/acme/shop/pull/8\n")
+    if child_review is not None:
+        env.reviews(child_review)
     child_close = env.close("STACK/B")
     assert child_close.returncode == 0, child_close.stdout + child_close.stderr
     return repo, base_head
@@ -123,7 +125,8 @@ def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previ
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
 def test_4_forge_merge_retargets_and_replays_the_stacked_part(env, previous):
-    repo, base_head = _stacked_pair(env, previous)
+    earlier_note = "Keep the saved child value readable"
+    repo, base_head = _stacked_pair(env, previous, blocked(finding("P2", earlier_note, "use.py")))
 
     env.gh.respond("pr", "list", "--base", "task/STACK-A", stdout=json.dumps([
         {"number": 8, "headRefName": "task/STACK-B"},
@@ -157,9 +160,13 @@ def test_4_forge_merge_retargets_and_replays_the_stacked_part(env, previous):
     _install(repo.bin, "gh", gh.read_text("utf-8").replace('"number": 7,', '"number": 8,'))
     review_count = len(env.review_calls())
     checks_count = len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]"))
+    env.reviews(CLEAN)
     replayed = env.close("STACK/B")
     assert replayed.returncode == 0, replayed.stdout + replayed.stderr
     assert len(env.review_calls()) == review_count + 1
+    # A replay needs a full review, with earlier findings retained as context.
+    assert "## Repair review" not in env.prompt()
+    assert earlier_note in env.prompt()
     assert len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")) > checks_count
     child_head = repo.git("rev-parse", "origin/task/STACK-B")
     assert subprocess.run(["git", "merge-base", "--is-ancestor", base_head, child_head],
@@ -177,7 +184,7 @@ def test_4_forge_merge_retargets_and_replays_the_stacked_part(env, previous):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_4_close_guides_a_manually_merged_base_before_replaying_the_child(env, previous):
+def test_4_close_guides_a_manually_merged_base_before_replaying_the_child(env, previous, monkeypatch):
     repo, base_head = _stacked_pair(env, previous)
     _merge_base_by_hand(repo)
     _retarget_manual_child(env)
@@ -195,6 +202,21 @@ def test_4_close_guides_a_manually_merged_base_before_replaying_the_child(env, p
     assert len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")) > checks_count
     child_head = repo.git("rev-parse", "origin/task/STACK-B")
     base = repo.git("rev-parse", "origin/main")
+    # GitHub checks out a SHA without origin/HEAD, including on non-main defaults.
+    repo.git("push", "-q", "origin", f"{base}:refs/heads/master")
+    repo.git("fetch", "-q", "origin", "master:refs/remotes/origin/master")
+    repo.git("symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
+    repo.git("update-ref", "-d", "refs/remotes/origin/main")
+    event = repo.path / "github-event.json"
+    event.write_text(json.dumps({"repository": {"default_branch": "master"}}), encoding="utf-8")
+    with monkeypatch.context() as ci:
+        ci.setenv("GITHUB_EVENT_PATH", str(event))
+        check = repo.forge("hook", "pr-check", "--base", base, "--head", child_head,
+                           "--branch", "task/STACK-B")
+    assert check.returncode == 0, check.stdout + check.stderr
+    repo.git("fetch", "-q", "origin", "main:refs/remotes/origin/main")
+    repo.git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+    event.unlink()
     check = repo.forge("hook", "pr-check", "--base", base, "--head", child_head,
                        "--branch", "task/STACK-B")
     assert check.returncode == 0, check.stdout + check.stderr

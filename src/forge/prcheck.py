@@ -352,7 +352,9 @@ def pr_check(args: argparse.Namespace) -> int:
     if "/" in item and (parent := state.get("stacked_on")):
         from forge import task
 
-        default = repo.default_branch(top)
+        event = os.environ.get("GITHUB_EVENT_PATH")
+        default = (json.loads(Path(event).read_text(encoding="utf-8"))["repository"]["default_branch"]
+                   if event else repo.default_branch(top))
         if not task._merged(f"origin/{default}", parent, top):
             repo.refuse(REFUSALS["stacked"], item=item, parent=parent, default=default)
     changed = repo.git("diff", "--name-only", f"{base}...{head}", cwd=top).splitlines()
