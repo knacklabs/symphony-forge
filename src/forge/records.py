@@ -500,8 +500,15 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": result},
             accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
     if critical or review.blocking(result):
+        from shlex import quote
+
+        details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})"
+                            for _, f in review.blocking(result))
+        repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
+                  f"--done {quote(f'A review no longer finds: {details}')}")
         repo.refuse(("Customer sign-off review found a blocking issue: " + "; ".join(
-            f["title"] for f in opened) + ".", 'fix the prototype, then forge decision accept client-signoff --by "<name>"'))
+            f["title"] for f in opened) + ".", repair +
+            '\nThen fix and merge it, then forge decision accept client-signoff --by "<name>"'))
     return result["commit"]
 
 
