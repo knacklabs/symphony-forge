@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-TOOLS-1-SDKFIX",
+  "chat": {
+    "approval": "cfc81a0c59c7e0dfa5cdf9a93d176cd9c217c3ccb5cc97f1dc76007ce0b55a05",
+    "claude": null,
+    "conversation": "01a18cea-b7ef-72d1-926c-a997cf27829b",
+    "head": null,
+    "start": "1f321187c7dd0d6b3071897ba151d88d213314b5"
+  },
   "round": 1,
   "status": "working",
   "steps": [
