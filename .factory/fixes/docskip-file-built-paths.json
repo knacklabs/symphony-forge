@@ -71,7 +71,7 @@
     "id": "3be3acba-6363-4fa8-bc53-0d0e7351d9f5",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -84,10 +84,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "6914c526793a61075f6b945b9f665f8c06f31d02",
-    "keys": {},
-    "round": null
+    "close": "387f4366-7d39-4e07-ba54-ee8053bc0756",
+    "head": "339eed2f16e4f827dd560d5130e7a1c457abae2d",
+    "keys": {
+      "the open P0 not done: a docs change that a test reads through a __file__-built path runs that test in tests/test_file_relative_docs_run_tests.py": 1
+    },
+    "round": 1
   },
   "why": "The docs-only skip misses tests that build doc paths from __file__, so a docs change skips tests that read it (issue 1031)",
   "worker": "codex"
