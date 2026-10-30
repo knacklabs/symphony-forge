@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/worker.py\tGate: test_3_build_rounds_run_as_session_subagents\tFORGE-EFFORT-1/LADDER",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 193,
+      "text": "Gate: test_3_build_rounds_run_as_session_subagents",
+      "from": "blocking",
+      "item": "FORGE-EFFORT-1/LADDER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/worker.py\tRecognize required matrix checks when raising effort\tFORGE-EFFORT-1/LADDER",
+      "kind": "bug",
+      "path": "src/forge/worker.py",
+      "line": 187,
+      "text": "Recognize required matrix checks when raising effort",
+      "from": "blocking",
+      "item": "FORGE-EFFORT-1/LADDER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -7,13 +7,99 @@
     "head": null,
     "start": "fd968420e71b71f7af9246ed8be3af7333ddfb69"
   },
+  "known": [
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 166,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve in-flight Claude conversations when switching to the SDK",
+      "work": 3
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 187,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Recognize required matrix checks when raising effort",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 193,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_build_rounds_run_as_session_subagents",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8ef6d39d55b6c03634823ec1e24ec072aa86adc37d8b6cd49192fe42f75ac9ac",
+    "changed": "fa7d223d505455527c83d7bc7d96e05530243cb3d900b569a60dd19a4500e7fe",
+    "commit": "8156ca68004e158ea5c06f9406d1cacf47d72171",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 3, Harm 3\nRaise: Functional.\nCase: normal use - upgrade while a Claude-native item has a failed round awaiting repair. This routing change sends its next round through the SDK, but native handback stores the worker identity only under `native` (`src/forge/native.py:289\u2013292`). The SDK path reads only `record['claude']` (`src/forge/worker.py:239`), so it finds no session and creates a new UUID (`src/forge/worker.py:729\u2013735`). The failure round therefore loses the previous conversation instead of continuing the same worker thread. Preserve the prior conversation across this routing transition and cover an adopted item that actually completed a native round; the current adopted routing test starts an unused item.",
+        "file": "src/forge/worker.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 166,
+        "priority": "P1",
+        "title": "Preserve in-flight Claude conversations when switching to the SDK",
+        "work": 3
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - `checks = ['tests']` and a CI matrix reports a failed `tests (ubuntu-latest)` check after a clean review. Forge already treats that matrix job as the required `tests` check (`src/forge/checks.py:187\u2013195`), but `_failing` returns its full name and this exact-membership filter rejects it. With no local test failure or blocking finding, the repair round remains at low effort. Match required names using the existing matrix-name semantics while continuing to exclude optional checks. The new tests use only exact check names and miss this supported case.",
+        "file": "src/forge/worker.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 187,
+        "priority": "P1",
+        "title": "Recognize required matrix checks when raising effort",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test.\nCase: normal use - run the repository's existing test suite. `tests/test_tools_native_work.py:173` still expects `(model, effort)`, so both Codex parameters fail against the new `(model, effort requested)` output. Both Claude parameters also retain the installed fake SDK: `tests/conftest.py:573\u2013578` installs it under `tmp_path/data`, and `tests/test_tools_native_work.py:41\u201343` selects that same directory. They now execute the SDK path, while the handout parser at lines 97\u2013100 still requires native instructions. Update this existing test to exercise Claude's missing-SDK fallback and the requested-effort label; adding the new ladder tests leaves these deterministic suite failures unresolved.",
+        "file": "src/forge/worker.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 193,
+        "priority": "P1",
+        "title": "Gate: test_3_build_rounds_run_as_session_subagents",
+        "work": 2
+      }
+    ],
+    "id": "b92ccc9f-35ee-4ccb-a65d-ce49d9e0becd",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-29T23:45:20.927790+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T00:13:48.654410+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
