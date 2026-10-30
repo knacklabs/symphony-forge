@@ -71,7 +71,7 @@
     "id": "9918d901-98b3-4cd7-a263-84c9669a23d0",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -84,10 +84,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "5fde7d446f133e0e9eaf9be74b5a4222534f48f4",
-    "keys": {},
-    "round": null
+    "close": "bfcbdf48-060a-4d07-95c8-4b55fee4325e",
+    "head": "2d1c8e55541e0894c5fca6c6421b1d7ab0f21459",
+    "keys": {
+      "the open P0 not done: a blocked sign-off names one forge fix start step that covers every open blocking finding from that review in src/forge/records.py": 1
+    },
+    "round": 1
   },
   "why": "When the client sign-off review blocks on several findings, the next step does not say to fix them together, so clients run one fix and one full loop per finding",
   "worker": "codex"
