@@ -15,6 +15,8 @@ def notes(repo, top):
 
 def test_1_edited_spec_needs_current_text_confirmation(repo, client):
     top, _, _ = client
+    # Roadmap publication follows client sign-off, independently of spec confirmation.
+    _write(top, "docs/decisions/0001-client-signoff.md", "---\nstatus: accepted\n---\n")
     _write(top, "docs/specs/invoices.md", SPEC)
     _ok(repo.forge("spec", "save", "invoices", cwd=top))
     notes(repo, top)
