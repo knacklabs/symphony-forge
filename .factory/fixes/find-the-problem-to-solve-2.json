@@ -2,12 +2,22 @@
   "base": "919be0a6ec0a306bf8226e47f8f16066d5ac84a1",
   "branch": "fix/find-the-problem-to-solve-2",
   "done_when": "The discovery notes hold a filled problem card and the brief names it",
+  "drop": {
+    "at": "2026-10-30T13:04:08.108309+00:00",
+    "because": "Placeholder from idea sorting; its work already merged under its own fix name",
+    "by": "vrknetha <vrknetha@gmail.com> 1793365448 +0530",
+    "status": "started"
+  },
   "kind": "fix",
-  "status": "started",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-07T16:06:16+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:04:08.108630+00:00",
+      "step": "drop"
     }
   ],
   "why": "Find the problem to solve"
