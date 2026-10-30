@@ -71,7 +71,8 @@ REFUSALS = {
     "no_turn": ("Claude ended without running a turn, so no worker ran; it may be waiting on a "
                 "prompt such as a hooks review. Its log is {log}.",
                 "forge doctor --fix, then forge work {item}"),
-    "sdk": ("{problem}", "cd {top} && forge doctor --fix"),
+    "sdk": ("{problem}", "forge doctor --fix"),
+    "claude_sdk": ("{problem}", "cd {top} && forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
               "what story {key} approved, so Forge sends no brief from it.",
@@ -429,7 +430,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
     claude's --model and --effort, or [] on Codex. The cold read (Grill) runs these checks too."""
     if not on_codex:
         if not native and kind != "Grill" and (problem := claude_sdk.sdk_problem()):
-            refuse(REFUSALS["sdk"], problem=problem, top=repo.quote(top))
+            refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
         # A worker always names its models; a cold read with no entry runs on Claude's own.
         chosen = (repo.design_models(config, "claude") if design else
                   (repo.models if kind == "Grill" else repo.worker_models)(config, kind.lower(),
@@ -437,7 +438,7 @@ def ready(top: Path, config: dict[str, Any], kind: str, on_codex: bool,
         return ["--model", chosen["model"], "--effort", chosen["effort"]] if chosen else []
     problem = None if native else codex.sdk_problem(reuse=True)  # native sessions need no driver SDK
     if problem:
-        refuse(REFUSALS["sdk"], problem=problem, top=repo.quote(top))
+        refuse(REFUSALS["sdk"], problem=problem)
     if not design:  # a design round's Codex models are design_models', which never refuse
         codex.settings(config, kind)
     codex.require_trust(top)  # before the status commit, so a refusal changes nothing
@@ -748,7 +749,7 @@ def _run(item: str, top: Path, brief: str, models: list[str], budget: dict[str, 
     """Drive the isolated Claude SDK; stream its messages to the terminal and the log."""
     log = repo.work_log(top, item)
     if problem := claude_sdk.sdk_problem():
-        refuse(REFUSALS["sdk"], problem=problem, top=repo.quote(top))
+        refuse(REFUSALS["claude_sdk"], problem=problem, top=repo.quote(top))
     command = [str(claude_sdk.python()), str(claude_sdk.TURN)]
     request = {"prompt": brief, "cwd": str(top),
                "model": models[models.index("--model") + 1],
