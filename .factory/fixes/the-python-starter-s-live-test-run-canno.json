@@ -1,0 +1,45 @@
+{
+  "base": "88604bd9092273e2d1e13f2a191e0fa67cd79780",
+  "branch": "fix/the-python-starter-s-live-test-run-canno",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17ce5-df09-72f2-b1d9-6deed167b8d4",
+    "head": null,
+    "start": "f513b7fbd4accc69c23fe32bebe63d86e830e543"
+  },
+  "done_when": "The Python starter's live run on main finishes within its time limit, with test_module_schemas passing using --no-sync like test_database's drift check",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "70be3fa642f007757b112ec1e63e34dcb70cf32485010fd0a4763e50d6c2b60c",
+    "changed": "29a47e638b7d47fb14396af32e23e1b150bf3cba16fa8eea84932c0dcd504a18",
+    "commit": "d28f715ccdce65a1f8a6e8f9302d16841d0752c0",
+    "dismissals": [],
+    "findings": [],
+    "id": "cd79f596-6855-4e0e-9baf-2fb558821847",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T10:26:27.686071+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T10:30:52.116415+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "a7e41fc991bac6431a29f70ab1ede2142ee4e969",
+    "keys": {},
+    "round": null
+  },
+  "why": "The Python starter's live test run cannot finish: test_module_schemas.py runs uv run alembic check without --no-sync, so it downloads packages inside the container and passes its 120-second limit, and on main the whole Python live run does not finish within 30 minutes",
+  "worker": "codex"
+}

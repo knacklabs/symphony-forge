@@ -1,0 +1,147 @@
+{
+  "branch": "task/FORGE-MAINONCE-1-ONCLASH",
+  "chat": {
+    "approval": "a43c91a72bf376779d9921b61734a305e342c9e332474fc14234e7340bde79b3",
+    "claude": null,
+    "conversation": "01a13b50-e5ed-7ba0-ac01-04552f0b5cfc",
+    "head": null,
+    "start": "ebb780706982c44908e5a3a6ddc832b84297e662"
+  },
+  "flagged": [
+    "plans/spotted.json",
+    "src/forge/checks.py",
+    "src/forge/close.py"
+  ],
+  "known": [
+    {
+      "area": "_merge_default() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 655,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A draft pull request can reach Ready while still behind a required base",
+      "work": 2
+    },
+    {
+      "area": "_wait() in src/forge/checks.py",
+      "file": "src/forge/checks.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 73,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "A failed mergeability lookup can let green checks reach Ready",
+      "work": 1
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 412,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: bring main in when a pull request becomes BEHIND during close",
+      "work": 2
+    },
+    {
+      "area": "plans/spotted.json",
+      "file": "plans/spotted.json",
+      "gain": 4,
+      "harm": 3,
+      "line": 9486,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "The unrelated spotted-record rewrite is outside ONCLASH scope",
+      "work": 1
+    },
+    {
+      "area": "plans/spotted.json",
+      "file": "plans/spotted.json",
+      "gain": 4,
+      "harm": 2,
+      "line": 8440,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted on 15 October: close itself writes the spotted-problems list on the branch, so the flagged edit is Forge's own record; the fix review-skips-forge-records stops the loop",
+      "round": 5,
+      "security": false,
+      "title": "An unrelated test-audit finding edits the shared spotted list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dc563fe0b794c769c3048ac6a5d11535ba886e42253176c83fbaef34308d5b43",
+    "changed": "9e597cab4745dc6c333fca43712f81f67033c9a7a0162cf1d57d7b005657b9ba",
+    "commit": "b863083917f4a3f00bd964bba451bba27ecc6451",
+    "dismissals": [],
+    "findings": [],
+    "id": "c7e7cb0a-e8dc-4d81-b318-74d258c49d6f",
+    "status": "clean"
+  },
+  "round": 6,
+  "settled_areas": [
+    "plans/spotted.json"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T16:46:39.875996+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T18:51:13.476242+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T20:00:15.398856+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T20:26:12.908498+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:07:20.326791+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:28:07.821775+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:33:44.184216+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:37:33.757120+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-15T02:33:44.196620+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "plans/spotted.json",
+    "reason": "Owner accepted on 15 October: close itself writes the spotted-problems list on the branch, so the flagged edit is Forge's own record; the fix review-skips-forge-records stops the loop",
+    "wait_id": "8bc2ecb0-3237-47d9-9942-81770e7a8bb3",
+    "worker_round": 6
+  },
+  "stuck": {
+    "close": "1a171bd0-b21c-4ddb-bdfd-d96c87737a2c",
+    "head": "55ddfe1d71c5ac2aa3f4e36b7cff8c52e186f825",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}

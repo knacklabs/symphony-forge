@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge board, releases</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #F4F5F2; color: #15171A; font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column">
+
+  <header style="height: 48px; flex: none; background: #15171A; color: #ECEDEA; display: flex; align-items: center; gap: 24px; padding: 0 32px">
+    <span style="font-size: 14px; font-weight: 600">Forge <span style="font-weight: 400; color: #B4B8BC">symphony-forge</span></span>
+    <nav aria-label="Pages" style="display: flex; gap: 4px">
+      <a href="Manager.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Now</a>
+      <a href="Releases.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; background: #ECEDEA; color: #15171A; border-radius: 6px; padding: 6px 12px">Releases</a>
+      <a href="Insights.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Insights</a>
+    </nav>
+  </header>
+
+  <div style="flex: 1; min-height: 0; padding: 24px 32px; display: flex; gap: 24px">
+
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+      <section aria-label="Next release" style="background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: baseline; gap: 14px">
+          <span style="font-size: 17px; font-weight: 600">Next release</span>
+          <span style="font-size: 24px; font-weight: 600">41</span>
+          <span style="font-size: 12px; color: #4A4F57">changes since v1.2.12 · 13 Oct</span>
+          <span style="margin-left: auto; font-size: 12px; font-weight: 600; color: #FFFFFF; background: #B54708; border-radius: 3px; padding: 2px 8px">1 story half done</span>
+        </div>
+        <div style="display: flex; gap: 10px">
+          <sc-for list="{{checks}}" as="c" hint-placeholder-count="4">
+            <span title="{{c.tip}}" style="flex: 1; display: flex; align-items: center; gap: 8px; border: 1px solid {{c.line}}; background: {{c.bg}}; border-radius: 6px; padding: 8px 10px; font-size: 13px">
+              <span style="width: 16px; height: 16px; border-radius: 999px; background: {{c.dot}}; color: #FFFFFF; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center" aria-hidden="true">{{c.mark}}</span>{{c.name}}
+            </span>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{stories}}" as="s" hint-placeholder-count="3">
+            <a href="Item.dc.html" style="display: grid; grid-template-columns: minmax(0, 1fr) 200px 80px; gap: 16px; align-items: center">
+              <span style="font-size: 14px; font-weight: 600">{{s.title}} <span style="font-weight: 400; font-size: 12px; color: #6B717A">{{s.key}}</span></span>
+              <span style="display: flex; gap: 3px; height: 6px"><sc-for list="{{s.parts}}" as="p" hint-placeholder-count="4"><span style="flex: 1; border-radius: 2px; background: {{p}}"></span></sc-for></span>
+              <span style="font-size: 12px; color: #4A4F57; text-align: right">{{s.note}}</span>
+            </a>
+          </sc-for>
+          <span style="display: grid; grid-template-columns: minmax(0, 1fr) 200px 80px; gap: 16px; font-size: 14px; border-top: 1px solid #E2E4E0; padding-top: 10px"><span>Fixes and lite fixes</span><span></span><span style="text-align: right; font-weight: 600">28</span></span>
+        </div>
+      </section>
+
+      <section aria-label="Past releases" style="flex: 1; min-height: 0; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 16px 22px; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 17px; font-weight: 600">Past releases</span>
+        <div style="display: grid; grid-template-columns: 100px 110px 90px 90px minmax(0, 1fr); gap: 16px; font-size: 12px; color: #6B717A"><span>Release</span><span>Date</span><span style="text-align: right">Stories</span><span style="text-align: right">Fixes</span><span>Median plan to release</span></div>
+        <sc-for list="{{past}}" as="p" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 100px 110px 90px 90px minmax(0, 1fr); gap: 16px; font-size: 14px; border-top: 1px solid #EEEFEC; padding-top: 8px">
+            <span style="font-weight: 600">{{p.name}}</span><span style="color: #4A4F57">{{p.date}}</span><span style="text-align: right">{{p.stories}}</span><span style="text-align: right">{{p.fixes}}</span>
+            <span style="display: flex; align-items: center; gap: 8px"><span style="width: {{p.bar}}; height: 6px; border-radius: 3px; background: #1D4ED8"></span><span style="font-size: 12px; color: #4A4F57">{{p.after}}</span></span>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+
+    <aside aria-label="Known issues" style="width: 360px; flex: none; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <span style="font-size: 17px; font-weight: 600">Shipping with</span>
+        <span style="font-size: 12px; color: #4A4F57">known issues by file</span>
+      </div>
+      <sc-for list="{{known}}" as="k" hint-placeholder-count="5">
+        <div title="{{k.tip}}" style="display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 10px; align-items: center">
+          <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <span style="font-size: 13px; overflow-wrap: anywhere">{{k.file}}</span>
+            <span style="display: flex; height: 4px; border-radius: 2px; background: #EEEFEC"><span style="width: {{k.bar}}; background: #8A9096; border-radius: 2px"></span></span>
+          </span>
+          <span style="font-size: 14px; font-weight: 600; text-align: right">{{k.n}}</span>
+        </div>
+      </sc-for>
+      <span style="margin-top: auto; font-size: 12px; color: #8A9096">Kept below the review bar · hover for titles · sample counts</span>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ok = { dot: '#0F766E', mark: '✓', line: '#E2E4E0', bg: '#FFFFFF' };
+    const bad = { dot: '#9F1239', mark: '!', line: '#9F1239', bg: '#FCE8EE' };
+    return {
+      checks: [
+        { name: 'All through Forge', tip: '41 of 41 merged through Forge since the last tag', ...ok },
+        { name: 'Stories finished', tip: '1 story is half merged', ...bad },
+        { name: 'No open findings', tip: 'No merged change has an open finding', ...ok }
+      ],
+      stories: [
+        { title: 'The board tells a team what is happening', key: 'FORGE-BOARD-2', parts: ['#0F766E', '#0F766E', '#0F766E', '#0F766E', '#0F766E', '#0F766E', '#0F766E', '#0F766E'], note: 'done' },
+        { title: 'Reviews block only above the bar', key: 'FORGE-SCORE-1', parts: ['#0F766E', '#0F766E', '#0F766E'], note: 'done' },
+        { title: 'Main only on a real clash', key: 'FORGE-MAINONCE-1', parts: ['#1D4ED8', '#9F1239', '#E2E4E0'], note: 'held back' }
+      ],
+      past: [
+        { name: 'v1.2.12', date: '13 Oct', stories: '2', fixes: '31', after: '2 d 6 h', bar: '90px' },
+        { name: 'v1.2.11', date: '11 Oct', stories: '1', fixes: '24', after: '1 d 9 h', bar: '56px' },
+        { name: 'v1.2.10', date: '9 Oct', stories: '2', fixes: '18', after: '3 d 2 h', bar: '124px' },
+        { name: 'v1.2.9', date: '7 Oct', stories: '1', fixes: '12', after: '1 d 20 h', bar: '74px' }
+      ],
+      known: [
+        { file: 'src/forge/board.py', n: '14', bar: '100%', tip: 'Older parts drop from the runway, and 13 more' },
+        { file: 'src/forge/close.py', n: '8', bar: '57%', tip: 'Runs started before a fix keep their old record, and 7 more' },
+        { file: 'src/forge/review.py', n: '9', bar: '64%', tip: 'A moved line reopens a dismissed finding, and 8 more' },
+        { file: 'src/forge/fasttest.py', n: '15', bar: '100%', tip: 'Close can pass when a listed pytest node is filtered, and 14 more' },
+        { file: 'src/forge/nextstep.py', n: '6', bar: '43%', tip: 'A started fix can get the wrong next step, and 5 more' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

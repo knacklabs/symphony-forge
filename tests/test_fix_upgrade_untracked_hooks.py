@@ -1,4 +1,7 @@
-"""An upgrade ignores Husky's generated runtime files but checks its committed Forge hooks."""
+"""An upgrade ignores Husky's generated runtime files but checks its committed Forge hooks.
+
+Commit resolution in src/forge/repo.py must also work through the runtime git.cmd launcher.
+"""
 from __future__ import annotations
 
 import json
@@ -9,6 +12,10 @@ import sys
 import conftest
 
 from test_close import env  # noqa: F401 (the shared fixture)
+
+import pytest
+
+pytestmark = pytest.mark.platform
 
 STORY = "FIX-UPGRADE-UNTRACKED-HOOKS"
 
@@ -22,8 +29,10 @@ def test_1_untracked_hook_files_never_block_an_upgrade_but_a_stale_tracked_file_
     env.repo.git("push", "-q", "origin", "main")
     prepare = ('node -e "const fs = require(\'fs\'); fs.mkdirSync(\'.husky/_\', {recursive:true}); '
                'fs.writeFileSync(\'.husky/_/h\', \'husky\')"')
-    toml += f"test = {json.dumps(prepare)}\nfast_test = {json.dumps(prepare)}\n"
-    item, where = env.start_fix({"forge.toml": toml}, allow_large="Forge's first synced files")
+    toml += (f'test_place = "local"\ntest = {json.dumps(prepare)}\n'
+             f"fast_test = {json.dumps(prepare)}\n")
+    item, where = env.start_fix({"forge.toml": toml}, allow_large="Forge's first synced files",
+                                done_when="forge.toml upgrades Forge and runs Husky preparation")
     synced = env.repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert (where / ".husky/pre-commit").exists()
@@ -54,7 +63,7 @@ sys.exit(result)
     done = env.repo.forge("close", item, cwd=where)
 
     assert done.returncode == 0, done.stdout + done.stderr
-    assert "Ready: tidy-readme has a clean review and green checks." in done.stdout
+    assert "Ready: tidy-readme has a clean review and its tests passed on this machine." in done.stdout
     assert "?? .husky/_/h" in runtime_status.read_text("utf-8")
     assert (where / ".husky/_/h").read_text("utf-8").strip() == "husky"
     # Later blanket commits must not adopt Husky's generated runtime file.

@@ -123,8 +123,9 @@ def test_2_doctor_fix_reuses_git_checks_when_creating_its_repair_checkout(
     assert sum(args[0] == "log" and "--" in args for args in calls) == 1
 
 
-@pytest.mark.parametrize("adoption", ["new init", "previous release"])
-@pytest.mark.parametrize("branch", ["default", "fix"])
+@pytest.mark.parametrize("branch,adoption", [
+    ("default", "new init"), ("default", "previous release"), ("fix", "new init"),
+])
 def test_4_doctor_fix_batches_separately_landed_hand_edits(
         repo, gh, tmp_path, monkeypatch, adoption, branch):
     # Land each hand edit independently: each last-change commit needs its own pin

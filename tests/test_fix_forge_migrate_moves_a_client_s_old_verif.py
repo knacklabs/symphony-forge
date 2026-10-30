@@ -9,6 +9,7 @@ from test_migrate import TEST, _copied_client, _land
 STORY = "forge-migrate-moves-a-client-s-old-verif"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("has_package", [True, False])
 def test_1_migrated_verify_commands_install_for_a_package_json_client(
         repo, tmp_path, monkeypatch, has_package):

@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/spotted.py\tRepair command can execute code from a spotted filename\tFORGE-MAINONCE-1/SPOTTED",
+      "kind": "bug",
+      "path": "src/forge/spotted.py",
+      "line": 173,
+      "text": "Repair command can execute code from a spotted filename",
+      "from": "blocking",
+      "item": "FORGE-MAINONCE-1/SPOTTED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_mainonce_spotted.py\tNot done: item 4 client lifecycle test\tFORGE-MAINONCE-1/SPOTTED",
+      "kind": "bug",
+      "path": "tests/test_mainonce_spotted.py",
+      "line": 33,
+      "text": "Not done: item 4 client lifecycle test",
+      "from": "blocking",
+      "item": "FORGE-MAINONCE-1/SPOTTED",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_mainonce_spotted.py\tNot done: proof list\tFORGE-MAINONCE-1/SPOTTED",
+      "kind": "bug",
+      "path": "tests/test_mainonce_spotted.py",
+      "line": 31,
+      "text": "Not done: proof list",
+      "from": "blocking",
+      "item": "FORGE-MAINONCE-1/SPOTTED",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

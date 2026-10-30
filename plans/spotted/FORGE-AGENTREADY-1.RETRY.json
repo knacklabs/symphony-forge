@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_mod_native.py\tThe pinned Claude marketplace validation command timed out after 120 seconds in the plugin CI job without a validator diagnostic.",
+      "kind": "bug",
+      "path": "tests/test_mod_native.py",
+      "line": 28,
+      "text": "The pinned Claude marketplace validation command timed out after 120 seconds in the plugin CI job without a validator diagnostic.",
+      "from": "worker",
+      "item": "FORGE-AGENTREADY-1/RETRY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

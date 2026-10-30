@@ -1,0 +1,50 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/diverged-branch-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15004-5694-7ea2-94f8-09da8f4a6960",
+    "head": null,
+    "start": "fc1d59400bbd7cd142b2aca0bed09562fbf7d91b"
+  },
+  "done_when": "Close says the local and remote branches diverged and why, merges the remote branch when it merges cleanly and goes on, never force-pushes, stops with a plain next step on a conflict, and the worker brief says never to amend a pushed commit; tests cover a clean merge and a conflict",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "68f168eeb32747e8b2eb1dfe6f98039f2ce75c46090cfee1b65679f683ce755e",
+    "changed": "a216ee09b6f833c6217392719b03e52e9f442fadc8b8bf93de3d4510680eb475",
+    "commit": "eb05e142508da1e0bccae681a81764ceba9ff0b2",
+    "dismissals": [],
+    "findings": [],
+    "id": "39d9809c-b543-4336-ab48-abc2647c2104",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:58:48.684347+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:35:49.246576+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:24:42.599210+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ffcb455e-4f4d-4d20-9e16-23f3174c7d97",
+    "head": "102d9fe66f863ee13f8e70ec65d1d3d001601938",
+    "keys": {},
+    "round": 1
+  },
+  "why": "When close finds its branch diverged from the pushed branch after an amended or rebased commit, it shows git's rejection and says only forge doctor (issue 926)",
+  "worker": "codex"
+}

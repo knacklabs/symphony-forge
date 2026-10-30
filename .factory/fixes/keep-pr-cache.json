@@ -1,0 +1,70 @@
+{
+  "base": "e8168963a12c1060de16e797d56e8afc9778d347",
+  "branch": "fix/keep-pr-cache",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14a3d-8f0b-7211-89c6-ed6dddcf05d1",
+    "head": null,
+    "start": "870d573e81cc2c4fdb960689d1f5beb87330607c"
+  },
+  "done_when": "Pull request edits no longer delete the shared cache (changes show within its minute), forge next fetches the default branch at most once per run, and a test counts the fetches and cache refills",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 92,
+      "outcome": "accepted",
+      "reason": "src/forge/mod/hooks/events.ts:92 Owner accepted: this fix does not change events.ts; the queued CI rerun case goes to its own fix",
+      "round": 2,
+      "security": false,
+      "title": "Queued CI failure is delivered after its rerun starts",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ee43314b4631f20cbbb8996ac65aef4cbb8f862a1167c8e2be59359626df0ac5",
+    "changed": "de63b0de1925fbc0b006d22e6f7c868d50492620788d9d61f7014b5afa5adc6e",
+    "commit": "f0ea3d3dc0c9a2a8a7fb8bdc2fc35ac9b7f59aae",
+    "dismissals": [],
+    "findings": [],
+    "id": "65a5e37a-069d-4ad4-9fb5-3260ac2779dc",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T14:21:17.299313+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T14:33:37.487638+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T15:27:13.229081+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T16:29:57.800391+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "60d2e611-2afc-44bd-83df-0b0f5a0b1a22",
+    "head": "71c2b2cd9f450efe4eaf971a168fcb09893736b0",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Every pull request edit from any worktree deletes the shared pull request cache, and forge next fetches the default branch twice per run",
+  "worker": "codex"
+}

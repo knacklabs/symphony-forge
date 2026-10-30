@@ -1,0 +1,123 @@
+{
+  "base": "fd72d5a52fad8735ad3da6f316b7ff46e53454ae",
+  "branch": "fix/review-findings-split-from-forge-board-4",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1547d-948f-7343-bf41-1feacc27f8e7",
+    "head": null,
+    "start": "1509e08596c456fe8d6adb574ab29a13bb1c49c7"
+  },
+  "done_when": "A review no longer finds: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)",
+  "fix_kind": "mechanical",
+  "flagged": [
+    "src/forge/board_app/item.js"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 86,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep command text out of recorded reviews and known issues",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_item_page.py",
+      "file": "tests/test_board_item_page.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 122,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
+      "work": 3
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 342,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve keyboard focus when live item data refreshes",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 268,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Read item history beyond the repository's latest twenty events",
+      "work": 3
+    }
+  ],
+  "land": {
+    "rounds": 3,
+    "stop": null
+  },
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e9e2d6e6b64889f3750dcbebfa323257b1eeb2d8a7301b51206f4d7f95802b58",
+    "changed": "2467cefa49ced06c5e000d5ae518524d707c3a4c040ab9c37e25154f5fc3b22e",
+    "commit": "6942e49ecc51a26ff66d9c56406d29bf4fd2b901",
+    "dismissals": [],
+    "findings": [],
+    "id": "3c689ece-7ece-4a6a-bbb0-7204ec161d64",
+    "status": "clean"
+  },
+  "round": 7,
+  "stacked_on": "FORGE-BOARD-4/DETAIL",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T14:05:51.340822+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T14:28:04.526989+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:45:30.449779+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:36:58.596508+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:56:09.281516+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T18:23:08.762904+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "61f55f29-b688-49c3-bc43-30f4772d9bfb",
+    "head": "52db0387a8bde441c98e50022ab12279e6f5171d",
+    "keys": {},
+    "round": 6
+  },
+  "tool": "claude",
+  "why": "Review findings split from FORGE-BOARD-4/DETAIL: Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan (tests/test_board_item_page.py:122); Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark. (src/forge/board_app/item.js:142); Keep unknown merger facts distinct from an item that has not merged (src/forge/board_app/item.js:272); Give the Known issues panel a valid accessible label reference (src/forge/board_app/item.js:246); Map the server's ready-to-merge story stage (src/forge/board_app/item.js:9); Count the rounds represented by compacted history (src/forge/board_app/item.js:92)",
+  "worker": "claude"
+}

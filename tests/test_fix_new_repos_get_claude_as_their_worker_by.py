@@ -24,7 +24,7 @@ def _new_repo(repo, gh, tmp_path: Path, forge_toml: str = "") -> Path:
 def test_1_forge_init_writes_codex_workers(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
 
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
 
     assert result.returncode == 0, result.stderr
     # Was "codex"; new repos now get split written explicitly, the old codex route.
@@ -33,7 +33,7 @@ def test_1_forge_init_writes_codex_workers(repo, gh, tmp_path):
 
 def test_2_forge_toml_defaults_to_codex_workers(repo, gh, tmp_path, monkeypatch):
     client = _new_repo(repo, gh, tmp_path)
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stderr
     path = client / "forge.toml"
     path.write_text("\n".join(line for line in path.read_text(encoding="utf-8").splitlines()
@@ -49,7 +49,7 @@ def test_3_forge_init_preserves_explicit_workers(repo, gh, tmp_path):
     version = repo.forge("--version").stdout.split()[-1]
     client = _new_repo(repo, gh, tmp_path, f'version = "{version}"\nworkers = "claude"\n')
 
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
 
     assert result.returncode == 0, result.stderr
     assert tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))["workers"] == "claude"

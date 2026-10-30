@@ -15,6 +15,8 @@ from test_codex_resume import _resuming
 from test_codex_worker import _codex_repo, _lines, _sent, sdk_data  # noqa: F401
 from test_close import env  # noqa: F401
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-STEER-1"
 
 

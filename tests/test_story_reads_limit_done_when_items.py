@@ -7,7 +7,8 @@ import pytest
 
 from conftest import ROOT, FORGE_SHIM, _install
 from test_setup import _fresh_client
-from test_story import DOC, GRILL, READER, claude_plan, hook, new_story, setup
+from test_readloop_gates import dispose_all
+from test_story import DOC, GRILL, READER, approved_constitution, claude_plan, hook, new_story, setup
 
 STORY = "FIX-PLAN-SIX-DONE-WHENS"
 MESSAGE = "This story has more than six Done when items; split it into smaller stories.\n"
@@ -40,6 +41,7 @@ def test_1_read_refuses_more_than_six_results_in_new_and_upgraded_clients(
     repo.git("add", "-A")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qm", "Upgrade the client")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     repo.git("switch", "-qc", "fix/plan-guidance")
     synced = repo.forge("sync")
@@ -60,9 +62,9 @@ def test_1_read_refuses_more_than_six_results_in_new_and_upgraded_clients(
     doc.write_text(plan(6).replace("1. Shoppers see result 1.",
                                  "1. Shoppers see result 1,\n   including after sign-in."),
                    encoding="utf-8")
-    read = repo.forge("read", "SHOP")
-    assert read.returncode == 0 and "found nothing" in read.stdout, read.stdout + read.stderr
-    # A later revision must get the split message even with an unanswered finding.
+    six_results = doc.read_text("utf-8")
+    # First-round findings remain unanswered until disposed. A second-round
+    # non-P0 now passes, so use round one to prove the limit precedes that guard.
     (repo.bin / "claude-says.md").write_text("1. The saved basket can be lost.\n", encoding="utf-8")
     read = repo.forge("read", "SHOP")
     assert read.returncode == 0 and "give every blocking finding a disposition" in read.stdout, read.stderr
@@ -75,6 +77,12 @@ def test_1_read_refuses_more_than_six_results_in_new_and_upgraded_clients(
     assert (refused.returncode, refused.stderr) == (1, MESSAGE)
     assert (shop / "plans/SHOP.read.md").read_bytes() == notes
     assert (repo.bin / "claude-calls.jsonl").read_bytes() == calls
+    doc.write_text(six_results, encoding="utf-8")
+    dispose_all(shop / "plans/SHOP.read.md")
+    (repo.bin / "claude-says.md").write_text("No findings.\n", encoding="utf-8")
+    read = repo.forge("read", "SHOP")
+    assert read.returncode == 0 and "Round 2" in read.stdout and "found nothing" in read.stdout, (
+        read.stdout + read.stderr)
 
 
 def test_2_previously_approved_large_stories_can_still_be_read_and_started(

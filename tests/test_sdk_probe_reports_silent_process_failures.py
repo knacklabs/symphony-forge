@@ -7,6 +7,10 @@ import json
 
 from test_codex_worker import PIN, _codex_repo, sdk_data  # noqa: F401
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "agent-allowance"
 
 

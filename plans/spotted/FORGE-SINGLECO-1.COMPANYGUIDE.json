@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "improve\t.claude/skills/forge/standards.md\tBoth checked-in host standards copies lag the shared template; unrelated sync changes were excluded.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/standards.md",
+      "line": 83,
+      "text": "Both checked-in host standards copies lag the shared template; unrelated sync changes were excluded.",
+      "from": "worker",
+      "item": "FORGE-SINGLECO-1/COMPANYGUIDE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

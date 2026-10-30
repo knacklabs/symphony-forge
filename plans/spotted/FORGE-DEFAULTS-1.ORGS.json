@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "improve\tsrc/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx\tThe React Compiler skips the table hook because its library returns functions that it cannot memoize.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "line": 165,
+      "text": "The React Compiler skips the table hook because its library returns functions that it cannot memoize.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/ORGS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

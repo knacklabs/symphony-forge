@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/assign.js\tPreserve keyboard focus across successive live redraws\tFORGE-BOARD-4/ASSIGNUI",
+      "kind": "bug",
+      "path": "src/forge/board_app/assign.js",
+      "line": 146,
+      "text": "Preserve keyboard focus across successive live redraws",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/ASSIGNUI",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_server.py\tRemove Git command text from assignment refusals\tFORGE-BOARD-4/ASSIGNUI",
+      "kind": "bug",
+      "path": "src/forge/board_server.py",
+      "line": 58,
+      "text": "Remove Git command text from assignment refusals",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/ASSIGNUI",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_assign_ui.py\tGate: test_19_a_manager_gives_a_story_from_the_board_and_a_teammate_sees_the_owner\tFORGE-BOARD-4/ASSIGNUI",
+      "kind": "bug",
+      "path": "tests/test_board_assign_ui.py",
+      "line": 121,
+      "text": "Gate: test_19_a_manager_gives_a_story_from_the_board_and_a_teammate_sees_the_owner",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/ASSIGNUI",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tPRODUCT.md\tThe board's product brief says the page changes nothing in the repo, but the approved story lets a manager assign from it.",
+      "kind": "improve",
+      "path": "PRODUCT.md",
+      "line": 1,
+      "text": "The board's product brief says the page changes nothing in the repo, but the approved story lets a manager assign from it.",
+      "from": "worker",
+      "item": "FORGE-BOARD-4/ASSIGNUI",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

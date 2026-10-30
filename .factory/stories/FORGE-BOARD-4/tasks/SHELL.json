@@ -1,0 +1,83 @@
+{
+  "branch": "task/FORGE-BOARD-4-SHELL",
+  "flagged": [],
+  "known": [
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 3,
+      "harm": 2,
+      "line": 98,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Standard: The error says what to do next",
+      "work": 1
+    },
+    {
+      "area": "tests/test_board_shell.py",
+      "file": "tests/test_board_shell.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 58,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: functional check",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7d53084e3ba6cce477e0d36fc87940588992d99245b0adbdfa613a7a7940f4ed",
+    "changed": "bbd65b6b5c8845f9263c544a4bd8745725242c6ef531e4984ff3bf5816e5af64",
+    "commit": "f05472dc7f85a698631c221c5365f3cad8cabfe9",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional. After a snapshot loads, `fail()` hides the recovery message and displays only \u201cOffline\u201d. Stopping or restarting the board therefore leaves users with stale content and no next action; restarting creates a different address and token, so this page cannot recover by polling. The standard requires \u201cThe error says what to do next.\u201d Keep the snapshot visible while also showing the recovery instructions.",
+        "file": "src/forge/board_app/app.js",
+        "gain": 3,
+        "harm": 2,
+        "line": 98,
+        "priority": "P1",
+        "title": "Standard: The error says what to do next",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The final commit changes the shell layout and desktop browser check but contains no `Functional check:` paragraph, as confirmed by its complete commit message. Earlier commits contain walkthroughs, but the required final-commit record is absent. Exercise the covered desktop flow and record what was exercised and observed.",
+        "file": "tests/test_board_shell.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 58,
+        "priority": "P1",
+        "title": "Gate: functional check",
+        "work": 1
+      }
+    ],
+    "id": "0edd160c-7150-45b2-bca7-5759937977b1",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T08:38:59.186865+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T11:05:42.594094+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "db8d914355a5f82ea12342e4bd0726da893c1e03",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
+}

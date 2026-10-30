@@ -1,0 +1,136 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tCount the rounds represented by compacted history\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 92,
+      "text": "Count the rounds represented by compacted history",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tGive the Known issues panel a valid accessible label reference\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 246,
+      "text": "Give the Known issues panel a valid accessible label reference",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tKeep unknown merger facts distinct from an item that has not merged\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 272,
+      "text": "Keep unknown merger facts distinct from an item that has not merged",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tMap the server's ready-to-merge story stage\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 9,
+      "text": "Map the server's ready-to-merge story stage",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/item.js\tNot done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.\tFORGE-BOARD-4/DETAIL",
+      "kind": "bug",
+      "path": "src/forge/board_app/item.js",
+      "line": 142,
+      "text": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tCount the rounds represented by compacted history",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 92,
+      "text": "Count the rounds represented by compacted history",
+      "from": "review",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tGive the Known issues panel a valid accessible label reference",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 246,
+      "text": "Give the Known issues panel a valid accessible label reference",
+      "from": "review",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tKeep unknown merger facts distinct from an item that has not merged",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 272,
+      "text": "Keep unknown merger facts distinct from an item that has not merged",
+      "from": "review",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tMap the server's ready-to-merge story stage",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 9,
+      "text": "Map the server's ready-to-merge story stage",
+      "from": "review",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/item.js\tNot done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "kind": "edge",
+      "path": "src/forge/board_app/item.js",
+      "line": 142,
+      "text": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "from": "review",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board_app/tokens.css\tthe shell's .status class name is generic; a screen that styles its own .status overrides the header's status mark",
+      "kind": "edge",
+      "path": "src/forge/board_app/tokens.css",
+      "line": 170,
+      "text": "the shell's .status class name is generic; a screen that styles its own .status overrides the header's status mark",
+      "from": "worker",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_board_item_page.py\tGate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
+      "kind": "edge",
+      "path": "tests/test_board_item_page.py",
+      "line": 122,
+      "text": "Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
+      "from": "review",
+      "item": "FORGE-BOARD-4/DETAIL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

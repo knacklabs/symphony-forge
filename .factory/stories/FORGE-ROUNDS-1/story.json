@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-10-20T06:40:47.882618+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_014bvK7ejc5kZaJ7yNG3ZS9Z",
+    "hash": "24d98103c5d69eb74043f84c181e8cf014dce9cf6b2575b9391509ec688bd6f3",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-ROUNDS-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-20T06:04:15.819666+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T06:26:46.598193+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-20T06:35:11.766083+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-20T06:38:34.365522+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-20T06:40:47.882784+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Reads and reviews end after two rounds",
+  "touches": 1
+}

@@ -1,0 +1,68 @@
+{
+  "base": "80f61902060e0ec4fbdba358985dfa7997b29966",
+  "branch": "fix/keep-main-settings-on-handback",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14f12-4766-7ef0-a70b-075b5d3005c8",
+    "head": null,
+    "start": "8da8d6645d988a3c405cae2ea42c83e607817ea7"
+  },
+  "done_when": "The hand-back reverts only the worker's own forge.toml edits, keeps settings that came from merging the default branch, and a test with a round that merges main's changed settings keeps them, on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/native.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_work_result() in src/forge/native.py",
+      "file": "src/forge/native.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 221,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve inherited settings on stacked fixes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0aed51604ca14d0ce36b3911a7f49363ed28a6cab586cef3b902f122cebd1d14",
+    "changed": "914d2cb7405a9ed89d567dec34999d7bd7d2a56bd929684ea5846a357484460d",
+    "commit": "82f81c763e253cad433090ac46313dd2ced95f6a",
+    "dismissals": [],
+    "findings": [],
+    "id": "4edb6c13-fb31-4a2c-b1ed-d000892d67a6",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T12:46:55.482512+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T12:52:32.474753+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T13:01:54.573108+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "11e50974-c473-4463-a2cf-ab6bb633da61",
+    "head": "3ebbfd414de4f36b01141eceddadf4f5e7ccc70f",
+    "keys": {
+      "the review finding \"Preserve inherited settings on stacked fixes\" in src/forge/native.py": 1
+    },
+    "round": null
+  },
+  "why": "When a build round merges main after main's forge.toml changed, the hand-back treats main's new settings as the worker's edit and restores the round's old copy, so merging the fix reverts main's settings",
+  "worker": "codex"
+}

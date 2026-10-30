@@ -1,0 +1,73 @@
+{
+  "allow_large": "The owner approved the v1.2.23 release. The change is the version bump in every pin, installer, plugin and version test, plus the guides that forge sync rewrote because close requires synced guides for a version change",
+  "base": "44686c923e254ffa75a6d0eb2a2981078420e012",
+  "branch": "fix/release-forge-v1-2-23-with-the-client-si",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17db8-72c7-7092-8f96-b5c16bcb5a6c",
+    "head": null,
+    "start": "b77f384dc8729836d1b8641193af4c557574b70b"
+  },
+  "done_when": "src/forge/__init__.py says version 1.2.23",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".codex/skills/forge/standards.md",
+      "file": ".codex/skills/forge/standards.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 85,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: release allowance does not cover unrelated guidance changes",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "34369a278a962034f1aa2b8a34afe6d1a41d55a5e5c8b6eb26a669a5c02abb39",
+    "changed": "720668ce0467d8cc615f7b332df79362d98b87909cf2bb87ec60f73c5f7b456d",
+    "commit": "f489e85631c0abac3467e380fbd073209506cbd8",
+    "dismissals": [],
+    "findings": [],
+    "id": "841b2546-5054-4b14-a412-57c8fe2de46e",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T14:16:01.771362+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T14:38:22.768796+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T14:54:22.718319+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-27T14:38:22.785648+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": ".codex/skills/forge/standards.md",
+    "reason": "The allowance now names the synced guides that close required for the version change",
+    "wait_id": "738f8ebf-d3d4-4c00-92f5-3da49ea6d7b5",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": "da98fb8a-8a9c-4794-85ef-a859ed155458",
+    "head": "4190e67574fb975e757b6e4fd40a851d50a09708",
+    "keys": {},
+    "round": 6
+  },
+  "why": "Release Forge v1.2.23 with the client sign-off hotfix",
+  "worker": "codex"
+}

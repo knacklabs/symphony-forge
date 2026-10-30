@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_app/now.js\tGive story part progress an accessible text equivalent\tFORGE-BOARD-4/NOW",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.js",
+      "line": 165,
+      "text": "Give story part progress an accessible text equivalent",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4-2"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.js\tPreserve unknown waiting time instead of displaying zero\tFORGE-BOARD-4/NOW",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.js",
+      "line": 83,
+      "text": "Preserve unknown waiting time instead of displaying zero",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4-2"
+    },
+    {
+      "key": "bug\tsrc/forge/board_app/now.js\tRetain readiness for assigned, unstarted story parts\tFORGE-BOARD-4/NOW",
+      "kind": "bug",
+      "path": "src/forge/board_app/now.js",
+      "line": 72,
+      "text": "Retain readiness for assigned, unstarted story parts",
+      "from": "blocking",
+      "item": "FORGE-BOARD-4/NOW",
+      "status": "done",
+      "closed_by": "review-findings-split-from-forge-board-4-2"
+    }
+  ]
+}

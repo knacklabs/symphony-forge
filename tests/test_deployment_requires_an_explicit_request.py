@@ -23,7 +23,7 @@ def test_1_clients_receive_explicit_deployment_authorization(repo, gh, tmp_path,
         client, made = _fresh_client(repo, gh, tmp_path)
         assert made.returncode == 0, made.stdout + made.stderr
         started = repo.forge("fix", "start", "Check deployment instructions", "--done",
-                             "Agents receive deployment instructions", cwd=client)
+                             "Agents receive deployment instructions", "--kind", "mechanical", cwd=client)
         assert started.returncode == 0, started.stdout + started.stderr
         client = tmp_path / "client-fix-check-deployment-instructions"
         item = "check-deployment-instructions"

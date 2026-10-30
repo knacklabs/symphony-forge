@@ -46,7 +46,7 @@ def test_1_worker_start_resume_and_review_force_quiet_config(env, monkeypatch, s
     client, made = _fresh_client(repo, env.gh, tmp_path)
     assert made.returncode == 0, made.stdout + made.stderr
     started = repo.forge("fix", "start", "Keep the reader quiet", "--done",
-                         "The reader uses quiet settings", cwd=client)
+                         "The reader uses quiet settings", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     client = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     old = tmp_path / "previous-release"

@@ -19,6 +19,8 @@ from test_mod_install import (mod_reads_real_old_forge_refusal_and_spaced_workin
 from test_mod_native import run_native_plugin_checks
 from test_setup import _autoreview, _on_a_branch_with_forge_toml, _version
 
+pytestmark = pytest.mark.platform
+
 STORY = 'FORGE-MOD-1'
 
 CLAUDE = """#!{python}

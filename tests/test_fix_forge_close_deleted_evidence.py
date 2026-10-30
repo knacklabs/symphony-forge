@@ -18,7 +18,7 @@ def test_1_close_uses_base_lines_only_for_deleted_files(env, change, path, line,
     base_path = path if path != "app.py" else "secret.txt"
     env.commit(env.repo.path, base_path, "old password\nremoved by migration\n")
     env.repo.git("push", "-q", "origin", "main")
-    item, where = env.start_fix()
+    item, where = env.start_task()
     if change == "deleted":
         (where / path).unlink()
         env.repo.git("add", "-u", cwd=where)

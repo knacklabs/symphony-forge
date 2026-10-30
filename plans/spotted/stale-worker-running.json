@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/codex.py\tGate: module ceilings fail in board.py and codex.py",
+      "kind": "edge",
+      "path": "src/forge/codex.py",
+      "line": 1060,
+      "text": "Gate: module ceilings fail in board.py and codex.py",
+      "from": "review",
+      "item": "stale-worker-running",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

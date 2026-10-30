@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/feature.py\tMerge partialIndexes into an existing previewFeatures list\tFORGE-DATABASE-1/KINDS",
+      "kind": "bug",
+      "path": "src/forge/feature.py",
+      "line": 185,
+      "text": "Merge partialIndexes into an existing previewFeatures list",
+      "from": "blocking",
+      "item": "FORGE-DATABASE-1/KINDS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

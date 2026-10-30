@@ -7,6 +7,8 @@ from test_records import SPEC
 from test_story import worktree
 from test_worker_and_reader_chats_survive_rounds import _client_reader, _old_round, _reader_chat
 
+pytestmark = pytest.mark.platform
+
 STORY = "sync-in-any-worktree"
 
 

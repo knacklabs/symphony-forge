@@ -1,0 +1,98 @@
+{
+  "base": "7d789873bacbf732fb1e6f95ad08e497f1f2eff4",
+  "branch": "fix/close-lists-p1-findings-including-a-not",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16261-1b0d-7bf0-b397-d226d83efce9",
+    "head": null,
+    "start": "013a2c3d91d11d6bf381fe40d6dbcbb66e1a36cc"
+  },
+  "done_when": "When a review is clean but lists findings, close says in one plain line that they do not block and why, and a Not done that names one of the item's own Done-when lines blocks the merge",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_bound_findings() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 987,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep required acceptance findings open across review rounds",
+      "work": 2
+    },
+    {
+      "area": "blocking() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 227,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Apply acceptance classification to reused reviews",
+      "work": 2
+    },
+    {
+      "area": "blocking() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 227,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Include required acceptance findings in worker repair briefs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "78dc1453c27093ef8aaa78fb36bc8b0d75a19ec507d337d741cafba816f018ee",
+    "changed": "45f0fbc4468e3dc9c38731d94b33bc5ef4925b84c0f669057186eaca2c576d04",
+    "commit": "c0bfb06d1b19882f50d44ffbc3e4231e4a4e42f5",
+    "dismissals": [],
+    "findings": [],
+    "id": "3fed78a8-52d3-445e-906f-0e0d984853ad",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-22T06:51:16.988830+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-22T07:05:55.433791+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-22T07:28:09.633858+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-22T07:05:55.444784+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/review.py",
+    "reason": "The owner chose one more round on 22 Oct: close all three gaps",
+    "wait_id": "8e1008b3-9c3d-4c54-8b8a-5de6f7c7b281",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "fd335dec-5bb5-437b-99d6-fa709a3b78c8",
+    "head": "97c1c6fff1fdd015fb63eb65f4f24524633ff124",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Close lists P1 findings, including a Not done on the fix's own Done-when, and then says Review: clean without saying that these findings do not block, so the agent merges unmet work without knowing (issue #927).",
+  "worker": "codex"
+}

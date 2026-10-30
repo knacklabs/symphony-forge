@@ -1,0 +1,78 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-26T09:18:09.343487+00:00",
+      "because": "The first round cut board JSON from about 17 to 10 seconds within five files; the five-second goal moves to a follow-up fix",
+      "done_when": "Both forge next and the board JSON finish in under five seconds on this repo."
+    }
+  ],
+  "base": "8145252c3aca2b2228e7f7c923d8374bfa890bf7",
+  "branch": "fix/the-pane-s-refresh-runs-forge-next-and-f",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17771-b7d9-7292-90ca-cb6b1c9ebf17",
+    "head": null,
+    "start": "76b245f72eed490523de6caee4bd9700a8d2c358"
+  },
+  "done_when": "On this repo, forge next and the board JSON both finish well inside the pane's 20-second refresh limit, so the pane loads its first rows",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "next_step() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": null,
+      "harm": null,
+      "line": 122,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "[P2] Preserve the statistics summary in plain forge next output",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fe6e9c3542964263d10ed6b32e697cd6a8d3d9934d0723a45c6db57442323109",
+    "changed": "ee00e885f70b4703ede2dba40476f6c0b4b05dbb6651c2c6aabdb2d7a0860960",
+    "commit": "384efefe1e08fdd557cf9e6a1f92de9a83736fbd",
+    "dismissals": [],
+    "findings": [],
+    "id": "30a6f992-27f5-4a17-845b-a926c9ece55f",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T09:01:26.366142+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T10:08:25.880388+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T10:27:51.760269+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T10:46:54.432521+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T11:07:08.253138+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "da674068-b82b-4c80-a379-59e27a39b61b",
+    "head": "256a7eca9da2af96b23b5636656281db44aebadb",
+    "keys": {},
+    "round": 7
+  },
+  "why": "The pane's refresh runs forge next and forge lanes, and next also runs the same slow board build, so the first load waits on it; the pane already shows Couldn't refresh when a first load fails, so only the speed part is new.",
+  "worker": "codex"
+}

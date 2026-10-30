@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/history/pages/history-page.tsx\tHandle paused history queries as an offline state\tFORGE-DEFAULTS-1/HISTORYUI",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/src/features/history/pages/history-page.tsx",
+      "line": 26,
+      "text": "Handle paused history queries as an offline state",
+      "from": "blocking",
+      "item": "FORGE-DEFAULTS-1/HISTORYUI",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/members.spec.ts\tthe axe scan runs while the \"Role updated.\" toast animates in and failed once on colour contrast in the Python live run, then passed on the next run.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "line": 63,
+      "text": "the axe scan runs while the \"Role updated.\" toast animates in and failed once on colour contrast in the Python live run, then passed on the next run.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/HISTORYUI",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/src/main.tsx\tmutations keep the default network mode, so a save sent offline waits until the connection returns instead of failing.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/src/main.tsx",
+      "line": 13,
+      "text": "mutations keep the default network mode, so a save sent offline waits until the connection returns instead of failing.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/HISTORYUI",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "improve\t.claude/skills/forge/standards.md\tThe checked-in standards omit existing template guidance about internal abstractions.",
+      "kind": "improve",
+      "path": ".claude/skills/forge/standards.md",
+      "line": 83,
+      "text": "The checked-in standards omit existing template guidance about internal abstractions.",
+      "from": "worker",
+      "item": "a-repo-with-test-groups-still-runs-its-n",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/standards.md\tThe checked-in standards omit existing template guidance about internal abstractions.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/standards.md",
+      "line": 83,
+      "text": "The checked-in standards omit existing template guidance about internal abstractions.",
+      "from": "worker",
+      "item": "a-repo-with-test-groups-still-runs-its-n",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

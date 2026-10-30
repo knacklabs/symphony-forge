@@ -2,10 +2,19 @@
 import json
 import re
 import pytest
-from test_close import CLEAN, blocked, body, env, finding  # noqa: F401 - command-level fixture
+from test_close import CLEAN, STORY_DOC, blocked, body, env, finding  # noqa: F401 - command-level fixture
 from test_story import setup
 
 STORY = "forge-s-pull-requests-and-status-output"
+
+def _facts(tmp_path, repo):
+    """Every item's facts by ID, finished ones included, as `forge board --out` writes them."""
+    out = tmp_path / "board.json"
+    result = repo.forge("board", "--out", str(out))
+    assert result.returncode == 0, result.stderr
+    return {row["id"]: row for parent in json.loads(out.read_text("utf-8"))["items"]
+            for row in [parent, *parent["children"]]}
+
 
 def test_1_pr_title_and_labeled_body(env):
     item, _ = env.start_task()
@@ -37,7 +46,7 @@ def test_2_fix_title_is_at_most_seventy_characters(env, why, expected):
 
 @pytest.mark.parametrize("blocked_review", [False, True])
 def test_3_review_block_opens_with_plain_verdict_and_no_hash(env, blocked_review):
-    item, where = env.start_fix()
+    item, where = env.start_task()
     reviewed = env.repo.git("rev-parse", "HEAD", cwd=where)
     env.reviews(blocked(finding("P1", "A greeting is missing")) if blocked_review else CLEAN)
     assert env.close(item).returncode == (1 if blocked_review else 0)
@@ -97,15 +106,11 @@ def test_5_board_links_items_to_pull_requests(repo, gh, tmp_path):
     gh.respond("pr", "list", "--state", "merged", "--limit", "25", "--json",
                "headRefName,headRefOid,state,title,body,mergedAt,mergedBy,url,files,statusCheckRollup", exit=1,
                stderr="GitHub timed out on the detailed bulk request")
-    out = tmp_path / "board.html"
-    result = repo.forge("board", "--out", str(out))
-    assert result.returncode == 0, result.stderr
-    page = out.read_text()
-    assert '<a href="https://github.com/acme/shop/pull/7">Tidy up</a>' in page
-    assert "Ready to merge" in page
+    fix = _facts(tmp_path, repo)["tidy-up"]
+    assert (fix["title"], fix["pr"]["url"]) == ("Tidy up", "https://github.com/acme/shop/pull/7")
     calls = [call for call in gh.calls() if call[:2] == ["pr", "list"]]
-    # SVG and text share the board snapshot: one open list, seven weekly searches, one detail list.
-    assert len(calls) == 9
+    # One board snapshot: one open list and seven weekly searches.
+    assert len(calls) == 8
     assert len([call for call in gh.calls() if call[:2] == ["api", "graphql"]]) == 1
 
 
@@ -147,15 +152,15 @@ def test_7_next_names_pr_after_successful_close(env):
 
 
 def test_8_next_names_finding_after_close_stops(env):
-    item, _ = env.start_fix()
+    item, _ = env.start_approved_task(STORY_DOC)
     env.reviews(blocked(finding("P1", "A greeting is missing")))
     assert env.close(item).returncode == 1
     result = env.repo.forge("next")
     assert result.returncode == 0, result.stderr
-    assert "Close stopped on The fix tidy-readme: A greeting is missing." in result.stdout
+    assert "Close stopped on SHOP/T1: A greeting is missing." in result.stdout
 
 
-def test_9_board_puts_active_work_first_and_folds_finished_fixes(repo, gh, tmp_path):
+def test_9_board_keeps_finished_fixes_with_their_pull_requests_beside_active_work(repo, gh, tmp_path):
     setup(repo, keys=("OLD", "LIVE"))
     repo.write("plans/roadmap.json", json.dumps({"items": [
         {"key": "OLD", "title": "An earlier story"},
@@ -178,16 +183,9 @@ def test_9_board_puts_active_work_first_and_folds_finished_fixes(repo, gh, tmp_p
         "headRefName": "fix/finished-fix", "state": "MERGED", "title": "A finished fix",
         "url": "https://github.com/acme/shop/pull/8",
         "mergedAt": "2026-09-26T10:00:00Z"}]))
-    out = tmp_path / "board.html"
-    result = repo.forge("board", "--out", str(out))
-    assert result.returncode == 0, result.stderr
-    page = out.read_text()
-    # The item list, not the roadmap graph above it, puts active work first.
-    stories = page[page.index('<section id="stories"'):page.index('<section id="fixes"')]
-    fixes = page[page.index('<section id="fixes"'):]
-    fold = '<details class="done"><summary>Done (1)</summary>'
-    assert stories.index("A current story") < stories.index(fold) < stories.index("An earlier story")
-    assert fixes.index("An active fix") < fixes.index(fold) < fixes.index("A finished fix")
-    assert '<a href="https://github.com/acme/shop/pull/8">A finished fix</a>' in page
-    assert ('<span class="title">An active fix</span><span class="kind">Fix</span>'
-            '<span class="state">In progress</span>') in page
+    rows = _facts(tmp_path, repo)
+    finished, active = rows["finished-fix"], rows["active-fix"]
+    assert (finished["title"], finished["state"], finished["pr"]["url"]) == (
+        "A finished fix", "done", "https://github.com/acme/shop/pull/8")
+    assert (active["title"], active["state"]) == ("An active fix", "in progress")
+    assert (rows["LIVE"]["state"], rows["OLD"]["state"]) == ("planning", "done")

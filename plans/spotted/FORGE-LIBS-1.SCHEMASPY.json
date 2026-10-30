@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/migrations/versions/0008_module_schemas.py\tQualify the error-report test's account table after moving it\tFORGE-LIBS-1/SCHEMASPY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/migrations/versions/0008_module_schemas.py",
+      "line": 31,
+      "text": "Qualify the error-report test's account table after moving it",
+      "from": "blocking",
+      "item": "FORGE-LIBS-1/SCHEMASPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

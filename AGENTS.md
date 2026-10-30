@@ -10,8 +10,9 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 
 ### The flow
 
-1. A story starts as one short doc: `forge story new <KEY> "<title>"`.
-2. It gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
+1. Every idea starts with `forge start "<idea>"`. Forge picks a fix, a plan, discovery or the idea list.
+   Never ask the human whether it is a story or a fix.
+2. A plan gets rounds of cold read (`forge read <KEY>`) until no notes block building, then one
    approval from the human.
 3. Each task runs in its own branch and worktree: `forge task start <KEY>/<TASK>`, then
    `forge work <KEY>/<TASK>`.
@@ -23,9 +24,20 @@ and the Rules below, and leave the flow and the approval steps to the agent coor
 
 ### The lanes
 
+Send every idea through `forge start "<idea>"`. Forge picks the lane.
+
 - **Story:** anything that changes an interface or needs more than five code files.
-- **Fix:** a small change, started with `forge fix start "<why>" --done "<done when>"`.
+- **Fix:** a small change with at most five code files and no interface change.
   Specs, decisions, the roadmap and discovery notes ship as fixes.
+- **Discovery:** one question when Forge cannot guess the problem.
+- **Idea list:** only when the owner says later. Forge keeps the idea in `plans/ideas.md`.
+
+| The human says | Run |
+|---|---|
+| "Make it a story" (a fix) | Add the key to the fix's roadmap and commit it, then `forge story new <KEY> --from-fix <fix>` |
+| "Make it a fix" or "Just fix it" (a plan in planning) | `forge fix start "<its Problem>" --done "<its first Done-when>"`, then `forge story drop <KEY> --because "Moved to the fix <fix>"` |
+| "Do it later" (a fix) | `forge fix drop <fix> --because "The owner wants it later"`, then `forge start "Do this later: <its why> (kept on fix <fix>)"`. `fix drop --undo` brings it back |
+| "Do it now" (an idea-list entry) | `forge start "<the owner's new words>: <the entry's idea without its deferral words>"`, for example `forge start "Do it now: add dark mode"`. Then remove the entry from the main checkout's file while it is waiting, or else in the new item's branch |
 
 ### Who builds
 
@@ -37,6 +49,8 @@ each item:
 - `split`: user-facing story tasks on Claude, everything else on Codex.
 
 ### Rules
+
+- Before adding complexity for a speculative or vanishingly unlikely race or security edge case, explain the concrete failure mode, likelihood, and complexity cost to the user and get their buy-in. Do not silently expand scope for theoretical robustness.
 
 Mainline Deploy is available to install through the organization's plugin catalog. Do not assume
 that the plugin and MCP are installed or that the user is signed in.
@@ -56,10 +70,20 @@ Do not install Mainline or start OAuth sign-in for those requests. An explicit r
   `forge merge <item>` when the default branch allows it; `merge = "human"` is the default.
 - Ask the human only to approve a story, to choose between options, or to merge when the repo
   keeps the human merge setting.
-- No running commentary. Speak only when something lands, when a failure or finding needs the
+- No running commentary. Speak only when something merges, when a failure or finding needs the
   human, or when a decision is theirs, in a line or two.
-- Write for humans in plain English: no IDs, hashes or jargon in questions, pull request
-  summaries or the board, except story keys shown small beside titles on the board.
+- Write every reply, summary and question for a human in plain English that a non-native
+  speaker understands on the first read. Use everyday words, not agent slang: important, not
+  load-bearing; merge, not land; what it affects, not blast radius; easy mistake, not footgun;
+  start, not spin up. Explain each technical term the first time it comes up. Use no IDs,
+  hashes or jargon in questions, pull request summaries or the board, except story keys shown
+  small beside titles on the board. Notes and prompts for other agents are exempt.
+- Report progress in plain sentences: what changed, what failed, what comes next. Start with
+  three lines, and add detail only when it changes the next action. Use no emoji checkmarks,
+  no "Successfully", no "Perfect" and no wall of bullets.
+- Never make anything sound more certain or more finished than it is. Keep numbers, uncertainty
+  and status (planned, in progress, done) exact. A correlation stays a correlation, and a plan
+  stays a plan.
 - A story is approved through Plan Mode: exit Plan Mode with the text of the story doc that
   `forge next` names, unchanged, as the plan: from its title down to `## For the builders`, or the
   whole doc when it has no such heading. The approval matches its "What changes for you" and
@@ -91,12 +115,29 @@ change is dogfooded on Forge itself before clients get it.
 ## Review rules
 
 - A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
-  upgrade to the new release) each get, and its tests cover both, including an existing repo adopted
-  on an earlier release. Report a change that covers only one side, or only Forge's own repo, as
-  P1. A release's version bump changes no behaviour and needs no new upgrade test.
+  upgrade to the new release) each get. Each rule keeps its full cases on a new repo plus at least
+  one case on an existing repo adopted on an earlier release. Keep more existing-repo cases only
+  where Forge takes a different path for it. Report a change that covers only one side, or only
+  Forge's own repo, as P1. Report extra existing-repo cases that repeat the new-repo path as a
+  deletion candidate, not a gap. A release's version bump changes no behaviour and needs no new
+  upgrade test.
 - A change to what a coordinator or worker should do or can use (a command, an option, a setting,
   a step in the flow) updates `src/forge/templates/skill.md` or the worker brief
   (`src/forge/templates/brief.md`) in the same change. Report a missing update as P1.
+
+### Four simplicity principles
+
+These govern every change to Forge, as they govern every app that Forge builds.
+
+1. Is it needed at all? Deleting beats fixing.
+2. Add work only when F x H >= 2 x C: how often the problem happens (F) times how bad it is (H)
+   is at least two times the cost (C). Score each from 1 to 3. F, for the first 1,000 users:
+   1 rare, 2 weekly, 3 daily. H: 1 cosmetic or the person's own data, 2 wrong information or a
+   broken step, 3 a P0. C: 1 for 20 lines or fewer with no model call or user step, 2 for up to
+   about 150 lines or one model call or user step, 3 for more, or a new table, job, workflow or
+   flag.
+3. Choose the simplest option.
+4. Rules are stated, not policed: add no check, gate or refusal only to enforce a rule.
 
 ### Forge's 13 principles
 
@@ -118,9 +159,11 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
 
 ### Tests for Forge
 
+- Each rule keeps its full cases on a new repo plus at least one earlier-adopted repo case.
+  Keep more adopted-repo cases only where Forge takes a different path for it. In a test audit,
+  report extra adopted-repo cases that repeat the new-repo path as deletion candidates, not gaps.
 - Tests run the forge command and never import forge.
 - A test that calls a real Codex model runs only when FORGE_LIVE_CODEX=1 (the codex-smoke workflow
   sets it); don't set it in local runs.
 - A general process rule (how to plan, build, test, review, merge or release) added only to this
   repo's files instead of what Forge ships is P1: it belongs in `src/forge/templates` or a command.
-

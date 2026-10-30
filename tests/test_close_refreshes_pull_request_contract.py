@@ -8,6 +8,7 @@ import pytest
 from conftest import patient
 from test_close import STORY_DOC, body, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
+from test_story import DESIGN_IMAGE
 
 STORY = "skipped-close"
 
@@ -38,6 +39,8 @@ def test_2_close_replaces_done_when_after_amend_and_preserves_human_notes(env, p
 def test_4_close_reads_story_title_as_utf8_in_a_legacy_locale(env, previous, monkeypatch):
     client(env, previous)
     title = "Shoppers save a basket 雪"
+    if not (env.repo.path / "docs/design/baskets/screen.svg").exists():
+        env.commit(env.repo.path, "docs/design/baskets/screen.svg", DESIGN_IMAGE)
     env.commit(env.repo.path, "plans/SHOP.md",
                STORY_DOC.replace("Shoppers can save a basket", title, 1))
     env.repo.git("push", "-q", "origin", "main")

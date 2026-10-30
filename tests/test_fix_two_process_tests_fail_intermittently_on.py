@@ -13,6 +13,8 @@ from test_codex_worker import ROOT, _toml, sdk_data  # noqa: F401 (a fixture)
 from test_story import DOC, new_story, setup
 from conftest import _install
 
+pytestmark = pytest.mark.platform
+
 
 STORY = "two-process-tests-fail-intermittently-on"
 

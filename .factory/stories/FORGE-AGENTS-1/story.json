@@ -1,0 +1,34 @@
+{
+  "approval": {
+    "at": "2026-10-28T14:53:42.746050+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01KhuKpmptrWg4E5H6JUViPS",
+    "hash": "02a8989119fb33011af49abdec1ea08219492f5fdd8d7c161df2bf7e0b75153b",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-AGENTS-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-28T14:14:16.956222+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T14:30:57.518791+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-28T14:45:29.909591+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-28T14:53:42.746402+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Client apps with agents get agent must-haves before they build",
+  "touches": 1
+}

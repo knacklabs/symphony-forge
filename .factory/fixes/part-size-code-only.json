@@ -1,0 +1,45 @@
+{
+  "base": "f0250948eb513a843659ab4bdf44dfc35cf18f3f",
+  "branch": "fix/part-size-code-only",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a145b3-db91-7a10-aef6-06b7385bc3f4",
+    "head": null,
+    "start": "cfe2858101e33b1b10c7fcb537706f15e5f736e4"
+  },
+  "done_when": "A story part's size limit counts only code: Markdown files and files under docs/, plans/ and .factory/ do not count, nor do tests; a part that carries its story's design copies is measured by its own code; new repos get it at init and existing repos on upgrade",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b7bb1d51c9343cdfca76f414c63304855af173f77ffa68a46885d56179a8bab4",
+    "changed": "72df0e141d754d11afe7fb52998f10c2f60de7b2d32cdd17d16dce900e8eeee4",
+    "commit": "0e0d523af11b1c2950d13f5121cdc57e5a0c0aee",
+    "dismissals": [],
+    "findings": [],
+    "id": "30715c1d-8b73-4ded-a799-ae2ddef1ca16",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T17:12:52.170830+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T17:30:56.806293+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1b61200b106bead800637b1e55554145392dc0fc",
+    "keys": {},
+    "round": null
+  },
+  "why": "A story part's size limit counts its story's design copies under docs and Markdown files as code, so a user-facing part stops on size it does not have",
+  "worker": "codex"
+}

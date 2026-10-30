@@ -1,0 +1,89 @@
+{
+  "branch": "task/FORGE-INTAKE-1-MOVE",
+  "chat": {
+    "approval": "5f782b5309a654bcd05f60064fe0a2dbe51589ad1f48c4cab3e323ab42ab0b4a",
+    "claude": null,
+    "conversation": "01a15a4f-80a1-74e1-b79e-3adc2d80036e",
+    "head": null,
+    "start": "4b2c6197ceddcf15f85ff6925bba5a1a2255de38"
+  },
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 294,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: moving an idea leaves one item on the board",
+      "work": 2
+    },
+    {
+      "area": "story_drop() in src/forge/intake.py",
+      "file": "src/forge/intake.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 167,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Check task ownership before refusing a story drop",
+      "work": 2
+    },
+    {
+      "area": "test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list() in tests/test_start_sorts_ideas.py",
+      "file": "tests/test_start_sorts_ideas.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 289,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "39570c13715330d8711b9db8cbb380afad1cfb7e8c704c4b052ca33da69fefad",
+    "changed": "7aa7e3494b080e64914983a417ce41e06b244f44da71219231efd27f0f6eb1db",
+    "commit": "bf1565ea81892850d04a0cb2fb7ac3ba095c8f64",
+    "dismissals": [],
+    "findings": [],
+    "id": "7bc112e6-5d53-4473-a594-31c1c38c21e0",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T17:15:07.809453+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T21:10:53.401098+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T21:33:46.451602+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T22:07:17.673366+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "342d0ac2-81b7-4399-84a1-9ee5c994cbdf",
+    "head": "30fdb4d4402b38e5e2392a186e29baf36cd6f5fa",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

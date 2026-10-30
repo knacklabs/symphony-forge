@@ -15,6 +15,7 @@ from test_which_worker_builds import _help
 STORY = "FORGE-TOOLS-1"
 
 
+@pytest.mark.platform
 def test_1_tools_choose_one_tool_without_changing_the_work_process(repo, monkeypatch, sdk_data):
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
@@ -91,7 +92,7 @@ def test_10_doctor_checks_the_selected_tool_instead_of_workers(env, tmp_path, mo
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     started = repo.forge("fix", "start", "Choose tools", "--done", "Doctor checks chosen tool",
-                         cwd=client)
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     client = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     config = client / "forge.toml"

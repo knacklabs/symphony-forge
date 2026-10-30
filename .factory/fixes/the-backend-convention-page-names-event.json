@@ -1,0 +1,49 @@
+{
+  "base": "1879dd44e6a8cb4ad7a899276039b2d5e1507a8b",
+  "branch": "fix/the-backend-convention-page-names-event",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16d25-beda-7671-9575-7405d6545963",
+    "head": null,
+    "start": "d58e58d1686972900ca97691d597a36f4f1b7eb3"
+  },
+  "done_when": "A new client app and an existing app that upgrades both get the call-or-event rule on the backend page, and reviews hold only new code against it.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e15c03a032b5934a57f27b13b65d4d09de7356641361049f2c017cb0d7331fea",
+    "changed": "add51436eb41c13ff874cd1644524d9fca293cc37d93d3e7bd27cf87b75567d7",
+    "commit": "b87f264cb1fc98423232d5ecf70f1d644bf117a5",
+    "dismissals": [],
+    "findings": [],
+    "id": "5d59b761-906d-4f2e-9c15-80c02e123817",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T09:02:19.173132+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T09:05:25.899916+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T09:19:33.103376+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "7d020d8b-47b5-4d70-9554-b31ad010d04a",
+    "head": "704726a5a598e2d08044cd8a6a8b2493dce86d97",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The backend convention page names event files but never says when a module calls another module's public service or sends an event. The standards page covers only part of it, and the stack page already says to add a queue only when a story's New moving parts names one, so the fix adds just the answer-now versus react-after split.",
+  "worker": "codex"
+}

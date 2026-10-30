@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 DESTROY = '" because it can destroy work that cannot be recovered.'
 HOOKS = '" because the git hooks must run on every commit and push.'
 MERGE = '" because only a human merges a pull request.'
@@ -72,6 +74,7 @@ ALLOWED = ["ls -la", "git status", "git commit -m 'Remove the rm -rf step'",
            "env GIT_EDITOR=: git commit --file=- <<'EOF'\nNo git commit -n here\nEOF"]
 
 
+@pytest.mark.platform
 def test_23_deny_hook(repo, claude_payload, codex_payload):
     for build in (claude_payload, codex_payload):
         for command, reason in BLOCKED.items():

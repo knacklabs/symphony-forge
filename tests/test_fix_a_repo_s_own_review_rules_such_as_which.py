@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 
 from test_close import env  # noqa: F401 (pytest fixture)
-from test_proto_signoff import SOL_HIGH, _client, _decision
+from test_proto_signoff import SOL_HIGH, _client, _decision, _green_full_run
 
 STORY = "FIX-A-REPO-S-OWN-REVIEW-RULES-SUCH-AS-WHICH"
 
@@ -46,7 +46,8 @@ def test_1_every_review_gets_the_repo_s_review_rules_from_the_default_branch(env
 def test_2_a_repo_without_review_rules_gets_no_extra_text(env):
     item, _ = env.start_fix()
     assert env.close(item).returncode == 0
-    assert "review rules" not in env.prompt().lower()
+    # Generic guidance names Review rules; only the optional repository section is absent.
+    assert "## This repository's review rules" not in env.prompt()
 
 
 def test_3_the_skill_and_agents_template_tell_clients_the_section_exists(env):
@@ -68,12 +69,15 @@ def test_4_the_client_sign_off_review_gets_the_repo_s_review_rules(repo, tmp_pat
     repo.git("add", "AGENTS.md")
     repo.git("commit", "-q", "-m", "Write the review rules")
     repo.git("push", "-q", "origin", "main")
+    _green_full_run(repo)
     _decision(fix, answers, via="", on="")
-    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "scoped-clean",
-                                                              "findings": []}}]))
+    clean = {"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}
+    queue.write_text(json.dumps([clean, clean]))
     reviewed = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert reviewed.returncode == 0, reviewed.stderr
-    [call] = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text().splitlines()]
+    [call] = [call for call in calls if "## Client prototype sign-off review" in
+              "\n".join(call["prompt_files"].values())]
     prompt = "\n\n".join(call["prompt_files"].values())
     assert "## Client prototype sign-off review" in prompt
     rules = _rules_in(prompt)

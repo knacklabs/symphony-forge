@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/feature_api.py\tPreserve the filters object declaration in generated contracts\tFORGE-FEATURE-1/COMMAND",
+      "kind": "bug",
+      "path": "src/forge/feature_api.py",
+      "line": 228,
+      "text": "Preserve the filters object declaration in generated contracts",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/COMMAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_api.py\tRename indexed cursor references along with their parameter\tFORGE-FEATURE-1/COMMAND",
+      "kind": "bug",
+      "path": "src/forge/feature_api.py",
+      "line": 504,
+      "text": "Rename indexed cursor references along with their parameter",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/COMMAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_tests.py\tChoose a status filter fixture different from the matching value\tFORGE-FEATURE-1/COMMAND",
+      "kind": "bug",
+      "path": "src/forge/feature_tests.py",
+      "line": 134,
+      "text": "Choose a status filter fixture different from the matching value",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/COMMAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_tests.py\tCreate required linked dependencies instead of using example UUIDs\tFORGE-FEATURE-1/COMMAND",
+      "kind": "bug",
+      "path": "src/forge/feature_tests.py",
+      "line": 63,
+      "text": "Create required linked dependencies instead of using example UUIDs",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/COMMAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_tests.py\tScope the generated validation case for each link field\tFORGE-FEATURE-1/COMMAND",
+      "kind": "bug",
+      "path": "src/forge/feature_tests.py",
+      "line": 105,
+      "text": "Scope the generated validation case for each link field",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/COMMAND",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

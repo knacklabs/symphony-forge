@@ -10,6 +10,8 @@ from conftest import ROOT
 from test_setup import _fresh_client, _version
 from test_fix_plans_roadmap_json_conflicts_on_almost_e import _git, _commit_roadmap
 
+pytestmark = pytest.mark.platform
+
 STORY = "skipped-sync-board"
 
 
@@ -49,7 +51,12 @@ def test_1_claude_hook_finds_project_before_current_folder(client, tmp_path):
             assert "git hooks must run" in done.stderr
 
 
-@pytest.mark.parametrize("conflicting_field", [None, "title", "spec", "status"])
+@pytest.mark.parametrize("client,conflicting_field", [
+    pytest.param(history, field, id=f"{history}-{field}")
+    for history in ["new", "previous adoption"]
+    for field in [None, "title", "spec", "status"]
+    if history == "new" or field in (None, "status")
+], indirect=["client"])
 def test_2_roadmap_merges_fields_and_conflicts_on_shared_changes(client, conflicting_field):
     base = {"key": "SYNC-1", "title": "Original title", "spec": "docs/specs/original.md",
             "status": "pending", "order": 1}

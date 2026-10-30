@@ -1,0 +1,68 @@
+{
+  "base": "b3880ba87978fefde7e106eb1d43ae6e18d42c0e",
+  "branch": "fix/reuse-test-proof",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fef-3167-75a0-b53b-5b5a0a094b46",
+    "head": null,
+    "start": "cf1e812d332bb42c5f69d4708d1fcc8ca21dd589"
+  },
+  "done_when": "A merge to main skips its full test run when its tree equals the pull request's code merged onto main's previous tip and that pull request's checks passed; a release tag skips tests when its commit's tree already passed main's full run; both say so in the job summary; the nightly every-platform run still runs everything",
+  "fix_kind": "mechanical",
+  "flagged": [
+    ".github/reuse-test-proof.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "reused_run() in .github/reuse-test-proof.py",
+      "file": ".github/reuse-test-proof.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 53,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Bind reused PR proof to the tree its run actually tested",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "afd989e85cdc7885b213c8e1444d3bd288b6a1924971d7ce1640bc94963dffa2",
+    "changed": "4b768cb95a2098fc6f4d03d088748bf07d09d4178a541a12fe30089c2086e83a",
+    "commit": "91ae7381c4c898d6d5703bada818a5323a7152bd",
+    "dismissals": [],
+    "findings": [],
+    "id": "7d192d45-5b26-4ccf-8ddd-c185e9d1fa3a",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:47:32.821444+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:13:27.875555+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:00:41.303993+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "4a0696a6-6c5e-464e-88e0-e9cfa051d3d5",
+    "head": "c0b5c65a868723f6536ff02325d43dd586c8ecb5",
+    "keys": {
+      "the review finding \"Bind reused PR proof to the tree its run actually tested\" in .github/reuse-test-proof.py": 1
+    },
+    "round": 1
+  },
+  "why": "After a pull request passes, Forge's CI runs the same tests again on the merge to main and again on the release tag, though the code is identical",
+  "worker": "codex"
+}

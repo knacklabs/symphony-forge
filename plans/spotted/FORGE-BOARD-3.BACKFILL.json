@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/backfill.py\tFlatten the GraphQL query before passing it through a batch launcher\tFORGE-BOARD-3/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/backfill.py",
+      "line": 39,
+      "text": "Flatten the GraphQL query before passing it through a batch launcher",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/BACKFILL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tPreserve historical PR bodies when restoring older part rows\tFORGE-BOARD-3/BACKFILL",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 260,
+      "text": "Preserve historical PR bodies when restoring older part rows",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/BACKFILL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

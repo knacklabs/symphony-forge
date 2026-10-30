@@ -9,6 +9,8 @@ import pytest
 
 from conftest import ROOT, FORGE_SHIM, _install
 
+pytestmark = pytest.mark.platform
+
 STORY = "forge-sync-points-git-s-merge-rule-for-t"
 DRIVER = 'forge hook merge-roadmap %O %A %B'
 
@@ -31,7 +33,7 @@ def test_1_merge_rule_survives_removing_the_worktree_that_registered_it(
         repo.git("init", "-q", "--bare", "-b", "main", str(remote))
         repo.git("init", "-q", "-b", "main", str(client))
         repo.git("remote", "add", "origin", str(remote), cwd=client)
-        made = repo.forge("init", cwd=client)
+        made = repo.forge("init", "--actions", "yes", cwd=client)
         assert made.returncode == 0, made.stdout + made.stderr
     else:
         # Adopt a real existing repository with the previous release, then upgrade its pin.

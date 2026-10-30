@@ -1,0 +1,77 @@
+{
+  "allow_large": "A release bump names the new version in every file that records it; no behaviour changes",
+  "base": "30b1545d3921be2b95eb43cb3d94fdc36324f8f5",
+  "branch": "fix/release-1-2-25",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18c84-0597-7163-819e-c764a4a9fd13",
+    "head": null,
+    "start": "b123822fc9ecd7d9ca58ac06919726efdec09cf2"
+  },
+  "done_when": "Every version reference names v1.2.25, forge sync output is committed, and the version tests pass",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_forge_version_is_1_2_25_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 19,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Every version reference names v1.2.25, forge sync output is committed, and the version tests pass",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "73cfe680bcefb62c570ac890d14d83cc8b705a41bea28ed44eff36b32b3420e5",
+    "changed": "608ad42c65cbea8f7f04c0309114ce3de92a1e2a7deee5513928b9156410bae6",
+    "commit": "fda2b633d72e27f1ad9c39b8027c312b9edbf567",
+    "dismissals": [],
+    "findings": [],
+    "id": "488a7901-58ca-4982-a4fe-fe4dc7ca9f6d",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T11:13:30.723870+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T11:21:34.657800+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T11:23:18.033237+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T11:49:03.025620+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-30T11:21:34.672282+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_release_version.py",
+    "reason": "The coordinator committed the forge.toml pin to v1.2.25, which the worker may not edit; check again",
+    "wait_id": "0c51fae3-69e3-408c-9ae6-a80b6c85f720",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": null,
+    "head": "99a344f6472d89fb4d717e9aea3ab39530684b83",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.25 with the client sign-off speed hotfix",
+  "worker": "codex"
+}

@@ -1,0 +1,120 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-14T20:11:48.815827+00:00",
+      "because": "A scheduled run on main can only happen after the merge, so close could never prove the old wording",
+      "done_when": "The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real cause, not by skipping it"
+    }
+  ],
+  "base": "30983d7a6bfcb5ac51a62f73a6ac8a8c2844a8d3",
+  "branch": "fix/windows-nightly-red",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13ae4-baff-7402-8fd9-cf3b67014c9f",
+    "head": null,
+    "start": "87845e9a853f0fdb4e0c6b4c948ea9731d897b87"
+  },
+  "done_when": "Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real cause, not by skipping it; after merge, the next all-platform run on main confirms it",
+  "flagged": [
+    "tests/test_queue_land_all.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_queue_land_all.py",
+      "file": "tests/test_queue_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 146,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The scheduled forge-next run passes every Windows full-suite group on main, and each failing test passes on Windows for the real\u539f\u56e0",
+      "work": 1
+    },
+    {
+      "area": "tests/test_queue_land_all.py",
+      "file": "tests/test_queue_land_all.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 146,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner accepted: the all-platform run of this branch passed every Windows group (run 38642015758); the land-queue test starts from another folder because Windows keeps a running process's starting folder open, which Forge already handles when removing worktrees",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real8",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "406dce3f199bbfc6b62b90de473c0c5bc1663ce0a51c353dddfb97d6c86e8029",
+    "changed": "3a3422d577065f20c72a536e547961509cf0758c8ee3063d89b3c4eceeedba0e",
+    "commit": "4e8fb957cb8d8e0da1b333657cf04c534859a33e",
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: Owner accepted: the all-platform run of this branch passed every Windows group (run 38642015758); the land-queue test starts from another folder because Windows keeps a running process's starting folder open, which Forge already handles when removing worktrees",
+        "finding": 1
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. `OWN_REVIEWS` still appends to `review-starts.jsonl` without the new lock-safe helper. The land test starts two closes concurrently, and `_in_close` requires both review-start records. Concurrent Windows append handles can overwrite a record, leaving the test intermittently failing despite the supplied green run.",
+        "file": "tests/test_queue_land_all.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 146,
+        "priority": "P1",
+        "title": "Not done: Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real8",
+        "work": 1
+      }
+    ],
+    "id": "8b70632f-679e-498b-b07b-6192640b0fcc",
+    "status": "clean"
+  },
+  "round": 3,
+  "settled_areas": [
+    "tests/test_queue_land_all.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T14:50:18.085042+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T20:09:37.179337+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T22:13:16.584311+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T02:07:35.342120+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-15T02:07:35.350524+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "tests/test_queue_land_all.py",
+    "reason": "Owner accepted: the all-platform run of this branch passed every Windows group (run 38642015758); the land-queue test starts from another folder because Windows keeps a running process's starting folder open, which Forge already handles when removing worktrees",
+    "wait_id": "b91e9b9b-4b26-4042-9f84-f8d8a514aab8",
+    "worker_round": 3
+  },
+  "stuck": {
+    "close": "6a6eb4f2-47c9-4fba-a822-a2306630ae1b",
+    "head": "6e3e9b584dd0822ce2608414b6e378688a812cf2",
+    "keys": {
+      "the review finding \"Not done: Every Windows full-suite group passes in an all-platform run of this branch, and each failing test passes on Windows for its real8\" in tests/test_queue_land_all.py": 1
+    },
+    "round": 2
+  },
+  "why": "The nightly full test run fails on Windows in 7 of 8 groups: the blocked-read choice test quotes a Windows path the POSIX way, the land queue test leaves a change busy, and the machine-views speed test counts the wrong number of GitHub calls",
+  "worker": "codex"
+}

@@ -1,0 +1,70 @@
+{
+  "base": "835fb8749d7a32d91cd5b24c27df0f3be7053872",
+  "branch": "fix/honour-review-model",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14ae6-06ad-7333-9c8b-a5c03f81f08c",
+    "head": null,
+    "start": "789170c111586821d2e693b0e42b7e9502621696"
+  },
+  "done_when": "Reviews use the model and effort in forge.toml's [models.review] when set and the review tool's default when not, doctor stops calling the entry ignored, and tests cover a new repo and an adopted earlier-release repo",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/review.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 941,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update obsolete expectations in existing review tests",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4be7dfaa43b0308e91efc9cd5a54bc9f22910551714f9fe578b987a4a037ac90",
+    "changed": "5f848b89483b24c64ce3c1de89ce914dfbac3cd29a03d6fc552cd87263141135",
+    "commit": "20956834bebbf3f19065fb8f2a4506e8f84e89aa",
+    "dismissals": [],
+    "findings": [],
+    "id": "c46b97bb-51cf-45fd-ad55-d823c6bcc084",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T17:25:45.118204+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:35:33.068857+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T18:23:06.221538+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:43:38.252781+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "749cd197-f12d-4b85-8820-e03b750ce583",
+    "head": "24d91dbb9eb46ada9ba3bf7ae6d79d0555771716",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Forge accepts a review model in forge.toml but ignores it, so a repo cannot choose the model or effort its reviews use",
+  "worker": "codex"
+}

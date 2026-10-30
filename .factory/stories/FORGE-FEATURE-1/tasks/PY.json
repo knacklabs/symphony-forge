@@ -1,0 +1,198 @@
+{
+  "allow_large": "The owner allows this story's parts over the line limit, because each part spans an API, the screen and tests",
+  "branch": "task/FORGE-FEATURE-1-PY",
+  "chat": {
+    "approval": "d87b61d57f1123509a4f6eaad642b89b43adac93703229702877cf41663496af",
+    "claude": null,
+    "conversation": "01a17c81-246c-7350-828f-ec1bf96d18c6",
+    "head": null,
+    "start": "a282f7183462bf27dec4955ea18fc0a0d485ecd2"
+  },
+  "known": [
+    {
+      "area": "_schema_source() in src/forge/feature_python.py",
+      "file": "src/forge/feature_python.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 300,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Validate numeric precision and money bounds before writing",
+      "work": 2
+    },
+    {
+      "area": "render_python_contracts() in src/forge/feature_python_contracts.py",
+      "file": "src/forge/feature_python_contracts.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 105,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Align Python sort keys with the shared web renderer",
+      "work": 2
+    },
+    {
+      "area": "render_python_tests() in src/forge/feature_python_tests.py",
+      "file": "src/forge/feature_python_tests.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 325,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Emit Python tests that pass the starter's formatter check",
+      "work": 2
+    },
+    {
+      "area": "_build_python() in src/forge/feature.py",
+      "file": "src/forge/feature.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 304,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the Python table inventory when generating a feature",
+      "work": 2
+    },
+    {
+      "area": "_python_rename() in src/forge/feature_python.py",
+      "file": "src/forge/feature_python.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 64,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve hyphens in generated permission names",
+      "work": 2
+    },
+    {
+      "area": "test_4_the_feature_keeps_history_and_its_tests_pass_at_once() in tests/test_feature_command.py",
+      "file": "tests/test_feature_command.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 545,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python]",
+      "work": 2
+    },
+    {
+      "area": "test_2_the_new_feature_works_like_projects() in tests/test_feature_command.py",
+      "file": "tests/test_feature_command.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 406,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: generated Python API and browser proofs never run in CI",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1c106b30fa16bbd2af5b526f681e2b26ce57b93f92e031bccd9726b0efbfd5e9",
+    "changed": "31b346053469af5527e8567485285dae5d190e47bcf76d58173a6491b372ce86",
+    "commit": "1742ae46a883f8a561ff640cc0fb11b033db4eff",
+    "dismissals": [],
+    "findings": [],
+    "id": "de8fee8c-f819-4868-87b4-d098073c1001",
+    "status": "clean"
+  },
+  "round": 19,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T08:36:21.945925+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T09:41:00.426207+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T09:59:53.596388+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T10:19:32.092257+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T10:31:03.193900+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T11:18:21.504162+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T11:39:27.143391+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T11:58:54.029598+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:35:53.328127+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T13:16:20.925159+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T13:48:59.783700+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T14:22:51.383058+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T15:00:16.155180+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T01:27:46.291077+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T01:58:08.065656+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T02:27:10.763517+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T02:30:23.642321+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T03:19:43.684088+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "f6d6d6f4-676c-49b1-af45-c06c272f8d79",
+    "head": "95adf76db258abadeda464f81bfb435c9240f13b",
+    "keys": {},
+    "round": 18
+  },
+  "worker": "codex"
+}

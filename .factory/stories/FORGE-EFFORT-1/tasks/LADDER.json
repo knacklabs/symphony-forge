@@ -1,0 +1,97 @@
+{
+  "branch": "task/FORGE-EFFORT-1-LADDER",
+  "chat": {
+    "approval": "64c3881c88c667b369704b842d343973bdb9da6adde66c963d45ac74a55f1b4e",
+    "claude": null,
+    "conversation": "01a18a0e-1305-7301-903e-824cf7fd7276",
+    "head": null,
+    "start": "fd968420e71b71f7af9246ed8be3af7333ddfb69"
+  },
+  "known": [
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 166,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve in-flight Claude conversations when switching to the SDK",
+      "work": 3
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 187,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Recognize required matrix checks when raising effort",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 193,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_build_rounds_run_as_session_subagents",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2076f3182f9b4d0943192d947b447835f431f01f4ba5877c96b165129ee3c298",
+    "changed": "2ad615d86bda7db305b3db52f5c9d190ba8a7e5fab77bcf6732e43f0b7a5c543",
+    "commit": "2b083edf4bcfc572440707acd4cd090d74ea3279",
+    "dismissals": [],
+    "findings": [],
+    "id": "8cd7ce21-41f5-4b7e-89e6-91783900f9d2",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T23:45:20.927790+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T00:13:48.654410+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T00:19:02.255928+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T00:52:49.769450+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T01:19:20.944862+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T02:04:05.077079+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "34902d4b-e8b3-4b75-b8a6-72d3e706b8d1",
+    "head": "0b441a5896e35ea9a70b298515cc8df9464debf3",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

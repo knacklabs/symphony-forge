@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tPreserve shell state when running checks without selected tests\tFORGE-TESTPLACE-1/CISEL",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 571,
+      "text": "Preserve shell state when running checks without selected tests",
+      "from": "blocking",
+      "item": "FORGE-TESTPLACE-1/CISEL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tSupport detached HEAD before invoking change tests in CI\tFORGE-TESTPLACE-1/CISEL",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 238,
+      "text": "Support detached HEAD before invoking change tests in CI",
+      "from": "blocking",
+      "item": "FORGE-TESTPLACE-1/CISEL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skill.md\tUpdate the remaining documentation test for related-test CI\tFORGE-TESTPLACE-1/CISEL",
+      "kind": "bug",
+      "path": "src/forge/templates/skill.md",
+      "line": 1535,
+      "text": "Update the remaining documentation test for related-test CI",
+      "from": "blocking",
+      "item": "FORGE-TESTPLACE-1/CISEL",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/test-audit/SKILL.md\tThe validation paragraph still says that CI runs the full suite.",
+      "kind": "improve",
+      "path": ".codex/skills/test-audit/SKILL.md",
+      "line": 160,
+      "text": "The validation paragraph still says that CI runs the full suite.",
+      "from": "worker",
+      "item": "FORGE-TESTPLACE-1/CISEL",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

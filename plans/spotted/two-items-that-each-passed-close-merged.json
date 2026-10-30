@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge.py\tRefresh the committed review after merging changes to a reviewed file\ttwo-items-that-each-passed-close-merged",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 94,
+      "text": "Refresh the committed review after merging changes to a reviewed file",
+      "from": "blocking",
+      "item": "two-items-that-each-passed-close-merged",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/merge.py\tRun the retest against the committed tree that will be pushed\ttwo-items-that-each-passed-close-merged",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 87,
+      "text": "Run the retest against the committed tree that will be pushed",
+      "from": "blocking",
+      "item": "two-items-that-each-passed-close-merged",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/merge.py\tNot done: Retest when the default branch advances during tests or CI",
+      "kind": "edge",
+      "path": "src/forge/merge.py",
+      "line": 80,
+      "text": "Not done: Retest when the default branch advances during tests or CI",
+      "from": "review",
+      "item": "two-items-that-each-passed-close-merged",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

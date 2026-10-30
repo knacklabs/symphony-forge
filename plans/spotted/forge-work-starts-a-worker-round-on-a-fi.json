@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_mod_native.py\tNative plugin validation timed out after 120 seconds in CI before the native tests ran.",
+      "kind": "bug",
+      "path": "tests/test_mod_native.py",
+      "line": 28,
+      "text": "Native plugin validation timed out after 120 seconds in CI before the native tests ran.",
+      "from": "worker",
+      "item": "forge-work-starts-a-worker-round-on-a-fi",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_mod_plugin.py\tThe pinned TypeScript command timed out after 90 seconds in CI before the packaged mod registrar assertions ran.",
+      "kind": "bug",
+      "path": "tests/test_mod_plugin.py",
+      "line": 54,
+      "text": "The pinned TypeScript command timed out after 90 seconds in CI before the packaged mod registrar assertions ran.",
+      "from": "worker",
+      "item": "forge-work-starts-a-worker-round-on-a-fi",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

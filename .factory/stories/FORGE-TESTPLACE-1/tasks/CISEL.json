@@ -1,0 +1,109 @@
+{
+  "branch": "task/FORGE-TESTPLACE-1-CISEL",
+  "chat": {
+    "approval": "be1165261ad8a6a7d238bbab779080eb05ad2981ece85f728185164184008de5",
+    "claude": null,
+    "conversation": "01a1724f-18a6-7d81-aa26-2f1fca03e9ee",
+    "head": null,
+    "start": "e3b27368fcfe1ec1a00b251181afa2c6f5fdb5bd"
+  },
+  "known": [
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 238,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Support detached HEAD before invoking change tests in CI",
+      "work": 3
+    },
+    {
+      "area": "pytest_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 571,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve shell state when running checks without selected tests",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 3,
+      "line": 1535,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the remaining documentation test for related-test CI",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e7318a17e733050b2b5325a686d3a26d977b0576cceca707d434e18ba65c785a",
+    "changed": "40521c4c6650afbcc190b3f9f49e6252ad2b63bc4add09cd2a501a818ce01ff9",
+    "commit": "c94bdcfb8a565884eee26b041a1365a516c97a99",
+    "dismissals": [],
+    "findings": [],
+    "id": "49ecadc0-e132-458c-bae6-daefa9a46250",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T09:05:30.246559+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T09:26:38.445548+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T09:39:06.554522+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T09:58:24.324365+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T10:14:25.595990+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T10:34:51.444995+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T10:46:37.299014+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T10:59:25.495002+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T11:18:37.806590+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "982b7a1f-66e9-42f2-a51e-850bfbe96b39",
+    "head": "e63c5241918517044c37408cd07e5fd17bd674f0",
+    "keys": {},
+    "round": 7
+  },
+  "worker": "codex"
+}

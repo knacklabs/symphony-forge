@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Active worker sessions miss the brief update after sync\tworker-no-idle-choice",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 10,
+      "text": "Not done: Active worker sessions miss the brief update after sync",
+      "from": "blocking",
+      "item": "worker-no-idle-choice",
+      "status": "done",
+      "closed_by": "the-check-in-src-forge-templates-design"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Existing worker sessions must receive the delegation invitation after upgrade and sync\tcodex-spawns-subagents-only-when-explici",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 8,
+      "text": "Not done: Existing worker sessions must receive the delegation invitation after upgrade and sync",
+      "from": "blocking",
+      "item": "codex-spawns-subagents-only-when-explici",
+      "status": "done",
+      "closed_by": "the-check-in-src-forge-templates-design"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Resolve conflicting fix-round directions\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 254,
+      "text": "Not done: Resolve conflicting fix-round directions",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "done",
+      "closed_by": "the-check-in-src-forge-templates-design"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief does not end with the reviewer's checklist on resumed rounds\tworker-brief-faster",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 264,
+      "text": "Not done: The worker brief does not end with the reviewer's checklist on resumed rounds",
+      "from": "blocking",
+      "item": "worker-brief-faster",
+      "status": "done",
+      "closed_by": "the-check-in-src-forge-templates-design"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting\tbrief-close-pushes",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 18,
+      "text": "Not done: The worker brief must identify CI as the merge gate and tell workers to commit local proof without waiting",
+      "from": "blocking",
+      "item": "brief-close-pushes",
+      "status": "done",
+      "closed_by": "the-check-in-src-forge-templates-design"
+    },
+    {
+      "key": "bug\tsrc/forge/templates/brief.md\tNot done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base\tworker-fast-tests",
+      "kind": "bug",
+      "path": "src/forge/templates/brief.md",
+      "line": 110,
+      "text": "Not done: Workers are told to run only the change's related tests before they stop: forge.toml's fast_test with {base} as the merge base",
+      "from": "blocking",
+      "item": "worker-fast-tests",
+      "status": "done",
+      "closed_by": "the-check-in-src-forge-templates-design"
+    }
+  ]
+}

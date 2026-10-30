@@ -12,13 +12,14 @@ import pytest
 
 from conftest import ROOT, _install
 from test_setup import _fresh_client
-from test_story import DOC, READER, new_story
+from test_story import DOC, READER, approved_constitution, new_story
+
+pytestmark = pytest.mark.platform
 
 STORY = "FIX-READ-NO-FINDINGS"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("reply, clean", [
+REPLIES = [
     ("6. No findings.\n\nTests were not run (read-only review).", True),
     ("1. No findings.\nTests were not run; runtime behaviour remains unverified.", True),
     ("1. No findings.\nRuntime and visual checks were not run; this was a document-only review.", True),
@@ -53,9 +54,22 @@ STORY = "FIX-READ-NO-FINDINGS"
     ("6. No findings.\nThe required proof is missing.", True),
     ("6. No findings (required proof is missing).", False),
     ("6. No bugs are covered by the proposed regression test.", False),
-])
+]
+
+
+# Windows process startup made the 34 command pairs exceed the 300-second test
+# timeout. Keep every reply, but bound each Windows case to six pairs.
+_NEW_BATCHES = [REPLIES[index:index + 6] for index in range(0, len(REPLIES), 6)] \
+    if sys.platform == "win32" else [REPLIES]
+
+
+@pytest.mark.parametrize("previous,replies", [
+    pytest.param(False, replies, id="new-client" if len(_NEW_BATCHES) == 1 else f"new-client-{index + 1}")
+    for index, replies in enumerate(_NEW_BATCHES)
+] + [pytest.param(True, [REPLIES[index] for index in (0, 20, 21)], id="earlier-adoption")])
+@pytest.mark.timeout(300)
 def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
-        repo, gh, tmp_path, previous, reply, clean):
+        repo, gh, tmp_path, previous, replies):
     if previous:
         shutil.copytree(ROOT / "tests/fixtures/adopted-v1.2.2/client", repo.path,
                         dirs_exist_ok=True)
@@ -73,32 +87,42 @@ def test_1_read_accepts_only_no_findings_and_next_needs_no_disposition(
     repo.write("forge.toml", config)
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": "SHOP"}]}))
+    # The parser has no adoption branch; adoption replays passing, mixed and missing-marker replies.
+    keys = [f"SHOP-{index}" for index in range(len(replies))]
+    repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
     repo.git("add", "-A")
     # Land fixture setup before any active item, as the upgrade tests do.
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "commit", "-qm", "Update Forge")
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/reader-guidance")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
-    (repo.bin / "claude-says.md").write_text(reply, encoding="utf-8")
-    shop = new_story(repo, "SHOP")
-    (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
-    read = repo.forge("read", "SHOP")
-    assert read.returncode == 0, read.stdout + read.stderr
-    prompt = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
-    notes = (shop / "plans/SHOP.read.md").read_text("utf-8")
-    next_step = repo.forge("next")
-    assert next_step.returncode == 0, next_step.stdout + next_step.stderr
-    if clean:
-        assert "passed: yes\n" in notes
-        assert "found nothing" in read.stdout
-        assert "disposition" not in next_step.stdout
-        assert "round 1 of its cold read had findings" not in next_step.stdout
-        assert "forge read SHOP" not in next_step.stdout
-        assert repo.git("status", "--porcelain", cwd=shop) == ""
-    else:
-        assert "passed: no\n" in notes
-        assert "give every blocking finding a disposition" in read.stdout
-        assert "disposition" in next_step.stdout
-    assert "write exactly `No findings.` and nothing else" in " ".join(prompt.split())
+    for key, (reply, clean) in zip(keys, replies):
+        (repo.bin / "claude-says.md").write_text(reply, encoding="utf-8")
+        shop = new_story(repo, key)
+        (shop / f"plans/{key}.md").write_text(DOC, encoding="utf-8")
+        read = repo.forge("read", key)
+        assert read.returncode == 0, read.stdout + read.stderr
+        prompt = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])["prompt"]
+        notes = (shop / f"plans/{key}.read.md").read_text("utf-8")
+        next_step = repo.forge("next")
+        assert next_step.returncode == 0, next_step.stdout + next_step.stderr
+        read_steps = [line for line in next_step.stdout.splitlines()
+                      if line.endswith(f"forge read {key}")]
+        if clean:
+            assert "passed: yes\n" in notes
+            assert "found nothing" in read.stdout
+            assert not read_steps, next_step.stdout
+            assert f"show plans/{key}.md" in next_step.stdout
+            assert repo.git("status", "--porcelain", cwd=shop) == ""
+        else:
+            assert "passed: no\n" in notes
+            assert "give every blocking finding a disposition" in read.stdout
+            assert len(read_steps) == 1, next_step.stdout
+            assert f"in plans/{key}.read.md a disposition" in read_steps[0]
+        assert "write exactly `No findings.` and nothing else" in " ".join(prompt.split())
+        # Keep next's inventory to this row instead of re-reading every earlier story.
+        repo.git("worktree", "remove", "--force", str(shop))
+        repo.git("branch", "-D", f"story/{key}")
+        repo.git("push", "-q", "origin", "--delete", f"story/{key}")

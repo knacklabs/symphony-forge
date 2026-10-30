@@ -2,16 +2,16 @@
 from __future__ import annotations
 
 import json
-import re
-from html.parser import HTMLParser
 
-from test_story import claude_plan, hook, ready, setup, worktree
+from test_story import DESIGN_TREE, claude_plan, hook, ready, setup, worktree
 
 DOC = """# Shoppers can save a basket
 
 ## What changes for you
 
 Shoppers can save a basket and come back to it later.
+
+Design: docs/design/baskets/ (<design tree>)
 
 ## Why
 
@@ -39,32 +39,13 @@ Risks: none
 
 ## Notes
 """
-IDS = ("SHOP", "WISH", "SAVE", "SHOW", "SHARE", "shop-done", "upgrade-forge", "readme-greets")
+DOC = DOC.replace("<design tree>", DESIGN_TREE)
 
 
-class _Text(HTMLParser):
-    """Painted words, excluding styles and SVG accessibility metadata."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.words: list[str] = []
-        self.hidden = 0
-
-    def handle_starttag(self, tag, attrs):
-        self.hidden += tag in ("style", "title", "desc")
-
-    def handle_endtag(self, tag):
-        self.hidden -= tag in ("style", "title", "desc")
-
-    def handle_data(self, data):
-        if not self.hidden:
-            self.words.append(data)
-
-
-def seen(path) -> str:
-    parser = _Text()
-    parser.feed(path.read_text("utf-8"))
-    return " ".join(" ".join(parser.words).split())
+def facts(path) -> dict:
+    """Every item and part in the board's facts that `forge board --out` writes, by its key."""
+    items = json.loads(path.read_text("utf-8"))["items"]
+    return {row["id"]: row for item in items for row in (item, *item["children"])}
 
 
 def pr(branch, title, summary, merged, checks, files):
@@ -164,50 +145,32 @@ def test_26_board(repo, gh, claude_payload, monkeypatch):
     ])
     gh.respond("pr", "list", stdout=listing)
 
-    # The board, a week later: every story in plain English.
-    monkeypatch.setenv("FORGE_NOW", "2026-09-22T10:00:00+00:00")
-    made = repo.forge("board")
+    # The board's facts, a week later: every story, fix and part with its state and its people.
+    page = repo.path / ".git" / "forge" / "board.json"
+    made = repo.forge("board", "--out", str(page))
     assert made.returncode == 0, made.stderr
-    page = repo.path / ".git" / "forge" / "board.html"
     assert made.stdout == f"Wrote the board to {page}\n"
-    text = seen(page)
-    # Every story and fix, its state and its people; finished work sits in the done fold.
-    for line in (
-            "Shoppers can save a basket SHOP Story Done Finished on 18 September 2026",
-            "Started by Forge Test. Approved by Forge Test.",
-            "Save a basket Part Done Finished on 14 September 2026",
-            "Show when it was saved Part Done Finished on 15 September 2026",
-            "Share a basket Part Done Finished on 18 September 2026",
-            "Shoppers can keep a wish list WISH Story No plan yet Not started yet",
-            "Readme greets new readers Fix In progress",
-            "Upgrade Forge to the newest version Fix Done Finished on 16 September 2026",
-            "How the factory is doing: a part usually takes 1 hour 50 minutes from its start to ready "
-            "(target: under 2 hours); a story usually needs a person 3 times (target: 3 times or fewer); "
-            "1 of the last 5 finished changes fixed Forge itself (target: under 10%)."):
-        assert line in text, f"{line!r} is not on the page:\n{text}"
-    # Plain English: no IDs, hashes, file paths or jargon, and nothing but a pull request's summary.
-    # The one exception is a story's own key, small beside its title.
-    unkeyed = page.with_name("board-unkeyed.html")
-    unkeyed.write_text(re.sub(r'<span class="key">[^<]*</span>', "", page.read_text("utf-8")), "utf-8")
-    for word in IDS:
-        assert not re.search(rf"(?<![\w-]){re.escape(word)}(?![\w-])", seen(unkeyed)), word
-    assert not re.search(r"\b[0-9a-f]{7,}\b", page.read_text("utf-8")), "a hash is on the page"
-    assert not re.search(r"\w/\w|\.(py|md|json|toml|txt)\b", text), "a file path is on the page"
-    assert not re.search(r"\b(P0|P1|CI|PR|commit|branch|worktree)\b", text, re.I), text
-    # Only Forge's own work is on the board; other pull requests show only in the around-Forge list.
-    around = re.sub(r'<div class="around">.*?</div>', "", page.read_text("utf-8"), flags=re.S)
-    assert "bump" not in re.sub(r"<[^>]+>", " ", around).lower()
+    expected = {
+        "SHOP": ("Shoppers can save a basket", "Finished on 18 September 2026"),
+        "SHOP/SAVE": ("Save a basket", "Finished on 14 September 2026"),
+        "SHOP/SHOW": ("Show when it was saved", "Finished on 15 September 2026"),
+        "SHOP/SHARE": ("Share a basket", "Finished on 18 September 2026"),
+        "WISH": ("Shoppers can keep a wish list", "Not started yet"),
+        "readme-greets": ("Readme greets new readers", "In progress"),
+        "upgrade-forge": ("Upgrade Forge to the newest version", "Finished on 16 September 2026")}
+    rows = facts(page)
+    # Only Forge's own work is on the board: the other pull request is no item.
+    assert {key: (row["title"], row["status"]) for key, row in rows.items()} == expected
+    assert (rows["SHOP"]["started_by"], rows["SHOP"]["approved_by"]) == ("Forge Test", "Forge Test")
 
-    # Without gh: the state and its dates, and a plain word that the finished work list is missing.
+    # Without gh: the state and its dates are still there.
     gh.respond("pr", "list", exit=1)
     (repo.path / ".git/forge/prs-cache.json").unlink()  # the last minute's lists have expired
-    out = repo.path.parent / "board-offline.html"
+    out = repo.path.parent / "board-offline.json"
     assert repo.forge("board", "--out", str(out)).returncode == 0
-    offline = seen(out)
-    assert "GitHub couldn't be reached, so the list of finished work isn't available." in offline
-    for line in ("Shoppers can save a basket SHOP Story Done Finished on 18 September 2026",
-                 "Share a basket Part Done Finished on 18 September 2026"):
-        assert line in offline, f"{line!r} is not on the page:\n{offline}"
+    offline = facts(out)
+    for key in ("SHOP", "SHOP/SHARE"):
+        assert offline[key]["status"] == "Finished on 18 September 2026", offline[key]
 
     # forge next shows the three numbers in one line, only from the check date on.
     assert "How the factory is doing" not in repo.forge("next").stdout

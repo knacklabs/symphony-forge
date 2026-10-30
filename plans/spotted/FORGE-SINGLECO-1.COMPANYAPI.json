@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/api/src/setup-company.ts\tLoad setup credentials from the documented .env file\tFORGE-SINGLECO-1/COMPANYAPI",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/api/src/setup-company.ts",
+      "line": 13,
+      "text": "Load setup credentials from the documented .env file",
+      "from": "blocking",
+      "item": "FORGE-SINGLECO-1/COMPANYAPI",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_one_company.py\tGate: run the one-company proof tests in live CI\tFORGE-SINGLECO-1/COMPANYAPI",
+      "kind": "bug",
+      "path": "tests/test_one_company.py",
+      "line": 26,
+      "text": "Gate: run the one-company proof tests in live CI",
+      "from": "blocking",
+      "item": "FORGE-SINGLECO-1/COMPANYAPI",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

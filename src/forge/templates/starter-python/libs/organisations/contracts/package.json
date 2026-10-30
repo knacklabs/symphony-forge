@@ -1,0 +1,17 @@
+{
+  "name": "@app/organisations-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@app/shared-api-types": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "@app/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+}

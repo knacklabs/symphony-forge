@@ -1,0 +1,100 @@
+{
+  "base": "241e3e8c050e58429afff4eaf379d3798323ff46",
+  "branch": "fix/windows-rerun-flakes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13ead-bbc2-7dc2-a328-20c3cd9f5f03",
+    "head": null,
+    "start": "8d75fbf1733bdd15b9ffe76560526ad19e4ac9ab"
+  },
+  "done_when": "The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a test that fails twice still fails the run",
+  "flagged": [
+    "pyproject.toml",
+    "src/forge/prcheck.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "pyproject.toml",
+      "file": "pyproject.toml",
+      "gain": 3,
+      "harm": 3,
+      "line": 13,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The Windows full-suite job reruns a failed test once before failing it, the known slow tests get a longer Windows timeout, and a B",
+      "work": 1
+    },
+    {
+      "area": "ships() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 201,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Windows client checks break configured PowerShell test commands",
+      "work": 2
+    },
+    {
+      "area": "pyproject.toml",
+      "file": "pyproject.toml",
+      "gain": 3,
+      "harm": 3,
+      "line": 13,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Windows full-suite retries leave transient teardown errors red",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "21f112d1993332421cdbbcf5663c685d82449eacfbf525b3b7207b2823e8fabd",
+    "changed": "e7d490b18299e7e73d64dfe2cf6b48b3e62d28b088855e12f9960b6d32e46d5b",
+    "commit": "3115b5ee29c2fc51c9b647babee56f809f8ba140",
+    "dismissals": [],
+    "findings": [],
+    "id": "b7231029-3250-4c19-a000-b49a9413917b",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-15T08:28:44.831530+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T10:10:16.726807+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T10:45:03.498934+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T19:43:24.157751+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T20:08:39.731845+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "99963f9a-eeac-41b2-b79c-a79af6717c19",
+    "head": "1729d4a9ab9c5ac0c490d5539cfaf2c3461ecac0",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Windows full-suite runs fail a different slow test each run (timeouts, a flaky retry), so the nightly is red even when nothing is broken",
+  "worker": "codex"
+}

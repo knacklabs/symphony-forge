@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/time_records.py\tNot done: Each round keeps its full duration after compaction\tFORGE-BOARD-3/ROUNDS",
+      "kind": "bug",
+      "path": "src/forge/time_records.py",
+      "line": 367,
+      "text": "Not done: Each round keeps its full duration after compaction",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/ROUNDS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

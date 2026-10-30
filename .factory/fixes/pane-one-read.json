@@ -1,0 +1,46 @@
+{
+  "base": "e8168963a12c1060de16e797d56e8afc9778d347",
+  "branch": "fix/pane-one-read",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14a3d-8fab-7823-9708-59a008d619a4",
+    "head": null,
+    "start": "0b31b2e2c68eaa54330d5d277610f934f0c1db8f"
+  },
+  "done_when": "The pane runs one forge next --json per refresh and reads the board rows from it, and a test proves one refresh starts one read command",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c1df888829d0de1b85c1b4069bd2ca24aa27e056b0fbc2acb335463fb5cfa96a",
+    "changed": "26b6c6f435c6e9c3497c3f097fe763bb98f870b87d71c23b6487c93b17af8d21",
+    "commit": "2707949d22fc3f02e91b7bfa197bee13f5c4f260",
+    "dismissals": [],
+    "findings": [],
+    "id": "4f4d1f9c-20c1-433e-9a3b-2397349e2b7d",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T14:21:20.956533+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T14:47:21.368804+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "8c09ab16ee62630c55dde57f951c5eda7ca98fe8",
+    "keys": {},
+    "round": null
+  },
+  "why": "The Claude Code pane runs forge board --json and forge next --json together every refresh, though next already carries the board's rows, so it does the work twice",
+  "worker": "codex"
+}

@@ -10,8 +10,10 @@ import pytest
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_worker import install_claude
-from test_upgrade_command import unsynced_up  # noqa: F401
+from test_upgrade_command import Upgrade, unsynced_up  # noqa: F401
 from test_story import DOC, new_story, setup
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-MOD-1-RUNS"
 
@@ -43,6 +45,7 @@ def configure(env):
     config = repo.path / 'forge.toml'
     command = f'"{sys.executable}" -c "print(123)"'
     config.write_text(config.read_text('utf-8') +
+                      'test_place = "local"\n'
                       'models.lite = { model = "sonnet", effort = "medium" }\n'
                       f'test = {json.dumps(command)}\nfast_test = {json.dumps(command)}\n', 'utf-8')
     repo.git('add', 'forge.toml')
@@ -69,7 +72,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
     repo = env.repo
     if family == 'claude':
         configure(env)
-        require_worker_environment(repo.bin / 'claude')
+        require_worker_environment(repo.bin / 'claude_agent_sdk' / '__init__.py')
         item, where = env.start_fix()
     else:
         request.getfixturevalue("claude_session")
@@ -84,9 +87,14 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
         item = 'BOARD/PAGE'
         config = where / 'forge.toml'
         command = f'"{sys.executable}" -c "print(123)"'
-        env.commit(where, 'forge.toml', 'checks = ["tests", "forge-pr-check"]\n'
+        settings = "\n".join(line for line in config.read_text('utf-8').splitlines()
+                               if line.partition("=")[0].strip() != "test_place")
+        env.commit(where, 'forge.toml', 'test_place = "local"\n'
+                   'checks = ["tests", "forge-pr-check"]\n'
                    + f'test = {json.dumps(command)}\nfast_test = {json.dumps(command)}\n'
-                   + config.read_text('utf-8'))
+                   + settings + "\n")
+        # Coordinator test settings belong on main, not to the timing task's diff.
+        Upgrade(env, env.tmp).on_main('forge.toml', config.read_text('utf-8'))
     require_worker_environment(env.queue.parent / 'autoreview' / 'scripts' / 'autoreview')
     for number in (1, 2):
         # A commit nudge finishes this round, even though Codex logs another turn.
@@ -101,8 +109,7 @@ def test_2_each_round_records_worker_tests_review_and_ci_times(env, monkeypatch,
     timings = records(repo, 'timings.jsonl')
     assert [(row['round'], row['step'], row['outcome']) for row in timings] == [
         (number, step, outcome) for number in (1, 2) for step, outcome in
-        [('worker round', 'completed'), ('test run', 'passed'), ('review', 'clean'),
-         ('CI wait', 'passed')]]
+        [('worker round', 'completed'), ('test run', 'passed'), ('review', 'clean')]]
     for row in timings:
         assert row['item'] == item
         assert row['seconds'] > 0
@@ -164,10 +171,9 @@ def _repeated_worker_questions(env, monkeypatch, request, family):
         monkeypatch.setenv('STUB_SAY', '\n\n' + question)
     else:
         configure(env)
-        stub = repo.bin / 'claude'
+        stub = repo.bin / 'claude_agent_sdk' / '__init__.py'
         require_worker_environment(stub)
-        stub.write_text(stub.read_text('utf-8').replace(
-            'print("stub claude: built it")', f'print("\\n\\n" + {question!r})'), 'utf-8')
+        monkeypatch.setenv('STUB_CLAUDE_RESULT', '\n\n' + question)
         item, _ = env.start_fix()
     for args in [(), ('--note', 'Yes, use it.')]:
         worked = repo.forge('work', item, *args)
@@ -235,6 +241,7 @@ def _failures_keep_run_end_occurrences(env, monkeypatch, failure):
             config = where / 'forge.toml'
             env.commit(where, 'forge.toml', config.read_text('utf-8').replace(
                 'print(123)', 'raise SystemExit(1)'))
+            Upgrade(env, env.tmp).on_main('forge.toml', config.read_text('utf-8'))
             step = 'test run'
         else:
             from test_close import FAILED
@@ -334,13 +341,15 @@ def _worker_questions_survive_a_commit_nudge(env, monkeypatch, request, family, 
                 'models.design.claude = { model = "sonnet", effort = "medium" }\n')
         else:
             item, where = env.start_fix()
-        stub = repo.bin / 'claude'
-        source = stub.read_text('utf-8').replace('print("stub claude: built it")',
-            f'print("\\n\\n" + ({nudged!r} if "Your turn ended" in brief else {initial!r}))')
+        stub = repo.bin / 'claude_agent_sdk' / '__init__.py'
+        source = stub.read_text('utf-8').replace('    yield ResultMessage(session_id=session',
+            f'    os.environ["STUB_CLAUDE_RESULT"] = "\\n\\n" + '
+            f'({nudged!r} if "Your turn ended" in prompt else {initial!r})\n'
+            '    yield ResultMessage(session_id=session')
         monkeypatch.setenv('STUB_CLAUDE_COMMIT_FROM', '2')
         if question_turn == 'failed':
-            source = source.replace('sys.exit(int(os.environ.get("STUB_CLAUDE_EXIT", "0")))',
-                                    'sys.exit(3 if "Your turn ended" in brief else 0)')
+            source = source.replace('status = int(os.environ.get("STUB_CLAUDE_EXIT", "0"))',
+                                    'status = 3 if "Your turn ended" in prompt else 0')
     stub.write_text(source, 'utf-8')
     (where / 'pending.py').write_text('print(1)\n', 'utf-8')
     worked = repo.forge('work', item)
@@ -370,14 +379,16 @@ def _signoff_review_results_have_fresh_ids(repo, tmp_path, monkeypatch):
     from test_close import finding, report, FAILED
     fix, answers, queue = _client(repo, tmp_path / 'signoff', monkeypatch)
     _decision(fix, answers)
-    for outcome, reply in [('blocked', {'say': SOL_HIGH, 'report': report(
+    clean_check = {'say': SOL_HIGH, 'report': report()}
+    for index, (outcome, reply) in enumerate([('blocked', {'say': SOL_HIGH, 'report': report(
             finding('P1', 'Prototype fails'))}), ('failed', FAILED),
-            ('clean', {'say': SOL_HIGH, 'report': report()})]:
-        queue.write_text(json.dumps([reply]), 'utf-8')
+            ('clean', {'say': SOL_HIGH, 'report': report()})]):
+        answers_for_run = [clean_check, reply] if index == 0 else [reply]
+        queue.write_text(json.dumps(answers_for_run), 'utf-8')
         done = repo.forge('decision', 'accept', 'client-signoff', '--by', 'Ravi', cwd=fix)
         assert (done.returncode == 0) == (outcome == 'clean'), done.stdout + done.stderr
         results = [row for row in records(repo, 'events.jsonl')
-                   if row['event'] == 'review result']
+                   if row['event'] == 'review result' and row['item'] == 'client-signoff']
         assert results[-1]['outcome'] == outcome
         assert results[-1]['item'] == 'client-signoff'
     assert len(results) == 3 and len({row['id'] for row in results}) == 3
@@ -431,6 +442,7 @@ def _previously_adopted_client_records_runs_after_upgrade(unsynced_up, monkeypat
     assert len({row['id'] for row in events}) == len(events)
     timings = records(repo, 'timings.jsonl')
     assert any(row['step'] == 'worker round' and row['round'] == 1 for row in timings)
-    assert any(row['step'] == 'test run' and row['outcome'] == 'passed' for row in timings)
-    assert {'test run', 'review', 'CI wait', 'worker round'} <= {row['step'] for row in timings}
+    assert any(row['step'] == 'CI wait' and row['outcome'] == 'passed' for row in timings)
+    assert not any(row['step'] == 'test run' for row in timings)
+    assert {'review', 'CI wait', 'worker round'} <= {row['step'] for row in timings}
     assert all(row['seconds'] > 0 for row in timings)

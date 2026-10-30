@@ -1,0 +1,76 @@
+{
+  "base": "823f647c36f3a27720d771acff0ea2d63132d8a9",
+  "branch": "fix/signoff-skips-screenshots",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18c21-a493-7dd3-8aeb-3ac90df498bf",
+    "head": null,
+    "start": "4c5ca90ba46cdc696c0bd976568c199cc5359e62"
+  },
+  "done_when": "The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "signoff() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 1137,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "072ee3bf1e5d6d9392ae324fd0e7f922b04e3d1de77933bada40da2ee4761fb4",
+    "changed": "8bf829059b651c1db52e19feed4ea9157be386ed530ae1f5acd526f36ec667b9",
+    "commit": "90a80d54f0ae62e822edc0eddbc6ef17b100e474",
+    "dismissals": [],
+    "findings": [],
+    "id": "53700593-ed71-4857-a866-1a86a9642fcd",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T09:25:59.979540+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T09:29:50.935788+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T09:38:08.580078+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T10:46:55.414786+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-30T09:29:50.947204+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/review.py",
+    "reason": "One more round: also leave image files out of the earlier sign-off copy that later attempts compare with, so screenshots never show as deleted",
+    "wait_id": "8481ef60-b1cd-4715-920a-de0f2f414369",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "37cedd37-4959-4e26-b1a8-2c106818a36c",
+    "head": "2f3948af26493fdc9fceb3c9e3603dedae41a1dc",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The strict client sign-off review sends every screenshot in the repo with the code, which makes the review many parts longer, although the canvas check already compares the screens",
+  "worker": "codex"
+}

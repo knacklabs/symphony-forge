@@ -40,9 +40,14 @@ def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_p
     before = tomllib.loads(old)
     installed = repo.forge("--version").stdout.split()[-1]
     assert before["version"] != installed
-    started = repo.forge("fix", "start", "Upgrade the client lanes", "--done", "Both lanes work")
-    assert started.returncode == 0, started.stdout + started.stderr
-    upgrade_folder = worktree(repo, "fix/upgrade-the-client-lanes")
+    # Prepare the upgrade with Git so the current command never runs under the old pin.
+    upgrade_folder = repo.path.parent / "upgrade-the-client-lanes"
+    repo.git("worktree", "add", "-q", "-b", "fix/upgrade-the-client-lanes", str(upgrade_folder))
+    record = upgrade_folder / ".factory/fixes/upgrade-the-client-lanes.json"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    record.write_text(json.dumps({
+        "kind": "fix", "branch": "fix/upgrade-the-client-lanes", "why": "Upgrade the client lanes",
+        "done_when": "Both lanes work", "status": "started"}), "utf-8")
     path = upgrade_folder / "forge.toml"
     upgraded = old.replace('version = "v1.2.5"', f'version = "{installed}"')
     path.write_text(upgraded, "utf-8")
@@ -61,7 +66,7 @@ def check_previous_release_upgrade_keeps_settings_and_runs_both_lanes(env, tmp_p
     path = repo.path / "forge.toml"
     machine_cores(repo, 8)
     doctor = repo.forge("doctor")
-    assert "This machine: 8 cores, so 4 agents at once and 2 test runs at once, each on 4 cores." in doctor.stdout
+    assert "This machine: 8 cores, so 4 agents at once and 4 test processes shared by all runs." in doctor.stdout
     item, name = make_work(repo, "Correct the client typo")
     where = worktree(repo, "fix/" + item)
     hold_agents(env)

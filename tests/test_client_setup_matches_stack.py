@@ -25,9 +25,10 @@ def test_1_init_only_gives_node_repos_node_deploy_files(repo, gh, tmp_path, mark
     if marker:
         (client / marker).write_text("{}\n" if node else "", encoding="utf-8")
     gh.respond("api", stdout="{}")
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
-    for name in ("Dockerfile", ".dockerignore"):
+    # Init ships the services list only with its own Node Dockerfile.
+    for name in ("Dockerfile", ".dockerignore", "services.toml"):
         assert (client / name).exists() == node
     if node:
         assert "FROM node:" in (client / "Dockerfile").read_text()

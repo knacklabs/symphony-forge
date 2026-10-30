@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tA queued CI failure is delivered after a rerun starts within the cache window\tstop-clears-lock",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 96,
+      "text": "A queued CI failure is delivered after a rerun starts within the cache window",
+      "from": "blocking",
+      "item": "stop-clears-lock",
+      "status": "done",
+      "closed_by": "dismissed"
+    }
+  ]
+}

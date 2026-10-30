@@ -1,0 +1,34 @@
+{
+  "approval": {
+    "at": "2026-10-27T09:23:20.561937+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01EPsyHXb8XLP3jYAxNrW5Vo",
+    "hash": "eee40133eb4349971e36ff140f0a50244bfb0ab070555cde5ff09f8b05436fe3",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-SIGNOFF-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-27T08:50:11.283700+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T09:14:04.889151+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-27T09:22:05.176442+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-27T09:23:20.562160+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Client apps reach sign-off through five guided steps and one list of open decisions",
+  "touches": 1
+}

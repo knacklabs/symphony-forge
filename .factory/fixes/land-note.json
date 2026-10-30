@@ -1,0 +1,58 @@
+{
+  "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
+  "branch": "fix/land-note",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a157e4-8db3-78c0-b533-e15d83fd8a94",
+    "head": null,
+    "start": "702230d47d52f88a4dfab18abcd64912b1c753ca"
+  },
+  "done_when": "forge land <item> --note \"<text>\" passes the note to the round it starts, the same way forge work --note does, on a new repo and on an earlier-adopted repo; the coordinator guide says to queue several items by running forge land for each in the background, because Forge admits their rounds by machine capacity",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d4d4ca057f974e6abee2387651e477ec1addb3940b550fda0c69bdaa7641e055",
+    "changed": "da9fad62cfd7fd51fa6d1ed580121b3d703c06cf44b861cc04b9265527cd7a7c",
+    "commit": "4c94632d058c332cb66d9966559471054b49648a",
+    "dismissals": [],
+    "findings": [],
+    "id": "c0defd2c-220f-419a-8c91-6c12663f3c33",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T05:59:00.845581+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T06:09:36.921292+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:27:54.441692+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:51:45.638070+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:11:00.422590+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9c0b9c84-7fd7-4297-8bb7-4261d831c576",
+    "head": "bc41d1b08de8b5d45ccb7ade069d51326b1648f8",
+    "keys": {},
+    "round": 3
+  },
+  "why": "A client coordinator wrote its own shell queues to run rounds one at a time, and parallel queues raced each other; forge land already builds, closes, runs fix rounds and merges with each round waiting for a machine place, but it takes no note for the first round, so coordinators chain forge work --note and forge land by hand (issue 968)",
+  "worker": "codex"
+}

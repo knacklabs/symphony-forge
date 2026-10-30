@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\t.claude/skills/forge/standards.md\tThe checked-in standards miss source-template guidance on abstraction layers.",
+      "kind": "bug",
+      "path": ".claude/skills/forge/standards.md",
+      "line": 83,
+      "text": "The checked-in standards miss source-template guidance on abstraction layers.",
+      "from": "worker",
+      "item": "FORGE-BAR-1/BARRULES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.codex/skills/forge/standards.md\tThe checked-in standards miss source-template guidance on abstraction layers.",
+      "kind": "bug",
+      "path": ".codex/skills/forge/standards.md",
+      "line": 83,
+      "text": "The checked-in standards miss source-template guidance on abstraction layers.",
+      "from": "worker",
+      "item": "FORGE-BAR-1/BARRULES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

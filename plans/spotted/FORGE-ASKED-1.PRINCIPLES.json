@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/templates/cold-read.md\tNot done: Missing checks promised by Done-when still hold the work",
+      "kind": "edge",
+      "path": "src/forge/templates/cold-read.md",
+      "line": 117,
+      "text": "Not done: Missing checks promised by Done-when still hold the work",
+      "from": "review",
+      "item": "FORGE-ASKED-1/PRINCIPLES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

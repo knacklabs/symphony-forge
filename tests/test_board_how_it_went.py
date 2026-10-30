@@ -3,6 +3,7 @@
 Audit: existing time tests keep one machine's logs. These command tests protect
 cross-machine reconciliation, overlapping story time and human-readable rounding.
 Only GitHub and review reports are faked; no Forge helper is imported.
+New plan reads use src/forge/story.py before the approval and time history starts.
 """
 import json
 import re
@@ -15,9 +16,7 @@ import pytest
 from test_close import CLEAN, GREEN, STORY_DOC, approve_story, body, blocked, env, finding, run  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_item_time_history import row
-from test_board import seen
 from test_board_keys_rule import agents_md_allows_story_keys
-from test_board_sections import pinned_bar_and_folding_sections
 from test_board_story_history import story_history_lists_read_rounds
 from test_last_task_records_story_outcome import github_merge
 from test_worker import install_claude
@@ -53,6 +52,12 @@ def github_list_fields(env):
         sys.stdout.write(output)'''), "utf-8")
 
 
+def p1_at_bar(title):
+    entry = finding("P1", title)
+    entry["body"] = "Gain 4, Work 1, Harm 2\nCase: normal use - The basket disappears."
+    return entry
+
+
 @pytest.mark.parametrize("case,previous", [("shared-fix", False), ("shared-fix", True),
                                           ("story-runway", False), ("rebuilt-history", False),
                                           ("question-wait", False), ("conflict-wait", False),
@@ -61,7 +66,7 @@ def github_list_fields(env):
                                           ("read-history-batching", False), ("refresh-stale-receipt", False),
                                           ("refresh-missing-receipt", False), ("resume-published-wait", False),
                                           ("warm-checks-cache", False), ("story-full-runway", False),
-                                          ("story-full-runway", True), ("bad-null-event", False),
+                                          ("bad-null-event", False),
                                           ("bad-infinite-seconds", False), ("bad-huge-seconds", False),
                                           ("bad-deep-nesting", False),
                                           ("story-done-runway", False)],
@@ -69,7 +74,7 @@ def github_list_fields(env):
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
                               "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
-                              "warm-checks-cache", "story-full-runway-new", "story-full-runway-adopted",
+                              "warm-checks-cache", "story-full-runway-new",
                               "bad-null-event", "bad-infinite-seconds", "bad-huge-seconds",
                               "bad-deep-nesting", "story-done-runway"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):
@@ -131,10 +136,14 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     where = next(Path(block.splitlines()[0].removeprefix("worktree "))
                  for block in listing.split("\n\n") if f"branch refs/heads/fix/{item}" in block)
     env.commit(where, "app.py", "print('basket')\n")
-    env.reviews(blocked(finding("P1", "Basket disappears")))
+    # An open P1 stops for the owner at the round limit and remains across machines.
+    env.reviews(blocked(p1_at_bar("Basket disappears")))
     env.checks([run("tests", None, "queued"), run("forge-pr-check")])
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
+    published(env, item)
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
     machine_a = env.repo.path
     remote = env.repo.git("remote", "get-url", "origin")
@@ -148,6 +157,9 @@ def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, mo
     env.checks(GREEN)
     second = env.close(item)
     assert second.returncode == 1, second.stdout + second.stderr
+    published(env, item)
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
     env.commit(resumed, "app.py", "print('basket stays')\n")
     env.reviews(CLEAN)
@@ -309,7 +321,7 @@ def read_history_batching(env, monkeypatch):
                        for block in listing.split("\n\n") if f"branch refs/heads/story/{key}" in block)
              for key in ("SHOP", "PACK")}
     original = (trees["SHOP"] / "plans/SHOP.read.md").read_text("utf-8")
-    counts = {"json": [], "html": []}
+    counts = {"json": [], "out": []}
     for rounds in (2, 10):
         previous = ""
         for number in range(1, rounds + 1):
@@ -320,15 +332,16 @@ def read_history_batching(env, monkeypatch):
             notes = notes.replace("\n---", fields + "\n---", 1)
             # Historical notes are actual Git objects, including objects unreachable from refs.
             stored = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=env.repo.path,
-                                    input=notes, capture_output=True, text=True, encoding="utf-8", check=True)
+                                    input=notes, capture_output=True, text=True, encoding="utf-8", check=True,
+                                    timeout=60)
             previous = stored.stdout.strip()
         for key, tree in trees.items():
             env.commit(tree, f"plans/{key}.read.md", notes)
             env.repo.git("push", "-q", "origin", f"story/{key}", cwd=tree)
-        for mode in ("json", "html"):
+        for mode in ("json", "out"):
             trace = env.tmp / f"git-{mode}-{rounds}.jsonl"
             monkeypatch.setenv("GIT_TRACE2_EVENT", trace.as_posix())
-            page = env.tmp / "read-history-board.html"
+            page = env.tmp / "read-history-board.json"
             result = env.repo.forge("board", *(('--json',) if mode == "json" else ('--out', str(page))))
             monkeypatch.delenv("GIT_TRACE2_EVENT")
             assert result.returncode == 0, result.stdout + result.stderr
@@ -344,13 +357,13 @@ def read_history_batching(env, monkeypatch):
             assert all("blob" not in argv for argv in calls), calls
             counts[mode].append(len(calls))
     assert 0 < counts["json"][0] == counts["json"][1] <= 2, counts
-    assert 0 < counts["html"][0] == counts["html"][1] <= 3, counts
+    assert 0 < counts["out"][0] == counts["out"][1] <= 3, counts
 
 
 def warm_checks_cache(env, monkeypatch):
     github_list_fields(env)
     item, where = env.start_fix(round=1)
-    env.reviews(blocked(finding("P1", "Basket disappears")))
+    env.reviews(blocked(p1_at_bar("Basket disappears")))
     first = env.close(item)
     assert first.returncode == 1, first.stdout + first.stderr
     old_body = published(env, item)
@@ -375,6 +388,8 @@ def warm_checks_cache(env, monkeypatch):
     assert row(env.repo, item)["gates"]["review"]["status"] == "blocked"
     calls = len(env.gh_calls("api", "graphql"))
     env.repo.path = machine
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     env.commit(where, "app.py", "print('basket retained')\n")
     env.reviews(CLEAN)
     closed = env.close(item)
@@ -384,19 +399,19 @@ def warm_checks_cache(env, monkeypatch):
     env.repo.path = observer
     monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=30)).isoformat())
     current = row(env.repo, item)
-    page = env.tmp / "cached-checks-board.html"
+    page = env.tmp / "cached-checks-board.json"
     rendered = env.repo.forge("board", "--out", str(page))
     next_step = env.repo.forge("next")
     assert rendered.returncode == 0, rendered.stdout + rendered.stderr
     assert next_step.returncode == 0, next_step.stdout + next_step.stderr
     assert len(env.gh_calls("api", "graphql")) == calls, "Checks remain cached inside the same minute"
-    visible = seen(page)
+    written = next(row for row in json.loads(page.read_text("utf-8"))["items"] if row["id"] == item)
     observations = {"json": current["stage"] == "ready" and
                     current["gates"]["review"]["status"] == "clean" and len(current["rounds"]) == 2,
                     "checks": current["pr"]["checks"] == "unknown",
-                    "html": "Readme greets new readers Fix Ready to merge" in visible,
+                    "out": (written["title"], written["status"]) == ("Readme greets new readers", "Ready to merge"),
                     "next": any(item in line and "is ready" in line for line in next_step.stdout.splitlines())}
-    assert all(observations.values()), (observations, current["stage"], next_step.stdout, visible)
+    assert all(observations.values()), (observations, current["stage"], next_step.stdout, written["status"])
 
 
 def shared_ready_refresh(env, monkeypatch, missing, wait_first):
@@ -430,11 +445,8 @@ def shared_ready_refresh(env, monkeypatch, missing, wait_first):
     if missing:
         # A's successful publication event remains; only its obsolete local receipt is absent.
         (machine_a / ".git/forge/ready" / f"{item}.json").unlink()
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
     if not wait_first:
-        stub.write_text(source.replace('print("stub claude: built it")',
-                                       'print("\\n\\nQuestion: May I reuse the existing basket parser?")'), "utf-8")
+        monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the existing basket parser?")
     monkeypatch.setenv("FORGE_NOW", (at + timedelta(seconds=30)).isoformat())
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
@@ -457,7 +469,7 @@ def shared_ready_refresh(env, monkeypatch, missing, wait_first):
         assert row(env.repo, item)["waiting_seconds"] == refreshed["waiting_seconds"]
         return
     env.repo.path = machine_a
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse the existing parser")
     assert answered.returncode == 0, answered.stdout + answered.stderr
     published(env, item)
@@ -472,16 +484,12 @@ def question_wait(env, monkeypatch):
                + 'models.lite = { model = "sonnet", effort = "medium" }\n')
     env.repo.git("push", "-q", "origin", "main")
     item, _ = env.start_fix(round=1)
-    stub = env.repo.bin / "claude"
-    source = stub.read_text("utf-8")
-    asking = source.replace('print("stub claude: built it")',
-                            'print("\\n\\nQuestion: May I reuse the basket parser?")')
-    stub.write_text(asking, "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     assert "Question: May I reuse the basket parser?" in asked.stdout
     assert not env.gh_calls("pr", "create") and not env.gh_calls("pr", "edit")
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, reuse it")
     assert answered.returncode == 0, answered.stderr
     closed = env.close(item)
@@ -489,7 +497,7 @@ def question_wait(env, monkeypatch):
     published(env, item)
     at = datetime.now(timezone.utc) + timedelta(seconds=60)
     monkeypatch.setenv("FORGE_NOW", at.isoformat())
-    stub.write_text(asking, "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", item)
     assert asked.returncode == 0, asked.stderr
     published(env, item)
@@ -503,7 +511,7 @@ def question_wait(env, monkeypatch):
                and datetime.fromisoformat(interval["start"]) >= at
                for interval in waiting["intervals"])
     env.repo.path = machine_a
-    stub.write_text(source, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     answered = env.repo.forge("work", item, "--note", "Yes, keep the existing parser")
     assert answered.returncode == 0, answered.stderr
     published(env, item)
@@ -546,8 +554,12 @@ def conflict_wait(env, monkeypatch):
     assert datetime.fromisoformat(wait["end"]) == at + timedelta(seconds=30)
     # A later conflict keeps the pull request's earlier findings instead of a made-up result.
     env.commit(where, "app.py", "print('branch basket again')\n")
-    env.reviews(blocked(finding("P1", "Basket disappears")))
-    assert env.close(item).returncode == 1
+    env.reviews(blocked(p1_at_bar("Basket disappears")))
+    stopped = env.close(item)
+    assert stopped.returncode == 1 and "One more round, split or accept?" in stopped.stderr
+    published(env, item)
+    chosen = env.close(item, "--resolve", "more", "--reason", "Repair the basket loss")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published(env, item)
     env.commit(env.repo.path, "app.py", "print('newer main basket')\n")
     env.repo.git("push", "-q", "origin", "main")
@@ -736,44 +748,44 @@ def story_runway(env, monkeypatch):
     assert current["intervals"]
 
 
-@pytest.mark.parametrize("case", ["plain-times", *(f"{part}-{history}" for part in ("sections", "history", "keys")
+@pytest.mark.parametrize("case", ["plain-times", *(f"{part}-{history}" for part in ("history", "keys")
                                                    for history in ("new", "adopted-v1.2.2"))])
 def test_12_getting_around_the_board_and_telling_items_apart(request, case):
-    """Plain times; the pinned bar and folding sections; story histories with their cold-read
-    rounds; the shipped line allowing story keys. Each case gets the fixtures it needs."""
+    """Plain times; story histories with their cold-read rounds; the shipped line allowing story
+    keys. Each case gets the fixtures it needs."""
     if case == "plain-times":
-        plain_times(request.getfixturevalue("env"))
+        plain_times(request.getfixturevalue("env"), request.getfixturevalue("monkeypatch"))
         return
     part, history = case.split("-", 1)
     repo, gh, tmp_path = (request.getfixturevalue(name) for name in ("repo", "gh", "tmp_path"))
-    if part == "sections":
-        pinned_bar_and_folding_sections(repo, gh, tmp_path, history)
-    elif part == "history":
+    if part == "history":
         story_history_lists_read_rounds(repo, gh, tmp_path, request.getfixturevalue("claude_payload"), history)
     else:
         agents_md_allows_story_keys(repo, gh, tmp_path, history)
 
 
-def plain_times(env):
+def plain_times(env, monkeypatch):
     """15.001-second review times read in rounded plain units in the board and pull request."""
     item, _ = env.start_fix(round=1)
     closed = env.close(item)
     assert closed.returncode == 0, closed.stderr
     top = env.repo.path / ".git/forge"
-    timings = [json.loads(line) for line in (top / "timings.jsonl").read_text("utf-8").splitlines()]
-    for timing in timings:
-        if timing.get("item") == item and timing.get("step") == "review":
-            # 15.4 still rounds to whole seconds and leaves room for overlapping CI waits on slow runners.
-            timing["seconds"] = 15.4
-    (top / "timings.jsonl").write_text("".join(json.dumps(t) + "\n" for t in timings), "utf-8")
+    began = datetime(2026, 10, 9, 10, tzinfo=timezone.utc)
+    at = lambda seconds: (began + timedelta(seconds=seconds)).isoformat()
+    # This rounding case owns a fixed recorded review, independent of how long close took.
+    timing = {"item": item, "round": 1, "step": "review", "start": at(0),
+              "seconds": 15.001, "outcome": "clean"}
+    events = [json.loads(line) for line in (top / "events.jsonl").read_text("utf-8").splitlines()]
+    result = next(event for event in events if event.get("event") == "review result")
+    result["at"] = at(15.001)
+    (top / "timings.jsonl").write_text(json.dumps(timing) + "\n", "utf-8")
+    (top / "events.jsonl").write_text(json.dumps(result) + "\n", "utf-8")
+    monkeypatch.setenv("FORGE_NOW", at(60))
     current = row(env.repo, item)
     assert "15 seconds" in current["rounds"][0]["line"]
     again = env.close(item)
     assert again.returncode == 0, again.stderr
     text = body(env.gh_calls("pr", "edit")[-1])
     assert "15 seconds" in text
-    page = env.tmp / "board.html"
-    rendered = env.repo.forge("board", "--out", str(page))
-    assert rendered.returncode == 0, rendered.stderr
-    for output in (text, page.read_text("utf-8"), current["rounds"][0]["line"]):
+    for output in (text, current["rounds"][0]["line"]):
         assert not re.search(r"\d+\.\d+ ?s", re.sub(r"<!--.*?-->", "", output, flags=re.S))

@@ -1,0 +1,202 @@
+{
+  "branch": "task/FORGE-TOOLS-1-SDK",
+  "chat": {
+    "approval": "cfc81a0c59c7e0dfa5cdf9a93d176cd9c217c3ccb5cc97f1dc76007ce0b55a05",
+    "claude": null,
+    "conversation": "01a13b84-aff8-7c80-a04b-0150662d2092",
+    "head": null,
+    "start": "f4f39ba34bcf09a07fb5415b852a2419a200ae20"
+  },
+  "flagged": [
+    "src/forge/claude_turn.py",
+    "src/forge/doctor.py",
+    "src/forge/worker.py",
+    "tests/test_running_commands_follow_changed_forge_pin.py"
+  ],
+  "known": [
+    {
+      "area": "_run() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 625,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Claude SDK workers still require a separate claude executable",
+      "work": 1
+    },
+    {
+      "area": "_run() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 628,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: missing-SDK refusal before state changes",
+      "work": 2
+    },
+    {
+      "area": "event() in src/forge/claude_turn.py",
+      "file": "src/forge/claude_turn.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 26,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "An SDK result without text or errors crashes Forge's result handling",
+      "work": 1
+    },
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 325,
+      "outcome": "accepted",
+      "reason": "src/forge/doctor.py:325 Owner chose split on 15 October: moved to the SDKFIX part",
+      "round": 2,
+      "security": false,
+      "title": "Doctor cannot install the SDK after an item switches to Claude",
+      "work": 2
+    },
+    {
+      "area": "_worker_merges_upgrade() in tests/test_running_commands_follow_changed_forge_pin.py",
+      "file": "tests/test_running_commands_follow_changed_forge_pin.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 95,
+      "outcome": "accepted",
+      "reason": "tests/test_running_commands_follow_changed_forge_pin.py:95 Owner chose split on 15 October: moved to the SDKFIX part",
+      "round": 2,
+      "security": false,
+      "title": "Not done: running commands follow changed Forge pin",
+      "work": 1
+    },
+    {
+      "area": "_run() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 653,
+      "outcome": "accepted",
+      "reason": "src/forge/worker.py:653 Owner chose split on 15 October: moved to the SDKFIX part",
+      "round": 2,
+      "security": false,
+      "title": "No-turn refusal directs SDK-only clients to a nonexistent Claude command",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f3cd730f8370492fb8ae34326068d8b9cc2d75e4cab873268b7e1984db01b7e8",
+    "changed": "28eb9a0aa1595a339579b72601f7be74214249f372aacfa772bdb101bd918101",
+    "commit": "4b2dec4219528678dacebb13fcf413c13ea9ceca",
+    "dismissals": [
+      {
+        "because": "src/forge/doctor.py:325 Owner chose split on 15 October: moved to the SDKFIX part",
+        "finding": 1,
+        "from_base": false
+      },
+      {
+        "because": "src/forge/worker.py:653 Owner chose split on 15 October: moved to the SDKFIX part",
+        "finding": 2,
+        "from_base": false
+      },
+      {
+        "because": "tests/test_running_commands_follow_changed_forge_pin.py:95 Owner chose split on 15 October: moved to the SDKFIX part",
+        "finding": 3,
+        "from_base": false
+      }
+    ],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional. This condition skips the Claude SDK when `workers = \"codex\"`. In a repo with `tools = \"both\"`, `forge close --choice switch` can select Claude for an item (src/forge/close.py:113-114). `forge work` then refuses with `forge doctor --fix` as the next action, but doctor neither reports nor installs the missing SDK.",
+        "file": "src/forge/doctor.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 325,
+        "priority": "P1",
+        "title": "Doctor cannot install the SDK after an item switches to Claude",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Functional. An empty SDK answer reaches the `no_turn` refusal here. Its next action at src/forge/worker.py:58-60 tells the user to run `claude` to answer a prompt. A client using the SDK's bundled executable need not have a separate `claude` command on PATH, so it cannot follow that recovery step.",
+        "file": "src/forge/worker.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 653,
+        "priority": "P1",
+        "title": "No-turn refusal directs SDK-only clients to a nonexistent Claude command",
+        "work": 1
+      },
+      {
+        "body": "Gain 3, Work 1, Harm 3\nRaise: Test. This replacement is a no-op: the SDK stub has no `    if not int(os.environ.get(` line (tests/stubs/claude_agent_sdk.py:100-109). The land-build and land-fix cases never make the worker merge the upgraded pin, so this named command-level proof does not exercise the behavior it claims to cover.",
+        "file": "tests/test_running_commands_follow_changed_forge_pin.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 95,
+        "priority": "P1",
+        "title": "Not done: running commands follow changed Forge pin",
+        "work": 1
+      }
+    ],
+    "id": "2d8bdb98-6967-4d47-b0fe-143b9c20ad30",
+    "status": "clean"
+  },
+  "round": 2,
+  "settled_areas": [
+    "_run() in src/forge/worker.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-14T16:46:51.827799+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T19:24:23.103929+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T03:37:32.713843+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T05:35:13.206360+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T05:38:05.623631+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "_run() in src/forge/worker.py",
+    "at": "2026-10-15T03:37:32.714111+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": "_run() in src/forge/worker.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner chose split: merge the SDK runner as reviewed; the doctor install after a switch to Claude, the changed-pin test and the refusal message become a follow-up part",
+    "wait_id": "6f349f20-76dc-43f0-a45b-034222885267",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "2edaf550-32f2-49f4-a82b-4ceb60491363",
+    "head": "9304f781867871ed4a44dc3b0da1a303555022a9",
+    "keys": {
+      "the review finding \"An SDK result without text or errors crashes Forge's result handling\" in src/forge/claude_turn.py": 1,
+      "the review finding \"Claude SDK workers still require a separate claude executable\" in src/forge/worker.py": 1,
+      "the review finding \"Not done: missing-SDK refusal before state changes\" in src/forge/worker.py": 1
+    },
+    "round": 1
+  },
+  "worker": "codex"
+}

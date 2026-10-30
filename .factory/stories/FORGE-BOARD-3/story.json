@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-10-14T19:29:48.188219+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01CUsJuMFSuKJaYWp8pvZ9mL",
+    "hash": "f0f8c5ede5017c1ad136b34a1d026cbd5c838a2ecc5cf27167cf92f8aa07bd50",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-BOARD-3.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-14T19:06:29.116233+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T19:13:44.812651+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-14T19:19:14.366400+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-14T19:22:36.863144+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-14T19:29:48.188541+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "The board's data knows who owns what, what shipped when, and what was left",
+  "touches": 1
+}

@@ -17,6 +17,8 @@ from test_upgrade_command import (  # noqa: F401
 )
 from test_worker import calls, install_claude
 
+pytestmark = pytest.mark.platform
+
 STORY = "explore-kind"
 MODELS = """
 [models.lite.codex]
@@ -56,7 +58,10 @@ def test_1_init_gives_read_only_work_explore_defaults(repo, gh, tmp_path):
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     models = tomllib.loads((client / "forge.toml").read_text("utf-8"))["models"]
     assert models["explore"]["claude"] == {"model": "claude-haiku-5-5", "effort": "high"}
-    assert models["explore"]["codex"] == models["lite"]["codex"]
+    # Low implementation defaults do not change the fixed explore effort or helpers.
+    assert models["explore"]["codex"] == {
+        "model": "gpt-6.1-sol", "effort": "medium",
+        "subagents": "gpt-6-luna", "subagent_effort": "max"}
     assert _settings(client, "explorer") == (
         ("gpt-6.1-sol", "medium"), ("claude-haiku-5-5", "high"))
 
@@ -89,7 +94,7 @@ def test_4_earlier_adopted_repo_without_explore_keeps_lite_after_upgrade(
     assert synced.returncode == 0, synced.stdout + synced.stderr
     assert toml.read_bytes() == before
     assert _settings(up.folder, "explorer") == (
-        ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "xhigh"))
+        ("gpt-6.1-sol", "medium"), ("claude-sonnet-5-5", "low"))
 
 
 @pytest.mark.parametrize("host", ["codex", "claude"])
@@ -112,4 +117,5 @@ def test_5_a_fix_first_build_keeps_lite_with_explore_configured(
         settings = _sent(log, "thread/start")[0]["config"]
         assert (settings["model"], settings["model_reasoning_effort"]) == ("gpt-6-sol", "low")
     else:
-        assert calls(log)[0]["args"][:5] == ["-p", "--model", "sonnet", "--effort", "medium"]
+        options = calls(log)[0]["options"]
+        assert (options["model"], options["effort"]) == ("sonnet", "medium")

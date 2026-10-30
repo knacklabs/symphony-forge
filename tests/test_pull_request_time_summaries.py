@@ -272,6 +272,7 @@ def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_bud
     assert closed.returncode == 0, closed.stdout + closed.stderr
     # Closing again once ready publishes close's saved clean review with the record.
     env.open_pr(body(env.gh_calls("pr", "edit")[-1]))
+    monkeypatch.setenv("FORGE_NOW", (datetime.now().astimezone() + timedelta(minutes=30)).isoformat())
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     published = body(env.gh_calls("pr", "edit")[-1])
@@ -285,5 +286,11 @@ def test_3_one_huge_review_keeps_its_counts_and_round_line_within_the_record_bud
     env.repo.path = clone
     shared = row(env.repo, item)
     assert shared["rounds"][-1]["line"].startswith("Round 1: "), shared["rounds"]
+    if huge == "long-titles":
+        # Owner narrowed round seconds: after lifecycle compaction, a later close
+        # must not present partial measurements as the round's full duration.
+        assert shared["rounds"][-1]["seconds"] is None
+    else:
+        assert shared["rounds"][-1]["seconds"] is not None
     assert re.search(r"review \w+ \(\d+ seconds?\)", shared["rounds"][-1]["line"])
     assert shared["rounds"][-1]["new_findings"] == (200 if huge == "long-titles" else 20)

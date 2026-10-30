@@ -30,7 +30,7 @@ def test_1_review_defers_pending_pr_check_proof_but_keeps_failed_or_absent_proof
         env.commit(client, "forge.toml", config, "Use the installed Forge")
     env.repo.git("push", "-q", "origin", "main")
     started = env.repo.forge("fix", "start", "Scan the client image", "--done",
-                             "The image scan pull request check proves the image is safe")
+                             "The image scan pull request check proves the image is safe", "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     if not adopted:

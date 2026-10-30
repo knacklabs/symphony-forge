@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-10-25T02:40:53.631061+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_016kRcihhpuikmAmGHduwrxP",
+    "hash": "be1165261ad8a6a7d238bbab779080eb05ad2981ece85f728185164184008de5",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-TESTPLACE-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-24T17:39:26.182711+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T18:08:11.470879+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-25T01:38:40.689313+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-25T02:38:26.225688+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-25T02:40:53.631228+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Tests run once per change, in one place per repo, and CI is optional",
+  "touches": 1
+}

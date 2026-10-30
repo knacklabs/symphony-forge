@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge board</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="tokens.css?token={{token}}">
+<script type="module" src="app.js?token={{token}}"></script>
+</head>
+<body>
+<header class="bar">
+  <p class="brand">Forge <span class="repo" data-repo></span></p>
+  <nav aria-label="Pages" class="pages">
+    <a href="#now" aria-current="page">Now</a>
+    <a href="#releases">Releases</a>
+    <a href="#insights">Insights</a>
+  </nav>
+  <div class="tail">
+    <div role="group" aria-label="Whose work" class="switch">
+      <button type="button" data-view="team" aria-pressed="true">Team</button>
+      <button type="button" data-view="me" aria-pressed="false">Me</button>
+    </div>
+    <p role="status" class="status" data-state="reading">Reading</p>
+  </div>
+</header>
+<main aria-busy="true">
+  <p class="note">Reading the work…</p>
+</main>
+</body>
+</html>

@@ -39,7 +39,7 @@ def test_5_init_gives_new_client_one_answers_page_with_all_line_formats(repo, gh
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    made = repo.forge("init", cwd=client)
+    made = repo.forge("init", "--actions", "yes", cwd=client)
     assert made.returncode == 0, made.stderr
     brief = (client / "docs/product/BRIEF.md").read_text(encoding="utf-8")
     answers = brief.split("\n## Answers\n")[1].split("\n## ")[0]
@@ -66,7 +66,7 @@ def test_9_cold_read_instructs_reader_to_resolve_deferred_answers(repo, monkeypa
     repo.git("push", "-q", "origin", "main")
     made = repo.forge("story", "new", "DEMO", "Demo the product")
     assert made.returncode == 0, made.stderr
-    log = install_claude(repo)
+    log = install_claude(repo, worker=False)
     read = repo.forge("read", "DEMO")
     assert read.returncode == 0, read.stderr
     [call] = calls(log)

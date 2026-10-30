@@ -54,7 +54,10 @@ conversation because it "already has an active writer", Forge waits a few second
 continue once more. It never stops a process for this: by then the item's recorded process
 identities belong to the new turn, so the holder can't be proven to be the item's own, and Forge
 already stops the item's recorded leftovers before each turn. Every other resume error keeps
-today's behaviour. When the retry also fails, Forge starts a fresh conversation and says why.
+today's behaviour. When the retry still reports an active writer, a cold read starts a fresh
+conversation and says why in one line. A work round keeps its conversation and refuses with a
+line that says another program holds it: close the conversation in that program, then run the
+work round again.
 
 **A read-only question.** `forge ask "<question>"` runs one read-only Codex turn in the current
 checkout with the models in `forge.toml`'s `[models.lite]`, prints the answer, and changes no file
@@ -79,7 +82,8 @@ Dismissing a finding with evidence from the reviewed commit stays as it is. The 
   start carries the question and answer in its brief.
 - On Codex's "already has an active writer" resume error, Forge waits a few seconds, retries once
   and continues, and never stops a process for it; other resume errors behave as today; it starts
-  fresh only if the retry fails, saying why.
+  a cold read fresh only if the retry still reports an active writer, saying why. A work round
+  refuses with a line that names the cause and tells the user how to free the conversation.
 - `forge ask` prints an answer from a read-only Codex turn, changes no file in the checkout, keeps
   its records under `.git/forge/`, and discards the answer if a tracked or untracked file changed
   during the turn.

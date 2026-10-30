@@ -1,0 +1,50 @@
+{
+  "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
+  "branch": "fix/signoff-whitespace",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155bb-6bd0-76d1-850f-9e8a3698f1b6",
+    "head": null,
+    "start": "0e2e03478c97007df1e061a2858bae5805bd912b"
+  },
+  "done_when": "forge decision accept client-signoff ignores trailing whitespace and line-ending differences when it compares the Answers to BRIEF, and a refusal names the first line that differs; a test covers both on a new and an adopted repo",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4681f3262c3d0843b885d9d78a4fceaa7f45e1e03b1e0de5292ea96484295fc3",
+    "changed": "db5567ca4ce7afce46f2612160bbf6739c2e28a1dedf4afec75378cc462a2001",
+    "commit": "c5be45f26361cf58a07556546f3cfbbda7bd9504",
+    "dismissals": [],
+    "findings": [],
+    "id": "b65ebe2e-f567-41cd-aee1-a6244547fb2f",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T19:54:41.482829+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T20:09:52.991253+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T20:28:55.833252+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "33fe44f9-d0fc-4a21-9790-abff12d4a5f6",
+    "head": "028696942f2bbd3b8a72de8f28c84ad6397565b2",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The sign-off answers check refuses over one trailing blank line, which cost a full strict-review run (issue 974)",
+  "worker": "codex"
+}

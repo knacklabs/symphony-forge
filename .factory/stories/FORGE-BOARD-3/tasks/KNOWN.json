@@ -1,0 +1,60 @@
+{
+  "branch": "task/FORGE-BOARD-3-KNOWN",
+  "chat": {
+    "approval": "f0f8c5ede5017c1ad136b34a1d026cbd5c838a2ecc5cf27167cf92f8aa07bd50",
+    "claude": null,
+    "conversation": "01a14324-005c-7910-a956-c988142ed0d9",
+    "head": null,
+    "start": "1dc2aa9b42a6f36f9bc86aced65ece5c6eddda39"
+  },
+  "flagged": [],
+  "known": [
+    {
+      "area": "collect.historical() in src/forge/known_issues.py",
+      "file": "src/forge/known_issues.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 53,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Board refresh re-fetches every older pull request",
+      "work": 3
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "08f29bd626e828eecfd481da4ddb082460f5ba201b6c0ea74eea1fa11ee93f8c",
+    "changed": "ab6219eff992fbb4babc87fb88d6154bf83aee6e001ffe7dfecde06b65bf9edb",
+    "commit": "8e4c5d8fe6a9281bb336b8304714f58654a7b99d",
+    "dismissals": [],
+    "findings": [],
+    "id": "9fe1f370-d762-41f9-986f-6813189f99bd",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T05:16:12.122581+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T05:23:25.778527+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T05:44:16.574551+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "1e302a3d-0fa7-4ba0-a4cd-642405dec41d",
+    "head": "731e9ea73a631ac57875e1f847a0a2b36989476d",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "codex"
+}

@@ -48,9 +48,7 @@ def test_1_workers_fix_each_round_unless_close_has_stopped_the_review_loop(env, 
         command.write_text(current_command, encoding="utf-8")
     # The old unconditional wait made each finding look like a fresh choice.
     # This is a delivered prompt contract; the host stub only captures its input.
-    rule = ("Wait for a recorded choice only after close has stopped the review loop. "
-            "Otherwise, fix the findings inside your Done-when in this round, including new findings "
-            "after a recorded narrow or split; do not ask for another choice unless close stops the loop again.")
+    rule = "At the round limit (review round two for a story part, round one for a fix), close stops when findings below P0 are still open. Wait for the owner's recorded choice of one more round, split or accept. An open P0 never stops for the owner: fix it in this round. When the same P0 stays open two rounds in a row, Forge stops and asks the owner."
     first = calls(log)[-1]
     assert (rule in " ".join(first["brief"].split())) == (not previous)
     if previous:
@@ -59,8 +57,8 @@ def test_1_workers_fix_each_round_unless_close_has_stopped_the_review_loop(env, 
     resumed = env.repo.forge("work", item)
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     call = calls(log)[-1]
-    assert "--resume" in call["args"]
-    assert (call["args"][call["args"].index("--resume") + 1]
-            == first["args"][first["args"].index("--session-id") + 1])
+    assert bool(call["options"].get("resume"))
+    assert (call["options"]["resume"]
+            == first["options"]["session_id"])
     assert "The earlier brief in this conversation still applies." in call["brief"]
     assert rule in " ".join(call["brief"].split())

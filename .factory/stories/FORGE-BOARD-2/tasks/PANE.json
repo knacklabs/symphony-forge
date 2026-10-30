@@ -1,0 +1,157 @@
+{
+  "branch": "task/FORGE-BOARD-2-PANE",
+  "flagged": [
+    "plans/FORGE-BOARD-2.md",
+    "src/forge/mod/hooks/summary.ts",
+    "tests/test_board_pane_lines.py"
+  ],
+  "known": [
+    {
+      "area": "plans/FORGE-BOARD-2.md",
+      "file": "plans/FORGE-BOARD-2.md",
+      "gain": 5,
+      "harm": 3,
+      "line": 578,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: 9. The pane's first screen matches the board",
+      "work": 3
+    },
+    {
+      "area": "plans/FORGE-BOARD-2.md",
+      "file": "plans/FORGE-BOARD-2.md",
+      "gain": 3,
+      "harm": 2,
+      "line": 578,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: seconds() rounding matches time_records.plain",
+      "work": 1
+    },
+    {
+      "area": "test_9_the_pane_opens_with_the_boards_first_screen_lines() in tests/test_board_pane_lines.py",
+      "file": "tests/test_board_pane_lines.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 40,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: the pane first-screen parity test",
+      "work": 2
+    },
+    {
+      "area": "seven_items_need_you_shows_five_and_n_more() in tests/test_board_pane_lines.py",
+      "file": "tests/test_board_pane_lines.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 25,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: functional check",
+      "work": 1
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 5,
+      "harm": 3,
+      "line": 162,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: 9's sentence, totals and In progress lines",
+      "work": 3
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 118,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: Needs you follows the board's oldest-first order",
+      "work": 1
+    },
+    {
+      "area": "test_9_the_board_tab_shows_the_boards_team_facts() in tests/test_board_pane_lines.py",
+      "file": "tests/test_board_pane_lines.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 84,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Not done: test the first-screen facts and overflow parity",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/summary.ts",
+      "file": "src/forge/mod/hooks/summary.ts",
+      "gain": 3,
+      "harm": 2,
+      "line": 168,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: waiting and blocked ages in the pane",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4ccc7d8ca363d8ccbb829be93e69985cab2718d70b5604669a2482f155b3288f",
+    "changed": "70bc6ca6798bafd9bf7c0079cd29898c0b62d20898b660d12dec893a9f218cb0",
+    "commit": "8572e66aad78a1935b8042496adec59054139932",
+    "dismissals": [],
+    "findings": [],
+    "id": "2b3e6c53-a33d-429d-879a-dfa4def4e585",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-13T11:57:45.229895+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-14T14:56:50.788450+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T15:16:53.113472+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T16:05:45.310404+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-14T16:33:32.293341+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "4ce4880c-a68d-464d-82e1-661e246293be",
+    "head": "a262d4d96221b18deaa3274feb162be0d3bd6fb0",
+    "keys": {
+      "the review finding \"Not done: waiting and blocked ages in the pane\" in src/forge/mod/hooks/summary.ts": 1
+    },
+    "round": 3
+  },
+  "worker": "claude"
+}

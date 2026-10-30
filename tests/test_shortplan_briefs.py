@@ -1,5 +1,5 @@
-"""Done-when details reach the builders: the worker brief and the review carry each covered item's
-details, a bad details section is refused wherever the doc is read, and old docs read as before.
+"""Done-when details reach builders and reviews as guidance, separate from owner acceptance.
+Bad details sections are refused wherever read, and old docs read as before.
 
 Each test is named test_<n>_<rule> after the Done-when item of STORY it proves.
 """
@@ -12,7 +12,7 @@ import sys
 import conftest
 import pytest
 from test_close import CLEAN, approve_story, env  # noqa: F401  (env is a fixture)
-from test_story import READER
+from test_story import READER, approved_constitution
 from test_worker import calls, install_claude
 
 STORY = "FORGE-SHORTPLAN-1"
@@ -96,7 +96,10 @@ def test_3_brief_and_review_carry_the_covered_items_details(env):
     closed = env.close(item)
     assert closed.returncode == 0, closed.stdout + closed.stderr
     covered, context = covered_and_context(env.prompt())
-    assert "1. **A shopper can save a basket.**" in covered and SAVE_DETAILS in flat(covered)
+    assert "1. **A shopper can save a basket.**" in covered
+    assert SAVE_DETAILS not in flat(covered)
+    guidance = env.prompt().split("## Builder guidance", 1)[1].split("##", 1)[0]
+    assert SAVE_DETAILS in flat(guidance)
     assert "2. **A saved basket comes back after sign-in.**" in context
     assert SIGN_IN_DETAILS not in flat(env.prompt())
 
@@ -138,6 +141,7 @@ def _repeated_done_when_number(env):
                '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# The client signed off\n')
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Sign-off and roadmap")
+    approved_constitution(repo)
     conftest._install(repo.bin, "claude", READER.format(python=sys.executable))
     assert repo.forge("story", "new", "SHOP", "Shoppers can save a basket").returncode == 0
     where = re.search(r"^worktree (.+)\n[^\n]*\nbranch refs/heads/story/SHOP$",

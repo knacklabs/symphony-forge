@@ -39,7 +39,7 @@ def test_1_sync_merges_the_allow_list_keeps_the_client_s_own_and_blocks_first(re
     [guard] = [hook["command"] for group in settings["hooks"]["PreToolUse"]
                if group.get("matcher") == "Bash" for hook in group["hooks"]]
     payload = claude_payload("PreToolUse", "Bash", {"command": "rm -rf build"})
-    blocked = subprocess.run(guard, shell=True, cwd=repo.path, input=json.dumps(payload),
+    blocked = subprocess.run(["sh", "-c", guard], cwd=repo.path, input=json.dumps(payload),
                              capture_output=True, text=True, timeout=60)
     assert blocked.returncode == 2 and blocked.stderr.startswith('Forge blocks "')
 

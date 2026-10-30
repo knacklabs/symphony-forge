@@ -16,11 +16,6 @@ Item = dict[str, Any]
 WEEK = timedelta(weeks=1)
 
 
-def _person(pr: Item) -> str:
-    author = pr.get("author") or {}
-    return author.get("name") or author.get("login") or "Unknown"
-
-
 def _through(pr: Item) -> bool:
     from forge import board_facts
 
@@ -37,7 +32,7 @@ def _day(at: date) -> str:
 
 
 def facts(top: Path, history: Item, counts: Item, items: list[Item],
-          github: Item | None) -> tuple[Item, str]:
+          github: Item | None, names: dict | None = None) -> tuple[Item, str]:
     """The team keys `pace`, `go_live`, `trends` and `around_forge`, and the sentence's go-live
     clause. Pace and go-live read git; trends and the around-Forge list need GitHub."""
     from forge import board_facts
@@ -87,18 +82,22 @@ def facts(top: Path, history: Item, counts: Item, items: list[Item],
                  for week in github["weeks"]]
         full = found[:6]
         # Grouped by login, which is unique; the display name is only the label.
-        people = {(pr.get("author") or {}).get("login"): _person(pr)
+        person = lambda pr: board_facts.person(pr.get("author"), names=names)
+        identity = lambda pr: ((person(pr)["login"] or "").casefold() or None, None if person(pr)["login"] else (
+            ((pr.get("author") or {}).get("email") or person(pr)["name"] or "Unknown").casefold()))
+        people = {identity(pr): person(pr)["name"] or "Unknown"
                   for week in full if week["complete"] for pr in week["prs"]}
         trends = {"weeks": [week["start"][:10] for week in full],
                   "team": [_split(week["prs"]) if week["complete"] else None for week in full],
-                  "people": [{"name": name, "weeks": [
-                      _split([pr for pr in week["prs"] if (pr.get("author") or {}).get("login") == login])
+                  "people": [{"name": name, "login": person[0], "weeks": [
+                      _split([pr for pr in week["prs"] if identity(pr) == person])
                       if week["complete"] else None for week in full]}
-                      for login, name in sorted(people.items(), key=lambda person: (person[1].casefold(),
+                      for person, name in sorted(people.items(), key=lambda person: (person[1].casefold(),
                                                                                     str(person[0])))]}
         # Last week's and this week's searches hold the last 7 days; a capped one leaves it unknown.
         if all(week["complete"] for week in found[-2:]):
-            around = sorted(({"title": pr.get("title"), "author": _person(pr), "merged_at": pr.get("mergedAt"),
+            around = sorted(({"title": pr.get("title"), "author": person(pr)["name"] or "Unknown",
+                              "author_login": person(pr)["login"], "merged_at": pr.get("mergedAt"),
                               "url": pr.get("url")} for week in found[-2:] for pr in week["prs"]
                              if not _through(pr) and (at := time_records.when(pr.get("mergedAt")))
                              and at >= now - WEEK),

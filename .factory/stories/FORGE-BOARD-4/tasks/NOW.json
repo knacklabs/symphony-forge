@@ -1,0 +1,139 @@
+{
+  "allow_large": "Owner accepted the size on 19 October 2026: new screen code checked in the browser",
+  "branch": "task/FORGE-BOARD-4-NOW",
+  "flagged": [
+    "src/forge/board_app/now.js"
+  ],
+  "known": [
+    {
+      "area": "src/forge/board_app/now.js",
+      "file": "src/forge/board_app/now.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 83,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve unknown waiting time instead of displaying zero",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/now.js",
+      "file": "src/forge/board_app/now.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 72,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Retain readiness for assigned, unstarted story parts",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/now.js",
+      "file": "src/forge/board_app/now.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 165,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Give story part progress an accessible text equivalent",
+      "work": 2
+    },
+    {
+      "area": "tests/test_board_now_screen.py",
+      "file": "tests/test_board_now_screen.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 106,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_12_the_first_screen_fits_a_laptop_window_and_keeps_every_item_reachable",
+      "work": 3
+    },
+    {
+      "area": "src/forge/board_app/app.js",
+      "file": "src/forge/board_app/app.js",
+      "gain": 5,
+      "harm": 3,
+      "line": 13,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Remove the duplicate closing bracket that prevents the board from loading",
+      "work": 1
+    }
+  ],
+  "land": {
+    "rounds": 3,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bc186821e91e88bdeb1ab19dd3aed2d4fd9d1775b08d053437e034928d33a9ca",
+    "changed": "cec0c9d822c139b1ede8e291fc0ea36fe4069ae820c9d644828067956ebebe90",
+    "commit": "930e21ed96d683c4e75ea68611733922a34e7b83",
+    "dismissals": [],
+    "findings": [],
+    "id": "26a66264-22a3-464d-b32e-b47b5532fe18",
+    "status": "clean"
+  },
+  "round": 6,
+  "settled_areas": [
+    "src/forge/board_app/now.js"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T12:22:09.231462+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T14:36:53.875165+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:58:34.542128+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:03:10.548396+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:17:45.358411+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T16:36:42.501992+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T16:49:49.170982+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T17:06:43.244539+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T17:27:17.771834+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "bbe126ce-dae3-400b-aa56-e1431bb36ab6",
+    "head": "a5af37fabaa46ab73da5ec1e5ed0a919d4924fc1",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "claude"
+}

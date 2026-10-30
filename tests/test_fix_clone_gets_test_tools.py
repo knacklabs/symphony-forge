@@ -7,13 +7,19 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 
 STORY = "A-DEVELOPER-WHO-CLONES-SYMPHONY-FORGE-TO"
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
-    for name in ("pyproject.toml", "uv.lock", "README.md"):
+    # Preserve the active pytest config: omitting it hides collection regressions in a clone.
+    # This command-level test owns discovery; no extra test or production seam is needed.
+    for name in ("pyproject.toml", "pytest.ini", "uv.lock", "README.md"):
         shutil.copy2(ROOT / name, tmp_path / name)
     shutil.copytree(ROOT / "src", tmp_path / "src")
     for name in (
@@ -54,7 +60,7 @@ def test_1_plain_sync_installs_test_tools_and_uv_run_runs_tests(tmp_path):
     )
     run = subprocess.run(["uv", "run", "--frozen", "pytest", "-q"],
                          cwd=tmp_path, env=env, capture_output=True, text=True)
-    assert run.returncode == 0, run.stderr
+    assert run.returncode == 0, run.stdout + run.stderr
     assert "1 passed" in run.stdout
 
 
@@ -72,7 +78,10 @@ def test_2_ci_runs_the_documented_pytest_command():
     workflows = ROOT / ".github" / "workflows"
     for name in ("forge-next.yml", "forge.yml", "codex-smoke.yml"):
         workflow = (workflows / name).read_text(encoding="utf-8")
-        # Forge's generated workflow now consumes the lock without refreshing it.
-        assert (command if name == "forge.yml" else "uv run --python 3.11 pytest") in workflow
+        if name == "forge.yml":
+            # The generated job installs Forge, then delegates test execution to it.
+            assert 'run: "forge test --change"' in workflow
+        else:
+            assert "uv run --python 3.11 pytest" in workflow
         assert "--group dev" not in workflow
         assert "--with pytest" not in workflow

@@ -1,0 +1,67 @@
+{
+  "allow_large": "The owner allows every FORGE-MCP-1 part over the line limit",
+  "branch": "task/FORGE-MCP-1-MCPGUIDE",
+  "chat": {
+    "approval": "1f115deaacad6f96cad786da78b6bc3172cc164cd891d26f118e71c6b3381bdf",
+    "claude": null,
+    "conversation": "01a17c23-dcb4-79f3-baf2-7a30931a57fc",
+    "head": null,
+    "start": "d07d154a9f32344865eacbea5fc2e45cc19c084f"
+  },
+  "known": [
+    {
+      "area": "docs/design/FORGE-MCP-1/CHECKS.md",
+      "file": "docs/design/FORGE-MCP-1/CHECKS.md",
+      "gain": 3,
+      "harm": 1,
+      "line": 3,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: remove unrelated agent-screen design files",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a8c6a280943d36856929eee2b31a96469d57e488c666dc69db1b6cf8214d2c09",
+    "changed": "077672cc90978129bbf021e40b7532329d97b657f195fe9c002f9c7d0fc7c5f1",
+    "commit": "4032e23a53781ea64612f1dd55aa36d5ddd1f205",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. Case: normal use - merging this guide-delivery part also adds designs for the agent-account screens and Agent access dialog. The ten files under docs/design/FORGE-MCP-1/ (CHECKS.md, SCREENS.md, four HTML artboards and four PNGs) fall outside this part's Scope and are not needed to deliver or test the guide text through init, sync and work. Keep those screen-design additions with the task that owns the screens; the stated records exemption does not include these design files.",
+        "file": "docs/design/FORGE-MCP-1/CHECKS.md",
+        "gain": 3,
+        "harm": 1,
+        "line": 3,
+        "priority": "P1",
+        "title": "Gate: remove unrelated agent-screen design files",
+        "work": 1
+      }
+    ],
+    "id": "21a4ac7c-807f-4dd3-afbf-ae74ccf11477",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T06:54:37.157430+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T07:00:54.558356+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "289d74935b63875e8b88ccbdf9749341c0d2f037",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}

@@ -15,7 +15,7 @@ from test_board_counts import ONE_PART, board, clock, configure, github, read_st
 from test_close import CLEAN, STORY_DOC, approve_story, blocked, body, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_hotspot_stop import rounds, seed
-from test_story import READER, worktree
+from test_story import READER, approved_constitution, worktree
 from test_worker import install_claude
 
 STORY = "FORGE-BOARD-2"
@@ -75,6 +75,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         size_choice(env)
         return
     seed(env, "src/a.py")
+    approved_constitution(env.repo)
     now = datetime.now(timezone.utc).replace(microsecond=0)
     prs = {}
 
@@ -82,10 +83,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     clock(monkeypatch, now)
     read_story(env.repo, "WAIT", ONE_PART)
     env.repo.git("push", "-q", "origin", "story/WAIT")
-    # Three blocked closes stop the review loop for a person's choice.
+    # A fix's first P1 at the bar stops the review loop for a person's choice.
     clock(monkeypatch, now + timedelta(minutes=1))
     _, loop = env.start("loop", "fix/loop", ".factory/fixes/loop.json", {**FIX, "why": "Loop"}, {"loop.py": "x\n"})
-    rounds(env, "loop", loop, ["src/a.py"] * 3)
+    rounds(env, "loop", loop, ["src/a.py"])
     share(env, prs, "loop", 1)
     # A close ending ready in a repo where a human merges.
     clock(monkeypatch, now + timedelta(minutes=2))
@@ -107,13 +108,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
                            "at": (now + timedelta(minutes=2, seconds=30)).isoformat()}):
                 log.write(json.dumps({**event, "item": "asks"}) + "\n")
     clock(monkeypatch, now + timedelta(minutes=3))
-    stub = env.repo.bin / "claude"
-    plain = stub.read_text("utf-8")
-    stub.write_text(plain.replace('print("stub claude: built it")',
-                                  'print("\\n\\nQuestion: May I reuse the basket parser?")'), "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: May I reuse the basket parser?")
     asked = env.repo.forge("work", "asks")
     assert asked.returncode == 0 and "May I reuse the basket parser?" in asked.stdout, asked.stderr
-    stub.write_text(plain, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     share(env, prs, "asks", 3)
     # A merge conflict close stopped on, on the fix's first close: it opens the pull request.
     clock(monkeypatch, now + timedelta(minutes=4))
@@ -145,8 +143,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
         assert [entry["waited_seconds"] for entry in team["needs_you"]] == [300, 240, 180, 120, 60, None], where
         assert team["needs_you"][-1]["since"] is None
         assert "6 need you" in team["sentence"]
-    # Past the 30 minutes after which close records the repo's default choice, the stop still
-    # waits on a person until a choice is committed.
+    # The stop still waits on a person after 30 minutes, until a choice is committed.
     env.repo.path = machine_a
     clock(monkeypatch, now + timedelta(minutes=40))
     assert ("loop", "review loop") in needs(env.repo)
@@ -166,7 +163,7 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     share(env, prs, "clash", 4)
     env.repo.path = machine_b
     env.repo.git("worktree", "add", "-q", "-b", "fix/loop", str(env.tmp / "needs-loop-b"), "origin/fix/loop")
-    chosen = env.repo.forge("close", "loop", "--resolve", "narrow", "--reason", "Keep it small")
+    chosen = env.repo.forge("close", "loop", "--resolve", "more", "--reason", "Repair the open P1")
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     share(env, prs, "loop", 1)
     # B, who did not open the pull request, answers the question.
@@ -177,11 +174,10 @@ def test_2_needs_you_lists_every_wait_oldest_first_on_every_machine(env, monkeyp
     share(env, prs, "asks", 3)
     # A's own record still holds that question, yet A works on; its worker asks a second one.
     env.repo.path = machine_a
-    stub.write_text(plain.replace('print("stub claude: built it")',
-                                  'print("\\n\\nQuestion: Should the parser keep comments?")'), "utf-8")
+    monkeypatch.setenv("STUB_CLAUDE_RESULT", "\n\nQuestion: Should the parser keep comments?")
     worked = env.repo.forge("work", "asks")
     assert worked.returncode == 0, worked.stdout + worked.stderr
-    stub.write_text(plain, "utf-8")
+    monkeypatch.delenv("STUB_CLAUDE_RESULT")
     share(env, prs, "asks", 3)
     clock(monkeypatch, now + timedelta(minutes=7))
     for where in (machine_a, machine_b):

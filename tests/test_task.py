@@ -6,11 +6,15 @@ import json
 import re
 from pathlib import Path
 
+from test_story import DESIGN_IMAGE, DESIGN_TREE
+
 DOC = """# Board shows each story in plain English
 
 ## What changes for you
 
 Anyone can open one page and see where each piece of work stands.
+
+Design: docs/design/baskets/ (<design tree>)
 
 ## Why
 
@@ -41,7 +45,7 @@ Risks: none
 ## Notes
 
 Reuse the old board's look.
-"""
+""".replace("<design tree>", DESIGN_TREE)
 
 
 def story(repo, doc=DOC, approved=DOC, key="BOARD"):
@@ -60,6 +64,8 @@ def story(repo, doc=DOC, approved=DOC, key="BOARD"):
     exists = repo.git("branch", "--list", f"story/{key}")
     repo.git("checkout", "-q", *([] if exists else ["-b"]), f"story/{key}")
     repo.write(f"plans/{key}.md", doc)
+    # These task and worker tests now start from an approved design as well as approved outcomes.
+    repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.write(f".factory/stories/{key}/story.json", json.dumps(state))
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Story doc and its approval")
@@ -92,6 +98,13 @@ def test_13_approval_scope(repo):
 
 
 def test_16_task_start(repo):
+    # This test owns the original wait-until-merge lane. Stacking's default-on
+    # admission and refusal contract is covered by test_stack_start.py.
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\nstack = "off"\n')
+    repo.git("add", "forge.toml")
+    repo.git("commit", "-qm", "Keep tasks waiting for merges")
+
     def refused(item, text):
         result = repo.forge("task", "start", item)
         assert result.returncode == 1, result.stdout
