@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_release_version.py\tNot done: Every version reference names v1.2.25, forge sync output is committed, and the version tests pass\trelease-1-2-25",
+      "kind": "bug",
+      "path": "tests/test_release_version.py",
+      "line": 19,
+      "text": "Not done: Every version reference names v1.2.25, forge sync output is committed, and the version tests pass",
+      "from": "blocking",
+      "item": "release-1-2-25",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

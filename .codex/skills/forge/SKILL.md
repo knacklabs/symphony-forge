@@ -986,7 +986,7 @@ prototype design files for this gate.
 The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
 Codex must be installed because only Codex can review the screen images.
 On Windows, large image folders use separate batches to fit the native command line limit.
-Fix gaps, then retry `forge decision accept client-signoff`.
+Fix all findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.
