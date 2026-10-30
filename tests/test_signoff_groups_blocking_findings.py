@@ -3,6 +3,8 @@
 The old next step names no fix and encourages separate repair loops. Existing
 sign-off tests check refusal, not the suggested repair command. Exercise the
 real commands, fake only external reviews, and add no production seam.
+Prototype clients require an explicit worker kind. A live-stage fixture cannot
+catch an unusable repair command in that main sign-off flow.
 """
 
 import json
@@ -17,10 +19,11 @@ STORY = "signoff-one-fix-for-all"
 
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
 def test_1_blocked_signoff_names_one_fix_for_every_blocker(repo, tmp_path, monkeypatch, adopted):
-    make = _adopted_client if adopted else _client
-    fix, answers, queue = make(repo, tmp_path, monkeypatch)
     if adopted:
-        _request_build(repo, fix)
+        fix, answers, queue = _adopted_client(repo, tmp_path, monkeypatch)
+    else:
+        fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
+    _request_build(repo, fix)
     _decision(fix, answers)
     titles = ["Customer's order cannot save", 'Missing "Cancel" action']
     queue.write_text(json.dumps([

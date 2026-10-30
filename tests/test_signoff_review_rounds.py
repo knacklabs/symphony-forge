@@ -70,7 +70,8 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
     if priority == "P0":
         assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {"app.py"}
         assert "Order submission fails" in third.stderr
-        assert "Next: fix the prototype" in third.stderr
+        # A P0 still needs repair after the round limit, through one grouped fix.
+        assert "Next: forge fix start " in third.stderr
         assert len(calls.read_text().splitlines()) == len(prior) + 1
         return
     assert "One more round, split or accept?" in third.stderr

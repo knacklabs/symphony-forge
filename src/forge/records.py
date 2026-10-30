@@ -505,7 +505,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         details = "; ".join(f"{f['title']} ({f['file']}:{f['line']})"
                             for _, f in review.blocking(result))
         repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
-                  f"--done {quote(f'A review no longer finds: {details}')}")
+                  f"--done {quote(f'A review no longer finds: {details}')} --kind mechanical")
         repo.refuse(("Customer sign-off review found a blocking issue: " + "; ".join(
             f["title"] for f in opened) + ".", repair +
             '\nThen fix and merge it, then forge decision accept client-signoff --by "<name>"'))
