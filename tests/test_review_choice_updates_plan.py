@@ -3,104 +3,76 @@
 Test-audit: a recorded choice previously left the plan and task branch untouched,
 requiring manual edits and merges. Observe published Git data and the real worker
 brief; fake only GitHub and the model. Existing stop tests cover the choice record.
+Narrow follows a stuck-worker stop; split follows today's two-review stop.
+Timed defaults were removed from Forge, so they no longer belong in these cases.
 """
 import json
 import re
-import shutil
 import subprocess
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
-import conftest
-from test_close import GREEN, STORY_DOC, blocked, env, finding  # noqa: F401
+from test_close import STORY_DOC, blocked, env, finding  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_close_waits_for_review_loop_choice import stopped
-from test_setup import _fresh_client
-from test_story import READER
 from test_worker import calls, install_claude
 
 STORY = "no-wasted-rounds"
 
 
-def _merge_on_github(repo, branch):
-    """The bare origin stands in for GitHub accepting a human merge."""
-    remote = repo.git("remote", "get-url", "origin")
-    repo.git("fetch", "-q", str(repo.path), f"{branch}:main", cwd=Path(remote))
-    repo.git("merge", "-q", "--ff-only", branch)
-    repo.git("fetch", "-q", "origin")
+def _failing_test_settings(config, tmp_path):
+    suite = tmp_path / "failing test.py"
+    suite.write_text("raise SystemExit(1)\n", encoding="utf-8")
+    config = re.sub(r"(?m)^(test|test_place) = .*\n?", "", config)
+    return ('test_place = "local"\ntest = '
+            + json.dumps(f'"{sys.executable}" "{suite.as_posix()}"') + "\n" + config)
+
+
+def _stuck_on_failed_tests(env, item, where):
+    # The suite fails for real; Forge owns counting attempts and creating the stop.
+    # This setup supplies no stop records or mocked choice/plan behavior.
+    for number in (1, 2):
+        worked = env.repo.forge("work", item)
+        assert worked.returncode == 0, worked.stdout + worked.stderr
+        env.commit(where, "app.py", f"print('attempt {number}')\n")
+        closed = env.close(item)
+        assert closed.returncode == 1, closed.stdout + closed.stderr
+    stopped = env.repo.forge("work", item)
+    assert stopped.returncode == 1, stopped.stdout + stopped.stderr
+    assert "The worker can't get past the same problem" in stopped.stderr
 
 
 @pytest.mark.parametrize("previous,choice,guarded", [
-    (False, "narrow", False), (True, "narrow", False),
+    (False, "narrow", False),
     (False, "split", False), (True, "split", False), (False, "split", True),
-    (False, "default", False), (True, "default", False),
-], ids=["new-narrow", "adopted-narrow", "new-split", "adopted-split", "guarded-retry",
-        "new-default", "adopted-default"])
+], ids=["new-narrow", "new-split", "adopted-split", "guarded-retry"])
 def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task(
-        env, tmp_path, monkeypatch, previous, choice, guarded):
-    automatic = choice == "default"
-    if automatic:
-        choice = "narrow"
-        began = datetime(2026, 10, 15, 10, tzinfo=timezone.utc)
-        monkeypatch.setenv("FORGE_NOW", began.isoformat())
-    if previous:
-        shutil.copytree(Path(__file__).parent / "fixtures/adopted-v1.2.2/client",
-                        env.repo.path, dirs_exist_ok=True)
-        env.repo.git("add", "-A")
-        env.repo.git("commit", "-q", "-m", "Adopt the earlier release")
-        env.repo.git("push", "-q", "origin", "main")
-    else:
-        client, initialized = _fresh_client(env.repo, env.gh, tmp_path)
-        assert initialized.returncode == 0, initialized.stderr
-        env.repo.path = client
-    # Prepare client data on a fix branch, respecting the installed default-branch hooks.
-    _, prepared = env.start_fix(changes={"app.py": "print('basket')\n"},
-                               done_when="forge.toml selects Claude and the current release")
-    config = (prepared / "forge.toml").read_text("utf-8")
-    version = env.repo.forge("--version").stdout.split()[-1]
-    config = re.sub(r'(?m)^version = .*$', f'version = "{version}"', config)
+        env, tmp_path, previous, choice, guarded):
+    client(env, previous)
+    config = (env.repo.path / "forge.toml").read_text("utf-8")
     config = re.sub(r'(?m)^workers = .*$', 'workers = "claude"', config)
-    if "models.grill.claude" not in config:
-        config += '\n[models.grill.claude]\nmodel = "opus"\neffort = "high"\n'
-    env.commit(prepared, "forge.toml", config)
-    env.commit(prepared, "docs/decisions/0001-client-signoff.md",
-               '---\nstatus: accepted\nconfirmed_by: "A Client"\n---\n\n# Client signed off\n')
-    synced = env.repo.forge("sync", cwd=prepared)
-    assert synced.returncode == 0, synced.stderr
-    env.commit(prepared, "app.py", "print('existing basket')\n")
-    _merge_on_github(env.repo, "fix/tidy-readme")
-    conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
-    made = env.repo.forge("story", "new", "SHOP", "Shoppers can save a basket")
-    assert made.returncode == 0, made.stderr
+    if choice == "narrow":
+        config = _failing_test_settings(config, tmp_path)
+    env.commit(env.repo.path, "forge.toml", config)
+    env.repo.git("push", "-q", "origin", "main")
+    item, where = env.start_approved_task(STORY_DOC)
     story = Path(re.search(r"^worktree (.+)\n[^\n]*\nbranch refs/heads/story/SHOP$",
                            env.repo.git("worktree", "list", "--porcelain"), re.M)[1])
-    (story / "plans/SHOP.md").write_text(STORY_DOC, encoding="utf-8")
-    read = env.repo.forge("read", "SHOP")
-    assert read.returncode == 0, read.stderr
-    payload = conftest._payload("PostToolUse", env.repo.path, "ExitPlanMode", {"plan": STORY_DOC},
-                                {"plan": STORY_DOC, "isAgent": False, "filePath": "/plans/plan.md"})
-    approved = env.repo.forge("hook", "approval", input=json.dumps(payload))
-    assert approved.returncode == 0, approved.stderr
-    _merge_on_github(env.repo, "story/SHOP")
-    item = "SHOP/T1"
-    started = env.repo.forge("task", "start", item)
-    assert started.returncode == 0, started.stderr
-    where = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
-    env.checks(GREEN)
     log = install_claude(env.repo)
-    worked = env.repo.forge("work", item)
-    assert worked.returncode == 0, worked.stdout + worked.stderr
-    for number in range(1, 4):
-        env.commit(where, "app.py", f"print('basket attempt {number}')\n")
-        env.reviews(blocked({**finding("P1", f"Basket defect {number}"),
-                             "body": ("Gain 4, Work 1, Harm 2" if automatic else "Gain 3, Work 2, Harm 3")
-                                     + "\nSaving loses a basket."}))
-        stopped = env.close(item)
-        assert stopped.returncode == 1, stopped.stdout + stopped.stderr
-    assert "Ask the human to narrow the part" in stopped.stderr
+    if choice == "narrow":
+        _stuck_on_failed_tests(env, item, where)
+    else:
+        worked = env.repo.forge("work", item)
+        assert worked.returncode == 0, worked.stdout + worked.stderr
+        for number in (1, 2):
+            env.commit(where, "app.py", f"print('basket attempt {number}')\n")
+            env.reviews(blocked({**finding("P1", f"Basket defect {number}"),
+                                 "body": "Gain 3, Work 2, Harm 3\nSaving loses a basket."}))
+            held = env.close(item)
+            assert held.returncode == 1, held.stdout + held.stderr
+        assert "One more round, split or accept?" in held.stderr
     before = env.repo.git("show", "story/SHOP:plans/SHOP.md")
     reason = "Save one basket only; shared baskets move to a later part."
     if guarded:
@@ -148,14 +120,7 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
         resolved = env.repo.git("show", "story/SHOP:plans/SHOP.md").replace(
             "Risks: story guidance", "Risks: story guidance; task guidance") + "\n"
         env.commit(where, "plans/SHOP.md", resolved, "Keep both builders' guidance")
-    if automatic:
-        reason = ("Nobody answered in 30 minutes; the repo's default narrows the part "
-                  "to its Done-when lines and files each open finding as a follow-up fix")
-        monkeypatch.setenv("FORGE_NOW", (began + timedelta(minutes=31)).isoformat())
-        chosen = env.close(item)
-        assert "recorded the repo's default choice: narrow" in chosen.stdout
-    else:
-        chosen = env.close(item, "--resolve", choice, "--reason", reason)
+    chosen = env.close(item, "--resolve", choice, "--reason", reason)
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     published = env.repo.git("show", "origin/story/SHOP:plans/SHOP.md")
     assert reason in published
@@ -176,24 +141,33 @@ def test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task
         assert len(rows) == 1 and reason in rows[0]
         assert "| T1 |" in rows[0]
     assert env.repo.git("merge-base", "--is-ancestor", "origin/story/SHOP", "HEAD", cwd=where) == ""
-    if not automatic:
-        assert "worker gets the updated plan" in chosen.stdout
-        if choice == "split":
-            assert "Split the part as agreed" in chosen.stdout
+    assert "worker gets the updated plan" in chosen.stdout
+    if choice == "split":
+        assert "Split the part as agreed" in chosen.stdout
     worked = env.repo.forge("work", item)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     assert calls(log)[-1]["options"].get("resume")
-    assert reason in calls(log)[-1]["brief"]
+    assert f"Owner's {choice} choice for T1: {reason}" in calls(log)[-1]["brief"]
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-def test_2_fix_narrow_names_the_fix_amend_step(env, previous):
+@pytest.mark.parametrize("previous,choice", [(False, "narrow"), (False, "split"), (True, "split")],
+                         ids=["new-narrow", "new-split", "adopted-split"])
+def test_2_fix_choices_name_the_fix_amend_step(env, previous, choice):
     client(env, previous)
-    item, where = stopped(env)
+    if choice == "narrow":
+        settings = env.repo.path / "forge.toml"
+        env.commit(env.repo.path, "forge.toml", _failing_test_settings(
+            settings.read_text("utf-8"), env.tmp))
+        env.repo.git("push", "-q", "origin", "main")
+        install_claude(env.repo)
+        item, where = env.start_fix(tool="claude")
+        _stuck_on_failed_tests(env, item, where)
+    else:
+        item, where = stopped(env, "fix")
     plans = env.repo.git("ls-tree", "-r", "HEAD", "--", "plans/", cwd=where)
     before = len(env.review_calls())
 
-    chosen = env.close(item, "--resolve", "narrow", "--reason", "Keep only the greeting")
+    chosen = env.close(item, "--resolve", choice, "--reason", "Keep only the greeting")
 
     assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     assert chosen.stdout.splitlines()[-1] == (

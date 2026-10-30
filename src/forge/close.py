@@ -110,6 +110,8 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
                         else REFUSALS["bad_choice"], item=item)
         if not continued:
+            plan_updated = (choice in ("narrow", "split") and
+                            task.apply_review_choice(top, item, choice, reason.strip()))
             if choice == "switch":  # the next forge work runs this item on the other tool
                 state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
             if choice == "split" and (findings := score.open_findings(state.get("review") or {})):
@@ -146,10 +148,15 @@ def close(args: argparse.Namespace) -> int:
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
         if choice != "accept":
-            print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
-                  f"then forge work {item}.")
+            print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed.")
+            if plan_updated:
+                print("The worker gets the updated plan next round.")
             if choice == "split" and state["stop"].get("fixes"):
                 print(f"Follow-up fix: {', '.join(state['stop']['fixes'])} owns the split findings.")
+            if "/" in item:
+                print(f"Next: forge work {item}")
+            else:
+                print(f'Next: forge fix amend {item} --done "<done when>" --because "<why>"')
             return 0
         if not continued:
             print("Recorded the human's choice.")
