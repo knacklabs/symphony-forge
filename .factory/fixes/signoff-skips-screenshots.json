@@ -48,7 +48,7 @@
     "id": "245008b5-3324-416d-80cf-286847efdab2",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -70,10 +70,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "55c6c75d374ddc312c59151a9a3fba217571a000",
+    "close": "d9b29da6-d644-4364-8461-1a7a42577b9d",
+    "head": "9f363d1815cde553e6a8bd9b26640003e6bf0d23",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The strict client sign-off review sends every screenshot in the repo with the code, which makes the review many parts longer, although the canvas check already compares the screens",
   "worker": "codex"
