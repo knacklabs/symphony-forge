@@ -18,7 +18,7 @@
       "gain": 5,
       "harm": 3,
       "line": 508,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 1,
       "line": 510,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,38 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "e6ce94838a604aea71812e4b76a6f2d8caaf83eb7ce424f75778eccbf7671dd8",
-    "changed": "bde9982b68887069da7dd4c1e0716fe3b1e2079bd8b1241e8691f84717053e99",
-    "commit": "a7a3d367ad9eaec4e8c589329a70397d0b9f6318",
+    "branch_diff": "ea636880358cd237d15255038b5a33a5027a9c4abaa4d4ecb03f2224cde7f47b",
+    "changed": "5969d6620a9fae59e370f2aa033dca45a55dcb4326d08d27d6ffbc17f4ff42d0",
+    "commit": "056ce90a458798888a1712bb60d77d0621c7c120",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 2, Harm 3\nRaise: Not done\nCase: normal use - sign-off blocks in an unsigned client repo with stage = \"prototype\".\nThe generated command omits --kind. src/forge/task.py:615-618 refuses fix start in that state unless a kind is supplied, so following this next step starts no repair. Both new test fixtures use the live stage (the new-client fixture omits stage, whose default is live), hiding the main prototype case. Include the required kind in the suggested command and exercise it in a prototype-stage client.",
-        "file": "src/forge/records.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 508,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: A blocked sign-off names one forge fix start step that covers every open blocking finding from that review",
-        "work": 2
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 1\nRaise: Gate\nCase: normal use - running the repository's sign-off command tests.\nThis replacement removes \"Next: fix the prototype\", but tests/test_proto_signoff.py:209 and tests/test_signoff_review_rounds.py:73 still require that exact substring after P0 refusals. Those paths reach this changed refusal, so both tests now fail. Update both assertions to check the grouped repair command while retaining their P0-blocking checks.",
-        "file": "src/forge/records.py",
-        "gain": 4,
-        "harm": 1,
-        "line": 510,
-        "priority": "P1",
-        "title": "Gate: existing sign-off tests still require the removed next step",
-        "work": 2
-      }
-    ],
-    "id": "9918d901-98b3-4cd7-a263-84c9669a23d0",
-    "status": "blocked"
+    "findings": [],
+    "id": "9ca37bf0-8462-40e4-9784-a03b28c42d30",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T09:28:54.732304+00:00",
@@ -80,6 +58,10 @@
     },
     {
       "at": "2026-10-30T09:34:18.285555+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T09:37:51.095663+00:00",
       "step": "review"
     }
   ],
