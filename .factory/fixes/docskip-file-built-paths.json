@@ -1,6 +1,13 @@
 {
   "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
   "branch": "fix/docskip-file-built-paths",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d03-c195-7681-87e1-34e9e6c05b99",
+    "head": null,
+    "start": "a726f327a6f9d21380b80bd84f56b508672b1a9b"
+  },
   "done_when": "A docs change that a test reads through a __file__-built path runs that test",
   "fix_kind": "backend",
   "kind": "fix",
