@@ -4,12 +4,20 @@
   "done_when": "Every version reference names v1.2.25, forge sync output is committed, and the version tests pass",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T11:13:30.723870+00:00",
       "step": "start"
     }
   ],
-  "why": "Release v1.2.25 with the client sign-off speed hotfix"
+  "stuck": {
+    "close": null,
+    "head": "99a344f6472d89fb4d717e9aea3ab39530684b83",
+    "keys": {},
+    "round": null
+  },
+  "why": "Release v1.2.25 with the client sign-off speed hotfix",
+  "worker": "codex"
 }
