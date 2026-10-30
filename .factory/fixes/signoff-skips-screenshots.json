@@ -1,0 +1,15 @@
+{
+  "base": "823f647c36f3a27720d771acff0ea2d63132d8a9",
+  "branch": "fix/signoff-skips-screenshots",
+  "done_when": "The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-30T09:25:59.979540+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The strict client sign-off review sends every screenshot in the repo with the code, which makes the review many parts longer, although the canvas check already compares the screens"
+}
