@@ -89,6 +89,19 @@ After a red close test, a blocking review finding or a failed required check, a 
 lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
 Design rounds keep their fixed effort. Claude uses the SDK when installed. Native rounds
 request the effort in their instructions and record it as requested.
+New repos start build, fix and lite at low effort on both tools. Existing repos keep
+their configured models and efforts; a failure round uses the higher of that effort
+and the tool's top effort. Optional failed checks and owner notes do not raise it.
+The same worker thread continues; only the main worker's turn effort changes.
+Reviews, cold reads and sign-off keep their fixed effort. New Claude repos get
+Sonnet 5.5 at high for cold reads and reviews. Forge's defaults never use none.
+Claude helpers use their kind's subagents and subagent_effort pair, or Haiku 5.5
+at high when neither is set, including the SDK's general-purpose helper. Codex
+helpers keep their configured pair (Luna at max by default). Helpers never rise
+with the main worker, and Claude's SDK options affect only its builder's turn.
+Each run records its round and effort. The board and story history add built at
+the recorded effort to each round line; native effort is labelled requested.
+Old records with no effort keep their existing line.
 
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.

@@ -336,6 +336,15 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         if (result or current["review_timings"]) and findings is None:
             known_history = False
         steps = []
+        worker = next((e for e in events if e.get("event") == "run start"
+                       and e.get("kind") in ("work", "worker") and e.get("effort")
+                       and (at := when(e.get("at")))
+                       and attempt(e.get("round"), at) == index), None)
+        if worker is None:
+            worker = next((t for t in timing_rows.get((index, "worker round"), [])
+                           if t.get("effort")), {})
+        if effort := worker.get("effort"):
+            steps.append(f"built at {effort}" + (" requested" if worker.get("requested") else ""))
         for step, label in (("worker round", "work"), ("test run", "tests"), ("review", "review"), ("CI wait", "CI")):
             rows = timing_rows.get((index, step), [])
             if step == "review":

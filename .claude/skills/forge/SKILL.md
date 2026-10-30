@@ -262,9 +262,11 @@ with its own design model; `workers` is ignored. With both, `workers` keeps its 
 Forge's planning, approval, build, review, CI and merge process stays the same.
 Doctor's SDK, project trust and UI skill checks follow the selected tool too.
 
-When a round's tool is the coordinator's, its route is native: that session's own background subagent,
-even with both tools. The other tool runs through its kit: the Codex app server or the Claude
-Agent SDK. No coordinating session open in a one-tool repo means work waits for the session.
+Claude worker rounds use the Agent SDK whenever installed, even in a Claude coordinator.
+Without the SDK, a Claude coordinator hands the round to its own background subagent.
+Codex rounds in a Codex coordinator stay native; other Codex rounds use the app server.
+Plan reads on the coordinator's tool stay native. No coordinating session open in a
+one-tool repo means work waits for the session.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
 Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
@@ -1572,8 +1574,11 @@ Each kind in `forge.toml`'s `[models]` table may have a codex and a claude entry
 tool (a gpt model is Codex's, any other Claude's). Workers use their selected tool's entry,
 and explorers use their host's entry. Workers and Claude plan readers with no entry use Forge's defaults.
 Codex build, fix and lite default to `gpt-6.1-sol` at low effort; design uses its design default.
-Claude workers use model and effort
-and ignore the Codex-only subagents and subagent_effort keys.
+Claude build, fix and lite accept a `subagents` and `subagent_effort` pair, or use
+`claude-haiku-5-5` at high when neither is set. The SDK's `general-purpose` helper
+gets the same pair. These options affect only the Claude builder's turn, not other
+Claude sessions or settings. Codex helpers keep their configured pair, defaulting
+to `gpt-6-luna` at max. Neither tool's helpers change effort after a failure.
 
 After `forge sync`, Codex sessions opened in the repo can use every shipped role, including
 `fixer`. Sync keeps the team's other registered roles. The default subagent model and effort
@@ -1586,6 +1591,18 @@ Claude design, including frontend, keeps `xhigh` effort. Claude plan reads with 
 `claude-opus-5-5` at `high` effort, including when Claude is the only installed tool.
 `forge init` writes Sonnet at high for Claude plan reads and reviews.
 Existing model and effort entries stay unchanged after upgrade and sync.
+After a red close test, a blocking review finding or a failed required check named
+in `checks`, the next build, fix or lite round uses at least high on Codex and
+xhigh on Claude, keeping a higher configured effort. Optional failed checks and
+owner notes do not raise it. The same worker thread continues with the same model;
+only that turn's effort changes. Design, cold reads, reviews and sign-off keep
+their fixed effort. Forge's defaults and ladder never choose none.
+Claude rounds use the Agent SDK when installed. Native rounds request effort in
+their instructions, and their records and round lines label it requested because
+Forge cannot check that the host applied it. A continued native Codex helper can
+retain its first effort. Each run records its round number and effort. The board
+and story history show `built at <effort>` in the round line, and omit it for old
+records without effort.
 Claude planner and architect roles use the plan-read entry; debugger, security
 and performance roles use Opus 5.5 at high effort. Reviews, including prototype sign-off,
 use the selected tool's `models.review` entry, or Autoreview's defaults when unset.
