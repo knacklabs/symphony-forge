@@ -222,7 +222,7 @@
     "id": "88c3e1d8-faf7-4b5b-b7db-50176103efb8",
     "status": "blocked"
   },
-  "round": 11,
+  "round": 12,
   "settled_areas": [
     "close() in src/forge/close.py",
     "src/forge/close.py"
@@ -284,10 +284,12 @@
     "worker_round": 10
   },
   "stuck": {
-    "close": "6582bf32-061e-4ff6-8854-710c0fb2ec04",
-    "head": "8e069ae32b404ddc6d3064d7e6a2067e4e9217da",
-    "keys": {},
-    "round": 10
+    "close": "dafa2b22-0761-4ef0-93c2-04be908f3a8e",
+    "head": "2abc0afa49d06b3d58b43d02d73e1e59d21e8d17",
+    "keys": {
+      "the open P0 [p1] connect owner choices to plan updates and fix-amend guidance in src/forge/task.py": 1
+    },
+    "round": 11
   },
   "why": "About 40% of review rounds are process waste: narrowing needs hand merges of the plan, rounds run with no change, and Forge's own records cost rounds and API calls",
   "worker": "codex"
