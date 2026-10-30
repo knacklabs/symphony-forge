@@ -44,7 +44,7 @@
     "id": "30249346-ebe1-43d6-8957-075ce52c7e72",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -57,10 +57,12 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "1ffd4d6bf07933e1f90e871b21349d317e8f7b2c",
-    "keys": {},
-    "round": null
+    "close": "9d06dc5b-faaa-47b2-a83b-eb1bedbd5714",
+    "head": "d423de2e9a9f05190203166c91792df33770c282",
+    "keys": {
+      "the open P0 canonicalize uuids before checking self-removal in src/forge/templates/starter/libs/organisations/server/src/organisations.service.ts": 1
+    },
+    "round": 1
   },
   "worker": "codex"
 }
