@@ -17,6 +17,8 @@ from test_codex_worker import sdk_data  # noqa: F401
 from test_effort_ladder import _round_client
 from test_item_time_history import records, row
 
+STORY = "FORGE-EFFORT-1"
+
 
 @pytest.mark.platform
 @pytest.mark.parametrize("family,history", [
@@ -75,7 +77,7 @@ def test_4_round_line_and_run_records_show_effort_and_round(
 
 
 @pytest.mark.platform
-def test_round_history_names_the_successful_design_fallback_effort(
+def test_9_round_history_names_the_successful_design_fallback_effort(
         repo, gh, tmp_path, monkeypatch, sdk_data):
     _round_client(repo, gh, tmp_path, monkeypatch, "split", task="PAGE", sdk_data=sdk_data)
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)

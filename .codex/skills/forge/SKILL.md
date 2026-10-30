@@ -262,11 +262,9 @@ with its own design model; `workers` is ignored. With both, `workers` keeps its 
 Forge's planning, approval, build, review, CI and merge process stays the same.
 Doctor's SDK, project trust and UI skill checks follow the selected tool too.
 
-Claude worker rounds use the Agent SDK whenever installed, even in a Claude coordinator.
-Without the SDK, a Claude coordinator hands the round to its own background subagent.
-Codex rounds in a Codex coordinator stay native; other Codex rounds use the app server.
-Plan reads on the coordinator's tool stay native. No coordinating session open in a
-one-tool repo means work waits for the session.
+Claude workers use the Claude Agent SDK kit when installed; otherwise their coordinator uses a background subagent.
+Codex in a Codex coordinator stays native; on the other tool it uses the Codex app server. Plan reads stay native on their coordinator.
+Without a coordinating session, a one-tool repo waits for it.
 Reviews run externally through Autoreview on the named tool; with both, Codex when installed,
 otherwise Claude. Normal, light and sign-off reviews use `[models.review]` or its per-tool entries.
 Unset entries use Autoreview's default model and effort; unset effort uses its default effort.
