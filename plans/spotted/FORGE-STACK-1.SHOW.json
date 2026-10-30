@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tAvoid overriding active parts with the default Not started status\tFORGE-STACK-1/SHOW",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 761,
+      "text": "Avoid overriding active parts with the default Not started status",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/SHOW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tResolve the reviewed remote commit before computing its fingerprint\tFORGE-STACK-1/SHOW",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 641,
+      "text": "Resolve the reviewed remote commit before computing its fingerprint",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/SHOW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/nextstep.py\tStop requesting close once the post-merge close has succeeded\tFORGE-STACK-1/SHOW",
+      "kind": "bug",
+      "path": "src/forge/nextstep.py",
+      "line": 645,
+      "text": "Stop requesting close once the post-merge close has succeeded",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/SHOW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tNot done: The board shows which part a stacked part builds on and waits for",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 764,
+      "text": "Not done: The board shows which part a stacked part builds on and waits for",
+      "from": "review",
+      "item": "FORGE-STACK-1/SHOW",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

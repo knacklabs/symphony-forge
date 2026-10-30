@@ -7,12 +7,122 @@
     "head": null,
     "start": "a2a5f501c7473d1b8843c9636bc495e9afa0f41a"
   },
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 764,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The board shows which part a stacked part builds on and waits for",
+      "work": 2
+    },
+    {
+      "area": "_story() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 641,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Resolve the reviewed remote commit before computing its fingerprint",
+      "work": 2
+    },
+    {
+      "area": "_story() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 645,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Stop requesting close once the post-merge close has succeeded",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 761,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Avoid overriding active parts with the default Not started status",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c5c316d45d3091b9406670f4b236aad4fe4a92b2ddf7d40a65f8485a7648b9ab",
+    "changed": "593d121dbe2bda0b310f587fe01b3eb69e8d5e014edf1fe7c27c6e4d00b1582f",
+    "commit": "1d04c9ea4a2333d303362d316c14111da75c94db",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done\nCase: normal use - opening a stacked part on the board before its base merges.\nItem 5 requires: \u201cThe board and Forge's next-step summary show a stacked part as building on the part beneath it, and once built, as waiting for that part to merge.\u201d This change updates only dependency_maps.parts.status. The visible part status still comes from items[].children[].status, derived without stacking information at src/forge/board.py:578\u2013612 and displayed at src/forge/board_app/item.js:180 and :293. The dependency-map status is only used for unstarted cards and progress-strip attributes in now.js:70\u201376 and :172. Consequently, neither requested status appears in the part's visible summary. The added test checks only dependency_maps, so it passes despite this gap.",
+        "file": "src/forge/board.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 764,
+        "priority": "P1",
+        "title": "Not done: The board shows which part a stacked part builds on and waits for",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a coordinator reads next on another machine while a stacked part has a clean review and pending checks.\n_task supports parts with only an origin/task/... ref, and _item records their status before returning its other-machine message. This new fingerprint call nevertheless uses state['branch'], the local task/... name. On a machine without that local branch, review.fingerprint calls repo.resolve_commit (repo.py:327\u2013330), whose rev-parse fails and raises CalledProcessError. Thus forge next fails instead of reporting the part's wait; the board also loses the story advice through its exception fallback. Use the existing review_ref resolution for the fingerprint rather than assuming a local branch exists.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 641,
+        "priority": "P1",
+        "title": "Resolve the reviewed remote commit before computing its fingerprint",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - A is squash-merged, then B closes successfully without a clash.\nThis ancestry condition remains true even after the requested forge close B succeeds. close._merge_default deliberately leaves a nonconflicting branch unchanged unless GitHub requires it to be updated (src/forge/close.py:717\u2013719), and close then writes a fresh ready receipt at :477 and recommends merge at :483. Because the squash commit on main is still not B's ancestor, the next forge next overrides that valid merge instruction with another close, indefinitely. Determine whether B has been closed against the merged base from review/readiness evidence rather than requiring main's current tip to be an ancestor.",
+        "file": "src/forge/nextstep.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 645,
+        "priority": "P1",
+        "title": "Stop requesting close once the post-merge close has succeeded",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - the base merges while its stacked child is still open.\n_story initializes every readiness.parts entry to 'Not started' at nextstep.py:609, but supplies a stacked label only while the base is unmerged at :648\u2013653. Once the base merges, stacked_on remains in the child's state, so this unconditional lookup returns the default 'Not started' and gives it precedence over Running or Waiting. The dependency map therefore reports an already built or actively running child as unstarted until it merges. Only override the normal status when the readiness value actually represents a stacked state.",
+        "file": "src/forge/board.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 761,
+        "priority": "P1",
+        "title": "Avoid overriding active parts with the default Not started status",
+        "work": 2
+      }
+    ],
+    "id": "6880ba89-fc0c-493f-a67a-710d01f42cbf",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:05:23.572006+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T14:40:33.059818+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
