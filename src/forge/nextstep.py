@@ -579,7 +579,7 @@ def _story(top: Path, key: str, path: Path | None, text: str,
     states = {name: _task(top, key, name, trees, merged_prs, history, prs)
               for name in task_rows(sections(text)) if re.fullmatch(r"[A-Z0-9][A-Z0-9-]*", name)}
     if readiness is not None:
-        readiness.update(stage="planning", parts={}, waits={})
+        readiness.update(stage="planning", parts={}, waits={}, stacked={})
     if history is None:
         notes, saved = story.show(top, ref, f"plans/{key}.read.md") or "", story.show(top, ref, repo.state_path(key))
     else:  # the board's one read of every ref
@@ -652,8 +652,8 @@ def _story(top: Path, key: str, path: Path | None, text: str,
                     base_text = text if base_key == key else story._plan(top, base_key, history=history)
                     base_title = task_rows(sections(base_text)).get(base_name, {}).get("Name") or base_name
                     if readiness is not None:
-                        readiness["parts"][task["id"]] = (f"Waiting for {base_title} to merge" if built
-                                                         else f"Building on {base_title}")
+                        readiness["stacked"][task["id"]] = (f"Waiting for {base_title} to merge" if built
+                                                           else f"Building on {base_title}")
                     if built:
                         base_lines = _item(base, base, base_state, top,
                                            trees.get(f"task/{base_key}-{base_name}"), prs, refusals)

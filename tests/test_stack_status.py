@@ -10,6 +10,8 @@ from test_machine_views import github, pull
 from test_stack_start import configured, reviewed, start
 from test_last_task_records_story_outcome import github_merge
 
+STORY = "FORGE-STACK-1"
+
 
 @pytest.mark.parametrize("previous,close_again", [(False, False), (True, False), (False, True)],
                          ids=["new-client", "upgraded-client", "post-merge-close"])
@@ -76,6 +78,9 @@ def test_5_next_and_board_show_stacked_parts(env, previous, close_again):
         pr["body"] = published
         pr["headRefOid"] = repo.git("rev-parse", "origin/task/STACK-B")
         pr["commits"]["nodes"][0]["commit"]["oid"] = pr["headRefOid"]
+        # Next skips GraphQL for an empty open-PR inventory. Both GitHub
+        # boundaries must report the real open PR and its published readiness.
+        env.gh.respond("pr", "list", "--state", "open", stdout=json.dumps([pr]))
         github(env.gh, [pr])
         shown = repo.forge("next")
         assert shown.returncode == 0, shown.stdout + shown.stderr
@@ -83,7 +88,7 @@ def test_5_next_and_board_show_stacked_parts(env, previous, close_again):
         assert "Next: forge close STACK/B" not in shown.stdout
 
 
-def test_5_remote_stacked_part_with_pending_checks_waits_for_its_base(env):
+def test_7_remote_stacked_part_with_pending_checks_waits_for_its_base(env):
     # Audit: another machine has no local task branch or ready receipt. The
     # existing lifecycle case cannot catch resolution of a missing local ref.
     # Real close records a clean review while only GitHub supplies pending CI.
