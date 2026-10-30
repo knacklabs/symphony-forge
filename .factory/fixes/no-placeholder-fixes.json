@@ -1,6 +1,13 @@
 {
   "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
   "branch": "fix/no-placeholder-fixes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d03-c093-7be3-ac4f-710acf6b1a89",
+    "head": null,
+    "start": "fbd4e2c56d8470d5f71c3a210faf2ac84da4ab66"
+  },
   "done_when": "Sorting an idea never leaves a fix or branch named find-the-problem-to-solve behind",
   "fix_kind": "backend",
   "kind": "fix",
