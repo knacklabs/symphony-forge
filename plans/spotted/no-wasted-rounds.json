@@ -45,12 +45,34 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/task.py\t[P1] Connect owner choices to plan updates and fix-amend guidance\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 87,
+      "text": "[P1] Connect owner choices to plan updates and fix-amend guidance",
+      "from": "blocking",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_codex_worker.py\tThe cached SDK interpreter can point into a deleted test folder.",
       "kind": "bug",
       "path": "tests/test_codex_worker.py",
       "line": 84,
       "text": "The cached SDK interpreter can point into a deleted test folder.",
       "from": "worker",
+      "item": "no-wasted-rounds",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_review_choice_updates_plan.py\t[P1] Update the choice tests for the current stop lifecycle\tno-wasted-rounds",
+      "kind": "bug",
+      "path": "tests/test_review_choice_updates_plan.py",
+      "line": 103,
+      "text": "[P1] Update the choice tests for the current stop lifecycle",
+      "from": "blocking",
       "item": "no-wasted-rounds",
       "status": "open",
       "closed_by": null

@@ -157,33 +157,69 @@
       "gain": 3,
       "harm": 2,
       "line": 18,
-      "outcome": "open",
+      "outcome": "fixed in round 10",
       "reason": "",
       "round": 9,
       "security": false,
       "title": "Not done: test that task-worktree sync preserves an older Forge pin",
       "work": 1
+    },
+    {
+      "area": "apply_review_choice() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 5,
+      "harm": 3,
+      "line": 87,
+      "outcome": "open",
+      "reason": "",
+      "round": 10,
+      "security": false,
+      "title": "[P1] Connect owner choices to plan updates and fix-amend guidance",
+      "work": 3
+    },
+    {
+      "area": "test_1_review_choice_publishes_builder_details_and_merges_them_into_the_task() in tests/test_review_choice_updates_plan.py",
+      "file": "tests/test_review_choice_updates_plan.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 103,
+      "outcome": "open",
+      "reason": "",
+      "round": 10,
+      "security": false,
+      "title": "[P1] Update the choice tests for the current stop lifecycle",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b7b7322c743de2a8a61a48e43e0038ba5d78c28143e6d21ec5124f1e6973b604",
-    "changed": "a6d8605e80db87673760e61756ff03a96719acc7bf9c9497063bdad659ec2ddc",
-    "commit": "20008b5d506e212c4cd16346e01bd6eac456676a",
+    "branch_diff": "ac05bf26b43c10f842fbb09aeb061c6391bf5ab39a08b1c2fcb51173667c0547",
+    "changed": "43346ec52dc563b9eb14e7381f246b6f39318dc8437a2d71883ef689db448993",
+    "commit": "845e4f2471ce3bba7a5e7521d9cbff0f7c414ada",
     "dismissals": [],
     "findings": [
       {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Test \u2014 The test sets the pin to the version of the Forge executable under test for both new and adopted clients. It would still pass if sync incorrectly rewrote forge.toml to that executable's version, so it does not prove the promised pin preservation during an upgrade. It also omits the named Forge-source repo case.",
-        "file": "tests/test_sync_preserves_task_pin.py",
-        "gain": 3,
-        "harm": 2,
-        "line": 18,
+        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional\nCase: normal use - an owner resolves a stopped story part with narrow or split. The new apply_review_choice function has no callers. src/forge/close.py:112\u2013153 records the choice and returns without publishing or merging the updated story plan, leaving the worker with unchanged builder details. The same command path also prints generic manual instructions for fixes instead of the promised forge fix amend step. Adding this unused helper does not deliver either required behavior.",
+        "file": "src/forge/task.py",
+        "gain": 5,
+        "harm": 3,
+        "line": 87,
         "priority": "P1",
-        "title": "Not done: test that task-worktree sync preserves an older Forge pin",
-        "work": 1
+        "title": "[P1] Connect owner choices to plan updates and fix-amend guidance",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - CI runs tests/test_review_choice_updates_plan.py. The first test expects the obsolete \"Ask the human to narrow the part\" question here, while current close stops story reviews after two rounds and asks \"One more round, split or accept?\" Consequently, it fails before reaching plan publication. Separately, line 192 calls stopped(env), whose default kind is \"task\", so the purported fix-amend test starts a story task; its subsequent narrow choice is rejected for that review-loop stop. These tests need current stop fixtures so they can reach and verify the behaviors they claim to protect.",
+        "file": "tests/test_review_choice_updates_plan.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 103,
+        "priority": "P1",
+        "title": "[P1] Update the choice tests for the current stop lifecycle",
+        "work": 2
       }
     ],
-    "id": "473a1ee9-a0bd-4418-9d34-9707f5f28d15",
+    "id": "88c3e1d8-faf7-4b5b-b7db-50176103efb8",
     "status": "blocked"
   },
   "round": 11,
@@ -191,7 +227,7 @@
     "close() in src/forge/close.py",
     "src/forge/close.py"
   ],
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
@@ -231,6 +267,10 @@
     },
     {
       "at": "2026-10-16T16:01:00.623436+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T02:46:28.029273+00:00",
       "step": "review"
     }
   ],
