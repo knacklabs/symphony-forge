@@ -34,6 +34,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_member_removal_guide.py\tThe missing story label repeats an existing test number and blocks the rule check on main.",
+      "kind": "bug",
+      "path": "tests/test_member_removal_guide.py",
+      "line": 13,
+      "text": "The missing story label repeats an existing test number and blocks the rule check on main.",
+      "from": "worker",
+      "item": "FORGE-STACK-1/SHOW",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "edge\tsrc/forge/board.py\tNot done: The board shows which part a stacked part builds on and waits for",
       "kind": "edge",
       "path": "src/forge/board.py",
