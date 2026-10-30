@@ -21,9 +21,9 @@
   "chat": {
     "approval": null,
     "claude": null,
-    "conversation": "01a13e64-03d9-72b2-8f4e-4da8171a5010",
+    "conversation": "01a18aae-8e3d-7fc3-8682-550acb3063d2",
     "head": null,
-    "start": "fa7c754c40f8a3d5e9221309959f4f8e51b9f499"
+    "start": "54bff59c7e848121c092cd91c387cbf5199e3cad"
   },
   "done_when": "Choosing narrow or split on a story part updates that part's builder details in the plan and brings them into the task branch in one step, and on a fix it names the fix amend step; sync run inside a task worktree never changes the Forge pin; in Forge's repo and in client repos, new and upgraded",
   "flagged": [
