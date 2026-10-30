@@ -70,7 +70,7 @@ REFUSALS = {
     "failed": ("The worker stopped with exit code {status}; its log is {log}.", "forge work {item}"),
     "no_turn": ("Claude ended without running a turn, so no worker ran; it may be waiting on a "
                 "prompt such as a hooks review. Its log is {log}.",
-                "run claude once in {top} and answer its prompt, then forge work {item}"),
+                "forge doctor --fix, then forge work {item}"),
     "sdk": ("{problem}", "forge doctor --fix"),
     "turn": ("The Codex turn didn't complete: {why}; its log is {log}.", "forge work {item}"),
     "brief": ('"What changes for you" or "Done when" in the story doc of {item}\'s checkout isn\'t '
