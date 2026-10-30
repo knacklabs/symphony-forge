@@ -389,7 +389,7 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
 # and fail the run when an entry ran no test. xdist forwards each test's report to the controller.
 SELECTION = """import os, pathlib, pytest
-IGNORE, PICKED, ALWAYS = {}, {}, {}
+IGNORE, PICKED, ALWAYS, REQUIRED = {}, {}, {}, {}
 RAN, ROOT = set(), []
 def pytest_configure(config):
     config.option.ignore = (config.option.ignore or []) + IGNORE
@@ -419,7 +419,7 @@ def pytest_sessionfinish(session):
     # rejects missing files and nodes. One-group runs retain the ran-no-test check.
     if int(os.environ.get("FORGE_GROUPS", "1")) > 1:
         return
-    for entry in ALWAYS:
+    for entry in REQUIRED:
         if not any(runs(nodeid, entry) for nodeid in
                    RAN | set(getattr(session.config, "_forge_prior_passed", []))):
             print("\\nforge.toml's always_test names " + entry
@@ -596,6 +596,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
     excluded = []
     # Read as forge test --pytest reads test: close has already checked forge.toml.
     always = tomllib.loads(Path("forge.toml").read_text("utf-8")).get("always_test", [])
+    required = always[:]
     picked, tests, shared_changed, missed = related(base)
     # Tests that run the program from outside never name its files, so say what local runs miss.
     from forge import review  # imported late: review's imports lead back here
@@ -606,7 +607,19 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
               "The nightly full run covers the rest.", flush=True)
         item = review.branch_item(repo.current_branch(Path.cwd()), Path.cwd())
         if item and "/" in item[0]:
-            named = review.cells(review.task(Path.cwd(), item[0])[2].get("tests", ""))
+            notes = review.task(Path.cwd(), item[0])[2].get("tests", "")
+            named, file = [], ""
+            # Task cells contain Markdown and prose, not a comma-separated path list.
+            for match in re.finditer(
+                    r"(?<![\w/.-])(?:[\w./-]+\.py\b(?:::[\w.-]+(?:\[[^\]\n]*\])?)*"
+                    r"|::[\w.-]+(?:\[[^\]\n]*\])?(?:::[\w.-]+)*)", notes):
+                name = match.group()
+                if name.startswith("::"):
+                    if not file:
+                        continue
+                    name = file + name
+                file = name.split("::", 1)[0]
+                named.append(name)
             always = list(dict.fromkeys(always + named))
             picked = []
         else:
@@ -632,7 +645,7 @@ def pytest_tests(base: str, command: str, entry: dict | None = None) -> int:
         if excluded or always:
             selection = Path(folder) / "_forge_pytest_selection.py"
             selection.write_text(SELECTION.format(repr(excluded), repr(None if shared_changed else picked),
-                                                  repr(always)), "utf-8")
+                                                  repr(always), repr(required)), "utf-8")
             environment["PYTHONPATH"] = os.pathsep.join(
                 [folder, environment.get("PYTHONPATH", "")])
         if entry is None:
