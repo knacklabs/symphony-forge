@@ -4,12 +4,20 @@
   "done_when": "After an accept at the round limit, the first forge close's clean review passes forge-pr-check on the commit it pushed",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T13:45:42.572467+00:00",
       "step": "start"
     }
   ],
-  "why": "After close --resolve accept, forge-pr-check says the clean review close just pushed is out of date, so a second close is needed (issue 1244)"
+  "stuck": {
+    "close": null,
+    "head": "e2a26cee524bdb1b85a9458c05895194c75cce00",
+    "keys": {},
+    "round": null
+  },
+  "why": "After close --resolve accept, forge-pr-check says the clean review close just pushed is out of date, so a second close is needed (issue 1244)",
+  "worker": "codex"
 }
