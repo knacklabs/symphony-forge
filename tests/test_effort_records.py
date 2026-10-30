@@ -5,6 +5,9 @@ A renderer can omit effort, use the latest effort for every round, or lose old
 timing-only history. The ladder tests own selection, but never inspect the board.
 Reuse their command fixture; no production seam is added. Record edits below
 represent earlier releases, after checking the real producers' output.
+Round-two regressions: the visible number must exist before review, and a clean
+Claude failure must not hide the successful Codex fallback's effort. Existing
+coverage checks only the worker counter and fallback routing, not this display.
 """
 import json
 
@@ -62,8 +65,30 @@ def test_4_round_line_and_run_records_show_effort_and_round(
                     "".join(json.dumps(value) + "\n" for value in values), encoding="utf-8")
         rounds = row(repo, item)["rounds"]
         assert [one["worker_round"] for one in rounds] == [1, 2]
-        for one, (_, effort) in zip(rounds, expected):
+        for one, (number, effort) in zip(rounds, expected):
+            assert one["round"] == number
+            assert one["line"].startswith(f"Round {number}: ")
             if source == "legacy":
                 assert "built at" not in one["line"]
             else:
                 assert f"built at {effort}" in one["line"]
+
+
+@pytest.mark.platform
+def test_round_history_names_the_successful_design_fallback_effort(
+        repo, gh, tmp_path, monkeypatch, sdk_data):
+    _round_client(repo, gh, tmp_path, monkeypatch, "split", task="PAGE", sdk_data=sdk_data)
+    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
+    monkeypatch.delenv("CLAUDECODE", raising=False)
+    monkeypatch.setenv("STUB_CLAUDE_EXIT", "3")
+    worked = repo.forge("work", "BOARD/PAGE")
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    assert "fell back to Codex" in worked.stdout
+    starts = [event for event in records(repo, "events.jsonl")
+              if event.get("item") == "BOARD/PAGE" and event.get("event") == "run start"
+              and event.get("kind") in ("work", "worker")]
+    assert starts[0]["effort"] == "xhigh"
+    assert starts[1:] and all(event["effort"] == "high" for event in starts[1:])
+    [round_] = row(repo, "BOARD/PAGE")["rounds"]
+    assert "built at high" in round_["line"]
+    assert "built at xhigh" not in round_["line"]
