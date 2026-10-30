@@ -4,12 +4,20 @@
   "done_when": "A docs change that a test reads through a __file__-built path runs that test",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T13:32:38.413143+00:00",
       "step": "start"
     }
   ],
-  "why": "The docs-only skip misses tests that build doc paths from __file__, so a docs change skips tests that read it (issue 1031)"
+  "stuck": {
+    "close": null,
+    "head": "6914c526793a61075f6b945b9f665f8c06f31d02",
+    "keys": {},
+    "round": null
+  },
+  "why": "The docs-only skip misses tests that build doc paths from __file__, so a docs change skips tests that read it (issue 1031)",
+  "worker": "codex"
 }
