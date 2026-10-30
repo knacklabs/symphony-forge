@@ -985,8 +985,8 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                 settled = {key: reason for key, reason in settled.items()
                            if not reason.startswith("accepted by the owner:")}
                 for finding in findings:
-                    if finding["priority"] != "P0" and (reason := accepted.get(finding["file"].replace("\\", "/"))):
-                        settled[score.identity(finding["file"], finding["title"])] = reason
+                    if finding["priority"] != "P0" and (accepted_reason := accepted.get(finding["file"].replace("\\", "/"))):
+                        settled[score.identity(finding["file"], finding["title"])] = accepted_reason
                     elif finding["priority"] == "P0":
                         settled.pop(score.identity(finding["file"], finding["title"]), None)
             findings = [finding for finding in findings if not settled.get(
