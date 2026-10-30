@@ -890,6 +890,11 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                     repo.git("rm", "-f", "-q", "--cached", "--", *sorted(recheck), cwd=tree)
                     prompt += ("\n\nFiles with open earlier findings appear as additions so they remain review targets. "
                                "They already exist in the product. Re-check their earlier findings: " + ", ".join(sorted(recheck)))
+                if images is not None:
+                    omitted = [name for name in repo.git("ls-files", "-z", cwd=tree).split("\0")
+                               if Path(name).suffix.lower() in design.IMAGES and name not in images]
+                    if omitted:
+                        repo.git("rm", "-f", "-q", "--cached", "--", *omitted, cwd=tree)
                 review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
                                        "-m", "Previous sign-off product", cwd=tree)
                 repo.git("read-tree", head, cwd=tree)
