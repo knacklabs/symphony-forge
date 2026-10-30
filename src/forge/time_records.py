@@ -336,6 +336,21 @@ def item(top: Path, key: str, state: dict[str, Any], *,
         if (result or current["review_timings"]) and findings is None:
             known_history = False
         steps = []
+        # A fallback can run another tool in the same turn; use its latest start.
+        worker = next((e for e in reversed(events) if e.get("event") == "run start"
+                       and e.get("kind") in ("work", "worker") and e.get("effort")
+                       and (at := when(e.get("at")))
+                       and attempt(e.get("round"), at) == index), None)
+        if worker is None:
+            worker = next((t for t in reversed(timing_rows.get((index, "worker round"), []))
+                           if t.get("effort")), {})
+        # A worker has a known turn number before close assigns a review number.
+        # Keep earlier reviews with unknown ordinals unknown, as before.
+        if number is None and not (result or current["review_timings"]) and (
+                worker or timing_rows.get((index, "worker round"))):
+            number = worker_round
+        if effort := worker.get("effort"):
+            steps.append(f"built at {effort}" + (" requested" if worker.get("requested") else ""))
         for step, label in (("worker round", "work"), ("test run", "tests"), ("review", "review"), ("CI wait", "CI")):
             rows = timing_rows.get((index, step), [])
             if step == "review":
