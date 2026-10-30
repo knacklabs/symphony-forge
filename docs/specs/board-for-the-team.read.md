@@ -1,17 +1,12 @@
 ---
 reader: codex (gpt-6.1-sol)
 read_at: 2026-10-10T08:55:37+00:00
-seconds:
 read_hash: 58ef214e422e54cdc19d06dced2d804f70be6799
 round: 21
 passed: yes
 doc_seen: 58ef214e422e54cdc19d06dced2d804f70be6799
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 notes_seen: f29f476997226169652e4e964f1b715b7901903a
-conversation: 01a12505-dee2-71e0-b591-ae56c31acbf9
-session:
-loop_choice:
-loop_reason:
 ---
 # Cold read notes
 
