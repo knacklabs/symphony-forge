@@ -76,7 +76,7 @@ export class OrganisationsService implements OrganisationsApi {
   }
 
   async removeMember(account: OrganisationPrincipal, accountId: string, tx: Prisma.TransactionClient): Promise<void> {
-    if (accountId === account.id) {
+    if (accountId.toLowerCase() === account.id.toLowerCase()) {
       throw new ForbiddenException({ code: 'CANNOT_REMOVE_SELF', message: 'You cannot remove yourself.', details: null });
     }
     const where = { accountId, organisationId: account.organisationId, deletedAtUtc: null };

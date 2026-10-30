@@ -90,11 +90,15 @@ describe('organisations', () => {
       .expect(403)
       .expect(({ body }) => expect(body.error.code).toBe('ADMIN_ONLY'));
 
-    await adminClient
-      .delete(`/api/v1/members/${adminId}`)
-      .set('x-csrf-token', adminCsrf)
-      .expect(403)
-      .expect(({ body }) => expect(body.error.code).toBe('CANNOT_REMOVE_SELF'));
+    // UUID spelling must not let an admin bypass the self-removal rule.
+    for (const ownId of [adminId, adminId.toUpperCase()]) {
+      await adminClient
+        .delete(`/api/v1/members/${ownId}`)
+        .set('x-csrf-token', adminCsrf)
+        .expect(403)
+        .expect(({ body }) => expect(body.error.code).toBe('CANNOT_REMOVE_SELF'));
+    }
+    await adminClient.get('/api/v1/auth/me').expect(200);
 
     await adminClient
       .patch(`/api/v1/members/${memberId}`)
