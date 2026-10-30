@@ -1,4 +1,5 @@
 {
+  "allow_large": "A release bump names the new version in every file that records it; no behaviour changes",
   "base": "30b1545d3921be2b95eb43cb3d94fdc36324f8f5",
   "branch": "fix/release-1-2-25",
   "chat": {
