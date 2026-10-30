@@ -27,7 +27,8 @@ def _ready_before_switch(env, adopted=False, changes_setting=False):
     settings = (repo.path / "forge.toml").read_text("utf-8")
     changes = {"forge.toml": settings.replace('merge = "human"', 'merge = "agent"')
                if 'merge = "human"' in settings else 'merge = "agent"\n' + settings}
-    item, where = env.start_fix(changes if changes_setting else None)
+    item, where = env.start_fix(changes if changes_setting else None,
+                              **({"done_when": "forge.toml permits agent merges"} if changes_setting else {}))
     synced = repo.forge("sync", cwd=where)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     env.commit(where, "README.md", "# Hello\n")
@@ -76,6 +77,7 @@ def test_2_item_changing_merge_value_is_refused_even_when_default_matches(env):
 @pytest.mark.parametrize("changes_setting", [False, True], ids=["older-branch", "changed-setting"])
 @pytest.mark.parametrize("local_work", ["", "unsaved.txt", ".hooks/keep.txt", ".hooks/pre-commit"],
                          ids=["generated-hooks", "unsaved-file", "user-hook-file", "edited-shim"])
+@pytest.mark.platform
 def test_3_already_merged_item_tidies_without_setting_guard(env, local_work, changes_setting):
     item, where, head = _ready_before_switch(env, changes_setting=changes_setting)
     _merge_at_github(env)

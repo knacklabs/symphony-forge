@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tAnswered second-round question keeps replacing the next work step\treviews-converge",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 253,
+      "text": "Answered second-round question keeps replacing the next work step",
+      "from": "blocking",
+      "item": "reviews-converge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tSecurity findings identified by category can become nonblocking follow-ups\treviews-converge",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 980,
+      "text": "Security findings identified by category can become nonblocking follow-ups",
+      "from": "blocking",
+      "item": "reviews-converge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/task.py\tA locally started base gives dependent parts a circular next step\treviews-converge",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 340,
+      "text": "A locally started base gives dependent parts a circular next step",
+      "from": "blocking",
+      "item": "reviews-converge",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: Deleting a line can make an unchanged finding block the next review",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 993,
+      "text": "Not done: Deleting a line can make an unchanged finding block the next review",
+      "from": "review",
+      "item": "reviews-converge",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

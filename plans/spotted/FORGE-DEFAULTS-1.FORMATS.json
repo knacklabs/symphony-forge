@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx\tPreserve Python starter compatibility in the shared web app\tFORGE-DEFAULTS-1/FORMATS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/src/features/projects/pages/projects-page.tsx",
+      "line": 13,
+      "text": "Preserve Python starter compatibility in the shared web app",
+      "from": "blocking",
+      "item": "FORGE-DEFAULTS-1/FORMATS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

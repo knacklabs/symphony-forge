@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/shared/util/src/format.test.ts\t[P1] Keep shipped money tests compatible with the chosen currency\tFORGE-DATABASE-1/MONEY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/shared/util/src/format.test.ts",
+      "line": 9,
+      "text": "[P1] Keep shipped money tests compatible with the chosen currency",
+      "from": "blocking",
+      "item": "FORGE-DATABASE-1/MONEY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "base": "d051e3adb187d70d8625fa23d98b0b245d9adecd",
+  "branch": "fix/after-the-upgrade-to-v1-2-22-client-sign",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17d66-2eea-7db0-b212-ca345e22053b",
+    "head": null,
+    "start": "b7c7ef441bc073dfab811a0d84ac38cbec877fbf"
+  },
+  "done_when": "Client sign-off passes on a green full run, matching answers, a strict review with no serious findings and a clean completeness review, and when something is missing one refusal lists every gap.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "decision_accept() in src/forge/records.py",
+      "file": "src/forge/records.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 357,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_signoff_reuses_results_until_their_inputs_change",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "24b47a2bb4d7ddc0a7451fd4b6b523392d5e9f143230365201b4336dac34ef65",
+    "changed": "141d051d1c5cdb3602c34fafd262dbcf78159b3ad1ae31a4248092151259e05f",
+    "commit": "958c96fda3ef4941ab8074b37e36ab06d5aa585a",
+    "dismissals": [],
+    "findings": [],
+    "id": "58fd4431-ee6e-4572-8790-39f08cc359f1",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T12:46:34.844774+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T12:55:51.411731+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T13:13:46.939586+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "21418a94-e7cb-4430-ba9a-7156eab6b745",
+    "head": "b25d5492bba8d8c520a3d3991c0a43ca42d4d12e",
+    "keys": {},
+    "round": 1
+  },
+  "why": "After the upgrade to v1.2.22, client sign-off loops because the ritual checks added in v1.2.21 stop it one missing record at a time.",
+  "worker": "codex"
+}

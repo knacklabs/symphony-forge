@@ -7,6 +7,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 ROOT = Path(__file__).resolve().parents[1]
 STORY = "in-forge-s-own-repo-a-forge-installed-ea"
 # Run forge from the given install folder, as an installed forge's entry point would.

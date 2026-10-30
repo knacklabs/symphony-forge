@@ -1,5 +1,6 @@
 """The repos this machine has used with Forge, and its line of Forge agent runs."""
 import contextlib
+import csv
 import json
 import os
 import sys
@@ -32,14 +33,18 @@ COMMANDS = [{"words": "lanes", "run": "lanes", "changes_state": False,
     "listing": "| `forge stop <item>` | Person only: stops the item's runs in this repo (`--repo <root>` or `--id <id>`) |"}]
 
 
-def half_cores() -> int:
+def half_cores(runners: int | None = None) -> int:
     """The shared budget for agents and tests, including Python 3.11 and unknown counts."""
-    return max(1, (getattr(os, "process_cpu_count", os.cpu_count)() or 2) // 2)
+    cores = (getattr(os, "process_cpu_count", os.cpu_count)() or 2) // 2
+    return max(1, cores - (busy_runners() if runners is None else runners))
 
 
-def test_cpus() -> str:
-    """The test processes for one test run: a worker's own budget, else half the cores."""
-    return os.environ.get("FORGE_TEST_CPUS") or str(half_cores())
+def test_cpus(entry: dict[str, Any] | None = None) -> str:
+    """Use the admitted allocation, or the worker's cap before admission."""
+    if entry is not None:
+        return str(entry.get("processes", half_cores(0)))
+    budget = test_slots()
+    return str(min(int(os.environ.get("FORGE_TEST_CPUS") or budget), budget))
 
 
 def worker_env() -> dict[str, str]:
@@ -49,6 +54,29 @@ def worker_env() -> dict[str, str]:
 
 
 LOAD_LIMIT = 1.5
+MEMORY_FLOOR = 1_500_000_000
+
+
+def memory_floor(reading: dict[str, int | None]) -> int:
+    return max(MEMORY_FLOOR, (reading["total_bytes"] or 0) // 10)
+
+
+def busy_runners() -> int:
+    """Each local Actions job leaves one core out of Forge's half-core budget."""
+    with contextlib.suppress(OSError, repo.Refused, csv.Error):
+        if os.name == "nt":
+            listed = repo.run("tasklist", "/FO", "CSV", "/NH")
+            if listed.returncode == 0:
+                return sum(bool(row) and row[0].casefold() == "runner.worker.exe"
+                           for row in csv.reader(listed.stdout.splitlines()))
+        else:
+            listed = repo.run("ps", "-axo", "comm=")
+            if listed.returncode == 0:
+                commands = (line.strip() for line in listed.stdout.splitlines())
+                return sum(command == "Runner.Worker" or
+                           (command.startswith("/") and Path(command).name == "Runner.Worker")
+                           for command in commands)
+    return 0
 
 
 def _load_per_core() -> float | None:
@@ -58,9 +86,16 @@ def _load_per_core() -> float | None:
     return None
 
 
-def test_slots() -> int:
-    """One test run per four available cores, with at least one place."""
-    return max(1, half_cores() // 2)
+def test_slots(runners: int | None = None) -> int:
+    """Test processes share the cores left after the agent share and local CI jobs."""
+    cores = getattr(os, "process_cpu_count", os.cpu_count)() or 2
+    return max(1, cores - half_cores(0) - (busy_runners() if runners is None else runners))
+
+
+def test_allocation(runs: list[dict[str, Any]]) -> int:
+    """Running tests reserve their allocation; older entries reserve the old default share."""
+    return sum(run.get("processes", half_cores(0)) for run in runs
+               if run["kind"] == "test" and _admitted(run))
 
 
 def _repos_file() -> Path:
@@ -125,12 +160,41 @@ def _unblocks(top: Path, item: str) -> bool:
     return False
 
 
-def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None,
-         small: bool = False) -> dict[str, Any]:
+def _admitted(run: dict[str, Any]) -> bool:
+    return bool(run.get("admitted") or run.get("started_at") or run.get("legacy"))
+
+
+def _holder(run: dict[str, Any]) -> str:
+    name = run.get("title") or run.get("item") or run["kind"]
+    if run.get("native"):
+        action = (f"In its session at {run['checkout_root']}, use forge handback {run['item']} "
+                  f"--round {run['round']} --subagent <id> with its result on stdin.")
+    else:
+        command = (f"--repo {repo.quote(run['repo_root'])} {run['item']}" if run.get("item")
+                   else f"--id {run['id']}")
+        action = f"To free this place, ask the operator to run forge stop {command}."
+    return f"Held by {name} ({run['repo_name']}, {run['kind']}). {action}"
+
+
+def _place(run: dict[str, Any], lane: list[dict[str, Any]], size: int) -> int:
+    """Running rounds retain capacity, but do not become waiters when the budget shrinks."""
+    if _admitted(run):
+        return 0
+    if run["kind"] == "test":
+        waiting = [row for row in lane if not _admitted(row)]
+        if waiting[0] == run and test_allocation(lane) < size:
+            return 0
+        return 1 + waiting.index(run)
+    if run.get("free") or lane.index(run) < size:
+        return 0
+    return 1 + sum(not _admitted(row) for row in lane[:lane.index(run)])
+
+
+def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str | None) -> dict[str, Any]:
     """Join a lane; prerequisite agents go first, with arrival order within each group.
 
-    Reviews and plan reads wait on a model's API rather than this machine's cores, and a small
-    test run ends in moments, so they start at once and take no place from anyone else."""
+    Reviews and plan reads take no place from anyone else, but every run
+    waits for the machine's load and memory to allow a start."""
     from forge import codex, repo as repository  # codex imports machine
 
     me = codex.identity(os.getpid()) or {"pid": os.getpid()}
@@ -159,48 +223,70 @@ def join(kind: str, repo: Path, item: str | None, model: str | None, effort: str
              "repo_name": root.name, "item": item, "title": title, "model": model, "effort": effort,
              "joined_at": repository.now(), "started_at": None, "process": me, "forge": me,
              "agent": None, "round": round_number, "unblocks": unblocks,
-             "output_path": None, "progress": None, "free": small or kind in ("read", "review")}
-    size = test_slots() if kind == "test" else half_cores()
+             "output_path": None, "progress": None, "free": kind in ("read", "review")}
+    if kind == "test":
+        entry["processes"] = 0
     with _queue() as runs:
         runs.append(entry)
     _lane_event(entry, "lane joined", at=entry["joined_at"])
+    waiting_since = time.monotonic()
     try:
-        said: int | str = 0
+        said: int | str | tuple = 0
         while True:
+            runners = busy_runners()
+            size = test_slots(runners) if kind == "test" else half_cores(runners)
+            reading = memory()
+            floor = memory_floor(reading)
+            available = reading["available_bytes"]
+            low_memory = available is not None and available < floor
             with _queue() as runs:
                 mine = next((run for run in runs if run["id"] == entry["id"]), None)
                 if mine is None:
                     raise repository.Refused("This run was stopped while waiting; it will not start.", "")
                 lane = [run for run in runs if (run["kind"] == "test") == (kind == "test")
-                        and not run.get("free")]
-                place = 0 if entry["free"] else lane.index(mine) - size + 1
+                        and (kind == "test" or not run.get("free"))]
+                place = _place(mine, lane, size)
+                holders = [run for run in lane if _admitted(run)]
+                occupied = test_allocation(holders) if kind == "test" else len(holders)
+                waiting = (place, tuple(run["id"] for run in holders))
                 busy = None
-                # A work round waits while the machine is busy, unless no other agent runs, since
-                # waiting then never lowers the load.
+                # External jobs also drive load, even when no Forge run has started.
                 # ponytail: the one-minute average lags, so a dip can admit up to half the cores at
                 # once; space admissions by a minute if that burst shows up in queue waits.
-                if place <= 0 and kind == "work" and any(
-                        run.get("admitted") or run["started_at"] or run.get("legacy")
-                        for run in lane if run["id"] != entry["id"]):
+                if place <= 0:
                     busy = _load_per_core()
                     busy = busy if busy is not None and busy >= LOAD_LIMIT else None
-                if place <= 0 and busy is None:
+                if place <= 0 and busy is None and not low_memory:
                     # Admission holds the place before the model process is launched.
+                    if kind == "test":
+                        mine["processes"] = entry["processes"] = min(
+                            int(os.environ.get("FORGE_TEST_CPUS") or size), size - occupied)
                     mine["admitted"] = entry["admitted"] = True
-            if place <= 0 and busy is None:
+            if place <= 0 and busy is None and not low_memory:
                 _lane_event(entry, "lane admitted")
                 return entry
-            if busy is not None:
+            if place <= 0 and low_memory:
+                if said != "memory":
+                    print(f"This run is waiting for memory: {available / 1e9:.1f} GB free, "
+                          f"starts above {floor / 1e9:.1f} GB.", flush=True)
+                    said = "memory"
+            elif busy is not None:
                 if said != "busy":
                     print(f"This machine is busy (load {busy:.1f} per core), so this work round waits "
                           f"until it is under {LOAD_LIMIT}.", flush=True)
                     said = "busy"
-            elif place != said:
-                print(f"{size} Forge {'test runs' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
-                      f"its turn: it is number {place} in line."
-                      + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""), flush=True)
-                said = place
-            time.sleep(0.5)
+            elif waiting != said:
+                lines = []
+                # A holder handover can precede admission of the next run without moving us.
+                if not isinstance(said, tuple) or said[0] != place:
+                    lines.append(f"{max(size, occupied)} Forge {'test processes' if kind == 'test' else 'agents'} already run on this machine, so this one waits "
+                                 f"its turn: it is number {place} in line."
+                                 + (f" {_WAIT_REASONS[unblocks]}" if kind != "test" else ""))
+                lines.extend(_holder(run) for run in holders)
+                if lines:
+                    print("\n".join(lines), flush=True)
+                said = waiting
+            time.sleep(1 if time.monotonic() - waiting_since < 60 else 2)
     except BaseException:
         leave(entry)
         raise
@@ -297,23 +383,24 @@ def view() -> dict[str, Any]:
     for run in runs:
         run["process"] = {key: value for key, value in run["process"].items()
                           if key in ("pid", "started")}
-    return {name: {"size": size, "entries": [run for run in runs
+    runners = busy_runners()
+    return {name: {"size": size, **({"used": test_allocation(runs)} if name == "tests" else {}),
+            "entries": [run for run in runs
             if (run["kind"] == "test") == (name == "tests")]}
-            for name, size in (("agents", half_cores()), ("tests", test_slots()))}
+            for name, size in (("agents", half_cores(runners)), ("tests", test_slots(runners)))}
 
 
 def lanes(args: Any) -> int:
     """Show this release, while older runs still count towards queue admission."""
     result = view()
     now = datetime.fromisoformat(repo.now())
-    for lane in result.values():
+    for name, lane in result.items():
         rows = []
-        counted = [run for run in lane["entries"] if not run.get("free")]
+        counted = [run for run in lane["entries"] if name == "tests" or not run.get("free")]
         for run in lane["entries"]:
             if run.get("version") != __version__:
                 continue
-            run["place"] = (0 if run["started_at"] or run.get("free")
-                            else max(0, counted.index(run) - lane["size"] + 1))
+            run["place"] = _place(run, counted, lane["size"])
             at = run["started_at"] or run["joined_at"]
             run["elapsed"] = max(0, (now - datetime.fromisoformat(at)).total_seconds())
             rows.append(run)
@@ -334,10 +421,10 @@ def lanes(args: Any) -> int:
     return 0
 
 
-def load() -> dict[str, Any]:
-    """OS measurements; unavailable values stay null, never invented."""
+def memory() -> dict[str, int | None]:
+    """Available memory from the OS; an unreadable source never holds a run."""
     memory: dict[str, int | None] = {"total_bytes": None, "available_bytes": None}
-    with contextlib.suppress(OSError, ValueError, AttributeError):
+    with contextlib.suppress(OSError, ValueError, AttributeError, KeyError, IndexError, repo.Refused):
         if sys.platform == "linux":
             values = {line.split()[0]: int(line.split()[1]) * 1024
                       for line in Path("/proc/meminfo").read_text().splitlines()}
@@ -348,8 +435,7 @@ def load() -> dict[str, Any]:
             page_size = int(stats[0].split("of ")[1].split()[0])
             pages = {key: int(value.strip().rstrip(".")) for line in stats[1:]
                      if ":" in line for key, value in [line.split(":", 1)]}
-            memory["available_bytes"] = page_size * sum(pages.get(key, 0) for key in
-                ("Pages free", "Pages inactive", "Pages speculative"))
+            memory["available_bytes"] = page_size * (pages["Pages free"] + pages["Pages inactive"])
         elif os.name == "nt":
             import ctypes
             class Memory(ctypes.Structure):
@@ -361,10 +447,15 @@ def load() -> dict[str, Any]:
             status.length = ctypes.sizeof(status)
             if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
                 memory.update(total_bytes=status.total, available_bytes=status.available)
+    return memory
+
+
+def load() -> dict[str, Any]:
+    """OS measurements; unavailable values stay null, never invented."""
     average = None
     with contextlib.suppress(OSError):
         average = list(os.getloadavg()) if hasattr(os, "getloadavg") else None
-    return {"load": average, "memory": memory}
+    return {"load": average, "memory": memory()}
 
 
 def stop(args: Any) -> int:
@@ -397,9 +488,43 @@ def stop(args: Any) -> int:
     held = [run for run in selected if run.get("native")]
     for run in held:
         native.cancel(run)
+    cleared = False
+    if not selected and root and repo.ITEM.fullmatch(args.item):
+        for kind in ("Build", "Grill"):
+            cleared = _clear_item_lock(root, args.item, kind) or cleared
     print("Stopped Forge's hold; stop the subagent in your session too." if held else
-          "Stopped the run." if selected else "There is nothing to stop.")
+          "Stopped the run." if selected or cleared else "There is nothing to stop.")
     return 0
+
+
+def _clear_item_lock(root: Path, item: str, kind: str) -> bool:
+    """A surviving session alone does not keep an abandoned round busy."""
+    from forge import codex
+
+    lock = codex._item_file(root, item, ".lock", kind)
+    with codex._one_at_a_time(lock), _queue() as runs:
+        if not lock.exists() or any(run["repo_root"] == root.as_posix() and run["item"] == item
+                                    for run in runs):
+            return False
+        owner = codex._json(lock)
+        alive = codex._alive(owner)
+        if "started" not in owner or alive is None:
+            raise repo.Refused("Forge cannot verify this run's process; nothing was stopped.", "")
+        record = lock.with_suffix(".json")
+        saved = codex._json(record)
+        entry = (saved.get("pending") or {}).get("entry") or {}
+        # Only a matching native handout proves a live owner is the surviving session,
+        # rather than a work command (including older releases without saves_chat).
+        if alive and (not entry.get("native") or any(
+                owner.get(key) != entry.get("process", {}).get(key) for key in ("pid", "started"))):
+            return False
+        if any(codex._alive(saved[key]) is not False for key in ("driver", "app_server")
+               if saved.get(key)):
+            return False
+        if saved.get("pending"):
+            codex._record(record, pending=None)
+        lock.unlink()
+        return True
 
 
 @contextlib.contextmanager
@@ -414,6 +539,7 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
             runs = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             runs = []
+        original = json.dumps(runs)
         # Runs launched by the previous release still hold their places during an upgrade.
         for run in runs:
             if "id" not in run:
@@ -428,27 +554,33 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
         # calls its live Forge process holds the admission. Tests hold only their command once
         # started. A reused child pid falls back to that Forge process, never to its new owner.
         before = list(runs)
+        pids = {process["pid"] for run in runs
+                for process in (run["process"], run.get("forge"))
+                if process and isinstance(process.get("pid"), int)}
+        identities = _identities(pids)
         retained = []
         for run in runs:
             recorded = run["process"]
-            current = codex.identity(recorded["pid"])
+            current = identities.get(recorded["pid"])
             # One OS observation decides both liveness and parent fallback. A second
             # lookup could see a reused pid after the first already reported it gone.
             if current is not None and ("started" not in recorded or "command" not in current
                                         or codex._legacy_identity(recorded)
                                         or current["started"] == recorded["started"]):
                 retained.append(run)
-            elif run["kind"] != "test" and _running(run.get("forge")):
+            elif run["kind"] != "test" and _running(run.get("forge"), identities):
                 run["process"] = run["forge"]
                 retained.append(run)
         runs[:] = retained
         agents = iter(sorted((run for run in runs if run["kind"] != "test"), key=lambda run:
-            0 if run.get("admitted") or run["started_at"] or run.get("legacy") else
+            0 if _admitted(run) else
             1 if run.get("unblocks") else 2))
         runs[:] = [run if run["kind"] == "test" else next(agents) for run in runs]
         yield runs
-        path.with_suffix(".new").write_text(json.dumps(runs), encoding="utf-8")
-        os.replace(path.with_suffix(".new"), path)
+        updated = json.dumps(runs)
+        if updated != original:
+            path.with_suffix(".new").write_text(updated, encoding="utf-8")
+            os.replace(path.with_suffix(".new"), path)
         remaining = {run["id"] for run in runs}
         live = {run["id"] for run in retained}
         for run in before:
@@ -456,12 +588,57 @@ def _queue() -> Iterator[list[dict[str, Any]]]:
                 _lane_event(run, "lane left", end_known=run["id"] in live)
 
 
-def _running(process: dict[str, Any] | None) -> bool:
+def _identities(pids: set[int]) -> dict[int, dict[str, Any] | None]:
+    """Observe each process once; POSIX can list the whole set with one ps call."""
+    from forge import codex
+
+    if os.name == "nt":
+        return {pid: codex.identity(pid) for pid in pids}
+    if not pids:
+        return {}
+    done = repo.run("env", "TZ=UTC", "LC_ALL=C", "LANG=C", "ps", "-ww", "-o",
+                    "pid=,stat=,lstart=,command=", "-p", ",".join(map(str, sorted(pids))))
+    if done.returncode == 1 and not (done.stdout + done.stderr).strip():
+        return {pid: None for pid in pids}
+    if done.returncode:
+        return {pid: {"pid": pid} for pid in pids}
+    identities: dict[int, dict[str, Any] | None] = {}
+    malformed = False
+    for line in done.stdout.splitlines():
+        fields = line.split(None, 7)
+        try:
+            pid = int(fields[0])
+        except (IndexError, ValueError):
+            malformed = True
+            continue
+        if pid not in pids:
+            continue
+        if len(fields) > 1 and fields[1].startswith("Z"):
+            identities[pid] = None
+        elif len(fields) < 8 or not fields[7].strip():
+            identities[pid] = {"pid": pid}
+        else:
+            identities[pid] = {"pid": pid, "started": "UTC " + " ".join(fields[2:7]),
+                               "command": fields[7].strip()}
+    for pid in pids - identities.keys():
+        identities[pid] = {"pid": pid} if malformed else None
+    return identities
+
+
+def _running(process: dict[str, Any] | None,
+             identities: dict[int, dict[str, Any] | None] | None = None) -> bool:
     """Whether a recorded process still runs; one recorded by id alone runs while its id does."""
     from forge import codex
 
     if not process:
         return False
+    if identities is not None:
+        current = identities.get(process["pid"])
+        if "started" not in process:
+            return current is not None
+        if current is not None and ("command" not in current or codex._legacy_identity(process)):
+            return True
+        return current is not None and current["started"] == process["started"]
     if "started" not in process:
         return codex.identity(process["pid"]) is not None
     return codex._alive(process) is not False  # pyright: ignore[reportPrivateUsage]

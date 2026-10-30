@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: A review reports new agent work that breaks a Must rule as a must-fix finding, and work that breaks a Should rule as advice.\tFORGE-AGENTS-1/REVIEW",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 363,
+      "text": "Not done: A review reports new agent work that breaks a Must rule as a must-fix finding, and work that breaks a Should rule as advice.",
+      "from": "blocking",
+      "item": "FORGE-AGENTS-1/REVIEW",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

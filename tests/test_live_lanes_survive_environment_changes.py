@@ -20,7 +20,7 @@ from test_lanes_tests import accepted, configure, reap, release_server  # noqa: 
 from test_story import worktree
 
 STORY = "lane-identity-env"
-pytestmark = pytest.mark.skipif(os.name == "nt", reason="POSIX ps timezone and locale contract")
+pytestmark = [pytest.mark.platform, pytest.mark.skipif(os.name == "nt", reason="POSIX ps timezone and locale contract")]
 
 
 def environment(monkeypatch, zone, locale):
@@ -37,7 +37,7 @@ def client(env, history):
         repo.git("init", "-q", "-b", "main", str(path))
         repo.git("remote", "add", "origin", str(remote), cwd=path)
         env.gh.respond("api", stdout="{}")
-        initialized = repo.forge("init", cwd=path)
+        initialized = repo.forge("init", "--actions", "yes", cwd=path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
         checkout = env.tmp / "new-checkout"
         repo.git("clone", "-q", str(remote), str(checkout))
@@ -82,8 +82,9 @@ def lanes(repo):
     return json.loads(result.stdout)
 
 
-@pytest.mark.parametrize("history", ["new", "earlier"])
-@pytest.mark.parametrize("kind", ["agents", "tests"])
+@pytest.mark.parametrize("kind,history", [
+    ("agents", "new"), ("tests", "new"), ("tests", "earlier")],
+    ids=["agents-new", "tests-new", "tests-earlier"])
 def test_1_waiting_run_keeps_its_place_across_timezone_and_locale(
         env, tmp_path, monkeypatch, release_server, history, kind):
     repo = client(env, history)

@@ -42,5 +42,9 @@ def test_9_synced_guides_explain_tools_and_the_session_handoff(repo):
                              "--round", "forge stop", "unreachable", "Stale rounds record nothing",
                              "nudge", "never edit the brief", "Upgrade Forge", "before adding"):
                 assert contract in tools, contract
+            # The approved effort story gives the SDK priority even in Claude's
+            # own coordinator. Token presence alone cannot protect that instruction.
+            assert "Claude workers use the Claude Agent SDK kit when installed" in tools
+            assert "otherwise their coordinator uses a background subagent" in tools
     brief = (ROOT / "src/forge/templates/brief.md").read_text(encoding="utf-8")
     assert "A subagent never runs `forge handback`, `forge work` or `forge stop` itself." in brief

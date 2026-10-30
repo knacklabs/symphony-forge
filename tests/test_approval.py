@@ -1,4 +1,5 @@
-"""Approval capture on both hosts, and the client sign-off gate (spec criteria 14 and 32)."""
+"""Approval capture in src/forge/approval.py on both hosts and the client sign-off gate
+(spec criteria 14 and 32)."""
 from __future__ import annotations
 
 import json
@@ -39,7 +40,10 @@ def test_14_approval_capture(repo, claude_payload, codex_payload, monkeypatch):
     assert {"plans/SHOP.md", "plans/SHOP.read.md"} <= set(read)
     assert any(path.startswith(".factory/") for path in committed)
     shown = repo.forge("next").stdout
-    assert "Next: forge task start SHOP/SAVE" in shown and "SHOP/SHOW" not in shown
+    # Stacking names the dependent part's blocker; approval still offers only SAVE.
+    assert "Next: forge task start SHOP/SAVE" in shown
+    assert "Next: forge task start SHOP/SHOW" not in shown
+    assert "SHOP/SHOW builds on SHOP/SAVE, which hasn't started yet." in shown
 
     # Codex: a completed request_user_input that follows the contract records it the same way.
     recorded = hook(repo, codex_question(codex_payload, _digest(repo)))
@@ -129,7 +133,8 @@ def test_32_client_signoff(repo, claude_payload):
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "The client signed off")
     repo.git("push", "-q", "origin", "main")  # as when the decision's fix merges
-    assert not (shop / "docs" / "decisions").exists()  # so it is found on the default branch
+    # Constitution decisions already exist; this sign-off is still found only on the default branch.
+    assert not (shop / "docs/decisions/0001-client-signoff.md").exists()
     recorded = hook(repo, approval)
     assert recorded.returncode == 0, recorded.stderr
     assert "Next: forge task start SHOP/SAVE" in repo.forge("next").stdout

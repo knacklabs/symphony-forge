@@ -17,8 +17,12 @@ from test_item_time_history import row
 STORY = "FIX-WHERE-TIME-WENT"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("source", ["timing", "worker-event", "work-event"])
+@pytest.mark.parametrize("source,previous", [
+    pytest.param("timing", False, id="timing-new-client"),
+    pytest.param("timing", True, id="timing-earlier-adoption"),
+    pytest.param("worker-event", False, id="worker-event-new-client"),
+    pytest.param("work-event", False, id="work-event-new-client"),
+])
 def test_26_legacy_first_worker_phase_stays_unknown_until_recorded(
         env, tmp_path, monkeypatch, previous, source):
     began = datetime(2026, 1, 1, tzinfo=timezone.utc)

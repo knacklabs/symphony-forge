@@ -21,6 +21,8 @@ import conftest
 from test_close import CLEAN, CODEX_STUB, PIN, body, run
 from test_setup import LISTED
 
+pytestmark = pytest.mark.platform
+
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "copied-client"
 SHIP = "plans/active/SHIP-1-shoppers-can-save-a-basket.md"

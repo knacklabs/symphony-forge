@@ -12,6 +12,8 @@ import pytest
 
 from test_codex_record import _up
 
+pytestmark = pytest.mark.platform
+
 STORY = "forge-s-own-test-suite-leaves-stopped-co"
 TESTS = Path(__file__).resolve().parent
 
@@ -48,8 +50,10 @@ def test_1_a_test_that_leaves_a_process_fails_the_run_by_name(tmp_path):
     try:
         run = subprocess.run([sys.executable, "-m", "pytest", str(leaky), "-p", "conftest",
                               "-p", "no:cacheprovider", "-q", "-o", "addopts="],
-                             cwd=tmp_path, env={**os.environ, "PYTHONPATH": str(TESTS)},
-                             capture_output=True, text=True, timeout=120)
+                             cwd=tmp_path, env={**os.environ, "PYTHONPATH": str(TESTS),
+                                                "PYTEST_PROCESS_GRACE_SECONDS": "1"},
+                             # These intentional leaks need no normal ten-second exit grace.
+                             capture_output=True, text=True, timeout=20)
         started = dict(line.split() for line in pids.read_text("utf-8").splitlines())
 
         assert run.returncode != 0

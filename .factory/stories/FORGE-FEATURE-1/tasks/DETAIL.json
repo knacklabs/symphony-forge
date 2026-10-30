@@ -1,0 +1,57 @@
+{
+  "allow_large": "The owner allows every FORGE-FEATURE-1 part over the line limit, because each part changes both starters' APIs and the shared screen",
+  "branch": "task/FORGE-FEATURE-1-DETAIL",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "file": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 165,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: recent changes are scoped to the requested project",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c4848d72303d53373962030acbd4e1ff83242e407f41c62409def5318c89f2b7",
+    "changed": "e61717140f6bc31e7c413532a4f61dfd4469c572c8df8539de99bf284bf2a499",
+    "commit": "6ccc2ec48f7a20dad3bf6cddf41ee421b47f11ce",
+    "dismissals": [],
+    "findings": [],
+    "id": "b14d685c-172b-410f-99f4-51b31de12a75",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T12:07:09.964009+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T13:06:19.862558+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T13:50:25.585322+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b6f3e2f5-4512-4a5b-beb9-67fae8e4d287",
+    "head": "8f3e09d7fde0fb85c684ae8a5b7b6cbd115bca6c",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

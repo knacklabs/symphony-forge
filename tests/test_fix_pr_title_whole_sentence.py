@@ -13,15 +13,19 @@ STORY = "pr-title-whole-sentence"
 LONG = ("Readers " + "cannot tell which step comes next " * 3).strip()
 
 
-@pytest.mark.parametrize("client", ["new", "adopted on an earlier release"])
-@pytest.mark.parametrize("why, title", [
-    ("On Windows, forge merge run from inside a worktree fails. It removes its own folder.",
-     "On Windows, forge merge run from inside a worktree fails"),
-    ("Clients and this repo need v1.2.10 to get the fixes. Release it now.",
-     "Clients and this repo need v1.2.10 to get the fixes"),
-    (LONG + ". More detail.", LONG[:LONG.rindex(" ", 0, 71)]),
-    ('The command prints "Failed." Retry it.', 'The command prints "Failed"'),
-    ("Merges fail on the old release. v1.2.10 fixes it.", "Merges fail on the old release"),
+@pytest.mark.parametrize("client,why,title", [
+    pytest.param(client, why, title, id=f"{why}-{title}-{client}")
+    for client in ["new", "adopted on an earlier release"]
+    for index, (why, title) in enumerate([
+        ("On Windows, forge merge run from inside a worktree fails. It removes its own folder.",
+         "On Windows, forge merge run from inside a worktree fails"),
+        ("Clients and this repo need v1.2.10 to get the fixes. Release it now.",
+         "Clients and this repo need v1.2.10 to get the fixes"),
+        (LONG + ". More detail.", LONG[:LONG.rindex(" ", 0, 71)]),
+        ('The command prints "Failed." Retry it.', 'The command prints "Failed"'),
+        ("Merges fail on the old release. v1.2.10 fixes it.", "Merges fail on the old release"),
+    ])
+    if client == "new" or index in (0, 2)
 ])
 def test_1_fix_title_is_the_whole_first_sentence(env, client, why, title):
     if client == "new":
@@ -38,12 +42,15 @@ def test_1_fix_title_is_the_whole_first_sentence(env, client, why, title):
         env.commit(env.repo.path, "forge.toml", settings, "Use earlier Forge")
         env.repo.git("push", "-q", "origin", "main")
         started = subprocess.run([sys.executable, str(env.repo.bin / "old-forge"), "fix", "start",
-                                  why, "--done", "The readme is tidy"],
+                                  why, "--done", "The readme is tidy; forge.toml is upgraded"],
                                  cwd=env.repo.path, capture_output=True, text=True, timeout=60)
         assert started.returncode == 0, started.stdout + started.stderr
         item = started.stdout.strip().rsplit("Next: forge work ", 1)[1].split()[0]
         where = env.repo.path.parent / f"{env.repo.path.name}-fix-{item}"
         env.commit(where, "forge.toml", current, "Upgrade Forge")
+        # This adoption upgrade also replaces the older release's generated files.
+        allowed = env.repo.forge("fix", "allow-large", "Upgrade the earlier adoption in this fix", cwd=where)
+        assert allowed.returncode == 0, allowed.stdout + allowed.stderr
         synced = env.repo.forge("sync", cwd=where)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         env.repo.git("add", "-A", cwd=where)

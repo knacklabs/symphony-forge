@@ -1,0 +1,76 @@
+{
+  "base": "9f221b36051273a449703680dfb4c5ff1d05fbf4",
+  "branch": "fix/work-starts-fresh-when-conversation-held",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a171eb-7c58-7332-a8a3-335b8a80ee9a",
+    "head": null,
+    "start": "6f1fbbe8063ad07574b5a41c2d6f57e33c648509"
+  },
+  "done_when": "When another program holds the earlier conversation, forge work starts a fresh Codex conversation with the whole brief and prints one line saying so, as the cold read and the grill already do",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/skill.md",
+      "file": "src/forge/templates/skill.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 1345,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the guide contract test for the new fallback behavior",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e043801a00614ec696480df33532875829a89b58908f576479eebb80069cd122",
+    "changed": "31a067491c8a4f9df4c1c6fd14bfd718c30ee45b71d0b5631d94618f6a92e12c",
+    "commit": "df9c6b9c0036a4feb7239027c1979d30b1940cdf",
+    "dismissals": [],
+    "findings": [],
+    "id": "4c4c57b1-6302-4ef8-a626-a263b1543972",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T07:16:36.281345+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T07:22:32.642046+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T07:41:25.980581+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T08:07:22.421355+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-25T07:22:32.654897+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/skill.md",
+    "reason": "One more round to update the guide contract test for the new wording",
+    "wait_id": "7b5ff55b-3739-4782-b0de-6d91df853780",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "5a60446f-df6d-4599-bd57-2a938a4d19b2",
+    "head": "3e1b6de2d694f53a1861eadb50539aa931caceb0",
+    "keys": {},
+    "round": 2
+  },
+  "why": "When another program, such as the ChatGPT desktop app, holds a worker's Codex conversation, forge work refuses with 'Another program holds this Codex conversation' and the item cannot go on until a person closes that program; a cold read already starts fresh in this case",
+  "worker": "codex"
+}

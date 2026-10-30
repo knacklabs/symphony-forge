@@ -16,8 +16,9 @@ from test_worker_and_reader_chats_survive_rounds import _client_reader, _reader_
 STORY = "reuse-worker-chats"
 
 
-@pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-adoption"])
-@pytest.mark.parametrize("family", ["codex", "claude"])
+@pytest.mark.parametrize("family,adopted", [
+    ("codex", False), ("claude", False), ("claude", True),
+], ids=["codex-new-client", "claude-new-client", "claude-earlier-adoption"])
 def test_23_sync_cost_for_preserved_spec_chats_does_not_grow_with_work_branches(
         repo, monkeypatch, tmp_path, sdk_data, adopted, family):
     reader = _client_reader(repo, monkeypatch, tmp_path, sdk_data, family, adopted)

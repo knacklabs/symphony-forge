@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\ttests/test_react_review_rules.py\tFollow-up: write the preservation fixture as bytes on Windows",
+      "kind": "edge",
+      "path": "tests/test_react_review_rules.py",
+      "line": 112,
+      "text": "Follow-up: write the preservation fixture as bytes on Windows",
+      "from": "review",
+      "item": "FORGE-REACTDEFAULTS-1/RULES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -34,7 +34,8 @@ def test_21_returning_machine_resumes_the_committed_replacement_chat(
     run()
     first = chat()
     old_record = record.read_bytes()
-    store = repo.bin / ("threads.json" if app == "codex" else "claude-sessions.json")
+    store = repo.bin / ("threads.json" if app == "codex" else
+                        "claude-sdk-sessions.json" if kind == "worker" else "claude-sessions.json")
     old_chats = json.loads(store.read_text("utf-8"))
     # Machine B cannot load A's chat. Keep an unrelated Codex chat so its stub
     # allocates a distinct replacement ID, just as the native provider does.

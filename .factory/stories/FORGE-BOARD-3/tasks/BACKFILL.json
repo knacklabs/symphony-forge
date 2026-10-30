@@ -1,0 +1,84 @@
+{
+  "branch": "task/FORGE-BOARD-3-BACKFILL",
+  "chat": {
+    "approval": "f0f8c5ede5017c1ad136b34a1d026cbd5c838a2ecc5cf27167cf92f8aa07bd50",
+    "claude": null,
+    "conversation": "01a15910-eeb5-7a71-bc9e-744a0e2fa04a",
+    "head": null,
+    "start": "b0eedd68816e80a66c01f212047984dc15621685"
+  },
+  "flagged": [
+    "src/forge/backfill.py",
+    "src/forge/board.py"
+  ],
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 260,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve historical PR bodies when restoring older part rows",
+      "work": 2
+    },
+    {
+      "area": "_past.fetch() in src/forge/backfill.py",
+      "file": "src/forge/backfill.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 39,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Flatten the GraphQL query before passing it through a batch launcher",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3e501a00d7d8da7f577527934d71d107d85c6a65421c4fed87d587bce41147d1",
+    "changed": "9e3ee422cc358952137f9afbac5b17dd62fb11ccee5f38a3c47525a4d602d653",
+    "commit": "93708460db8334c33e4747223d1d4b5623870f1e",
+    "dismissals": [],
+    "findings": [],
+    "id": "021f6352-b5d0-4244-9cd9-400ae907e5b8",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T11:27:06.335873+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T12:43:19.295466+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T13:20:03.575209+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T13:50:46.157125+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T14:16:13.718089+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "67d7ed03-6e2b-44c2-91ca-5473cd78b489",
+    "head": "cd78211577f40075915d01170fab5834b986bf5b",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

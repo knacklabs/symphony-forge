@@ -1,0 +1,56 @@
+{
+  "allow_large": "A release bump changes the version in every pinned file",
+  "base": "b60ac8b21c9689fc84359c0915b2c71e9116ac4f",
+  "branch": "fix/release-1221",
+  "done_when": "Forge's version, pins, installers and release tests name v1.2.21",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_forge_version_is_1_2_21_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 15,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "502af0b44ae37a0e201b342cdd6c2f65f74fdc63ecd1cd567ab6788465ff95cd",
+    "changed": "c8df19f8cb1ee86013b5441af629b1d052ec6cbc7e1a75979e90dacb9810cfa2",
+    "commit": "bdee3014dd475a8a3334ccd47683b2cd7a947bc3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. Case: normal use - closing the v1.2.21 release. The supplied proof list is `missing`, and the implementation commit contains no `Proof list:` paragraph. The release test exists, but the required mapping from the Done-when item to its release and installer checks is absent. Record that mapping so close can associate its test results with the release requirement.",
+        "file": "tests/test_release_version.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 15,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      }
+    ],
+    "id": "7e985bb2-a027-4b70-a092-6246f488d795",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T03:45:47.420520+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T03:48:10.643927+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients need v1.2.21: the per-app design flow, the starter app, reviews that keep unscored findings, the no-speculative-complexity rule and this week's fixes"
+}

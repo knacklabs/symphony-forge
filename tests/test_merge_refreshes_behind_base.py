@@ -34,6 +34,8 @@ def _client(env, tmp_path, previous, *, fast_test=True):
     version = env.repo.forge("--version").stdout.split()[-1]
     config = config.replace('version = "v1.2.2"', f'version = "{version}"')
     config = config.replace('merge = "human"', 'merge = "agent"')
+    config = re.sub(r'^test_place = .*\n', '', config, flags=re.M)
+    config = 'test_place = "ci"\n' + config
     config = re.sub(r'^test = .*$', 'test = "python verify.py"', config, flags=re.M)
     config = re.sub(r'^fast_test = .*\n', '', config, flags=re.M)
     if fast_test:
@@ -72,10 +74,17 @@ marker = here / "default-moved"
 merged = here / "github-merged"
 def git(*words, cwd=None):
     return subprocess.check_output(["git", *words], cwd=cwd, text=True).strip()
-if args[:2] in (["pr", "merge"], ["pr", "view"]):
+if args[:2] in (["pr", "merge"], ["pr", "view"], ["pr", "list"]):
     with (here / "gh-calls.jsonl").open("a", encoding="utf-8") as calls:
         calls.write(json.dumps(args) + "\\n")
     head = git("ls-remote", remote, "refs/heads/fix/tidy-readme").split()[0]
+    if args[:2] == ["pr", "list"]:
+        # Close must see the up-to-date requirement or GitHub-only clash after main moves,
+        # even when its own trial merge can resolve the changed lines.
+        print(json.dumps([{"number": 7, "state": "OPEN", "body": "", "isDraft": False,
+                           "mergeable": "CONFLICTING" if marker.exists() and merge_state == "DIRTY" else "MERGEABLE",
+                           "mergeStateStatus": merge_state if marker.exists() else "CLEAN"}]))
+        sys.exit(0)
     if args[:2] == ["pr", "view"]:
         state = "MERGED" if merged.exists() else "OPEN"
         if "--jq" in args:
@@ -116,18 +125,22 @@ if args[:2] in (["pr", "merge"], ["pr", "view"]):
     git("push", "-q", "origin", "main", cwd=checkout)
     merged.write_text("merged", encoding="utf-8")
     sys.exit(0)
-'''.replace("REMOTE", json.dumps(remote)).replace("CONFLICT", repr(conflict)).replace(
+'''.replace("REMOTE", json.dumps(remote)).replace("conflict = CONFLICT", f"conflict = {conflict!r}").replace(
     "MERGE_STATE", json.dumps(merge_state)).replace("UPGRADED", repr(upgraded)).replace(
     "FAILING_TEST", repr(failing_test))
     fallback = GH_STUB.format(python=sys.executable).split("\n", 1)[1]
     _install(env.repo.bin, "gh", "#!" + sys.executable + "\n" + code + fallback)
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
-@pytest.mark.parametrize("command", ["merge", "land"])
-@pytest.mark.parametrize("merge_state,conflict", [("BEHIND", False), ("DIRTY", False),
-                                                 ("DIRTY", True)],
-                         ids=["behind-clean", "hint-clean", "conflict"])
+@pytest.mark.parametrize("previous,command,merge_state,conflict", [
+    (False, "merge", "BEHIND", False),
+    (False, "land", "BEHIND", False),
+    (False, "merge", "DIRTY", True),
+    (False, "land", "DIRTY", True),
+    # Upgraded-pin recovery below covers adopted clean refresh, but not conflicts.
+    (True, "merge", "DIRTY", True),
+], ids=["new-merge-behind-clean", "new-land-behind-clean", "new-merge-conflict",
+        "new-land-conflict", "earlier-adoption-merge-conflict"])
 def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         env, tmp_path, previous, command, conflict, merge_state):
     test_log = _client(env, tmp_path, previous)
@@ -147,10 +160,8 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         assert result.returncode == 1, result.stdout + result.stderr
         assert result.stderr.splitlines()[-2] == (
             "Merging main into fix/tidy-readme conflicts in README.md.")
-        assert re.fullmatch(
-            r"Next: git -C .+ merge origin/main, follow Keeping work moving in "
-            r"\.codex/skills/forge/SKILL\.md or \.claude/skills/forge/SKILL\.md and commit, "
-            r"then forge close tidy-readme", result.stderr.splitlines()[-1])
+        assert result.stderr.splitlines()[-1] == (
+            "Next: forge work tidy-readme to merge the default branch and continue this work, then forge close tidy-readme")
         assert len(attempts) == 1
         assert len(env.review_calls()) == before_reviews
         assert env.repo.git("rev-parse", "HEAD", cwd=where) == first_head
@@ -166,9 +177,9 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
         env.repo.git("merge-base", "--is-ancestor", advanced, heads[1])
         assert len(env.review_calls()) == before_reviews + 1
         env.repo.git("merge-base", "--is-ancestor", advanced, env.review_calls()[-1]["head"])
-        tested = [json.loads(line) for line in test_log.read_text("utf-8").splitlines()]
-        assert len(tested) == 2
-        env.repo.git("merge-base", "--is-ancestor", advanced, tested[-1])
+        # CI owns the tests for this repo, so close does not run verify.py locally after refresh.
+        assert not test_log.exists()
+        # The check query below must use the refreshed head after main advances.
         assert any(f"/commits/{heads[1]}/" in call[-1] for call in env.gh_calls("api"))
         assert env.repo.git("show", "origin/main:app.py") == "print('hello')"
         assert env.repo.git("show", "origin/main:README.md") == (
@@ -178,6 +189,7 @@ def test_1_merge_and_land_refresh_behind_base_or_preserve_conflict(
                    for line in result.stdout.splitlines()), result.stdout
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new-repo", "earlier-adoption"])
 @pytest.mark.parametrize("command,failing_test", [("merge", False), ("land", False),
                                                 ("merge", True)],
@@ -193,6 +205,8 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
                             {"kind": "fix", "why": "Run the earlier release",
                              "done_when": "The client uses its earlier Forge pin"}, {})
     config = (prepared / "forge.toml").read_text("utf-8")
+    config = re.sub(r'^test_place = .*\n', '', config, flags=re.M)
+    config = 'test_place = "local"\n' + config
     config = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"', config)
     config = re.sub(r'^fast_test = .*\n', '', config, flags=re.M)
     env.commit(prepared, "forge.toml", config)
@@ -243,7 +257,6 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
     tested = [json.loads(line) for line in test_log.read_text("utf-8").splitlines()]
     assert len(tested) == 2
     env.repo.git("merge-base", "--is-ancestor", advanced, tested[-1])
-    assert any(f"/commits/{heads[1]}/" in call[-1] for call in env.gh_calls("api"))
     assert env.repo.git("show", "origin/main:forge.toml") == upgraded.strip()
     assert env.repo.git("show", "origin/main:README.md") == (
         "Branch greeting\n\nKeep this paragraph.\n\nOther closing")

@@ -1,0 +1,68 @@
+{
+  "base": "db35b0d7cf9fc1ad2a8bbcd95dc91c3e5bc64483",
+  "branch": "fix/windows-generated-diff",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14aab-93b9-79a2-ab73-b89b2766f7a5",
+    "head": null,
+    "start": "06251a0be9393397896dbc6cbe41817b294b94a4"
+  },
+  "done_when": "Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
+  "fix_kind": "mechanical",
+  "flagged": [
+    "tests/test_fix_review_bundles_include_generated_files_s.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_fix_review_bundles_include_generated_files_s.py",
+      "file": "tests/test_fix_review_bundles_include_generated_files_s.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 19,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Both generated-files tests pass on Windows, Linux and macOS in the every-platform run",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bfa4f13bf7a0b07b540f202786d03814babaf3d71570954004290e45b50eb17b",
+    "changed": "3b9623b22ae822d243e0568862ea27dea1e6eb9fd51aef5d7e71f4aa87338034",
+    "commit": "0963f0da9730f7299c3bbdf0adfb9cbfb50cc49b",
+    "dismissals": [],
+    "findings": [],
+    "id": "d8609639-dcb6-4787-bea0-bd60dafc5964",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T16:21:53.802316+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T16:26:08.828702+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T18:29:39.148927+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "e44bd727-b50b-46c8-b213-8239468f3112",
+    "head": "ba2bcb81d05a6557268dba6061e20c8869e96449",
+    "keys": {
+      "the review finding \"Not done: Both generated-files tests pass on Windows, Linux and macOS in the every-platform run\" in tests/test_fix_review_bundles_include_generated_files_s.py": 1
+    },
+    "round": 1
+  },
+  "why": "On Windows, two generated-files tests fail because the tests' stand-in review script reads a binary diff with the Windows code page",
+  "worker": "codex"
+}

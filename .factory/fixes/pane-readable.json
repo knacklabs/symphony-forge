@@ -1,0 +1,102 @@
+{
+  "base": "c578688c431feae735fd0306c4d599038c7394a7",
+  "branch": "fix/pane-readable",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a143aa-b9fd-7371-b3a8-2e093a125ab0",
+    "head": null,
+    "start": "ed957e5a01831428170368ee9d2d9f4d0fa0033a"
+  },
+  "done_when": "In the pane, each item shows its title on its own line, then short lines for status (state, round, worker, elapsed), stages with the total, and gates (plan read, review, CI with the failing check and pull request), then its next step, with a blank line between items; no field shows unknown, an empty value or 0s; rounds count from 1 and a running review shows as running; the Board and Machine tabs each have a shown key that selects them and the selected tab is marked; new repos get it at init, existing repos on upgrade and sync",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 94,
+      "outcome": "accepted",
+      "reason": "src/forge/mod/hooks/events.ts:94 Owner accepted: this fix does not change events.ts; the rerun inside the cache window goes to its own fix",
+      "round": 3,
+      "security": false,
+      "title": "In-progress CI rerun can deliver the previous failure",
+      "work": 2
+    },
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 96,
+      "outcome": "accepted",
+      "reason": "Human accepted the remaining finding: Owner chose (18 Oct): accept the events.ts CI-rerun finding on fixes that do not change events.ts; this branch's diff against main does not touch events.ts; the cache-window case is its own fix (pane-rerun-cache-window)",
+      "round": 4,
+      "security": false,
+      "title": "Disputed keep In-progress CI rerun can deliver the previous failure: cached failure still reaches the prompt",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "bec1f0c165714bb21a5bbc4b4b24999b4655ef7615bd85fd64b998f7d600f0b9",
+    "changed": "63d0aa3c19c77767e39b968e6ee30fdc9db6be9202479a7722307ac4c75b27ab",
+    "commit": "f885c1a824067d479bffa4615045981cecaefd4d",
+    "dismissals": [],
+    "findings": [],
+    "id": "f7e683a1-271b-418a-8284-a541330f15c9",
+    "status": "clean"
+  },
+  "round": 7,
+  "settled_areas": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T07:40:24.219745+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T08:11:52.411504+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T10:18:09.486569+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T17:58:39.631866+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:05:23.853553+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:34:35.885487+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-17T20:05:23.866966+00:00",
+    "by": "owner",
+    "choice": "accept",
+    "file": "src/forge/mod/hooks/events.ts",
+    "reason": "Owner chose (18 Oct): accept the events.ts CI-rerun finding on fixes that do not change events.ts; this branch's diff against main does not touch events.ts; the cache-window case is its own fix (pane-rerun-cache-window)",
+    "wait_id": "56afa0fe-2675-4576-b903-65787aa29aa4",
+    "worker_round": 6
+  },
+  "stuck": {
+    "close": "5e125dab-d37b-4bce-b602-4860f51e4b62",
+    "head": "28272b5021a33473ddda245b2c4518cc99a5cdf0",
+    "keys": {},
+    "round": 6
+  },
+  "why": "The Claude Code pane's Board tab is hard to read and shows wrong data in a new repo: every field runs on one line, eight time totals say unknown or 0s, a running review shows round 0 and Review: none, and the Board and Machine tabs cannot be selected from the keyboard",
+  "worker": "codex"
+}

@@ -4,6 +4,10 @@ import json
 
 from test_story import DOC, setup
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "one-worktree-with-settings-the-installed"
 
 

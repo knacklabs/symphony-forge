@@ -5,17 +5,21 @@ human reads and the calls the stubs recorded (spec criterion 4).
 """
 from __future__ import annotations
 
+import faulthandler
 import json
 import os
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import threading
 import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, TypeVar
 
 import pytest
@@ -25,6 +29,32 @@ import _pytest.tmpdir
 ROOT = Path(__file__).resolve().parents[1]
 REAL_UV = shutil.which("uv")  # Capture before any test adds a command stub to PATH.
 REAL_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+
+_deadline_log = None
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Windows CI needs a native deadline even outside the per-test timeout."""
+    global _deadline_log
+    seconds = float(os.environ.get("PYTEST_SESSION_DEADLINE") or "0")
+    if not seconds:
+        return
+    # Keep a descriptor outside pytest capture: a stuck capture flush must not hide
+    # the stacks or prevent the native watchdog from terminating the process.
+    _deadline_log = os.fdopen(os.dup(sys.stderr.fileno()), "w", encoding="utf-8")
+    if hasattr(config, "workerinput"):
+        seconds -= min(60, seconds / 2)  # Workers dump before the controller exits.
+    faulthandler.dump_traceback_later(seconds, file=_deadline_log, exit=True)
+
+
+def pytest_runtest_logstart(nodeid: str, location: tuple) -> None:
+    if _deadline_log is not None:
+        print(f"Test started: {nodeid}", file=_deadline_log, flush=True)
+
+IDLE_MACHINE = """from forge import machine
+machine.memory = lambda: dict(total_bytes=16_000_000_000, available_bytes=8_000_000_000)
+machine.busy_runners = lambda: 0
+"""
 
 # `forge` on PATH runs this checkout's src/forge, whatever else is installed.
 FORGE_SHIM = """#!{python}
@@ -36,35 +66,66 @@ signal.signal(signal.SIGINT, signal.default_int_handler)
 sys.path.insert(0, {src!r})
 from forge.cli import main
 sys.exit(main())
-"""
+""".replace("from forge.cli import main", IDLE_MACHINE + "from forge.cli import main")
 
 
 def machine_cores(repo, count, system_count=None):
     """Report a machine's CPU count at the command boundary, without a production test flag."""
+    override = (f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
+                f"os.process_cpu_count = lambda: {count!r}\n")
     shim = repo.bin / "forge"
     source = shim.read_text("utf-8")
     shim.write_text(source.replace("from forge.cli import main",
-        f"import os\nos.cpu_count = lambda: {count if system_count is None else system_count!r}\n"
-        f"os.process_cpu_count = lambda: {count!r}\nfrom forge.cli import main"), "utf-8")
+        override + "from forge.cli import main"), "utf-8")
+    # Inline Python test commands inherit PYTHONPATH, but do not use the Forge launcher.
+    startup = repo.bin / "sitecustomize.py"
+    startup.write_text((startup.read_text("utf-8") if startup.exists() else "") + override, "utf-8")
+
+
+def machine_runners(repo, count: int | Path = 0):
+    """Supply runner inventory to inline Python too; keep process identity queries real."""
+    command = "tasklist" if os.name == "nt" else "ps"
+    real = shutil.which(command)
+    args = ["/FO", "CSV", "/NH"] if os.name == "nt" else ["-axo", "comm="]
+    reading = (f"int(pathlib.Path({count.as_posix()!r}).read_text('utf-8'))"
+               if isinstance(count, Path) else repr(count))
+    worker = ('"Runner.Worker.exe","101","Console","1","100 K"\n'
+              if os.name == "nt" else "/runner/bin/Runner.Worker\n")
+    _install(repo.bin, command, f'''#!{sys.executable}
+import pathlib, subprocess, sys
+if sys.argv[1:] == {args!r}:
+    sys.stdout.write({worker!r} * {reading})
+else:
+    sys.exit(subprocess.call([{json.dumps(real)}, *sys.argv[1:]], timeout=60))
+''')
 
 GH_STUB = """#!{python}
 # Stub gh: records each call's arguments; the newest matching response answers.
-import json, pathlib, sys
+import json, pathlib, subprocess, sys
+from json_log import append_json
 here = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
-with open(here / "gh-calls.jsonl", "a", encoding="utf-8") as calls:
-    calls.write(json.dumps(args) + "\\n")
+append_json(here / "gh-calls.jsonl", args)
 if "--body-file" in args:  # the body as sent: the next call may rewrite the same file
-    with open(here / "gh-bodies.jsonl", "a", encoding="utf-8") as bodies:
-        path = args[args.index("--body-file") + 1]
-        body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
-        bodies.write(json.dumps(body) + "\\n")
+    path = args[args.index("--body-file") + 1]
+    body = sys.stdin.read() if path == "-" else pathlib.Path(path).read_text("utf-8")
+    append_json(here / "gh-bodies.jsonl", body)
 responses = here / "gh-responses.json"
 for rule in reversed(json.loads(responses.read_text("utf-8")) if responses.exists() else []):
     if args[:len(rule["args"])] == rule["args"]:
         sys.stdout.write(rule["stdout"])
         sys.stderr.write(rule["stderr"])
         sys.exit(rule["exit"])
+if args[:2] == ["pr", "view"] and args[-2] == "--json" and args[-1] in (
+        "mergeable,headRefOid", "mergeable,headRefOid,number,headRefName"):
+    # Ordinary close fixtures have a mergeable pull request on the real pushed head.
+    # Explicit responses above still own API errors and conflicting/unknown states.
+    head = subprocess.check_output(["git", "ls-remote", "--heads", "origin",
+                                    "refs/heads/" + args[2]], text=True,
+                                   stdin=subprocess.DEVNULL, timeout=60).split()[0]
+    sys.stdout.write(json.dumps({{"mergeable": "MERGEABLE", "headRefOid": head,
+                                 "number": 7, "headRefName": args[2]}}))
+    sys.exit(0)
 sys.stderr.write("stub gh: no response for: gh " + " ".join(args) + "\\n")
 sys.exit(1)
 """
@@ -77,6 +138,73 @@ def _install(bin_dir: Path, name: str, text: str) -> None:
     if os.name == "nt":  # Windows finds commands by extension; a .cmd hands off to Python.
         (bin_dir / f"{name}.cmd").write_text(f'@"{sys.executable}" "%~dp0{name}" %*\n',
                                              encoding="utf-8")
+
+
+def _sdk_ready(env: Path) -> bool:
+    python = env / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if (env / "forge-sdk-ready").is_file():
+        try:
+            return subprocess.run([python, "-I", "-c", "pass"], capture_output=True,
+                                  timeout=10).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            pass  # A restart can remove the Python that this cached venv points to.
+    return False
+
+
+@contextmanager
+def _cached_sdk(env: Path, pin: str):
+    """Build privately; only the publisher may replace a cache that is still broken."""
+    if _sdk_ready(env):
+        yield None
+        return
+    env.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix="building-", dir=env.parent) as folder:
+        build = Path(folder)
+        yield build
+        (build / "forge-sdk-ready").write_text(pin + "\n", encoding="utf-8")
+        # Keep the lock outside the directory being replaced, and never unlink it:
+        # other workers must lock the same file even after a publication.
+        with env.with_suffix(".lock").open("a+b") as lock:
+            lock.seek(0)
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                if not _sdk_ready(env):
+                    if env.exists():
+                        shutil.rmtree(env)
+                    build.rename(env)
+            finally:
+                if os.name == "nt":
+                    lock.seek(0)
+                    msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def _claude_sdk_env(data: Path, pin: str = "0.2.161") -> None:
+    """The Claude Agent SDK's separate Python environment under this XDG_DATA_HOME."""
+    env = data / "forge" / "claude-sdk" / f"claude-agent-sdk-{pin}"
+    with _cached_sdk(env, pin) as build:
+        if build is not None:
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(build)], check=True,
+                           stdin=subprocess.DEVNULL, timeout=120)
+
+
+def _install_claude_sdk(bin_dir: Path, data: Path) -> None:
+    """A separate Python environment, with only the SDK's external edge replaced."""
+    pin = "0.2.161"
+    _claude_sdk_env(data, pin)
+    package = bin_dir / "claude_agent_sdk"
+    package.mkdir(exist_ok=True)
+    shutil.copyfile(ROOT / "tests/stubs/claude_agent_sdk.py", package / "__init__.py")
+    metadata = bin_dir / f"claude_agent_sdk-{pin}.dist-info"
+    metadata.mkdir(exist_ok=True)
+    (metadata / "METADATA").write_text(
+        f"Metadata-Version: 2.1\nName: claude-agent-sdk\nVersion: {pin}\n", encoding="utf-8")
 
 
 T = TypeVar("T")
@@ -152,7 +280,21 @@ _rm_error = _pytest.pathlib.on_rm_rf_error
 
 def _skip_locked(func: Any, path: Any, excinfo: Any, **kwargs: Any) -> Any:
     try:
+        error = excinfo if isinstance(excinfo, BaseException) else excinfo[1]
+        if isinstance(error, PermissionError) and func in (os.unlink, os.remove):
+            mode = os.lstat(path).st_mode
+            if stat.S_ISREG(mode) and not mode & stat.S_IWUSR:
+                # Windows Git objects need only their own read-only bit cleared.
+                # Pytest's fallback chmods every ancestor for each object.
+                try:
+                    os.chmod(path, mode | stat.S_IWUSR)
+                    func(path)
+                    return True
+                except PermissionError:
+                    pass  # Retain pytest's parent-permission recovery when needed.
         return _rm_error(func, path, excinfo, **kwargs)
+    except FileNotFoundError:
+        return False
     except PermissionError:
         # Pytest already retries read-only files after chmod; a persistent lock is skipped.
         return False
@@ -169,7 +311,7 @@ class Repo:
     def git(self, *args: str, cwd: Path | None = None) -> str:
         try:
             return subprocess.run(["git", *args], cwd=cwd or self.path, check=True, capture_output=True,
-                                  text=True, encoding="utf-8").stdout.strip()
+                                  text=True, encoding="utf-8", stdin=subprocess.DEVNULL, timeout=60).stdout.strip()
         except subprocess.CalledProcessError as error:
             error.add_note(error.stdout + error.stderr)
             raise
@@ -246,7 +388,8 @@ def _left(tmp_path: Path) -> list[str]:
 
 def _end_left(path: Path) -> list[str]:
     """Wait for the processes that name path to go, end any still there, and return those."""
-    for _ in range(20):  # a process the test just ended may take a moment to go
+    grace_seconds = float(os.environ.get("PYTEST_PROCESS_GRACE_SECONDS", "10"))
+    for _ in range(int(grace_seconds * 2)):  # a process the test just ended may take a moment to go
         left = _left(path)
         if not left:
             return []
@@ -313,15 +456,90 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
 # Time zones need no pin: Forge writes UTC times and runs `ps` with TZ=UTC itself.
 @pytest.fixture(autouse=True)
 def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Outer test-selection flags must not change a client's own pytest command.
+    monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
+    # The checkout launcher exposes src through PYTHONPATH; clients and released tools must not.
+    monkeypatch.delenv("PYTHONPATH", raising=False)
     for name in list(os.environ):
         if name.startswith(("GIT_", "FORGE_")) and name != "FORGE_LIVE_CODEX" or name in (
                 "CLAUDECODE", "CODEX_BIN", "CLAUDE_BIN", "AUTOREVIEW"):
             monkeypatch.delenv(name)
+    # cmd.exe expands %CI% in a .cmd stub's arguments, case-insensitively: git's
+    # --format=%x00%cI%x00 would reach git as %x00truex00 on CI runners.
+    monkeypatch.delenv("CI", raising=False)
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 
+@pytest.fixture(scope="session")
+def seed_repo(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    folder = tmp_path_factory.mktemp("seed-repo")
+    remote, path = folder / "remote.git", folder / "repo"
+    path.mkdir()
+    (path / "README.md").write_text("# A test repo\n", encoding="utf-8")
+    # Session fixtures run before per-test isolation. Ignore the host's Git config
+    # and any outer hook/worktree variables while constructing this plain repo.
+    env = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    for args in (
+        ["init", "-q", "--bare", "-b", "main", str(remote)],
+        ["init", "-q", "-b", "main", str(path)],
+        ["add", "README.md"],
+        ["commit", "-q", "-m", "First commit"],
+        ["remote", "add", "origin", str(remote)],
+        ["push", "-q", "-u", "origin", "main"],
+        ["remote", "set-head", "origin", "main"],
+    ):
+        subprocess.run(["git", "-c", "user.name=Forge Test", "-c",
+                        "user.email=forge-test@example.com", "-c", "commit.gpgsign=false", *args],
+                       cwd=path, env=env, check=True, capture_output=True,
+                       stdin=subprocess.DEVNULL, timeout=60)
+    # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
+    (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")
+    return folder
+
+
+@pytest.fixture(scope="session")
+def empty_claude_sdk(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    data = tmp_path_factory.mktemp("empty-claude-sdk")
+    _claude_sdk_env(data)
+    return data
+
+
 @pytest.fixture
-def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
+def fake_clock(repo, tmp_path, monkeypatch, request):
+    """Advance sleeps without waiting; Forge and its gh children share elapsed time.
+
+    An indirect parameter can jump the 15-second check polls across queue boundaries.
+    Subprocess deadlines and OS wait polling retain real time.
+    """
+    folder = tmp_path / "clock"
+    folder.mkdir()
+    offset = folder / "elapsed"
+    offset.write_text("0", encoding="utf-8")
+    (folder / "sitecustomize.py").write_text(f'''import subprocess, time
+from pathlib import Path
+from types import SimpleNamespace
+subprocess.time = SimpleNamespace(sleep=time.sleep)
+real = time.monotonic
+offset = Path({offset.as_posix()!r})
+poll_seconds = {getattr(request, "param", 15)!r}
+
+def monotonic():
+    return real() + float(offset.read_text("utf-8"))
+
+def sleep(seconds):
+    seconds = poll_seconds if seconds == 15 else seconds
+    offset.write_text(str(float(offset.read_text("utf-8")) + seconds), encoding="utf-8")
+
+time.sleep = sleep
+time.monotonic = monotonic
+''', encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(folder) + os.pathsep + os.environ.get("PYTHONPATH", ""))
+
+
+@pytest.fixture
+def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seed_repo: Path,
+         empty_claude_sdk: Path) -> Repo:
     # A launcher's marker and test budget, again: a module fixture may set them as a launcher would.
     monkeypatch.delenv("FORGE_WORKER", raising=False)
     monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)
@@ -336,6 +554,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
+    shutil.copyfile(ROOT / "tests/stubs/json_log.py", bin_dir / "json_log.py")
     _install(bin_dir, "forge", FORGE_SHIM.format(python=sys.executable, src=str(ROOT / "src")))
     _install(bin_dir, "gh", GH_STUB.format(python=sys.executable))
     # Sync manages Claude's user-scope plugins. Never let a command test touch
@@ -351,22 +570,23 @@ elif args == ["plugin", "list", "--json"]:
     print('[{{"id":"forge@forge","scope":"user","enabled":true,"version":"1.2.6"}}]')
 ''')
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    data = tmp_path / "data"
+    monkeypatch.setenv("XDG_DATA_HOME", str(data))
+    # Preserve the venv's interpreter links, but copy all writable SDK files.
+    # Direct SDK setup/recovery callers still use _claude_sdk_env's fresh-build path.
+    shutil.copytree(empty_claude_sdk, data, symlinks=True)
+    _install_claude_sdk(bin_dir, data)
+    monkeypatch.setenv("PYTHONPATH", str(bin_dir) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     # Host hooks find forge through uv's tool folders, so those name this one too.
     monkeypatch.setenv("XDG_BIN_HOME", str(bin_dir))
     monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)
 
     remote, path = tmp_path / "remote.git", tmp_path / "repo"
-    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
-    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True)
+    # copytree uses independent files, including Git objects; no clone hardlinks.
+    shutil.copytree(seed_repo / "remote.git", remote)
+    shutil.copytree(seed_repo / "repo", path)
     made = Repo(path, bin_dir)
-    # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
-    (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")
-    made.write("README.md", "# A test repo\n")
-    made.git("add", "README.md")
-    made.git("commit", "-q", "-m", "First commit")
-    made.git("remote", "add", "origin", str(remote))
-    made.git("push", "-q", "-u", "origin", "main")
-    made.git("remote", "set-head", "origin", "main")
+    made.git("remote", "set-url", "origin", str(remote))
     return made
 
 

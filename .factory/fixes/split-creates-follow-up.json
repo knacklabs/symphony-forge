@@ -1,0 +1,46 @@
+{
+  "base": "b3880ba87978fefde7e106eb1d43ae6e18d42c0e",
+  "branch": "fix/split-creates-follow-up",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe8-5555-7493-aed1-a1151c6def76",
+    "head": null,
+    "start": "6b4fa32a34c8d83905f8607a5262112a42eb05ea"
+  },
+  "done_when": "Split creates one follow-up fix holding every split-out finding, linked from the item and named in close's output, and the item goes on without them; a test covers a fix and a story part, on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2c8be784b8f3fc2754eaa60fd6e9da1e6c606f0180870d4fbe7f9eefa7864507",
+    "changed": "64f12afea4757346918a78daba5d014a7de83f03083eb7f734c97d010287e98c",
+    "commit": "e9ecd99001a345f16d8c486e961caf6c79ac6ca7",
+    "dismissals": [],
+    "findings": [],
+    "id": "e3b1e346-36c0-453c-b9c5-bcc493801217",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:46:20.306165+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:43:48.257971+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "fb69d25547419cf0a24e2a44aa463544960faf95",
+    "keys": {},
+    "round": null
+  },
+  "why": "Choosing split at a review stop records the choice but creates no follow-up, so the split-out findings vanish",
+  "worker": "codex"
+}

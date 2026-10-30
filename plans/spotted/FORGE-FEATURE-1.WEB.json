@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/feature_api.py\t_sample with changed=True compares with the kind table's sample, not the field's own, so a status like open|closed gives the same value for sample and changed.",
+      "kind": "bug",
+      "path": "src/forge/feature_api.py",
+      "line": 63,
+      "text": "_sample with changed=True compares with the kind table's sample, not the field's own, so a status like open|closed gives the same value for sample and changed.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_web.py\tAllow optional status selections to be cleared\tFORGE-FEATURE-1/WEB",
+      "kind": "bug",
+      "path": "src/forge/feature_web.py",
+      "line": 435,
+      "text": "Allow optional status selections to be cleared",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_web.py\tPreserve real name fields when replacing heading placeholders\tFORGE-FEATURE-1/WEB",
+      "kind": "bug",
+      "path": "src/forge/feature_web.py",
+      "line": 598,
+      "text": "Preserve real name fields when replacing heading placeholders",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_web.py\tRegister linked-field triggers for validation error focus\tFORGE-FEATURE-1/WEB",
+      "kind": "bug",
+      "path": "src/forge/feature_web.py",
+      "line": 441,
+      "text": "Register linked-field triggers for validation error focus",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/feature/link-picker.tsx\tMake the linked-list retry instruction trigger a request\tFORGE-FEATURE-1/WEB",
+      "kind": "bug",
+      "path": "src/forge/templates/feature/link-picker.tsx",
+      "line": 56,
+      "text": "Make the linked-list retry instruction trigger a request",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/auth/server/src/auth.controller.ts\tThe fixed sign-up and global rate limits leave no room for a built feature's own API and browser tests in the app's test run.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/auth/server/src/auth.controller.ts",
+      "line": 29,
+      "text": "The fixed sign-up and global rate limits leave no room for a built feature's own API and browser tests in the app's test run.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/feature_web.py\tNot done: its tests pass as soon as the command runs",
+      "kind": "edge",
+      "path": "src/forge/feature_web.py",
+      "line": 517,
+      "text": "Not done: its tests pass as soon as the command runs",
+      "from": "review",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/members.spec.ts\taxe can catch the role toast mid-animation under load and report its contrast.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "line": 63,
+      "text": "axe can catch the role toast mid-animation under load and report its contrast.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/WEB",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -23,8 +23,10 @@ def _commit_roadmap(repo, items: list[dict], message: str) -> None:
 
 
 def _synced(repo, items: list[dict]) -> None:
+    # The current sync command owns the merge driver these scenarios exercise.
     repo.git("checkout", "-q", "-b", "fix/roadmap")
-    repo.write("forge.toml", 'version = "v1.2.6"\ntest = "echo ok"\n'
+    version = repo.forge("--version").stdout.split()[-1]
+    repo.write("forge.toml", f'version = "{version}"\ntest = "echo ok"\n'
                              'checks = ["tests", "forge-pr-check"]\n')
     repo.write("plans/roadmap.json", json.dumps({"items": items}, indent=2) + "\n")
     synced = repo.forge("sync")

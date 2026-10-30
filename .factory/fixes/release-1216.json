@@ -1,0 +1,57 @@
+{
+  "allow_large": "A release bump changes the version everywhere it is recorded, in one change",
+  "base": "ca8be90505cf29ffc620f8b80e727ecd39d03e87",
+  "branch": "fix/release-1216",
+  "done_when": "Forge's version is 1.2.16 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_forge_version_is_1_2_16_everywhere_it_is_recorded() in tests/test_release_version.py",
+      "file": "tests/test_release_version.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 12,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1eb331ba0b93ed775d4ae8b30e8b04d8160486b801ce7d22eb146f0791b7a4ba",
+    "changed": "0ca604b0ad5939bf0dc11536e30bb21355d9c4fc67589fdc0b90acd86a905755",
+    "commit": "1f110d991eaa94f02800cf2448dcf6dcf6c15949",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. The supplied proof list is explicitly `missing`, and the branch's release commit contains no `Proof list:` paragraph. The required mapping from every Done-when detail to its named proof is therefore absent. Add that mapping, covering both the version records and this repository's generated-file parity; the release test's presence alone does not supply it.",
+        "file": "tests/test_release_version.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 12,
+        "priority": "P1",
+        "title": "Gate: proof list",
+        "work": 1
+      }
+    ],
+    "id": "ef6e357d-62f2-413a-a801-14eee3e97837",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T17:42:08.763968+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T17:44:59.803127+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Clients need v1.2.16: the new live board page, the fix for forge.toml reverting after a Codex round merges main, migration-number warnings, Vitest and Jest worker caps, and steadier CI"
+}

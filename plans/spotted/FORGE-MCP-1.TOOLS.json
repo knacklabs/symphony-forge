@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/feature_tests.py\tGate: MCP filters and response formats need boundary assertions\tFORGE-MCP-1/TOOLS",
+      "kind": "bug",
+      "path": "src/forge/feature_tests.py",
+      "line": 142,
+      "text": "Gate: MCP filters and response formats need boundary assertions",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/TOOLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_tests.py\tGate: generated MCP cases must respect feature permissions\tFORGE-MCP-1/TOOLS",
+      "kind": "bug",
+      "path": "src/forge/feature_tests.py",
+      "line": 121,
+      "text": "Gate: generated MCP cases must respect feature permissions",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/TOOLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/core/server/src/common/tools.ts\tAccept null optional fields in generated tool results\tFORGE-MCP-1/TOOLS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
+      "line": 146,
+      "text": "Accept null optional fields in generated tool results",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/TOOLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/core/server/src/common/tools.ts\tPreserve parent tool reads when a linked item is deleted\tFORGE-MCP-1/TOOLS",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
+      "line": 170,
+      "text": "Preserve parent tool reads when a linked item is deleted",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/TOOLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_mcp.py\tGate: tools-copy assertions reject the generated literals\tFORGE-MCP-1/TOOLS",
+      "kind": "bug",
+      "path": "tests/test_mcp.py",
+      "line": 179,
+      "text": "Gate: tools-copy assertions reject the generated literals",
+      "from": "blocking",
+      "item": "FORGE-MCP-1/TOOLS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

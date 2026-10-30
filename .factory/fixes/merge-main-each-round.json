@@ -1,0 +1,125 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-20T03:43:01.393016+00:00",
+      "because": "Owner chose one normal round on 20 October 2026: the resolve-only round dropped notes and answers, gave fresh workers no Done-when, and read settings before the merge",
+      "done_when": "forge work merges the default branch into the item's branch before every work round, and when close finds a merge conflict it offers a short resolve-only round instead of a full worker round; a test covers both on a new and an adopted repo"
+    }
+  ],
+  "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
+  "branch": "fix/merge-main-each-round",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155bb-66ec-7c13-bb80-99910c54d001",
+    "head": null,
+    "start": "5bfe1e9db02752dbc8e925c6733bd04d96a6bf32"
+  },
+  "done_when": "forge work merges the default branch into the item's branch first, before it reads any settings or writes the brief; on a merge conflict the worker gets its normal full brief (Done-when, notes and question answers included) with one added line to finish the merge first, and no separate resolve-only round exists; a test covers a clean merge, a conflict and a settings change merged from main, on a new and an adopted repo",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/worker.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 227,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve coordinator answers through resolve-only rounds",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 243,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Send the full build brief after a fresh resolve-only session",
+      "work": 2
+    },
+    {
+      "area": "_work() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 214,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Select the worker using the settings brought in by the merge",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2a9573d2dfbd1df08c43e68e240add6b137d37e0362dccff0990c069e7d9345e",
+    "changed": "6e9afa0f0daabaa4cc278a50a8855df73b41970e38956df63204f423d9554cdd",
+    "commit": "ed7dff6d6f74b0c3a282ead4907030cc4d111274",
+    "dismissals": [],
+    "findings": [],
+    "id": "5717af1d-b0ed-4bef-b51f-10c8356a6636",
+    "status": "clean"
+  },
+  "round": 5,
+  "settled_areas": [
+    "_work() in src/forge/worker.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T19:54:33.365473+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T20:22:18.279872+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T04:18:24.505953+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T04:38:56.456417+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T05:10:23.335664+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T05:29:22.427356+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "_work() in src/forge/worker.py",
+    "at": "2026-10-19T20:22:18.314158+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "_work() in src/forge/worker.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner chose one normal round on 20 October 2026: merge main before reading settings or writing the brief, and on a conflict send the normal full brief with one line to finish the merge; no resolve-only round",
+    "wait_id": "a0473af7-5bf9-4998-9181-3a5c98601d96",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "e688ddab-3287-4538-bcb9-7615b3ead7d2",
+    "head": "8efcba61777786488fb2bcd05efe2ab8b2ac499f",
+    "keys": {},
+    "round": 4
+  },
+  "why": "Closes fail with 'merging main conflicts in ...' and each costs a whole worker round, and rounds that start on a stale base show diffs that seem to delete main's newer files (issue 969)",
+  "worker": "codex"
+}

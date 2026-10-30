@@ -1,0 +1,142 @@
+{
+  "base": "202d0aa921373257b8d471893e8058ff51fce7ca",
+  "branch": "fix/reviews-converge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13e37-4df4-7541-b2db-f2e7ae165c2e",
+    "head": null,
+    "start": "46ffdfbfbc0f0eeae9a7b497cd16626372a2cb33"
+  },
+  "done_when": "From an item's second review round, review checks only the previous round's findings and the lines changed since that review; a new finding in unchanged code becomes a follow-up unless it is a security or data-loss problem; and a Not done finding blocks only against an owner-approved Done-when item, never a builder detail; in Forge's repo and in client repos, new and upgraded",
+  "flagged": [
+    "src/forge/review.py",
+    "src/forge/task.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_bound_findings() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 980,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Security findings identified by category can become nonblocking follow-ups",
+      "work": 2
+    },
+    {
+      "area": "_bound_findings() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 993,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Deleting a line can make an unchanged finding block the next review",
+      "work": 1
+    },
+    {
+      "area": "tests/test_reviews_converge_on_changed_lines.py",
+      "file": "tests/test_reviews_converge_on_changed_lines.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 21,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: client guide proof does not check the Not done rule",
+      "work": 1
+    },
+    {
+      "area": "loop_advice() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 253,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Answered second-round question keeps replacing the next work step",
+      "work": 2
+    },
+    {
+      "area": "stack_base() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 340,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "A locally started base gives dependent parts a circular next step",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "23945afcdf55d4541cb854e98ec0262afe34873fe14984e14791e8cc6e77fbde",
+    "changed": "0001203e444d442e06041873b59b8f5fcc79e2d899608b9144bca81dcaf72bb7",
+    "commit": "eee5f79deaa384b60e5502970f39b51a3b412484",
+    "dismissals": [],
+    "findings": [],
+    "id": "e4927f3b-c113-4c6a-a150-89bb03fc8d41",
+    "status": "clean"
+  },
+  "round": 6,
+  "settled_areas": [
+    "src/forge/review.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-15T06:19:28.735147+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T07:36:24.341985+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T08:18:25.860544+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T09:23:48.407478+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T11:44:14.458457+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T19:27:49.150815+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-15T09:23:48.425220+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "src/forge/review.py",
+    "reason": "Owner: fix only the stuck next step after an answered stop question (src/forge/review.py). The circular next step for dependent parts is out of scope; the merged stack-circular-next fix on main covers it.",
+    "wait_id": "c559721d-3c09-41e0-9f05-6edbf8ed41aa",
+    "worker_round": 4
+  },
+  "stuck": {
+    "close": "e81cb720-c45d-4e00-b8c1-a0775aa39ead",
+    "head": "d4b1c4e92fccea19b81c0d8c6fe32adbe44422d8",
+    "keys": {},
+    "round": 5
+  },
+  "why": "Close reviews take 4 to 9 rounds on code parts because every round reviews afresh and finds new edge cases, and builder details block as Not done",
+  "worker": "codex"
+}

@@ -1,0 +1,41 @@
+{
+  "approval": {
+    "at": "2026-10-11T09:09:58+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01PzDju7JRcyApV4fkkRTLbP",
+    "hash": "a43c91a72bf376779d9921b61734a305e342c9e332474fc14234e7340bde79b3",
+    "round": 4,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-MAINONCE-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-11T07:35:34.985293+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-11T08:08:12.308265+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T08:30:22.311418+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T08:48:36.711467+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T09:04:37.341584+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-11T09:09:58+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Pull requests take in main only on a real clash",
+  "touches": 1
+}

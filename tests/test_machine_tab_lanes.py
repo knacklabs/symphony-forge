@@ -116,7 +116,7 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
     hold_agents(env)
     old_launcher = repo.bin / "older-forge"
     old_launcher.write_text((repo.bin / "forge").read_text("utf-8").replace(
-        "from forge.cli import main", "import forge\nforge.__version__ = '0.0.0'\nfrom forge.cli import main"), "utf-8")
+        "from forge import machine", "import forge\nforge.__version__ = '0.0.0'\nfrom forge import machine"), "utf-8")
     processes = []
     test_processes = []
 
@@ -155,7 +155,9 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
                 assert "in line." not in output.read_text("utf-8")
         data = view()
         assert data["version"] == repo.forge("--version").stdout.strip().split()[-1].removeprefix("v")
-        assert data["agents"]["size"] == 1 and data["tests"] == {"size": 1, "entries": []}
+        # Admission reporting can add fields without changing the Machine tab contract.
+        assert data["agents"]["size"] == 1
+        assert data["tests"]["size"] == 1 and data["tests"]["entries"] == []
         assert data["machine"]["cores"] == 2
         assert data["machine"]["load"] is None or len(data["machine"]["load"]) == 3
         rows = data["agents"]["entries"]

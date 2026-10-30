@@ -1,0 +1,125 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-20T07:04:51.516871+00:00",
+      "because": "Owner rule of 20 October 2026: leftovers after review round two that are not P0 become follow-ups",
+      "done_when": "A change that touches only docs and asset files gets the light review and its pull request skips the test jobs, on a new repo and on an earlier-adopted repo; a docs or asset file that a test reads, or a linguist-generated file, does not count as docs-only; the coordinator guide says so"
+    }
+  ],
+  "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
+  "branch": "fix/docs-assets-light",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a157d6-a4db-7e82-afca-dd45393813fb",
+    "head": null,
+    "start": "63ee94025caf21f2bab3ac9ad5fea040c1e82895"
+  },
+  "done_when": "A change that touches only docs and asset files gets the light review and its pull request skips the test jobs, on a new repo and on an earlier-adopted repo; a docs or asset file that a test reads, or a linguist-generated file, does not count as docs-only; the coordinator guide says so Out of scope, a follow-up: a test that builds an asset path by joining Path(__file__) with relative parts is not detected as reading that asset.",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/docskip.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "only_docs() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 25,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include supported test consumers in the input-reference scan",
+      "work": 2
+    },
+    {
+      "area": "only_docs() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 31,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Distinguish unrelated inputs that share a filename",
+      "work": 2
+    },
+    {
+      "area": "only_docs() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 44,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Preserve full checks for file-relative path joins",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d44b08fc1a83a825d991e0441668885f73bd3c1ca308a8e496f4d1f4aa7c155c",
+    "changed": "367f4bf99deb11e8da24ee090bf2ec02397d491eb5cbd237af7e2328b8bd09f4",
+    "commit": "30ea6698798209bac36ae6f4d02f7273091b1a4b",
+    "dismissals": [],
+    "findings": [],
+    "id": "35c10875-a02e-439e-a662-59a06735b5a9",
+    "status": "clean"
+  },
+  "round": 4,
+  "settled_areas": [
+    "only_docs() in src/forge/docskip.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T05:43:56.114060+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T06:03:17.262023+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:23:26.411776+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:08:19.334247+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:22:27.574324+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:53:58.630642+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "only_docs() in src/forge/docskip.py",
+    "at": "2026-10-20T06:23:26.411879+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "only_docs() in src/forge/docskip.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner rule of 20 October 2026: at most two review rounds; a finding left after round two that is not a P0 becomes a follow-up. A test that builds an asset path from Path(__file__) joins is a rare case.",
+    "wait_id": "82241fa2-1337-427d-a13f-7af7da207c9b",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "2cfff1de-38a0-4c9e-9e10-13bf4c33d7d0",
+    "head": "6d6a3ee4444dc14430605daf319711f3092c4b83",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Docs and brand-asset fixes still wait for the full review and every CI test job (issue 975)",
+  "worker": "codex"
+}

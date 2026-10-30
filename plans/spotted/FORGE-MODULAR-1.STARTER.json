@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tThe task test picker treats Markdown annotations as filenames and runs no tests; issue 1060 records the failure.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 465,
+      "text": "The task test picker treats Markdown annotations as filenames and runs no tests; issue 1060 records the failure.",
+      "from": "worker",
+      "item": "FORGE-MODULAR-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/README.md\tLoad the local .env before running Prisma migrations\tFORGE-MODULAR-1/STARTER",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/README.md",
+      "line": 25,
+      "text": "Load the local .env before running Prisma migrations",
+      "from": "blocking",
+      "item": "FORGE-MODULAR-1/STARTER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

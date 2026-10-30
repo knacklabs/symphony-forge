@@ -1,0 +1,48 @@
+{
+  "allow_large": "Owner accepted the size on 19 October 2026: about 660 of the 706 lines delete the old page and its renderer",
+  "branch": "task/FORGE-BOARD-4-CUTOVER",
+  "flagged": [],
+  "known": [],
+  "land": {
+    "rounds": 2,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a7690d4f6f1d79b6dbafe02099b8d990988f6ea789865d9f593ca3ddc12039f8",
+    "changed": "db1ef92bd4df54164e26c928cd167150362a45465bdcbb0e84476da1bbbd80ff",
+    "commit": "48453b9c025dd01a5be7448915e56fc6be4be2c6",
+    "dismissals": [],
+    "findings": [],
+    "id": "ed3931e2-b9c3-4330-a106-4789275ebd48",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T11:18:36.810039+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T12:36:16.359905+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:41:42.097681+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:30:01.888901+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9d34db83-7e55-4785-b6e5-b30347eb6bca",
+    "head": "3b5dc597f50a590f6a58c6cdb89485b27b2f68f1",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "claude"
+}

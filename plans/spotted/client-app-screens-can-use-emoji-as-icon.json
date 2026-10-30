@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/review.md\tNot done: Review reports an emoji used as an icon on a client app screen as a finding.\tclient-app-screens-can-use-emoji-as-icon",
+      "kind": "bug",
+      "path": "src/forge/templates/review.md",
+      "line": 281,
+      "text": "Not done: Review reports an emoji used as an icon on a client app screen as a finding.",
+      "from": "blocking",
+      "item": "client-app-screens-can-use-emoji-as-icon",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

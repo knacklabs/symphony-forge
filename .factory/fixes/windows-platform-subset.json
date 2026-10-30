@@ -1,0 +1,76 @@
+{
+  "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
+  "branch": "fix/windows-platform-subset",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155c9-9b4a-7801-8ac4-16af20cca723",
+    "head": null,
+    "start": "c792fdeb64eef11c8d8a55365bfd61e7b975f916"
+  },
+  "done_when": "Windows CI runs only tests marked as platform-sensitive (installers, git hooks, shell quoting, paths, line endings, command stand-ins) on every pull request beside Linux; Linux still runs the whole suite; a test fails when a test in those areas lacks the mark; and a measured Windows run on the branch uses at most 2 times Linux's total runner minutes and at most 2 times Linux's longest group",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_2_platform_sensitive_tests_are_marked() in tests/test_platform_sensitive_selection.py",
+      "file": "tests/test_platform_sensitive_selection.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 40,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_platform_sensitive_tests_are_marked",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3b058132f87366467d22828bdd97a734262c7569d0a8858170ff763a0f684507",
+    "changed": "a56438c084274812f3b39a8709cd4c6568ff4b194bbb310f7c3ba4e34c2d0fa9",
+    "commit": "03aa10fc4d8dab566a7518f0d867632a24cb488f",
+    "dismissals": [],
+    "findings": [],
+    "id": "754148d8-6b90-4bb3-9bb1-3e014f1f0683",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T20:09:40.594291+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T21:20:26.572261+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T03:45:47.938872+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T04:15:55.098119+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T04:37:22.857931+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T05:07:00.405446+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "234cc4e6-135e-4337-91bc-e9372b9499e0",
+    "head": "e1e94f07938d74e6c09777411dee221f7d575cf8",
+    "keys": {},
+    "round": 5
+  },
+  "why": "Windows CI takes about 6 times Linux (313 against 53 runner minutes, longest group 31.8 against 12.3 minutes) because it runs the whole suite, and it runs only nightly, so Windows bugs show up the next day",
+  "worker": "codex"
+}

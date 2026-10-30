@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/machine.py\tCap fixed pytest counts when busy runners reduce the budget\tFORGE-BUDGET-1/MEMORY",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 45,
+      "text": "Cap fixed pytest counts when busy runners reduce the budget",
+      "from": "blocking",
+      "item": "FORGE-BUDGET-1/MEMORY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/machine.py\tNot done: New work, reads, reviews and test runs wait while free memory is below a safe floor, and start again when it recovers.\tFORGE-BUDGET-1/MEMORY",
+      "kind": "bug",
+      "path": "src/forge/machine.py",
+      "line": 208,
+      "text": "Not done: New work, reads, reviews and test runs wait while free memory is below a safe floor, and start again when it recovers.",
+      "from": "blocking",
+      "item": "FORGE-BUDGET-1/MEMORY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

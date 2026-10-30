@@ -7,7 +7,7 @@ from pathlib import Path
 
 from conftest import Repo, machine_cores
 from test_close import env  # noqa: F401 (pytest fixture)
-from test_story import DOC, GRILL, worktree
+from test_story import DESIGN_IMAGE, DOC, GRILL, worktree
 
 STORY = "forge-runs-on-several-repos-at-once-can"
 WAITING = ("2 Forge agents already run on this machine, so this one waits its turn: it is number 1 "
@@ -47,6 +47,7 @@ def _other_repo(tmp_path: Path, bin_dir: Path) -> Repo:
     version = other.forge("--version").stdout.split()[-1]
     other.write("forge.toml", f'version = "{version}"\nrepo = "forge-source"\n{GRILL}')
     other.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
+    other.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     other.git("add", "-A")
     other.git("commit", "-q", "-m", "Set up Forge")
     other.git("remote", "add", "origin", str(remote))

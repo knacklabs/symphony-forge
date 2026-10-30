@@ -4,7 +4,6 @@ Audit: premature command exits, failed-answer retries and stalled-check refusals
 Only third-party responses and elapsed wall time are faked; no production test seam is added.
 """
 import json
-import os
 import shutil
 import sys
 
@@ -18,21 +17,7 @@ STORY = "land-waits-ci"
 
 
 @pytest.fixture
-def clock(land, tmp_path, monkeypatch):
-    folder = tmp_path / "clock"
-    folder.mkdir()
-    (folder / "sitecustomize.py").write_text("""import time
-real = time.monotonic
-elapsed = 0
-
-def sleep(seconds):
-    global elapsed
-    elapsed += seconds
-
-time.sleep = sleep
-time.monotonic = lambda: real() + elapsed
-""", encoding="utf-8")
-    monkeypatch.setenv("PYTHONPATH", str(folder) + os.pathsep + os.environ.get("PYTHONPATH", ""))
+def clock(land, fake_clock, monkeypatch):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "60")
     return land
 
@@ -76,7 +61,7 @@ def test_1_land_waits_through_a_long_run_with_progress(clock, history):
         repo.git("init", "-q", "-b", "main", str(client))
         repo.git("remote", "add", "origin", str(remote), cwd=client)
         env.gh.respond("api", stdout="{}")
-        made = repo.forge("init", cwd=client)
+        made = repo.forge("init", "--actions", "yes", cwd=client)
         assert made.returncode == 0, made.stderr
         repo.path = client
         _install(repo.bin, "gh", GH.format(python=sys.executable, remote=remote.as_posix(), url=URL)

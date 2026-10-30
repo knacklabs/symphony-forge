@@ -1,0 +1,51 @@
+{
+  "allow_large": "Release version bump: the version is recorded in eight code files; no behaviour changes",
+  "base": "9350b5fc8d05ff3f44c4703f7b0b01a2f6d09dcd",
+  "branch": "fix/release-1214",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fda-fb8e-7a01-8593-a2ca960f73b9",
+    "head": null,
+    "start": "944e14b8b688b36b09502261b8509b741f465ce3"
+  },
+  "done_when": "Forge's version is 1.2.14 everywhere it is recorded (the command, the repo pin, both install scripts, the README install line, the plugin and marketplace manifests, committed hooks and workflows, uv.lock), and this repo's generated files match what forge sync writes for it",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d15622d2218136a753bc02db444e14b89ed0f0d493fe6225e6f33cc01af070a9",
+    "changed": "cc1afc161aa0742951371683bbe64ab7567e68084a10704e26f86b43b2d67aed",
+    "commit": "c0a43084bcfcb07bc634e6a6d7298e033a042a7b",
+    "dismissals": [],
+    "findings": [],
+    "id": "b76813c2-267c-4fe2-b0fd-e05b666ba1b0",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:22:17.592021+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T16:24:16.422703+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T16:35:25.162357+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a036404b-3e89-492c-a038-574ea7d84abf",
+    "head": "69b2a915a4fbdd8dcf2b372a38017bcc35e7c68e",
+    "keys": {},
+    "round": null
+  },
+  "why": "Clients need v1.2.14 for the fix that stops a round's hand-back from reverting main's forge.toml (issue 921) and for the speed and test fixes merged since v1.2.13",
+  "worker": "codex"
+}

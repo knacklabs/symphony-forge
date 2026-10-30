@@ -1,0 +1,64 @@
+{
+  "allow_large": "The owner allowed the Python retry-keys part to go over the line limit (28 Oct)",
+  "branch": "task/FORGE-AGENTREADY-1-RETRYPY",
+  "chat": {
+    "approval": "43a1abe4232ad43aa01e94ee3a69bf4d37f6699506428144937150471bf41e48",
+    "claude": null,
+    "conversation": "01a1838c-ef8a-7e52-849c-3c4c1dd112fe",
+    "head": null,
+    "start": "3534056c86e0f0432aa9b4d24548acb7f2298d8a"
+  },
+  "known": [
+    {
+      "area": "test_a_project_create_sent_again_with_the_same_idempotency_key_makes_one_project() in src/forge/templates/starter-python/apps/api/tests/test_projects.py",
+      "file": "src/forge/templates/starter-python/apps/api/tests/test_projects.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 147,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: retry tests reject the API's successful preflight response",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "40e42a29270fc27411a523e14ae42966368772e1abd69322bb92f7d159c0d498",
+    "changed": "b15b89c8cd573ec0fb6a23cde10a0312f8503115e652e25217c31c5557fa7128",
+    "commit": "c4360e8c3003a9165b94a20419adc41fc6371c59",
+    "dismissals": [],
+    "findings": [],
+    "id": "e35c61c5-3fc2-48e7-a7a9-e5dbddd08821",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T17:18:13.243221+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T18:03:45.973054+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T18:15:08.437504+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T18:34:37.443972+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "23dfff45-c2a2-4e24-a17b-305eda5738fa",
+    "head": "1ed344f457131b13acb3afb0ecc14092f5bb7d49",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

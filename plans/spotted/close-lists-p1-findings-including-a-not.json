@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tApply acceptance classification to reused reviews\tclose-lists-p1-findings-including-a-not",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 227,
+      "text": "Apply acceptance classification to reused reviews",
+      "from": "blocking",
+      "item": "close-lists-p1-findings-including-a-not",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tKeep required acceptance findings open across review rounds\tclose-lists-p1-findings-including-a-not",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 987,
+      "text": "Keep required acceptance findings open across review rounds",
+      "from": "blocking",
+      "item": "close-lists-p1-findings-including-a-not",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/review.py\tFollow-up: Include required acceptance findings in worker repair briefs",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 227,
+      "text": "Follow-up: Include required acceptance findings in worker repair briefs",
+      "from": "review",
+      "item": "close-lists-p1-findings-including-a-not",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

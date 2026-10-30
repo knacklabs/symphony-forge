@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/records.py\tGate: existing sign-off tests still require the removed next step\tsignoff-one-fix-for-all",
+      "kind": "bug",
+      "path": "src/forge/records.py",
+      "line": 510,
+      "text": "Gate: existing sign-off tests still require the removed next step",
+      "from": "blocking",
+      "item": "signoff-one-fix-for-all",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/records.py\tNot done: A blocked sign-off names one forge fix start step that covers every open blocking finding from that review\tsignoff-one-fix-for-all",
+      "kind": "bug",
+      "path": "src/forge/records.py",
+      "line": 508,
+      "text": "Not done: A blocked sign-off names one forge fix start step that covers every open blocking finding from that review",
+      "from": "blocking",
+      "item": "signoff-one-fix-for-all",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

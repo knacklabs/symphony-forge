@@ -70,7 +70,7 @@ def test_2_workers_split_builds_user_facing_on_claude_and_the_rest_on_codex(repo
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
     [call] = calls(claude_log)
-    assert call["args"][:5] == ["-p", "--model", "claude-sonnet-5-5", "--effort", "xhigh"]
+    assert (call["options"]["model"], call["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
     assert _sent(codex_log, "turn/start") == []
     assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because it is user-facing "
             "(workers = split)") in page.stdout
@@ -92,16 +92,14 @@ def test_3_workers_claude_builds_user_facing_and_plain_tasks_on_claude(repo, mon
     _workers(repo, folder, "claude", CLAUDE_BUILD)
     page = repo.forge("work", "BOARD/PAGE")
     assert page.returncode == 0, page.stdout + page.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
-                                                 "--effort", "xhigh"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
     assert ("Building BOARD/PAGE with Claude (claude-sonnet-5-5, xhigh) because workers = claude, "
             "with the design model as it is user-facing") in page.stdout
 
     _help(repo, "claude", CLAUDE_BUILD)
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5",
-                                                 "--effort", "medium"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5", "medium")
     assert ("Building BOARD/HELP with Claude (claude-sonnet-5, medium) because workers = claude"
             in plain.stdout)
     assert _sent(codex_log, "turn/start") == []
@@ -181,7 +179,7 @@ def test_5_a_family_switch_between_rounds_starts_fresh_with_the_brief_and_findin
     assert ("Starting a new Claude session with the whole brief, because its last round ran on "
             "Codex") in to_claude.stdout
     last = calls(claude_log)[-1]
-    assert "--resume" not in last["args"] and "--session-id" in last["args"]
+    assert not last["options"].get("resume") and bool(last["options"].get("session_id"))
     assert "## Tests first" in last["brief"] and "Board misses a story" in last["brief"]
 
 
@@ -200,7 +198,7 @@ def test_6_workers_claude_never_falls_back_to_codex(repo, monkeypatch, sdk_data)
 
 def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, monkeypatch,
                                                                      sdk_data, claude_session):
-    # Earlier settings name only gpt models: omitted Claude entries now use Sonnet at xhigh.
+    # Earlier settings name only gpt models: omitted Claude entries now use Sonnet at low.
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     _help(repo, "claude")
@@ -208,9 +206,8 @@ def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, mon
     monkeypatch.delenv("CLAUDECODE")
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5-5",
-                                                 "--effort", "xhigh"]
-    assert ("Building BOARD/HELP with Claude (claude-sonnet-5-5, xhigh) because workers = claude"
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "low")
+    assert ("Building BOARD/HELP with Claude (claude-sonnet-5-5, low) because workers = claude"
             in plain.stdout)
 
     # Codex with no models at all runs, and names, Forge's Codex default.
@@ -221,8 +218,8 @@ def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, mon
     again = repo.forge("work", "BOARD/HELP")
     assert again.returncode == 0, again.stdout + again.stderr
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
-        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
-    assert ("Building BOARD/HELP with Codex (gpt-6.1-sol, medium) because workers = codex"
+        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "low"}
+    assert ("Building BOARD/HELP with Codex (gpt-6.1-sol, low) because workers = codex"
             in again.stdout)
 
 
@@ -262,6 +259,7 @@ def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and
     assert "## Tests first" in sent and "Board misses a story" in sent
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="no Ctrl-C to send a process there")
 def test_10_a_codex_start_cut_short_after_a_claude_round_leaves_the_retry_fresh(
         repo, monkeypatch, sdk_data, claude_session):

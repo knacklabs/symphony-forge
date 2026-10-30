@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\ttests/test_close_keeps_full_tests_in_ci.py\tThe Jest upgrade case timed out before these changes and teardown found two live processes.",
+      "kind": "edge",
+      "path": "tests/test_close_keeps_full_tests_in_ci.py",
+      "line": 83,
+      "text": "The Jest upgrade case timed out before these changes and teardown found two live processes.",
+      "from": "worker",
+      "item": "trim-close-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -113,13 +113,13 @@ def test_1_sync_writes_roles_for_both_hosts_from_forge_toml(repo, adopted):
     # session's own applies on Codex. Claude implementations default to Sonnet, planning uses
     # grill, and diagnostics use Opus independently of legacy review settings.
     by_kind = {"build": ((None, "medium"), ("claude-opus-5-5", "medium")),
-               "lite": (("gpt-6-luna", "ultra"), ("claude-sonnet-5-5", "xhigh")),
+               "lite": (("gpt-6-luna", "ultra"), ("claude-sonnet-5-5", "low")),
                "design": (("gpt-6.1-sol", "xhigh"), ("opus", "high")),
                "review": (("gpt-6-sol", None), ("claude-opus-5-5", "high")),
                "grill": (("gpt-6.1-sol", "high"), ("opus", "high"))}
     # The Codex worker runs forge work's own built-in model when no entry names a Codex one.
     expected = {**{name: by_kind[kind] for name, kind in ROLES.items()},
-                "worker": (("gpt-6.1-sol", "medium"), by_kind["build"][1])}
+                "worker": (("gpt-6.1-sol", "low"), by_kind["build"][1])}
     for name in ROLES:
         assert _settings(repo.path, name) == expected[name], name
     # The reader reviews the plan without writing and reports only new blocking defects.
@@ -180,7 +180,7 @@ def test_4_missing_design_leaves_codex_unpinned_and_claude_planning_uses_grill(r
 
     for name in ("planner", "architect"):
         assert _settings(repo.path, name) == ((None, None), ("opus", "high")), name
-    assert _settings(repo.path, "worker") == (("gpt-6.1-sol", "medium"), ("claude-opus-5-5", "medium"))
+    assert _settings(repo.path, "worker") == (("gpt-6.1-sol", "low"), ("claude-opus-5-5", "medium"))
 
 
 def test_5_a_value_from_forge_toml_stays_one_setting_and_grill_keeps_its_own_model(repo):
@@ -212,8 +212,14 @@ def test_6_codex_roles_without_a_model_are_not_pinned_by_old_subagent_defaults(r
     assert _synced(repo).returncode == 0
 
     config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
-    assert config["agents"] == {"max_depth": 1,
-                                "worker": {"config_file": "agents/worker.toml"},
-                                "reader": {"config_file": "agents/reader.toml"}}
-    assert _settings(repo.path, "worker")[0] == ("gpt-6.1-sol", "medium")  # forge work's built-in
+    # With no configured subagent pair, stale defaults still go; sync now also registers
+    # all shipped roles and their descriptions instead of only the reader.
+    assert config["agents"]["max_depth"] == 1
+    assert "default_subagent_model" not in config["agents"]
+    assert "default_subagent_reasoning_effort" not in config["agents"]
+    for name in ROLES:
+        assert config["agents"][name] == {
+            "config_file": f"agents/{name}.toml",
+            "description": _codex(repo.path, name)["description"]}
+    assert _settings(repo.path, "worker")[0] == ("gpt-6.1-sol", "low")  # forge work's built-in
     assert repo.forge("sync").stdout.startswith("Nothing to change")

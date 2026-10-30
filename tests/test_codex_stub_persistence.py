@@ -7,9 +7,12 @@ import sys
 
 from test_codex_resume import RESUMING
 
+import pytest
+
 STORY = "FIX-CODEX-STUB-PERSISTENCE"
 
 
+@pytest.mark.platform
 def test_1_turn_start_survives_a_reader_blocking_the_store_replace(tmp_path):
     # Windows refuses replacement while the recovery test reads the destination. Inject that
     # OS failure in the child on every platform; successful attempts still do the real rename.

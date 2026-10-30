@@ -16,6 +16,8 @@ from conftest import ROOT
 from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401
 from test_codex_turns_trust_forge_hooks import _listed, _trusted
 
+pytestmark = pytest.mark.platform
+
 ADOPTED = ROOT / "tests/fixtures/adopted-v1.2.2/client"
 LAUNCHER = '. "$(git rev-parse --show-toplevel)/.forge/hooks.sh" && '
 

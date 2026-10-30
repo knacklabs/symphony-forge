@@ -1,0 +1,167 @@
+/* The Releases and Insights pages (docs/board-design/Releases and Insights): panels on the ground,
+   a release column beside the known issues rail, and the weekly chart above the people table. */
+:root {
+  --line-soft: #EEEFEC;
+  --ink-3: #6B717A;
+  --held-ground: #FCE8EE;
+  /* People in the weekly chart: told apart by colour only beside the legend's names. */
+  --person-1: #1D4ED8;
+  --person-2: #7AA2F7;
+  --person-3: #0F766E;
+  --person-4: #5CC8B8;
+  --person-5: #B54708;
+  --person-6: #9F1239;
+  --hatch: #C9CCC6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --line-soft: #26292C;
+    --ink-3: #9AA0A6;
+    --held-ground: #3A1F28;
+    --person-1: #7AA2F7;
+    --person-2: #3B62C4;
+    --person-3: #5CC8B8;
+    --person-4: #2F8F84;
+    --person-5: #F0A35C;
+    --person-6: #F08AA6;
+    --hatch: #4A4F57;
+  }
+}
+
+.releases, .insights {
+  height: calc(100vh - 96px); /* the window less the header and main's padding: a laptop page, no scroll */
+  display: flex;
+  gap: var(--space-6);
+}
+
+.releases > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.insights { flex-direction: column; gap: 20px; }
+
+/* Everything below applies only inside these two pages, so no other screen or the header changes. */
+:is(.releases, .insights) {
+  .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .panel h2 { margin: 0; font-size: var(--size-region); line-height: 24px; font-weight: 600; }
+  .panel .sub, .panel thead th, .legend { font-size: var(--size-label); color: var(--ink-2); font-weight: 400; }
+  .panel p { margin: 0; color: var(--ink-2); }
+  .fill { flex: 1; min-height: 0; overflow: auto; }
+
+  .head { display: flex; align-items: baseline; gap: 14px; }
+  .big { font-size: var(--size-title); font-weight: 600; }
+  .tag {
+    margin-left: auto;
+    border-radius: var(--radius-tag);
+    padding: 2px var(--space-2);
+    background: var(--needs-you);
+    color: var(--surface);
+    font-size: var(--size-label);
+    font-weight: 600;
+  }
+
+  .checks { display: flex; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .checks li {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: var(--space-2) 10px;
+  }
+  .checks li::before {
+    content: "\2713";
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: var(--ready);
+    color: var(--surface);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .checks li[data-held]::before { content: "!"; background: var(--stuck); }
+  .checks li[data-held] { border-color: var(--stuck); background: var(--held-ground); }
+
+  .stories { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .stories li, .stories .total {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 200px 80px;
+    gap: var(--space-4);
+    align-items: center;
+  }
+  .stories .key { font-size: var(--size-label); color: var(--ink-3); }
+  .stories b { font-weight: 600; }
+  .stories .total { border-top: 1px solid var(--line); padding-top: 10px; }
+  .note-end { font-size: var(--size-label); color: var(--ink-2); text-align: right; }
+  .parts { display: flex; gap: 3px; height: 6px; }
+  .parts span { flex: 1; border-radius: 2px; background: var(--line); }
+  .parts [data-stage="merged"] { background: var(--ready); }
+  .parts [data-stage="moving"] { background: var(--moving); }
+
+  table { border-collapse: collapse; width: 100%; }
+  th { text-align: left; padding: 0 var(--space-4) 6px 0; }
+  td { border-top: 1px solid var(--line-soft); padding: var(--space-2) var(--space-4) var(--space-2) 0; }
+  .num { text-align: right; }
+  tbody th { font-weight: 600; padding: var(--space-2) var(--space-4) var(--space-2) 0; border-top: 1px solid var(--line-soft); }
+
+  .known { width: 360px; flex: none; min-height: 0; overflow-y: auto; } /* a long list scrolls in the rail, never the page */
+  .known header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+  .known h2:focus { outline: none; }
+  .known .more, .known .close {
+    align-self: flex-start;
+    border-radius: var(--radius-tag);
+    padding: var(--space-1) var(--space-2);
+    background: none;
+    font-size: var(--size-label);
+    font-weight: 600;
+  }
+  .known .more { border: 0; color: var(--moving); }
+  .known .more:hover { text-decoration: underline; }
+  .known .close { border: 1px solid var(--line); color: var(--ink); }
+  .known ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
+  .known summary { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 10px; align-items: center; cursor: pointer;
+    border-radius: var(--radius-tag); }
+  .known .titles { margin: var(--space-2) 0 0; padding-left: var(--space-4); display: block; list-style: disc; color: var(--ink-2); }
+  .known .file { font-size: 13px; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: var(--space-1); }
+  .known .count { font-weight: 600; text-align: right; }
+  .meter { display: flex; height: 4px; border-radius: 2px; background: var(--line-soft); }
+  .meter span { width: var(--w); border-radius: 2px; background: var(--waiting); }
+  .share .meter { flex: 1; height: 6px; border-radius: 3px; overflow: hidden; }
+  .share .meter span { background: var(--ready); }
+  .share { display: flex; align-items: center; gap: 10px; }
+  .share b { font-weight: 400; font-size: var(--size-label); color: var(--ink-2); width: 56px; text-align: right; }
+
+  .legend { display: flex; gap: 14px; margin: 0; padding: 0; list-style: none; }
+  .legend li { display: flex; align-items: center; gap: 6px; }
+  .legend li::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--swatch); }
+  .legend li.around::before, .bars .stack .around {
+    background: repeating-linear-gradient(135deg, var(--hatch) 0 3px, var(--surface) 3px 6px);
+    border: 1px solid var(--hatch);
+  }
+
+  .chart { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+  .bars, .weeks {
+    display: grid;
+    grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+    gap: 28px;
+    padding: 0 var(--space-2);
+  }
+  .bars { flex: 1; min-height: 120px; align-items: end; border-bottom: 1px solid var(--line); }
+  .bars > div { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
+  .bars .stack { height: var(--h); display: flex; flex-direction: column-reverse; border-radius: 3px 3px 0 0; overflow: hidden; }
+  .bars .stack span { flex: var(--n) 0 0; background: var(--swatch); }
+  .weeks span, .bars .total { font-size: var(--size-label); color: var(--ink-2); text-align: center; }
+  .people .who small { font-size: var(--size-label); color: var(--ink-3); font-weight: 400; }
+}

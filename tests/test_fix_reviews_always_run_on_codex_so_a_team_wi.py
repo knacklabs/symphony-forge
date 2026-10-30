@@ -8,6 +8,10 @@ from pathlib import Path
 from test_close import PIN, ROOT, env  # noqa: F401  (env is a fixture)
 from test_setup import _executable, _fresh_client
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "reviews-always-run-on-codex-so-a-team-wi"
 
 

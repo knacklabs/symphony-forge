@@ -1,0 +1,60 @@
+{
+  "branch": "task/FORGE-GITCOST-1-HOOK",
+  "chat": {
+    "approval": "f3d2013063648d127aebc7af050f7081233c80d37cb5587b6d28d40ee608f479",
+    "claude": null,
+    "conversation": "01a14e2a-a4e5-7980-81b1-555dc52efe7d",
+    "head": null,
+    "start": "8e1ece383e6f2975dd2b8420b776ff7880deab1c"
+  },
+  "flagged": [],
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4bb3be5b27791366cd6bbf222a3e3c93208547e807812097a90bf044a7e58e6f",
+    "changed": "41b376694face156d7c16c85b1c121f6be13033fe23a7be09a0f0823ae214c62",
+    "commit": "234fea03a42d9585bda8fbb2787365d397a4c384",
+    "dismissals": [],
+    "findings": [],
+    "id": "3c04f523-fc1d-4ec6-a44a-21ddd657150c",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T08:39:21.834305+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T08:48:04.856539+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T10:08:21.000801+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T12:04:28.092542+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T12:21:03.673272+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T13:38:35.212763+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "0f2958ee-8a51-46bd-8797-f4a58bafdb05",
+    "head": "bbbcf7ed81083b2345882e8bca87346d8739e78c",
+    "keys": {
+      "close's tests failing": 2
+    },
+    "round": 4
+  },
+  "worker": "codex"
+}

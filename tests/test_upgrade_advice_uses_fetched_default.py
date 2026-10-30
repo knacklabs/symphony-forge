@@ -11,6 +11,8 @@ from conftest import ROOT
 from test_fix_when_the_installed_forge_differs_from_th import _uv
 from test_setup import _fresh_client, _version
 
+pytestmark = pytest.mark.platform
+
 STORY = "skipped-next"
 
 

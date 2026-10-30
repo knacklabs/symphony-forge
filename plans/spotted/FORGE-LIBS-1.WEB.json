@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/eslint.config.mjs\tEnforce Python web boundaries from nested screen and hook folders\tFORGE-LIBS-1/WEB",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/eslint.config.mjs",
+      "line": 42,
+      "text": "Enforce Python web boundaries from nested screen and hook folders",
+      "from": "blocking",
+      "item": "FORGE-LIBS-1/WEB",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx\tUpdate the remaining format and export checks for the moved screens\tFORGE-LIBS-1/WEB",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "line": 27,
+      "text": "Update the remaining format and export checks for the moved screens",
+      "from": "blocking",
+      "item": "FORGE-LIBS-1/WEB",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

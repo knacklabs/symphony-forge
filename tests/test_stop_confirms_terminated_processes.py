@@ -14,6 +14,8 @@ from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import alive, finish, hold_agents, lane_adapter, make_work, person, start  # noqa: F401
 from test_lanes_view import lanes
 
+pytestmark = pytest.mark.platform
+
 STORY = "LANE-STOP-RACE"
 
 

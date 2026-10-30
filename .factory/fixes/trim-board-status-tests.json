@@ -1,0 +1,77 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-board-status-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14ded-dd24-7ec2-a640-a623a78ba82c",
+    "head": null,
+    "start": "f98d5662eed3dd8ebe5a57b9edb875ebc4f07d3b"
+  },
+  "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/trim-board-status-tests.json",
+      "file": ".factory/fixes/trim-board-status-tests.json",
+      "gain": 5,
+      "harm": 1,
+      "line": 11,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The listed duplicate tests and repeated adopted rows are gone",
+      "work": 3
+    },
+    {
+      "area": ".factory/fixes/trim-board-status-tests.json",
+      "file": ".factory/fixes/trim-board-status-tests.json",
+      "gain": 3,
+      "harm": 1,
+      "line": 11,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: proof list",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "debbb0c8029d518e374ec384b01ef6787b39f437b08fc21074913494b8cb512c",
+    "changed": "1117202655e046813f40c8be6edc3813413173904dc3a423ad398c2f5396fdf6",
+    "commit": "80e25e8f4758ea45d7231404c0c92187d6a19255",
+    "dismissals": [],
+    "findings": [],
+    "id": "e8fe5a74-de2e-4436-8553-c3c3b821b6a7",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:34:58.062612+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:39:13.111089+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T10:12:09.281943+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b5911c21-4cf6-4e7c-8c09-ddc4e8654f87",
+    "head": "d6078495b8c782a63f5b90cd63730ec5a5cedabb",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The board status and machine view tests repeat adopted rows and one review priority with the same path",
+  "worker": "codex"
+}

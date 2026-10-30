@@ -19,13 +19,13 @@ def test_1_accept_before_the_reply_runs_the_review_and_stops(repo, tmp_path, mon
     fix, answers, queue = _client(repo, tmp_path, monkeypatch)
     page = _decision(fix, answers, via="", on="")
 
-    queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
+    queue.write_text(json.dumps(CLEAN + [{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [{
         "priority": "P1", "title": "Prototype fails", "body": "Gain 5, Work 2, Harm 1\nDemo cannot finish",
         "code_location": {"file_path": "app.py", "line": 1}}]}}]))
     gaps = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert gaps.returncode == 1
     assert "Prototype fails" in gaps.stderr
-    assert _calls(queue) == 1
+    assert _calls(queue) == 2
     assert "status: proposed" in page.read_text()
 
     queue.write_text(json.dumps(CLEAN))
@@ -35,8 +35,12 @@ def test_1_accept_before_the_reply_runs_the_review_and_stops(repo, tmp_path, mon
     assert "review passed" in passed.stdout
     assert "ask the customer's named person for sign-off" in passed.stdout
     assert "email" not in passed.stdout
-    assert _calls(queue) == 2
-    assert page.read_text() == before
+    assert _calls(queue) == 3
+    # The old contract discarded this result. Sign-off now saves it for acceptance
+    # after the customer replies, while the decision remains proposed.
+    assert page.read_text() != before
+    assert "status: proposed" in page.read_text()
+    assert "reviewed_commit:" in page.read_text()
 
 
 def test_2_accept_with_the_reply_recorded_accepts_as_today(repo, tmp_path, monkeypatch):
@@ -48,4 +52,4 @@ def test_2_accept_with_the_reply_recorded_accepts_as_today(repo, tmp_path, monke
     assert "Accepted" in accepted.stdout
     assert "status: accepted" in page.read_text()
     assert "reviewed_commit:" in page.read_text()
-    assert _calls(queue) == 1
+    assert _calls(queue) == 2

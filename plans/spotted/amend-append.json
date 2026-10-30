@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_board_shell.py\tCI observed Live when the board status assertion expected Updating.",
+      "kind": "bug",
+      "path": "tests/test_board_shell.py",
+      "line": 86,
+      "text": "CI observed Live when the board status assertion expected Updating.",
+      "from": "worker",
+      "item": "amend-append",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

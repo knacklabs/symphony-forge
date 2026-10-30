@@ -1,0 +1,99 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/migration-number-warning",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1500e-18e6-7bf2-b943-62af04044b8d",
+    "head": null,
+    "start": "d63689c6c5b08242da988572ece31457e56d0006"
+  },
+  "done_when": "Close and forge next warn, without refusing, when another open item's branch adds a migration file with the same number under the repo's migrations folders, naming both items, and a test covers it on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/migration_warnings.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "warnings() in src/forge/migration_warnings.py",
+      "file": "src/forge/migration_warnings.py",
+      "gain": 5,
+      "harm": 4,
+      "line": 35,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Refresh origin's peer refs before checking collisions",
+      "work": 3
+    },
+    {
+      "area": "warnings() in src/forge/migration_warnings.py",
+      "file": "src/forge/migration_warnings.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 45,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Determine whether peers are open from their actual item and landed state",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e10c1850f834fb2c8de7dbe1479146b372ed063f92db2fcce15aa1d0d772711e",
+    "changed": "2965db34fde7be7175618faaa002ca5f1584d9395256b6b0bbfdaa2eaff69fec",
+    "commit": "183a9096111cfbbedd91df7c4e917c287b27b3c9",
+    "dismissals": [],
+    "findings": [],
+    "id": "b9a77f12-d161-43f5-852a-ef56149167a1",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:58:58.683303+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T18:01:37.527530+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:43:20.457901+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T11:47:56.441500+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T12:25:34.916910+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T12:54:42.814572+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:51:41.432962+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T15:28:28.414939+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "09c29303-ef01-4b58-a205-05b43a33bb68",
+    "head": "05b0100c97d25a80ee976994e83ac72f3e125163",
+    "keys": {},
+    "round": 6
+  },
+  "why": "Two open items can add database migrations with the same number, and neither review sees the other branch (issue 925)",
+  "worker": "codex"
+}

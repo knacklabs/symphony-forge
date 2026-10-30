@@ -11,7 +11,9 @@ import pytest
 
 from conftest import ROOT, _install
 from test_setup import _fresh_client
-from test_story import DOC, READER, claude_plan, hook, new_story
+from test_story import DOC, READER, approved_constitution, claude_plan, hook, new_story
+
+pytestmark = pytest.mark.platform
 
 STORY = "FIX-READ-BLOCKING-ONLY"
 
@@ -43,6 +45,7 @@ def test_1_only_blocking_notes_need_another_round(
     repo.git("switch", "-q", "main")
     repo.git("merge", "-q", "--ff-only", "fix/reader-guidance")
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main")
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     advisory = "1. Advisory: Use a shorter heading.\n   Wording preference only.\n"
     reply = advisory + (f"2. {blocking}Saving requires an account but sign-in is out of scope.\n"

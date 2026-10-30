@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/join.spec.ts\tGate: isolate invite links between parallel browser tests\tFORGE-DEFAULTS-1/JOIN",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/join.spec.ts",
+      "line": 22,
+      "text": "Gate: isolate invite links between parallel browser tests",
+      "from": "blocking",
+      "item": "FORGE-DEFAULTS-1/JOIN",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/templates/starter/apps/web/e2e/starter-shell.spec.ts\tThe keyboard sort test failed once in a parallel live run and passed on rerun.",
+      "kind": "edge",
+      "path": "src/forge/templates/starter/apps/web/e2e/starter-shell.spec.ts",
+      "line": 154,
+      "text": "The keyboard sort test failed once in a parallel live run and passed on rerun.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/JOIN",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

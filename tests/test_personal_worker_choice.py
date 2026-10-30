@@ -10,6 +10,7 @@ from conftest import ROOT, patient
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_setup import _fresh_client, _stub_forge
+from test_story import prototype_design
 from test_worker import calls, install_claude
 
 STORY = "personal-worker-choice"
@@ -53,7 +54,7 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     assert started.returncode == 0, started.stdout + started.stderr
     built = repo.forge("work", "BOARD/HELP")
     assert built.returncode == 0, built.stdout + built.stderr
-    assert calls(claude_log)[-1]["args"][:5] == ["-p", "--model", "claude-sonnet-5", "--effort", "medium"]
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5", "medium")
     assert ("Building BOARD/HELP with Claude (claude-sonnet-5, medium) because workers = claude; "
             "forge.local.toml: workers = claude, models.build; forge.toml: tools = both") in built.stdout
     # A local tools choice overrides forge.toml's Codex workers too. forge.toml has only Codex
@@ -73,14 +74,17 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     shown = repo.forge("next").stdout
     assert (f"Next: forge work {name}  # Claude builds it (forge.local.toml: tools = claude; "
             "forge.toml: workers = codex; built-in default: models.lite)") in shown, shown
-    # A prototype fix is design work, so forge next previews the worker forge work picks for it.
+    # An explicit UI fix is design work; forge next previews the worker forge work picks for it.
+    # Design approval is a prerequisite; this test owns the local worker choice after approval.
+    prototype_design(repo)
+    repo.git("add", "docs/decisions/0001-prototype-design.md")
     config = repo.path / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('repo = "client"', 'repo = "client"\nstage = "prototype"'),
                       "utf-8")
     repo.git("commit", "-qam", "Back to the prototype stage")
     repo.git("push", "-q", "origin", "main")
     (repo.path / "forge.local.toml").write_text('workers = "split"\n', "utf-8")
-    fixed = repo.forge("fix", "start", "Show the demo", "--done", "The demo shows")
+    fixed = repo.forge("fix", "start", "Show the demo", "--done", "The demo shows", "--kind", "ui")
     assert fixed.returncode == 0, fixed.stdout + fixed.stderr
     name = fixed.stdout.split()[2]
     shown = repo.forge("next").stdout
@@ -128,7 +132,8 @@ def test_3_new_and_upgraded_repos_ignore_the_local_file_and_doctor_names_its_set
         # init's own first commit ignores the file.
         assert "forge.local.toml" in repo.git("show", "HEAD:.gitignore", cwd=client).splitlines()
     main = client
-    started = repo.forge("fix", "start", "Choose my worker", "--done", "My file is ignored", cwd=main)
+    started = repo.forge("fix", "start", "Choose my worker", "--done", "My file is ignored",
+                         "--kind", "mechanical", cwd=main)
     assert started.returncode == 0, started.stdout + started.stderr
     client = Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     synced = repo.forge("sync", cwd=client)

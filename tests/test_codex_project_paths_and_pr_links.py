@@ -16,6 +16,8 @@ from test_chatview_start import SERVER, _ready
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_setup import _fresh_client, _version
 
+pytestmark = pytest.mark.platform
+
 STORY = "codex-project-roots"
 
 

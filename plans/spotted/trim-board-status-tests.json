@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\t.factory/fixes/trim-board-status-tests.json\tNot done: The listed duplicate tests and repeated adopted rows are gone",
+      "kind": "edge",
+      "path": ".factory/fixes/trim-board-status-tests.json",
+      "line": 11,
+      "text": "Not done: The listed duplicate tests and repeated adopted rows are gone",
+      "from": "review",
+      "item": "trim-board-status-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

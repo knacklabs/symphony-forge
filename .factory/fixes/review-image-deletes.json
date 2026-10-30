@@ -1,0 +1,50 @@
+{
+  "base": "1e1d088d8e86f5eb39515f563a224c497dca2d59",
+  "branch": "fix/review-image-deletes",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14adc-9b3b-7a92-9c41-0d276463f85e",
+    "head": null,
+    "start": "2275ffc700cfe0bdad7d5b196d4f5c26a53d337d"
+  },
+  "done_when": "A branch that deletes or changes an image is reviewed with the image named only, as generated files are, and a test removes an image through close",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b4e33d46f7a9ac562ef6c81172301ad3bac43c478f17dbf1412e832449a2d3dc",
+    "changed": "20b5c24066e931cc46a186dc4d2f4b83b541407cbbe3f2763f0f99fe5dbfd5ad",
+    "commit": "fecbbe6271bb1d53a3ba3171b22c83d80be928a6",
+    "dismissals": [],
+    "findings": [],
+    "id": "42fe37f9-c894-40fa-8a1d-9c64b7fc54e1",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T17:15:23.696987+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:20:17.550372+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T17:45:45.282311+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "296866f8-bd26-46e1-958e-d487ffec1e5e",
+    "head": "4da37c7664901bc8cbb4bf4338695cd4295b414f",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Review refuses any branch that deletes or changes a binary image, so an image can never be removed through Forge",
+  "worker": "codex"
+}

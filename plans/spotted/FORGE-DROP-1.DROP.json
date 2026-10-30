@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/task.py\tStarting a fix from a retained dropped checkout creates a blocked stack\tFORGE-DROP-1/DROP",
+      "kind": "bug",
+      "path": "src/forge/task.py",
+      "line": 577,
+      "text": "Starting a fix from a retained dropped checkout creates a blocked stack",
+      "from": "blocking",
+      "item": "FORGE-DROP-1/DROP",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

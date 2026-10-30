@@ -21,6 +21,7 @@ from test_worker_and_reader_chats_survive_rounds import (_chat, _old_round, _pre
 STORY = "sync-not-blocked"
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="the held run is stopped with Ctrl-C")
 @pytest.mark.parametrize("command", ["work", "land"])
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2-client"])
@@ -64,6 +65,7 @@ def test_1_sync_runs_while_another_items_run_holds_its_lock(repo, gh, monkeypatc
     assert _chat(log, "codex", resumed=True) == first
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="the held run is stopped with Ctrl-C")
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "adopted-v1.2.2-client"])
 def test_2_sync_never_skips_a_chat_an_earlier_release_run_holds(repo, monkeypatch, sdk_data, tmp_path,

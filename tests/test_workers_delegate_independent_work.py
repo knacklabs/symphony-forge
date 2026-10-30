@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from conftest import FORGE_SHIM, ROOT, _install
+from conftest import FORGE_SHIM, ROOT, _install, patient
 from test_codex_worker import _sent, sdk_data  # noqa: F401
 from test_codex_resume import _resuming
 from test_fix_claude_workers_start_a_fresh_session_eve import FIX, _started
@@ -28,6 +28,7 @@ def _invitation(brief):
         assert invitation in guidance
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
 def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
         repo, gh, tmp_path, monkeypatch, sdk_data, previous, request):
@@ -84,7 +85,7 @@ def test_1_workers_invite_delegation_and_codex_enables_configured_helpers(
     repo.git("-c", f"core.hooksPath={tmp_path / 'no-hooks'}", "push", "-q", "origin", "main",
              cwd=client)
     started = repo.forge("fix", "start", "Delegate independent work", "--done",
-                         "Workers may delegate independent parts", cwd=client)
+                         "Workers may delegate independent parts", "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     request.getfixturevalue("claude_session")
     worked = repo.forge("work", "delegate-independent-work", cwd=client)
@@ -125,6 +126,8 @@ def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
     old_src = tmp_path / "pre-invitation"
     shutil.copytree(ROOT / "src/forge", old_src / "forge",
                     ignore=shutil.ignore_patterns("__pycache__"))
+    patient(lambda: shutil.copytree(ROOT / ".codex/skills/test-audit",
+                                    old_src / "forge/templates/skills/test-audit", dirs_exist_ok=True))
     # Plain-text brief from the fix's base release, before the delegation invitation.
     shutil.copyfile(ROOT / "tests/fixtures/worker-brief-before-delegation.md",
                     old_src / "forge/templates/brief.md")
@@ -142,7 +145,7 @@ def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
         monkeypatch.delenv("STUB_CODEX_COMMIT")
     else:
         [started] = calls(log)
-        first = started["args"][started["args"].index("--session-id") + 1]
+        first = started["options"]["session_id"]
         old_brief = started["brief"]
     assert "spawn the repo's subagent roles" not in old_brief
     before = (folder / "forge.toml").read_bytes()
@@ -161,7 +164,7 @@ def test_2_sync_gives_existing_sessions_the_invitation_when_they_resume(
         brief = _sent(log, "turn/start")[-1]["input"][0]["text"]
     else:
         [_, resumed] = calls(log)
-        assert resumed["args"][resumed["args"].index("--resume") + 1] == first
+        assert resumed["options"]["resume"] == first
         brief = resumed["brief"]
     assert "The earlier brief in this conversation still applies." in brief
     assert "# Worker brief" not in brief

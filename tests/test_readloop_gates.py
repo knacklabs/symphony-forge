@@ -1,5 +1,5 @@
 STORY = "FORGE-READLOOP-1"
-"""A story passes only on "No findings.": the passing round commits, and approval, `forge next`,
+"""A blocking read holds approval, `forge next`,
 `forge task start` and forge-pr-check refuse a story whose latest round had findings or whose doc
 changed after it. Stories approved before rounds keep today's rules. Everything runs the real
 forge command; the reader is the stub `claude` from test_story, or the stand-in Codex app-server
@@ -64,38 +64,44 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     shop = new_story(repo, "SHOP")
     doc, notes = shop / "plans" / "SHOP.md", shop / "plans" / "SHOP.read.md"
     doc.write_text(DOC, encoding="utf-8")
-    # No-findings formatting now passes; substantive text still fails and numbers on.
+    # Consecutive P0 rounds stop for the owner's choice. Keep formatting and gate
+    # proof here; test_owner_decides_at_the_round_limit owns the read-stop outcomes.
     for number, near in enumerate(["No findings, except missing recovery.",
                                    "No issues? The time has no time zone.",
                                    "**Finding:** required proof is missing.",
                                    "No findings.\n1. The saved time has no time zone.",
                                    "No findings. The page is fine.",
                                    "1. A gap.\n\n## Round 99\n\nNo findings."], start=1):
-        say(repo, near + "\n")
-        if number in (3, 6):
+        before_heading, heading, after_heading = near.partition("\n\n## Round 99")
+        say(repo, before_heading +
+            "\n   Case: normal use - Reopening a saved basket loses its contents.\n"
+            "   Gain 4, Work 1, Harm 5\n" + heading + after_heading)
+        if number >= 2:
             held = repo.forge("read", "SHOP")
-            assert held.returncode == 1 and "Ask the human to accept, narrow or split" in held.stderr
+            assert held.returncode == 1 and "One more round, split or accept?" in held.stderr
         else:
             assert "Next: give every blocking finding a disposition" in read(repo)
         text = notes.read_text("utf-8")
         assert f"round: {number}\n" in text and "passed: no\n" in text
         assert f"## Round {number}\n\n" in text and re.search(rf"^{number}\. ", text, re.M), text
         dispose_all(notes)
-        if number == 3:
-            # Formatting coverage continues only after the new mandatory human choice.
-            chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing this slice")
+        if 2 <= number < 6:
+            # Only an owner's more choice permits the next P0 formatting case.
+            chosen = repo.forge("read", "SHOP", "--resolve", "more", "--reason", "Keep testing this slice")
             assert chosen.returncode == 0, chosen.stderr
     # A heading inside the reply is text: round 6 is everything after its own heading.
-    assert "## Round 6\n\n6. A gap.\n   Disposition: cut\n\n## Round 99\n\nNo findings." in (
+    assert ("## Round 6\n\n6. A gap.\n   Disposition: cut\n"
+            "   Case: normal use - Reopening a saved basket loses its contents.\n"
+            "   Gain 4, Work 1, Harm 5\n\n\n## Round 99\n\nNo findings.") in (
         notes.read_text("utf-8"))
     refused = hook(repo, claude_plan(claude_payload, DOC))
     assert (refused.returncode, refused.stderr) == (1, (
         "Round 6 of the cold read of plans/SHOP.md hasn't passed, so it needs another round.\n"
         "Next: forge read SHOP\n"))
     assert "forge read SHOP --resolve" in repo.forge("next").stdout
-    # A round with findings commits nothing.
+    # A failed round still commits nothing.
     assert repo.git("status", "--porcelain", "--", "plans", cwd=shop) != ""
-    chosen = repo.forge("read", "SHOP", "--resolve", "narrow", "--reason", "Keep testing this slice")
+    chosen = repo.forge("read", "SHOP", "--resolve", "more", "--reason", "Keep testing this slice")
     assert chosen.returncode == 0, chosen.stderr
     tip = repo.git("rev-parse", "story/SHOP")
     # Exactly "No findings.", trimmed, passes, and the doc and notes are committed on its branch.
@@ -153,9 +159,13 @@ def _gates_wait_for_a_pass(repo, claude_payload, monkeypatch, tmp_path,
             repo.git("commit", "-q", "-am", "Rename a task", cwd=shop)
         refused = repo.forge("task", "start", "SHOP/SHOW")
         assert (refused.returncode, refused.stderr) == (1, REFUSED_CHANGED)
-    # A round with findings stops it too.
-    say(repo, "1. The time needs a zone.\n")
-    read(repo)
+    # A first P0 round permits another read, but still blocks approval and task starts.
+    say(repo, "1. The time needs a zone.\n"
+        "   Case: normal use - The ordinary save path drops a basket.\n"
+        "   Gain 4, Work 1, Harm 5\n")
+    held = repo.forge("read", "SHOP")
+    assert held.returncode == 0 and "Wrote round 3" in held.stdout, held.stdout + held.stderr
+    assert "One more round, split or accept?" not in held.stdout + held.stderr
     dispose_all(notes)
     refused = repo.forge("task", "start", "SHOP/SHOW")
     assert refused.stderr == ("Round 3 of the cold read of plans/SHOP.md hasn't passed, so it needs "
@@ -431,10 +441,14 @@ def _passing_reader_keeps_its_chat(repo, claude_payload, monkeypatch, tmp_path,
     conversation = _sent(reader.log, "turn/start")[-1]["threadId"]
     monkeypatch.delenv("STUB_CODEX_NO_ARCHIVE")
 
-    # A round with findings keeps its conversation for the next round.
+    # A stopped round keeps its conversation for the owner's next read round.
     reader.doc.write_text(TASKS, encoding="utf-8")
     archived = len(_sent(reader.log, "thread/archive"))
-    reader.ok(f"1. {FIRST}\n")
+    reader.say(f"1. {FIRST}\n")
+    stopped = reader.read()
+    assert stopped.returncode == 1 and "One more round, split or accept?" in stopped.stderr
+    chosen = reader.resolve("more", "The owner wants to repair the sign-in note")
+    assert chosen.returncode == 0, chosen.stdout + chosen.stderr
     assert len(_sent(reader.log, "thread/archive")) == archived
     assert reader.continued()
     assert _sent(reader.log, "thread/resume")[-1]["threadId"] == conversation

@@ -1,0 +1,49 @@
+{
+  "base": "3101b66a9a3b2d8a1dfda70871ba98f56b619b3a",
+  "branch": "fix/waiting-line-test-flaky",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169ca-d36e-7691-8bf1-03cc8c0de3d6",
+    "head": null,
+    "start": "d837a995bc4b8251a7b3075afc4cdabcef8ec9f0"
+  },
+  "done_when": "The waiting-line test passes on every run, and a waiting close says each place in line correctly",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "aee0813ba357193078e692524f4e9fce1772864b8e23b92b075031e7d64190bc",
+    "changed": "0b6fdfecf31b40fb338dac830b6b6602404dba80ab85ed591dc04096fab18d32",
+    "commit": "d7fd1b7a209820ee17e6bafb129037fad2c3daca",
+    "dismissals": [],
+    "findings": [],
+    "id": "be0d87c8-bc26-4b64-aef2-1108e3b5144a",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-23T17:24:03.757719+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-23T17:39:46.574122+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T17:58:19.442208+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c96c2469-f4a0-410f-be99-175184686814",
+    "head": "15184181ae39beb0734bab0b421100e718e06af5",
+    "keys": {},
+    "round": 1
+  },
+  "why": "tests/test_close_test_runs_wait_in_line.py test_1 fails about two runs in three on main since the waiting line started naming the holders: a waiting close prints 'it is number 2 in line' then 'number 1' where the test expects only 'number 1', so every pull request's CI can fail on it",
+  "worker": "codex"
+}

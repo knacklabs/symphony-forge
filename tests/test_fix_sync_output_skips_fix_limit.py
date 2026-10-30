@@ -10,6 +10,10 @@ from test_close import env  # noqa: F401 (the shared fixture)
 from test_githooks import NEXT_PROMOTE, commit, hooked, push, start_fix
 from test_upgrade_check import _install_release, _pin, _upgrade
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "an-upgrade-fix-can-t-commit-without-the"
 
 

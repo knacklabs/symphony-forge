@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board.py\tBoard fails when GitHub CLI is not installed\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 727,
+      "text": "Board fails when GitHub CLI is not installed",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: a login-only pull request hides the starter's recorded name\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 535,
+      "text": "Not done: a login-only pull request hides the starter's recorded name",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: a parent and part can show different names for the same approver\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 596,
+      "text": "Not done: a parent and part can show different names for the same approver",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: approval identity names the actual approver\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 521,
+      "text": "Not done: approval identity names the actual approver",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: new work keeps a visible starter before its pull request\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 519,
+      "text": "Not done: new work keeps a visible starter before its pull request",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "done",
+      "closed_by": "dismissed"
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tNot done: older board history loses known pull-request logins\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 520,
+      "text": "Not done: older board history loses known pull-request logins",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tOffline board erases the only name for login-only mergers\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 705,
+      "text": "Offline board erases the only name for login-only mergers",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board.py\tReparsing every starter commit for each historical row slows the HTML board\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board.py",
+      "line": 538,
+      "text": "Reparsing every starter commit for each historical row slows the HTML board",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tBoard still fails without GitHub CLI for ordinary git authors\tFORGE-BOARD-3/OWNERS",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 140,
+      "text": "Board still fails without GitHub CLI for ordinary git authors",
+      "from": "blocking",
+      "item": "FORGE-BOARD-3/OWNERS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

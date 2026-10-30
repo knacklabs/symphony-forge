@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge board, one story in full</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #F4F5F2; color: #15171A; font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column">
+
+  <header style="height: 48px; flex: none; background: #15171A; color: #ECEDEA; display: flex; align-items: center; gap: 24px; padding: 0 32px">
+    <span style="font-size: 14px; font-weight: 600">Forge <span style="font-weight: 400; color: #B4B8BC">symphony-forge</span></span>
+    <nav aria-label="Breadcrumb" style="font-size: 14px; color: #B4B8BC; display: flex; gap: 8px">
+      <a href="Manager.dc.html">Now</a><span aria-hidden="true">›</span><span style="color: #ECEDEA">Main only on a real clash</span>
+    </nav>
+  </header>
+
+  <div style="flex: 1; min-height: 0; padding: 24px 32px; display: flex; gap: 24px">
+
+    <aside style="width: 320px; flex: none; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; color: #1D4ED8; background: #E8EEFC; border-radius: 3px; padding: 2px 8px">Building</span><span style="font-size: 12px; color: #6B717A">FORGE-MAINONCE-1</span></span>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 600; line-height: 30px">Pull requests take in main only on a real clash</h1>
+      </div>
+
+      <div style="background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 12px 14px; display: flex; align-items: center; gap: 10px">
+        <span style="width: 28px; height: 28px; border-radius: 999px; background: #4A4F57; color: #FFFFFF; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">RV</span>
+        <span style="display: flex; flex-direction: column; flex: 1"><span style="font-size: 14px; font-weight: 600">Ravi Kiran Vemula</span><span style="font-size: 12px; color: #6B717A">@vrknetha · owner</span></span>
+        <button type="button" style="border: 1px solid #C9CCC6; background: #FFFFFF; font: inherit; font-size: 12px; font-weight: 600; border-radius: 6px; padding: 6px 10px; color: #15171A">Assign ▾</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 12px; color: #4A4F57">Parts</span>
+        <sc-for list="{{parts}}" as="p" hint-placeholder-count="3">
+          <a href="Drawer.dc.html" style="background: #FFFFFF; border: 1px solid {{p.line}}; border-left: 3px solid {{p.color}}; border-radius: 6px; padding: 8px 10px; display: flex; gap: 8px; align-items: baseline">
+            <span style="font-size: 14px; font-weight: 600; flex: 1">{{p.title}}</span>
+            <span style="font-size: 12px; color: {{p.color}}; font-weight: 600">{{p.state}}</span>
+          </a>
+        </sc-for>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+        <sc-for list="{{figs}}" as="f" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column"><span style="font-size: 20px; font-weight: 600; color: {{f.color}}">{{f.value}}</span><span style="font-size: 12px; color: #4A4F57">{{f.label}}</span></div>
+        </sc-for>
+      </div>
+    </aside>
+
+    <main style="flex: 1; min-width: 0; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden">
+      <div role="tablist" aria-label="Story" style="display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid #E2E4E0">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+          <button type="button" role="tab" aria-selected="{{t.sel}}" style="border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: {{t.weight}}; color: {{t.color}}; padding: 14px 12px; border-bottom: 2px solid {{t.bar}}">{{t.name}}</button>
+        </sc-for>
+        <span style="margin-left: auto; align-self: center; font-size: 12px; color: #6B717A">Read 2 rounds · approved by @vrknetha on 13 October</span>
+      </div>
+
+      <article style="flex: 1; min-height: 0; overflow: hidden; padding: 28px 0; display: flex; justify-content: center">
+        <div style="width: 640px; display: flex; flex-direction: column; gap: 16px; font-size: 15px; line-height: 25px">
+          <h2 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600">Pull requests take in main only on a real clash</h2>
+          <h3 style="margin: 8px 0 0; font-size: 17px; font-weight: 600">What changes for you</h3>
+          <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px">
+            <li>A pull request takes in main only when main changed a file it also changes.</li>
+            <li>A merge to main no longer forces a fresh review on every open change.</li>
+            <li>Spotted problems are kept per change, not lost in the merge.</li>
+          </ul>
+          <h3 style="margin: 8px 0 0; font-size: 17px; font-weight: 600">Done when</h3>
+          <ol style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px">
+            <li>A change with no shared file merges without taking in main.</li>
+            <li>A change that shares a file takes in main once, then reviews once.</li>
+            <li>Each change keeps its own spotted problems through an upgrade.</li>
+          </ol>
+          <details style="border-top: 1px solid #E2E4E0; padding-top: 12px">
+            <summary style="font-size: 14px; font-weight: 600; color: #4A4F57">For the builders · 3 parts, files and tests</summary>
+          </details>
+          <span style="font-size: 12px; color: #8A9096">Sample text: the real story's plan renders here from its doc in the repo.</span>
+        </div>
+      </article>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tab = (name, on) => ({ name, sel: on ? 'true' : 'false', weight: on ? 600 : 400, color: on ? '#15171A' : '#4A4F57', bar: on ? '#1D4ED8' : 'transparent' });
+    return {
+      tabs: [ tab('Overview', false), tab('Plan', true), tab('Rounds', false), tab('Known issues · 2', false) ],
+      parts: [
+        { title: 'Main only on a clash', state: 'Building', color: '#1D4ED8', line: '#E2E4E0' },
+        { title: 'Spotted per change', state: '3 rounds', color: '#9F1239', line: '#9F1239' },
+        { title: 'Close takes in main once', state: 'Planned', color: '#8A9096', line: '#E2E4E0' }
+      ],
+      figs: [
+        { value: '1 d 4 h', label: 'since approval', color: '#15171A' },
+        { value: '3 h 10 m', label: 'waited for you', color: '#B54708' },
+        { value: '5', label: 'review rounds', color: '#15171A' },
+        { value: '2', label: 'known issues kept', color: '#15171A' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+{
+  "base": "81c662ef9bbc25089339a02ec6c786cf0536545e",
+  "branch": "task/FORGE-EXPAND-1-EXPAND",
+  "chat": {
+    "approval": "045576adcc8304670d6cd183ca5f6b80f5b1bc8605305d4266a0ff62c8bff120",
+    "claude": null,
+    "conversation": "01a17d11-e47c-7d20-99ad-7677c8c4d4e5",
+    "head": null,
+    "start": "a2c67c3bf8c8a0d335402ff5d16c73be99b17b7d"
+  },
+  "known": [
+    {
+      "area": "migrations() in src/forge/app_baseline.py",
+      "file": "src/forge/app_baseline.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 134,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: close refuses a change that adds a Prisma or Alembic migration that drops, renames or changes the type of a column or table",
+      "work": 2
+    },
+    {
+      "area": "test_1_close_holds_a_migration_the_previous_release_cannot_run() in tests/test_migrations_keep_previous_release.py",
+      "file": "tests/test_migrations_keep_previous_release.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 18,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_one_test_per_rule",
+      "work": 1
+    },
+    {
+      "area": "src/forge/cli.py",
+      "file": "src/forge/cli.py",
+      "gain": 3,
+      "harm": 4,
+      "line": 32,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated open-decision commands exceed the migration scope",
+      "work": 2
+    },
+    {
+      "area": "migrations() in src/forge/app_baseline.py",
+      "file": "src/forge/app_baseline.py",
+      "gain": 2,
+      "harm": 4,
+      "line": 114,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: check Prisma migrations at the repository root",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4d34b270160c67e6869858948a6155c0495c46867615ff8c1eed7459e2b2f67e",
+    "changed": "ff30dfe651d5dfa6f411391e144963ffed8e6e6ea40640fcda55231e3710b4d3",
+    "commit": "63837d7ac9467240023638103ee715167bfec80f",
+    "dismissals": [],
+    "findings": [],
+    "id": "0a7617e0-c15d-40ad-bbc6-953d5515b900",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "FORGE-SIGNOFF-1/OPENLIST",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T11:14:40.036459+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T11:48:00.309687+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T11:51:26.720935+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:21:00.220306+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:55:09.989995+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "01855075-6abb-41a6-ae73-d194c684534c",
+    "head": "40d64594f0a57bd6717a5ef5b8612104eaf1d726",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

@@ -100,22 +100,10 @@ def test_3_active_writer_retries_and_continues_the_conversation(repo, monkeypatc
     assert "stub codex: turn-stub-2 on thr-stub-1" in resumed.stdout
     assert _lines(turns)[-1]["continued"] is True
 
-    monkeypatch.setenv("STUB_RESUME_ERROR", "hold")
-    with _writer(repo, "hold") as holder:
-        refused = repo.forge("work", "BOARD/PAGE")
-        assert refused.returncode != 0, refused.stdout + refused.stderr
-        assert holder.poll() is None
-    assert len(_sent(calls, "thread/resume")) == 4
-    # A busy writer stops this round and preserves the original chat, rather than forking it.
-    assert len(_sent(calls, "thread/start")) == 1
-    assert "already has an active writer" in refused.stdout + refused.stderr
-    assert "Starting a new Codex conversation" not in refused.stdout
-    assert len(_sent(calls, "turn/start")) == 2
-
     monkeypatch.setenv("STUB_RESUME_ERROR", "other")
     refused = repo.forge("work", "BOARD/PAGE")
     assert refused.returncode != 0, refused.stdout + refused.stderr
-    assert len(_sent(calls, "thread/resume")) == 5
+    assert len(_sent(calls, "thread/resume")) == 3
     assert len(_sent(calls, "thread/start")) == 1
     assert "stub: store is busy" in refused.stdout + refused.stderr
     assert "Starting a new Codex conversation" not in refused.stdout

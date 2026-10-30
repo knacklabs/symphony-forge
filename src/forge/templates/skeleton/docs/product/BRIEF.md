@@ -12,6 +12,10 @@ Keep this under one page. It says what the product is and why; stories say how.
 
 - **Role:** what they do with the product
 
+## Things it keeps track of
+
+<!-- Each kind of thing, its fields, and the options for each choice list. -->
+
 ## Target outcome
 
 <!-- What becomes possible when this succeeds? The observable result, not the build. -->

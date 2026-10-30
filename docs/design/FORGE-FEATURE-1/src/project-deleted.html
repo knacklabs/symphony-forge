@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Spring launch</title><style>
+:root{--radius:0.625rem;--background:oklch(1 0 0);--foreground:oklch(0.145 0 0);--card:oklch(1 0 0);--popover:oklch(1 0 0);--primary:oklch(0.205 0 0);--primary-foreground:oklch(0.985 0 0);--secondary:oklch(0.97 0 0);--muted:oklch(0.97 0 0);--muted-foreground:oklch(0.556 0 0);--accent:oklch(0.97 0 0);--accent-foreground:oklch(0.205 0 0);--destructive:oklch(0.577 0.245 27.325);--border:oklch(0.922 0 0);--input:oklch(0.922 0 0);--ring:oklch(0.708 0 0);--sidebar:oklch(0.985 0 0);--sidebar-foreground:oklch(0.145 0 0);--sidebar-accent:oklch(0.97 0 0);--sidebar-accent-foreground:oklch(0.205 0 0);--sidebar-border:oklch(0.922 0 0)}
+*{box-sizing:border-box;margin:0;border-color:var(--border)}
+html,body{height:100%}
+body{background:var(--background);color:var(--foreground);font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;line-height:1.43}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app{display:flex;height:100vh}
+.sb{width:256px;flex:none;background:var(--sidebar);color:var(--sidebar-foreground);border-right:1px solid var(--sidebar-border);padding:8px}
+.sb .lbl{height:32px;display:flex;align-items:center;padding:0 8px;font-size:12px;font-weight:500;color:oklch(0.145 0 0 / 70%);margin-top:8px}
+.sb a{display:flex;align-items:center;gap:8px;height:32px;padding:0 8px;border-radius:calc(var(--radius) * 0.8);color:inherit;text-decoration:none}
+.sb a.on{background:var(--sidebar-accent);color:var(--sidebar-accent-foreground);font-weight:500}
+.inset{flex:1;min-width:0;display:flex;flex-direction:column}
+header{height:56px;flex:none;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);padding:0 16px}
+.vsep{width:1px;height:20px;background:var(--border)}
+.crumb{color:var(--foreground)}
+.hr{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn.o.search{width:208px;justify-content:space-between;color:var(--muted-foreground);font-weight:400}
+kbd{font-family:inherit;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:0 6px}
+main{flex:1;padding:24px}
+.page{max-width:1152px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.ph{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+h1{font-size:24px;line-height:32px;font-weight:600;letter-spacing:-0.025em}
+.sub{margin-top:4px;color:var(--muted-foreground)}
+.acts{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;border-radius:calc(var(--radius) * 0.8);font:inherit;font-weight:500;border:1px solid transparent;background:var(--primary);color:var(--primary-foreground);white-space:nowrap;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.btn.o{background:var(--background);color:var(--foreground);border-color:var(--border)}
+.btn.g{background:transparent;color:var(--foreground);box-shadow:none}
+.btn.ic{width:36px;padding:0}
+.btn.sm{height:32px;padding:0 12px}
+.tw{border:1px solid var(--border);border-radius:calc(var(--radius) * 0.8);overflow-x:auto}
+table{width:100%;border-collapse:collapse;caption-side:bottom}
+th{height:40px;padding:0 8px;text-align:left;font-weight:500;white-space:nowrap}
+td{padding:8px;vertical-align:middle;white-space:nowrap}
+tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:0}
+th .sort{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;margin-left:-12px;border-radius:calc(var(--radius) * 0.8)}
+th .sort svg{width:14px;height:14px}
+.wrap{white-space:normal;overflow-wrap:anywhere}
+.badge{display:inline-flex;align-items:center;border-radius:calc(var(--radius) * 0.6);padding:2px 8px;font-size:12px;font-weight:500;border:1px solid transparent;background:var(--secondary);color:var(--accent-foreground)}
+.badge.o{background:transparent;border-color:var(--border);color:var(--foreground)}
+.you{margin-left:8px;color:var(--muted-foreground);font-size:12px}
+.sel{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;width:128px;height:36px;padding:0 12px;border:1px solid var(--input);border-radius:calc(var(--radius) * 0.8);background:transparent;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.sel svg{opacity:.5}
+.muted{color:var(--muted-foreground)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.end{display:flex;justify-content:flex-end;gap:4px}
+.overlay{position:fixed;inset:0;background:rgb(0 0 0 / .5)}
+.dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:100%;max-width:512px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:grid;gap:16px;box-shadow:0 10px 15px -3px rgb(0 0 0 / .1),0 4px 6px -4px rgb(0 0 0 / .1)}
+.dlg h2{font-size:18px;line-height:1;font-weight:600}
+.dlg .x{position:absolute;right:16px;top:16px;opacity:.7}
+.dfoot{display:flex;justify-content:flex-end;gap:8px}
+.field{display:grid;gap:8px}
+label{font-weight:500;line-height:1}
+.input{height:36px;width:100%;border:1px solid var(--input);border-radius:calc(var(--radius) * 0.8);padding:4px 12px;font:inherit;background:transparent;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05);display:flex;align-items:center}
+.input.focus{border-color:var(--ring);box-shadow:0 0 0 3px oklch(0.708 0 0 / 50%)}
+.authm{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+.authm section{width:100%;max-width:384px;display:grid;gap:24px}
+form{display:grid;gap:16px}
+.w{width:100%}
+a.u{color:inherit;text-decoration:underline;text-underline-offset:4px}
+
+.crumb.m{color:var(--muted-foreground)}
+.crumbs{display:flex;align-items:center;gap:6px}
+.crumbs svg{width:14px;height:14px;color:var(--muted-foreground)}
+.crumbs a{color:var(--muted-foreground);text-decoration:none}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.input.sx{width:320px;gap:8px;color:var(--muted-foreground)}
+.input.sx b{font-weight:400;color:var(--foreground)}
+.sel.w40{width:160px}
+td a.name{color:inherit;font-weight:500;text-decoration:none}
+tbody tr.hov{background:oklch(0.97 0 0 / 50%)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+th.num .sort{margin-left:0;margin-right:-12px}
+.ttl{display:flex;align-items:center;gap:12px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.card{border:1px solid var(--border);border-radius:var(--radius);background:var(--card);box-shadow:0 1px 2px 0 rgb(0 0 0 / .05);padding:24px;display:grid;gap:24px}
+.card h2{font-size:16px;line-height:1;font-weight:600}
+.card .cd{margin-top:6px;color:var(--muted-foreground)}
+dl{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px}
+dt{color:var(--muted-foreground);font-size:12px;font-weight:500;line-height:16px}
+dd{margin:4px 0 0;font-variant-numeric:tabular-nums}
+dd a{color:inherit;text-decoration:underline;text-underline-offset:4px}
+.full{grid-column:1 / -1}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px;border-top:1px solid var(--border);padding-top:20px}
+ol.log{list-style:none;padding:0;display:grid;gap:0}
+ol.log li{padding:12px 0;border-bottom:1px solid var(--border)}
+ol.log li:first-child{padding-top:0}
+ol.log li:last-child{border-bottom:0;padding-bottom:0}
+ol.log .m{margin-top:2px;font-size:12px;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+.btn.d{background:var(--destructive);color:#fff}
+.btn.od{background:var(--background);color:var(--destructive);border-color:var(--border)}
+.toast{position:fixed;right:24px;bottom:24px;width:356px;display:flex;align-items:center;gap:8px;padding:16px;border:1px solid var(--border);border-radius:var(--radius);background:var(--popover);box-shadow:0 4px 12px rgb(0 0 0 / .1);font-weight:500}
+.dlg.lg{max-width:560px;gap:20px}
+.dlg p.dd{color:var(--muted-foreground);margin-top:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.input.err{border-color:var(--destructive)}
+.input.ta{height:64px;align-items:flex-start;padding-top:8px}
+.msg{color:var(--destructive);font-size:13px;line-height:1.3}
+label.err{color:var(--destructive)}
+.pre{display:flex}
+.pre>span{display:flex;align-items:center;padding:0 12px;border:1px solid var(--input);border-right:0;border-radius:calc(var(--radius) * 0.8) 0 0 calc(var(--radius) * 0.8);color:var(--muted-foreground)}
+.pre .input{border-radius:0 calc(var(--radius) * 0.8) calc(var(--radius) * 0.8) 0}
+.ph2{color:var(--muted-foreground)}
+.chk{display:flex;align-items:center;gap:8px;height:36px}
+.box{width:16px;height:16px;border:1px solid var(--input);border-radius:4px;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.sel.wf{width:100%}
+.sw{display:inline-flex;align-items:center;gap:8px;height:36px;margin-left:8px;font-weight:500}
+.trk{width:32px;height:18px;border-radius:9999px;background:var(--input);padding:1px;display:flex;box-shadow:0 1px 2px 0 rgb(0 0 0 / .05)}
+.trk i{width:16px;height:16px;border-radius:9999px;background:var(--background)}
+.trk.on{background:var(--primary);justify-content:flex-end}
+tr.del td{color:var(--muted-foreground)}
+tr.del td a.name{color:var(--muted-foreground)}
+.badge.del{margin-left:8px}
+.alert{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px}
+.alert p{flex:1}
+</style></head><body><div class="app"><nav class="sb" aria-label="Workspace navigation"><div class="lbl">Workspace</div><a href="#" class="on" aria-current=page><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M8 10v4"/><path d="M12 10v2"/><path d="M16 10v6"/></svg><span>Projects</span></a><a href="#" class=""><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Members</span></a><a href="#" class=""><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg><span>Change history</span></a><a href="#" class=""><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span>Settings</span></a></nav>
+<div class="inset"><header><button class="btn g ic" aria-label="Toggle Sidebar"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button><div class="vsep"></div><nav class="crumbs" aria-label="Breadcrumb"><a href="#">Projects</a><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span class="crumb">Spring launch</span></nav>
+<div class="hr"><button class="btn o search" aria-label="Search"><span style="display:flex;align-items:center;gap:8px"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Search</span><kbd>⌘/Ctrl K</kbd></button><button class="btn g ic" aria-label="Open user menu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></button></div></header>
+<main id="main-content"><div class="page"><div class="ph"><div><div class="ttl"><h1>Spring launch</h1><span class="badge o">Active</span><span class="badge">Deleted</span></div></div></div><div class="alert" role="status"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg><p>This project was deleted on <time>2026-10-25</time> by grace@example.com.</p><button class="btn o sm">Restore</button></div><div class="cols"><section class="card" aria-labelledby="dt"><div><h2 id="dt">Details</h2></div><dl><div class="" data-fill="field"><dt>Name</dt><dd>Spring launch</dd></div><div class="" data-fill="field"><dt>Status</dt><dd>Active</dd></div><div class="" data-fill="field"><dt>Client</dt><dd><a href="#">Northwind Traders</a></dd></div><div class="" data-fill="field"><dt>Due date</dt><dd><time>2026-11-30</time></dd></div><div class="" data-fill="field"><dt>Hours budget</dt><dd>640</dd></div><div class="" data-fill="field"><dt>Budget</dt><dd>USD 48,000.00</dd></div><div class="" data-fill="field"><dt>Billable</dt><dd>Yes</dd></div><div class="" data-fill="field"><dt>Contact email</dt><dd><a href="#">maria@northwind.example</a></dd></div><div class="full" data-fill="field"><dt>Description</dt><dd>Launch the spring range in all three regions: new product pages, the email campaign and the in-store displays. Ends with the retail partner review.</dd></div></dl><div class="who"><div><dt>Created</dt><dd><time>2026-10-02 09:14</time> by ada@example.com</dd></div><div><dt>Last changed</dt><dd><time>2026-10-24 16:42</time> by grace@example.com</dd></div></div></section><section class="card" aria-labelledby="rc"><div><h2 id="rc">Recent changes</h2><p class="cd">The last 5 changes to this project.</p></div><ol class="log"><li><p>Deleted the project</p><p class="m">grace@example.com · <time>2026-10-25 10:02</time></p></li><li><p>Status changed from Planned to Active</p><p class="m">grace@example.com · <time>2026-10-24 16:42</time></p></li><li><p>Budget changed from USD 42,000.00 to USD 48,000.00</p><p class="m">grace@example.com · <time>2026-10-24 16:40</time></p></li><li><p>Due date changed from 2026-11-15 to 2026-11-30</p><p class="m">ada@example.com · <time>2026-10-20 11:03</time></p></li><li><p>Contact email changed from info@northwind.example to maria@northwind.example</p><p class="m">ada@example.com · <time>2026-10-09 08:57</time></p></li></ol><a class="u" href="#">Open the change history</a></section></div></div></main></div></div></body></html>

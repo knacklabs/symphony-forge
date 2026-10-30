@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tNot done: The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them\tsignoff-skips-screenshots",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1137,
+      "text": "Not done: The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them",
+      "from": "blocking",
+      "item": "signoff-skips-screenshots",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

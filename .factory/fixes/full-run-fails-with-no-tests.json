@@ -1,0 +1,115 @@
+{
+  "base": "bbfed490c2129010b97b8b5664ecf567941ef48f",
+  "branch": "fix/full-run-fails-with-no-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a187ef-f522-79e3-bf6c-c234813307bc",
+    "head": null,
+    "start": "4af1fef22cbbafe4233b094205c7af238fe0f768"
+  },
+  "done_when": "forge test --full fails when it ran no tests, and its message says to set test to the whole suite",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/fullrun.py",
+      "file": "src/forge/fullrun.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 71,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Successful non-pytest suites are always reported as empty",
+      "work": 3
+    },
+    {
+      "area": "src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 476,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Empty partitions of nonempty suites still fail",
+      "work": 2
+    },
+    {
+      "area": "run() in src/forge/fullrun.py",
+      "file": "src/forge/fullrun.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 51,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the existing no-command full-run test",
+      "work": 1
+    },
+    {
+      "area": "test_1_full_run_fails_when_it_ran_no_tests() in tests/test_full_run_requires_tests.py",
+      "file": "tests/test_full_run_requires_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 32,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: the empty-group proof never creates an empty partition",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5cefc211e64e3846d4bd2b3108caf11b22c648af69feac0d2c2ab28780b58823",
+    "changed": "195348ceb32c6a35fde63fbc2b5baa408e0e50462a2f8abd021762b5550354c5",
+    "commit": "461932479bd920497d9b72c84f20f6c91b7bf603",
+    "dismissals": [],
+    "findings": [],
+    "id": "558fa321-5a2d-49cd-8240-bdaf3a31d816",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T13:53:16.965309+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T14:02:42.035402+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T14:12:46.268135+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-29T17:15:36.687214+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-29T14:02:42.046446+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/fasttest.py",
+    "reason": "The owner chose one more round: accepting would break the nightly full run for non-pytest client repos and for empty test groups",
+    "wait_id": "b9cfa36f-4d8e-4a45-80fc-7bf454733f22",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "12ca67a0-654c-4dbf-acf9-0d71f18fd7a9",
+    "head": "18d5cc73b083f98aa42eb28d7a05e1a0fb9acd0c",
+    "keys": {},
+    "round": 2
+  },
+  "why": "The nightly full run can pass on a clean default branch without running a test: when forge.toml's test is a change-only command, forge test --full selects nothing and reports success",
+  "worker": "codex"
+}

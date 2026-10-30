@@ -1,0 +1,68 @@
+{
+  "base": "835fb8749d7a32d91cd5b24c27df0f3be7053872",
+  "branch": "fix/load-check-all-runs",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14ae8-de0c-7372-800f-9a1382857eb7",
+    "head": null,
+    "start": "9810eaf231f0dab9530cc5366590448045aaa3e1"
+  },
+  "done_when": "Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on this machine, and a test covers a test run waiting under high load",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "join() in src/forge/machine.py",
+      "file": "src/forge/machine.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 181,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Test runs and reviews also wait while the machine's load is over Forge's limit, doctor warns when a self-hosted runner runs on the",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d4317c44b81e45e6f8f409edc0ac60e1783297a8b5c06afbec669e9fe55c1bf0",
+    "changed": "f3f2db8a6238526beae570edc0c17b1ee2ff16c583104eea05cfb5e4f0aaafe7",
+    "commit": "cfb5bb5192ee627f17c9ce893937088845e0b0d0",
+    "dismissals": [],
+    "findings": [],
+    "id": "54284aca-b396-4812-9367-4ad29412f19e",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T17:28:51.777172+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:39:12.306933+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T19:56:22.468614+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:41:21.766473+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b02ee783-a80c-41ca-801e-641f887d5f5a",
+    "head": "f9c4b4b52554d0805b22237cb6831d6765b24015",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Tests and reviews start on a busy machine because only work rounds wait for high load, so self-hosted CI runners on the same Mac slow everything",
+  "worker": "codex"
+}

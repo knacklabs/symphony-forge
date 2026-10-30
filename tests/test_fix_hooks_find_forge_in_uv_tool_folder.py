@@ -29,7 +29,7 @@ HIDE = (["sandbox-exec", "-p", "(version 1)(allow default)(deny file-read* "
 INSTALLED = [] if HIDE else [str(path) for path in (
     Path(folder) / "bin" / name for folder in SYSTEM for name in ("forge", "uv", "uvx")) if path.exists()]
 
-pytestmark = pytest.mark.skipif(os.name == "nt", reason="hooks run under sh with POSIX folders")
+pytestmark = [pytest.mark.platform, pytest.mark.skipif(os.name == "nt", reason="hooks run under sh with POSIX folders")]
 
 
 def _synced(repo) -> list[tuple[str, str, str]]:

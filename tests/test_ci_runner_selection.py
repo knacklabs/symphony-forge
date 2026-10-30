@@ -1,4 +1,4 @@
-"""Client CI runner selection and doctor diagnostics after a week without runner activity."""
+"""Client CI runner selection and doctor diagnostics from recent runner activity."""
 from __future__ import annotations
 
 import json
@@ -12,6 +12,7 @@ import pytest
 
 from conftest import ROOT
 from test_close import GREEN, env, run  # noqa: F401
+from test_ci_waits_for_busy_runners import _runner_activity, clock, land  # noqa: F401
 from test_fix_new_repos_get_claude_as_their_worker_by import _new_repo
 from test_migrate import _copied_client
 
@@ -19,6 +20,7 @@ STORY = "FIX-RUNNER-SETTING"
 
 
 def test_4_copied_client_migration_keeps_default_ci_runner(repo, gh, tmp_path, monkeypatch):
+    # Include nightly jobs when checking that every migrated job uses the default runner.
     # Migration inventories generated adapters before forge.toml exists, then writes the jobs.
     _copied_client(repo, tmp_path, monkeypatch)
     migrated = repo.forge("migrate")
@@ -26,7 +28,7 @@ def test_4_copied_client_migration_keeps_default_ci_runner(repo, gh, tmp_path, m
     workflow = repo.git("show", "forge/migrate-v1:.github/workflows/forge.yml")
     labels = re.findall(r"^    runs-on: (.+)$", workflow, re.M)
     assert [json.loads(label) if label.startswith('"') else label for label in labels] == [
-        "ubuntu-latest", "ubuntu-latest", "ubuntu-latest"]
+        "ubuntu-latest"] * 6
 
 
 def _jobs(client: Path) -> tuple[str, str]:
@@ -61,7 +63,7 @@ def _tool_bootstrap(jobs: tuple[str, str]) -> None:
 def test_1_new_client_init_selects_runner_and_bootstraps_tools(repo, gh, tmp_path, runner):
     client = _new_repo(repo, gh, tmp_path)
     args = ("--runner", runner) if runner else ()
-    initialized = repo.forge("init", *args, cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", *args, cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     settings = tomllib.loads((client / "forge.toml").read_text("utf-8"))
     selected = runner or "ubuntu-latest"
@@ -104,11 +106,20 @@ def test_6_sync_refuses_blank_runner_label(repo, runner):
     assert not (repo.path / ".github/workflows/forge.yml").exists()
 
 
-@pytest.mark.parametrize("command,state", [
-    (command, state) for command in ("doctor", "close")
+@pytest.mark.parametrize("command,state,history", [
+    (command, state, "new") for command in ("doctor", "close")
     for state in ("recent-queued", "recent-rerun", "running")
-] + [("doctor", "target-event"), ("doctor", "another-head"), ("close", "optional-queued")])
-def test_3_only_doctor_names_a_likely_missing_runner_after_a_five_minute_queue(env, command, state, monkeypatch):
+] + [(command, state, "new") for command, state in (
+    ("doctor", "target-event"), ("doctor", "another-head"), ("close", "optional-queued")
+)] + [("doctor", f"pool-{activity}", "new") for activity in (
+    "busy", "missing", "busy-running", "busy-rerun", "busy-case", "busy-days-ago", "missing-case",
+    "wrong-label", "old-job", "future-job", "unassigned"
+)] + [("doctor", "pool-missing", "upgraded")])
+def test_3_only_doctor_names_a_likely_missing_runner_after_a_five_minute_queue(
+        env, command, state, history, monkeypatch, request):
+    if state.startswith("pool-"):
+        _runner_activity(request.getfixturevalue("clock"), history, command, state.removeprefix("pool-"))
+        return
     config = (env.repo.path / "forge.toml").read_text("utf-8") + 'runner = "self-hosted"\n'
     env.commit(env.repo.path, "forge.toml", config, "Select the organisation runner")
     item, where = env.start_fix()

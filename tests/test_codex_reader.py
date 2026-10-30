@@ -20,6 +20,8 @@ from test_setup import _fresh_client
 from test_story import DOC, new_story, setup
 from test_worker import calls as claude_calls
 
+import pytest
+
 STORY = "FORGE-WARM-1"
 GRILL = {"grill.codex": {"model": "gpt-6-sol", "effort": "high"},
          "grill.claude": {"model": "opus", "effort": "high"}}
@@ -27,6 +29,7 @@ COORDINATOR = ("Forge can't tell which app is coordinating, so it can't pick the
                "read.\nNext: run forge read SHOP from Claude Code or Codex\n")
 
 
+@pytest.mark.platform
 def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_data, tmp_path):
     monkeypatch.setenv("STUB_CODEX_RESUME", "1")
     monkeypatch.setenv("FORGE_NOW", NOW)
@@ -167,25 +170,29 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
 
     # forge init writes the models table, grill and design with an entry per family, and no single model key;
     # an old one gets the ordinary unknown-key refusal. Codex work uses GPT-6.1 Sol;
-    # review selection now belongs to Autoreview.
+    # new Claude read and review entries use Sonnet high.
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     written = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "model" not in written
     # Lite keeps first fix rounds; explore now owns read-only work with separate host defaults.
     assert written["models"] == {
-        "build": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
-                  "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
-        "fix": {"codex": {"model": "gpt-6.1-sol", "effort": "medium"},
-                "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
-        "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
+        "build": {"codex": {"model": "gpt-6.1-sol", "effort": "low"},
+                  "claude": {"model": "claude-sonnet-5-5", "effort": "low",
+                             "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
+        "fix": {"codex": {"model": "gpt-6.1-sol", "effort": "low"},
+                "claude": {"model": "claude-sonnet-5-5", "effort": "low",
+                           "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
+        "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "low",
                            "subagents": "gpt-6-luna", "subagent_effort": "max"},
-                 "claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"}},
+                 "claude": {"model": "claude-sonnet-5-5", "effort": "low",
+                            "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
         "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
                               "subagents": "gpt-6-luna", "subagent_effort": "max"},
                     "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
         "grill": {"codex": {"model": "gpt-6.1-sol", "effort": "high"},
-                  "claude": {"model": "claude-opus-5-5", "effort": "high"}},
+                  "claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
+        "review": {"claude": {"model": "claude-sonnet-5-5", "effort": "high"}},
         "design": {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}},
     }

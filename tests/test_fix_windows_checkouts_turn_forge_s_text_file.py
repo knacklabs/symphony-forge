@@ -3,6 +3,10 @@
 import subprocess
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 
 STORY = "FIX-WINDOWS-CHECKOUTS-TURN-FORGE-S-TEXT-FILE"
 ROOT = Path(__file__).resolve().parents[1]

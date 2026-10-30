@@ -25,7 +25,7 @@ def test_1_sync_sets_up_node_before_package_tests(repo, files, expected):
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")[0]
     setup = tests_job.index("- uses: actions/setup-node@v7")
-    command = tests_job.index(f"- run: {json.dumps('npm ci && npm test')}")
+    command = tests_job.index('- run: "forge test --change"')
     assert setup < command
     if expected:
         assert expected in tests_job[setup:command]
@@ -43,4 +43,4 @@ def test_2_sync_keeps_python_only_tests_job(repo):
     workflow = (repo.path / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job = workflow.split("\n  tests:\n")[1].split("\n  forge-pr-check:\n")[0]
     assert "actions/setup-node" not in tests_job
-    assert '- run: "uv run pytest"' in tests_job
+    assert '- run: "forge test --change"' in tests_job

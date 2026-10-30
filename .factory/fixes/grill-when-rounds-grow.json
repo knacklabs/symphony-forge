@@ -1,0 +1,99 @@
+{
+  "base": "202d0aa921373257b8d471893e8058ff51fce7ca",
+  "branch": "fix/grill-when-rounds-grow",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a13e13-b9d7-7c93-8878-ebad6f5479ff",
+    "head": null,
+    "start": "38e550b7364f305fc60a53bea1d583447914368d"
+  },
+  "done_when": "From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner, listing every round's findings, and the shipped coordinator guide says to settle the missing rule one question at a time before the next round; new repos get it at init and existing repos on upgrade",
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/nextstep.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "_item() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 911,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: From the second blocked cold-read or review round on an item, forge next and close tell the coordinator to stop and ask the owner,",
+      "work": 2
+    },
+    {
+      "area": "_item() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 911,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Remote hard stops hide the required resolution step",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 401,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Third-round output gives conflicting instructions about who decides",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "945c810b95dec4165bf27af9bc92107af4a9ec07d7063155cefa226770a96eb3",
+    "changed": "f02507fbeaac3d09626a17ffb9fd7aa5edc58d8400a5fdda29ec604f1574bc56",
+    "commit": "710ebd107a1ebfcd23b93474bb36d7c59e699717",
+    "dismissals": [],
+    "findings": [],
+    "id": "d3a5e93f-74dd-4da7-bc52-2251563f5a5e",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-15T05:40:36.668830+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-15T06:08:22.692719+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T06:36:10.417387+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-15T07:55:45.102125+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "61a43fe0-9460-4555-aea5-f6505c3949fd",
+    "head": "45df2c89c8800f961cd5d3e09b01d7fe9736294c",
+    "keys": {
+      "the review finding \"Remote hard stops hide the required resolution step\" in src/forge/nextstep.py": 1,
+      "the review finding \"Third-round output gives conflicting instructions about who decides\" in src/forge/close.py": 1
+    },
+    "round": 2
+  },
+  "why": "Coordinators keep sending workers back round after round when a cold read or review finds a new problem each time, instead of stopping to settle the missing rule with the owner",
+  "worker": "codex"
+}

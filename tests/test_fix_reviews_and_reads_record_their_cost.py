@@ -9,7 +9,7 @@ from test_close import report, env  # noqa: F401  (env is a fixture)
 from test_codex_worker import sdk_data  # noqa: F401
 from test_fix_reviews_always_run_on_codex_so_a_team_wi import _claude_only
 from test_run_records import _readers_inherit_worker_environment, records
-from test_story import DOC, new_story, setup, worktree
+from test_story import DOC, approved_constitution, new_story, setup, worktree
 from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_release,
                                   unsynced_up)  # noqa: F401
 
@@ -117,6 +117,7 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
         repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}',
                  'merge', '-q', '--ff-only', f'fix/{NAME}')
         repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}', 'push', '-q', 'origin', 'main')
+        approved_constitution(repo)
         conftest._install(repo.bin, 'claude', CLAUDE.format(python=sys.executable))
         release = [sys.executable, str(up.tmp / 'releases' / RELEASE / 'forge')]
         made = subprocess.run([*release, 'story', 'new', 'SHOP', 'Shoppers can save a basket'],

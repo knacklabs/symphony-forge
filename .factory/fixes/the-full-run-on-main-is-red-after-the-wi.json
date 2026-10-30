@@ -1,0 +1,70 @@
+{
+  "base": "0d5ea6249dd4ed3a361b897519c3d2994d36b6ac",
+  "branch": "fix/the-full-run-on-main-is-red-after-the-wi",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17ed7-2a03-7341-a756-6d836a183472",
+    "head": null,
+    "start": "1c5782855e47f96494b63c61484ebced0870293d"
+  },
+  "done_when": "tests/test_rules.py and tests/test_signoff_reuse.py pass on this branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "instructions() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 347,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: preserve literal matches for bracketed scope paths",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "08019680ad4b9d74ab88bf9516e0464391692a9253c04e17d82f858a30b8d2b3",
+    "changed": "5b85e9884d6452e52197777b9611a809f5ad660cbd5e477291fcfbddca57e997",
+    "commit": "d9a8119e11573693d5289bb2328a23cc37627541",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - a client lists a dynamic-route file such as `app/orders/[id]/page.tsx` explicitly in Scope. The removed `_within` helper accepted `path == entry`; this replacement does not. `fnmatch` interprets `[id]` as a character class, so the identical literal path fails to match and appears under \u201cFiles the branch changes outside that scope.\u201d Preserve the equality check when inlining the helper so explicitly permitted files remain classified correctly.",
+        "file": "src/forge/review.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 347,
+        "priority": "P2",
+        "title": "Follow-up: preserve literal matches for bracketed scope paths",
+        "work": 1
+      }
+    ],
+    "id": "8fc3cc6e-4800-44f9-a97e-38ddbccf21ce",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T19:29:35.115746+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T19:34:56.250882+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "2a05e5abe97294eca329b2e862d82600a5143491",
+    "keys": {},
+    "round": null
+  },
+  "why": "The full run on main is red after the Windows completeness hotfix: review.py is 1,215 lines (over the 1,200 ceiling), a new test name cites no rule, and the sign-off reuse test still expects the completeness check on Claude",
+  "worker": "codex"
+}

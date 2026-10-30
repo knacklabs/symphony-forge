@@ -1,0 +1,45 @@
+{
+  "base": "d09873d744a6abb4225c1b58a7f3045e4f25f081",
+  "branch": "fix/design-none-accepted",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16cd9-fdc1-7191-9a1e-d964bf95ca47",
+    "head": null,
+    "start": "2113b0e32d4685abefff40f96b6bdaa4c1629f85"
+  },
+  "done_when": "forge read accepts a user-facing story whose What changes for you ends with one Design: none (<why>) line with a non-empty reason, and still refuses one with no Design line",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "branch_diff": "74491c762363041ab9b5b7cb2ab3b5ca96b038bf97b91003aedeb735318564ef",
+    "changed": "25ee2ba316b96510b330311a095bc7637a9e48a72ea3999b0b02ad93f77122c5",
+    "commit": "fd946fda012d5c4413fe2afe09ed1f66273adedb",
+    "dismissals": [],
+    "findings": [],
+    "id": "de0aac2a-b022-4ef3-958f-e0e27a721b53",
+    "mechanical": true,
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T07:39:30.552435+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T07:50:22.828680+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "5218b40e83a0d3628f5d4cee946b78d393e49f76",
+    "keys": {},
+    "round": null
+  },
+  "why": "A user-facing story whose What changes for you ends with Design: none (<why>) is refused by forge read with 'This user-facing story needs its design folder and tree id', although the approved design rules let a story with only small changes to existing screens name that choice instead of a design folder",
+  "worker": "codex"
+}

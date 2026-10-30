@@ -1,4 +1,4 @@
-"""Reviews use the chosen tool and leave model and effort to Autoreview."""
+"""Reviews use the chosen tool and honour model settings without an ignored-entry note."""
 import json
 import re
 import shutil
@@ -15,7 +15,7 @@ STORY = "FORGE-TOOLS-1"
 
 @pytest.mark.parametrize("tools,engine", [("both", "codex"), ("new doctor", ""),
                                          ("adopted doctor", "")])
-def test_7_reviews_use_the_repos_tool_and_autoreviews_defaults(env, tmp_path, monkeypatch, tools, engine):
+def test_7_reviews_use_the_repos_tool_and_configured_models(env, tmp_path, monkeypatch, tools, engine):
     if not engine:
         _doctor_defaults(env, tmp_path, monkeypatch, tools == "adopted doctor")
         return
@@ -32,7 +32,8 @@ def test_7_reviews_use_the_repos_tool_and_autoreviews_defaults(env, tmp_path, mo
     [call] = env.review_calls()
     args = call["args"]
     assert args[args.index("--engine") + 1] == engine
-    assert "--model" not in args and "--thinking" not in args
+    assert args[args.index("--model") + 1] == "codex=gpt-6-astra"
+    assert args[args.index("--thinking") + 1] == "codex=xhigh"
 
 
 def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
@@ -52,7 +53,8 @@ def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
     else:
         client, initialized = _fresh_client(repo, env.gh, tmp_path)
         assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    started = repo.forge("fix", "start", "Upgrade settings", "--done", "Settings work", cwd=client)
+    started = repo.forge("fix", "start", "Upgrade settings", "--done", "Settings work",
+                         "--kind", "mechanical", cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     client = type(client)(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
     config = client / "forge.toml"
@@ -76,5 +78,5 @@ def _doctor_defaults(env, tmp_path, monkeypatch, adopted):
     checked = repo.forge("doctor", cwd=client)
     assert checked.returncode == 0, checked.stdout + checked.stderr
     note = "- Note: reviews don't use forge.toml's review model; Autoreview runs on its own default model and effort."
-    assert checked.stdout.count(note) == int(adopted)
+    assert note not in checked.stdout
     assert config.read_bytes() == before

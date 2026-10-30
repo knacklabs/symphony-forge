@@ -9,7 +9,8 @@ STORY = "FIX-A-CHANGE-THAT-ONLY-EDITS-FORGE-TOML-STIL"
 
 
 def test_1_close_skips_the_test_command_for_a_forge_toml_only_change(env):
-    log = _with_test_command(env)
+    # The skip message belongs to laptop testing; CI close leaves all tests to CI.
+    log = _with_test_command(env, test_place="local")
     toml = (env.repo.path / "forge.toml").read_text("utf-8")
     item, _ = env.start_fix({"forge.toml": toml + "# Reviews read this file\n"})
     closed = env.close(item)

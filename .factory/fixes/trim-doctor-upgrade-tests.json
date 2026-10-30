@@ -1,0 +1,52 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-doctor-upgrade-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14dc7-26b4-7f70-9cc3-f86a847d55a4",
+    "head": null,
+    "start": "a3f31669c934190a8c6a70e22eae1acfe0a7ad54"
+  },
+  "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b8a71bc9338c66bcbe4e478e2c20c46099a2c0fd1ef95ca6611806f9965cd2fb",
+    "changed": "dcf3f5720d16de2eaf8d45838f27ae18d01729e63833ad913583395bf2c5f99c",
+    "commit": "b38e641d6065118bd1a65835b86139f999ba52e8",
+    "dismissals": [],
+    "findings": [],
+    "id": "31570e12-2fd8-4deb-a4bc-9ba7049beacd",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:34:32.286624+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:29:48.978035+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T10:05:58.951927+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ca0f96e0-87b1-48ae-b89d-e31f5c48fb43",
+    "head": "15039dda03a23dd4859e8b6924de2999d31486cd",
+    "keys": {
+      "close's tests failing": 1
+    },
+    "round": 1
+  },
+  "why": "The doctor and upgrade tests repeat adopted rows and hold one duplicate proof test",
+  "worker": "codex"
+}

@@ -1,0 +1,73 @@
+{
+  "allow_large": "A release's version bump changes the pinned version in every file that names it; no behaviour changes",
+  "base": "ecf68826c902d901f5432bb5ec0e5b9fb24e5492",
+  "branch": "fix/release-1219",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1623f-27df-7dc2-b448-a723c785031b",
+    "head": null,
+    "start": "6e61a246d36f77e873050521a20f0a2304c617b7"
+  },
+  "done_when": "forge.toml, the package and every pinned reference say v1.2.19",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "README.md",
+      "file": "README.md",
+      "gain": 3,
+      "harm": 3,
+      "line": 232,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: forge.toml, the package and every pinned reference say v1.2.19",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4586327f0f7f3b4fd54bcf1656c8b172ce7a387658d581a4d9131e807ae6cbc9",
+    "changed": "c271fae82ea97daf56d2b80c11b54d3bead48e0f9210498d149efb7e73921fae",
+    "commit": "03e83f4fb502e3beb7c94906b6a9e078bcb516ab",
+    "dismissals": [],
+    "findings": [],
+    "id": "2fa5bd13-a00e-4be8-9213-6637bbd8ef77",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-22T06:10:44.146322+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-22T06:13:15.707416+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-22T06:18:16.710644+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-22T06:13:15.716243+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "README.md",
+    "reason": "The owner chose one more round on 22 Oct: point docs/guide.md's install line at v1.2.19",
+    "wait_id": "c8d577a5-3e3f-43c8-b23e-f29434302c36",
+    "worker_round": null
+  },
+  "stuck": {
+    "close": "bde64e1e-cfc0-40b3-93f1-f59e954be356",
+    "head": "9397e45e738ce1373897e057a79bb6caf66f7e80",
+    "keys": {},
+    "round": null
+  },
+  "why": "Clients need v1.2.19: chat sign-off, the owner's round-limit rule and registered Codex roles",
+  "worker": "codex"
+}

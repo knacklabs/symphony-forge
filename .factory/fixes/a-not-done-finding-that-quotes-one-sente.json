@@ -1,0 +1,63 @@
+{
+  "base": "3101b66a9a3b2d8a1dfda70871ba98f56b619b3a",
+  "branch": "fix/a-not-done-finding-that-quotes-one-sente",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a169c9-7ede-72b3-aeff-d1af35bd3309",
+    "head": null,
+    "start": "e95cbf5d46be51476319ffa47f6e23544ac337cd"
+  },
+  "done_when": "A Not done that quotes any one sentence of the fix's Done-when blocks close, and each non-blocking finding close lists shows its own reason with its scores",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "bound_review() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 1000,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A Not done that quotes any one sentence of the fix's Done-when blocks close",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "05e2ca2eeac8b65d054b0d4356ee0332ac204ee94e4e399f0380bba5b5fec5ef",
+    "changed": "a6d2b0618a7bedf42dcab87680d21d624ef973f54e4d2780e4e52880c094f6f7",
+    "commit": "70565af06485e7626f322f2c0644cacebabdb571",
+    "dismissals": [],
+    "findings": [],
+    "id": "510dc507-7a33-496b-940f-9511701cd213",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-23T17:22:31.767934+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-23T17:33:54.694665+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-23T18:00:20.390833+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "5c95e0ed-c07a-4715-8395-8353e5df4819",
+    "head": "61351e05b74b3944478a7a1762cedfa320ad940e",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A Not done finding that quotes one sentence of a fix's longer Done-when is treated as naming no owner-approved Done-when item, so it does not block and close prints a wrong reason; and close says the review is clean while listing such findings without saying why each one does not block",
+  "worker": "codex"
+}

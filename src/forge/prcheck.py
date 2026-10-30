@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from fnmatch import fnmatch
 from pathlib import Path
@@ -15,6 +16,9 @@ from typing import Any
 from forge import repo, review
 
 REFUSALS = {
+    "outside_branch": ('This branch was not started by Forge, so it cannot merge. '
+                       'Redo the change with forge fix start "<why>" --done "<done when>" '
+                       'and copy the commits there.', ""),
     "usage": ("forge hook pr-check needs the pull request's --base, --head and --branch.",
               "forge hook pr-check --base <base commit> --head <head commit> --branch <branch>"),
     "not_started": ("Forge did not start {branch}: no task or fix at its head is on that branch.",
@@ -41,7 +45,7 @@ name: forge
 on:
   pull_request:
   pull_request_target:
-
+<full-triggers>
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
@@ -51,16 +55,40 @@ permissions:
   actions: read
 
 jobs:
-  tests:
+  docs-check:
     if: github.event_name == 'pull_request'
-    name: test group ${{ matrix.group }} of <groups>
+    runs-on: <runner>
+    outputs:
+      docs-only: ${{ steps.docs.outputs.docs-only }}
+      test-only: ${{ steps.docs.outputs.test-only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - id: docs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_EXCLUDES: '<docs-excludes>'
+        run: python .forge/review-tests.py
+
+  tests:
+    needs: docs-check
+    if: github.event_name == 'pull_request' && needs.docs-check.outputs.docs-only != 'true'
+    name: test group ${{ matrix.group }} of ${{ needs.docs-check.outputs.test-only == 'true' && 1 || <groups> }}
     strategy:
       fail-fast: false
       matrix:
-        group: <group-list>
+        group: ${{ fromJSON(needs.docs-check.outputs.test-only == 'true' && '[1]' || '<group-list>') }}
     runs-on: <runner>
     env:
       UV_FROZEN: '1'
+      FORGE_GROUP: ${{ matrix.group }}
+      FORGE_GROUPS: ${{ needs.docs-check.outputs.test-only == 'true' && '1' || '<groups>' }}
 <containers><tests-timeout>    steps:
       - uses: actions/checkout@v7
         with:
@@ -74,8 +102,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DOCS_ONLY_EXCLUDES: '<docs-excludes>'
         run: python .forge/review-tests.py
-<npm-cache><node>      - run: <test>
+<npm-cache><node><test-install>      - run: <test>
         if: steps.parent-tests.outputs.reuse != 'true'
 
   tests-passed:
@@ -83,18 +112,26 @@ jobs:
     # tests-passed and forge-pr-check. The skipped one takes another name, because a skipped
     # job would otherwise pass a required check of the same name; always() keeps a failed
     # group from skipping this one.
-    needs: tests
+    needs: [docs-check, tests]
     if: always() && github.event_name == 'pull_request'
     name: ${{ github.event_name == 'pull_request' && 'tests' || 'tests (other event)' }}
     runs-on: <runner>
     steps:
-      - env:
-          GROUPS: ${{ needs.tests.result }}
-        run: test "$GROUPS" = success
+<group-warning>      - env:
+          TEST_GROUP_RESULT: ${{ needs.tests.result }}
+          DOCS_CHECK: ${{ needs.docs-check.result }}
+          DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
+        run: test "$DOCS_CHECK" = success && { test "$TEST_GROUP_RESULT" = success || { test "$DOCS_ONLY" = true && test "$TEST_GROUP_RESULT" = skipped; }; }
+      - if: needs.docs-check.outputs.docs-only == 'true'
+        run: "echo 'docs only: tests skipped'"
 
   forge-pr-check:
     if: github.event_name == 'pull_request_target'
-    name: ${{ github.event_name == 'pull_request_target' && 'forge-pr-check' || 'forge-pr-check (other event)' }}
+    name: Review pull request
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
     runs-on: <runner>
     steps:
       # The base branch's code and forge.toml; the pull request's commits are only data.
@@ -114,11 +151,33 @@ jobs:
           git fetch --no-tags origin "refs/pull/$PR/head"
           test "$(git rev-parse FETCH_HEAD)" = "$HEAD_SHA"
 <choose>      - run: <install>
-      - env:
+      - id: review
+        continue-on-error: true
+        env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF"
+        run: forge hook pr-check --base "$BASE_SHA" --head "$HEAD_SHA" --branch "$HEAD_REF" 2> "$RUNNER_TEMP/forge-pr-check.log"
+      - name: Report review status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REVIEW_OUTCOME: ${{ steps.review.outcome }}
+          REVIEW_PENDING: ${{ steps.review.outputs.review-pending }}
+        run: |
+          if [ -f "$RUNNER_TEMP/forge-pr-check.log" ]; then
+            cat "$RUNNER_TEMP/forge-pr-check.log"
+          fi
+          state=failure
+          if [ "$REVIEW_OUTCOME" = success ]; then
+            state=success
+          elif [ "$REVIEW_OUTCOME" = failure ] && [ "$REVIEW_PENDING" = true ]; then
+            state=pending
+          fi
+          job_url=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[] | select(.name == "Review pull request") | .html_url')
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f context=forge-pr-check -f "state=$state" -f "target_url=$job_url" > /dev/null
+          test "$state" != failure
       - name: Report pull request size
         if: always()
         continue-on-error: true
@@ -128,7 +187,7 @@ jobs:
         run: |
           stats=$(git diff --numstat "$BASE_SHA...$HEAD_SHA")
           echo "$stats" | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\\n", a - d, a, d}' >> "$GITHUB_STEP_SUMMARY"
-"""
+<full-suite-job>"""
 
 # A client's check runs the Forge release its default branch pins. A pull request that changes
 # that pin (an upgrade) is checked by the release it pins instead, installed from Forge's own
@@ -170,41 +229,111 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
             version = version if isinstance(version, str) and version.strip() else "22"
             node += f"        with:\n          node-version: {json.dumps(version)}\n"
     source = cfg.get("repo") == "forge-source"
-    # ponytail: only a direct pytest call (bare, `python -m` or `uv run` with options) in a repo
-    # listing pytest-split splits; any other command, such as `make pytest`, runs one group.
-    direct = r"(?:(?:uv|poetry|pipenv) run(?: -\S+| [\d.]+)* |python3? -m )?pytest\b"
-    groups = 6 if (re.match(direct, cfg["test"]) and not re.search(r"[;&|]", cfg["test"])
-                   and any("pytest-split" in sync.read(path) for path in
-                           [top / "pyproject.toml", *top.glob("requirements*.txt")])) else 1
-    test = cfg["test"] + (" --splits 6 --group ${{ matrix.group }} --splitting-algorithm "
-                          "least_duration" if groups > 1 else "")
-    if groups > 1:
-        # Empty groups pass only if the unsplit suite still collects tests successfully.
-        test += ' || { status=$?; [ "$status" -eq 5 ] && ' + cfg["test"] + ' --collect-only; }'
-    workflow = (WORKFLOW.replace("<choose>", "" if source else CHOOSE)
+    configured_groups = cfg.get("groups")
+    warning = repo.group_warning(top, cfg)
+    groups = (configured_groups if configured_groups is not None
+              else 6 if repo.pytest_split(top, cfg["test"]) else 1)
+    ci_tests = repo.test_place(cfg) == "ci" and "tests" in cfg.get("checks", [])
+    test = "forge test --change" if ci_tests else cfg["test"]
+    full_run = repo.test_place(cfg) == "ci"
+    test_install = ("      - run: " + ("uv tool install ." if source else sync.install_line(cfg["version"]))
+                    + "\n        if: steps.parent-tests.outputs.reuse != 'true'\n"
+                    if ci_tests else "")
+    windows = cfg.get("runner", repo.DEFAULTS["runner"]).startswith("windows-")
+    if windows:
+        # Each attempt gets its own PowerShell process, so exit or throw cannot end the retry.
+        script = ("$ErrorActionPreference = 'Stop'\n& {\n" + test +
+                  "\n}\nif (Test-Path variable:LASTEXITCODE) { exit $LASTEXITCODE }")
+        attempt = ("& (Get-Process -Id $PID).Path -NoProfile -NonInteractive -Command '" +
+                   script.replace("'", "''") + "'")
+        test = f"{attempt}\nif ($LASTEXITCODE -ne 0) {{ {attempt} }}\nexit $LASTEXITCODE"
+    full_node = node.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
+    npm_cache = ("      - uses: actions/cache@v4\n"
+                 "        if: steps.parent-tests.outputs.reuse != 'true'\n"
+                 "        with:\n          path: ~/.npm\n"
+                 "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
+    full_npm_cache = npm_cache.replace("        if: steps.parent-tests.outputs.reuse != 'true'\n", "")
+    full_triggers = ("  schedule:\n    - cron: '0 3 * * *'\n"
+                     "  workflow_dispatch:\n" if full_run else "")
+    full_suite = ("\n  full-suite:\n"
+                  "    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n"
+                  "    name: Full test suite\n"
+                  "    strategy:\n"
+                  "      fail-fast: false\n"
+                  "      matrix:\n"
+                  "        group: <group-list>\n"
+                  "    permissions:\n"
+                  "      contents: read\n"
+                  "      actions: read\n"
+                  "      statuses: write\n"
+                  "    runs-on: <runner>\n"
+                  "    env:\n"
+                  "      UV_FROZEN: '1'\n"
+                  "      FORGE_GROUP: ${{ matrix.group }}\n"
+                  "      FORGE_GROUPS: '<groups>'\n"
+                  "<containers>      GH_TOKEN: ${{ github.token }}\n"
+                  "    timeout-minutes: 60\n"
+                  "    steps:\n"
+                  "      - uses: actions/checkout@v7\n"
+                  "        with:\n"
+                  "          fetch-depth: 0\n"
+                  "      - run: git remote set-head origin --auto\n"
+                  "      - uses: actions/setup-python@v6\n"
+                  "        with:\n"
+                  "          python-version: '3.11'\n"
+                  "      - uses: astral-sh/setup-uv@v6\n"
+                  "<full-npm-cache><full-node>      - run: <full-install>\n"
+                  "      - run: forge test --full\n"
+                  "\n  full-suite-result:\n"
+                  "    needs: full-suite\n"
+                  "    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)\n"
+                  "    runs-on: <runner>\n"
+                  "    timeout-minutes: 5\n"
+                  "    permissions:\n"
+                  "      statuses: write\n"
+                  "    steps:\n"
+                  "      - name: Report full test result\n"
+                  "        shell: bash\n"
+                  "        env:\n"
+                  "          GH_TOKEN: ${{ github.token }}\n"
+                  "          FULL_RESULT: ${{ needs.full-suite.result }}\n"
+                  "          HEAD_SHA: ${{ github.sha }}\n"
+                  "        run: |\n"
+                  "          state=failure\n"
+                  "          if [ \"$FULL_RESULT\" = success ]; then state=success; fi\n"
+                  "          gh api --method POST \"repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA\" -f context=forge-full-suite -f \"state=$state\" -f \"target_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"\n"
+                  "          test \"$state\" = success\n" if full_run else "")
+    workflow = (WORKFLOW.replace("<full-triggers>", full_triggers)
+                .replace("<full-suite-job>", full_suite)
+                .replace("<choose>", "" if source else CHOOSE)
                 .replace("<version>", cfg["version"])
+                .replace("<docs-excludes>", json.dumps(review.DOC_EXCLUDES))
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
-                .replace("<tests-timeout>", "    timeout-minutes: 10\n"
-                         if cfg.get("repo") == "client" and (top / "package.json").is_file()
-                         else "")
+                .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 30}\n")
                 .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
-                .replace("<npm-cache>", "      - uses: actions/cache@v4\n"
-                         "        if: steps.parent-tests.outputs.reuse != 'true'\n"
-                         "        with:\n          path: ~/.npm\n"
-                         "          key: npm-jest-30.2.0-vitest-3.2.4\n" if source else "")
+                .replace("<npm-cache>", npm_cache)
+                .replace("<full-npm-cache>", full_npm_cache)
                 .replace("<node>", node)
+                .replace("<full-node>", full_node)
+                .replace("<full-install>", "uv tool install ." if source
+                         else sync.install_line(cfg["version"]))
+                .replace("<test-install>", test_install)
                 .replace("<test>", json.dumps(test))
+                .replace("<group-warning>", "      - run: " + json.dumps(
+                    'echo "::warning::' + warning + '"') + "\n" if warning else "")
                 .replace("<groups>", str(groups))
                 .replace("<group-list>", str(list(range(1, groups + 1))))
                 .replace("<runner>", json.dumps(cfg.get("runner", repo.DEFAULTS["runner"]))))
-    if "tests" not in cfg.get("checks", []):
-        start = workflow.index("  tests:\n")
+    if not ci_tests:
+        start = workflow.index("  docs-check:\n")
         end = workflow.index("  forge-pr-check:\n")
         workflow = workflow[:start] + workflow[end:]
     return {WORKFLOW_PATH: workflow,
-            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")}
+            ".forge/records-only/action.yml": (sync.TEMPLATES / "records-only-action.yml").read_text(encoding="utf-8"),
+            ".forge/review-tests.py": (sync.TEMPLATES / "review-tests.py").read_text(encoding="utf-8")
+                .replace("# <docs-only-rule>", (sync.TEMPLATES.parent / "docskip.py").read_text(encoding="utf-8"))}
 
 
 def pr_check(args: argparse.Namespace) -> int:
@@ -214,9 +343,7 @@ def pr_check(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["usage"])
     base, head, branch = given["--base"], given["--head"], given["--branch"]
     if not branch.startswith(("task/", "fix/", "story/", "forge/")):
-        print("Forge didn't start this branch, so it checks nothing here; the repo's own CI and "
-              "review apply.")
-        return 0
+        repo.refuse(REFUSALS["outside_branch"])
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     item, state = _started(top, head, branch)
@@ -241,8 +368,14 @@ def pr_check(args: argparse.Namespace) -> int:
         repo.refuse(REFUSALS["story_doc"], problem=doc_problem)
     _check_specs(top, head, changed)
     result = state.get("review")
+    if isinstance(result, dict) and isinstance(result.get("findings"), list):
+        review.bound_review(top, item, state, result, head)
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):
+        # Keep the command's refusal, but let the trusted workflow distinguish the first push.
+        if result is None and os.environ.get("GITHUB_OUTPUT"):
+            with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+                output.write("review-pending=true\n")
         problem = "missing"
     elif not _on_branch(top, str(result.get("commit", "")), head):
         problem = "for a commit that isn't part of this branch"

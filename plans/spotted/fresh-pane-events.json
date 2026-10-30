@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tQueued CI events can report an obsolete result after a rerun\tfresh-pane-events",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 76,
+      "text": "Queued CI events can report an obsolete result after a rerun",
+      "from": "blocking",
+      "item": "fresh-pane-events",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

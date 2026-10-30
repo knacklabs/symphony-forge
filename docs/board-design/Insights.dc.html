@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge board, insights</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #F4F5F2; color: #15171A; font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column">
+
+  <header style="height: 48px; flex: none; background: #15171A; color: #ECEDEA; display: flex; align-items: center; gap: 24px; padding: 0 32px">
+    <span style="font-size: 14px; font-weight: 600">Forge <span style="font-weight: 400; color: #B4B8BC">symphony-forge</span></span>
+    <nav aria-label="Pages" style="display: flex; gap: 4px">
+      <a href="Manager.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Now</a>
+      <a href="Releases.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Releases</a>
+      <a href="Insights.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; background: #ECEDEA; color: #15171A; border-radius: 6px; padding: 6px 12px">Insights</a>
+    </nav>
+    <span style="margin-left: auto; font-size: 12px; color: #B4B8BC">Last 6 weeks</span>
+  </header>
+
+  <div style="flex: 1; min-height: 0; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px">
+
+    <section aria-label="Lifetime" style="display: flex; gap: 48px; align-items: baseline">
+      <sc-for list="{{life}}" as="f" hint-placeholder-count="4">
+        <div style="display: flex; align-items: baseline; gap: 8px">
+          <span style="font-size: 24px; font-weight: 600">{{f.value}}</span>
+          <span style="font-size: 12px; color: #4A4F57">{{f.label}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section aria-label="Merged per week, by person" style="flex: 1; min-height: 0; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: baseline; gap: 16px">
+        <span style="font-size: 17px; font-weight: 600">Merged per week</span>
+        <span style="display: flex; gap: 14px; font-size: 12px; color: #4A4F57">
+          <span><span style="display: inline-block; width: 10px; height: 10px; background: #1D4ED8; border-radius: 2px"></span> @kl-nandeeshwar</span>
+          <span><span style="display: inline-block; width: 10px; height: 10px; background: #7AA2F7; border-radius: 2px"></span> @vrknetha</span>
+          <span><span style="display: inline-block; width: 10px; height: 10px; background: repeating-linear-gradient(135deg, #C9CCC6 0 3px, #FFFFFF 3px 6px); border: 1px solid #C9CCC6; border-radius: 2px"></span> around Forge</span>
+        </span>
+      </div>
+      <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 28px; align-items: end; border-bottom: 1px solid #E2E4E0; padding: 0 8px">
+        <sc-for list="{{weeks}}" as="w" hint-placeholder-count="6">
+          <div style="display: flex; flex-direction: column; align-items: stretch; gap: 6px; height: 100%; justify-content: flex-end">
+            <span style="font-size: 12px; color: #4A4F57; text-align: center">{{w.total}}</span>
+            <div title="{{w.tip}}" style="display: flex; flex-direction: column; border-radius: 3px 3px 0 0; overflow: hidden; height: {{w.h}}">
+              <span style="flex: {{w.around}}; background: repeating-linear-gradient(135deg, #C9CCC6 0 4px, #FFFFFF 4px 8px)"></span>
+              <span style="flex: {{w.ravi}}; background: #7AA2F7"></span>
+              <span style="flex: {{w.kl}}; background: #1D4ED8"></span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 28px; padding: 0 8px">
+        <sc-for list="{{weeks}}" as="w" hint-placeholder-count="6"><span style="font-size: 12px; color: #4A4F57; text-align: center">{{w.label}}</span></sc-for>
+      </div>
+    </section>
+
+    <section aria-label="People" style="flex: none; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 14px 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: grid; grid-template-columns: 240px 120px 120px minmax(0, 1fr); gap: 20px; font-size: 12px; color: #6B717A">
+        <span>Person · alphabetical</span><span style="text-align: right">Open now</span><span style="text-align: right">Stories owned</span><span>Through Forge, last 8 weeks</span>
+      </div>
+      <sc-for list="{{people}}" as="p" hint-placeholder-count="2">
+        <div style="display: grid; grid-template-columns: 240px 120px 120px minmax(0, 1fr); gap: 20px; align-items: center; font-size: 14px">
+          <span style="display: flex; align-items: center; gap: 10px"><span style="width: 24px; height: 24px; border-radius: 999px; background: {{p.color}}; color: #FFFFFF; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">{{p.init}}</span><span><b style="font-weight: 600">{{p.name}}</b> <span style="font-size: 12px; color: #6B717A">@{{p.user}}</span></span></span>
+          <span style="text-align: right">{{p.open}}</span>
+          <span style="text-align: right">{{p.stories}}</span>
+          <span style="display: flex; align-items: center; gap: 10px"><span style="flex: 1; display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #EEEFEC"><span style="width: {{p.share}}; background: #0F766E"></span></span><span style="font-size: 12px; color: #4A4F57; width: 40px; text-align: right">{{p.share}}</span></span>
+        </div>
+      </sc-for>
+    </section>
+
+    <section aria-label="Cost" style="flex: none; display: flex; gap: 48px; border-top: 1px solid #E2E4E0; padding-top: 12px; align-items: baseline">
+      <span style="font-size: 14px; font-weight: 600">Cost</span>
+      <span style="font-size: 14px; color: #4A4F57">unknown until every run keeps its token count</span>
+      <span style="margin-left: auto; font-size: 12px; color: #8A9096">Weekly counts and people are this repo's; release and plan-to-release figures are sample</span>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const raw = [
+      { label: '31 Aug', kl: 12, klA: 5, ravi: 9, raviA: 1 },
+      { label: '7 Sep', kl: 3, klA: 4, ravi: 7, raviA: 14 },
+      { label: '14 Sep', kl: 3, klA: 2, ravi: 5, raviA: 5 },
+      { label: '21 Sep', kl: 0, klA: 1, ravi: 81, raviA: 35 },
+      { label: '28 Sep', kl: 0, klA: 0, ravi: 230, raviA: 0 },
+      { label: '5 Oct', kl: 0, klA: 0, ravi: 133, raviA: 0 }
+    ];
+    const max = 230;
+    return {
+      life: [
+        { value: '26', label: 'stories done' },
+        { value: '386', label: 'fixes merged' },
+        { value: '12', label: 'releases' },
+        { value: '2 d 6 h', label: 'median plan to release' }
+      ],
+      weeks: raw.map((w) => {
+        const total = w.kl + w.klA + w.ravi + w.raviA;
+        return { label: w.label, total, kl: w.kl, ravi: w.ravi, around: w.klA + w.raviA, h: Math.max(4, Math.round(total / max * 100)) + '%', tip: '@kl-nandeeshwar ' + w.kl + ' · @vrknetha ' + w.ravi + ' · around Forge ' + (w.klA + w.raviA) };
+      }),
+      people: [
+        { init: 'KN', color: '#1D4ED8', name: 'Nandeeshwar', user: 'kl-nandeeshwar', open: '0', stories: '0', share: '62%' },
+        { init: 'RV', color: '#4A4F57', name: 'Ravi Kiran Vemula', user: 'vrknetha', open: '12', stories: '3', share: '86%' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
