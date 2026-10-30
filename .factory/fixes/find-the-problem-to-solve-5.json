@@ -2,13 +2,23 @@
   "base": "2d30574654b797e5f19d12efda504eacd5f190a9",
   "branch": "fix/find-the-problem-to-solve-5",
   "done_when": "The discovery notes hold a filled problem card and the brief names it",
+  "drop": {
+    "at": "2026-10-30T13:04:27.357318+00:00",
+    "because": "Placeholder from idea sorting; its work already merged under its own fix name",
+    "by": "vrknetha <vrknetha@gmail.com> 1793365467 +0530",
+    "status": "started"
+  },
   "kind": "fix",
   "stacked_on": "FORGE-MAINONCE-1/ONCLASH",
-  "status": "started",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-14T16:49:42.437519+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:04:27.357477+00:00",
+      "step": "drop"
     }
   ],
   "why": "Find the problem to solve"
