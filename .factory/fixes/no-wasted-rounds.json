@@ -170,7 +170,7 @@
       "gain": 5,
       "harm": 3,
       "line": 87,
-      "outcome": "open",
+      "outcome": "fixed in round 11",
       "reason": "",
       "round": 10,
       "security": false,
@@ -183,7 +183,7 @@
       "gain": 4,
       "harm": 3,
       "line": 103,
-      "outcome": "open",
+      "outcome": "fixed in round 11",
       "reason": "",
       "round": 10,
       "security": false,
@@ -193,41 +193,20 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ac05bf26b43c10f842fbb09aeb061c6391bf5ab39a08b1c2fcb51173667c0547",
-    "changed": "43346ec52dc563b9eb14e7381f246b6f39318dc8437a2d71883ef689db448993",
-    "commit": "845e4f2471ce3bba7a5e7521d9cbff0f7c414ada",
+    "branch_diff": "970e446cce9b6cfb7e501395997aed071f77e5dc33a6488767e3d317d814b154",
+    "changed": "348d9b0b8c6949df8f04fc7c2f8254e3fd333fcf3fb0db59975e6a43d594e73c",
+    "commit": "3c921e625b625da67eb5a44564c64734a749b32b",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 5, Work 3, Harm 3\nRaise: Functional\nCase: normal use - an owner resolves a stopped story part with narrow or split. The new apply_review_choice function has no callers. src/forge/close.py:112\u2013153 records the choice and returns without publishing or merging the updated story plan, leaving the worker with unchanged builder details. The same command path also prints generic manual instructions for fixes instead of the promised forge fix amend step. Adding this unused helper does not deliver either required behavior.",
-        "file": "src/forge/task.py",
-        "gain": 5,
-        "harm": 3,
-        "line": 87,
-        "priority": "P1",
-        "title": "[P1] Connect owner choices to plan updates and fix-amend guidance",
-        "work": 3
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Test\nCase: normal use - CI runs tests/test_review_choice_updates_plan.py. The first test expects the obsolete \"Ask the human to narrow the part\" question here, while current close stops story reviews after two rounds and asks \"One more round, split or accept?\" Consequently, it fails before reaching plan publication. Separately, line 192 calls stopped(env), whose default kind is \"task\", so the purported fix-amend test starts a story task; its subsequent narrow choice is rejected for that review-loop stop. These tests need current stop fixtures so they can reach and verify the behaviors they claim to protect.",
-        "file": "tests/test_review_choice_updates_plan.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 103,
-        "priority": "P1",
-        "title": "[P1] Update the choice tests for the current stop lifecycle",
-        "work": 2
-      }
-    ],
-    "id": "88c3e1d8-faf7-4b5b-b7db-50176103efb8",
-    "status": "blocked"
+    "findings": [],
+    "id": "5633e17d-51a6-4156-88ac-039dac10e6a9",
+    "status": "clean"
   },
   "round": 12,
   "settled_areas": [
     "close() in src/forge/close.py",
     "src/forge/close.py"
   ],
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-15T06:46:40.237703+00:00",
@@ -271,6 +250,10 @@
     },
     {
       "at": "2026-10-30T02:46:28.029273+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T02:54:24.008180+00:00",
       "step": "review"
     }
   ],
