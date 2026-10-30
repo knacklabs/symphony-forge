@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, repo, review, story, task
+from forge import checks, close, codex, githooks, prcheck, repo, review, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -35,6 +35,9 @@ REFUSALS = {
            "open or correct its pull request, then forge close {item}"),
     "merge_failed": ("GitHub did not merge the pull request for {item}: {reason}.", "check the pull request, then forge merge {item}"),
     "pending": ("GitHub has not finished merging the pull request for {item}.", "check the pull request, then forge merge {item}"),
+    "stacked": ("{item} builds on {base}, which hasn't merged yet.", "forge merge {base}"),
+    "retarget": ("Forge could not point {other}'s pull request at {default}, so it kept {item}'s branch.",
+                 "check that pull request, then forge merge {item}"),
     "remote_branch": ("Forge could not delete the remote branch for {item}.",
                       "check the branch on GitHub, then forge merge {item}"),
 }
@@ -45,6 +48,13 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
     config = repo.default_config(top)
     if repo.merge_setting(top) != "agent":
         repo.refuse(REFUSALS["owner_merges" if item == ENABLE else "disabled"], item=item)
+    worktree = close._worktree(item)
+    branch = repo.current_branch(worktree)
+    default = repo.default_branch(top)
+    repo.git("fetch", "-q", "origin", default, cwd=top)
+    stacked_on = (repo.read_state(item, worktree) or {}).get("stacked_on")
+    if stacked_on and not task._merged(f"origin/{default}", stacked_on, top):
+        repo.refuse(REFUSALS["stacked"], item=item, base=stacked_on)
     path = repo.ready_path(item, top)
     try:
         receipt = json.loads(path.read_text(encoding="utf-8"))
@@ -54,9 +64,6 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
     if (not isinstance(receipt, dict) or receipt.get("review") != "clean"
             or not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head)):
         repo.refuse(REFUSALS["not_ready"], item=item)
-    worktree = close._worktree(item)
-    branch = repo.current_branch(worktree)
-    default = repo.default_branch(top)
     shown = repo.run("gh", "pr", "view", branch, "--json",
                      "number,state,baseRefName,headRefName,headRefOid,title,isDraft,body", cwd=top)
     if shown.returncode and shown.stderr.strip() == repo.REFUSALS["no_github"][0]:
@@ -199,6 +206,41 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             reason = (done.stderr or done.stdout or "GitHub gave no reason").strip().splitlines()[-1]
             repo.refuse(REFUSALS["merge_failed" if done.returncode else "pending"], item=item, reason=reason)
         repo.record_event(top, item, "item finished", round=item_state.get("round"))
+    children = repo.run("gh", "pr", "list", "--base", branch, "--state", "open",
+                        "--limit", "1000", "--json", "number,headRefName", cwd=top)
+    if children.returncode:
+        if children.stderr.strip() == repo.REFUSALS["no_github"][0]:
+            repo.refuse(repo.REFUSALS["no_github"])
+        repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+    try:
+        child_prs = json.loads(children.stdout)
+    except ValueError:
+        repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+    if not isinstance(child_prs, list):
+        repo.refuse(REFUSALS["retarget"], other="a child", default=default, item=item)
+    trees = story.worktrees(top)
+    for child_pr in child_prs:
+        head_branch = child_pr.get("headRefName") if isinstance(child_pr, dict) else None
+        number = child_pr.get("number") if isinstance(child_pr, dict) else None
+        other = head_branch if isinstance(head_branch, str) else "a child"
+        if not isinstance(head_branch, str) or type(number) is not int:
+            repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
+        found = task.branch_item(head_branch, trees[head_branch]) if head_branch in trees else None
+        head_ref = f"refs/remotes/origin/{head_branch}"
+        if not found and not repo.run("git", "show-ref", "--verify", head_ref, cwd=top).returncode:
+            try:
+                found = prcheck._started(top, f"origin/{head_branch}", head_branch)
+            except repo.Refused:
+                pass
+        if found:
+            other = found[0]
+        retargeted = repo.run("gh", "pr", "edit", str(number), "--base", default, cwd=top)
+        if retargeted.returncode:
+            if retargeted.stderr.strip() == repo.REFUSALS["no_github"][0]:
+                repo.refuse(repo.REFUSALS["no_github"])
+            repo.refuse(REFUSALS["retarget"], other=other, default=default, item=item)
+        if found:
+            print(f"Next: forge close {other}")
     main_checkout = repo.forge_dir(top).parent.parent
     pending = receipt.get("pending_archives")
     if pending is None:

@@ -31,6 +31,8 @@ REFUSALS = {
     "not_reviewed": ("The committed review at the head of {branch} is {problem}.",
                      "forge close {item}"),
     "story_doc": ("{problem}", "fix the story doc, then forge read <KEY>"),
+    "stacked": ("{item} builds on {parent}; Forge checks its pull request once it targets {default}.",
+                "forge close {item}"),
 }
 CODE_LIMIT = 5
 WORKFLOW_PATH = ".github/workflows/forge.yml"
@@ -347,6 +349,12 @@ def pr_check(args: argparse.Namespace) -> int:
     top = repo.root()
     cfg = repo.config(top)  # the base checkout's forge.toml, never the head's
     item, state = _started(top, head, branch)
+    if "/" in item and (parent := state.get("stacked_on")):
+        from forge import task
+
+        default = repo.default_branch(top)
+        if not task._merged(f"origin/{default}", parent, top):
+            repo.refuse(REFUSALS["stacked"], item=item, parent=parent, default=default)
     changed = repo.git("diff", "--name-only", f"{base}...{head}", cwd=top).splitlines()
     if "/" not in item:
         missing = [line for line, key in (("Why:", "why"), ("Done when:", "done_when"))
