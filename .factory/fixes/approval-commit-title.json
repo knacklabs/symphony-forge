@@ -22,8 +22,8 @@
     "id": "9822af68-ee22-448a-b008-17352905b316",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:32:33.978890+00:00",
@@ -43,10 +43,10 @@
     }
   ],
   "stuck": {
-    "close": "94947bf0-ba7e-4fe1-af11-7b9c15f77eaa",
-    "head": "8d003432265dcaff87f713343d927e9e348a8aae",
+    "close": "6a23312b-9cf5-4344-b9b2-138e12a9cfe7",
+    "head": "c5b9bdc1e157f190f6756138222b1a0d95930bff",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "The plan approval commit keeps the story's old title after a re-plan (issue 916)",
   "worker": "codex"
