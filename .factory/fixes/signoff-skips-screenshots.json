@@ -11,14 +11,60 @@
   "done_when": "The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "signoff() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 1137,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "6d2e7f9a03b2d4bcc0c64df80fcf6851f96acbfd004ff0b2762c2d772bd738bb",
+    "changed": "2951ff177a99065d4acd3984e0a25da29d5c0949ea0ed1dd6eee9931d35c31a7",
+    "commit": "f4cfc9879c4c552c146b1f753071c56f393cdef6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - fix a blocking sign-off finding and retry acceptance.\nPassing `images=set()` filters only the current snapshot. In `run()`, lines 882\u2013894 build the review base from the previous original product commit, retaining its images; lines 898\u2013902 remove images only from the new snapshot. Consequently, every existing SVG appears as a deletion in the retry's reviewed diff, sending image contents through code review again. Previous reviews persist through `records.py:453\u2013454`, so this affects ordinary review retries. Apply the exclusion to both sides of the comparison. The new test covers only the first acceptance attempt and misses this failure.",
+        "file": "src/forge/review.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 1137,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: The client sign-off review leaves image files out of what it reviews, and the canvas completeness check still reviews them",
+        "work": 2
+      }
+    ],
+    "id": "245008b5-3324-416d-80cf-286847efdab2",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-30T09:25:59.979540+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T09:29:50.935788+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-30T09:29:50.947204+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "8481ef60-b1cd-4715-920a-de0f2f414369"
+  },
   "stuck": {
     "close": null,
     "head": "55c6c75d374ddc312c59151a9a3fba217571a000",
