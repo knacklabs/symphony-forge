@@ -20,6 +20,7 @@ export interface OrganisationsApi {
   openInvite(token: string): Promise<OrganisationInvite>;
   joinFromInvite(invite: OrganisationInvite, account: OrganisationAccount): Promise<{ role: Role }>;
   membershipFor(accountId: string): Promise<OrganisationMembership | null>;
+  removeMember(account: OrganisationPrincipal, accountId: string, tx: Prisma.TransactionClient): Promise<void>;
   /** Makes the new account an agent of the admin's organisation, with its Change history row. */
   addAgent(account: OrganisationAccount, role: Role, admin: OrganisationPrincipal): Promise<Member>;
   /** The agent with this key hash and its organisation's agent delete and restore list. */
