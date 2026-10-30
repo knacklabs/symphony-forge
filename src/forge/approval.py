@@ -129,7 +129,8 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
     story_used = repo.forge_dir(path) / "approvals" / marker
     if story_used.exists():
         repo.refuse(REFUSALS["replay"])
-    folder = design.check(path, (path / "plans" / f"{key}.md").read_text(encoding="utf-8"))
+    doc = (path / "plans" / f"{key}.md").read_text(encoding="utf-8")
+    folder = design.check(path, doc)
     story.check_read(key, path)
     if repo.is_prototype(path):
         repo.refuse(REFUSALS["no_signoff"])
@@ -141,7 +142,8 @@ def _approve(top: Path, payload: dict[str, Any], tool: str) -> None:
                 "round": int(notes.get("round") or 1), "part_line_limit": 400}
     state.update(status="approved", approval=approval, touches=state.get("touches", 0) + 1)
     rel = repo.write_state(key, repo.add_step(state, "approved"), path)
-    title = state.get("title") or key
+    heading = re.search(r"^# (.+)$", doc, re.M)
+    title = heading[1] if heading else key
     repo.commit_state(f"Approve the plan: {title}", f"plans/{key}.md", f"plans/{key}.read.md", rel,
                       *([folder] if folder else []), top=path)
     for used in dict.fromkeys((chat_used, story_used)):
