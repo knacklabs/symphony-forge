@@ -9,14 +9,24 @@
     "start": "80ce3a58775d0bc7a95ef3f40c5d2d47b691ae1a"
   },
   "done_when": "Sign-off accepts a green full test run on a commit whose files match the latest default-branch commit, and still refuses when no such run passed",
+  "drop": {
+    "at": "2026-10-30T09:31:14.023796+00:00",
+    "because": "Not a small fix: the pull request checks do not record a full-suite result sign-off can trust; the owner wanted only small changes in the hotfix",
+    "by": "vrknetha <vrknetha@gmail.com> 1793352674 +0530",
+    "status": "working"
+  },
   "fix_kind": "backend",
   "kind": "fix",
   "round": 2,
-  "status": "working",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-10-30T09:28:59.034039+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T09:31:14.024193+00:00",
+      "step": "drop"
     }
   ],
   "stuck": {
