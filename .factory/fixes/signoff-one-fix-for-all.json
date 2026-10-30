@@ -1,6 +1,13 @@
 {
   "base": "823f647c36f3a27720d771acff0ea2d63132d8a9",
   "branch": "fix/signoff-one-fix-for-all",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18c24-74b3-74d0-8fdc-3278477cc8f0",
+    "head": null,
+    "start": "62b73c077aacf98fed1585d39a715b39ad163a51"
+  },
   "done_when": "A blocked sign-off names one forge fix start step that covers every open blocking finding from that review",
   "fix_kind": "backend",
   "kind": "fix",
