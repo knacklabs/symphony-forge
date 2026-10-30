@@ -28,6 +28,8 @@ from test_codex_worker import sdk_data  # noqa: F401
 from test_setup import _fresh_client
 from test_tools_session_hold import Session
 
+STORY = "FORGE-EFFORT-1"
+
 
 def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HELP",
                   history="new", sdk_data=None, fixed=False, test_place="local"):
@@ -329,7 +331,7 @@ def test_5_effort_none_is_never_sent(
 
 @pytest.mark.parametrize("history,sdk_installed", [("new", True), ("new", False), ("adopted", True)],
                          ids=["installed", "missing", "adopted-installed"])
-def test_1_claude_rounds_use_the_sdk_in_a_claude_session(
+def test_7_claude_rounds_use_the_sdk_in_a_claude_session(
         repo, gh, tmp_path, monkeypatch, sdk_data, history, sdk_installed):
     _, _, log = _round_client(repo, gh, tmp_path, monkeypatch, "claude",
                               sdk_data=sdk_data, history=history)
@@ -360,7 +362,7 @@ def test_1_claude_rounds_use_the_sdk_in_a_claude_session(
 
 
 @pytest.mark.parametrize("family", ["codex", "claude"])
-def test_1_native_round_names_the_requested_effort(
+def test_8_native_round_names_the_requested_effort(
         repo, gh, tmp_path, monkeypatch, sdk_data, family):
     env, folder, log = _round_client(repo, gh, tmp_path, monkeypatch, family,
                                      sdk_data=sdk_data)
