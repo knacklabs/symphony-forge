@@ -521,7 +521,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                    "Use this green full run as passing evidence for the tests named in Proof. "
                    "No separate forge test run is required.")
     result = review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
-                        "", {}, previous, signoff_prompt=prompt)
+                        "", {}, previous, signoff_prompt=prompt, images=set())
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
     saved.update(review=result, inputs=inputs,
