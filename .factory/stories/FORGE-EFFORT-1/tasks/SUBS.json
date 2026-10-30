@@ -7,13 +7,76 @@
     "head": null,
     "start": "96e0692d28a5317cc4d2ba3a1ac3848e411db4d2"
   },
+  "known": [
+    {
+      "area": "_run() in src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 757,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_claude_ignores_codex_only_subagent_keys_on_first_fix",
+      "work": 2
+    },
+    {
+      "area": "tests/test_claude_subagents.py",
+      "file": "tests/test_claude_subagents.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 63,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_6_claude_builder_gets_haiku_helpers misses kind selection",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "e34902cc383820914b9ec5f1a4fd499edf21d0fbfd72952b0ca0f5fc34253d54",
+    "changed": "b520991e20ae9436103c79044460ca8333f66c9b041c31910c6e9b1eebd281b4",
+    "commit": "95e60107cf95f8bf3d8d3b60f422930413c75329",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Test.\nCase: normal use - running the existing worker recovery tests.\nForwarding the configured budget now puts `gpt-6-luna` into the SDK's agent definitions for the fixture in tests/test_claude_worker_recovery.py:23. That test still asserts at line 77 that this value appears nowhere in the serialized options, so both its new-client and previous-adoption cases fail. Update the superseded fixture and assertion to verify the approved Claude helper behavior.",
+        "file": "src/forge/worker.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 757,
+        "priority": "P1",
+        "title": "Gate: test_2_claude_ignores_codex_only_subagent_keys_on_first_fix",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test.\nCase: normal use - a Claude lite fix has a helper pair different from build, or a design task retries after failure.\nEvery custom-budget case configures only build and runs BOARD/HELP; the design case runs only once with defaults. Hard-coding the worker's budget lookup to build would pass these assertions while ignoring lite settings. Likewise, selecting fix's budget on a design retry would escape coverage. Extend this command-level test with distinct kind budgets and a design failure retry to protect item 6's per-kind selection and unchanged helper settings.",
+        "file": "tests/test_claude_subagents.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 63,
+        "priority": "P1",
+        "title": "Gate: test_6_claude_builder_gets_haiku_helpers misses kind selection",
+        "work": 2
+      }
+    ],
+    "id": "992870af-ae6c-43ed-a305-9b36cb3050fa",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T02:37:44.382839+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T02:53:00.828774+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
