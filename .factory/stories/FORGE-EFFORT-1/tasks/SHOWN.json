@@ -1,5 +1,12 @@
 {
   "branch": "task/FORGE-EFFORT-1-SHOWN",
+  "chat": {
+    "approval": "64c3881c88c667b369704b842d343973bdb9da6adde66c963d45ac74a55f1b4e",
+    "claude": null,
+    "conversation": "01a18aab-e3ca-7962-9537-6df2027f03c4",
+    "head": null,
+    "start": "168f7bd66a48366aa248988b958b5d54c0a25650"
+  },
   "part_line_limit": 400,
   "round": 1,
   "status": "working",
