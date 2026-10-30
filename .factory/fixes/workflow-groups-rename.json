@@ -1,0 +1,15 @@
+{
+  "base": "390b30c1e9254e29c9d12fca8953315e9c0812bd",
+  "branch": "fix/workflow-groups-rename",
+  "done_when": "forge init and forge sync write the tests-passed job with TEST_GROUP_RESULT instead of GROUPS, and the required tests check still passes and fails as before",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-30T08:44:04.369485+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The generated workflow's tests-passed job names an env var GROUPS, a name Bash reserves; strict client reviews keep raising it as a serious finding and clients cannot edit the generated file"
+}
