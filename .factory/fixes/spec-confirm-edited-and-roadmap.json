@@ -1,6 +1,13 @@
 {
   "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
   "branch": "fix/spec-confirm-edited-and-roadmap",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d03-c003-7951-baed-dac47978b333",
+    "head": null,
+    "start": "6eb8d22a92aad4086e3228895edc908209843214"
+  },
   "done_when": "spec confirm on an edited spec confirms the new text, and spec confirm refuses a spec with no Roadmap lines before the owner confirms it",
   "fix_kind": "backend",
   "kind": "fix",
