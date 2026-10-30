@@ -21,6 +21,17 @@
       "item": "docskip-file-built-paths",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_member_removal_guide.py\tThe member-removal test has no story key, so the rule check fails on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_member_removal_guide.py",
+      "line": 13,
+      "text": "The member-removal test has no story key, so the rule check fails on the default branch.",
+      "from": "worker",
+      "item": "docskip-file-built-paths",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
