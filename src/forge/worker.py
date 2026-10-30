@@ -16,7 +16,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import claude_sdk, codex, doctor, machine, native, repo, story, task
+from forge import claude_sdk, codex, doctor, machine, native, repo, roles, story, task
 from forge.repo import git, refuse
 
 HERE = Path(__file__).parent
@@ -298,6 +298,7 @@ def _work(args: argparse.Namespace) -> bool:
         nudged = ""
         try:
             if not on_codex:
+                budget = repo.subagent_budget(config, "build" if design else kind.lower())
                 before = story._snapshot(top) if design else None  # pyright: ignore[reportPrivateUsage]
 
                 def before_turn() -> None:
@@ -309,7 +310,7 @@ def _work(args: argparse.Namespace) -> bool:
                 try:
                     final = _claude(item, top, brief, fresh_brief, claude,
                             session, thread, None if fresh == "first turn" else fresh,
-                            before_turn if design else None)
+                            budget, before_turn if design else None)
                 except (repo.Refused, OSError) as error:
                     # Only both with split falls back; one tool, or the owner's chosen one, keeps its
                     # failed round.
@@ -353,7 +354,7 @@ def _work(args: argparse.Namespace) -> bool:
                         print(NUDGING, flush=True)
                         saved = codex.record(top, item)["claude"]
                         try:
-                            nudged = _run(item, top, nudge, claude, resume=saved["id"])
+                            nudged = _run(item, top, nudge, claude, budget, resume=saved["id"])
                         finally:
                             codex._record(codex._item_file(top, item, ".json", kind),
                                 claude={**saved, "head": git("rev-parse", "HEAD", cwd=top)})
@@ -698,6 +699,7 @@ def _existing_tests(top: Path, scope: list[str]) -> str:
 
 def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: list[str],
             session: dict[str, Any] | None, resume: str | None, why: str | None,
+            budget: dict[str, str],
             before_turn: Callable[[], None] | None = None) -> str:
     """A Claude worker's round: continue session `resume` with the short brief, else start a new
     session with the whole brief and say why when there was one to continue. When Claude says it
@@ -714,7 +716,7 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
                 before_turn()
             size = log.stat().st_size if log.exists() else 0
             try:
-                return _run(item, top, brief, models, resume=resume)
+                return _run(item, top, brief, models, budget, resume=resume)
             except repo.Refused:
                 # Claude refuses a session it doesn't have before the turn starts, with this line.
                 output = log.read_bytes()[size:].decode("utf-8", "replace")
@@ -733,14 +735,14 @@ def _claude(item: str, top: Path, brief: str, fresh_brief: str | None, models: l
         codex.remember(top, item, codex._json(path))
         if before_turn is not None:
             before_turn()
-        return _run(item, top, fresh_brief or brief, models, session_id=session["id"])
+        return _run(item, top, fresh_brief or brief, models, budget, session_id=session["id"])
     finally:
         if session:
             codex._record(path, claude={**session, "rounds": rounds + 1,
                                         "head": git("rev-parse", "HEAD", cwd=top)})
 
 
-def _run(item: str, top: Path, brief: str, models: list[str],
+def _run(item: str, top: Path, brief: str, models: list[str], budget: dict[str, str],
          *, resume: str | None = None, session_id: str | None = None) -> str:
     """Drive the isolated Claude SDK; stream its messages to the terminal and the log."""
     log = repo.work_log(top, item)
@@ -751,7 +753,10 @@ def _run(item: str, top: Path, brief: str, models: list[str],
                "model": models[models.index("--model") + 1],
                "effort": models[models.index("--effort") + 1],
                "permission_mode": "bypassPermissions", "add_dirs": [str(CONVENTIONS)],
-               "resume": resume, "session_id": session_id}
+               "resume": resume, "session_id": session_id,
+               "agents": {name: {"description": description, "prompt": instructions, **budget}
+                          for name, (_, description, instructions) in
+                          {**roles.ROLES, "general-purpose": roles.ROLES["worker"]}.items()}}
     final_result = None
     with repo.record_run(top, item, "worker", family="claude",
                          model=models[models.index("--model") + 1],

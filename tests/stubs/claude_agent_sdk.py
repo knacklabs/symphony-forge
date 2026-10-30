@@ -9,6 +9,14 @@ import sys
 
 
 @dataclasses.dataclass
+class AgentDefinition:
+    description: str
+    prompt: str
+    model: str | None = None
+    effort: str | None = None
+
+
+@dataclasses.dataclass
 class ClaudeAgentOptions:
     model: str | None = None
     effort: str | None = None
@@ -21,6 +29,7 @@ class ClaudeAgentOptions:
     env: dict = dataclasses.field(default_factory=dict)
     system_prompt: dict | None = None
     setting_sources: list | None = None
+    agents: dict[str, AgentDefinition] | None = None
     stderr: object = None
 
 
@@ -63,11 +72,16 @@ class ResultMessage:
 async def query(*, prompt, options):
     here = Path(__file__).resolve().parent.parent
     values = {key: value for key, value in vars(options).items() if key != "stderr"}
+    if options.agents is not None:
+        values["agents"] = {name: dataclasses.asdict(definition)
+                            for name, definition in options.agents.items()}
     log = here / "claude-sdk-calls.jsonl"
     session = options.resume or options.session_id
     with log.open("a", encoding="utf-8") as out:
         out.write(json.dumps({"options": values, "prompt": prompt, "cwd": os.getcwd(),
                               "worker": os.environ.get("FORGE_WORKER"),
+                              "process_env": {"CLAUDE_CODE_SUBAGENT_MODEL": os.environ.get(
+                                  "CLAUDE_CODE_SUBAGENT_MODEL")},
                               "session_id": session}) + "\n")
     store = here / "claude-sdk-sessions.json"
     legacy = here / "claude-sessions.json"

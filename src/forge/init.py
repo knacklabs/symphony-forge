@@ -79,6 +79,8 @@ effort = "low"
 [models.build.claude]
 model = "claude-sonnet-5-5"
 effort = "low"
+subagents = "claude-haiku-5-5"
+subagent_effort = "high"
 
 [models.fix.codex]
 model = "gpt-6.1-sol"
@@ -87,6 +89,8 @@ effort = "low"
 [models.fix.claude]
 model = "claude-sonnet-5-5"
 effort = "low"
+subagents = "claude-haiku-5-5"
+subagent_effort = "high"
 
 [models.lite.codex]
 model = "gpt-6.1-sol"
@@ -97,6 +101,8 @@ subagent_effort = "max"
 [models.lite.claude]
 model = "claude-sonnet-5-5"
 effort = "low"
+subagents = "claude-haiku-5-5"
+subagent_effort = "high"
 
 [models.explore.codex]
 model = "gpt-6.1-sol"

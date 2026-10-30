@@ -5,7 +5,7 @@ import json
 import sys
 
 from claude_agent_sdk import (
-    AssistantMessage, ClaudeAgentOptions, ResultMessage, SystemMessage, TextBlock, ToolUseBlock,
+    AgentDefinition, AssistantMessage, ClaudeAgentOptions, ResultMessage, SystemMessage, TextBlock, ToolUseBlock,
     query,
 )
 
@@ -37,6 +37,7 @@ async def turn(request):
         env={"FORGE_WORKER": "1"},
         system_prompt={"type": "preset", "preset": "claude_code"},
         setting_sources=["user", "project", "local"],
+        agents={name: AgentDefinition(**definition) for name, definition in request["agents"].items()},
         stderr=lambda line: print(line, file=sys.stderr, flush=True))
     failed = False
     async for message in query(prompt=request["prompt"], options=options):

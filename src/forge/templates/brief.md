@@ -124,6 +124,10 @@ If another program holds the earlier Codex conversation, Forge retries once. If 
 held, work starts a new conversation with the whole brief and says why in one line.
 
 $delegation
+- Claude SDK workers get their helper roles and `general-purpose` through turn options only.
+  Each worker kind uses its `subagents` and `subagent_effort` pair, or `claude-haiku-5-5` at
+  high when it has no pair. Design turns use the build pair. Helper settings stay the same
+  after a failed round and set no process-wide value or `settings.json` value.
 - Edit files only inside this checkout.
 - $settings
 - After a merge of the default branch, close keeps that branch's settings unless this item's

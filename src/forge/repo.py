@@ -593,6 +593,7 @@ DESIGN_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
 CLAUDE_GRILL_DEFAULT = {"model": "claude-opus-5-5", "effort": "high"}
 TOP_EFFORT = {"codex": "high", "claude": "xhigh"}
+SUBAGENT_DEFAULT = {"model": "claude-haiku-5-5", "effort": "high"}
 
 
 def round_effort(chosen: dict[str, str], family: str, failed: bool) -> dict[str, str]:
@@ -778,6 +779,13 @@ def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
 def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     """A worker's models for this kind: forge.toml's entry for the family, else Forge's default."""
     return models(cfg, kind, family) or WORKER_DEFAULTS[family]
+
+
+def subagent_budget(cfg: dict[str, Any], kind: str) -> dict[str, str]:
+    """A Claude worker kind's helper pair, or the default when that kind has no pair."""
+    entry = models(cfg, kind, "claude")
+    return ({"model": entry["subagents"], "effort": entry["subagent_effort"]}
+            if "subagents" in entry else SUBAGENT_DEFAULT)
 
 
 def worker(cfg: dict[str, Any], kind: str, design: bool,
