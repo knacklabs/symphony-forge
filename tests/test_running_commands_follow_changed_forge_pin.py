@@ -13,7 +13,7 @@ import pytest
 from conftest import FORGE_SHIM, IDLE_MACHINE, REAL_UV, ROOT, _install
 from test_close import body, env, run  # noqa: F401
 from test_close_waits_for_review_loop_choice import stopped
-from test_land import ITEM, URL, _fix, _red_checks, _workers, land  # noqa: F401
+from test_land import COMMITS, ITEM, URL, _fix, _red_checks, _workers, land  # noqa: F401
 
 
 def _earlier_release(env, *, real_uv=False):
@@ -99,8 +99,8 @@ subprocess.run(["git", "merge", "-q", "--no-edit", "origin/main"], check=True,
                stdin=subprocess.DEVNULL, timeout=60)
 '''
     upgrade = "".join("    " + line + "\n" for line in upgrade.splitlines())
-    module.write_text(worker.replace('    if not int(os.environ.get(',
-                      upgrade + '    if not int(os.environ.get(', 1), "utf-8")
+    marker = "    " + COMMITS.splitlines()[0]
+    module.write_text(worker.replace(marker, upgrade + marker, 1), "utf-8")
 
 
 @pytest.mark.parametrize("adoption", ["fresh", "earlier-adopted"])
