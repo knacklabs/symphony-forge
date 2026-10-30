@@ -1,0 +1,123 @@
+{
+  "branch": "task/FORGE-PACE-1-DESIGN",
+  "chat": {
+    "approval": "d4d8358328732737d1c7870ab4fb844c6487ec5e7e7775ba471afc64804839c1",
+    "claude": null,
+    "conversation": "01a143fa-9133-7d11-893d-3e406f4c22cd",
+    "head": null,
+    "start": "0e50a4bc8a6bec6d65f840b253860550898c15c6"
+  },
+  "flagged": [
+    "src/forge/close.py",
+    "src/forge/design.py",
+    "src/forge/task.py"
+  ],
+  "known": [
+    {
+      "area": "require_prototype() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 73,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Every prototype and every story with user-facing parts starts with the design skill's init",
+      "work": 2
+    },
+    {
+      "area": "check() in src/forge/design.py",
+      "file": "src/forge/design.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 17,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Require a design for User-facing=true plans",
+      "work": 1
+    },
+    {
+      "area": "start() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 297,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Reject task branches that change the approved design",
+      "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 191,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Gate: test closing a task with a pre-upgrade approval",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "5efe99558fd6844b75859b4a4cbdbdbba9f57fe473aec8383ee5976fb7307df1",
+    "changed": "a85f522c62a993ec2ea1e55397a19e21d22d1a11bb66bd0a1ac78cd9274e6d8e",
+    "commit": "33c8cc44467672642a7ff07c8320134698f40d4a",
+    "dismissals": [],
+    "findings": [],
+    "id": "8cc68263-4eb0-4d53-878e-c68a1d5ea136",
+    "status": "clean"
+  },
+  "round": 8,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T09:09:56.753834+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-16T09:58:29.605067+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T10:46:23.317305+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-16T15:43:41.710553+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T12:21:25.756638+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T13:33:52.839954+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T14:23:38.167652+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T16:42:01.608587+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "5ef4c743-4026-4720-ba67-009751c3747c",
+    "head": "6b495ddff30703bf9df9da1b09e2a2469fcd88ba",
+    "keys": {},
+    "round": 7
+  },
+  "worker": "codex"
+}

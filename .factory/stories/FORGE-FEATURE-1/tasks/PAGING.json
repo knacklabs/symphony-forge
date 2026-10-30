@@ -1,0 +1,100 @@
+{
+  "allow_large": "The owner chose to keep the paging API and the projects screen in one part, because the screen in both starters calls the list API and they cannot merge apart",
+  "branch": "task/FORGE-FEATURE-1-PAGING",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "file": "src/forge/templates/starter/apps/api/test/projects.e2e-spec.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 16,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Preserve the sign-up rate-limit repair",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter-python/apps/api/app/projects/schema.py",
+      "file": "src/forge/templates/starter-python/apps/api/app/projects/schema.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 41,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Accept every cursor generated for a valid project name",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "file": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 221,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Apply the list filters to CSV exports",
+      "work": 3
+    },
+    {
+      "area": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "file": "src/forge/templates/starter/libs/projects/web/src/pages/projects-page.tsx",
+      "gain": 3,
+      "harm": 3,
+      "line": 256,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Keep first-page recovery on filtered empty cursor pages",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c398120b8451caac3e1e8b6f3642f26cc5c6afb9ff6b8bf4a44cb47fcfa0643d",
+    "changed": "474b076bdf7286dbf29089bc42eed5303613354b19678d87325ac93b6f6ccf16",
+    "commit": "37acf6a30b86c88ff40339677967352feb05dff9",
+    "dismissals": [],
+    "findings": [],
+    "id": "b6816692-ff75-45ec-8a15-a4b6604c1e47",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T10:17:36.496894+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T11:05:51.591713+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T11:34:48.484498+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T11:45:28.465542+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "83bca9d6-ed40-4aff-bf48-2645cce84492",
+    "head": "b2f06a2266a84174663ca0e9f386ad7b55d4b7f5",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "claude"
+}

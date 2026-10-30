@@ -1,0 +1,50 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/stop-waits-for-owner",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fff-15d5-7bd2-a800-8eb3766f6cd2",
+    "head": null,
+    "start": "912333234eee551fd553da7d66ad5af5e8e2bcd5"
+  },
+  "done_when": "A stop that asks the owner is cleared only by the owner's recorded choice; a merge of main or a new review never clears it, and a test merges main into a stopped item and then records the choice, on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a8af2cc2af4f08599c25bfce2393721b1853b0c2e731cdfeb883cc5adc25e115",
+    "changed": "ce4b45972916b9ed860df6683a36897537cb44d523b290735b8317c1cf71eae1",
+    "commit": "9179c10f46b2a5cbae9fc9962da5ab5f5cfce0ed",
+    "dismissals": [],
+    "findings": [],
+    "id": "dd049f49-cd1d-4666-adf1-06f73ab1dfc9",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:58:44.001927+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:37:49.047157+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:31:07.344259+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2d8c173c-021c-44bf-923e-ef82b3dc7e57",
+    "head": "e0b217b0ab062ab4fc97558a39cb716cf74dee29",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A stop that asks the owner is cleared when main is merged into the item and the next review is clean, so the owner's answer can no longer be recorded (issue 932)",
+  "worker": "codex"
+}

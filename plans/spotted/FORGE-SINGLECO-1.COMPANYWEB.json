@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "improve\tsrc/forge/templates/starter/apps/web/src/app.tsx\tThe browser tab still reads \"Create account\" on the closed sign-up page.",
+      "kind": "improve",
+      "path": "src/forge/templates/starter/apps/web/src/app.tsx",
+      "line": 43,
+      "text": "The browser tab still reads \"Create account\" on the closed sign-up page.",
+      "from": "worker",
+      "item": "FORGE-SINGLECO-1/COMPANYWEB",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

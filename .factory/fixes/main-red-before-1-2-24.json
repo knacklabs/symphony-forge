@@ -1,0 +1,45 @@
+{
+  "base": "1967b96d9bf12bab966b66130ed34cb0d80739d3",
+  "branch": "fix/main-red-before-1-2-24",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a185a8-a71b-7ed0-abbb-c2834d2f07a8",
+    "head": null,
+    "start": "ac4acb7c5643da8ddec4ce8ed3e17b2fcf0966b0"
+  },
+  "done_when": "Those four test files pass on this branch and every test the merged changes touched still passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "15966014750609b161da5bd8c264127d349bbacac27366ce50f27cfb0be7b32c",
+    "changed": "4b94595c26e897ec403f57b5e32ae008bc0cbe72ef79ceb13f5af30d08bd7429",
+    "commit": "3abe41bc1e03a9a6a1ecae61fa66e9137f8249d7",
+    "dismissals": [],
+    "findings": [],
+    "id": "f51fbbff-7559-4848-8041-0491928a60d7",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T03:16:06.866584+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T03:23:47.602225+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "85f5b4a512030c1b48f500c1dadec6b74e7a1686",
+    "keys": {},
+    "round": null
+  },
+  "why": "The nightly full run on main is red, which blocks the v1.2.24 hotfix release: tests/test_machine_tab_lanes.py, tests/test_platform_sensitive_selection.py, tests/test_small_test_runs_skip_the_test_line.py and tests/test_standards.py fail after the day's merges (nightly run 40662161886)",
+  "worker": "codex"
+}

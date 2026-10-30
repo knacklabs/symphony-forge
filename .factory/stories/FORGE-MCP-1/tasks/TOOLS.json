@@ -1,0 +1,152 @@
+{
+  "allow_large": "The owner allowed every MCP story part to go over the line limit (25 Oct)",
+  "branch": "task/FORGE-MCP-1-TOOLS",
+  "chat": {
+    "approval": "1f115deaacad6f96cad786da78b6bc3172cc164cd891d26f118e71c6b3381bdf",
+    "claude": null,
+    "conversation": "01a17d1c-865d-7fa1-be3f-46d44610a564",
+    "head": null,
+    "start": "3bb92b582e5d558eff353bf4e8f20cbbc58c7e3b"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
+      "file": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 146,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Accept null optional fields in generated tool results",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
+      "file": "src/forge/templates/starter/libs/core/server/src/common/tools.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 170,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve parent tool reads when a linked item is deleted",
+      "work": 2
+    },
+    {
+      "area": "render_mcp_cases() in src/forge/feature_tests.py",
+      "file": "src/forge/feature_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 121,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: generated MCP cases must respect feature permissions",
+      "work": 2
+    },
+    {
+      "area": "test_3_each_feature_has_its_tools() in tests/test_mcp.py",
+      "file": "tests/test_mcp.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 179,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: tools-copy assertions reject the generated literals",
+      "work": 1
+    },
+    {
+      "area": "render_mcp_cases() in src/forge/feature_tests.py",
+      "file": "src/forge/feature_tests.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: MCP filters and response formats need boundary assertions",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a229d09e532b90099e7f993852b5bedf317985ccb16bc7347f751055c6174fbc",
+    "changed": "7fc63fb7faf91132ed125a99eb0740cc03af11a1e0fa65561ce11480c2a931df",
+    "commit": "a95569e5b5463b9308f1011f6001446fc4954a0f",
+    "dismissals": [],
+    "findings": [],
+    "id": "bec00bd5-5628-498b-bc16-70a1ee209350",
+    "status": "clean"
+  },
+  "round": 14,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T11:26:04.478598+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T11:58:15.062068+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:14:13.372024+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:23:54.086443+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:39:55.779303+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T12:57:15.545743+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T13:17:29.459446+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T13:39:34.745518+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T13:46:41.581870+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T14:13:32.475322+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T14:44:13.999632+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T15:09:10.282195+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T01:27:27.662288+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a9da9b89-bc03-4dfd-9b3e-4935ec26c785",
+    "head": "1f935acfcfe2724fffc25a74476cea48f8c93b48",
+    "keys": {},
+    "round": 12
+  },
+  "worker": "codex"
+}

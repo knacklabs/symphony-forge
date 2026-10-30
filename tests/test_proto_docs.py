@@ -12,17 +12,18 @@ def test_11_prototype_precedes_signoff_and_stories_in_the_docs():
     guide = (ROOT / "docs/guide.md").read_text(encoding="utf-8")
     ruling = decision.read_text(encoding="utf-8")
 
-    stages = [line.split("|", 2)[1].strip() for line in readme.splitlines()
-              if line.startswith("| ") and line.split("|", 2)[1].strip()[:1].isdigit()]
-    assert [stage.split(". ", 1)[1] for stage in stages[:6]] == [
-        "Find the problem", "Pick an option", "Build the prototype",
-        "Demo and review", "Client sign-off", "Plan the stories",
-    ]
-    route = guide.split("### A new client project", 1)[1].split("## Commands", 1)[0]
+    # The new seven-step README journey has its own owner-boundary test.
+    route = " ".join(guide.split("### A new client project", 1)[1].split("## Commands", 1)[0].split())
     assert route.index("Start with FDE discovery") < route.index("Build and demo the prototype")
-    assert route.index("prototype and answers strictly reviewed") < route.index(
+    assert route.index("Resolve the answers, then run the sign-off checks") < route.index(
         "The customer's named person approves") < route.index("Only after accepted client sign-off")
+    assert route.index("reviews the canvas against the whole brief") < route.index(
+        "The customer's named person approves")
+    assert route.index("A working prototype also gets one strict whole-product review") < route.index(
+        "The customer's named person approves")
     assert route.index("Only after accepted client sign-off") < route.index("create stories")
+    assert "a canvas-only sign-off does not need that review." in route
+    assert "A working prototype also gets one strict whole-product review" in route
     assert "[decision 0095](docs/decisions/0095-prototype-before-stories.md)" in readme
     assert "[decision 0095](decisions/0095-prototype-before-stories.md)" in guide
 

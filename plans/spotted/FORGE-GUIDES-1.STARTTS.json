@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_mod_native.py\tThe plugin validation command exceeded its 120-second limit in CI without output.",
+      "kind": "bug",
+      "path": "tests/test_mod_native.py",
+      "line": 31,
+      "text": "The plugin validation command exceeded its 120-second limit in CI without output.",
+      "from": "worker",
+      "item": "FORGE-GUIDES-1/STARTTS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -11,6 +11,8 @@ from pathlib import Path
 import pytest
 import conftest
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-HUSKY-HOOKS"
 FIXTURES = Path(__file__).parent / "fixtures"
 

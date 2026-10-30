@@ -12,7 +12,8 @@ import pytest
 
 from conftest import ROOT, _install, patient
 from test_setup import _fresh_client, _version
-from test_story import DOC, GRILL, READER, claude_plan, hook, new_story, setup, worktree
+from test_story import (DOC, GRILL, READER, approved_constitution, claude_plan, hook,
+                        new_story, setup, worktree)
 
 STORY = "story-from-goal"
 
@@ -24,7 +25,7 @@ def test_3_next_allows_a_new_problem_with_an_existing_roadmap_backlog(repo):
     setup(repo, kind="client", keys=("LATER",))
     suggested = repo.forge("next")
     assert suggested.returncode == 0, suggested.stdout + suggested.stderr
-    assert 'Next: forge story new <KEY> "<title>"' in suggested.stdout.splitlines()
+    assert 'Next: forge start "<idea>"' in suggested.stdout.splitlines()
 
 
 @pytest.fixture(params=["new-client", "adopted-v1.2.2"])
@@ -60,6 +61,7 @@ def client(repo, gh, tmp_path, request):
     repo.git("add", "-A", cwd=folder)
     repo.git("commit", "-qm", "Upgrade and sync client guidance", cwd=folder)
     _merge_fixture(repo, folder, "fix/prepare-client-settings")
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     return repo
 

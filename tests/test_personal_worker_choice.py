@@ -10,6 +10,7 @@ from conftest import ROOT, patient
 from test_close import env  # noqa: F401
 from test_codex_worker import _codex_repo, sdk_data  # noqa: F401
 from test_setup import _fresh_client, _stub_forge
+from test_story import prototype_design
 from test_worker import calls, install_claude
 
 STORY = "personal-worker-choice"
@@ -74,6 +75,9 @@ def test_1_each_clone_chooses_its_own_worker_with_no_tracked_change(repo, monkey
     assert (f"Next: forge work {name}  # Claude builds it (forge.local.toml: tools = claude; "
             "forge.toml: workers = codex; built-in default: models.lite)") in shown, shown
     # An explicit UI fix is design work; forge next previews the worker forge work picks for it.
+    # Design approval is a prerequisite; this test owns the local worker choice after approval.
+    prototype_design(repo)
+    repo.git("add", "docs/decisions/0001-prototype-design.md")
     config = repo.path / "forge.toml"
     config.write_text(config.read_text("utf-8").replace('repo = "client"', 'repo = "client"\nstage = "prototype"'),
                       "utf-8")

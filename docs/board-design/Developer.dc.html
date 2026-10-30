@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge board, my now</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #F4F5F2; color: #15171A; font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums; display: flex; flex-direction: column">
+
+  <header style="height: 48px; flex: none; background: #15171A; color: #ECEDEA; display: flex; align-items: center; gap: 24px; padding: 0 32px">
+    <span style="font-size: 14px; font-weight: 600">Forge <span style="font-weight: 400; color: #B4B8BC">symphony-forge</span></span>
+    <nav aria-label="Pages" style="display: flex; gap: 4px">
+      <a href="Developer.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; background: #ECEDEA; color: #15171A; border-radius: 6px; padding: 6px 12px">Now</a>
+      <a href="Releases.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Releases</a>
+      <a href="Insights.dc.html" style="font-size: 14px; color: #B4B8BC; padding: 6px 12px">Insights</a>
+    </nav>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 16px">
+      <div role="group" aria-label="View" style="display: flex; background: #2C3034; border-radius: 6px; padding: 2px">
+        <a href="Manager.dc.html" style="font-size: 12px; color: #B4B8BC; padding: 4px 12px">Team</a>
+        <a href="Developer.dc.html" aria-current="page" style="font-size: 12px; font-weight: 600; background: #ECEDEA; color: #15171A; border-radius: 4px; padding: 4px 12px">Me</a>
+      </div>
+      <span style="font-size: 12px; color: #B4B8BC; display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #5CC8B8"></span>Live</span>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px">
+
+    <section aria-label="Needs you" style="display: flex; align-items: stretch; gap: 16px; flex: none">
+      <div style="width: 96px; display: flex; flex-direction: column; justify-content: center">
+        <span style="font-size: 12px; font-weight: 600; color: #15171A">@vrknetha</span>
+        <span style="font-size: 24px; font-weight: 600; color: #B54708">1</span>
+        <span style="font-size: 12px; color: #4A4F57">needs you</span>
+      </div>
+      <a href="Drawer.dc.html" style="width: 300px; background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+        <span style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; color: #FFFFFF; background: #B54708; border-radius: 3px; padding: 2px 8px">Decide</span><span style="font-size: 12px; color: #6B717A">MAINONCE</span></span>
+        <span style="font-size: 14px; font-weight: 600">Spotted per change</span>
+        <span title="waiting 1 h 10 m" style="display: flex; height: 4px; border-radius: 2px; background: #EEEFEC"><span style="width: 30%; background: #B54708; border-radius: 2px"></span></span>
+      </a>
+    </section>
+
+    <div style="flex: 1; min-height: 0; display: flex; gap: 24px">
+
+      <section aria-label="My items" style="flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+          <div style="background: #EEEFEC; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 2px 4px">
+              <span style="font-size: 14px; font-weight: 600">{{c.name}}</span>
+              <span style="font-size: 12px; color: #4A4F57">{{c.count}}</span>
+            </div>
+            <sc-for list="{{c.chips}}" as="h" hint-placeholder-count="2">
+              <a href="Drawer.dc.html" style="background: #FFFFFF; border: 1px solid {{h.line}}; border-left: 3px solid {{h.color}}; border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px">
+                <span style="display: flex; gap: 6px; align-items: baseline">
+                  <span style="font-size: 14px; font-weight: 600; line-height: 18px; flex: 1; min-width: 0">{{h.title}}</span>
+                  <span style="font-size: 12px; color: {{h.tagColor}}; background: {{h.tagBg}}; border-radius: 3px; padding: 0 5px; white-space: nowrap; font-weight: {{h.tagWeight}}">{{h.tag}}</span>
+                </span>
+                <sc-if value="{{h.hasStrip}}" hint-placeholder-val="{{true}}">
+                  <span style="display: flex; height: 4px; border-radius: 2px; overflow: hidden; width: {{h.len}}">
+                    <span style="flex: {{h.work}}; background: {{h.color}}"></span>
+                    <span style="flex: {{h.wait}}; background: repeating-linear-gradient(135deg, #C9CCC6 0 3px, #F4F5F2 3px 6px)"></span>
+                    <span style="flex: {{h.you}}; background: repeating-linear-gradient(135deg, #F0A35C 0 3px, #FDF0E6 3px 6px)"></span>
+                  </span>
+                </sc-if>
+                <sc-if value="{{h.findings}}" hint-placeholder-val="{{false}}">
+                  <span style="font-size: 12px; font-weight: 600; color: #9F1239">1 finding</span>
+                </sc-if>
+              </a>
+            </sc-for>
+            <sc-if value="{{c.emptyNote}}" hint-placeholder-val="{{false}}">
+              <span style="font-size: 12px; color: #6B717A; padding: 4px 2px">{{c.emptyText}}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </section>
+
+      <aside style="width: 320px; flex: none; display: flex; flex-direction: column; gap: 16px">
+        <section aria-label="Live runs" style="background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline">
+            <span style="font-size: 17px; font-weight: 600">Live</span>
+            <span style="font-size: 12px; color: #4A4F57">3 of 4 places</span>
+          </div>
+          <sc-for list="{{runs}}" as="r" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 5px">
+              <span style="display: flex; gap: 8px; align-items: baseline"><span style="width: 8px; height: 8px; border-radius: 999px; background: #1D4ED8"></span><span style="font-size: 14px; font-weight: 600; flex: 1">{{r.title}}</span><span style="font-size: 12px; color: #6B717A">{{r.who}}</span></span>
+              <span style="font-size: 12px; color: #4A4F57; padding-left: 16px">{{r.now}}</span>
+              <span style="display: flex; height: 3px; border-radius: 2px; background: #EEEFEC; margin-left: 16px"><span style="width: {{r.len}}; background: #1D4ED8; border-radius: 2px"></span></span>
+            </div>
+          </sc-for>
+        </section>
+      </aside>
+    </div>
+
+    <section aria-label="Figures" style="flex: none; display: flex; gap: 48px; border-top: 1px solid #E2E4E0; padding-top: 14px">
+      <sc-for list="{{figures}}" as="f" hint-placeholder-count="4">
+        <div style="display: flex; align-items: baseline; gap: 8px">
+          <span style="font-size: 24px; font-weight: 600; color: {{f.color}}">{{f.value}}</span>
+          <span style="font-size: 12px; color: #4A4F57">{{f.label}}</span>
+        </div>
+      </sc-for>
+      <span style="margin-left: auto; font-size: 12px; color: #8A9096; align-self: center">Sample data</span>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const base = { line: '#E2E4E0', tagColor: '#6B717A', tagBg: 'transparent', tagWeight: 400, hasStrip: true, you: 0, findings: false };
+    const fix = { tagColor: '#4A4F57', tagBg: '#EEEFEC' };
+    const moving = { ...base, color: '#1D4ED8' };
+    return {
+      cols: [
+        { name: 'Planned', count: '1', chips: [ { ...base, color: '#8A9096', hasStrip: false, title: 'Close takes in main once', tag: 'MAINONCE' } ] },
+        { name: 'Building', count: '2', chips: [
+          { ...moving, title: 'Main only on a clash', tag: 'MAINONCE', work: 55, wait: 45, len: '60%' },
+          { ...moving, ...fix, title: 'Windows tests pass again', tag: 'Fix', work: 70, wait: 25, you: 5, len: '100%' } ] },
+        { name: 'Review', count: '1', chips: [
+          { ...moving, color: '#9F1239', line: '#9F1239', title: 'Spotted per change', tag: '3 rounds', tagColor: '#9F1239', tagWeight: 600, work: 60, wait: 20, you: 20, len: '70%', findings: true } ] },
+        { name: 'Ready', count: '0', chips: [], emptyNote: true, emptyText: 'Nothing ready.' },
+        { name: 'Merged', count: '23', chips: [], emptyNote: true, emptyText: '23 of yours in 7 days.' }
+      ],
+      runs: [
+        { title: 'Windows tests pass again', who: 'Codex', now: 'Fix round 2 · reviewing', len: '90%' },
+        { title: 'Main only on a clash', who: 'Codex', now: 'Build round 1 · tests 72 of 140', len: '50%' },
+        { title: 'Spotted per change', who: 'Codex', now: 'Fix round 2 · building', len: '10%' }
+      ],
+      files: [
+        { file: 'src/forge/close.py', by: 'Main only on a clash' },
+        { file: 'src/forge/merge.py', by: 'Main only on a clash' },
+        { file: 'tests/test_board_after_upgrade.py', by: 'Windows tests pass again' }
+      ],
+      figures: [
+        { value: '4', label: 'my items open', color: '#15171A' },
+        { value: '3', label: 'runs live', color: '#1D4ED8' },
+        { value: '1', label: 'open finding', color: '#9F1239' },
+        { value: '23', label: 'merged in 7 days', color: '#15171A' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

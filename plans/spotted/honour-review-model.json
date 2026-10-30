@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tGate: update obsolete expectations in existing review tests\thonour-review-model",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 941,
+      "text": "Gate: update obsolete expectations in existing review tests",
+      "from": "blocking",
+      "item": "honour-review-model",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-SKIPPED-TEMPLATES"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,7 +23,10 @@ def test_6_windows_installer_is_a_required_pull_request_check():
     job = re.search(r"^  windows-installers:\n(.*?)(?=^  \S|\Z)", workflow, re.M | re.S)
     assert job, "Windows installer cases need a pull-request job"
     assert "runs-on: windows-latest" in job[1]
-    assert "if:" not in job[1] and "continue-on-error:" not in job[1]
+    # The job stays required on PRs. Only its push steps can reuse passed proof;
+    # step conditions must not be mistaken for a condition that skips the job.
+    assert not re.search(r"^    if:", job[1], re.M)
+    assert "continue-on-error:" not in job[1]
     command = re.search(r"^      - run: (.+)$", job[1], re.M)
     assert command
     tokens = shlex.split(command[1])

@@ -1,0 +1,46 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/trim-chat-brief-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14dd2-ed30-7433-a277-1349a94a8537",
+    "head": null,
+    "start": "7be4b21e8c57e4ef6ccad2b36428939a4a9d5572"
+  },
+  "done_when": "The listed duplicate tests and repeated adopted rows are gone, every assertion no other test owns moved into a kept sibling, each rule keeps one adopted case, and the touched tests pass",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0690c37e3857f71e335a20fabbbbed0a600fbc2b8088c516b91f848ad89023ff",
+    "changed": "1b59469ab21bd2b5bd407b01416310411938ea641a77ea1204cc16aa64f2434f",
+    "commit": "276f8f66a9a68423559cd434235e961c17e5452a",
+    "dismissals": [],
+    "findings": [],
+    "id": "732b9ae6-d4d7-4aaa-8412-4b7bde2876ec",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:34:36.810383+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T07:27:15.114171+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "cfc54c23459d1074b025b514bb82c69e6ea88b74",
+    "keys": {},
+    "round": null
+  },
+  "why": "The spec chat, cancelled CI, brief and merge-enable tests repeat adopted rows and rebuild the same fixture per test",
+  "worker": "codex"
+}

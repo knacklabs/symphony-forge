@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_board_server.py\tBoth client cases omit beta from rebuilt rows on the first request.",
+      "kind": "bug",
+      "path": "tests/test_board_server.py",
+      "line": 229,
+      "text": "Both client cases omit beta from rebuilt rows on the first request.",
+      "from": "worker",
+      "item": "FORGE-DROP-1/BOARD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_server.py\tBoth client cases report an update in progress on the first request.",
+      "kind": "bug",
+      "path": "tests/test_board_server.py",
+      "line": 264,
+      "text": "Both client cases report an update in progress on the first request.",
+      "from": "worker",
+      "item": "FORGE-DROP-1/BOARD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_board_server.py\tBoth client cases report no rebuilt rows on the first request.",
+      "kind": "bug",
+      "path": "tests/test_board_server.py",
+      "line": 145,
+      "text": "Both client cases report no rebuilt rows on the first request.",
+      "from": "worker",
+      "item": "FORGE-DROP-1/BOARD",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

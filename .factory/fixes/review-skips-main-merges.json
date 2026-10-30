@@ -1,0 +1,50 @@
+{
+  "base": "ddf2c24ab37e3bde066324d78c6dcb32d78bd010",
+  "branch": "fix/review-skips-main-merges",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14bc1-3624-7e52-b04e-c8f6ad1c054a",
+    "head": null,
+    "start": "063bd9c15e20bf6d98e88141b57445425925ef9f"
+  },
+  "done_when": "A review after a merge of the default branch covers only the change's own work, never commits that came from the default branch, and a test merges main with an unrelated change between two closes and sees no finding about it",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7ef2d360e7c15c5bd97def0871303bfc19a62bad1c3a5f59a20a0977e3cbaa05",
+    "changed": "efd3a32df61c2da44458325a564ba6948bcfb087ff148091f82d70794e8c3b61",
+    "commit": "a28673d895a9e3c3b4f7b62985fcfd4755412970",
+    "dismissals": [],
+    "findings": [],
+    "id": "e2fba5be-7aec-4aa7-b0ef-30318b61a9b4",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T21:25:09.925950+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T21:28:51.869088+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T21:57:02.467413+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "5eae27dd-980d-4dcf-889b-8df5f23695cd",
+    "head": "9f51e9bfb6a3fa68a91004299db6b04847109a14",
+    "keys": {},
+    "round": 1
+  },
+  "why": "After main is merged into a branch, close's next review covers every commit since the last review, including main's own new commits, so reviews blame the change for other merged work",
+  "worker": "codex"
+}

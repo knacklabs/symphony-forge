@@ -10,9 +10,12 @@ from conftest import _install
 from test_codex_record import BARE_SERVER, KILL, _codex_repo_direct, _held, _up
 from test_codex_worker import sdk_data  # noqa: F401 (a fixture)
 
+import pytest
+
 STORY = "tests-test-macos-app-server-py-test-12-a"
 
 
+@pytest.mark.platform
 def test_1_dead_driver_leaves_no_app_server_behind(repo, monkeypatch, sdk_data, claude_session):
     folder, calls = _codex_repo_direct(repo, monkeypatch, sdk_data)
     record = repo.path / ".git" / "forge" / "threads" / "task" / "BOARD" / "PAGE.json"

@@ -1,0 +1,45 @@
+{
+  "base": "829bb3379019c1b6d587f41b97961f9ff5e86d03",
+  "branch": "fix/windows-reuse-proof-utf8",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18000-96c6-7622-8f89-035d5182fc1d",
+    "head": null,
+    "start": "ba0f219645482f1fc289f42f54252b9bdce21575"
+  },
+  "done_when": ".github/reuse-test-proof.py decodes command output as UTF-8, so the tag run's Windows jobs get past the reuse step",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "372ff7c2fa566dcfe7a837f4de18038bb4321b64be84fb3deb564bdb0d3cbd2e",
+    "changed": "8094ae782e74274f99a790b588ed5809d6165eba20183f140a42795a34a4bc84",
+    "commit": "7d4224902d5a37f670161224fcb01be0a07adbdb",
+    "dismissals": [],
+    "findings": [],
+    "id": "546c8d5b-7981-4938-90c1-d5f52e947edb",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T00:54:25.052323+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T00:56:27.442641+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "3522cb7fddc7c54f446c26c3de677315a28d960d",
+    "keys": {},
+    "round": null
+  },
+  "why": "The v1.2.23 tag run fails on every Windows job: .github/reuse-test-proof.py reads gh output with the Windows default code page and crashes on a non-ASCII byte",
+  "worker": "codex"
+}

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: Records-only close still reviews Forge's planning records",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 43,
+      "text": "Not done: Records-only close still reviews Forge's planning records",
+      "from": "review",
+      "item": "records-only-review",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

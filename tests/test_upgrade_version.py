@@ -25,6 +25,7 @@ TOML = (
 )
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("text", [
     TOML,
     # A second version-looking line inside a multi-line setting.

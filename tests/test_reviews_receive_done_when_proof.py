@@ -99,9 +99,10 @@ def test_2_close_delivers_the_whole_proof_list_to_pr_and_first_review(env, kind)
     assert env.close(item).returncode == 0
     assert len(env.review_calls()) == 2
     assert checked(changed) in env.prompt()
-    # A later worker commit must not inherit an older round's list.
+    # The old contract dropped the list when the latest commit had no label.
+    # Close now retains the newest list and reuses the review when nothing changed.
     env.repo.git("commit", "--allow-empty", "-q", "-m", "Work without proof", cwd=where)
     assert env.close(item).returncode == 0
-    assert len(env.review_calls()) == 3
-    assert checked(changed) not in env.prompt()
+    assert len(env.review_calls()) == 2
+    assert checked(changed) in env.prompt()
     assert "missing list or entry is a P1" in env.prompt()

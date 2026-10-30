@@ -1,0 +1,80 @@
+{
+  "branch": "task/FORGE-SINGLECO-1-COMPANYAPI",
+  "chat": {
+    "approval": "0d08757b739604620f35179a62a256cd5855426df6dc569487a239533d4478c8",
+    "claude": null,
+    "conversation": "01a17431-25d9-7483-8780-29e42479313a",
+    "head": null,
+    "start": "605f0df598d44d07c9621d7ccfc5c24c208a30c9"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/api/src/setup-company.ts",
+      "file": "src/forge/templates/starter/apps/api/src/setup-company.ts",
+      "gain": 4,
+      "harm": 3,
+      "line": 13,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Load setup credentials from the documented .env file",
+      "work": 2
+    },
+    {
+      "area": "test_2_setup_makes_the_company_and_its_first_admin() in tests/test_one_company.py",
+      "file": "tests/test_one_company.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 26,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: run the one-company proof tests in live CI",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "13408eb3390f03383c06f74e9aa91f47fa08cd8373f85c6cf3983030614f7341",
+    "changed": "5cfb3fea736cd75e51c1f2c594dd1847c45470594e66e77a71826c51a8460cba",
+    "commit": "02d5df54da84b247ef470ef8b7ecac5351df5bc4",
+    "dismissals": [],
+    "findings": [],
+    "id": "e650477e-2ddb-4fc1-bed6-70cd87216384",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T17:52:03.919786+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T18:01:19.883409+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:04:11.552042+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:19:18.776987+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:36:55.935366+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "d0a50d07-a8dc-49c1-b840-d52d0082acf7",
+    "head": "ce1d1a8db261a597c202fa6bc77a7c2469b4400b",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

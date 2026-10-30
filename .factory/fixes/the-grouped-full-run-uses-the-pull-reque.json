@@ -1,0 +1,45 @@
+{
+  "base": "24d23d671483c7975cf6a257ce6d86f228e92c61",
+  "branch": "fix/the-grouped-full-run-uses-the-pull-reque",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a175f2-1c19-7120-8471-664771d282de",
+    "head": null,
+    "start": "e9b30c82b6224f74a86e1d62291fcb1e98f81391"
+  },
+  "done_when": "The generated full run's jobs have a 60-minute limit while the pull request tests keep theirs, in new and existing repos after sync",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4869ed73c5c30bfac475c077c32d76bcb161a4474485588937c195b44c024341",
+    "changed": "c3bfc9337c7d697076f16c952c1c5c7c39e9fc00ac3842d023e58a1e6ea80fd1",
+    "commit": "44293aac1c4093e062d65b1b32968340495c9e35",
+    "dismissals": [],
+    "findings": [],
+    "id": "92f57ce1-b6e5-4a40-8abe-6e3a8620c046",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T02:02:27.812140+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T02:05:40.444015+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "6016584515bf874115bd9d2b0334292e9eed1d94",
+    "keys": {},
+    "round": null
+  },
+  "why": "The grouped full run uses the pull request tests job's 30-minute limit, but each group of the whole suite needs 22 to 30 minutes on a 2-core runner, so groups are cancelled at the limit and no full run can pass, which blocks every release",
+  "worker": "codex"
+}

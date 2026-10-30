@@ -12,7 +12,7 @@ impeccable and emil-design-eng skills. This page lists what must be there and po
 
 ## 1. Components
 
-- shadcn/ui only, installed with its CLI (`npx shadcn@latest add <component>`). One set of
+- shadcn/ui only, installed with its pinned CLI (`npx shadcn@4.21.4 add <component>`, with `--cwd libs/shared/ui` when the app has that library). One set of
   accessible components you own as code.
 - Never hand-roll something shadcn already has (dialog, menu, select, tabs, table). A second
   version drifts in look and accessibility.

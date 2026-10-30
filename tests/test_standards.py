@@ -56,12 +56,21 @@ def test_36_client_apps_simple(repo, tmp_path):
             if re.search(concern, line, re.I):
                 assert re.search(r"\b(only|no|not|never)\b", line, re.I), line
 
-    # The stack conventions name Redis, queues, Terraform, OIDC and a monitoring stack only as added later.
+    # Audit: this prompt contract defers infrastructure until its story needs it.
+    # Immediate setup instructions are the regression. Guide-delivery tests check
+    # receipt, not this cross-page rule; no production test seam is needed.
+    # Jobs now use a worker and Postgres instead of a separate queue server.
     later = re.compile(r"\b(redis|queue|terraform|oidc|monitoring)s?\b", re.I)
     named = [line for p in CONVENTIONS for line in p.read_text(encoding="utf-8").splitlines()
              if later.search(line)]
     for line in named:
-        assert ADD_LATER in line.lower().replace("`", ""), line
+        if line.startswith("- Background jobs and schedules "):
+            assert "the story adds a worker in `services.toml`" in line, line
+            assert "Postgres jobs table read with `FOR UPDATE SKIP LOCKED`" in line, line
+            assert "No separate queue server" in line, line
+            assert "until that story, work happens inside the request." in line, line
+        else:
+            assert ADD_LATER in line.lower().replace("`", ""), line
     assert {match.lower() for line in named for match in later.findall(line)} == {
         "redis", "queue", "terraform", "oidc", "monitoring"}
 
@@ -106,11 +115,11 @@ CARRIED_OVER_RULES = {
                      "static text", "logs, temporary tables", "mailing-list", "Terraform", "TFSec"],
     "api.md": ["1-4 line description", "one PascalCase tag", "never `Misc`", "ErrorResponseDto",
                "error-code list", "path and query param"],
-    "backend.md": ["and local and dev too", "idempotent", "CreateXDto", "*.handler.ts", "never whole objects",
+    "backend.md": ["and local and dev too", "idempotent", "createXSchema", "*.handler.ts", "never whole objects",
                    "4xx at debug", "implements LoggerService"],
-    "frontend.md": ["packages/shared", "x-correlation-id"],
+    "frontend.md": ["libs/shared", "x-correlation-id"],
     "testing.md": ["idempotency test", "failure test"],
-    "stack.md": ["ESLint", "Prettier", "Terraform"],
+    "stack.md": ["ESLint", "Terraform"],
 }
 
 
@@ -140,7 +149,7 @@ def _logger_example_writes_the_documented_fields(tmp_path):
                       f"const self = {{ logger: new JsonLogger() }};\n{call.replace('this.', 'self.')}\n",
                       encoding="utf-8")
     out = subprocess.run(["node", str(script)], capture_output=True, text=True, check=True,
-                         env={**os.environ, "NODE_ENV": "Local"}).stdout
+                         env={**os.environ, "APP_ENV": "Local"}).stdout
     entry = json.loads(out.strip().splitlines()[-1])
     assert entry["message"] == "Invoice paid" and entry["context"] == {"invoiceId": "inv-1"}
     for field in ("timestampUtc", "level", "environment", "serviceName", "module", "correlationId"):

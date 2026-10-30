@@ -12,7 +12,7 @@ def test_1_new_direction_is_grilled_before_changes_in_both_synced_skills(repo, g
     gh.respond("api", stdout="{}")
     gh.respond("api", "repos/{owner}/{repo}/branches/main/protection", exit=1,
                stdout='{"message":"Branch not protected","status":"404"}')
-    started = repo.forge("init", cwd=client)
+    started = repo.forge("init", "--actions", "yes", cwd=client)
     assert started.returncode == 0, started.stderr
 
     skills = [(client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")

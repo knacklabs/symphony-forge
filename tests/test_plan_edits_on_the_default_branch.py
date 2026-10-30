@@ -11,6 +11,10 @@ from shlex import quote as posix_quote
 from test_readloop_gates import approve, read
 from test_story import DOC, setup, new_story
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 
 def quote(path):  # the printed command quotes for the user's shell
     return f'"{path}"' if os.name == "nt" else posix_quote(path)

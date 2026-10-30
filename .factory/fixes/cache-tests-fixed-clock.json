@@ -1,0 +1,64 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/cache-tests-fixed-clock",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14da9-964c-7ce3-80ca-8056842e1882",
+    "head": null,
+    "start": "567ca7e5f94569bc82ba8c33e2de768e93d1437f"
+  },
+  "done_when": "Both cache tests run on a fixed clock Forge already supports for tests and pass on every platform in two every-platform runs",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/cache-tests-fixed-clock.json",
+      "file": ".factory/fixes/cache-tests-fixed-clock.json",
+      "gain": 3,
+      "harm": 1,
+      "line": 11,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Both cache tests run on a fixed clock Forge already supports for tests and pass on every platform in two every-platform runs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9cbbfc5c1a1d296438ff68cfa8b3fec286cadddcdb774d3a7bb1d07a77c9b502",
+    "changed": "e6b40b543fb0fd0ef0403dcd5a9dc1fc9993534632c125a8b28aa4ea64f57c45",
+    "commit": "0266efbd8f1c82376815d236ff03fc0c5bb17b51",
+    "dismissals": [],
+    "findings": [],
+    "id": "d1991fb9-94a9-4afb-9234-8cf3d62228b0",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:18:19.564249+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T06:27:18.804680+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T06:29:05.672380+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "f56f395fc273dffff13b73e9df0df8d65ccd2b76",
+    "keys": {},
+    "round": null
+  },
+  "why": "The two GitHub cache tests depend on the real clock: they fail when a run crosses a minute or a day boundary, so main's every-platform run fails at random",
+  "worker": "codex"
+}

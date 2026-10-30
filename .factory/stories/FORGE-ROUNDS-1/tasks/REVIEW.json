@@ -1,0 +1,74 @@
+{
+  "branch": "task/FORGE-ROUNDS-1-REVIEW",
+  "chat": {
+    "approval": "24d98103c5d69eb74043f84c181e8cf014dce9cf6b2575b9391509ec688bd6f3",
+    "claude": null,
+    "conversation": "01a1580b-2be3-74f1-8010-8af177e0fb89",
+    "head": null,
+    "start": "8a307b63ff9b44d72d508239764d3e564744da56"
+  },
+  "flagged": [
+    "src/forge/board.py"
+  ],
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 829,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep follow-ups on newly added files visible in Known issues",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b0e87ca23d4ce0ca241c2da971250c61106afa3f8aadfdb6f7c355298f5861cd",
+    "changed": "326cc3533d702f852c69b23895519ba030d93a71c56c28db9993ce3f42fd7c12",
+    "commit": "d4b774a2c7c5f34d4b83674a3a377b3218acdf73",
+    "dismissals": [],
+    "findings": [],
+    "id": "637c9c89-d1a9-4b81-9d57-875d27509d0d",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T06:41:15.723130+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T07:06:11.623806+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T07:24:00.708848+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T08:30:29.767579+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T09:48:58.798225+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T10:10:36.884787+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "02fe9221-46df-43a7-8e92-27c1fe7b84ae",
+    "head": "d57f5304942066762983aae4be3e58367290d379",
+    "keys": {},
+    "round": 4
+  },
+  "worker": "codex"
+}

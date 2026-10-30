@@ -1,0 +1,50 @@
+{
+  "base": "2afce1d89e3e304696b33c359cb1fe19355ef3b5",
+  "branch": "fix/proof-list-after-merge",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14856-d2c6-7f00-9b03-292c593dffd4",
+    "head": null,
+    "start": "47f9deb28f969c1b083e6cc4b82f25373f43d7fe"
+  },
+  "done_when": "Review reads the Proof list from the newest commit that has one, and a merge of main into the branch never causes a missing Proof list finding",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fb645850c9e19fcd76b969ae2595627db125702d99be81a8c322c28df89ce289",
+    "changed": "cd2dbc7d4ea836cf69adf5fa5304f33ba2fc80d3962105d981f6c8c781dea4cb",
+    "commit": "1a2960a8e0bcaae4da576f63cc54be04673eb604",
+    "dismissals": [],
+    "findings": [],
+    "id": "951b1282-59e7-4c67-964b-c972d92b2441",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T05:29:42.359286+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:35:39.678552+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T06:24:16.542618+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "62d61caf-8164-4be1-94dc-61be37d70da2",
+    "head": "96264ec1e5b9e6a280ca907e7de855dead8b85ff",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Review reports a missing Proof list after the coordinator merges main into a branch, so a worker round is spent copying the list forward",
+  "worker": "codex"
+}

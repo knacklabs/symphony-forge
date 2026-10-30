@@ -1,0 +1,45 @@
+{
+  "base": "930f7311b9eac452fd8c8dd9f9d64d26113411e4",
+  "branch": "fix/after-the-sign-off-hotfix-a-client-sign",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17d96-deeb-7423-8f6d-b49e2384aaff",
+    "head": null,
+    "start": "d8ec92f4e2b5137f6a0139a848105bcd46d3c253"
+  },
+  "done_when": "The sign-off review gets the green full run as its test evidence with no separate forge test run, and a failed sign-off or completeness review names the saved raw report path",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f7c3c060746c9dc0aab90dc521f09122772d282aa588e8cfb0a15af302c93448",
+    "changed": "35cb32a16323da8002dd57c82eecdc1ba168ebf824413ce9264e05351a88477e",
+    "commit": "202522e135fad0486991f35102591e8eea882e50",
+    "dismissals": [],
+    "findings": [],
+    "id": "a0445e54-c7e1-4ef0-bc31-3922fd272a6f",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T13:39:41.062267+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T13:44:13.967026+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "eb0189b029ff979357ea0982258ca50aad61e14d",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the sign-off hotfix, a client sign-off review can still be held by a hidden need for forge test results on exactly the committed product, which the green full run on main already proves, and a failed sign-off review still does not name the saved review report",
+  "worker": "codex"
+}

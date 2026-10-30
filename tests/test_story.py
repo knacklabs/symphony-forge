@@ -4,6 +4,7 @@ The helpers here set up stories; test_approval.py and test_next.py use them too.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -13,11 +14,20 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.platform
+# A newline-free asset has identical Git bytes on Windows before sync adds text attributes.
+DESIGN_IMAGE = '<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900"></svg>'
+_blob = hashlib.sha1(f'blob {len(DESIGN_IMAGE)}\0'.encode() + DESIGN_IMAGE.encode()).digest()
+_tree = b'100644 screen.svg\0' + _blob
+DESIGN_TREE = hashlib.sha1(f'tree {len(_tree)}\0'.encode() + _tree).hexdigest()
+
 DOC = """# Shoppers can save a basket
 
 ## What changes for you
 
 Shoppers can save a basket and come back to it later.
+
+Design: docs/design/baskets/ (<design tree>)
 
 ## Why
 
@@ -42,7 +52,7 @@ New moving parts: none
 Risks: none
 
 ## Notes
-"""
+""".replace("<design tree>", DESIGN_TREE)
 
 # A stub reader: it records each call, answers with claude-says.md (or "No findings."), and writes the
 # file named in claude-touch, to stand for a reader that changes a file.
@@ -83,12 +93,57 @@ sys.stdout.write(text)
 GRILL = 'models.grill.claude = { model = "opus", effort = "high" }\n'
 
 
+def approved_constitution(repo, where=None):
+    """Seed the complete, accepted constitution that ordinary client tests need."""
+    top = Path(where) if where is not None else repo.path
+    decisions = top / "docs/decisions"
+    decisions.mkdir(parents=True, exist_ok=True)
+    used = {int(match.group(1)) for path in decisions.glob("[0-9][0-9][0-9][0-9]-*.md")
+            if (match := re.match(r"(\d{4})-", path.name))}
+    choice_number = 1
+    while choice_number in used:
+        choice_number += 1
+    constitution_number = choice_number + 1
+    while constitution_number in used:
+        constitution_number += 1
+    choice = f"{choice_number:04d}-postgres-storage.md"
+    constitution = top / "docs/product/CONSTITUTION.md"
+    constitution.parent.mkdir(parents=True, exist_ok=True)
+    constitution.write_text(
+        "# App constitution\n\n## Defaults\nUse the secure defaults listed in the guide.\n\n"
+        "## Architecture choices\n"
+        f"- Store app data in Postgres: docs/decisions/{choice}.\n",
+        encoding="utf-8")
+    (decisions / choice).write_text(
+        '---\nstatus: accepted\nconfirmed_by: "Ravi"\n---\n\n'
+        "# Store app data in Postgres\n",
+        encoding="utf-8")
+    (decisions / f"{constitution_number:04d}-app-constitution.md").write_text(
+        '---\nstatus: accepted\nconfirmed_by: "Ravi"\n---\n\n'
+        "# App constitution\n",
+        encoding="utf-8")
+    repo.git("add", "docs/product/CONSTITUTION.md", f"docs/decisions/{choice}",
+             f"docs/decisions/{constitution_number:04d}-app-constitution.md", cwd=top)
+    if repo.git("branch", "--show-current", cwd=top) == "main":
+        no_hooks = top.parent / "fixture-no-hooks"
+        no_hooks.mkdir(exist_ok=True)
+        repo.git("-c", f"core.hooksPath={no_hooks}", "commit", "-q", "-m",
+                 "Approve a complete app constitution", cwd=top)
+        repo.git("-c", f"core.hooksPath={no_hooks}", "push", "-q", "origin", "main", cwd=top)
+    else:
+        repo.git("commit", "-q", "-m", "Approve a complete app constitution", cwd=top)
+
+
 def setup(repo, kind="forge-source", keys=("SHOP",)):
     """forge.toml pinned to this Forge with the grill kind's models, a roadmap with these keys, and
     a stub claude reader."""
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nrepo = "{kind}"\n{GRILL}')
     repo.write("plans/roadmap.json", json.dumps({"items": [{"key": key} for key in keys]}))
+    if kind == "client":
+        approved_constitution(repo)
+    # These user-facing plans need screens under the new design-first contract.
+    repo.write("docs/design/baskets/screen.svg", DESIGN_IMAGE)
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Set up Forge")
     repo.git("push", "-q", "origin", "main")
@@ -109,7 +164,23 @@ def worktree(repo, branch):
 def new_story(repo, key, title="Shoppers can save a basket"):
     made = repo.forge("story", "new", key, title)
     assert made.returncode == 0, made.stderr
-    return worktree(repo, f"story/{key}")
+    path = worktree(repo, f"story/{key}")
+    image = path / "docs/design/baskets/screen.svg"
+    if not image.exists():
+        image.parent.mkdir(parents=True, exist_ok=True)
+        image.write_text(DESIGN_IMAGE, encoding="utf-8")
+    return path
+
+
+def prototype_design(repo):
+    """Routing tests start after the design approval, now required for prototype UI fixes."""
+    repo.write("docs/design/prototype/screen.svg", DESIGN_IMAGE)
+    repo.write("PRODUCT.md", "# Basket shop\n\nPeople save baskets and return to them.\n")
+    repo.git("add", "docs/design/prototype", "PRODUCT.md")
+    tree = repo.git("write-tree")
+    digest = repo.git("rev-parse", f"{tree}:docs/design/prototype")
+    repo.write("docs/decisions/0001-prototype-design.md",
+               f"---\nstatus: accepted\ndesign_tree: {digest}\n---\n# Approved prototype screens\n")
 
 
 def ready(repo, key, doc=DOC):

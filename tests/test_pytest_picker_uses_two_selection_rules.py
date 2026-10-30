@@ -38,8 +38,8 @@ def _run(repo, base, launcher=None):
                           capture_output=True, text=True, timeout=120)
 
 
-def test_1_changed_test_files_are_selected_without_their_readers(repo):
-    # The old changed-path rule incorrectly selects a test that names another test.
+def test_1_changed_test_files_select_their_text_readers(repo):
+    # The owner chose conservative text references, including comments, for shared setup.
     _configure(repo)
     repo.write("tests/test_changed.py", "def test_changed():\n    assert True\n")
     repo.write("tests/test_reader.py", "# tests/test_changed.py\n"
@@ -49,9 +49,9 @@ def test_1_changed_test_files_are_selected_without_their_readers(repo):
     repo.write("tests/test_changed.py", "def test_changed():\n    assert 1 == 1\n")
     _commit(repo, "Change one test")
     result = _run(repo, base)
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.splitlines()[0] == "Related tests: tests/test_changed.py"
-    assert "1 passed" in result.stdout
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert result.stdout.splitlines()[0] == "Related tests: tests/test_changed.py, tests/test_reader.py"
+    assert "1 failed, 1 passed" in result.stdout
 
 
 def _module_selection(repo, monkeypatch, launcher=None):
@@ -100,6 +100,7 @@ def _module_selection(repo, monkeypatch, launcher=None):
     assert "7 passed" in result.stdout
 
 
+@pytest.mark.platform
 def test_2_only_imports_dotted_names_and_file_paths_select_module_tests(repo, monkeypatch):
     # Replaces filename and arbitrary changed-input readers with module references.
     _module_selection(repo, monkeypatch)
@@ -107,7 +108,7 @@ def test_2_only_imports_dotted_names_and_file_paths_select_module_tests(repo, mo
 
 def test_3_new_clients_run_only_changed_tests_and_module_references(repo, gh, tmp_path, monkeypatch):
     client = _new_repo(repo, gh, tmp_path)
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     repo.path = client
     _module_selection(repo, monkeypatch)

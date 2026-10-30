@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tThe adopted queue cases time out during load admission and one leaves processes for teardown to collect.",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 337,
+      "text": "The adopted queue cases time out during load admission and one leaves processes for teardown to collect.",
+      "from": "worker",
+      "item": "windows-platform-subset",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "base": "756909ec34b5ff26e7b749f8abef2aa262d2c5ce",
+  "branch": "fix/read-decisions",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a157d6-a4db-7170-a449-22f097b024ba",
+    "head": null,
+    "start": "2d33e89d91ca76edba098ea20e6b4109aff715b2"
+  },
+  "done_when": "forge read <decision-slug> runs a cold read of a decision record the same way it reads a spec, on a new repo and on an earlier-adopted repo; the coordinator guide names it",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b2c0ad8fe5ec0f5bc5f9633385994e05f699e0f587a4fce3f691b8891dd259ef",
+    "changed": "9d2f0c1328fe09826dceafba308e625b6f697e67dbb0022cfbcb7e3ec2959bc6",
+    "commit": "6fe470d25dbadfb5cccc49af7ab70cca24eb8997",
+    "dismissals": [],
+    "findings": [],
+    "id": "42e993d8-e848-4e74-bee9-8dec84e61f3b",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-20T05:43:52.086375+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-20T05:49:07.408856+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:02:39.080811+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:14:33.176972+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T06:34:16.612068+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "ab8b350e-065a-4b99-b9c4-a458e2849ea8",
+    "head": "98ead3882adce8fd4a85935df0d4112ddfabdf94",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Large decisions such as architecture or privacy need cold reads over several rounds, but forge read takes only story keys and spec slugs, so teams draft decisions as specs first (issue 970)",
+  "worker": "codex"
+}

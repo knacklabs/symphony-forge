@@ -25,8 +25,8 @@ function host(on: On) {
       stops.push([...e.argv])
       return { value: { exitCode: 0, stdout: state.stopOutput, stderr: '' } }
     }
-    const value = e.argv[1] === 'lanes' ? state.lanes : e.argv[1] === 'board' ? boardFixture() :
-      { version: '1.2.6', repo_root: '/repo', next: { command: null, line: 'Waiting for work.' } }
+    const value = e.argv[1] === 'lanes' ? state.lanes :
+      { ...boardFixture(), next: { command: null, line: 'Waiting for work.' } }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
   })
   return { state, clock, stops }

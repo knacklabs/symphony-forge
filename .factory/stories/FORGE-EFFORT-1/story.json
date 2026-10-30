@@ -1,0 +1,34 @@
+{
+  "approval": {
+    "at": "2026-10-28T18:18:45.112140+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_01X96nU9VUiBGeGubAUnKw26",
+    "hash": "64c3881c88c667b369704b842d343973bdb9da6adde66c963d45ac74a55f1b4e",
+    "part_line_limit": 400,
+    "round": 2,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-EFFORT-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-28T17:44:24.878134+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T18:05:48.679909+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-28T18:17:41.805707+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-28T18:18:45.112570+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Build and fix rounds raise their effort after a failure",
+  "touches": 1
+}

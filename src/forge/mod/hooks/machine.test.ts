@@ -35,7 +35,7 @@ function host(on: On, surface: 'terminal' | 'desktop' | 'mobile') {
   on('process.run', (_$, e) => {
     if (e.argv[1] === 'stop') { stops.push([...e.argv]); return { value: { exitCode: state.stopFailure ? 1 : 0, stdout: 'Stopped the run.', stderr: state.stopFailure } } }
     if (e.argv[1] === 'lanes' && state.failure) return { value: { exitCode: 1, stdout: '', stderr: state.failure } }
-    const value = e.argv[1] === 'board' ? state.board : e.argv[1] === 'lanes' ? state.malformed ? { version: '1.2.6', agents: { entries: [{}] } } : state.lanes : { version: '1.2.6', repo_root: '/repo', next: { command: 'forge close guide', line: 'Close the guide.' } }
+    const value = e.argv[1] === 'lanes' ? state.malformed ? { version: '1.2.6', agents: { entries: [{}] } } : state.lanes : { ...state.board, next: { command: 'forge close guide', line: 'Close the guide.' } }
     return { value: { exitCode: 0, stdout: JSON.stringify(value), stderr: '' } }
   })
   return { state, clock, stops, opens, questions, toasts }

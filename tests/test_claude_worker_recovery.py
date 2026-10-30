@@ -78,23 +78,24 @@ def test_2_claude_ignores_codex_only_subagent_keys_on_first_fix(repo, gh, tmp_pa
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
-def test_3_progress_retries_a_busy_events_file_without_aborting_worker(repo, gh, tmp_path, previous, monkeypatch):
+def test_3_progress_retries_a_busy_live_file_without_aborting_worker(repo, gh, tmp_path, previous, monkeypatch):
     log, _ = _client(repo, gh, tmp_path, previous)
     monkeypatch.setenv("STUB_CLAUDE_RESULT", "Worker completed")
+    # History now appends. Only the existing live progress file is replaced.
     # The command shim supplies one Windows sharing violation at the filesystem edge;
     # the real progress writer decides whether to retry, without a production seam.
     shim = repo.bin / "forge"
-    marker = repo.bin / "busy-events-observed"
+    marker = repo.bin / "busy-progress-observed"
     shim.write_text(shim.read_text("utf-8").replace('from forge.cli import main', f'''import os
 from pathlib import Path
 real_replace = os.replace
 busy = True
 def replace(source, target):
     global busy
-    if busy and str(target).endswith("events.jsonl"):
+    if busy and Path(target).parent.name == "progress" and Path(target).exists():
         busy = False
         Path({json.dumps(marker.as_posix())}).write_text("busy", encoding="utf-8")
-        raise PermissionError("events file is held by a reader")
+        raise PermissionError("live progress file is held by a reader")
     return real_replace(source, target)
 os.replace = replace
 from forge.cli import main'''), encoding="utf-8")

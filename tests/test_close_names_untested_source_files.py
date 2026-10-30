@@ -19,7 +19,7 @@ from test_worker import calls, install_claude
 STORY = "test-gap-warning"
 
 
-@pytest.mark.parametrize("others", [3, 0], ids=["runs-selected", "skips-large-selection"])
+@pytest.mark.parametrize("others", [3, 0], ids=["unrelated-files", "no-unrelated-files"])
 def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatch, others):
     # Forge's own settings and dependencies; only review and GitHub are faked. A second
     # runner prints after pytest, as Jest does after the Python part of a mixed command.
@@ -28,16 +28,17 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
     settings = tomllib.loads((ROOT / "forge.toml").read_text("utf-8"))
     later = f'"{Path(sys.executable).as_posix()}" -c "for i in range(40): print(i)"'  # sh and cmd
     # Forge's always_test names Forge's own test files, which this repo does not have.
-    env.repo.write("forge.toml", "".join(
+    root_settings = "".join(
         line for line in (ROOT / "forge.toml").read_text("utf-8").splitlines(keepends=True)
-        if not line.startswith("always_test")).replace(
+        if not line.startswith(("always_test", "test_place =")))
+    env.repo.write("forge.toml", 'test_place = "local"\n' + root_settings.replace(
         json.dumps(settings["fast_test"]), json.dumps(settings["fast_test"] + " && " + later)))
     monkeypatch.setenv("UV_PROJECT_ENVIRONMENT", sys.prefix)
     monkeypatch.setenv("UV_NO_SYNC", "1")  # Reuse the enclosing run's installed test dependencies.
     for name in ("named", "first", "second"):
         env.repo.write(f"src/app/{name}.py", "VALUE = 1\n")
     env.repo.write("tests/test_named.py", "# app/named.py\ndef test_named():\n    assert True\n")
-    for number in range(others):  # Close skips local tests when over a third would run.
+    for number in range(others):
         env.repo.write(f"tests/test_other_{number}.py", "def test_other():\n    assert True\n")
     env.repo.git("add", "-A")
     env.repo.git("commit", "-q", "-m", "Use Forge's own test settings")
@@ -50,7 +51,7 @@ def test_1_close_names_each_changed_source_file_no_test_mentions(env, monkeypatc
 
     assert closed.returncode == 0, closed.stdout + closed.stderr
     for name in ("first", "second"):
-        assert (f"No local test names src/app/{name}.py; GitHub's checks will cover it."
+        assert (f"No local test names src/app/{name}.py. The nightly full run covers it."
                 in closed.stdout), closed.stdout
     assert "No local test names src/app/named.py" not in closed.stdout
 
@@ -64,4 +65,5 @@ def test_2_worker_brief_says_run_the_tests_that_check_changed_printed_text(clien
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = " ".join(calls(log)[0]["brief"].split())
     assert ("When you change text the program prints (messages, pull request text, board lines), "
-            "search the tests for that text and run those tests too.") in brief
+            "include tests for that text in the change's related tests and follow the test-place "
+            "instructions below.") in brief

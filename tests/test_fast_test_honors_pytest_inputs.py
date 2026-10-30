@@ -29,6 +29,7 @@ def run_picker(repo, command, *, shared=False):
         text=True, capture_output=True, timeout=120)
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("shared", [False, True], ids=["related", "full-fallback"])
 @pytest.mark.parametrize("configuration", ["pytest.ini", "PYTEST_ADDOPTS", "launcher",
                                             "pyproject.toml", "pytest.toml", "smaller-cap",
@@ -78,6 +79,7 @@ def test_2_excludes_unrelated_tests_explicitly_named_by_full_command(repo):
     assert "1 passed" in result.stdout
 
 
+@pytest.mark.platform
 def test_3_recognizes_source_prefixed_paths_and_package_relative_imports(repo):
     repo.write("src/shop/__init__.py", "")
     repo.write("src/shop/checks/__init__.py", "")

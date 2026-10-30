@@ -1,0 +1,76 @@
+{
+  "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
+  "branch": "fix/amend-append",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155c0-3dcf-7c42-8b4d-ff84c6467965",
+    "head": null,
+    "start": "71547036084c3426ce5e96d2622b8c8015b27ed6"
+  },
+  "done_when": "forge fix amend accepts --append '<text>' to add to the Done-when, and both --done and --append print the old and new text before writing; a test covers both on a new and an adopted repo, and the coordinator guide names --append",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_amend_preserves_done_when_on_append_and_previews_both_changes() in tests/test_done_when_additions.py",
+      "file": "tests/test_done_when_additions.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 26,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_amend_preserves_done_when_on_append_and_previews_both_changes",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f41c11f03bf7b80c88702e6cc522619e10077101fcdd74f88c76c6fe2a8e66d9",
+    "changed": "af256f9db84947462ccbe370c3a0b90b415efbce14219faf40604c91f1ad68d7",
+    "commit": "6d663cfc65422aeb87b4fcf6aec82309cc672fd2",
+    "dismissals": [],
+    "findings": [],
+    "id": "1de45241-1fdb-4b9c-beeb-0e5c98f54403",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T19:54:37.464195+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T20:15:49.570085+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T20:42:08.361932+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T21:00:10.371030+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T21:17:12.799503+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-20T03:45:31.979884+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "89fcb37d-99b6-4156-9b74-ad3ed41d973c",
+    "head": "e5c60b790cff84535ddc67f6d5ad03f99e09bd89",
+    "keys": {},
+    "round": 3
+  },
+  "why": "forge fix amend --done replaces the whole Done-when, so a coordinator who meant to add a line wiped it (issue 973)",
+  "worker": "codex"
+}

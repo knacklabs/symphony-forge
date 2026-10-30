@@ -6,13 +6,16 @@ Existing migration tests do not inherit a hook environment; no Git call is faked
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
-from conftest import ROOT
+from conftest import ROOT, _install
+from test_close import env  # noqa: F401
 from test_migrate import _copied_client, _land
 
 STORY = "no-bare-flip"
@@ -85,3 +88,29 @@ def test_2_migrate_source_fetch_preserves_sentinel_repository_settings(
     assert "factory/" in done.stdout
     assert (repo.git("config", "--local", "--list"), repo.git("rev-parse", "HEAD"),
             (repo.path / ".git/index").read_bytes()) == before
+
+
+@pytest.mark.platform
+def test_3_a_merge_commit_handed_to_the_pinned_release_keeps_the_repository(env):
+    repo = env.repo
+    # uv fetches a git+ source with its own plain `git init` and `git reset --hard`, run with
+    # the environment it was given; this stub does the same in a temporary folder.
+    _install(repo.bin, "uv", f"""#!{sys.executable}
+import subprocess, tempfile
+cache = tempfile.mkdtemp()
+subprocess.run(["git", "init", "-q"], cwd=cache, check=True)
+subprocess.run(["git", "read-tree", "--empty"], cwd=cache, check=True)
+""")
+    _, where = env.start_fix()
+    pinned = re.sub(r'version = "[^"]+"', 'version = "v1.2.2"',
+                    (repo.path / "forge.toml").read_text(encoding="utf-8"))
+    env.commit(repo.path, "forge.toml", pinned, "Pin an earlier release")
+    hook = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir")) / "hooks/pre-commit"
+    hook.write_text('#!/bin/sh\nexec forge hook pre-commit "$@"\n', encoding="utf-8")
+    hook.chmod(0o755)
+    repo.git("merge", "-q", "--no-ff", "--no-commit", "main", cwd=where)
+    # Git runs the hook with GIT_DIR and GIT_INDEX_FILE naming this linked worktree.
+    repo.git("commit", "-q", "--no-edit", cwd=where)
+    assert repo.git("config", "core.bare") == "false"
+    assert repo.git("status", "--porcelain", cwd=where) == ""
+    assert len(repo.git("rev-list", "--parents", "-1", "HEAD", cwd=where).split()) == 3

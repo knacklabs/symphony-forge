@@ -1,0 +1,126 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/cap-vitest-jest-workers",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a15010-f5e1-7643-af0b-aae9fde29c8f",
+    "head": null,
+    "start": "f093f3a220d2e9e0f76a7f6c1b3f56f764c932c1"
+  },
+  "done_when": "When the test command runs Vitest or Jest, Forge adds --maxWorkers with the machine budget, as it adds --maxprocesses for pytest, and tests cover Vitest, Jest and a runner left as written",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/fasttest.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "node_worker_budget() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 113,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve Jest's serial execution mode",
+      "work": 2
+    },
+    {
+      "area": "node_worker_budget() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 105,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve npm lifecycle hooks when replacing a script's worker cap",
+      "work": 2
+    },
+    {
+      "area": "node_worker_budget() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 91,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Cap the launcher forms Forge already recommends",
+      "work": 2
+    },
+    {
+      "area": "node_worker_budget() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 105,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Preserve non-ASCII paths in the Node preload option",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "938357ccfb15134c719cdbfdfed694c8e57125b56ad639c8cf99e9b2c9d995b9",
+    "changed": "981720698e72fdd11b3d89745755a777de9128ea4d3cd045c1fba4c4a6aca1ba",
+    "commit": "e6a26765a61be92ca3d9743aa863e9108e5c17c6",
+    "dismissals": [],
+    "findings": [],
+    "id": "95722932-85b2-479e-a890-fc502872f302",
+    "status": "clean"
+  },
+  "round": 3,
+  "settled_areas": [
+    "node_worker_budget() in src/forge/fasttest.py"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:59:09.930837+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T18:10:44.445026+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:28:21.052812+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T05:35:16.867171+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "node_worker_budget() in src/forge/fasttest.py",
+    "at": "2026-10-18T18:28:21.053062+00:00",
+    "by": "owner",
+    "choice": "narrow",
+    "file": "node_worker_budget() in src/forge/fasttest.py",
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner narrowed (19 Oct): add --maxWorkers only when the test command itself runs vitest or jest (including npx/pnpm exec); skip when it already sets --maxWorkers, --runInBand or -i; leave npm/yarn scripts alone; the guide says read FORGE_TEST_CPUS there.",
+    "wait_id": "bf9c9250-0da9-49d5-a55b-996a26181d42",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "07c3e3a8-6ae3-4908-8aa5-fe39d62ca3a7",
+    "head": "c6fd6833868b0c4ff101886b2ad31d6eef42027f",
+    "keys": {
+      "close's tests failing": 1,
+      "the review finding \"Preserve non-ASCII paths in the Node preload option\" in src/forge/fasttest.py": 1
+    },
+    "round": 2
+  },
+  "why": "Test runs cap pytest's workers to the machine budget but leave Vitest and Jest at one worker per core, so parallel rounds overload the machine (issue 924)",
+  "worker": "codex"
+}

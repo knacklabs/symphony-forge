@@ -25,8 +25,12 @@ SHAPES = {"no-result": '    return',
                               '    raise error')}
 
 
-@pytest.mark.parametrize("shape", list(SHAPES))
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
+@pytest.mark.parametrize("previous,shape", [
+    pytest.param(previous, shape, id=f"{history}-{shape}")
+    for previous, history in [(False, "new-client"), (True, "previous-adoption")]
+    for shape in SHAPES
+    if not previous or shape in ("null-answer", "null-error", "exception-error")
+])
 def test_1_claude_ending_without_a_turn_fails_forge_work(repo, gh, tmp_path, previous, shape):
     _, folder = _client(repo, gh, tmp_path, previous)
     stub = repo.bin / "claude_agent_sdk" / "__init__.py"

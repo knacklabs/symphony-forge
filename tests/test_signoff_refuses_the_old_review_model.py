@@ -29,5 +29,5 @@ def test_2_the_skill_explains_autoreviews_defaults(env):
     skill = " ".join((env.repo.path / ".claude/skills/forge/SKILL.md").read_text("utf-8").split())
     assert "Every normal, light and sign-off review" in skill
     assert 'Claude when `tools = "claude"`, Codex when `tools = "codex"`' in skill
-    assert "Forge pins no review model or effort" in skill
+    assert "`[models.review]` model and optional effort to Autoreview" in skill
     assert "light review that blocks only on P0 findings" in skill

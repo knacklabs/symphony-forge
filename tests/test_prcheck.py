@@ -19,13 +19,6 @@ def _passes_once_close_finished(env):
     return "fix/tidy-readme", where, None
 
 
-def _branch_forge_did_not_start(env):
-    where = env.tmp / "stray"
-    env.repo.git("worktree", "add", "-q", "-b", "stray", str(where))
-    env.commit(where, "app.py", "print('hi')\n")
-    return "stray", where, None
-
-
 def _forge_branch_without_state(env):
     where = env.tmp / "untracked"
     env.repo.git("worktree", "add", "-q", "-b", "fix/untracked", str(where))
@@ -63,12 +56,12 @@ def _interface_path_by_base_config(env):
 
 
 def _review_blocked(env):
-    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
-    item, where = env.start_fix()
+    env.reviews(blocked(finding("P1", "Not done: A shopper can save a basket")))
+    item, where = env.start_task()
     env.close(item)
-    return "fix/tidy-readme", where, (
-        "The committed review at the head of fix/tidy-readme is blocked by serious findings no one "
-        "fixed or dismissed.", "forge close tidy-readme")
+    return "task/SHOP-T1", where, (
+        "The committed review at the head of task/SHOP-T1 is blocked by serious findings no one "
+        "fixed or dismissed.", "forge close SHOP/T1")
 
 
 OUT_OF_DATE = "out of date: the product files or what the change must do changed after it."
@@ -123,7 +116,7 @@ def _no_branch_given(env):
         "forge hook pr-check --base <base commit> --head <head commit> --branch <branch>")
 
 
-CASES = [_passes_once_close_finished, _branch_forge_did_not_start, _forge_branch_without_state,
+CASES = [_passes_once_close_finished, _forge_branch_without_state,
          _fix_without_done_when,
          _fix_over_the_limit, _fix_allowed_large, _interface_path_by_base_config, _review_blocked,
          _product_changed_after_review, _story_done_when_changed_after_review,
@@ -139,11 +132,7 @@ def test_24_pull_request_check(env, case):
     done = env.repo.forge("hook", "pr-check", *pull)  # from the base checkout, on main
     if refusal is None:
         assert done.returncode == 0, done.stderr
-        if branch == "stray":
-            assert done.stdout == ("Forge didn't start this branch, so it checks nothing here; "
-                                   "the repo's own CI and review apply.\n")
-        else:
-            assert done.stdout == f"forge-pr-check passed for {branch}.\n"
+        assert done.stdout == f"forge-pr-check passed for {branch}.\n"
     else:
         assert done.returncode == 1
         assert done.stderr.splitlines()[-2:] == [refusal[0], f"Next: {refusal[1]}"]

@@ -17,10 +17,9 @@ from test_close import env  # noqa: F401
 
 STORY = "FIX-CLAUDE-SONNET-DEFAULT"
 SONNET = {"model": "claude-sonnet-5-5", "effort": "xhigh"}
-OPUS = {"model": "claude-opus-5-5", "effort": "high"}
 
 
-def test_1_init_claude_only_repo_uses_sonnet_implementation_and_opus_reads(repo, gh, tmp_path):
+def test_1_init_claude_only_repo_uses_low_implementation_and_sonnet_reads(repo, gh, tmp_path):
     client, result = _fresh_client(repo, gh, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     settings = client / "forge.toml"
@@ -32,15 +31,16 @@ def test_1_init_claude_only_repo_uses_sonnet_implementation_and_opus_reads(repo,
     config = tomllib.loads(settings.read_text("utf-8"))
     assert config["workers"] == "claude"
     models = config["models"]
-    for kind in ("build", "fix", "lite", "design"):
-        assert models[kind]["claude"] == SONNET
-    assert models["grill"]["claude"] == OPUS
-    assert "review" not in models  # Autoreview owns its model and effort defaults.
+    for kind in ("build", "fix", "lite"):
+        assert models[kind]["claude"] == {**SONNET, "effort": "low"}
+    assert models["design"]["claude"] == SONNET
+    for kind in ("grill", "review"):
+        assert models[kind]["claude"] == {**SONNET, "effort": "high"}
     frontend = (client / ".claude/agents/frontend.md").read_text("utf-8")
     assert 'model: "claude-sonnet-5-5"' in frontend and 'effort: "xhigh"' in frontend
     guide = (client / ".codex/skills/forge/SKILL.md").read_text("utf-8")
     assert "claude-sonnet-5-5" in guide and "xhigh" in guide
-    assert "claude-opus-5-5" in guide and "high" in guide
+    assert "claude-sonnet-5-5" in guide and "high" in guide
 
 
 def test_2_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_notes(unsynced_up):
@@ -52,8 +52,8 @@ def test_2_earlier_adopted_repo_keeps_model_pins_on_upgrade_and_gets_opt_in_note
     for host in (".claude", ".codex"):
         notes = up.show(f"{host}/skills/forge/SKILL.md")
         assert "claude-sonnet-5-5" in notes and "xhigh" in notes
-        assert 'model = "claude-sonnet-5-5", effort = "xhigh"' in notes
-        assert 'model = "claude-opus-5-5", effort = "high"' in notes
+        assert 'model = "claude-sonnet-5-5", effort = "low"' in notes
+        assert 'model = "claude-sonnet-5-5", effort = "high"' in notes
         assert "Existing model entries stay unchanged" in notes
 
 
@@ -87,7 +87,7 @@ def test_3_plan_read_with_no_claude_entry_uses_builtin_opus_high(repo, tmp_path,
         owner.close()
 
 
-def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
+def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_low(repo):
     version = repo.forge("--version").stdout.split()[-1]
     repo.write("forge.toml", f'version = "{version}"\nworkers = "claude"\n')
     repo.git("add", "forge.toml")
@@ -99,4 +99,4 @@ def test_4_lite_and_fix_with_no_claude_entries_use_builtin_sonnet_xhigh(repo):
     for _ in range(2):
         result = repo.forge("work", "correct-greeting")
         assert result.returncode == 0, result.stdout + result.stderr
-        assert (calls(log)[-1]["options"]["model"], calls(log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
+        assert (calls(log)[-1]["options"]["model"], calls(log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "low")

@@ -1,0 +1,69 @@
+{
+  "allow_large": "Cache the internal command parser in cli.py; no command interface changes",
+  "base": "e8168963a12c1060de16e797d56e8afc9778d347",
+  "branch": "fix/cheaper-next",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14a3d-932a-77f1-8d7d-258910943b7e",
+    "head": null,
+    "start": "c33931fb718bc05846c9f945e1a34d51c50b01b2"
+  },
+  "done_when": "Read-only callers reuse cached time records without copying, the parser is built once, stack checks are remembered per command, and a test counts the git calls and checks a time budget on a client-sized repo",
+  "fix_kind": "backend",
+  "flagged": [
+    "tests/test_next_reuses_command_work.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_next_reuses_work_within_a_command() in tests/test_next_reuses_command_work.py",
+      "file": "tests/test_next_reuses_command_work.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 74,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test parser and time-record reuse",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "32be67c2babd1f188b017aedea2ef971284d42faf5c148eceed50df4edad4635",
+    "changed": "d46785baad30f913cc75b6707e263226529c3866e2c8a5792334a31e39fa3bc6",
+    "commit": "5d03fab565b27ef254ce5375957559451a77f673",
+    "dismissals": [],
+    "findings": [],
+    "id": "18d5707c-8085-40a0-b2f8-fb9484bfa24a",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T14:21:24.671299+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T16:05:59.373256+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T17:09:14.941892+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c06e3344-2fb4-4512-9bcc-99715d74933e",
+    "head": "530087e14a21d50ad7979661b986ba17480a6324",
+    "keys": {
+      "the review finding \"Gate: test parser and time-record reuse\" in tests/test_next_reuses_command_work.py": 1
+    },
+    "round": 2
+  },
+  "why": "forge next spends seconds copying cached time records, rebuilding the command parser per row and repeating the same stack checks",
+  "worker": "codex"
+}

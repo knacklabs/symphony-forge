@@ -1,0 +1,146 @@
+{
+  "branch": "task/FORGE-BOARD-4-SERVER",
+  "flagged": [
+    "src/forge/board.py",
+    "src/forge/board_server.py",
+    "tests/test_board_server.py"
+  ],
+  "known": [
+    {
+      "area": "docs/board-design/Manager.dc.html",
+      "file": "docs/board-design/Manager.dc.html",
+      "gain": 3,
+      "harm": 2,
+      "line": 1,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: remove design artboards from the SERVER change",
+      "work": 1
+    },
+    {
+      "area": "Snapshots.watched() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 67,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Watch working-tree inputs before serving the cached snapshot",
+      "work": 2
+    },
+    {
+      "area": "machine_board.row() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 346,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "An unrelated main commit invalidates every cached item row",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 44,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Later: SHELL must make the page refresh by itself",
+      "work": 3
+    },
+    {
+      "area": "test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request() in tests/test_board_server.py",
+      "file": "tests/test_board_server.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 235,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 2,
+      "security": false,
+      "title": "Gate: test_5_uncommitted_edits_in_a_worktree_show_on_the_next_request",
+      "work": 1
+    },
+    {
+      "area": "handler.Handler.route() in src/forge/board_server.py",
+      "file": "src/forge/board_server.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 237,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Removing shell and asset serving breaks the live page when SHELL lands",
+      "work": 1
+    }
+  ],
+  "land": {
+    "rounds": 3,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b68fa02eba6316995aa858712ab42eba72fffac29f65725dc1a18eca21a42621",
+    "changed": "f27916fe5184be44fddc9b757b8eaa58b3246b6359b185a45fb1f95689ffbe32",
+    "commit": "0ec41ecc49345b8ede6913a2c9c6a239b8eac0a6",
+    "dismissals": [],
+    "findings": [],
+    "id": "f0e117ae-4be8-4003-bdfb-f69d54c45f29",
+    "status": "clean"
+  },
+  "round": 11,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-16T06:15:46.941448+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T05:47:12.073339+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T06:12:44.996867+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T08:10:46.228335+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T14:31:25.975487+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T17:31:25.139491+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T18:14:07.877878+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T05:29:29.661515+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "85c6edfe-6ab7-4a4b-9002-96c5934edd45",
+    "head": "8fb9e83f6412732be2ec8b8d5df487d6b8ac4492",
+    "keys": {},
+    "round": 10
+  },
+  "worker": "claude"
+}

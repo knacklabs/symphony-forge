@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\tREADME.md\tThe command table lists forge ask, but that command does not exist.",
+      "kind": "bug",
+      "path": "README.md",
+      "line": 292,
+      "text": "The command table lists forge ask, but that command does not exist.",
+      "from": "worker",
+      "item": "FORGE-INTAKE-1/MOVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/intake.py\tCheck task ownership before refusing a story drop\tFORGE-INTAKE-1/MOVE",
+      "kind": "bug",
+      "path": "src/forge/intake.py",
+      "line": 167,
+      "text": "Check task ownership before refusing a story drop",
+      "from": "blocking",
+      "item": "FORGE-INTAKE-1/MOVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_start_sorts_ideas.py\tGate: test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list\tFORGE-INTAKE-1/MOVE",
+      "kind": "bug",
+      "path": "tests/test_start_sorts_ideas.py",
+      "line": 289,
+      "text": "Gate: test_4_unclear_ideas_start_discovery_and_only_ideas_put_off_go_to_the_list",
+      "from": "blocking",
+      "item": "FORGE-INTAKE-1/MOVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/board.py\tNot done: moving an idea leaves one item on the board",
+      "kind": "edge",
+      "path": "src/forge/board.py",
+      "line": 294,
+      "text": "Not done: moving an idea leaves one item on the board",
+      "from": "review",
+      "item": "FORGE-INTAKE-1/MOVE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

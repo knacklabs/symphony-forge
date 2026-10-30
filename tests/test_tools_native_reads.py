@@ -29,6 +29,7 @@ def native_host(repo, monkeypatch, tmp_path, tool):
         owner.close()
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("tool,model", [("codex", "gpt-6-sol"), ("claude", "opus")])
 def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, tmp_path,
                                                        tool, model, native_host):
@@ -110,20 +111,24 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
     assert not notes.exists()
     findings_offer = handout()
     findings = handback("1. Missing saved basket ownership.\n2. Missing save failure behavior.")
-    assert findings.returncode == 0, findings.stdout + findings.stderr
+    assert findings.returncode == 1 and "asks the owner" in findings.stderr, findings.stdout + findings.stderr
     written = notes.read_text("utf-8")
     assert f"reader: {tool} ({model}), a subagent of this " in written
     assert f"because forge.toml's tools is {tool}" in written
-    # Every handout consumes its round, including failed or stopped reads.
-    assert f"round: {findings_offer['round']}\n" in written and "passed: no\n" in written
-    assert "1. Missing saved basket ownership." in written
-    assert "2. Missing save failure behavior." in written
+    # Failed handouts consume rounds too. This result arrives after round two,
+    # so unscored notes stop for the owner's choice.
+    assert f"round: {findings_offer['round']}\n" in written
+    assert "Disposition: keep - Left open after round two" not in written
+    accepted = repo.forge("read", "SHOP", "--resolve", "accept", "--reason",
+                          "the owner accepts the two missing details")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    written = notes.read_text("utf-8")
     for finding in ("1. Missing saved basket ownership.", "2. Missing save failure behavior."):
-        written = written.replace(finding, finding + "\n   Disposition: keep - clarified in the plan")
-    notes.write_text(written, "utf-8")
+        assert finding + "\n   Disposition: keep - the owner accepts the two missing details" in written
+    assert repo.git("show", "HEAD:plans/SHOP.read.md", cwd=shop) == written.strip()
     doc.write_text(DOC + "\nSaved baskets belong to their shopper; failures leave the basket intact.\n", "utf-8")
     second = handout()
-    assert "Disposition: keep - clarified in the plan" in second["fresh_prompt"]
+    assert "Disposition: keep - the owner accepts the two missing details" in second["fresh_prompt"]
     assert second["subagent"] == "reader-chat"
     result = handback("1. Advisory: State how long baskets are kept.")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -156,6 +161,11 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
 
     if tool == "codex":
         # Handback from the main checkout finishes a spec in its original worktree.
+        def main_docs():
+            return {path.relative_to(repo.path).as_posix(): path.read_bytes()
+                    for path in (repo.path / "docs").rglob("*") if path.is_file()}
+
+        before_docs = main_docs()
         spec_checkout = tmp_path / "spec"
         repo.git("worktree", "add", "-q", "-b", "fix/native-spec", str(spec_checkout))
         (spec_checkout / "forge.toml").write_text(config.read_text("utf-8"), "utf-8")
@@ -177,7 +187,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         assert "passed: yes\n" in spec_notes.read_text("utf-8")
         assert repo.git("show", "HEAD:docs/specs/read-scope.read.md", cwd=spec_checkout) == (
             spec_notes.read_text("utf-8").strip())
-        assert not (repo.path / "docs").exists()
+        assert main_docs() == before_docs
         unchanged_notes = spec_notes.read_bytes()
         spec_doc.write_text(spec_doc.read_text("utf-8") + "\nSaved baskets expire after thirty days.\n",
                             "utf-8")
@@ -190,7 +200,7 @@ def test_5_plan_reads_belong_to_the_coordinating_session(repo, gh, monkeypatch, 
         assert deleted_result.returncode == 1
         assert "A file changed during the cold read" in deleted_result.stderr
         assert spec_notes.read_bytes() == unchanged_notes
-        assert not (repo.path / "docs").exists()
+        assert main_docs() == before_docs
 
         # A one-tool choice replaces the recorded other-tool reader, starting fresh.
         config.write_text(config.read_text("utf-8").replace('tools = "codex"', 'tools = "claude"'),

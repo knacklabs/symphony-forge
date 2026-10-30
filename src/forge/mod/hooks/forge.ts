@@ -4,7 +4,7 @@ export type Stage = { name: string; status?: string | null; started_at?: string 
 export type Item = {
   title: string; id?: string; kind?: string; stage?: string | null
   worker?: { kind: string; model: string | null; started_at: string | null } | null
-  pr?: { number: number | null; checks: string } | null
+  pr?: { number: number | null; checks: string; checked_at?: string | null } | null
   findings?: { count: number; titles: string[] }
   round?: number | null; total_seconds?: number | null; stages?: Stage[]
   children?: Item[]; [key: string]: unknown
@@ -26,7 +26,7 @@ const timestamp = (v: unknown) => v == null || (typeof v === 'string' && Number.
 function item(v: unknown): v is Item {
   if (!object(v) || typeof v.title !== 'string' || !nullable(v.stage, 'string')) return false
   if (v.worker != null && (!object(v.worker) || typeof v.worker.kind !== 'string' || !nullable(v.worker.model, 'string') || !nullable(v.worker.started_at, 'string') || !timestamp(v.worker.started_at))) return false
-  if (v.pr != null && (!object(v.pr) || !nullable(v.pr.number, 'number') || !['pass', 'fail', 'running', 'unknown'].includes(String(v.pr.checks)))) return false
+  if (v.pr != null && (!object(v.pr) || !nullable(v.pr.number, 'number') || !timestamp(v.pr.checked_at) || !['pass', 'fail', 'running', 'unknown'].includes(String(v.pr.checks)))) return false
   if (v.findings != null && (!object(v.findings) || typeof v.findings.count !== 'number' || !Array.isArray(v.findings.titles) || !v.findings.titles.every(t => typeof t === 'string'))) return false
   if (!nullable(v.round, 'number') || !nullable(v.total_seconds, 'number')) return false
   if (v.stages != null && (!Array.isArray(v.stages) || !v.stages.every(s => object(s) && typeof s.name === 'string' && nullable(s.status, 'string') && timestamp(s.started_at) && timestamp(s.ended_at) && nullable(s.seconds, 'number')))) return false
@@ -53,7 +53,7 @@ export function createCore() {
     if (running) return
     running = true
     try {
-      const results = await Promise.allSettled(['board', 'next', 'lanes'].map(async command => {
+      const results = await Promise.allSettled(['next', 'lanes'].map(async command => {
         const result = await run(command)
         if (result.exitCode !== 0) {
           const error = result.stderr || result.stdout || `forge ${command} failed`
@@ -65,12 +65,11 @@ export function createCore() {
       }))
       const failed = results.find(r => r.status === 'rejected')
       if (failed?.status === 'rejected') throw failed.reason
-      const [board, next, lanes] = results.map(r => r.status === 'fulfilled' ? r.value : null)
-      if (!board || typeof board.version !== 'string' || typeof board.repo_root !== 'string' || !Array.isArray(board.items) || !board.items.every(item)) throw new Error('Malformed forge board output')
-      if (!next || typeof next.version !== 'string' || typeof next.repo_root !== 'string' || !object(next.next) || typeof next.next.line !== 'string' || !nullable(next.next.command, 'string')) throw new Error('Malformed forge next output')
+      const [next, lanes] = results.map(r => r.status === 'fulfilled' ? r.value : null)
+      if (!next || typeof next.version !== 'string' || typeof next.repo_root !== 'string' || !Array.isArray(next.items) || !next.items.every(item) || !object(next.next) || typeof next.next.line !== 'string' || !nullable(next.next.command, 'string')) throw new Error('Malformed forge next output')
       if (lanes && typeof lanes.version !== 'string') throw new Error('Malformed forge lanes output')
       const refreshedAt = await now()
-      data.board = board as Board
+      data.board = next as Board
       data.next = next as Next
       data.lanes = lanes ?? null
       data.refreshedAt = refreshedAt

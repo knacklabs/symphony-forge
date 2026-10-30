@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/fasttest.py\tProse task tests make the local test gate blame a setting that is absent.",
+      "kind": "bug",
+      "path": "src/forge/fasttest.py",
+      "line": 560,
+      "text": "Prose task tests make the local test gate blame a setting that is absent.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/HISTORYPY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter-python/apps/api/app/history/routes.py\tAllow history GET requests without a CSRF header\tFORGE-DEFAULTS-1/HISTORYPY",
+      "kind": "bug",
+      "path": "src/forge/templates/starter-python/apps/api/app/history/routes.py",
+      "line": 35,
+      "text": "Allow history GET requests without a CSRF header",
+      "from": "blocking",
+      "item": "FORGE-DEFAULTS-1/HISTORYPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

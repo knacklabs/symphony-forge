@@ -1,0 +1,95 @@
+{
+  "allow_large": "Owner accepted the size on 19 October 2026: new screen code checked in the browser",
+  "branch": "task/FORGE-BOARD-4-PAGES",
+  "flagged": [
+    "src/forge/board_app/insights.js",
+    "src/forge/board_app/releases.js"
+  ],
+  "known": [
+    {
+      "area": "src/forge/board_app/insights.js",
+      "file": "src/forge/board_app/insights.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 10,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve unknown weeks when calculating Insights",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/releases.js",
+      "file": "src/forge/board_app/releases.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/releases.js",
+      "file": "src/forge/board_app/releases.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Make kept-finding titles accessible from the keyboard",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "44478faea486000bc119391fc11076e42e5e1b9747cfff013301a5bcf02bca4b",
+    "changed": "03b531f375e9816e4318edf5788227c2e7903d1fb59efe021d6694394f0b4f6f",
+    "commit": "0191121ab22a39618a29babde28e186ed7a6a5ba",
+    "dismissals": [],
+    "findings": [],
+    "id": "86e0880c-2a23-437f-a3db-2c20b0ab3fb1",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T12:22:21.533680+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T12:44:58.915986+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:34:18.281898+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:56:49.366936+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2497f53d-65f8-44ad-8644-3bfa79e2e760",
+    "head": "27e87b9c279218b9b5cba25eeb34a34237856351",
+    "keys": {
+      "the review finding \"Make kept-finding titles accessible from the keyboard\" in src/forge/board_app/releases.js": 1,
+      "the review finding \"Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.\" in src/forge/board_app/releases.js": 1,
+      "the review finding \"Preserve unknown weeks when calculating Insights\" in src/forge/board_app/insights.js": 1
+    },
+    "round": 1
+  },
+  "worker": "claude"
+}

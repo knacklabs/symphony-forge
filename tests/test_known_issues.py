@@ -80,6 +80,7 @@ def kept_history(unsynced_up, monkeypatch, request):
         {"file": "reader.py", "line": 12, "title": "An ordinary dismissal", "gain": 2,
          "work": 2, "harm": 1, "outcome": "accepted", "reason": "The report was incorrect"}]
     saved = {**state, "branch": "fix/current-help", "known": known}
+    env.commit(repo.path, "reader.py", "print('read')\n", "Add the reader")  # the board leaves out deleted files
     env.commit(repo.path, ".factory/fixes/current-help.json", json.dumps(saved), "Keep help review decisions")
     repo.git("push", "-q", "origin", "main")
     repo.git("switch", "-q", "-c", "fix/unmerged-help")
@@ -95,9 +96,15 @@ def kept_history(unsynced_up, monkeypatch, request):
     (repo.bin / "historical-checks.json").write_text("{}", "utf-8")
     github = GITHUB.replace('prs = json.loads(store.read_text("utf-8"))', '''prs = json.loads(store.read_text("utf-8"))
 if args and args[0] == "api" and any("/pulls?" in arg for arg in args):
-    for pr in prs:
-        if pr["state"] == "MERGED":
-            print(json.dumps({"number": pr["number"], "headRefName": pr["headRefName"]}))
+    print("HTTP/2.0 200 OK")
+    if "page=2" not in args:
+        last = 101 if "per_page=1" in args else 2
+        print(f'Link: <https://api.github.com/repos/acme/shop/pulls?state=closed&page=2>; rel="next", <https://api.github.com/repos/acme/shop/pulls?state=closed&page={last}>; rel="last"')
+    print()
+    if "page=2" in args:
+        for pr in prs:
+            if pr["state"] == "MERGED":
+                print(json.dumps({"number": pr["number"], "headRefName": pr["headRefName"]}))
     sys.exit(0)''')
     fallback = GH_STUB.format(python=sys.executable).split("\n", 1)[1]
     _install(repo.bin, "gh", "#!" + sys.executable + "\n" + github + fallback)
@@ -128,12 +135,13 @@ def test_4_board_lists_kept_review_problems_since_adoption(kept_history):
         assert row["reason"], row
 
 
-def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch, tmp_path):
+def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch, tmp_path, request):
     # A minute-cache regression would preserve the JSON but repeat every network
     # fetch. Trace real Git to observe that distinct board-refresh contract.
     repo, _, _ = kept_history
+    previous = request.node.callspec.params["kept_history"]
     fetches = []
-    for seconds in (0, 61):
+    for seconds in (0, 86401):
         trace = tmp_path / f"git-{seconds}.jsonl"
         monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=seconds)).isoformat())
         monkeypatch.setenv("GIT_TRACE2_EVENT", trace.as_posix())
@@ -143,5 +151,47 @@ def test_14_board_reads_each_merged_pull_request_once(kept_history, monkeypatch,
         fetches.append([event["argv"] for event in events if event.get("event") == "start"
                         and "fetch" in event.get("argv", [])
                         and "refs/pull/11/head" in event["argv"]])
-    assert len(fetches[0]) == 1, fetches
+    # Upgrade now fills the adopted repo before its first board read. A new
+    # repo still fetches on demand. Expiring the aggregate must never refetch
+    # either repo's immutable pull-request evidence.
+    assert len(fetches[0]) == (0 if previous else 1), fetches
     assert fetches[1] == [], fetches
+
+
+def test_16_board_refresh_uses_the_current_saved_list(kept_history, monkeypatch):
+    # Audit: the public board JSON must reveal immutable old PR evidence after its landed
+    # state stops saving a known list. Before the fix, the first read caches an empty
+    # historical result because the saved list shadows that PR; removing the field then
+    # incorrectly reuses that partial result. Existing test_4 checks one read with both
+    # sources, and test_14 checks PR-fetch lifetimes, but neither changes the saved state
+    # between board requests. This uses the real board command and Git; only GitHub is stubbed.
+    repo, _, item = kept_history
+    path = f".factory/fixes/{item}.json"
+    state = json.loads((repo.path / path).read_text("utf-8"))
+    branch = state["branch"]
+    # Upgrade installs real hooks: edit the existing item's own branch, then
+    # let the bare remote receive the landed state as GitHub would after a merge.
+    repo.git("switch", "-q", "-c", branch)
+
+    def publish(message):
+        repo.write(path, json.dumps(state))
+        repo.git("add", path)
+        repo.git("commit", "-q", "-m", message)
+        repo.git("switch", "-q", "main")
+        repo.git("merge", "-q", "--ff-only", branch)
+        repo.git("--git-dir", repo.git("remote", "get-url", "origin"), "fetch", "-q",
+                 str(repo.path), "main:main")
+
+    state["known"] = []
+    publish("Save an empty known list")
+
+    monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(days=2)).isoformat())
+    first = board(repo)["known_issues"]
+    assert not any(row["item"] == item for row in first)
+
+    state.pop("known")
+    repo.git("switch", "-q", branch)
+    publish("Read original review evidence again")
+    refreshed = board(repo)["known_issues"]
+    old = {row["title"] for row in refreshed if row["item"] == item}
+    assert old == {"Explain short greetings", "Older greeting has no example"}

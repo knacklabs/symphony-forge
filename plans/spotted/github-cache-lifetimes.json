@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/board_facts.py\tOlder merged parts disappear for up to a day when the week rolls over\tgithub-cache-lifetimes",
+      "kind": "bug",
+      "path": "src/forge/board_facts.py",
+      "line": 170,
+      "text": "Older merged parts disappear for up to a day when the week rolls over",
+      "from": "blocking",
+      "item": "github-cache-lifetimes",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\ttests/test_github_reads_follow_data_lifetimes.py\tNot done: Each GitHub cache lives as long as its data changes (open pull requests and this week each minute, past weeks and history for a d\u2026",
+      "kind": "edge",
+      "path": "tests/test_github_reads_follow_data_lifetimes.py",
+      "line": 77,
+      "text": "Not done: Each GitHub cache lives as long as its data changes (open pull requests and this week each minute, past weeks and history for a d\u2026",
+      "from": "review",
+      "item": "github-cache-lifetimes",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

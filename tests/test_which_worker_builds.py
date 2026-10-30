@@ -198,7 +198,7 @@ def test_6_workers_claude_never_falls_back_to_codex(repo, monkeypatch, sdk_data)
 
 def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, monkeypatch,
                                                                      sdk_data, claude_session):
-    # Earlier settings name only gpt models: omitted Claude entries now use Sonnet at xhigh.
+    # Earlier settings name only gpt models: omitted Claude entries now use Sonnet at low.
     folder, codex_log = _codex_repo(repo, monkeypatch, sdk_data, client=True)
     claude_log = install_claude(repo)
     _help(repo, "claude")
@@ -206,8 +206,8 @@ def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, mon
     monkeypatch.delenv("CLAUDECODE")
     plain = repo.forge("work", "BOARD/HELP")
     assert plain.returncode == 0, plain.stdout + plain.stderr
-    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "xhigh")
-    assert ("Building BOARD/HELP with Claude (claude-sonnet-5-5, xhigh) because workers = claude"
+    assert (calls(claude_log)[-1]["options"]["model"], calls(claude_log)[-1]["options"]["effort"]) == ("claude-sonnet-5-5", "low")
+    assert ("Building BOARD/HELP with Claude (claude-sonnet-5-5, low) because workers = claude"
             in plain.stdout)
 
     # Codex with no models at all runs, and names, Forge's Codex default.
@@ -218,8 +218,8 @@ def test_7_the_launch_line_names_the_default_models_a_worker_runs_with(repo, mon
     again = repo.forge("work", "BOARD/HELP")
     assert again.returncode == 0, again.stdout + again.stderr
     assert _sent(codex_log, "thread/start")[-1]["config"] == {
-        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "medium"}
-    assert ("Building BOARD/HELP with Codex (gpt-6.1-sol, medium) because workers = codex"
+        **QUIET, "features.multi_agent": True, "model": "gpt-6.1-sol", "model_reasoning_effort": "low"}
+    assert ("Building BOARD/HELP with Codex (gpt-6.1-sol, low) because workers = codex"
             in again.stdout)
 
 
@@ -259,6 +259,7 @@ def test_8_a_fallback_after_a_claude_round_starts_codex_fresh_with_the_brief_and
     assert "## Tests first" in sent and "Board misses a story" in sent
 
 
+@pytest.mark.platform
 @pytest.mark.skipif(os.name == "nt", reason="no Ctrl-C to send a process there")
 def test_10_a_codex_start_cut_short_after_a_claude_round_leaves_the_retry_fresh(
         repo, monkeypatch, sdk_data, claude_session):

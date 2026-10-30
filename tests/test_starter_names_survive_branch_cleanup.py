@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 
 from conftest import GH_STUB, ROOT, Repo, _install
-from test_board import seen
 from test_close import CLEAN, CODEX_STUB, GREEN, PIN, Forge
 from test_started_branches_claim_the_work import client  # noqa: F401
 from test_story import DOC, claude_plan, hook, worktree
@@ -189,8 +188,3 @@ def test_15_board_keeps_original_starters_after_squash_merge_and_branch_cleanup(
     assert story["started_by"] == "Original Story Starter"
     assert part["started_by"] == "Original Part Starter"
     assert fix["started_by"] == "Original Fix Starter"
-    page = viewer.forge("board")
-    assert page.returncode == 0, page.stdout + page.stderr
-    words = seen(observer / ".git/forge/board.html")
-    for starter in ("Original Story Starter", "Original Part Starter", "Original Fix Starter"):
-        assert f"Started by {starter}." in words, words

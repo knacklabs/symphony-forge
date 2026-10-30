@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\ttests/test_queue_land_all.py\tConcurrent stub writes can expose incomplete pull request JSON to readers.",
+      "kind": "edge",
+      "path": "tests/test_queue_land_all.py",
+      "line": 66,
+      "text": "Concurrent stub writes can expose incomplete pull request JSON to readers.",
+      "from": "worker",
+      "item": "FORGE-BOARD-3/RELEASES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

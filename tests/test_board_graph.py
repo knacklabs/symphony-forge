@@ -1,13 +1,9 @@
-"""The board's dependency graph: every roadmap story, parts in columns by when they can start,
-arrows for waits across stories, running marks, done folds, no-plan boxes and a Fixes row."""
+"""The board's dependency order: every roadmap story, parts in columns by when they can start,
+waits across stories, running parts, done counts, unplanned stories and a Fixes row."""
 import json
-import re
-import subprocess
-import xml.etree.ElementTree as ET
 
 import pytest
 
-from conftest import REAL_UV
 from test_board_dependency_timelines import _configured, _land_fixture
 from test_story import claude_plan, hook, new_story, worktree
 
@@ -32,24 +28,6 @@ def _story(repo, key, title, rows, read=True):
     if read:
         assert repo.forge("read", key).returncode == 0
     return tree, doc
-
-
-def _node(svg, title):
-    """The drawn group whose <title> starts with this part's title."""
-    for group in svg.iter("{http://www.w3.org/2000/svg}g"):
-        named = group.find("{http://www.w3.org/2000/svg}title")
-        if named is not None and named.text.startswith(title + ":"):
-            return group
-    raise AssertionError(title)
-
-
-def _x(group):
-    return float(re.match(r"translate\(([\d.]+)", group.get("transform"))[1])
-
-
-def _painted(group):
-    return " ".join(t.strip() for t in group.itertext()
-                    if t.strip() and t not in [n.text for n in group.iter("{http://www.w3.org/2000/svg}title")])
 
 
 @pytest.mark.timeout(600)
@@ -123,73 +101,10 @@ def test_11_dependency_graph(repo, gh, tmp_path, claude_payload, monkeypatch, hi
     assert open_fixes["readme-greets"]["running"] and not open_fixes["sort-case"]["running"]
     assert open_fixes["sort-case"]["started_on"] == "ALPHA/T2"
 
-    out = tmp_path / "board.html"
-    assert repo.forge("board", "--out", str(out)).returncode == 0
-    page = out.read_text("utf-8")
-    svg = ET.fromstring(re.search(r'<svg\b[^>]*aria-label="Roadmap dependencies".*?</svg>', page, re.S)[0])
-    titles = [t.text for t in svg.iter("{http://www.w3.org/2000/svg}title")]
-    assert _x(_node(svg, "Draw the list")) == _x(_node(svg, "Print the list")) < _x(_node(svg, SORT))
-    assert _x(_node(svg, SORT)) < _x(_node(svg, "Send the list"))
-    assert f"Send the list waits for {SORT}" in titles
-    assert "running" in _painted(_node(svg, "Print the list"))
-    assert "Store the list" not in " ".join(titles) and "1 done" in _painted(svg)
-    assert len([t for t in titles if t.startswith("No plan yet:")]) == 3
-    greets, case = _node(svg, "Readme greets new readers"), _node(svg, "Sort ignores case")
-    assert _x(greets) == _x(case) == _x(_node(svg, "Draw the list"))
-    assert "running" in _painted(greets) and f"started on {SORT}" in _painted(case), "The whole part name shows"
-    assert not any("Sort ignores case" in t and "waits for" in t for t in titles)
-    assert "Land the stored list" not in " ".join(titles)
-    assert _x(_node(svg, "Map the route")) == _x(_node(svg, "Book the slot"))
-    assert "waits on each other" in _painted(_node(svg, "Map the route"))
-    assert "waits on a part no plan names" in _painted(_node(svg, "Confirm the slot"))
-    assert not any("Confirm the slot waits for" in t for t in titles)
-    assert any(t.startswith("No plan yet: Shoppers get ideas") for t in titles)
-    if history == "new":
-        _browser(out)
-
-
-def _browser(page):
-    """In real Chrome at 1440 and 390 wide: the graph fills its slot at laptop width at its own
-    size (no stretching), no label overlaps another, no arrow runs through a label, and only the
-    graph's own focusable box scrolls sideways when narrow."""
-    script = """
-import sys
-from playwright.sync_api import sync_playwright
-CHECK = '''() => {
-  const svg = document.querySelector('svg[aria-label="Roadmap dependencies"]');
-  const box = svg.getBoundingClientRect(), slot = svg.parentElement.getBoundingClientRect();
-  const rects = [...svg.querySelectorAll('text')].map(t => t.getBoundingClientRect()).filter(r => r.width);
-  let overlaps = 0, crossings = 0;
-  rects.forEach((a, i) => rects.slice(i + 1).forEach(b => {
-    if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) overlaps++; }));
-  for (const path of svg.querySelectorAll('.dependency-edge')) {
-    const m = path.getScreenCTM();
-    for (let d = 0; d < path.getTotalLength(); d += 2) {
-      const p = path.getPointAtLength(d).matrixTransform(m);
-      if (rects.some(r => p.x > r.left + 1 && p.x < r.right - 1 && p.y > r.top + 1 && p.y < r.bottom - 1)) crossings++;
-    }
-  }
-  return {scale: box.width / svg.viewBox.baseVal.width, fill: box.width / slot.width, overlaps, crossings,
-          page: document.documentElement.scrollWidth <= window.innerWidth,
-          focusable: svg.parentElement.tabIndex === 0, label: svg.parentElement.getAttribute('aria-label')};
-}'''
-with sync_playwright() as p:
-    browser = p.chromium.launch(channel='chrome', headless=True, args=['--no-sandbox'])
-    try:
-        for width in (1440, 390):
-            page = browser.new_page(viewport={'width': width, 'height': 900})
-            page.goto(sys.argv[1])
-            seen = page.evaluate(CHECK)
-            assert seen['scale'] == 1, seen
-            assert seen['overlaps'] == 0 and seen['crossings'] == 0, seen
-            assert seen['page'] and seen['focusable'] and seen['label'], seen
-            if width == 1440:
-                assert seen['fill'] > 0.97, seen
-            page.close()
-    finally:
-        browser.close()
-"""
-    shown = subprocess.run([REAL_UV or "uv", "run", "--no-project", "--python", "3.11", "--with",
-                            "playwright==1.55.0", "python", "-c", script, page.resolve().as_uri()],
-                           capture_output=True, text=True, encoding="utf-8", timeout=120)
-    assert shown.returncode == 0, shown.stdout + shown.stderr
+    parts = {part["id"]: part for entry in maps.values() for part in entry["parts"]}
+    assert parts["BETA/T1"]["waits_for"] == ["ALPHA/T2"], "A wait across stories"
+    assert parts["ALPHA/T3"]["status"] == "Running"
+    assert open_fixes["sort-case"]["waits_for"] == []
+    assert parts["GAMMA/T1"]["note"] == parts["DELTA/T1"]["note"] == "waits on each other"
+    assert parts["DELTA/T2"]["note"] == "waits on a part no plan names"
+    assert maps["IDEA"]["title"] == "Shoppers get ideas"

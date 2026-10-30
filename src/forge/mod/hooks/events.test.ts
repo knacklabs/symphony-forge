@@ -4,7 +4,7 @@ import { expect, mock, test } from 'claude-code/testing'
 // response are replaced. The plugin decides what enters the session.
 const occurrence = (id: string, kind = 'worker_question', title = 'Which option?') => ({ id, kind, title })
 const row = (title: string, id: string, command: string | null = 'forge work guide') => ({
-  title, occurrences: [occurrence(id)], next: { command, line: '' },
+  title, stage: 'working', occurrences: [occurrence(id)], next: { command, line: '' },
 })
 const started = { cwd: '/repo', surface: 'terminal', isInteractive: true } as const
 const complete = { answer: '', durationMs: 1, isAborted: false, turnId: 'main', reason: 'answer' } as const
@@ -30,8 +30,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
       on('process.run', async (_$, e) => {
         if (gate) { entered(); await gate }
         return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-          e.argv[1] === 'board' ? { version: '1.2.5', repo_root: '/repo', items } :
-          e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: '' } } : { version: '1.2.5' },
+          e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', items, next: { command: null, line: '' } } : { version: '1.2.5' },
         ) } }
       })
       on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
@@ -82,8 +81,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('process.run', (_$, e) => {
       directories.push(e.init?.cwd ?? '')
       return { value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-        e.argv[1] === 'board' ? { version: '1.2.5', repo_root: boardRoot, items } :
-        e.argv[1] === 'next' ? { version: '1.2.5', repo_root: boardRoot, next: { command: null, line: '' } } : { version: '1.2.5' },
+        e.argv[1] === 'next' ? { version: '1.2.5', repo_root: boardRoot, items, next: { command: null, line: '' } } : { version: '1.2.5' },
       ) } }
     })
     on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
@@ -104,7 +102,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     items = [row('Foreign guide', 'foreign-change')]
     await clock.advance(10000)
     expect(prompts.length).toBe(3)
-    expect(directories.slice(-3)).toEqual(['/other', '/other', '/other'])
+    expect(directories.slice(-2)).toEqual(['/other', '/other'])
     boardRoot = '/other'
     items = [row('New repo', 'other-baseline')]
     await clock.advance(10000)
@@ -140,8 +138,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('ui.invalidate', () => ({ value: undefined }))
     on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-      e.argv[1] === 'board' ? { version: '1.2.5', repo_root: root, items } :
-      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: root, next: { command: null, line: '' } } : { version: '1.2.5' },
+      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: root, items, next: { command: null, line: '' } } : { version: '1.2.5' },
     ) } }))
     on('prompt.submit', (_$, e) => {
       if (unavailable) throw new Error('Session disconnected')
@@ -165,16 +162,18 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await $.turn.start({ text: 'Working', turnId: 'main' })
     // Reload has no replay of the active turn's start. Both following ticks must batch.
     await $.session.start({ ...started, surface })
-    items = [row('Guide', 'question-2')]
+    items = [row('Guide', 'question-2'), row('Merged', 'obsolete')]
     await clock.advance(10000)
-    items = [row('Checks', 'check-run:7:later', 'forge close checks')]
+    items = [row('Checks', 'check-run:7:later', 'forge close checks'),
+      { ...row('Guide', 'question-2', 'forge close guide'), occurrences: [] },
+      { ...row('Merged', 'obsolete'), stage: 'merged', occurrences: [] }]
     items[0]!.occurrences = [occurrence('check-run:7:later', 'checks_failed', 'Tests failed')]
     await clock.advance(10000)
     expect(prompts.length).toBe(1)
     await $.turn.complete({ ...complete, agentId: 'child' })
     expect(prompts.length).toBe(1)
     await $.turn.complete(complete)
-    expect(prompts[1]).toBe('Guide: Which option? Next: forge work guide\nChecks: Tests failed Next: forge close checks')
+    expect(prompts[1]).toBe('Guide: Which option? Next: forge close guide\nChecks: Tests failed Next: forge close checks')
     await clock.advance(10000)
     expect(prompts.length).toBe(2)
     for (const id of ['check-run:8:now', 'check-run:8:later', 'commit-status:9']) {
@@ -249,8 +248,7 @@ for (const mode of ['worker', 'headless'] as const) {
     on('ui.invalidate', () => ({ value: undefined }))
     on('ui.open', () => ({ value: undefined }))
     on('process.run', (_$, e) => ({ value: { exitCode: 0, stderr: '', stdout: JSON.stringify(
-      e.argv[1] === 'board' ? { version: '1.2.5', repo_root: '/repo', items: [row('Guide', id)] } :
-      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', next: { command: null, line: '' } } : { version: '1.2.5' },
+      e.argv[1] === 'next' ? { version: '1.2.5', repo_root: '/repo', items: [row('Guide', id)], next: { command: null, line: '' } } : { version: '1.2.5' },
     ) } }))
     on('prompt.submit', (_$, e) => { prompts.push(e.text); return { text: e.text } })
     await $.session.start({ ...started, isInteractive: mode !== 'headless' })

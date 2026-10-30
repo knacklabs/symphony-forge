@@ -82,7 +82,7 @@ def _guidance(client):
 
 def test_4_new_clients_receive_story_start_guidance(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
-    result = repo.forge("init", cwd=client)
+    result = repo.forge("init", "--actions", "yes", cwd=client)
     assert result.returncode == 0, result.stdout + result.stderr
     _guidance(client)
 

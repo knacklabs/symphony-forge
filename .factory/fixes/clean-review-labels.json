@@ -1,0 +1,46 @@
+{
+  "base": "b3880ba87978fefde7e106eb1d43ae6e18d42c0e",
+  "branch": "fix/clean-review-labels",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14fe6-f396-7ee1-81fe-3e0fe09b734a",
+    "head": null,
+    "start": "874da88f4a1e5500bc84b0d021fec2c133762b59"
+  },
+  "done_when": "When a review is clean, close labels every finding it prints as not blocking, as it already does for advice, and a test shows a clean review with a non-blocking P1 prints the label, on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3b6137e45bb9eec80e93337b38cbc09ed5c6d834b941953175af527c951dd8fe",
+    "changed": "efb8a06c4bff8d89fd5a3cd55e6c0417219f488bdcc2ee5f9ef009fff89113d2",
+    "commit": "d449f27c7d6d4091be650b7823c73b0621ac1046",
+    "dismissals": [],
+    "findings": [],
+    "id": "8b38a440-3667-4cfe-b028-51bea25cc4da",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:44:50.960175+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:09:26.382778+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "97a3d7453a5543af9a6cb2302187b540e1077c33",
+    "keys": {},
+    "round": null
+  },
+  "why": "A clean review prints its P1 'Not done' findings in close's output without saying they do not block, so the coordinator thinks the review failed",
+  "worker": "codex"
+}

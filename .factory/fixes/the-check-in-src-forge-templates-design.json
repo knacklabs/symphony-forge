@@ -1,0 +1,45 @@
+{
+  "base": "d09873d744a6abb4225c1b58a7f3045e4f25f081",
+  "branch": "fix/the-check-in-src-forge-templates-design",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16cd1-90f0-7aa0-92ea-ab09085cc657",
+    "head": null,
+    "start": "5da96c35aea90a1784f08fe157423c6b482e8098"
+  },
+  "done_when": "The completeness check asks for each list's sort, search, default order and filters, and for dates, time zones, currency and number formats, with the four production-only items removed from it and checked by the production story rules in src/forge/templates/brief.md and src/forge/templates/review.md.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "eb1c17554466ceb8bd1b9e4f39c7ee694d50604c05aa29b7ce9be249d6569f1a",
+    "changed": "d4f29a46205fb9998a98e890e09bac6b345cb7eec78d0ac69fdf74461d3f878b",
+    "commit": "e6327e4cde1363a53859cb71808c51f22794885d",
+    "dismissals": [],
+    "findings": [],
+    "id": "87770fcc-4680-47cc-b248-ea3fff4bdf56",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T07:27:15.515348+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T07:34:10.319401+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "ed0f9057ba07bb5f882024c45e844523154d8a2d",
+    "keys": {},
+    "round": null
+  },
+  "why": "The check in src/forge/templates/design-check.md blocks canvas sign-off on offline, tablet, keyboard path and tabbed detail items that production stories should carry, and it never asks for list sort, search, default order, filters, or date, time zone, currency and number formats. The constitution defaults in .claude/skills/forge/fde.md cover dates and time zones only, so the check has no default to cite for currency or number formats.",
+  "worker": "codex"
+}

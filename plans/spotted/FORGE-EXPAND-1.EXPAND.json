@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/app_baseline.py\tFollow-up: check Prisma migrations at the repository root\tFORGE-EXPAND-1/EXPAND",
+      "kind": "bug",
+      "path": "src/forge/app_baseline.py",
+      "line": 114,
+      "text": "Follow-up: check Prisma migrations at the repository root",
+      "from": "blocking",
+      "item": "FORGE-EXPAND-1/EXPAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/cli.py\tGate: unrelated open-decision commands exceed the migration scope\tFORGE-EXPAND-1/EXPAND",
+      "kind": "bug",
+      "path": "src/forge/cli.py",
+      "line": 32,
+      "text": "Gate: unrelated open-decision commands exceed the migration scope",
+      "from": "blocking",
+      "item": "FORGE-EXPAND-1/EXPAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_migrations_keep_previous_release.py\tGate: test_4_one_test_per_rule\tFORGE-EXPAND-1/EXPAND",
+      "kind": "bug",
+      "path": "tests/test_migrations_keep_previous_release.py",
+      "line": 18,
+      "text": "Gate: test_4_one_test_per_rule",
+      "from": "blocking",
+      "item": "FORGE-EXPAND-1/EXPAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/app_baseline.py\tFollow-up: check Prisma migrations at the repository root",
+      "kind": "edge",
+      "path": "src/forge/app_baseline.py",
+      "line": 114,
+      "text": "Follow-up: check Prisma migrations at the repository root",
+      "from": "review",
+      "item": "FORGE-EXPAND-1/EXPAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/app_baseline.py\tNot done: close refuses a change that adds a Prisma or Alembic migration that drops, renames or changes the type of a column or table",
+      "kind": "edge",
+      "path": "src/forge/app_baseline.py",
+      "line": 134,
+      "text": "Not done: close refuses a change that adds a Prisma or Alembic migration that drops, renames or changes the type of a column or table",
+      "from": "review",
+      "item": "FORGE-EXPAND-1/EXPAND",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\t.codex/skills/forge/standards.md\tBoth host standards copies still lack unrelated abstraction guidance from the source template.",
+      "kind": "improve",
+      "path": ".codex/skills/forge/standards.md",
+      "line": 82,
+      "text": "Both host standards copies still lack unrelated abstraction guidance from the source template.",
+      "from": "worker",
+      "item": "FORGE-EXPAND-1/EXPAND",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

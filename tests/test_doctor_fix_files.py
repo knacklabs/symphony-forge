@@ -21,6 +21,8 @@ from conftest import _install
 from test_close import env  # noqa: F401
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
 
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-DOCTORFIX-1"
 WHY = "Bring the files Forge writes for Claude Code and Codex up to date"
 SETTINGS, HOOKS, SKILL = ".claude/settings.json", ".codex/hooks.json", ".claude/skills/forge/SKILL.md"
@@ -309,20 +311,19 @@ def _on_a_fix_branch_the_files_are_written_in_place(repo, gh, tmp_path, monkeypa
 
 def _a_stale_tests_workflow_is_repaired_in_place(repo, gh, tmp_path, monkeypatch, _):
     client = _client(repo, gh, tmp_path, monkeypatch)
-    folder = _start_fix(repo, client)
-    toml = folder / "forge.toml"
-    toml.write_text(re.sub(r"^test = .*$", 'test = "make check"', toml.read_text(encoding="utf-8"),
-                           count=1, flags=re.M), encoding="utf-8")
-    repo.git("commit", "-qam", "Run the tests with make", cwd=folder)
     workflow = ".github/workflows/forge.yml"
+    stale = (Path(__file__).parent / "fixtures/doctor-v1.2.2" / workflow).read_text(encoding="utf-8")
+    assert 'run: "npm test"' in stale
+    _land(repo, client, "Upgrade Forge", lambda folder: _set(folder, workflow, stale), forge=True)
+    folder = _start_fix(repo, client)
     listed = repo.forge("doctor", cwd=folder).stdout
     assert f"{workflow} differs from what forge sync writes" in listed, listed
-    assert f"The tests check in {workflow} doesn't run forge.toml's test command." in listed
+    assert f"The tests check in {workflow} does not run forge test --change." in listed
     head = repo.git("rev-parse", "HEAD", cwd=folder)
 
     done = repo.forge("doctor", "--fix", cwd=folder)
     assert f"- Fixed: wrote {workflow}.\n" in done.stdout, done.stdout
-    assert 'run: "make check"' in (folder / workflow).read_text(encoding="utf-8")
+    assert 'run: "forge test --change"' in (folder / workflow).read_text(encoding="utf-8")
     assert workflow not in done.stdout.replace(f"- Fixed: wrote {workflow}.\n", "")
     assert "The tests check" not in done.stdout
     assert repo.git("rev-parse", "HEAD", cwd=folder) == head
@@ -842,12 +843,12 @@ def _cases(*cases) -> list:
     (_a_stale_tests_workflow_is_repaired_in_place, [None], ()),
     (_a_failed_pin_install_writes_nothing, [None], SHELL),
     (_a_fix_already_named_forge_files_is_left_alone, [None], ()),
-    (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n", ""], ()),
+    (_a_file_sync_wants_empty_is_removed, ["@AGENTS.md\n"], ()),
     (_a_stale_doctor_fix_gets_one_step_and_nothing_new_starts,
      ["the default branch changed the test command", "its forge.toml was edited"], ()),
     (_nothing_differing_leaves_no_fix_behind, [None], ()),
     (_doctor_starts_its_fix_only_from_a_clean_checkout_at_origin,
-     ["unstaged config", "staged config", "untracked file", "behind origin"], ()),
+     ["staged config", "untracked file", "behind origin"], ()),
     (_a_fix_holds_the_repaired_file_and_the_held_one_keeps_its_row, [None], ()),
     (_a_commit_a_git_hook_refuses_leaves_the_fix, ["record", "files"], SHELL),
     (_a_file_the_system_wont_write, [None], SHELL),

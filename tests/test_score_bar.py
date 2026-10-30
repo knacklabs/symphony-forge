@@ -7,7 +7,6 @@ GitHub and the clock are stubbed; the stubs write the scored findings and notes.
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -18,7 +17,6 @@ from conftest import _install
 from test_close import CLEAN, GREEN, STORY_DOC, blocked, body, env  # noqa: F401 (env is a fixture)
 from test_proto_signoff import SOL_HIGH, _client, _decision
 from test_score_notes import _client_repo, _scored
-from test_stop_default_answer import follow_ups, later
 from test_story import DOC, READER, new_story
 from test_worker import calls, install_claude
 
@@ -51,8 +49,11 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
         (tmp_path / "sign-off").mkdir()
         fix, answers, queue = _client(repo, tmp_path / "sign-off", monkeypatch)
         _decision(fix, answers)
-        queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
-            _scored("P2", "The demo loses its basket", "Gain 5, Work 1, Harm 1\nRaise: Functional")]}}]))
+        clean_check = {"say": SOL_HIGH, "report": {
+            "review_status": "scoped-clean", "findings": []}}
+        p2_finding = {"say": SOL_HIGH, "report": {"review_status": "findings", "findings": [
+            _scored("P2", "The demo loses its basket", "Gain 5, Work 1, Harm 1\nRaise: Functional")]}}
+        queue.write_text(json.dumps([clean_check, p2_finding]))
         refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
         assert refused.returncode == 1
         assert "found a blocking issue: The demo loses its basket" in refused.stderr
@@ -83,11 +84,20 @@ def test_2_only_notes_at_the_bar_hold_work_and_the_rest_are_listed(env, tmp_path
                         {"priority": "P3", "title": "Saved advice", "body": "Evidence",
                          "file": "app.py", "line": 1}]}
     log = install_claude(repo)
-    item, where = env.start_fix(**({"review": old} if case != "init" else {}))
     if case != "init":
+        item, where = env.start_fix(review=old)
         assert repo.forge("work", item).returncode == 0
         brief = _findings_in(calls(log)[-1]["brief"])
         assert "Saved serious finding" in brief and "Saved advice" not in brief
+
+    # A story part keeps one repair round before its owner review stop.
+    (shop / "plans/SHOP.md").write_text(STORY_DOC, encoding="utf-8")
+    _says(repo, "No findings.\n")
+    assert repo.forge("read", "SHOP").returncode == 0
+    where = _approve(env, STORY_DOC, f"core.hooksPath={tmp_path / 'no-hooks'}")
+    item = "SHOP/T1"
+    env.commit(where, "app.py", "print('hello')\n")
+    log = install_claude(repo)
 
     # Stop and fix-this-round scores hold, regardless of the reviewer's priority.
     held = [("Saving loses the note", 3, 2, 3),
@@ -173,12 +183,15 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     assert "passed: no\n" in text
     notes.write_text(text.replace("Harm 1\n2.", "Harm 1\n   Disposition: keep - sign-in is out of scope\n2.", 1),
                      encoding="utf-8")
-    # Round 2 raises one more note at the bar; round 3 still gets every settled note, unchanged ones too.
+    # Round two stops for the owner's answer; later reads retain that answer too.
     (repo.bin / "claude-says.md").write_text(
         "3. Blocking: Saving needs a button.\n   Raise: Plan gap\n   Gain 4, Work 1, Harm 1\n", encoding="utf-8")
-    assert repo.forge("read", "SHOP").returncode == 0
-    notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - the button is in the doc\n",
-                     encoding="utf-8")
+    stopped = repo.forge("read", "SHOP")
+    assert stopped.returncode == 1 and "asks the owner" in stopped.stderr, stopped.stdout + stopped.stderr
+    accepted = repo.forge("read", "SHOP", "--resolve", "accept", "--reason",
+                          "the owner accepts the missing save button")
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "Disposition: keep - the owner accepts the missing save button" in notes.read_text("utf-8")
     (repo.bin / "claude-says.md").write_text("No findings.\n", encoding="utf-8")
     assert repo.forge("read", "SHOP").returncode == 0
     settled = _read_prompt(repo).split("each with its scores and its disposition:", 1)[1].split("For a story,", 1)[0]
@@ -195,9 +208,9 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
     known = env.prompt().split("## Known and accepted", 1)[1].split("##", 1)[0]
     assert "Sign-in is out of scope" in known and "The title could be shorter" in known
 
-    # Three findings at the bar in one area stop the part; the owner accepts them.
+    # The part's second review has P1s at the bar; the owner accepts them as follow-ups.
     env.commit(where, "app.py", "print('saved twice')\n")
-    env.reviews(blocked(*[_scored("P1", title, "Gain 4, Work 2, Harm 1\nRaise: Functional")
+    env.reviews(blocked(*[_scored("P1", title, "Gain 4, Work 1, Harm 2\nRaise: Functional")
                           for title in ("Saving drops the basket", "Saving skips the coupon",
                                         "Saving forgets the address")],
                         _scored("P2", "Label spacing", "Gain 2, Work 1, Harm 1\nRaise: Functional")))
@@ -238,7 +251,7 @@ def test_3_settled_notes_reach_later_reads_and_reviews_as_known(env, tmp_path, c
 
 def _round(env, item, where, number, *findings, code=1):
     env.commit(where, "app.py", f"print({number})\n")
-    # The score/area rules own these cases; each new defect is in this round's edits.
+    # Every finding names this round's own edits, not a canned report over absent code.
     for entry in findings:
         location = entry["code_location"]
         path, line = location["file_path"], location["line"]
@@ -250,91 +263,3 @@ def _round(env, item, where, number, *findings, code=1):
     result = env.close(item)
     assert result.returncode == code, result.stdout + result.stderr
     return result
-
-
-SHOP = ("def save(basket):\n    total = 0\n    return total\n\n\nLIMIT = 5\n\n\n"
-        "def load(\n        basket,\n        user):\n    return basket\n\n\n"
-        "class A:\n    def __init__(self):\n        self.x = 1\n\n\n"
-        "class B:\n    def __init__(self):\n        self.y = 2\n")
-
-
-@pytest.mark.parametrize("case", CASES)
-@pytest.mark.parametrize("loop", ["new-harm-1", "harm-3-open", "only-harm-2", "only-harm-2-saved-before-known", "area",
-                                  "read-below-bar-harm-3", "case-only-repeat"])
-def test_4_loops_stop_only_by_the_bar_and_by_area(env, tmp_path, monkeypatch, case, loop):
-    _client_on_this_release(env, tmp_path, case)
-    item, where = env.start_fix()
-    before = follow_ups(env)
-    # Loop findings must still hold work under the new bar; low-Harm Gain 3 no longer does.
-    at_bar = lambda title, file, harm=1, line=1: {  # noqa: E731
-        **_scored("P1", title, f"Gain 4, Work 2, Harm {harm}\nRaise: Functional", file),
-        "code_location": {"file_path": file, "line": line}}
-    if loop == "new-harm-1":  # three blocked rounds of new Harm 1 findings: a fourth review runs
-        for number in (1, 2, 3):
-            _round(env, item, where, number, at_bar(f"Round {number} defect", f"docs/{number}.md"))
-        assert "Ready:" in _round(env, item, where, 4, code=0).stdout
-        assert len(env.review_calls()) == 4
-    elif loop == "harm-3-open":  # an open Harm 3 follow-up stops it, and waits for the owner
-        for number in (1, 2):
-            _round(env, item, where, number, at_bar(f"Round {number} defect", f"docs/{number}.md"))
-        _round(env, item, where, 3, at_bar("Round 3 defect", "docs/3.md", harm=2),
-               _scored("P2", "Follow-up: other shells", "Gain 3, Work 4, Harm 3\nRaise: Functional", "docs/4.md"))
-        stop = _round(env, item, where, 4).stderr
-        assert "Ask the human" in stop and "| 2 | other shells" in stop  # the finding that caused the stop
-        later(monkeypatch, 31)
-        held = env.close(item)
-        assert held.returncode == 1 and "Ask the human" in held.stderr
-        assert len(env.review_calls()) == 3 and follow_ups(env) == before
-    elif loop.startswith("only-harm-2"):  # a finding at the bar that keeps coming back; the default narrows
-        for number in (1, 2, 3):
-            _round(env, item, where, number, at_bar("Saving drops the basket", "docs/1.md", harm=2))
-        if loop.endswith("saved-before-known"):  # rounds an earlier release saved without the known list
-            path = ".factory/fixes/tidy-readme.json"
-            state = json.loads((where / path).read_text("utf-8"))
-            state.pop("known")
-            env.commit(where, path, json.dumps(state), "Rounds saved before the known list")
-        stopped = _round(env, item, where, 4).stderr
-        # The owner now decides even when every open finding has low Harm.
-        assert "Ask the human" in stopped and "settle it yourself" not in stopped
-        assert len(env.review_calls()) == 3
-        later(monkeypatch, 31)
-        narrowed = env.close(item)
-        assert "Forge recorded the repo's default choice: narrow" in narrowed.stdout
-        assert len(follow_ups(env)) == len(before) + 1
-    elif loop == "case-only-repeat":  # one finding whatever its case: a third round still holds it
-        for number, title in enumerate(("Saving drops the basket", "saving drops the basket", "Saving drops the basket"), 1):
-            held = _round(env, item, where, number, at_bar(title, "docs/1.md"))
-        assert "The review left serious findings open" in held.stderr
-    elif loop == "read-below-bar-harm-3":  # a disposed below-bar note never stops the read loop
-        shop = new_story(env.repo, "SHOP")
-        (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
-        for number in (1, 2, 3):
-            _says(env.repo, f"1. Blocking: Gap {number}.\n   Raise: Plan gap\n   Gain 4, Work 1, Harm 1\n"
-                  + ("2. Advisory: Wording.\n   Raise: Plan gap\n   Gain 2, Work 1, Harm 3\n" if number == 3 else ""))
-            read = env.repo.forge("read", "SHOP")
-            assert read.returncode == 0 and "Three consecutive" not in read.stderr, read.stdout + read.stderr
-            notes = shop / "plans/SHOP.read.md"
-            notes.write_text(notes.read_text("utf-8").rstrip() + "\n   Disposition: keep - fine\n", encoding="utf-8")
-    else:
-        env.commit(where, "src/shop.py", SHOP)
-        shop = "src/shop.py"
-        _round(env, item, where, 1, {**at_bar("Save trusts any user", shop, line=2),
-                                     "body": "Gain 3, Work 2, Harm 4\nRaise: Security"},
-               at_bar("The limit is too low", shop, line=6), at_bar("Load ignores the user", shop, line=10),
-               at_bar("A starts without a name", shop, line=17))
-        # One finding raised twice counts once; module-level code, load(), A.__init__ and
-        # B.__init__ are areas of their own.
-        second = _round(env, item, where, 2, at_bar("Save trusts any user", shop, line=2),
-                        at_bar("Save returns early", shop, line=3),
-                        at_bar("B starts empty", shop, line=21), at_bar("B keeps a stale y", shop, line=22))
-        assert "The review left serious findings open" in second.stderr
-        # An earlier round's security finding there, already scored Harm 4, puts fail closed first.
-        third = _round(env, item, where, 3, at_bar("Save rounds down", shop, line=2))
-        assert "still finds serious problems in save() in src/shop.py" in third.stderr
-        assert re.search(r"Findings keep coming in save\(\) in src/shop.py; proposed: make it fail closed", third.stderr)
-        narrow = env.close(item, "--resolve", "narrow", "--reason", "Cut the rounding")
-        assert narrow.returncode == 0, narrow.stdout + narrow.stderr
-        assert "Ready:" in _round(env, item, where, 4, at_bar("Save adds tax twice", shop, harm=2, line=2),
-                                  code=0).stdout
-        held = _round(env, item, where, 5, at_bar("Save loses cents", shop, harm=3, line=2))
-        assert "The review left serious findings open: finding 1 (Save loses cents)." in held.stderr

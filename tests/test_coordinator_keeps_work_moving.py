@@ -1,4 +1,4 @@
-"""Clients receive coordinator recovery guidance, and close points to it on a conflict."""
+"""Clients receive recovery guidance; close sends merge conflicts to normal work."""
 import shutil
 from pathlib import Path
 
@@ -33,18 +33,19 @@ def test_1_synced_skill_explains_keeping_work_moving_and_close_names_it(env, tmp
     refused = env.close(item)
     assert refused.returncode == 1, refused.stdout + refused.stderr
     assert "Merging main into fix/tidy-readme conflicts in README.md." in refused.stderr
-    assert "Keeping work moving" in refused.stderr
+    assert f"Next: forge work {item} to merge the default branch and continue this work" in refused.stderr
     assert "then forge close tidy-readme" in refused.stderr
     assert repo.git("status", "--porcelain", cwd=where) == ""
 
     for host in (".claude", ".codex"):
         skill = client / host / "skills/forge/SKILL.md"
-        assert f"{host}/skills/forge/SKILL.md" in refused.stderr
         section = skill.read_text(encoding="utf-8").split("## Keeping work moving\n", 1)[1]
         flat = " ".join(section.split("\n## ", 1)[0].split())
+        # Land now accepts guidance itself, replacing the work --note then land chain.
         for instruction in (
             "`forge land <item>`", "build, close, fix rounds and merge",
-            "`forge work <item> --note", "`forge task start <KEY>/<TASK>`",
+            '`forge land <item> --note "<text>"`', "for each in the background",
+            "Forge admits each worker round by machine capacity.", "`forge task start <KEY>/<TASK>`",
             "`forge fix start", "team-owned", "`forge.toml`", "pinned Forge",
             "`forge sync`", "approval", "cold-read", "stage only resolved paths",
             "overlapping work", "other ready work", "`forge next` after each merge",

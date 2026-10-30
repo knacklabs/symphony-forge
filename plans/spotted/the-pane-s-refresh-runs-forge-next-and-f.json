@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/nextstep.py\t[P2] Preserve the statistics summary in plain forge next output",
+      "kind": "edge",
+      "path": "src/forge/nextstep.py",
+      "line": 122,
+      "text": "[P2] Preserve the statistics summary in plain forge next output",
+      "from": "review",
+      "item": "the-pane-s-refresh-runs-forge-next-and-f",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

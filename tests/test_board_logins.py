@@ -3,6 +3,7 @@
 Command-boundary cases cover unavailable GitHub, an actual upgrade of an earlier
 client, and starter and approver identities before publication. No Forge internals
 are imported and no identity lookup is faked.
+New plan reads use src/forge/story.py before the approver identity is recorded.
 """
 from datetime import datetime, timedelta, timezone
 import json
@@ -104,7 +105,9 @@ def test_8_approval_identity_comes_from_the_approvers_own_record(
         history.prs = list(history.stored().values())
         history.prs = [merged if one["number"] == 21 else one for one in history.prs]
         history.publish()
-        monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(seconds=121)).isoformat())
+        # Upgrade already warmed past-week bodies. Expire their daily cache
+        # so the board reads the changed published evidence in both cases.
+        monkeypatch.setenv("FORGE_NOW", (NOW + timedelta(days=2)).isoformat())
     shown = rows(board(history.repo))["SHOP/T1"]
     assert (shown["approved_by"], shown["approved_by_login"]) == (
         "Plan Approver", "actual-approver" if evidence == "published" else None)

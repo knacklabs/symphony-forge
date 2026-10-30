@@ -1,0 +1,155 @@
+{
+  "allow_large": "Owner accepted the size on 19 October 2026: about 790 new lines, a third of them styles, checked in the browser",
+  "branch": "task/FORGE-BOARD-4-DETAIL",
+  "flagged": [
+    "src/forge/board_app/item.js"
+  ],
+  "known": [
+    {
+      "area": "tests/test_board_item_page.py",
+      "file": "tests/test_board_item_page.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 122,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_an_item_opens_in_a_drawer_and_a_full_page_with_an_inert_plan",
+      "work": 3
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 142,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The board's own words show no commands, say unknown where Forge has no record, work from the keyboard, and read in light and dark.",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 272,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Keep unknown merger facts distinct from an item that has not merged",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 246,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Give the Known issues panel a valid accessible label reference",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 9,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Map the server's ready-to-merge story stage",
+      "work": 2
+    },
+    {
+      "area": "src/forge/board_app/item.js",
+      "file": "src/forge/board_app/item.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 92,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Count the rounds represented by compacted history",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": {
+      "area": "src/forge/board_app/item.js",
+      "at": "2026-10-19T12:46:24.515844+00:00",
+      "by": "owner",
+      "choice": "split",
+      "file": "src/forge/board_app/item.js",
+      "fixes": [
+        "review-findings-split-from-forge-board-4"
+      ],
+      "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+      "reason": "Owner chose split on 19 October 2026: the five small drawer defects (command text in record lines, unknown vs not yet merged, Known issues tab label, ready-to-merge story stage, compacted round count) and a stronger history test move to a follow-up fix",
+      "wait_id": "340baa0a-cafe-4b1b-8d6b-092630b37dd5",
+      "worker_round": 1
+    }
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "463e41b168089508f82ac482b47f326d8ac3ed4a38556109c3cd4dd188b3c478",
+    "changed": "b183cd293e3764012bba6f55f6aabd7463ae71effd7562c6603bbbd7ab1a5ff5",
+    "commit": "9a02cbb036cb151b2cb55e96084e5455d7c2d4ff",
+    "dismissals": [],
+    "findings": [],
+    "id": "a86c5246-2b59-42aa-8b48-fc7b67ddfcf9",
+    "status": "clean"
+  },
+  "round": 2,
+  "settled_areas": [
+    "src/forge/board_app/item.js"
+  ],
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T12:22:15.451751+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T12:46:24.419211+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T14:29:07.560934+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "area": "src/forge/board_app/item.js",
+    "at": "2026-10-19T12:46:24.515844+00:00",
+    "by": "owner",
+    "choice": "split",
+    "file": "src/forge/board_app/item.js",
+    "fixes": [
+      "review-findings-split-from-forge-board-4"
+    ],
+    "proposed": "cut the code that invites these findings; or replace the cases with one general rule; or narrow that Done when item; or make it fail closed",
+    "reason": "Owner chose split on 19 October 2026: the five small drawer defects (command text in record lines, unknown vs not yet merged, Known issues tab label, ready-to-merge story stage, compacted round count) and a stronger history test move to a follow-up fix",
+    "wait_id": "340baa0a-cafe-4b1b-8d6b-092630b37dd5",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "e16b2e74-116d-4961-a88a-38375f55da34",
+    "head": "ab8fd11b5209f391d44f1feabcf0e5805e138d25",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

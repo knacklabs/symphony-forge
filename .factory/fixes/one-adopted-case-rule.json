@@ -1,0 +1,46 @@
+{
+  "base": "fae2104adebec6d0ccf12dd3a6dabd5be7785647",
+  "branch": "fix/one-adopted-case-rule",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14db2-23c1-73b2-b095-d48715ef685c",
+    "head": null,
+    "start": "858001959a7854d73898693dd91da368bc398125"
+  },
+  "done_when": "AGENTS.md's review rule says each rule keeps its full cases on a new repo plus at least one adopted-repo case, with more only where the adopted path differs, and the test-audit guidance says the same",
+  "fix_kind": "mechanical",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "31c4eea150346a68a091d335ac1fe8c40831bb6511d373d184eee214b16446fe",
+    "changed": "e83cd781013d02c11704927c9e8a290d1c9604fe7b0e6bf2c4d2190dbf930e4c",
+    "commit": "44f997553cba9d183e9039075d7148a5480e41e0",
+    "dismissals": [],
+    "findings": [],
+    "id": "20406524-c188-42a1-ad41-05830f150d49",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T06:26:40.581400+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T06:30:06.741564+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "11e0a0510ac7087b02c32c1b7d417188e298b709",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge's review rule asks every change to test new and existing repos, which in practice crosses the adopted fixture with every test case and makes the suite take about four hours of machine time",
+  "worker": "codex"
+}

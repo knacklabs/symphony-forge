@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_sync_output_skips_fix_limit.py\tUpgrade close waited for machine load and exceeded its test timeout.",
+      "kind": "bug",
+      "path": "tests/test_fix_sync_output_skips_fix_limit.py",
+      "line": 99,
+      "text": "Upgrade close waited for machine load and exceeded its test timeout.",
+      "from": "worker",
+      "item": "FORGE-GITCOST-1/HOOK",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

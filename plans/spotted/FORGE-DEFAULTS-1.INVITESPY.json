@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/api/test/invites.e2e-spec.ts\tThe token case timed out in the first live run and passed in the later full live run.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/api/test/invites.e2e-spec.ts",
+      "line": 156,
+      "text": "The token case timed out in the first live run and passed in the later full live run.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/INVITESPY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "improve\tsrc/forge/templates/conventions/python.md\tThe Python layout still puts the shared mail provider under auth.",
+      "kind": "improve",
+      "path": "src/forge/templates/conventions/python.md",
+      "line": 19,
+      "text": "The Python layout still puts the shared mail provider under auth.",
+      "from": "worker",
+      "item": "FORGE-DEFAULTS-1/INVITESPY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

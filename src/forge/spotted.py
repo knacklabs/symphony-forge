@@ -89,8 +89,8 @@ def read(top: Path, ref: str | None = None) -> list[dict[str, Any]]:
                          cwd=top).split("\0")
         paths = [path for path in paths if Path(path).parent.as_posix() == DIRECTORY
                  and path.endswith(".json")]
-        old = subprocess.run(["git", "show", f"{ref}:{PATH}"], cwd=top, capture_output=True)
-        if old.returncode == 0:
+        texts = repo.blob_bytes(top, [f"{ref}:{path}" for path in [*paths, PATH]])
+        if f"{ref}:{PATH}" in texts:
             paths.append(PATH)
     else:
         paths = [path.relative_to(top).as_posix() for path in (top / DIRECTORY).glob("*.json")]
@@ -102,10 +102,10 @@ def read(top: Path, ref: str | None = None) -> list[dict[str, Any]]:
             if ref is None:
                 raw = (top / path).read_bytes()
             else:
-                shown = subprocess.run(["git", "show", f"{ref}:{path}"], cwd=top, capture_output=True)
-                if shown.returncode:
+                text = texts.get(f"{ref}:{path}")
+                if text is None:
                     raise Unreadable("it cannot be read")
-                raw = shown.stdout
+                raw = text
             items = _parse(raw)
         except (Unreadable, OSError) as error:
             problem = error if isinstance(error, Unreadable) else Unreadable("it cannot be read")

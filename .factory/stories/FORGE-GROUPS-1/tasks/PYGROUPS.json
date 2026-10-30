@@ -1,0 +1,76 @@
+{
+  "branch": "task/FORGE-GROUPS-1-PYGROUPS",
+  "chat": {
+    "approval": "7f2e16f3bda17272d1fdced97bad81de5cde84846f80213e4f4c708e1dfd4a24",
+    "claude": null,
+    "conversation": "01a17378-50f3-7b51-809a-b906a1affaa1",
+    "head": null,
+    "start": "e3840c04c56ae874c8143034e7e881bf9743bc55"
+  },
+  "known": [
+    {
+      "area": "test_2_small_split_suite_passes_without_hiding_errors() in tests/test_fix_gate_on_split_checks.py",
+      "file": "tests/test_fix_gate_on_split_checks.py",
+      "gain": 4,
+      "harm": 4,
+      "line": 127,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: repair tests broken by the workflow migration",
+      "work": 2
+    },
+    {
+      "area": "test_5_always_tests_pass_in_their_owning_group() in tests/test_groups_pytest.py",
+      "file": "tests/test_groups_pytest.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 255,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_5_always_tests_pass_in_their_owning_group",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "912fb9326beecc861cb846ab5724d5b01c58466e17d472eddc10897124fad0af",
+    "changed": "a2eb5a09af43bbebd6d1c64d0f0d22c201a099ef7af264d8009e3fa6c26ac320",
+    "commit": "738ac6c16946cf7d34c2aa3f45579691d1f8519c",
+    "dismissals": [],
+    "findings": [],
+    "id": "f045ecd1-399e-4805-bb08-259d3caed041",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T14:30:12.952853+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T14:50:24.912763+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T14:55:37.806892+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T15:07:06.338482+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c162529a-5420-40f5-879a-c437e68ac9f4",
+    "head": "92bd346912297fedcae5551ad4a9e38e4d06a955",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

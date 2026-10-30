@@ -10,11 +10,12 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tarfile
+from pathlib import Path
 
 import pytest
 
 from conftest import ROOT
-from test_close import CLEAN, GREEN, blocked, env  # noqa: F401 (env is a fixture)
+from test_close import CLEAN, GREEN, STORY_DOC, approve_story, blocked, env  # noqa: F401 (env is a fixture)
 from test_score_bar import _client_on_this_release, _says
 from test_score_notes import _scored
 from test_story import DOC, new_story
@@ -45,7 +46,10 @@ def _move_to(repo, tmp_path, config: str, version: str, branch: str) -> None:
     repo.write("forge.toml", config.replace(config.split('"')[1], version, 1))
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
-    repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
+    # An upgrade keeps the item's roadmap contract; replacing it would correctly
+    # invalidate the story review instead of exercising saved-review reuse.
+    if not (repo.path / "plans/roadmap.json").exists():
+        repo.write("plans/roadmap.json", '{"items": [{"key": "SHOP"}]}')
     repo.git("add", "-A")
     repo.git("-c", no_hooks, "commit", "-qm", f"Move to {version}")
     repo.git("switch", "-q", "main")
@@ -67,11 +71,24 @@ def test_6_saved_unscored_notes_hold_until_scored_and_the_readme_explains_the_ba
         assert repo.forge("--version").stdout.split()[-1].endswith(EARLIER[1:])
         _move_to(repo, tmp_path, config, EARLIER, "fix/earlier")
         env.checks(GREEN)
+
+        # First-round P1 fix findings now become follow-ups, including saved ones.
+        # An approved earlier-release story part retains the unscored hold-until-
+        # reviewed contract, independently of SHOP's blocked cold read below.
+        owner = tmp_path / "score-upgrade-owner"
+        repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(owner))
+        repo.path = owner
+        approve_story(repo, STORY_DOC, key="REVIEW")
+        repo.git("merge", "-q", "--ff-only", "story/REVIEW")
+        repo.git("push", "-q", "origin", "main")
+        started = repo.forge("task", "start", "REVIEW/T1")
+        assert started.returncode == 0, started.stdout + started.stderr
+        item, where = "REVIEW/T1", Path(started.stdout.splitlines()[0].rsplit(" in ", 1)[1])
+        env.commit(where, "app.py", "print('hello')\n")
         _says(repo, "1. Blocking: Saving requires an account but sign-in is out of scope.\n")
         shop = new_story(repo, "SHOP")
         (shop / "plans/SHOP.md").write_text(DOC, encoding="utf-8")
         assert repo.forge("read", "SHOP").returncode == 0
-        item, where = env.start_fix()
         env.reviews(blocked({"title": "Saved serious finding", "body": "Evidence", "priority": "P1",
                              "code_location": {"file_path": "app.py", "line": 1}}))
         saved = env.close(item)

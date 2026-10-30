@@ -1,0 +1,63 @@
+{
+  "base": "a474c8635ced7801f9df00e753d6e5c1b954644e",
+  "branch": "fix/close-lists-every-failed-test",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a16f07-9ba1-7010-a3f5-3acf1b63597b",
+    "head": null,
+    "start": "2458d1ea56a2e9f99e37406bdcd2c80c161c5b4f"
+  },
+  "done_when": "A failed close's output ends with the full list of failed test files and test names and the path of the full test log",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 2,
+      "harm": 1,
+      "line": 565,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: Include Vitest and Jest failures in the footer",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "99db8f9db4cc12fba22774ea011c96c6f06f0ebb496d386c9e72055e709eb0e4",
+    "changed": "64bc4181c0e006b0e634c3210229a28f882913a2f9a1f17d23ec531746771a00",
+    "commit": "3c968427777b7fc4e2e12f060abdb7c400927355",
+    "dismissals": [],
+    "findings": [],
+    "id": "a0391a5a-79fa-4ebf-8cc9-ee537af0275d",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T17:34:15.091881+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T18:21:06.371786+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T18:48:55.430728+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "6f70a85b-aaa0-4428-a072-8ee293850c6c",
+    "head": "463d21562a7dcd1f6c19468e286db94eaa7a8384",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A failed close prints only a bounded tail of the test output, so people rerun whole suites to find which tests failed",
+  "worker": "codex"
+}

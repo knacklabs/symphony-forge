@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import GH_STUB, ROOT, _install, machine_cores
+from conftest import GH_STUB, ROOT, _install, machine_cores, patient
 from test_close import CLEAN, GREEN, blocked, env, finding, run  # noqa: F401
 from test_conflicting_pull_requests_stop_check_waits import _publish_default
 from test_setup import _fresh_client
@@ -158,6 +158,10 @@ SHARED = "".join(f"line {n}\n" for n in range(1, 8))
 @pytest.fixture(params=["new", "adopted"])
 def client(env, request):
     repo = env.repo
+    # Land's direct Python children bypass the command shim's idle-machine override.
+    patient(lambda: (repo.bin / "sitecustomize.py").write_text(
+        "import os\nif hasattr(os, 'getloadavg'):\n"
+        "    os.getloadavg = lambda: (0.0, 0.0, 0.0)\n", encoding="utf-8"))
     config = (repo.path / "forge.toml").read_text("utf-8") + 'merge = "agent"\n'
     if request.param == "new":
         path, made = _fresh_client(repo, env.gh, env.tmp)
@@ -302,7 +306,7 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(600):
-            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid"] in env.gh.calls():
+            if ["pr", "view", "fix/busy", "--json", "mergeable,headRefOid,number,headRefName"] in env.gh.calls():
                 break
             time.sleep(0.2)
         # The draft stays in place: a Windows process can hold its starting folder open.
@@ -355,7 +359,8 @@ def test_1_one_run_starts_changes_oldest_first_and_merges_each(client, monkeypat
 def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, older):
     env = client
     machine_cores(env.repo, 4)  # two agent places, as on CI: fewer places than changes
-    answer = CLEAN if older == "merges" else blocked(finding("P1", "Saving drops line one", "shared.py"))
+    # A P1 at the bar reaches the owner-needed review stop.
+    answer = CLEAN if older == "merges" else blocked({**finding("P1", "Saving drops line one", "shared.py"), "body": "Gain 4, Work 1, Harm 2\nSaving drops line one."})
     _fix(env, monkeypatch, "aa", 1, {"shared.py": _edit(1, "first")}, answer=answer,
          message="Worker round\n\nSpotted: bug shared.py:4 line four repeats itself")
     _fix(env, monkeypatch, "bb", 2, {"shared.py": _edit(7, "last")})
@@ -375,7 +380,8 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
     assert "bb waits for aa: both change shared.py." in lines, done.stdout
     assert not any(line.startswith(("cc waits", "dd waits")) for line in lines), done.stdout
     assert _reviews(env, "bb") == 1, done.stdout
-    end = "aa merged." if older == "merges" else "aa stopped: The review left serious findings open: finding 1 (Saving drops line one)."
+    end = "aa merged." if older == "merges" else next(
+        line for line in lines if line.startswith("aa stopped: Review round 1 of aa reached the round limit with open findings, so Forge stopped."))
     assert end in lines and lines.index(end) < lines.index("Starting bb."), done.stdout
     if older == "merges":
         assert done.returncode == 0, done.stdout + done.stderr
@@ -390,16 +396,20 @@ def test_2_a_change_sharing_a_file_waits_for_the_older_one(client, monkeypatch, 
         summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
         assert re.fullmatch(r"Merged \(2\): .+ · Ready to merge \(0\): none · Needs you \(2\): aa, ee",
                             lines[summary]), done.stdout
-        assert lines[summary + 1:summary + 3] == [
-            "- aa: The review left serious findings open: finding 1 (Saving drops line one).",
-            "  Next: forge land aa"]
+        tail = "\n".join(lines[summary + 1:])
+        assert tail.startswith("- aa: Review round 1 of aa reached the round limit with open findings, so Forge stopped.")
+        assert "Saving drops line one" in tail and "One more round, split or accept?" in tail
+        assert ('  Next: forge close aa --resolve <more|split|accept> --reason '
+                '"<human\'s choice>", then forge land aa') in tail
 
 
+@pytest.mark.platform
 @pytest.mark.timeout(600 if sys.platform == "win32" else 150)
 def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monkeypatch):
     env = client
-    # Close runs fast_test, so only its passed record says the tests passed here.
-    _settings(env, test=f"{sys.executable} -c \"print(1)\"", fast_test=f"{sys.executable} -c pass")
+    # CI runs the configured test command; an infrastructure-only failure can be retried there.
+    _settings(env, test_place="ci", test=f"{sys.executable} -c \"print(1)\"",
+              fast_test=f"{sys.executable} -c pass")
     for day, (slug, run_id) in enumerate((("flaky", "5"), ("broken", "6")), 1):
         _fix(env, monkeypatch, slug, day, {f"{slug}.py": "x = 1\n"})
         _red(env, slug)
@@ -411,8 +421,8 @@ def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monke
     assert done.returncode == 1, done.stdout + done.stderr
     lines = done.stdout.splitlines()
     for slug in ("flaky", "broken"):
-        assert (f"{slug}: Re-running tests once: its failure names none of this change's files and the tests "
-                "passed here.") in lines, done.stdout
+        assert (f"{slug}: Re-running tests once: its failure names none of this change's files and "
+                "CI runs this repo's tests.") in lines, done.stdout
     assert sorted(env.gh_calls("run", "rerun")) == [["run", "rerun", "5", "--failed"], ["run", "rerun", "6", "--failed"]]
     assert "flaky merged." in lines, done.stdout
     assert not env.gh_calls("pr", "merge", _number("fix/broken"))
@@ -424,12 +434,12 @@ def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monke
 def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     env = client
     _fix(env, monkeypatch, "stuck", 1, {"stuck.py": "x = 1\n"},
-         answer=blocked(finding("P1", "Saving drops the basket", "stuck.py")))
+         answer=blocked({**finding("P1", "Saving drops the basket", "stuck.py"), "body": "Gain 4, Work 1, Harm 2\nSaving drops the basket."}))
     _fix(env, monkeypatch, "clean", 2, {"clean.py": "x = 1\n"})
     held = _fix(env, monkeypatch, "loop", 3, {"loop.py": "x = 1\n"}, status="hotspot",
                 stop={"file": "loop.py", "round": 4, "at": datetime.now(timezone.utc).isoformat()},
-                review={"findings": [finding("P1", "Saving loses the name", "loop.py")], "dismissals": []})
-    # A stuck worker's stop, and a review loop stop nobody answered for 31 minutes.
+                review={"findings": [{**finding("P1", "Saving loses the name", "loop.py"), "body": "Gain 4, Work 1, Harm 2\nSaving loses the name."}], "dismissals": []})
+    # Both a stuck worker and an older release's overdue stop still need an owner choice.
     _fix(env, monkeypatch, "worn", 4, {"worn.py": "x = 1\n"}, status="hotspot",
          stop={"question": "Worn keeps failing the same test. Switch, same, narrow or split?", "tool": "claude"})
     late = _fix(env, monkeypatch, "late", 5, {"late.py": "x = 1\n"}, status="hotspot",
@@ -448,21 +458,25 @@ def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
     lines = done.stdout.splitlines()
     assert "clean merged." in lines, done.stdout
     assert "Starting loop." not in lines
-    # Close's own 30-minute default answered the overdue stop, so that change closed and merged.
-    assert lines[0].startswith("Nobody answered the review loop stop in 30 minutes, so Forge recorded "
-                               "the repo's default choice: narrow"), done.stdout
-    assert "late merged." in lines and not late.exists(), done.stdout
+    # The obsolete timeout setting never answers even an older low-Harm stop.
+    assert "default choice" not in done.stdout
+    assert "late merged." not in lines and late.exists(), done.stdout
     summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
-    assert re.fullmatch(r"Merged \(2\): (clean, late|late, clean) · Ready to merge \(0\): none · "
-                        r"Needs you \(4\): stuck, loop, worn, skip", lines[summary]), done.stdout
+    assert lines[summary] == ("Merged (1): clean · Ready to merge (0): none · "
+                              "Needs you (5): stuck, loop, worn, late, skip"), done.stdout
     tail = "\n".join(lines[summary + 1:])
-    assert tail.startswith("- stuck: The review left serious findings open: finding 1 "
-                           "(Saving drops the basket).\n  Next: forge land stuck\n- loop: Review round ")
-    assert "Saving loses the name" in tail and "Accept, narrow or split?" in tail
-    assert '  Next: forge close loop --resolve <narrow|split|accept> --reason "<human\'s choice>"\n- worn: ' in tail
-    assert tail.endswith("Ask the human:\nWorn keeps failing the same test. Switch, same, narrow or split?\n"
-                         '  Next: forge close worn --resolve <switch|same|narrow|split> --reason "<human\'s choice>"\n'
-                         "- skip: Checks failed on the pull request: tests.\n  Next: forge land skip"), done.stdout
+    assert tail.startswith("- stuck: Review round 1 of stuck reached the round limit with open findings, so Forge stopped.")
+    assert "Saving drops the basket" in tail
+    assert ('  Next: forge close stuck --resolve <more|split|accept> --reason '
+            '"<human\'s choice>", then forge land stuck\n- loop: Review round ') in tail
+    assert "Saving loses the name" in tail and "One more round, split or accept?" in tail
+    assert '  Next: forge close loop --resolve <more|split|accept> --reason "<human\'s choice>"\n- worn: ' in tail
+    assert ("Ask the human:\nWorn keeps failing the same test. Switch, same, narrow or split?\n"
+            '  Next: forge close worn --resolve <switch|same|narrow|split> --reason "<human\'s choice>"\n'
+            "- late: ") in tail, done.stdout
+    assert 'forge close late --resolve <more|split|accept>' in tail
+    assert tail.endswith("- skip: Checks failed on the pull request: tests.\n"
+                         "  Next: forge land skip"), done.stdout
     assert not (env.repo.bin / "claude-calls.jsonl").exists()
     assert not env.gh_calls("pr", "merge", _number("fix/stuck"))
     assert (record.read_bytes(), env.repo.git("rev-parse", "HEAD", cwd=held)) == before

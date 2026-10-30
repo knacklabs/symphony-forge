@@ -1,9 +1,7 @@
 # Standards
 
-Forge puts this page in every worker's brief, and reviewers judge each change against it. It carries
-the principles for the apps Forge builds and the engineering rules for client code. Each rule gives
-its reason, so you can apply it with judgement.
-If a rule here and the approved story doc disagree, follow the story doc and say so in your handoff.
+Workers and reviewers use these client-app principles and engineering rules, with their reasons.
+If the approved story disagrees, follow it and explain the difference in your handoff.
 
 ## The 11 client-app principles
 
@@ -14,11 +12,17 @@ run in the cold reads, the review's Simpler rule, the functional check and the c
    costs. A spec's Why names that problem and its cost, so we can tell whether building paid off.
 2. **Smallest slice.** Build the thinnest end-to-end path that moves the success measure, deployed
    where the client can use it. Everything else waits for evidence; no story is only setup.
-3. **Only what Done-when needs.** Every task, screen, field, setting, role and integration traces
-   to a Done-when item. Anything else is cut, or goes under the spec's Out of scope.
+3. **Only what is needed.** Every task, screen, field, endpoint, tool, setting, role and
+   integration traces to a Done-when item and is needed: a source asks for it (a client note, a
+   brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of the app, or the
+   owner's own request), or an item that has a source cannot work without it. An idea that
+   nothing needs goes as one line to `plans/ideas.md`, and nothing is built for it. Anything else
+   is cut, or goes under the spec's Out of scope.
 4. **Fewest moving parts.** Climb the ladder below on every change. A new dependency, service,
    datastore, queue, background job or abstraction layer comes last, and only when the story's
-   `New moving parts` line names it, because the client pays for it as long as the app runs.
+   `New moving parts` line names it, because the client pays for it as long as the app runs. The
+   starter's fixed rules are the base of each app. Build nothing beyond them just in case: modules,
+   contracts, a schema per module and `services.toml` already leave room to grow.
 5. **Delete before adding.** Prefer the change that removes a step, screen, field or workaround.
    Replacing behaviour deletes the old path, its tests and its docs in the same change.
 6. **One home per fact.** Store each piece of data once; everything else reads or derives it.
@@ -29,8 +33,10 @@ run in the cold reads, the review's Simpler rule, the functional check and the c
 8. **Measure then check back.** Success means the client's number moved, not that a feature
    shipped. Every spec has a metric, baseline, target and check date. At the check-back the choice
    is to stop, change the slice or remove it; adding more is never the default.
-9. **Reversible.** Every change is a pull request a revert undoes. Prefer migrations that only add,
-   keep data rather than drop it, and list any one-way step under Risks for the human to decide.
+9. **Reversible.** Every change is a pull request a revert undoes. Expand, then contract: add a new
+   table or column before code uses it, keep the old table or column for two releases, and remove
+   it only when no live release uses it. Keep data rather than drop it, and list any one-way step
+   under Risks for the human to decide.
 10. **Runnable by a non-technical client.** Errors and empty states say in plain words what
     happened and what to do next, and the README keeps a short, current "How it works".
 11. **Security and accessibility never simplified away.** Input is checked where it enters, every
@@ -55,10 +61,18 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
   mention unrelated dead code instead of deleting it. Remove what your own change left unused.
   Every changed line should trace to the task, so the reviewer can judge it against the story.
 - Joining lines or removing blank lines never counts as a reduction.
+- **Keep reader load low.** Avoid a wrapper or adapter with one caller, a layer that repeats the
+  next layer's methods and arguments, or module or global state where a local variable or return
+  value works. A new reader can answer "where does X come from?" and "what can change X?" in about
+  30 seconds. Keep structure a real concern requires below. Review reports reader load under its
+  Simpler rule and normal Gain/Work/Harm bar, not as a P1 Standard finding on its own.
 - **Turn the task into checks first.** A Done-when item that changes runtime behaviour becomes one
   end-to-end test at the boundary the user touches, and a settings, docs, deletion or test-only item
   is proven by the check the item names; a bug becomes a test that fails before the fix. Then make
   them pass.
+- **Fix the root cause.** Reproduce the bug before you change the code. Find the first place the
+  code goes wrong. Fix it in the shared function that every affected caller uses. Check sibling
+  callers for the same fault. A guard is a fix only when it handles a valid state.
 - **Compatibility is a requirement, not a reflex.** Unless the story names live users, API
   consumers or production data, a replacement deletes the old path: no shims, aliases, fallbacks
   or versioned migrations for data nobody has. When consumers are live, the story says so.
@@ -72,6 +86,9 @@ known limit with a `ponytail: <limit>, <upgrade path>` comment, so it reads as i
 ## Structure only where its concern exists
 
 Structure earns its place by solving a problem the code has today. These rules say where.
+Add an abstraction layer only at the edge to an outside service. Keep business logic in domain
+services and pure computation in helpers. Required module boundaries, controllers and data
+access below keep their roles; do not wrap them in extra layers.
 
 - **One deployable app.** Build a modular monolith: one backend, one database, one module per
   business domain. No microservices, and no planning or abstractions for future growth: one app is
@@ -91,11 +108,13 @@ Structure earns its place by solving a problem the code has today. These rules s
   can fail, change or be swapped, and tests need a fake. The provider handles authentication,
   timeouts and retries, maps vendor errors to our error codes, returns our own types and holds no
   business logic. Pure computation is a helper, not a provider.
-- **An interface only for an external service or a real second implementation.** One class with
-  one implementation needs no interface, factory or base class; add one when the second arrives.
-- **Shared code.** Types and validators that both the backend and the frontend use live in the
-  shared package, so both sides agree. Add a typed API client there only when the frontend calls
-  that API, and a notification module only when a Done-when item sends a notification.
+- **An interface only at an external-service edge.** Internal code needs no extra interface,
+  factory or base class, except for a module's public service contract when another module needs
+  that service. Use the domain service or helper directly.
+- **Shared code.** A module's types and validators live in its contracts package, so its backend
+  and frontend agree. General helpers live in `libs/shared/util`. Add a typed API client only when
+  the frontend calls that API, and a notification module only when a Done-when item sends a
+  notification.
 - **File size.** Split a file when it holds two unrelated jobs. Never split a file by line count.
 - **Names say the role.** Files are kebab-case with a role suffix (`user.controller.ts`,
   `user.service.ts`, `create-user.dto.ts`, `stripe.provider.ts`, `date.helper.ts`); classes are
@@ -103,14 +122,20 @@ Structure earns its place by solving a problem the code has today. These rules s
 
 ## The client stack
 
-A new client app starts on the smallest stack that runs its first story: NestJS, Prisma and
-Postgres behind a React app built with Vite, in one repo with npm workspaces, tested in CI by
-Forge's `tests` check. A repo that already runs another stack keeps it. Anything else arrives only
-when a story's `New moving parts` line names it, and that includes Redis and job queues, Terraform,
-OIDC sign-in and a monitoring stack.
+The starter's modules are `libs/auth`, `libs/projects`, `libs/organisations` and `libs/history`.
+
+A new client app uses the smallest stack that runs its first story: a pnpm workspace with NestJS,
+Prisma and Postgres behind a React app built with Vite and React
+Router. Nx builds `apps/web` and `apps/api`; each module has a `contracts` library for its schemas
+and types and a `server` library for its Nest code. `libs/core/server` holds shared Nest code, and
+`libs/shared/util` holds general helpers. Forge's `tests` check runs the test command. An existing
+app keeps its package manager, lockfile, Dockerfile, test command and folder layout. Anything else
+arrives only when a story's `New moving parts` line names it, and that includes Redis and job queues,
+Terraform, OIDC sign-in and a monitoring stack.
 
 Forge's package ships a short how-to per concern for this stack in `forge/templates/conventions/`:
-`stack.md`, `backend.md`, `api.md`, `database.md`, `frontend.md`, `testing.md` and `security.md`.
+`stack.md`, `backend.md`, `api.md`, `database.md`, `frontend.md`, `testing.md` and `security.md`,
+plus `python.md` (the same rules for a FastAPI backend).
 Open one only when your task touches its concern; the rules on this page apply either way.
 The repo's own rules, its AGENTS.md House rules and conventions, win where they differ from these
 default-stack conventions, which apply only to a repo on the default stack.
@@ -129,34 +154,41 @@ default-stack conventions, which apply only to a repo on the default stack.
   The field errors are `details.fieldErrors: [{field, reason}]`, so the UI can place them.
 - PUT replaces the whole resource and PATCH changes part; neither is used for an action.
 - Filters are plain query params; search is `?search=`.
-- Lists take `page` (from 1) and `limit` (20 by default, at most 100) and return
-  `data.items` with `data.pagination` (`page`, `limit`, `totalItems`, `totalPages`). Sorting uses
-  `sortBy` and `sortOrder` (`asc` or `desc`).
+- Lists use keyset paging. They take `limit` (20 by default, at most 100) and one cursor, `after` (the `nextCursor` of the page before) or `before` (the `previousCursor` of the page after). They return `data.items` with `data.paging` (`limit`, `nextCursor`, `previousCursor`, `total`, `totalCapped`); `total` stops at 10,000 and `totalCapped` says so. Sorting uses `sortBy` and `sortOrder` (`asc` or `desc`). Numbered pages are only for small admin screens.
 - A breaking change needs a new version while the old one has consumers; with no consumers yet,
-  change it in place. Payments, webhooks and retried actions accept an `Idempotency-Key`; the values are stored, so a replay is refused.
+  change it in place.
+- Every create, and every action with a side effect (send, pay, notify), accepts an
+  `Idempotency-Key`. A repeat with the same key from the same account makes no second record
+  and gives back the first result. An update that sets values takes no key. A webhook stores
+  the sender's event id, so a replay is refused.
+- Screens, the API, agent tools and any later in-app agent use the same module service for
+  each action, with the same permission check. No route, tool or job changes a module's data
+  around its service.
+- An agent account, for a team agent, acts as itself with its role. An agent that a person
+  signs in acts as that person, with that person's permissions, and its principal names the
+  agent, so the change history records both.
 - Browser clients that send credentials get CSRF protection.
 - Swagger documents every endpoint from its decorators at `/api/docs`: a summary, each field with
   an example, the error responses and the auth it needs. The docs stay true because they're code.
 
 ## Errors and logs
 
-- One global exception filter turns every error into the envelope, logs it with an `errorId` and
-  the request's `correlationId`, and hides internals. Never swallow an unexpected error: a caught
-  error that returns success hides the failure from everyone. Falling back on purpose (a cached
-  answer when a vendor times out) is allowed when the code says why and logs a warning.
-- Log through the framework's logger as structured JSON, never `console.log`. Each entry has
-  `timestampUtc`, `level`, a fixed `message`, a `context` object, `environment`, `serviceName`,
-  `module` and `correlationId`, plus `accountId`, `requestId` or `eventId` when there is one.
-  A fixed message makes logs searchable; the details go in `context`.
+- One global exception filter returns the envelope, hides internals and logs every error with `errorId` and the request's `correlationId`. Never swallow unexpected errors or return success for them. A deliberate fallback states why and logs a warning.
+- Use the framework logger for structured JSON, never `console.log`: `timestampUtc`, `level`, fixed `message`, `context`, `environment`, `serviceName`, `module`, `correlationId`. Add `accountId`, `requestId` or `eventId` when present. Keep messages searchable; put details in the `context` object.
 - Log validation failures (4xx) at debug, never as errors.
 - Error messages are static text with no interpolated values, so personal data can't slip in.
 - Never log passwords, tokens, one-time codes, secrets or personal data; mask what you must keep.
-- Levels: `debug` for detail, `info` for normal business events, `warn` for something unexpected
-  that didn't fail, `error` for a failed operation, `fatal` when the app can't continue.
-- Environments are named `Local`, `Development`, `QA`, `UAT`, `Staging` and `Production`; a project
-  has only the ones it uses. Logs go to the console locally and to the host's log service elsewhere.
+- With `libs/core/server/src/common/request-log.middleware.ts` (TypeScript) or `set_log_level` in `apps/api/app/core/logging.py` (Python), the next three rules are built in. Other apps keep their logger, which may write all levels and keep secrets: never log secrets; add these rules only in a story that copies the starter's logger.
+- At any depth, context fields whose names hold `password`, `token`, `secret`, `key` or `authorization` get `[removed]` values. Log only needed ids.
+- Each API request writes one `info` line, `API request`: context has `method`, matched `route` pattern, `status`, `durationMs`; the line has the request's `correlationId`. Never include query strings, real paths, headers or bodies. Health checks and web pages write no line.
+- `LOG_LEVEL` (`debug`, `info`, `warn` or `error`; `info` when unset) picks the lowest level written.
+- Mainline sends error alerts from the `error` lines, each with its `errorId`. Add no error-tracking service to the app.
+- Levels: `debug` for detail, `info` for normal business events, `warn` for unexpected events without failure, `error` for failure, `fatal` when the app cannot continue.
+- `APP_ENV` holds the environment's name in lower case: `development` on a developer's machine, `test` in the test stack, and `demo`, `qa`, `uat`, `staging` or `production` where a project has them. A project has only the ones it uses. The starters treat every name other than `development` and `test` as deployed. Logs go to the console locally and to the host's log service elsewhere.
 
 ## Data
+
+A Python app writes these names in snake_case (payment_transaction, created_at_utc); see python.md.
 
 - Postgres through Prisma. Tables are PascalCase and singular (`PaymentTransaction`); columns are
   camelCase and don't repeat the table's name (`Order.id`, not `Order.orderId`).
@@ -169,12 +201,17 @@ default-stack conventions, which apply only to a repo on the default stack.
   (`deletedAtUtc`, and `deletedByAccountId` once there are accounts), which protects against loss;
   logs, temporary tables and data the client asked to erase are the exceptions.
 - Automated jobs fill the audit fields with a system account.
+- A report is a named, typed read in its module's report service. Each result field has a
+  plain name with its unit (`revenueInr`, `durationSeconds`). Start with a live query, and
+  move it to a summary table only when the database skill's measure shows it slow, with no
+  change for its callers.
 - Keep tables normalised; copy data only for a measured performance need, and say why. Use a JSON
   column only for metadata that is never queried or joined.
 - Index every foreign key and every column a frequent query filters on, as `idx_<Table>_<column>`, and every unique field.
 - Many-to-many uses an explicit join table named with both tables in alphabetical order (`RoleUser`).
 - Every schema change is a migration with a timestamped name. Never edit a merged migration.
-  Prefer migrations that only add; a destructive one goes under the story's Risks.
+  Expand, then contract: add a new table or column before code uses it, keep the old table or
+  column for two releases, and remove it only when no live release uses it.
 - Use Postgres full-text search before adding a search engine.
 - When a story does add in-process events: name them `<Domain><Action>Event`, give each payload an
   `id`, `version`, `timestampUtc`, `initiatedByAccountId` and `data`, keep secrets out of it, and
@@ -239,8 +276,9 @@ Windows checklist:
   adding a fixed sleep.
 - New and changed flows get browser tests now; an untouched old flow gets one when a story first
   changes it, with no backfill.
-- Test behaviour, not markup or internals. There is no coverage target: a number invites tests
-  that prove nothing, and the review's test audit judges each test instead.
+- Tests check behaviour at the boundary the user touches, never markup, internal record formats
+  or private calls. A behaviour-preserving refactor must not break a test. There is no coverage
+  target: a number invites tests that prove nothing, and the review's test audit judges each test.
 - forge.toml's `test` command runs everything CI needs (install, lint, typecheck, all tests), so a
   green run locally means a green `tests` check.
 

@@ -1,0 +1,50 @@
+{
+  "base": "d21e29b94f3f09aac4c8b490481f818bc5e522ba",
+  "branch": "fix/merge-enable-wording",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a155bb-6628-73c2-9c00-9bf15d4430c0",
+    "head": null,
+    "start": "79d807c37beb060b09bd3d826abff7fb8222ab7e"
+  },
+  "done_when": "The forge merge enable refusal from an agent shell says to run it in a terminal outside Claude Code or Codex, and a test covers the message on a new and an adopted repo",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "acbd96be66d812483400087c88d84b449f3ae8e44326b498d7e1a3b42d526e82",
+    "changed": "2244b97f83f1892dd600a06b48bf48242fd9dcdbe925d9249034401cd8cd0312",
+    "commit": "6b8136390de023cc4b8af133007b565e59811c95",
+    "dismissals": [],
+    "findings": [],
+    "id": "d46be588-75b2-4afa-9921-3b127617b499",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-19T19:54:49.797624+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-19T20:44:36.646634+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-19T21:07:56.628678+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "3e788788-7b7d-4f31-82c0-37edbc12d7dc",
+    "head": "a25f4870e83c07e9e0d58168a017cab2b3c7355b",
+    "keys": {},
+    "round": 1
+  },
+  "why": "The forge merge enable refusal from an agent shell tells the owner to use their own terminal, and an owner tried the ! prefix inside the session instead (issue 977)",
+  "worker": "codex"
+}

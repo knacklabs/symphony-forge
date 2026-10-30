@@ -1,0 +1,30 @@
+{
+  "base": "d81dea7acbd9b8a8842752550c1919c657cb3996",
+  "branch": "fix/effort-defaults-one-test",
+  "done_when": "The effort defaults rule has one test, with a new-repo case and an existing-repo case, and the rule check passes",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "38e5785da6dcaccd7fd6e8a2b342262abf5db25893e1bd3c077782776a0529dc",
+    "changed": "2f7dbb4ca696fe7f998f4d93b83910f9a230bc8a9fc2de09b4ca9d0ad20d09d2",
+    "commit": "2cd07011e70ea722f563f4fdd54806e33b5630d2",
+    "dismissals": [],
+    "findings": [],
+    "id": "ca4a72a5-899c-484d-86e2-e998f743e557",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T15:21:49.016747+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T15:25:21.341027+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "The effort defaults task left two tests that claim the same rule, so the one-test-per-rule check fails on main"
+}

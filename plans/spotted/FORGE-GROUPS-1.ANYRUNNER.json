@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: A group with no tests to run passes.",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 435,
+      "text": "Not done: A group with no tests to run passes.",
+      "from": "review",
+      "item": "FORGE-GROUPS-1/ANYRUNNER",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

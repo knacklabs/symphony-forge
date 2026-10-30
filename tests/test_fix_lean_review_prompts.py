@@ -115,4 +115,6 @@ def test_1_review_and_cold_read_weigh_likelihood(env, adopted):
         assert ("every finding at the bar (Proposed \"fix now\" or \"fix this round\") gets a fix round "
                 "with `forge work <item>`, whatever its priority") in text, guide
         assert "Dismiss only a finding outside the boundary or factually wrong" in text, guide
-        assert "never kept as unnecessary" in text, guide
+        # A worker can now decline costly repairs; the guide must carry the exact protocol.
+        assert "Declined: <title> (<file>): not worth the code - <reason>" in text, guide
+        assert "A P0 stays open." in text, guide

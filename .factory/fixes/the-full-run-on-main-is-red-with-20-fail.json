@@ -1,0 +1,74 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-27T17:13:48.088920+00:00",
+      "because": "Main's full run can only be checked after merge; the coordinator runs it on main before the release",
+      "done_when": "The full test suite passes on main"
+    }
+  ],
+  "base": "ae5cc0561e40412a7782e71b59978bd0a963e158",
+  "branch": "fix/the-full-run-on-main-is-red-with-20-fail",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17e47-0ca8-78a0-ac6e-a954adb50a0d",
+    "head": null,
+    "start": "e5e3bdb5c689b64e8a3b5313516aa41d00f22861"
+  },
+  "done_when": "The 20 tests that failed in the full run on main pass on this branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".factory/fixes/the-full-run-on-main-is-red-with-20-fail.json",
+      "file": ".factory/fixes/the-full-run-on-main-is-red-with-20-fail.json",
+      "gain": 5,
+      "harm": 3,
+      "line": 11,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The full test suite passes on main",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "300db350a66ce35bfd5ea0ef05dc25d81ec38ad11293cce00a52b511200f1b02",
+    "changed": "97510eb2e28d10b0b4f454233f045b8b6993a235e57958130cbfd43589040115",
+    "commit": "4695660f3eaf6d09abeb3a1112ca88bcf30055ba",
+    "dismissals": [],
+    "findings": [],
+    "id": "194c903a-4d9f-456d-bfd4-446981887f20",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-27T16:52:10.076485+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-27T17:11:44.125067+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T17:17:15.041688+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T17:31:09.064386+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "7b58df80-1c52-4f4c-ac1c-2faf9c5198d0",
+    "head": "62118506016fdca1fd2406724680934dbf2e90b5",
+    "keys": {},
+    "round": 3
+  },
+  "why": "The full run on main is red with 20 failing tests after the day's merges, which blocks the v1.2.23 release",
+  "worker": "codex"
+}

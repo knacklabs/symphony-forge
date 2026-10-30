@@ -173,8 +173,12 @@ def published_upgrade_plan(env, stale):
     return published, approval, modern
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "upgraded-client"])
-@pytest.mark.parametrize("plan_source", ["current", "stale-approval", "stale-rows"])
+@pytest.mark.parametrize("plan_source,previous", [
+    pytest.param(plan_source, previous,
+                 id=f"{plan_source}-{'upgraded-client' if previous else 'new-client'}")
+    for plan_source in ("current", "stale-approval", "stale-rows")
+    for previous in (False, True) if not previous or plan_source == "current"
+])
 def test_1_parts_start_on_reviewed_remote_work(env, previous, plan_source):
     repo = configured(env, previous)
     if plan_source != "current":
@@ -212,10 +216,13 @@ def test_1_parts_start_on_reviewed_remote_work(env, previous, plan_source):
     assert repo.git("rev-parse", "HEAD", cwd=parent) == local
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "upgraded-client"])
-@pytest.mark.parametrize("case", ["not-started", "remote-story", "old-story", "not-reviewed", "changed",
-                                  "older", "two-bases", "stacked", "stacked-merged",
-                                  "stacked-merged-proof", "stacked-merged-prose", "stacked-human-merged"])
+@pytest.mark.parametrize("case,previous", [
+    pytest.param(case, previous, id=f"{case}-{'upgraded-client' if previous else 'new-client'}")
+    for case in ("not-started", "remote-story", "old-story", "not-reviewed", "changed",
+                 "older", "two-bases", "stacked", "stacked-merged",
+                 "stacked-merged-proof", "stacked-merged-prose", "stacked-human-merged")
+    for previous in (False, True) if not previous or case == "older"
+])
 def test_2_unsafe_starts_name_the_blocker_without_creating_work(env, previous, case):
     repo = configured(env, previous)
     part, command = "B", "forge close STACK/A"

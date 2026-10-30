@@ -1,0 +1,169 @@
+[table]
+list_index = 'CREATE INDEX "idx_{table}_list" ON "{schema}"."{table}" ("{org}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'
+filter_index = 'CREATE INDEX "idx_{table}_{column}" ON "{schema}"."{table}" ("{org}", "{column}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'
+search_index = 'CREATE INDEX "idx_{table}_{column}_search" ON "{schema}"."{table}" USING gin ("{org}", "{column}" gin_trgm_ops) WHERE "{deleted}" IS NULL;'
+index = 'CREATE INDEX "idx_{table}_{column}_fk" ON "{schema}"."{table}" ("{column}");'
+updated_at_trigger = 'CREATE TRIGGER "{table}_set_updated_at" BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE FUNCTION set_updated_at();'
+soft_delete_trigger = 'CREATE TRIGGER soft_delete_only BEFORE DELETE ON "{table}" FOR EACH ROW EXECUTE FUNCTION soft_delete_only();'
+
+# Web keys: input is the form control, cell how a value shows, column whether the list shows it,
+# filter_options the list filter's choices before the field's own ({Label}, {label}, {labels}).
+[kinds.text]
+sql = "text"
+prisma = "String"
+sqlalchemy = "Text"
+pydantic = "str"
+check = 'CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") BETWEEN 1 AND 200)'
+sample = "Example"
+changed = "Changed"
+bad = ""
+filter_index = false
+search_index = true
+index = false
+input = "input"
+cell = "text"
+column = true
+filter_options = []
+
+[kinds.long-text]
+sql = "text"
+prisma = "String"
+sqlalchemy = "Text"
+pydantic = "str"
+check = 'CONSTRAINT "{table}_{column}_length" CHECK (char_length("{column}") <= 10000)'
+sample = "Example description"
+changed = "Updated description"
+bad = 123
+filter_index = false
+search_index = false
+index = false
+input = "textarea"
+cell = "long-text"
+column = false
+filter_options = []
+
+[kinds.number]
+sql = "numeric(19,4)"
+prisma = "Decimal @db.Decimal(19, 4)"
+sqlalchemy = "Numeric(19, 4)"
+pydantic = "str"
+zod = 'z.string().regex(/^-?\d{1,15}(?:\.\d{1,4})?$/)'
+check = ""
+sample = "-42.5000"
+changed = "96.2500"
+bad = "not-a-number"
+filter_index = false
+search_index = false
+index = false
+input = "number"
+cell = "number"
+column = false
+filter_options = []
+
+[kinds.money]
+sql = "numeric(19,4)"
+prisma = "Decimal @db.Decimal(19, 4)"
+sqlalchemy = "Numeric(19, 4)"
+pydantic = "str"
+zod = 'z.string().regex(/^-?\d{1,15}(?:\.\d{1,4})?$/)'
+check = ""
+currency_sql = "text"
+currency_prisma = "String"
+currency_sqlalchemy = "Text"
+currency_check = "CONSTRAINT \"{table}_{currency}_code\" CHECK (\"{currency}\" ~ '^[A-Z]{3}$')"
+sample = "1250.0000"
+changed = "1800.0000"
+bad = "not-money"
+filter_index = false
+search_index = false
+index = false
+input = "money"
+cell = 'formatMoney(row.{name}, row.{name}Currency)'
+csv = 'formatMoney(row.{name}, row.{name}Currency)'
+column = true
+filter_options = []
+
+[kinds.date]
+sql = "date"
+prisma = "DateTime @db.Date"
+sqlalchemy = "Date"
+pydantic = "date"
+check = ""
+sample = "2026-10-02"
+changed = "2026-10-24"
+bad = "2026-02-30"
+filter_index = false
+search_index = false
+index = false
+input = "date"
+cell = "date"
+column = true
+filter_options = []
+
+[kinds.yes-no]
+sql = "boolean DEFAULT false"
+prisma = "Boolean @default(false)"
+sqlalchemy = "Boolean, server_default=false()"
+pydantic = "bool"
+check = ""
+sample = true
+changed = false
+bad = "maybe"
+filter_index = true
+search_index = false
+index = false
+input = "checkbox"
+cell = "yes-no"
+column = false
+filter_options = ["{Label} or not", "{Label}", "Not {label}"]
+
+[kinds.email]
+sql = "text"
+prisma = "String"
+sqlalchemy = "Text"
+pydantic = "str"
+check = "CONSTRAINT \"{table}_{column}_format\" CHECK (char_length(\"{column}\") <= 254 AND \"{column}\" ~ '^[^@[:space:]]+@[^@[:space:]]+$')"
+sample = "ada@example.com"
+changed = "grace@example.com"
+bad = "not-an-email"
+filter_index = false
+search_index = true
+index = false
+input = "email"
+cell = "email"
+column = false
+filter_options = []
+
+[kinds.status]
+sql = "text DEFAULT '{first}'"
+prisma = 'String @default("{first}")'
+sqlalchemy = 'Text, server_default="{first}"'
+pydantic = "str"
+check = 'CONSTRAINT "{table}_{column}_allowed" CHECK ("{column}" IN ({options}))'
+sample = "planned"
+changed = "active"
+bad = "unknown"
+filter_index = true
+search_index = false
+index = false
+input = "select"
+cell = "badge"
+column = true
+filter_options = ["All {labels}"]
+
+[kinds.link]
+sql = "uuid"
+prisma = "String @db.Uuid"
+sqlalchemy = "Uuid"
+pydantic = "UUID"
+check = ""
+sample = "0189f01c-0000-7000-8000-000000000001"
+changed = "0189f01c-0000-7000-8000-000000000002"
+bad = "not-a-uuid"
+filter_index = true
+search_index = false
+index = true
+input = "combobox"
+cell = "link"
+column = true
+filter_options = ["All {labels}"]

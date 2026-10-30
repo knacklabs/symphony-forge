@@ -24,6 +24,7 @@ ITEM = "keep-claude-worker-context"
 PIN = "0.2.161"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("history", ["new", "adopted"])
 @pytest.mark.parametrize("regression", ["bundled-cli", "design-preflight"])
 def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(

@@ -6,6 +6,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 NEXT_PROMOTE = "Next: forge story new <KEY> --from-fix {fix}\n"
 
 

@@ -1,0 +1,114 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/feature.py\tUpdate the Python table inventory when generating a feature\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "src/forge/feature.py",
+      "line": 304,
+      "text": "Update the Python table inventory when generating a feature",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_python.py\tPreserve hyphens in generated permission names\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "src/forge/feature_python.py",
+      "line": 64,
+      "text": "Preserve hyphens in generated permission names",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_python.py\tValidate numeric precision and money bounds before writing\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "src/forge/feature_python.py",
+      "line": 300,
+      "text": "Validate numeric precision and money bounds before writing",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_python_contracts.py\tAlign Python sort keys with the shared web renderer\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "src/forge/feature_python_contracts.py",
+      "line": 105,
+      "text": "Align Python sort keys with the shared web renderer",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/feature_python_tests.py\tEmit Python tests that pass the starter's formatter check\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "src/forge/feature_python_tests.py",
+      "line": 325,
+      "text": "Emit Python tests that pass the starter's formatter check",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/pane.test.ts\tThe terminal pane test timed out after five seconds in the plugin CI job.",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/pane.test.ts",
+      "line": 30,
+      "text": "The terminal pane test timed out after five seconds in the plugin CI job.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/apps/web/e2e/members.spec.ts\tThe Python starter smoke times out waiting for the member-list refresh after the delayed agent key response.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/apps/web/e2e/members.spec.ts",
+      "line": 135,
+      "text": "The Python starter smoke times out waiting for the member-list refresh after the delayed agent key response.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_feature_command.py\tGate: generated Python API and browser proofs never run in CI\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 406,
+      "text": "Gate: generated Python API and browser proofs never run in CI",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_feature_command.py\tGate: test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python]\tFORGE-FEATURE-1/PY",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 545,
+      "text": "Gate: test_4_the_feature_keeps_history_and_its_tests_pass_at_once[python]",
+      "from": "blocking",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_hook_generated_check_speed.py\tWindows group 1 measured a 0.523-second hook median against the 0.4-second limit.",
+      "kind": "bug",
+      "path": "tests/test_hook_generated_check_speed.py",
+      "line": 93,
+      "text": "Windows group 1 measured a 0.523-second hook median against the 0.4-second limit.",
+      "from": "worker",
+      "item": "FORGE-FEATURE-1/PY",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

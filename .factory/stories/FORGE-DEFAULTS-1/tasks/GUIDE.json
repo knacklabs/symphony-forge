@@ -1,0 +1,63 @@
+{
+  "branch": "task/FORGE-DEFAULTS-1-GUIDE",
+  "chat": {
+    "approval": "243290d63c20635ccb12255ffe4d18e627b2f609c9cf16680931584c7da8986e",
+    "claude": null,
+    "conversation": "01a16e06-f6ed-75a1-9aa9-f722c7165ad6",
+    "head": null,
+    "start": "9f9c2c320bbce821c2d2f05b4a68ac1a39765762"
+  },
+  "known": [
+    {
+      "area": "docs/design/FORGE-DEFAULTS-1/SCREENS.md",
+      "file": "docs/design/FORGE-DEFAULTS-1/SCREENS.md",
+      "gain": 3,
+      "harm": 1,
+      "line": 1,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: design files outside GUIDE scope",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9f0cd3658d58f082f9528248eda594557ece8b035a6536b5d334a84bce06fb79",
+    "changed": "c48cb565ab174f4731d5f1304e885fdaed9809c427661f07b92992cbf9dbecdf",
+    "commit": "59c008a19271fb8a48609c475bf5dce906f61f08",
+    "dismissals": [],
+    "findings": [],
+    "id": "0cad73d4-ec81-4b74-97c2-ffc53d5bbff0",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T13:08:13.313436+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T13:17:13.072200+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T13:29:22.742312+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-24T13:57:05.887800+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "98bff908-38e2-4f14-95a9-8788621f7622",
+    "head": "6b97d0a76cb0fcf3c06218747814da920bf6d256",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

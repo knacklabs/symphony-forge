@@ -1,6 +1,10 @@
 """Git hooks configured in a Husky-style folder."""
 from __future__ import annotations
 
+import pytest
+
+pytestmark = pytest.mark.platform
+
 STORY = "FIX-IN-A-REPO-WHOSE-GIT-HOOKS-FOLDER-IS-SET"
 
 

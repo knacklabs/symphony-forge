@@ -1,4 +1,5 @@
-"""Approval capture on both hosts, and the client sign-off gate (spec criteria 14 and 32)."""
+"""Approval capture in src/forge/approval.py on both hosts and the client sign-off gate
+(spec criteria 14 and 32)."""
 from __future__ import annotations
 
 import json
@@ -132,7 +133,8 @@ def test_32_client_signoff(repo, claude_payload):
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "The client signed off")
     repo.git("push", "-q", "origin", "main")  # as when the decision's fix merges
-    assert not (shop / "docs" / "decisions").exists()  # so it is found on the default branch
+    # Constitution decisions already exist; this sign-off is still found only on the default branch.
+    assert not (shop / "docs/decisions/0001-client-signoff.md").exists()
     recorded = hook(repo, approval)
     assert recorded.returncode == 0, recorded.stderr
     assert "Next: forge task start SHOP/SAVE" in repo.forge("next").stdout

@@ -9,9 +9,9 @@ type Entry = {
   output_path: string | null; progress: { done: number | null; total: number | null } | null
   place: number; elapsed: number
 }
-type Lanes = { agents: { size: number; entries: Entry[] }; tests: { size: number; entries: Entry[] }; machine: { load: number[] | null; cores: number | null } }
+type Lanes = { agents: { size: number; entries: Entry[] }; tests: { size: number; used?: number; entries: Entry[] }; machine: { load: number[] | null; cores: number | null } }
 const entries = (lanes: Lanes) => [...lanes.agents.entries, ...lanes.tests.entries]
-const testLane = (lanes: Lanes) => `Tests ${lanes.tests.entries.filter(run => run.started_at !== null).length}/${lanes.tests.size} (${lanes.tests.entries.filter(run => run.place > 0).length} waiting)`
+const testLane = (lanes: Lanes) => `Tests ${lanes.tests.used ?? lanes.tests.entries.filter(run => run.started_at !== null).length}/${lanes.tests.size} (${lanes.tests.entries.filter(run => run.place > 0).length} waiting)`
 const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]!)
 
 function valid(value: unknown): value is Lanes {

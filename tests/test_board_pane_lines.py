@@ -7,7 +7,6 @@ cap, the older-release rule, parity with `forge board --json`'s team facts throu
 mounted Board tab, and time rounding.
 """
 import copy
-import json
 import re
 import sys
 from datetime import datetime, timedelta, timezone
@@ -15,13 +14,11 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 import conftest
-from conftest import ROOT
 from test_board_counts import ONE_PART, board, configure, read_story
 from test_board_pace import parts_per_week
 from test_close import STORY_DOC, approve_story, env  # noqa: F401
 from test_close_keeps_reviews_for_unchanged_branch_diffs import client
 from test_fix_pane_grouped_board import FIXTURE, PREVIOUS, board_tab, lines, row
-from test_mod_plugin import node_run
 from test_story import READER
 
 STORY = "FORGE-BOARD-2"
@@ -53,7 +50,7 @@ def an_older_forge_board_draws_rows_and_no_team_line(_request, tmp_path):
 def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
     """Real forge commands build a repo with six plans waiting for approval, read newest-first by key,
     six stalled fixes, a part other parts wait on, six fixes in progress and enough pace for
-    go-live; the mounted Board tab shows the same facts as `forge board --json` and its page."""
+    go-live; the mounted Board tab shows the same facts as `forge board --json`."""
     env, monkeypatch = request.getfixturevalue("env"), request.getfixturevalue("monkeypatch")
     client(env, previous)
     conftest._install(env.repo.bin, "claude", READER.format(python=sys.executable))
@@ -94,7 +91,7 @@ def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
         f"{counts['parts']['in progress'] + counts['fixes']['in progress']} in progress",
         f"{len(team['needs_you'])} needs you", f"{len(team['blocked'])} stuck",
         f"go-live about {due:%b} {due.day}"]) in shown, shown
-    # The page's sentence and its labelled totals, word for word.
+    # The board's sentence and its labelled totals, word for word.
     assert team["sentence"] in shown, shown
     labels = {"finished_last_7_days": "Finished in the last 7 days"}
     for kind, by in counts.items():
@@ -118,36 +115,29 @@ def the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous):
         assert rows == [shown_as(e) for e in entries][:5], (name, lines)
         return lines
 
-    # Each wait and block shows the age the page shows, in short units (3 hours reads 3h).
-    page = tmp_path / "board.html"
-    assert env.repo.forge("board", "--out", str(page)).returncode == 0
-    html = page.read_text("utf-8")
-
-    def ages(lane):
-        what = re.findall(r'class="what">(.*?)</span>', html[html.index(f'id="{lane}"'):html.index(f"<!-- end {lane} -->")])
-        return [re.sub(r"(\d+) ([smhd])\w*", r"\1\2", text.rsplit(" · ", 1)[-1].rsplit("waiting ", 1)[-1])
-                for text in what]
+    # Each wait and block shows the board's age for it, in short units (3 hours reads 3h).
+    def short(seconds):
+        # ponytail: plain()'s rounding for whole hours under a day and days over it, all this fixture makes.
+        return f"{round(seconds / 3600)}h" if seconds < 86400 else f"{round(seconds / 86400)}d"
 
     needs = group("NEEDS YOU", team["needs_you"])
-    assert [age for age in ages("needs-you")[:5] if any(f"waiting {age}" in line for line in needs)] \
-        == ages("needs-you")[:5], (ages("needs-you"), needs)
+    assert [found for line in needs for found in re.findall(r" · waiting (\S+)$", line)] \
+        == [short(e["waited_seconds"]) for e in team["needs_you"][:5]], needs
     stuck = group("STUCK", team["blocked"])
     assert all(any(e["detail"] in line for line in stuck) for e in team["blocked"][:5]), stuck
-    assert all(any(line.endswith(f" · {age}") for line in stuck) for age in ages("blocked")[:5]), (ages("blocked"), stuck)
+    assert [found for line in stuck for found in re.findall(r" · (\d+[hd])$", line)] \
+        == [short(e["seconds"]) for e in team["blocked"][:5]], stuck
     group("MOVING", [e for e in team["in_progress"] if e["state"] != "ready to merge"])
 
 
 def pane_times_round_like_the_board(_request, tmp_path):
-    """A 150-second review reads 2m, as the board's 2 minutes, not 2m 30s or 3m."""
+    """The approved pane keeps recorded seconds in its stage line, outside the concise prompt."""
     item = row(FIXTURE["board"]["items"][0], stages=[{"name": "Review", "status": "pass", "seconds": 150},
                                                      {"name": "CI", "status": "running",
                                                       "started_at": "2026-10-13T11:59:00Z"}])
-    shown = node_run(tmp_path, f"""
-const {{ summary }} = await import({json.dumps((ROOT / "src/forge/mod/hooks/summary.ts").as_uri())});
-const data = {{ board: {json.dumps({**FIXTURE["board"], "items": [item]})}, next: null, lanes: null, error: null, refreshedAt: 0 }};
-console.log(JSON.stringify(summary(data, Date.parse("2026-10-13T12:00:00Z")).join("\\n")));
-""")
-    assert "Review ✓ 2m →" in shown and "CI ● 1m" in shown, shown
+    shown = board_tab(tmp_path, canned={**FIXTURE, "board": {**FIXTURE["board"], "items": [item]}})
+    assert item["title"] in shown and "Loading Forge" not in shown, shown
+    assert "Review ✓ 2m 30s →" in shown and "CI ● 1m" in shown, shown
 
 
 def new_client_board_tab_matches(request, tmp_path):
@@ -158,6 +148,7 @@ def adopted_client_board_tab_matches(request, tmp_path):
     the_board_tab_shows_the_boards_team_facts(request, tmp_path, previous=True)
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", [seven_items_need_you_shows_five_and_n_more,
                                   an_older_forge_board_draws_rows_and_no_team_line, pane_times_round_like_the_board,
                                   new_client_board_tab_matches, adopted_client_board_tab_matches])

@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/journey.py\tFollow-up: Show the pending cold-read round after a restart",
+      "kind": "edge",
+      "path": "src/forge/journey.py",
+      "line": 86,
+      "text": "Follow-up: Show the pending cold-read round after a restart",
+      "from": "review",
+      "item": "FORGE-JOURNEY-1/JOURNEY-NEXT",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/journey.py\tNot done: a Codex capacity retry until its retry time",
+      "kind": "edge",
+      "path": "src/forge/journey.py",
+      "line": 78,
+      "text": "Not done: a Codex capacity retry until its retry time",
+      "from": "review",
+      "item": "FORGE-JOURNEY-1/JOURNEY-NEXT",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

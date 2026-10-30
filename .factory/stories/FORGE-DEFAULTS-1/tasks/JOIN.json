@@ -1,0 +1,56 @@
+{
+  "branch": "task/FORGE-DEFAULTS-1-JOIN",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/apps/web/e2e/join.spec.ts",
+      "file": "src/forge/templates/starter/apps/web/e2e/join.spec.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 22,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: isolate invite links between parallel browser tests",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "23a41b88c161c67622116d8ec6c00919ed5e31c3c48c80bfb4788e28bfd4075d",
+    "changed": "e5d5850707b8570c50f18a717d9e37886eab1bc33392211c3ace02db91c25b54",
+    "commit": "fb9ba055efe5959e62348ed9dc0fab2ea0a59c59",
+    "dismissals": [],
+    "findings": [],
+    "id": "a128ef84-9e51-439d-bc1b-a020f3605f98",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T04:42:55.208904+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T05:00:37.123323+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T05:16:43.364388+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "45b5bd5e-4df4-430b-aead-c19bfe38564a",
+    "head": "b5773f8bb127b7acedd494a6e947bdde4b0db156",
+    "keys": {},
+    "round": 1
+  },
+  "worker": "claude"
+}

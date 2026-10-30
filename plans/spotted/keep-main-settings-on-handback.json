@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/native.py\tPreserve inherited settings on stacked fixes\tkeep-main-settings-on-handback",
+      "kind": "bug",
+      "path": "src/forge/native.py",
+      "line": 221,
+      "text": "Preserve inherited settings on stacked fixes",
+      "from": "blocking",
+      "item": "keep-main-settings-on-handback",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

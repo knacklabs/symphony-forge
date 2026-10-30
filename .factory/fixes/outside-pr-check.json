@@ -1,0 +1,92 @@
+{
+  "base": "1e1d088d8e86f5eb39515f563a224c497dca2d59",
+  "branch": "fix/outside-pr-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14adf-77ec-7d20-b976-843341f7b545",
+    "head": null,
+    "start": "49cc5b84263922674216508e4f9fceaeb1e2e293"
+  },
+  "done_when": "Forge's required check fails such a pull request at once with a plain message that names the fix flow, on new and existing repos, and a test covers it",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/task.py",
+    "tests/test_required_check_rejects_outside_branches.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_required_check_rejects_outside_branch_with_fix_flow() in tests/test_required_check_rejects_outside_branches.py",
+      "file": "tests/test_required_check_rejects_outside_branches.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 32,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_required_check_rejects_outside_branch_with_fix_flow",
+      "work": 2
+    },
+    {
+      "area": "fix_drop() in src/forge/task.py",
+      "file": "src/forge/task.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 583,
+      "outcome": "fixed in round 5",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Standard: Touch only what the task needs",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "02cdddad10cdbd3fc7649f9d11bf37e5dc48f3d5d630324b36ea52ad72221575",
+    "changed": "0211ee8b161435a15973cce21445a2f54a700f2df17567b03dd1ab6f84649171",
+    "commit": "c27e4bdc7290954d346ab09b6bb040bd93157be8",
+    "dismissals": [],
+    "findings": [],
+    "id": "b758f3c9-5524-4a61-9b6c-399ea726b5fb",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T17:18:34.533305+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:23:35.778889+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T18:44:07.427195+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T19:55:57.818318+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T20:48:56.249548+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T02:00:41.018052+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "4c455ed8-b4ad-4eed-b397-35ef909e18cd",
+    "head": "ca543cce7760795d34788651ca14c338399994e1",
+    "keys": {},
+    "round": 3
+  },
+  "why": "A pull request from a branch Forge did not start passes Forge's required check, then cannot merge, and nothing tells its author to redo it as a fix",
+  "worker": "codex"
+}

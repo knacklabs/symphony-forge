@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\t.factory/fixes/cheaper-next.json\tGate: parser-cache allowance does not cover the mixed change\tdocs-only-skips-tests",
+      "kind": "bug",
+      "path": ".factory/fixes/cheaper-next.json",
+      "line": 2,
+      "text": "Gate: parser-cache allowance does not cover the mixed change",
+      "from": "blocking",
+      "item": "docs-only-skips-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/mod/hooks/events.ts\tA queued CI failure can be delivered after a rerun within the cache window\tdocs-only-skips-tests",
+      "kind": "bug",
+      "path": "src/forge/mod/hooks/events.ts",
+      "line": 96,
+      "text": "A queued CI failure can be delivered after a rerun within the cache window",
+      "from": "blocking",
+      "item": "docs-only-skips-tests",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_live_status.py\tTwo live-status cases fail in the related suite and pass on retry, so their failure remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_live_status.py",
+      "line": 118,
+      "text": "Two live-status cases fail in the related suite and pass on retry, so their failure remains unresolved.",
+      "from": "worker",
+      "item": "docs-only-skips-tests",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

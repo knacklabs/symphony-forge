@@ -1,0 +1,42 @@
+{
+  "allow_large": "The owner allowed this part past the limit: it builds both the TypeScript and the Python API side",
+  "branch": "task/FORGE-DEFAULTS-1-ERRORS",
+  "chat": {
+    "approval": "243290d63c20635ccb12255ffe4d18e627b2f609c9cf16680931584c7da8986e",
+    "claude": null,
+    "conversation": "01a16e78-9e4b-7831-98a0-dc1cee111921",
+    "head": null,
+    "start": "f989f6ead268c47fe0beb1727792f5f5a99d2206"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cc90f096404b7b72b2d8fe55e3d916c700e3f813e99a63392348847f525a0b32",
+    "changed": "e3cadc8e6406f22dfe5041cb92ce8d023f4b8e6bd0cf249a29167903e720ebd7",
+    "commit": "63ab5c2d4ffb2f433d92cb77369d763ae7738f59",
+    "dismissals": [],
+    "findings": [],
+    "id": "3136d8f6-6799-41a7-a33e-006edc1405c3",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-24T15:11:55.751399+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-24T15:29:27.179735+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "026add2e980ff3a5b1879887a04ebff49e39f15a",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
+}

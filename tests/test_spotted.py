@@ -82,24 +82,25 @@ def _close_records_the_reviews_findings_and_dismissals(env):
         finding("P2", "Later: cache prices", line=6),
         finding("P1", "Saving drops the basket", line=7),
         finding("P1", "Simpler: one save path", line=8)))
-    item, where = env.start_fix()
+    item, where = env.start_task()
+    own = "plans/spotted/SHOP.T1.json"
 
     refused = env.close(item)
 
     assert refused.returncode == 1 and "serious findings" in refused.stderr
-    wanted = [entry("simplify", "app.py", 2, "Simpler: merge the two loops", "review"),
-              entry("simplify", "app.py", 3, "Simpler (existing): drop the wrapper", "review"),
-              entry("edge", "app.py", 4, "Empty basket crashes totals", "review"),
-              entry("improve", "app.py", 5, "Name the tax constant", "review"),
-              entry("bug", "app.py", 7, "Saving drops the basket", "blocking"),
-              entry("simplify", "app.py", 8, "Simpler: one save path", "blocking")]
+    wanted = [entry("simplify", "app.py", 2, "Simpler: merge the two loops", "review", item=item),
+              entry("simplify", "app.py", 3, "Simpler (existing): drop the wrapper", "review", item=item),
+              entry("edge", "app.py", 4, "Empty basket crashes totals", "review", item=item),
+              entry("improve", "app.py", 5, "Name the tax constant", "review", item=item),
+              entry("bug", "app.py", 7, "Saving drops the basket", "blocking", item=item),
+              entry("simplify", "app.py", 8, "Simpler: one save path", "blocking", item=item)]
     assert listed(where) == sorted(wanted, key=lambda e: e["key"])
-    assert subjects(env, where, OWN) == [f"Review of {item}: blocked"]
+    assert subjects(env, where, own) == [f"Review of {item}: blocked"]
 
     # Dismissing a blocking finding closes its entry.
     env.close(item, "--dismiss", "6", "--because", "app.py:1 saving keeps the basket")
     wanted[4] = entry("bug", "app.py", 7, "Saving drops the basket", "blocking",
-                      status="done", closed_by="dismissed")
+                      item=item, status="done", closed_by="dismissed")
     assert listed(where) == sorted(wanted, key=lambda e: e["key"])
     assert len(env.review_calls()) == 1
 
@@ -120,17 +121,16 @@ def _each_problem_is_kept_once(env):
 
 def _a_serious_finding_counts_once_per_change(env):
     env.reviews(blocked(finding("P1", "Saving drops the basket")))
-    first, _ = env.start_fix()
+    first, _ = env.start_task()
     assert env.close(first).returncode == 1
-    env.repo.git("merge", "-q", "--no-edit", "fix/tidy-readme")
+    env.repo.git("merge", "-q", "--no-edit", "task/SHOP-T1")
     env.repo.git("push", "-q", "origin", "main")
-    second, there = env.start("save-fix", "fix/save-fix", ".factory/fixes/save-fix.json",
-                              {"kind": "fix", "why": "Saving works", "done_when": "It saves"},
-                              {"app.py": "print('save')\n"})
+    second, there = env.start_task("T2", changes={"app.py": "print('save')\n"})
     assert env.close(second).returncode == 1
     assert listed(there) == [entry("bug", "app.py", 1, "Saving drops the basket", "blocking",
-                                   item=second),
-                             entry("bug", "app.py", 1, "Saving drops the basket", "blocking")]
+                                   item=first),
+                             entry("bug", "app.py", 1, "Saving drops the basket", "blocking",
+                                   item=second)]
 
 
 def _a_reused_review_still_records_new_lines(env):

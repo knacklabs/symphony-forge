@@ -1,0 +1,46 @@
+{
+  "base": "61d87cbf053d6e765cbbeb4ef778b0c8293dfde2",
+  "branch": "fix/round-token-totals",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1500f-1d15-7822-8bf5-ce3a81c5f365",
+    "head": null,
+    "start": "3f846d10022de17ea2bc11029a3a55a7be56ed25"
+  },
+  "done_when": "Each worker, reader and review record holds the round's total input, cached and output tokens across all its turns, and a test with a two-turn round records the sum",
+  "fix_kind": "backend",
+  "flagged": [],
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "95f86ecc6e471c992ba485bae58cd9c10ab156cb8fad681d3885a34951e07765",
+    "changed": "053e118f69ca5e1d8380069fe4fe84c3bff0b930df20f751be7c46c5613a06e2",
+    "commit": "e7b65ca7d91cb91ded336169301de89b73407298",
+    "dismissals": [],
+    "findings": [],
+    "id": "7d646b50-878c-4441-9304-f2e3d5a086ac",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T16:59:04.384317+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T17:54:34.634753+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "ee17709bdb4322b055a8e385b6631cf15239a89c",
+    "keys": {},
+    "round": null
+  },
+  "why": "Worker, reader and review records keep only the last turn's tokens, not the round's total, so Forge's cost figures are wrong",
+  "worker": "codex"
+}

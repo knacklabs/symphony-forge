@@ -1,0 +1,53 @@
+{
+  "base": "b57fafaea2e32587274661ac94d4f6892c56105f",
+  "branch": "fix/a-repo-with-test-groups-still-runs-its-n",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17484-cde2-7fb3-86f7-485f8f14f211",
+    "head": null,
+    "start": "bafa1781642735da719b534c49fd888ba2c2d2ac"
+  },
+  "done_when": "The nightly full run splits into the repo's groups with the same time limit as the pull request tests job, and one full-run result is recorded for the default branch.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "067fed93156e6176dddf07014f58f09829300f7a6f12595260f4462d7bdc015e",
+    "changed": "551b32f24a182a8c8ac4d4835d0cfdb7a37d1ad9b1738de75ab3be017f914f5c",
+    "commit": "e734912fea16177812046d3699b632db4964556a",
+    "dismissals": [],
+    "findings": [],
+    "id": "8bdb39b2-7eff-405f-8243-5af7468231ca",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T19:23:21.850183+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T19:30:59.986054+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T20:05:51.432787+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T20:35:20.313599+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "f76e9a5c-ed61-45d0-8e8a-004a76f87043",
+    "head": "80497fe4f63e6a2127179c8a2202f1f2965e2dce",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A repo with test groups still runs its nightly full suite on one runner with no time limit, so the run can take hours or hang until GitHub's six-hour limit and block releases.",
+  "worker": "codex"
+}

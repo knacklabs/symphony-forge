@@ -1,0 +1,89 @@
+{
+  "base": "9eb15070b30ea0bf1d9369ac0e184a0401607687",
+  "branch": "fix/workers-add-code-and-layers-before-they",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a17449-8d9b-7220-b6b5-49cbada4df7a",
+    "head": null,
+    "start": "8de3e6662b8093a236fb994c9dc3eab5f7607416"
+  },
+  "done_when": "Each worker pull request summary carries three lines written before coding (the need, the simplest option, the existing code reused), a layer appears only at the edge to an outside service, and the review checks the change against those three lines.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "before_coding() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 733,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Restrict approach lookup to the current worker's commits",
+      "work": 2
+    },
+    {
+      "area": "test_2_close_copies_the_original_three_lines_to_summary_and_review() in tests/test_workers_record_the_simplest_approach.py",
+      "file": "tests/test_workers_record_the_simplest_approach.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 47,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_2_close_copies_the_original_three_lines_to_summary_and_review",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "550c296247f2f491b3fdf8e2a797da1542dd5b7da87a1f967f1fc53ed6aa64a4",
+    "changed": "f7032a83d6b9f113a8bfbf0e8bdb46f642197c41b4883a7fb9d7ed52f3494ac9",
+    "commit": "3ebfd1c6d63829ed2786966096fbe057450eb03a",
+    "dismissals": [],
+    "findings": [],
+    "id": "b596e536-98b7-4264-b7d9-86737c71f15a",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-25T18:18:39.508232+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-25T18:26:11.040593+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:34:10.703566+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-25T18:55:17.017889+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-25T18:26:11.051907+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/review.py",
+    "reason": "The owner chose one more round: read the newest planning lines on this branch from its head, and fix the test name or its check",
+    "wait_id": "8fa9cac1-6a16-4c88-9073-b4075067fa69",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "551ca83d-b3f6-4abc-b8f3-35472f65f8a1",
+    "head": "6076ef58e31efe8e3f3c5b7af913133731e53b5b",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Workers add code and layers before they think through the simplest way, and the rules say where not to add layers but not where a layer belongs, so the review has nothing written before coding to check the change against.",
+  "worker": "codex"
+}

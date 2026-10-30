@@ -1,6 +1,6 @@
 """CPU budget and FIFO admission through work, read, close and stop.
 
-Only the model providers wait at their edge; Forge owns admission and cancellation.
+Only the model providers wait at their edge; src/forge/story.py owns the plan read.
 """
 import os
 import json
@@ -19,6 +19,8 @@ from test_story import worktree
 from test_fix_agent_runs_wait_in_line import (
     HOLDING_CLAUDE, HOLDING_AUTOREVIEW, _other_repo, _until,
 )
+
+pytestmark = pytest.mark.platform
 
 STORY = "FORGE-LANES-1"
 

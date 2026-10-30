@@ -1,0 +1,74 @@
+{
+  "base": "1e1d088d8e86f5eb39515f563a224c497dca2d59",
+  "branch": "fix/stop-clears-lock",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14adc-9b3b-76c2-b65c-6880e7727d11",
+    "head": null,
+    "start": "bbb769418bb22d29bd860a251036f8c4c7a59cfc"
+  },
+  "done_when": "forge stop on an item also clears that item's lock when no live run of this machine holds it, and a test stops an item whose lock outlived its run",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/mod/hooks/events.ts"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/mod/hooks/events.ts",
+      "file": "src/forge/mod/hooks/events.ts",
+      "gain": 3,
+      "harm": 3,
+      "line": 96,
+      "outcome": "accepted",
+      "reason": "src/forge/mod/hooks/events.ts:94 Owner accepted: this fix does not change events.ts; the rerun inside the cache window goes to its own fix",
+      "round": 2,
+      "security": false,
+      "title": "A queued CI failure is delivered after a rerun starts within the cache window",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7812b162298fdfbf055fab9c014e269c241864b6c36c0d68895abf20ff3a15c7",
+    "changed": "3c3ecf81d4f63d03b799a4b54a54b5634419e3736fa761ad08c9005e331fd270",
+    "commit": "f98259de050efb55389cea12a7b0c8d8c3544767",
+    "dismissals": [],
+    "findings": [],
+    "id": "3cc479e2-5775-4b2d-9be5-43ff5b5ec10e",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-17T17:15:27.504481+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-17T17:37:22.363198+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T18:43:00.904478+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T21:28:28.694293+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-17T21:47:43.790173+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "021705e0-f72d-4e4b-92ce-b0c7c695c682",
+    "head": "7ec5f6ba330f9eee36cf2c1546906bcf4df16aeb",
+    "keys": {},
+    "round": 1
+  },
+  "why": "A stopped forge work can leave its item lock behind, and forge stop says there is nothing to stop, so the next round is refused as busy",
+  "worker": "codex"
+}

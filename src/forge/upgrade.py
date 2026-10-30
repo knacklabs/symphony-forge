@@ -12,7 +12,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from forge import close, quicktest, repo, story, task
+from forge import close, machine, quicktest, repo, story, task
 
 COMMANDS = [{
     "words": "upgrade", "run": "upgrade", "changes_state": False,
@@ -35,6 +35,9 @@ REFUSALS = {
                     "git switch {default}, then {again}"),
     "dirty": ("This checkout has changes you haven't committed: {files}.",
               "commit or undo them, then {again}"),
+    "running": ("Forge runs are still in progress on this machine:\n{runs}\n"
+                "An install during a run can mix two releases.",
+                "Wait until no Forge runs are in progress, then {again}"),
     "bad_release": ("{release!r} is not a Forge release; a release is v and three numbers, such "
                     "as v1.3.0.", "forge upgrade <release>"),
     "not_newer": ("{default} already pins Forge {pinned}, so {release} would not be an upgrade.",
@@ -73,6 +76,11 @@ def upgrade(args: argparse.Namespace) -> int:
     if dirty:
         repo.refuse(REFUSALS["dirty"], files=", ".join(entry[3:] for entry in dirty.split("\0") if entry),
                     again=again)
+    runs = machine.entries()
+    if runs:
+        repo.refuse(REFUSALS["running"], runs="\n".join(
+            f"- {run['repo_name']}: {run['item'] or 'test command'} ({run['kind']})"
+            for run in runs), again=again)
     release = args.release or _newest(top)
     if not RELEASE.fullmatch(release):
         repo.refuse(REFUSALS["bad_release"], release=release)

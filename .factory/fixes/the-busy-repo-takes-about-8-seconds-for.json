@@ -1,0 +1,114 @@
+{
+  "allow_large": "The stale-cache repair needs known_issues.py as a sixth file; the fix stays one speed change with no interface change",
+  "base": "681f68953998c6b6344c6dbe77b86a94b03f15ec",
+  "branch": "fix/the-busy-repo-takes-about-8-seconds-for",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a177fb-9245-7fd1-bd9d-f41cd4eeba92",
+    "head": null,
+    "start": "42fd32fd88b4e7933fd068dbb784cdc477a63456"
+  },
+  "done_when": "On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_busy_views_finish_within_five_seconds() in tests/test_busy_repo_views_finish_quickly.py",
+      "file": "tests/test_busy_repo_views_finish_quickly.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 36,
+      "outcome": "fixed in round 4",
+      "reason": "",
+      "round": 3,
+      "security": false,
+      "title": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
+      "work": 3
+    },
+    {
+      "area": "prs.fetch() in src/forge/board_facts.py",
+      "file": "src/forge/board_facts.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 264,
+      "outcome": "fixed in round 7",
+      "reason": "",
+      "round": 6,
+      "security": false,
+      "title": "Not done: On this repo, forge next and the board's JSON output each finish in under five seconds with unchanged output.",
+      "work": 3
+    },
+    {
+      "area": "next_step() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": null,
+      "harm": null,
+      "line": 135,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "Preserve local next output when gh is unavailable",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1843920e2d68ba13534aa34c4d6c4f75203cc8d3ae76add267443ecc2f464ca2",
+    "changed": "4a8f75a5ec0e0231cc3d481e7512cb4201d6f300d3880248ba16b73b536cd49a",
+    "commit": "14d019346ce3dacfaf943fdb0ed26dd9263d7dc0",
+    "dismissals": [],
+    "findings": [],
+    "id": "b48d9e4d-3e37-418f-8183-c73ca121c118",
+    "status": "clean"
+  },
+  "round": 10,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T09:20:17.910674+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T12:08:23.640906+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T12:19:56.464175+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T13:31:50.030383+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T16:27:19.471177+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T16:36:17.707203+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T17:13:27.659560+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T17:41:45.787371+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-27T04:37:24.862458+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "bc0cfbf9-3031-44bb-9b30-5374be0088a1",
+    "head": "3a70d0d43bbc03b03978e2456bf7b55bba2a8539",
+    "keys": {},
+    "round": 9
+  },
+  "why": "The busy repo takes about 8 seconds for forge next and about 10 seconds for the board's JSON output, and slow is a bug under Forge's principles.",
+  "worker": "codex"
+}

@@ -24,11 +24,25 @@ def _related_test_skills(client):
     for host in (".claude", ".codex"):
         skill = (client / host / "skills/test-audit/SKILL.md").read_text("utf-8")
         validation = " ".join(skill.split("## Validation\n")[1].split("## Landing")[0].split())
+        assert "follow `forge.toml`'s `test_place`" in validation.lower()
+        assert "in local mode" in validation.lower()
+        assert "run the change's related tests through `forge test`" in validation.lower()
+        assert "in ci mode" in validation.lower()
+        assert "do not run them here" in validation.lower()
+        assert "run `forge test` only for a test you are writing" in validation.lower()
         assert "run the change's related tests" in validation
         assert "through `forge test`" in validation
         assert "`fast_test`, or `test` when none is set" in validation
         assert "Run forge.toml's `test` command before you stop." not in validation
         _commit_test_fixes(validation)
+
+        guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
+        refresh = guide.split("## Refresh dependencies", 1)[1].split("## Planning a story", 1)[0]
+        assert "follow the repo's `test_place`" in refresh.lower()
+        assert "local mode" in refresh.lower()
+        assert "run the related tests through `forge test`" in refresh.lower()
+        assert "ci mode" in refresh.lower()
+        assert "do not run them here" in refresh.lower()
 
 
 def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypatch):
@@ -50,7 +64,7 @@ def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypa
 
     assert built.returncode == 0, built.stdout + built.stderr
     nudged = calls(log)[1]
-    assert "Run the change's related tests through `forge test`" in nudged["brief"]
+    assert "run the change's related tests through `forge test`" in nudged["brief"].lower()
     _commit_test_fixes(nudged["brief"])
 
     monkeypatch.delenv("STUB_CLAUDE_LEAVE")
@@ -59,14 +73,13 @@ def test_1_the_commit_nudge_and_continued_round_use_the_test_lane(repo, monkeypa
     assert again.returncode == 0, again.stdout + again.stderr
     continued = calls(log)[-1]
     assert bool(continued["options"].get("resume"))
-    assert "Run the change's related tests through `forge test`" in continued["brief"]
+    assert "run the change's related tests through `forge test`" in continued["brief"].lower()
     _commit_test_fixes(continued["brief"])
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
-@pytest.mark.parametrize("fast", [False, True], ids=["test-fallback", "fast-test"])
 def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
-        repo, gh, tmp_path, previous, fast):
+        repo, gh, tmp_path, previous):
     # Prompt bytes and synced guidance are the contract; Claude only records what Forge sends.
     # The old adoption is real release output from a text fixture, never current sync output.
     version = repo.forge("--version").stdout.split()[-1]
@@ -83,8 +96,6 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     config = config.replace('version = "v1.2.2"', f'version = "{version}"')
     config = config.replace('workers = "codex"', 'workers = "claude"').replace(
         'workers = "split"', 'workers = "claude"')
-    if fast:
-        config = 'fast_test = "pytest -q --since {base}"\n' + config
     repo.write("forge.toml", config)
     synced = repo.forge("sync")
     assert synced.returncode == 0, synced.stdout + synced.stderr
@@ -102,11 +113,11 @@ def test_2_clients_receive_related_test_guidance_in_briefs_and_synced_skills(
     assert started.returncode == 0, started.stdout + started.stderr
     built = repo.forge("work", FIX)
     assert built.returncode == 0, built.stdout + built.stderr
-    brief = " ".join(calls(log)[0]["brief"].split())
-    assert "run the change's related tests through `forge test`" in brief
-    assert "`{base}` as the merge base with `origin/<default branch>`" in brief
-    assert "`fast_test`, or `test` when none is set" in brief
-    _commit_test_fixes(brief.split("Use the test-audit skill", 1)[1])
+    brief = " ".join(calls(log)[0]["brief"].split()).lower()
+    assert ("the pull request's ci runs the change's related tests, lint and type checks, "
+            "so do not run them here; run `forge test` only for a test you are writing, "
+            "to watch it fail.") in brief
+    assert "run the change's related tests through `forge test` in the foreground" not in brief
 
 
 @pytest.mark.parametrize("full,fast", [
@@ -130,4 +141,4 @@ def test_3_the_commit_nudge_uses_the_lane_even_without_a_test_command(repo, monk
     built = repo.forge("work", FIX)
     assert built.returncode == 0, built.stdout + built.stderr
     brief = calls(log)[1]["brief"]
-    assert "Run the change's related tests through `forge test`" in brief
+    assert "run the change's related tests through `forge test`" in brief.lower()

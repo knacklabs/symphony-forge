@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Forge board design language</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 56px 64px; background: #F4F5F2; color: #15171A; font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-variant-numeric: tabular-nums; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 32px 40px">
+
+  <div style="grid-column: 1 / 4; display: flex; align-items: baseline; gap: 24px; border-bottom: 1px solid #E2E4E0; padding-bottom: 20px">
+    <h1 style="margin: 0; font-size: 24px; font-weight: 600">Forge board · design language</h1>
+    <span style="font-size: 14px; color: #4A4F57">Position says the group. Colour and shape say the state. Words say only the title.</span>
+  </div>
+
+  <section style="display: flex; flex-direction: column; gap: 12px">
+    <h2 style="margin: 0; font-size: 17px; font-weight: 600">Colour · light / dark</h2>
+    <sc-for list="{{tokens}}" as="t" hint-placeholder-count="10">
+      <div style="display: grid; grid-template-columns: 28px 28px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 14px">
+        <span style="width: 28px; height: 20px; border-radius: 3px; background: {{t.light}}; border: 1px solid #C9CCC6"></span>
+        <span style="width: 28px; height: 20px; border-radius: 3px; background: {{t.dark}}; border: 1px solid #2C3034"></span>
+        <span>{{t.name}}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px">
+    <h2 style="margin: 0; font-size: 17px; font-weight: 600">Type · system font, 4 sizes</h2>
+    <div style="font-size: 24px; font-weight: 600">24 · Page title</div>
+    <div style="font-size: 17px; font-weight: 600">17 · Region</div>
+    <div style="font-size: 14px">14 · Chip and body</div>
+    <div style="font-size: 12px; color: #4A4F57">12 · Keys and labels</div>
+    <h2 style="margin: 12px 0 0; font-size: 17px; font-weight: 600">Space · 4 px grid</h2>
+    <div style="display: flex; align-items: flex-end; gap: 10px">
+      <sc-for list="{{space}}" as="s" hint-placeholder-count="7">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+          <span style="width: {{s.px}}; height: {{s.px}}; background: #1D4ED8; border-radius: 2px"></span>
+          <span style="font-size: 12px; color: #4A4F57">{{s.n}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size: 12px; color: #4A4F57">Corners: 6 chips and cards · 3 strips and tags</div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px">
+    <h2 style="margin: 0; font-size: 17px; font-weight: 600">Rules</h2>
+    <sc-for list="{{rules}}" as="r" hint-placeholder-count="6">
+      <div style="display: flex; gap: 10px; font-size: 14px; line-height: 20px"><span style="color: #1D4ED8; font-weight: 600">{{r.n}}</span><span>{{r.t}}</span></div>
+    </sc-for>
+  </section>
+
+  <section style="grid-column: 1 / 4; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; align-items: start; border-top: 1px solid #E2E4E0; padding-top: 24px">
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; color: #4A4F57">Item chip · part, fix, idle, stuck</span>
+      <div style="background: #FFFFFF; border: 1px solid #E2E4E0; border-left: 3px solid #1D4ED8; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; gap: 8px; align-items: baseline"><span style="font-size: 14px; font-weight: 600; flex: 1">Main only on a clash</span><span style="font-size: 12px; color: #6B717A">MAINONCE</span></div>
+        <div style="display: flex; height: 4px; border-radius: 2px; overflow: hidden"><span style="flex: 6; background: #1D4ED8"></span><span style="flex: 4; background: repeating-linear-gradient(135deg, #C9CCC6 0 3px, #F4F5F2 3px 6px)"></span></div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E2E4E0; border-left: 3px solid #1D4ED8; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; gap: 8px; align-items: baseline"><span style="font-size: 14px; font-weight: 600; flex: 1">Windows tests pass again</span><span style="font-size: 12px; color: #4A4F57; background: #EEEFEC; border-radius: 3px; padding: 0 6px">Fix</span></div>
+        <div style="display: flex; height: 4px; border-radius: 2px; overflow: hidden"><span style="flex: 7; background: #1D4ED8"></span><span style="flex: 3; background: repeating-linear-gradient(135deg, #C9CCC6 0 3px, #F4F5F2 3px 6px)"></span></div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px dashed #C9CCC6; border-left: 3px solid #1D4ED8; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; gap: 8px; align-items: baseline"><span style="font-size: 14px; font-weight: 600; flex: 1">Time summaries in pull requests</span><span style="font-size: 12px; font-weight: 600; color: #9F1239">idle 2 d</span></div>
+        <div style="display: flex; height: 4px; border-radius: 2px; overflow: hidden"><span style="flex: 1; background: #1D4ED8"></span></div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #9F1239; border-left: 3px solid #9F1239; border-radius: 6px; padding: 8px 12px; display: flex; gap: 8px; align-items: baseline">
+        <span style="font-size: 14px; font-weight: 600; flex: 1">Spotted per change</span><span style="font-size: 12px; font-weight: 600; color: #9F1239">3 rounds</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; color: #4A4F57">Wait strip · length is time</span>
+      <div style="display: flex; height: 10px; border-radius: 3px; overflow: hidden">
+        <span style="flex: 5; background: #1D4ED8"></span>
+        <span style="flex: 2; background: repeating-linear-gradient(135deg, #C9CCC6 0 4px, #F4F5F2 4px 8px)"></span>
+        <span style="flex: 3; background: #1D4ED8"></span>
+        <span style="flex: 4; background: repeating-linear-gradient(135deg, #F0A35C 0 4px, #FDF0E6 4px 8px)"></span>
+      </div>
+      <div style="display: flex; gap: 14px; font-size: 12px; color: #4A4F57"><span>■ work</span><span>▨ in line</span><span style="color: #B54708">▨ waits for you</span></div>
+      <span style="font-size: 12px; color: #4A4F57; margin-top: 12px">Part bar · one segment per part</span>
+      <div style="display: flex; gap: 3px; height: 10px">
+        <span style="flex: 1; background: #0F766E; border-radius: 2px"></span><span style="flex: 1; background: #0F766E; border-radius: 2px"></span><span style="flex: 1; background: #1D4ED8; border-radius: 2px"></span><span style="flex: 1; background: #9F1239; border-radius: 2px"></span><span style="flex: 1; background: #E2E4E0; border-radius: 2px"></span>
+      </div>
+      <span style="font-size: 12px; color: #4A4F57; margin-top: 12px">Dependency tags</span>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <span style="font-size: 12px; color: #4A4F57; border: 1px dashed #8A9096; border-radius: 3px; padding: 2px 8px">after Main only on a clash</span>
+        <span style="font-size: 12px; font-weight: 600; color: #FFFFFF; background: #15171A; border-radius: 3px; padding: 2px 8px">blocks 5</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; color: #4A4F57">Attention card</span>
+      <div style="background: #FFFFFF; border: 1px solid #E2E4E0; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; gap: 8px; align-items: center"><span style="font-size: 12px; font-weight: 600; color: #FFFFFF; background: #B54708; border-radius: 3px; padding: 2px 8px">Decide</span><span style="font-size: 12px; color: #6B717A">MAINONCE</span></div>
+        <span style="font-size: 14px; font-weight: 600">Spotted per change</span>
+        <span style="display: flex; height: 4px; border-radius: 2px; background: #EEEFEC"><span style="width: 35%; background: #B54708; border-radius: 2px"></span></span>
+      </div>
+      <span style="font-size: 12px; color: #4A4F57; margin-top: 8px">Figure</span>
+      <div style="display: flex; flex-direction: column"><span style="font-size: 24px; font-weight: 600">174</span><span style="font-size: 12px; color: #4A4F57">merged in 7 days</span></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; color: #4A4F57">Drawer · every sentence lives here</span>
+      <div style="background: #FFFFFF; border-left: 1px solid #E2E4E0; box-shadow: -8px 0 24px rgba(21,23,26,0.08); padding: 16px; display: flex; flex-direction: column; gap: 8px; height: 190px">
+        <span style="font-size: 17px; font-weight: 600">Spotted per change</span>
+        <span style="font-size: 12px; color: #4A4F57">Status · Rounds · Findings · Time · Cost · History</span>
+        <span style="font-size: 14px; line-height: 20px">Review blocked three rounds on the same missing test.</span>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      tokens: [
+        { name: 'Ground', light: '#F4F5F2', dark: '#141618' },
+        { name: 'Surface', light: '#FFFFFF', dark: '#1D2023' },
+        { name: 'Line', light: '#E2E4E0', dark: '#2C3034' },
+        { name: 'Ink', light: '#15171A', dark: '#ECEDEA' },
+        { name: 'Ink 2', light: '#4A4F57', dark: '#B4B8BC' },
+        { name: 'Moving', light: '#1D4ED8', dark: '#7AA2F7' },
+        { name: 'Needs you', light: '#B54708', dark: '#F0A35C' },
+        { name: 'Stuck', light: '#9F1239', dark: '#F08AA6' },
+        { name: 'Ready', light: '#0F766E', dark: '#5CC8B8' },
+        { name: 'Waiting', light: '#8A9096', dark: '#6B717A' }
+      ],
+      space: [ { n: '4', px: '4px' }, { n: '8', px: '8px' }, { n: '12', px: '12px' }, { n: '16', px: '16px' }, { n: '24', px: '24px' }, { n: '32', px: '32px' }, { n: '48', px: '48px' } ],
+      rules: [
+        { n: '1', t: 'A chip is one line: title of 8 words or fewer, plus a key or a Fix tag.' },
+        { n: '2', t: 'A reason is one word. The sentence opens in the drawer.' },
+        { n: '3', t: 'Time is drawn as length first; the number shows on hover.' },
+        { n: '4', t: 'Columns are the headings. No legends.' },
+        { n: '5', t: 'Unknown is the word unknown, never zero.' },
+        { n: '6', t: 'An empty region keeps its place with one short line.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

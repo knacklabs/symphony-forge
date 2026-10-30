@@ -1,4 +1,5 @@
-"""Planned prerequisites get the machine's next agent place before ordinary work."""
+"""Planned prerequisites get the machine's next agent place before ordinary work.
+New plan reads use src/forge/story.py before their parts enter the agent lane."""
 import json
 import shutil
 import sys
@@ -11,7 +12,7 @@ from test_board_dependency_timelines import _client, _land_fixture
 from test_close import env  # noqa: F401
 from test_fix_agent_runs_wait_in_line import _until
 from test_lanes_agents import finish, hold_agents, make_work, start
-from test_story import GRILL, READER, claude_plan, hook, ready, worktree
+from test_story import GRILL, READER, approved_constitution, claude_plan, hook, ready, worktree
 from test_upgrade_command import unsynced_up  # noqa: F401
 
 STORY = "unblockers-first"
@@ -55,6 +56,8 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
     repo.path = main
     repo.git("merge", "-q", "--ff-only", "fix/configure-client")
     _land_fixture(repo)
+    if not (repo.path / "docs/product/CONSTITUTION.md").exists():
+        approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     doc = DOC.replace("`tests/test_page.py` | SAVE | yes |",
                       "`tests/test_page.py` | none | yes |").replace(
@@ -113,6 +116,7 @@ def test_1_waiting_prerequisites_start_first_and_explain_their_place(
         finish(repo, list(processes.values()))
 
 
+@pytest.mark.platform
 def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
         env, tmp_path, monkeypatch, claude_payload):
     repo = env.repo
@@ -123,6 +127,7 @@ def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
     repo.git("add", "-A")
     repo.git("commit", "-qm", "Plan the unfinished story")
     _land_fixture(repo)
+    approved_constitution(repo)
     _install(repo.bin, "claude", READER.format(python=sys.executable))
     # Neither of these runs unblocks a part, so admission must finish inspecting the plans.
     doc = DOC.replace("| SAVE | yes |", "| none | yes |")
@@ -154,6 +159,9 @@ def test_2_finished_story_history_does_not_add_git_processes_to_agent_admission(
                 _land_fixture(repo)
                 for number in range(40):
                     repo.git("branch", f"story/FINISHED-{number}")
+            # Compare admission with equally current bases, excluding Git's real startup merge cost.
+            repo.git("merge", "-q", "--no-edit", "origin/main",
+                     cwd=worktree(repo, f"task/SHOP-{part}"))
             trace = tmp_path / f"admission-{index}.jsonl"
             with monkeypatch.context() as tracing:
                 tracing.setenv("GIT_TRACE2_EVENT", trace.as_posix())

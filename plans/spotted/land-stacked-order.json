@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/land.py\tNot done: Land lands a stacked fix after the fix it was stacked on\tland-stacked-order",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 326,
+      "text": "Not done: Land lands a stacked fix after the fix it was stacked on",
+      "from": "blocking",
+      "item": "land-stacked-order",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/land.py\tStack ordering puts an unrelated younger change ahead of an older child\tland-stacked-order",
+      "kind": "bug",
+      "path": "src/forge/land.py",
+      "line": 315,
+      "text": "Stack ordering puts an unrelated younger change ahead of an older child",
+      "from": "blocking",
+      "item": "land-stacked-order",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

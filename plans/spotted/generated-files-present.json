@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/review.py\tNot done: Generated files notice makes inaccurate claims for deletions and repeat reviews",
+      "kind": "edge",
+      "path": "src/forge/review.py",
+      "line": 1061,
+      "text": "Not done: Generated files notice makes inaccurate claims for deletions and repeat reviews",
+      "from": "review",
+      "item": "generated-files-present",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

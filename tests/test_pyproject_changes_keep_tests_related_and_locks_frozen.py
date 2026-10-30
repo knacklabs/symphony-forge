@@ -152,6 +152,7 @@ def test_1_only_known_harmless_manifest_lines_keep_tests_related(repo, change, f
     assert ("2 passed" if full else "1 passed") in result.stdout, result.stdout
     assert ("Shared test inputs changed" in result.stdout) == full
 
+@pytest.mark.platform
 @pytest.mark.parametrize("case", ["success", "failed-tests", "missing-lock"])
 def test_2_uv_setup_and_test_runs_keep_an_older_worktrees_lock_unchanged(repo, monkeypatch, case):
     monkeypatch.setenv("UV_FROZEN", "0")  # Forge's policy wins over the caller's environment.
@@ -194,6 +195,8 @@ def check_generated_ci(repo, lock, *, launcher=None):
     frozen = re.search(r"^      UV_FROZEN: '([^']+)'$", tests_job, re.M)
     assert frozen, tests_job
     command = json.loads(re.search(r'^      - run: (".*")$', tests_job, re.M)[1])
+    # Actions executes the generated step detached, without a local Forge item.
+    repo.git("checkout", "-q", "--detach", "HEAD")
     result = subprocess.run(command, shell=True, cwd=repo.path, capture_output=True, text=True,
                             env={**os.environ, "UV_FROZEN": frozen[1]}, timeout=60)
     assert result.returncode == 0, result.stdout + result.stderr
@@ -204,7 +207,7 @@ def check_generated_ci(repo, lock, *, launcher=None):
 def test_3_new_clients_get_related_manifest_tests_and_frozen_uv(repo, gh, tmp_path):
     client = _new_repo(repo, gh, tmp_path)
     (client / "pyproject.toml").write_text(MANIFEST, "utf-8")
-    initialized = repo.forge("init", cwd=client)
+    initialized = repo.forge("init", "--actions", "yes", cwd=client)
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     repo.path = client
     base = configure(repo, uv=True)
@@ -215,6 +218,7 @@ def test_3_new_clients_get_related_manifest_tests_and_frozen_uv(repo, gh, tmp_pa
     assert "1 passed" in result.stdout
     assert (client / "uv.lock").read_bytes() == lock
     check_generated_ci(repo, lock)
+    check_nested_project_inputs(repo)
 
 
 def test_4_earlier_adopted_clients_get_related_manifest_tests_and_frozen_uv(unsynced_up):
@@ -229,3 +233,30 @@ def test_4_earlier_adopted_clients_get_related_manifest_tests_and_frozen_uv(unsy
     assert "1 passed" in result.stdout
     assert (repo.path / "uv.lock").read_bytes() == lock
     check_generated_ci(repo, lock, launcher=unsynced_up.tmp / "uvbin/forge")
+    check_nested_project_inputs(repo, launcher=unsynced_up.tmp / "uvbin/forge")
+
+
+def check_nested_project_inputs(repo, *, launcher=None):
+    # A nested dependency edit must reach its own tests and an outside reader, without
+    # expanding to unrelated test roots. The old basename-only shared-input rule runs all four.
+    repo.write("tests/nested/pyproject.toml", MANIFEST)
+    repo.write("tests/nested/uv.lock", "version = 1\n")
+    repo.write("tests/nested/test_dependency.py", "def test_nested():\n    assert True\n")
+    repo.write("tests/test_nested_contract.py",
+               "# tests/nested/pyproject.toml\n# tests/nested/uv.lock\n"
+               "def test_nested_contract():\n    assert True\n")
+    repo.write("tests/test_unrelated.py", "def test_unrelated():\n    assert False\n")
+    repo.git("add", "-A")
+    repo.git("-c", f"core.hooksPath={repo.path / '.git/no-hooks'}", "commit", "-qm",
+             "Give the nested project its own dependency checks")
+    base = repo.git("rev-parse", "HEAD")
+    repo.write("tests/nested/pyproject.toml", MANIFEST.replace(
+        "dependencies = []", 'dependencies = ["pytest"]'))
+    repo.write("tests/nested/uv.lock", "version = 2\n")
+    repo.git("add", "-A")
+    repo.git("-c", f"core.hooksPath={repo.path / '.git/no-hooks'}", "commit", "-qm",
+             "Change only nested project dependencies")
+    result = pick(repo, base, launcher=launcher)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "2 passed" in result.stdout, result.stdout
+    assert "Shared test inputs changed" not in result.stdout

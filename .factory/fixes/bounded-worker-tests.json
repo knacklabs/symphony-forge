@@ -1,0 +1,74 @@
+{
+  "base": "f915d25dfe7ac22420ddc879d4b822e20f28f3fe",
+  "branch": "fix/bounded-worker-tests",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a14e81-8ef4-76f3-8576-f0d863a15174",
+    "head": null,
+    "start": "ab08c657d645113456a374b566260915609df625"
+  },
+  "done_when": "A worker's forge test runs only the tests the item names (or a bounded selection) when the selection is broad, says that CI runs the full suite, and a test proves a shared-fixture change no longer runs the full suite locally, on new and adopted repos",
+  "fix_kind": "backend",
+  "flagged": [
+    "src/forge/fasttest.py"
+  ],
+  "kind": "fix",
+  "known": [
+    {
+      "area": "pytest_tests() in src/forge/fasttest.py",
+      "file": "src/forge/fasttest.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 404,
+      "outcome": "fixed in round 3",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: existing worker-selection regression tests",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "573d0044a531d7382f1a92338f78328b97adc503f4f90fb0043c9f80d9df2387",
+    "changed": "83260b7ba691aa4e48830c4f77a20160bec87ab151a1cb9e95903d065416b6f3",
+    "commit": "a5f2172db5649b30d36eac4a061b8ee8600a6970",
+    "dismissals": [],
+    "findings": [],
+    "id": "b2ecce4f-b324-427b-97c0-ff80188ab06a",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-18T10:14:25.983249+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-18T10:24:12.128212+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T11:46:29.543481+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T13:40:13.743949+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-18T13:56:03.058354+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "b5a49656-4b65-4780-8ce6-ab2f54a6e6e6",
+    "head": "5382aeeb7e3ad67635efcee8aea254ed07f2f29f",
+    "keys": {},
+    "round": 2
+  },
+  "why": "A worker's forge test runs the whole suite when a shared test fixture changes (one change ran 3,190 tests for two hours on the laptop), because the broad-selection skip applies only at close",
+  "worker": "codex"
+}

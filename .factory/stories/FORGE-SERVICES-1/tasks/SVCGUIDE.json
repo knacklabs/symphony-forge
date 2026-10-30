@@ -1,0 +1,93 @@
+{
+  "base": "4fc5be47a84d48390c085579b4fd5fcbae7f089d",
+  "branch": "task/FORGE-SERVICES-1-SVCGUIDE",
+  "chat": {
+    "approval": "4a5900ede65e43d289a0790eaf68cf1206ff54c1f423db4622d24938d763ef7c",
+    "claude": null,
+    "conversation": "01a177d5-d9ff-79b1-8eaf-50d63626883f",
+    "head": null,
+    "start": "11610c0097d7f80bfbfc4ac01fdbf41976ed7248"
+  },
+  "known": [
+    {
+      "area": "instructions() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 379,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated review-bar changes outside Scope",
+      "work": 2
+    },
+    {
+      "area": "_config_problem() in src/forge/repo.py",
+      "file": "src/forge/repo.py",
+      "gain": 3,
+      "harm": 1,
+      "line": 875,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 4,
+      "security": false,
+      "title": "Gate: unrelated settings validation outside Scope",
+      "work": 1
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "27774f50e4e21117356cdbe94b9c7482b692ac9d9b0125e990fb8d4d3285b0f1",
+    "changed": "5a87d803eae5c5fc113dda8262a47dd50b5580139d1815b2794fee1f667ec0f4",
+    "commit": "5f5c6ba81af50fd6bcb5512f1e8a11aed414df67",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 1, Harm 1\nRaise: Gate. Case: normal use - delivering the services guides includes an unrelated change to review-setting validation. The added `added_work_min_gain` check in `src/forge/repo.py` serves none of item 3's guide, init, sync or worker requirements. `_config_text` already checks the same constraint at lines 727\u2013729, so this hunk is unnecessary for the existing validation too. Remove this hunk to meet the stated scope.",
+        "file": "src/forge/repo.py",
+        "gain": 3,
+        "harm": 1,
+        "line": 875,
+        "priority": "P1",
+        "title": "Gate: unrelated settings validation outside Scope",
+        "work": 1
+      }
+    ],
+    "id": "5716ec88-4c14-4425-abe1-4495c4ea212c",
+    "status": "clean"
+  },
+  "round": 4,
+  "stacked_on": "FORGE-BAR-1/BARRULES",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-26T10:50:53.889177+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-26T11:02:46.302740+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T11:04:43.938776+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T11:26:13.451962+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-26T13:05:57.025660+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "a57c452d-b60b-4a25-9343-9cb5ef67cecc",
+    "head": "490919db1ce694dd4824c06a063b3a5c345b11b5",
+    "keys": {},
+    "round": 3
+  },
+  "worker": "codex"
+}

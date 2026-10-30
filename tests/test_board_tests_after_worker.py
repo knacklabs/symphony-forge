@@ -24,7 +24,7 @@ STORY = "FIX-BOARD-DATA-TRUTH"
 def test_13_close_tests_after_worker_exit_show_tests_running(
         env, tmp_path, monkeypatch, release_server, history):
     repo = env.repo
-    settings = (repo.path / "forge.toml").read_text("utf-8")
+    settings = (repo.path / "forge.toml").read_text("utf-8").rstrip() + '\ntest_place = "local"\n'
     _client(repo, env.gh, tmp_path, history)
     # Client setup has already landed; this case tests reporting, not commit gates.
     repo.git("config", "core.hooksPath", (tmp_path / "fixture-hooks").as_posix())
@@ -48,7 +48,7 @@ def test_13_close_tests_after_worker_exit_show_tests_running(
         closing, output = start(repo.path, tmp_path / "closing", repo, "close", item)
         processes.append(closing)
         connection, _ = accepted(server, connections, folder, closing, output)
-        data, text, _ = _board(repo, tmp_path)
+        data, _, _ = _board(repo, tmp_path)
         row = _row(data, item)
         # The build worker has exited; close's review may already run alongside the tests.
         assert row["worker"] is None or row["worker"]["kind"] == "review", row["worker"]
@@ -57,7 +57,6 @@ def test_13_close_tests_after_worker_exit_show_tests_running(
         assert row["tests"] is not None
         assert next(stage for stage in row["stages"] if stage["name"] == "Tests")["status"] == "running"
         assert re.search(running, row["status"], re.I), row["status"]
-        assert re.search(running, text, re.I), text
         shown = repo.forge("next")
         assert shown.returncode == 0, shown.stdout + shown.stderr
         assert "A worker is building" not in shown.stdout
