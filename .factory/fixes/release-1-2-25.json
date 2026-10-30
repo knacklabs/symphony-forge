@@ -19,7 +19,7 @@
       "gain": 4,
       "harm": 3,
       "line": 19,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -29,28 +29,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "022fe88b639a8c99ebc7caf1a89cdce0008d7b6edb652ce911d15025e0cca3cb",
-    "changed": "8ab43178a081fc344bcdd0ad8dfb422ad4458ee7af3e4dbd65214dcefdc072d5",
-    "commit": "b85602640e0c789776ee870f3df19362bdddb200",
+    "branch_diff": "ab879a1750baeee68f071176f1077b172574038837ffe8d4099abc668a819d87",
+    "changed": "754c9cca0d1ecac23c7d5dd6e8248c92dacd3e41095c996e4780955577282506",
+    "commit": "a4232f9b5c1af40a4256cc489e0ac78683b75f26",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Not done\nCase: normal use - CI tests the committed release checkout.\nThe package and release assertions now require v1.2.25, but forge.toml:2 still pins v1.2.24 and is absent from the branch diff. This assertion and the pin assertions in tests/test_fix_clients_pin_forge_v1_0_2_but_main_has_28.py:13 and tests/test_fix_clients_pin_forge_v1_1_0_but_main_has_th.py:13 therefore fail. The coordinator's requested pin update has not reached the committed change. Commit the forge.toml bump, synchronize its generated output, and verify the version tests.",
-        "file": "tests/test_release_version.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 19,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Every version reference names v1.2.25, forge sync output is committed, and the version tests pass",
-        "work": 1
-      }
-    ],
-    "id": "edc272a2-60e9-4d2e-8a82-da8c7091e2a1",
-    "status": "blocked"
+    "findings": [],
+    "id": "d5e37702-dbe4-4e2b-b2e0-ea55ea644927",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T11:13:30.723870+00:00",
@@ -58,6 +46,10 @@
     },
     {
       "at": "2026-10-30T11:21:34.657800+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T11:23:18.033237+00:00",
       "step": "review"
     }
   ],
