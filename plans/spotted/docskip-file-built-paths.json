@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/docskip.py\tInclude relative subpaths in the conservative basename match\tdocskip-file-built-paths",
+      "kind": "bug",
+      "path": "src/forge/docskip.py",
+      "line": 68,
+      "text": "Include relative subpaths in the conservative basename match",
+      "from": "blocking",
+      "item": "docskip-file-built-paths",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_file_relative_docs_run_tests.py\tNot done: A docs change that a test reads through a __file__-built path runs that test\tdocskip-file-built-paths",
+      "kind": "bug",
+      "path": "tests/test_file_relative_docs_run_tests.py",
+      "line": 55,
+      "text": "Not done: A docs change that a test reads through a __file__-built path runs that test",
+      "from": "blocking",
+      "item": "docskip-file-built-paths",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

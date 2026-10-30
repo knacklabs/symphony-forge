@@ -11,12 +11,76 @@
   "done_when": "A docs change that a test reads through a __file__-built path runs that test",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_file_relative_doc_reader_keeps_client_tests() in tests/test_file_relative_docs_run_tests.py",
+      "file": "tests/test_file_relative_docs_run_tests.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 55,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A docs change that a test reads through a __file__-built path runs that test",
+      "work": 3
+    },
+    {
+      "area": "only_docs() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 68,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Include relative subpaths in the conservative basename match",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "4ea2e35b52484312e33f8d523c7f364a9cb9cfa28ec5dd9aec37717bcfba013d",
+    "changed": "3d6021a01463e47f36811838b0cbd3d365bb693244a4d8469fab381d08ceea7c",
+    "commit": "761008bdb295c18b677e32353be887c3382c1e8e",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 2\nRaise: Not done\nCase: normal use - a Python client configured with `test = \"pytest tests\"` and no `always_test` changes only the document consumed by an existing test.\nThe new proof stops at enabling the workflow step; it never executes the consuming test. Generated CI runs `forge test --change` (`src/forge/prcheck.py:237`), which reaches pytest selection through `src/forge/review.py:395` and `src/forge/fasttest.py:282`. That selector considers changed Python modules and shared configuration, but does not select readers of changed Markdown files (`src/forge/fasttest.py:351\u2013382`). With this docs-only input, its selection remains empty and it returns success without running pytest (`src/forge/fasttest.py:618\u2013621`). Consequently, even the expressions covered by this proof still skip their tests in ordinary Python clients. Repair the selection path and extend this proof to execute the real change-test command and verify that the consuming test runs.",
+        "file": "tests/test_file_relative_docs_run_tests.py",
+        "gain": 5,
+        "harm": 2,
+        "line": 55,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A docs change that a test reads through a __file__-built path runs that test",
+        "work": 3
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Functional\nCase: normal use - `tests/test_guide.py` reads `Path(__file__).parents[1] / 'docs' / 'topics/guide.md'` and only `docs/topics/guide.md` changes.\nThe candidate search finds this consumer, but `patterns` contains `guide.md`, while the quoted literals are `docs` and `topics/guide.md`. Neither equals the basename, so this new check misses the reader. The remaining literal resolver also misses it: it cannot fold `Path(__file__)`, and resolving either literal against the repository or consumer directory does not produce the changed document's path. The classifier therefore still declares this change docs-only and skips CI. Match basenames contained in quoted relative path components in both this shared implementation and `.forge/review-tests.py:80`; the current regression cases only cover a basename quoted separately.",
+        "file": "src/forge/docskip.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 68,
+        "priority": "P1",
+        "title": "Include relative subpaths in the conservative basename match",
+        "work": 2
+      }
+    ],
+    "id": "3be3acba-6363-4fa8-bc53-0d0e7351d9f5",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:32:38.413143+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:38:51.245029+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
