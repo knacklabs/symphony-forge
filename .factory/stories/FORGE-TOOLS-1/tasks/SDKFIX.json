@@ -7,12 +7,75 @@
     "head": null,
     "start": "1f321187c7dd0d6b3071897ba151d88d213314b5"
   },
+  "known": [
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 336,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Make the advertised SDK repair select the switched item's checkout",
+      "work": 2
+    },
+    {
+      "area": "src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 73,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: update the shipped no-turn recovery guidance",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9146484e06d4e9005aed48cba85ae6eadee5fda263058a2a48c616801e8b491c",
+    "changed": "7cdf18d4dd60b117b35794c90bfd03a721fa6a2af3389ab7cc8485d1c5cce2c2",
+    "commit": "47bc28d630576e25489da9787c90d0dcd4071db7",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a coordinator on main switches a Codex-default item to Claude, then follows the missing-SDK refusal.\nThis lookup reads only the caller's current branch. `forge work <item>` locates the item's separate checkout without changing the caller's directory (`worker.py:85-103`), but its SDK refusal advertises plain `forge doctor --fix` (`worker.py:74`). Running that command from main finds no item override, retains workers=codex and skips Claude installation at doctor.py:349-354. Retrying work therefore gives the same refusal. Make the recovery command select the item's checkout or otherwise account for its override. The added test avoids this normal invocation by explicitly passing cwd=folder.",
+        "file": "src/forge/doctor.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 336,
+        "priority": "P1",
+        "title": "Make the advertised SDK repair select the switched item's checkout",
+        "work": 2
+      },
+      {
+        "body": "Gain 2, Work 1, Harm 2\nCase: normal use - an SDK-only client's coordinator follows the shipped guide after a zero-turn refusal.\nThe refusal now recommends doctor, but `src/forge/templates/skill.md:1523-1525` still explicitly instructs the coordinator to run standalone `claude` in this exact situation. SDK-only clients lack that executable, so the shipped instructions retain the unavailable recovery step this change removes. Update that paragraph alongside the refusal.",
+        "file": "src/forge/worker.py",
+        "gain": 2,
+        "harm": 2,
+        "line": 73,
+        "priority": "P2",
+        "title": "Follow-up: update the shipped no-turn recovery guidance",
+        "work": 1
+      }
+    ],
+    "id": "4c2b0bfc-da5a-4970-a83c-bfbd00eadaa3",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:05:28.711482+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:19:44.773184+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
