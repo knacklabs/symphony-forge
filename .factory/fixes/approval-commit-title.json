@@ -1,0 +1,15 @@
+{
+  "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
+  "branch": "fix/approval-commit-title",
+  "done_when": "The approval commit names the title in the approved story doc",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-30T13:32:33.978890+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The plan approval commit keeps the story's old title after a re-plan (issue 916)"
+}
