@@ -878,28 +878,32 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.git("clone", "-q", "--no-local", "--no-checkout", str(top), str(tree), cwd=top)
         repo.git("checkout", "-q", "--detach", head, cwd=tree)
         if signoff_prompt:
-            review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base", cwd=tree)
             if previous.get("commit"):
                 repo.git("fetch", "-q", str(top), previous["commit"], cwd=tree)
                 repo.git("read-tree", previous["commit"], cwd=tree)
-                repo.git("rm", "-r", "-f", "-q", "--cached", "--ignore-unmatch", "--",
-                         ".factory", "plans", "docs/decisions", cwd=tree)
+                review_base = previous["commit"]
                 changed = set(repo.git("diff", "--name-only", "-z", previous["commit"], head, cwd=tree).split("\0"))
-                recheck = ({f["file"] for f in score.open_findings(previous)} & set(product)) - changed
+                recheck = ({f["file"].replace("\\", "/") for f in score.open_findings(previous)} & set(product)) - changed
                 if recheck:
                     repo.git("rm", "-f", "-q", "--cached", "--", *sorted(recheck), cwd=tree)
                     prompt += ("\n\nFiles with open earlier findings appear as additions so they remain review targets. "
                                "They already exist in the product. Re-check their earlier findings: " + ", ".join(sorted(recheck)))
+                    review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
+                                           "-p", previous["commit"], "-m", "Open sign-off findings", cwd=tree)
                 if images is not None:
                     omitted = [name for name in repo.git("ls-files", "-z", cwd=tree).split("\0")
                                if Path(name).suffix.lower() in design.IMAGES and name not in images]
                     if omitted:
                         repo.git("rm", "-f", "-q", "--cached", "--", *omitted, cwd=tree)
-                review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
-                                       "-m", "Previous sign-off product", cwd=tree)
+                        review_base = repo.git("commit-tree", repo.git("write-tree", cwd=tree),
+                                               "-p", review_base, "-m", "Previous sign-off without omitted images", cwd=tree)
                 repo.git("read-tree", head, cwd=tree)
-            repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
-                     ".factory", "plans", "docs/decisions", cwd=tree)
+                # Keep bookkeeping identical to the base so it is not reviewed.
+                repo.git("reset", "-q", previous["commit"], "--", ".factory", "plans", "docs/decisions", cwd=tree)
+            else:
+                review_base = repo.git("commit-tree", EMPTY_TREE, "-m", "Empty product review base", cwd=tree)
+                repo.git("rm", "-r", "-q", "--cached", "--ignore-unmatch", "--",
+                         ".factory", "plans", "docs/decisions", cwd=tree)
             if images is not None:
                 omitted = [name for name in product if Path(name).suffix.lower() in design.IMAGES
                            and name not in images]
@@ -970,6 +974,28 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         if not signoff_prompt or item == "client-signoff":
             history = state["signoff_history"] if signoff_prompt else _history(top, item, base, previous, state=state)
             settled = {score.identity(*key): reason for key, reason in _settled(history).items()}
+            if item == "client-signoff":
+                # The owner accepts the limitation in this version of the file,
+                # independent of the next reviewer's wording. Edits reopen it.
+                accepted = {}
+                for old in history:
+                    for dismissal in old.get("dismissals", []):
+                        if not dismissal.get("accepted"):
+                            continue
+                        finding = old["findings"][dismissal["finding"] - 1]
+                        path = finding["file"].replace("\\", "/")
+                        commit = dismissal.get("accepted_commit", old["commit"])
+                        if not repo.git("diff", "--name-only", commit, head, "--", path, cwd=top):
+                            accepted[path] = "accepted by the owner: " + dismissal["because"]
+                # Exact-title settlements must obey the same file lifetime and
+                # must never turn a newly reported P0 into an accepted finding.
+                settled = {key: reason for key, reason in settled.items()
+                           if not reason.startswith("accepted by the owner:")}
+                for finding in findings:
+                    if finding["priority"] != "P0" and (accepted_reason := accepted.get(finding["file"].replace("\\", "/"))):
+                        settled[score.identity(finding["file"], finding["title"])] = accepted_reason
+                    elif finding["priority"] == "P0":
+                        settled.pop(score.identity(finding["file"], finding["title"]), None)
             findings = [finding for finding in findings if not settled.get(
                 score.identity(finding["file"], finding["title"]), "").startswith("fixed:")]
             result.update(findings=findings, dismissals=[
@@ -1118,6 +1144,7 @@ def _hide_generated(tree: Path, start: str, head: str, *, keep_images: bool = Fa
                        for path in generated))
 
 
+<<<<<<< HEAD
 def signoff(top: Path, answers: str, evidence: str = "", *, previous: dict[str, Any],
             history: list[dict[str, Any]]) -> dict[str, Any]:
     """Review the product initially, then changes and earlier findings before client acceptance."""
@@ -1142,6 +1169,8 @@ def signoff(top: Path, answers: str, evidence: str = "", *, previous: dict[str, 
                signoff_prompt=prompt, images=set())
 
 
+=======
+>>>>>>> origin/main
 def design_check(top: Path, prompt: str) -> None:
     """Check the canvas with its own pinned model through the strict review engine."""
     from forge import design
