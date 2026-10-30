@@ -30,6 +30,7 @@ import argparse
 import hashlib
 import json
 import re
+import string
 from datetime import date
 from itertools import zip_longest
 from pathlib import Path
@@ -283,7 +284,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["unfilled"], rel=rel, sections=", ".join(unfilled), slug=args.slug,
                     by=by)
     if signed:
-        from forge import fullrun, nextstep, open_decisions, review
+        from forge import fullrun, nextstep, open_decisions, review, sync
 
         gaps = []
         reason = fullrun.green(top)
@@ -371,7 +372,16 @@ def decision_accept(args: argparse.Namespace) -> None:
                 f"- {problem} Next: {action}" for problem, action in gaps))
         product_hash = _digest("\0".join(product))
         brief_hash = _digest(brief)
-        if fields.get("design_checked") != product_hash or fields.get("brief_checked") != brief_hash:
+        previous = json.loads(_text(top / ".factory/client-signoff.json") or "{}").get("review") or {}
+        generated_only = False
+        if previous.get("commit"):
+            changed = repo.git("diff", "--name-only", "-z", previous["commit"], "HEAD", cwd=top).strip("\0").split("\0")
+            changed = [name for name in changed if name and not name.startswith(
+                (*review.BOOKKEEPING, "docs/decisions/"))]
+            generated_only = not (set(changed) - sync.synced(
+                top, repo.config(top), previous["commit"], "HEAD", changed))
+        if (fields.get("design_checked") != product_hash and not generated_only
+                or fields.get("brief_checked") != brief_hash):
             prompt = (Path(__file__).parent / "templates/design-check.md").read_text(encoding="utf-8")
             prompt += "\n\n## App brief\n" + brief
             prompt += f"\n\n## Sign-off record: {rel}\n{text}"
@@ -382,7 +392,8 @@ def decision_accept(args: argparse.Namespace) -> None:
                                      story.agents_section(top, "Review rules"), constitution(top)]))
         if working and (fields.get("review_checked") != checked or not fields.get("reviewed_commit")):
             evidence = "\n\n".join(f"## {name}\n{sections.get(name, '')}" for name in SIGNOFF_SECTIONS)
-            text = _set(text, reviewed_commit=_signoff_review(top, args, quote, evidence), review_checked=checked)
+            text = _set(text, reviewed_commit=_signoff_review(
+                top, args, quote, evidence, unchanged=generated_only), review_checked=checked)
         if not replied:  # so the customer is only asked to approve a reviewed version
             _write(top / rel, text)
             repo.commit_state("Save the sign-off checks", rel, top=top)
@@ -445,13 +456,15 @@ def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]
             or (story.show(top, ref, name) if ref else _text(top / name)) != _text(template)]
 
 
-def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str) -> str:
+def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
+                    *, unchanged: bool = False) -> str:
     """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
     from forge import close, review, score
 
     rel = ".factory/client-signoff.json"
     saved = json.loads(_text(top / rel) or "{}")
     previous = saved.get("review") or {}
+    inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
     history = review._history(top, "client-signoff", "", previous, path=rel)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     next_step = ('forge decision accept client-signoff --by "<name>" '
@@ -469,8 +482,10 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                 for finding in opened:
                     finding["follow_up"] = f"Split into follow-up fix {follow_up}"
             previous.setdefault("dismissals", []).extend(
-                {"finding": number, "because": f"Human chose {choice}: {reason.strip()}", "accepted": True}
-                for number, finding in enumerate(previous["findings"], 1) if finding in opened)
+                {"finding": number, "because": f"Human chose {choice}: {reason.strip()}", "accepted": True,
+                 "accepted_commit": repo.git("rev-parse", "HEAD", cwd=top)}
+                for number, finding in enumerate(previous["findings"], 1)
+                if finding in opened and finding["priority"] != "P0")
             known = score.remember([], previous, len(history), {})
             identities = {score.identity(entry["file"], entry["title"]) for entry in known}
             state["known"] = [entry for entry in state.get("known", [])
@@ -481,18 +496,36 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         saved["choice"] = {"resolve": choice, "reason": reason.strip()}
         _write(top / rel, json.dumps(saved, indent=2) + "\n")
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
-        if choice != "more" and not repo.git("diff", "--name-only", previous["commit"], "HEAD", "--", ".",
-                ":(exclude).factory/**", ":(exclude)plans/**", ":(exclude)docs/decisions/**", cwd=top):
-            return previous["commit"]
         history = review._history(top, "client-signoff", "", previous, path=rel)
     if saved.get("stop"):
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
             accept="the findings stay in the item's Known issues with your reason, and sign-off continues."), next_step))
-    result = review.signoff(top, answers, evidence, previous=previous, history=history)
+    if (unchanged and not score.open_findings(previous) and choice != "more"
+            and (choice in ("accept", "split") or saved.get("inputs") == inputs)):
+        return previous["commit"]
+    skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
+    table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
+    block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
+    prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
+        answers=answers, topics=table[0] if table else "")
+    prompt += "\n\n## Earlier review rounds\n" + ("\n\n".join(review._previous(old) for old in history) or "- none")
+    prompt += "\n\nSettled findings:\n" + review._accepted(top, "client-signoff", history)
+    if evidence:
+        prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
+                   "Each step must name a passing test. Refuse a missing step, a missing test, "
+                   "or a test without evidence that it passes. The full production proof is due now."
+                   "\n\n## Test evidence\n"
+                   f"The full test run on the latest commit on {repo.default_branch(top)} passed "
+                   "(forge-full-suite). Client sign-off checked this result before this review. "
+                   "Use this green full run as passing evidence for the tests named in Proof. "
+                   "No separate forge test run is required.")
+    result = review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
+                        "", {}, previous, signoff_prompt=prompt)
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
-    saved.update(review=result, stop=bool(review.blocking(result) and len(history) + 1 >= 2 and not critical))
+    saved.update(review=result, inputs=inputs,
+                 stop=bool(review.blocking(result) and len(history) + 1 >= 2 and not critical))
     _write(top / rel, json.dumps(saved, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
     if saved["stop"]:
