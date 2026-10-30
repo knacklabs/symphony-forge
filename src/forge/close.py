@@ -110,6 +110,22 @@ def close(args: argparse.Namespace) -> int:
             repo.refuse((REFUSALS["bad_choice"][0], REFUSALS["stuck"][1]) if stuck
                         else REFUSALS["bad_choice"], item=item)
         if not continued:
+            plan_updated = False
+            if choice in ("narrow", "split") and "/" in item:
+                result = state.get("review") or {}
+                head = repo.resolve_commit(top, "HEAD")
+                base = repo.resolve_commit(top, f"origin/{repo.default_branch(top)}")
+                reviewed = result.get("branch_diff") == review.fingerprint(
+                    head, item, top, state, base, branch_diff=True)
+                plan_updated = task.apply_review_choice(top, item, choice, reason.strip())
+                # The owner's plan update does not require another code review. Keep any
+                # earlier unreviewed work or product edits merged from the story stale.
+                if reviewed and not repo.git("diff", "--name-only", head, "HEAD", "--", ".",
+                                             *[f":(exclude){path}" for path in review.BOOKKEEPING],
+                                             cwd=top):
+                    result.update(changed=review.fingerprint("HEAD", item, top, state, base),
+                                  branch_diff=review.fingerprint("HEAD", item, top, state, base,
+                                                                 branch_diff=True))
             if choice == "switch":  # the next forge work runs this item on the other tool
                 state["tool"] = "claude" if state["stop"]["tool"] == "codex" else "codex"
             if choice == "split" and (findings := score.open_findings(state.get("review") or {})):
@@ -146,10 +162,15 @@ def close(args: argparse.Namespace) -> int:
             print(f"Recorded the human's choice.\nNext: forge work {item}")
             return 0
         if choice != "accept":
-            print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed, "
-                  f"then forge work {item}.")
+            print(f"Recorded the human's choice. {choice.capitalize()} the part as agreed.")
+            if plan_updated:
+                print("The worker gets the updated plan next round.")
             if choice == "split" and state["stop"].get("fixes"):
                 print(f"Follow-up fix: {', '.join(state['stop']['fixes'])} owns the split findings.")
+            if "/" in item:
+                print(f"Next: forge work {item}")
+            else:
+                print(f'Next: forge fix amend {item} --done "<done when>" --because "<why>"')
             return 0
         if not continued:
             print("Recorded the human's choice.")
