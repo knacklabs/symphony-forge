@@ -17,6 +17,7 @@ from test_proto_signoff import _adopted_client, _client, _decision, _request_bui
 STORY = "signoff-one-fix-for-all"
 
 
+@pytest.mark.platform
 @pytest.mark.parametrize("adopted", [False, True], ids=["new-client", "earlier-release"])
 def test_1_blocked_signoff_names_one_fix_for_every_blocker(repo, tmp_path, monkeypatch, adopted):
     if adopted:
