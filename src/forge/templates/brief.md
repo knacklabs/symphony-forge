@@ -333,6 +333,9 @@ When changing a user-facing flow, add or update its Playwright test, including a
 touches for the first time.
 
 Add every test your task's Tests column names, even when the change is documentation only.
+The pytest picker extracts file paths and node IDs from that column and ignores prose and
+annotations. A `::test_name` entry uses the preceding file. These task selections respect pytest
+filters and do not become `always_test` settings.
 
 <!-- if user-facing -->
 ## Functional check
