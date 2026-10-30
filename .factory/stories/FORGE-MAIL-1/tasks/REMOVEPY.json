@@ -1,4 +1,5 @@
 {
+  "allow_large": "Most of the size is regenerated API types the plan requires plus the starter's own test; the code change is about 70 lines",
   "branch": "task/FORGE-MAIL-1-REMOVEPY",
   "chat": {
     "approval": "f071d6b7e1dff37e47d16571828d708e1ebb4673c3c8cbb683c0d6e9709759b8",
