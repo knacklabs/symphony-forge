@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-10-30T13:13:18.546701+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_0122B4vDoR5zaPnkirBRfeV4",
+    "hash": "f071d6b7e1dff37e47d16571828d708e1ebb4673c3c8cbb683c0d6e9709759b8",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-MAIL-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-28T10:54:50.373411+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T12:29:01.461947+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-28T13:27:08.015301+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-30T13:11:59.746694+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-30T13:13:18.546915+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Email and member removal for client apps",
+  "touches": 1
+}
