@@ -4,12 +4,20 @@
   "done_when": "Sorting an idea never leaves a fix or branch named find-the-problem-to-solve behind",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T13:32:47.367514+00:00",
       "step": "start"
     }
   ],
-  "why": "Fixes named Find the problem to solve appear by themselves and collect other fixes' commits (issue 819)"
+  "stuck": {
+    "close": null,
+    "head": "8f0f1bdfe64d3e90b8c01068ea568d79be250f2d",
+    "keys": {},
+    "round": null
+  },
+  "why": "Fixes named Find the problem to solve appear by themselves and collect other fixes' commits (issue 819)",
+  "worker": "codex"
 }
