@@ -7,12 +7,75 @@
     "head": null,
     "start": "4067db07079bfc4a5e00e6bce2c7b94b58c9e892"
   },
+  "known": [
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 361,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Run a full review after replaying a stacked part",
+      "work": 2
+    },
+    {
+      "area": "pr_check() in src/forge/prcheck.py",
+      "file": "src/forge/prcheck.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 355,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Resolve the actual default branch in the PR-check checkout",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2a036c9989e604bc1b2bba6f6aa57ac05ab221b7f5c8a6b86333dd71d4712570",
+    "changed": "44dac7ee45a141c7ad746088008bd3dab993f3128f6f6d4e8c2a8dadde346689",
+    "commit": "34de09e6af8e921c5257385497cedc1d53a4bcff",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - closing a previously reviewed child after its base merges.\nThe replay forces `fresh` false, but this call still passes the pre-replay `previous` review. `review.instructions()` at src/forge/review.py:380-382 consequently appends the repair-review instructions from src/forge/templates/review.md:481-488, which prohibit a fresh review and allow only new P0 findings. The new invocation therefore cannot report ordinary P1 defects exposed by integrating the child with merged code. Request a full review after replay while retaining historical findings separately. The named tests count review invocations but do not check this restriction.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 361,
+        "priority": "P1",
+        "title": "Run a full review after replaying a stacked part",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a client repository whose default branch is `master` runs the generated GitHub check.\nThe generated workflow checks out the base SHA (src/forge/prcheck.py:140-153). [actions/checkout](https://raw.githubusercontent.com/actions/checkout/v7/src/git-source-provider.ts) initializes a repository and fetches explicit refspecs; it does not establish `origin/HEAD`. [Git's fetch implementation](https://raw.githubusercontent.com/git/git/v2.51.0/builtin/fetch.c) also skips creating that symbolic ref for explicit refspecs. Consequently `repo.default_branch()` falls back to `main` (src/forge/repo.py:440-444). This guard then looks for the merged parent on nonexistent `origin/main` and permanently refuses the child, even after its parent merged and close replayed it onto `master`. Resolve the default branch from trusted CI metadata or establish its remote symbolic ref before checking it.",
+        "file": "src/forge/prcheck.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 355,
+        "priority": "P1",
+        "title": "Resolve the actual default branch in the PR-check checkout",
+        "work": 2
+      }
+    ],
+    "id": "b3a16887-ace9-4857-a77e-7e09acf7caa2",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:05:18.351033+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:31:27.132922+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
