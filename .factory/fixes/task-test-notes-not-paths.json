@@ -1,6 +1,13 @@
 {
   "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
   "branch": "fix/task-test-notes-not-paths",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d05-2f02-7502-841e-8b71d487e2ba",
+    "head": null,
+    "start": "1914829908846d9b60d237831713be369d670fa4"
+  },
   "done_when": "When a task's Tests column holds prose or annotated names, forge test runs the named test files and never reports the prose as a missing setting",
   "fix_kind": "backend",
   "kind": "fix",
