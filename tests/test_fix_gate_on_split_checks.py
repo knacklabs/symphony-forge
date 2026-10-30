@@ -32,7 +32,7 @@ def jobs(workflow):
 def gate_passes(gate, result):
     # Run the required check's own step with what GitHub reports for the group jobs.
     step = re.search(r"run: (.+)$", gate, re.M)[1]
-    return bash("-c", step, env={"GROUPS": result, "DOCS_CHECK": "success",
+    return bash("-c", step, env={"TEST_GROUP_RESULT": result, "DOCS_CHECK": "success",
                                 "DOCS_ONLY": "false"}).returncode == 0
 
 

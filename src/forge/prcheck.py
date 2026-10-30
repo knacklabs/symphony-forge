@@ -118,10 +118,10 @@ jobs:
     runs-on: <runner>
     steps:
 <group-warning>      - env:
-          GROUPS: ${{ needs.tests.result }}
+          TEST_GROUP_RESULT: ${{ needs.tests.result }}
           DOCS_CHECK: ${{ needs.docs-check.result }}
           DOCS_ONLY: ${{ needs.docs-check.outputs.docs-only }}
-        run: test "$DOCS_CHECK" = success && { test "$GROUPS" = success || { test "$DOCS_ONLY" = true && test "$GROUPS" = skipped; }; }
+        run: test "$DOCS_CHECK" = success && { test "$TEST_GROUP_RESULT" = success || { test "$DOCS_ONLY" = true && test "$TEST_GROUP_RESULT" = skipped; }; }
       - if: needs.docs-check.outputs.docs-only == 'true'
         run: "echo 'docs only: tests skipped'"
 
