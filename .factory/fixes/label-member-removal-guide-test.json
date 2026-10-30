@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-30T18:16:57.257204+00:00",
+      "because": "The label follows the part-level style of the sibling removal test; the first Done-when named only the story",
+      "done_when": "tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1"
+    }
+  ],
   "base": "3cdc27c956cdbc1153cd865aa31a91b43028116c",
   "branch": "fix/label-member-removal-guide-test",
-  "done_when": "tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1",
+  "done_when": "tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1/GUIDE, as its sibling test is labelled FORGE-MAIL-1/REMOVE",
   "fix_kind": "mechanical",
   "kind": "fix",
   "known": [
