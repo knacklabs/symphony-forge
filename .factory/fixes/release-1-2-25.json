@@ -50,7 +50,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T11:13:30.723870+00:00",
@@ -63,8 +63,12 @@
   ],
   "stop": {
     "at": "2026-10-30T11:21:34.672282+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_release_version.py",
-    "wait_id": "0c51fae3-69e3-408c-9ae6-a80b6c85f720"
+    "reason": "The coordinator committed the forge.toml pin to v1.2.25, which the worker may not edit; check again",
+    "wait_id": "0c51fae3-69e3-408c-9ae6-a80b6c85f720",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
