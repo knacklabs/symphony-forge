@@ -121,7 +121,7 @@ def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sd
     assert config.read_bytes() == configured
 
 
-def test_9_codex_request_names_the_subagents(repo, gh, tmp_path, monkeypatch, sdk_data, claude_session):
+def test_12_codex_request_names_the_subagents(repo, gh, tmp_path, monkeypatch, sdk_data, claude_session):
     _, _, log = _round_client(repo, gh, tmp_path, monkeypatch, "codex", sdk_data=sdk_data)
     worked = repo.forge("work", "BOARD/HELP")
     assert worked.returncode == 0, worked.stdout + worked.stderr
