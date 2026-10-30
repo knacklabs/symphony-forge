@@ -1,6 +1,13 @@
 {
   "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
   "branch": "fix/approval-commit-title",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d05-c810-7923-804d-6c85d1e2bbf7",
+    "head": null,
+    "start": "767e41607b0ab41c4041b3d14575ef2e9fb24d2a"
+  },
   "done_when": "The approval commit names the title in the approved story doc",
   "fix_kind": "backend",
   "kind": "fix",
