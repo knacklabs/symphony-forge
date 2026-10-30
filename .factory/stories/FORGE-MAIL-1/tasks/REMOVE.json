@@ -1,0 +1,63 @@
+{
+  "branch": "task/FORGE-MAIL-1-REMOVE",
+  "chat": {
+    "approval": "f071d6b7e1dff37e47d16571828d708e1ebb4673c3c8cbb683c0d6e9709759b8",
+    "claude": null,
+    "conversation": "01a18cf2-2234-7651-87af-cf76e23eecd7",
+    "head": null,
+    "start": "d2098d21fc68d7edab0bf4b5086a6b5857fc0055"
+  },
+  "known": [
+    {
+      "area": "src/forge/templates/starter/libs/organisations/server/src/organisations.service.ts",
+      "file": "src/forge/templates/starter/libs/organisations/server/src/organisations.service.ts",
+      "gain": 4,
+      "harm": 4,
+      "line": 79,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": true,
+      "title": "Canonicalize UUIDs before checking self-removal",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cd8c11eee06ed7e81432c1a6723043d54d79e7f494d052ecda9b630e4e6799d3",
+    "changed": "628ab5338c0cc5c18849ae3322789e79e8166228c9696ac95e657421ce6ff73d",
+    "commit": "71db68d4b7b833d2421e584790560f78fda71c58",
+    "dismissals": [],
+    "findings": [],
+    "id": "7e637877-8332-496d-80ef-ac2deae52886",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:13:38.561119+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:22:34.623190+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T13:25:20.862104+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T14:16:45.903342+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c37acf38-1fff-43c7-9605-f02bf1990b47",
+    "head": "1c277117259a80fef94692aee202c8871e9627ec",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}
