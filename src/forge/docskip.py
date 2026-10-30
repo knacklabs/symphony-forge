@@ -61,10 +61,16 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
         for consumer in filter(None, found.stdout.split("\0")):
             folder = posixpath.dirname(consumer.partition(":")[2])
             roots = ("", top.as_posix(), posixpath.join(top.as_posix(), folder))
+            source = git("show", consumer)
+            # File-relative expressions cannot always be resolved from literals alone.
+            # Prefer extra tests when a quoted basename could read the changed input.
+            if re.search(r"\b__file__\b", source) and any(
+                    literal[2] in patterns for literal in re.finditer(strings, source)):
+                return False
             # A basename finds candidates, not consumers: resolve whole path literals.
             # Fold literal path joins so their components cannot match unrelated root files.
             source = joined.sub(lambda call: repr(posixpath.join(*(
-                value[2] for value in re.finditer(strings, call[0])))), git("show", consumer))
+                value[2] for value in re.finditer(strings, call[0])))), source)
             for literal in re.finditer(strings, source):
                 name = literal[2].replace("\\", "/")
                 if any(posixpath.normpath(posixpath.join(root, name)) in targets for root in roots):
