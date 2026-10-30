@@ -1,0 +1,15 @@
+{
+  "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
+  "branch": "fix/docskip-file-built-paths",
+  "done_when": "A docs change that a test reads through a __file__-built path runs that test",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-30T13:32:38.413143+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The docs-only skip misses tests that build doc paths from __file__, so a docs change skips tests that read it (issue 1031)"
+}
