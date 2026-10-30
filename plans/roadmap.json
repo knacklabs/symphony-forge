@@ -498,6 +498,12 @@
       "title": "Log every API request safely in client apps",
       "status": "pending",
       "order": 108
+    },
+    {
+      "key": "FORGE-MAIL-1",
+      "title": "Email and member removal for client apps",
+      "status": "pending",
+      "order": 109
     }
   ],
   "epics": [
