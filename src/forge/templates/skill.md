@@ -1112,7 +1112,7 @@ The product facts are in docs/product/BRIEF.md.
 - A module uses another module only through its public service, never through its tables.
 - The tests run Nx's module-boundary lint, so an import across modules fails them.
 - Built in: each account belongs to one organisation, as an admin or a member, and every query is scoped to that organisation.
-- Built in: admins invite people by email; members cannot invite people or change roles.
+- Built in: admins invite people by email and remove members, which signs them out at once; members cannot invite, remove people or change roles.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
 - Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
@@ -1521,8 +1521,8 @@ record or the index, so both conflicted and resolved but uncommitted merges stay
 New repos get this guidance at init; existing repos get it after upgrading and running sync.
 
 When `forge work` says Claude ended without running a turn, no worker ran: Claude is often
-waiting on a prompt, such as a review of changed hooks. Run `claude` once in the item's
-checkout, answer its prompt, then run `forge work <item>` again.
+waiting on a prompt, such as a review of changed hooks. Run `forge doctor --fix` in the item's
+checkout. Then run `forge work <item>` again. If no turn runs, inspect the saved log.
 
 Every Codex worker, plan reader and review runs with low model verbosity, no reasoning
 summaries, and a developer instruction to write no progress commentary, only the final handoff

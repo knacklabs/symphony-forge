@@ -94,6 +94,14 @@ export class AuthService implements AuthApi {
     return this.organisations.invite(email, account, options);
   }
 
+  async removeMember(account: AccountPrincipal, accountId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.organisations.removeMember(account, accountId, tx);
+      await tx.session.deleteMany({ where: { accountId } });
+      await tx.passwordResetToken.deleteMany({ where: { accountId } });
+    });
+  }
+
   async acceptInvite(token: string, email: string, password: string): Promise<{ account: AccountResponse; cookies: SessionCookies }> {
     const invite = await this.organisations.openInvite(token);
     if (invite.email !== email) {
