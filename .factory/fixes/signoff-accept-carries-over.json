@@ -11,7 +11,7 @@
   "done_when": "After an owner's accept, a later sign-off attempt reviews only files changed since the last sign-off review plus files with open findings, and does not block again on a finding the owner accepted in the same file",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
