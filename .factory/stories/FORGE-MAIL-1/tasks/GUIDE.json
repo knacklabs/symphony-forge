@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-MAIL-1-GUIDE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T13:13:43.775217+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "0d96cc7d35c73d5c4b590ed1f5a613cd2b5725d7",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
