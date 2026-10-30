@@ -1,0 +1,64 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-30T18:16:57.257204+00:00",
+      "because": "The label follows the part-level style of the sibling removal test; the first Done-when named only the story",
+      "done_when": "tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1"
+    }
+  ],
+  "base": "3cdc27c956cdbc1153cd865aa31a91b43028116c",
+  "branch": "fix/label-member-removal-guide-test",
+  "done_when": "tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1/GUIDE, as its sibling test is labelled FORGE-MAIL-1/REMOVE",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "tests/test_member_removal_guide.py",
+      "file": "tests/test_member_removal_guide.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 10,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "c50bcfa9eba684187bba10a3b96edfd3b2242c66c4b84cfa21ef0b18eb8fd1dd",
+    "changed": "dd3620b9c592db65989fc03f5268a043c371715fe8c966f884166e0694228804",
+    "commit": "64eb88a3cd40419950a6b0cf747eb1d6506fc525",
+    "dismissals": [],
+    "findings": [],
+    "id": "406d8710-f7a6-46d3-8b22-ba6f0f80988b",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T18:15:09.516305+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T18:16:28.662545+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:18:04.738838+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-30T18:16:28.672986+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_member_removal_guide.py",
+    "reason": "The Done-when now names the label the test uses; review it again",
+    "wait_id": "2cbb4eb7-721d-4bf5-8abf-d821f09dc671",
+    "worker_round": null
+  },
+  "why": "The member removal guide test has no story label, so it claims rule 2 of the old FORGE-NEXT-1 story and the rules test fails on main"
+}

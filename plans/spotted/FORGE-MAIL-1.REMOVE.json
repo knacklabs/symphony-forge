@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/organisations/server/src/organisations.service.ts\tAn uppercase account ID also bypasses the existing own-role check.",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/organisations/server/src/organisations.service.ts",
+      "line": 100,
+      "text": "An uppercase account ID also bypasses the existing own-role check.",
+      "from": "worker",
+      "item": "FORGE-MAIL-1/REMOVE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/starter/libs/organisations/server/src/organisations.service.ts\tCanonicalize UUIDs before checking self-removal\tFORGE-MAIL-1/REMOVE",
+      "kind": "bug",
+      "path": "src/forge/templates/starter/libs/organisations/server/src/organisations.service.ts",
+      "line": 79,
+      "text": "Canonicalize UUIDs before checking self-removal",
+      "from": "blocking",
+      "item": "FORGE-MAIL-1/REMOVE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
