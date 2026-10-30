@@ -1,0 +1,75 @@
+{
+  "branch": "task/FORGE-TOOLS-1-SDKFIX",
+  "chat": {
+    "approval": "cfc81a0c59c7e0dfa5cdf9a93d176cd9c217c3ccb5cc97f1dc76007ce0b55a05",
+    "claude": null,
+    "conversation": "01a18cea-b7ef-72d1-926c-a997cf27829b",
+    "head": null,
+    "start": "1f321187c7dd0d6b3071897ba151d88d213314b5"
+  },
+  "known": [
+    {
+      "area": "doctor() in src/forge/doctor.py",
+      "file": "src/forge/doctor.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 336,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Make the advertised SDK repair select the switched item's checkout",
+      "work": 2
+    },
+    {
+      "area": "src/forge/worker.py",
+      "file": "src/forge/worker.py",
+      "gain": 2,
+      "harm": 2,
+      "line": 73,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Follow-up: update the shipped no-turn recovery guidance",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "b479ac59bf23361b6819137531e4a01a4e88d3c12c1e1e3340f2941e0cd159d1",
+    "changed": "4ebfc5522d96637d6c0feb355065ab2bd58860ec7f2acf10aecd9f19f7b3206e",
+    "commit": "d0ef10b3daa46afc533baf3a63a27337c9d3b243",
+    "dismissals": [],
+    "findings": [],
+    "id": "ae08bace-0632-4c19-8f0c-bdcbc58dcfad",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:05:28.711482+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:19:44.773184+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T13:26:55.037644+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T14:53:34.693263+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "23d82e64-ed03-4a3e-8c19-f0d0b873c48e",
+    "head": "d47e3cd3c4ec6aa7fa7cfeff664c16d1ea92e18e",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

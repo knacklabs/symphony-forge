@@ -333,6 +333,8 @@ def doctor(args: argparse.Namespace) -> int:
             add(f"{problem} Installing it failed: {said}", install)
         else: add(problem, REPAIR if repairs and not args.fix else install)
     workers = cfg["workers"] if cfg["tools"] == "both" else cfg["tools"]
+    if item := task.branch_item(repo.current_branch(top), top):
+        workers = item[1].get("tool") or workers
     on_codex = workers != "claude"  # split runs Codex and Claude
     needs_sdk = on_codex or bool(cfg["tools"] == "both" and os.environ.get("CLAUDECODE")
                                 and shutil.which(os.environ.get("CODEX_BIN") or "codex"))
