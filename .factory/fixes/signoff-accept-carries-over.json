@@ -1,6 +1,13 @@
 {
   "base": "390b30c1e9254e29c9d12fca8953315e9c0812bd",
   "branch": "fix/signoff-accept-carries-over",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18bfb-f2ba-7dc1-95e9-4be4c59394e1",
+    "head": null,
+    "start": "45d86918bcc2b4ba7ecff040d990739a850d8365"
+  },
   "done_when": "After an owner's accept, a later sign-off attempt reviews only files changed since the last sign-off review plus files with open findings, and does not block again on a finding the owner accepted in the same file",
   "fix_kind": "backend",
   "kind": "fix",
