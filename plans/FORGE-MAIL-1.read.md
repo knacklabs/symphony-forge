@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-28T13:27:07.989763+00:00
-seconds: 173.257
-read_hash: 087ebc16830029e3ac5ad9fa53bfdc6d7d1062e1
-round: 2
+read_at: 2026-10-30T13:11:59.731119+00:00
+seconds: 91.595
+read_hash: 73d292e78dcd987acc92d19af23418e836fb639e
+round: 3
 passed: yes
-doc_seen: 087ebc16830029e3ac5ad9fa53bfdc6d7d1062e1
+doc_seen: 73d292e78dcd987acc92d19af23418e836fb639e
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: d1a5d3b4fd7bd22ebeaeb435bcf20bf04db96e78
+notes_seen: 5e7abae3589502df961c44ac9aa3ea0ded98acce
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a18273-6249-7501-ac6b-8fc103df2240
 session:
@@ -117,3 +117,10 @@ Only a genuine trade-off goes to the human, as a question with options.
 ## Round 2
 
 No findings.
+
+## Round 3
+
+13. Advisory: Removing MAIL also removed the only owner of the required smoke-workflow edit.
+    Raise: Plan gap. [Plan line 33](/plans/FORGE-MAIL-1.md:33) requires both smoke jobs to run `tests/test_member_removal.py`, but none of the four remaining task Scopes includes `.github/workflows/starter-smoke.yml`. Its explicit pytest lists at lines 44 and 58 omit the new file. The earlier MAIL task owned this edit; deleting that task leaves builders unable to deliver the promised wiring within Scope. Assign the workflow edit to REMOVE.
+    Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)
