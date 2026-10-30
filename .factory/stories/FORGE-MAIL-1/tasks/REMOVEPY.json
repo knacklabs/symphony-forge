@@ -8,21 +8,30 @@
     "head": null,
     "start": "8a875c40a17772e1846e5cc66e2f8c4222b3eb29"
   },
+  "known": [],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9de7903533baacd989e3c3d4352a804c84a02e99884d72917f67997090596b82",
+    "changed": "09b35728a86e324843decb02ffcd72ad414b4dac11231035c843aab96c1767a7",
+    "commit": "eb949daa20f046e72cd0101d5fddb3070fc408cf",
+    "dismissals": [],
+    "findings": [],
+    "id": "e3cd777f-5c58-4492-b18f-a0b6fc354014",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T17:59:05.783396+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T18:08:20.748317+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "question": "Admins remove members in client apps: Member removal in the Python API is stuck. It should deliver: The same route and steps in the Python starter, and its case. Regenerate `libs/shared/api-types`.\nIt changes 600 lines outside tests, over its limit of 400.\nThe worker tried: Add member removal to the Python starter.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "4734b4eb-e291-405e-b2a1-3edfdefcb8c2"
-  },
   "stuck": {
     "close": null,
     "head": "a1f1aea6b21c5a5c23dc9b70d0c33a81647d0970",
