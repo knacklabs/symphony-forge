@@ -7,13 +7,53 @@
     "head": null,
     "start": "6f001c8f6fb570e9c0615c85dff6f78fc7bc3f32"
   },
+  "known": [
+    {
+      "area": "docs/specs/board-for-the-team.read.md",
+      "file": "docs/specs/board-for-the-team.read.md",
+      "gain": 4,
+      "harm": 1,
+      "line": 11,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated board review metadata is outside Scope",
+      "work": 1
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a1bbc8e5165ac3a143928098ff9d5bcc9fa8c3a5a2e8e470829234160cfa6040",
+    "changed": "f5ef3b6946df766bf0462330a277f7ae13ad65c880dad8fecc483d014a20b57c",
+    "commit": "86f38d188b7f934bbddcd3edbc4820ae1503a0a6",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 1\nRaise: Gate. The added conversation identifier and four other metadata fields modify the board specification's review record. This file is outside the allowed paths and is unnecessary for the member removal guidance or its init/sync delivery. The exemption for this story's own documentation and read notes does not cover this separate specification. Revert these five additions.\nCase: normal use - merging the guide change also modifies an unrelated specification's review record.",
+        "file": "docs/specs/board-for-the-team.read.md",
+        "gain": 4,
+        "harm": 1,
+        "line": 11,
+        "priority": "P1",
+        "title": "Gate: unrelated board review metadata is outside Scope",
+        "work": 1
+      }
+    ],
+    "id": "7d8b154f-4cbb-4fb7-a3f6-e49d0d7575f1",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:13:43.775217+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:18:11.557028+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
