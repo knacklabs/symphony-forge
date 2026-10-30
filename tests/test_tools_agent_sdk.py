@@ -6,6 +6,7 @@ the session, selects each brief and stops the real driver and its child.
 import json
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -53,6 +54,9 @@ def test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree(
                          "Claude workers keep their conversation and stop with their children")
     assert started.returncode == 0, started.stdout + started.stderr
     folder = repo.path.parent / f"{repo.path.name}-fix-{ITEM}"
+    moved = folder.with_name(folder.name + " worker's files")
+    repo.git("worktree", "move", str(folder), str(moved))
+    folder = moved
     synced = repo.forge("sync", cwd=folder)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     if repo.git("status", "--porcelain", cwd=folder):
@@ -102,7 +106,17 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         chosen["tool"] = "claude"
         state_path.write_text(json.dumps(chosen), encoding="utf-8")
         repo.git("commit", "-qam", "Choose Claude for this item", cwd=folder)
-        repaired = host.forge("doctor", "--fix", cwd=folder)
+        # The coordinator stays on main and executes the recovery that work gives.
+        main_config = repo.path / "forge.toml"
+        main_configured = main_config.read_text("utf-8")
+        main_config.write_text(main_configured.replace('workers = "claude"', 'workers = "codex"'),
+                               encoding="utf-8")
+        switched = host.forge("work", ITEM)
+        assert switched.returncode == 1, switched.stdout + switched.stderr
+        assert f"The Claude Agent SDK {PIN} isn't installed" in switched.stderr
+        recovery = switched.stderr.split("Next: ", 1)[1].strip()
+        repaired = subprocess.run(recovery, shell=True, cwd=repo.path, capture_output=True,
+                                  text=True, encoding="utf-8", timeout=120)
         assert f"Installed the Claude Agent SDK {PIN}" in repaired.stdout, repaired.stdout + repaired.stderr
         assert ready.read_text("utf-8").strip() == PIN
         requests = [json.loads(line) for line in
@@ -112,6 +126,7 @@ elif args[:3] != ["pip", "install", "--python"] or args[-1] != "claude-agent-sdk
         assert ["pip", "install", "--python", str(sdk_python), f"claude-agent-sdk=={PIN}"] in requests
         checked = host.forge("doctor", cwd=folder)
         assert "Claude Agent SDK" not in checked.stdout + checked.stderr
+        main_config.write_text(main_configured, encoding="utf-8")
         config.write_text(configured, encoding="utf-8")
         repo.git("commit", "-qam", "Restore Claude worker default", cwd=folder)
 
