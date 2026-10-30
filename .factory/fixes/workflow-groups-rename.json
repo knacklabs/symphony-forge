@@ -1,6 +1,13 @@
 {
   "base": "390b30c1e9254e29c9d12fca8953315e9c0812bd",
   "branch": "fix/workflow-groups-rename",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18bfb-4136-7192-bca5-5613a33cbfef",
+    "head": null,
+    "start": "91dc28d1cf8aa2e8600a8f4ca4331bcd0da7458f"
+  },
   "done_when": "forge init and forge sync write the tests-passed job with TEST_GROUP_RESULT instead of GROUPS, and the required tests check still passes and fails as before",
   "fix_kind": "mechanical",
   "kind": "fix",
