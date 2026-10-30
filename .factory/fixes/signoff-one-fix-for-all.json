@@ -4,12 +4,20 @@
   "done_when": "A blocked sign-off names one forge fix start step that covers every open blocking finding from that review",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T09:28:54.732304+00:00",
       "step": "start"
     }
   ],
-  "why": "When the client sign-off review blocks on several findings, the next step does not say to fix them together, so clients run one fix and one full loop per finding"
+  "stuck": {
+    "close": null,
+    "head": "5fde7d446f133e0e9eaf9be74b5a4222534f48f4",
+    "keys": {},
+    "round": null
+  },
+  "why": "When the client sign-off review blocks on several findings, the next step does not say to fix them together, so clients run one fix and one full loop per finding",
+  "worker": "codex"
 }
