@@ -1,0 +1,1 @@
+- 2026-10-30: Email for client apps (password reset, invites, sign-up check) through SNS or SES directly, when a client needs it (moved out of FORGE-MAIL-1 on 30 Oct 2026 by the owner)
