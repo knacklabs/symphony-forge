@@ -222,7 +222,7 @@ def close(args: argparse.Namespace) -> int:
     review_ref = f"origin/{default}"
     if stacked_waiting:
         base = githooks.fix_base(top, state, review_ref, "HEAD")
-        review_ref = f"origin/forge-stack-{item.replace('/', '-')}"
+        review_ref = f"forge-stack/{item.replace('/', '-')}"
         repo.git("update-ref", f"refs/remotes/{review_ref}", base, cwd=top)
         pr_target = stacked_branch
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
