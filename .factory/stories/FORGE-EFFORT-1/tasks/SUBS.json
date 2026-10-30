@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-EFFORT-1-SUBS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-30T02:37:44.382839+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "db2f26b0332ece42940bd5dcd5c5614767e9052e",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
