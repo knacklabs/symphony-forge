@@ -14,7 +14,7 @@
       "gain": 4,
       "harm": 3,
       "line": 347,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -40,7 +40,7 @@
       "gain": 3,
       "harm": 3,
       "line": 339,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -51,48 +51,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "99141239863df596e3f32049bf9e798991061176fc737d2c79299ec80ea83da1",
-    "changed": "37813720714f3ffd42fa504ce534620474d53c2fa326c786e08cbc1cc93ba72d",
-    "commit": "ff6da2956b5e332c34c56f365d004fa1792c4547",
+    "branch_diff": "8c189b5c030c079c5cebc81222878b01ac601127fb787a2d903c4a3d3992b1c0",
+    "changed": "8fd763f58afae91c837525ed9a82e47103fd7666955379c4c3354b16eea18933",
+    "commit": "b8e4f93a951ce271cf431fe99601774f9e44ea0f",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 3\nRaise: Not done.\nCase: normal use - viewing the board after a worker round and before its review.\nThe added phrase shows effort, but the line still gets its number exclusively from `review_round` (`src/forge/time_records.py:239,388`). Consequently, the second worker run in the new test produces `Round unknown: built at high` (or xhigh), despite recording worker round 2. The board also labels it as having no number (`src/forge/board_app/item.js:115`). Include the known worker-round number in the visible history; the test currently checks only the separate `worker_round` field.",
-        "file": "src/forge/time_records.py",
-        "gain": 4,
-        "harm": 3,
-        "line": 347,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Each worker run's record and the board's round line show the round number and the effort that round ran at.",
-        "work": 2
-      },
-      {
-        "body": "Gain 3, Work 1, Harm 2\nRaise: Functional.\nCase: normal use - running the repository's test suite.\nThis sentence now says `When Claude Code coordinates without the SDK`, but `tests/test_design_docs.py:45` still requires the literal sentence beginning `When Claude Code coordinates the round`. That assertion necessarily fails with this change. Update the existing test to protect the revised SDK/native routing contract.",
-        "file": "docs/guide.md",
-        "gain": 3,
-        "harm": 2,
-        "line": 348,
-        "priority": "P1",
-        "title": "Update the existing guide test for the SDK routing change",
-        "work": 1
-      },
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - a split-mode design round falls back after Claude fails before changing the checkout.\n`next()` selects the first worker start, including a failed Claude attempt. The supported fallback in `src/forge/worker.py:313\u2013370` then runs Codex in the same round with its own effort. With defaults, the board reports `built at xhigh` from failed Claude although Codex built at high; the final worker timing contains high but is ignored because a start was found. Account for the fallback run rather than presenting the failed attempt's effort as the build effort.",
-        "file": "src/forge/time_records.py",
-        "gain": 3,
-        "harm": 3,
-        "line": 339,
-        "priority": "P1",
-        "title": "Account for the successful fallback worker when selecting effort",
-        "work": 2
-      }
-    ],
-    "id": "d0de3612-7954-448d-a1e9-7615f6ef3701",
-    "status": "blocked"
+    "findings": [],
+    "id": "fb13e266-29f9-43f7-9f20-10bbdd74af6b",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T02:37:39.924696+00:00",
@@ -100,6 +68,10 @@
     },
     {
       "at": "2026-10-30T02:45:26.759071+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T02:51:08.891222+00:00",
       "step": "review"
     }
   ],
