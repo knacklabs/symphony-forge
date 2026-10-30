@@ -32,7 +32,8 @@ def test_1_init_claude_only_repo_uses_low_implementation_and_sonnet_reads(repo, 
     assert config["workers"] == "claude"
     models = config["models"]
     for kind in ("build", "fix", "lite"):
-        assert models[kind]["claude"] == {**SONNET, "effort": "low"}
+        assert models[kind]["claude"] == {**SONNET, "effort": "low",
+                                           "subagents": "claude-haiku-5-5", "subagent_effort": "high"}
     assert models["design"]["claude"] == SONNET
     for kind in ("grill", "review"):
         assert models[kind]["claude"] == {**SONNET, "effort": "high"}

@@ -29,6 +29,7 @@ from test_worker import calls, install_claude
 from test_codex_worker import sdk_data  # noqa: F401
 
 pytestmark = pytest.mark.platform
+STORY = "FORGE-EFFORT-1"
 
 HELPER_ROLES = {
     "worker", "fixer", "coder", "frontend", "tester", "refactorer", "explorer",
@@ -84,8 +85,12 @@ def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sd
     history = "adopted" if case.startswith("adopted") else "new"
     task = "PAGE" if case == "new-design-retry" else "HELP"
     item = f"BOARD/{task}"
+    # Configure the client's settings before branching. Close correctly removes task-owned
+    # settings edits when the task is not a settings change.
+    budgets = {"build": ("custom-haiku", "medium"), "fix": ("claude-sonnet-5-5", "high"),
+               "lite": ("claude-haiku-5-5", "low")}
     env, folder, log = _round_client(repo, gh, tmp_path, monkeypatch, "claude", history=history,
-                                     sdk_data=sdk_data, task=task)
+                                     sdk_data=sdk_data, task=task, helper_budgets=budgets)
     if case == "new-lite-retry":
         item = "keep-helper-settings"
         started = repo.forge("fix", "start", "Keep helper settings", "--done",
@@ -93,17 +98,6 @@ def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sd
         assert started.returncode == 0, started.stdout + started.stderr
         folder = repo.path.parent / f"{repo.path.name}-fix-{item}"
     config = folder / "forge.toml"
-    text = config.read_text("utf-8")
-    budgets = {"build": ("custom-haiku", "medium"), "fix": ("claude-sonnet-5-5", "high"),
-               "lite": ("claude-haiku-5-5", "low")}
-    for kind, (model, effort) in budgets.items():
-        original = f'models.{kind} = {{ model = "claude-sonnet-5-5", effort = "low" }}'
-        assert original in text
-        text = text.replace(original, original[:-2] +
-                            f', subagents = "{model}", subagent_effort = "{effort}" }}')
-    config.write_text(text, encoding="utf-8")
-    repo.git("add", "forge.toml", cwd=folder)
-    repo.git("commit", "-q", "-m", "Keep the Claude helper budget", cwd=folder)
     configured = config.read_bytes()
     source = folder / ("app.py" if case == "new-lite-retry" else
                        "web/board.py" if task == "PAGE" else "web/help.py")
@@ -127,7 +121,7 @@ def test_6_claude_builder_gets_haiku_helpers(repo, gh, tmp_path, monkeypatch, sd
     assert config.read_bytes() == configured
 
 
-def test_6_codex_request_names_the_subagents(repo, gh, tmp_path, monkeypatch, sdk_data, claude_session):
+def test_9_codex_request_names_the_subagents(repo, gh, tmp_path, monkeypatch, sdk_data, claude_session):
     _, _, log = _round_client(repo, gh, tmp_path, monkeypatch, "codex", sdk_data=sdk_data)
     worked = repo.forge("work", "BOARD/HELP")
     assert worked.returncode == 0, worked.stdout + worked.stderr
@@ -139,7 +133,7 @@ def test_6_codex_request_names_the_subagents(repo, gh, tmp_path, monkeypatch, sd
     assert not (repo.bin / "claude-sdk-calls.jsonl").exists()
 
 
-def test_6_no_process_wide_setting(repo, gh, tmp_path, monkeypatch, sdk_data):
+def test_10_no_process_wide_setting(repo, gh, tmp_path, monkeypatch, sdk_data):
     home = tmp_path / "home"
     claude_config = tmp_path / "claude-config"
     home.mkdir()
@@ -168,7 +162,7 @@ def test_6_no_process_wide_setting(repo, gh, tmp_path, monkeypatch, sdk_data):
     assert sent["process_env"]["CLAUDE_CODE_SUBAGENT_MODEL"] is None
 
 
-def test_6_one_key_is_refused_as_today(repo, gh, tmp_path, monkeypatch, sdk_data):
+def test_11_one_key_is_refused_as_today(repo, gh, tmp_path, monkeypatch, sdk_data):
     _, folder, _ = _round_client(repo, gh, tmp_path, monkeypatch, "claude", history="adopted",
                                  sdk_data=sdk_data)
     config = folder / "forge.toml"

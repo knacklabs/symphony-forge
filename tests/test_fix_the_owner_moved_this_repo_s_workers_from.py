@@ -24,6 +24,7 @@ STORY = "the-owner-moved-this-repo-s-workers-from"
 # No new test, duplicate boundary coverage or production seam is needed.
 SOL = {"model": "gpt-6.1-sol", "effort": "low"}
 SONNET = {"model": "claude-sonnet-5-5", "effort": "low"}
+CLAUDE_BUILD = {**SONNET, "subagents": "claude-haiku-5-5", "subagent_effort": "high"}
 
 
 def _codex(repo, monkeypatch, sdk_data):
@@ -46,10 +47,10 @@ def test_1_this_repo_works_on_codex_low_and_reviews_on_codex(repo, monkeypatch, 
     assert config["workers"] == "split"
     # Ordinary work stays on Codex; both tools start implementation at low effort.
     assert config["models"]["build"] == config["models"]["fix"] == {
-        "codex": SOL, "claude": SONNET}
+        "codex": SOL, "claude": CLAUDE_BUILD}
     assert config["models"]["lite"] == {
         "codex": {**SOL, "subagents": "gpt-6-luna", "subagent_effort": "max"},
-        "claude": SONNET}
+        "claude": CLAUDE_BUILD}
     for kind in ("design", "grill"):
         assert config["models"][kind] == {
             "codex": {"model": "gpt-6.1-sol", "effort": "high"},

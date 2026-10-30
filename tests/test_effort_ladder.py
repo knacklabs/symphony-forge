@@ -33,17 +33,20 @@ pytestmark = pytest.mark.platform
 
 
 def _round_client(repo, gh, tmp_path, monkeypatch, mode, effort="low", task="HELP",
-                  history="new", sdk_data=None, fixed=False, test_place="local"):
+                  history="new", sdk_data=None, fixed=False, test_place="local", helper_budgets=None):
     """A new or earlier-adopted client with one started task and a configured worker."""
     env = close_env.__wrapped__(repo, gh, tmp_path, monkeypatch)
     version = repo.forge("--version").stdout.split()[-1]
     family = "claude" if mode == "claude" else "codex"
     model = "claude-sonnet-5-5" if family == "claude" else "gpt-6.1-sol"
     helpers = ', subagents = "gpt-6-luna", subagent_effort = "max"' if family == "codex" else ""
+    pairs = {kind: (f', subagents = "{helper_budgets[kind][0]}", '
+                    f'subagent_effort = "{helper_budgets[kind][1]}"' if helper_budgets else helpers)
+             for kind in ("build", "fix", "lite")}
     settings = (f'version = "{version}"\nrepo = "client"\nworkers = "{mode}"\n'
                 f'test_place = "{test_place}"\nchecks = ["tests", "forge-pr-check"]\n'
                 'test = "python fail_test.py"\nfast_test = "python fail_test.py"\n' +
-                "".join(f'models.{kind} = {{ model = "{model}", effort = "{effort}"{helpers} }}\n'
+                "".join(f'models.{kind} = {{ model = "{model}", effort = "{effort}"{pairs[kind]} }}\n'
                         for kind in ("build", "fix", "lite")))
     if fixed:
         settings += ('models.review.codex = { model = "gpt-6.1-sol", effort = "medium" }\n'

@@ -178,12 +178,15 @@ def test_10_the_cold_read_runs_on_the_other_family(repo, gh, monkeypatch, sdk_da
     # Lite keeps first fix rounds; explore now owns read-only work with separate host defaults.
     assert written["models"] == {
         "build": {"codex": {"model": "gpt-6.1-sol", "effort": "low"},
-                  "claude": {"model": "claude-sonnet-5-5", "effort": "low"}},
+                  "claude": {"model": "claude-sonnet-5-5", "effort": "low",
+                             "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
         "fix": {"codex": {"model": "gpt-6.1-sol", "effort": "low"},
-                "claude": {"model": "claude-sonnet-5-5", "effort": "low"}},
+                "claude": {"model": "claude-sonnet-5-5", "effort": "low",
+                           "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
         "lite": {"codex": {"model": "gpt-6.1-sol", "effort": "low",
                            "subagents": "gpt-6-luna", "subagent_effort": "max"},
-                 "claude": {"model": "claude-sonnet-5-5", "effort": "low"}},
+                 "claude": {"model": "claude-sonnet-5-5", "effort": "low",
+                            "subagents": "claude-haiku-5-5", "subagent_effort": "high"}},
         "explore": {"codex": {"model": "gpt-6.1-sol", "effort": "medium",
                               "subagents": "gpt-6-luna", "subagent_effort": "max"},
                     "claude": {"model": "claude-haiku-5-5", "effort": "high"}},
