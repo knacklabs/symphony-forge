@@ -47,6 +47,8 @@ def test_1_handback_keeps_inherited_and_incoming_settings(client, monkeypatch, t
                            "--kind", "mechanical", cwd=parent)
     assert started.returncode == 0, started.stdout + started.stderr
     child = client.path.parent / f"{client.path.name}-fix-child-product"
+    # This contract needs native handback; installed SDK rounds use the driver instead.
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "without-claude-sdk"))
     host = Session(client, tmp_path / "host", "claude-session")
     try:
         given = host.forge("work", "child-product", cwd=child)

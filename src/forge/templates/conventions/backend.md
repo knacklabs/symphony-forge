@@ -146,5 +146,26 @@ export class StripePaymentProvider implements PaymentProvider { /* the only file
 ```
 
 Register it under a token in the domain's module, and give tests a fake, and local and dev too, so nothing calls the vendor by accident. Set a timeout on every
-call, retry only errors that can succeed on retry, and log each call's duration and outcome.
+call. For outgoing web calls, use a 10-second timeout and send the request's `x-correlation-id`.
+Retry at most twice, after 0.5 and 2 seconds, only for a network error, HTTP 429 or 5xx, and only
+for GET, PUT, DELETE or a POST with an idempotency key. Log each call's duration and outcome.
 Payment and notification provider calls are idempotent.
+
+```ts
+async call(url: string, correlationId: string): Promise<Response> {
+  const startedAt = performance.now();
+  let outcome = 'failure';
+  try {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(10_000),
+      headers: { 'x-correlation-id': correlationId },
+    });
+    outcome = response.ok ? 'success' : 'failure';
+    return response;
+  } finally {
+    this.logger.log('Outgoing call finished', 'PaymentProvider', {
+      durationMs: Math.round(performance.now() - startedAt), outcome, correlationId,
+    });
+  }
+}
+```

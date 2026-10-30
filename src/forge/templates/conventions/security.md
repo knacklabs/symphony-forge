@@ -36,4 +36,9 @@ app.enableCors({ origin: config.corsOrigins, credentials: true });  // a named l
 ## Uploads
 
 Set a size limit per endpoint, accept only a named list of file types, and check the type from the
-file's content, not its name or header. Store uploads outside the web root under generated names.
+file's content, not its name or header. Store uploads in a private S3-compatible bucket configured
+with `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`; Mainline
+will supply these settings later. Use a generated key, store the key in the database, never a URL,
+and give downloads signed links that expire in 5 minutes or less. Use `@aws-sdk/client-s3` with
+`@aws-sdk/s3-request-presigner` in TypeScript, or `boto3` in Python. The story that first needs
+uploads adds the bucket and these libraries; do not add them to the starters in advance.

@@ -27,6 +27,15 @@ def guided_client(repo, gh, tmp_path, request):
         version = repo.forge("--version").stdout.split()[-1]
         config.write_text(config.read_text("utf-8").replace('"v1.2.2"', json.dumps(version)),
                           encoding="utf-8")
+    if request.param == "previous release":
+        app_files = {
+            "Dockerfile": 'FROM node:24-bookworm-slim\nWORKDIR /app\nCOPY . .\nRUN corepack pnpm install --frozen-lockfile\nCMD ["node", "dist/main.js"]\n',
+            "README.md": "## Run\nRun our own app.\n",
+            "package.json": '{"devDependencies":{"prettier":"3.6.2"}}\n',
+            "pnpm-lock.yaml": "packages:\n  prettier@3.6.2: {}\n",
+        }
+        for name, text in app_files.items():
+            (client / name).write_text(text, encoding="utf-8")
     config = client / "forge.toml"
     config.write_text(re.sub(r'^workers = ".*"$', 'workers = "claude"',
                              config.read_text("utf-8"), flags=re.M), encoding="utf-8")
@@ -38,7 +47,7 @@ def guided_client(repo, gh, tmp_path, request):
                          cwd=client)
     assert started.returncode == 0, started.stdout + started.stderr
     top = Path(re.search(r" in (.+)\n", started.stdout)[1])
-    if request.param == "previous release":
+    if request.param == "previous release" and request.node.originalname != "test_4_an_existing_repo_gets_the_non_root_rule_and_keeps_its_app_files":
         synced = repo.forge("sync", cwd=top)
         assert synced.returncode == 0, synced.stdout + synced.stderr
         _fixture_git(repo, tmp_path, "add", "-A", cwd=top)
@@ -108,3 +117,71 @@ def test_2_the_fde_defaults_promise_only_built_parts(guided_client):
         for obsolete in ("social sign-in through", "object storage for files",
                          "and in-app notices", "and a message catalogue", "error tracking,"):
             assert obsolete not in fde
+
+
+def _worker_conventions(repo, client):
+    log = install_claude(repo)
+    worked = repo.forge("work", "check-guide-alignment", cwd=client)
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    match = re.search(r"how-to.*?is in `([^`]+)`", calls(log)[-1]["brief"], re.S)
+    assert match
+    return Path(match[1])
+
+
+@pytest.mark.platform
+def test_3_the_guides_hold_the_jobs_calls_and_uploads_rules(repo, guided_client):
+    # Audit: delivered rules are the prompt contract. Missing rules cause different
+    # client implementations; starter tests do not cover these later features.
+    # Real init, sync and work cover delivery without a production test seam.
+    for host in (".claude", ".codex"):
+        database = (guided_client / host / "skills/database/SKILL.md").read_text("utf-8")
+        for term in ("worker entry in `services.toml`", "FOR UPDATE SKIP LOCKED",
+                     "clean-up of old sessions, reset tokens and invites", "attempt count",
+                     "last error", "schedule only inserts job rows"):
+            assert term in database
+    conventions = _worker_conventions(repo, guided_client)
+    expected = {
+        "deploy.md": ('name = "worker"', 'expose = "internal"', 'command ='),
+        "stack.md": ("FOR UPDATE SKIP LOCKED",),
+        "backend.md": ("AbortSignal.timeout(10_000)", "x-correlation-id", "0.5", "2 seconds"),
+        "python.md": ("httpx.Client(timeout=10.0)", "x-correlation-id", "0.5", "2 seconds"),
+        "security.md": ("S3_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY_ID",
+                        "S3_SECRET_ACCESS_KEY", "never a URL", "5 minutes or less",
+                        "@aws-sdk/client-s3", "boto3"),
+    }
+    for page, terms in expected.items():
+        text = (conventions / page).read_text("utf-8")
+        for term in terms:
+            assert term in text, (page, term)
+
+
+@pytest.mark.platform
+@pytest.mark.parametrize("guided_client", ["previous release"], indirect=True)
+def test_4_an_existing_repo_gets_the_non_root_rule_and_keeps_its_app_files(repo, guided_client, tmp_path):
+    # Audit: sync must preserve app-owned bytes, including root images and Prettier.
+    # No other delivery test seeds these files; no production seam is needed.
+    names = ("Dockerfile", "README.md", "package.json", "pnpm-lock.yaml")
+    before = {name: (guided_client / name).read_bytes() for name in names}
+    synced = repo.forge("sync", cwd=guided_client)
+    assert synced.returncode == 0, synced.stdout + synced.stderr
+    for name, content in before.items():
+        assert (guided_client / name).read_bytes() == content
+    status = _fixture_git(repo, tmp_path, "status", "--porcelain", "-uall", cwd=guided_client)
+    for name in names:
+        assert name not in status
+    _fixture_git(repo, tmp_path, "add", "-A", cwd=guided_client)
+    _fixture_git(repo, tmp_path, "commit", "-q", "-m", "Sync the client guide", cwd=guided_client)
+    deploy = (_worker_conventions(repo, guided_client) / "deploy.md").read_text("utf-8")
+    assert "Containers run as a user that is not root." in deploy
+
+
+@pytest.mark.platform
+def test_5_the_guide_turns_on_security_alerts_only(guided_client):
+    # Audit: security setup is a delivered agent instruction. Existing tests do not
+    # cover alerts or accidental update configuration; no production seam is needed.
+    for host in (".claude", ".codex"):
+        guide = (guided_client / host / "skills/forge/SKILL.md").read_text("utf-8")
+        assert "gh api --method PUT repos/{owner}/{repo}/vulnerability-alerts" in guide
+        assert "Dependabot security updates stay off" in guide
+        assert "no Dependabot update pull requests" in guide
+    assert not (guided_client / ".github/dependabot.yml").exists()

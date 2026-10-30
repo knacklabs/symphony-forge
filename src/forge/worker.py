@@ -160,8 +160,10 @@ def _work(args: argparse.Namespace) -> bool:
     tool = getattr(args, "fallback", None) or state.get("tool")
     family = repo.worker(config, "build", design, tool)[0]
     on_codex = family == "codex"
-    # The coordinating app's own tool runs the round as one of the session's subagents.
+    # Codex uses its coordinating session; Claude uses the SDK when it is available.
     is_native = repo.route(config, family, command="work", item=item) == "native"
+    if is_native and not on_codex:
+        is_native = bool(claude_sdk.sdk_problem())
     role = ("frontend" if design else "worker" if match["task"] else
             "coder" if state.get("fix_kind") == "backend" else "fixer")
     if note is None and (question := (asked_open[-1].get("question") if asked_open else None)
@@ -178,8 +180,18 @@ def _work(args: argparse.Namespace) -> bool:
     approval = _approval(match["key"], item, top) if match["task"] else None
     claude = ready(top, config, kind, on_codex, design=design, native=is_native)
     _, chosen, why = repo.worker(config, kind.lower(), design, tool)
+    review.bound_review(top, item, state, state.get("review") or {})
+    findings, failing = _fix_round(state)
+    if not design:
+        failed = bool(findings or state.get("tests") or
+                      any(name == required or name.startswith(required + " (")
+                          for name, _ in failing for required in config.get("checks", [])))
+        chosen = repo.round_effort(chosen, family, failed)
+    if claude:
+        claude[claude.index("--effort") + 1] = chosen["effort"]
     why = "Claude failed this design round" if getattr(args, "fallback", None) else why
-    building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}) "
+    requested = " requested" if is_native else ""
+    building = (f"Building {item} with {family.title()} ({chosen['model']}, {chosen['effort']}{requested}) "
                 f"because {why}")
     if not on_codex or is_native:
         print(building, flush=True)
@@ -233,8 +245,6 @@ def _work(args: argparse.Namespace) -> bool:
             elif not on_codex and previous:
                 fresh = "Forge has no record of its Claude session on this machine"
         state = repo.read_state(item, top) or {}
-        review.bound_review(top, item, state, state.get("review") or {})
-        findings, failing = _fix_round(state)
         stop = state.get("stop") or {}
         if note is None and stop.get("by") == "owner" and stop.get("worker_round") == state.get("round"):
             note = f"The owner chose {stop['choice']}: {stop['reason']}. Follow the owner's choice."
@@ -357,6 +367,7 @@ def _work(args: argparse.Namespace) -> bool:
             result = codex.run(top, item, kind, name, brief, "full-access",
                                thread, fresh, approval, note=note, fresh_prompt=fresh_brief,
                                design=design,
+                               effort=chosen["effort"],
                                on_thread=(lambda _: print(building, flush=True)) if on_codex else None)
             outcome = "completed" if result["status"] == "completed" else "failed"
             final = (result.get("text") or "") if outcome == "completed" else None
@@ -364,7 +375,8 @@ def _work(args: argparse.Namespace) -> bool:
             if outcome == "completed" and git("status", "--porcelain", "-uall", cwd=top):
                 print(NUDGING, flush=True)
                 again = codex.run(top, item, kind, name, nudge, "full-access",
-                                  result["conversation"], "", approval, design=design)
+                                  result["conversation"], "", approval, design=design,
+                                  effort=chosen["effort"])
                 if again["status"] != "completed":
                     result, outcome = again, "failed"
                 else:

@@ -222,6 +222,8 @@ def test_3_land_runs_at_most_one_fix_round(
     from test_tools_session_hold import Session
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
+    # Exercise the native handback round limit rather than the installed SDK route.
+    monkeypatch.setenv("XDG_DATA_HOME", str(land.tmp / "without-claude-sdk"))
     host = Session(land.repo, land.tmp / "host", "claude-session")
     try:
         first = host.forge("land", ITEM)

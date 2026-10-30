@@ -85,6 +85,11 @@ Normal reviews, reviews of docs and assets, and sign-off reviews use the selecte
 `[models.review]` in `forge.toml`, including its per-tool entries. An unset entry or effort
 uses Autoreview's default. New and earlier-adopted repos get this behaviour on the current release.
 
+After a red close test, a blocking review finding or a failed required check, a build, fix or
+lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
+Design rounds keep their fixed effort. Claude uses the SDK when installed. Native rounds
+request the effort in their instructions and record it as requested.
+
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.
 

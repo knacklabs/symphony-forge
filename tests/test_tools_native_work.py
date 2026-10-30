@@ -38,7 +38,8 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
     _install(repo.bin, "codex-app-server", (ROOT / "tests/stubs/codex-app-server").read_text("utf-8"))
     monkeypatch.setenv("CODEX_BIN", str(repo.bin / (
         "codex-app-server.cmd" if os.name == "nt" else "codex-app-server")))
-    data = tmp_path / "data"  # no Codex SDK installed: a native round needs none
+    # Claude's native fallback needs no SDK; Codex keeps Claude's SDK for the design fallback below.
+    data = tmp_path / ("without-claude-sdk" if tool == "claude" else "data")
     data.mkdir(exist_ok=True)
     monkeypatch.setenv("XDG_DATA_HOME", str(data))
     if tool == "claude":
@@ -162,6 +163,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         [begun] = [e for e in events if e["event"] == "run start" and e["item"] == "BOARD/HELP"]
         [ended] = [e for e in events if e["event"] == "run end" and e["item"] == "BOARD/HELP"]
         assert (begun["kind"], begun["round"], begun["family"]) == ("work", 1, tool)
+        assert begun["requested"] is True
         assert (ended["run_id"], ended["outcome"]) == (begun["id"], "completed")
 
         # The next round continues the subagent on the role's model; an uncommitted forge.toml
@@ -170,7 +172,7 @@ def test_3_build_rounds_run_as_session_subagents(repo, gh, monkeypatch, tmp_path
         model = {("claude", "new"): "sonnet, medium", ("codex", "new"): "gpt-6-sol, high",
                  ("claude", "adopted"): "claude-sonnet-5-5, low",
                  ("codex", "adopted"): "gpt-6.1-sol, low"}[tool, history]
-        assert f"({model})" in given.stdout
+        assert f"({model} requested)" in given.stdout
         short = Path(re.search(r"Continue subagent w1 with: Read (.+) and follow it", given.stdout)[1])
         assert "The earlier brief in this conversation still applies." in short.read_text("utf-8")
         assert str(folder.resolve().as_posix()) in short.read_text("utf-8")
