@@ -29,6 +29,8 @@ def test_4_handback_restores_committed_settings_with_their_original_bytes(client
                            "--kind", "mechanical")
     assert started.returncode == 0, started.stdout + started.stderr
     folder = client.path.parent / f"{client.path.name}-fix-correct-spelling"
+    # This covers native handback; installed SDK rounds restore settings through the driver.
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "without-claude-sdk"))
     host = Session(client, tmp_path / "host", "claude-session")
     try:
         offered = host.forge("work", "correct-spelling")

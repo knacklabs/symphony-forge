@@ -2,7 +2,7 @@ import base64
 import hashlib
 import hmac
 import secrets
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from urllib.parse import urlencode
@@ -29,6 +29,7 @@ from app.core import (
     ApiError,
     MailProvider,
     Settings,
+    create_once,
     permissions_for,
 )
 
@@ -184,14 +185,42 @@ class AuthService:
             ) from error
         return account
 
-    def invite(self, email: str, account: AccountPrincipal) -> MessageResponse:
-        if self.db.scalar(select(Account.id).where(Account.email == email)) is not None:
-            raise ApiError(
-                409, "EMAIL_ALREADY_REGISTERED", "That person already has an account."
+    def invite(
+        self,
+        email: str,
+        account: AccountPrincipal,
+        idempotency_key: str | None = None,
+    ) -> MessageResponse:
+        def create_invite(
+            after_create: Callable[[DbSession, UUID], None] | None,
+        ) -> UUID:
+            existing_account = self.db.scalar(
+                select(Account.id).where(Account.email == email)
             )
-        self.organisations.invite(
-            email, account, self.mail_provider, self.settings.app_origin
-        )
+            if existing_account is not None:
+                raise ApiError(
+                    409,
+                    "EMAIL_ALREADY_REGISTERED",
+                    "That person already has an account.",
+                )
+            return self.organisations.invite(
+                email,
+                account,
+                self.mail_provider,
+                self.settings.app_origin,
+                after_create=after_create,
+            )
+
+        if idempotency_key is not None:
+            create_once(
+                self.db,
+                account,
+                "invites_create",
+                idempotency_key,
+                create_invite,
+            )
+        else:
+            create_invite(None)
         return MessageResponse(message="Invite sent.")
 
     def accept_invite(self, input_data: AcceptInviteInput) -> SessionData:

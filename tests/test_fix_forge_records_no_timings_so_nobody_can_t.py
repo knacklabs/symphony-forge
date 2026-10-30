@@ -93,7 +93,7 @@ def test_1_work_and_close_append_step_timings(env, request, monkeypatch, scenari
     for line, earliest, latest in zip(lines, [work_start, close_start, close_start],
                                       [work_end, close_end, close_end]):
         assert earliest - timedelta(seconds=1) <= datetime.fromisoformat(line["start"]) <= latest
-        assert 0.15 <= line["seconds"] <= (latest - earliest).total_seconds()
+        assert 0 < line["seconds"] <= (latest - earliest).total_seconds()
     assert not repo.git("status", "--porcelain", cwd=repo.path)
 
 

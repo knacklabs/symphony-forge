@@ -40,6 +40,7 @@ REACT_PATHS = PYTHON_REACT_PATHS
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 API_SECURITY_TESTS = (
     "production_forgot_password_does_not_log_a_reset_link",
+    "the_api_container_runs_as_a_user_that_is_not_root",
 )
 PYTHON_PACKAGES = {
     "fastapi", "pydantic", "sqlalchemy", "alembic", "uvicorn", "psycopg",
@@ -112,6 +113,7 @@ def _assert_python_tree(client: Path):
     react_dependencies = {}
     for group in ("dependencies", "devDependencies", "optionalDependencies"):
         versions = package.get(group, {})
+        assert "prettier" not in versions, group
         all_dependencies.update(versions)
         react_dependencies.update(react_package.get(group, {}))
         for name, version in versions.items():
@@ -122,7 +124,9 @@ def _assert_python_tree(client: Path):
     assert all_dependencies["openapi-typescript"] == "7.13.0"
     assert not any(name.startswith(("@nestjs/", "@prisma/", "@nx/")) or name in ("prisma", "nx")
                    for name in all_dependencies)
-    lock_importer = _pnpm_root_importer((client / "pnpm-lock.yaml").read_text(encoding="utf-8"))
+    lock_text = (client / "pnpm-lock.yaml").read_text(encoding="utf-8")
+    assert "prettier@" not in lock_text
+    lock_importer = _pnpm_root_importer(lock_text)
     for group in ("dependencies", "devDependencies", "optionalDependencies"):
         assert set(lock_importer.get(group, {})) == set(package.get(group, {})), group
         for name, version in package.get(group, {}).items():
@@ -142,6 +146,7 @@ def _assert_python_tree(client: Path):
     assert (client / "libs/shared/api-types/src/api-types.ts").is_file()
 
     dockerfile = (client / "Dockerfile").read_text(encoding="utf-8")
+    assert dockerfile.index("USER app") < dockerfile.index("uv sync --frozen --no-dev")
     for line in (
         "FROM node:24",
         "corepack pnpm install --frozen-lockfile && corepack pnpm run build",
@@ -170,6 +175,9 @@ def _assert_python_tree(client: Path):
     readme = (client / "README.md").read_text(encoding="utf-8")
     assert "node scripts/test.mjs" in readme
     assert "How it works" in readme
+    assert "## When something breaks" in readme
+    for step in ("error id", "Roll back", "Restore a snapshot", "leaked secret", "agent key"):
+        assert step in readme, step
     for term in ("app.auth", "app.projects", "import-linter", "OpenAPI", "API types"):
         assert term in readme
     _assert_python_guidance(client)
@@ -196,6 +204,9 @@ def test_1_a_python_backend_app_starts_from_the_fastapi_starter(
     # Regressions include a missing init option, omitted wheel data, or missing sync guidance.
     # Existing starter tests cover the React default and its own sync text, not Python selection.
     # The real Forge command, installed wheel, and existing adoption fixture are the boundaries.
+    # New apps must now omit Prettier, install as app, and include recovery steps.
+    # These generated-file contracts catch stale starter copies; the live uid case
+    # separately catches a root runtime user. Neither needs a production seam.
     if case == "wheel":
         built = subprocess.run(
             ["uv", "build", "--wheel", "--out-dir", str(tmp_path / "dist")],

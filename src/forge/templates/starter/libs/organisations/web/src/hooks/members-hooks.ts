@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AddAgentInput, AgentKey, ChangeRoleInput, Member } from '@app/organisations-contracts';
 import type { InviteInput } from '@app/auth-contracts';
@@ -37,11 +38,16 @@ export function useChangeRole() {
 }
 
 export function useInvite() {
+  const idempotencyKey = useRef(crypto.randomUUID());
   return useMutation({
     mutationFn: (input: InviteInput) => apiRequest<{ message: string }>('/invites', {
       method: 'POST',
       body: JSON.stringify(input),
+      headers: { 'Idempotency-Key': idempotencyKey.current },
     }),
+    onSuccess: () => {
+      idempotencyKey.current = crypto.randomUUID();
+    },
   });
 }
 

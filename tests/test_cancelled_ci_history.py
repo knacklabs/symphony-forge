@@ -44,9 +44,12 @@ def test_27_cancelled_ci_wait_keeps_observed_phase_reason_and_published_history(
         "\nimport signal\nfrom pathlib import Path\n"
         f"marker = Path({str(marker)!r})\n"
         "advance = time.sleep\n"
+        "waited = 0\n"
         "def cancel(seconds):\n"
+        "    global waited\n"
         "    advance(seconds)\n"
-        "    if marker.exists() and elapsed >= 120:\n"
+        "    waited += seconds\n"
+        "    if marker.exists() and waited >= 120:\n"
         "        marker.unlink()\n"
         "        signal.raise_signal(signal.SIGINT)\n"
         "time.sleep = cancel\n", encoding="utf-8")

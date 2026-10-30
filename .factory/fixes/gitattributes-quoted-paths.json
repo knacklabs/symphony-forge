@@ -1,0 +1,45 @@
+{
+  "base": "1967b96d9bf12bab966b66130ed34cb0d80739d3",
+  "branch": "fix/gitattributes-quoted-paths",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a185c4-8bda-7aa3-b63d-34c4cf62087a",
+    "head": null,
+    "start": "5eeb896f0539226376bcf1c071705368210f079e"
+  },
+  "done_when": "The three failing test_1 cases pass on this branch and the other test_generated_docs_run_tests cases still pass",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ff957973452136c423e713724d946124c2f3ba8d9886af5fc099529a66ee8efe",
+    "changed": "765fde82b97fa9301a47e0cda5483defd6334a15a2281e237e3a298d52af1733",
+    "commit": "5f0cf8622084fdc1a082cf9e7a8945ebf61ace35",
+    "dismissals": [],
+    "findings": [],
+    "id": "fa6f00ff-141a-41cd-bcc1-fe9f59efdd7d",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-29T03:46:44.647916+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-29T03:51:00.242265+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "5e56e0fdd3b6ae988fa53d0b505646af3ffbfdfd",
+    "keys": {},
+    "round": null
+  },
+  "why": "Main is red before the v1.2.24 hotfix: the change classifier treats quoted .gitattributes paths as code consumers, so tests/test_generated_docs_run_tests.py test_1 fails three cases on origin/main",
+  "worker": "codex"
+}

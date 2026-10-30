@@ -1,6 +1,12 @@
 export const HISTORY_API = 'HistoryApi';
 
-export type HistoryPrincipal = { id: string; email: string; organisationId: string };
+export type HistoryPrincipal = {
+  id: string;
+  email: string;
+  organisationId: string;
+  /** The agent that acts for this person, such as `the assistant`. Unset when the person acts, or when a team agent acts as its own account. */
+  viaAgent?: string;
+};
 
 /** The changed item; its name prefixes the summary on the Change history screen. */
 export type HistorySubject = { id: string; name: string };

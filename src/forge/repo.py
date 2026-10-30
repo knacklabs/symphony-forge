@@ -587,11 +587,22 @@ KINDS = ("build", "fix", "lite", "explore", "grill", "design", "review", "light_
 SUBAGENTS = ("subagents", "subagent_effort")
 FAMILIES = ("codex", "claude")
 # A worker's models when forge.toml has no entry for its family, so Forge always names them.
-WORKER_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
-                   "codex": {"model": "gpt-6.1-sol", "effort": "medium"}}
+WORKER_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "low"},
+                   "codex": {"model": "gpt-6.1-sol", "effort": "low"}}
 DESIGN_DEFAULTS = {"claude": {"model": "claude-sonnet-5-5", "effort": "xhigh"},
                    "codex": {"model": "gpt-6.1-sol", "effort": "high"}}
 CLAUDE_GRILL_DEFAULT = {"model": "claude-opus-5-5", "effort": "high"}
+TOP_EFFORT = {"codex": "high", "claude": "xhigh"}
+SUBAGENT_DEFAULT = {"model": "claude-haiku-5-5", "effort": "high"}
+
+
+def round_effort(chosen: dict[str, str], family: str, failed: bool) -> dict[str, str]:
+    """Raise only the worker's effort after a verified failure, keeping higher repo choices."""
+    order = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
+    effort, top = chosen["effort"], TOP_EFFORT[family]
+    if failed and effort in order and order.index(effort) < order.index(top):
+        return {**chosen, "effort": top}
+    return chosen
 
 
 def config(top: Path | None = None) -> dict[str, Any]:
@@ -768,6 +779,13 @@ def user_facing(cfg: dict[str, Any], row: dict[str, str]) -> bool:
 def worker_models(cfg: dict[str, Any], kind: str, family: str) -> dict[str, str]:
     """A worker's models for this kind: forge.toml's entry for the family, else Forge's default."""
     return models(cfg, kind, family) or WORKER_DEFAULTS[family]
+
+
+def subagent_budget(cfg: dict[str, Any], kind: str) -> dict[str, str]:
+    """A Claude worker kind's helper pair, or the default when that kind has no pair."""
+    entry = models(cfg, kind, "claude")
+    return ({"model": entry["subagents"], "effort": entry["subagent_effort"]}
+            if "subagents" in entry else SUBAGENT_DEFAULT)
 
 
 def worker(cfg: dict[str, Any], kind: str, design: bool,

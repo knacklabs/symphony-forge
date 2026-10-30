@@ -74,8 +74,10 @@ def test_1_every_note_and_finding_shows_scores_and_the_harm_floor(env, tmp_path,
             _scored("P1", "Prototype fails", "Gain 5, Work 2, Harm 1\nDemo cannot finish")]}}
         queue.write_text(json.dumps([valid_score]))
         refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+        # The second attempt is round 2, so sign-off asks the owner to choose.
         assert refused.returncode == 1
-        assert "found a blocking issue: Prototype fails" in refused.stderr
+        assert "choose one more round, split or accept" in refused.stderr
+        assert "Prototype fails" in refused.stderr
         calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
         call = [call for call in calls if "## Client prototype sign-off review" in
                 "\n".join(call["prompt_files"].values())][-1]

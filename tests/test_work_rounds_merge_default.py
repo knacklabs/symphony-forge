@@ -26,6 +26,8 @@ def rounds(client, monkeypatch, tmp_path):
     environment, _, remote = client
     repo = environment.repo
     install_claude(repo)
+    # These tests cover the native fallback; the repo fixture installs the SDK by default.
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "without-claude-sdk"))
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
     repo.git("switch", "-qc", "fix/default-update")

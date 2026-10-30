@@ -13,6 +13,8 @@ from test_mcp import _adopted_files_after_sync
 from test_setup import _fresh_client
 from test_starter_tree import LIVE, _junit_cases, _require_cases, live_python_run, live_run
 
+STORY = "FORGE-MCPRES-1"
+
 
 RESOURCE_ITEM_CASE = "an agent reads a project, the project fields and the status values as resources"
 RESOURCE_CONTRACT_CASE = "every feature has its resources, each with a description and the JSON type"

@@ -115,7 +115,7 @@ test('switching accounts does not show the previous account projects', async ({ 
   });
   try {
     await page.getByRole('link', { name: 'Members' }).click();
-    await expect(page.getByText('Loading members…')).toBeVisible();
+    await expect(page.getByRole('status', { name: 'Loading members' })).toBeVisible();
     await expect(page.getByRole('row', { name: new RegExp(firstEmail) })).toHaveCount(0);
   } finally {
     releaseMembers();

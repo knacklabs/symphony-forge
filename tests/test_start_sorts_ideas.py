@@ -60,7 +60,7 @@ def intake(request, land, gh, monkeypatch, tmp_path):
         assert synced.returncode == 0, synced.stdout + synced.stderr
         repo.git("switch", "-q", "main", cwd=top)
         remote = tmp_path / "remote.git"
-        expected = ("claude-sonnet-5-5", "xhigh")
+        expected = ("claude-sonnet-5-5", "low")
     # A landed adoption and initial scaffold are facts in git before intake starts.
     _land_setup(repo, top, "setup-intake")
     _install(repo.bin, "gh", GH.format(python=sys.executable, remote=str(remote), url=URL)

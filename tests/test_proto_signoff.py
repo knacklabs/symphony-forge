@@ -206,7 +206,8 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     critical = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert critical.returncode == 1
     assert "Prototype exposes data" in critical.stderr
-    assert "Next: fix the prototype" in critical.stderr
+    # A P0 still blocks; its next step now starts one grouped repair fix.
+    assert "Next: forge fix start " in critical.stderr
     assert "status: proposed" in page.read_text()
     assert len(queue.with_suffix(".calls.jsonl").read_text().splitlines()) == 3
 
@@ -270,7 +271,10 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     missing_selection = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert missing_selection.returncode == 0, missing_selection.stderr
     assert "status: accepted" in page.read_text()
-    page = _decision(fix, answers)
+    # Test audit: these existing cases own strict external-review failures and
+    # model selection. Changed proof makes each reach the reviewer despite reuse;
+    # keep every failure assertion and the total call count. No new seam is needed.
+    page = _decision(fix, answers, proof="The order flow passes. Check automatic model fallback.")
 
     queue.write_text(json.dumps([{"say": SOL_HIGH + "\n"
                                    "codex model gpt-6.1-sol is unavailable for this account; "
@@ -279,14 +283,14 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     fallback = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert fallback.returncode == 0, fallback.stderr
     assert "status: accepted" in page.read_text()
-    page = _decision(fix, answers)
+    page = _decision(fix, answers, proof="The order flow passes. Check alternate effort.")
 
     queue.write_text(json.dumps([{"say": "model: gpt-6.1-sol\nthinking: xhigh",
                                   "report": {"review_status": "scoped-clean", "findings": []}}]))
     other_effort = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
     assert other_effort.returncode == 0, other_effort.stderr
     assert "status: accepted" in page.read_text()
-    page = _decision(fix, answers)
+    page = _decision(fix, answers, proof="The order flow passes. Check strict review errors.")
     reviewed = repo.git("rev-parse", "HEAD", cwd=fix)
 
     queue.write_text(json.dumps([{"say": SOL_HIGH, "report": {
@@ -345,10 +349,9 @@ def test_7_review_guards_client_signoff(repo, tmp_path, monkeypatch):
     assert "docs/product/BRIEF.md" in prompt
     assert "| Topic | Question | Options (default first) | Before sign-off |" in prompt
     assert "| Data import | Does data need to come in from today's tools?" in prompt
-    assert set((tmp_path / "reviewed-files.txt").read_text().splitlines()) == {
-        "README.md", "forge.toml", "app.py", "PRODUCT.md", "DESIGN.md",
-        "docs/product/BRIEF.md", "docs/design/prototype/CHECKS.md",
-        "docs/design/prototype/SCREENS.md", "docs/design/prototype/order-list.svg"}
+    # The first attempt reviews the whole product. This retry rechecks earlier
+    # findings without replaying unchanged product files (covered by signoff_review_rounds).
+    assert not (tmp_path / "reviewed-files.txt").read_text().splitlines()
 
 
 def test_8_signoff_requires_customer_evidence_and_exact_answers(repo, tmp_path, monkeypatch):

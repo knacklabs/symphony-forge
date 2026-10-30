@@ -77,13 +77,38 @@ Land prints the owner's question, open findings and failing checks, then exits w
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
 
+When the owner narrows or splits a stopped story part, close writes the choice into that part's
+builder details and merges the plan into the task branch. The next worker round gets those details.
+This plan update keeps the code review when no other reviewed input changed.
+For a fix, follow the printed `forge fix amend` step to update its Done when before more work.
+Narrow stays a choice at a stuck-worker stop. Review-loop stops use more, split or accept.
+
 Close records a reused review against the current branch after a replay. Land retries close once
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
 
+The client sign-off code review excludes images; the canvas completeness check reviews them.
 Normal reviews, reviews of docs and assets, and sign-off reviews use the selected tool's model and optional effort from
 `[models.review]` in `forge.toml`, including its per-tool entries. An unset entry or effort
 uses Autoreview's default. New and earlier-adopted repos get this behaviour on the current release.
+
+After a red close test, a blocking review finding or a failed required check, a build, fix or
+lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
+Design rounds keep their fixed effort. Claude uses the SDK when installed. Native rounds
+request the effort in their instructions and record it as requested.
+New repos start build, fix and lite at low effort on both tools. Existing repos keep
+their configured models and efforts; a failure round uses the higher of that effort
+and the tool's top effort. Optional failed checks and owner notes do not raise it.
+The same worker thread continues; only the main worker's turn effort changes.
+Reviews, cold reads and sign-off keep their fixed effort. New Claude repos get
+Sonnet 5.5 at high for cold reads and reviews. Forge's defaults never use none.
+Claude helpers use their kind's subagents and subagent_effort pair, or Haiku 5.5
+at high when neither is set, including the SDK's general-purpose helper. Codex
+helpers keep their configured pair (Luna at max by default). Helpers never rise
+with the main worker, and Claude's SDK options affect only its builder's turn.
+Each run records its round and effort. The board and story history add built at
+the recorded effort to each round line; native effort is labelled requested.
+Old records with no effort keep their existing line.
 
 Keep new story plans to at most six Done when items. `forge read` refuses larger plans in one
 line asking you to split them into smaller stories; already approved larger stories stay as they are.
@@ -98,21 +123,31 @@ Before every work round, Forge fetches and merges the default branch before it r
 If that merge conflicts, the worker gets its normal full brief with one added line to finish and commit the merge first.
 `forge work` refuses a fix or task whose pull request is already merged. Start a new fix with `forge fix start` for follow-up work.
 
-If the default branch moved after close, `forge merge` first merges it into the item's branch.
+If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
+It merges the default branch locally to check the combined change.
 It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
-merge base. It pushes and merges only after the tests pass. A failure names the failed tests
+merge base. It merges the pull request only after the tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. With no default-branch move, merge runs no extra tests.
-After a green retest, Forge reuses the existing review and commits its coverage of the combined
-change before the push. It pushes and merges at once, without another pull-request CI wait.
+If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
+If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
+It pushes that commit, waits for its required checks, then merges.
 The nightly full run on the default branch covers the rest.
+`forge test --full` fails if the whole run has no tests. Set `test` in `forge.toml` to run
+the whole suite. An empty group of a nonempty suite is valid.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
-checks, Forge fetches the default branch again. If it moved again, Forge refuses the merge
-and gives `forge merge <item>` as the next step.
+checks, Forge fetches the default branch again. If it moved again, Forge checks the new
+commits against the item's changed files. With no overlap, Forge merges at once. With an
+overlap, Forge repeats the combined tests and required checks. After five further moves,
+Forge stops and gives `forge merge <item>` as the next step.
 
 If another program holds the earlier Codex conversation, Forge retries once. If it is still
 held, work starts a new conversation with the whole brief and says why in one line.
 
 $delegation
+- Claude SDK workers get their helper roles and `general-purpose` through turn options only.
+  Each worker kind uses its `subagents` and `subagent_effort` pair, or `claude-haiku-5-5` at
+  high when it has no pair. Design turns use the build pair. Helper settings stay the same
+  after a failed round and set no process-wide value or `settings.json` value.
 - Edit files only inside this checkout.
 - $settings
 - After a merge of the default branch, close keeps that branch's settings unless this item's
@@ -273,6 +308,11 @@ test command without installing Forge in the project. This picker belongs in `fa
 workers run bare `forge test` to enter the lane.
 Root dependency files select the full test command. A nested project's dependency files
 select that project's tests and test files that name those dependency paths.
+A test module is shared setup when another test or conftest.py names it, including in a
+pytest_plugins string or a comment. The pytest picker also runs those readers and their readers;
+a conftest.py reference includes the tests below its folder. This plain text search can run
+extra tests. Only modules with no readers use the independent-test CI shortcut; shared modules
+keep the configured CI groups and Windows coverage.
 When the pytest picker selects more than a third of the test files, bare `forge test` runs
 only the part's Tests column or the fix's touched test files, plus `always_test`, and says
 "The nightly full run covers the rest." This includes shared-fixture changes. With no named
@@ -421,6 +461,12 @@ default tool only with `hide`. Never call a feature's service from the MCP modul
 contract case `every tool has a description, annotations, schemas and the error shape`
 must pass.
 
+In an app with `libs/core/server/src/common/retry-keys.ts` (Python `app/core/retry_keys.py`),
+a create or a send, pay or notify action that you add takes the `Idempotency-Key` header
+through `RetryKeys.once` (Python `create_once`), as the projects create does. An update takes
+no key. Put a report in its module's report service, with named, typed results that carry
+their units. Never change a module's data around its service, from a route, a tool or a job.
+
 A feature's resources come from `defineFeatureTools`; add none by hand. Add a prompt with
 `definePrompt` only when your part names it, with a strict `arguments` schema and one
 permission. Never send an elicitation or a sampling request.
@@ -448,11 +494,15 @@ table or column, or changes a column's type, add a `-- Contract: ...` comment to
 `# Contract: ...` to Alembic Python. Explain why the live release no longer reads the table or
 column; close allows the migration when the line is present, and review reads the explanation.
 
+Before any agent, chat, voice or in-app assistant work, load the agents skill (.codex/skills/agents/SKILL.md) and follow it. Say which of its sections apply to your change. A review holds a broken Must rule.
+
 In an app that has libs/organisations, scope every query to the caller's organisation
 (organisationId on the principal), guard admin actions with @AdminOnly() and record them
 with HistoryService.record, format dates, times, numbers and money only with the helpers
 in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach
-the one error report. An app without libs/organisations keeps the code it has.
+the one error report.
+Add no error-tracking service; Mainline sends alerts from the error lines. In an app with `request-log.middleware.ts` or `set_log_level` in `app/core/logging.py`, the logger writes each API request's line and removes password, token, secret, key and authorization values from its context, so add no request logging or redaction there.
+An app without libs/organisations keeps the code it has.
 An app made before this layout keeps its own folders and schema; follow the folders it has.
 
 In a TypeScript app with zod in a package.json, check each request body and query that you add

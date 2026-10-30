@@ -7,11 +7,8 @@ def _sql(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
 
 
-def _prisma(value: str) -> str:
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
 def _template(value: str, **parts: str) -> str:
+    parts = {"org": "organisationId", "updated": "updatedAtUtc", "deleted": "deletedAtUtc", **parts}
     for key, part in parts.items():
         value = value.replace("{" + key + "}", part)
     return value
@@ -39,14 +36,12 @@ def render_schema(
     for field in fields:
         name, kind_name = _column(field), field["kind"]
         kind = definitions[kind_name]
-        base, _, native = kind["prisma"].partition(" ")
+        base, _, native = _template(kind["prisma"], first=field["options"][0] if field["options"] else "").partition(" ")
         optional = field.get("optional", False) and kind_name != "yes-no"
         declaration = f"{base}{'?' if optional else ''}{' ' + native if native else ''}"
-        if kind_name == "yes-no":
-            declaration += " @default(false)"
-        elif kind_name == "status":
-            declaration += f" @default({_prisma(field['options'][0])})"
         prisma_fields.append(f"  {name:<19} {declaration}")
+        if "currency_prisma" in kind:
+            prisma_fields.append(f"  {name}Currency {kind['currency_prisma']}")
     prisma_fields.extend(
         [
             "  createdAtUtc        DateTime @default(now()) @db.Timestamptz(3)",
@@ -61,21 +56,21 @@ def render_schema(
             f'  modifiedByAccount   Account @relation("{model}ModifiedBy", fields: [modifiedByAccountId], references: [id], onDelete: Restrict)',
             f'  deletedByAccount    Account? @relation("{model}DeletedBy", fields: [deletedByAccountId], references: [id], onDelete: Restrict)',
             "",
-            f'  @@index([organisationId, updatedAtUtc(sort: Desc), id(sort: Desc)], map: "idx_{model}_list")',
+            f'  @@index([organisationId, updatedAtUtc(sort: Desc), id(sort: Desc)], map: "idx_{model}_list", where: {{ deletedAtUtc: null }})',
         ]
     )
     for field in fields:
         name, kind = _column(field), definitions[field["kind"]]
         if kind.get("filter_index"):
             prisma_fields.append(
-                f'  @@index([organisationId, {name}, updatedAtUtc(sort: Desc), id(sort: Desc)], map: "idx_{model}_{name}")'
+                f'  @@index([organisationId, {name}, updatedAtUtc(sort: Desc), id(sort: Desc)], map: "idx_{model}_{name}", where: {{ deletedAtUtc: null }})'
             )
         if kind.get("search_index"):
             prisma_fields.append(
-                f'  @@index([organisationId(ops: raw("uuid_ops")), {name}(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_{model}_{name}_search")'
+                f'  @@index([organisationId(ops: raw("uuid_ops")), {name}(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_{model}_{name}_search", where: {{ deletedAtUtc: null }})'
             )
         if kind.get("index"):
-            prisma_fields.append(f'  @@index([{name}], map: "idx_{model}_{name}_link")')
+            prisma_fields.append(f'  @@index([{name}], map: "idx_{model}_{name}_fk")')
     prisma_fields.extend(
         [
             f'  @@index([{column}], map: "idx_{model}_{column}")'
@@ -93,14 +88,15 @@ def render_schema(
         name, kind_name = _column(field), field["kind"]
         kind = definitions[kind_name]
         optional = field.get("optional", False) and kind_name != "yes-no"
-        declaration = f'"{name}" {kind["sql"]}'
+        sql_type = _template(kind["sql"], first=field["options"][0] if field["options"] else "")
+        declaration = f'"{name}" {sql_type}'
         if not optional:
             declaration += " NOT NULL"
-        if kind_name == "yes-no":
-            declaration += " DEFAULT false"
-        elif kind_name == "status":
-            declaration += " DEFAULT " + _sql(field["options"][0])
         columns.append(declaration)
+        if "currency_sql" in kind:
+            currency = name + "Currency"
+            columns.append(f'"{currency}" {kind["currency_sql"]} NOT NULL')
+            checks.append(_template(kind["currency_check"], table=model, currency=currency))
         if kind.get("check"):
             options = ", ".join(_sql(option) for option in field.get("options", []))
             checks.append(_template(kind["check"], table=model, column=name, options=options))

@@ -469,6 +469,8 @@ def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, f
         if kind[enabled]:
             expected = kinds["table"][key].replace("{table}", model).replace(
                 "{schema}", schema).replace("{column}", column).replace("{options}", options)
+            expected = (expected.replace("{org}", "organisationId")
+                        .replace("{updated}", "updatedAtUtc").replace("{deleted}", "deletedAtUtc"))
             assert expected in migration
 
 
@@ -588,9 +590,9 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
             expected = (kinds["table"][template_name].replace("{table}", "job")
                         .replace("{schema}", "jobs").replace("{column}", column)
                         .replace("{options}", ""))
-            for camel, snake in (("organisationId", "organisation_id"),
-                                 ("updatedAtUtc", "updated_at_utc"),
-                                 ("deletedAtUtc", "deleted_at_utc")):
+            for camel, snake in (("{org}", "organisation_id"),
+                                 ("{updated}", "updated_at_utc"),
+                                 ("{deleted}", "deleted_at_utc")):
                 expected = expected.replace(camel, snake)
             return expected
 
@@ -618,7 +620,8 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
                 None,
             )
             assert declaration, column
-            assert kind["sql"] in declaration, (column, declaration)
+            sql_type = kind["sql"].replace("{first}", options[0] if options else "")
+            assert sql_type in declaration, (column, declaration)
             assert ("NOT NULL" in declaration) is required, column
             assert kind["sqlalchemy"].split(", server_default")[0] in models, column
             schema_field = input_fields.get(column)
@@ -631,7 +634,8 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
             else:
                 annotation = ast.unparse(schema_field.annotation)
                 assert kind["pydantic"] in annotation, (column, annotation)
-            if kind_name == "number":
+            # Decimal inputs now use strings, in place of Decimal and integer coercion.
+            if kind_name in ("number", "money"):
                 assert isinstance(schema_field.value, ast.Call)
                 assert isinstance(schema_field.value.func, ast.Name)
                 assert schema_field.value.func.id == "Field"
@@ -640,19 +644,7 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
                     for keyword in schema_field.value.keywords
                     if keyword.arg is not None
                 }
-                assert constraints["max_digits"] == 19
-                assert constraints["decimal_places"] == 4
-            if kind_name == "money":
-                assert isinstance(schema_field.value, ast.Call)
-                assert isinstance(schema_field.value.func, ast.Name)
-                assert schema_field.value.func.id == "Field"
-                constraints = {
-                    keyword.arg: ast.literal_eval(keyword.value)
-                    for keyword in schema_field.value.keywords
-                    if keyword.arg is not None
-                }
-                assert constraints["ge"] == -(2**31)
-                assert constraints["le"] == 2**31 - 1
+                assert constraints["pattern"] == r"^-?\d{1,15}(?:\.\d{1,4})?$"
             if kind["check"]:
                 expected_check = (
                     kind["check"].replace("{table}", "job")
@@ -665,8 +657,8 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
                                            ("index", "index")):
                 if kind[enabled]:
                     assert table_sql(template_name, column) in sql, (column, enabled)
-        assert '"client_id" UUID' in sql
-        assert 'idx_job_client_id_link' in sql
+        assert '"client_id" uuid' in sql
+        assert 'idx_job_client_id_fk' in sql
         assert 'FOREIGN KEY ("client_id")' not in sql
         assert "REFERENCES clients." not in sql
         assert 'REFERENCES core.organisation("id")' in sql
@@ -697,7 +689,8 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
     for audit in ("createdByAccountId", "modifiedByAccountId", "deletedAtUtc", "deletedByAccountId"):
         assert f'"{audit}"' in migration
     assert (kinds["table"]["list_index"].replace("{table}", "Job")
-            .replace("{schema}", "jobs")) in migration
+            .replace("{schema}", "jobs").replace("{org}", "organisationId")
+            .replace("{updated}", "updatedAtUtc").replace("{deleted}", "deletedAtUtc")) in migration
     assert kinds["table"]["updated_at_trigger"].replace("{table}", "Job") in migration
     assert kinds["table"]["soft_delete_trigger"].replace("{table}", "Job") in migration
 
@@ -715,7 +708,8 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
     for column, (kind_name, required, options) in declarations.items():
         kind = kinds["kinds"][kind_name]
         declaration = re.search(rf'^\s*"{re.escape(column)}" (.+),$', migration, re.M)
-        assert declaration and declaration[1].startswith(kind["sql"]), column
+        sql_type = kind["sql"].replace("{first}", options[0] if options else "")
+        assert declaration and declaration[1].startswith(sql_type), column
         assert ("NOT NULL" in declaration[1]) is required, column
         if kind["check"]:
             expected = (kind["check"].replace("{table}", "Job").replace("{column}", column)
@@ -725,7 +719,7 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
             "name": column, "column": column, "kind": kind_name, "options": options,
         })
     assert '"clientId"' in migration
-    assert 'CREATE INDEX "idx_Job_clientId_link" ON "jobs"."Job" ("clientId");' in migration
+    assert 'CREATE INDEX "idx_Job_clientId_fk" ON "jobs"."Job" ("clientId");' in migration
     assert 'FOREIGN KEY ("clientId")' not in migration
     assert "REFERENCES clients." not in migration
 

@@ -56,7 +56,7 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
     label = _snake(_column(next(field for field in fields if field["kind"] == "text" and not field.get("optional"))))
     concise = [_snake(_column(field)) for field in fields if kinds["kinds"][field["kind"]]["column"]]
     numbers = [_snake(_column(field)) for field in fields
-               if field["kind"] == "number" and kinds["kinds"][field["kind"]]["column"]]
+               if field["kind"] in ("number", "money") and kinds["kinds"][field["kind"]]["column"]]
     statuses = [_snake(_column(field)) for field in fields if field["kind"] == "status"]
     links = [_snake(_column(field)) for field in fields if field["kind"] == "link"]
     optional_input_fields = [_column(field) for field in fields if field.get("optional")]
@@ -317,7 +317,7 @@ def render_mcp_cases(fields: list[dict[str, Any]], one: str, plural: str, kinds:
       for (const [column, definition] of Object.entries(FIELD_CASES)) {
         const field = column.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
         if (FEATURE_CONCISE_FIELDS.includes(field)) continue;
-        if (definition.kind === 'number') expect(Number(actual[field])).toBe(Number(input[field]));
+        if (definition.kind === 'number' || definition.kind === 'money') expect(Number(actual[field])).toBe(Number(input[field]));
         else expect(actual[field]).toEqual(input[field]);
       }
     }
@@ -759,7 +759,7 @@ async function featureInput(
       if (field.kind === 'text' || field.kind === 'long-text') value = `${String(field.sample)} ${mark}-${variant}`;
       else if (field.kind === 'email') value = `${mark}-${variant}@example.test`;
       else if (field.kind === 'number') value = (Number(field.sample) + variant).toFixed(4);
-      else if (field.kind === 'money') value = Number(field.sample) + variant;
+      else if (field.kind === 'money') value = (Number(field.sample) + variant).toFixed(4);
       else if (field.kind === 'date') {
         const date = new Date(`${String(field.sample)}T00:00:00.000Z`);
         date.setUTCDate(date.getUTCDate() + variant);
@@ -795,7 +795,7 @@ function compareValues(left: unknown, right: unknown, order: 'asc' | 'desc', kin
 
 function expectFeatureValues(actual: Record<string, unknown>, input: Record<string, unknown>): void {
   for (const [column, expected] of Object.entries(input)) {
-    if (FIELD_CASES[column].kind === 'number') {
+    if (FIELD_CASES[column].kind === 'number' || FIELD_CASES[column].kind === 'money') {
       expect(typeof actual[column]).toBe('string');
       expect(Number(actual[column])).toBe(Number(expected));
     } else expect(actual[column]).toEqual(expected);

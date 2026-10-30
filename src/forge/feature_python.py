@@ -58,8 +58,8 @@ def _remove_marks(text: str) -> str:
 
 
 def _feature_mcp(text: str, include: bool) -> str:
-    """Keep MCP-only code for a starter that ships the server."""
-    matches = [match for match in MARKER.finditer(text) if match["name"] in {"mcp", "mcp-cases"}]
+    """Keep agent tools and retry keys when the app ships both helpers."""
+    matches = [match for match in MARKER.finditer(text) if match["name"] in {"mcp", "mcp-cases", "retry-key"}]
     for match in reversed(matches):
         lines = match.group(0).splitlines(keepends=True)
         replacement = "".join(lines[1:-1]) if include else ""
@@ -97,6 +97,11 @@ def _table_type(kind: str, definitions: dict[str, Any]) -> str:
     return definitions[kind]["sqlalchemy"].split(", server_default=", 1)[0]
 
 
+def _value(field: dict[str, Any], definitions: dict[str, Any], key: str) -> str:
+    value = definitions[field["kind"]][key]
+    return value.replace("{first}", field["options"][0].replace("'", "''")) if field["kind"] == "status" else value
+
+
 def _table_type_name(kind: str, definitions: dict[str, Any]) -> str:
     return re.match(r"[A-Za-z_][A-Za-z0-9_]*", _table_type(kind, definitions))[0]
 
@@ -111,14 +116,22 @@ def _field_attr(field: dict[str, Any]) -> str:
     return _snake(field["column"])
 
 
-def _check_parts(field: dict[str, Any], definitions: dict[str, Any], table: str) -> tuple[str, str] | None:
-    check = definitions[field["kind"]].get("check", "")
+def _check_parts(
+    field: dict[str, Any], definitions: dict[str, Any], table: str, *, currency: bool = False
+) -> tuple[str, str] | None:
+    if currency and field["kind"] != "money":
+        return None
+    check = (
+        definitions["money"].get("currency_check", "")
+        if currency
+        else definitions[field["kind"]].get("check", "")
+    )
     if not check:
         return None
-    column = _snake(field["column"])
-    options = ", ".join(_sql(option) for option in field["options"])
+    column = _field_attr(field) + "_currency" if currency else _snake(field["column"])
+    options = ", ".join(_sql(option) for option in field.get("options", []))
     check = (check.replace("{table}", table).replace("{column}", column)
-             .replace("{options}", options))
+             .replace("{currency}", column).replace("{options}", options))
     match = re.fullmatch(r'CONSTRAINT "([^"]+)" CHECK \((.*)\)', check)
     if match is None:
         raise ValueError(f"Unsupported check template for {field['kind']}.")
@@ -142,15 +155,23 @@ def _model_source(
     definitions = kinds["kinds"]
     table, schema = _snake(one), _snake(plural)
     used_types = {_table_type_name(field["kind"], definitions) for field in fields}
+    if any(field["kind"] == "money" for field in fields):
+        used_types.add(definitions["money"]["currency_sqlalchemy"])
     imports = {"DateTime", "ForeignKey", "Index", "func", "text"} | used_types
-    if any(_check_parts(field, definitions, table) for field in fields):
+    if any(
+        _check_parts(field, definitions, table)
+        or _check_parts(field, definitions, table, currency=True)
+        for field in fields
+    ):
         imports.add("CheckConstraint")
+    if any(", server_default=false()" in _value(field, definitions, "sqlalchemy") for field in fields):
+        imports.add("false")
     import_lines = [
         "from datetime import date, datetime"
         if any(field["kind"] == "date" for field in fields)
         else "from datetime import datetime"
     ]
-    if any(field["kind"] == "number" for field in fields):
+    if any(field["kind"] in ("number", "money") for field in fields):
         import_lines.append("from decimal import Decimal")
     import_lines.extend(["from uuid import UUID", "", "from sqlalchemy import ("])
     import_lines.extend(f"    {name}," for name in sorted(imports))
@@ -164,8 +185,12 @@ def _model_source(
     )
     table_args = []
     for field in fields:
-        check = _check_parts(field, definitions, table)
-        if check:
+        for check in (
+            _check_parts(field, definitions, table),
+            _check_parts(field, definitions, table, currency=True),
+        ):
+            if not check:
+                continue
             table_args.extend(
                 [
                     "CheckConstraint(",
@@ -173,7 +198,7 @@ def _model_source(
                     f"    name={_literal(check[0])},",
                     "),",
                 ]
-    )
+            )
     for column in (
         "organisation_id",
         "created_by_account_id",
@@ -229,7 +254,7 @@ def _model_source(
             table_args.extend(
                 [
                     "Index(",
-                    f'    "idx_{table}_{column}_link",',
+                    f'    "idx_{table}_{column}_fk",',
                     f'    "{column}",',
                     "),",
                 ]
@@ -239,7 +264,7 @@ def _model_source(
     for field in fields:
         kind, attr = field["kind"], _field_attr(field)
         optional = field.get("optional", False) and kind != "yes-no"
-        base = "str" if kind == "status" else definitions[kind]["pydantic"]
+        base = "Decimal" if kind in ("number", "money") else definitions[kind]["pydantic"]
         if optional:
             base += " | None"
         column_type = _table_type(kind, definitions)
@@ -247,13 +272,23 @@ def _model_source(
             # Persist an explicit None instead of letting the server default replace it.
             column_type += "().evaluates_none()"
         args = [column_type, f"nullable={optional}"]
-        if kind == "yes-no":
-            args.append('server_default=text("false")')
-        elif kind == "status":
-            args.append(f"server_default=text({_literal(_sql(field['options'][0]))})")
+        server_default = _value(field, definitions, "sqlalchemy").partition(", server_default=")[2]
+        if server_default:
+            args.append(f"server_default={server_default}")
         model_fields.append(f"{attr}: Mapped[{base}] = mapped_column(")
         model_fields.extend(f"    {arg}," for arg in args)
         model_fields.append(")")
+        if kind == "money":
+            currency = attr + "_currency"
+            currency_type = definitions[kind]["currency_sqlalchemy"]
+            model_fields.extend(
+                [
+                    f"{currency}: Mapped[str] = mapped_column(",
+                    f"    {currency_type},",
+                    "    nullable=False,",
+                    ")",
+                ]
+            )
     template = (STARTER_PYTHON / "apps/api/app/projects/models.py").read_text(
         encoding="utf-8"
     )
@@ -261,131 +296,6 @@ def _model_source(
     template = _replace_mark(template, "model-imports", "\n".join(import_lines))
     template = _replace_mark(template, "model-table-args", "\n".join(table_args))
     template = _replace_mark(template, "model-fields", "\n".join(model_fields))
-    return _remove_marks(template)
-
-
-def _schema_source(
-    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any]
-) -> str:
-    definitions = kinds["kinds"]
-    imports = [
-        "from datetime import date, datetime"
-        if any(field["kind"] == "date" for field in fields)
-        else "from datetime import datetime"
-    ]
-    if any(field["kind"] == "number" for field in fields):
-        imports.append("from decimal import Decimal")
-    imports.extend(
-        [
-            "from typing import Literal",
-            "from uuid import UUID",
-            "",
-            "from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator",
-            "from pydantic.alias_generators import to_camel",
-        ]
-    )
-    input_fields = []
-    for field in fields:
-        kind, attr = field["kind"], _field_attr(field)
-        optional = field.get("optional", False) and kind != "yes-no"
-        definition = definitions[kind]
-        sample = definition["sample"]
-        if kind == "status" and sample not in field["options"]:
-            sample = field["options"][0]
-        metadata = [
-            f"description={_literal(_words(field['name']) + '.')}",
-            f"examples=[{_literal(sample)}]",
-        ]
-        constraints = []
-        if kind == "text":
-            constraints.extend(["min_length=1", "max_length=200"])
-        elif kind == "long-text":
-            constraints.append("max_length=10000")
-        elif kind == "email":
-            constraints.extend(["max_length=254", 'pattern=r"^[^@\\s]+@[^@\\s]+$"'])
-        elif kind == "number":
-            constraints.extend(["max_digits=19", "decimal_places=4"])
-        elif kind == "money":
-            constraints.extend(["ge=-2147483648", "le=2147483647"])
-        if kind == "status":
-            suffix = " | None" if optional else ""
-            default = "default=None" if optional else f"default={_literal(field['options'][0])}"
-            input_fields.append(f"{attr}: Literal[")
-            input_fields.extend(f"    {_literal(value)}," for value in field["options"])
-            input_fields.append(
-                f"]{suffix} = Field({default}, " + ", ".join(metadata) + ")"
-            )
-        else:
-            type_name = definitions[kind]["pydantic"]
-            if optional:
-                type_name += " | None"
-            arguments = metadata + constraints
-            if optional:
-                arguments.insert(0, "default=None")
-            elif kind == "yes-no":
-                arguments.insert(0, "default=False")
-            input_fields.append(f"{attr}: {type_name} = Field(")
-            input_fields.extend(f"    {argument}," for argument in arguments)
-            input_fields.append(")")
-    response_fields = []
-    for field in fields:
-        kind, attr = field["kind"], _field_attr(field)
-        type_name = _pydantic_type(field, definitions)
-        if field.get("optional") and kind != "yes-no":
-            type_name += " | None"
-        if kind == "status":
-            response_fields.append(f"{attr}: Literal[")
-            response_fields.extend(f"    {_literal(value)}," for value in field["options"])
-            suffix = " | None" if field.get("optional") else ""
-            response_fields.append(f"]{suffix}")
-        elif kind in ("text", "long-text", "email"):
-            limits = {
-                "text": ["max_length=200"],
-                "long-text": ["max_length=10000"],
-                "email": ["max_length=254", 'pattern=r"^[^@\\s]+@[^@\\s]+$"'],
-            }[kind]
-            response_fields.append(f"{attr}: {type_name} = Field(")
-            response_fields.extend(f"    {limit}," for limit in limits)
-            response_fields.append(")")
-        else:
-            response_fields.append(f"{attr}: {type_name}")
-    filter_fields = []
-    for field in fields:
-        kind, attr = field["kind"], _field_attr(field)
-        if not definitions[kind].get("filter_index"):
-            continue
-        if kind == "status":
-            filter_fields.append(f"{attr}: Literal[")
-            filter_fields.extend(f"    {_literal(value)}," for value in field["options"])
-            filter_fields.append("] | None = None")
-        else:
-            query_type = 'Literal["yes", "no"]' if kind == "yes-no" else "UUID"
-            filter_fields.append(f"{attr}: {query_type} | None = None")
-    sort_fields = [field for field in fields if field["kind"] != "long-text"]
-    sort_names = [field["column"] for field in sort_fields]
-    sort_names.extend(["createdAtUtc", "updatedAtUtc"])
-    sort_field = ["sort_by: Literal["]
-    sort_field.extend(f"    {_literal(value)}," for value in sort_names)
-    sort_field.append('] = "updatedAtUtc"')
-    template = (STARTER_PYTHON / "apps/api/app/projects/schema.py").read_text(
-        encoding="utf-8"
-    )
-    template = _python_rename(template, one, plural)
-    search_field = next(field for field in fields if field["kind"] in ("text", "email"))
-    template = template.replace(
-        "# Search reads the first text or email field: name.",
-        f"# Search reads the first text or email field: {_field_attr(search_field)}.",
-    )
-    template = template.replace(
-        "# A cursor holds a whole project name, which can be 120 characters of any script.",
-        "# A cursor holds one sort value and the item's id.",
-    )
-    template = _replace_mark(template, "schema-imports", "\n".join(imports))
-    template = _replace_mark(template, "status-type", "")
-    template = _replace_mark(template, "input-fields", "\n".join(input_fields))
-    template = _replace_mark(template, "response-fields", "\n".join(response_fields))
-    template = _replace_mark(template, "filter-fields", "\n".join(filter_fields))
-    template = _replace_mark(template, "sort-fields", "\n".join(sort_field))
     return _remove_marks(template)
 
 
@@ -425,17 +335,22 @@ def _migration_source(
         column = _snake(field["column"])
         kind = field["kind"]
         optional = field.get("optional", False) and kind != "yes-no"
-        declaration = f'    "{column}" {definitions[kind]["sql"]}'
+        declaration = f'    "{column}" {_value(field, definitions, "sql")}'
         if not optional:
             declaration += " NOT NULL"
-        if kind == "yes-no":
-            declaration += " DEFAULT false"
-        elif kind == "status":
-            declaration += " DEFAULT " + _sql(field["options"][0])
         columns.append(declaration)
         check = _check_parts(field, definitions, table)
         if check:
             checks.append(f'    CONSTRAINT "{check[0]}" CHECK ({check[1]})')
+        currency_check = _check_parts(field, definitions, table, currency=True)
+        if currency_check:
+            currency_column = _field_attr(field) + "_currency"
+            columns.append(
+                f'    "{currency_column}" {definitions[kind]["currency_sql"]} NOT NULL'
+            )
+            checks.append(
+                f'    CONSTRAINT "{currency_check[0]}" CHECK ({currency_check[1]})'
+            )
     columns.extend([
         '    "created_at_utc" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP',
         '    "updated_at_utc" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP',
@@ -453,9 +368,9 @@ def _migration_source(
         f'    CONSTRAINT "{table}_deleted_by_account_id_fkey" FOREIGN KEY ("deleted_by_account_id") REFERENCES core.account("id") ON DELETE RESTRICT',
     ]
     table_sql = {
-        name: template.replace("organisationId", "organisation_id")
-        .replace("updatedAtUtc", "updated_at_utc")
-        .replace("deletedAtUtc", "deleted_at_utc")
+        name: template.replace("{org}", "organisation_id")
+        .replace("{updated}", "updated_at_utc")
+        .replace("{deleted}", "deleted_at_utc")
         for name, template in kinds["table"].items()
     }
     migration = [
@@ -533,7 +448,8 @@ def _permissions_source(one: str, plural: str) -> str:
 
 
 def _routes_source(
-    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any]
+    fields: list[dict[str, Any]], one: str, plural: str, kinds: dict[str, Any],
+    *, include_mcp: bool,
 ) -> str:
     model = _pascal(one)
     module = _snake(plural)
@@ -552,6 +468,12 @@ def _routes_source(
                 f"if item.{attr} is not None",
                 "else None",
             ]
+        elif kind == "money":
+            value = [
+                f"item.{attr}_currency + ' ' + str(item.{attr})",
+                f"if item.{attr} is not None",
+                "else None",
+            ]
         elif kind in ("number", "link"):
             value = [
                 f"str(item.{attr})",
@@ -563,7 +485,7 @@ def _routes_source(
         else:
             value = [f"item.{attr}"]
         columns.extend(["    (", f"        {_literal(label)},"])
-        if kind in ("date", "number", "link"):
+        if kind in ("date", "number", "link", "money"):
             columns.extend(
                 [
                     "        lambda item: (",
@@ -595,7 +517,7 @@ def _routes_source(
         f'"/api/v1/{module}', f'"/api/v1/{plural}'
     )
     template = _replace_mark(template, "csv-fields", "\n".join(columns))
-    return _remove_marks(template)
+    return _remove_marks(_feature_mcp(template, include_mcp))
 
 
 def _module_source(one: str, plural: str, *, include_mcp: bool) -> str:
@@ -636,15 +558,29 @@ def _service_source(
             "datetime": "datetime",
             "date": "date",
             "number": "decimal",
-            "money": "integer",
+            "money": "decimal",
             "yes-no": "boolean",
             "link": "uuid",
         }.get(kind, "string")
     labels = {_field_attr(field): _words(field["name"]) for field in fields}
     labels_source = "{\n" + "\n".join(f"    {_literal(key)}: {_literal(value)}," for key, value in labels.items()) + "\n}"
-    field_attrs = [_field_attr(field) for field in fields]
-    inputs_create = [f"            {attr}=input_data.{attr}," for attr in field_attrs]
-    inputs_update = [f"        item.{attr} = input_data.{attr}" for attr in field_attrs]
+    decimal_fields = tuple(
+        _field_attr(field) for field in fields if field["kind"] in ("number", "money")
+    )
+    money_fields = tuple(_field_attr(field) for field in fields if field["kind"] == "money")
+    inputs_create = []
+    inputs_update = []
+    for field in fields:
+        attr, kind = _field_attr(field), field["kind"]
+        value = f"input_data.{attr}"
+        if kind in ("number", "money"):
+            value = f"Decimal(input_data.{attr})"
+            if field.get("optional"):
+                value += f" if input_data.{attr} is not None else None"
+        inputs_create.append(f"            {attr}={value},")
+        inputs_update.append(f"        item.{attr} = {value}")
+        if kind == "money":
+            inputs_create.append(f"            {attr}_currency=DEFAULT_CURRENCY,")
     filter_lines = []
     for field in filter_fields:
         attr, kind = _field_attr(field), field["kind"]
@@ -739,7 +675,7 @@ def _service_source(
         "import json",
         "from collections.abc import Callable, Sequence" if include_mcp else "from collections.abc import Sequence",
         "from datetime import UTC, datetime" + (", date" if search_import else ""),
-        "from decimal import Decimal, InvalidOperation" if "decimal" in sort_types.values() else None,
+        "from decimal import Decimal, InvalidOperation" if "decimal" in sort_types.values() else "from decimal import Decimal",
         "from typing import Any, NoReturn",
         "from uuid import UUID, uuid7",
         "",
@@ -747,7 +683,8 @@ def _service_source(
         "from sqlalchemy.orm import Session as DbSession",
         "",
         "from app.auth import account_emails",
-        "from app.core import AccountPrincipal, ApiError, has_permission",
+        "from app.core import AccountPrincipal, ApiError, has_permission"
+        + (", DEFAULT_CURRENCY" if money_fields else ""),
         "from app.history import HistoryEntry, HistoryService, Subject",
         *links,
         f"from app.{module}.models import {model} as Model",
@@ -775,6 +712,8 @@ SORT_ATTRIBUTES = {{
 }}
 NULLABLE_SORT_FIELDS = {nullable}
 FIELD_LABELS = {field_labels}
+DECIMAL_FIELDS = {decimal_fields}
+MONEY_FIELDS = {money_fields}
 NAME_ATTRIBUTE = {name_attr}
 STORED_FIELDS = tuple(
     name
@@ -824,7 +763,13 @@ def _change_summary(item: Model, input_data: {model}Input) -> str:
     changes: list[str] = []
     for field, label in FIELD_LABELS.items():
         before, after = getattr(item, field), getattr(input_data, field)
+        if field in DECIMAL_FIELDS and after is not None:
+            after = Decimal(after)
         if before != after:
+            if field in MONEY_FIELDS:
+                currency = getattr(item, field + "_currency")
+                before = f"{{currency}} {{before}}" if before is not None else before
+                after = f"{{currency}} {{after}}" if after is not None else after
             changes.append(f"{{label}} changed from {{before}} to {{after}}")
     return "; ".join(changes)
 
@@ -878,7 +823,13 @@ class {model}Service:
         )
         return [
             {model}.model_validate(
-                {{name: getattr(item, name) for name in STORED_FIELDS}}
+                {{
+                    name: str(value)
+                    if name in DECIMAL_FIELDS and value is not None
+                    else value
+                    for name in STORED_FIELDS
+                    for value in (getattr(item, name),)
+                }}
                 | {{
                     "created_by_email": emails[item.created_by_account_id],
                     "modified_by_email": emails[item.modified_by_account_id],
@@ -1114,6 +1065,7 @@ class {model}Service:
         ),
         search_clause=search_clause, filter_body="\n".join(filter_lines),
         link_body=link_body, create_fields=data_fields, update_fields=assigns,
+        decimal_fields=_literal(decimal_fields), money_fields=_literal(money_fields),
         module=module, one=one.replace("-", " "), permission=_snake(one).upper() + "_PERMISSIONS",
         error_code=_snake(one).upper(),
     )
@@ -1128,7 +1080,7 @@ def render_feature_python(
     root: Path,
     *, include_mcp: bool = True,
 ) -> dict[str, str]:
-    from forge.feature_python_contracts import render_python_contracts
+    from forge.feature_python_contracts import _schema_source, render_python_contracts
     from forge.feature_python_tests import render_python_tests
     from forge.feature_python_tools import render_feature_tools
 
@@ -1140,7 +1092,7 @@ def render_feature_python(
         f"{api}/models.py": _model_source(fields, one, plural, kinds),
         f"{api}/schema.py": _schema_source(fields, one, plural, kinds),
         f"{api}/service.py": _service_source(fields, one, plural, kinds, root, include_mcp=include_mcp),
-        f"{api}/routes.py": _routes_source(fields, one, plural, kinds),
+        f"{api}/routes.py": _routes_source(fields, one, plural, kinds, include_mcp=include_mcp),
         f"{api}/permissions.py": _permissions_source(one, plural),
         f"apps/api/migrations/versions/{migration_name}": migration,
         f"apps/api/tests/test_{module}.py": render_python_tests(

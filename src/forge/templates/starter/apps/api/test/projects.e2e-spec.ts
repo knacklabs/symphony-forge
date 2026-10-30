@@ -68,6 +68,22 @@ function names(response: request.Response): string[] {
   return response.body.data.items.map((project: { name: string }) => project.name);
 }
 
+async function featureInput(
+  _client: ApiClient,
+  _csrf: string,
+  mark: string,
+  mode: 'sample' | 'changed' = 'sample',
+): Promise<Record<string, unknown>> {
+  return {
+    name: `${mode === 'sample' ? 'Retry project' : 'Changed retry project'} ${mark}`,
+    status: mode === 'sample' ? 'active' : 'archived',
+  };
+}
+
+function expectFeatureValues(actual: Record<string, unknown>, input: Record<string, unknown>): void {
+  expect(actual).toMatchObject(input);
+}
+
 describe('projects API', () => {
   it('creates, lists, reads, updates, and deletes a project through the API', async () => {
     const { client, csrf } = await signedIn();
@@ -462,6 +478,67 @@ describe('projects API', () => {
   });
 });
 // forge:feature:generated-tests:end
+
+// forge:feature:retry-key:start
+describe('projects API retry keys', () => {
+  it('a project create sent again with the same Idempotency-Key makes one project', async () => {
+    const { client, csrf } = await signedIn();
+    const key = randomUUID();
+    const mark = randomUUID();
+    const input = await featureInput(client, csrf, mark, 'sample');
+    const create = () => client.post('/api/v1/projects')
+      .set('x-csrf-token', csrf)
+      .set('Idempotency-Key', key)
+      .send(input)
+      .expect(201);
+
+    const first = await create();
+    const replay = await create();
+    const projectId = first.body.data.id as string;
+    expect(replay.body.data.id).toBe(projectId);
+
+    const matching = await client.get(`/api/v1/projects?search=${encodeURIComponent(mark)}`).expect(200);
+    expect(matching.body.data.paging.total).toBe(1);
+    expect(matching.body.data.items).toEqual([expect.objectContaining({ id: projectId })]);
+
+    const second = await client.post('/api/v1/projects')
+      .set('x-csrf-token', csrf)
+      .set('Idempotency-Key', randomUUID())
+      .send(input)
+      .expect(201);
+    expect(second.body.data.id).not.toBe(projectId);
+    expect((await client.get(`/api/v1/projects?search=${encodeURIComponent(mark)}`).expect(200)).body.data.paging.total)
+      .toBe(2);
+
+    const changed = await featureInput(client, csrf, mark, 'changed');
+    const updated = await client.put(`/api/v1/projects/${projectId}`)
+      .set('x-csrf-token', csrf)
+      .set('Idempotency-Key', key)
+      .send(changed)
+      .expect(200);
+    expectFeatureValues(updated.body.data as Record<string, unknown>, changed);
+
+    const invalidKey = await client.post('/api/v1/projects')
+      .set('x-csrf-token', csrf)
+      .set('Idempotency-Key', 'x'.repeat(201))
+      .send(input)
+      .expect(400);
+    expect(invalidKey.body.error.code).toBe('VALIDATION_ERROR');
+    expect(invalidKey.body.error.details.fieldErrors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: 'Idempotency-Key' }),
+    ]));
+
+    const preflight = await request(apiBaseUrl)
+      .options('/api/v1/projects')
+      .set('Origin', new URL(apiBaseUrl).origin)
+      .set('Access-Control-Request-Method', 'POST')
+      .set('Access-Control-Request-Headers', 'content-type,x-csrf-token,idempotency-key')
+      .expect(204);
+    const allowedHeaders = String(preflight.headers['access-control-allow-headers'] ?? '');
+    expect(allowedHeaders.split(',').map((header) => header.trim().toLowerCase())).toContain('idempotency-key');
+  });
+});
+// forge:feature:retry-key:end
 
 // forge:feature:mcp-cases:start
 async function addMcpAgent(

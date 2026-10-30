@@ -10,7 +10,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
-from forge import init, machine, quicktest, repo
+from forge import docskip, init, machine, quicktest, repo
 
 COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
              "args": [(("--pytest",), {"dest": "base", "metavar": "BASE"}),
@@ -343,8 +343,8 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     the changed sources no test file names."""
     changed = git_files("diff", "--no-renames", "--name-only", base)
     changed += git_files("ls-files", "--others", "--exclude-standard")
-    tests = [Path(name) for name in git_files("ls-files", "--cached", "--others",
-                                            "--exclude-standard")
+    files = git_files("ls-files", "--cached", "--others", "--exclude-standard")
+    tests = [Path(name) for name in files
              if (Path(name).name.startswith("test_") or Path(name).name.endswith("_test.py"))
              and name.endswith(".py") and Path(name).is_file()]
     fixtures = [Path(name).parent for name in changed if Path(name).name == "conftest.py"]
@@ -374,13 +374,16 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
     everything = [path.as_posix() for path in tests]
     if shared_changed:
         return everything, everything, True, missed
-    selected = sorted(path.as_posix() for path in tests
+    picked = {path for path in tests
                       if path.as_posix() in changed
                       or any(path.is_relative_to(folder) for folder in fixtures)
                       or any(path.is_relative_to(source.parent) or mentions(path, "", source)
                              for source in shared)
-                      or any(mentions(path, module, source) for module, source in modules))
-    return selected, everything, False, missed
+                      or any(mentions(path, module, source) for module, source in modules)}
+    readers = tests + [Path(name) for name in files
+                       if Path(name).name == "conftest.py" and Path(name).is_file()]
+    picked = docskip.test_readers(readers, picked)
+    return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
 
 
 # The temporary pytest plugin: skip unpicked files, keep picked tests and each always_test entry,
@@ -434,17 +437,13 @@ RETRY_HEADER = "# forge pytest retry\n"
 RETRY_STEP = "# forge pytest retry invocation\n"
 RESULTS = """import json, os, pathlib, pytest
 FILE, ROOT = [], []
+COLLECTED = []
 FAILED, PASSED = set(), set()
 INVOCATION_HEADER = """ + repr(INVOCATION_HEADER) + """
 RETRY_HEADER = """ + repr(RETRY_HEADER) + """
 RETRY_STEP = """ + repr(RETRY_STEP) + """
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
-    # A pytest that a test starts itself is the client's own run: it gets neither this hook nor
-    # close's results file. xdist workers need neither; the controller records their reports.
-    plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
-                       if name.strip() not in ("", "_forge_test_results"))
-    os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
     retry = os.environ.pop("FORGE_RETRY_FILES", None)
     if retry:
         before, _, after = pathlib.Path(retry).read_text("utf-8").partition(RETRY_HEADER)
@@ -461,6 +460,9 @@ def pytest_configure(config):
             config.args = previous["files"]
             config.option.file_or_dir = config.args
             config.option.splits = config.option.group = None
+            # Xdist workers reconstruct the original CLI args, losing this file selection.
+            # Run the failed files here instead of collecting the whole group again.
+            config.option.dist = "no"
             config._forge_prior_passed = previous["passed"]
     path = os.environ.pop("FORGE_TEST_RESULTS", None)
     if path and not hasattr(config, "workerinput"):
@@ -468,6 +470,20 @@ def pytest_configure(config):
         with FILE[0].open("a", encoding="utf-8") as results:  # close emptied it before the command
             results.write(""" + repr(RESULTS_HEADER) + """)
     ROOT.append(pathlib.Path(str(config.rootdir)))
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_sessionstart(session):
+    yield  # xdist starts workers with this plugin before we clear it for child tests.
+    plugins = ",".join(name for name in os.environ.pop("PYTEST_PLUGINS", "").split(",")
+                       if name.strip() not in ("", "_forge_test_results"))
+    os.environ.update({"PYTEST_PLUGINS": plugins} if plugins else {})
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(items):
+    # This hook registers before split's configure-time hook. Among trylast
+    # hooks, earlier registration runs first, after normal -k/-m deselection.
+    COLLECTED.append(len(items))
+@pytest.hookimpl(optionalhook=True)
+def pytest_testnodedown(node):
+    COLLECTED.append(node.workeroutput.get("forge_collected", 0))
 def pytest_runtest_logreport(report):
     if not FILE or report.when != "call" and report.passed:
         return
@@ -492,8 +508,11 @@ def _write_result(outcome, nodeid):
 @pytest.hookimpl(hookwrapper=True)
 def pytest_sessionfinish(session):
     yield  # Capture the final status, including always_test validation.
+    if hasattr(session.config, "workeroutput"):
+        session.config.workeroutput["forge_collected"] = sum(COLLECTED)
     if FILE:
-        invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus))
+        invocation = dict(files=sorted(FAILED), passed=sorted(PASSED), exit=int(session.exitstatus),
+                          collected=sum(COLLECTED))
         with FILE[0].open("a", encoding="utf-8") as results:
             results.write(INVOCATION_HEADER + json.dumps(invocation) + "\\n")
 """

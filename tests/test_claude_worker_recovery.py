@@ -20,7 +20,7 @@ def _client(repo, gh, tmp_path, previous, *, subagents=False):
     settings = (f'version = "{version}"\nrepo = "client"\n'
                'workers = "claude"\ntest = "git status --porcelain"\n'
                'models.lite = { model = "sonnet", effort = "medium"' +
-               (', subagents = "gpt-6-luna", subagent_effort = "max"' if subagents else '') + '}\n')
+               (', subagents = "claude-haiku-5-5", subagent_effort = "high"' if subagents else '') + '}\n')
     if previous:
         repo.write("forge.toml", settings)
         repo.git("add", "-A")
@@ -68,13 +68,19 @@ def test_1_lost_session_recovery_searches_all_claude_output(repo, gh, tmp_path, 
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])
-def test_2_claude_ignores_codex_only_subagent_keys_on_first_fix(repo, gh, tmp_path, previous):
+def test_2_claude_sends_helper_settings_only_in_agent_definitions(repo, gh, tmp_path, previous):
+    # Item 6 replaces the old Codex-only interpretation of these keys: Claude now sends
+    # its pair in agent definitions while keeping the main worker model independent.
+    # This test owns the SDK option shape, reusing the existing new/adopted recovery setup.
+    # It catches forwarding config keys as unsupported top-level SDK options, with no new seam.
     log, _ = _client(repo, gh, tmp_path, previous, subagents=True)
     worked = repo.forge("work", FIX)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     [sent] = calls(log)
     assert (sent["options"]["model"], sent["options"]["effort"]) == ("sonnet", "medium")
-    assert "subagents" not in sent["options"] and "gpt-6-luna" not in json.dumps(sent["options"])
+    assert "subagents" not in sent["options"] and "subagent_effort" not in sent["options"]
+    assert sent["options"]["agents"]["general-purpose"]["model"] == "claude-haiku-5-5"
+    assert sent["options"]["agents"]["general-purpose"]["effort"] == "high"
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new-client", "previous-adoption"])

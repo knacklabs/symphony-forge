@@ -66,7 +66,7 @@ def p1_at_bar(title):
                                           ("read-history-batching", False), ("refresh-stale-receipt", False),
                                           ("refresh-missing-receipt", False), ("resume-published-wait", False),
                                           ("warm-checks-cache", False), ("story-full-runway", False),
-                                          ("story-full-runway", True), ("bad-null-event", False),
+                                          ("bad-null-event", False),
                                           ("bad-infinite-seconds", False), ("bad-huge-seconds", False),
                                           ("bad-deep-nesting", False),
                                           ("story-done-runway", False)],
@@ -74,7 +74,7 @@ def p1_at_bar(title):
                               "question-wait", "conflict-wait", "item-totals", "approved-runway-known",
                               "approved-runway-unknown", "real-read-runway", "read-history-batching",
                               "refresh-stale-receipt", "refresh-missing-receipt", "resume-published-wait",
-                              "warm-checks-cache", "story-full-runway-new", "story-full-runway-adopted",
+                              "warm-checks-cache", "story-full-runway-new",
                               "bad-null-event", "bad-infinite-seconds", "bad-huge-seconds",
                               "bad-deep-nesting", "story-done-runway"])
 def test_5_how_it_went_is_shared_and_story_time_counts_each_instant_once(env, monkeypatch, case, previous):

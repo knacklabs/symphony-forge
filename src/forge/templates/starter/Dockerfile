@@ -3,8 +3,10 @@ FROM node:24-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
+RUN mkdir -p /app && chown node:node /app
 WORKDIR /app
-COPY . .
+USER node
+COPY --chown=node:node . .
 RUN corepack pnpm install --frozen-lockfile && corepack pnpm run build
 
 ENV NODE_ENV=production

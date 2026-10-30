@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from datetime import datetime
 from uuid import UUID
 
@@ -9,11 +10,14 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    select,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from app.core import Base
+from app.core.database import Base
+from app.core.principal import AccountPrincipal
 
 
 class IdempotencyKey(Base):
@@ -56,3 +60,42 @@ class IdempotencyKey(Base):
     created_at_utc: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+def create_once(
+    db: Session,
+    account: AccountPrincipal,
+    tool: str,
+    key: str,
+    create: Callable[[Callable[[Session, UUID], None]], UUID],
+) -> UUID:
+    statement = select(IdempotencyKey.item_id).where(
+        IdempotencyKey.organisation_id == account.organisation_id,
+        IdempotencyKey.account_id == account.id,
+        IdempotencyKey.tool == tool,
+        IdempotencyKey.key == key,
+    )
+    existing = db.scalar(statement)
+    if existing is not None:
+        return existing
+
+    def after_create(transaction: Session, item_id: UUID) -> None:
+        transaction.add(
+            IdempotencyKey(
+                organisation_id=account.organisation_id,
+                account_id=account.id,
+                tool=tool,
+                key=key,
+                item_id=item_id,
+            )
+        )
+        transaction.flush()
+
+    try:
+        return create(after_create)
+    except IntegrityError:
+        db.rollback()
+        winner = db.scalar(statement)
+        if winner is None:
+            raise
+        return winner

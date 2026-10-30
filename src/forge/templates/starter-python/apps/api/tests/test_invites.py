@@ -3,10 +3,20 @@
 import hashlib
 import json
 from urllib.parse import parse_qs, urlsplit
+from uuid import uuid4
 
 import httpx
 from test_api import compose_logs, credentials, sign_up
 from test_soft_delete import psql
+
+
+def _invite_token_from_line(line: str) -> str:
+    event = json.loads(line[line.index("{") :])
+    invite_url = event["context"]["inviteUrl"]
+    assert isinstance(invite_url, str)
+    token = parse_qs(urlsplit(invite_url).query).get("token", [None])[0]
+    assert token
+    return token
 
 
 def invite(client: httpx.Client, csrf: str, email: str, service: str = "api") -> str:
@@ -22,13 +32,83 @@ def invite(client: httpx.Client, csrf: str, email: str, service: str = "api") ->
     for line in reversed(new_lines):
         if '"inviteUrl"' not in line:
             continue
-        event = json.loads(line[line.index("{") :])
-        invite_url = event["context"]["inviteUrl"]
-        assert isinstance(invite_url, str)
-        token = parse_qs(urlsplit(invite_url).query).get("token", [None])[0]
-        assert token
-        return token
+        return _invite_token_from_line(line)
     raise AssertionError("The test mail provider did not log an invite link.")
+
+
+def test_an_invite_sent_again_with_the_same_idempotency_key_sends_one_email_and_makes_one_invitation(
+    client: httpx.Client,
+) -> None:
+    # Audit: this owns the HTTP retry contract and its email side effect. Existing invite tests
+    # send once or deliberately replace an invite, and MCP does not reach this REST path. The
+    # running API and database own persistence; the test mail log is the external edge.
+    admin, csrf = sign_up(client)
+    invited = credentials()
+    key = f"invite-{uuid4()}"
+
+    def send_invite(email: str, idempotency_key: str) -> httpx.Response:
+        return client.post(
+            "/api/v1/invites",
+            headers={"x-csrf-token": csrf, "Idempotency-Key": idempotency_key},
+            json={"email": email},
+        )
+
+    before = compose_logs("api").splitlines()
+    first = send_invite(invited["email"], key)
+    retried = send_invite(invited["email"], key)
+    assert first.status_code == retried.status_code == 201
+    assert first.json() == retried.json()
+
+    def invite_lines(from_count: int) -> list[str]:
+        return [
+            line
+            for line in compose_logs("api").splitlines()[from_count:]
+            if '"inviteUrl"' in line
+        ]
+
+    def invitation_count(email: str) -> int:
+        result = psql(
+            "SELECT COUNT(*) FROM core.invite "
+            "WHERE organisation_id = (SELECT organisation_id FROM core.membership "
+            "WHERE account_id = (SELECT id FROM core.account "
+            f"WHERE email = '{admin['email']}')) "
+            f"AND email = '{email}'"
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        return int(
+            next(
+                line.strip()
+                for line in result.stdout.splitlines()
+                if line.strip().isdigit()
+            )
+        )
+
+    first_links = invite_lines(len(before))
+    assert len(first_links) == 1
+    assert invitation_count(invited["email"]) == 1
+    first_token = _invite_token_from_line(first_links[0])
+    with httpx.Client(base_url=client.base_url, timeout=15) as recipient:
+        accepted = recipient.post(
+            "/api/v1/auth/accept-invite",
+            json={**invited, "token": first_token},
+        )
+    assert accepted.status_code == 201, accepted.text
+
+    reinvited = credentials()
+    before_reinvite = len(compose_logs("api").splitlines())
+    first_reinvite = send_invite(reinvited["email"], f"invite-{uuid4()}")
+    second_reinvite = send_invite(reinvited["email"], f"invite-{uuid4()}")
+    assert first_reinvite.status_code == second_reinvite.status_code == 201
+    reinvite_links = invite_lines(before_reinvite)
+    assert len(reinvite_links) == 2
+    assert invitation_count(reinvited["email"]) == 1
+    latest_token = _invite_token_from_line(reinvite_links[-1])
+    with httpx.Client(base_url=client.base_url, timeout=15) as recipient:
+        accepted = recipient.post(
+            "/api/v1/auth/accept-invite",
+            json={**reinvited, "token": latest_token},
+        )
+    assert accepted.status_code == 201, accepted.text
 
 
 def test_an_admin_invites_a_person_by_email_who_joins_the_organisation(

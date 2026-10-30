@@ -11,7 +11,7 @@ from app.core.envelope import ErrorEnvelope, SuccessEnvelope
 from app.core.error_report import report_error
 from app.core.error_report import router as error_report_router
 from app.core.errors import ApiError, install_error_handlers
-from app.core.logging import log_event
+from app.core.logging import log_event, set_log_level
 from app.core.mail import MailProvider
 from app.core.permissions import (
     FeaturePermissions,
@@ -23,6 +23,7 @@ from app.core.permissions import (
 from app.core.principal import AccountPrincipal, Role
 from app.core.prompts import define_prompt, get_prompt, list_prompts
 from app.core.resources import list_resource_templates, list_resources, read_resource
+from app.core.retry_keys import IdempotencyKey, create_once
 from app.core.schema import HealthResponse
 from app.core.security import _is_rate_limited as rate_limit_retry_after
 from app.core.security import install_security_middleware, verify_csrf
@@ -46,6 +47,7 @@ __all__ = [
     "ErrorEnvelope",
     "FeaturePermissions",
     "HealthResponse",
+    "IdempotencyKey",
     "MailProvider",
     "Role",
     "Settings",
@@ -56,6 +58,7 @@ __all__ = [
     "admin_only",
     "call_tool",
     "create_database",
+    "create_once",
     "csv_response",
     "define_feature_tools",
     "define_permissions",
@@ -79,6 +82,7 @@ __all__ = [
     "read_resource",
     "report_error",
     "require_permission",
+    "set_log_level",
     "tool_failure",
     "utc_date_time",
     "verify_csrf",

@@ -26,9 +26,10 @@ SOURCES = {
 # The FDE pin includes the app constitution's date, time zone, currency and number defaults.
 # It also includes the approved built-in labels for organisations, invites, formats, deletion and CSV.
 # The FDE labels recognize both the TypeScript and Python starter organisation folders.
+# The approved guide uses INR, defers unbuilt parts and names Mainline error-log alerts.
 # Current-source equality alone would miss a shared change across all three installs.
 PRE_TRIM_SHA256 = {
-    ".codex/skills/forge/fde.md": "8ce9b9d20a633ca2cb220b8de03f61f27069ffce75afd7245e5b09c78446d9ef",
+    ".codex/skills/forge/fde.md": "b47159d2bf5109482de58fdfdcbc8167f5df53413bcce2d6ea3e8b5fc02371ba",
     ".codex/skills/test-audit/SKILL.md": "9fa98df5cbe096dd5d9ce44ab2c0fa5136bc07b6511c30b75196ea2e73340258",
     ".codex/skills/test-audit/NOTICE.md": "05713febd8aeaca480afdc78074c66544635517e1868d3a59d7fe1cb54d70149",
     ".claude/skills/remote-approval/SKILL.md": "f3d334b989b73b65f6255d874592c052db96089df476dd1f0c9efa1d95ce8e01",

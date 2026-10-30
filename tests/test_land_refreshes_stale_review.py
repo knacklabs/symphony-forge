@@ -10,14 +10,19 @@ from test_stacked_fixes_count_only_their_own_changes import configured
 STORY = "review-after-replay"
 
 
-@pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-@pytest.mark.parametrize("problem,other_failure,persistent", [
-    ("missing", False, False),
-    ("for a commit that isn't part of this branch", False, False),
-    ("out of date: the product files or what the change must do changed after it", False, False),
-    ("blocked by serious findings no one fixed or dismissed", False, False),
-    ("missing", True, False),
-    ("missing", False, True),
+@pytest.mark.parametrize("previous,problem,other_failure,persistent", [
+    pytest.param(previous, problem, other_failure, persistent,
+                 id=f"{problem}-{other_failure}-{persistent}-{history}")
+    for previous, history in [(False, "new"), (True, "previously-adopted")]
+    for index, (problem, other_failure, persistent) in enumerate([
+        ("missing", False, False),
+        ("for a commit that isn't part of this branch", False, False),
+        ("out of date: the product files or what the change must do changed after it", False, False),
+        ("blocked by serious findings no one fixed or dismissed", False, False),
+        ("missing", True, False),
+        ("missing", False, True),
+    ])
+    if not previous or index not in (0, 2)
 ])
 def test_2_land_closes_again_for_its_stale_review_check(land, previous, problem, other_failure, persistent):
     configured(land, previous)

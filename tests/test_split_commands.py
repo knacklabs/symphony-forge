@@ -20,6 +20,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "forge"
 # Dropping and restoring a fix adds a fix subcommand, with no new top-level command.
 # Amend now offers --append alongside --done and describes the preview of both texts.
 # Open decisions adds listing and answer commands to the existing decision group.
+# Sign-off review stops add owner choices to decision accept, keeping the exact help contract.
 HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
      '             '
      '{init,sync,doctor,test,migrate,upgrade,next,board,lanes,stop,start,story,read,assign,task,fix,work,handback,close,merge,land,spec,decision,roadmap,hook}\n'
@@ -464,7 +465,9 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                  '\n'
                  'options:\n'
                  '  -h, --help  show this help message and exit\n',
- 'decision accept': 'usage: forge decision accept [-h] --by NAME slug\n'
+ 'decision accept': 'usage: forge decision accept [-h] --by NAME [--resolve {accept,more,split}]\n'
+                    '                             [--reason REASON]\n'
+                    '                             slug\n'
                     '\n'
                     'Accept a decision after the human confirms in chat\n'
                     '\n'
@@ -472,8 +475,10 @@ HELP_GOLDEN = {'': 'usage: forge [-h] [--version]\n'
                     '  slug\n'
                     '\n'
                     'options:\n'
-                    '  -h, --help  show this help message and exit\n'
-                    '  --by NAME\n',
+                    '  -h, --help            show this help message and exit\n'
+                    '  --by NAME\n'
+                    '  --resolve {accept,more,split}\n'
+                    "  --reason REASON       The owner's choice after a sign-off review stop\n",
  'roadmap add': 'usage: forge roadmap add [-h] spec\n'
                 '\n'
                 'Add roadmap items from a confirmed spec\n'

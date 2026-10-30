@@ -142,14 +142,14 @@ def test_3_pytest_repos_keep_six_groups_and_new_repos_start_with_one(
     fresh_settings = tomllib.loads((new / "forge.toml").read_text(encoding="utf-8"))
     assert fresh_settings.get("groups") == 1
     fresh_tests = _jobs((new / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
-    assert "group: [1]" in fresh_tests
+    assert "&& '[1]' || '[1]')" in fresh_tests
 
     client = _adopted_client(repo, tmp_path, "earlier-pytest-client")
     settings = tomllib.loads((client / "forge.toml").read_text(encoding="utf-8"))
     assert "groups" not in settings
     workflow = (client / ".github/workflows/forge.yml").read_text(encoding="utf-8")
     tests_job = _jobs(workflow)["tests"]
-    assert "group: [1, 2, 3, 4, 5, 6]" in tests_job
+    assert "|| '[1, 2, 3, 4, 5, 6]')" in tests_job
     assert 'run: "forge test --change"' in tests_job
     assert "--splits" not in workflow
     _settings(client, test=PYTEST, fast_test="forge test --pytest {base}")
@@ -165,7 +165,7 @@ def test_3_pytest_repos_keep_six_groups_and_new_repos_start_with_one(
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     tests_job = _jobs((client / ".github/workflows/forge.yml").read_text(encoding="utf-8"))["tests"]
-    assert "group: [1, 2]" in tests_job
+    assert "|| '[1, 2]')" in tests_job
     _commit_setup(repo, client, "Set up two related pytest files")
     _branch(repo, client, "related-pytest-groups")
     (client / "src/cart.py").write_text("VALUE = 2\n", encoding="utf-8")

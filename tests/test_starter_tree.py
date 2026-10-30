@@ -20,6 +20,7 @@ PIN = re.compile(r"[0-9]+(?:\.[0-9]+)*\Z")
 LIVE = os.environ.get("FORGE_STARTER_LIVE") == "1"
 API_SECURITY_TESTS = (
     "production forgot-password does not log a reset link",
+    "the API container runs as a user that is not root",
 )
 API_ZOD_CASES = (
     "rejects a bad list query with the same field errors as a bad body",
@@ -369,6 +370,10 @@ def test_1_the_starter_is_a_runnable_stack(request):
         assert (STARTER / rel).is_dir(), rel
 
     package = _json(STARTER / "package.json")
+    # The shipped package must not install the removed formatter in any dependency group.
+    for group, entries in package.items():
+        if group.lower().endswith("dependencies"):
+            assert "prettier" not in entries, group
     assert re.fullmatch(r"pnpm@" + PIN.pattern, package.get("packageManager", "")), package.get("packageManager")
     assert "nx" in package.get("devDependencies", {})
     assert package.get("scripts", {}).get("build")
@@ -381,6 +386,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
     for name, version in PINNED_PACKAGES.items():
         assert dependencies.get(name) == version, (name, dependencies.get(name), version)
     lock_text = (STARTER / "pnpm-lock.yaml").read_text(encoding="utf-8")
+    assert "prettier@" not in lock_text
     lock_importer = _pnpm_root_importer(lock_text)
     for group in ("dependencies", "devDependencies", "optionalDependencies"):
         manifest_dependencies = package.get(group, {})
@@ -408,7 +414,15 @@ def test_1_the_starter_is_a_runnable_stack(request):
 
     command = f"node {(Path('scripts') / 'test.mjs').as_posix()}"
     assert command in (STARTER / "README.md").read_text(encoding="utf-8")
+    recovery = (STARTER / "README.md").read_text(encoding="utf-8").split(
+        "## When something breaks\n", 1)[1].split("\n## ", 1)[0]
+    for step in ("1. Find the error", "2. Roll back", "3. Restore a snapshot",
+                 "4. Change a leaked secret"):
+        assert step in recovery, step
+    assert "agent key" in recovery
     dockerfile = (STARTER / "Dockerfile").read_text(encoding="utf-8")
+    assert dockerfile.index("USER node") < dockerfile.index("RUN corepack pnpm install")
+    assert "COPY --chown=node:node . ." in dockerfile
     assert "RUN corepack enable" in dockerfile
     assert "corepack pnpm install --frozen-lockfile && corepack pnpm run build" in dockerfile
     assert "WORKDIR /app" in dockerfile

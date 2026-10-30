@@ -4,7 +4,6 @@ Audit: premature command exits, failed-answer retries and stalled-check refusals
 Only third-party responses and elapsed wall time are faked; no production test seam is added.
 """
 import json
-import os
 import shutil
 import sys
 
@@ -18,24 +17,7 @@ STORY = "land-waits-ci"
 
 
 @pytest.fixture
-def clock(land, tmp_path, monkeypatch):
-    folder = tmp_path / "clock"
-    folder.mkdir()
-    (folder / "sitecustomize.py").write_text("""import subprocess, time
-from types import SimpleNamespace
-# Child-process deadlines and POSIX wait polling must use real elapsed time.
-subprocess.time = SimpleNamespace(sleep=time.sleep)
-real = time.monotonic
-elapsed = 0
-
-def sleep(seconds):
-    global elapsed
-    elapsed += seconds
-
-time.sleep = sleep
-time.monotonic = lambda: real() + elapsed
-""", encoding="utf-8")
-    monkeypatch.setenv("PYTHONPATH", str(folder) + os.pathsep + os.environ.get("PYTHONPATH", ""))
+def clock(land, fake_clock, monkeypatch):
     monkeypatch.setenv("FORGE_CHECKS_WAIT", "60")
     return land
 

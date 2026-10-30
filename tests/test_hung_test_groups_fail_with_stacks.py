@@ -64,7 +64,7 @@ def test_1_a_hung_group_exits_with_the_test_name_and_stack(tmp_path, phase):
 def test_2_only_windows_ci_enables_the_deadline_before_the_step_cap():
     workflow = (ROOT / ".github/workflows/forge-next.yml").read_text("utf-8")
     step = next(step for step in workflow.split("      - ")
-                if "pytest tests -q -n auto" in step)
+                if "pytest @testFiles -q -n auto" in step)
     for runner in ("windows-latest", "ubuntu-latest"):
         resolved = re.sub(
             r"\$\{\{ matrix.os == '([^']+)' && ('[^']*'|\d+) \|\| ('[^']*'|\d+) \}\}",

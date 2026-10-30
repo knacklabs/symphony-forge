@@ -4,7 +4,6 @@ from sqlalchemy import engine_from_config, pool
 # Register both modules' tables before Alembic reads shared metadata.
 import app.auth
 import app.history
-import app.mcp
 import app.organisations
 import app.projects  # noqa: F401
 from app.core import Base, load_settings

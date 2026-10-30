@@ -1,0 +1,62 @@
+{
+  "base": "1ef66b286cb84a45cb7ff09ec29f4db1a21928dd",
+  "branch": "fix/typed-text-in-the-invite-and-add-agent-f",
+  "done_when": "The starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text.",
+  "fix_kind": "ui",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/starter/libs/organisations/web/src/pages/invite-dialog.tsx",
+      "file": "src/forge/templates/starter/libs/organisations/web/src/pages/invite-dialog.tsx",
+      "gain": 3,
+      "harm": 4,
+      "line": 48,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text.",
+      "work": 2
+    }
+  ],
+  "land": {
+    "rounds": 1,
+    "stop": null
+  },
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1313fa18d96358cfd35fe20ee3bbe4d6b9089c8614beb842df55f2141cd3ead1",
+    "changed": "4b022e9cf2c614fea84b37c8bf3f8e4c17fd6a7a43f6cd13b9834f57e94446c1",
+    "commit": "ac721c63f0f8743bc5391ed0a5988782feb40d7f",
+    "dismissals": [],
+    "findings": [],
+    "id": "6ee6962b-b8d6-48df-a634-68b3e479addd",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T12:18:48.030164+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T13:07:00.822821+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T13:35:56.430515+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "c1fa155f-f80a-4ade-9b06-7c1091b1ec70",
+    "head": "90b145f006819080b329a0c24db28d710bdcebb8",
+    "keys": {
+      "the open P0 not done: the starter's lists show skeleton rows while loading, and the invite and add-agent forms ask before closing with unsaved text. in src/forge/templates/starter/libs/organisations/web/src/pages/invite-dialog.tsx": 1
+    },
+    "round": 1
+  },
+  "why": "Typed text in the invite and add-agent forms is lost on a stray click, and the projects, members and change history lists show only a plain text line while loading instead of skeleton rows, so the starter misses the app baseline.",
+  "worker": "claude"
+}

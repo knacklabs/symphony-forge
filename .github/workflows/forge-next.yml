@@ -1,7 +1,7 @@
 name: forge-next
 
 # Reuse passed proof on identical release tags.
-# Pull requests run Linux's full suite in forge.yml and the Windows platform subset here.
+# Pull requests run related Linux tests in forge.yml and Windows platform tests here.
 
 on:
   pull_request:
@@ -22,6 +22,24 @@ permissions:
   pull-requests: read
 
 jobs:
+  selection:
+    runs-on: ubuntu-latest
+    outputs:
+      test-only: ${{ steps.select.outputs.test-only }}
+      platform-files: ${{ steps.select.outputs.platform-files }}
+      run-windows: ${{ steps.select.outputs.run-windows }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: select
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          DOCS_ONLY_EXCLUDES: '[":(exclude,glob).factory/**", ":(exclude,glob)plans/**"]'
+        run: python .forge/review-tests.py
+
   windows-installers:
     runs-on: windows-latest
     timeout-minutes: 5
@@ -66,16 +84,20 @@ jobs:
         run: uv run --frozen --python 3.11 pytest tests/test_mod_sync.py -q -k 'native-plugin-checks or real-local-install' -o faulthandler_timeout=120 --timeout=150 --timeout-method=thread
 
   tests:
+    needs: selection
+    if: needs.selection.outputs.run-windows != 'false'
     # Keep these matrix checks separate from the required Linux tests check in forge.yml.
     name: ${{ matrix.os == 'windows-latest' && 'platform-sensitive tests' || 'full suite' }} on ${{ matrix.os }}, group ${{ matrix.group }} of ${{ matrix.groups }}
     env:
       FORGE_CONTAINERS: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
+      TEST_ONLY: ${{ needs.selection.outputs.test-only }}
+      PLATFORM_FILES: ${{ needs.selection.outputs.platform-files }}
     strategy:
       fail-fast: false
       matrix:
         # forge.yml owns the full Linux suite for every event.
         include: >-
-          ${{ fromJSON('[
+          ${{ fromJSON(needs.selection.outputs.test-only == 'true' && '[{"os":"windows-latest","group":1,"groups":1}]' || '[
             {"os":"windows-latest","group":1,"groups":5},
             {"os":"windows-latest","group":2,"groups":5},
             {"os":"windows-latest","group":3,"groups":5},
@@ -122,8 +144,11 @@ jobs:
         if: steps.parent-tests.outputs.reuse != 'true'
       # 3.11 is the oldest Python Forge supports. Parallel across the runner's cores, and split across
       # runners where one runner is too slow.
-      - run: >-
-          uv run --python 3.11 pytest tests -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '-p no:faulthandler --max-worker-restart=0 -m platform --reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
+      - shell: pwsh
+        run: |
+          $testFiles = @('tests')
+          if ($env:TEST_ONLY -eq 'true') { $testFiles = @(ConvertFrom-Json $env:PLATFORM_FILES) }
+          uv run --python 3.11 pytest @testFiles -q -n auto -o faulthandler_timeout=${{ matrix.os == 'windows-latest' && 270 || 120 }} --timeout=${{ matrix.os == 'windows-latest' && 300 || 150 }} --timeout-method=thread ${{ matrix.os == 'windows-latest' && '-p no:faulthandler --max-worker-restart=0 -m platform --reruns 1 --basetemp D:/t/pytest --durations=30 --store-durations --clean-durations' || '' }} --splits ${{ matrix.groups }} --group ${{ matrix.group }} --splitting-algorithm least_duration --durations-path ${{ matrix.os == 'windows-latest' && hashFiles('.test_durations_windows') != '' && '.test_durations_windows' || '.test_durations' }}
         if: steps.parent-tests.outputs.reuse != 'true'
         timeout-minutes: ${{ matrix.os == 'windows-latest' && 30 || 20 }}
         env:

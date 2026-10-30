@@ -1,0 +1,69 @@
+{
+  "base": "02ba9c55424649133d95392db92305e788b4d64b",
+  "branch": "task/FORGE-AGENTS-1-SKILL",
+  "chat": {
+    "approval": "02a8989119fb33011af49abdec1ea08219492f5fdd8d7c161df2bf7e0b75153b",
+    "claude": null,
+    "conversation": "01a18301-1455-7493-86ee-ddd8a0d73284",
+    "head": null,
+    "start": "541e510221cea36c082dc85edb3188fbd0ce16f4"
+  },
+  "known": [
+    {
+      "area": "src/forge/standards.md",
+      "file": "src/forge/standards.md",
+      "gain": 4,
+      "harm": 2,
+      "line": 164,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Exclude unrelated agent-ready guidance from this part",
+      "work": 2
+    }
+  ],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "07bf04265347b1a088e486e9d0f71173ed37f7394d6643d1aee721ee4b5853af",
+    "changed": "723ba1ebb84cb3f3462020a7f66363e0de4ecacc602e1249b07aa5acd67aa7a5",
+    "commit": "5a0387e5f982f58844b186cda38f2cd9c9867288",
+    "dismissals": [],
+    "findings": [],
+    "id": "48fc1942-013b-4c82-8374-092b8d6f2cd9",
+    "status": "clean"
+  },
+  "round": 3,
+  "stacked_on": "FORGE-AGENTREADY-1/GUIDE",
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-28T14:53:58.904830+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-28T15:03:48.799574+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T15:06:56.323923+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T15:23:16.296674+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-28T15:33:55.258962+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "698bdbd9-44e0-426c-b204-d738ce2b6258",
+    "head": "7bc88cc06fb1eab33ec2e22ebefc1560aa1dc8b5",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}

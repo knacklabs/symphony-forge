@@ -1,15 +1,15 @@
 [table]
-list_index = 'CREATE INDEX "idx_{table}_list" ON "{schema}"."{table}" ("organisationId", "updatedAtUtc" DESC, "id" DESC) WHERE "deletedAtUtc" IS NULL;'
-filter_index = 'CREATE INDEX "idx_{table}_{column}" ON "{schema}"."{table}" ("organisationId", "{column}", "updatedAtUtc" DESC, "id" DESC) WHERE "deletedAtUtc" IS NULL;'
-search_index = 'CREATE INDEX "idx_{table}_{column}_search" ON "{schema}"."{table}" USING gin ("organisationId", "{column}" gin_trgm_ops) WHERE "deletedAtUtc" IS NULL;'
-index = 'CREATE INDEX "idx_{table}_{column}_link" ON "{schema}"."{table}" ("{column}");'
+list_index = 'CREATE INDEX "idx_{table}_list" ON "{schema}"."{table}" ("{org}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'
+filter_index = 'CREATE INDEX "idx_{table}_{column}" ON "{schema}"."{table}" ("{org}", "{column}", "{updated}" DESC, "id" DESC) WHERE "{deleted}" IS NULL;'
+search_index = 'CREATE INDEX "idx_{table}_{column}_search" ON "{schema}"."{table}" USING gin ("{org}", "{column}" gin_trgm_ops) WHERE "{deleted}" IS NULL;'
+index = 'CREATE INDEX "idx_{table}_{column}_fk" ON "{schema}"."{table}" ("{column}");'
 updated_at_trigger = 'CREATE TRIGGER "{table}_set_updated_at" BEFORE UPDATE ON "{table}" FOR EACH ROW EXECUTE FUNCTION set_updated_at();'
 soft_delete_trigger = 'CREATE TRIGGER soft_delete_only BEFORE DELETE ON "{table}" FOR EACH ROW EXECUTE FUNCTION soft_delete_only();'
 
 # Web keys: input is the form control, cell how a value shows, column whether the list shows it,
 # filter_options the list filter's choices before the field's own ({Label}, {label}, {labels}).
 [kinds.text]
-sql = "TEXT"
+sql = "text"
 prisma = "String"
 sqlalchemy = "Text"
 pydantic = "str"
@@ -26,7 +26,7 @@ column = true
 filter_options = []
 
 [kinds.long-text]
-sql = "TEXT"
+sql = "text"
 prisma = "String"
 sqlalchemy = "Text"
 pydantic = "str"
@@ -43,12 +43,13 @@ column = false
 filter_options = []
 
 [kinds.number]
-sql = "NUMERIC(19,4)"
+sql = "numeric(19,4)"
 prisma = "Decimal @db.Decimal(19, 4)"
 sqlalchemy = "Numeric(19, 4)"
-pydantic = "Decimal"
+pydantic = "str"
+zod = 'z.string().regex(/^-?\d{1,15}(?:\.\d{1,4})?$/)'
 check = ""
-sample = "42.5000"
+sample = "-42.5000"
 changed = "96.2500"
 bad = "not-a-number"
 filter_index = false
@@ -60,24 +61,30 @@ column = false
 filter_options = []
 
 [kinds.money]
-sql = "INTEGER"
-prisma = "Int"
-sqlalchemy = "Integer"
-pydantic = "int"
+sql = "numeric(19,4)"
+prisma = "Decimal @db.Decimal(19, 4)"
+sqlalchemy = "Numeric(19, 4)"
+pydantic = "str"
+zod = 'z.string().regex(/^-?\d{1,15}(?:\.\d{1,4})?$/)'
 check = ""
-sample = 125000
-changed = 180000
+currency_sql = "text"
+currency_prisma = "String"
+currency_sqlalchemy = "Text"
+currency_check = "CONSTRAINT \"{table}_{currency}_code\" CHECK (\"{currency}\" ~ '^[A-Z]{3}$')"
+sample = "1250.0000"
+changed = "1800.0000"
 bad = "not-money"
 filter_index = false
 search_index = false
 index = false
 input = "money"
-cell = "money"
+cell = 'formatMoney(row.{name}, row.{name}Currency)'
+csv = 'formatMoney(row.{name}, row.{name}Currency)'
 column = true
 filter_options = []
 
 [kinds.date]
-sql = "DATE"
+sql = "date"
 prisma = "DateTime @db.Date"
 sqlalchemy = "Date"
 pydantic = "date"
@@ -94,8 +101,8 @@ column = true
 filter_options = []
 
 [kinds.yes-no]
-sql = "BOOLEAN"
-prisma = "Boolean"
+sql = "boolean DEFAULT false"
+prisma = "Boolean @default(false)"
 sqlalchemy = "Boolean, server_default=false()"
 pydantic = "bool"
 check = ""
@@ -111,7 +118,7 @@ column = false
 filter_options = ["{Label} or not", "{Label}", "Not {label}"]
 
 [kinds.email]
-sql = "TEXT"
+sql = "text"
 prisma = "String"
 sqlalchemy = "Text"
 pydantic = "str"
@@ -128,9 +135,9 @@ column = false
 filter_options = []
 
 [kinds.status]
-sql = "TEXT"
-prisma = "String"
-sqlalchemy = "Text"
+sql = "text DEFAULT '{first}'"
+prisma = 'String @default("{first}")'
+sqlalchemy = 'Text, server_default="{first}"'
 pydantic = "str"
 check = 'CONSTRAINT "{table}_{column}_allowed" CHECK ("{column}" IN ({options}))'
 sample = "planned"
@@ -145,7 +152,7 @@ column = true
 filter_options = ["All {labels}"]
 
 [kinds.link]
-sql = "UUID"
+sql = "uuid"
 prisma = "String @db.Uuid"
 sqlalchemy = "Uuid"
 pydantic = "UUID"

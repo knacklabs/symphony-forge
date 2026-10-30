@@ -1,6 +1,6 @@
 import hashlib
 import secrets
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import NamedTuple
 from urllib.parse import urlencode
@@ -78,8 +78,13 @@ class OrganisationsService:
         self.history = history
 
     def invite(
-        self, email: str, account: AccountPrincipal, mail: MailProvider, app_origin: str
-    ) -> None:
+        self,
+        email: str,
+        account: AccountPrincipal,
+        mail: MailProvider,
+        app_origin: str,
+        after_create: Callable[[Session, UUID], None] | None = None,
+    ) -> UUID:
         token = secrets.token_urlsafe(32)
         credentials = {
             "token_hash": hashlib.sha256(token.encode()).hexdigest(),
@@ -87,7 +92,7 @@ class OrganisationsService:
             "modified_by_account_id": account.id,
             "updated_at_utc": datetime.now(UTC),
         }
-        self.db.execute(
+        invite_id = self.db.scalars(
             insert(Invite)
             .values(
                 id=uuid7(),
@@ -99,13 +104,17 @@ class OrganisationsService:
             .on_conflict_do_update(
                 index_elements=["organisation_id", "email"], set_=credentials
             )
-        )
+            .returning(Invite.id)
+        ).one()
+        if after_create is not None:
+            after_create(self.db, invite_id)
         # A provider refusal rolls back the pending invite with the request's session.
         mail.send_invite(
             email, f"{app_origin}/accept-invite?{urlencode({'token': token})}"
         )
         self.history.record(account, "member.invited", f"Invited {email}")
         self.db.commit()
+        return invite_id
 
     def open_invite(self, token: str) -> OpenInvite:
         invite = self.db.scalar(

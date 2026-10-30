@@ -19,6 +19,7 @@ import {
 import { Badge } from '@app/shared-ui/components/ui/badge';
 import { Button } from '@app/shared-ui/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
+import { Skeleton } from '@app/shared-ui/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@app/shared-ui/components/ui/table';
 import { useChangeRole, useMembers, useRevokeAgentKey } from '../hooks/members-hooks';
 import { AddAgentDialog } from './add-agent-dialog';
@@ -160,7 +161,11 @@ export function MembersPage() {
         </div>
       </div>
 
-      {members.isPending && <p role="status" className="text-sm text-muted-foreground">Loading members…</p>}
+      {members.isPending && (
+        <div role="status" aria-label="Loading members" className="space-y-2">
+          {[0, 1, 2].map((row) => <Skeleton key={row} className="h-10 w-full" />)}
+        </div>
+      )}
       {members.isError && (
         <div role="alert" className="space-y-3">
           <p>Could not load members. Check your connection and try again.</p>

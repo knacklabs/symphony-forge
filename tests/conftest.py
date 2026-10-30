@@ -470,8 +470,76 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CODEX_THREAD_ID", "thr-test-coordinator")
 
 
+@pytest.fixture(scope="session")
+def seed_repo(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    folder = tmp_path_factory.mktemp("seed-repo")
+    remote, path = folder / "remote.git", folder / "repo"
+    path.mkdir()
+    (path / "README.md").write_text("# A test repo\n", encoding="utf-8")
+    # Session fixtures run before per-test isolation. Ignore the host's Git config
+    # and any outer hook/worktree variables while constructing this plain repo.
+    env = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    for args in (
+        ["init", "-q", "--bare", "-b", "main", str(remote)],
+        ["init", "-q", "-b", "main", str(path)],
+        ["add", "README.md"],
+        ["commit", "-q", "-m", "First commit"],
+        ["remote", "add", "origin", str(remote)],
+        ["push", "-q", "-u", "origin", "main"],
+        ["remote", "set-head", "origin", "main"],
+    ):
+        subprocess.run(["git", "-c", "user.name=Forge Test", "-c",
+                        "user.email=forge-test@example.com", "-c", "commit.gpgsign=false", *args],
+                       cwd=path, env=env, check=True, capture_output=True,
+                       stdin=subprocess.DEVNULL, timeout=60)
+    # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
+    (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")
+    return folder
+
+
+@pytest.fixture(scope="session")
+def empty_claude_sdk(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    data = tmp_path_factory.mktemp("empty-claude-sdk")
+    _claude_sdk_env(data)
+    return data
+
+
 @pytest.fixture
-def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Repo:
+def fake_clock(repo, tmp_path, monkeypatch, request):
+    """Advance sleeps without waiting; Forge and its gh children share elapsed time.
+
+    An indirect parameter can jump the 15-second check polls across queue boundaries.
+    Subprocess deadlines and OS wait polling retain real time.
+    """
+    folder = tmp_path / "clock"
+    folder.mkdir()
+    offset = folder / "elapsed"
+    offset.write_text("0", encoding="utf-8")
+    (folder / "sitecustomize.py").write_text(f'''import subprocess, time
+from pathlib import Path
+from types import SimpleNamespace
+subprocess.time = SimpleNamespace(sleep=time.sleep)
+real = time.monotonic
+offset = Path({offset.as_posix()!r})
+poll_seconds = {getattr(request, "param", 15)!r}
+
+def monotonic():
+    return real() + float(offset.read_text("utf-8"))
+
+def sleep(seconds):
+    seconds = poll_seconds if seconds == 15 else seconds
+    offset.write_text(str(float(offset.read_text("utf-8")) + seconds), encoding="utf-8")
+
+time.sleep = sleep
+time.monotonic = monotonic
+''', encoding="utf-8")
+    monkeypatch.setenv("PYTHONPATH", str(folder) + os.pathsep + os.environ.get("PYTHONPATH", ""))
+
+
+@pytest.fixture
+def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seed_repo: Path,
+         empty_claude_sdk: Path) -> Repo:
     # A launcher's marker and test budget, again: a module fixture may set them as a launcher would.
     monkeypatch.delenv("FORGE_WORKER", raising=False)
     monkeypatch.delenv("FORGE_TEST_CPUS", raising=False)
@@ -504,6 +572,9 @@ elif args == ["plugin", "list", "--json"]:
     monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
     data = tmp_path / "data"
     monkeypatch.setenv("XDG_DATA_HOME", str(data))
+    # Preserve the venv's interpreter links, but copy all writable SDK files.
+    # Direct SDK setup/recovery callers still use _claude_sdk_env's fresh-build path.
+    shutil.copytree(empty_claude_sdk, data, symlinks=True)
     _install_claude_sdk(bin_dir, data)
     monkeypatch.setenv("PYTHONPATH", str(bin_dir) + os.pathsep + os.environ.get("PYTHONPATH", ""))
     # Host hooks find forge through uv's tool folders, so those name this one too.
@@ -511,19 +582,11 @@ elif args == ["plugin", "list", "--json"]:
     monkeypatch.delenv("UV_TOOL_BIN_DIR", raising=False)
 
     remote, path = tmp_path / "remote.git", tmp_path / "repo"
-    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True,
-                   stdin=subprocess.DEVNULL, timeout=60)
-    subprocess.run(["git", "init", "-q", "-b", "main", str(path)], check=True,
-                   stdin=subprocess.DEVNULL, timeout=60)
+    # copytree uses independent files, including Git objects; no clone hardlinks.
+    shutil.copytree(seed_repo / "remote.git", remote)
+    shutil.copytree(seed_repo / "repo", path)
     made = Repo(path, bin_dir)
-    # The stub Codex's accepted requests write these; a worker would not leave them uncommitted.
-    (path / ".git" / "info" / "exclude").write_text("ran-stub-ask-*\n", encoding="utf-8")
-    made.write("README.md", "# A test repo\n")
-    made.git("add", "README.md")
-    made.git("commit", "-q", "-m", "First commit")
-    made.git("remote", "add", "origin", str(remote))
-    made.git("push", "-q", "-u", "origin", "main")
-    made.git("remote", "set-head", "origin", "main")
+    made.git("remote", "set-url", "origin", str(remote))
     return made
 
 

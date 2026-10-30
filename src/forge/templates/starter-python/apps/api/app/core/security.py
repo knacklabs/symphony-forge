@@ -11,6 +11,7 @@ from starlette.middleware.base import RequestResponseEndpoint
 
 from app.core.config import Settings
 from app.core.errors import ApiError, _error_response
+from app.core.logging import log_event
 
 _STATE_CHANGING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 _RATE_LIMITED_PATHS = {
@@ -94,6 +95,7 @@ def install_security_middleware(app: FastAPI) -> None:
     async def security_middleware(
         request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        started = time.monotonic()
         incoming = request.headers.get("x-correlation-id", "")
         correlation_id = incoming if incoming and len(incoming) <= 128 else str(uuid4())
         request.state.correlation_id = correlation_id
@@ -101,6 +103,7 @@ def install_security_middleware(app: FastAPI) -> None:
         origin = request.headers.get("origin")
 
         response: Response
+        route: str | None = None
         if request.method == "OPTIONS":
             response = Response(status_code=204)
         elif (
@@ -127,6 +130,7 @@ def install_security_middleware(app: FastAPI) -> None:
             and request.client
             and _is_rate_limited(request.client.host, request.url.path)
         ):
+            route = request.url.path
             response = JSONResponse(
                 status_code=429,
                 content={
@@ -153,6 +157,26 @@ def install_security_middleware(app: FastAPI) -> None:
                     None,
                     exception=error,
                 )
+            route = getattr(request.scope.get("route"), "path", None)
+            if route == "/{path:path}":
+                route = None
+
+        if (
+            request.url.path.startswith("/api/")
+            or request.url.path.rstrip("/") == "/mcp"
+        ):
+            log_event(
+                request,
+                "info",
+                "API request",
+                "app.core.security",
+                {
+                    "method": request.method,
+                    "route": route,
+                    "status": response.status_code,
+                    "durationMs": int((time.monotonic() - started) * 1000),
+                },
+            )
 
         nonce = (
             getattr(request.state, "script_nonce", None)
@@ -167,7 +191,7 @@ def install_security_middleware(app: FastAPI) -> None:
                 "GET, POST, PUT, PATCH, DELETE, OPTIONS"
             )
             response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, X-CSRF-Token, X-Correlation-Id, Authorization, MCP-Protocol-Version"
+                "Content-Type, X-CSRF-Token, X-Correlation-Id, Authorization, MCP-Protocol-Version, Idempotency-Key"
             )
             response.headers["Vary"] = "Origin"
         return response

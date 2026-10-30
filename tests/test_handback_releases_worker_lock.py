@@ -21,6 +21,8 @@ STORY = "FIX-STALE-WORKER-RUNNING"
 def test_1_handback_releases_the_lock_of_a_completed_round(client, monkeypatch, tmp_path, leftover):
     monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
+    # The repo fixture installs the SDK; this test covers the native handback fallback.
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "without-claude-sdk"))
     made = client.forge("fix", "start", "Correct spelling", "--done", "Correct spelling", "--kind", "mechanical")
     assert made.returncode == 0, made.stdout + made.stderr
     host = Session(client, tmp_path / "host", "claude-session")

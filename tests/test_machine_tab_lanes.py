@@ -155,7 +155,9 @@ def test_6_machine_tab_lanes_report_release_rows_and_keep_other_release_admissio
                 assert "in line." not in output.read_text("utf-8")
         data = view()
         assert data["version"] == repo.forge("--version").stdout.strip().split()[-1].removeprefix("v")
-        assert data["agents"]["size"] == 1 and data["tests"] == {"size": 1, "entries": []}
+        # Admission reporting can add fields without changing the Machine tab contract.
+        assert data["agents"]["size"] == 1
+        assert data["tests"]["size"] == 1 and data["tests"]["entries"] == []
         assert data["machine"]["cores"] == 2
         assert data["machine"]["load"] is None or len(data["machine"]["load"]) == 3
         rows = data["agents"]["entries"]

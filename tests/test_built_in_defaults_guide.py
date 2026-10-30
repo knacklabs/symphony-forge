@@ -119,21 +119,27 @@ def test_6_the_constitution_lists_the_built_in_defaults_and_existing_apps_keep_t
         for question, suffix in partial_answers.items():
             answer = next(line for line in fde if line.startswith(f"- {question}:"))
             assert answer.endswith(suffix)
+        # Alerts now come from Mainline reading error logs, with no app tracking service.
         assert ("- Who fixes problems, and how fast must it be back up if it breaks?: Daily managed "
-                "backups, error tracking, and no uptime promise.") in fde
+                "backups and no uptime promise. Each error is logged with its error id, and "
+                "Mainline alerts on the error log lines; the app has no error-tracking service.") in fde
 
     log = install_claude(repo)
     worked = repo.forge("work", "check-built-in-defaults-guide", cwd=top)
     assert worked.returncode == 0, worked.stdout + worked.stderr
     brief = calls(log)[-1]["brief"]
-    worker_rule = (
+    # The logging guide now sits between these rules. Keep checking both instructions,
+    # without requiring adjacency that the approved logging text deliberately changes.
+    worker_rules = (
         "In an app that has libs/organisations, scope every query to the caller's organisation "
         "(organisationId on the principal), guard admin actions with @AdminOnly() and record them "
         "with HistoryService.record, format dates, times, numbers and money only with the helpers "
         "in @app/shared-util, export a table only with sendCsv from @app/core-server, and let crashes reach "
-        "the one error report. An app without libs/organisations keeps the code it has."
+        "the one error report.",
+        "An app without libs/organisations keeps the code it has.",
     )
-    assert worker_rule in " ".join(brief.split())
+    for rule in worker_rules:
+        assert rule in " ".join(brief.split())
     match = re.search(r"how-to.*?is in `([^`]+)`", brief, re.S)
     assert match, brief
     conventions = Path(match[1])

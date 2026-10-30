@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { apiBaseUrl, credentials, csrfToken, invite, productionApiBaseUrl, psql } from './helpers';
+import { apiBaseUrl, credentials, csrfToken, invite, logEvents, productionApiBaseUrl, psql } from './helpers';
 
 describe('organisation invites and roles', () => {
   it('an admin invites a person by email who joins the organisation', async () => {
@@ -64,6 +64,68 @@ describe('organisation invites and roles', () => {
       expect.objectContaining({ name: 'Shared project' }),
       expect.objectContaining({ name: 'Updated member project' }),
     ]));
+  });
+
+  it('an invite sent again with the same Idempotency-Key sends one email and makes one invitation', async () => {
+    const adminClient = request.agent(apiBaseUrl);
+    const signUp = await adminClient.post('/api/v1/auth/sign-up').send(credentials()).expect(201);
+    const csrf = csrfToken(signUp);
+    const invited = credentials();
+    const previousLogCount = logEvents('api').length;
+    const sendInvite = (email: string, idempotencyKey: string) => adminClient.post('/api/v1/invites')
+      .set('x-csrf-token', csrf)
+      .set('Idempotency-Key', idempotencyKey)
+      .send({ email });
+
+    const key = randomUUID();
+    const first = await sendInvite(invited.email, key).expect(201);
+    const replay = await sendInvite(invited.email, key).expect(201);
+    expect(replay.body).toEqual(first.body);
+
+    const inviteEvents = (from: number) => logEvents('api').slice(from)
+      .filter(({ context }) => typeof context?.inviteUrl === 'string');
+    const firstLinks = inviteEvents(previousLogCount);
+    expect(firstLinks).toHaveLength(1);
+    const firstToken = new URL(String(firstLinks[0].context?.inviteUrl)).searchParams.get('token');
+    if (!firstToken) throw new Error('The API did not log a test invite token.');
+
+    const accountId = signUp.body.data.id as string;
+    const storedInvite = psql(`
+      SELECT COUNT(*) FROM core."Invite"
+      WHERE "organisationId" = (
+        SELECT "organisationId" FROM core."Membership" WHERE "accountId" = '${accountId}'
+      ) AND "email" = '${invited.email}'
+    `);
+    expect(storedInvite.status).toBe(0);
+    expect(storedInvite.output).toMatch(/\n\s*1\s*\n/);
+
+    await request(apiBaseUrl)
+      .post('/api/v1/auth/accept-invite')
+      .send({ email: invited.email, password: invited.password, token: firstToken })
+      .expect(201);
+
+    const reInvited = credentials();
+    const reInviteLogCount = logEvents('api').length;
+    await sendInvite(reInvited.email, randomUUID()).expect(201);
+    await sendInvite(reInvited.email, randomUUID()).expect(201);
+    const replacementLinks = inviteEvents(reInviteLogCount);
+    expect(replacementLinks).toHaveLength(2);
+    const replacementToken = new URL(String(replacementLinks[1].context?.inviteUrl)).searchParams.get('token');
+    if (!replacementToken) throw new Error('The API did not log a test invite token.');
+
+    const currentInviteCount = psql(`
+      SELECT COUNT(*) FROM core."Invite"
+      WHERE "organisationId" = (
+        SELECT "organisationId" FROM core."Membership" WHERE "accountId" = '${accountId}'
+      ) AND "email" = '${reInvited.email}'
+    `);
+    expect(currentInviteCount.status).toBe(0);
+    expect(currentInviteCount.output).toMatch(/\n\s*1\s*\n/);
+
+    await request(apiBaseUrl)
+      .post('/api/v1/auth/accept-invite')
+      .send({ email: reInvited.email, password: reInvited.password, token: replacementToken })
+      .expect(201);
   });
 
   it('a member cannot invite people or change roles', async () => {

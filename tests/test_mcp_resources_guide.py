@@ -43,12 +43,12 @@ def test_3_the_guides_name_resources_and_prompts(repo, gh, tmp_path, setup):
         guide = " ".join((client / host / "skills/forge/SKILL.md").read_text("utf-8").split())
         built_in = ("- Built in: each feature also offers its items, its field guide and its "
                     "allowed values as MCP resources; agents get a prompt only for a task "
-                    "under ## Agent tasks; the MCP server never uses elicitation or sampling.")
+                    "under `## Agent tasks`; the MCP server never uses elicitation or sampling.")
         assert guide.count(built_in) == 2, host
         for instruction in (
             "In an app with libs/mcp or apps/api/app/mcp, check the client notes",
             "Which tasks will people ask an agent to do again and again?",
-            "Write each task under ## Agent tasks",
+            "Write each task under `## Agent tasks`",
             "`- <task>: <feature>; inputs: <the inputs it needs>`",
             "With no task, write `- None`",
             "Ask it again only when the person wants to change the list",

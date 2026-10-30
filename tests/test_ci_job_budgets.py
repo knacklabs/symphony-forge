@@ -72,7 +72,8 @@ def test_1_each_platform_runs_every_group_once_with_its_time_limit(
     assert per_test < min(budgets) * 60
     command = command.replace("${{ matrix.groups }}", str(count)).replace(
         "${{ matrix.group }}", "1")
-    tokens = shlex.split(command)
+    # PowerShell expands the full-run default to tests; the narrow PR path uses changed files.
+    tokens = shlex.split(command.replace("@testFiles", "tests"))
     options = tokens[tokens.index("pytest") + 1:]
     # This workflow covers only the marked Windows boundary.
     assert (options[options.index("-m") + 1] if "-m" in options else None) == (

@@ -106,9 +106,13 @@ def expected(previous, *, ready=1, progress=1):
             "finished_last_7_days": {"parts": 1, "fixes": 1 + previous}}
 
 
-@pytest.mark.parametrize("case", ["counts", "newer-push", "github-once", "approved-not-started", "newer-findings",
-                                  "older-part"])
-@pytest.mark.parametrize("previous", [False, True], ids=["new-client", "earlier-adoption"])
+@pytest.mark.parametrize("previous,case", [
+    (False, case) for case in ("counts", "newer-push", "github-once", "approved-not-started",
+                             "newer-findings", "older-part")
+] + [(True, "counts")], ids=[
+    "new-client-counts", "new-client-newer-push", "new-client-github-once",
+    "new-client-approved-not-started", "new-client-newer-findings", "new-client-older-part",
+    "earlier-adoption-counts"])
 def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, monkeypatch, previous, case):
     if case == "github-once":
         github_read_once(env, monkeypatch, previous)

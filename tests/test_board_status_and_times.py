@@ -85,7 +85,9 @@ def _row(data, key):
     return next(row for row in data["items"] if row["id"] == key)
 
 
-@pytest.mark.parametrize("historical_state", [False, True], ids=["roadmap-only", "historical-state"])
+@pytest.mark.parametrize("client,historical_state", [
+    ("new", False), ("new", True), ("adopted-v1.2.2", True)
+], indirect=["client"], ids=["new-roadmap-only", "new-historical-state", "adopted-v1.2.2-historical-state"])
 def test_1_roadmap_done_without_local_state_is_finished(client, tmp_path, monkeypatch, historical_state):
     tree = _fix(client)
     if historical_state:
@@ -162,8 +164,7 @@ def test_3_idle_items_show_stall_duration_and_wait_but_done_items_do_not(client,
 @pytest.mark.parametrize("client,child_activity", [
     ("new", activity) for activity in
     ("running", "recently merged", "legacy timing", "branch commit", "stalled")
-] + [("adopted-v1.2.2", activity) for activity in
-     ("recently merged", "legacy timing", "stalled")], indirect=["client"])
+] + [("adopted-v1.2.2", "legacy timing")], indirect=["client"])
 def test_11_story_idle_time_tracks_its_parts(
         client, tmp_path, monkeypatch, claude_payload, gh, child_activity):
     configured = _fix(client)

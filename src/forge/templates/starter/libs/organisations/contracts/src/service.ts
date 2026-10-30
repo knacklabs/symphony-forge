@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import type { Member, Role } from './index';
 
 export const ORGANISATIONS_API = 'OrganisationsApi';
@@ -15,7 +16,7 @@ export type OrganisationMembership = { organisationId: string; role: Role };
 
 export interface OrganisationsApi {
   createForAccount(account: OrganisationAccount): Promise<{ role: Role }>;
-  invite(email: string, account: OrganisationPrincipal): Promise<void>;
+  invite(email: string, account: OrganisationPrincipal, options?: { afterCreate: (tx: Prisma.TransactionClient, id: string) => Promise<void> }): Promise<string>;
   openInvite(token: string): Promise<OrganisationInvite>;
   joinFromInvite(invite: OrganisationInvite, account: OrganisationAccount): Promise<{ role: Role }>;
   membershipFor(accountId: string): Promise<OrganisationMembership | null>;

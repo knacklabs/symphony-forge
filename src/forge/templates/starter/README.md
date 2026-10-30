@@ -30,6 +30,13 @@ COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run start:prod
 
 The app serves the web app and API at port 3000. `/health` checks readiness. `/api/docs` lists the API endpoints.
 
+## When something breaks
+
+1. Find the error by its id. Copy the error id from the screen or API response. Find that id in the app's error logs in Mainline.
+2. Roll back to the previous healthy release in Mainline. A rollback restores the code and keeps the database.
+3. Restore a snapshot if data needs recovery. Ask the database operator to restore the snapshot to a separate database. Check the data before you switch the app's `DATABASE_URL` to it.
+4. Change a leaked secret at its provider. Replace it in the platform's secret store and restart the app. For a leaked agent key, revoke it and create a new key.
+
 ## One company
 
 Set `APP_COMPANIES=one` to close public sign-up. An unset value or `many` keeps sign-up open.
