@@ -4,12 +4,58 @@
   "done_when": "tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "known": [
+    {
+      "area": "tests/test_member_removal_guide.py",
+      "file": "tests/test_member_removal_guide.py",
+      "gain": 4,
+      "harm": 1,
+      "line": 10,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9ebf6100cecc8d56dac9ea66b411877dccd751bcb06d006a7ed7c2e411edba0a",
+    "changed": "4ca68246760c4c17768aaf4cb51613bf5a31b4657727e130d98f0984b9fee3d7",
+    "commit": "b0f4f972e6e7ac90aeff042f8c12b4474e8070f3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 1\nRaise: Not done.\nCase: normal use - the rules suite classifies the member removal guide test.\nThe added label is `FORGE-MAIL-1/GUIDE`, whereas the Done-when requires `FORGE-MAIL-1`. `tests/test_rules.py:31\u201335` reads the constant verbatim and line 51 uses that exact string as the criterion namespace, so these labels are distinct. The reported four passing tests establish uniqueness but do not establish the required label. Set this constant to `FORGE-MAIL-1`.",
+        "file": "tests/test_member_removal_guide.py",
+        "gain": 4,
+        "harm": 1,
+        "line": 10,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: tests/test_rules.py passes on main with the member removal guide test labelled FORGE-MAIL-1",
+        "work": 1
+      }
+    ],
+    "id": "0e534ac3-a2ad-4725-8ba8-13690c8a09e0",
+    "status": "blocked"
+  },
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-30T18:15:09.516305+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T18:16:28.662545+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-30T18:16:28.672986+00:00",
+    "file": "tests/test_member_removal_guide.py",
+    "wait_id": "2cbb4eb7-721d-4bf5-8abf-d821f09dc671"
+  },
   "why": "The member removal guide test has no story label, so it claims rule 2 of the old FORGE-NEXT-1 story and the rules test fails on main"
 }
