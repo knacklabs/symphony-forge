@@ -21,17 +21,25 @@ from pathlib import Path
 PATH_LITERALS = r'''(["'`])((?:\\.|(?!\1)[^\\\r\n])*)\1'''
 
 
-def reads_file_relative(source: str, basenames: set[str]) -> bool:
+def reads_file_relative(source: str, paths: set[str]) -> bool:
     """Match literals in file-relative paths, not unrelated content assertions."""
-    if not basenames or not re.search(r"\b__file__\b", source):
+    if not paths or not re.search(r"\b__file__\b", source):
         return False
     try:
         tree = ast.parse(source)
     except SyntaxError:
         # Embedded Python and newer syntax still get the conservative check.
+        basenames = {posixpath.basename(path) for path in paths}
         return any(posixpath.basename(literal[2].replace("\\", "/")) in basenames
                    for literal in re.finditer(PATH_LITERALS, source))
-    roots = {"__file__"}
+    roots = {"__file__": []}
+
+    def components(node: ast.AST) -> list[str]:
+        if isinstance(node, ast.Name):
+            return roots.get(node.id, [])
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return [node.value.replace("\\", "/")]
+        return [part for child in ast.iter_child_nodes(node) for part in components(child)]
 
     def rooted(node: ast.AST) -> bool:
         if isinstance(node, ast.Name):
@@ -53,15 +61,17 @@ def reads_file_relative(source: str, basenames: set[str]) -> bool:
         for node in assignments:
             if rooted(node.value):
                 targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-                roots.update(target.id for target in targets if isinstance(target, ast.Name))
+                for target in targets:
+                    if isinstance(target, ast.Name) and target.id not in roots:
+                        roots[target.id] = components(node.value)
         if len(roots) == before:
             break
     for node in ast.walk(tree):
-        if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node) and any(
-                isinstance(part, ast.Constant) and isinstance(part.value, str)
-                and posixpath.basename(part.value.replace("\\", "/")) in basenames
-                for part in ast.walk(node)):
-            return True
+        if isinstance(node, (ast.BinOp, ast.Call)) and rooted(node):
+            parts = components(node)
+            suffix = posixpath.normpath("/" + posixpath.join(*parts)).lstrip("/") if parts else ""
+            if suffix and any(path == suffix or path.endswith("/" + suffix) for path in paths):
+                return True
     return False
 
 
@@ -122,7 +132,7 @@ def only_docs(top: Path, base: str, excludes: list[str], *, allow_settings: bool
             source = git("show", consumer)
             # File-relative expressions cannot always be resolved from literals alone.
             # Prefer extra tests when a quoted basename could read the changed input.
-            if reads_file_relative(source, set(patterns)):
+            if reads_file_relative(source, set(changed)):
                 return False
             # A basename finds candidates, not consumers: resolve whole path literals.
             # Fold literal path joins so their components cannot match unrelated root files.
