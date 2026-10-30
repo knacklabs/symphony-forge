@@ -154,7 +154,6 @@ def spec_confirm(args: argparse.Namespace) -> None:
     if status != "draft":
         repo.refuse(REFUSALS["not_draft"], slug=args.slug, status=status)
     _check_measure(args.slug, body)
-    _roadmap_items(args.slug, body)
     notes = f"docs/specs/{args.slug}.read.md"
     read = _text(top / notes)
     record, findings = _front(read)
@@ -165,6 +164,7 @@ def spec_confirm(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
     # The rest of the cold read's gate: its latest round passed and the spec is unchanged since.
     story.gate(args.slug, rel, read, repo.git("hash-object", "--", rel, cwd=top))
+    _roadmap_items(args.slug, body)
     _write(top / rel, _set(text, status="confirmed", confirmed_by=f'"{by}"',
                            confirmed_hash=_digest(body)))
     repo.commit_state(f"Confirm the {args.slug} spec", rel, notes, top=top)
