@@ -11,12 +11,27 @@
   "done_when": "After an accept at the round limit, the first forge close's clean review passes forge-pr-check on the commit it pushed",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0f504041cbd69468da259a82a110bbfb83ab0f47e611248a83c3702072b23e82",
+    "changed": "fc4de651179871316ec1de7f03e70a0eeaba51c5d4f917fab7deb31f30632dbe",
+    "commit": "da82380ce8bc1b5be2f86939d012b7e1f0c5bb17",
+    "dismissals": [],
+    "findings": [],
+    "id": "c6174004-707a-4146-a008-bed344f97f19",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T13:45:42.572467+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:53:17.599573+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
