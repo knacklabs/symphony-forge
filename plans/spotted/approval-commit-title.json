@@ -10,6 +10,28 @@
       "item": "approval-commit-title",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe tool guide test fails in Linux group six; the job output omits its assertion details.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 7,
+      "text": "The tool guide test fails in Linux group six; the job output omits its assertion details.",
+      "from": "worker",
+      "item": "approval-commit-title",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_work_fails_without_worker.py\tThe test still expects the manual Claude command after worker recovery changed to forge doctor.",
+      "kind": "bug",
+      "path": "tests/test_work_fails_without_worker.py",
+      "line": 53,
+      "text": "The test still expects the manual Claude command after worker recovery changed to forge doctor.",
+      "from": "worker",
+      "item": "approval-commit-title",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
