@@ -1,6 +1,13 @@
 {
   "base": "0662fec844e652ced23aff732d2e78ed58224368",
   "branch": "fix/when-a-client-s-data-is-protected-by-law",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19307-0356-7502-a15c-c5333d5aaa99",
+    "head": null,
+    "start": "4e72b54cd09343b6e44d2eb84b6453d822c62654"
+  },
   "done_when": "A brief that answers the personal data question as regulated makes the app's constitution list the three rules (read logging, data location, and retention with removal of old records), and the plan asks the location and retention questions before the first story.",
   "fix_kind": "mechanical",
   "kind": "fix",
