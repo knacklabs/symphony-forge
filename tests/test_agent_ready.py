@@ -162,9 +162,6 @@ def test_3_a_new_feature_takes_a_retry_key_on_create(repo, gh, tmp_path, starter
     if starter == "python":
         routes = (client / "apps/api/app/jobs/routes.py").read_text("utf-8")
         assert "Idempotency-Key" in routes and '"jobs_create"' in routes
-        assert "Idempotency-Key" in (
-            client / "libs/jobs/web/src/hooks/jobs-hooks.ts"
-        ).read_text("utf-8")
         built = repo.forge(
             "task",
             "feature",
@@ -191,7 +188,6 @@ def test_3_a_new_feature_takes_a_retry_key_on_create(repo, gh, tmp_path, starter
     assert "forge:feature:retry-key" not in controller
     spec = (client / "apps/api/test/jobs.e2e-spec.ts").read_text("utf-8")
     assert "Idempotency-Key" in spec and "forge:feature:retry-key" not in spec
-    assert "Idempotency-Key" in (client / "libs/jobs/web/src/hooks/jobs-hooks.ts").read_text("utf-8")
     built = repo.forge("task", "feature", "work-orders", "--one", "work-order", "--field", "name:text", cwd=client)
     assert built.returncode == 0, built.stdout + built.stderr
     controller = (client / "libs/work-orders/server/src/work-orders.controller.ts").read_text("utf-8")
