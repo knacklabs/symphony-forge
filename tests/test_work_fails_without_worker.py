@@ -32,7 +32,7 @@ SHAPES = {"no-result": '    return',
     if not previous or shape in ("null-answer", "null-error", "exception-error")
 ])
 def test_1_claude_ending_without_a_turn_fails_forge_work(repo, gh, tmp_path, previous, shape):
-    _, folder = _client(repo, gh, tmp_path, previous)
+    _client(repo, gh, tmp_path, previous)
     stub = repo.bin / "claude_agent_sdk" / "__init__.py"
     source = stub.read_text("utf-8")
     source = source[:source.index('    yield AssistantMessage')] + SHAPES[shape] + "\n"
@@ -50,5 +50,5 @@ def test_1_claude_ending_without_a_turn_fails_forge_work(repo, gh, tmp_path, pre
     problem = ("Claude ended without running a turn, so no worker ran; it may be waiting on a "
                "prompt such as a hooks review. Its log is ")
     assert re.fullmatch(re.escape(problem) + rf".*work-{FIX}\.log\.\n" + re.escape(
-        f"Next: run claude once in {folder} and answer its prompt, then forge work {FIX}\n"),
+        f"Next: forge doctor --fix, then forge work {FIX}\n"),
         worked.stderr), worked.stderr
