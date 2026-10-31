@@ -36,6 +36,9 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
     monkeypatch.delenv("PYTEST_ADDOPTS", raising=False)
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     _client(env, tmp_path, flavor == "adopted", fast_test=False)
+    # The fixture merged its preparation on the remote. Match a real worker's fetch
+    # so the next fix's size counts only its own files, not that preparation too.
+    env.repo.git("fetch", "-q", "origin", "main")
     _, setup = env.start("test-setup", "fix/test-setup", ".factory/fixes/test-setup.json",
                          {"kind": "fix", "why": "Set up pytest",
                           "done_when": "The client runs pytest"}, {})
