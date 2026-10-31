@@ -1,6 +1,13 @@
 {
   "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
   "branch": "fix/a-change-that-touches-central-files-sele",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19277-128b-7381-b74c-d792883de405",
+    "head": null,
+    "start": "2b82c7276dab65a9d01ba28b5aebfe044df1ef0e"
+  },
   "done_when": "When a change's related tests are more than a quarter of the suite, forge close and merge skip the laptop run and wait for the pull request's CI, in Forge's own repo and in client repos.",
   "fix_kind": "backend",
   "kind": "fix",
