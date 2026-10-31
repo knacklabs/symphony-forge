@@ -19,8 +19,8 @@
       "text": "Not done: A docs change that a test reads through a __file__-built path runs that test",
       "from": "blocking",
       "item": "docskip-file-built-paths",
-      "status": "open",
-      "closed_by": null
+      "status": "done",
+      "closed_by": "dismissed"
     },
     {
       "key": "bug\ttests/test_file_relative_docs_run_tests.py\tNot done: A docs change that a test reads through a __file__-built path runs that test\tdocskip-file-built-paths",
