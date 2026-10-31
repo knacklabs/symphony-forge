@@ -49,8 +49,8 @@
     "id": "f1ba3ebe-a4de-4fd0-bb0c-371b2f3e78cf",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T06:25:50.508198+00:00",
@@ -83,10 +83,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "cf0fc009-5be5-4de7-992e-5aa7e1e0bcdf",
-    "head": "9338682665a081ea17a563a854d1ad35797d1163",
+    "close": "4704086b-1c26-469c-bb68-2d912e5f2267",
+    "head": "4b7dd625a9eb8efc3d884a99f77b32d91e325d0b",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "Many land runs each poll GitHub for check status, used up the hourly limit twice in one day, and stalled every merge. The repo does not record which of GitHub's two hourly limits (REST or GraphQL) was hit.",
   "worker": "codex"
