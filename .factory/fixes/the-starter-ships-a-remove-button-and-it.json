@@ -1,0 +1,15 @@
+{
+  "base": "e307e40df24243c675c75805ec1ec1df5410695f",
+  "branch": "fix/the-starter-ships-a-remove-button-and-it",
+  "done_when": "The story doc lists three parts with no Remove button or screen in What changes for you or Done when, and the unmerged Remove-button part is not merged into main.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T08:44:09.715795+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The starter ships a Remove button and its own screen, but each client app builds its own screens in its own design, and the story already says the starter has no look of its own."
+}
