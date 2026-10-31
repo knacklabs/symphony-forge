@@ -11,12 +11,27 @@
   "done_when": "The guide a new client repo receives moves its machine, pane and board JSON sections into a reference file that the guide names where a waiting or stopped run is explained, and the deploy authorization text stays in the guide itself, not in that reference file.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fad706dd0b232de4ce0dbba079278dfa598541b390df3f9055bfbd998f37ea50",
+    "changed": "5e2880dabb7175cb4e0d4612368e632fe0416c0ae14e2ef595a8f56e1a067c9c",
+    "commit": "92b78d05e8cb6e04ba1b6cbea3621f3d698ec7e2",
+    "dismissals": [],
+    "findings": [],
+    "id": "89ab4ea6-2018-4ebc-91f1-f351b2ea1c27",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T09:39:34.469566+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T23:32:06.129896+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
