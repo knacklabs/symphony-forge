@@ -18,8 +18,8 @@ def test_1_only_current_forge_state_and_story_plans_remain(repo):
 
     plans = {path.relative_to(ROOT).as_posix() for path in (ROOT / "plans").rglob("*")
              if path.is_file()}
-    # The legacy list stays valid; new records are flat task or fix files, not subfolders.
-    assert all(re.fullmatch(r"plans/(?:[A-Z][A-Z0-9-]*(?:\.read)?\.md|roadmap\.json|spotted\.json"
+    # The ideas and legacy lists stay valid; new records are flat task or fix files, not subfolders.
+    assert all(re.fullmatch(r"plans/(?:[A-Z][A-Z0-9-]*(?:\.read)?\.md|ideas\.md|roadmap\.json|spotted\.json"
                             r"|spotted/(?:[A-Z][A-Z0-9-]*\.[A-Z0-9][A-Z0-9-]*|[a-z0-9][a-z0-9-]*)\.json)",
                             path) for path in plans), sorted(plans)
 
