@@ -1,0 +1,15 @@
+{
+  "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
+  "branch": "fix/each-of-the-six-pull-request-test-groups",
+  "done_when": "The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same runners.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T13:06:04.098372+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Each of the six pull request test groups runs about 20 to 32 minutes, so every change waits on the slowest group, and Forge's own rule is that CI finishes in under 5 minutes."
+}
