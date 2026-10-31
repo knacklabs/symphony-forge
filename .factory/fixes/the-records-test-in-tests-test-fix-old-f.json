@@ -1,6 +1,13 @@
 {
   "base": "7ca994c6b4a73979e9e3f90c1430f7dc5ecef67f",
   "branch": "fix/the-records-test-in-tests-test-fix-old-f",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1930f-841c-7270-9f95-596776b6ff74",
+    "head": null,
+    "start": "4a0155435b0169eac5ba98fd3073215255c7195e"
+  },
   "done_when": "tests/test_fix_old_forge_records.py test_1 passes on origin/main once plans/ideas.md is allowed in its plans pattern, and the other checks in that file stay the same.",
   "fix_kind": "mechanical",
   "kind": "fix",
