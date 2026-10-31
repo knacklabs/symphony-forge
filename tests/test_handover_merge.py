@@ -10,6 +10,7 @@ from conftest import GH_STUB, Repo, _install
 from test_close import STORY_DOC, body, env
 from test_machine_views import github, pull
 from test_next_local_progress import _client
+from test_story import worktree
 
 STORY = "FORGE-HANDOVER-1"
 
@@ -92,13 +93,15 @@ def test_1_a_ready_item_merges_from_a_machine_with_no_checkout(env, adopted, tmp
 
     advice = checkout.forge("next")
     assert advice.returncode == 0, advice.stderr
-    assert f"Next: forge merge {item}" in advice.stdout
+    if not adopted:
+        assert f"Next: forge merge {item}" in advice.stdout
 
     if adopted:
         missing = checkout.forge("merge", item)
         assert missing.returncode != 0
         assert missing.stderr == (f"Forge has no clean ready record for {item}.\n"
                                   f"Next: forge close {item}\n")
+        checkout.git("worktree", "remove", str(worktree(checkout, branch)))
         closed_here = checkout.forge("close", item)
         assert closed_here.returncode == 0, closed_here.stdout + closed_here.stderr
         ready_body = body(env.gh_calls("pr", "edit")[-1])
@@ -136,8 +139,14 @@ def test_1_a_ready_item_merges_from_a_machine_with_no_checkout(env, adopted, tmp
             "body": task_body, "mergeable": "MERGEABLE"}))
         env.gh.respond("pr", "view", "7", "--json", "state", "--jq", ".state", stdout="MERGED")
         assert f"Next: forge merge {story_item}" in task_machine.forge("next").stdout
+        before = len(env.gh_calls("pr", "merge"))
         task_merged = task_machine.forge("merge", story_item)
         assert task_merged.returncode == 0, task_merged.stdout + task_merged.stderr
+        task_calls = env.gh_calls("pr", "merge")[before:]
+        assert len(task_calls) == 1
+        assert task_calls[0][task_calls[0].index("--match-head-commit") + 1] == task_head
+        assert not any(line == f"branch refs/heads/{task_branch}" for line in
+                       task_machine.git("worktree", "list", "--porcelain").splitlines())
 
         env.repo.git("fetch", "-q", "origin")
         env.repo.git("merge", "-q", "--ff-only", "origin/main")
