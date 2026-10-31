@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-31T08:04:33.912904+00:00",
+      "because": "The owner chose to keep the clash check but limit it to the default branch's new files, since CI already tested the pull request's own files",
+      "done_when": "When CI is already green on the pull request's current commit, forge merge skips the laptop test run and goes straight to merging."
+    }
+  ],
   "base": "24b1cafd1cf30bfe67c7fd5f0a7088aee402ce13",
   "branch": "fix/each-merge-that-finds-the-default-branch",
-  "done_when": "When CI is already green on the pull request's current commit, forge merge skips the laptop test run and goes straight to merging.",
+  "done_when": "When the default branch moved after CI passed on the pull request's commit, forge merge runs on the laptop only the tests related to the files that changed on the default branch since that CI run, not the tests related to the pull request's own files",
   "fix_kind": "backend",
   "kind": "fix",
   "status": "started",
