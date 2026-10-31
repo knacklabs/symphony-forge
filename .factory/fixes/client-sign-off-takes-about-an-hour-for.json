@@ -4,12 +4,20 @@
   "done_when": "Sign-off's independent checks run side by side within the machine's review runs and finish in about the time of the slowest one, with the same number of model calls.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T06:25:56.037189+00:00",
       "step": "start"
     }
   ],
-  "why": "Client sign-off takes about an hour for 13 parts because its independent checks run one after another instead of side by side."
+  "stuck": {
+    "close": null,
+    "head": "d3da54dba24aadfe8071e794dd7b7d1c2b107257",
+    "keys": {},
+    "round": null
+  },
+  "why": "Client sign-off takes about an hour for 13 parts because its independent checks run one after another instead of side by side.",
+  "worker": "codex"
 }
