@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 2,
       "line": 21,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -28,27 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "b1fbd3c9c0ddf6c0fa305574b510153275f95b49106992f3d6fcdda567145664",
-    "changed": "f46a9ea976e4c0a43bde36d1ea25c2f050c689010407c9da53739f6e2d0a8a80",
-    "commit": "638d2b0b8171fa78138ebec5bb7d1f63fc5b2aa7",
+    "branch_diff": "aaa1c1f650ae440fb7ed729a2b644bf8751f3cbf67a16ad2fee8232b70826c36",
+    "changed": "61e6c011e149ff428500b372b510fd5c7cf955e16cb012bcc29f73bec5210c1a",
+    "commit": "76aaa24a59fc78591eae0a48ded83e81d17d4aa8",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Test\nCase: normal use - the regression test runs its second worker round.\nThe second iteration resumes Claude's saved session, but this assertion requires the full cheap-check instruction in the latest prompt. `src/forge/worker.py:604\u2013640` builds a shortened continuation prompt without reading `templates/brief.md`, and `_claude` sends that prompt when resuming at line 721. Consequently, both fixture cases fail on their second iteration and block CI. Check that the instructions remain available through the initial prompt and resumed conversation instead of requiring the full instruction to be resent.",
-        "file": "tests/test_workers_run_cheap_repo_checks.py",
-        "gain": 4,
-        "harm": 2,
-        "line": 21,
-        "priority": "P1",
-        "title": "Gate: test_1_workers_run_cheap_checks_before_the_round_ends",
-        "work": 2
-      }
-    ],
-    "id": "412d36bc-5d72-429a-8820-118030ecce9c",
-    "status": "blocked"
+    "findings": [],
+    "id": "4614a1c5-1a21-4a7a-aa6f-d807c1a869d9",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T06:26:01.018268+00:00",
@@ -56,6 +45,10 @@
     },
     {
       "at": "2026-10-31T06:32:28.783007+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T06:40:02.235286+00:00",
       "step": "review"
     }
   ],
