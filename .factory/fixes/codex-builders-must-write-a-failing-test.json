@@ -49,8 +49,8 @@
     "id": "b5ace39b-2408-4f0f-9a9c-d790d2715ba5",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T06:27:26.177215+00:00",
@@ -70,10 +70,10 @@
     }
   ],
   "stuck": {
-    "close": "3a6f60f0-9dae-4acc-a016-0087d685e298",
-    "head": "d3e129cc0b6184d75ce26fc0429539c112e5bc11",
+    "close": "df533a83-be93-47b2-8f1c-29eec05e1dc6",
+    "head": "0041e21a8a7e421a9d91a2f6fddd60274c99bdf7",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "Codex builders must write a failing test and watch it fail with forge test, but the refusal blocks that step, so the item reaches CI without that check.",
   "worker": "codex"
