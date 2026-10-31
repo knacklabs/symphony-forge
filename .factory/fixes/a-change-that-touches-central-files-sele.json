@@ -11,14 +11,59 @@
   "done_when": "When a change's related tests are more than a quarter of the suite, forge close and merge skip the laptop run and wait for the pull request's CI, in Forge's own repo and in client repos.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_broad_related_tests_wait_for_ci() in tests/test_broad_related_tests_wait_for_ci.py",
+      "file": "tests/test_broad_related_tests_wait_for_ci.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 99,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_broad_related_tests_wait_for_ci",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3a39193a1e568ed0b2688489fca8ee77d9ea0a58fc6f2a604c7a1d89ec101d3d",
+    "changed": "c8372121d7b1895c56708367f4ebf4333ef6c69114714b63f5aaf31ef70310ee",
+    "commit": "e624f6be977ea2f568ff3cb431010b72b281ea92",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - the original PR head is green while the newly published combined head has pending or failed CI.\nThe assertion only proves that another API call occurred; it never checks that CI was queried for `published`. The GitHub responses configured by `tests/test_close.py:170-176` match API prefixes regardless of commit, so this test would still pass if the broad, disjoint merge path waited on the original head's checks. The red-ci case also supplies failure for every head, leaving the same gap. Bind the check assertions or responses to the published commit and verify that its pending or failed checks prevent merging.",
+        "file": "tests/test_broad_related_tests_wait_for_ci.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 99,
+        "priority": "P1",
+        "title": "Gate: test_1_broad_related_tests_wait_for_ci",
+        "work": 2
+      }
+    ],
+    "id": "5be6ae5c-c85b-4286-aad6-1846a2971ae9",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-31T13:42:55.718823+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:53:00.152749+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-31T17:53:00.195961+00:00",
+    "file": "tests/test_broad_related_tests_wait_for_ci.py",
+    "wait_id": "9e5a2d84-0795-4ccc-983b-870afeb764a1"
+  },
   "stuck": {
     "close": null,
     "head": "4f37b9ff6e9fc985912865ba6a7fdfbdb9b6ab58",
