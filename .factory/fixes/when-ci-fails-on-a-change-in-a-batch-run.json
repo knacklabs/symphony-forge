@@ -1,0 +1,71 @@
+{
+  "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
+  "branch": "fix/when-ci-fails-on-a-change-in-a-batch-run",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a7-08ac-73e1-8030-58ccbfcbe0c1",
+    "head": null,
+    "start": "c4902ca088afe19c6ee430569d4498067198cdb5"
+  },
+  "done_when": "A batch run gives a change with failing CI one fix round on its builder's own thread, then closes it again and merges it or stops it with a plain reason, with no manual rerun.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "land() in src/forge/land.py",
+      "file": "src/forge/land.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 119,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: Native batch CI repairs exit before closing again and falsely report a merge",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fb9b2ef1cc2354b0b5faf4564986f5b2e32d64c22891aec0796265373a583583",
+    "changed": "9853c62f4a03114c887255c8fb3db2a38e64d3627f3476aa8c13793fb75ace8e",
+    "commit": "22008cdd44428579c3ed8871f856d5bc94b0c128",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 3, Harm 3\nRaise: Not done\nCase: normal use - a Codex coordinator runs `forge land --all` for a change built by its native Codex subagent.\nThis condition now sends queued failures into `_handed_out`, but native work only records a pending round and prints subagent instructions (`src/forge/worker.py:290`); it does not execute the repair. `_handed_out` consequently returns true, and land exits successfully at line 130 before closing again. The queue treats that successful exit as a completed merge (`src/forge/land.py:411`), reporting the still-failing, unmerged change as merged. It requires handback and another land invocation to finish. Keep native repairs pending through handback and the subsequent close instead of counting the handoff as a merge. The new regression test exercises only Claude SDK workers, so it misses this path.\nUnmet item: \"A batch run gives a change with failing CI one fix round on its builder's own thread, then closes it again and merges it or stops it with a plain reason, with no manual rerun.\"",
+        "file": "src/forge/land.py",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 4,
+        "harm": 3,
+        "line": 119,
+        "priority": "P1",
+        "title": "Not done: Native batch CI repairs exit before closing again and falsely report a merge",
+        "work": 3
+      }
+    ],
+    "id": "83547b8e-b8c9-4b88-b9b9-1700c559931a",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T06:25:20.787422+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T14:52:57.564601+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "e3caac021a1c1d451c174bb9ae954358dc61026b",
+    "keys": {},
+    "round": null
+  },
+  "why": "When CI fails on a change in a batch run, the run stops that change and the owner has to start its fix round again by hand, while a single change gets that round itself.",
+  "worker": "codex"
+}
