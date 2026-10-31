@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T06:26:01.018268+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-10-31T06:32:28.796930+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_workers_run_cheap_repo_checks.py",
-    "wait_id": "bb233747-2259-4cfc-be38-7e4e89f4a06b"
+    "reason": "The owner chose one more round: the resumed Claude prompt must carry the cheap-check instruction too",
+    "wait_id": "bb233747-2259-4cfc-be38-7e4e89f4a06b",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
