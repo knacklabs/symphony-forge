@@ -15,7 +15,7 @@
       "gain": null,
       "harm": null,
       "line": 69,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -39,31 +39,16 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "dfe55c15d6951c02e7414482f202b793b41921f892f46e14a30cb58508d7486a",
-    "changed": "ebea16c2a5df9a1f7702dcc0ba80ef8129ec925e721954f9de5522d6268c456d",
-    "commit": "51605a19bac03c14e9e988b91828dca54192da39",
+    "branch_diff": "2c0d550e96593c680563ae92e3498f300f232c958e7beaaa75cc7bc109efe74a",
+    "changed": "96444f4dff6b5b9c6775c1431e52b872f75f22eacd4748b511bddde33a65fe9e",
+    "commit": "e736848444ad496a10dfa67b059752e89670f75c",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "chunk 1/4:\n\nRemoving `csv` breaks every TypeScript feature containing a money field. `src/forge/feature_api.py:399` still reads `kinds[\"kinds\"][kind][\"csv\"]` while rendering the controller, so a command such as `forge task feature invoices --one invoice --field 'name:text' --field 'total:money'` raises `KeyError: 'csv'` before writing the feature. Keep this API export setting when removing the web settings.",
-        "file": "src/forge/templates/feature/kinds.toml",
-        "line": 69,
-        "priority": "P1",
-        "title": "Preserve the money formatter used by API generation"
-      },
-      {
-        "body": "chunk 1/4:\n\n`tests/test_database_kinds.py:74\u201375` still indexes `money[\"input\"]` and `money[\"cell\"]`. Both settings are removed here, so both parameters of `test_5_feature_columns_come_from_the_kind_table` fail in `_assert_kind_values`, before generating or exercising a feature. This independently breaks the TypeScript and Python smoke selections even after restoring the API's `csv` setting. Remove the obsolete web assertions while retaining the API and database checks.",
-        "file": "src/forge/templates/feature/kinds.toml",
-        "line": 69,
-        "priority": "P2",
-        "title": "Update the kind-table tests after removing web settings"
-      }
-    ],
-    "id": "e6334e27-6f9f-4bbd-865c-6d5012c390cd",
-    "status": "blocked"
+    "findings": [],
+    "id": "96ff9794-7111-44ed-b2f7-1e434ca94669",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T11:36:58.290854+00:00",
@@ -71,6 +56,10 @@
     },
     {
       "at": "2026-10-31T15:02:00.076620+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T17:37:13.627968+00:00",
       "step": "review"
     }
   ],
