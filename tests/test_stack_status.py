@@ -99,7 +99,9 @@ def test_7_remote_stacked_part_with_pending_checks_waits_for_its_base(env):
     env.open_pr("")
     env.checks([{**check, "status": "in_progress", "conclusion": None} for check in GREEN])
     closed = env.close("STACK/B")
-    assert closed.returncode != 0, closed.stdout + closed.stderr
+    # Close now succeeds after review without waiting for CI while the base is unmerged.
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    assert "Reviewed STACK/B; it is tested and merges after STACK/A merges." in closed.stdout
     assert "Review: clean." in closed.stdout, closed.stdout + closed.stderr
     remote = env.tmp / "other-machine"
     repo.git("clone", "-q", repo.git("remote", "get-url", "origin"), str(remote))

@@ -186,7 +186,6 @@ def close(args: argparse.Namespace) -> int:
     dismissals = _dismissals(args, item)
     branch, default = state["branch"], repo.default_branch(top)
     stacked_on = state.get("stacked_on") if "/" in item else ""
-    stacked_branch = f"task/{stacked_on.replace('/', '-')}" if stacked_on else ""
     pr_target = default
     pr = _pull_request(top, branch)
     migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
@@ -224,7 +223,7 @@ def close(args: argparse.Namespace) -> int:
         base = githooks.fix_base(top, state, review_ref, "HEAD")
         review_ref = f"forge-stack/{item.replace('/', '-')}"
         repo.git("update-ref", f"refs/remotes/{review_ref}", base, cwd=top)
-        pr_target = stacked_branch
+        pr_target = f"task/{stacked_on.replace('/', '-')}"
     if pending := time_records.pending_merge_wait(top, item, (pr or {}).get("body") or "", reason="merge conflict"):
         repo.record_event(top, item, "owner wait end", wait_id=pending["id"])
         _refresh_record(top, item, state, pr)
