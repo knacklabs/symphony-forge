@@ -4,12 +4,20 @@
   "done_when": "The guide a new client repo receives moves its machine, pane and board JSON sections into a reference file that the guide names where a waiting or stopped run is explained, and the deploy authorization text stays in the guide itself, not in that reference file.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T09:39:34.469566+00:00",
       "step": "start"
     }
   ],
-  "why": "The shipped Forge guide is about 171 KB and 2,222 lines, so every coordinator that loads it pays for about 400 lines on machine queues, the Claude Code pane and board JSON fields, and it repeats several Mainline deploy passages."
+  "stuck": {
+    "close": null,
+    "head": "75e1391ac5825370a6229ce7b0584aa960598632",
+    "keys": {},
+    "round": null
+  },
+  "why": "The shipped Forge guide is about 171 KB and 2,222 lines, so every coordinator that loads it pays for about 400 lines on machine queues, the Claude Code pane and board JSON fields, and it repeats several Mainline deploy passages.",
+  "worker": "codex"
 }
