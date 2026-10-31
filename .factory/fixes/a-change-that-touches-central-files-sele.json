@@ -48,7 +48,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T13:42:55.718823+00:00",
@@ -61,8 +61,12 @@
   ],
   "stop": {
     "at": "2026-10-31T17:53:00.195961+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_broad_related_tests_wait_for_ci.py",
-    "wait_id": "9e5a2d84-0795-4ccc-983b-870afeb764a1"
+    "reason": "Owner chose one more round: the test must prove CI is checked on the published combined head",
+    "wait_id": "9e5a2d84-0795-4ccc-983b-870afeb764a1",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
