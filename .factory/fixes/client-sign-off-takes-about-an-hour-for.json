@@ -1,0 +1,45 @@
+{
+  "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
+  "branch": "fix/client-sign-off-takes-about-an-hour-for",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a9-1853-7533-a622-9a9baa2df8c7",
+    "head": null,
+    "start": "c115ecdb4d61dc58fd240af2517211844cb76863"
+  },
+  "done_when": "Sign-off's independent checks run side by side within the machine's review runs and finish in about the time of the slowest one, with the same number of model calls.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "7c6aaf6497477e2490709365cceb66b0731941d5c55541cfad1cf8852df9490e",
+    "changed": "5fd8b9032b5e794d7da128db9b2f596b431ea7f3de61046e63b3c66b7973a0d5",
+    "commit": "e1c44b2f3dcc63e40c5565b5fa40daf478362153",
+    "dismissals": [],
+    "findings": [],
+    "id": "4c158195-d088-49fb-ab1b-bd9ae89af4a8",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T06:25:56.037189+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T14:54:28.316761+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "d3da54dba24aadfe8071e794dd7b7d1c2b107257",
+    "keys": {},
+    "round": null
+  },
+  "why": "Client sign-off takes about an hour for 13 parts because its independent checks run one after another instead of side by side.",
+  "worker": "codex"
+}
