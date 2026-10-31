@@ -2,6 +2,10 @@ $summary
 
 # Worker brief
 
+"Find the problem to solve" is a discovery placeholder, not a problem for a fix.
+Forge refuses it before it creates a branch. Use `forge start "<the idea>"` to explore an idea;
+discovery asks a question and starts no fix. Workers work only on their brief.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.

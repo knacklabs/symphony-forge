@@ -1,5 +1,8 @@
 Read the repo to find the problem that this idea solves and choose its first step.
 Change no files. Read docs/decisions/ and the repo's ## Review rules first.
+Run no commands that create a fix, branch, worktree or commit. Forge acts on your reply.
+"Find the problem to solve" is a discovery placeholder, not a problem for a fix.
+For an unknown problem, reply with Lane: discovery and a question; start no fix.
 A fix changes at most five code files and does not change an interface.
 Use a fix for a small, clear idea. If you can guess the problem, use your guess
 and state it in the reason. Ask one question through discovery only when you
