@@ -1,0 +1,15 @@
+{
+  "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
+  "branch": "fix/no-placeholder-fixes-2",
+  "done_when": "Sorting an idea never leaves a fix or branch named find-the-problem-to-solve behind",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T12:50:26.079497+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Fixes named Find the problem to solve appear by themselves and collect another fix's commits (issue 819). The first fix for this merged with no code (issue 1260)"
+}
