@@ -1,6 +1,13 @@
 {
   "base": "4dadf7123a18c38401db4d9bbb232452b3dcefbb",
   "branch": "fix/builders-stop-their-round-to-ask-the-coo",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19270-20da-7382-a412-f37e8d125404",
+    "head": null,
+    "start": "4e933be66677b4da9aae7debe8ee5aa1baca0cc7"
+  },
   "done_when": "The worker brief tells a builder that when its test run waits in line it keeps waiting, and never stops its round to ask about the test place.",
   "fix_kind": "mechanical",
   "kind": "fix",
