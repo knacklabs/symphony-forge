@@ -1,0 +1,61 @@
+{
+  "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
+  "branch": "fix/spec-confirm-edited-and-roadmap",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d03-c003-7951-baed-dac47978b333",
+    "head": null,
+    "start": "6eb8d22a92aad4086e3228895edc908209843214"
+  },
+  "done_when": "spec confirm on an edited spec confirms the new text, and spec confirm refuses a spec with no Roadmap lines before the owner confirms it",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ac0452d6d1eae1b7dd33513f3d8cc09ff2b8d498b0f6d8d6e731343dfb32e1d6",
+    "changed": "2cd63f7139c2467413373f09f279da8d296dbeb095e39e42d0ee1ba50c923ddc",
+    "commit": "f129d57f5bf5258b66a80f90efd6d5a73c4e3f89",
+    "dismissals": [],
+    "findings": [],
+    "id": "af2e8d38-aae7-4261-9a42-8c936f702d61",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:32:29.355751+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:36:50.727507+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T14:48:35.140480+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T16:14:56.378102+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:55:39.854831+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T03:35:45.179773+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "79c283ac-4d2d-4bbb-ac63-db669db5a742",
+    "head": "03432ab570b189a286a2f5fafe8c6eaaa219de69",
+    "keys": {},
+    "round": 4
+  },
+  "why": "spec confirm says a spec is already confirmed after it was edited, and accepts a spec with no Roadmap lines, so the owner confirms twice (issues 817 and 820)",
+  "worker": "codex"
+}
