@@ -11,12 +11,27 @@
   "done_when": "When the default branch moved after CI passed on the pull request's commit, forge merge runs on the laptop only the tests related to the files that changed on the default branch since that CI run, not the tests related to the pull request's own files",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "cab1a4433f7940a9e0a74e300df2343bacbff1867bdb483e253762bd902255a4",
+    "changed": "d0a43b90a7b0b6080d125887cd946a82a3fe74537ea5e20baf051feee09e4111",
+    "commit": "ba1fc424d4e6a0e7047d7ef57913cc3a14756f9b",
+    "dismissals": [],
+    "findings": [],
+    "id": "4b45c6cb-c86d-4f73-9c85-1fec655a33c9",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T14:44:25.522071+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:42:09.823165+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
