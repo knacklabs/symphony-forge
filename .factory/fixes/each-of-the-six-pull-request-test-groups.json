@@ -4,12 +4,20 @@
   "done_when": "The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same runners.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T13:06:04.098372+00:00",
       "step": "start"
     }
   ],
-  "why": "Each of the six pull request test groups runs about 20 to 32 minutes, so every change waits on the slowest group, and Forge's own rule is that CI finishes in under 5 minutes."
+  "stuck": {
+    "close": null,
+    "head": "dca54ae67faaff2bb5f81f40288c4db6ea496cbf",
+    "keys": {},
+    "round": null
+  },
+  "why": "Each of the six pull request test groups runs about 20 to 32 minutes, so every change waits on the slowest group, and Forge's own rule is that CI finishes in under 5 minutes.",
+  "worker": "codex"
 }
