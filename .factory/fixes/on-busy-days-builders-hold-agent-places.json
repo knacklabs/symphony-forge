@@ -1,7 +1,14 @@
 {
+  "amendments": [
+    {
+      "at": "2026-10-31T12:23:40.699617+00:00",
+      "because": "The owner chose all three balance rules on 31 Oct 2026: free the place, finish before start, pause new builds when the test line is long",
+      "done_when": "While a builder's tests wait in the test line, the machine's agent line shows that place as free and another waiting item starts; when the builder's tests finish, it waits for an agent place again before its round goes on."
+    }
+  ],
   "base": "4dadf7123a18c38401db4d9bbb232452b3dcefbb",
   "branch": "fix/on-busy-days-builders-hold-agent-places",
-  "done_when": "While a builder's tests wait in the test line, the machine's agent line shows that place as free and another waiting item starts; when the builder's tests finish, it waits for an agent place again before its round goes on.",
+  "done_when": "While a builder's tests wait in the test line, its agent place is free for another item and it waits for a place again before its round goes on; a free agent place goes first to work near the end (a fix round after a failed test, a review) and a new build last; and no new build starts while more than 2 items wait for the test place, starting again when 1 waits",
   "fix_kind": "backend",
   "kind": "fix",
   "status": "started",
