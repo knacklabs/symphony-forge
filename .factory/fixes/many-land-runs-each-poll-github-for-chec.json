@@ -1,6 +1,13 @@
 {
   "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
   "branch": "fix/many-land-runs-each-poll-github-for-chec",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a4-b2c0-7361-b9d0-bfece23a0e71",
+    "head": null,
+    "start": "26f3c7790d4b2d34cad76fd1a93ca70eff482b3a"
+  },
   "done_when": "Waiting land runs read one shared status snapshot per 60 seconds instead of each polling GitHub every 15 seconds.",
   "fix_kind": "backend",
   "kind": "fix",
