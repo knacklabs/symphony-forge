@@ -160,9 +160,8 @@ $delegation
 - A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
   the board and `forge next` show the worker as stopped and give `forge work <item>` for an unfinished round.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
-- A run in line names each holder and the command that frees its place. Return a finished
-  native round with `forge handback` in its own session. Ask the operator to use `forge stop`
-  for other holders. A place no longer counts after its owning process exits.
+- When your test run waits in line, keep waiting in the same round until it finishes.
+  Never stop your round to ask the coordinator to free a test place.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.
@@ -380,6 +379,12 @@ a sensible default, and name it in your handback as an open question: what it to
 asked, the default, why you picked it and what happens if it stands. The coordinator adds it to
 the open-decisions list.
 Build the screens marked `Build: now` in SCREENS.md. Build a `Build: later` screen only when the plan names it.
+In a client repo with a web app, build each person-facing API's screen in the client's design
+with the API, without waiting for a request, unless the screen is marked `Build: later`.
+In a client repo with a web app, report as P1, titled `Screen: <route>`, a route this change
+adds that people use, when the change adds no screen for it. Webhooks, agent-only routes,
+MCP, system endpoints and jobs are not findings, nor is a screen marked `Build: later`.
+When you build a basic screen, remove its name from `pendingScreens` so its rule specs run.
 
 <!-- if fix-round -->
 ## Fix round
@@ -448,6 +453,7 @@ singular and fields. As your first step, run the plan's line:
 Keep every `--field` value in single quotes, such as `'name:text'`,
 `'description?:long-text'`, `'status:status(planned|active|done)'` and `'client?:link(clients)'`.
 The command copies the installed starter's projects feature, not the app's projects code.
+It builds the API, agent tools, change history and tests without writing pages or changing the web app.
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
 Admins have all five. Members can view, create and edit, but cannot delete or restore and never

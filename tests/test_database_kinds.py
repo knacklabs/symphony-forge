@@ -71,8 +71,6 @@ def _assert_kind_values(client: Path) -> None:
     money = kinds["kinds"]["money"]
     assert (money["currency_sql"], money["currency_prisma"], money["currency_sqlalchemy"]) == ("text", "String", "Text")
     assert money["currency_check"] == 'CONSTRAINT "{table}_{currency}_code" CHECK ("{currency}" ~ \'^[A-Z]{3}$\')'
-    assert money["input"] == "money"
-    assert money["cell"] == money["csv"] == "formatMoney(row.{name}, row.{name}Currency)"
     assert (money["sample"], money["changed"], money["bad"]) == ("1250.0000", "1800.0000", "not-money")
 
 
@@ -290,6 +288,8 @@ def _assert_live_run(client: Path, starter: str, tmp_path_factory) -> None:
 def test_5_feature_columns_come_from_the_kind_table(repo, gh, tmp_path, tmp_path_factory, starter):
     # Audit: a changed kind value must reach generated migrations and both shipped skill copies;
     # command tests that read the kind table cannot detect a table and skill drifting together.
+    # The invoice command also catches loss of the money CSV formatter used by the API.
+    # Web input and cell settings are no longer part of feature generation's contract.
     # The command is the owner boundary; no test-only production seam is needed.
     client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", "react" if starter == "typescript" else "python")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
