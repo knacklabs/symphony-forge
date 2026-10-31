@@ -45,8 +45,8 @@
     "id": "9d5b9415-ed6c-497d-803a-87fcbc612197",
     "status": "clean"
   },
-  "round": 8,
-  "status": "waiting for checks",
+  "round": 9,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:05:33.479824+00:00",
@@ -86,10 +86,10 @@
     }
   ],
   "stuck": {
-    "close": "86341e06-f762-4b09-819d-3ce3c4c7b565",
-    "head": "686fde0a177d7d27d50deda94ac5d38ad05a354c",
+    "close": "741c27ec-2664-46b3-84ea-12cec300a75d",
+    "head": "f71628aa2d741fa2448e6e1edccf90bc9e5abf42",
     "keys": {},
-    "round": 7
+    "round": 8
   },
   "worker": "codex"
 }
