@@ -1,0 +1,15 @@
+{
+  "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
+  "branch": "fix/codex-builders-must-write-a-failing-test",
+  "done_when": "A Codex builder runs forge test in its round without a permission refusal.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T06:27:26.177215+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Codex builders must write a failing test and watch it fail with forge test, but the refusal blocks that step, so the item reaches CI without that check."
+}
