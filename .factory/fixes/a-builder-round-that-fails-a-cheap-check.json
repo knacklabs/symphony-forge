@@ -1,6 +1,13 @@
 {
   "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
   "branch": "fix/a-builder-round-that-fails-a-cheap-check",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a4-b2f8-76c1-b399-550d2fcec8d6",
+    "head": null,
+    "start": "2dddbffcc87784f4c103b5ebd2f9b0baf85f2eaa"
+  },
   "done_when": "A builder round runs those cheap repo checks before it ends, so a failing one is fixed in that same round instead of in CI.",
   "fix_kind": "backend",
   "kind": "fix",
