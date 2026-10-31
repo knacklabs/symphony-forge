@@ -43,6 +43,17 @@
       "item": "docskip-file-built-paths",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_work_fails_without_worker.py\tThe test still expects the old Claude recovery command, so six cases fail on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_work_fails_without_worker.py",
+      "line": 52,
+      "text": "The test still expects the old Claude recovery command, so six cases fail on the default branch.",
+      "from": "worker",
+      "item": "docskip-file-built-paths",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
