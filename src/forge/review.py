@@ -329,6 +329,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["fix", "proof-list", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
+    has_web = any((top / path / "package.json").is_file() for path in ("apps/web", "web", "frontend"))
+    chosen += (["screens"] if cfg["repo"] == "client" and has_web else []) + ["app-rules"]
     values["design_context"], owned_design = worker.design_context(top, design_text, user_facing)
     chosen.append("design-context")
     if owned_design:
@@ -340,6 +342,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
     prompt = (string.Template((Path(__file__).parent / "templates" / "review-light.md").read_text(
         encoding="utf-8")).substitute(values) if prototype else
         "\n\n".join(blocks[name].substitute(values) for name in chosen))
+    if prototype and "screens" in chosen:
+        prompt += "\n\n" + blocks["screens"].substitute(values)
     prompt += "\n\n" + blocks["approach"].substitute(values)
     settings = repo.review_settings(top)
     if "added_work_min_gain" in settings:

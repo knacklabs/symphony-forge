@@ -311,7 +311,9 @@ def ships(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
                 .replace("<install>", "uv tool install ." if source
                          else sync.install_line("${FORGE_RELEASE#v}"))
                 .replace("<tests-timeout>", f"    timeout-minutes: {45 if source else 30}\n")
-                .replace("<containers>", "      FORGE_CONTAINERS: '1'\n" if source else "")
+                .replace("<containers>", ("      FORGE_CONTAINERS: '1'\n"
+                                          "      # Measure every test on CI hardware before choosing a performance repair.\n"
+                                          "      PYTEST_ADDOPTS: '--durations=0'\n") if source else "")
                 # Forge's own Node client tests download jest and vitest into npm's cache.
                 .replace("<npm-cache>", npm_cache)
                 .replace("<full-npm-cache>", full_npm_cache)
