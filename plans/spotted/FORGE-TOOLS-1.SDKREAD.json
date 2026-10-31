@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\ttests/test_mod_install.py\tThe real plugin install test sometimes misses its settings change event in the full suite, although the focused run passes.",
+      "kind": "bug",
+      "path": "tests/test_mod_install.py",
+      "line": 177,
+      "text": "The real plugin install test sometimes misses its settings change event in the full suite, although the focused run passes.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SDKREAD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_tools_agent_sdk.py\tGate: Claude read process-tree shutdown is not exercised\tFORGE-TOOLS-1/SDKREAD",
       "kind": "bug",
       "path": "tests/test_tools_agent_sdk.py",
