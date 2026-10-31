@@ -454,6 +454,7 @@ singular and fields. As your first step, run the plan's line:
 Keep every `--field` value in single quotes, such as `'name:text'`,
 `'description?:long-text'`, `'status:status(planned|active|done)'` and `'client?:link(clients)'`.
 The command copies the installed starter's projects feature, not the app's projects code.
+It builds the API, agent tools, change history and tests without writing pages or changing the web app.
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
 Admins have all five. Members can view, create and edit, but cannot delete or restore and never
