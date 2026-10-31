@@ -11,14 +11,56 @@
   "done_when": "An FDE can follow the guides to the first Promote without finding a contradictory rule, a promise of an unbuilt feature, a placeholder address or a missing production step.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/conventions/deploy.md",
+      "file": "src/forge/templates/conventions/deploy.md",
+      "gain": null,
+      "harm": null,
+      "line": 5,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the shipped coordinator or worker instructions",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "1eaffd566e787cc78d0a2d0842d427c1efadb71ddeb98a01af7958bd5658d29c",
+    "changed": "67a839b2905cbe60641eb8b7229c16a358be9595ae6fb81f7ac7f42aa8c04635",
+    "commit": "2f39479113c99e730ebe2e0d8ea825e21c7c19b5",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Gate.\nCase: normal use - an FDE initializes or upgrades a client repo and follows its agent through sign-off and production preparation.\nThe change adds production preparation and a client-hosted deployment path, but updates neither `src/forge/templates/skill.md` nor `src/forge/templates/brief.md`, as the supplied repository review rule requires for changed coordinator or worker steps. The shipped coordinator journey also still promises choosing Build now or Later at sign-off, whereas the changed README labels that command unavailable. `story.ships` distributes that unchanged journey to both hosts. Update the shipped instructions to carry the corrected sign-off guidance and production flow so the agent gives the FDE the same route as these guides.",
+        "file": "src/forge/templates/conventions/deploy.md",
+        "line": 5,
+        "priority": "P1",
+        "title": "Gate: update the shipped coordinator or worker instructions"
+      }
+    ],
+    "id": "2ebee1c1-3ce5-4d16-a6b4-5bb18402b40d",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-31T09:39:40.905876+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T23:28:48.294053+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-10-31T23:28:48.305873+00:00",
+    "file": "src/forge/templates/conventions/deploy.md",
+    "wait_id": "7db6ba0d-0a31-41b9-b89d-31f0573f643c"
+  },
   "stuck": {
     "close": null,
     "head": "de86f911ad04fab5872ce96fcaaf415bde6609f2",
