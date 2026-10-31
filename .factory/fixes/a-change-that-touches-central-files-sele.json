@@ -11,7 +11,7 @@
   "done_when": "When a change's related tests are more than a quarter of the suite, forge close and merge skip the laptop run and wait for the pull request's CI, in Forge's own repo and in client repos.",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
