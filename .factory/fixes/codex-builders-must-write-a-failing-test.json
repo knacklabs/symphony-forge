@@ -1,6 +1,13 @@
 {
   "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
   "branch": "fix/codex-builders-must-write-a-failing-test",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a4-b2e3-7441-ad9b-54be4a96ba97",
+    "head": null,
+    "start": "e695943353386af50cdb2c8eba9a50e606a34496"
+  },
   "done_when": "A Codex builder runs forge test in its round without a permission refusal.",
   "fix_kind": "backend",
   "kind": "fix",
