@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-NOSCREENS-1-RULES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T11:37:07.840128+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "1e158d769a9cfd01c893d722643ab0424b3dfa30",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
