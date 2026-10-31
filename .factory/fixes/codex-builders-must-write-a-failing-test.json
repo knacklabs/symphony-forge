@@ -4,12 +4,20 @@
   "done_when": "A Codex builder runs forge test in its round without a permission refusal.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T06:27:26.177215+00:00",
       "step": "start"
     }
   ],
-  "why": "Codex builders must write a failing test and watch it fail with forge test, but the refusal blocks that step, so the item reaches CI without that check."
+  "stuck": {
+    "close": null,
+    "head": "156cf49df20a240e89cd7c7fffda4317c6ac95c8",
+    "keys": {},
+    "round": null
+  },
+  "why": "Codex builders must write a failing test and watch it fail with forge test, but the refusal blocks that step, so the item reaches CI without that check.",
+  "worker": "codex"
 }
