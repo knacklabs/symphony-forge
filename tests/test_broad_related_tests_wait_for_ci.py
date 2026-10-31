@@ -104,12 +104,20 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
     before_checks = len(env.gh_calls("api"))
 
     merged = env.repo.forge("merge", item)
+    attempts = env.gh_calls("pr", "merge")
 
     broad = place == "ci" and selected > 1
     if broad:
         assert not list(receipts.iterdir()), merged.stdout + merged.stderr
         assert "Related tests exceed one quarter of the suite. Pull request CI runs them." in merged.stdout
-        published = env.repo.git("rev-parse", "fix/tidy-readme", cwd=remote)
+        if ci_red:
+            # Failed CI keeps the worktree at the pushed commit.
+            published = env.repo.git("rev-parse", "HEAD", cwd=where)
+        else:
+            # A successful merge deletes the branch and worktree. GitHub's merge
+            # request retains the exact commit whose checks permitted that merge.
+            assert len(attempts) == 1, merged.stdout + merged.stderr
+            published = attempts[0][attempts[0].index("--match-head-commit") + 1]
         assert published != original
         env.repo.git("merge-base", "--is-ancestor", advanced, published, cwd=remote)
         assert ["api", "--paginate", "--jq", ".check_runs[]",
@@ -125,7 +133,6 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
             merged.stdout + merged.stderr)
         assert "Related tests exceed one quarter" not in merged.stdout
     assert merged.returncode == 0, merged.stdout + merged.stderr
-    attempts = env.gh_calls("pr", "merge")
     assert len(attempts) == 1
     published = attempts[0][attempts[0].index("--match-head-commit") + 1]
     assert (published != original) == broad
