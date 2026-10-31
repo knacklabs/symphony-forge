@@ -1,6 +1,13 @@
 {
   "base": "0662fec844e652ced23aff732d2e78ed58224368",
   "branch": "fix/the-shipped-forge-guide-is-about-171-kb",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a1944b-9620-7270-af29-0bc7133a5e1f",
+    "head": null,
+    "start": "5a4fa95b557887a69dbc0a7cb8fc32164f4b5cd8"
+  },
   "done_when": "The guide a new client repo receives moves its machine, pane and board JSON sections into a reference file that the guide names where a waiting or stopped run is explained, and the deploy authorization text stays in the guide itself, not in that reference file.",
   "fix_kind": "mechanical",
   "kind": "fix",
