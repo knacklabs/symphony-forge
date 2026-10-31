@@ -1,18 +1,18 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-31T10:57:02.078665+00:00
-seconds: 270.081
-read_hash: c97b5a7a4c1758b3eb9efa191e3d142b94364928
-round: 1
+read_at: 2026-10-31T11:45:22.250911+00:00
+seconds: 147.896
+read_hash: aab721d0950df5c46d42ec239df86c10da9283d0
+round: 2
 passed: no
-doc_seen: c97b5a7a4c1758b3eb9efa191e3d142b94364928
+doc_seen: aab721d0950df5c46d42ec239df86c10da9283d0
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 56a876ac05d2f69e9776016de92f695ace082f23
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a19196-f998-7fe2-83c5-cfa4c6b2e7d2
 session:
-loop_choice:
-loop_reason:
+loop_choice: more
+loop_reason: The owner chose one more round: put the brief sentence and its test in one part
 ---
 # Cold read notes
 
@@ -53,3 +53,10 @@ Only a genuine trade-off goes to the human, as a question with options.
    [plans/FORGE-ONEPLAN-1.md:132](/plans/FORGE-ONEPLAN-1.md:132) explicitly gives overlapping Prototype text as the reason for this dependency. No code or shared format from RULES is needed. Give the shared Prototype paragraphs to GUIDE and leave the other screen rules with RULES; the shared text then has one owner.
    Gain 2, Work 2, Harm 1
    Disposition: keep - below the bar (live with)
+
+## Round 2
+
+4. Advisory: The fix for finding 2 separates the brief assertion from the text it checks.
+   Raise: Plan gap.
+   The amended plan assigns `tests/test_feature_command.py:893` to DEFAULT, but leaves the corresponding brief sentence with GUIDE, which waits for DEFAULT. That test checks the delivered worker brief; `src/forge/templates/brief.md:453` still says members can edit. Updating the assertion in DEFAULT therefore precedes its matching text change and fails the check. This ordering problem is new evidence introduced by the ownership correction. Keep the brief sentence and its assertion in the same task.
+   Gain 4, Work 1, Harm 2
