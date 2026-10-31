@@ -178,6 +178,8 @@ jobs:
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: '6'
       FORGE_CONTAINERS: '1'
+      # Measure every test on CI hardware before choosing a performance repair.
+      PYTEST_ADDOPTS: '--durations=0'
       GH_TOKEN: ${{ github.token }}
     timeout-minutes: 60
     steps:
