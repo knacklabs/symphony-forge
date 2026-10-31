@@ -1,0 +1,78 @@
+{
+  "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
+  "branch": "fix/codex-builders-must-write-a-failing-test",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a4-b2e3-7441-ad9b-54be4a96ba97",
+    "head": null,
+    "start": "e695943353386af50cdb2c8eba9a50e606a34496"
+  },
+  "done_when": "A Codex builder runs forge test in its round without a permission refusal.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_worker_requests_use_forges_accepting_reviewer() in tests/test_worker_approval_requests.py",
+      "file": "tests/test_worker_approval_requests.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 19,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A Codex builder runs forge test in its round without a permission refusal.",
+      "work": 2
+    },
+    {
+      "area": "test_1_worker_requests_use_forges_accepting_reviewer() in tests/test_worker_approval_requests.py",
+      "file": "tests/test_worker_approval_requests.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 8,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: worker approval coverage for earlier-adopted clients",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0cce9fc61caf9c6a82b4ebc44cb1ad87f2bf4d5e24e1b0fa3e0d90bbe920a151",
+    "changed": "b5664135a645f8242dd7048f73ca76ef5edc6f5eb0e2c81854f93910c39bbe15",
+    "commit": "003fb051238f5025799bea88aeaec96a86f1eea2",
+    "dismissals": [],
+    "findings": [],
+    "id": "7e546a70-c769-4e6b-bc8e-83ad1b28a065",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T06:27:26.177215+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T06:33:21.588592+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T06:36:29.204821+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "69ea0c97-0dee-4f59-95a8-3cfecda431a6",
+    "head": "a6fa34184622818338001f888a1f76297087f530",
+    "keys": {
+      "the open P0 not done: a codex builder runs forge test in its round without a permission refusal. in tests/test_worker_approval_requests.py": 1
+    },
+    "round": 1
+  },
+  "why": "Codex builders must write a failing test and watch it fail with forge test, but the refusal blocks that step, so the item reaches CI without that check.",
+  "worker": "codex"
+}
