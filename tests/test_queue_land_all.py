@@ -427,8 +427,10 @@ def test_3_a_failed_check_naming_none_of_the_files_runs_again_once(client, monke
     assert "flaky merged." in lines, done.stdout
     assert not env.gh_calls("pr", "merge", _number("fix/broken"))
     summary = next(n for n, line in enumerate(lines) if line.startswith("Merged ("))
+    # Previously the batch stopped before work. It now spends its one repair round,
+    # then gives work as the next step if CI still fails.
     assert lines[summary:] == ["Merged (1): flaky · Ready to merge (0): none · Needs you (1): broken",
-                               "- broken: Checks failed on the pull request: tests.", "  Next: forge land broken"], done.stdout
+                               "- broken: Checks failed on the pull request: tests.", "  Next: forge work broken"], done.stdout
 
 
 def test_4_a_change_that_needs_you_stops_alone(client, monkeypatch):
