@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-31T11:36:58.290854+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Starter ships no screens: `forge task feature` writes no page is stuck. It should deliver: The feature command, its tests and the smoke list stop generating web files; the browser parts of the generated specs go.\nIt changes 942 lines outside tests, over its limit of 400.\nThe worker tried: Stop feature generation from writing pages.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "41124cfe-5644-47ea-853f-10d6183f28f7"
+  },
   "stuck": {
     "close": null,
     "head": "9f8c062f0ea340fe488b243790b303f411116f25",
