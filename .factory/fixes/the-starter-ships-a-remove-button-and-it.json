@@ -1,6 +1,13 @@
 {
   "base": "e307e40df24243c675c75805ec1ec1df5410695f",
   "branch": "fix/the-starter-ships-a-remove-button-and-it",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19124-1e86-7361-9628-f12513d20768",
+    "head": null,
+    "start": "fb894eb183459f8771833f59bd8f5ef0617b2069"
+  },
   "done_when": "The story doc lists three parts with no Remove button or screen in What changes for you or Done when, and the unmerged Remove-button part is not merged into main.",
   "fix_kind": "mechanical",
   "kind": "fix",
