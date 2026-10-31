@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe records allowlist rejects the current ideas file.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The records allowlist rejects the current ideas file.",
+      "from": "worker",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_land_waits_for_check_progress.py\tGate: test_3_land_stops_when_github_shows_no_check_progress[unreadable]\tmany-land-runs-each-poll-github-for-chec",
       "kind": "bug",
       "path": "tests/test_land_waits_for_check_progress.py",
