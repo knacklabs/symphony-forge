@@ -117,6 +117,8 @@ line asking you to split them into smaller stories; already approved larger stor
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
 moves its own changes onto the default branch after the base merges through Forge.
+The board and `forge next` show the part's base. After a clean review, they say that
+the part waits for its base to merge. After that merge, run `forge close <part>`.
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish
 and review it before you start a part on top of it.
 
@@ -159,9 +161,8 @@ $delegation
 - A successful hand-back frees the item's lock. If the worker process and lock are no longer live,
   the board and `forge next` show the worker as stopped and give `forge work <item>` for an unfinished round.
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
-- A run in line names each holder and the command that frees its place. Return a finished
-  native round with `forge handback` in its own session. Ask the operator to use `forge stop`
-  for other holders. A place no longer counts after its owning process exits.
+- When your test run waits in line, keep waiting in the same round until it finishes.
+  Never stop your round to ask the coordinator to free a test place.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.

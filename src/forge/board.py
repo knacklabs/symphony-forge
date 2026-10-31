@@ -765,7 +765,7 @@ def machine_board(top: Path, history: Item | None = None, trim: bool = True, cac
                       "Waiting" if current else readiness.get(key, {}).get("parts", {}).get(tid, "Not started"))
             parts.append({"id": item, "title": spec.get("Name") or "A part with no name yet",
                           "owner": task.developer(spec) or task.owner(text),
-                          "status": status, "waits_for": waits})
+                          "status": readiness.get(key, {}).get("stacked", {}).get(tid, status), "waits_for": waits})
         phase = ("done" if key in completed else
                  readiness.get(key, {}).get("stage", "planning"))
         if items.get(key, {}).get("worker"):
