@@ -1,0 +1,88 @@
+{
+  "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
+  "branch": "fix/each-of-the-six-pull-request-test-groups",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19272-ca24-74a0-8a94-e2847606b1a6",
+    "head": null,
+    "start": "c8030855e51aa6148e9e37c182d3964536d4e524"
+  },
+  "done_when": "The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same runners.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge.yml",
+      "file": ".github/workflows/forge.yml",
+      "gain": 5,
+      "harm": 2,
+      "line": 56,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same",
+      "work": 3
+    },
+    {
+      "area": ".github/workflows/forge.yml",
+      "file": ".github/workflows/forge.yml",
+      "gain": 5,
+      "harm": 2,
+      "line": 56,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 2,
+      "security": false,
+      "title": "Not done: The slowest of the six pull request test groups does not finish in about 5 minutes on the same runners",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a937cfa29733abadcab2a3aa5ff34ee105375392df44c45aabb959d37d853b32",
+    "changed": "cab65b64dd786252fdef8e330831e1fdb1e0d95dd9f0a13d7afdbd2d04565bb1",
+    "commit": "3536a5858d30c3c44024376e27274a247832bb92",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 2\nRaise: Not done\nCase: normal use - a pull request runs the six test groups on the existing runners.\nThe Done-when requires: \u201cThe slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same runners.\u201d This change only enables timing reports; it does not reduce test execution time. The latest commit explicitly confirms that no measured performance repair or refreshed hardware durations exist. Its 36\u201382-second diagnostic jobs selected related tests and are acknowledged as incomparable to the earlier baseline. The requested performance outcome therefore remains unmet; complete the measured repair and demonstrate comparable normal group times.",
+        "file": ".github/workflows/forge.yml",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 2,
+        "line": 56,
+        "priority": "P1",
+        "title": "Not done: The slowest of the six pull request test groups does not finish in about 5 minutes on the same runners",
+        "work": 3
+      }
+    ],
+    "id": "b9cbdab3-8238-4133-a1f3-841f491f5d89",
+    "status": "clean"
+  },
+  "round": 2,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T13:06:04.098372+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T14:59:02.466759+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T17:45:31.884093+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "cc6b4f57-0d33-4f54-bcc8-eb9f5a242688",
+    "head": "5f8db04eed706a75ed20d9f813be784038865a4f",
+    "keys": {},
+    "round": 1
+  },
+  "why": "Each of the six pull request test groups runs about 20 to 32 minutes, so every change waits on the slowest group, and Forge's own rule is that CI finishes in under 5 minutes.",
+  "worker": "codex"
+}
