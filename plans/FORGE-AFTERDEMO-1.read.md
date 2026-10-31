@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-31T10:20:20.746727+00:00
-seconds: 288.793
-read_hash: b1631269a1fbee3fe38999b79f27cbfbfa334b47
-round: 1
-passed: no
-doc_seen: b1631269a1fbee3fe38999b79f27cbfbfa334b47
+read_at: 2026-10-31T10:53:08.125855+00:00
+seconds: 95.888
+read_hash: 427a4b52c350ee5976dfbb8ba4297ae9b9e0fcac
+round: 2
+passed: yes
+doc_seen: 427a4b52c350ee5976dfbb8ba4297ae9b9e0fcac
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: 4b308b73cf154f10a4433bc6ce8971bf832e0fef
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a19175-198c-7423-9128-9c22b0243e9a
 session:
@@ -65,3 +65,12 @@ Only a genuine trade-off goes to the human, as a question with options.
    [NOTIFY's Scope](plans/FORGE-AFTERDEMO-1.md:92) suggests more than the requested limit of about 400 changed lines. The existing history contracts, server and app test already total 303 lines; this task also needs the new schema, migration, command-level test, lock-file entries and starter wiring. Separate those responsibilities before building.
    Gain 2, Work 2, Harm 4 (floor: migration)
    Disposition: keep - one part per starter is the smallest split that keeps the pinned names in one place; the owner's cuts already removed the screen, so the part is below the size that needs a split (live with).
+
+## Round 2
+
+6. Advisory: The new Python helper bypasses the app's installed dependencies.
+   Raise: Plan gap.
+   Case: normal use - running the notifications app case in Python starter smoke.
+   [The amended plan](plans/FORGE-AFTERDEMO-1.md:68) runs `docker compose ... exec -T api python -`. The [Python Dockerfile](src/forge/templates/starter-python/Dockerfile:15) installs dependencies with `uv sync` into the project's virtual environment and does not add that environment to `PATH`. Plain `python` therefore cannot import the service's dependencies. Use `uv run --no-sync python -`, matching the container's existing startup commands.
+   Gain 3, Work 1, Harm 2
+   Disposition: keep - below the bar (follow-up)

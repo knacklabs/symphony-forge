@@ -1,10 +1,18 @@
 {
   "doc": "plans/FORGE-AFTERDEMO-1.md",
-  "status": "planning",
+  "status": "read",
   "steps": [
     {
       "at": "2026-10-31T09:39:15.521740+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T10:20:20.776048+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-31T10:53:08.189970+00:00",
+      "step": "read"
     }
   ],
   "title": "After a demo: waiting items show in the app, notes become changes, and releases get a backup before Promote",
