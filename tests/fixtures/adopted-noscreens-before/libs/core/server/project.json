@@ -1,0 +1,9 @@
+{
+  "name": "@app/core-server",
+  "projectType": "library",
+  "sourceRoot": "libs/core/server/src",
+  "tags": [
+    "type:server",
+    "scope:core"
+  ]
+}
