@@ -1,6 +1,13 @@
 {
   "base": "b4824597a84a62789a5106257f11c1a6aac5e57b",
   "branch": "fix/merge-retest-main-only",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19279-6cf8-77c1-ad3e-29d76a3fd4b9",
+    "head": null,
+    "start": "a26002fde97387f05533987ab0b018c3c6613429"
+  },
   "done_when": "When the default branch moved after CI passed on the pull request's commit, forge merge runs on the laptop only the tests related to the files that changed on the default branch since that CI run, not the tests related to the pull request's own files",
   "fix_kind": "mechanical",
   "kind": "fix",
