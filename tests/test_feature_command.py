@@ -822,7 +822,8 @@ def test_6_unsupported_apps_refuse_without_changing_the_worktree(repo, gh, tmp_p
     assert repo.git("status", "--porcelain", cwd=client) == before
 
 
-SHELLS = [shutil.which("bash"), *([shutil.which("zsh")] if shutil.which("zsh") else [])]
+# Keep node IDs the same on runners without zsh, so timing entries stay valid.
+SHELLS = [shutil.which("bash"), shutil.which("zsh") or "zsh"]
 assert SHELLS[0], "The planner command must run through bash -c."
 
 
@@ -888,6 +889,8 @@ def test_1_feature_contracts_parse_and_plan_lines_build_in_one_step(repo, gh, tm
     if case == "parser":
         _generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path)
     else:
+        if not shutil.which(case):
+            pytest.skip(f"{Path(case).name} is not installed on this runner")
         _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, case, starter)
 
 
