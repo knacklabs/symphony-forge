@@ -1,0 +1,37 @@
+{
+  "amendments": [
+    {
+      "at": "2026-10-31T12:23:40.699617+00:00",
+      "because": "The owner chose all three balance rules on 31 Oct 2026: free the place, finish before start, pause new builds when the test line is long",
+      "done_when": "While a builder's tests wait in the test line, the machine's agent line shows that place as free and another waiting item starts; when the builder's tests finish, it waits for an agent place again before its round goes on."
+    }
+  ],
+  "base": "4dadf7123a18c38401db4d9bbb232452b3dcefbb",
+  "branch": "fix/on-busy-days-builders-hold-agent-places",
+  "done_when": "While a builder's tests wait in the test line, its agent place is free for another item and it waits for a place again before its round goes on; a free agent place goes first to work near the end (a fix round after a failed test, a review) and a new build last; and no new build starts while more than 2 items wait for the test place, starting again when 1 waits",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "branch_diff": "46dc804e08b3517f6503bd13555e22c7df794ab52cea568f9df1ae212fa547f2",
+    "changed": "46dc804e08b3517f6503bd13555e22c7df794ab52cea568f9df1ae212fa547f2",
+    "commit": "935d472e152061ed31cc088a420446b4700ec686",
+    "dismissals": [],
+    "findings": [],
+    "id": "aab1e6c3-a943-40b2-b0b3-fdf0c098b961",
+    "mechanical": true,
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T12:23:18.682436+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T12:23:57.122774+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "On busy days builders hold agent places while they wait for the test line, so other items cannot start even though those places sit idle (seen: 4 agent places held, 6 items waiting for tests, waits up to 3 hours)."
+}
