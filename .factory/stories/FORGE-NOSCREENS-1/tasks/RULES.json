@@ -1,0 +1,11 @@
+{
+  "branch": "task/FORGE-NOSCREENS-1-RULES",
+  "part_line_limit": 400,
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T11:37:07.840128+00:00",
+      "step": "start"
+    }
+  ]
+}
