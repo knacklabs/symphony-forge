@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-ONEPLAN-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-31T09:39:09.531509+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "One prototype approval, then the agent builds every record type",
+  "touches": 0
+}
