@@ -160,6 +160,36 @@ class OrganisationsService:
         self.db.commit()
         return AccountPrincipal(account_id, email, invite.organisation_id, "member")
 
+    def remove_member(self, account: AccountPrincipal, account_id: UUID) -> None:
+        if account_id == account.id:
+            raise ApiError(403, "CANNOT_REMOVE_SELF", "You cannot remove yourself.")
+        email = self.db.scalar(
+            update(Membership)
+            .where(
+                Membership.account_id == account_id,
+                Membership.organisation_id == account.organisation_id,
+                Membership.deleted_at_utc.is_(None),
+            )
+            .values(
+                deleted_at_utc=datetime.now(UTC),
+                deleted_by_account_id=account.id,
+                modified_by_account_id=account.id,
+                agent_key_hash=None,
+            )
+            .returning(Membership.email)
+        )
+        if email is None:
+            raise _member_not_found()
+        self.db.execute(
+            delete(Invite).where(
+                Invite.organisation_id == account.organisation_id,
+                (Invite.created_by_account_id == account_id)
+                | (Invite.modified_by_account_id == account_id),
+            )
+        )
+        self.history.record(account, "member.removed", f"Removed {email}")
+        # Auth commits the removal together with the member's sessions.
+
     def change_role(
         self, account: AccountPrincipal, account_id: UUID, role: Role
     ) -> Member:
