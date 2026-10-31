@@ -360,7 +360,8 @@ def instructions(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any
         chosen = ["fix", "proof-list", "rules"]
         if not cfg["interfaces"] and not state.get("allow_large"):
             chosen.insert(1, "promote")
-    chosen += (["screens"] if cfg["repo"] == "client" and (top / "apps/web").is_dir() else []) + ["app-rules"]
+    has_web = any((top / path / "package.json").is_file() for path in ("apps/web", "web", "frontend"))
+    chosen += (["screens"] if cfg["repo"] == "client" and has_web else []) + ["app-rules"]
     values["design_context"], owned_design = worker.design_context(top, design_text, user_facing)
     chosen.append("design-context")
     if owned_design:

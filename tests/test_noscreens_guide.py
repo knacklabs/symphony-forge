@@ -4,21 +4,24 @@ Test-audit answers:
 1. The client-visible contracts are who builds screens, their order, and when the review rule
    applies; init, sync, work and close are the owning boundaries.
 2. A template or review-selection regression can omit the guidance, lose it during sync, or add
-   the web-app rule to an API-only client's review.
+   the web-app rule to an API-only client's review. Checking only apps/web misses web and
+   frontend apps; checking directories alone mistakes web documentation for an app.
 3. Existing guide tests do not cover this screen guidance or its conditional review delivery.
-   Both new and earlier-adopted clients are covered at the real Forge command boundary.
+   Extend this owning prompt-delivery table with all three package-manifest locations and a
+   directory-only negative control, including an earlier-adopted client at the same boundary.
 4. No production seam is needed; only Autoreview, GitHub and the Claude worker edge are
    stubbed.
 """
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
 import pytest
 
 from conftest import ROOT
-from test_close import CLEAN, blocked, env, finding
+from test_close import CLEAN, GREEN, blocked, env, finding
 from test_score_notes import _client_repo as setup_client
 from test_setup import LISTED, _fresh_client, _version
 from test_shadcn_only import _commit_main
@@ -130,22 +133,22 @@ def _fix(env, name: str, changes: dict[str, str]) -> tuple[str, Path]:
 
 @pytest.mark.platform
 @pytest.mark.parametrize(
-    "setup,has_web",
-    [("new init", True), ("previous release", True), ("API-only", False)],
-    ids=["new-client", "previous-release", "api-only-client"],
+    "setup,web_path",
+    [("new init", "apps/web"), ("new init", "web"), ("new init", "frontend"),
+     ("previous release", "frontend"), ("API-only", None)],
+    ids=["new-client", "new-web", "new-frontend", "previous-release", "api-only-client"],
 )
 def test_7_the_review_reports_a_person_facing_api_with_no_screen(
-        env, tmp_path, setup, has_web):
+        env, tmp_path, setup, web_path):
     setup_client(env, tmp_path, setup == "previous release")
     repo = env.repo
-    web = repo.path / "apps/web"
-    if has_web and not web.is_dir():
-        (web / "index.html").parent.mkdir(parents=True, exist_ok=True)
-        (web / "index.html").write_text("<main>Client web app</main>\n", encoding="utf-8")
-        _commit_main(repo, tmp_path, "Add the web app")
-    elif not has_web and web.exists():
-        shutil.rmtree(web)
-        _commit_main(repo, tmp_path, "Keep this client API-only")
+    if web_path:
+        repo.write(f"{web_path}/package.json", json.dumps({"name": "client-web", "private": True}))
+        repo.write(f"{web_path}/index.html", "<main>Client web app</main>\n")
+    else:
+        repo.write("apps/web/README.md", "Web integration notes for API consumers.\n")
+    _commit_main(repo, tmp_path, "Record the client layout")
+    env.checks(GREEN)
 
     item, _ = _fix(env, f"screen-rule-{setup.lower().replace(' ', '-')}", {
         "apps/api/orders/routes.ts": "export const route = '/api/v1/orders';\n",
@@ -157,7 +160,7 @@ def test_7_the_review_reports_a_person_facing_api_with_no_screen(
     assert REVIEW_RULE in brief
     assert PENDING_SCREENS_RULE in brief
 
-    if has_web:
+    if web_path:
         review_finding = {**finding("P1", "Screen: /api/v1/orders", "apps/api/orders/routes.ts"),
                           "body": "Gain 4, Work 2, Harm 1\nRaise: Functional\n"
                                   "Case: normal use - a person uses this API but has no screen."}
