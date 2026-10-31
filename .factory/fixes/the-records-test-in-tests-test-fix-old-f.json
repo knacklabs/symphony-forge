@@ -1,0 +1,15 @@
+{
+  "base": "7ca994c6b4a73979e9e3f90c1430f7dc5ecef67f",
+  "branch": "fix/the-records-test-in-tests-test-fix-old-f",
+  "done_when": "tests/test_fix_old_forge_records.py test_1 passes on origin/main once plans/ideas.md is allowed in its plans pattern, and the other checks in that file stay the same.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T17:40:22.316389+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "The records test in tests/test_fix_old_forge_records.py refuses plans/ideas.md, which origin/main now carries, so main's suite fails for every item."
+}
