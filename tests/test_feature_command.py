@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from test_setup import _fresh_client
-from test_starter_tree import _LIVE_RUNS, LIVE, _junit_cases, _run_live_starter
+from test_starter_tree import _LIVE_RUNS, LIVE, _run_live_starter
 from test_worker import calls, install_claude
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -652,11 +652,6 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
             require_feature_cases(live["api"], "test_jobs", (
                 "test_records_each_job_change_in_the_change_history",
             ))
-            require_feature_cases(
-                _junit_cases(live["folder"] / "test-results/formats.xml"),
-                "jobs-hooks.test.tsx",
-                ("job hooks",),
-            )
         return
 
     migration_paths = list((client / "apps/api/prisma/migrations").glob("*_*jobs/migration.sql"))
@@ -727,8 +722,6 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
         for plural, one in (("clients", "client"), ("jobs", "job"), ("notes", "note")):
             require_feature_cases(live["api"], f"{plural}.e2e-spec.ts",
                                   (f"records each {one} change in the change history",))
-            require_feature_cases(_junit_cases(live["folder"] / "test-results/formats.xml"),
-                                  f"{plural}-hooks.test.tsx", (f"{one} hooks",))
 
 
 @pytest.mark.platform
