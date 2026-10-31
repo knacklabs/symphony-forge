@@ -1,0 +1,38 @@
+{
+  "approval": {
+    "at": "2026-10-31T11:36:30.538127+00:00",
+    "by": "human-via-Claude",
+    "event": "toolu_0144sLaSAcxftmCWqNScDtWC",
+    "hash": "8297d12aa6b1c88eb937d015eb0b123f47849ffa27289e0073d4c4a1293cc35a",
+    "part_line_limit": 400,
+    "round": 3,
+    "runtime": "claude",
+    "session": "c01a489d-c76f-41c1-8371-d6f0052b027c"
+  },
+  "doc": "plans/FORGE-NOSCREENS-1.md",
+  "status": "approved",
+  "steps": [
+    {
+      "at": "2026-10-31T08:48:38.687819+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T10:14:17.192695+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-31T10:55:19.201379+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-31T11:01:42.137803+00:00",
+      "step": "read"
+    },
+    {
+      "at": "2026-10-31T11:36:30.540805+00:00",
+      "step": "approved"
+    }
+  ],
+  "title": "Starter ships no screens",
+  "touches": 1
+}
