@@ -4,12 +4,20 @@
   "done_when": "Every test in the suite has a recorded time in the timing file, and the pull request text reports the slowest group's time before and after on the same runners.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T20:25:44.871326+00:00",
       "step": "start"
     }
   ],
-  "why": "Pull request test groups take 20 to 32 minutes each, far above the 5-minute goal, and the six groups are split from a timing file that misses 1,193 of 3,851 tests; no CI run stores Linux per-test times."
+  "stuck": {
+    "close": null,
+    "head": "7bca0d007bb7690a066853436e07d5fb91583658",
+    "keys": {},
+    "round": null
+  },
+  "why": "Pull request test groups take 20 to 32 minutes each, far above the 5-minute goal, and the six groups are split from a timing file that misses 1,193 of 3,851 tests; no CI run stores Linux per-test times.",
+  "worker": "codex"
 }
