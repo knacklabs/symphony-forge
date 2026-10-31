@@ -210,10 +210,8 @@ def test_41_records_ship_through_the_fix_lane(repo, monkeypatch):
     assert _ok(repo.forge(*add)) == (
         "plans/roadmap.json already has every item in docs/specs/invoices.md.\n")
     repo.write("docs/specs/receipts.md", SPEC.split("## Roadmap")[0])
-    _ok(repo.forge("spec", "save", "receipts"))
-    _notes(repo, "receipts", _hash(repo, "receipts"))
-    _ok(repo.forge("spec", "confirm", "receipts", "--by", "Ravi"))
-    _refused(repo.forge("roadmap", "add", "receipts"),
+    # Empty roadmaps now fail before the owner confirms, at save.
+    _refused(repo.forge("spec", "save", "receipts"),
              SECTION.format(slug="receipts") + "it has none.", "forge spec save receipts")
 
     # Decisions: the next number after every branch's, filled in, then accepted.
