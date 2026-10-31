@@ -1,7 +1,11 @@
 # FastAPI starter
 
 The app has a FastAPI API, a React web app, and Postgres. The API uses SQLAlchemy and Alembic.
-The shell uses the neutral shadcn/ui theme. Apply the app's approved design in its own story.
+The web app keeps its build setup and neutral shadcn/ui theme, but starts without an app shell or
+screens. The design comes first: use the client's existing design. If there is none, draft one on
+a design canvas from the client's brand, or use a neutral design when there is no brand. The agent
+builds each screen with the API that a person uses. Webhooks, endpoints only agents or other
+systems call, and background jobs get no screen.
 `libs/shared/ui/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
 
 ## Run it
@@ -46,12 +50,14 @@ company, people, and records. No data migration is needed.
 
 ## How it works
 
-`apps/web` holds the route table, app shell and theme CSS. Module screens and their hooks live in each
-module's `web` library. `libs/core/web` holds the API client, query client and route error page.
-`libs/shared/ui` holds shadcn/ui and shared screen parts. Components use the hooks and make no
-direct HTTP calls. React Compiler memoizes components, so the code has no `useMemo`, `useCallback`,
-or `React.memo` outside `libs/shared/ui/src/components/ui`. Each route has an error page. A crash
-on one screen leaves the other screens usable.
+`apps/web` keeps the web entry point and theme CSS, but starts without an app shell, route table or
+screens. `libs/core/web` holds the API client and query client. `libs/shared/ui` holds shadcn/ui
+components. The agent builds a screen in the client's design with each person-facing API; webhooks,
+agent-only or system-only endpoints, and background jobs get no screen. Build the basic screens
+first, then the business screens. The demo opens on the business task and shows the basic screens
+last. Components use the hooks and make no direct HTTP calls. Each route has an error page. A
+crash on one screen leaves the other screens usable. React Compiler memoizes components, so the code has no `useMemo`, `useCallback` or
+`React.memo` outside `libs/shared/ui/src/components/ui`.
 
 The `app.auth` module owns sign-in and account tables. The `app.projects` module owns example
 records and project tables. Each module exports its public service from `__init__.py`. A module
@@ -63,11 +69,13 @@ come from `apps/api` OpenAPI in `libs/shared/api-types`, and general helpers liv
 `libs/shared/util`.
 
 Passwords use scrypt. Postgres holds sessions, reset tokens, accounts, and projects. Each project
-query checks the account. Delete keeps the audit record.
+query checks the account. Delete keeps the audit record. When the agent builds the Members screen,
+an admin can copy an invite link and send it by chat when the app has no mail provider. Email
+invites need a mail provider.
 
-Forgot password always gives the same reply. Only development and test environments log a reset
-link. Production sends no email and logs no reset link or token. A story can add a real mail
-provider when needed.
+Forgot password gives the same neutral reply for known and unknown emails. When the agent builds
+the Members screen, an admin can make a reset link and send it by chat if the app has no mail
+provider. A reset link works once and expires.
 
 The Dockerfile builds the web app, applies migrations, and runs the API. The container needs
 `DATABASE_URL`, `APP_ENV`, `APP_ORIGIN`, and `PORT`. The host uses HTTPS in production.

@@ -423,7 +423,7 @@ def how_it_went(top: Path, key: str, state: dict[str, Any], published: str = "",
         head = repo.git("rev-parse", "HEAD", cwd=top)
         data["ready"] = None
         if ready.get("commit") == head and ready.get("review") == "clean":
-            data["ready"] = {"commit": head, "review": "clean"}
+            data["ready"] = {name: ready[name] for name in ("commit", "review", "base") if name in ready}
             if review := state.get("review"):
                 data["clean_reviews"] = list({r.get("id") or r.get("commit"): r
                                               for r in [*data["clean_reviews"], review]}.values())
