@@ -58,6 +58,14 @@ def test_1_review_change_runs_only_changed_tests_and_explicit_references(repo):
         repo.write(f"tests/test_{name}.py",
                    f"# {mention}\ndef test_{name}():\n    assert {selected!r}\n")
 
+    # An empty untracked-file list must not select an unchanged file-relative input.
+    # The empty string below is a content assertion, not a reference to a changed path.
+    # This negative control extends the command boundary without a production seam.
+    repo.write("tests/other.md", "Unchanged document\n")
+    repo.write("tests/test_file_relative.py", "from pathlib import Path\n"
+               "INPUT = Path(__file__).with_name('other.md')\n"
+               "def test_file_relative():\n    assert INPUT.read_text() == ''\n")
+
     result = run_fast_test(repo)
 
     assert result.returncode == 0, result.stdout + result.stderr
