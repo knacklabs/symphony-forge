@@ -1,6 +1,13 @@
 {
   "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
   "branch": "fix/each-of-the-six-pull-request-test-groups",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19272-ca24-74a0-8a94-e2847606b1a6",
+    "head": null,
+    "start": "c8030855e51aa6148e9e37c182d3964536d4e524"
+  },
   "done_when": "The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same runners.",
   "fix_kind": "mechanical",
   "kind": "fix",
