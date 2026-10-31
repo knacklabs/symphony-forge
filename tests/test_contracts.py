@@ -420,15 +420,16 @@ def test_7_same_result_on_both_hosts(repo, claude_payload, codex_payload, monkey
                                                                        {"command": command}))
         assert denied[0] == code, (command, denied)
 
-    # An approval through Plan Mode and one through request_user_input record the same way.
+    # Both hosts record approval the same way, with each approved doc's current title.
     by_plan = through(".claude", "PostToolUse", claude_plan(claude_payload, DOC, cwd=shop))
     by_question = through(".codex", "PostToolUse",
                           codex_question(codex_payload, _digest(repo), cwd=wish))
-    assert by_plan == by_question and by_plan[:2] == (
-        0, "Recorded the approval of Shoppers can save a basket.\n"), (by_plan, by_question)
+    assert by_plan == (0, "Recorded the approval of Shoppers can save a basket.\n", "")
+    assert by_question == (0, "Recorded the approval of Shoppers can keep a wish list.\n", "")
 
     def recorded(key):
-        return repo.git("show", "--name-only", "--format=%s", f"story/{key}").replace(key, "KEY")
+        return repo.git("show", "--name-only", "--format=%s", f"story/{key}").replace(
+            key, "KEY").replace("keep a wish list", "save a basket")
 
     assert recorded("SHOP") == recorded("WISH")
     shown = repo.forge("next").stdout
