@@ -217,15 +217,17 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         repo, gh, tmp_path, "--starter", "react" if starter == "typescript" else "python")
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     if starter == "typescript":
-        for line, plural, words in ((CLIENTS_LINE, "clients", "clients"),
-                                    (FEATURE_LINE, "jobs", "jobs"),
-                                    ("forge task feature work-orders --one work-order --field 'name:text' "
-                                     "--field 'client?:link(clients)'", "work-orders", "work orders")):
+        for line, plural in (
+            (CLIENTS_LINE, "clients"),
+            (FEATURE_LINE, "jobs"),
+            (
+                "forge task feature work-orders --one work-order --field 'name:text' "
+                "--field 'client?:link(clients)'",
+                "work-orders",
+            ),
+        ):
             built = repo.forge(*shlex.split(line)[1:], cwd=client)
             assert built.returncode == 0, built.stdout + built.stderr
-            if plural != "clients":
-                page = (client / f"libs/{plural}/web/src/pages/{plural}-page.tsx").read_text("utf-8")
-                assert f'feature="{plural}"' in page and f'label="{words}"' in page, page
             if plural == "jobs":
                 tools = (client / "libs/jobs/server/src/jobs.tools.ts").read_text("utf-8")
                 assert "feature: 'jobs'" in tools and "JOB_PERMISSIONS" in tools
@@ -249,7 +251,6 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         _require_cases(_live(starter, request)["browser"], (ACCESS_FLOW.format(plural="projects"),))
         if starter == "typescript":
             live = feature_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
-            require_feature_cases(live["browser"], "jobs.spec.ts", (ACCESS_FLOW.format(plural="jobs"),))
             require_feature_cases(live["api"], "jobs.e2e-spec.ts", (
                 "an agent searches, reads, creates and updates jobs through MCP as its account",
                 "a member agent cannot delete or restore a job through MCP",

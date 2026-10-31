@@ -24,10 +24,6 @@ RESERVED = {"id", "organisationId", "createdAtUtc", "updatedAtUtc", "createdByAc
 KEYWORDS = set("break case catch class const continue debugger default delete do else enum export extends false finally for function if import in instanceof new null return super switch this throw true try typeof var void while with yield let static await implements interface package private protected public".split())
 
 
-def _camel_name(slug: str) -> str:
-    return re.sub(r"-([a-z0-9])", lambda match: match[1].upper(), slug)
-
-
 def _refuse(message: str, next_step: str = "correct the feature line and run it again.") -> NoReturn:
     raise repo.Refused(message, next_step)
 
@@ -89,26 +85,6 @@ def _before(text: str, anchor: str, addition: str, path: str) -> str:
     return _insert(text, anchor, "", path).replace(anchor, addition + anchor, 1)
 
 
-def _link_names(fields: list[dict], root: Path) -> dict[str, dict[str, str]]:
-    """For each linked feature: the field that names its items (the first required text in its
-    schema) and its required fields' examples, which the browser flows send to make one."""
-    names = {}
-    for target in sorted({field["target"] for field in fields if field["kind"] == "link"}):
-        contract = (root / f"libs/{target}/contracts/src/index.ts").read_text(encoding="utf-8")
-        # Query examples (such as sortBy) are not fields accepted by create.
-        schema = re.search(r"export const \w+Schema = z\.object\(\{(.*?)^\}\)\.strict\(\);",
-                           contract, re.M | re.S)
-        contract = schema[1] if schema else ""
-        match = re.search(r"^\s+(\w+): z\.string\(\)\.trim\(\)\.min\(1\)", contract, re.M)
-        if not match:
-            _refuse(f"The linked feature {target!r} has no required text field for its name.",
-                    "build the linked feature with this command first, then run this line again.")
-        required = re.findall(r"^\s+(\w+): (?!.*\.optional\(\)).*\.meta\(\{ description: .*, example: (.+) \}\),$", contract, re.M)
-        names[target] = {"name": match[1], "examples": ", ".join(
-            f"{column}: {example}" for column, example in required if column != match[1])}
-    return names
-
-
 def _importer(lock: str, path: str) -> str:
     match = re.search(r"^  " + re.escape(path) + r":(?:[^\n]*\n)(?:(?!  \S|\S).*(?:\n|$))*", lock, re.M)
     if not match:
@@ -125,9 +101,6 @@ def build(args) -> int:
             _refuse("Feature names need lower-case words separated by hyphens.")
     if one in KEYWORDS:
         _refuse(f"The singular name {one!r} is a reserved TypeScript word.", "choose another singular name.")
-    from forge.feature_web import taken_names
-    for name in {_camel_name(plural), _camel_name(one)} & taken_names():
-        _refuse(f"The name {name!r} is already a name in the feature's screens.", "choose another feature name.")
     if (root / "libs" / plural).exists():
         _refuse(f"The feature folder libs/{plural} already exists.", "choose a new feature name.")
     if (root / "apps/api/app/main.py").is_file():
@@ -137,8 +110,7 @@ def build(args) -> int:
                 "apps/api/prisma/schema/auth.prisma", "apps/api/prisma/schema/organisations.prisma",
                 "apps/api/prisma/schema/history.prisma", "libs/organisations/server/src/index.ts",
                 "libs/history/contracts/src/index.ts", "apps/api/package.json", "apps/api/tsconfig.json",
-                "eslint.config.mjs", "pnpm-lock.yaml", "scripts/test-build.mjs",
-                "apps/web/src/app.tsx", "apps/web/src/components/app-shell.tsx", "apps/web/package.json"]
+                "eslint.config.mjs", "pnpm-lock.yaml", "scripts/test-build.mjs"]
     for path in required:
         if not (root / path).is_file():
             _refuse(f"This feature needs a starter app. Missing {path}.",
@@ -154,20 +126,18 @@ def build(args) -> int:
     fields = _fields(args.field, root, kinds["kinds"])
     from forge.feature_api import render_feature_api
     from forge.feature_schema import render_schema
-    from forge.feature_web import render_feature_web
 
     include_mcp = all((root / path).is_file() for path in (
         "libs/core/server/src/common/tools.ts", "libs/core/server/src/common/retry-keys.ts"))
     files = render_feature_api(fields, one, plural, kinds, include_mcp=include_mcp)
     files.update(render_schema(plural, one, fields, kinds))
-    files.update(render_feature_web(fields, one, plural, kinds, _link_names(fields, root), include_mcp=include_mcp))
     title = "".join(word.capitalize() for word in plural.split("-"))
     names = {"projects": plural, "Projects": title, "PROJECTS": plural.replace("-", "_").upper(),
              "Project": model, "project": one}
     def rename(text: str) -> str:
         return re.sub("projects|Projects|PROJECTS|Project|project", lambda match: names[match[0]], text)
     targets = sorted({field["target"] for field in fields if field["kind"] == "link"})
-    for kind in ("contracts", "server", "web"):
+    for kind in ("contracts", "server"):
         for source in (STARTER / f"libs/projects/{kind}").glob("*.json"):
             value = json.loads(rename(source.read_text(encoding="utf-8")))
             if kind == "server":
@@ -216,16 +186,13 @@ def build(args) -> int:
     if (root / database_test).is_file() and anchor in (text := (root / database_test).read_text(encoding="utf-8")):
         current[database_test] = text
         files[database_test] = text.replace(anchor, anchor + f" {model}: '{plural.replace('-', '_')}',", 1)
-    files.update(_wire_web(current, plural, one, model, title))
     lockpath = "pnpm-lock.yaml"
     lock = current[lockpath]
     api_importer = _importer(lock, "apps/api")
     lock = lock.replace(api_importer, api_importer.rstrip() + f"\n      '@app/{plural}-server':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/server\n\n", 1)
-    web_importer = _importer(lock, "apps/web")
-    lock = lock.replace(web_importer, web_importer.rstrip() + f"\n      '@app/{plural}-web':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/web\n\n", 1)
     shipped_lock = (STARTER / lockpath).read_text(encoding="utf-8")
     additions = []
-    for kind in ("contracts", "server", "web"):
+    for kind in ("contracts", "server"):
         block = rename(_importer(shipped_lock, f"libs/projects/{kind}"))
         if kind == "server":
             block = block.rstrip() + "\n" + "".join(f"      '@app/{target}-contracts':\n        specifier: workspace:*\n        version: link:../../{target}/contracts\n" for target in targets) + "\n"
@@ -235,41 +202,6 @@ def build(args) -> int:
     if not include_mcp:
         print(f"This app has no MCP server or retry keys, so {plural} get no agent tools, resources or retry keys.")
     return 0
-
-
-def _wire_web(current, plural, one, model, title):
-    files = {}
-    words = plural.replace("-", " ")
-    plural_title, one_title = words[:1].upper() + words[1:], one.replace("-", " ")[:1].upper() + one.replace("-", " ")[1:]
-    route = f"/{plural}"
-    web_app = "apps/web/src/app.tsx"
-    files[web_app] = _insert(current[web_app], "import { NotFoundPage } from '@/pages/not-found-page';",
-                             f"\nimport {{ {model}Crumbs, {model}DetailPage, {title}Page }} from '@app/{plural}-web';", web_app)
-    files[web_app] = _insert(files[web_app], "    '/members': 'Members',", f"\n    '{route}': '{plural_title}',", web_app)
-    files[web_app] = _insert(files[web_app], ")[location.pathname] ?? (",
-                             f"matchPath('{route}/:id', location.pathname) ? '{one_title}' : ", web_app)
-    files[web_app] = _before(files[web_app], '      <Route path="/members" element={<MembersPage />}',
-                             f'      <Route path="{route}" element={{<{title}Page />}} handle={{{{ permission: \'{plural}.view\' }}}} errorElement={{<RouteErrorPage />}} />\n'
-                             f'      <Route path="{route}/:id" element={{<{model}DetailPage />}} handle={{{{ crumbs: <{model}Crumbs />, permission: \'{plural}.view\' }}}} errorElement={{<RouteErrorPage />}} />\n', web_app)
-    shell = "apps/web/src/components/app-shell.tsx"
-    icon = f"{title}Icon"
-    files[shell] = _insert(current[shell], "import type { ComponentProps, ReactNode } from 'react';",
-                           f"\nimport {{ Folder as {icon} }} from 'lucide-react';", shell)
-    files[shell] = _before(files[shell], "            <SidebarMenuItem>\n              <SidebarMenuButton asChild isActive={pathname === '/members'}",
-                           f"            {{useCan('{plural}.view') && (\n              <SidebarMenuItem>\n"
-                           f"                <SidebarMenuButton asChild isActive={{pathname === '{route}' || pathname.startsWith('{route}/')}} tooltip=\"{plural_title}\">\n"
-                           f"                  <Link to=\"{route}\"><{icon} /><span>{plural_title}</span></Link>\n"
-                           f"                </SidebarMenuButton>\n              </SidebarMenuItem>\n            )}}\n", shell)
-    files[shell] = _insert(files[shell], "function SearchBox({ account }: { account: Account }) {",
-                           f"\n  const canView{title} = useCan('{plural}.view');", shell)
-    files[shell] = _before(files[shell], "            <CommandItem onSelect={() => goTo('/members')}>Members</CommandItem>",
-                           f"            {{canView{title} && <CommandItem onSelect={{() => goTo('{route}')}}>{plural_title}</CommandItem>}}\n", shell)
-    files[shell] = _insert(files[shell], "'/members': 'Members',", f" '{route}': '{plural_title}',", shell)
-    web_package = "apps/web/package.json"
-    data = json.loads(current[web_package])
-    data["dependencies"][f"@app/{plural}-web"] = "workspace:*"
-    files[web_package] = _dump(data)
-    return files
 
 
 def _write(root, current, files):
@@ -289,19 +221,15 @@ def _build_python(args, root: Path) -> int:
     import keyword
 
     from forge.feature_python import render_feature_python
-    from forge.feature_web import render_feature_web
 
     plural, one = args.plural, args.one
     module = plural.replace("-", "_")
     model = "".join(word.capitalize() for word in one.split("-"))
-    title = "".join(word.capitalize() for word in plural.split("-"))
     required = ["apps/api/app/main.py", "apps/api/app/organisations/__init__.py",
                 "apps/api/app/history/__init__.py", "apps/api/app/core/permissions.py",
                 "apps/api/migrations/env.py", "apps/api/pyproject.toml",
                 "apps/api/tests/test_module_schemas.py",
-                "libs/history/contracts/src/index.ts", "apps/web/src/app.tsx",
-                "apps/web/src/components/app-shell.tsx", "apps/web/package.json",
-                "package.json", "pnpm-lock.yaml"]
+                "libs/history/contracts/src/index.ts", "package.json", "pnpm-lock.yaml"]
     for path in required:
         if not (root / path).is_file():
             _refuse(f"This feature needs a starter app. Missing {path}.",
@@ -320,10 +248,6 @@ def _build_python(args, root: Path) -> int:
     include_mcp = all((root / path).is_file() for path in (
         "apps/api/app/core/tools.py", "apps/api/app/core/retry_keys.py"))
     files = render_feature_python(fields, one, plural, kinds, root, include_mcp=include_mcp)
-    files.update(render_feature_web(
-        fields, one, plural, kinds, _link_names(fields, root), include_mcp=include_mcp
-    ))
-    files.update(_wire_web(current, plural, one, model, title))
     main = "apps/api/app/main.py"
     files[main] = _insert(current[main], "from app.organisations import router as organisations_router",
                           f"\nfrom app.{module} import router as {module}_router", main)
@@ -363,29 +287,22 @@ def _build_python(args, root: Path) -> int:
                 "build this feature by hand in this app.")
     files[schema_tests] = schema_source
     python_starter = Path(__file__).parent / "templates/starter-python"
-    for kind in ("contracts", "web"):
-        source_root = python_starter if kind == "contracts" else STARTER
-        for source in (source_root / f"libs/projects/{kind}").glob("*.json"):
-            files[f"libs/{plural}/{kind}/{source.name}"] = source.read_text(encoding="utf-8").replace("projects", plural)
-        # Python contracts use OpenAPI types; the shared starter supplies the Nx metadata.
-        project = STARTER / f"libs/projects/{kind}/project.json"
-        files[f"libs/{plural}/{kind}/project.json"] = project.read_text(encoding="utf-8").replace("projects", plural)
+    for source in (python_starter / "libs/projects/contracts").glob("*.json"):
+        files[f"libs/{plural}/contracts/{source.name}"] = source.read_text(encoding="utf-8").replace("projects", plural)
+    # Python contracts use OpenAPI types; the shared starter supplies the Nx metadata.
+    project = STARTER / "libs/projects/contracts/project.json"
+    files[f"libs/{plural}/contracts/project.json"] = project.read_text(encoding="utf-8").replace("projects", plural)
     package = "package.json"
     data = json.loads(current[package])
     anchor = "apps/web/tsconfig.json"
     data["scripts"]["typecheck"] = _before(data["scripts"]["typecheck"], anchor,
-        f"libs/{plural}/contracts/tsconfig.json libs/{plural}/web/tsconfig.json ", package)
+        f"libs/{plural}/contracts/tsconfig.json ", package)
     files[package] = _dump(data)
     lockpath = "pnpm-lock.yaml"
     lock = current[lockpath]
-    importer = _importer(lock, "apps/web")
-    lock = lock.replace(importer, importer.rstrip() + f"\n      '@app/{plural}-web':\n        specifier: workspace:*\n        version: link:../../libs/{plural}/web\n\n", 1)
-    additions = []
-    for kind in ("contracts", "web"):
-        source = python_starter if kind == "contracts" else STARTER
-        shipped = (source / lockpath).read_text(encoding="utf-8")
-        additions.append(_importer(shipped, f"libs/projects/{kind}").replace("projects", plural))
-    files[lockpath] = _insert(lock, "importers:\n", "\n" + "".join(additions), lockpath)
+    shipped = (python_starter / lockpath).read_text(encoding="utf-8")
+    addition = _importer(shipped, "libs/projects/contracts").replace("projects", plural)
+    files[lockpath] = _insert(lock, "importers:\n", "\n" + addition, lockpath)
     _write(root, current, files)
     if not include_mcp:
         print(f"This app has no MCP server or retry keys, so {plural} get no agent tools, resources or retry keys.")
