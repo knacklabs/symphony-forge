@@ -4,12 +4,20 @@
   "done_when": "When a change's related tests are more than a quarter of the suite, forge close and merge skip the laptop run and wait for the pull request's CI, in Forge's own repo and in client repos.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T13:42:55.718823+00:00",
       "step": "start"
     }
   ],
-  "why": "A change that touches central files selects about 3,000 related tests, which the laptop's single test place runs for hours while CI runs them again on the pull request and every other item waits."
+  "stuck": {
+    "close": null,
+    "head": "4f37b9ff6e9fc985912865ba6a7fdfbdb9b6ab58",
+    "keys": {},
+    "round": null
+  },
+  "why": "A change that touches central files selects about 3,000 related tests, which the laptop's single test place runs for hours while CI runs them again on the pull request and every other item waits.",
+  "worker": "codex"
 }
