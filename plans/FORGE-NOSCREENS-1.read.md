@@ -75,3 +75,4 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - FEATURE runs its required earlier-release test before SCREENS builds.
    The repair for finding 3 introduces a new ordering problem: `plans/FORGE-NOSCREENS-1.md:48` assigns fixture creation to SCREENS, while line 130 requires FEATURE to use it and line 131 puts SCREENS after FEATURE. The fixture does not exist, and neither task’s Scope includes its path. FEATURE therefore cannot pass its required test using the prescribed fixture. Starting SCREENS on FEATURE’s branch does not resolve this: `src/forge/task.py:518–521` requires the parent’s changes to have passed review. Assign fixture creation and its path to FEATURE, its first consumer.
    Gain 5, Work 1, Harm 2
+   Disposition: cut - FEATURE now creates `tests/fixtures/adopted-noscreens-before/**` (in its Scope) and SCREENS reuses it; the fixed-fixture line no longer says SCREENS creates it.
