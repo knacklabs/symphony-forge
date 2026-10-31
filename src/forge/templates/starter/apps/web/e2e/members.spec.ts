@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { inviteUrlsSince, logEvents, newEmail, password, signUp } from './helpers';
+import { csrfToken, inviteUrlsSince, logEvents, newEmail, password, signUp } from './helpers';
 
 test('only an admin sees the invite and role controls', async ({ page, browser }) => {
   const adminEmail = await signUp(page);
@@ -200,4 +200,71 @@ test('an admin adds an agent account, creates its key once and revokes it', asyn
   await expect(page.getByText('Key revoked.')).toBeVisible();
   await expect(row).toContainText('No key');
   await expect(page.getByRole('button', { name: `Revoke key for ${email}` })).toHaveCount(0);
+});
+
+test('an admin removes a member, who loses access at once', async ({ page, browser }) => {
+  const adminEmail = await signUp(page);
+  const memberEmail = newEmail();
+  const appUrl = (path: string) => new URL(path, page.url()).toString();
+  const previousLogCount = logEvents('api').length;
+  const invite = await page.context().request.post(appUrl('/api/v1/invites'), {
+    data: { email: memberEmail },
+    headers: { 'x-csrf-token': await csrfToken(page) },
+  });
+  expect(invite.ok()).toBeTruthy();
+
+  const memberContext = await browser.newContext();
+  try {
+    const memberPage = await memberContext.newPage();
+    let joined = false;
+    for (const inviteUrl of inviteUrlsSince(previousLogCount)) {
+      const response = await memberPage.request.post(appUrl('/api/v1/auth/accept-invite'), {
+        data: { email: memberEmail, password, token: inviteUrl.searchParams.get('token') },
+      });
+      joined = response.ok();
+      if (joined) break;
+    }
+    expect(joined).toBeTruthy();
+
+    // The member must be an admin to see the History link, so the admin changes the role first.
+    await page.getByRole('link', { name: 'Members' }).click();
+    await page.getByRole('combobox', { name: `Role for ${memberEmail}` }).click();
+    await page.getByRole('option', { name: 'Admin' }).click();
+    await expect(page.getByText('Role updated.')).toBeVisible();
+    await memberPage.goto(appUrl('/projects'));
+    await expect(memberPage.getByRole('heading', { name: 'Projects' })).toBeVisible();
+    await expect(memberPage.getByRole('link', { name: 'Change history' })).toBeVisible();
+
+    // An admin has no Remove button on their own row.
+    await expect(page.getByRole('button', { name: `Remove ${adminEmail}` })).toHaveCount(0);
+    const membersAxe = await new AxeBuilder({ page }).analyze();
+    expect(membersAxe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
+
+    // A likely failure first: a lost connection keeps the dialog open and says what to do next.
+    const removeButton = page.getByRole('button', { name: `Remove ${memberEmail}` });
+    await removeButton.click();
+    const dialog = page.getByRole('alertdialog', { name: 'Remove this member?' });
+    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused();
+    await page.route('**/api/v1/members/*', (route) => route.request().method() === 'DELETE' ? route.abort() : route.continue());
+    await dialog.getByRole('button', { name: 'Remove member' }).click();
+    await expect(page.getByText('Could not remove the member. Try again.')).toBeVisible();
+    await expect(dialog).toBeVisible();
+    await page.unroute('**/api/v1/members/*');
+
+    await dialog.getByRole('button', { name: 'Remove member' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText(`Removed ${memberEmail}.`)).toBeVisible();
+    await expect(page.getByRole('row', { name: new RegExp(memberEmail) })).toHaveCount(0);
+
+    // With no reload, the member's next page change asks them to sign in.
+    await memberPage.getByRole('link', { name: 'Change history' }).click();
+    await expect(memberPage.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Change history' }).click();
+    await expect(page.getByRole('row', { name: new RegExp(`Removed ${memberEmail.replace(/[.]/g, '\\.')}`) })).toBeVisible();
+    const axe = await new AxeBuilder({ page }).analyze();
+    expect(axe.violations.filter(({ impact }) => impact === 'serious' || impact === 'critical')).toEqual([]);
+  } finally {
+    await memberContext.close();
+  }
 });

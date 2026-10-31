@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, Route, createBrowserRouter, createRoutesFromElements, matchPath, useLocation, useMatches } from 'react-router-dom';
 import { AppShell } from '@/components/app-shell';
 import { RouteErrorPage } from '@app/core-web';
@@ -20,10 +21,16 @@ function ProtectedLayout() {
   // A screen names the permission it needs in its route handle; without it the screen reads as an unknown address.
   const needed = useMatches().map((match) => (match.handle as { permission?: string } | undefined)?.permission).find(Boolean);
 
+  // A removed member's session ends at once; the next page change reads the account again and finds out.
+  // cancelRefetch false: the first load is already fetching, so it is not asked twice.
+  const { refetch } = account;
+  useEffect(() => { void refetch({ cancelRefetch: false }); }, [location.pathname, refetch]);
+
   if (account.isPending) {
     return <main id="main-content" className="flex min-h-screen items-center justify-center p-6"><p role="status">Loading your account…</p></main>;
   }
-  if (account.isError) {
+  // Offline on a page change keeps the screen the person is on; only a first load shows this one.
+  if (account.isError && account.data === undefined) {
     return (
       <main id="main-content" className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
         <h1 className="text-xl font-semibold">We could not load your account.</h1>

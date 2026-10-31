@@ -37,6 +37,14 @@ export function useChangeRole() {
   });
 }
 
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (accountId: string) => apiRequest<null>(`/members/${encodeURIComponent(accountId)}`, { method: 'DELETE' }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey }),
+  });
+}
+
 export function useInvite() {
   const idempotencyKey = useRef(crypto.randomUUID());
   return useMutation({

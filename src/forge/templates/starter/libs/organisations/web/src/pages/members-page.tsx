@@ -21,7 +21,7 @@ import { Button } from '@app/shared-ui/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@app/shared-ui/components/ui/select';
 import { Skeleton } from '@app/shared-ui/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@app/shared-ui/components/ui/table';
-import { useChangeRole, useMembers, useRevokeAgentKey } from '../hooks/members-hooks';
+import { useChangeRole, useMembers, useRemoveMember, useRevokeAgentKey } from '../hooks/members-hooks';
 import { AddAgentDialog } from './add-agent-dialog';
 import { AgentKeyDialog } from './agent-key-dialog';
 import { InviteDialog } from './invite-dialog';
@@ -84,6 +84,41 @@ function RevokeKeyDialog({ agent }: { agent: Member }) {
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction variant="destructive" disabled={revokeKey.isPending} onClick={(event) => { event.preventDefault(); void revoke(); }}>
             {revokeKey.isPending ? 'Revoking…' : 'Revoke key'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function RemoveMemberDialog({ member }: { member: Member }) {
+  const [open, setOpen] = useState(false);
+  const removeMember = useRemoveMember();
+
+  async function remove() {
+    try {
+      await removeMember.mutateAsync(member.accountId);
+      toast.success(`Removed ${member.email}.`);
+      setOpen(false);
+    } catch {
+      toast.error('Could not remove the member. Try again.');
+    }
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" aria-label={`Remove ${member.email}`}>Remove</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove this member?</AlertDialogTitle>
+          <AlertDialogDescription>{member.email} is signed out at once and loses access. The invites they sent are cancelled.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" disabled={removeMember.isPending} onClick={(event) => { event.preventDefault(); void remove(); }}>
+            {removeMember.isPending ? 'Removing…' : 'Remove member'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -181,6 +216,7 @@ export function MembersPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Joined</TableHead>
+                  {account.role === 'admin' && <TableHead><span className="sr-only">Actions</span></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -189,6 +225,11 @@ export function MembersPage() {
                     <TableCell className="min-w-56 whitespace-normal break-all">{member.email}</TableCell>
                     <TableCell><RoleCell member={member} account={account} /></TableCell>
                     <TableCell><time dateTime={member.createdAtUtc}>{formatDate(member.createdAtUtc)}</time></TableCell>
+                    {account.role === 'admin' && (
+                      <TableCell>
+                        <div className="flex justify-end">{member.accountId !== account.id && <RemoveMemberDialog member={member} />}</div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

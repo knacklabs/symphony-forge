@@ -10,6 +10,7 @@ from test_starter_tree import LIVE, _require_cases, live_python_run, live_run
 
 STORY = "FORGE-MAIL-1/REMOVE"
 REMOVAL_API_CASE = "an admin removes a member, who is signed out at once"
+REMOVAL_WEB_CASE = "an admin removes a member, who loses access at once"
 
 
 @pytest.mark.platform
@@ -39,3 +40,4 @@ def test_1_an_admin_removes_a_member(repo, gh, tmp_path, tmp_path_factory, start
         run = live_python_run(tmp_path_factory) if starter == "python" else live_run(tmp_path_factory)
         case = "test_an_admin_removes_a_member_who_is_signed_out_at_once" if starter == "python" else REMOVAL_API_CASE
         _require_cases(run["api"], (case,))
+        _require_cases(run["browser"], (REMOVAL_WEB_CASE,))
