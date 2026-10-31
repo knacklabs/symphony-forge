@@ -379,6 +379,12 @@ a sensible default, and name it in your handback as an open question: what it to
 asked, the default, why you picked it and what happens if it stands. The coordinator adds it to
 the open-decisions list.
 Build the screens marked `Build: now` in SCREENS.md. Build a `Build: later` screen only when the plan names it.
+In a client repo with a web app, build each person-facing API's screen in the client's design
+with the API, without waiting for a request, unless the screen is marked `Build: later`.
+In a client repo with a web app, report as P1, titled `Screen: <route>`, a route this change
+adds that people use, when the change adds no screen for it. Webhooks, agent-only routes,
+MCP, system endpoints and jobs are not findings, nor is a screen marked `Build: later`.
+When you build a basic screen, remove its name from `pendingScreens` so its rule specs run.
 
 <!-- if fix-round -->
 ## Fix round

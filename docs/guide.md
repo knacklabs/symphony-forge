@@ -99,6 +99,13 @@ fix started before sign-off can exceed the usual fix size and change an interfac
 tests, review and a pull request. Save and confirm specs as the work reveals them. Before sign-off,
 `forge next` shows which required answers are still open. Its light rounds prove the demo steps,
 security and data boundaries, with `[models.light_review]`. Full proof is due at sign-off.
+The design comes first. Before any screen, use the app's existing design. If it has none, draft
+one on a design canvas from the client's brand; use a neutral design when there is no brand. Every
+API a person uses gets its screen in the client's design, built by the agent when it builds the API, with no
+need to ask. Webhooks, endpoints only agents or other systems call, and background jobs get no
+screen. Build the basic screens first, then the business screens. The demo opens on the client's
+business task, and the basic screens are shown last.
+
 Resolve the answers, then run the sign-off checks before the customer is asked. Write the record
 with `forge decision new client-signoff`, leave `approved_via` and `approved_on` empty, and run
 `forge decision accept`. Forge checks the copied Answers section and full test run, then reviews
@@ -162,8 +169,10 @@ forge task feature clients --one client --field 'name:text'
 forge task feature jobs --one job --field 'name:text' --field 'description?:long-text' --field 'status:status(planned|active|done)' --field 'client?:link(clients)' --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date' --field 'contactEmail?:email' --field 'billable:yes-no'
 ```
 
-The command copies the installed starter's projects feature with the plan's fields, including
-its organisation checks, change history and permissions. Admins can view, create, edit, delete
+The command copies the installed starter's projects API, tools, history and tests with the plan's
+fields. It writes no pages. Build each person-facing API's screen in the client's design with that
+API; webhooks, agent-only and system-only endpoints, and background jobs get no screen. The feature
+keeps its organisation checks, change history and permissions. Admins can view, create, edit, delete
 and restore; members can view, create and edit and never see deleted items. The plan can change
 the roles in one permission mapping per feature. Fields can be text, long text, number, money,
 date, yes or no, email, a status list or a link to one other feature's item; `?` makes one
@@ -228,7 +237,9 @@ A working prototype also needs its strict whole-product review.
    changes for the client, why, when it's done, the tasks, any new moving parts and the risks.
    Its own branch adds a missing roadmap entry. The title seeds Why; write the problem,
    today's workaround and its cost there, without a separate spec read or confirmation.
-   Before the cold read, design each added screen or changed flow with the process above.
+   Before the cold read, design each added screen or changed flow with the process above. Build
+   each screen with its person-facing API; APIs used only by agents or other systems and background
+   jobs get no screen.
    Save the artboards, images, SCREENS.md and CHECKS.md in `docs/design/<KEY>/`.
    End `## What changes for you` with `Design: docs/design/<KEY>/ (<tree id>)`.
    Get the tree id with `git rev-parse HEAD:docs/design/<KEY>` after committing the folder.
