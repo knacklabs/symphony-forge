@@ -596,6 +596,15 @@ $standards
 
 <!-- end -->
 
+Run the repo's documented cheap checks before you end each builder round.
+This step also applies when `test_place` is `ci`. Run their documented commands
+directly, as an exception to the test instructions above. These are quick local
+checks, such as file-size limits, duplicate rule labels and tests with no rule,
+not the related suite, lint or type checks that CI owns. Use the repo's existing
+checks, not new checks or settings. Fix failures in this round, rerun the failed checks, then commit the repairs.
+Record each command and its result in the `Proof list:`. If a check cannot run,
+record the reason instead of claiming it passed.
+
 $handover
 
 $prototype_proof
