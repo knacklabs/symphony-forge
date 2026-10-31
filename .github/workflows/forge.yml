@@ -52,6 +52,8 @@ jobs:
       FORGE_GROUP: ${{ matrix.group }}
       FORGE_GROUPS: ${{ needs.docs-check.outputs.test-only == 'true' && '1' || '6' }}
       FORGE_CONTAINERS: '1'
+      # Measure every test on CI hardware before choosing a performance repair.
+      PYTEST_ADDOPTS: '--durations=0'
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
