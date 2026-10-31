@@ -4,12 +4,20 @@
   "done_when": "The worker brief tells a builder that when its test run waits in line it keeps waiting, and never stops its round to ask about the test place.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T11:34:27.562178+00:00",
       "step": "start"
     }
   ],
-  "why": "Builders stop their round to ask the coordinator to free a test place, and each stop costs a coordinator turn and a new paid round."
+  "stuck": {
+    "close": null,
+    "head": "68788c851f9246a67e314a448997d72f372cca35",
+    "keys": {},
+    "round": null
+  },
+  "why": "Builders stop their round to ask the coordinator to free a test place, and each stop costs a coordinator turn and a new paid round.",
+  "worker": "codex"
 }
