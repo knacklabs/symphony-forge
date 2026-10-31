@@ -1,0 +1,15 @@
+{
+  "base": "4dadf7123a18c38401db4d9bbb232452b3dcefbb",
+  "branch": "fix/builders-stop-their-round-to-ask-the-coo",
+  "done_when": "The worker brief tells a builder that when its test run waits in line it keeps waiting, and never stops its round to ask about the test place.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T11:34:27.562178+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Builders stop their round to ask the coordinator to free a test place, and each stop costs a coordinator turn and a new paid round."
+}
