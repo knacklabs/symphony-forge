@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-HANDOVER-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-31T09:39:27.679685+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Hand over client work to another machine",
+  "touches": 0
+}
