@@ -7,13 +7,70 @@
     "head": null,
     "start": "240987c1136bd31c19608e02624106a479826f75"
   },
+  "known": [
+    {
+      "area": "instructions() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": null,
+      "harm": null,
+      "line": 363,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Select the screen rule for all supported web-app layouts",
+      "work": null
+    },
+    {
+      "area": "docs/specs/board-for-the-team.read.md",
+      "file": "docs/specs/board-for-the-team.read.md",
+      "gain": null,
+      "harm": null,
+      "line": 5,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: unrelated board read metadata is outside Scope",
+      "work": null
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "95b777d2bd68db039eb7fc05e163e9bca9e7ff24d6510d8727e43f8889046d38",
+    "changed": "270592aaf199e732e62f035adc535a464ac258e2c581933745f5b3be82d7326a",
+    "commit": "207d1b08ee4d2896b0070b09b55fea88a6a1b7a3",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Raise: Functional.\nCase: normal use - an existing client keeps its web app under `web/` or `frontend/` and adds a person-facing API.\nThe new selection checks only `apps/web`, so those clients receive no screen-review rule. Settled item 14 explicitly identifies all three supported locations, using their `package.json` files. Match that detection contract and cover the alternative locations in the prompt-delivery test.\nGain 4, Work 1, Harm 2.",
+        "file": "src/forge/review.py",
+        "line": 363,
+        "priority": "P1",
+        "title": "Select the screen rule for all supported web-app layouts"
+      },
+      {
+        "body": "Raise: Gate.\nCase: normal use - this part includes unrelated changes to the team-board cold-read record.\nThe five added metadata fields in this file do not support screen guidance, written rules, delivery or review selection. This file is explicitly outside Scope, and neither covered Done-when item needs its modification. Revert this file's changes.\nGain 4, Work 1, Harm 1.",
+        "file": "docs/specs/board-for-the-team.read.md",
+        "line": 5,
+        "priority": "P1",
+        "title": "Gate: unrelated board read metadata is outside Scope"
+      }
+    ],
+    "id": "ceaf6d8d-81d9-40a8-bd6e-54e30c08b7ec",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T11:37:07.840128+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:36:08.778872+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
