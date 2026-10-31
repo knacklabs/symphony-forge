@@ -119,6 +119,8 @@ moves its own changes onto the default branch after the base merges through Forg
 Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
 After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
 After a merge outside Forge, follow close's printed pull request target correction, then close the part again.
+The board and `forge next` show the part's base. After a clean review, they say that
+the part waits for its base to merge. After that merge, run `forge close <part>`.
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish
 and review it before you start a part on top of it.
 
@@ -546,6 +548,9 @@ change. Close refuses a `services.toml` that names a Dockerfile the branch does 
 that does not have exactly one service with `expose = "main"`. In a repo without
 `services.toml`, do not create one: the coordinator writes the first list with the owner's
 confirmation.
+
+Before spec confirmation, include at least one `- KEY: title` line under `## Roadmap`.
+After edits to a confirmed spec, save it, complete a new cold read, then confirm the new text.
 
 In `docs/specs/`, state each rule once, on an `R-<n>:` line. Validation (VAL), UAT and
 acceptance (AC) lines name the rule that they check by its ID, for example

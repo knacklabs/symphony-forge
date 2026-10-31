@@ -1521,8 +1521,8 @@ record or the index, so both conflicted and resolved but uncommitted merges stay
 New repos get this guidance at init; existing repos get it after upgrading and running sync.
 
 When `forge work` says Claude ended without running a turn, no worker ran: Claude is often
-waiting on a prompt, such as a review of changed hooks. Run `claude` once in the item's
-checkout, answer its prompt, then run `forge work <item>` again.
+waiting on a prompt, such as a review of changed hooks. Run `forge doctor --fix` in the item's
+checkout. Then run `forge work <item>` again. If no turn runs, inspect the saved log.
 
 Every Codex worker, plan reader and review runs with low model verbosity, no reasoning
 summaries, and a developer instruction to write no progress commentary, only the final handoff

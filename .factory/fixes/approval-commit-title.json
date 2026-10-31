@@ -1,0 +1,61 @@
+{
+  "base": "f53ee86582457189f0d6ed0d8b0b577c4b04d133",
+  "branch": "fix/approval-commit-title",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a18d05-c810-7923-804d-6c85d1e2bbf7",
+    "head": null,
+    "start": "767e41607b0ab41c4041b3d14575ef2e9fb24d2a"
+  },
+  "done_when": "The approval commit names the title in the approved story doc",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "9a0cc90d98066eec42ae993a2fb7b06b099798a0873d7c39c3922185783b29d8",
+    "changed": "6f3140655d275cedf898fc60fa7113f0e1a7d43fa004b73f408b8d3d3b923c91",
+    "commit": "c014d1ea447e627b45d40e16339cad61aa68a6b2",
+    "dismissals": [],
+    "findings": [],
+    "id": "2c84290c-c29e-4424-9312-cfe3ec0c80ae",
+    "status": "clean"
+  },
+  "round": 5,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:32:33.978890+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T13:38:27.598847+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T17:25:50.703711+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:19:10.113329+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T20:20:19.709653+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T04:38:54.410829+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "4bc63902-f103-4ec0-9df4-650f906beb19",
+    "head": "5da08f50ec859631e86076329342c75d80ad991d",
+    "keys": {},
+    "round": 4
+  },
+  "why": "The plan approval commit keeps the story's old title after a re-plan (issue 916)",
+  "worker": "codex"
+}

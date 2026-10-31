@@ -380,7 +380,8 @@ def _failed_merge_leaves_task(repo, claude_payload, monkeypatch, tmp_path,
     roadmap.write_text('{"items": []}\n', encoding="utf-8")
     head = repo.git("rev-parse", "task/BASKET-SPEC")
     said = approve(repo, claude_payload, text)
-    assert "Recorded the approval of Keep baskets." in said
+    # The approved doc replaced the title from the promoted fix.
+    assert "Recorded the approval of Shoppers can save a basket." in said
     assert (f"Forge couldn't bring the approved plan into BASKET/SPEC's branch.\n"
             f"Next: in {fix}, git merge story/BASKET, then forge close BASKET/SPEC") in said
     assert '"approval"' in repo.git("show", "story/BASKET:.factory/stories/BASKET/story.json")

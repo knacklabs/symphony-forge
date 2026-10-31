@@ -22,7 +22,7 @@ COMMANDS = [{"words": "test", "run": "test", "changes_state": False,
 
 def git_files(*args: str) -> list[str]:
     return subprocess.run(["git", *args, "-z"], check=True, capture_output=True,
-                          text=True).stdout.rstrip("\0").split("\0")
+                          text=True).stdout.split("\0")[:-1]
 
 
 def module_parts(path: Path) -> list[str]:
@@ -382,6 +382,9 @@ def related(base: str) -> tuple[list[str], list[str], bool, list[str]]:
                       or any(mentions(path, module, source) for module, source in modules)}
     readers = tests + [Path(name) for name in files
                        if Path(name).name == "conftest.py" and Path(name).is_file()]
+    inputs = {name for name in changed if Path(name).suffix != ".py"}
+    picked |= {path for path in readers
+               if docskip.reads_file_relative(path.read_text("utf-8-sig"), inputs)}
     picked = docskip.test_readers(readers, picked)
     return sorted(path.as_posix() for path in picked if path in tests), everything, False, missed
 

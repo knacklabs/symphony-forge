@@ -185,6 +185,11 @@ class AuthService:
             ) from error
         return account
 
+    def remove_member(self, account: AccountPrincipal, account_id: UUID) -> None:
+        self.organisations.remove_member(account, account_id)
+        self.db.execute(delete(Session).where(Session.account_id == account_id))
+        self.db.commit()
+
     def invite(
         self,
         email: str,

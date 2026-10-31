@@ -147,6 +147,8 @@ def spec_confirm(args: argparse.Namespace) -> None:
     rel, text, fields, body = _spec(top, args.slug)
     status = fields.get("status") or "none"
     if status == "confirmed":
+        if fields.get("confirmed_hash") != _digest(body):
+            repo.refuse(REFUSALS["not_confirmed_text"], slug=args.slug)
         print(f"{rel} is already confirmed.")
         return
     if status != "draft":
@@ -162,6 +164,7 @@ def spec_confirm(args: argparse.Namespace) -> None:
         repo.refuse(REFUSALS["no_disposition"], number=number, slug=args.slug, by=by)
     # The rest of the cold read's gate: its latest round passed and the spec is unchanged since.
     story.gate(args.slug, rel, read, repo.git("hash-object", "--", rel, cwd=top))
+    _roadmap_items(args.slug, body)
     _write(top / rel, _set(text, status="confirmed", confirmed_by=f'"{by}"',
                            confirmed_hash=_digest(body)))
     repo.commit_state(f"Confirm the {args.slug} spec", rel, notes, top=top)
@@ -618,8 +621,6 @@ def roadmap_add(args: argparse.Namespace) -> None:
     if fields.get("confirmed_hash") != _digest(body):
         repo.refuse(REFUSALS["not_confirmed_text"], slug=slug)
     wanted = _roadmap_items(slug, body)
-    if not wanted:
-        repo.refuse(REFUSALS["roadmap_section"], slug=slug, problem="it has none")
     items = repo.roadmap(top)  # refuses a roadmap it can't read
     taken = {item["key"]: item.get("spec") for item in items}
     for key in wanted:
@@ -721,6 +722,8 @@ def _roadmap_items(slug: str, body: str) -> dict[str, str]:
             problem = f"{match[1]} is listed twice" if match else f"{line.strip()!r} is not one"
             repo.refuse(REFUSALS["roadmap_section"], slug=slug, problem=problem)
         items[match[1]] = match[2]
+    if not items:
+        repo.refuse(REFUSALS["roadmap_section"], slug=slug, problem="it has none")
     return items
 
 
