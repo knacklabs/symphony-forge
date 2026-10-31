@@ -1,0 +1,15 @@
+{
+  "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
+  "branch": "fix/build-test-balance",
+  "done_when": "While a builder's tests wait in the test line, its agent place is free for another item and it waits for a place again before its round goes on; a free agent place goes first to work near the end (a fix round after a failed test, a review) and a new build last; and no new build starts while more than two times the test places' count of items wait for tests, starting again when no more than the test places' count wait; new and existing client repos get this with the release, and the shipped coordinator guide and worker brief say it",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T12:50:19.211483+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "On busy days builders hold agent places while they wait for the test line, so other items cannot start even though those places sit idle (seen: 4 agent places held, 6 items waiting for tests, waits up to 3 hours). The first fix for this merged with no code (issue 1260)"
+}
