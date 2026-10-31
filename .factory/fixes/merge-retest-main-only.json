@@ -22,8 +22,8 @@
     "id": "4b45c6cb-c86d-4f73-9c85-1fec655a33c9",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T14:44:25.522071+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "6901b5f650b688025c0b64d00a8439ac90f52504",
+    "close": "dc9f8ef2-2b8c-44f3-b771-296b32c6b9fd",
+    "head": "57694bf6046201b27c4340f1383050eb9827b6d4",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Each merge that finds the default branch moved reruns the related tests on the laptop's one test lane, so busy days queue every merge behind near-full-suite runs even when CI already checked the pull request's commit. The first fix for this merged with no code (issue 1260)",
   "worker": "codex"
