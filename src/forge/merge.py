@@ -107,8 +107,9 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 base = repo.git("merge-base", "HEAD", f"origin/{default}", cwd=worktree)
                 checked_default = base
                 cfg = repo.config(worktree)
-                command = (cfg["fast_test"] or cfg["test"]).replace("{base}", base)
-                failed, tested = review.test_run(worktree, command, f"origin/{default}", always=True)
+                # CI covered this head; only the incoming default-branch diff needs tests.
+                command = (cfg["fast_test"] or cfg["test"]).replace("{base}", head)
+                failed, tested = review.test_run(worktree, command, head, always=True)
                 print(tested, flush=True)
                 if failed:
                     repo.refuse(REFUSALS["retest_failed"], item=item,
