@@ -4,12 +4,20 @@
   "done_when": "A builder round runs those cheap repo checks before it ends, so a failing one is fixed in that same round instead of in CI.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T06:26:01.018268+00:00",
       "step": "start"
     }
   ],
-  "why": "A builder round that fails a cheap check, such as a file over 1,200 lines, a rule label that collides with another rule's test, or a test with no rule, is found only after the push, which costs a CI wait and a paid fix round."
+  "stuck": {
+    "close": null,
+    "head": "462dfe4d49567c52e3d5d2140b7c5e2266d87f3f",
+    "keys": {},
+    "round": null
+  },
+  "why": "A builder round that fails a cheap check, such as a file over 1,200 lines, a rule label that collides with another rule's test, or a test with no rule, is found only after the push, which costs a CI wait and a paid fix round.",
+  "worker": "codex"
 }
