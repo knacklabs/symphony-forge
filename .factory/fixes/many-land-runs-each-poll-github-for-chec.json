@@ -11,7 +11,7 @@
   "done_when": "Waiting land runs read one shared status snapshot per 60 seconds instead of each polling GitHub every 15 seconds.",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
