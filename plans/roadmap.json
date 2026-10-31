@@ -504,6 +504,12 @@
       "title": "Email and member removal for client apps",
       "status": "pending",
       "order": 109
+    },
+    {
+      "key": "FORGE-HANDOVER-1",
+      "title": "Hand over client work to another machine",
+      "status": "pending",
+      "order": 110
     }
   ],
   "epics": [
