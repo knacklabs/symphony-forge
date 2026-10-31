@@ -23,6 +23,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in coordinator guides differ from the shipped template.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in coordinator guides differ from the shipped template.",
+      "from": "worker",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_waiters_share_check_status.py\tGate: test_4_one_test_per_rule\tmany-land-runs-each-poll-github-for-chec",
       "kind": "bug",
       "path": "tests/test_waiters_share_check_status.py",
