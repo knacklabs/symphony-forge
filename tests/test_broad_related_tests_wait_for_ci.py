@@ -5,6 +5,11 @@ Test-audit gate:
 2. A broad merge can take the laptop lane, or merge before the combined head passes CI.
 3. Existing merge tests require local retests and do not cover the quarter boundary.
 4. Real pytest tests write run receipts; only GitHub and the review service are faked.
+
+Review repair: the check-read contract belongs here. The original head stays green while
+the combined head fails, so an incorrect wait on the old head cannot satisfy this test.
+The earlier call-count assertion could not distinguish those two GitHub requests.
+Extend this command test without a production seam or another test owner.
 """
 import json
 import re
@@ -88,6 +93,11 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
     (env.repo.bin / "default-moved").write_text(advanced, encoding="utf-8")
     if ci_red:
         env.checks([run("tests", "failure"), run("forge-pr-check")])
+        # The original PR passed CI. Only the newly published combined head fails.
+        env.gh.respond("api", "--paginate", "--jq", ".check_runs[]",
+                       f"repos/{{owner}}/{{repo}}/commits/{original}/check-runs?per_page=100",
+                       stdout="".join(json.dumps(check) + "\n" for check in
+                                      [run("tests"), run("forge-pr-check")]))
     before_checks = len(env.gh_calls("api"))
 
     merged = env.repo.forge("merge", item)
@@ -96,12 +106,15 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
     if broad:
         assert not list(receipts.iterdir()), merged.stdout + merged.stderr
         assert "Related tests exceed one quarter of the suite. Pull request CI runs them." in merged.stdout
-        assert len(env.gh_calls("api")) > before_checks
         published = env.repo.git("rev-parse", "fix/tidy-readme", cwd=remote)
         assert published != original
         env.repo.git("merge-base", "--is-ancestor", advanced, published, cwd=remote)
+        assert ["api", "--paginate", "--jq", ".check_runs[]",
+                f"repos/{{owner}}/{{repo}}/commits/{published}/check-runs?per_page=100"
+                ] in env.gh_calls("api")[before_checks:]
         if ci_red:
             assert merged.returncode != 0
+            assert "Checks failed on the pull request: tests." in merged.stderr
             assert not env.gh_calls("pr", "merge")
             return
     else:
