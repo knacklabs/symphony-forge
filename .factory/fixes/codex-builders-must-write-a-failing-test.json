@@ -11,12 +11,76 @@
   "done_when": "A Codex builder runs forge test in its round without a permission refusal.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_worker_requests_use_forges_accepting_reviewer() in tests/test_worker_approval_requests.py",
+      "file": "tests/test_worker_approval_requests.py",
+      "gain": 5,
+      "harm": 2,
+      "line": 19,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Not done: A Codex builder runs forge test in its round without a permission refusal.",
+      "work": 2
+    },
+    {
+      "area": "test_1_worker_requests_use_forges_accepting_reviewer() in tests/test_worker_approval_requests.py",
+      "file": "tests/test_worker_approval_requests.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 8,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: worker approval coverage for earlier-adopted clients",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ab43edf3de54db23e41884ac1e4226305764261100988fa5a5105fe66f0574e8",
+    "changed": "9505b95f880685534e968915d811fc483c46d79d044fd844f891e6d9aa59354b",
+    "commit": "a34b1a6085dad302f5c5a338123802a2f0c9145d",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 2, Harm 2\nRaise: Test\nCase: normal use - a Codex builder must run its failing regression through forge test during a work round.\nThe named proof checks outgoing approval settings but never executes forge test. Its app-server stub requests marker-file operations and fabricates failed pytest output (tests/stubs/codex-app-server:57\u201364,224\u2013229). The existing live smoke uses read-only turns (tests/test_codex_smoke.py:69\u201372), so it cannot supply the missing worker execution proof. These checks can pass without demonstrating the Done-when behavior. Add a worker-round regression that actually invokes forge test and observes the expected test failure without a permission refusal.",
+        "file": "tests/test_worker_approval_requests.py",
+        "gain": 5,
+        "harm": 2,
+        "line": 19,
+        "priority": "P1",
+        "required_done_when": true,
+        "title": "Not done: A Codex builder runs forge test in its round without a permission refusal.",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Gate\nCase: normal use - an existing client upgrades Forge and starts a Codex worker round.\nThe repository requires each changed rule to retain at least one case on a client adopted on an earlier release. This regression uses _codex_repo's default forge-source setup (tests/test_codex_worker.py:113\u2013133); the listed design-route proof uses a newly configured client (tests/test_design_route.py:121), and none of the listed approval proofs exercises an earlier-adopted client. Extend the approval contract's primary test with one earlier-release client case so the claimed upgrade behavior is covered.",
+        "file": "tests/test_worker_approval_requests.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 8,
+        "priority": "P1",
+        "title": "Gate: worker approval coverage for earlier-adopted clients",
+        "work": 2
+      }
+    ],
+    "id": "1414adf8-d72f-46cc-a6ee-2fe35660f9ed",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T06:27:26.177215+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T06:33:21.588592+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
