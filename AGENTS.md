@@ -114,6 +114,7 @@ change is dogfooded on Forge itself before clients get it.
 
 ## Review rules
 
+- Report as P1 any screen, page, route table or app shell that a change adds under `src/forge/templates/starter` or `src/forge/templates/starter-python`.
 - A change to Forge says what a new client repo (init or adoption) and an existing client repo (on
   upgrade to the new release) each get. Each rule keeps its full cases on a new repo plus at least
   one case on an existing repo adopted on an earlier release. Keep more existing-repo cases only
