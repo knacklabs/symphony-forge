@@ -22,8 +22,8 @@
     "mechanical": true,
     "status": "clean"
   },
-  "round": 2,
-  "status": "fixing",
+  "round": 3,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T08:44:09.715795+00:00",
