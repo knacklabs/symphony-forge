@@ -21,6 +21,39 @@
       "item": "FORGE-STACK-1/CLOSE",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe plan-file allowlist rejects the existing ideas file and fails CI.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The plan-file allowlist rejects the existing ideas file and fails CI.",
+      "from": "worker",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in guides lack the incoming batch CI repair guidance and fail the guide check.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in guides lack the incoming batch CI repair guidance and fail the guide check.",
+      "from": "worker",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tFollow-up: Recognize the expected stacked check failure in status",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 359,
+      "text": "Follow-up: Recognize the expected stacked check failure in status",
+      "from": "review",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }
