@@ -4,39 +4,21 @@
 
 ## What changes for you
 
-<What the people who use this will notice, in plain English. No IDs, codes or jargon. End each
-item with its source in plain words, such as (Source: the client's note on late orders, 12 Oct),
-or with the sourced item that needs it, such as (Needed by: the Customers screen). A source is a
-client note, a brief answer, a decision, a screen marked Build now at sign-off, a fixed rule of
-the app, or the owner's own request with its date. Name each screen, field, endpoint, tool and
-setting that the plan adds in one of these items.>
-
-<!-- For user-facing parts: run impeccable init if PRODUCT.md is absent. Design the screens
-in a Claude Design artifact; on a Codex-only host without artifact tools, use HTML artboards.
-Save each screen and its images in docs/design/<KEY>/. Copy .forge/design/support.js beside
-the HTML screens and run it for a 1440 by 900 PNG per screen. Commit the folder. Use its git tree
-id (git rev-parse HEAD:docs/design/<KEY>) in the last line below. For small changes to existing
-screens that add no screen and change no flow, use Design: none (<why>) instead.
-Remove this comment and omit
-the Design line for a backend-only story. Cold read follows the design; one plan approval binds
-these exact files. A folder edit needs its new tree id and a new plan approval.
-The rule starts with the next plan read and approval. Plans approved without a Design line
-before this rule keep their existing approval. -->
-Design: docs/design/<KEY>/ (<tree id>)
+- Each client app user sees records waiting for their action (an approval or an assignment) in an in-app notification list, with a count by default. Email comes later through SNS, not in this story.
+- The FDE gives the agent demo notes or a call transcript. The agent splits it into separate changes and shows one list. After one FDE OK, each change goes through forge start.
+- Each release that adds a database migration is marked, so Mainline takes a backup at Promote. Mainline does the backup and the restore itself; Forge only marks the release.
+- Every database change keeps the previous release working (add first, remove a release later). This is the pending story FORGE-EXPAND-1, which this plan cites and does not rebuild.
 
 ## Why
 
-After a demo: waiting items show in the app, notes become changes, and releases get a backup before Promote
-
-
+After a demo, the FDE has no single way to turn notes into separate changes with one approval. A person waiting on an approval or an assignment does not see it in the app. A Mainline rollback reverts only the code, so a migration that removes something the previous release reads breaks it, and no release is marked for a backup before Promote.
 
 ## Done when
 
-<!-- One bold plain sentence per result, which the owner approves: no code names, file paths or
-test names. Its evidence, edge cases and proving tests go under the same number in Done-when
-details. -->
-
-1. **Something anyone can observe once this is done.**
+1. **A record waiting for someone's action shows in that person's in-app list with a count.**
+2. **Demo notes or a transcript become separate changes shown as one list, and none starts until the FDE gives one OK.**
+3. **A release with a migration is marked, and one test restore is run before launch.**
+4. **Each part says what a new client repo and an existing client repo get on upgrade, and its tests cover both.**
 
 ## Risks
 
