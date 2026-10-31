@@ -1,42 +1,103 @@
 # One prototype approval, then the agent builds every record type
 
-<n> parts · Risks: ... · New moving parts: ...
+2 parts · Risks: none one-way · New moving parts: none
 
 ## What changes for you
 
-- The owner approves one prototype plan, which lists the record types, their fields, the architecture choices and who may do what with each record type. The design canvas, working-build, constitution and architecture-record approvals are no longer separate steps.
-- After that one approval, the agent builds every record type with the feature command without more questions.
-- The agent writes about 20 realistic demo records per record type, in the client's own words, with no real personal data. They are for the prototype and tests only.
-- Each Done-when item becomes a demo step that opens on the client's business task. The agent runs the steps in a browser and saves a screenshot of each one, kept out of code review. The client ticks each step to sign off.
+- You approve one prototype plan. It holds the record types with their fields (a record type is a kind of thing the app keeps, such as an invoice), a table of who may view, create, edit, delete and restore each record type, the design canvas, the architecture choices with one plain reason each, and the demo steps. The separate approvals of the canvas, of the working build, of the app constitution and of each architecture choice stop. After this approval, only the client's sign-off is left. (Source: your decisions, 31 Oct 2026)
+- The agent drafts the roles table from the client's notes. Where the notes say nothing, the default is: admins do everything, and members view and create. (Source: your decision, 31 Oct 2026)
+- After the approval, the agent builds every record type with the feature command, without more questions. The feature command is Forge's command that builds a record type's table, API, permissions, agent tools, change history and tests. The agent builds the screens in the client's design; the story "Starter ships no screens" sets that rule. (Source: your decision, 31 Oct 2026)
+- The agent writes about 20 realistic demo records for each record type, in the client's own words, with no real personal data. They exist for the prototype and its demo run only. They never reach production. (Source: your decision, 31 Oct 2026)
+- Each demo step is one Done-when item of the prototype plan. The first step is the client's one business task. The basic screens (sign-in, members, settings) come last. The agent runs every step in a browser and saves one screenshot for each step. A screenshot-only change gets no code review. (Source: your decision, 31 Oct 2026)
+- The client signs off by ticking each demo step. The person who runs the demo writes the tick when the client says yes. Forge refuses the sign-off while a step has no tick or no screenshot. (Source: your decision, 31 Oct 2026; the way the tick is recorded is the planner's choice, see Notes)
+- A new client repo gets all of this at `forge init`. An existing client repo gets the guide text and the demo data page with `forge sync`. Its accepted canvas, build and constitution approvals stay valid, so it is never asked again, and its app code does not change. (Source: the Forge review rules)
+
+Design: none (this story adds no screen; each client app's own design covers every screen)
 
 ## Why
 
-The owner's approval steps are spread across four separate gates, and the client's sign-off is not tied to the business tasks the prototype has to do. The plan must also change the constitution rule in FORGE-CONSTITUTION-1 and the sign-off spec in docs/specs/prototype-signoff.md, which currently require those separate approvals.
+An FDE (the person who runs the client project) today meets four separate approvals before the client sees a finished prototype: the canvas, the working build, the constitution, and one record for each architecture choice. The client's sign-off is not tied to the business tasks that the prototype must do. The owner chose one plan approval and a sign-off by demo step on 31 October 2026.
 
 ## Done when
 
-1. **One prototype plan approval replaces the four separate approvals, and the agent then builds every listed record type without asking more questions.**
-2. **Each record type has about 20 demo records in the client's words, with no real personal data.**
-3. **Each Done-when item runs as a browser demo step with a saved screenshot, and the client ticks each step.**
+1. **In a client repo, the owner's one approval of the prototype plan lets UI fixes start, lets app code merge, and lets new stories start. The canvas, working-build, constitution and architecture-record approvals are not asked. Forge refuses the approval, and names each gap, until the plan has its demo steps, roles table, architecture choices, committed canvas and personal-data answer.**
+2. **The guide tells the agent to build every record type in the plan with the feature command, with the roles table and without more questions. A review holds work that goes against the roles table and the architecture choices.**
+3. **The demo data page asks for about 20 realistic demo records for each record type, in the client's words, with no real personal data, for the prototype and its demo run only.**
+4. **Each demo step runs in a browser with a screenshot kept out of code review. Forge refuses the client's sign-off while a step has no tick or no screenshot.**
 
 ## Risks
 
-<!-- Each one-way step: deleting data, a destructive migration, a new vendor. -->
+Risks: none one-way. Each part reverts with its pull request. No migration, no data change, no app file changes.
 
-Risks: none
+Trade-off: the tick is written by the person who runs the demo, not by the client in an app. Forge ships no screens, so it has no page where a client could tick. The record of how and when the client replied (`approved_via`, `approved_on`) stays as it is.
+
+Trade-off: Forge's code keeps the old approval names (`prototype-design`, `prototype-build`, `app-constitution`) for reading, so every repo that already holds one keeps working. The guide stops naming them.
 
 ## For the builders
 
 <!-- Everything from here down is for the agents. The owner doesn't see it when approving, and
 tightening it needs no new approval. -->
 
+Each new test file starts with `STORY = "FORGE-ONEPLAN-1"`. Tests run the forge command and never import forge. The setups to reuse: `_fresh_client` (`tests/test_setup.py`) and `_fixture_git` (`tests/test_app_constitution.py`) for the new repo; `tests/fixtures/adopted-v1.2.2/client` for the earlier-release repo, as `tests/test_app_constitution.py::test_1` copies it; `env` and `finding` (`tests/test_close.py`) for close; `tests/test_proto_signoff.py` and `tests/test_signoff_design.py` for the sign-off setup. `tests/test_guides_agree.py` (`guided_client`) and `tests/test_app_constitution.py::test_4` show the guide checks (whitespace collapsed, both synced copies).
+
+### What exists (evidence)
+
+- Four approvals, each a decision record under `docs/decisions/`:
+  - `prototype-design`: `records.decision_accept` (`stem.endswith("-prototype-design")`) stores `design_tree` from `design.prototype_tree`, which refuses without committed images in `docs/design/prototype/`. `design.require_prototype` (used by `task.fix_start` for `--kind ui` and by `journey.step_line`) reads an accepted `\d{4}-prototype-design.md` whose `design_tree` matches, and needs `PRODUCT.md`.
+  - `prototype-build`: `design.working_build`, `design.require_working_build` (called in `close.py:269`) and `records._working_build` read an accepted `*-prototype-build.md`. Nothing checks the record when it is accepted.
+  - `app-constitution`: `records.decision_accept` calls `_constitution_gaps` (CONSTITUTION.md has `## Defaults` and `## Architecture choices`, every architecture line names an accepted record, BRIEF has Summary, Users and Things it keeps track of, Personal data is answered). `records.constitution()` returns CONSTITUTION.md only when an accepted `\d{4}-app-constitution.md` exists. Its text reaches `story.py` cold reads, `review.py` (the `<!-- constitution -->` block), `records._signoff_review`, and the next-step reminder in `nextstep.py:377`. `story.new` refuses a client repo that is past the prototype with no constitution (`story.REFUSALS["constitution"]`, `story.py:116`).
+  - One record per architecture choice: only `_constitution_gaps` asks for them.
+- `client-signoff` (`records.decision_accept`, `signed` branch): working builds need a non-empty `## Proof` ("This working prototype needs a Proof section..."). Proof is free text. The record carries `approved_via` and `approved_on`; with neither, the command runs the checks and stops ("you can now ask the customer's named person").
+- The feature command (`src/forge/feature.py`, `forge task feature <plural> --one <singular> --field '<name>:<kind>'`) takes the field syntax that the plan can use. Members get view, create and edit by default (`templates/brief.md` feature paragraph: "Change the role mapping in the feature's permissions file only when the plan asks for it"). The mapping is one `definePermissions(feature, { admin: [...], member: [...] })` call (`libs/core/server/src/common/permissions.ts`).
+- Demo data is a convention page only: `src/forge/templates/conventions/demo-data.md` ("Forge ships this page, not the code"; the loader runs only with `APP_ENV=demo` and `DEMO_DATA=1` and empty tables). `tests/test_aha_templates.py::test_2` checks the page text. `templates/skill.md` says to build the loader "for a requested working prototype".
+- Screenshots already stay out of code review: `review.DOC_EXCLUDES` skips `docs/**` and image files, `docskip.only_docs` gives a docs-only change the light check (`tests/test_docs_and_assets_get_light_checks.py`), and the sign-off product review passes `images=set()`.
+- `docs/specs/prototype-signoff.md` is a confirmed spec. Its Behaviour says the prototype is "the smallest working slice" and the sign-off quotes the answers; nothing in it names a plan or ticks.
+- `plans/FORGE-NOSCREENS-1.md` (in flight): the starter loses its screens, the feature command writes no pages, and its RULES part rewrites the `app-baseline` skill, `skill.md`, `docs/guide.md`, `frontend.md` and `brief.md`. It leaves "the text of the approval of the design" to this story.
+
+### Words this story pins
+
+GATES pins these; GUIDE uses them.
+
+- **Plan record.** `forge decision new prototype-plan` writes `docs/decisions/NNNN-prototype-plan.md`. Front matter as every decision, plus `design_tree` (set at accept, as for `prototype-design`). Sections: `## Decision` (one sentence: the owner approves the plan as shown) and `## Demo steps`. The ordinary Context and Consequences sections are not required for this slug.
+- **Where each part of the plan lives.** Record types and fields: `docs/product/BRIEF.md`, `## Things it keeps track of`. Roles table: `## Roles` in `docs/product/CONSTITUTION.md`, one row per record type: `| Record type | admin | member |` with the actions each role has, from view, create, edit, delete, restore. Architecture choices: `## Architecture choices` in CONSTITUTION.md, `- <choice>: <reason>`, with no decision-record link. Canvas: `docs/design/prototype/`. Demo steps: the record's `## Demo steps`, numbered `1.` to `6.`, step 1 the client's one business task, basic screens last.
+- **Proof line.** In the sign-off record's `## Proof`: `- [x] <n>. <step> docs/product/demo/<n>.png`, plus the test name as free text, as the review already asks. `- [ ]` is an unticked step.
+
+### Settled (with the reason)
+
+1. **The plan is a decision record named `prototype-plan`, not a new file type or command.** Reason: `forge decision new` and `accept --by` already carry slug-specific checks (`design_tree`, `_constitution_gaps`, the sign-off sections), so one more slug adds no command word and no file format.
+2. **Each fact keeps its one home.** Record types stay in the BRIEF, roles and architecture choices go in the CONSTITUTION, the canvas stays in `docs/design/prototype/`. Reason: `records.constitution()` already feeds CONSTITUTION.md to cold reads, reviews and sign-off, so the roles table and the architecture choices reach every review with no new review rule, and the Postgres-extension line in the database skill ("under Architecture choices in `docs/product/CONSTITUTION.md`") stays true.
+3. **Old records keep working; only the guide stops naming them.** `design.require_prototype`, `working_build`, `_working_build` and `constitution()` accept the old slug or `prototype-plan`. Reason: a repo that already holds an accepted record must not be asked again (principle 12 and the existing-repo rule).
+4. **The architecture-record loop in `_constitution_gaps` is deleted, and the gap check moves to `-prototype-plan`.** The `-app-constitution` accept keeps only the ordinary decision checks. Reason: deleting beats keeping a check that no new approval uses (principle 1).
+5. **A plan in a repo that already has an accepted sign-off needs no canvas and no demo steps.** It holds the roles table and the architecture choices only (`repo.is_prototype` tells the two cases apart). Reason: an adopted live app has no canvas to commit and nothing left to demo, and today's `app-constitution` accept asks for neither.
+6. **The sign-off tick check runs only when the client's reply is recorded, and only in a repo with an accepted plan.** Reason: the first accept run still only checks and asks the salesperson to get the reply; a missing tick is then a missing approval. A repo without a plan has no demo steps, so its sign-off does not change.
+7. **Screenshots go in `docs/product/demo/<n>.png`.** Reason: `docs/` and images already skip code review, and the folder is not under `docs/design/prototype/`, so a new screenshot does not change the canvas's tree id.
+8. **No new command for the browser run.** The agent runs each step with the browser tool the app already has (the starter keeps its Playwright setup). Reason: a command would add about 150 lines to wrap one guide paragraph.
+9. **The step names in `journey.STEPS` stay.** "canvas design" is still the third step; it ends when the plan is approved. Reason: renaming a step would change the board and several tests for no client gain.
+
 ### Done-when details
 
-<!-- Under each Done-when item's number: its evidence, edge cases and the tests that prove it.
-Workers and reviewers get the entries of the items they cover. An item with nothing to add has
-no entry. -->
+1. One approval (GATES).
+   - Evidence: `tests/test_one_plan.py::test_1_one_plan_approval_opens_the_prototype_gates`, parameters `new prototype` and `adopted live app`.
+   - `new prototype` (after `forge init`): `forge decision new prototype-plan` writes the template. `forge decision accept prototype-plan --by "<name>"` refuses with one line for each gap, each with its next step: no `## Demo steps` (or more than six), no `## Roles` or `## Architecture choices` in CONSTITUTION.md, no `## Defaults`, no committed image in `docs/design/prototype/`, BRIEF missing Summary, Users or Things it keeps track of, and Personal data not answered. After the gaps are fixed it accepts and stores `design_tree`. Then `forge fix start ... --kind ui` starts (it refused before for lack of `prototype-design`), `design.require_working_build` passes for a fix that changes app code (through `forge close`, with `env`), and `forge next` names no missing approval.
+   - `adopted live app` (earlier-release fixture, accepted sign-off, no constitution): `forge story new` refuses and names `forge decision accept prototype-plan`; the plan accepts with no canvas and no demo steps; then `forge story new` works and the next-step reminder is gone.
+   - The earlier records stay covered by the existing tests, which keep their steps: `tests/test_story.py` (accepted `app-constitution`), `tests/test_design_first.py`, `tests/test_prototype_build.py`, `tests/test_proto_signoff.py`. Change only the text they quote: the refusal that named `forge decision new prototype-build` (`tests/test_prototype_build.py:157`, `tests/test_signoff_design.py:144`), the `prototype-design` mention (`tests/test_design_first.py:226`) and `CONSTITUTION_STEP` in `tests/test_app_constitution.py`. In `tests/test_app_constitution.py`, move the approval cases of `test_2` and `test_3` from `app-constitution` to `prototype-plan`; drop the architecture-record cases (lines 282-318); keep `test_1`'s earlier-release cases as they are.
+   - Edit: `src/forge/records.py` (`decision_new` template for the slug, `decision_accept` branch and its unfilled-section check for this slug, `_constitution_gaps` renamed for the plan, `constitution()`, `_working_build`), `src/forge/design.py` (`require_prototype`, `working_build`, and the refusal text of `require_working_build` and `require_prototype`), `src/forge/story.py` (`REFUSALS["constitution"]`: `forge fix start "Write the prototype plan" --done "The owner approved the prototype plan"`). `nextstep.py` reads `story.REFUSALS`, so it needs no edit.
+2. The guide (GUIDE). `tests/test_one_plan_guide.py::test_2_the_guide_says_one_plan_then_build_every_record_type`, parameters `new init` and `previous release`, setup of `tests/test_guides_agree.py`. Compare with whitespace collapsed; both synced skill copies hold each sentence. `previous release`: after `forge sync`, `git status --porcelain` lists only synced skill, guide and convention files, no file under `apps/` or `libs/`.
+   - `src/forge/templates/skill.md`, Prototype section: replace the canvas-first and `prototype-build` paragraphs and the `prototype-design` sentence with one flow: discovery, then the plan (record types with fields in the BRIEF, roles table and architecture choices in the CONSTITUTION, the canvas, the demo steps), one `forge decision accept prototype-plan --by "<name>"`, then the build. In the App constitution section, replace "Create and accept a decision record for each architecture choice", "Create the constitution approval record" and "The owner approves the constitution once" with the plan approval. Keep the interview, the defaults, the growth notes and the fixed rules unchanged. Add `## Roles` and the reason-only `## Architecture choices` to the outline, and the default row (admin all five; member view and create). Say: the agent builds every record type with `forge task feature` right after the approval and asks nothing more; for each record type whose row differs from the command's default (member view, create, edit), the agent edits that feature's one `definePermissions` call.
+   - Sign-off paragraph: the demo steps come from the plan; the agent runs each in a browser, saves `docs/product/demo/<n>.png`, writes the Proof line unticked, and writes the tick only when the client says yes. A screenshot-only change skips code review.
+   - `docs/guide.md` lines 76-110 (`prototype-design`, `prototype-build`) say the same in the same order; keep the phrases that `tests/test_proto_docs.py` asserts or update that test with them. `src/forge/templates/brief.md`: the feature paragraph says "when the plan's Roles table asks for it", and the Prototype proof paragraph says the sign-off Proof lists each demo step with its test and screenshot. `.claude/skills/forge/SKILL.md` and `.codex/skills/forge/SKILL.md` are rewritten by `forge sync`.
+   - Tests that quote changed sentences: `tests/test_app_constitution.py::GUIDE_SENTENCES`, `tests/test_notes_first_discovery.py`, `tests/test_story.py`, `tests/test_proto_docs.py`.
+3. Demo data (GUIDE). `tests/test_one_plan_guide.py::test_3_the_demo_data_page_asks_for_about_20_records`, same two parameters, with the setup of `tests/test_aha_templates.py::test_2`. The page `conventions/demo-data.md` in the new repo holds the sentences; `previous release`: `forge sync` writes the page and changes no app file. Page change: "About 20 records for each record type", "in the client's words", "no real personal data", "for the prototype and its demo run only, never production" (the existing guard keeps it so), and one sentence that a Python app puts the loader in `apps/api/app/demo/`. Keep the sentences that `tests/test_aha_templates.py::test_2` asserts. `skill.md` says to build the loader in every prototype, not only "a requested working prototype".
+4. Demo steps and ticks (GATES). `tests/test_one_plan.py::test_4_signoff_needs_every_demo_step_ticked_with_its_screenshot`, parameters `new prototype` (accepted plan with two steps) and `earlier approvals` (an accepted `prototype-build`, no plan).
+   - `new prototype`: with the reply recorded (`approved_via`, `approved_on`) and step 2 unticked, accept refuses and says `Demo step 2 is not ticked`. With step 2 ticked and no committed `docs/product/demo/2.png`, it refuses and names the file. With both done, it accepts. With no reply recorded and no ticks, the first run still passes its checks and tells the salesperson to ask for the reply.
+   - `earlier approvals`: no plan, so no demo steps; the existing Proof rule applies and sign-off accepts as today.
+   - Edit: `src/forge/records.py` (`signed` branch: after the date check, when the repo holds an accepted plan and `replied`, parse the plan's `## Demo steps` and the record's `## Proof`; add one gap per unticked or screenshot-less step, using the `gaps` list already built there; update the Proof comment in the `client-signoff` template).
+   - The screenshots' keeping out of code review needs no new test: `tests/test_docs_and_assets_get_light_checks.py` already proves that a docs file and an image get the light check.
 
-1. <Evidence, edge cases and the tests that prove item 1.>
+### New and existing repos
+
+- **New repos** (`forge init`): the guide's one-plan flow, the demo data page, the `prototype-plan` template, and the tick check at sign-off.
+- **Existing repos** (on upgrade, after `forge sync`): the guide text and the demo data page. A repo with an accepted canvas, build or constitution approval keeps working with no new approval. A repo past sign-off that has no constitution gets the plan as its next step, with no canvas and no demo steps. A repo with no plan has no demo steps, so its sign-off does not change. No app file changes. Each item has a case on the earlier-release fixture, as the Done-when details name.
 
 ## Tasks
 
@@ -54,7 +115,32 @@ queue, background job or abstraction layer, with the Done-when item that needs i
 
 | ID | Name | What it delivers | Covers | Scope | Tests | After | User-facing | Developer |
 |---|---|---|---|---|---|---|---|---|
+| GATES | One plan approval opens the gates, and sign-off checks the ticks | The `prototype-plan` record and its gap check, the three gates and the review text reading it, the deleted architecture-record check, and the tick and screenshot check at sign-off. | 1, 4 | `src/forge/records.py`, `src/forge/design.py`, `src/forge/story.py`, `tests/test_one_plan.py` (new), `tests/test_app_constitution.py`, `tests/test_design_first.py`, `tests/test_prototype_build.py`, `tests/test_signoff_design.py` | `tests/test_one_plan.py::test_1` (`new prototype`, `adopted live app`), `tests/test_one_plan.py::test_4` (`new prototype`, `earlier approvals`), `tests/test_app_constitution.py::test_2`, `::test_3` (moved to the plan) | | no | |
+| GUIDE | The guide, the brief and the demo data page say the one flow | The prototype and sign-off text in the guide and the worker brief, the demo data page, and the synced copies, on new and existing repos. | 2, 3 | `src/forge/templates/skill.md`, `src/forge/templates/brief.md`, `src/forge/templates/conventions/demo-data.md`, `docs/guide.md`, `.claude/skills/forge/SKILL.md`, `.codex/skills/forge/SKILL.md` (rewritten by `forge sync`), `tests/test_one_plan_guide.py` (new), `tests/test_app_constitution.py` (`GUIDE_SENTENCES` only), `tests/test_notes_first_discovery.py`, `tests/test_story.py` (quoted sentences only), `tests/test_proto_docs.py` | `tests/test_one_plan_guide.py::test_2`, `::test_3` (`new init`, `previous release`) | GATES, FORGE-NOSCREENS-1/RULES | no | |
 
-New moving parts: none
+GUIDE needs GATES because the guide names the plan record, its sections and the Proof line that GATES pins. GUIDE needs FORGE-NOSCREENS-1's RULES because both rewrite the Prototype section of `skill.md`, `docs/guide.md` and `brief.md`. `tests/test_app_constitution.py` is in both rows: GATES changes its approval steps, GUIDE only its `GUIDE_SENTENCES`, and GUIDE starts after GATES merges.
+
+New moving parts: none.
 
 ## Notes
+
+- **Scores (F x H >= 2 x C).** F is how often the problem happens, H how bad it is, C the cost.
+  - The one plan approval and its gates (GATES): F 2 (each new prototype), H 2 (a broken step: the owner meets four approvals and per-choice records), C 2 (about 150 lines of code). 4 >= 4. Kept. Model cost: no model call added. Each architecture choice no longer needs `decision new` and `decision accept`, so a prototype with eight choices saves about 16 commands and the owner's separate steps. The code removes the architecture-record loop.
+  - The tick and screenshot check at sign-off (GATES): F 2, H 2 (a sign-off that skipped a step is wrong information), C 2 (about 60 lines). 4 >= 4. Kept. Model cost: no model call; the sign-off review is unchanged and still gets no images.
+  - The guide, brief and demo data text (GUIDE): F 3 (every prototype), H 2, C 2. 6 >= 4. Kept. Model cost: the guide gets shorter or stays equal, so no extra reading. About 20 records for each record type is one-time output in the build turn, about 1,000 to 2,000 words for each type; no extra model call.
+  - Checking each `name:kind` field line when the plan is approved: F 2 x H 1 = 2 < 4. Cut. The feature command already refuses a bad field line in plain words at build time.
+  - Checking each roles row against the five actions and the number of demo records in code: 2 x 1 = 2 < 4. Cut. The guide states the rule, and reviews read the roles table through the constitution text.
+  - A command to run the browser steps: 2 x 1 = 2 < 4. Cut. The agent follows the guide.
+  - A page where the client ticks the steps: Cut. Forge ships rules, not screens.
+- **Planner choices the owner did not make.**
+  1. The plan is a decision record with the slug `prototype-plan`, and the roles table and architecture choices live in CONSTITUTION.md (Settled 1 and 2).
+  2. The client's tick is a `- [x]` line that the demo runner writes when the client says yes, in the sign-off record's Proof, with the screenshot path on the same line.
+  3. Roles default: your decision says members view and create. The feature command today gives members view, create and edit. The plan follows your decision, and the agent edits each feature's one permissions call where the table differs. Changing the command's own default to view and create is a separate, small fix if you want it.
+  4. In a repo that already has a sign-off, the plan needs no canvas and no demo steps (Settled 5).
+  5. Screenshots go in `docs/product/demo/`.
+- **Order with other work.**
+  - FORGE-NOSCREENS-1 removes the starter's screens and rewrites the same guide lines. This story's GUIDE waits for its RULES. Its FEATURE part removes the feature command's page output; GATES and GUIDE do not touch `src/forge/feature*.py`.
+  - FORGE-NOSCREENS-1 leaves "the text of the approval of the design" to this story. GUIDE writes it as part of the plan approval.
+- **A follow-up fix, started after the last part merges.** `docs/specs/prototype-signoff.md` is a confirmed spec. Its Behaviour still says the prototype is "the smallest working slice" and says nothing about the plan or the ticks. Specs ship as fixes and need a cold read and the owner's confirmation, so the fix rewrites those paragraphs, runs `forge spec save`, a read and `forge spec confirm`. This story does not edit the spec.
+- **Not touched, on purpose.** The canvas-only sign-off route (`not working` in the sign-off branch) stays for repos that have no plan. It can go when no repo needs it; that is a later deletion.
+- No client repo is named in this story's code, tests, texts or commits.
