@@ -354,10 +354,17 @@ preservation review, merge, cleanup and rollback. Follow it in order.
 ## Machine views
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds
-share a line. Plan reads and close reviews take no place in that line. Every run, including
+share a line. A builder lends its agent place while its test command waits or runs, then
+waits for an agent place again before the command returns to its round. Returning builders
+and repair rounds after failed tests go before new builds. Plan reads and close reviews
+take no place in that line. New builds pause when more than twice the test lane's places
+are waiting for tests; they start again when waiting test items fall to the place count or below.
+For example, with two test places, five waiting test items pause new builds, and two or
+fewer let them start again. This applies to new and upgraded repos on this release.
+Every run, including
 tests, reviews and plan reads, waits while the machine's
 one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
-(Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
+(Windows) the memory and core budgets still apply. Within the remaining work, items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane makes all test runs share one process budget: the cores left after the agent share and busy
 local CI jobs, with at least one process. Small selections count too. Each run takes its allocation
@@ -1468,12 +1475,17 @@ setup-only, platform or "foundation" stories. Cut a story that answers no proble
 when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. Every run also waits while load per
+finishes. One machine runs work rounds on half its available cores (at least one place),
+across all its repos; the rest wait in line. Reads and reviews take no agent place.
+Builders lend their places during test commands and wait for admission again before continuing.
+Returning builders and failed-test repairs go before new builds. New builds pause above twice
+the test lane's place count of waiting test items and resume at that count or below.
+Every run also waits while load per
 core is 1.5 or more, including when external jobs cause the load, or free memory is below its floor.
-Busy local CI jobs reduce the available budget until they finish. Items that other planned work waits on go
+Busy local CI jobs reduce the available budget until they finish. Within the remaining work, items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
-each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
+each time it changes. Running agents keep their places except during test commands.
+A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
 so with the command that merges it into the story branch; run it, then carry on. Forge compares
 content history, never commit dates: an older copy on the default branch does not block a start.
@@ -2067,13 +2079,15 @@ can enter close. Among changes whose bases are ready, the oldest starts first. A
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
-the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
-alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
+the run starts that change again once and says so. A failed CI check gets one fix round on
+that change's builder thread, then close runs again. Other worker or owner stops affect only
+that change, and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
-its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
+its next run, or, for a stopped change, close's own question and next step, which only the owner
 answers. Close waits for the owner's recorded choice. A failed
-CI job whose log names none of the change's files runs again once; a second failure stops that
-change. Forge's review check follows review recovery instead. Where a human merges, the run closes
+CI job whose log names none of the change's files runs again once before the fix round.
+If CI still fails after the fix round, the change stops with its reason.
+Forge's review check follows review recovery instead. Where a human merges, the run closes
 every change, holds none and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
 with their pull request links: merge them
 in that order.
