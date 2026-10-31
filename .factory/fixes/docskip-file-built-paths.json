@@ -44,8 +44,8 @@
       "gain": null,
       "harm": null,
       "line": 27,
-      "outcome": "open",
-      "reason": "",
+      "outcome": "follow-up",
+      "reason": "Human accepted the remaining finding: The owner accepts: the common __file__ path case is fixed; a file name kept in a separate variable is a rarer case left as a follow-up",
       "round": 5,
       "security": false,
       "title": "Not done: A docs change that a test reads through a __file__-built path runs that test",
@@ -57,7 +57,13 @@
     "branch_diff": "2fb90d978cc35282e64486650dd58c92311d5e8b02b736af383bb0e7ac333d43",
     "changed": "8bbaa69cf8bbad42b13eb7cee115137cc4ef7bd9d1e8ada4805bf1a44fd3d138",
     "commit": "bce6b4f86eff9de3f834f93e98441930b264c991",
-    "dismissals": [],
+    "dismissals": [
+      {
+        "accepted": true,
+        "because": "Human accepted the remaining finding: The owner accepts: the common __file__ path case is fixed; a file name kept in a separate variable is a rarer case left as a follow-up",
+        "finding": 1
+      }
+    ],
     "findings": [
       {
         "body": "A filename stored in a constant still makes the consuming test disappear from selection. For example, `NAME = 'guide.md'; GUIDE = Path(__file__).parents[1] / 'docs' / NAME` followed by `GUIDE.read_text()` reads `docs/guide.md`, but `components(NAME)` returns an empty list because only file-rooted assignments enter `roots`. The computed suffix is therefore just `docs`, which cannot match the changed document. The docs classifier's remaining literal checks also cannot resolve the separately quoted directory and basename, so CI skips the tests; the pytest selector likewise selects nothing. Preserve literal-valued path variables and cover this case through the existing command-level regression test. The copied implementation in `.forge/review-tests.py` has the same defect.",
@@ -69,10 +75,10 @@
       }
     ],
     "id": "62091562-cba4-437d-a13a-8280c69250fb",
-    "status": "blocked"
+    "status": "clean"
   },
   "round": 5,
-  "status": "hotspot",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T13:32:38.413143+00:00",
@@ -101,8 +107,12 @@
   ],
   "stop": {
     "at": "2026-10-30T18:57:00.370075+00:00",
+    "by": "owner",
+    "choice": "accept",
     "file": "src/forge/docskip.py",
-    "wait_id": "62dd1d32-cb2b-4b85-bea1-c793070c191f"
+    "reason": "The owner accepts: the common __file__ path case is fixed; a file name kept in a separate variable is a rarer case left as a follow-up",
+    "wait_id": "62dd1d32-cb2b-4b85-bea1-c793070c191f",
+    "worker_round": 5
   },
   "stuck": {
     "close": "2a122893-6730-4684-ab4f-b7773d3b3057",
