@@ -14,7 +14,7 @@ STORY = "when-ci-fails-on-a-change-in-a-batch-run"
 # The batch-only early refusal breaks this; single-item tests cannot reach that refusal.
 # Only the model and GitHub edges are faked, with no production seam.
 @pytest.mark.parametrize("heals", [True, False], ids=["merges", "stops"])
-def test_batch_gives_failed_ci_one_round_on_the_builder_thread(client, monkeypatch, heals):
+def test_1_batch_gives_failed_ci_one_round_on_the_builder_thread(client, monkeypatch, heals):
     env = client
     module = env.repo.bin / "claude_agent_sdk" / "__init__.py"
     commits = "".join("    " + line + "\n" for line in COMMITS.splitlines())
