@@ -11,12 +11,27 @@
   "done_when": "Every test in the suite has a recorded time in the timing file, and the pull request text reports the slowest group's time before and after on the same runners.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f4accca5e28dc7880415c40e0d6b149a95d9043ba46f48925274319d34ec6986",
+    "changed": "ca02b2b9c847b22d2b68c6bad0cc07ad3b4da2894a9ca9fdf587693b1db379e9",
+    "commit": "42da562702a243df55d5aeca8df97a6595165a21",
+    "dismissals": [],
+    "findings": [],
+    "id": "a21e645b-3f1d-47c7-80d8-f256d24e5596",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T20:25:44.871326+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T21:30:36.505360+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
