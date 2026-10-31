@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-AFTERDEMO-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-10-31T09:39:15.521740+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "After a demo: waiting items show in the app, notes become changes, and releases get a backup before Promote",
+  "touches": 0
+}
