@@ -1,6 +1,13 @@
 {
   "base": "823cdf3b43ec810daebff876ebb55995fadd5310",
   "branch": "fix/pull-request-test-groups-take-20-to-32-m",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a193a6-49f4-7bf0-95cb-bcb1707138f9",
+    "head": null,
+    "start": "d07d82c3ba97fa44bbb18d2429d21ecbd00ee597"
+  },
   "done_when": "Every test in the suite has a recorded time in the timing file, and the pull request text reports the slowest group's time before and after on the same runners.",
   "fix_kind": "mechanical",
   "kind": "fix",
