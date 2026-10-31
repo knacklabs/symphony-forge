@@ -1,0 +1,98 @@
+{
+  "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
+  "branch": "fix/many-land-runs-each-poll-github-for-chec",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a4-b2c0-7361-b9d0-bfece23a0e71",
+    "head": null,
+    "start": "26f3c7790d4b2d34cad76fd1a93ca70eff482b3a"
+  },
+  "done_when": "Waiting land runs read one shared status snapshot per 60 seconds instead of each polling GitHub every 15 seconds.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_waiters_share_one_status_read_per_minute() in tests/test_waiters_share_check_status.py",
+      "file": "tests/test_waiters_share_check_status.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 17,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_one_test_per_rule",
+      "work": 1
+    },
+    {
+      "area": "test_3_land_stops_when_github_shows_no_check_progress() in tests/test_land_waits_for_check_progress.py",
+      "file": "tests/test_land_waits_for_check_progress.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 133,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_land_stops_when_github_shows_no_check_progress[unreadable]",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "463d0c41f34441b8b7343bf6378da11bfd922af9ff9de8124b2e3bbfed58d89e",
+    "changed": "71e1505ae71fd0f7ce9c42730491f791820a8cd59ef829734ff7094469cf749f",
+    "commit": "596ed5712f13a4dc580ba595044212a0ae0f3bdc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - running the required repository checks.\nThe new test name fails the existing check in tests/test_rules.py:47\u201348, which requires every test function to match `test_(\\d+)_\\w+`. Consequently, the required check fails even if status sharing works. Give this regression a numbered criterion name and update its proof references.",
+        "file": "tests/test_waiters_share_check_status.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 17,
+        "priority": "P1",
+        "title": "Gate: test_4_one_test_per_rule",
+        "work": 1
+      },
+      {
+        "body": "Gain 4, Work 1, Harm 2\nRaise: Gate\nCase: normal use - running the changed failed-GitHub-read regression.\nThis expectation should account for the failure cache starting after the fetch finishes. The malformed response exhausts four attempts and seven simulated seconds of backoff (src/forge/repo.py:351\u2013383), then checks.py:176 timestamps the cached failure. The 60-second wait deadline is not renewed on that failure, so it expires before the failure cache does. Only four check-run requests occur, rather than eight, causing this proof test to fail. Correct the expected count, or extend the scenario if it is intended to verify expiration of a failed snapshot.",
+        "file": "tests/test_land_waits_for_check_progress.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 133,
+        "priority": "P1",
+        "title": "Gate: test_3_land_stops_when_github_shows_no_check_progress[unreadable]",
+        "work": 1
+      }
+    ],
+    "id": "7fbb201b-9243-4e72-b7f3-8e4b87e0982c",
+    "status": "blocked"
+  },
+  "round": 2,
+  "status": "hotspot",
+  "steps": [
+    {
+      "at": "2026-10-31T06:25:50.508198+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T10:26:35.685404+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-31T10:26:35.701307+00:00",
+    "file": "tests/test_waiters_share_check_status.py",
+    "wait_id": "bf62f339-d3db-4459-b141-5c50bf4968d1"
+  },
+  "stuck": {
+    "close": null,
+    "head": "149294ab1211e69e6d3a0c72d096daf4791eecff",
+    "keys": {},
+    "round": null
+  },
+  "why": "Many land runs each poll GitHub for check status, used up the hourly limit twice in one day, and stalled every merge. The repo does not record which of GitHub's two hourly limits (REST or GraphQL) was hit.",
+  "worker": "codex"
+}
