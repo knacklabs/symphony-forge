@@ -4,12 +4,20 @@
   "done_when": "The story doc lists three parts with no Remove button or screen in What changes for you or Done when, and the unmerged Remove-button part is not merged into main.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T08:44:09.715795+00:00",
       "step": "start"
     }
   ],
-  "why": "The starter ships a Remove button and its own screen, but each client app builds its own screens in its own design, and the story already says the starter has no look of its own."
+  "stuck": {
+    "close": null,
+    "head": "e333ce911b2cc0d5c13339f4c10f0fe161c4860f",
+    "keys": {},
+    "round": null
+  },
+  "why": "The starter ships a Remove button and its own screen, but each client app builds its own screens in its own design, and the story already says the starter has no look of its own.",
+  "worker": "codex"
 }
