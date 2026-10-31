@@ -1,0 +1,15 @@
+{
+  "base": "3255f9c326e5eb579f755d6e7a1e298701ff15f9",
+  "branch": "fix/closing-a-story-part-that-was-started-on",
+  "done_when": "Closing a story part that was started on top of an unmerged part finishes its size check and no longer stops with the no merge base error.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T15:06:14.725425+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Closing a story part that was started on top of another unmerged part fails with a git error saying there is no merge base, because the size baseline Forge builds for it has no parent commit, so the diff that close runs finds no shared starting point."
+}
