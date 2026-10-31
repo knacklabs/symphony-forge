@@ -47,7 +47,7 @@
     "id": "412d36bc-5d72-429a-8820-118030ecce9c",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -69,10 +69,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "462dfe4d49567c52e3d5d2140b7c5e2266d87f3f",
+    "close": "96975872-5ac3-42ff-99f4-40ca09b7d83c",
+    "head": "e6639b3bf40ab4e307378cce2f70ecc7efbbf466",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A builder round that fails a cheap check, such as a file over 1,200 lines, a rule label that collides with another rule's test, or a test with no rule, is found only after the push, which costs a CI wait and a paid fix round.",
   "worker": "codex"
