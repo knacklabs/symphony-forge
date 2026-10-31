@@ -4,12 +4,20 @@
   "done_when": "tests/test_fix_old_forge_records.py test_1 passes on origin/main once plans/ideas.md is allowed in its plans pattern, and the other checks in that file stay the same.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T17:40:22.316389+00:00",
       "step": "start"
     }
   ],
-  "why": "The records test in tests/test_fix_old_forge_records.py refuses plans/ideas.md, which origin/main now carries, so main's suite fails for every item."
+  "stuck": {
+    "close": null,
+    "head": "e30ac70cf4993021f4f746b43c4ae7fbbd5b0d0e",
+    "keys": {},
+    "round": null
+  },
+  "why": "The records test in tests/test_fix_old_forge_records.py refuses plans/ideas.md, which origin/main now carries, so main's suite fails for every item.",
+  "worker": "codex"
 }
