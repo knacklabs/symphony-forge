@@ -72,44 +72,40 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
     queued_since = None
     printed_minute = None
     requested: set[int] = set()
+    cache = (repo.forge_dir(top) / f"check-wait-{repo.blob_hash(branch + sha)}.json"
+             if progress else None)
     while True:
         queued = False
         try:
-            seen, snapshot, check_runs = _seen(top, item, sha)
+            seen, snapshot, check_runs, pr = _status(top, item, sha, branch, cache, requested)
             result["state"] = ("running" if any(state == PENDING for _, state in seen)
                                else "queued" if any(state == QUEUED for _, state in seen)
                                else "unknown")
             if progress and snapshot != previous:
                 previous = snapshot
                 deadline = time.monotonic() + timeout
-            shown = repo.run("gh", "pr", "view", branch, "--json", "mergeable,headRefOid,number,headRefName", cwd=top)
-            try:
-                pr = json.loads(shown.stdout) if shown.returncode == 0 else None
-            except ValueError:
-                pr = None
             if not isinstance(pr, dict):
-                said = (shown.stderr.strip() or "no readable mergeability answer").splitlines()[-1]
-                reason = said if said.startswith("GitHub did not answer.") else f"GitHub did not answer: {said}"
                 repo.refuse(REFUSALS["not_green"], item=item,
-                            reason=reason.rstrip("."))
+                            reason=pr.rstrip("."))
             mergeable = pr.get("mergeable") if pr.get("headRefOid") == sha else None
             if mergeable == "CONFLICTING":
                 repo.refuse(REFUSALS["conflict"], item=item)
-            if pr.get("headRefOid") == sha:
-                _cancel_superseded(top, item, check_runs, number=pr.get("number"), branch=branch,
-                                   requested=requested)
             _tests_timeout(top, item, sha, names, check_runs, seen)
             reason = _pending(item, names, seen)
             if mergeable == "UNKNOWN":
                 reason = reason or "GitHub has not determined whether this pull request can merge"
             queued = any(state == QUEUED for _, state in seen)
         except repo.Refused as error:
+            if cache is not None and error.entry is not REFUSALS["not_green"]:
+                cache.unlink(missing_ok=True)
             if not progress or error.entry is not REFUSALS["not_green"]:
                 raise
             result["state"] = "unknown"
             reason = str(error).split("\n", 1)[0].removeprefix("The checks are not green yet: ").rstrip(".")
         else:
             if not reason:
+                if cache is not None:
+                    cache.unlink(missing_ok=True)  # The next gate must check green answers again.
                 result["outcome"] = "passed"
                 return
         if queued:
@@ -138,6 +134,50 @@ def _wait(top: Path, item: str, sha: str, names: list[str], branch: str, progres
         # Queued checks keep backpressure; running checks need no local close place.
         waiting(not queued)
         time.sleep(min(15, left))
+
+
+def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
+            requested: set[int]) -> list[Any]:
+    def read() -> list[Any]:
+        seen, snapshot, runs = _seen(top, item, sha)
+        shown = repo.run("gh", "pr", "view", branch, "--json",
+                         "mergeable,headRefOid,number,headRefName", cwd=top)
+        try:
+            pr = json.loads(shown.stdout) if shown.returncode == 0 else None
+        except ValueError:
+            pr = None
+        if not isinstance(pr, dict):
+            said = (shown.stderr.strip() or "no readable mergeability answer").splitlines()[-1]
+            pr = said if said.startswith("GitHub did not answer.") else f"GitHub did not answer: {said}"
+        elif pr.get("headRefOid") == sha and pr.get("mergeable") != "CONFLICTING":
+            _cancel_superseded(top, item, runs, number=pr.get("number"), branch=branch,
+                               requested=requested)
+        return [seen, snapshot, runs, pr]
+
+    if cache is None:
+        return read()
+    from forge import codex
+    # The common Git directory and its lock share both reads and queue recovery
+    # across processes. Use the wait loop's clock for the snapshot's lifetime.
+    with codex._one_at_a_time(cache):
+        value = None
+        try:
+            saved = json.loads(cache.read_text(encoding="utf-8"))
+            if 0 <= time.monotonic() - saved["at"] < 60:
+                value = saved["status"]
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+        if value is None:
+            try:
+                value = read()
+            except repo.Refused as error:
+                value = str(error)  # An outage must not make every waiter poll again.
+            temp = cache.with_suffix(".tmp")
+            temp.write_text(json.dumps({"at": time.monotonic(), "status": value}), encoding="utf-8")
+            os.replace(temp, cache)
+    if isinstance(value, str):
+        raise repo.Refused(value, "", entry=REFUSALS["not_green"])
+    return value
 
 
 def _tests_timeout(top: Path, item: str, sha: str, names: list[str],
