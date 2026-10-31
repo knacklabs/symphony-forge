@@ -49,8 +49,8 @@
     "id": "7e546a70-c769-4e6b-bc8e-83ad1b28a065",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T06:27:26.177215+00:00",
@@ -66,12 +66,10 @@
     }
   ],
   "stuck": {
-    "close": "69ea0c97-0dee-4f59-95a8-3cfecda431a6",
-    "head": "a6fa34184622818338001f888a1f76297087f530",
-    "keys": {
-      "the open P0 not done: a codex builder runs forge test in its round without a permission refusal. in tests/test_worker_approval_requests.py": 1
-    },
-    "round": 1
+    "close": "3a6f60f0-9dae-4acc-a016-0087d685e298",
+    "head": "d3e129cc0b6184d75ce26fc0429539c112e5bc11",
+    "keys": {},
+    "round": 2
   },
   "why": "Codex builders must write a failing test and watch it fail with forge test, but the refusal blocks that step, so the item reaches CI without that check.",
   "worker": "codex"
