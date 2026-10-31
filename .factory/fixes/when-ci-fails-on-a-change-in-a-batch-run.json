@@ -1,6 +1,13 @@
 {
   "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
   "branch": "fix/when-ci-fails-on-a-change-in-a-batch-run",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a7-08ac-73e1-8030-58ccbfcbe0c1",
+    "head": null,
+    "start": "c4902ca088afe19c6ee430569d4498067198cdb5"
+  },
   "done_when": "A batch run gives a change with failing CI one fix round on its builder's own thread, then closes it again and merges it or stops it with a plain reason, with no manual rerun.",
   "fix_kind": "backend",
   "kind": "fix",
