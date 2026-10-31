@@ -11,12 +11,27 @@
   "done_when": "The worker brief tells a builder that when its test run waits in line it keeps waiting, and never stops its round to ask about the test place.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "66f7d92eded53a99e97921eb477f3b2fc61a1dcdfbaafff9ed3a6f0a4491b7c1",
+    "changed": "4eabe7565b7afda8b9d564a8f5c4be45eb12322821f11264707184498a3b2cfa",
+    "commit": "ca53e0f9b7decb7ff127c1988e09104f5f45bc49",
+    "dismissals": [],
+    "findings": [],
+    "id": "a31cb0b6-8f63-4b9d-babc-0ca570e1d422",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T11:34:27.562178+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T14:54:40.384848+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
