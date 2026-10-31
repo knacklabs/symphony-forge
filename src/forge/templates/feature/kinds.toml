@@ -61,6 +61,7 @@ currency_sql = "text"
 currency_prisma = "String"
 currency_sqlalchemy = "Text"
 currency_check = "CONSTRAINT \"{table}_{currency}_code\" CHECK (\"{currency}\" ~ '^[A-Z]{3}$')"
+csv = 'formatMoney(row.{name}, row.{name}Currency)'
 sample = "1250.0000"
 changed = "1800.0000"
 bad = "not-money"
