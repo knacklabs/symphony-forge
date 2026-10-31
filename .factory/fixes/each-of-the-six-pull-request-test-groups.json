@@ -11,12 +11,53 @@
   "done_when": "The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same runners.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [
+    {
+      "area": ".github/workflows/forge.yml",
+      "file": ".github/workflows/forge.yml",
+      "gain": 5,
+      "harm": 2,
+      "line": 56,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same",
+      "work": 3
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "954220ac324d08d5dc0ee3caca7bd91ad97336d8e8bb30a9577ff1c76f522afb",
+    "changed": "dcd99ffda2ace7bf6ab154e4c67ab7d55d14c7687a37b920e6b5a569372113d7",
+    "commit": "75feb9a334b1c7025c4e517338f3fce53dbbb225",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 5, Work 3, Harm 2\nRaise: Not done\nCase: normal use - a pull request runs the six test groups on the existing runners.\nThe required Done-when item is: \u201cThe slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same runners.\u201d The only execution change adds `--durations=0`, which reports timings without reducing test execution time. The proof list explicitly records the diagnostic run, repair and comparable after times as missing. Measurement follows the coordinator's direction, but this branch still needs the measured performance repair and a comparable normal run demonstrating the five-minute outcome with all six groups and the same runners.",
+        "file": ".github/workflows/forge.yml",
+        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
+        "gain": 5,
+        "harm": 2,
+        "line": 56,
+        "priority": "P1",
+        "title": "Not done: The slowest of the six pull request test groups finishes in about 5 minutes on a normal run, with the same six groups and the same",
+        "work": 3
+      }
+    ],
+    "id": "694d41a3-6afa-4b66-b8c0-66802b85a141",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T13:06:04.098372+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T14:59:02.466759+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
