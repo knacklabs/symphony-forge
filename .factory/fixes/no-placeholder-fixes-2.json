@@ -11,12 +11,27 @@
   "done_when": "Sorting an idea never leaves a fix or branch named find-the-problem-to-solve behind",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "a10024245d007b6c4f91826b97ceee2012601a6f355bc34549db2c3265d58af2",
+    "changed": "20299350fc6e41e367e4e08337585069928d6a874b87ab2ea8004338bad746d1",
+    "commit": "1d7c34f55c0d1a5ac1c23e29e88ffe0db73a0a95",
+    "dismissals": [],
+    "findings": [],
+    "id": "2ba6d1ff-8b62-4463-8ab3-1d56d72c0b54",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T12:50:26.079497+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:53:05.571169+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
