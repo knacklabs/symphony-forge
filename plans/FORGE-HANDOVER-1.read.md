@@ -1,13 +1,13 @@
 ---
 reader: codex (gpt-6.1-sol)
-read_at: 2026-10-31T10:12:02.448557+00:00
-seconds: 300.695
-read_hash: 8e348a250b72b54fe39d61b8ec02f5bb044f5ec2
-round: 1
-passed: no
-doc_seen: 8e348a250b72b54fe39d61b8ec02f5bb044f5ec2
+read_at: 2026-10-31T10:52:51.559238+00:00
+seconds: 99.425
+read_hash: acf115b8063364f5e1e8f972c74c6145082b2ab9
+round: 2
+passed: yes
+doc_seen: acf115b8063364f5e1e8f972c74c6145082b2ab9
 spec_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
-notes_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+notes_seen: d2462329f8d2ab963b4ab8b4ba9e6438e1770990
 answers_seen: e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 conversation: 01a1916d-590b-7ef2-a191-d2e0083e6a2f
 session:
@@ -53,3 +53,7 @@ Only a genuine trade-off goes to the human, as a question with options.
    `plans/FORGE-HANDOVER-1.md:37,52` simulates machine B by removing the worktree and branch after a real close. Close writes the ready record under the shared Git directory (`src/forge/close.py:470-481`, `src/forge/repo.py:752-755`); those removals leave it intact. The current merge reads that local record first (`src/forge/merge.py:46-55`). The proposed positive test can therefore pass with the GitHub-record fallback entirely missing. It needs an independent clone or explicit removal of the local ready record.
    Gain 4, Work 2, Harm 3
    Disposition: cut - the test now uses an independent clone as machine B, so no local ready record exists there and the GitHub-record fallback is the only way merge can pass.
+
+## Round 2
+
+No findings.
