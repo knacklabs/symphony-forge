@@ -106,7 +106,8 @@ def _exact_pass_is_committed(repo, claude_payload, monkeypatch, tmp_path,
     tip = repo.git("rev-parse", "story/SHOP")
     # Exactly "No findings.", trimmed, passes, and the doc and notes are committed on its branch.
     say(repo, "\n  No findings.  \n\n")
-    assert read(repo).startswith("Round 7 of the cold read of plans/SHOP.md found nothing.")
+    # The SDK streams the reader's messages before Forge prints the round result.
+    assert "Round 7 of the cold read of plans/SHOP.md found nothing." in read(repo).splitlines()
     assert "passed: yes\n" in notes.read_text("utf-8")
     assert repo.git("rev-parse", "story/SHOP~1") == tip
     # The choice already committed the document; the passing round commits its new notes.

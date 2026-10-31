@@ -26,7 +26,7 @@ from pathlib import Path
 from string import Template
 from typing import Any
 
-from forge import codex, design, machine, native, repo, review, score, task, worker
+from forge import claude_sdk, codex, design, machine, native, repo, review, score, task, worker
 
 REFUSALS = {
     "bad_key": ("{key!r} is not a story key; a key is capital letters, digits and hyphens.",
@@ -211,7 +211,7 @@ def read(args: Any) -> int:
         repo.refuse(REFUSALS["no_disposition"], number=number, notes=_rel(top, notes))
     if here is None:  # neither app, or one running inside the other
         repo.refuse(REFUSALS["coordinator"], target=target)
-    installed = {"claude": shutil.which("claude") is not None, "codex": codex.installed()}
+    installed = {"claude": not claude_sdk.sdk_problem(), "codex": codex.installed()}
     installed[here] = True  # the coordinating app needs no external driver to read natively
     other = "claude" if here == "codex" else "codex"
     # One tool always reads its own plans; both keep the earlier reader while it is installed.
@@ -309,8 +309,8 @@ def read(args: Any) -> int:
         with codex.hold(top, target, "Grill"), machine.agent_slot(
                 top, "read", target, **repo.models(config, "grill", reader)):
             clock = time.monotonic()
-            done = _claude_read(top, target, models, prompt, fresh_prompt, session and session["id"],
-                                why, round_number, remember_reader)
+            done = _sdk_read(top, target, models, prompt, fresh_prompt, session and session["id"],
+                             why, round_number, remember_reader)
             read_seconds = time.monotonic() - clock
         said, failed = done.stdout.strip(), done.returncode
         problem = (done.stderr.strip().splitlines() or [f"it wrote nothing (exit code {done.returncode})"])[-1]
@@ -944,33 +944,34 @@ def _find_spec(top: Path, key: str) -> tuple[str, str, str] | None:
     return None
 
 
-def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
-                 resume: str | None, why: str, round_number: int,
-                 on_thread: Callable[[str], None]) -> subprocess.CompletedProcess[str]:
+def _sdk_read(top: Path, target: str, models: list[str], prompt: str, fresh_prompt: str,
+              resume: str | None, why: str, round_number: int,
+              on_thread: Callable[[str], None]) -> subprocess.CompletedProcess[str]:
     """Continue session `resume`; else, or when Claude no longer has it, start one with a known id."""
-    exe = shutil.which("claude")
-    if exe is None:
-        repo.refuse(repo.REFUSALS["missing_tool"], tool="claude")
+    command = [str(claude_sdk.python()), str(claude_sdk.TURN)]
+    log = codex._item_file(top, target, ".sdk.log", "Grill")
 
-    def run(*args: str, text: str) -> subprocess.CompletedProcess[str]:
+    def run(text: str, **session: str) -> subprocess.CompletedProcess[str]:
+        request = {"prompt": text, "cwd": str(top),
+                   "model": models[models.index("--model") + 1] if "--model" in models else None,
+                   "effort": models[models.index("--effort") + 1] if "--effort" in models else None,
+                   "permission_mode": "plan", "add_dirs": [], "agents": {}, **session}
         with repo.record_run(top, target, "read", family="claude", round=round_number,
                              model=models[models.index("--model") + 1] if models else None,
                              effort=models[models.index("--effort") + 1] if "--effort" in models else None) as ran:
-            with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errors, subprocess.Popen(
-                                  [exe, "-p", *models, "--permission-mode", "plan",
-                                   "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", *args],
+            with log.open("a", encoding="utf-8", buffering=1) as output, \
+                    tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errors, subprocess.Popen(
+                                  command,
                                   cwd=top, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   stderr=errors, text=True, encoding="utf-8",
                                   errors="replace",
-                                  env={**os.environ, "FORGE_WORKER": "1"}, **codex.GROUP) as reader, \
-                    machine.agent_process(reader):
-                events = ({"type": "control_request", "request_id": "forge-live-init", "request": {"subtype": "initialize"}},
-                          {"type": "control_request", "request_id": "forge-live-settings", "request": {"subtype": "get_settings"}},
-                          {"type": "user", "message": {"role": "user", "content": text}})
+                                  env=machine.worker_env(), **codex.GROUP) as reader, \
+                    machine.agent_process(reader, log):
                 # communicate's writer handles a provider closing stdin, including Windows EINVAL.
-                reader._stdin_write("".join(json.dumps(event) + "\n" for event in events))
+                reader._stdin_write(json.dumps(request))
                 lines, final = [], None
                 for line in reader.stdout:
+                    output.write(line)
                     try:
                         event = json.loads(line)
                     except ValueError:
@@ -980,6 +981,8 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
                         if event.get("type") == "result":
                             final = line + "\n".join(event.get("errors") or [])
                     lines.append(line)
+                    if line and isinstance(event, dict) and event.get("type") == "assistant":
+                        print(line, end="", flush=True)
                 reader.wait()
                 errors.seek(0)
                 out, err = final if final is not None else "".join(lines), errors.read()
@@ -988,7 +991,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
 
     if resume:
         on_thread(resume)
-        done = run("--resume", resume, text=prompt)
+        done = run(prompt, resume=resume)
         if not done.returncode or "No conversation found" not in done.stdout + done.stderr:
             return done
         why = f"Claude couldn't continue session {resume}"
@@ -1000,7 +1003,7 @@ def _claude_read(top: Path, target: str, models: list[str], prompt: str, fresh_p
     codex._append(codex._item_file(top, target, ".log", "Grill"),
                   {"claude": {"id": session}, "status": None})
     on_thread(session)
-    return run("--session-id", session, text=fresh_prompt)
+    return run(fresh_prompt, session_id=session)
 
 
 def _store(top: Path, data: bytes, path: str = "") -> str:

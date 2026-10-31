@@ -49,6 +49,7 @@ def test_1_claude_ending_without_a_turn_fails_forge_work(repo, gh, tmp_path, pre
         return
     problem = ("Claude ended without running a turn, so no worker ran; it may be waiting on a "
                "prompt such as a hooks review. Its log is ")
+    # SDK turns recover through doctor rather than a standalone Claude CLI prompt.
     assert re.fullmatch(re.escape(problem) + rf".*work-{FIX}\.log\.\n" + re.escape(
         f"Next: forge doctor --fix, then forge work {FIX}\n"),
         worked.stderr), worked.stderr

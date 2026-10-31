@@ -308,8 +308,7 @@ def test_12_cold_read(repo, claude_payload, monkeypatch):
                                              "saved time.\n", encoding="utf-8")
     assert repo.forge("read", "SHOP").returncode == 0
     call = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])
-    assert call["args"][0] == "-p"
-    assert call["args"][call["args"].index("--permission-mode") + 1] == "plan"
+    assert call["options"]["permission_mode"] == "plan"
     assert Path(call["cwd"]).resolve() == shop.resolve()
     assert "Shoppers can save a basket and come back" in call["prompt"]
     read_hash = repo.git("hash-object", "plans/SHOP.md", cwd=shop)

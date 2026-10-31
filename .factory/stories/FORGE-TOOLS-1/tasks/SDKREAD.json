@@ -1,0 +1,91 @@
+{
+  "branch": "task/FORGE-TOOLS-1-SDKREAD",
+  "chat": {
+    "approval": "cfc81a0c59c7e0dfa5cdf9a93d176cd9c217c3ccb5cc97f1dc76007ce0b55a05",
+    "claude": null,
+    "conversation": "01a18d1b-0703-7872-84ea-13dc35de42e4",
+    "head": null,
+    "start": "3d946e661fe84e5da2e702f39a482dfbdfa6f36f"
+  },
+  "known": [
+    {
+      "area": "test_7_live_status_in_both_machine_views() in tests/test_live_status.py",
+      "file": "tests/test_live_status.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 239,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: default Claude read effort uses an unsupported SDK message",
+      "work": 2
+    },
+    {
+      "area": "test_6_claude_workers_use_resumable_sdk_turns_and_stop_their_tree() in tests/test_tools_agent_sdk.py",
+      "file": "tests/test_tools_agent_sdk.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 131,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Claude read process-tree shutdown is not exercised",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ad0096ca7c01a3e8d8be5d9473c257ab98f4a3e27e82f314fe95c54f9372ecae",
+    "changed": "8744763a9a094421176b45f3016d800224a0803c98ec576ab9da4c16c30d6c28",
+    "commit": "c62ce9d415f7da81612cc1051394c61c55112224",
+    "dismissals": [],
+    "findings": [],
+    "id": "bffe0643-6c68-471b-bbaf-e94b90b3bb9a",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:05:33.479824+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T14:10:47.163713+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T14:13:31.022943+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T16:35:42.864551+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T17:23:29.399645+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:07:23.854072+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:50:38.152414+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T03:34:33.239538+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "2d7cd74b-eaca-4df0-bd40-7708b1f560fb",
+    "head": "ed4087d315b8b21f47e79bce2d111fe39fc9f764",
+    "keys": {},
+    "round": 6
+  },
+  "worker": "codex"
+}

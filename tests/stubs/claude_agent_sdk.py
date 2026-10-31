@@ -75,7 +75,8 @@ async def query(*, prompt, options):
     if options.agents is not None:
         values["agents"] = {name: dataclasses.asdict(definition)
                             for name, definition in options.agents.items()}
-    log = here / "claude-sdk-calls.jsonl"
+    # Keep read transcripts separate from worker turns, as the CLI fixtures did.
+    log = here / ("claude-calls.jsonl" if options.permission_mode == "plan" else "claude-sdk-calls.jsonl")
     session = options.resume or options.session_id
     with log.open("a", encoding="utf-8") as out:
         out.write(json.dumps({"options": values, "prompt": prompt, "cwd": os.getcwd(),
@@ -99,6 +100,15 @@ async def query(*, prompt, options):
     sessions[session] = os.getcwd()
     store.write_text(json.dumps(sessions), encoding="utf-8")
     yield SystemMessage("init", {"session_id": session, "model": options.model})
+    if options.permission_mode == "plan":
+        touch = here / "claude-touch"
+        changed = os.environ.get("STUB_CLAUDE_TOUCH") or (
+            touch.read_text("utf-8") if touch.exists() else None)
+        if changed:
+            Path(changed).write_text("changed by the reader\n", encoding="utf-8")
+        if os.environ.get("STUB_CLAUDE_EXIT"):
+            options.stderr("stub claude: the model gave up")
+            sys.exit(int(os.environ["STUB_CLAUDE_EXIT"]))
     if os.environ.get("STUB_CLAUDE_SDK_HOLD"):
         child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(300)"])
         try:
@@ -116,6 +126,9 @@ async def query(*, prompt, options):
         subprocess.run(["git", "add", "-A"], check=True)
         subprocess.run(["git", "commit", "-q", "-m", "Worker round"], check=True)
     yield AssistantMessage([TextBlock("SDK worker output")], options.model)
+    if options.permission_mode == "plan" and "STUB_CLAUDE_RESULT" not in os.environ:
+        said = here / "claude-says.md"
+        os.environ["STUB_CLAUDE_RESULT"] = said.read_text("utf-8") if said.exists() else "No findings.\n"
     yield ResultMessage(session_id=session, result=os.environ.get(
         "STUB_CLAUDE_RESULT", "stub claude: built it\n"))
     status = int(os.environ.get("STUB_CLAUDE_EXIT", "0"))

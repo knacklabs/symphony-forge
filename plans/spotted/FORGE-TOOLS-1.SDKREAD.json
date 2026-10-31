@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_tools_agent_sdk.py\tGate: Claude read process-tree shutdown is not exercised\tFORGE-TOOLS-1/SDKREAD",
+      "kind": "bug",
+      "path": "tests/test_tools_agent_sdk.py",
+      "line": 131,
+      "text": "Gate: Claude read process-tree shutdown is not exercised",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDKREAD",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
