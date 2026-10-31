@@ -1,0 +1,109 @@
+{
+  "branch": "task/FORGE-STACK-1-SHOW",
+  "chat": {
+    "approval": "163c341206a7b61eb1165174f54268020096e3131854660f47f52ab7d21c8127",
+    "claude": null,
+    "conversation": "01a18d39-8f20-7171-af04-94ef31ed52c7",
+    "head": null,
+    "start": "a2a5f501c7473d1b8843c9636bc495e9afa0f41a"
+  },
+  "known": [
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 764,
+      "outcome": "follow-up",
+      "reason": "Not done names no owner-approved Done-when item; builder details are guidance.",
+      "round": 1,
+      "security": false,
+      "title": "Not done: The board shows which part a stacked part builds on and waits for",
+      "work": 2
+    },
+    {
+      "area": "_story() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 641,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Resolve the reviewed remote commit before computing its fingerprint",
+      "work": 2
+    },
+    {
+      "area": "_story() in src/forge/nextstep.py",
+      "file": "src/forge/nextstep.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 645,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Stop requesting close once the post-merge close has succeeded",
+      "work": 2
+    },
+    {
+      "area": "machine_board() in src/forge/board.py",
+      "file": "src/forge/board.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 761,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Avoid overriding active parts with the default Not started status",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "8012ba50eee3a540b315d6cd931ef6cd07073d44298a0b6be9308a0b0d2374ab",
+    "changed": "3ea5dbab90644196f8602c58595f27baa46fc144ffd718f181060ac484e786f1",
+    "commit": "e042ca803fed8f0016fd671999f16c188b10fbaf",
+    "dismissals": [],
+    "findings": [],
+    "id": "defc15e8-d5b4-4f64-acbf-82b4f2f22d84",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T13:05:23.572006+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T14:40:33.059818+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T14:47:00.914969+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T17:08:10.548504+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T03:41:55.470252+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T04:14:36.306555+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "86b7a0a6-d93b-41b9-b043-d699d5490bfe",
+    "head": "d7571c09d057e7044a5ecb467b9e920ded1ef4ab",
+    "keys": {},
+    "round": 5
+  },
+  "worker": "codex"
+}

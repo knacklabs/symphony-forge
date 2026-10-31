@@ -159,6 +159,11 @@ These govern Forge itself. Each has a check: an acceptance criterion, a CI check
 
 ### Tests for Forge
 
+- Before each builder round ends, run the cheap repo checks with
+  `uv run --frozen --python 3.11 pytest -q tests/test_rules.py::test_4_one_test_per_rule tests/test_rules.py::test_5_forge_stays_small`.
+  This step also applies in CI test mode. Fix failures in the same round, rerun
+  the failed checks, and commit the repairs. These existing checks cover duplicate
+  rule labels, tests with no rule, and files over 1,200 lines.
 - Each rule keeps its full cases on a new repo plus at least one earlier-adopted repo case.
   Keep more adopted-repo cases only where Forge takes a different path for it. In a test audit,
   report extra adopted-repo cases that repeat the new-repo path as deletion candidates, not gaps.

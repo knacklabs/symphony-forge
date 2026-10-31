@@ -474,7 +474,10 @@ def close(args: argparse.Namespace) -> int:
         if not pending:
             repo.record_event(top, item, "owner wait start", reason="merge", commit=head)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps({"commit": head, "review": "clean"}) + "\n", encoding="utf-8")
+    ready = {"commit": head, "review": "clean"}
+    if "/" in item and state.get("stacked_on"):
+        ready["base"] = base
+    tmp.write_text(json.dumps(ready) + "\n", encoding="utf-8")
     os.replace(tmp, path)
     _publish(top, item, state, branch, default, pr, result, evidence)
     proof = "its tests passed on this machine" if local_tests else "green checks"
