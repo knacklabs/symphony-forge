@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe records check rejects the current idea list on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The records check rejects the current idea list on the default branch.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SDKREAD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_mod_install.py\tThe real plugin install test sometimes misses its settings change event in the full suite, although the focused run passes.",
       "kind": "bug",
       "path": "tests/test_mod_install.py",
