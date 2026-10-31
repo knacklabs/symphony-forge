@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "edge\tsrc/forge/land.py\tNot done: Native batch CI repairs exit before closing again and falsely report a merge",
+      "kind": "edge",
+      "path": "src/forge/land.py",
+      "line": 119,
+      "text": "Not done: Native batch CI repairs exit before closing again and falsely report a merge",
+      "from": "review",
+      "item": "when-ci-fails-on-a-change-in-a-batch-run",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
