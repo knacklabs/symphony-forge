@@ -1,0 +1,13 @@
+{
+  "base": "2a895d37c4bb500391881c88ced6179c5be81290",
+  "branch": "task/FORGE-HANDOVER-1-MERGE",
+  "part_line_limit": 400,
+  "stacked_on": "FORGE-STACK-1/CLOSE",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T10:55:49.065586+00:00",
+      "step": "start"
+    }
+  ]
+}
