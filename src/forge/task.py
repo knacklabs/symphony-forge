@@ -228,6 +228,33 @@ def _folder(name: str) -> Path:
     return main.parent / f"{main.name}-{name}"
 
 
+def pick_up(item: str, branches: list[str]) -> Path | None:
+    """Find the item's checkout, or make one from its published state."""
+    from forge import story
+
+    top = repo.root()
+    for branch, tree in story.worktrees(top).items():
+        state = repo.read_state(item, tree)
+        if state and state.get("branch") == branch:
+            return tree
+    for branch in branches:
+        if run("git", "fetch", "-q", "origin", branch, cwd=top).returncode:
+            continue
+        remote = f"origin/{branch}"
+        if story.json_of(show(remote, repo.state_path(item), top)).get("branch") != branch:
+            continue
+        path = _folder(item.replace("/", "-") if "/" in item else f"fix-{item}")
+        if git("branch", "--list", branch, cwd=top):
+            git("worktree", "add", "-q", str(path), branch, cwd=top)
+            if run("git", "merge", "--ff-only", "--no-overwrite-ignore", remote, cwd=path).returncode:
+                raise repo.Refused(f"Local and remote work for {item} differ. Reconcile the branch first.",
+                                   f"forge work {item}")
+        else:
+            git("worktree", "add", "-q", "--track", "-b", branch, str(path), remote, cwd=top)
+        return path
+    return None
+
+
 def _new_checkout(item: str, branch: str, folder: str, base: str, state: dict[str, Any],
                   message: str, carry: tuple[str, list[str]] | None = None) -> Path:
     """Make the branch in its own worktree and commit the item's state there, after a first

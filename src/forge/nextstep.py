@@ -1041,21 +1041,21 @@ def _item(item: str, label: str, state: dict[str, Any], top: Path,
                 review.stop_question(path or top, item, state),
                 "Next: " + close.REFUSALS["hotspot"][1].format(item=item, **stop)]
     if not path and status not in ("ready", "merged", "done"):  # its checkout is on another machine
-        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
-        return [f"{label} was started by {starter} and runs on their machine."]
+        return [f"{label} has no checkout on this machine.", f"Next: forge work {item}"]
     if question := codex.record(top, item).get("question"):  # close and work refuse until it is answered
         return [f"The worker on {label} asked a question. Ask the human:", question,
                 "Next: " + close.REFUSALS["question"][1].format(item=item)]
     if receipt.get("tidied") is True:
         return []
     if status == "ready" and not path and repo.merge_setting(top) == "agent":
-        starter = board._starters(top).get(repo.state_path(item)) or "the person who started it"
-        return [f"{label} is ready to merge; {starter} merges it from their machine."]
+        return [f"{label} is ready to merge.", f"Next: forge merge {item}"]
     if status == "ready" and path and receipt.get("shared"):
         if repo.git("rev-parse", "HEAD", cwd=path) == receipt["commit"]:  # close here writes the receipt
+            if repo.merge_setting(top) == "agent":
+                return [f"{label} is ready to merge.", f"Next: forge merge {item}"]
             return [f"{label} was closed clean on another machine; close it here to check it again.",
                     f"Next: forge close {item}"]
-        if repo.merge_setting(top) == "agent":  # forge merge needs this machine's receipt
+        if repo.merge_setting(top) == "agent":
             return [f"{label} is ready to merge, but this worktree is behind its pull request.",
                     f"Next: git -C {repo.quote(str(path))} pull, then forge close {item}"]
     if status == "merged" and path:
