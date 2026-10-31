@@ -177,8 +177,9 @@ recommendation first. Save the answer before moving to the next question.
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
-It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
-merge base. It merges the pull request only after the tests pass. A failure names the failed tests
+It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the
+pull request's checked head. This selects tests for incoming default-branch changes instead of
+the pull request's own files, on the combined code. It merges only after those tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. This is always on, with no setting. With no
 default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
 get it on upgrade and sync.
@@ -2058,13 +2059,15 @@ can enter close. Among changes whose bases are ready, the oldest starts first. A
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
-the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
-alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
+the run starts that change again once and says so. A failed CI check gets one fix round on
+that change's builder thread, then close runs again. Other worker or owner stops affect only
+that change, and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
-its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
+its next run, or, for a stopped change, close's own question and next step, which only the owner
 answers. Close waits for the owner's recorded choice. A failed
-CI job whose log names none of the change's files runs again once; a second failure stops that
-change. Forge's review check follows review recovery instead. Where a human merges, the run closes
+CI job whose log names none of the change's files runs again once before the fix round.
+If CI still fails after the fix round, the change stops with its reason.
+Forge's review check follows review recovery instead. Where a human merges, the run closes
 every change, holds none and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
 with their pull request links: merge them
 in that order.
