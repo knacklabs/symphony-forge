@@ -54,6 +54,17 @@
       "item": "docskip-file-built-paths",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/docskip.py\t[P2] Keep file-relative root bindings separate across test scopes",
+      "kind": "edge",
+      "path": "src/forge/docskip.py",
+      "line": 53,
+      "text": "[P2] Keep file-relative root bindings separate across test scopes",
+      "from": "review",
+      "item": "docskip-file-built-paths",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

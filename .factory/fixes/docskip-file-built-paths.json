@@ -50,20 +50,41 @@
       "security": false,
       "title": "Not done: A docs change that a test reads through a __file__-built path runs that test",
       "work": null
+    },
+    {
+      "area": "reads_file_relative() in src/forge/docskip.py",
+      "file": "src/forge/docskip.py",
+      "gain": null,
+      "harm": null,
+      "line": 53,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 7,
+      "security": false,
+      "title": "[P2] Keep file-relative root bindings separate across test scopes",
+      "work": null
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "fd1b388d6863de3f032a05b2961f429358501629651ed23e76333c307d5e689d",
+    "branch_diff": "7b510b97414e8087b4a591c5f37c45d524de59d0fb51d9709dfe425b40f76bc1",
     "changed": "8bbaa69cf8bbad42b13eb7cee115137cc4ef7bd9d1e8ada4805bf1a44fd3d138",
-    "commit": "c08bec01135e9eef5974b548e3124d57bc5acd43",
+    "commit": "cc586b9f35f2a0816acd93fbc052e1773dd3e3aa",
     "dismissals": [],
-    "findings": [],
-    "id": "84afeb6f-3fb2-4a56-a045-3b428387f438",
+    "findings": [
+      {
+        "body": "The single `roots` dictionary keeps only the first assignment to each variable name across the entire file. For example, if one test sets `root = Path(__file__).parent / 'fixtures'` and another sets `root = Path(__file__).parents[1] / 'docs'` before reading `(root / 'guide.md').read_text()`, the second binding is discarded. The reader is then matched against `fixtures/guide.md`, so changing `docs/guide.md` still skips CI and omits the consuming test from pytest selection. This uses a literal filename, unlike the accepted separate-filename-variable limitation. Track bindings per scope or conservatively retain alternative roots; the copied implementation in `.forge/review-tests.py` needs the same correction.",
+        "file": "src/forge/docskip.py",
+        "line": 53,
+        "priority": "P2",
+        "title": "[P2] Keep file-relative root bindings separate across test scopes"
+      }
+    ],
+    "id": "e59a06b1-0979-472b-b3eb-62be24469e14",
     "status": "clean"
   },
   "round": 7,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-30T13:32:38.413143+00:00",
@@ -91,6 +112,10 @@
     },
     {
       "at": "2026-10-31T03:51:40.811513+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T05:22:28.767972+00:00",
       "step": "review"
     }
   ],
