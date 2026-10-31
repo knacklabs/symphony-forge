@@ -1,6 +1,13 @@
 {
   "base": "2a895d37c4bb500391881c88ced6179c5be81290",
   "branch": "task/FORGE-HANDOVER-1-MERGE",
+  "chat": {
+    "approval": "eeaf92f22fb9bf529745eb4625ac7a62de4fdcbf8fac67ad339fc196203eefc7",
+    "claude": null,
+    "conversation": "01a1919e-15e7-7f33-80fb-dfca397cc5e0",
+    "head": null,
+    "start": "0247acc00ffc5c1c0be9944730af3afc46f615ff"
+  },
   "part_line_limit": 400,
   "round": 1,
   "stacked_on": "FORGE-STACK-1/CLOSE",
