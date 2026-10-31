@@ -116,6 +116,9 @@ line asking you to split them into smaller stories; already approved larger stor
 Parts can start on one reviewed, unmerged part by default. `stack = "off"` in `forge.toml`
 makes new parts wait for merges. A part that builds on another part keeps that base until close
 moves its own changes onto the default branch after the base merges through Forge.
+Close reviews only the stacked part's own changes and waits for its base to merge before CI and merge.
+After Forge merges the base, run the printed `forge close <part>` step to move the part onto the default branch.
+After a merge outside Forge, follow close's printed pull request target correction, then close the part again.
 The board and `forge next` show the part's base. After a clean review, they say that
 the part waits for its base to merge. After that merge, run `forge close <part>`.
 If a base exists only on this machine, finish its work and run `forge close <base>` to publish

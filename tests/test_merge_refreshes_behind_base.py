@@ -247,6 +247,8 @@ def test_2_behind_recovery_finishes_close_under_the_upgraded_pin_before_retrying
         assert not (env.repo.bin / "github-merged").exists()
         return
     assert done.returncode == 0, done.stdout + done.stderr
+    # Standalone fix recovery does not retarget story-part pull requests.
+    assert not env.gh_calls("pr", "list", "--base")
     assert len(attempts) == 2
     heads = [call[call.index("--match-head-commit") + 1] for call in attempts]
     assert heads[0] == first_head and heads[1] != first_head
