@@ -14,7 +14,7 @@ from test_land_waits_for_check_progress import _pending
 STORY = "many-land-runs-each-poll-github-for-chec"
 
 
-def test_waiters_share_one_status_read_per_minute(client, monkeypatch):
+def test_1_waiters_share_one_status_read_per_minute(client, monkeypatch):
     env, sleeps, _ = client
     _fix(env, "working", worked=True)
     env.checks(_pending(1))

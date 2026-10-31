@@ -129,8 +129,9 @@ def test_3_land_stops_when_github_shows_no_check_progress(clock, answer):
             "has not reported" if answer == "old-head" else "is still running") in done.stderr
     assert not env.gh_calls("pr", "merge")
     if answer == "unreadable":
-        # One failed snapshot is shared for a minute. Each fetch makes four attempts.
-        assert len(env.gh_calls(*RUNS)) == 8
+        # Four attempts take seven seconds before the failure cache starts.
+        # The wait's deadline expires before that cached failure does.
+        assert len(env.gh_calls(*RUNS)) == 4
     else:
         assert len(env.gh_calls(*RUNS)) == 2
 
