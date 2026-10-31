@@ -48,8 +48,8 @@
     "id": "694d41a3-6afa-4b66-b8c0-66802b85a141",
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T13:06:04.098372+00:00",
@@ -61,10 +61,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "dca54ae67faaff2bb5f81f40288c4db6ea496cbf",
+    "close": "cc6b4f57-0d33-4f54-bcc8-eb9f5a242688",
+    "head": "5f8db04eed706a75ed20d9f813be784038865a4f",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "Each of the six pull request test groups runs about 20 to 32 minutes, so every change waits on the slowest group, and Forge's own rule is that CI finishes in under 5 minutes.",
   "worker": "codex"
