@@ -1,0 +1,15 @@
+{
+  "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
+  "branch": "fix/many-land-runs-each-poll-github-for-chec",
+  "done_when": "Waiting land runs read one shared status snapshot per 60 seconds instead of each polling GitHub every 15 seconds.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-10-31T06:25:50.508198+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Many land runs each poll GitHub for check status, used up the hourly limit twice in one day, and stalled every merge. The repo does not record which of GitHub's two hourly limits (REST or GraphQL) was hit."
+}
