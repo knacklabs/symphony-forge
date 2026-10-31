@@ -22,8 +22,8 @@
     "mechanical": true,
     "status": "clean"
   },
-  "round": 1,
-  "status": "waiting for checks",
+  "round": 2,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T08:44:09.715795+00:00",
@@ -35,10 +35,10 @@
     }
   ],
   "stuck": {
-    "close": null,
-    "head": "e333ce911b2cc0d5c13339f4c10f0fe161c4860f",
+    "close": "3f37dca9-4dd3-484d-9073-5f4d3edbd91c",
+    "head": "b0cc1ce60c7119dbbb0845b6847231f520bbbae4",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "The starter ships a Remove button and its own screen, but each client app builds its own screens in its own design, and the story already says the starter has no look of its own.",
   "worker": "codex"
