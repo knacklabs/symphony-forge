@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, fasttest, githooks, prcheck, repo, review, story, task
+from forge import checks, close, codex, fasttest, githooks, prcheck, repo, review, story, task, time_records
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -61,9 +61,6 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
     except (OSError, ValueError, UnicodeDecodeError):
         receipt = {}
     head = receipt.get("commit") if isinstance(receipt, dict) else None
-    if (not isinstance(receipt, dict) or receipt.get("review") != "clean"
-            or not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head)):
-        repo.refuse(REFUSALS["not_ready"], item=item)
     shown = repo.run("gh", "pr", "view", branch, "--json",
                      "number,state,baseRefName,headRefName,headRefOid,title,isDraft,body", cwd=top)
     if shown.returncode and shown.stderr.strip() == repo.REFUSALS["no_github"][0]:
@@ -72,6 +69,15 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
         pr = json.loads(shown.stdout) if shown.returncode == 0 else {}
     except ValueError:
         pr = {}
+    if (not isinstance(receipt, dict) or receipt.get("review") != "clean"
+            or not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head)):
+        shared = time_records.from_body(pr.get("body") or "") if isinstance(pr, dict) else {}
+        shared = shared.get("ready") or {}
+        receipt = ({name: shared[name] for name in ("commit", "review", "base") if name in shared}
+                   if shared.get("review") == "clean" and shared.get("commit") == pr.get("headRefOid") else {})
+        head = receipt.get("commit")
+        if not isinstance(head, str) or not re.fullmatch(r"[0-9a-f]{40,64}", head):
+            repo.refuse(REFUSALS["not_ready"], item=item)
     if (not isinstance(pr, dict) or pr.get("state") not in ("OPEN", "MERGED") or (pr.get("state") == "OPEN" and pr.get("isDraft") is not False)
             or pr.get("baseRefName") != default or pr.get("headRefName") != branch
             or not isinstance(pr.get("number"), int) or not isinstance(pr.get("title"), str)):
@@ -376,6 +382,7 @@ def _other_settings(text: str) -> dict:
 
 
 def _save_ready(path: Path, receipt: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     saved = path.with_suffix(".tmp")
     saved.write_text(json.dumps(receipt) + "\n", encoding="utf-8")
     os.replace(saved, path)
