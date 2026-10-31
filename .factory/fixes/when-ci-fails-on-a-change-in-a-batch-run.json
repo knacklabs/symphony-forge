@@ -11,7 +11,7 @@
   "done_when": "A batch run gives a change with failing CI one fix round on its builder's own thread, then closes it again and merges it or stops it with a plain reason, with no manual rerun.",
   "fix_kind": "backend",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
