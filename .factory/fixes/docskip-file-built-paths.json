@@ -77,8 +77,8 @@
     "id": "62091562-cba4-437d-a13a-8280c69250fb",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-30T13:32:38.413143+00:00",
@@ -115,10 +115,10 @@
     "worker_round": 5
   },
   "stuck": {
-    "close": "2a122893-6730-4684-ab4f-b7773d3b3057",
-    "head": "7ad0725dd4eb4ae3343edd1720b9809bfcde1ffd",
+    "close": "90311066-2667-4287-94bc-da0f60bc9f51",
+    "head": "bce21ae2e4ea78830309a90b60b8fb1ead03a636",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "The docs-only skip misses tests that build doc paths from __file__, so a docs change skips tests that read it (issue 1031)",
   "worker": "codex"
