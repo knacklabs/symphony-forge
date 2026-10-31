@@ -857,7 +857,14 @@ the request, demo it, review the whole prototype and answers, and obtain the cus
 then write the app's constitution; then create stories. Use prototype fixes before sign-off. The
 salesperson can be the FDE at first;
 the developer takes over with `docs/product/DISCOVERY.md`, `docs/product/BRIEF.md` and the customer
-call script. Build the prototype on the starter app. Rename or remove the `Project` placeholder.
+call script. The design comes first. Use the app's existing design; if it has none, draft one on
+a design canvas from the client's brand, or use a neutral design when there is no brand.
+Every API a person uses gets its screen in the client's design, built by the agent with the API,
+with no need to ask. Webhooks, endpoints only agents or systems call, and background jobs get none.
+Build the prototype on the starter app. Build the basic screens first, in the client's design;
+the starter has none, and has a `Project` API. Rename or remove the `Project` placeholder.
+Build the business screens next. The demo opens on the client's business task; show the basic
+screens last.
 Push back when a requested feature does not serve the problem card: explain why and
 offer to note it for after sign-off. Keep the same app as it grows into production.
 
@@ -1081,7 +1088,7 @@ In an app made from the Python starter, whose tests run import-linter, copy thes
 - Built in: each module keeps its tables in its own Postgres schema, with core tables in core; links between business modules store an indexed id without a foreign key, and links to core keep their foreign key.
 - A module uses another module only through its public service, never through its tables.
 - The tests run import-linter, so an import of another module's internal files fails them.
-- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
+- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts with a role and a key that shows once through the Members API; the agent builds the Members screen in the client's design; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 
@@ -1121,7 +1128,7 @@ The product facts are in docs/product/BRIEF.md.
 - Built in: admins invite people by email and remove members, which signs them out at once; members cannot invite, remove people or change roles.
 - Built in: dates and times are stored in UTC and shown in the person's time zone, and money is stored as an exact decimal with its currency code; the helpers in @app/shared-util format them.
 - Built in: each table has a CSV export, admin actions write change history, and records are soft deleted.
-- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts on the Members screen, with a role and a key that shows once; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
+- Built in: the API serves an MCP server at /mcp. An admin adds agent accounts with a role and a key that shows once through the Members API; the agent builds the Members screen in the client's design; agents use each feature's tools with that role's permissions, and delete and restore tools stay off until an admin turns them on for the feature.
 - Built in: each feature also offers its items, its field guide and its allowed values as MCP resources; agents get a prompt only for a task under `## Agent tasks`; the MCP server never uses elicitation or sampling.
 - Built in: every action goes through its feature's service and permission, from the screens, the API and agents; each feature's create takes a retry key; an agent that a person signs in acts as that person, and the change history records both; reports are named, typed reads in their feature's report service.
 - Built in: each UI or API crash writes one error report to the logs.
@@ -1401,6 +1408,8 @@ forge task feature clients --one client --field 'name:text'
 forge task feature jobs --one job --field 'name:text' --field 'description?:long-text' --field 'status:status(planned|active|done)' --field 'client?:link(clients)' --field 'hoursBudget?:number' --field 'budget?:money' --field 'dueDate?:date' --field 'contactEmail?:email' --field 'billable:yes-no'
 ```
 
+  The command builds the feature's API, agent tools, change history and tests. It writes no pages;
+  the agent builds the screens for APIs that people use, in the client's design.
   A feature needs a text field for its name. The nine kinds are text, long-text, number, money,
   date, yes-no, email, status and link; `?` makes a field optional. Add other kinds by hand.
   The worker runs the command; the human makes no technical choices and never types it.

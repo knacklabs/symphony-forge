@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tdocs/specs/board-for-the-team.read.md\tGate: unrelated board read metadata is outside Scope\tFORGE-NOSCREENS-1/RULES",
+      "kind": "bug",
+      "path": "docs/specs/board-for-the-team.read.md",
+      "line": 5,
+      "text": "Gate: unrelated board read metadata is outside Scope",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/RULES",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/review.py\tSelect the screen rule for all supported web-app layouts\tFORGE-NOSCREENS-1/RULES",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 363,
+      "text": "Select the screen rule for all supported web-app layouts",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/RULES",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
