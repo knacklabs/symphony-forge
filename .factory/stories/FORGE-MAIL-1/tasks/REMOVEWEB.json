@@ -1,11 +1,23 @@
 {
   "branch": "task/FORGE-MAIL-1-REMOVEWEB",
+  "land": {
+    "rounds": 0,
+    "stop": null
+  },
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T08:25:10.722810+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "c895568c58695ece3a340c882bc005ae50759b84",
+    "keys": {},
+    "round": null
+  },
+  "worker": "claude"
 }
