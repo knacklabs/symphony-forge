@@ -1,0 +1,41 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/auth/contracts"
+    },
+    {
+      "path": "../../libs/auth/server"
+    },
+    {
+      "path": "../../libs/core/server"
+    },
+    {
+      "path": "../../libs/history/server"
+    },
+    {
+      "path": "../../libs/mcp/server"
+    },
+    {
+      "path": "../../libs/organisations/server"
+    },
+    {
+      "path": "../../libs/projects/server"
+    }
+  ]
+}

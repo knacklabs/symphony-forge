@@ -1,0 +1,20 @@
+{
+  "name": "@app/organisations-server",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "@app/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@app/core-server": "workspace:*",
+    "@app/history-contracts": "workspace:*",
+    "@app/organisations-contracts": "workspace:*",
+    "@app/shared-util": "workspace:*"
+  }
+}

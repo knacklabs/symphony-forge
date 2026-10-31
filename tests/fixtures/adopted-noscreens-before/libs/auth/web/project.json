@@ -1,0 +1,9 @@
+{
+  "name": "@app/auth-web",
+  "projectType": "library",
+  "sourceRoot": "libs/auth/web/src",
+  "tags": [
+    "type:web",
+    "scope:auth"
+  ]
+}

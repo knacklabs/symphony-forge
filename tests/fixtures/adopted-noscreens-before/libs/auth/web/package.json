@@ -1,0 +1,17 @@
+{
+  "name": "@app/auth-web",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "@app/source": "./src/index.ts",
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@app/auth-contracts": "workspace:*",
+    "@app/core-web": "workspace:*",
+    "@app/shared-ui": "workspace:*"
+  }
+}
