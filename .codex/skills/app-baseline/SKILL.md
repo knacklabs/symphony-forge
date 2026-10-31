@@ -10,6 +10,39 @@ gets this baseline, whether or not the story names it. The stack and its rules l
 conventions (`stack.md`, `frontend.md`) and the standards page; the design craft lives in the
 impeccable and emil-design-eng skills. This page lists what must be there and points to them.
 
+## Screens for the API
+
+A new starter has no screens. The design comes first. Before any screen, use the app's existing
+design. If it has none, draft one on a design canvas from the client's brand; use a neutral design
+when there is no brand. Every API a person
+uses gets its screen in the client's design, built by the agent when it builds the API, with no
+need to ask. Webhooks, endpoints only agents or other systems call, and background jobs get no
+screen. Build the basic screens first, then the business screens. The demo opens on the client's
+business task, and the basic screens are shown last.
+
+## Basic screens
+
+Build these screens first in every prototype, in the client's design: sign-in, forgot password,
+reset password, accept invite, members and settings.
+
+- Sign-in has `Email`, `Password`, a `Sign in` button and a `Forgot password?` link. It shows the
+  API message in an alert for a wrong password, an unknown email or a lock. A signed-out visit
+  to a protected page goes to sign-in.
+- Forgot password has `Email` and a `Send reset link` button. It gives the same neutral message for
+  known and unknown emails, and says the admin can give a link when no email arrives.
+- Reset password has `New password` and a `Reset password` button. An expired or used link shows
+  the API message. Success tells the person to sign in.
+- Accept invite has `Email`, `Password` and a `Join` button. An expired or used link shows the API
+  message.
+- Members lists people and roles. An admin can use `Invite` to open a link with a `Copy` button,
+  change a role, use `Remove` with a confirm step, add an agent account with a key shown once, and
+  use `Reset link` to show a link once with a `Copy` button. The admin has no `Remove` button on
+  their own row; members see none of these actions.
+- Settings shows the signed-in email, the theme choice and `Sign out`.
+- Every screen refetches the account on each page change, so a removed member returns to sign-in.
+  Writes send the CSRF header. Screens show the API's `message` and handle loading, empty and error
+  states. Confirm destructive actions and warn before leaving unsaved forms.
+
 ## 1. Components
 
 - shadcn/ui only, installed with its pinned CLI (`npx shadcn@4.21.4 add <component>`, with `--cwd libs/shared/ui` when the app has that library). One set of
@@ -34,7 +67,8 @@ impeccable and emil-design-eng skills. This page lists what must be there and po
 
 - Each page has a header: title, one-line description, and one primary action. One obvious next
   step per page.
-- Sign-in and forgot-password pages, and protected routes. A records app is never open to anyone.
+- Protected routes send signed-out visitors to the sign-in screen. A records app is never open to
+  anyone.
 - 404 and 403 pages that say what happened and link home. A dead end is never a blank screen.
 
 ## 4. Lists
@@ -93,8 +127,7 @@ disagree, the frontend conventions settle it:
 
 ## 10. Prototype demos
 
-- Build the shell and the one demo workflow to this baseline first; everything else waits. The
-  customer judges the whole app by the path they see.
+- The demo opens on the customer's business task, and the basic screens are shown last.
 - Demo data and the feedback toolbar follow the stack conventions when the repo has them.
 
 ## 11. Dashboard and charts

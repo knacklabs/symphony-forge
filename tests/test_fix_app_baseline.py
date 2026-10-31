@@ -10,8 +10,9 @@ import pytest
 
 STORY = "FIX-APP-BASELINE"
 ROOT = Path(__file__).resolve().parents[1]
-# The approved guide now pins shadcn 4.21.4 and names the shared UI directory.
-BASELINE_SHA256 = "439e3e6c22e91668370bde6448646c60e21b536acb8b97c1828398a8a2b7ee63"
+# The approved guide adds screen ownership, order and the basic screen rules.
+# This package-byte contract remains distinct from the init/sync guidance test.
+BASELINE_SHA256 = "f31a3ccc8846974e6144b22b33c40657c9e521e0e69ce2e7e31f2445b925b56a"
 
 
 @pytest.mark.platform

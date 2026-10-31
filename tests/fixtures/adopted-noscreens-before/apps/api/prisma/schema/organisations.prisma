@@ -1,0 +1,65 @@
+model Organisation {
+  id                  String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  createdAtUtc        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime     @updatedAt @db.Timestamptz(3)
+  createdByAccountId  String       @db.Uuid
+  modifiedByAccountId String       @db.Uuid
+  deletedAtUtc        DateTime?    @db.Timestamptz(3)
+  deletedByAccountId  String?      @db.Uuid
+  // The features whose delete and restore tools agents may use.
+  agentDeleteRestore  String[]     @default([])
+  memberships         Membership[]
+  projects            Project[]
+  invites             Invite[]
+  idempotencyKeys     IdempotencyKey[]
+
+  @@index([createdByAccountId], map: "idx_Organisation_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_Organisation_modifiedByAccountId")
+  @@index([deletedByAccountId], map: "idx_Organisation_deletedByAccountId")
+  @@schema("core")
+}
+
+// Invites are temporary, single-use credentials and are removed when claimed.
+model Invite {
+  id                  String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organisationId      String       @db.Uuid
+  email               String
+  tokenHash           String       @unique
+  expiresAtUtc        DateTime     @db.Timestamptz(3)
+  createdAtUtc        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime     @updatedAt @db.Timestamptz(3)
+  createdByAccountId  String       @db.Uuid
+  modifiedByAccountId String       @db.Uuid
+  organisation        Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+
+  @@unique([organisationId, email])
+  @@index([expiresAtUtc], map: "idx_Invite_expiresAtUtc")
+  @@index([createdByAccountId], map: "idx_Invite_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_Invite_modifiedByAccountId")
+  @@schema("core")
+}
+
+model Membership {
+  id                  String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  accountId           String         @unique @db.Uuid
+  organisationId      String         @db.Uuid
+  email               String
+  role                String
+  isAgent             Boolean        @default(false)
+  // The SHA-256 of the agent's one key; null when it has none.
+  agentKeyHash        String?        @unique
+  createdAtUtc        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAtUtc        DateTime       @updatedAt @db.Timestamptz(3)
+  createdByAccountId  String         @db.Uuid
+  modifiedByAccountId String         @db.Uuid
+  deletedAtUtc        DateTime?      @db.Timestamptz(3)
+  deletedByAccountId  String?        @db.Uuid
+  account             Account        @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  organisation        Organisation   @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+
+  @@index([organisationId], map: "idx_Membership_organisationId")
+  @@index([createdByAccountId], map: "idx_Membership_createdByAccountId")
+  @@index([modifiedByAccountId], map: "idx_Membership_modifiedByAccountId")
+  @@index([deletedByAccountId], map: "idx_Membership_deletedByAccountId")
+  @@schema("core")
+}

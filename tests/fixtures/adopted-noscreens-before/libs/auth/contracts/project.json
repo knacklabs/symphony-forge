@@ -1,0 +1,9 @@
+{
+  "name": "@app/auth-contracts",
+  "projectType": "library",
+  "sourceRoot": "libs/auth/contracts/src",
+  "tags": [
+    "type:contracts",
+    "scope:auth"
+  ]
+}
