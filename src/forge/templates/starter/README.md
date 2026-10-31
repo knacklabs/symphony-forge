@@ -1,7 +1,11 @@
 # Starter app
 
 The app has a React web app, a NestJS API, and Postgres. Nx runs the builds and type checks.
-The shell uses the neutral shadcn/ui theme. Apply the app's approved design in its own story.
+The web app keeps its build setup and neutral shadcn/ui theme, but starts without an app shell or
+screens. The design comes first: use the client's existing design. If there is none, draft one on
+a design canvas from the client's brand, or use a neutral design when there is no brand. The agent
+builds each screen with the API that a person uses. Webhooks, endpoints only agents or other
+systems call, and background jobs get no screen.
 `libs/shared/ui/src/components/ui` holds copied shadcn/ui source from the pinned 4.21.4 tool and its MIT license.
 
 ## Run it
@@ -54,7 +58,8 @@ COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm run setup:company
 Run this command once. It creates a company and its admin, without a browser session.
 A duplicate email returns exit status 1 with `An account already uses that email.`
 A new email creates another company. Remove the setup credentials from `.env` after setup.
-Production invites need the mail provider described below.
+An admin can copy an invite link and send it by chat when the app has no mail provider. Email invites
+need a mail provider.
 
 To open sign-up later, change `APP_COMPANIES` to `many` and restart the API.
 The company, accounts and records stay in the same tables. No migration is needed.
@@ -62,12 +67,14 @@ New apps receive this code. An upgrade leaves existing app files and their sign-
 
 ## How it works
 
-`apps/web` holds the route table, app shell and theme CSS. Module screens and their hooks live in each
-module's `web` library. The API client, query client and route error page live in `libs/core/web`.
-`libs/shared/ui` holds shadcn/ui and shared screen parts. Components use the hooks, without direct
-HTTP calls. React Compiler memoizes components, so the code has no `useMemo`, `useCallback` or
-`React.memo` outside `libs/shared/ui/src/components/ui`. Each route has an error page, so a crash
-on one screen leaves the other screens working. `libs/auth` owns sign-in and account
+`apps/web` keeps the web entry point and theme CSS, but starts without an app shell, route table or
+screens. `libs/core/web` holds the API client and query client. `libs/shared/ui` holds shadcn/ui
+components. The agent builds a screen in the client's design with each person-facing API; webhooks,
+agent-only or system-only endpoints, and background jobs get no screen. Build the basic screens
+first, then the business screens. The demo opens on the business task and shows the basic screens
+last. Components use the hooks, without direct HTTP calls. Each route has an error page, so a
+crash on one screen leaves the other screens working. React Compiler memoizes components, so the code has no `useMemo`, `useCallback` or
+`React.memo` outside `libs/shared/ui/src/components/ui`. `libs/auth` owns sign-in and account
 tables. `libs/projects` owns example records and project tables. Each module has a `contracts`
 library for schemas, types and its public service contract, and a `server` library for NestJS code.
 A module calls another through its contracts package. It does not import the other module's
@@ -79,12 +86,13 @@ Zod schemas in each module's contracts library check request bodies and queries.
 `libs/organisations` owns organisations, admin and member roles, and email invites. Each account
 belongs to one organisation, and every query checks that organisation. Admins invite people and
 change roles; members cannot. `libs/history` records these admin actions for the change history.
-In local and test runs, invite links go to the log. Production refuses invites until the app
-has a real mail provider.
+When the agent builds the Members screen, an admin can copy an invite link and send it by chat if
+the app has no mail provider. Email invites need a mail provider.
 
 The helpers in `@app/shared-util` format dates, times, numbers and money. Dates and times are stored in
-UTC and shown in the person's browser time zone; money is stored as `numeric(19,4)` with a currency code column. Each table has an
-Export CSV button, and `sendCsv` from `@app/core-server` writes formula-like cells as plain text.
+UTC and shown in the person's browser time zone; money is stored as `numeric(19,4)` with a currency code column.
+When the agent builds a table screen, it adds an `Export CSV` button.
+`sendCsv` from `@app/core-server` writes formula-like cells as plain text.
 Deletes keep records with `deletedAtUtc`; the database's `soft_delete_only()` trigger refuses
 a hard delete. Each UI or API crash writes one error report to the logs, with only its kind,
 page path and reference number.
@@ -92,6 +100,8 @@ page path and reference number.
 `apps/api` wires the modules and serves the app. Passwords use scrypt. Postgres holds server
 sessions, reset tokens, accounts, organisations, invites, projects and change history.
 
-Forgot password always gives the same reply. Only `APP_ENV=development` or `APP_ENV=test` writes a reset link to the log. Other environments send no email and log no link or token. Add a real mail provider in the story that needs it.
+Forgot password gives the same neutral reply for known and unknown emails. When the agent builds
+the Members screen, an admin can make a reset link and send it by chat if the app has no mail
+provider. A reset link works once and expires.
 
 The Dockerfile runs root `build`, applies migrations, and runs root `start:prod`. Supply `DATABASE_URL`, `APP_ENV`, `APP_ORIGIN`, and `PORT` to the container. Use HTTPS at the host in production.
