@@ -1,6 +1,13 @@
 {
   "base": "0662fec844e652ced23aff732d2e78ed58224368",
   "branch": "fix/a-first-time-fde-gets-stuck-because-the",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19445-bca3-7e42-97df-cfb8805e6df3",
+    "head": null,
+    "start": "38d81f531239c65b25c630f9ee67b6cf79260342"
+  },
   "done_when": "An FDE can follow the guides to the first Promote without finding a contradictory rule, a promise of an unbuilt feature, a placeholder address or a missing production step.",
   "fix_kind": "mechanical",
   "kind": "fix",
