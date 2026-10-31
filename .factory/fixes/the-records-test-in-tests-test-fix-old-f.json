@@ -11,12 +11,27 @@
   "done_when": "tests/test_fix_old_forge_records.py test_1 passes on origin/main once plans/ideas.md is allowed in its plans pattern, and the other checks in that file stay the same.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2b60f34a4ca577665cc7275c7c051bdec5747b7e1326bbaf9f51993614f68bab",
+    "changed": "c10c87ed88e79e28a1b7e241f7b5b6894dad7b2c8e4c1149fe3d24c26383a07c",
+    "commit": "62de2e0c48060d0735eff442be4fe6c9bb8b3340",
+    "dismissals": [],
+    "findings": [],
+    "id": "0353bfb1-4111-48bd-8bcc-e6546cf00dfc",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T17:40:22.316389+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:50:04.844663+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
