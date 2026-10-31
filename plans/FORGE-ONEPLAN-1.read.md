@@ -60,3 +60,4 @@ Only a genuine trade-off goes to the human, as a question with options.
    Raise: Plan gap.
    The amended plan assigns `tests/test_feature_command.py:893` to DEFAULT, but leaves the corresponding brief sentence with GUIDE, which waits for DEFAULT. That test checks the delivered worker brief; `src/forge/templates/brief.md:453` still says members can edit. Updating the assertion in DEFAULT therefore precedes its matching text change and fails the check. This ordering problem is new evidence introduced by the ownership correction. Keep the brief sentence and its assertion in the same task.
    Gain 4, Work 1, Harm 2
+   Disposition: cut - DEFAULT now also owns the brief sentence (`brief.md` line 453, members sentence only), so it and the line 893 assertion change together; GUIDE keeps only the guide sentence at `docs/guide.md` line 167.
