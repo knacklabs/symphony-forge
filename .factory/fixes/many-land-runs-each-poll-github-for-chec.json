@@ -71,7 +71,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T06:25:50.508198+00:00",
@@ -84,8 +84,12 @@
   ],
   "stop": {
     "at": "2026-10-31T10:26:35.701307+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_waiters_share_check_status.py",
-    "wait_id": "bf62f339-d3db-4459-b141-5c50bf4968d1"
+    "reason": "Owner chose one more round: fix both test errors",
+    "wait_id": "bf62f339-d3db-4459-b141-5c50bf4968d1",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
