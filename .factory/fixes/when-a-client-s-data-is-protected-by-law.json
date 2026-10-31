@@ -4,12 +4,20 @@
   "done_when": "A brief that answers the personal data question as regulated makes the app's constitution list the three rules (read logging, data location, and retention with removal of old records), and the plan asks the location and retention questions before the first story.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T09:39:21.919625+00:00",
       "step": "start"
     }
   ],
-  "why": "When a client's data is protected by law, such as health or finance data, nothing changes: the app keeps no record of who read which record, the plan does not ask in which country or region the data must stay, and it does not ask how long data is kept or remove old records."
+  "stuck": {
+    "close": null,
+    "head": "7433cbe37e466238c0414a43981c3577753688ca",
+    "keys": {},
+    "round": null
+  },
+  "why": "When a client's data is protected by law, such as health or finance data, nothing changes: the app keeps no record of who read which record, the plan does not ask in which country or region the data must stay, and it does not ask how long data is kept or remove old records.",
+  "worker": "codex"
 }
