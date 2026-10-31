@@ -1,8 +1,9 @@
 import hashlib
 from datetime import UTC, datetime
 from typing import Annotated, cast
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, Request, Response
+from fastapi import APIRouter, Depends, Header, Path, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
@@ -38,6 +39,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 invites_router = APIRouter(prefix="/api/v1/invites", tags=["Organisations"])
 # In auth, because it makes the account, as sign-up and invites do.
 agents_router = APIRouter(prefix="/api/v1/agents", tags=["Organisations"])
+members_router = APIRouter(prefix="/api/v1/members", tags=["Organisations"])
 
 
 def _settings(request: Request) -> Settings:
@@ -201,6 +203,29 @@ def invite(
     return SuccessEnvelope(
         data=_service(request, db).invite(input_data.email, account, idempotency_key)
     )
+
+
+@members_router.delete(
+    "/{account_id}",
+    response_model=SuccessEnvelope[None],
+    responses={status: {"model": ErrorEnvelope} for status in (400, 401, 403, 404)},
+    summary="Remove a member from your organisation.",
+    description="Only admins can remove members. You cannot remove yourself. Removal ends sessions, cancels the member's invites and records the change.",
+)
+def remove_member(
+    request: Request,
+    account_id: Annotated[
+        UUID,
+        Path(
+            description="The account of another member in your organisation.",
+            examples=["b3e1d349-1d8e-481c-8c69-99ea576f94c7"],
+        ),
+    ],
+    account: Annotated[AccountPrincipal, Depends(admin_only)],
+    db: Annotated[DbSession, Depends(get_db)],
+) -> SuccessEnvelope[None]:
+    _service(request, db).remove_member(account, account_id)
+    return SuccessEnvelope(data=None)
 
 
 @agents_router.post(

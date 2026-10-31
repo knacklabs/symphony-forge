@@ -1,0 +1,50 @@
+{
+  "allow_large": "Most of the size is regenerated API types the plan requires plus the starter's own test; the code change is about 70 lines",
+  "branch": "task/FORGE-MAIL-1-REMOVEPY",
+  "chat": {
+    "approval": "f071d6b7e1dff37e47d16571828d708e1ebb4673c3c8cbb683c0d6e9709759b8",
+    "claude": null,
+    "conversation": "01a18df7-6504-7ee3-8c4d-acc8b9614745",
+    "head": null,
+    "start": "8a875c40a17772e1846e5cc66e2f8c4222b3eb29"
+  },
+  "known": [],
+  "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3fadff6736b99c161dcd69cdcaf775a3b7d448047e0f50a7ddba3ad7ba047e81",
+    "changed": "a32c608b2fc901455fcafcd18650d1c68c7622b98a7c8a712a147689f6004abc",
+    "commit": "40d541644034385c3c532fb01f4382c3ca43ce06",
+    "dismissals": [],
+    "findings": [],
+    "id": "bb23c4fe-4ac6-41e6-b24f-4f0c12f6a4c4",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-30T17:59:05.783396+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-30T18:08:20.748317+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-30T18:26:01.440614+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T04:27:33.516819+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "8ba024ea-13b2-410c-b9c5-1d176cb0faf5",
+    "head": "24f700c2c23bdd70f36987ce3282c3a42d308f65",
+    "keys": {},
+    "round": 2
+  },
+  "worker": "codex"
+}
