@@ -11,12 +11,27 @@
   "done_when": "A brief that answers the personal data question as regulated makes the app's constitution list the three rules (read logging, data location, and retention with removal of old records), and the plan asks the location and retention questions before the first story.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "3f7cd9e7834dacfd4f2907153351094775d9a3f654e63063bfe5eef120040731",
+    "changed": "bc176e4bb136c4c521426801977b173bc0b6c0010a3e4db106598c41542017ba",
+    "commit": "9310ee910775a55fd4660ee2f1592198a8bf10c2",
+    "dismissals": [],
+    "findings": [],
+    "id": "dc622927-e6d6-443c-84f8-8d74feab9259",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T09:39:21.919625+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:39:30.610115+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
