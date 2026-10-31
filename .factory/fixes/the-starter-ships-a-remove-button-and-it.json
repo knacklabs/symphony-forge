@@ -11,12 +11,27 @@
   "done_when": "The story doc lists three parts with no Remove button or screen in What changes for you or Done when, and the unmerged Remove-button part is not merged into main.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "branch_diff": "0a9b3427e158b61c7bf651d48aa8601f967043b99a97b2a6ca8684787eabdee8",
+    "changed": "b83a7b2073329dd895f2de099df8d0ec47ac9c5da6b64ec43c6ef23edf322c07",
+    "commit": "4bb4dcc34c18149363f8257acef7d7548b3e1636",
+    "dismissals": [],
+    "findings": [],
+    "id": "0492c491-0666-498f-9cf6-4b5249d67db1",
+    "mechanical": true,
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T08:44:09.715795+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T08:49:30.256615+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
