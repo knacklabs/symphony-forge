@@ -8,21 +8,72 @@
     "head": null,
     "start": "8ec6cd2c2acea832d23317fc4ccd0febd0bb993d"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/feature/kinds.toml",
+      "file": "src/forge/templates/feature/kinds.toml",
+      "gain": null,
+      "harm": null,
+      "line": 69,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve the money formatter used by API generation",
+      "work": null
+    },
+    {
+      "area": "src/forge/templates/feature/kinds.toml",
+      "file": "src/forge/templates/feature/kinds.toml",
+      "gain": null,
+      "harm": null,
+      "line": 69,
+      "outcome": "lived with",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Update the kind-table tests after removing web settings",
+      "work": null
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dfe55c15d6951c02e7414482f202b793b41921f892f46e14a30cb58508d7486a",
+    "changed": "ebea16c2a5df9a1f7702dcc0ba80ef8129ec925e721954f9de5522d6268c456d",
+    "commit": "51605a19bac03c14e9e988b91828dca54192da39",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "chunk 1/4:\n\nRemoving `csv` breaks every TypeScript feature containing a money field. `src/forge/feature_api.py:399` still reads `kinds[\"kinds\"][kind][\"csv\"]` while rendering the controller, so a command such as `forge task feature invoices --one invoice --field 'name:text' --field 'total:money'` raises `KeyError: 'csv'` before writing the feature. Keep this API export setting when removing the web settings.",
+        "file": "src/forge/templates/feature/kinds.toml",
+        "line": 69,
+        "priority": "P1",
+        "title": "Preserve the money formatter used by API generation"
+      },
+      {
+        "body": "chunk 1/4:\n\n`tests/test_database_kinds.py:74\u201375` still indexes `money[\"input\"]` and `money[\"cell\"]`. Both settings are removed here, so both parameters of `test_5_feature_columns_come_from_the_kind_table` fail in `_assert_kind_values`, before generating or exercising a feature. This independently breaks the TypeScript and Python smoke selections even after restoring the API's `csv` setting. Remove the obsolete web assertions while retaining the API and database checks.",
+        "file": "src/forge/templates/feature/kinds.toml",
+        "line": 69,
+        "priority": "P2",
+        "title": "Update the kind-table tests after removing web settings"
+      }
+    ],
+    "id": "e6334e27-6f9f-4bbd-865c-6d5012c390cd",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T11:36:58.290854+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-10-31T15:02:00.076620+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "question": "Starter ships no screens: `forge task feature` writes no page is stuck. It should deliver: The feature command, its tests and the smoke list stop generating web files; the browser parts of the generated specs go.\nIt changes 942 lines outside tests, over its limit of 400.\nThe worker tried: Stop feature generation from writing pages.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "41124cfe-5644-47ea-853f-10d6183f28f7"
-  },
   "stuck": {
     "close": null,
     "head": "9f8c062f0ea340fe488b243790b303f411116f25",
