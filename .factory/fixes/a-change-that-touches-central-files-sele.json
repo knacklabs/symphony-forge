@@ -36,8 +36,8 @@
     "id": "f58e4b7a-a605-4ee6-81a5-d9f75f011a81",
     "status": "clean"
   },
-  "round": 6,
-  "status": "waiting for checks",
+  "round": 7,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T13:42:55.718823+00:00",
@@ -74,10 +74,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": "5eb31766-13be-4c07-abcc-388b06f10d91",
-    "head": "fa1b4930a60243cf0aef6636764a285ac4f8e146",
+    "close": "3baabb15-9fd7-4165-bab4-6c185cb086d5",
+    "head": "697c565faf7afd85a2e186ed36105f71d9c27498",
     "keys": {},
-    "round": 4
+    "round": 6
   },
   "why": "A change that touches central files selects about 3,000 related tests, which the laptop's single test place runs for hours while CI runs them again on the pull request and every other item waits.",
   "worker": "codex"
