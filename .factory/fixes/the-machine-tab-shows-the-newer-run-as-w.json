@@ -1,6 +1,13 @@
 {
   "base": "f24ed0ebde3f293210e0662a8ed65b4040a557fe",
   "branch": "fix/the-machine-tab-shows-the-newer-run-as-w",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a195cf-1ad4-7002-8aad-b953ae6b8305",
+    "head": null,
+    "start": "f35d27bc68c97ac2e5b15ae843a0b85645545770"
+  },
   "done_when": "The Machine tab shows the newer run as waiting #2 behind the older release's run, and the release-rows test passes in both cases.",
   "fix_kind": "backend",
   "kind": "fix",
