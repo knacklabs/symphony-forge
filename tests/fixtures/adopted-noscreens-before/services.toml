@@ -1,7 +1,0 @@
-[[service]]
-name = "app"
-dockerfile = "Dockerfile"
-port = 3000
-health = "/health"
-expose = "main"
-mcp = "/mcp"
