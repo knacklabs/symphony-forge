@@ -10,6 +10,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -209,9 +210,22 @@ def _assert_python_api_output(
     return migration_path
 
 
+def _copy_earlier_starter(destination: Path) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        archive = Path(directory) / "starter.tar"
+        subprocess.run(
+            ["git", "archive", "--format=tar", f"--output={archive}",
+             "3255f9c326e5eb579f755d6e7a1e298701ff15f9:src/forge/templates/starter"],
+            cwd=ROOT, check=True, capture_output=True,
+        )
+        extracted = Path(directory) / "starter"
+        shutil.unpack_archive(archive, extracted)
+        shutil.copytree(extracted, destination, dirs_exist_ok=True)
+
+
 def _adopted_starter(repo) -> Path:
     shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
-    shutil.copytree(ROOT / "tests/fixtures/adopted-noscreens-before", repo.path, dirs_exist_ok=True)
+    _copy_earlier_starter(repo.path)
     permissions = repo.path / "libs/projects/server/src/projects.permissions.ts"
     original_permissions = permissions.read_text("utf-8")
     customised_permissions = original_permissions.replace(
@@ -233,7 +247,7 @@ def _adopted_starter(repo) -> Path:
 
 def _adopted_python_starter(repo) -> Path:
     shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
-    shutil.copytree(ROOT / "tests/fixtures/adopted-noscreens-before", repo.path, dirs_exist_ok=True)
+    _copy_earlier_starter(repo.path)
     shutil.copytree(PYTHON_STARTER, repo.path, dirs_exist_ok=True)
     permissions = repo.path / "apps/api/app/projects/permissions.py"
     original_permissions = permissions.read_text("utf-8")
