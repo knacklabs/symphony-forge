@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/conventions/deploy.md\tGate: update the shipped coordinator or worker instructions\ta-first-time-fde-gets-stuck-because-the",
+      "kind": "bug",
+      "path": "src/forge/templates/conventions/deploy.md",
+      "line": 5,
+      "text": "Gate: update the shipped coordinator or worker instructions",
+      "from": "blocking",
+      "item": "a-first-time-fde-gets-stuck-because-the",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
