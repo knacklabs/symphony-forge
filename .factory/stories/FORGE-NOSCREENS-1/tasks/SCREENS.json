@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-01T01:04:18.568508+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Starter ships no screens: Both starters ship no screens is stuck. It should deliver: Delete the screens, hooks, shell and screen specs in the React starter; keep the build-only web setup; add `served-app.spec.ts`, the four ignored rule specs, `pendingScreens` and `passWithNoTests`; regenerate both lock files; update both READMEs and the Python test script.\nIt changes 2803 lines outside tests, over its limit of 400.\nThe worker tried: Remove screens from both starters.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "b09f9a68-3691-4238-9152-8add278fe6a7"
+  },
   "stuck": {
     "close": null,
     "head": "7176394799492dfb960100130f44938b69bd339f",
