@@ -22,8 +22,8 @@
     "id": "aa0c6ded-7111-4e08-b77c-497e6485eb09",
     "status": "clean"
   },
-  "round": 3,
-  "status": "waiting for checks",
+  "round": 4,
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T09:39:34.469566+00:00",
@@ -43,10 +43,10 @@
     }
   ],
   "stuck": {
-    "close": "80afc20b-44a5-486b-908b-f671ef0d4101",
-    "head": "55e64a19bb708aecabfcee00dcddf475414050cf",
+    "close": "419956d8-b3d0-45a5-ae28-73472a6b03ad",
+    "head": "37820aab99dd346fb7646700a74d72ddb97dbd1f",
     "keys": {},
-    "round": 2
+    "round": 3
   },
   "why": "The shipped Forge guide is about 171 KB and 2,222 lines, so every coordinator that loads it pays for about 400 lines on machine queues, the Claude Code pane and board JSON fields, and it repeats several Mainline deploy passages.",
   "worker": "codex"
