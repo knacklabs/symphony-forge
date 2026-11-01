@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_libs_layout.py\tGate: Python web-boundary smoke fails on the diagnostic's final period\tFORGE-NOSCREENS-1/SCREENS",
+      "kind": "bug",
+      "path": "tests/test_libs_layout.py",
+      "line": 80,
+      "text": "Gate: Python web-boundary smoke fails on the diagnostic's final period",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/SCREENS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_noscreens_rules.py\tGate: test_5_the_rule_specs_ship_off_and_list never lists specs in CI\tFORGE-NOSCREENS-1/SCREENS",
+      "kind": "bug",
+      "path": "tests/test_noscreens_rules.py",
+      "line": 76,
+      "text": "Gate: test_5_the_rule_specs_ship_off_and_list never lists specs in CI",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/SCREENS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
