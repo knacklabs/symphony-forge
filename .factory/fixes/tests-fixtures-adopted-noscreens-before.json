@@ -71,7 +71,7 @@
     "id": "d3084e90-60e5-4ef2-95ea-8bd0cb56d333",
     "status": "blocked"
   },
-  "round": 2,
+  "round": 3,
   "status": "fixing",
   "steps": [
     {
@@ -93,10 +93,10 @@
     "worker_round": 2
   },
   "stuck": {
-    "close": null,
-    "head": "f090bdba6401f6b36a959d316b8c2851ad519161",
+    "close": "5fdf7cb4-ccb7-4bbb-b6f3-c522ad6d229d",
+    "head": "a3c4e714f6c335760bd782db845c05a4ae7ace85",
     "keys": {},
-    "round": null
+    "round": 2
   },
   "why": "tests/fixtures/adopted-noscreens-before copies the starter tree from before the screen removal (272 files, an 11,442-line pnpm lock among them); only two helpers in tests/test_feature_command.py use it.",
   "worker": "codex"
