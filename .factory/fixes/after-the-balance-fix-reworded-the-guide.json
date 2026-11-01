@@ -1,0 +1,15 @@
+{
+  "base": "2c8e0cb837b6448e8b4bd1807c7e0da65131313a",
+  "branch": "fix/after-the-balance-fix-reworded-the-guide",
+  "done_when": "The test passes in all 4 cases, and the guide keeps the rule that items other planned work waits on go first, first-come within each group.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-01T15:52:47.394746+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "After the balance fix reworded the guide's sentence about waiting items, the check at line 42 of tests/test_agent_lane_prioritizes_dependencies.py still looks for the old sentence, so main fails in all 4 cases (2 histories by 2 dependencies)."
+}
