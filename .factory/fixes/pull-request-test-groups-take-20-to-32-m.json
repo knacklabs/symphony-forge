@@ -28,25 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3b3bc6ef494541026950a5e594916e629ae03482ab49a1bf61a59d1acace527d",
-    "changed": "dd6d549a5f0f133184a559d0e8e27a878ae3aed40a0ec75cce77f03fc1e5bd9d",
-    "commit": "a3cfa997e41d56827221a2e6c31a0b512517b217",
+    "branch_diff": "f2c1cff9cdacc9107bf135793068786aa68c01ea72d28f31f9db34efda04c44f",
+    "changed": "967392b331a4ae7d9a28aea30cf28363381f9e61e203b453921288555a5f878b",
+    "commit": "c0c98f782c4ffb0d0be8a9e29114e193a08accec",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Raise: Not done.\nThe acceptance criterion is: \"Every test in the suite has a recorded time in the timing file, and the pull request text reports the slowest group's time before and after on the same runners.\"\nThe supplied proof explicitly identifies the same-runner elapsed comparison as missing. The reported 2,365.95-second and 2,279.61-second historical weight sums are not elapsed group times. Obtain comparable before and after runs on the same runners and report the slowest group's elapsed times in the pull request text.\nCase: normal use - this pull request lacks the required measurement of its effect on CI group duration.",
-        "file": ".factory/fixes/pull-request-test-groups-take-20-to-32-m.json",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "line": 11,
-        "priority": "P1",
-        "title": "Not done: Report the slowest group's elapsed time before and after on the same runners"
-      }
-    ],
-    "id": "3dc8328e-7c91-43ed-acc6-0f3910d124d2",
+    "findings": [],
+    "id": "ec62e91d-69a3-4774-a5fb-3de2bad7143c",
     "status": "clean"
   },
   "round": 3,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T20:25:44.871326+00:00",
@@ -58,6 +49,10 @@
     },
     {
       "at": "2026-10-31T22:46:15.733639+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T02:32:03.220393+00:00",
       "step": "review"
     }
   ],
