@@ -1,0 +1,15 @@
+{
+  "base": "cc122f02a3d266aee30ac656f46774a440ab36b8",
+  "branch": "fix/tests-fixtures-adopted-noscreens-before",
+  "done_when": "The feature-command tests build the earlier-adopted starter from a pinned commit before the screen removal at test time, tests/fixtures/adopted-noscreens-before is deleted, and the same test cases pass in CI.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-01T01:10:02.363783+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "tests/fixtures/adopted-noscreens-before copies the starter tree from before the screen removal (272 files, an 11,442-line pnpm lock among them); only two helpers in tests/test_feature_command.py use it."
+}
