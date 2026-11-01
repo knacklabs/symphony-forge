@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe records allowlist rejects the current ideas file.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The records allowlist rejects the current ideas file.",
+      "from": "worker",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_land_waits_for_check_progress.py\tGate: test_3_land_stops_when_github_shows_no_check_progress[unreadable]\tmany-land-runs-each-poll-github-for-chec",
+      "kind": "bug",
+      "path": "tests/test_land_waits_for_check_progress.py",
+      "line": 133,
+      "text": "Gate: test_3_land_stops_when_github_shows_no_check_progress[unreadable]",
+      "from": "blocking",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in coordinator guides differ from the shipped template.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in coordinator guides differ from the shipped template.",
+      "from": "worker",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_waiters_share_check_status.py\tGate: test_4_one_test_per_rule\tmany-land-runs-each-poll-github-for-chec",
+      "kind": "bug",
+      "path": "tests/test_waiters_share_check_status.py",
+      "line": 17,
+      "text": "Gate: test_4_one_test_per_rule",
+      "from": "blocking",
+      "item": "many-land-runs-each-poll-github-for-chec",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

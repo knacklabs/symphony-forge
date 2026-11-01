@@ -1,0 +1,109 @@
+{
+  "base": "f847009c6ab966fa0a2dc5274c9d4fe4bbe4f940",
+  "branch": "fix/many-land-runs-each-poll-github-for-chec",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a190a4-b2c0-7361-b9d0-bfece23a0e71",
+    "head": null,
+    "start": "26f3c7790d4b2d34cad76fd1a93ca70eff482b3a"
+  },
+  "done_when": "Waiting land runs read one shared status snapshot per 60 seconds instead of each polling GitHub every 15 seconds.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_waiters_share_one_status_read_per_minute() in tests/test_waiters_share_check_status.py",
+      "file": "tests/test_waiters_share_check_status.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 17,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_4_one_test_per_rule",
+      "work": 1
+    },
+    {
+      "area": "test_3_land_stops_when_github_shows_no_check_progress() in tests/test_land_waits_for_check_progress.py",
+      "file": "tests/test_land_waits_for_check_progress.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 133,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_3_land_stops_when_github_shows_no_check_progress[unreadable]",
+      "work": 1
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "36b8bc95084f1831f676a5c71a18e0f05012c2753e0ab917c2505e65f65d2dbf",
+    "changed": "8d16a749674ba287bef122b20d838fc1afadfede1c27f221a797d462776a9525",
+    "commit": "34319248cd2e991bffd7ee2a2cfba343f374d788",
+    "dismissals": [],
+    "findings": [],
+    "id": "ee39bfb2-0826-42c1-b1f5-bcebc006a843",
+    "status": "clean"
+  },
+  "round": 10,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T06:25:50.508198+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T10:26:35.685404+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T17:47:32.768199+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T19:10:18.653644+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T21:15:00.334572+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T22:44:27.701865+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T02:26:02.194137+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T16:00:28.371285+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T16:29:55.433568+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-31T10:26:35.701307+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_waiters_share_check_status.py",
+    "reason": "Owner chose one more round: fix both test errors",
+    "wait_id": "bf62f339-d3db-4459-b141-5c50bf4968d1",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "adc9fd82-0d6a-4d4b-9bef-6fd9efc47f12",
+    "head": "2a02724d907d0b862fefd5b32c601392a328e69a",
+    "keys": {},
+    "round": 9
+  },
+  "why": "Many land runs each poll GitHub for check status, used up the hourly limit twice in one day, and stalled every merge. The repo does not record which of GitHub's two hourly limits (REST or GraphQL) was hit.",
+  "worker": "codex"
+}
