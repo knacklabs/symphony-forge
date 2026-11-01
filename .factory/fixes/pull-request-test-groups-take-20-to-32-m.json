@@ -45,8 +45,8 @@
     "id": "3dc8328e-7c91-43ed-acc6-0f3910d124d2",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T20:25:44.871326+00:00",
@@ -62,10 +62,10 @@
     }
   ],
   "stuck": {
-    "close": "1e8a5eeb-c335-4835-8df0-711eba20cb2f",
-    "head": "bcffb9f25fd42c3924c8cef77a8a3df83d024ac8",
+    "close": "6af1462d-be09-40b6-ad38-e4f65864b01a",
+    "head": "a7999b0fbe4ae9c56940ac7a91cad4679ee4032d",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Pull request test groups take 20 to 32 minutes each, far above the 5-minute goal, and the six groups are split from a timing file that misses 1,193 of 3,851 tests; no CI run stores Linux per-test times.",
   "worker": "codex"
