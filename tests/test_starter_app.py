@@ -25,7 +25,10 @@ def test_3_init_writes_the_starter_and_the_nx_pages(repo, gh, tmp_path, monkeypa
     paths = subprocess.run(
         ["git", "ls-files", "-z", "src/forge/templates/starter"], cwd=ROOT,
         capture_output=True, text=True, encoding="utf-8", check=True).stdout.rstrip("\0").split("\0")
-    starter = [Path(path).relative_to("src/forge/templates/starter") for path in paths]
+    starter = [
+        relative for path in paths
+        if (STARTER / (relative := Path(path).relative_to("src/forge/templates/starter"))).is_file()
+    ]
     if case == "wheel":
         built = subprocess.run(["uv", "build", "--wheel", "--out-dir", str(tmp_path / "dist")],
                                cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=120)

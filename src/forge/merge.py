@@ -6,7 +6,7 @@ import os
 import re
 import tomllib
 from pathlib import Path
-from forge import checks, close, codex, githooks, prcheck, repo, review, story, task
+from forge import checks, close, codex, fasttest, githooks, prcheck, repo, review, story, task
 
 COMMANDS = [{
     "words": "merge", "run": "merge", "changes_state": False,
@@ -96,6 +96,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
             checked_default = repo.git("rev-parse", f"origin/{default}", cwd=top)
             retested = checked_default != base
             overlap = False
+            ci_retest = False
             if retested:
                 default_files = set(repo.git("diff", "--name-only", "--no-renames", "-z", base,
                                              checked_default, cwd=worktree).split("\0")) - {""}
@@ -115,19 +116,24 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                 checked_default = base
                 cfg = repo.config(worktree)
                 command = (cfg["fast_test"] or cfg["test"]).replace("{base}", base)
-                failed, tested = review.test_run(worktree, command, f"origin/{default}", always=True)
-                print(tested, flush=True)
-                if failed:
-                    repo.refuse(REFUSALS["retest_failed"], item=item,
-                                tests=tested.rsplit("Failed tests:\n", 1)[-1])
+                ci_retest = fasttest.broad_ci_selection(worktree, base)
+                if ci_retest:
+                    print("Related tests exceed one quarter of the suite. Pull request CI runs them.",
+                          flush=True)
+                else:
+                    failed, tested = review.test_run(worktree, command, f"origin/{default}", always=True)
+                    print(tested, flush=True)
+                    if failed:
+                        repo.refuse(REFUSALS["retest_failed"], item=item,
+                                    tests=tested.rsplit("Failed tests:\n", 1)[-1])
                 combined_tested = True
-                if overlap:
+                if overlap or ci_retest:
                     head = repo.git("rev-parse", "HEAD", cwd=worktree)
                     state = story.json_of(story.show(worktree, head, repo.state_path(item)))
                     state["review"].update(
                         changed=review.fingerprint(head, item, worktree, state, base),
                         branch_diff=review.fingerprint(head, item, worktree, state, base, branch_diff=True))
-                    close._save(worktree, item, state, "Keep the review after the combined tests pass")
+                    close._save(worktree, item, state, "Keep the review on the combined change")
                     head = repo.git("rev-parse", "HEAD", cwd=worktree)
                     close._push(worktree, branch)
                     receipt["commit"] = head
@@ -136,7 +142,7 @@ def merge(args: argparse.Namespace, *, refreshed: bool = False) -> int:
                     # Only the local test needs this merge. Keep GitHub's already checked head.
                     repo.git("reset", "--keep", head, cwd=worktree)
             try:
-                if config["test_place"] == "ci" and (not retested or overlap):
+                if config["test_place"] == "ci" and (not retested or overlap or ci_retest):
                     checks.wait(worktree, item, head, config["checks"],
                                 branch=branch, progress=getattr(args, "wait_for_progress", False),
                                 slot=getattr(args, "check_slot", None))

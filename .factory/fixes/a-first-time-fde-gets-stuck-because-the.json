@@ -1,0 +1,84 @@
+{
+  "base": "0662fec844e652ced23aff732d2e78ed58224368",
+  "branch": "fix/a-first-time-fde-gets-stuck-because-the",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19445-bca3-7e42-97df-cfb8805e6df3",
+    "head": null,
+    "start": "38d81f531239c65b25c630f9ee67b6cf79260342"
+  },
+  "done_when": "An FDE can follow the guides to the first Promote without finding a contradictory rule, a promise of an unbuilt feature, a placeholder address or a missing production step.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "src/forge/templates/conventions/deploy.md",
+      "file": "src/forge/templates/conventions/deploy.md",
+      "gain": null,
+      "harm": null,
+      "line": 5,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the shipped coordinator or worker instructions",
+      "work": null
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "d89f40ccbe94cbd23d29c907eda49e32c6e04a2eae9bff6a53eceb833745a49b",
+    "changed": "bfc8ba2d6200b002a9c573a31102f98fdfc63598f96b2549072eac9c3dc49737",
+    "commit": "6822cac20bfe821fbb3b4baf6810233a83d579ff",
+    "dismissals": [],
+    "findings": [],
+    "id": "3f3d964a-0e1d-402f-8ffc-696962f2858a",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T09:39:40.905876+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T23:28:48.294053+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T01:57:05.409895+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T03:17:18.126430+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T04:48:09.659163+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T17:28:40.653278+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-31T23:28:48.305873+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/templates/conventions/deploy.md",
+    "reason": "Owner chose one more round: add the new steps to the shipped guide and brief",
+    "wait_id": "7db6ba0d-0a31-41b9-b89d-31f0573f643c",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "2e4df8aa-cb88-440b-af17-d41aa092d89f",
+    "head": "88a854caa61f283184150d4aa592f8afa3b6b5cd",
+    "keys": {},
+    "round": 3
+  },
+  "why": "A first-time FDE gets stuck because the guides say Claude runs the sign-off review, but the canvas check in that same sign-off always runs on Codex. They give three different plan-read rules, promise a sign-off step that is only a plan so far, show a platform address placeholder, and have no production checklist, role definitions or path for a client's cloud or servers.",
+  "worker": "codex"
+}

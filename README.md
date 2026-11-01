@@ -183,7 +183,7 @@ developer can take over using the discovery notes and answers page. To start one
 1. **Ideas and client notes.** You give the agent the client notes or an idea, and it saves each note in `docs/context/` and reads them all before it asks anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
 2. **Brief.** The agent writes `docs/product/BRIEF.md` from your notes and asks only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
 3. **Canvas design.** The agent makes the screens on a design canvas for the client to click through in Play mode, and you or the FDE approve the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
-4. **Sign-off.** The client's named person approves the canvas and the answers, and you choose Build now or Later. You can say: "The client approved it; build now" or "The client approved it; build it later".
+4. **Sign-off.** The agent runs the sign-off checks, then the client's named person approves the canvas and answers. A Build now or Later command is planned, not available. Tell the agent what work to start or defer. You can say: "Record the client approval, then plan the first change".
 5. **Build.** The agent plans stories and fixes, builds each one with its tests and a review, and merges it. You can say: "Build this next: <idea>" or "What is ready to merge?".
 6. **Deploy on Mainline.** When you ask, the agent sets up Mainline and deploys dev, and a person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
 7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
@@ -224,8 +224,10 @@ where things are in one sentence and gives the exact next step.
 - **uv**, a tool that installs Python programs. Get it from
   [docs.astral.sh/uv](https://docs.astral.sh/uv/).
 - **Python 3.11** or later. uv can install it for you.
-- **Claude Code and Codex.** You talk to either one. Forge uses the other one for the
-  independent read.
+- **Claude Code and Codex.** With one tool selected, a separate reader on that tool reads plans.
+  With both selected, the first read uses the other installed tool, or your tool if the other
+  is unavailable. Later reads keep that reader while available. Canvas sign-off always needs
+  Codex, even in a Claude-only project.
 
 ### Install
 
