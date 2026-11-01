@@ -1,3 +1,0 @@
-Starter text snapshot from main before screen removal.
-Source: 3255f9c326e5eb579f755d6e7a1e298701ff15f9
-Version: v1.2.25

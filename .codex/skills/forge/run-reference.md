@@ -5,10 +5,17 @@ Open this file for machine queues, board JSON fields and the Claude Code pane.
 ## Machine views
 
 Forge gives agents half the available cores (at least one place), across all repos. Work rounds
-share a line. Plan reads and close reviews take no place in that line. Every run, including
+share a line. A builder lends its agent place while its test command waits or runs, then
+waits for an agent place again before the command returns to its round. Returning builders
+and repair rounds after failed tests go before new builds. Plan reads and close reviews
+take no place in that line. New builds pause when more than twice the test lane's places
+are waiting for tests; they start again when waiting test items fall to the place count or below.
+For example, with two test places, five waiting test items pause new builds, and two or
+fewer let them start again. This applies to new and upgraded repos on this release.
+Every run, including
 tests, reviews and plan reads, waits while the machine's
 one-minute load per core is 1.5 or more, even when no other Forge run is active; where the OS reports no load
-(Windows) the memory and core budgets still apply. Waiting items that other planned work waits on go
+(Windows) the memory and core budgets still apply. Within the remaining work, items that other planned work waits on go
 first, first-come within each group; each waiting run says its place and why. The test
 lane makes all test runs share one process budget: the cores left after the agent share and busy
 local CI jobs, with at least one process. Small selections count too. Each run takes its allocation

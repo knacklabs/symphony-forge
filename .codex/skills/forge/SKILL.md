@@ -358,6 +358,10 @@ machine queues, board JSON fields and the Claude Code pane. Use `forge next` for
 the current next step. Only a person can stop a run, after host confirmation;
 workers never run `forge stop`.
 
+A builder lends its agent place while tests wait or run, then waits to reclaim it
+before returning. Returning builders and repair rounds go before new builds;
+new builds pause above twice the test lane capacity and resume at capacity or below.
+
 `forge board` opens a live page on 127.0.0.1 with a per-run token and refreshes by itself;
 `--out <path>` writes JSON instead. The JSON views are `forge board --json` and
 `forge next --json`. Both views add `team` for the team's summary.
@@ -1132,12 +1136,17 @@ setup-only, platform or "foundation" stories. Cut a story that answers no proble
 when linked to a spec, it must also serve that spec's behaviour.
 
 Start every task and fix `forge next` lists as ready at once, and close each as its worker
-finishes. One machine runs agents on half its available cores (at least one; work rounds, plan reads and close
-reviews), across all its repos; the rest wait in line. Every run also waits while load per
+finishes. One machine runs work rounds on half its available cores (at least one place),
+across all its repos; the rest wait in line. Reads and reviews take no agent place.
+Builders lend their places during test commands and wait for admission again before continuing.
+Returning builders and failed-test repairs go before new builds. New builds pause above twice
+the test lane's place count of waiting test items and resume at that count or below.
+Every run also waits while load per
 core is 1.5 or more, including when external jobs cause the load, or free memory is below its floor.
-Busy local CI jobs reduce the available budget until they finish. Items that other planned work waits on go
+Busy local CI jobs reduce the available budget until they finish. Within the remaining work, items that other planned work waits on go
 first, first-come within each group; runs print their place and why when they start waiting and
-each time it changes. Running agents keep their places. A run that dies frees its place once its agent ends. A waiting
+each time it changes. Running agents keep their places except during test commands.
+A run that dies frees its place once its agent ends. A waiting
 run is working as meant: keep watching it. When a fix changed a story's plan on the default branch, `forge next` and `forge task start` say
 so with the command that merges it into the story branch; run it, then carry on. Forge compares
 content history, never commit dates: an older copy on the default branch does not block a start.
