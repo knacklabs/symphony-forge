@@ -4,12 +4,20 @@
   "done_when": "The Machine tab shows the newer run as waiting #2 behind the older release's run, and the release-rows test passes in both cases.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-01T05:51:08.589189+00:00",
       "step": "start"
     }
   ],
-  "why": "The Machine tab shows the newer run as waiting #1 where the test expects waiting #2, so the new waiting order no longer matches the test."
+  "stuck": {
+    "close": null,
+    "head": "2165c29ec35dfcf008232e5ebe58a680dbaebb75",
+    "keys": {},
+    "round": null
+  },
+  "why": "The Machine tab shows the newer run as waiting #1 where the test expects waiting #2, so the new waiting order no longer matches the test.",
+  "worker": "codex"
 }
