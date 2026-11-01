@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tThe Windows group exits while pytest waits for test workers and reports no failed test name.",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 151,
+      "text": "The Windows group exits while pytest waits for test workers and reports no failed test name.",
+      "from": "worker",
+      "item": "no-placeholder-fixes-2",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\t.github/workflows/forge-next.yml\tWindows group 4 exceeded its 45-minute job limit and produced no available log or duration artifact.",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 1,
+      "text": "Windows group 4 exceeded its 45-minute job limit and produced no available log or duration artifact.",
+      "from": "worker",
+      "item": "no-placeholder-fixes-2",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/codex.py\tSync crashes when a saved chat points to a missing temporary checkout; reported in issue 1275.",
+      "kind": "bug",
+      "path": "src/forge/codex.py",
+      "line": 347,
+      "text": "Sync crashes when a saved chat points to a missing temporary checkout; reported in issue 1275.",
+      "from": "worker",
+      "item": "no-placeholder-fixes-2",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_queue_land_all.py\tThe queue test failed in CI but passed in focused branch and main runs; its cause remains unknown.",
+      "kind": "bug",
+      "path": "tests/test_queue_land_all.py",
+      "line": 359,
+      "text": "The queue test failed in CI but passed in focused branch and main runs; its cause remains unknown.",
+      "from": "worker",
+      "item": "no-placeholder-fixes-2",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

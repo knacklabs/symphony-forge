@@ -1,0 +1,65 @@
+{
+  "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
+  "branch": "fix/no-placeholder-fixes-2",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19312-2cc0-7901-863f-0d514e43f2b3",
+    "head": null,
+    "start": "74557325ba50cfa4edbd51260d71103d2f560de2"
+  },
+  "done_when": "Sorting an idea never leaves a fix or branch named find-the-problem-to-solve behind",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "94c50921783ed864faf4223e8b8ae1cfe6744f5b76efa353f110d79b235a690d",
+    "changed": "6ca267de050c680e63353f79af51d63c026df7e53a2cc80bc065694c47319746",
+    "commit": "192e79cbd8493b2e4337070fcc8e8fb8a936f5d9",
+    "dismissals": [],
+    "findings": [],
+    "id": "d37d346e-363a-413f-b4e2-dab99679bab7",
+    "status": "clean"
+  },
+  "round": 6,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T12:50:26.079497+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:53:05.571169+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T19:31:55.986802+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T22:14:18.008639+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T02:30:55.825615+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T04:49:39.541821+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T19:40:32.794071+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "fd1b000c-db97-4044-b589-bb8fee22dfef",
+    "head": "88fc209a3e0eaa902b7287a3f7df9781fdfb4bc3",
+    "keys": {},
+    "round": 5
+  },
+  "why": "Fixes named Find the problem to solve appear by themselves and collect another fix's commits (issue 819). The first fix for this merged with no code (issue 1260)",
+  "worker": "codex"
+}
