@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-01T01:10:02.363783+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-01T01:23:44.605340+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "tests/test_feature_command.py",
-    "wait_id": "8abf9f14-3fa4-4ce3-aa99-e4f3f9ac2cee"
+    "reason": "Owner chose one more round: the starter smoke CI must fetch the pinned commit",
+    "wait_id": "8abf9f14-3fa4-4ce3-aa99-e4f3f9ac2cee",
+    "worker_round": 2
   },
   "stuck": {
     "close": null,
