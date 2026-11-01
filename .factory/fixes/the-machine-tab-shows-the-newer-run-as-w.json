@@ -11,12 +11,27 @@
   "done_when": "The Machine tab shows the newer run as waiting #2 behind the older release's run, and the release-rows test passes in both cases.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "39440bd73c4f1a06e037392ca19159700391aec45e20d8f2fe4ff97e6b5e87e0",
+    "changed": "1222de09617c52e66ae4ebf49d6facef70d4db1ed8961fdbad5b825a8c404add",
+    "commit": "961facfd4a9e318596f711f8231ad6e436995dcc",
+    "dismissals": [],
+    "findings": [],
+    "id": "8bd67da4-75c1-442d-bb4e-14bc50a93510",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-01T05:51:08.589189+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-01T15:48:50.587834+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
