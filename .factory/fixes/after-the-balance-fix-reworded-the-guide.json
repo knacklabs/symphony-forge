@@ -11,12 +11,27 @@
   "done_when": "The test passes in all 4 cases, and the guide keeps the rule that items other planned work waits on go first, first-come within each group.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "80c0bcac3a7c107cf27f331bde05bf1a605670fbbcbfda08a54850aa51602c1a",
+    "changed": "6ac0283d49642c00eedafcbf656a6f1f45bc8840c9fc84cf2faecf09782b5185",
+    "commit": "84e8d1b08d20fcf32bba4bc8c5450d172bc9674d",
+    "dismissals": [],
+    "findings": [],
+    "id": "924d1058-ea11-4b65-b0c9-18741fa4f8d3",
+    "status": "clean"
+  },
   "round": 2,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-01T15:52:47.394746+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-01T15:59:01.412172+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
