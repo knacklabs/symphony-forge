@@ -1102,6 +1102,25 @@ docs/product/CONSTITUTION.md. Use the defaults in
 already answers. Check the brief's `Personal data` answer; ask whether any data is private or
 regulated only when that answer is missing, then record the answer in `## Answers`.
 
+If the answer is regulated, such as health or finance data, ask these questions before the first story.
+Skip a question only when the brief already has a settled answer:
+
+- In which country or region must the data stay, including backups and copies held by service providers?
+- How long must each kind of record stay, and when must the app permanently remove it?
+
+Record the answers in the brief's `## Answers`. Add these three rules to the constitution,
+for any stack, before the owner approves it:
+
+- Read history: record who read which record and when, through every path that reads regulated data.
+  Keep record identifiers in this history, not the record contents. Restrict access to the history.
+  Ordinary API request logs do not provide this history.
+- Data location: keep regulated data, backups and service-provider copies in the country or region from the brief.
+- Retention: apply the period from the brief to each kind of record and permanently remove old records when it ends.
+  Cover backups, copies and read history in the policy. Soft delete alone does not remove old records.
+
+These are requirements for the app to build, not features already built into the starter.
+Use the client's answers, not a guessed country or period. Plan the work that these rules need in the first story that handles regulated data.
+
 Use this outline, and do not copy product facts from the brief into the constitution:
 
 ```markdown
