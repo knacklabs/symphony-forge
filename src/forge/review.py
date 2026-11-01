@@ -35,7 +35,7 @@ HELPERS = [Path.home() / host / "skills" / "autoreview" / "scripts" / "autorevie
            for host in (".codex", ".claude")]
 # Untracked in the review tree, which branch mode leaves out of the diff.
 STANDARDS = "forge-standards.md"
-SPENT = "spent.jsonl"  # beside the review tree: the engine's chat and token use
+SPENT = "spent"  # beside the review tree: the engine's chat and token use
 SERIOUS = ("P0", "P1")
 # Bookkeeping, not product: state and unrelated planning files never make a review stale.
 BOOKKEEPING = (".factory/", "plans/")
@@ -69,37 +69,6 @@ REFUSALS = {
     "bad_doc": ("plans/{key}.md has no usable Tasks row for {task}.",
                 "fix that row in plans/{key}.md, then forge close {item}"),
 }
-
-# Ported from the old tree's review launcher: the helper starts the reviewer in an empty folder,
-# where it can't open the code a finding depends on. Each launcher starts the real one in the
-# reviewed checkout instead. The `codex` one swaps that one folder; the read-only sandbox the
-# helper asks for stays as it is. The helper gives Claude only web search and refuses Read as a
-# tool option, so the `claude` one adds the read-only file tools; --restricted keeps them inside
-# the checkout and leaves out every tool that runs commands.
-LAUNCHER = '''\
-import subprocess, sys
-argv = sys.argv[1:]
-if {engine!r} == "codex":
-    for i in range(len(argv) - 1):
-        if argv[i] in ("-C", "--cd"):
-            argv[i + 1] = {tree!r}
-    if "exec" in argv:
-        i = argv.index("exec")
-        argv[i:i] = {quiet!r}
-elif "--tools" in argv:
-    i = argv.index("--tools") + 1
-    argv[i] = ",".join(filter(None, ["Read", "Grep", "Glob", argv[i]]))
-    argv.append("--restricted")
-# The engine's chat and token use go to a side file, as the helper keeps no copy.
-with open({spent!r}, "ab") as spent, subprocess.Popen(
-        [*{real!r}, *argv], cwd={tree!r}, stdout=subprocess.PIPE) as engine:
-    for line in engine.stdout:
-        sys.stdout.buffer.write(line)
-        sys.stdout.buffer.flush()
-        if any(kind in line for kind in (b"thread.started", b"turn.completed", b"session_id")):
-            spent.write(line)
-sys.exit(engine.returncode)
-'''
 
 
 # --- the story doc ---------------------------------------------------------------------
@@ -955,8 +924,10 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         launcher = _launcher(tmp / "bin", tree, engine)
         if launcher:
             argv += [f"--{engine}-bin", str(launcher)]
-            if os.name == "nt":
-                argv[1:1] = [str(Path(__file__).with_name("review_process.py")), str(launcher)]
+        if signoff_prompt or (os.name == "nt" and launcher):
+            argv[1:1] = [str(Path(__file__).with_name("review_process.py")),
+                         str(launcher) if os.name == "nt" and launcher else "",
+                         "parallel" if signoff_prompt else "serial"]
         with machine.agent_slot(top, "review", item):
             for attempt in ((1,) if signoff_prompt else (1, 2)):
                 with repo.record_run(top, item, "review", family=engine) as ran:
@@ -1188,6 +1159,8 @@ def _launcher(folder: Path, tree: Path, engine: str) -> Path | None:
     folder.mkdir()
     script = folder / f"{engine}_in_tree.py"
     from forge.codex import QUIET
+    from forge.review_process import LAUNCHER
+    (folder.parent / SPENT).mkdir()
     quiet = [arg for key, value in QUIET.items() for arg in ("-c", f"{key}={json.dumps(value)}")]
     script.write_text(LAUNCHER.format(engine=engine, tree=str(tree), real=command, quiet=quiet,
                                       spent=str(folder.parent / SPENT)), encoding="utf-8")
