@@ -50,29 +50,12 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "f99634fd2896c234bcd08d7c1950f8041fdf5817096dd2dbaceb949581c62e3c",
-    "changed": "ef12102c20c02e589d71eee90c8ed8a3e0ac606574662c8f0e227169d96016ae",
-    "commit": "1b0dacad9e32c145edfc5774ad3065ff9f59b244",
-    "dismissals": [
-      {
-        "because": "known: below the bar (live with)",
-        "carried": true,
-        "finding": 1
-      }
-    ],
-    "findings": [
-      {
-        "body": "Gain 2, Work 2, Harm 2\nCase: normal use - a reviewed stacked child's PR check finishes while its parent remains unmerged.\nThis refusal deliberately fails `forge-pr-check`, but `nextstep._item_readiness()` maps that result to `checks failed`. The stacked-status logic recognizes a built child only for `ready` or `waiting for checks`, so `forge next` and the board describe it as still building and direct users back to closing it. Repeating close cannot clear this expected failure. Distinguish the stacking refusal from actual failed checks in the status consumer. The changed tests still cover only successful or pending checks.",
-        "file": "src/forge/prcheck.py",
-        "gain": 2,
-        "harm": 2,
-        "line": 361,
-        "priority": "P2",
-        "title": "Follow-up: Recognize the expected stacked check failure in status",
-        "work": 2
-      }
-    ],
-    "id": "9170afaf-a0be-49d2-b460-1c707a17bad7",
+    "branch_diff": "2a7b5f76c47c686b9d0feb49141f9486fd0075d76663b3616e1badba5a83d95d",
+    "changed": "206321e84287f914331ca62859144e281e02345b542bc42ce9279bdd73e45ec4",
+    "commit": "4c9895a6c93c7601fe504fe0e8fef01b3c74cc87",
+    "dismissals": [],
+    "findings": [],
+    "id": "e5867e2d-46b1-4aa4-9756-beffeb5f74fc",
     "status": "clean"
   },
   "round": 10,
@@ -116,6 +99,10 @@
     },
     {
       "at": "2026-10-31T22:08:41.948912+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T01:59:01.518904+00:00",
       "step": "review"
     }
   ],
