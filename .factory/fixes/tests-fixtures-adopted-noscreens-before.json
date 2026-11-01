@@ -1,5 +1,5 @@
 {
-  "allow_large": "The owner instructed the worker to commit this exact fixture deletion after the hook refusal. The migration is historical test data within the explicitly requested 272-file fixture deletion; no client interface changes.",
+  "allow_large": "The owner chose on 1 Nov 2026 to remove the 26,990-line copied starter sample; the size is almost all deletion of that copy",
   "base": "cc122f02a3d266aee30ac656f46774a440ab36b8",
   "branch": "fix/tests-fixtures-adopted-noscreens-before",
   "chat": {
