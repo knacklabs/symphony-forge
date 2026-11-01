@@ -125,9 +125,9 @@ Every client repo moves through seven steps. `forge next` names the current step
 1. **Ideas and client notes.** The person gives you the client notes or an idea. Put each note in `docs/context/` and read them all before you ask anything. You can say: "Here are the client notes" or "I have an idea: <idea>".
 2. **Brief.** You write `docs/product/BRIEF.md` from the notes, and ask only about a point that changes a screen, a field or a flow. You can say: "The brief looks right" or "Change this in the brief: <change>".
 3. **Canvas design.** You make the screens on a design canvas, which the client can click through in Play mode, and the owner or FDE approves the canvas. You can say: "Show me the screens" or "Change this screen: <change>".
-4. **Sign-off.** The client's named person approves the canvas and the answers, and the owner chooses Build now or Later. You can say: "The client approved it; build now" or "The client approved it; build it later".
+4. **Sign-off.** Run the sign-off checks, then ask the client's named person to approve the canvas and answers. Build now and Later are planned choices, not available commands. Ask the owner what work to start or defer. You can say: "Record the client approval, then plan the first change".
 5. **Build.** You plan stories and fixes, build each one with its tests and a review, and merge it. You can say: "Build this next: <idea>" or "What is ready to merge?".
-6. **Deploy on Mainline.** When the person asks, you set up Mainline and deploy dev. A person presses Promote in Mainline for production. You can say: "Deploy this on Mainline".
+6. **Deploy on Mainline.** Confirm the client's host and complete production preparation below. When the person asks for Mainline deployment, set up Mainline and deploy dev. An authorized person presses Promote for production. A client host without Mainline uses its agreed release process. You can say: "Deploy this on Mainline" or "Use the client's servers".
 7. **Run and improve.** People use the app, and each new request or problem goes back to step 5. You can say: "Users asked for <request>" or "This is broken: <problem>".
 
 **The cold read loop.** A reader who did not write the plan reads it cold and lists its gaps. You fix the plan, and the reader reads it again. After two rounds that still have open notes, Forge stops and the owner chooses: accept, read again, or split. It exists because a gap found in the plan costs minutes, but the same gap found in the code costs a build round.
@@ -144,7 +144,9 @@ When a person asks what they can do, or seems unsure, run `forge next`, name the
 
 When a Forge command refuses, tell the person in plain words what Forge stopped, why, and the fix that it names. Then do the fix, or ask the choice. When the refusal looks like a Forge fault (a wrong or confusing message, a refusal of a correct step, a crash, or a success that did nothing), say so and offer to file a Forge bug as Reporting a Forge bug, below, says. File it when the person agrees.
 
-Before sign-off FORGE-SIGNOFF-1 adds Build now and Later; until then, record "build it later" with `forge start "Do this later: <the first story's idea>"`.
+Build now and Later at sign-off are planned, not available. Record "build it later" with
+`forge start "Do this later: <the first story's idea>"`. For work the owner wants now, record
+client sign-off first, then use the normal story flow.
 
 ## Save decisions and ideas
 
@@ -179,12 +181,18 @@ If the default branch moved after close, `forge merge` compares its new changed 
 It merges the default branch locally to check the combined change.
 It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
 merge base. It merges the pull request only after the tests pass. A failure names the failed tests
-and gives `forge work <item>` as the next step. This is always on, with no setting. With no
+and gives `forge work <item>` as the next step. With no
 default-branch move, merge runs no extra tests. New repos get this rule at init; existing repos
 get it on upgrade and sync.
 If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.
 It pushes that commit, waits for its required checks, then merges.
+In repos whose tests run in pull request CI, close already leaves the laptop tests to CI.
+When merge's pytest selection exceeds one quarter of the suite's test files, including
+`always_test`, merge also skips the laptop run. It publishes the combined change and waits
+for that commit's CI, even when the changed files do not overlap. This uses the existing
+pytest picker, with no new test collection. Other runners and custom fast commands keep
+their local retest. Repos whose tests run only on the laptop keep their local runs.
 The nightly full run on the default branch covers the rest. With no retest, the usual CI wait applies.
 Before the retest, Forge refuses uncommitted changes and names their files. After tests and
 checks, Forge fetches the default branch again. If it moved again, Forge checks the new
@@ -549,6 +557,30 @@ that reminder does not authorize deployment. When the user explicitly requests d
 Mainline Deploy as above. After the requested deployment is verified, record its address under
 `## Demo` in `docs/product/BRIEF.md` as `- Address: <url>`. Copy that address into the sign-off
 decision. A canvas-only prototype needs no demo address.
+
+**Production preparation.** Client sign-off approves the product direction, not production
+readiness. The coordinator confirms the host, account owner, region, domain, budget and release
+approver with the client. Record these decisions without secrets. The platform administrator
+provides access and environment setup. Name who owns support, alerts, backups and recovery.
+Plan remaining production work through stories and reviewed pull requests.
+
+Before the first Promote, follow First production release in Forge's packaged how-to,
+`forge/templates/conventions/deploy.md`.
+Confirm production access and secrets, HTTPS, DNS, database access, migrations and external
+services. Check the release in a non-production environment with a green full test run,
+the customer's main task and permissions for each role. Confirm a current backup and a
+demonstrated restore, recovery steps and an app and database rollback plan. Agree the release
+time and any data import or downtime. Only the authorized person presses Promote. Confirm the
+production address and main task after release. If a check fails, use the agreed rollback plan
+and notify the support contact. Workers never deploy.
+
+**Client cloud or servers.** Confirm this choice before deploy setup. Ask the platform
+administrator whether Mainline supports the requested target. For a supported target, follow
+the installed Mainline Deploy skill after an explicit deployment request. Otherwise, record
+the host and constraints and plan the required deploy work as a story. Name who owns server
+and network access, secrets, certificates, the database, backups, alerts and release. Use the
+client's approved release process and the same production checklist. A host without Mainline
+has no Mainline Promote step. Do not invent install commands or change the client's host choice.
 
 **The demo.** Every demo follows five steps, in order:
 
