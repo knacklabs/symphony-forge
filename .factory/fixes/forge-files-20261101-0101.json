@@ -1,0 +1,30 @@
+{
+  "allow_large": "Doctor brings every file forge sync writes up to date in one change; vrknetha allowed it by running forge doctor --fix.",
+  "base": "cc122f02a3d266aee30ac656f46774a440ab36b8",
+  "branch": "fix/forge-files-20261101-0101",
+  "done_when": "The files match what forge sync writes for the pinned Forge",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "f74ce46c915708e9c60daa6c226fe51984dfb73145bff6c203911f96acaf486b",
+    "changed": "c0924806b6797c6dfe1ed29b8a4858b8a97b39c1cd4b9256320ad4dc057c7be7",
+    "commit": "eaf67cf1e6287c8b2e76862915a4a50f26648ab8",
+    "dismissals": [],
+    "findings": [],
+    "id": "40566e00-e007-4cd5-90f3-3a7161cc98b2",
+    "status": "clean"
+  },
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-01T01:01:12.859985+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-01T01:08:57.296747+00:00",
+      "step": "review"
+    }
+  ],
+  "why": "Bring the files Forge writes for Claude Code and Codex up to date"
+}
