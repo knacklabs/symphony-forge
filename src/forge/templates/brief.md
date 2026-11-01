@@ -165,6 +165,12 @@ $delegation
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - When your test run waits in line, keep waiting in the same round until it finishes.
   Never stop your round to ask the coordinator to free a test place.
+- Your test command lends your agent place while it waits or runs. Before it returns,
+  it waits for an agent place again. Keep waiting for the command to finish.
+  Returning builders and repair rounds after failed tests go before new builds;
+  reviews take no agent place. New builds pause when waiting test items exceed twice
+  the test lane's place count and start again at that count or below. New and upgraded
+  repos on this release get this behaviour.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.
