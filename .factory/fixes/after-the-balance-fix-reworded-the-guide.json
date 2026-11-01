@@ -4,12 +4,20 @@
   "done_when": "The test passes in all 4 cases, and the guide keeps the rule that items other planned work waits on go first, first-come within each group.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-01T15:52:47.394746+00:00",
       "step": "start"
     }
   ],
-  "why": "After the balance fix reworded the guide's sentence about waiting items, the check at line 42 of tests/test_agent_lane_prioritizes_dependencies.py still looks for the old sentence, so main fails in all 4 cases (2 histories by 2 dependencies)."
+  "stuck": {
+    "close": null,
+    "head": "974d969b1ba339a93c2794aeeab6ebb6f2cfb68a",
+    "keys": {},
+    "round": null
+  },
+  "why": "After the balance fix reworded the guide's sentence about waiting items, the check at line 42 of tests/test_agent_lane_prioritizes_dependencies.py still looks for the old sentence, so main fails in all 4 cases (2 histories by 2 dependencies).",
+  "worker": "codex"
 }
