@@ -20,6 +20,7 @@ from test_starter_tree import (
     live_run,
 )
 from test_setup import _fresh_client
+from test_app_constitution import _fixture_git
 
 STORY = "FORGE-NOSCREENS-1"
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,7 +76,8 @@ def _earlier_app(repo, gh, tmp_path):
     assert (client / "apps/web/src/app.tsx").is_file()
     repo.git("checkout", "-q", "-b", "fix/noscreens-sync", cwd=client)
     repo.git("add", "-A", cwd=client)
-    repo.git("commit", "-qm", "Build earlier starter app", cwd=client)
+    # This restores an already-adopted app; it is fixture setup, not a new Forge change.
+    _fixture_git(repo, tmp_path, "commit", "-qm", "Build earlier starter app", cwd=client)
     synced = repo.forge("sync", cwd=client)
     assert synced.returncode == 0, synced.stdout + synced.stderr
     changed = repo.git("status", "--porcelain=v1", "-uall", cwd=client).splitlines()

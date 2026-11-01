@@ -77,7 +77,8 @@ def _check_module_web_boundary(folder, corepack, env, expected_rule):
         )
         output = blocked.stdout + blocked.stderr
         assert blocked.returncode != 0, output
-        assert expected_rule in output, output
+        # ESLint's stylish formatter removes the final period from a diagnostic.
+        assert expected_rule.removesuffix(".") in output, output
     finally:
         shutil.rmtree(library)
 

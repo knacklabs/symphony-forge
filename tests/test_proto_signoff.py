@@ -1,4 +1,10 @@
-"""Client sign-off is accepted only after a complete product review."""
+"""Client sign-off is accepted only after a complete product review.
+
+Fixture audit: preserve the real decision command's refusal of app changes before a build request.
+A fixture tied to a removed starter screen fails before that assertion; no other setup owns this
+existing-screen case. Keep the command-level case and let the test construct its own screen,
+without a production test seam.
+"""
 
 from __future__ import annotations
 
@@ -98,8 +104,8 @@ def _client(repo, tmp_path, monkeypatch, *, working_build=True, design_model=Non
     if working_build:
         repo.write("app.py", "print('prototype')\n")
     if seed_starter:
-        source = Path(__file__).parents[1] / "src/forge/templates/starter/apps/web/src/app.tsx"
-        repo.write("apps/web/src/app.tsx", source.read_text("utf-8"))
+        repo.write("apps/web/src/app.tsx",
+                   "export function App() { return <main>Prototype</main>; }\n")
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Build prototype")
     repo.git("push", "-q", "origin", "main")
