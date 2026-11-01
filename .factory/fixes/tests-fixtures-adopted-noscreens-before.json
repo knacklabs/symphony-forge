@@ -12,7 +12,7 @@
   "done_when": "The feature-command tests build the earlier-adopted starter from a pinned commit before the screen removal at test time, tests/fixtures/adopted-noscreens-before is deleted, and the same test cases pass in CI.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
