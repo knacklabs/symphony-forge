@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tWindows group 4 exceeded its 45-minute job limit and produced no available log or duration artifact.",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 1,
+      "text": "Windows group 4 exceeded its 45-minute job limit and produced no available log or duration artifact.",
+      "from": "worker",
+      "item": "no-placeholder-fixes-2",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/codex.py\tSync crashes when a saved chat points to a missing temporary checkout; reported in issue 1275.",
       "kind": "bug",
       "path": "src/forge/codex.py",
