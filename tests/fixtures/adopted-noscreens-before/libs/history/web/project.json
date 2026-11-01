@@ -1,0 +1,9 @@
+{
+  "name": "@app/history-web",
+  "projectType": "library",
+  "sourceRoot": "libs/history/web/src",
+  "tags": [
+    "type:web",
+    "scope:history"
+  ]
+}

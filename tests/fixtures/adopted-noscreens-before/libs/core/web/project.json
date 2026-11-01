@@ -1,0 +1,9 @@
+{
+  "name": "@app/core-web",
+  "projectType": "library",
+  "sourceRoot": "libs/core/web/src",
+  "tags": [
+    "type:web",
+    "scope:core"
+  ]
+}
