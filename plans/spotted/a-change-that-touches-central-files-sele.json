@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/merge.py\tThe merge retest still selects the pull request's changed files after the default branch moves; the earlier change merged only its record.",
+      "kind": "bug",
+      "path": "src/forge/merge.py",
+      "line": 112,
+      "text": "The merge retest still selects the pull request's changed files after the default branch moves; the earlier change merged only its record.",
+      "from": "worker",
+      "item": "a-change-that-touches-central-files-sele",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_broad_related_tests_wait_for_ci.py\tGate: test_1_broad_related_tests_wait_for_ci\ta-change-that-touches-central-files-sele",
+      "kind": "bug",
+      "path": "tests/test_broad_related_tests_wait_for_ci.py",
+      "line": 99,
+      "text": "Gate: test_1_broad_related_tests_wait_for_ci",
+      "from": "blocking",
+      "item": "a-change-that-touches-central-files-sele",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
