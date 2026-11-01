@@ -44,7 +44,7 @@
     "id": "2ebee1c1-3ce5-4d16-a6b4-5bb18402b40d",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -66,10 +66,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "de86f911ad04fab5872ce96fcaaf415bde6609f2",
+    "close": "fdb7308d-d01f-484a-ab4c-30681c8442ad",
+    "head": "f834f49930d67d69be181bddffae8500d94e1350",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "A first-time FDE gets stuck because the guides say Claude runs the sign-off review, but the canvas check in that same sign-off always runs on Codex. They give three different plan-read rules, promise a sign-off step that is only a plan so far, show a platform address placeholder, and have no production checklist, role definitions or path for a client's cloud or servers.",
   "worker": "codex"
