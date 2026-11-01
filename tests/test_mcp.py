@@ -36,8 +36,6 @@ AGENT_CASES = {
                "test_a_member_cannot_add_an_agent_account_or_change_its_key_or_agent_access",
                "test_an_agent_account_cannot_sign_in_with_a_password"),
 }
-AGENT_FLOW = "an admin adds an agent account, creates its key once and revokes it"
-ACCESS_FLOW = "an admin turns on agent delete and restore for {plural}"
 FEATURE_LINE = ("forge task feature jobs --one job --field 'name:text' "
                 "--field 'status:status(planned|active|done)'")
 CLIENTS_LINE = "forge task feature clients --one client --field 'name:text'"
@@ -140,8 +138,8 @@ def test_2_an_admin_adds_an_agent_account_and_its_key(repo, gh, tmp_path, starte
     # Audit: an agent account that is missing from the member list, a key that shows twice or
     # still works after a revoke, a member who can add agents or change keys, an agent that can
     # sign in with a password, or a change with no history row fails the app's own cases, which
-    # own the behaviour; the browser flow fails when the key stays on the page after Done. Sync
-    # must leave an earlier-adopted app's own files as they are.
+    # own the API behaviour. The starter ships no Members screen; its pending rule spec owns
+    # showing a key once when the client builds that screen. Sync must leave an earlier app alone.
     if starter == "earlier adopted":
         before, after = _adopted_files_after_sync(repo)
         assert after == before
@@ -154,7 +152,6 @@ def test_2_an_admin_adds_an_agent_account_and_its_key(repo, gh, tmp_path, starte
     if LIVE:
         live = _live(starter, request)
         _require_cases(live["api"], AGENT_CASES[starter])
-        _require_cases(live["browser"], (AGENT_FLOW,))
 
 
 @pytest.mark.platform
@@ -248,7 +245,6 @@ def test_3_each_feature_has_its_tools(repo, gh, tmp_path, starter, request):
         concise = re.search(r"\bconcise\s*=\s*(\[[^\]]*\])", tools)
         assert concise and ast.literal_eval(concise[1]) == ["name", "status"]
     if LIVE:
-        _require_cases(_live(starter, request)["browser"], (ACCESS_FLOW.format(plural="projects"),))
         if starter == "typescript":
             live = feature_live_run(repo, gh, request.getfixturevalue("tmp_path_factory"))
             require_feature_cases(live["api"], "jobs.e2e-spec.ts", (

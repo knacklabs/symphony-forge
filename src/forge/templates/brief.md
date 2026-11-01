@@ -76,6 +76,7 @@ A merge of the default branch or a clean review does not clear it. Close repeats
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
+While land waits, commands share each pull request head's status snapshot across worktrees for 60 seconds.
 
 When the owner narrows or splits a stopped story part, close writes the choice into that part's
 builder details and merges the plan into the task branch. The next worker round gets those details.
