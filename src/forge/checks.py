@@ -141,7 +141,7 @@ def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
     def read() -> list[Any]:
         seen, snapshot, runs = _seen(top, item, sha)
         shown = repo.run("gh", "pr", "view", branch, "--json",
-                         "mergeable,headRefOid,number,headRefName", cwd=top)
+                         "mergeable,headRefOid,number,headRefName", cwd=top, timeout=60)
         try:
             pr = json.loads(shown.stdout) if shown.returncode == 0 else None
         except ValueError:
@@ -159,22 +159,33 @@ def _status(top: Path, item: str, sha: str, branch: str, cache: Path | None,
     from forge import codex
     # The common Git directory and its lock share both reads and queue recovery
     # across processes. Use the wait loop's clock for the snapshot's lifetime.
-    with codex._one_at_a_time(cache):
-        value = None
+    with cache.with_suffix(".guard").open("a+b") as guard:
+        # Nonblocking attempts bound both contention and persistent Windows lock errors.
+        for _ in range(100):
+            if codex._try_lock(guard):
+                break
+            time.sleep(0.1)
+        else:
+            repo.refuse(REFUSALS["not_green"], item=item,
+                        reason="Could not get access to the shared check status within 10 seconds")
         try:
-            saved = json.loads(cache.read_text(encoding="utf-8"))
-            if 0 <= time.monotonic() - saved["at"] < 60:
-                value = saved["status"]
-        except (OSError, ValueError, KeyError, TypeError):
-            pass
-        if value is None:
+            value = None
             try:
-                value = read()
-            except repo.Refused as error:
-                value = str(error)  # An outage must not make every waiter poll again.
-            temp = cache.with_suffix(".tmp")
-            temp.write_text(json.dumps({"at": time.monotonic(), "status": value}), encoding="utf-8")
-            os.replace(temp, cache)
+                saved = json.loads(cache.read_text(encoding="utf-8"))
+                if 0 <= time.monotonic() - saved["at"] < 60:
+                    value = saved["status"]
+            except (OSError, ValueError, KeyError, TypeError):
+                pass
+            if value is None:
+                try:
+                    value = read()
+                except repo.Refused as error:
+                    value = str(error)  # An outage must not make every waiter poll again.
+                temp = cache.with_suffix(".tmp")
+                temp.write_text(json.dumps({"at": time.monotonic(), "status": value}), encoding="utf-8")
+                os.replace(temp, cache)
+        finally:
+            codex._unlock(guard)
     if isinstance(value, str):
         raise repo.Refused(value, "", entry=REFUSALS["not_green"])
     return value
@@ -358,7 +369,7 @@ def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]], *,
                     or run.get("status") not in ("queued", "pending", "in_progress")
                     or run["id"] in requested):
                 continue
-            done = repo.run("gh", "run", "cancel", str(run["id"]), cwd=top)
+            done = repo.run("gh", "run", "cancel", str(run["id"]), cwd=top, timeout=60)
             if done.returncode == 0:
                 requested.add(run["id"])
                 pending[run["id"]] = current["id"]
@@ -368,7 +379,7 @@ def _cancel_superseded(top: Path, item: str, checks: list[dict[str, Any]], *,
     if pending:
         time.sleep(2)
     for run_id, current_id in pending.items():
-        shown = repo.run("gh", "run", "view", str(run_id), "--json", "status", cwd=top)
+        shown = repo.run("gh", "run", "view", str(run_id), "--json", "status", cwd=top, timeout=60)
         try:
             status = json.loads(shown.stdout).get("status") if shown.returncode == 0 else None
         except (ValueError, AttributeError):
@@ -412,7 +423,7 @@ def _ask(top: Path, item: str, field: str, endpoint: str, *options: str,
          paginate: bool = True) -> list[dict[str, Any]]:
     # --paginate with "<field>[]" prints one JSON object per line across all pages.
     done = repo.run("gh", "api", *(["--paginate"] if paginate else []),
-                    "--jq", f"{field}[]", *options, endpoint, cwd=top)
+                    "--jq", f"{field}[]", *options, endpoint, cwd=top, timeout=60)
     try:
         text = done.stdout.strip()
         found = (json.loads(text) if text.startswith("[")
