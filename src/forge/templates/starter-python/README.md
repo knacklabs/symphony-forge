@@ -25,6 +25,12 @@ Postgres database and three API instances. It runs lint, format, and type checks
 Playwright. It removes the containers and data after the run, even when a test fails. Reports go
 to `test-results/api.xml` and `test-results/browser.xml`.
 
+The browser smoke test checks the built page, API responses and accessibility. The four basic-screen
+rule specs in `apps/web/e2e/rules` stay off until their screens exist. Remove each screen's name from
+`pendingScreens` in `apps/web/playwright.config.ts` when you build it. The hook test command accepts
+an empty test set until the app has hooks to check. Upgrades and `forge sync` keep existing app code
+and app tests unchanged.
+
 `.env.example` lists the values that the container needs outside this test stack.
 
 The app serves the web app and API at port 3000. `/health` checks readiness. `/api/docs` lists the

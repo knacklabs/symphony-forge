@@ -12,6 +12,7 @@ export default defineConfig({
     },
   },
   test: {
+    passWithNoTests: true,
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', '../../libs/*/*/src/**/*.test.{ts,tsx}'],
     reporters: ['default', 'junit'],

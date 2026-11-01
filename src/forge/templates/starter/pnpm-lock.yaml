@@ -219,24 +219,9 @@ importers:
 
   apps/web:
     dependencies:
-      '@app/auth-contracts':
-        specifier: workspace:*
-        version: link:../../libs/auth/contracts
-      '@app/auth-web':
-        specifier: workspace:*
-        version: link:../../libs/auth/web
       '@app/core-web':
         specifier: workspace:*
         version: link:../../libs/core/web
-      '@app/history-web':
-        specifier: workspace:*
-        version: link:../../libs/history/web
-      '@app/organisations-web':
-        specifier: workspace:*
-        version: link:../../libs/organisations/web
-      '@app/projects-web':
-        specifier: workspace:*
-        version: link:../../libs/projects/web
       '@app/shared-ui':
         specifier: workspace:*
         version: link:../../libs/shared/ui
@@ -258,18 +243,6 @@ importers:
       '@app/organisations-contracts':
         specifier: workspace:*
         version: link:../../organisations/contracts
-
-  libs/auth/web:
-    dependencies:
-      '@app/auth-contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@app/core-web':
-        specifier: workspace:*
-        version: link:../../core/web
-      '@app/shared-ui':
-        specifier: workspace:*
-        version: link:../../shared/ui
 
   libs/core/server:
     dependencies:
@@ -300,24 +273,6 @@ importers:
         specifier: workspace:*
         version: link:../../shared/util
 
-  libs/history/web:
-    dependencies:
-      '@app/auth-contracts':
-        specifier: workspace:*
-        version: link:../../auth/contracts
-      '@app/core-web':
-        specifier: workspace:*
-        version: link:../../core/web
-      '@app/history-contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@app/shared-ui':
-        specifier: workspace:*
-        version: link:../../shared/ui
-      '@app/shared-util':
-        specifier: workspace:*
-        version: link:../../shared/util
-
   libs/mcp/server:
     dependencies:
       '@app/core-server':
@@ -344,24 +299,6 @@ importers:
         specifier: workspace:*
         version: link:../../shared/util
 
-  libs/organisations/web:
-    dependencies:
-      '@app/auth-contracts':
-        specifier: workspace:*
-        version: link:../../auth/contracts
-      '@app/core-web':
-        specifier: workspace:*
-        version: link:../../core/web
-      '@app/organisations-contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@app/shared-ui':
-        specifier: workspace:*
-        version: link:../../shared/ui
-      '@app/shared-util':
-        specifier: workspace:*
-        version: link:../../shared/util
-
   libs/projects/contracts: {}
 
   libs/projects/server:
@@ -378,21 +315,6 @@ importers:
       '@app/projects-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@app/shared-util':
-        specifier: workspace:*
-        version: link:../../shared/util
-
-  libs/projects/web:
-    dependencies:
-      '@app/core-web':
-        specifier: workspace:*
-        version: link:../../core/web
-      '@app/projects-contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@app/shared-ui':
-        specifier: workspace:*
-        version: link:../../shared/ui
       '@app/shared-util':
         specifier: workspace:*
         version: link:../../shared/util
