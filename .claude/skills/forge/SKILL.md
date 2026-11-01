@@ -1096,6 +1096,25 @@ docs/product/CONSTITUTION.md. Use the defaults in
 already answers. Check the brief's `Personal data` answer; ask whether any data is private or
 regulated only when that answer is missing, then record the answer in `## Answers`.
 
+If the answer is regulated, such as health or finance data, ask these questions before the first story.
+Skip a question only when the brief already has a settled answer:
+
+- In which country or region must the data stay, including backups and copies held by service providers?
+- How long must each kind of record stay, and when must the app permanently remove it?
+
+Record the answers in the brief's `## Answers`. Add these three rules to the constitution,
+for any stack, before the owner approves it:
+
+- Read history: record who read which record and when, through every path that reads regulated data.
+  Keep record identifiers in this history, not the record contents. Restrict access to the history.
+  Ordinary API request logs do not provide this history.
+- Data location: keep regulated data, backups and service-provider copies in the country or region from the brief.
+- Retention: apply the period from the brief to each kind of record and permanently remove old records when it ends.
+  Cover backups, copies and read history in the policy. Soft delete alone does not remove old records.
+
+These are requirements for the app to build, not features already built into the starter.
+Use the client's answers, not a guessed country or period. Plan the work that these rules need in the first story that handles regulated data.
+
 Use this outline, and do not copy product facts from the brief into the constitution:
 
 ```markdown
@@ -2067,13 +2086,15 @@ can enter close. Among changes whose bases are ready, the oldest starts first. A
 not yet ready that changes a file an older change in the run also changes waits until that one
 merges or stops; Forge's own `plans/spotted.json` and `.factory/` files never count. Only one run
 works in a repo at a time. When two closes in the run collide on git's ref lock while fetching,
-the run starts that change again once and says so. It runs no fix rounds: a change that needs a worker or the owner stops
-alone and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
+the run starts that change again once and says so. A failed CI check gets one fix round on
+that change's builder thread, then close runs again. Other worker or owner stops affect only
+that change, and the others go on. The run ends with `Merged (n): ... · Ready to merge (n): ... · Needs
 you (n): ...`, then each stopped change with its reason and next step: `forge land <item>` for
-its fix rounds, or, for a stopped change, close's own question and next step, which only the owner
+its next run, or, for a stopped change, close's own question and next step, which only the owner
 answers. Close waits for the owner's recorded choice. A failed
-CI job whose log names none of the change's files runs again once; a second failure stops that
-change. Forge's review check follows review recovery instead. Where a human merges, the run closes
+CI job whose log names none of the change's files runs again once before the fix round.
+If CI still fails after the fix round, the change stops with its reason.
+Forge's review check follows review recovery instead. Where a human merges, the run closes
 every change, holds none and merges none, and lists the ready ones oldest first, with stacked fixes after their bases,
 with their pull request links: merge them
 in that order.

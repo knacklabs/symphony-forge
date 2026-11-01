@@ -88,6 +88,8 @@ when only Forge's review check reports a stale or missing review. If that check 
 land stops without a worker round.
 
 The client sign-off code review excludes images; the canvas completeness check reviews them.
+Sign-off runs each review's independent parts side by side inside its existing machine review run.
+It keeps the same model calls and result order.
 Normal reviews, reviews of docs and assets, and sign-off reviews use the selected tool's model and optional effort from
 `[models.review]` in `forge.toml`, including its per-tool entries. An unset entry or effort
 uses Autoreview's default. New and earlier-adopted repos get this behaviour on the current release.
@@ -455,6 +457,7 @@ singular and fields. As your first step, run the plan's line:
 Keep every `--field` value in single quotes, such as `'name:text'`,
 `'description?:long-text'`, `'status:status(planned|active|done)'` and `'client?:link(clients)'`.
 The command copies the installed starter's projects feature, not the app's projects code.
+It builds the API, agent tools, change history and tests without writing pages or changing the web app.
 Keep its organisation scoping, soft delete, restore and transactional change history.
 Each feature checks view, create, edit, delete and restore permissions on every screen and API call.
 Admins have all five. Members can view, create and edit, but cannot delete or restore and never
