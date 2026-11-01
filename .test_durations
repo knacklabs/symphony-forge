@@ -3105,6 +3105,8 @@
     "tests/test_shortplan_docs.py::test_2_you_approve_only_the_top_part": 4.423961958999826,
     "tests/test_signoff_accepts_chat.py::test_1_client_signoff_accepts_chat[adopted]": 5.714461291907355,
     "tests/test_signoff_accepts_chat.py::test_1_client_signoff_accepts_chat[new]": 5.8733540831599385,
+    "tests/test_signoff_checks_overlap.py::test_1_signoff_review_parts_overlap_without_extra_model_calls[adopted]": 7.674034915864468,
+    "tests/test_signoff_checks_overlap.py::test_1_signoff_review_parts_overlap_without_extra_model_calls[new]": 7.407579833175987,
     "tests/test_signoff_compares_answer_content.py::test_1_signoff_ignores_trailing_whitespace_and_line_endings[adopted-mixed whitespace]": 8.085546749876812,
     "tests/test_signoff_compares_answer_content.py::test_1_signoff_ignores_trailing_whitespace_and_line_endings[new-blank line]": 5.206225832924247,
     "tests/test_signoff_compares_answer_content.py::test_1_signoff_ignores_trailing_whitespace_and_line_endings[new-brief whitespace]": 5.275617165956646,
