@@ -68,12 +68,13 @@ customer and tell the agent what to change in the next round.
 
 ## Put the demo online
 
-Ask your team administrator for Mainline access and its current sign-in link. Resolve access
+Ask your team administrator for access to the Mainline deploy platform and its current sign-in link. Resolve access
 before this step. This guide does not provide a public platform address.
 
 Tell your coordinating agent: "Deploy this app to dev on Mainline." The agent checks for the
 Mainline Deploy plugin and follows its install and sign-in steps when needed. Finish sign-in
-with your own account. Confirm the app, repo and dev environment. After the one-time setup,
+with your own login. Confirm the app, repo and dev environment, then choose the demo subdomain.
+After the one-time setup,
 Mainline deploys dev at each merge and makes a preview for each pull request.
 Record the live address under `## Demo` as `- Address: <url>` in `docs/product/BRIEF.md`.
 Open that address and check the demo loads before you show the customer.
