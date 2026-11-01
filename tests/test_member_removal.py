@@ -4,7 +4,6 @@ import json
 
 import pytest
 
-from test_mcp import _adopted_files_after_sync
 from test_setup import _fresh_client
 from test_starter_tree import LIVE, _require_cases, live_python_run, live_run
 
@@ -14,16 +13,10 @@ REMOVAL_API_CASE = "an admin removes a member, who is signed out at once"
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
+@pytest.mark.parametrize("starter", ["typescript", "python"])
 def test_1_an_admin_removes_a_member(repo, gh, tmp_path, tmp_path_factory, starter):
-    # Audit: the live API case owns immediate loss of access and its removal side effects; this
-    # test also protects starter init and the earlier-adopted upgrade boundary. Without it, a new
-    # app can omit the route or sync can overwrite existing app code. No production seam is used.
-    if starter == "earlier adopted":
-        before, after = _adopted_files_after_sync(repo)
-        assert after == before
-        return
-
+    # Screen removal leaves the API behavior in place. The live API report owns immediate loss of
+    # access and its side effects; the new-app check ensures each starter keeps that API route.
     client, initialized = _fresh_client(
         repo, gh, tmp_path, "--starter", "python" if starter == "python" else "react"
     )

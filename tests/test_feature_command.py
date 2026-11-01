@@ -947,6 +947,16 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             _assert_feature_guidance(repo, client, log)
 
     for plural in ("clients", "jobs"):
+        # Earlier apps keep their screen importers. Compare the generated API/feature blocks;
+        # test_2 owns preservation of the app's web files and web importer.
+        for label in outputs:
+            lock = outputs[label][plural]["pnpm-lock.yaml"].decode("utf-8")
+            importers = re.findall(
+                rf"(?ms)^  (?:apps/api|libs/{re.escape(plural)}/(?:contracts|server)):.*?(?=^  \S|^\S|\Z)",
+                lock,
+            )
+            assert len(importers) == (3 if starter == "typescript" else 1), lock
+            outputs[label][plural]["pnpm-lock.yaml"] = "".join(importers).encode("utf-8")
         assert _normalized_outputs(outputs["new"][plural]) == _normalized_outputs(
             outputs["adopted"][plural])
 
