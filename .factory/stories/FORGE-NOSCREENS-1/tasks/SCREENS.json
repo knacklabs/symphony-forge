@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-NOSCREENS-1-SCREENS",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-01T01:04:18.568508+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7176394799492dfb960100130f44938b69bd339f",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
