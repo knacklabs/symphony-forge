@@ -1,6 +1,13 @@
 {
   "base": "2c8e0cb837b6448e8b4bd1807c7e0da65131313a",
   "branch": "fix/after-the-balance-fix-reworded-the-guide",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a197d0-709d-74a3-a881-47a64c3b854c",
+    "head": null,
+    "start": "734d9356c6ec95ee5dc21584ce4339b5eb9f5767"
+  },
   "done_when": "The test passes in all 4 cases, and the guide keeps the rule that items other planned work waits on go first, first-come within each group.",
   "fix_kind": "mechanical",
   "kind": "fix",
