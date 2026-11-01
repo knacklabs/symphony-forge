@@ -89,7 +89,7 @@ jobs:
           FORGE_STARTER_LIVE: '1'
         run: uv run --frozen --python 3.11 pytest 'tests/test_database_kinds.py::test_5_feature_columns_come_from_the_kind_table[python]' -q -n 0 --timeout=1800
 
-  python-feature-screens-smoke:
+  python-feature-api-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -98,7 +98,7 @@ jobs:
         with:
           node-version: '24'
       - uses: astral-sh/setup-uv@v6
-      - name: Run the Python feature stack and browser flows
+      - name: Run the Python feature API stack
         env:
           FORGE_STARTER_LIVE: '1'
         run: uv run --frozen --python 3.11 pytest tests/test_feature_command.py -k "python and test_2_the_new_feature_works_like_projects" -q -n 0 --timeout=1800
