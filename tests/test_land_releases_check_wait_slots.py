@@ -7,6 +7,10 @@ retry in src/forge/merge.py, which must preserve the queue's check-slot handoff.
 """
 
 import json
+import os
+from pathlib import Path
+
+import pytest
 
 from conftest import machine_cores
 from test_close import env  # noqa: F401
@@ -58,10 +62,13 @@ if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:
 '''
 
 
+@pytest.mark.timeout(300)
 def test_1_a_check_wait_admits_independent_close_but_keeps_order_and_backpressure(client, monkeypatch):
     env = client
     machine_cores(env.repo, 2)  # one place, so a waiting child would fill the queue
-    monkeypatch.setenv("FORGE_CHECKS_WAIT", "45")
+    # Queued, running and green now arrive in separate minute-long snapshots.
+    # A 45-second progress deadline expires before the next snapshot can refresh.
+    monkeypatch.setenv("FORGE_CHECKS_WAIT", "120")
     base = _fix(env, monkeypatch, "base", 1, {"shared.py": _edit(1, "base")})
     main = env.repo.path
     try:
@@ -75,6 +82,12 @@ def test_1_a_check_wait_admits_independent_close_but_keeps_order_and_backpressur
     # independent to finish, even though its checks are now green.
     (env.tmp / "wait-independent").write_text(
         (env.repo.bin / "base-green").as_posix(), encoding="utf-8")
+    # Keep the review barrier alive through the next snapshot, so the original
+    # slot-resume assertions still exercise backpressure rather than a timed-out stub.
+    reviewer = Path(os.environ["AUTOREVIEW"])
+    reviewer.write_text(reviewer.read_text("utf-8").replace(
+        "range(600 if _wait.exists() else 0)", "range(1800 if _wait.exists() else 0)"),
+        encoding="utf-8")
     gh = env.repo.bin / "gh"
     text = gh.read_text("utf-8")
     gh.write_text(text.replace('if args[:4] == ["api", "--paginate", "--jq", ".check_runs[]"]:',

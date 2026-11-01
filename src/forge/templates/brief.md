@@ -80,6 +80,7 @@ A merge of the default branch or a clean review does not clear it. Close repeats
 Land prints the owner's question, open findings and failing checks, then exits with status 3
 (needs a choice) instead of waiting. The coordinator records the choice, then runs `forge land <item>`
 again. Other stops and session subagent handoffs also print the open findings and failing checks.
+While land waits, commands share each pull request head's status snapshot across worktrees for 60 seconds.
 
 When the owner narrows or splits a stopped story part, close writes the choice into that part's
 builder details and merges the plan into the task branch. The next worker round gets those details.
@@ -168,6 +169,12 @@ $delegation
 - Never run `forge stop`: only a person can stop a run, after confirmation in the host.
 - When your test run waits in line, keep waiting in the same round until it finishes.
   Never stop your round to ask the coordinator to free a test place.
+- Your test command lends your agent place while it waits or runs. Before it returns,
+  it waits for an agent place again. Keep waiting for the command to finish.
+  Returning builders and repair rounds after failed tests go before new builds;
+  reviews take no agent place. New builds pause when waiting test items exceed twice
+  the test lane's place count and start again at that count or below. New and upgraded
+  repos on this release get this behaviour.
 - Only the human decides to drop a fix. Leave `forge fix drop <fix> --because "<reason>"`
   to the coordinator after a clear yes. `forge fix drop <fix> --undo` restores it; a restored
   fix needs `forge close` again before it is ready.
