@@ -22,8 +22,8 @@
     "id": "2c0f3c3b-9c87-4344-af6d-bcef133b5662",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T12:50:26.079497+00:00",
@@ -51,10 +51,10 @@
     }
   ],
   "stuck": {
-    "close": "aa1155f7-fac0-41ee-b1ad-0d011e45792b",
-    "head": "325af5f2b10df45cc10a457fa35951695c2accf6",
+    "close": "fd1b000c-db97-4044-b589-bb8fee22dfef",
+    "head": "88fc209a3e0eaa902b7287a3f7df9781fdfb4bc3",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "Fixes named Find the problem to solve appear by themselves and collect another fix's commits (issue 819). The first fix for this merged with no code (issue 1260)",
   "worker": "codex"
