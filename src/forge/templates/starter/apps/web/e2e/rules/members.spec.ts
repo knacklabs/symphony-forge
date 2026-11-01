@@ -162,7 +162,7 @@ test('members shows a reset link once with a Copy button', async ({ page, browse
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await createAdmin(request, page);
   const memberEmail = `member-${randomUUID()}@example.test`;
-  const { memberPage, memberContext } = await inviteAndJoin(page, browser, memberEmail);
+  const { memberContext } = await inviteAndJoin(page, browser, memberEmail);
 
   try {
     await page.reload();
