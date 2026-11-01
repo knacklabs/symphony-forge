@@ -358,6 +358,11 @@ machine queues, board JSON fields and the Claude Code pane. Use `forge next` for
 the current next step. Only a person can stop a run, after host confirmation;
 workers never run `forge stop`.
 
+`forge board` opens a live page on 127.0.0.1 with a per-run token and refreshes by itself;
+`--out <path>` writes JSON instead. The JSON views are `forge board --json` and
+`forge next --json`. Both views add `team` for the team's summary.
+The run reference explains the board fields and page behaviour.
+
 ## Events
 
 The mod starts a session turn for new review findings, failed checks, a pull request
