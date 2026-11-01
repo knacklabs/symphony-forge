@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\ttests/test_mod_sync.py\tThe real local plugin installation case failed in the regression run and remains unresolved.",
+      "kind": "bug",
+      "path": "tests/test_mod_sync.py",
+      "line": 206,
+      "text": "The real local plugin installation case failed in the regression run and remains unresolved.",
+      "from": "worker",
+      "item": "FORGE-NOSCREENS-1/SCREENS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\ttests/test_noscreens_rules.py\tGate: test_5_the_rule_specs_ship_off_and_list never lists specs in CI\tFORGE-NOSCREENS-1/SCREENS",
       "kind": "bug",
       "path": "tests/test_noscreens_rules.py",
