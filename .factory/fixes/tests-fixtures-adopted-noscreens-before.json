@@ -1,6 +1,13 @@
 {
   "base": "cc122f02a3d266aee30ac656f46774a440ab36b8",
   "branch": "fix/tests-fixtures-adopted-noscreens-before",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a194a9-9a8b-7e50-bad4-fd65ab073044",
+    "head": null,
+    "start": "7411736c7d246daee60e3cfddcf7a17c71a72888"
+  },
   "done_when": "The feature-command tests build the earlier-adopted starter from a pinned commit before the screen removal at test time, tests/fixtures/adopted-noscreens-before is deleted, and the same test cases pass in CI.",
   "fix_kind": "mechanical",
   "kind": "fix",
