@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_feature_command.py\t[P1] Fetch the pinned historical commit in starter-smoke CI\ttests-fixtures-adopted-noscreens-before",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 218,
+      "text": "[P1] Fetch the pinned historical commit in starter-smoke CI",
+      "from": "blocking",
+      "item": "tests-fixtures-adopted-noscreens-before",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_feature_command.py\t[P1] Fetch the pinned starter commit in smoke CI\ttests-fixtures-adopted-noscreens-before",
+      "kind": "bug",
+      "path": "tests/test_feature_command.py",
+      "line": 218,
+      "text": "[P1] Fetch the pinned starter commit in smoke CI",
+      "from": "blocking",
+      "item": "tests-fixtures-adopted-noscreens-before",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
