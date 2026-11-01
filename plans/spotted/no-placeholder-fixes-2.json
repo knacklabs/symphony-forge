@@ -1,6 +1,17 @@
 {
   "items": [
     {
+      "key": "bug\t.github/workflows/forge-next.yml\tThe Windows group exits while pytest waits for test workers and reports no failed test name.",
+      "kind": "bug",
+      "path": ".github/workflows/forge-next.yml",
+      "line": 151,
+      "text": "The Windows group exits while pytest waits for test workers and reports no failed test name.",
+      "from": "worker",
+      "item": "no-placeholder-fixes-2",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\t.github/workflows/forge-next.yml\tWindows group 4 exceeded its 45-minute job limit and produced no available log or duration artifact.",
       "kind": "bug",
       "path": ".github/workflows/forge-next.yml",
