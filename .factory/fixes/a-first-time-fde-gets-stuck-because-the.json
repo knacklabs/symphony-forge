@@ -45,7 +45,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-10-31T09:39:40.905876+00:00",
@@ -58,8 +58,12 @@
   ],
   "stop": {
     "at": "2026-10-31T23:28:48.305873+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": "src/forge/templates/conventions/deploy.md",
-    "wait_id": "7db6ba0d-0a31-41b9-b89d-31f0573f643c"
+    "reason": "Owner chose one more round: add the new steps to the shipped guide and brief",
+    "wait_id": "7db6ba0d-0a31-41b9-b89d-31f0573f643c",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
