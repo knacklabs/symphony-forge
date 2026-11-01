@@ -11,7 +11,7 @@
   "done_when": "The test passes in all 4 cases, and the guide keeps the rule that items other planned work waits on go first, first-come within each group.",
   "fix_kind": "mechanical",
   "kind": "fix",
-  "round": 1,
+  "round": 2,
   "status": "working",
   "steps": [
     {
