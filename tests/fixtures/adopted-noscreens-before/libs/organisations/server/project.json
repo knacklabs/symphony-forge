@@ -1,9 +1,0 @@
-{
-  "name": "@app/organisations-server",
-  "projectType": "library",
-  "sourceRoot": "libs/organisations/server/src",
-  "tags": [
-    "type:server",
-    "scope:organisations"
-  ]
-}
