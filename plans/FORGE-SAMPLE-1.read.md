@@ -75,9 +75,11 @@ Only a genuine trade-off goes to the human, as a question with options.
    Case: normal use - a sample-data prototype defines its React Router routes in `apps/web/src/main.tsx` or `router.tsx`.
    [Settled 4](/plans/FORGE-SAMPLE-1.md:72) now selects routes through `interfaces` or `init.INTERFACES`. [The default patterns](/src/forge/init.py:65) match neither filename, although [the frontend convention](/src/forge/templates/conventions/frontend.md:91) requires React Router. In a prototype with no back end, the check can therefore receive no routes. The planned file-list assertion would pass while the promised route comparison does nothing.
    Gain 3, Work 2, Harm 3
+   Disposition: cut - the plan now also finds router files by their content, with a test.
 
 7. Advisory: Unproven: item 1's retry can expose excluded files as deletions.
    Raise: Test.
    Case: normal use - the agent changes the prototype and reruns the gap check.
    The new filtering rule removes files only from the resulting snapshot. [review.py:1001](/src/forge/review.py:1001) saves the original product commit, and [line 855](/src/forge/review.py:855) uses that unfiltered commit as the next review's base. Filtering only the new snapshot makes every excluded product file appear deleted in the review diff. The new test inspects the working tree, so it misses those diff inputs. Both sides of the comparison need the same file selection.
    Gain 3, Work 2, Harm 3
+   Disposition: cut - the gap check always uses an empty base, with a test of a second run.
