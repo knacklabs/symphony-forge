@@ -186,7 +186,6 @@ def close(args: argparse.Namespace) -> int:
     dismissals = _dismissals(args, item)
     branch, default = state["branch"], repo.default_branch(top)
     stacked_on = state.get("stacked_on") if "/" in item else ""
-    pr_target = default
     pr = _pull_request(top, branch)
     migrating = state.get("kind") in ("migrate", "adopt")  # Forge isn't on the default branch yet
     if pr and pr["state"] == "MERGED":
@@ -218,9 +217,10 @@ def close(args: argparse.Namespace) -> int:
                          {"status": "reviewing", "findings": [], "dismissals": []}, ("", ""))
         raise
     stacked_waiting = bool(stacked_on and not task._merged(f"origin/{default}", stacked_on, top))
-    review_ref = f"origin/{default}"
+    review_ref, pr_target = f"origin/{default}", default
     if stacked_waiting:
         base = githooks.fix_base(top, state, review_ref, "HEAD")
+        repo.git("merge", "-q", "--no-edit", "-s", "ours", base, cwd=top)
         review_ref = f"forge-stack/{item.replace('/', '-')}"
         repo.git("update-ref", f"refs/remotes/{review_ref}", base, cwd=top)
         pr_target = f"task/{stacked_on.replace('/', '-')}"

@@ -11,6 +11,7 @@ from test_close import CLEAN, blocked, env, finding  # noqa: F401
 from conftest import _install
 from test_last_task_records_story_outcome import github_merge
 from test_stack_start import configured, start
+from test_worker import install_claude
 
 STORY = "FORGE-STACK-1/CLOSE"
 
@@ -73,7 +74,8 @@ def _retarget_manual_child(env):
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
-def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previous):
+@pytest.mark.parametrize("main_advanced", [False, True], ids=["same-main", "worker-merged-main"])
+def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previous, main_advanced):
     repo = configured(env, previous)
     _set_part_limit(repo)
     base_work, _ = start(repo, "A")
@@ -83,6 +85,14 @@ def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previ
 
     child_work, _ = start(repo, "B")
     env.commit(child_work, "use.py", "B_VALUE = 1\n" * 200, "Build the stacked part")
+    if main_advanced:
+        moved = env.commit(repo.path, "README.md", "Updated client instructions\n",
+                           "Update the default branch")
+        repo.git("push", "-q", "origin", "main")
+        install_claude(repo)
+        built = repo.forge("work", "STACK/B")
+        assert built.returncode == 0, built.stdout + built.stderr
+        assert repo.git("merge-base", moved, "HEAD", cwd=child_work) == moved
     review_count = len(env.review_calls())
     checks_count = len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]"))
     child_close = env.close("STACK/B")
@@ -97,8 +107,8 @@ def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previ
     review_args = env.review_calls()[-1]["args"]
     review_base = review_args[review_args.index("--base") + 1]
     review_head = env.review_calls()[-1]["head"]
-    changed = set(repo.git("diff", "--name-only", review_base, review_head, cwd=child_work).splitlines())
-    assert "use.py" in changed and "app.py" not in changed
+    changed = set(repo.git("diff", "--name-only", f"{review_base}...{review_head}", cwd=child_work).splitlines())
+    assert "use.py" in changed and not {"app.py", "README.md"} & changed
     assert len(env.gh_calls("api", "--paginate", "--jq", ".check_runs[]")) == checks_count
     assert not (repo.path / ".git" / "forge" / "ready" / "STACK" / "B.json").exists()
 
@@ -123,6 +133,9 @@ def test_3_stacked_close_uses_only_its_changes_and_waits_for_its_base(env, previ
     assert landed.returncode == 0, landed.stdout + landed.stderr
     assert "Reviewed STACK/B; it is tested and merges after STACK/A merges." in landed.stdout
     assert len(env.gh_calls("pr", "merge")) == before_merge_calls
+    next_step = repo.forge("next")
+    assert next_step.returncode == 0, next_step.stdout + next_step.stderr
+    assert "STACK/B is built and waits for STACK/A to merge." in next_step.stdout
 
 
 @pytest.mark.parametrize("previous", [False, True], ids=["new", "previously-adopted"])
