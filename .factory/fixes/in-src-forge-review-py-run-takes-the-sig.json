@@ -71,7 +71,7 @@
     "id": "64a97695-a28d-487e-99ad-9d4fb7b9c98e",
     "status": "blocked"
   },
-  "round": 1,
+  "round": 2,
   "status": "fixing",
   "steps": [
     {
@@ -93,10 +93,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": null,
-    "head": "676c55265319476d4b111b751412796d327876ca",
+    "close": "49a6510d-d0af-4f18-857e-6c3e5492f718",
+    "head": "fb0e89dd13552ae7c50932d5647fe919c6f187c8",
     "keys": {},
-    "round": null
+    "round": 1
   },
   "why": "In src/forge/review.py, run() takes the signoff branch with an empty base commit for item design-check, and the omitted-images filter only drops images outside the batch, so all source stays in the tree. Autoreview then splits that whole diff into chunks (review_process.py parallel_parts). Findings from different chunks are merged in design_check() with no de-duplication, so one gap gets reported under several titles. The refusal in src/forge/records.py _signoff_review() lists every open finding with its body under found gaps and does not give a count or say which findings block, while the repair text names only the held ones.",
   "worker": "codex"
