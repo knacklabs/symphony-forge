@@ -99,28 +99,24 @@ def _close_and_squash_repair(repo, gh, tmp_path, queue, repair, repair_branch):
 
 
 @pytest.mark.parametrize(
-    "setup,canvas",
+    "setup",
     [
-        pytest.param(_client, False, id="new-working-build"),
-        pytest.param(_client, True, id="new-canvas"),
-        pytest.param(_adopted_client, False, id="adopted-working-build"),
-        pytest.param(_adopted_client, True, id="adopted-canvas"),
+        pytest.param(_client, id="new-working-build"),
+        pytest.param(_adopted_client, id="adopted-working-build"),
     ],
 )
 def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
-        repo, gh, tmp_path, monkeypatch, setup, canvas):
+        repo, gh, tmp_path, monkeypatch, setup):
     if setup is _client:
-        fix, answers, queue = _client(repo, tmp_path / "signoff", monkeypatch,
-                                      working_build=not canvas)
+        fix, answers, queue = _client(repo, tmp_path / "signoff", monkeypatch)
     else:
         fix, answers, queue = _adopted_client(repo, tmp_path / "signoff", monkeypatch)
-        if not canvas:
-            _request_build(repo, fix)
-            (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
-            repo.git("add", "app.py", cwd=fix)
-            repo.git("commit", "-qm", "Build the adopted order path", cwd=fix)
+        _request_build(repo, fix)
+        (fix / "app.py").write_text("print('prototype')\n", encoding="utf-8")
+        repo.git("add", "app.py", cwd=fix)
+        repo.git("commit", "-qm", "Build the adopted order path", cwd=fix)
 
-    checked_file = "docs/design/prototype/SCREENS.md" if canvas else "app.py"
+    checked_file = "app.py"
     page = _decision(fix, answers)
     rel = page.relative_to(fix).as_posix()
     repo.git("add", rel, cwd=fix)
@@ -131,8 +127,8 @@ def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
     first_round = _report(settled, open_finding)
     second_round = _report(open_finding)
     third_round = _report(settled, open_finding)
-    reports = ([first_round, second_round, third_round] if canvas else
-               [_clean(), first_round, second_round])
+    # Canvas-only reviews are gone; only product-review rounds remain.
+    reports = [first_round, second_round]
     queue.write_text(json.dumps(reports), encoding="utf-8")
 
     parent_branch = repo.git("branch", "--show-current", cwd=fix)
@@ -161,13 +157,13 @@ def test_1_repair_checkout_keeps_rounds_settlements_and_owner_stop(
 
     clone = _fresh_repair_checkout(repo, tmp_path, repair_branch)
     before = len(_calls(queue))
-    # Close consumes its own clean report. Both sign-off paths must receive the
+    # Close consumes its own clean report. The product review must receive the
     # third-round findings so Forge filters the settled repeat.
-    queue.write_text(json.dumps([third_round] if canvas else [_clean(), third_round]), encoding="utf-8")
+    queue.write_text(json.dumps([third_round]), encoding="utf-8")
     still_stopped = _accept(repo, clone)
     assert still_stopped.returncode == 1, still_stopped.stdout + still_stopped.stderr
     assert "One more round, split or accept?" in still_stopped.stderr
-    assert len(_calls(queue)) == before + (not canvas)
+    assert len(_calls(queue)) == before
 
     more = _accept(repo, clone, "--resolve", "more", "--reason", "The owner wants one more round")
     assert more.returncode == 1, more.stdout + more.stderr
@@ -192,7 +188,7 @@ def test_2_adopted_client_with_one_legacy_review_reaches_the_round_two_stop(
     repo.git("add", rel, cwd=fix)
     repo.git("commit", "-qm", "Save the customer's sign-off request", cwd=fix)
     finding = _finding("Order submission loses the order", "app.py", "Gain 5, Work 2, Harm 4")
-    queue.write_text(json.dumps([_clean(), _report(finding)]), encoding="utf-8")
+    queue.write_text(json.dumps([_report(finding)]), encoding="utf-8")
 
     first = _accept(repo, fix)
     assert first.returncode == 1, first.stdout + first.stderr
@@ -221,11 +217,11 @@ def test_2_adopted_client_with_one_legacy_review_reaches_the_round_two_stop(
     _close_and_squash_repair(repo, gh, tmp_path, queue, repair, repair_branch)
 
     clone = _fresh_repair_checkout(repo, tmp_path, repair_branch)
-    queue.write_text(json.dumps([_clean(), _report(finding)]), encoding="utf-8")
+    queue.write_text(json.dumps([_report(finding)]), encoding="utf-8")
     second = _accept(repo, clone)
     assert second.returncode == 1, second.stdout + second.stderr
     assert "One more round, split or accept?" in second.stderr
-    assert len(_calls(queue)) == 5
+    assert len(_calls(queue)) == 3
     prompt = "\n".join(_calls(queue)[-1]["prompt_files"].values())
     assert "Order submission loses the order" in prompt
     assert f"sign-off checkout: {fix}" in first.stderr
