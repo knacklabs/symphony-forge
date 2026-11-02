@@ -49,7 +49,7 @@ def test_8_ready_pull_request_without_worktree_follows_the_merge_policy(env, mer
         assert next_step["command"] is None
         assert "merges it from their machine" not in next_line
     else:
-        assert next_line == f"The fix {item} is ready to merge."
+        assert next_line == "Readme greets new readers is ready to merge."
         assert next_step["command"] == f"forge merge {item}"
 
 
@@ -208,7 +208,7 @@ def test_7_current_remote_failures_survive_missing_or_behind_local_branch(
         assert any(event["kind"] == "checks_failed" for event in row["occurrences"])
         assert row["next"]["command"] == "forge work page"
         if local == "remote-only":
-            assert row["next"]["line"] == "The fix page has no checkout on this machine."
+            assert row["next"]["line"] == "Repair the page has no checkout on this machine."
     assert _row(full, "page")["status"] == "Checks failed"
     if local == "behind":
         plain = repo.forge("next")

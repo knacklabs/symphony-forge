@@ -216,7 +216,7 @@ def test_1_every_item_has_one_state_and_the_same_counts_on_every_machine(env, mo
     assert part["state"] == "ready to merge"
     assert part["next"] == {"command": "forge merge SHOP/T2",
                             "line": "Show a saved basket is ready to merge.",
-                            "step": None}
+                            "step": "forge merge SHOP/T2"}
     following = env.repo.forge("next")
     assert "SHOP/T2 is ready to merge" in following.stdout, following.stdout
     assert "Next: forge merge SHOP/T2" in following.stdout, following.stdout
