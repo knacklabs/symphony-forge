@@ -11,14 +11,128 @@
   "done_when": "A later screens check runs only when a screen or the brief changes and checks only the changed screens and the open findings; the first check still covers every screen.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "design_check() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 1141,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Retain images named in open finding titles",
+      "work": 2
+    },
+    {
+      "area": "test_1_later_screen_checks_only_review_changed_screens_and_open_findings() in tests/test_incremental_screen_checks.py",
+      "file": "tests/test_incremental_screen_checks.py",
+      "gain": 4,
+      "harm": 2,
+      "line": 40,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: earlier-release regression fixture puts the saved hash outside frontmatter",
+      "work": 2
+    },
+    {
+      "area": "design_check() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 1143,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: update the existing canvas attachment test for incremental selection",
+      "work": 2
+    },
+    {
+      "area": "test_1_later_screen_checks_only_review_changed_screens_and_open_findings() in tests/test_incremental_screen_checks.py",
+      "file": "tests/test_incremental_screen_checks.py",
+      "gain": 3,
+      "harm": 2,
+      "line": 88,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: verify that a brief change attaches every screen",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "0fa71d15e9ea2847feda154164a3f2e3a634f3c99785d8145ed8d38b6853f95a",
+    "changed": "2cc1de3e35285cdf1d290174a0626abe11dd742d817f77c48c0ef447c123044b",
+    "commit": "b081d0ee7382eb1f27122ab7c6cca9f6a5f09033",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - retrying a screen finding whose image filename appears in its title.\nThe filter searches finding locations and bodies, but ignores titles. A finding titled \"Missing customer field in order-list.svg\", located at SCREENS.md with descriptive evidence, loses its unchanged screen attachment on retry. review.run removes omitted images from the review checkout (src/forge/review.py:882), so the reviewer cannot inspect that screen to verify the finding. Include titles when selecting images named by open findings.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 1141,
+        "priority": "P1",
+        "title": "Retain images named in open finding titles",
+        "work": 2
+      },
+      {
+        "body": "Gain 4, Work 2, Harm 2\nRaise: Test.\nCase: normal use - running the earlier-release regression case.\nThe fixture appends design_checked after the document body rather than inside its frontmatter. story._record reads fields only from frontmatter (src/forge/story.py:1066). Consequently, decision_accept sees an accepted decision without design_checked and returns \"already accepted\" before reviewing (src/forge/records.py:274). The first canvas-call assertion at line 51 therefore fails, and the promised legacy-hash compatibility case is never exercised. Put the saved hash in the decision's metadata.",
+        "file": "tests/test_incremental_screen_checks.py",
+        "gain": 4,
+        "harm": 2,
+        "line": 40,
+        "priority": "P1",
+        "title": "Gate: earlier-release regression fixture puts the saved hash outside frontmatter",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test.\nCase: normal use - running the related sign-off image suite.\nThe existing test at tests/test_signoff_review_excludes_images.py:79 requires unchanged order-list.svg in both canvas reviews. Its second round only deletes old-screen.svg and edits PRODUCT.md, with no open canvas findings. This new filter therefore selects no current images, making that assertion fail in both new and upgraded client cases. Update the owning test to assert the approved incremental attachment behavior while preserving its code-review image-exclusion checks.",
+        "file": "src/forge/review.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 1143,
+        "priority": "P1",
+        "title": "Gate: update the existing canvas attachment test for incremental selection",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 2\nRaise: Test.\nCase: normal use - changing the brief after earlier screen checks.\nThe final assertion verifies only that another canvas call occurred. It never checks that both images reached that call, as the recorded ruling requires. Applying the changed-image filter unconditionally would attach no images for this brief-only edit and still satisfy this assertion. Extend the existing command-level proof to inspect the final image batch and require every screen.",
+        "file": "tests/test_incremental_screen_checks.py",
+        "gain": 3,
+        "harm": 2,
+        "line": 88,
+        "priority": "P1",
+        "title": "Gate: verify that a brief change attaches every screen",
+        "work": 2
+      }
+    ],
+    "id": "45c6f6a4-3dc6-4951-b623-34b7a3fb5ffc",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-02T09:14:33.033893+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T09:24:22.882869+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-02T09:24:22.894557+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "a7d35d2a-d228-45c5-961a-589b7e033565"
+  },
   "stuck": {
     "close": null,
     "head": "40b34c8333f8b84eb9421876a0b248064fb8a652",

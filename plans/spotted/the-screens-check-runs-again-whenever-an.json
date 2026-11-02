@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/review.py\tRetain images named in open finding titles\tthe-screens-check-runs-again-whenever-an",
+      "kind": "bug",
+      "path": "src/forge/review.py",
+      "line": 1141,
+      "text": "Retain images named in open finding titles",
+      "from": "blocking",
+      "item": "the-screens-check-runs-again-whenever-an",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_incremental_screen_checks.py\tGate: earlier-release regression fixture puts the saved hash outside frontmatter\tthe-screens-check-runs-again-whenever-an",
+      "kind": "bug",
+      "path": "tests/test_incremental_screen_checks.py",
+      "line": 40,
+      "text": "Gate: earlier-release regression fixture puts the saved hash outside frontmatter",
+      "from": "blocking",
+      "item": "the-screens-check-runs-again-whenever-an",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
