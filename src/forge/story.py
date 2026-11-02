@@ -1130,17 +1130,16 @@ def add_to_roadmap(top: Path, entries: list[dict[str, str]]) -> list[str]:
 
 def _promote(fix_top: Path, fix: str, key: str, fix_state: dict[str, Any]) -> str:
     """Turn a fix's branch into the story's first task branch, keeping its commits."""
-    task, branch, old = f"{key}/SPEC", f"task/{key}-SPEC", repo.state_path(fix)
+    item, branch, old = f"{key}/SPEC", f"task/{key}-SPEC", repo.state_path(fix)
     repo.git("branch", "-m", branch, cwd=fix_top)
     tracked = repo.run("git", "ls-files", "--error-unmatch", "--", old, cwd=fix_top).returncode == 0
     (fix_top / old).unlink()
     state = {name: value for name, value in fix_state.items() if name != "kind"}
-    new = repo.write_state(task, {**state, "branch": branch, "from_fix": fix}, fix_top)
+    new = repo.write_state(item, {**state, "branch": branch, "from_fix": fix}, fix_top)
     repo.commit_state("Turn the fix into the first part of its story", *([old] if tracked else []), new,
                       top=fix_top)
-    from forge.task import publish_start
-    publish_start(fix_top, branch)
-    return f"The fix {fix} is now the story's first task, {task}, in {fix_top}."
+    task.publish_start(fix_top, branch)
+    return f"The fix {fix} is now the story's first task, {item}, in {fix_top}."
 
 
 def _no_cycle(tasks: dict[str, dict[str, Any]]) -> None:
