@@ -195,7 +195,7 @@ def _readers_inherit_worker_environment(repo, monkeypatch, request, family):
     where = new_story(repo, 'SHOP')
     (where / 'plans' / 'SHOP.md').write_text(DOC, 'utf-8')
     if family == 'claude':
-        require_worker_environment(repo.bin / 'claude')
+        require_worker_environment(repo.bin / 'claude_agent_sdk/__init__.py')
     else:
         import os
         from conftest import ROOT, _install
