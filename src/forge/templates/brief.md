@@ -322,6 +322,8 @@ skill whenever you write or change a test. Before you stop, commit your work fir
 For a pytest repo, the shipped picker is `forge test --pytest <base>`; it runs the repo's own
 test command without installing Forge in the project. This picker belongs in `fast_test`;
 workers run bare `forge test` to enter the lane.
+Codex full-access worker turns send permission requests to Forge, which accepts them,
+including requests to run `forge test`. Read-only turns decline permission requests.
 Root dependency files select the full test command. A nested project's dependency files
 select that project's tests and test files that name those dependency paths.
 A test module is shared setup when another test or conftest.py names it, including in a

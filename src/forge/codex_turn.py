@@ -180,8 +180,8 @@ def main() -> int:
                 begun = None
             emit(read=[[turn.id, turn.status.value] for turn in turns], start=begun)
             return 0
-        # deny_all is the SDK's approval policy "never" with no reviewer: Codex never asks and its
-        # automatic reviewer isn't used. The SDK's only other mode, auto_review, uses it.
+        # The SDK exposes only deny_all and auto_review. Worker requests go to
+        # Forge's accepting handler at the protocol boundary below instead.
         settings = {"approval_mode": ApprovalMode.deny_all, "sandbox": sandbox,
                     "cwd": request["cwd"], "config": request["config"] or None}
         # Codex skips a project hook it doesn't trust, and any change to one un-trusts it. Forge
@@ -208,6 +208,8 @@ def main() -> int:
         selection = {}
         def selected_request(method, params=None):
             nonlocal tier, selection
+            if sandbox is Sandbox.full_access and method in ("thread/start", "thread/resume", "turn/start"):
+                params = {**params, "approvalPolicy": "on-request", "approvalsReviewer": "user"}
             if method == "turn/start":
                 client.speed_thread = params["threadId"]
                 # Persist the tier too, so Codex reports its effective settings back.

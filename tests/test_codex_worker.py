@@ -221,15 +221,15 @@ def test_1_codex_builds_on_a_named_conversation(repo, monkeypatch, sdk_data, tmp
     built = repo.forge("work", "BOARD/PAGE")
     assert built.returncode == 0, built.stdout + built.stderr
 
-    # One new conversation in the task's folder, with full access and approvals "never", named
+    # One new conversation in the task's folder, with full access and approvals sent to Forge, named
     # after the task; one turn with the same, carrying the same brief a Claude worker gets.
     [start] = _sent(calls, "thread/start")
     assert Path(start["cwd"]).resolve() == folder.resolve()
-    assert (start["sandbox"], start["approvalPolicy"]) == ("danger-full-access", "never")
+    assert (start["sandbox"], start["approvalPolicy"]) == ("danger-full-access", "on-request")
     assert [named["name"] for named in _sent(calls, "thread/name/set")] == [
         "BOARD · The page"]
     [turn] = _sent(calls, "turn/start")
-    assert (turn["sandboxPolicy"], turn["approvalPolicy"]) == ({"type": "dangerFullAccess"}, "never")
+    assert (turn["sandboxPolicy"], turn["approvalPolicy"]) == ({"type": "dangerFullAccess"}, "on-request")
     brief = turn["input"][0]["text"]
     assert "You are the worker." in brief and "| PAGE | The page | The board page |" in brief
 

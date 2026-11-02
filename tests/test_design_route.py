@@ -137,7 +137,7 @@ def test_4_missing_or_cleanly_failed_claude_falls_back_to_sol(repo, monkeypatch,
                                "model_reasoning_effort": "xhigh",
                                "agents.default_subagent_model": "gpt-6-luna",
                                "agents.default_subagent_reasoning_effort": "max"}
-    assert first["approvalPolicy"] == "never"
+    assert first["approvalPolicy"] == "on-request"
     [turn] = _sent(codex_log, "turn/start")
     assert turn["input"][0]["text"] == claude_call["brief"]
     log = (repo.path / ".git" / "forge" / "work-BOARD-PAGE.log").read_text("utf-8")
