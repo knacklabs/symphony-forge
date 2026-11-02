@@ -107,7 +107,7 @@ def test_1_signoff_review_reads_generated_files_as_names_only(repo, gh, tmp_path
     assert "BINARY-FILM-BYTES" not in diff
     assert "media/film.mp4" not in diff
     calls = [json.loads(line) for line in queue.with_suffix(".calls.jsonl").read_text("utf-8").splitlines()]
-    assert len(calls) == 2
+    assert len(calls) == 1
     prompt = "\n\n".join(calls[-1]["prompt_files"].values())
     assert "media/film.mp4: 1 added, 0 removed" in prompt
     assert "BINARY-FILM-BYTES" not in prompt
