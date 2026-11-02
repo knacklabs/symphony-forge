@@ -11,12 +11,27 @@
   "done_when": "A new prototype's sign-in question lists email and password first, then one-time codes, then company sign-in, and states that the client chooses the method.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "194a8a735faf1ff36ed21a4561530bf7f325e41aa3c266d753556bb2d45f0b11",
+    "changed": "08c98c04ac75a8b3b640918bafd670dd25baabb436d5c18a7d2eda15b0800693",
+    "commit": "6a62e82038a8171affa15fdf2677b16e1f262c59",
+    "dismissals": [],
+    "findings": [],
+    "id": "0198fe1d-d933-4521-95ef-93e2ee02b86b",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T11:32:01.870412+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T12:51:54.612614+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
