@@ -46,20 +46,44 @@
       "security": false,
       "title": "Follow-up: Recognize the expected stacked check failure in status",
       "work": 2
+    },
+    {
+      "area": "close() in src/forge/close.py",
+      "file": "src/forge/close.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 223,
+      "outcome": "open",
+      "reason": "",
+      "round": 11,
+      "security": false,
+      "title": "[P1] Preserve ancestry when constructing the stacked review baseline",
+      "work": 2
     }
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "d71cb81d5ed7318ee019fceb04a4ce5f29b9d388b9ed57ccb4424339aed7fafc",
-    "changed": "8bc27f648f1c917b663fd4863a4bb9faae8b0ef914e4bf1fefe0b71cc9f805cc",
-    "commit": "4c9895a6c93c7601fe504fe0e8fef01b3c74cc87",
+    "branch_diff": "4e3f31d87355f68b3f73086263fe79c2ffc759af282c5e54ce3091912d3fc9a7",
+    "changed": "73cbdcb7af915e755c487c40a649f309283cedf599b93d459632862ca9a7b6b2",
+    "commit": "7ac5e2c719ed497f53e95d9ddd5a18a661e81402",
     "dismissals": [],
-    "findings": [],
-    "id": "e5867e2d-46b1-4aa4-9756-beffeb5f74fc",
-    "status": "clean"
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - main advances while a stacked child is being built, and the worker starts another round.\n`worker.prepare()` automatically merges the updated default branch into the child (src/forge/worker.py:120). In that state, `githooks.fix_base()` returns a synthetic root commit without parents (src/forge/githooks.py:203-209). Using that commit as `review_ref` makes the subsequent three-dot diff at close.py:236, or the unconditional merge-base at close.py:281, fail because it shares no ancestry with HEAD. The child therefore cannot close while its parent remains unmerged. The new nextstep.py:643 fingerprint call has the same problem for a previously reviewed child. Preserve a connected baseline or adapt these consumers to compare the synthetic trees directly; the added tests bypass this normal worker preparation path.",
+        "file": "src/forge/close.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 223,
+        "priority": "P1",
+        "title": "[P1] Preserve ancestry when constructing the stacked review baseline",
+        "work": 2
+      }
+    ],
+    "id": "bc92741d-ce48-4e1b-bec8-670ace0aef48",
+    "status": "blocked"
   },
   "round": 11,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-10-30T13:05:18.351033+00:00",
@@ -104,8 +128,17 @@
     {
       "at": "2026-11-01T01:59:01.518904+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-02T00:59:32.966149+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-02T00:59:32.966655+00:00",
+    "file": "src/forge/close.py",
+    "wait_id": "df15cf82-1ca8-4383-9767-14c165788231"
+  },
   "stuck": {
     "close": "cbb2c6aa-c062-422a-b00d-02e29d71ee43",
     "head": "19842a894d0bb0973c21dd9d13eb98aaf465d3b8",

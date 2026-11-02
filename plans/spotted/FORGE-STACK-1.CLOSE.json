@@ -12,6 +12,17 @@
       "closed_by": null
     },
     {
+      "key": "bug\tsrc/forge/close.py\t[P1] Preserve ancestry when constructing the stacked review baseline\tFORGE-STACK-1/CLOSE",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 223,
+      "text": "[P1] Preserve ancestry when constructing the stacked review baseline",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
       "key": "bug\tsrc/forge/prcheck.py\tResolve the actual default branch in the PR-check checkout\tFORGE-STACK-1/CLOSE",
       "kind": "bug",
       "path": "src/forge/prcheck.py",
