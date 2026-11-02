@@ -1,0 +1,15 @@
+{
+  "base": "ccd90f3b42239de99959952577345047f0fbc717",
+  "branch": "fix/canvas-sign-off-in-src-forge-records-py",
+  "done_when": "After round 2, a canvas sign-off with only non-P0 gaps can be accepted by the owner, the gaps are kept as known issues, sign-off continues, and a P0 still blocks.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-02T05:35:17.840538+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Canvas sign-off in src/forge/records.py (decision_accept, the branch that calls review.design_check) never reaches _signoff_review, so the owner's accept choice is read nowhere and is silently ignored. design_check in src/forge/review.py runs review.run with empty state and empty previous history, so no earlier rounds or settled findings reach the check and each run finds different P1s. A refused run never writes design_checked, so the roughly 40-minute check reruns on the same product."
+}
