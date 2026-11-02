@@ -12,6 +12,7 @@ from test_run_records import _readers_inherit_worker_environment, records
 from test_story import DOC, approved_constitution, new_story, setup, worktree
 from test_upgrade_command import (NAME, RELEASE, _repo_adopted_on_the_previous_release,
                                   unsynced_up)  # noqa: F401
+from test_worker import calls
 
 STORY = "record-review-usage"
 
@@ -63,6 +64,20 @@ def run_end(repo, kind):
             if row['event'] == 'run end' and row['kind'] == kind][-1]
 
 
+def read_usage(repo):
+    edge = repo.bin / 'claude_agent_sdk/__init__.py'
+    edge.write_text(edge.read_text('utf-8').replace(
+        '"input_tokens": 10, "output_tokens": 5',
+        '"input_tokens": 10, "cache_read_input_tokens": 800, '
+        '"cache_creation_input_tokens": 90, "output_tokens": 120'), encoding='utf-8')
+
+
+def assert_read_usage(repo):
+    end = run_end(repo, 'read')
+    spent = {**CLAUDE_SPENT, 'chat': calls(repo.bin / 'claude-calls.jsonl')[-1]['session_id']}
+    assert end | spent == end
+
+
 @pytest.mark.parametrize('case', ['review_codex', 'review_claude', 'read_codex', 'read_claude',
                                   'existing_repo'])
 def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatch, request,
@@ -94,11 +109,11 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
         setup(repo)
         where = new_story(repo, 'SHOP')
         (where / 'plans' / 'SHOP.md').write_text(DOC, 'utf-8')
-        conftest._install(repo.bin, 'claude', CLAUDE.format(python=sys.executable))
+        read_usage(repo)
         read = repo.forge('read', 'SHOP')
         assert read.returncode == 0, read.stderr
         end = run_end(repo, 'read')
-        assert end | CLAUDE_SPENT == end
+        assert_read_usage(repo)
         assert (end['model'], end['effort']) == ('opus', 'high')
     else:
         # The old proof checked only a worker round. The upgraded release must record both
@@ -118,7 +133,7 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
                  'merge', '-q', '--ff-only', f'fix/{NAME}')
         repo.git('-c', f'core.hooksPath={tmp_path / "no-hooks"}', 'push', '-q', 'origin', 'main')
         approved_constitution(repo)
-        conftest._install(repo.bin, 'claude', CLAUDE.format(python=sys.executable))
+        read_usage(repo)
         release = [sys.executable, str(up.tmp / 'releases' / RELEASE / 'forge')]
         made = subprocess.run([*release, 'story', 'new', 'SHOP', 'Shoppers can save a basket'],
                               cwd=up.folder, capture_output=True, text=True, timeout=60)
@@ -128,5 +143,5 @@ def test_1_reviews_and_reads_record_model_effort_chat_and_tokens(env, monkeypatc
                               capture_output=True, text=True, timeout=60)
         assert read.returncode == 0, read.stdout + read.stderr
         end = run_end(repo, 'read')
-        assert end | CLAUDE_SPENT == end
+        assert_read_usage(repo)
         assert (end['model'], end['effort']) == ('opus', 'high')
