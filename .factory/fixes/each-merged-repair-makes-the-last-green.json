@@ -28,28 +28,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "9cf89615d97b7f3864c1f3fed7cf8dfc27162d0b28c38c92facda8f66e549bb8",
-    "changed": "6b4708a7d5cf0343446f9d95c01cbf213fda7591df89246ead0a3d3b366a1fc6",
-    "commit": "d8b56f7ef1950b7dd9b5cb2d545e71ea55578b2d",
+    "branch_diff": "fac4cace9d3042ec397324f011b2b4084942a614277829cbb06950697c8793ed",
+    "changed": "6cafd3980fc436cced8fa6742eaaddf7f3776bdeb733215ffa925707aa7e9512",
+    "commit": "8b310805701c6d1521a7ef69f5c10ed6be3acc81",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 3, Work 2, Harm 3\nRaise: Not done\nCase: normal use - a sign-off worktree predates a sync-only merge into main.\nSuppose G has green proof, HEAD branches from G with only Forge records, and main advances to C containing only exact sync output. The first iteration checks C against HEAD and returns here before reaching G. Older or absent generated files in HEAD fail the directional exact-output check described in src/forge/sync.py:453\u2013456. Both G..main and G..HEAD satisfy the promised reuse conditions, but sign-off still demands another full run. Compare HEAD against the selected green commit rather than refusing against an intermediate commit without green proof. The new regression test misses this case because it always merges main into the sign-off worktree at tests/test_signoff_reuses_green_ancestor.py:51.",
-        "file": "src/forge/fullrun.py",
-        "follow_up": "Not done names no owner-approved Done-when item; builder details are guidance.",
-        "gain": 3,
-        "harm": 3,
-        "line": 61,
-        "priority": "P1",
-        "title": "Not done: Sign-off accepts the last green full run when every change since it is a Forge-written file or record, and a change to app code ",
-        "work": 2
-      }
-    ],
-    "id": "2d5a9e94-2888-4c5a-8d50-e8b3a0757a96",
+    "findings": [],
+    "id": "8dea08bb-2bc1-4d66-8a29-129f86aecdb4",
     "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T09:14:10.523085+00:00",
@@ -57,6 +45,10 @@
     },
     {
       "at": "2026-11-02T09:31:05.010354+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T10:25:58.295807+00:00",
       "step": "review"
     }
   ],
