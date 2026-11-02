@@ -72,7 +72,7 @@
     "status": "blocked"
   },
   "round": 1,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T17:45:36.918377+00:00",
@@ -85,8 +85,12 @@
   ],
   "stop": {
     "at": "2026-11-02T17:53:22.917115+00:00",
+    "by": "owner",
+    "choice": "more",
     "file": ".github/workflows/forge-next.yml",
-    "wait_id": "c6abdc8d-bbca-4eb5-b955-cff48c10f185"
+    "reason": "The owner chose one more round: confirm the required checks and set Node 24 for the nightly starter tests.",
+    "wait_id": "c6abdc8d-bbca-4eb5-b955-cff48c10f185",
+    "worker_round": 1
   },
   "stuck": {
     "close": null,
