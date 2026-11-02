@@ -9,6 +9,13 @@
     "start": "dd4870645aeb838223d64a3248d988e396ee3dea"
   },
   "done_when": "The sign-off screens check reviews only the attached screen images and the brief, its refusal states how many findings are open and which of them block sign-off, and source is reviewed only by the strict review.",
+  "drop": {
+    "at": "2026-11-02T10:37:56.568843+00:00",
+    "because": "The owner removed sign-off's screens check everywhere, so this fix is no longer needed.",
+    "by": "vrknetha <vrknetha@gmail.com> 1793615876 +0530",
+    "pull_request": 1300,
+    "status": "waiting for checks"
+  },
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
@@ -50,7 +57,7 @@
     "status": "clean"
   },
   "round": 2,
-  "status": "waiting for checks",
+  "status": "dropped",
   "steps": [
     {
       "at": "2026-11-02T09:56:00.929300+00:00",
@@ -63,6 +70,10 @@
     {
       "at": "2026-11-02T10:16:40.940736+00:00",
       "step": "review"
+    },
+    {
+      "at": "2026-11-02T10:37:56.569041+00:00",
+      "step": "drop"
     }
   ],
   "stop": {
