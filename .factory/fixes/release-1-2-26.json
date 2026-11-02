@@ -1,4 +1,5 @@
 {
+  "allow_large": "A version bump for a release the owner asked for touches every file that names the version.",
   "base": "78b88454dae093df5dc4265125c41eca62c319ef",
   "branch": "fix/release-1-2-26",
   "chat": {
