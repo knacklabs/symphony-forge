@@ -129,6 +129,10 @@ def land(args: argparse.Namespace) -> int:
                 if _handed_out(step, top):
                     return 0
                 continue
+            stacked_on = (repo.read_state(item, top) or {}).get("stacked_on")
+            if stacked_on and not task._merged(
+                    f"origin/{repo.default_branch(top)}", stacked_on, top):
+                return 0
             # Merged since close looked: close again, so its merged path reports and tidies.
             if not merged and _merged(top, branch):
                 merged = True

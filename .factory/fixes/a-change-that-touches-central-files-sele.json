@@ -1,0 +1,88 @@
+{
+  "base": "4cdde9ebc7c77af80b4fb1e0c339a2cba059f0fa",
+  "branch": "fix/a-change-that-touches-central-files-sele",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19277-128b-7381-b74c-d792883de405",
+    "head": null,
+    "start": "2b82c7276dab65a9d01ba28b5aebfe044df1ef0e"
+  },
+  "done_when": "When a change's related tests are more than a quarter of the suite, forge close and merge skip the laptop run and wait for the pull request's CI, in Forge's own repo and in client repos.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "test_1_broad_related_tests_wait_for_ci() in tests/test_broad_related_tests_wait_for_ci.py",
+      "file": "tests/test_broad_related_tests_wait_for_ci.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 99,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: test_1_broad_related_tests_wait_for_ci",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "25ed679f96bae66108686afb6271bfa93fd17ac2a8e2f24ba34a122e46ad7a1b",
+    "changed": "997b37df8bc9f670c7f932df94b5dd189834fc72e00d28f9c1017036b573acba",
+    "commit": "c396bd19ab913ab1bdf667fd75902c7d839caa8b",
+    "dismissals": [],
+    "findings": [],
+    "id": "60b0b9cc-87ff-4a0a-a136-b95dcd80c93b",
+    "status": "clean"
+  },
+  "round": 7,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T13:42:55.718823+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:53:00.152749+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T17:56:58.277041+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T19:25:59.377916+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T21:12:27.441821+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T01:43:32.128118+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T19:40:35.336514+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-10-31T17:53:00.195961+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "tests/test_broad_related_tests_wait_for_ci.py",
+    "reason": "Owner chose one more round: the test must prove CI is checked on the published combined head",
+    "wait_id": "9e5a2d84-0795-4ccc-983b-870afeb764a1",
+    "worker_round": 2
+  },
+  "stuck": {
+    "close": "3baabb15-9fd7-4165-bab4-6c185cb086d5",
+    "head": "697c565faf7afd85a2e186ed36105f71d9c27498",
+    "keys": {},
+    "round": 6
+  },
+  "why": "A change that touches central files selects about 3,000 related tests, which the laptop's single test place runs for hours while CI runs them again on the pull request and every other item waits.",
+  "worker": "codex"
+}

@@ -23,6 +23,12 @@ Supertest, Vitest, and Playwright. It then removes its containers and data, even
 Reports stay in `test-results/api.xml` and
 `test-results/browser.xml`.
 
+The browser smoke test checks the built page, API responses and accessibility. The four basic-screen
+rule specs in `apps/web/e2e/rules` stay off until their screens exist. Remove each screen's name from
+`pendingScreens` in `apps/web/playwright.config.ts` when you build it. The hook test command accepts
+an empty test set until the app has hooks to check. Upgrades and `forge sync` keep existing app code
+and app tests unchanged.
+
 For local work, copy `.env.example` to `.env`. Set the database URL and app origin. Run Postgres, then run:
 
 ```sh

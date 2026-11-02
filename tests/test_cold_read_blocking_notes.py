@@ -84,15 +84,12 @@ def test_1_only_blocking_notes_need_another_round(
                              encoding="utf-8")
         if blocking == "":
             # Model session loss exercises the fresh follow-up prompt as well as resume.
-            reader = READER.replace("prompt = io.TextIOWrapper", "if '--resume' in args:\n"
-                "    sys.stderr.write('No conversation found\\n')\n    sys.exit(1)\n"
-                "prompt = io.TextIOWrapper")
-            _install(repo.bin, "claude", reader.format(python=sys.executable))
+            (repo.bin / "claude-sdk-sessions.json").unlink()
         (repo.bin / "claude-says.md").write_text("3. Advisory: Prefer a shorter title.\n", encoding="utf-8")
         follow_up = repo.forge("read", "SHOP")
         assert follow_up.returncode == 0, follow_up.stdout + follow_up.stderr
         call = json.loads((repo.bin / "claude-calls.jsonl").read_text("utf-8").splitlines()[-1])
-        assert ("--resume" in call["args"]) == bool(blocking)
+        assert bool(call["options"]["resume"]) == bool(blocking)
         dispositions = call["prompt"].split("with its scores and its disposition:\n", 1)[1].split(
             "For a story,", 1)[0]
         assert "2. " + blocking + "Saving requires an account" in dispositions

@@ -1,0 +1,45 @@
+{
+  "base": "0662fec844e652ced23aff732d2e78ed58224368",
+  "branch": "fix/when-a-client-s-data-is-protected-by-law",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19307-0356-7502-a15c-c5333d5aaa99",
+    "head": null,
+    "start": "4e72b54cd09343b6e44d2eb84b6453d822c62654"
+  },
+  "done_when": "A brief that answers the personal data question as regulated makes the app's constitution list the three rules (read logging, data location, and retention with removal of old records), and the plan asks the location and retention questions before the first story.",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "10038d282d56af257ad968f2c739a726088080b0e7dfc008808d9128215c34ff",
+    "changed": "9b7bc8fdc81a33f6d3bc8181f0cb9ded6c473181371a4231d64354b2861b7ada",
+    "commit": "9310ee910775a55fd4660ee2f1592198a8bf10c2",
+    "dismissals": [],
+    "findings": [],
+    "id": "dc622927-e6d6-443c-84f8-8d74feab9259",
+    "status": "clean"
+  },
+  "round": 1,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T09:39:21.919625+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:39:30.610115+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": null,
+    "head": "7433cbe37e466238c0414a43981c3577753688ca",
+    "keys": {},
+    "round": null
+  },
+  "why": "When a client's data is protected by law, such as health or finance data, nothing changes: the app keeps no record of who read which record, the plan does not ask in which country or region the data must stay, and it does not ask how long data is kept or remove old records.",
+  "worker": "codex"
+}

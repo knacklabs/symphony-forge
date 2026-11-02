@@ -3,7 +3,6 @@
 Python dependency contracts: src/forge/templates/starter-python/apps/api/pyproject.toml
 and src/forge/templates/starter-python/apps/api/uv.lock.
 """
-import ast
 import json
 import os
 import re
@@ -19,7 +18,7 @@ import pytest
 pytest_plugins = ("test_notes_first_discovery",)
 
 from test_setup import _fresh_client
-from test_defaults_formats import DOWNLOAD_FLOW, FORMAT_FLOW, PYTHON_CSV_API_CASES
+from test_defaults_formats import PYTHON_CSV_API_CASES
 from test_defaults_organisations import PYTHON_ORGANISATION_API_CASES
 from test_starter_tree import (
     BROWSER_FLOWS,
@@ -285,7 +284,7 @@ def test_1_a_python_backend_app_starts_from_the_fastapi_starter(
             live["api"],
             API_SECURITY_TESTS + PYTHON_ORGANISATION_API_CASES + PYTHON_CSV_API_CASES,
         )
-        _require_cases(live["browser"], BROWSER_FLOWS + (FORMAT_FLOW, DOWNLOAD_FLOW))
+        _require_cases(live["browser"], BROWSER_FLOWS)
 
 
 @pytest.mark.platform
@@ -338,80 +337,3 @@ def test_2_an_import_of_another_modules_internals_fails_the_tests(case, request)
     finally:
         if injected.exists():
             injected.unlink()
-
-
-def _rename_project_response_field(folder: Path):
-    schema_path = folder / "apps/api/app/projects/schema.py"
-    schema = schema_path.read_text(encoding="utf-8")
-    tree = ast.parse(schema)
-    response_classes = []
-    for node in tree.body:
-        if not isinstance(node, ast.ClassDef):
-            continue
-        has_name = any(
-            isinstance(statement, ast.AnnAssign)
-            and isinstance(statement.target, ast.Name)
-            and statement.target.id == "name"
-            for statement in node.body
-        )
-        if has_name and node.name == "Project":
-            response_classes.append(node)
-    assert response_classes, "the public Project response model has no name field"
-    lines = schema.splitlines(keepends=True)
-    [response] = response_classes
-    field = next(
-        statement for statement in response.body
-        if isinstance(statement, ast.AnnAssign)
-        and isinstance(statement.target, ast.Name)
-        and statement.target.id == "name"
-    )
-    changed, count = re.subn(r"^(\s*)name(?=\s*:)", r"\1title", lines[field.lineno - 1])
-    assert count == 1
-    lines[field.lineno - 1] = changed
-    schema_path.write_text("".join(lines), encoding="utf-8")
-    return schema_path, schema
-
-
-def _run_api_types_and_typecheck(folder: Path):
-    generated = subprocess.run(
-        ["corepack", "pnpm", "run", "api-types"], cwd=folder,
-        capture_output=True, text=True, encoding="utf-8", timeout=180,
-    )
-    assert generated.returncode == 0, generated.stdout + generated.stderr
-    checked = subprocess.run(
-        ["corepack", "pnpm", "run", "typecheck"], cwd=folder,
-        capture_output=True, text=True, encoding="utf-8", timeout=180,
-    )
-    return checked
-
-
-@pytest.mark.platform
-@pytest.mark.timeout(1800)
-@pytest.mark.parametrize("case", ["clean", "the API renames a field"])
-def test_3_the_tests_fail_when_the_api_changes_a_field_the_web_app_uses(case, request):
-    # Audit: the generated OpenAPI types must reach the web type checker. A stale or disconnected
-    # generation step lets API response changes compile. Existing React starter tests do not have
-    # a Python OpenAPI source. The test runs the root commands, with no test-only production seam.
-    scripts = json.loads((PYTHON_STARTER / "package.json").read_text(encoding="utf-8"))["scripts"]
-    assert "api-types" in scripts["test"] and scripts["test"].index("api-types") < scripts["test"].index("typecheck")
-    assert "../../libs/shared/api-types/openapi.json" in scripts["api-types"]
-    assert "openapi-typescript libs/shared/api-types/openapi.json -o libs/shared/api-types/src/api-types.ts" in scripts["api-types"]
-    project_contracts = (PYTHON_STARTER / "libs/projects/contracts/src/index.ts").read_text(encoding="utf-8")
-    assert "@app/shared-api-types" in project_contracts
-    if not LIVE:
-        return
-
-    folder = request.getfixturevalue("live_python_starter")["folder"]
-    if case == "clean":
-        checked = _run_api_types_and_typecheck(folder)
-        assert checked.returncode == 0, checked.stdout + checked.stderr
-        return
-
-    schema_path, original = _rename_project_response_field(folder)
-    try:
-        checked = _run_api_types_and_typecheck(folder)
-        output = checked.stdout + checked.stderr
-        assert checked.returncode != 0, output
-        assert re.search(r"libs[/\\]+projects[/\\]+web[/\\]+src[/\\]+", output), output
-    finally:
-        schema_path.write_text(original, encoding="utf-8")

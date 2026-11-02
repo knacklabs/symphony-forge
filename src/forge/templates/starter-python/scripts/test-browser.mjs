@@ -26,7 +26,7 @@ for (const [index, file] of files.entries()) {
   const report = resolve(reports, `${index}.zip`);
   const pattern = `apps/web/e2e/${file.replaceAll('\\', '/')}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$';
   const status = run(corepack, ['pnpm', 'exec', 'playwright', 'test', '--config', 'apps/web/playwright.config.ts',
-    '--reporter=line,blob', '--output', `test-results/browser-artifacts/${index}`, pattern],
+    '--pass-with-no-tests', '--reporter=line,blob', '--output', `test-results/browser-artifacts/${index}`, pattern],
   { ...process.env, PLAYWRIGHT_BLOB_OUTPUT_FILE: report });
   if (status !== 0) {
     // The next file recreates the API, so the outer runner can no longer read this failure's logs.

@@ -77,7 +77,11 @@ class Refused(Exception):
 def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
     """Raise one entry of a module's REFUSALS table, filled in with values."""
     problem, next_step = entry
-    raise Refused(problem.format(**values), next_step.format(**values), code, entry)
+    def fill(text: str) -> str:
+        # Findings and engine errors are literal text, not format templates.
+        return re.sub(r"(?<!\{)\{(\w+)(![rsa])?(:[^{}]*)?\}(?!\})",
+                      lambda m: m[0].format(**values) if m[1] in values else m[0], text)
+    raise Refused(fill(problem), fill(next_step), code, entry)
 
 
 # --- git -------------------------------------------------------------------------------
@@ -214,7 +218,8 @@ def blob_bytes(top: Path, specs: list[str]) -> dict[str, bytes]:
 
 
 def run(*args: str, cwd: str | os.PathLike[str] | None = None,
-        input: str | None = None, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+        input: str | None = None, env: dict[str, str] | None = None,
+        timeout: float | None = None) -> subprocess.CompletedProcess[str]:
     """Run a program without a shell. It is looked up on PATH, so .cmd shims work on Windows."""
     exe = shutil.which(args[0])
     if exe is None:
@@ -241,11 +246,15 @@ def run(*args: str, cwd: str | os.PathLike[str] | None = None,
         reading = args[0] == "git" and args[1] in ("merge-base", "rev-parse", "ls-tree", "log", "diff")
         if reading and snapshots is not None and key in snapshots:
             return snapshots[key]
-        done = subprocess.run([exe, *args[1:]], cwd=cwd, input=(input or "").encode("utf-8"),
-                              capture_output=True,
-                              # Git hooks need the caller's worker identity.
-                              env=(os.environ if env is None else env) if args[0] == "git"
-                              else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
+        try:
+            done = subprocess.run([exe, *args[1:]], cwd=cwd, input=(input or "").encode("utf-8"),
+                                  capture_output=True, timeout=timeout,
+                                  # Git hooks need the caller's worker identity.
+                                  env=(os.environ if env is None else env) if args[0] == "git"
+                                  else {**(os.environ if env is None else env), "FORGE_WORKER": "1"})
+        except subprocess.TimeoutExpired:
+            return subprocess.CompletedProcess([exe, *args[1:]], 1, "",
+                                               f"{args[0]} did not answer within {timeout:g} seconds.\n")
         # Text mode's universal newlines, the same on every OS.
         done.stdout, done.stderr = (data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
                                     for data in (done.stdout, done.stderr))

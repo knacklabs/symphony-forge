@@ -233,35 +233,25 @@ def test_7_live_status_in_both_machine_views(env, monkeypatch, request, case):
                 events.replace("\n", "\n            ") + 'asked = {"stub-ask-1"'), "utf-8")
         elif case in ("claude", "claude error") or case.startswith("read") and case.endswith("claude"):
             worker = not case.startswith("read")
-            stub = repo.bin / ("claude_agent_sdk/__init__.py" if worker else "claude")
+            stub = repo.bin / "claude_agent_sdk/__init__.py"
             events = ""
             if "default" in case:
-                event = {"type": "system", "subtype": "init", "model": model}
-                events += f'print({json.dumps(event)!r}, flush=True)\n'
-                event = {"type": "control_response", "response": {"subtype": "success", "request_id": "forge-live-settings", "response": {"applied": {"model": model, "effort": effort}}}}
-                events += 'assert any(e.get("request", {}).get("subtype") == "get_settings" for e in input_events)\n'
-                events += f'print({json.dumps(event)!r}, flush=True)\n'
+                events += f'yield SystemMessage("init", {{"model": {model!r}, "effort": {effort!r}}})\n'
             for tool, inputs in (("Edit", {"file_path": "src/forge/close.py"}),
                                  ("Bash", {"command": "git commit -m Done"})):
-                if worker:
-                    events += f'yield AssistantMessage([ToolUseBlock({tool!r}, {tool!r}, {inputs!r})], options.model)\n' + gate
-                else:
-                    event = {"type": "assistant", "message": {"content": [
-                        {"type": "tool_use", "name": tool, "input": inputs}]}}
-                    events += f'print({json.dumps(event)!r}, flush=True)\n' + gate
+                events += f'yield AssistantMessage([ToolUseBlock({tool!r}, {tool!r}, {inputs!r})], options.model)\n' + gate
             source = stub.read_text("utf-8")
             question = "Question: May I reuse the parser?"
+            marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
             if worker:
-                marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
                 replacement = events + f'yield AssistantMessage([TextBlock({question!r})], options.model)\n'
                 if case == "claude error":
                     replacement = events + ('yield ResultMessage(subtype="error_during_execution", is_error=True, '
                         'session_id=session, result="", errors=["Provider connection closed"])\nreturn\n')
-                replacement = "".join("    " + line + "\n" for line in replacement.splitlines())
                 source = source.replace('"stub claude: built it\\n"', repr(question))
             else:
-                marker = 'said = here / "claude-says.md"'
-                replacement = events + 'print(json.dumps({"type": "result", "result": "No findings."}), flush=True)\nraise SystemExit(0)\n'
+                replacement = events + 'yield ResultMessage(session_id=session, result="No findings.")\nreturn\n'
+            replacement = "".join("    " + line + "\n" for line in replacement.splitlines())
             stub.write_text(source.replace(marker, replacement), "utf-8")
         elif case.startswith("review"):
             stub = (Path(os.environ["HOME"]) / ".claude/skills/autoreview/scripts/autoreview"

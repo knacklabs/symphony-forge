@@ -10,13 +10,14 @@ import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import tomllib
 from pathlib import Path
 
 import pytest
 
 from test_setup import _fresh_client
-from test_starter_tree import _LIVE_RUNS, LIVE, _junit_cases, _run_live_starter
+from test_starter_tree import _LIVE_RUNS, LIVE, _run_live_starter
 from test_worker import calls, install_claude
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -73,6 +74,7 @@ def _assert_api_output(client: Path, plural: str, one: str, shell_paths: set[str
         f"libs/{plural}/server/src/{plural}.module.ts",
         f"libs/{plural}/server/src/{plural}.permissions.ts",
         f"libs/{plural}/server/src/{plural}.service.ts",
+        f"libs/{plural}/server/src/{plural}.tools.ts",
         f"apps/api/prisma/schema/{plural}.prisma",
         "apps/api/test/" + plural + ".e2e-spec.ts",
         "apps/api/prisma/schema/base.prisma",
@@ -137,24 +139,15 @@ def _assert_python_api_output(
         f"apps/api/app/{plural}/service.py",
         f"apps/api/app/{plural}/routes.py",
         f"apps/api/app/{plural}/permissions.py",
+        f"apps/api/app/{plural}/tools.py",
         f"apps/api/tests/test_{plural}.py",
         "apps/api/tests/test_module_schemas.py",
         f"libs/{plural}/contracts/package.json",
         f"libs/{plural}/contracts/tsconfig.json",
         f"libs/{plural}/contracts/src/index.ts",
-        f"libs/{plural}/web/package.json",
-        f"libs/{plural}/web/project.json",
-        f"libs/{plural}/web/tsconfig.json",
-        f"libs/{plural}/web/src/hooks/{plural}-hooks.ts",
-        f"libs/{plural}/web/src/hooks/{plural}-hooks.test.tsx",
-        f"libs/{plural}/web/src/pages/{plural}-page.tsx",
-        f"apps/web/e2e/{plural}.spec.ts",
         "apps/api/app/main.py",
         "apps/api/migrations/env.py",
         "apps/api/pyproject.toml",
-        "apps/web/src/app.tsx",
-        "apps/web/src/components/app-shell.tsx",
-        "apps/web/package.json",
         "pnpm-lock.yaml",
     }
     assert required <= shell_paths
@@ -217,9 +210,22 @@ def _assert_python_api_output(
     return migration_path
 
 
+def _copy_earlier_starter(destination: Path) -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        archive = Path(directory) / "starter.tar"
+        subprocess.run(
+            ["git", "archive", "--format=tar", f"--output={archive}",
+             "3255f9c326e5eb579f755d6e7a1e298701ff15f9:src/forge/templates/starter"],
+            cwd=ROOT, check=True, capture_output=True,
+        )
+        extracted = Path(directory) / "starter"
+        shutil.unpack_archive(archive, extracted)
+        shutil.copytree(extracted, destination, dirs_exist_ok=True)
+
+
 def _adopted_starter(repo) -> Path:
     shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
-    shutil.copytree(STARTER, repo.path, dirs_exist_ok=True)
+    _copy_earlier_starter(repo.path)
     permissions = repo.path / "libs/projects/server/src/projects.permissions.ts"
     original_permissions = permissions.read_text("utf-8")
     customised_permissions = original_permissions.replace(
@@ -241,7 +247,7 @@ def _adopted_starter(repo) -> Path:
 
 def _adopted_python_starter(repo) -> Path:
     shutil.copytree(ADOPTED, repo.path, dirs_exist_ok=True)
-    shutil.copytree(STARTER, repo.path, dirs_exist_ok=True)
+    _copy_earlier_starter(repo.path)
     shutil.copytree(PYTHON_STARTER, repo.path, dirs_exist_ok=True)
     permissions = repo.path / "apps/api/app/projects/permissions.py"
     original_permissions = permissions.read_text("utf-8")
@@ -384,37 +390,40 @@ def require_feature_cases(cases: list[str], report: str, expected) -> None:
 
 @pytest.mark.platform
 @pytest.mark.timeout(1800)
-@pytest.mark.parametrize("starter", ["typescript", "python"])
+@pytest.mark.parametrize("starter", ["typescript", "python", "earlier adopted"])
 def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_factory, starter):
-    # Audit: the item 1 lines must give the feature its screens, wiring and tests, and the app's
-    # own run must pass them through the real API, database and browser. A missing route,
-    # sidebar or search item, a form without a field's control or that shows no field's error and
-    # focus, a required link the form cannot fill, a list that forgets its
-    # filters on reload, or a detail screen without its recent changes fails the live flows.
-    # The existing generated TypeScript feature run and Python projects run do not cover a
-    # generated Python feature or a public hyphenated slug crossing API permissions and web
-    # access. The app's reports own this behavior, with no test seam.
+    # Audit: the real command must retain API output and leave all web bytes alone.
+    # Old coverage required pages; this catches rendering or wiring that survives removal.
+    # No production seam is needed, and the live API reports still own runtime behavior.
     starter_name = "react" if starter == "typescript" else "python"
-    client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
-    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    if starter == "earlier adopted":
+        client = _adopted_starter(repo)
+    else:
+        client, initialized = _fresh_client(repo, gh, tmp_path, "--starter", starter_name)
+        assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    web_before = {path.relative_to(client): path.read_bytes()
+                  for path in (client / "apps/web").rglob("*") if path.is_file()}
+    lock_before = (client / "pnpm-lock.yaml").read_text("utf-8")
     written = set()
     for line in (CLIENT_LINE, JOBS_LINE):
         result = _run_line(repo, client, SHELLS[0], line)
         assert result.returncode == 0, result.stdout + result.stderr
         written |= _written_paths(result, client)
-    web_paths = {
-        "libs/jobs/web/package.json", "libs/jobs/web/project.json", "libs/jobs/web/tsconfig.json",
-        "libs/jobs/web/src/index.ts", "libs/jobs/web/src/hooks/jobs-hooks.ts",
-        "libs/jobs/web/src/hooks/jobs-hooks.test.tsx", "libs/jobs/web/src/pages/jobs-page.tsx",
-        "libs/jobs/web/src/pages/job-detail-page.tsx", "libs/jobs/web/src/pages/job-form-dialog.tsx",
-        "apps/web/e2e/jobs.spec.ts", "apps/web/src/app.tsx", "apps/web/src/components/app-shell.tsx",
-        "apps/web/package.json",
-    }
-    assert web_paths <= written
-    web = json.loads((client / "libs/jobs/web/project.json").read_text("utf-8"))
-    assert web["tags"] == ["type:web", "scope:jobs"]
+    assert not any("/web/" in path or path.startswith("apps/web/") for path in written)
+    assert not (client / "libs/jobs/web").exists()
+    assert {path.relative_to(client): path.read_bytes()
+            for path in (client / "apps/web").rglob("*") if path.is_file()} == web_before
+
+    def web_importer(lock):
+        return re.search(r"(?ms)^  apps/web:.*?(?=^  [^ ]|\Z)", lock)[0]
+
+    assert web_importer((client / "pnpm-lock.yaml").read_text("utf-8")) == web_importer(lock_before)
     if starter == "python":
         _assert_python_api_output(client, "jobs", "job", written)
+    else:
+        _assert_api_output(client, "jobs", "job", written)
+    if starter == "earlier adopted":
+        return
     if LIVE:
         live = (feature_live_run(repo, gh, tmp_path_factory) if starter == "typescript"
                 else feature_python_live_run(repo, gh, tmp_path_factory))
@@ -447,17 +456,6 @@ def test_2_the_new_feature_works_like_projects(repo, gh, tmp_path, tmp_path_fact
                 "test_an_agent_searches_reads_creates_and_updates_notes_through_mcp_as_its_account",
                 "test_a_member_agent_cannot_delete_or_restore_a_note_through_mcp",
             ))
-        require_feature_cases(live["browser"], "jobs.spec.ts", (
-            "create, view, edit, and delete a job",
-            "a reloaded jobs list link keeps its search, filters and page",
-            "a job's detail screen shows its recent changes",
-        ))
-        if starter == "python":
-            require_feature_cases(live["browser"], "sales-orders.spec.ts", (
-                "create, view, edit, and delete a sales order",
-            ))
-        # A required link: the form checks and focuses it, and the flows link each task to a job.
-        require_feature_cases(live["browser"], "tasks.spec.ts", ("create, view, edit, and delete a task",))
 
 
 def _assert_kind_indexes(migration: str, kinds: dict, schema: str, model: str, field: dict) -> None:
@@ -668,11 +666,6 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
             require_feature_cases(live["api"], "test_jobs", (
                 "test_records_each_job_change_in_the_change_history",
             ))
-            require_feature_cases(
-                _junit_cases(live["folder"] / "test-results/formats.xml"),
-                "jobs-hooks.test.tsx",
-                ("job hooks",),
-            )
         return
 
     migration_paths = list((client / "apps/api/prisma/migrations").glob("*_*jobs/migration.sql"))
@@ -743,8 +736,6 @@ def test_4_the_feature_keeps_history_and_its_tests_pass_at_once(
         for plural, one in (("clients", "client"), ("jobs", "job"), ("notes", "note")):
             require_feature_cases(live["api"], f"{plural}.e2e-spec.ts",
                                   (f"records each {one} change in the change history",))
-            require_feature_cases(_junit_cases(live["folder"] / "test-results/formats.xml"),
-                                  f"{plural}-hooks.test.tsx", (f"{one} hooks",))
 
 
 @pytest.mark.platform
@@ -847,6 +838,8 @@ def test_6_unsupported_apps_refuse_without_changing_the_worktree(repo, gh, tmp_p
 
 SHELLS = [shutil.which("bash"), *([shutil.which("zsh")] if shutil.which("zsh") else [])]
 assert SHELLS[0], "The planner command must run through bash -c."
+# Collection includes optional shells; shared command helpers use installed shells only.
+SHELL_CASES = [SHELLS[0], shutil.which("zsh") or "zsh"]
 
 
 def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
@@ -901,16 +894,18 @@ def _assert_feature_guidance(repo, client: Path, log: Path) -> None:
 @pytest.mark.platform
 @pytest.mark.parametrize("starter,case", [("typescript", "parser"),
                          *[(starter, shell) for starter in ("typescript", "python")
-                           for shell in SHELLS]],
+                           for shell in SHELL_CASES]],
                          ids=["generated-contracts",
                               *[f"{starter}-{Path(shell).name}"
-                                for starter in ("typescript", "python") for shell in SHELLS]])
+                                for starter in ("typescript", "python") for shell in SHELL_CASES]])
 def test_1_feature_contracts_parse_and_plan_lines_build_in_one_step(repo, gh, tmp_path, starter, case):
     # The command line is the contract; each shell preserves it, and generated source parses.
     # Separate tests previously duplicated this criterion and let parser and command cases drift.
     if case == "parser":
         _generated_contracts_and_link_tests_parse_and_cursors_encode(repo, gh, tmp_path)
     else:
+        if not shutil.which(case):
+            pytest.skip(f"{Path(case).name} is not installed on this runner")
         _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, case, starter)
 
 
@@ -935,6 +930,17 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             ("clients", "client", CLIENT_LINE),
             ("jobs", "job", JOBS_LINE),
         ):
+            # Audit: feature wiring adds relations and a catalog entry without changing
+            # existing auth models or catalog entries. Replacing an old app's content
+            # must fail, while new-only auth tables are valid. Whole-file equality
+            # cannot express that contract; use the existing command, with no seam.
+            shared_before = {
+                rel: (client / rel).read_text("utf-8")
+                for rel in (
+                    "apps/api/prisma/schema/auth.prisma",
+                    "apps/api/test/database.e2e-spec.ts",
+                )
+            } if starter == "typescript" else {}
             result = _run_line(repo, client, shell, line)
             assert result.returncode == 0, result.stdout + result.stderr
             written = _written_paths(result, client)
@@ -947,11 +953,39 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
             outputs[label][plural] = {
                 rel: (client / rel).read_bytes() for rel in written
             }
+            if starter == "typescript":
+                model = one.capitalize()
+                additions = {
+                    "apps/api/prisma/schema/auth.prisma": "\n" + "\n".join(
+                        f'  {verb}{plural.capitalize()} {model}[] @relation("{model}{relation}By")'
+                        for verb, relation in (
+                            ("created", "Created"), ("modified", "Modified"), ("deleted", "Deleted"),
+                        )
+                    ),
+                    "apps/api/test/database.e2e-spec.ts": f" {model}: '{plural}',",
+                }
+                for rel, addition in additions.items():
+                    after = (client / rel).read_text("utf-8")
+                    assert after.count(addition) == 1, rel
+                    assert after.replace(addition, "", 1) == shared_before[rel], rel
+                    # Compare only this feature's addition across releases. The preservation
+                    # assertion above checks every other character, with native newlines read as LF.
+                    outputs[label][plural][rel] = addition.encode("utf-8")
             assert migration in [client / rel for rel in written]
         if log is not None:
             _assert_feature_guidance(repo, client, log)
 
     for plural in ("clients", "jobs"):
+        # Earlier apps keep their screen importers. Compare the generated API/feature blocks;
+        # test_2 owns preservation of the app's web files and web importer.
+        for label in outputs:
+            lock = outputs[label][plural]["pnpm-lock.yaml"].decode("utf-8")
+            importers = re.findall(
+                rf"(?ms)^  (?:apps/api|libs/{re.escape(plural)}/(?:contracts|server)):.*?(?=^  \S|^\S|\Z)",
+                lock,
+            )
+            assert len(importers) == (3 if starter == "typescript" else 1), lock
+            outputs[label][plural]["pnpm-lock.yaml"] = "".join(importers).encode("utf-8")
         assert _normalized_outputs(outputs["new"][plural]) == _normalized_outputs(
             outputs["adopted"][plural])
 
@@ -1045,7 +1079,6 @@ def _plan_line_builds_the_feature_in_one_step(repo, gh, tmp_path, shell, starter
     for plural, one, expected in (
         ("classrooms", "class", "reserved"),
         ("assignments", "project", "already exists"),
-        ("pages", "page", "already a name in the feature's screens"),
     ):
         before = repo.git("status", "--porcelain", cwd=new_client)
         refused = _run_line(
