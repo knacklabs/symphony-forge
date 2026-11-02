@@ -82,7 +82,7 @@
     "id": "bc92741d-ce48-4e1b-bec8-670ace0aef48",
     "status": "blocked"
   },
-  "round": 11,
+  "round": 12,
   "status": "fixing",
   "steps": [
     {
@@ -144,10 +144,10 @@
     "worker_round": 11
   },
   "stuck": {
-    "close": "cbb2c6aa-c062-422a-b00d-02e29d71ee43",
-    "head": "19842a894d0bb0973c21dd9d13eb98aaf465d3b8",
+    "close": "9c2ffee8-56dc-4c8e-8b02-07af3fffe49c",
+    "head": "acfc5b68498135906e3cbc94de7738ea58008022",
     "keys": {},
-    "round": 10
+    "round": 11
   },
   "worker": "codex"
 }
