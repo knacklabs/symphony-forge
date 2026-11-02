@@ -18,7 +18,7 @@
       "gain": 4,
       "harm": 3,
       "line": 42,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -31,7 +31,7 @@
       "gain": 4,
       "harm": 2,
       "line": 181,
-      "outcome": "open",
+      "outcome": "fixed in round 2",
       "reason": "",
       "round": 1,
       "security": false,
@@ -41,38 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "a646bd5b6b2a3817baf95105d5a8bfcdf2f3f34b9562dc97c495d72fd096c63b",
-    "changed": "485791d9e4f3738623835560664ff7585bb1087ef142f750e1a78d36744f9c90",
-    "commit": "fe7a433ceb9c973e1a216707636ace5a5bf5b088",
+    "branch_diff": "316d97215743a84452c94890b284fcce5820781a439a2698f82666fbb6d3630b",
+    "changed": "daf0dd859d2b7144ab03c7bd4b6e2161a329934851ad424316bc75c270e6391a",
+    "commit": "c02522a54885fa6243519702fce2f7a5b6848220",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "Gain 4, Work 1, Harm 3\nRaise: Functional\nCase: normal use - closing a Forge pull request after the installer job is removed.\nThe deleted windows-installers job remains required by forge.toml:8. src/forge/close.py:463 passes that list to checks.wait, and src/forge/checks.py:250 reports an absent required check as not reported. Consequently, close cannot finish even when every remaining job passes. Complete the coordinator's settings update alongside this deletion.",
-        "file": ".github/workflows/forge-next.yml",
-        "gain": 4,
-        "harm": 3,
-        "line": 42,
-        "priority": "P1",
-        "title": "Remove the deleted installer job from required checks",
-        "work": 1
-      },
-      {
-        "body": "Gain 4, Work 2, Harm 2\nRaise: Not done\nCase: normal use - the nightly full suite receives an Ubuntu 24.04 runner.\nSetting FORGE_STARTER_LIVE enables the tests, but full-suite never selects Node 24 as starter-smoke does. tests/test_starter_tree.py:165 skips both live starter stacks unless Node reports v24; tests/test_libs_layout.py:94 likewise skips live lint coverage. The [Ubuntu 24.04 image](https://raw.githubusercontent.com/actions/runner-images/main/images/ubuntu/Ubuntu2404-Readme.md) defaults to Node 22 and still serves ubuntu-latest during the [current rollout](https://github.com/actions/runner-images/issues/14748). Those nightly runs therefore skip the promised live coverage. Select Node 24 and ensure Corepack is available before running the suite.",
-        "file": ".github/workflows/forge.yml",
-        "gain": 4,
-        "harm": 2,
-        "line": 181,
-        "priority": "P1",
-        "required_done_when": true,
-        "title": "Not done: Each check runs once per pull request, and the live starter tests still run every night.",
-        "work": 2
-      }
-    ],
-    "id": "b9194018-578e-4993-a4fe-d6b9d3b10869",
-    "status": "blocked"
+    "findings": [],
+    "id": "52d17d2c-5dbe-45db-b865-958fcd7a63a9",
+    "status": "clean"
   },
   "round": 2,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T17:45:36.918377+00:00",
@@ -80,6 +58,10 @@
     },
     {
       "at": "2026-11-02T17:53:22.905649+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T17:57:54.726041+00:00",
       "step": "review"
     }
   ],
