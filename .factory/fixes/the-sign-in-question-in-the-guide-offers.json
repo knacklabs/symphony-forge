@@ -1,6 +1,13 @@
 {
   "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
   "branch": "fix/the-sign-in-question-in-the-guide-offers",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19c08-198b-7b72-a629-d0448545f61d",
+    "head": null,
+    "start": "8ac1fe5266882fb4ef2d9661e9f6e422bac72046"
+  },
   "done_when": "A new prototype's sign-in question lists email and password first, then one-time codes, then company sign-in, and states that the client chooses the method.",
   "fix_kind": "mechanical",
   "kind": "fix",
