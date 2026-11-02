@@ -33,6 +33,8 @@ REFUSALS = {
                 "forge close {other}"),
     "fix_lines": ("A fix needs a one-line why and a one-line done-when.",
                   'forge fix start "<why>" --done "<done when>"'),
+    "fix_placeholder": ("Find the problem to solve does not name a problem to fix. Nothing started.",
+                        'forge start "<the idea you want to explore>"'),
     "fix_kind": ("A prototype fix needs --kind ui, backend or mechanical.",
                  'forge fix start "<why>" --done "<done when>" --kind <kind>'),
     "not_fix": ("{branch} is not a fix, and allow-large works only inside a fix's folder.",
@@ -602,8 +604,11 @@ def fix_start(args: argparse.Namespace) -> None:
     why, done = args.why.strip(), args.done.strip()
     if args.slug is not None and not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", args.slug):
         refuse(REFUSALS["bad_slug"], slug=args.slug)
-    main = main_ref()
     slug = args.slug or re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")[:40].strip("-") or "fix"
+    problem = re.sub(r"[^a-z0-9]+", "-", why.lower()).strip("-")
+    if any(re.fullmatch(r"find-the-problem-to-solve(?:-\d+)?", value) for value in (problem, slug)):
+        refuse(REFUSALS["fix_placeholder"])
+    main = main_ref()
     taken = {ref.split("/fix/", 1)[1] for ref in git(
         "for-each-ref", "--format=%(refname)", "refs/heads/fix/", "refs/remotes/origin/fix/",
         "refs/tags/forge-start/fix/").splitlines()}

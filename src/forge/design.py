@@ -65,10 +65,12 @@ def has_app_code(top: Path, ref: str, base: str = "") -> bool:
 
 
 def working_build(top: Path, base: str) -> bool:
-    from forge import story
+    from forge import records, story
 
     def find() -> bool:
         for ref in ("HEAD", base):
+            if records.prototype_plan(top, ref):
+                return True
             names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top)
             for name in names.splitlines():
                 if not re.fullmatch(r"docs/decisions/\d{4,}-prototype-build\.md", name):
@@ -84,8 +86,8 @@ def working_build(top: Path, base: str) -> bool:
 def require_working_build(top: Path, base: str) -> None:
     if (repo.is_prototype(top, refs=(base, "HEAD")) and has_app_code(top, "HEAD", base)
             and not working_build(top, base)):
-        repo.refuse(("This prototype needs the owner's accepted request before app code can merge.",
-                     "forge decision new prototype-build"))
+        repo.refuse(("This prototype needs the owner's approved plan before app code can merge.",
+                     "forge decision new prototype-plan"))
 
 
 def check(top: Path, text: str, ref: str | None = None, *, required: bool = True) -> str | None:
@@ -144,11 +146,12 @@ def snapshot(top: Path, folder: str, ref: str | None = None) -> tuple[str, list[
 
 
 def require_prototype(top: Path, base: str) -> None:
-    from forge import story
+    from forge import records, story
 
-    next_step = ('save the screens and images in docs/design/prototype/ in a mechanical fix, '
-                 'then forge decision new prototype-design and '
-                 'forge decision accept prototype-design --by "<name>"')
+    if records.prototype_plan(top, base):
+        return
+    next_step = ('forge decision new prototype-plan, then '
+                 'forge decision accept prototype-plan --by "<name>"')
     names = repo.git("ls-tree", "-r", "--name-only", base, "--", "docs/decisions", cwd=top).splitlines()
     for name in names:
         if not re.fullmatch(r"docs/decisions/\d{4}-prototype-design\.md", name):
@@ -162,7 +165,7 @@ def require_prototype(top: Path, base: str) -> None:
                     repo.refuse(("This prototype needs PRODUCT.md from the design skill's init before a UI fix can start.",
                                  "run impeccable init, commit PRODUCT.md in a mechanical fix, then retry this UI fix"))
                 return
-    repo.refuse(("This prototype needs an approved design before a UI fix can start.", next_step))
+    repo.refuse(("This prototype needs an approved plan before a UI fix can start.", next_step))
 
 
 def prototype_tree(top: Path) -> str:
