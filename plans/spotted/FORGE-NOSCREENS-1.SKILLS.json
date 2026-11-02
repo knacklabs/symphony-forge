@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/templates/skills/impeccable/scripts/live-browser.js\tEscape saved class names before querying insert anchors\tFORGE-NOSCREENS-1/SKILLS",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "line": 2172,
+      "text": "Escape saved class names before querying insert anchors",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/templates/skills/impeccable/scripts/live-browser.js\t[P1] Allow keyboard focus to leave the Steer field\tFORGE-NOSCREENS-1/SKILLS",
+      "kind": "bug",
+      "path": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "line": 11526,
+      "text": "[P1] Allow keyboard focus to leave the Steer field",
+      "from": "blocking",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

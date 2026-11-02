@@ -8,21 +8,78 @@
     "head": null,
     "start": "ea66b1ccb60531e7f887c7b1c2575dbce2a45b3d"
   },
+  "known": [
+    {
+      "area": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 2172,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Escape saved class names before querying insert anchors",
+      "work": 2
+    },
+    {
+      "area": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+      "gain": 3,
+      "harm": 3,
+      "line": 11526,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "[P1] Allow keyboard focus to leave the Steer field",
+      "work": 2
+    }
+  ],
   "part_line_limit": 400,
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "2fd925fad4e921d14aa92b542c6ca2c40da4ec24351a4bec6f9ff811a35b6649",
+    "changed": "181f950ec93ad0ab12bb525c0bbce550b873b715400b7010ee0566d3ac7c5377",
+    "commit": "7b49147455e9aa7e64dcc4affbb808ade4f44125",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "chunk 5/6:\n\nGain 3, Work 2, Harm 3\nRaise: Functional\nCase: normal use - reloading or receiving HMR during an insert session beside an element whose first class is `w-1/2`, `md:flex` or another Tailwind class containing CSS punctuation.\nThe saved class is concatenated directly into a selector. For example, `w-1/2` produces `div.w-1/2`, causing `querySelectorAll` to throw an uncaught SyntaxError. Insert recovery calls this helper to reconstruct the anchor and placeholder, so the session cannot resume. Escape the class as a CSS identifier before constructing the selector.",
+        "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 2172,
+        "priority": "P1",
+        "title": "Escape saved class names before querying insert anchors",
+        "work": 2
+      },
+      {
+        "body": "chunk 6/6:\n\nGain 3, Work 2, Harm 3\nRaise: Functional.\nCase: normal use - navigating live mode with a keyboard on desktop.\nAfter Steer receives focus automatically, Shift+Tab to DESIGN.md triggers this blur handler, which schedules focus recovery after 120 ms. The recovery excludes editable fields but does not exclude focused buttons or links, so it moves focus back to Steer. The same happens when navigating onward to Exit or host-page buttons. Users cannot reliably reach and operate these controls by keyboard. Preserve focus when the user deliberately moves to another interactive control.\nAdds work: preserve deliberate keyboard focus; F 2 x H 2 = 4; 2 x C = 2",
+        "file": "src/forge/templates/skills/impeccable/scripts/live-browser.js",
+        "gain": 3,
+        "harm": 3,
+        "line": 11526,
+        "priority": "P1",
+        "title": "[P1] Allow keyboard focus to leave the Steer field",
+        "work": 2
+      }
+    ],
+    "id": "019767c3-f852-4087-9d35-f31fb9002e2d",
+    "status": "blocked"
+  },
   "round": 2,
-  "status": "hotspot",
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T05:14:47.798079+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T07:53:13.079947+00:00",
+      "step": "review"
     }
   ],
-  "stop": {
-    "question": "Starter ships no screens: Client repos get impeccable and emil-design-eng is stuck. It should deliver: The two skills, pinned with their licences; their `ships`; the executable bit; the installers and the doctor text.\nIt changes 15452 lines outside tests, over its limit of 400.\nThe worker tried: Ship the design skills to client repos.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
-    "size": true,
-    "tool": "codex",
-    "wait_id": "a6f351b7-f3ba-4225-b85e-b7524e4eedfa"
-  },
   "stuck": {
     "close": null,
     "head": "6f659bd6c2aa7fa51cb4cf07cb43ef361e59071d",
