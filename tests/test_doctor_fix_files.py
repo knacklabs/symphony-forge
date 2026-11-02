@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import _install
+from conftest import _install, patient
 from test_close import env  # noqa: F401
 from test_setup import _autoreview, _executable, _fresh_client, _stub_forge, _version
 
@@ -724,6 +724,18 @@ def _in_forges_own_repo_history_holds_nothing_back(repo, gh, tmp_path, monkeypat
 
 def _ui_client(repo, gh, tmp_path, monkeypatch, workers="claude") -> Path:
     client = _client(repo, gh, tmp_path, monkeypatch, workers=workers)
+    # This case owns global skill discovery for each installed host. Client init
+    # now supplies local copies, which mask a missing global install. Use Forge's
+    # own repo kind (no shipped design skills), retaining every missing-host
+    # assertion below. The delivery test owns client copies; no new seam needed.
+    def global_skills_only(folder):
+        config = folder / "forge.toml"
+        _set(folder, "forge.toml", config.read_text("utf-8").replace(
+            'repo = "client"', 'repo = "forge-source"', 1))
+        for host in (".claude", ".codex"):
+            for name in ("impeccable", "emil-design-eng"):
+                patient(lambda: shutil.rmtree(folder / host / "skills" / name))
+    _land(repo, client, "Use global design skills in Forge's own repo", global_skills_only)
     home = tmp_path / "home"
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))

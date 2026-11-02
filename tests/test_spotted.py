@@ -15,6 +15,10 @@ from test_codex_worker import _codex_repo, _sent, sdk_data  # noqa: F401 (sdk_da
 from test_task import story
 from test_worker import calls, install_claude
 
+# Shared attributes include Windows launcher byte preservation; keep these
+# existing command tests in the platform subset without changing their assertions.
+pytestmark = pytest.mark.platform
+
 STORY = "FORGE-SPOTTED-1"
 LIST = "plans/spotted.json"
 OWN = "plans/spotted/tidy-readme.json"

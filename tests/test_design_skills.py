@@ -16,6 +16,7 @@ STORY = "FORGE-NOSCREENS-1"
 # Missing ships discovery, packaging or executable mode is the credible regression.
 # Existing inventories lack old adoption, doctor and mode; no test seam is needed.
 # Installer transport has its independent owner in test_sales_install.
+@pytest.mark.platform
 @pytest.mark.parametrize("case", ["new init", "previous release", "forge repo"])
 def test_8_a_client_repo_gets_the_design_skills_and_the_installers_install_them(repo, gh, tmp_path, case):
     if case == "forge repo":
