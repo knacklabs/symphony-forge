@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-PARTWARN-1-SIZE",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T23:38:02.907374+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "de1b8c8fe2d9776fe2a0fc731784395dfa565aa4",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
