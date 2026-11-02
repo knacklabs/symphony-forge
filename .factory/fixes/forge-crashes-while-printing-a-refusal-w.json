@@ -4,12 +4,20 @@
   "done_when": "A refusal that carries review finding text or a review engine error prints exactly as written, with braces and JSON intact, and no error is raised.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T10:54:45.028057+00:00",
       "step": "start"
     }
   ],
-  "why": "Forge crashes while printing a refusal when a review finding or a review engine error contains curly braces, such as {role}, or JSON, so a client sign-off ends in an error after round 1 and the owner's stop question can be hidden (issue 1038 is the same fault)."
+  "stuck": {
+    "close": null,
+    "head": "af420256eafb7a495471c0ac71a5004a4145d659",
+    "keys": {},
+    "round": null
+  },
+  "why": "Forge crashes while printing a refusal when a review finding or a review engine error contains curly braces, such as {role}, or JSON, so a client sign-off ends in an error after round 1 and the owner's stop question can be hidden (issue 1038 is the same fault).",
+  "worker": "codex"
 }
