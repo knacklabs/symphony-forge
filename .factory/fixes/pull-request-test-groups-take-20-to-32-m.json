@@ -31,7 +31,7 @@
       "gain": null,
       "harm": null,
       "line": 1040,
-      "outcome": "open",
+      "outcome": "fixed in round 6",
       "reason": "",
       "round": 5,
       "security": false,
@@ -41,24 +41,16 @@
   ],
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "3b88ab2080c643131d18c6e3ee96e92f22206f7103cbeeb8819c33b8fdb917c4",
-    "changed": "a31aa7b9677d6b0f987e277693520457cf3ed5f756536a700d27ebdfc17126f8",
-    "commit": "10556e7e8aa9d6aaf182a89217dd8f184f86eeb2",
+    "branch_diff": "dd2d795455a4037a280a4af34ea4ac534cdf2097e3ec416ea599b895ba18b7db",
+    "changed": "eba43414a23a9a363927926b6ecead1bc89279bb775da7bea8366cb55be54f8f",
+    "commit": "18da27651f5e66702d0b55e65a9380d2d9603a08",
     "dismissals": [],
-    "findings": [
-      {
-        "body": "The timing refresh contains obsolete test IDs and misses current tests, so CI's inventory check will fail. For example, this entry names a function replaced by `test_5_the_api_records_crashes_and_accepts_private_web_reports` at tests/test_defaults_errors.py:20. Other obsolete entries appear at .test_durations:1042, :1960 and :3310. Current tests such as `test_1_broad_related_tests_wait_for_ci` also have no recorded timing. tests/test_ci_timing_inventory.py:25\u201327 explicitly rejects obsolete IDs. Reconcile the timings with the current suite after the main merges; the earlier 3,865-test inventory proof no longer describes this checkout.",
-        "file": ".test_durations",
-        "line": 1040,
-        "priority": "P1",
-        "title": "Refresh timing entries against the current test suite"
-      }
-    ],
-    "id": "c7458286-902b-437b-9794-5f0e1bb08cf0",
-    "status": "blocked"
+    "findings": [],
+    "id": "b1e17ba4-58f2-4756-8785-3f9fdc0dd7b9",
+    "status": "clean"
   },
   "round": 4,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T20:25:44.871326+00:00",
@@ -82,6 +74,10 @@
     },
     {
       "at": "2026-11-02T00:57:58.101524+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T02:51:25.328963+00:00",
       "step": "review"
     }
   ],
