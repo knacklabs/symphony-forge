@@ -11,12 +11,27 @@
   "done_when": "A refusal that carries review finding text or a review engine error prints exactly as written, with braces and JSON intact, and no error is raised.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "720d646be51013d9ff5c04312ecdb72ed411aa44dc1629dff5c759c0e5ae6ab3",
+    "changed": "933cb81ae7c7c368d817c3fe8266f6ee8fe826f6b50365fb9d1a3ec8affb6eb8",
+    "commit": "30d84ba4af77482bd20b99ef3126a68d8353bb31",
+    "dismissals": [],
+    "findings": [],
+    "id": "28a06df3-5921-4252-b506-a6332f150001",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T10:54:45.028057+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T11:03:21.061070+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
