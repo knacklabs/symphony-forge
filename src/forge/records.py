@@ -551,9 +551,13 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                             for _, f in held)
         repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
                   f"--done {quote(f'A review no longer finds: {details}')} --kind mechanical")
-        problem = ("The canvas completeness check found gaps: " + "; ".join(
-            f["title"] + ": " + f["body"] for f in opened) if canvas else
-            "Customer sign-off review found a blocking issue: " + "; ".join(f["title"] for f in opened))
+        problem = ("The canvas completeness check" if canvas else "Customer sign-off review")
+        problem += f" has {len(opened)} open findings; {len(held)} " + (
+            "blocks" if len(held) == 1 else "block") + " sign-off:\n"
+        problem += "\n".join(
+            ("Blocks sign-off: " if any(f is finding for _, finding in held)
+             else "Does not block sign-off: ") + f["title"] + ": " + f["body"]
+            for f in opened)
         repo.refuse((problem + ".", repair +
             '\nThen fix and merge it, then forge decision accept client-signoff --by "<name>"'))
     return result["commit"]

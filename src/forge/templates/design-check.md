@@ -1,7 +1,8 @@
 # Canvas completeness check
 
 Check the signed canvas against the app's brief. This is a design check, not a code review.
-Read the prototype screen images and app screens in this checkout.
+Read only the attached prototype screen images, the brief, and text in the design folder.
+Do not inspect source or report code defects. The strict review checks source separately.
 Compare the screens with the whole app brief below, including its entities, fields, options and key flows.
 Report each required screen, field, choice-list option or key flow that the prototype omits.
 Judge completeness inside this review. No separate screen list, check record, root DESIGN.md,

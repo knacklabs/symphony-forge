@@ -46,8 +46,6 @@ def _pins_the_completeness_check_and_records_what_it_checked(
     page.write_text(page.read_text("utf-8") + "\n## Owner confirmation\n" + confirmation + "\n", encoding="utf-8")
     image = fix / "docs/design/prototype/order-list.svg"
     expected_image = image.read_text("utf-8")
-    app = fix / "app.py"
-    expected_app = app.read_text("utf-8") if app.is_file() else None
     # Observe the reviewer's actual checkout, including a generated screen image.
     # Prompt filenames alone cannot prove that the engine can inspect the canvas.
     helper = Path(os.environ["AUTOREVIEW"])
@@ -99,7 +97,7 @@ runpy.run_path({str(original)!r}, run_name="__main__")
         "owner confirmation": confirmation in prompt,
         "score protocol": "Gain <g>, Work <w>, Harm <h>" in prompt,
     } == {"screen image": expected_image, "snapshot image": expected_image,
-          "app": expected_app, "snapshot app": expected_app,
+          "app": None, "snapshot app": None,
           "owner confirmation": True, "score protocol": True}
 
 

@@ -884,6 +884,13 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
                            and name not in images]
                 if omitted:
                     repo.git("rm", "-q", "--cached", "--", *omitted, cwd=tree)
+            if item == "design-check":
+                omitted = [name for name in product
+                           if Path(name).suffix.lower() not in design.IMAGES
+                           and name != "docs/product/BRIEF.md"
+                           and not (name.startswith("docs/design/") and name.endswith(".md"))]
+                if omitted:
+                    repo.git("rm", "-q", "--cached", "--", *omitted, cwd=tree)
             snapshot = repo.git("commit-tree", repo.git("write-tree", cwd=tree), "-p", review_base,
                                 "-m", "Product snapshot for sign-off", cwd=tree)
             repo.git("checkout", "-q", "-f", "--detach", snapshot, cwd=tree)
@@ -1133,6 +1140,9 @@ def design_check(top: Path, prompt: str, history: list[dict[str, Any]],
     images = [name for name in repo.git("ls-files", "-z", cwd=top).split("\0")
               if not name.startswith((*BOOKKEEPING, "docs/decisions/"))
               and Path(name).suffix.lower() in design.IMAGES]
+    if not images:
+        return {"findings": [], "dismissals": [], "blocking_level": "P1",
+                "commit": repo.git("rev-parse", "HEAD", cwd=top)}
     # The pinned helper stages each attachment under gettempdir(), with fixed-size names.
     # Leave 8K for executable, configs, schema, output and working-directory arguments.
     size = max(1, 24000 // (len(str(Path(tempfile.gettempdir()).resolve())) * 2 + 256))
