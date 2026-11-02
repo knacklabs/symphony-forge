@@ -515,6 +515,7 @@ Every API a person uses gets its screen in the client's design, built by the age
 with no need to ask. Webhooks, endpoints only agents or systems call, and background jobs get none.
 Build the prototype on the starter app. Build the basic screens first, in the client's design;
 the starter has none, and has a `Project` API. Rename or remove the `Project` placeholder.
+The app's approved sign-in answer, spec or decision decides which basic screens exist and what they hold; for another method, such as one-time codes or company sign-in, do not build the password screens.
 Build the business screens next. The demo opens on the client's business task; show the basic
 screens last.
 Push back when a requested feature does not serve the problem card: explain why and
@@ -615,7 +616,7 @@ salesperson or developer before sign-off; a default or agent-only answer does no
 | Demo workflow | Which one task should the demo let them do from start to finish? | from the problem card | must |
 | Users and roles | Who uses it, and what can each kind of user do? | admin and staff; other | must |
 | Existing systems | Which systems must this work with? | none; CRM; accounting; email or SMS; payments; company sign-in | must |
-| Sign-in | How will people sign in? | email and password; company sign-in (Google or Microsoft) | must |
+| Sign-in | How will people sign in? The client chooses the method. | email and password (default if the client gives no other answer); one-time codes; company sign-in (Google or Microsoft) | must |
 | Personal data | Will it hold personal, health or payment data, or data that must stay in one country? | none; personal only; regulated | must |
 | Production host | Where will the real app run? | our platform; the client's cloud; the client's servers | must |
 | Data import | Does data need to come in from today's tools? | no; a spreadsheet; another system | may wait |
@@ -665,30 +666,47 @@ client-signoff` (customer, demo address for a working build, and the answers pag
 approved via and approved on empty), and run `forge decision accept client-signoff --by "<name>"`
 before any reply is recorded. Put each demo step and its test under `## Proof` for a working build,
 and settled choices under `## Decisions`.
+Before the demo, the Claude agent reads the design artifact and lists its screens.
+It compares them with the app, then builds what is missing or tells the person.
+On a Codex-only host, compare the app with the design pages saved in the repo.
 Sign-off checks that the copied Answers section matches `docs/product/BRIEF.md` and that the full
-run on main is green. Its completeness review must pass after judging the screens against the whole
-brief, including its purpose, users, records, fields, choices and key flows; it does not require a
-separate screen list. Missing screens, fields, options or flows hold sign-off. When a precondition is
+run on main is green. When a precondition is
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
 sign-off with the brief and design they have after upgrade and sync; they do not need to add
 prototype design files for this gate.
-The check uses Codex's `gpt-6.1-sol` at high effort, independent of `[models.design]`.
-Codex must be installed because only Codex can review the screen images.
-On Windows, large image folders use separate batches to fit the native command line limit.
-Fix all findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
+Fix held findings from one sign-off review in one fix. Run the printed repair command from
+the sign-off checkout that the refusal names. The repair includes the sign-off record and
+publishes its earlier review commits, even when that checkout's first fix already merged.
+After the repair merges, retry `forge decision accept client-signoff` from its checkout.
+The record keeps earlier rounds and owner choices after a squash merge or a move to another computer.
+Judge a prototype as a prototype. Production work, including deployment to the client's account,
+belongs to build stories. A clearly labelled demo tool is not a P0 when the prototype holds
+only sample data and has no back end, as its own files show.
+A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Risks that exist only in a real-data build the prototype is not, such as browser-held
+codes or data in a prototype with no back end, belong to build stories and Known issues,
+not P0 findings.
+Only Harm 4 or higher, Gain 5, or a P0 holds
+the product review; every other finding goes straight to Known issues without a repair
+round or an owner question. A held finding below P0 still needs the owner's choice after two rounds.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.
 Every reviewer gets earlier findings and answers. Settled findings stay settled.
-After two rounds, P0 findings still block until fixed. Other open findings need the owner's choice.
+Only a person may write `sample_data: true` in the sign-off decision's front matter.
+It declares that the prototype holds only sample data and has no back end. After two
+rounds, a remaining P0 then stops for the owner's choice, and `--resolve accept` keeps
+it in Known issues with the owner's reason. The question explains that this accepts a
+P0 only because of the sample-data declaration. Without the field, or with
+`sample_data: false`, a P0 keeps the hard block and has no owner acceptance path.
+Earlier repos keep that hard block until a person adds the field; there is no migration.
+Other open held findings need the owner's choice after two rounds.
 Record that choice with `forge decision accept client-signoff --by "<name>" --resolve accept|more|split --reason "<human's choice>"`.
 Accept keeps the findings in the item's Known issues. Split creates a separate fix. More permits one more review.
-The canvas completeness check uses these same rounds and owner choices. Accept or split continues
-sign-off without another canvas check while the product and brief stay unchanged. A P0 still blocks.
 These rules apply to new clients and earlier-adopted clients after upgrade.
 Forge reuses passed results while what they checked stays unchanged.
 The product review uses the green full run as test evidence. It needs no separate `forge test` run.
-If the product or completeness review cannot finish, the refusal names its saved raw report when one exists.
+If the product review cannot finish, the refusal names its saved raw report when one exists.
 Before the customer's reply, the command runs these checks and stops without accepting sign-off.
 Autoreview uses the
 repo's tool and `[models.review]` settings, with Autoreview's defaults for unset values. Fix what it finds and run it again. Once it passes, tell the salesperson to ask the
@@ -709,7 +727,7 @@ A requested working prototype proves the demo steps and its security and data bo
 Its light review checks demo breakage, security and data loss, using `[models.light_review]`.
 A requested working prototype gets a light review that blocks only on P0 findings.
 A `Not done` against the item's own approved Done-when still blocks at any priority.
-Full proof is due at sign-off.
+Sign-off needs proof of the prototype demo; production proof belongs to the build stories.
 
 After sign-off, every new story carries forward the available canvas, Proof and Decisions into
 `## Proven by the prototype`. Treat that evidence as settled. Plan and cold read only new work
@@ -1576,8 +1594,14 @@ In CI mode, `forge.yml` also runs `forge test --full` once a day on the default 
 `workflow_dispatch`. To start a full run now, run `gh workflow run forge.yml --ref <default>`.
 Local mode has no scheduled job; when `forge next` says the daily run is due, run `forge test --full`
 in the main checkout when the machine is quiet. A green full run on the latest default-branch
-commit is required before pushing a release tag or accepting `client-signoff`. Everyday merges do
-not wait for it.
+commit is required before pushing a release tag. Client sign-off can reuse a green full run
+within the latest ten default-branch commits when only exact `forge sync` output or records
+under `.factory/`, `plans/` or `docs/decisions/` changed on the default branch.
+App, test or lock-file changes on the default branch need a fresh full run.
+An app repair on the sign-off branch can use the default branch's green run.
+A failed latest full run still blocks.
+Earlier clients need no migration, and accepted sign-off records stay valid. Everyday merges do
+not wait for a full run.
 A failed scheduled or manual full run appears in `forge next` with its failed test names.
 The required `forge-pr-check` fails a pull request from a branch Forge did not start.
 Before the first committed review, this check stays pending. A stale or blocked review still

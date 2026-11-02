@@ -518,12 +518,29 @@ or add a queue requirement.
 Forge's standards page follows: the same page every worker's brief carries. Check the change
 against each of its rules that applies to a concern the change has. Report every rule the change
 breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A
-rule for a concern the change doesn't have is not a finding. Where the approved story doc or the
-repo's own AGENTS.md rules differ from the page, they win.
+rule for a concern the change doesn't have is not a finding. Where the approved story doc, the
+repo's own AGENTS.md rules, the app's approved sign-in answer, specs or decisions in
+`docs/decisions` differ from the page, they win. Do not report a file that `forge sync` writes
+against the app. In an existing app, apply the rules to new and changed work. Do not ask an
+existing app to rebuild what it already has.
 
 $standards
 <!-- signoff -->
 ## Client prototype sign-off review
+Judge a prototype as a prototype. Production items, including deployment to the client's account,
+belong to the build stories. A clearly labelled demo tool is not a P0 when the prototype holds
+only sample data and has no back end, as its own files show.
+A security hole in a real API or sign-in, or any exposed real data, stays a P0.
+Risks that exist only in a real-data build the prototype is not, such as
+browser-held codes or data in a prototype with no back end, are
+build-story work and Known issues, not a P0.
+Answers about production are choices for those stories, not missing prototype work.
+Only Harm 4 or higher, Gain 5, or a P0 holds sign-off. Every other finding goes to
+Known issues without a repair round or a question to the owner.
+After two rounds, the owner may accept a remaining P0 with a reason only when a person
+wrote `sample_data: true` in the sign-off decision's front matter. This declares only
+sample data and no back end. The finding stays in Known issues. With the field absent
+or false, P0 findings keep blocking and cannot be accepted by the owner.
 Review the product diff against the customer's answers and the topic table below.
 The first review includes every tracked product file against an empty root. Later reviews
 include only product files changed since the previous sign-off review, plus a re-check of its

@@ -2,6 +2,10 @@ $summary
 
 # Worker brief
 
+"Find the problem to solve" is a discovery placeholder, not a problem for a fix.
+Forge refuses it before it creates a branch. Use `forge start "<the idea>"` to explore an idea;
+discovery asks a question and starts no fix. Workers work only on their brief.
+
 Settled findings stay settled. Each reader and reviewer gets earlier rounds' notes and answers,
 including findings already fixed or dismissed. Do not reopen them with the same finding text
 (cold reads) or title and file (reviews); report a new defect with distinct text and new evidence.
@@ -88,7 +92,7 @@ Close records a reused review against the current branch after a replay. Land re
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
 
-The client sign-off code review excludes images; the canvas completeness check reviews them.
+The client sign-off code review excludes images. Canvas-only sign-off runs no model review.
 Sign-off runs each review's independent parts side by side inside its existing machine review run.
 It keeps the same model calls and result order.
 Normal reviews, reviews of docs and assets, and sign-off reviews use the selected tool's model and optional effort from
@@ -97,7 +101,8 @@ uses Autoreview's default. New and earlier-adopted repos get this behaviour on t
 
 After a red close test, a blocking review finding or a failed required check, a build, fix or
 lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
-Design rounds keep their fixed effort. Claude uses the SDK when installed. Native rounds
+Design rounds keep their fixed effort. External Claude workers and cold reads use the Agent SDK;
+if it is missing, run `forge doctor --fix`. Cold reads use plan mode. Native rounds
 request the effort in their instructions and record it as requested.
 New repos start build, fix and lite at low effort on both tools. Existing repos keep
 their configured models and efforts; a failure round uses the higher of that effort

@@ -50,7 +50,7 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
     previous_app = repo.git("ls-tree", "HEAD", "--", "app.py", cwd=fix)
     previous_commit = repo.git("rev-parse", "HEAD", cwd=fix)
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, _report(priority)]))
+        _report(priority)]))
 
     def accept(*args):
         return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
@@ -65,9 +65,8 @@ def test_1_signoff_reviews_changes_and_bounds_rounds(repo, tmp_path, monkeypatch
         page_change.write("\n# Explain the order path\n")
     repo.git("add", changed, cwd=fix)
     repo.git("commit", "-q", "-m", "Explain the order path", cwd=fix)
-    # The product edit also invalidates the separate canvas completeness check.
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, _report(priority)]))
+        _report(priority)]))
     second = accept()
     assert second.returncode == 1, second.stdout + second.stderr
     # The earlier finding's file remains a review target even when only the
@@ -135,7 +134,11 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     (fix / "src/orders.py").write_text("print('orders')\n", encoding="utf-8")
     repo.git("add", "src/orders.py", cwd=fix)
     repo.git("commit", "-qm", "Build order flow", cwd=fix)
-    _decision(fix, answers)
+    # Keep client approval pending: owner acceptance settles a review finding,
+    # while a completed client sign-off now stays accepted without another review.
+    page = _decision(fix, answers)
+    page.write_text(page.read_text("utf-8").replace("approved_via: email\n", "").replace(
+        "approved_on: 2026-09-28\n", ""), encoding="utf-8")
     report = _report("P1")
     report["report"]["findings"][0]["code_location"]["file_path"] = "src\\orders.py"
 
@@ -143,7 +146,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
         return repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", *args, cwd=fix)
 
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+        report]), encoding="utf-8")
     assert accept().returncode == 1
     assert accept().returncode == 1
     assert set((tmp_path / "reviewed-files.txt").read_text("utf-8").splitlines()) == {"src/orders.py"}
@@ -168,7 +171,7 @@ def test_2_accepted_signoff_survives_only_unchanged_files(
     finding.update(priority=priority, title=("Order submission fails" if priority == "P0"
                                            else "Submitting an order still fails"))
     queue.write_text(json.dumps([
-        {"report": {"review_status": "scoped-clean", "findings": []}}, report]), encoding="utf-8")
+        report]), encoding="utf-8")
     retried = accept()
     assert retried.returncode == (0 if change == "other" and priority == "P1" else 1), retried.stdout + retried.stderr
     assert set((tmp_path / "reviewed-files.txt").read_text("utf-8").splitlines()) == {target}
