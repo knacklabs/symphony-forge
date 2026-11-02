@@ -1596,8 +1596,10 @@ Local mode has no scheduled job; when `forge next` says the daily run is due, ru
 in the main checkout when the machine is quiet. A green full run on the latest default-branch
 commit is required before pushing a release tag. Client sign-off can reuse a green full run
 within the latest ten default-branch commits when only exact `forge sync` output or records
-under `.factory/`, `plans/` or `docs/decisions/` changed, including on the reviewed branch.
-App, test or lock-file changes need a fresh full run. A failed latest full run still blocks.
+under `.factory/`, `plans/` or `docs/decisions/` changed on the default branch.
+App, test or lock-file changes on the default branch need a fresh full run.
+An app repair on the sign-off branch can use the default branch's green run.
+A failed latest full run still blocks.
 Earlier clients need no migration, and accepted sign-off records stay valid. Everyday merges do
 not wait for a full run.
 A failed scheduled or manual full run appears in `forge next` with its failed test names.

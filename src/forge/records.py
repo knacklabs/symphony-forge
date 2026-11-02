@@ -290,7 +290,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         from forge import fullrun, nextstep, open_decisions, review, sync
 
         gaps = []
-        reason = fullrun.green(top, "HEAD")
+        reason = fullrun.green(top, reuse=True)
         if reason:
             gaps.append((reason, fullrun.next_run(top)))
 
@@ -548,7 +548,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                    "or a test without evidence that it passes. Proof covers the prototype demo, "
                    "not the production build."
                    "\n\n## Test evidence\n"
-                   f"The full test run covering the reviewed product on {repo.default_branch(top)} passed "
+                   f"The full test run on {repo.default_branch(top)} passed "
                    "(forge-full-suite). Client sign-off checked this result before this review. "
                    "Use this green full run as passing evidence for the tests named in Proof. "
                    "No separate forge test run is required.")

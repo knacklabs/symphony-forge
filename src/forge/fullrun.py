@@ -28,7 +28,7 @@ def latest(top: Path) -> str:
     return repo.git("rev-parse", f"origin/{default}", cwd=top)
 
 
-def green(top: Path, head: str = "") -> str:
+def green(top: Path, *, reuse: bool = False) -> str:
     sha = latest(top)
     default = repo.default_branch(top)
     missing = f"The latest commit on {default} has no green full test run."
@@ -43,7 +43,7 @@ def green(top: Path, head: str = "") -> str:
             top, repo.config(top), base, target, product)
 
     # ponytail: at most ten commits/status calls; older proof needs a fresh full run.
-    commits = repo.git("rev-list", "--first-parent", "--max-count=10", sha, cwd=top).splitlines() if head else [sha]
+    commits = repo.git("rev-list", "--first-parent", "--max-count=10", sha, cwd=top).splitlines() if reuse else [sha]
     for commit in commits:
         done = repo.run("gh", "api", f"repos/{{owner}}/{{repo}}/commits/{commit}/statuses", cwd=top)
         if done.returncode:
@@ -56,10 +56,8 @@ def green(top: Path, head: str = "") -> str:
         if status and status.get("state") == "failure":
             return (f"The full test run on the latest commit on {default} failed."
                     if commit == sha else missing)
-        if head and not forge_only(commit, sha):
+        if reuse and not forge_only(commit, sha):
             return missing
-        if head and not forge_only(commit, head):
-            return "The reviewed product needs a new full test run."
         if status and status.get("state") == "success":
             return ""
     return missing

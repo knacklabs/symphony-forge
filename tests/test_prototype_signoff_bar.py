@@ -22,6 +22,22 @@ STORY = "sign-off-judges-a-sample-data-prototype"
 pytestmark = pytest.mark.platform
 
 
+@pytest.mark.parametrize("setup", [_client, _adopted_client], ids=["new", "adopted"])
+def test_5_signoff_branch_repair_uses_default_branch_green(repo, tmp_path, monkeypatch, setup):
+    # Audit: admission must not demand a main run containing an unmerged repair.
+    # Existing bar cases do not own this gate. Shared setup fakes only GitHub
+    # and the reviewer; this regression needs no new production seam.
+    fix, answers, _ = setup(repo, tmp_path, monkeypatch)
+    _request_build(repo, fix)
+    (fix / "app.py").write_text("print('repaired sample orders')\n", encoding="utf-8")
+    repo.git("add", "app.py", cwd=fix)
+    repo.git("commit", "-qm", "Repair the prototype", cwd=fix)
+    page = _decision(fix, answers)
+    accepted = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert "status: accepted" in page.read_text("utf-8")
+
+
 @pytest.mark.parametrize("setup,priority,scores,held", [
     (_client, "P1", "Gain 4, Work 1, Harm 3", False),
     (_client, "P1", "Gain 1, Work 5, Harm 4", True),

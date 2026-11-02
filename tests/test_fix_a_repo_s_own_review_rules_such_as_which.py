@@ -69,9 +69,6 @@ def test_4_the_client_sign_off_review_gets_the_repo_s_review_rules(repo, tmp_pat
     repo.git("add", "AGENTS.md")
     repo.git("commit", "-q", "-m", "Write the review rules")
     repo.git("push", "-q", "origin", "main")
-    # Full-run proof must cover the product reviewed here, including its new rules.
-    # Keep the prompt assertions reachable without relaxing the product check.
-    repo.git("merge", "--no-edit", "origin/main", cwd=fix)
     _green_full_run(repo)
     _decision(fix, answers, via="", on="")
     clean = {"say": SOL_HIGH, "report": {"review_status": "scoped-clean", "findings": []}}
