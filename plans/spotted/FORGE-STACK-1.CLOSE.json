@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "key": "bug\tsrc/forge/close.py\tRun a full review after replaying a stacked part\tFORGE-STACK-1/CLOSE",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 361,
+      "text": "Run a full review after replaying a stacked part",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/close.py\t[P1] Preserve ancestry when constructing the stacked review baseline\tFORGE-STACK-1/CLOSE",
+      "kind": "bug",
+      "path": "src/forge/close.py",
+      "line": 223,
+      "text": "[P1] Preserve ancestry when constructing the stacked review baseline",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\tsrc/forge/prcheck.py\tResolve the actual default branch in the PR-check checkout\tFORGE-STACK-1/CLOSE",
+      "kind": "bug",
+      "path": "src/forge/prcheck.py",
+      "line": 355,
+      "text": "Resolve the actual default branch in the PR-check checkout",
+      "from": "blocking",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe plan-file allowlist rejects the existing ideas file and fails CI.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The plan-file allowlist rejects the existing ideas file and fails CI.",
+      "from": "worker",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_guide.py\tThe checked-in guides lack the incoming batch CI repair guidance and fail the guide check.",
+      "kind": "bug",
+      "path": "tests/test_tools_guide.py",
+      "line": 16,
+      "text": "The checked-in guides lack the incoming batch CI repair guidance and fail the guide check.",
+      "from": "worker",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/prcheck.py\tFollow-up: Recognize the expected stacked check failure in status",
+      "kind": "edge",
+      "path": "src/forge/prcheck.py",
+      "line": 359,
+      "text": "Follow-up: Recognize the expected stacked check failure in status",
+      "from": "review",
+      "item": "FORGE-STACK-1/CLOSE",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}
