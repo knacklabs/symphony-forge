@@ -188,6 +188,10 @@ jobs:
         with:
           fetch-depth: 0
       - run: git remote set-head origin --auto
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: corepack enable
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
