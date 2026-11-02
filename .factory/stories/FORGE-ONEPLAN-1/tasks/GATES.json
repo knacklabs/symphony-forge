@@ -1,11 +1,19 @@
 {
   "branch": "task/FORGE-ONEPLAN-1-GATES",
   "part_line_limit": 400,
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T18:26:51.976870+00:00",
       "step": "start"
     }
-  ]
+  ],
+  "stuck": {
+    "close": null,
+    "head": "047ed7065a8aacd299dee628efed888d5c0dd7af",
+    "keys": {},
+    "round": null
+  },
+  "worker": "codex"
 }
