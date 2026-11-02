@@ -4,12 +4,20 @@
   "done_when": "Client sign-off no longer runs or refuses on the canvas completeness check for either kind of prototype, its template and model call are deleted, the product sign-off review still runs for working prototypes, and earlier accepted sign-off records stay as they are.",
   "fix_kind": "backend",
   "kind": "fix",
-  "status": "started",
+  "round": 1,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T10:39:49.970692+00:00",
       "step": "start"
     }
   ],
-  "why": "The canvas completeness check is a separate AI model call that runs on every client sign-off, for prototypes with a working app and for canvas-only ones, and it can hold sign-off over screen gaps the owner no longer wants checked, because the design lives in the artifact and the client approves a demo."
+  "stuck": {
+    "close": null,
+    "head": "0c2c81887b123c65f93948de18ec841bf980f468",
+    "keys": {},
+    "round": null
+  },
+  "why": "The canvas completeness check is a separate AI model call that runs on every client sign-off, for prototypes with a working app and for canvas-only ones, and it can hold sign-off over screen gaps the owner no longer wants checked, because the design lives in the artifact and the client approves a demo.",
+  "worker": "codex"
 }
