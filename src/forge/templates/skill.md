@@ -515,6 +515,7 @@ Every API a person uses gets its screen in the client's design, built by the age
 with no need to ask. Webhooks, endpoints only agents or systems call, and background jobs get none.
 Build the prototype on the starter app. Build the basic screens first, in the client's design;
 the starter has none, and has a `Project` API. Rename or remove the `Project` placeholder.
+The app's approved sign-in answer, spec or decision decides which basic screens exist and what they hold; for another method, such as one-time codes or company sign-in, do not build the password screens.
 Build the business screens next. The demo opens on the client's business task; show the basic
 screens last.
 Push back when a requested feature does not serve the problem card: explain why and

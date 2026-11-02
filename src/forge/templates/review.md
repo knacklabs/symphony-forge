@@ -518,8 +518,11 @@ or add a queue requirement.
 Forge's standards page follows: the same page every worker's brief carries. Check the change
 against each of its rules that applies to a concern the change has. Report every rule the change
 breaks as a P1 finding titled `Standard: <the rule it breaks>`, quoting the rule in the body. A
-rule for a concern the change doesn't have is not a finding. Where the approved story doc or the
-repo's own AGENTS.md rules differ from the page, they win.
+rule for a concern the change doesn't have is not a finding. Where the approved story doc, the
+repo's own AGENTS.md rules, the app's approved sign-in answer, specs or decisions in
+`docs/decisions` differ from the page, they win. Do not report a file that `forge sync` writes
+against the app. In an existing app, apply the rules to new and changed work. Do not ask an
+existing app to rebuild what it already has.
 
 $standards
 <!-- signoff -->
