@@ -271,11 +271,10 @@ def decision_accept(args: argparse.Namespace) -> None:
 
         prototype_tree = design.prototype_tree(top)
     signed = Path(rel).stem.endswith("client-signoff")
-    recheck = signed and bool(fields.get("design_checked"))
-    if status == "accepted" and not recheck and (not prototype_tree or fields.get("design_tree") == prototype_tree):
+    if status == "accepted" and (not prototype_tree or fields.get("design_tree") == prototype_tree):
         print(f"{rel} is already accepted.")
         return
-    if status != "proposed" and not ((prototype_tree or recheck) and status == "accepted"):
+    if status != "proposed" and not (prototype_tree and status == "accepted"):
         repo.refuse(REFUSALS["not_proposed"], rel=rel, status=status)
     if Path(rel).stem.endswith("-app-constitution"):
         missing = _constitution_gaps(top, by)
@@ -374,10 +373,8 @@ def decision_accept(args: argparse.Namespace) -> None:
         if gaps:
             repo.refuse(("Client sign-off needs these changes:\n{gaps}", ""), gaps="\n".join(
                 f"- {problem} Next: {action}" for problem, action in gaps))
-        product_hash = _digest("\0".join(product))
-        brief_hash = _digest(brief)
         signoff = json.loads(_text(top / ".factory/client-signoff.json") or "{}")
-        previous = signoff.get("canvas", {}).get("review") or signoff.get("review") or {}
+        previous = signoff.get("review") or {}
         generated_only = False
         if previous.get("commit"):
             changed = repo.git("diff", "--name-only", "-z", previous["commit"], "HEAD", cwd=top).strip("\0").split("\0")
@@ -385,17 +382,6 @@ def decision_accept(args: argparse.Namespace) -> None:
                 (*review.BOOKKEEPING, "docs/decisions/"))]
             generated_only = not (set(changed) - sync.synced(
                 top, repo.config(top), previous["commit"], "HEAD", changed))
-        if (fields.get("design_checked") != product_hash and not generated_only
-                or fields.get("brief_checked") != brief_hash):
-            prompt = (Path(__file__).parent / "templates/design-check.md").read_text(encoding="utf-8")
-            prompt += "\n\n## App brief\n" + brief
-            prompt += f"\n\n## Sign-off record: {rel}\n{text}"
-            _signoff_review(top, args, quote, "", unchanged=generated_only, canvas=prompt)
-            if signoff.get("canvas", {}).get("stop"):
-                # The canvas loop consumed this choice; the code review has its own stop.
-                args = argparse.Namespace(**{**vars(args), "resolve": None, "reason": None})
-            text = _set(text, design_checked=product_hash, brief_checked=brief_hash)
-            _write(top / rel, text)
         checked = _digest(json.dumps([product, quote, [sections.get(name, "") for name in SIGNOFF_SECTIONS],
                                      story.agents_section(top, "Review rules"), constitution(top)]))
         if working and (fields.get("review_checked") != checked or not fields.get("reviewed_commit")):
@@ -406,7 +392,7 @@ def decision_accept(args: argparse.Namespace) -> None:
         if not replied:  # so the customer is only asked to approve a reviewed version
             _write(top / rel, text)
             repo.commit_state("Save the sign-off checks", rel, top=top)
-            result = "The sign-off review passed" if working else "The canvas completeness check passed"
+            result = "The sign-off review passed" if working else "The sign-off checks passed"
             return print(result + "; you can now ask the customer's named person "
                          "for sign-off. Record their reply in approved_via and approved_on, then "
                          f"{next_step}")
@@ -487,19 +473,18 @@ def _signoff_known(top: Path, result: dict[str, Any], round_number: int) -> None
 
 
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
-                    *, unchanged: bool = False, canvas: str = "", sample_data: bool = False) -> str:
+                    *, unchanged: bool = False, sample_data: bool = False) -> str:
     """Keep sign-off rounds in the record across squash merges and reuse owner choices."""
     from forge import close, review, score
 
     rel = ".factory/client-signoff.json"
     document = json.loads(_text(top / rel) or "{}")
-    saved = document.setdefault("canvas", {}) if canvas else document
+    saved = document
     previous = saved.get("review") or {}
     inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
-    section = "canvas" if canvas else ""
     history = saved.get("rounds") or review._history(
-        top, "client-signoff", "", previous, path=rel, section=section)
-    if not canvas and previous:
+        top, "client-signoff", "", previous, path=rel)
+    if previous:
         _signoff_known(top, previous, len(history))
         history[-1] = previous
         saved["rounds"] = history
@@ -553,10 +538,10 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     skill = (Path(__file__).parent / "templates" / "skill.md").read_text(encoding="utf-8")
     table = re.search(r"^\| Topic \|.*?(?=\n\n)", skill, re.M | re.S)
     block = (Path(__file__).parent / "templates" / "review.md").read_text(encoding="utf-8")
-    prompt = canvas or string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
+    prompt = string.Template(block.split("<!-- signoff -->\n", 1)[1]).substitute(
         answers=answers, topics=table[0] if table else "")
     prompt += "\n\n## Earlier review rounds\n" + ("\n\n".join(review._previous(old) for old in history) or "- none")
-    prompt += "\n\nSettled findings:\n" + review._accepted(top, "design-check" if canvas else "client-signoff", history)
+    prompt += "\n\nSettled findings:\n" + review._accepted(top, "client-signoff", history)
     if evidence:
         prompt += ("\n\n" + evidence + "\n\nCheck every demo workflow step against the brief. "
                    "Each step must name a passing test. Refuse a missing step, a missing test, "
@@ -567,16 +552,12 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                    "(forge-full-suite). Client sign-off checked this result before this review. "
                    "Use this green full run as passing evidence for the tests named in Proof. "
                    "No separate forge test run is required.")
-    result = (review.design_check(top, prompt, history, previous) if canvas else
-              review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
-                         "", {}, previous, signoff_prompt=prompt, images=set()))
-    if not canvas:
-        _signoff_known(top, result, len(history) + 1)
+    result = review.run(top, "client-signoff", {"signoff_history": history}, repo.config(top),
+                        "", {}, previous, signoff_prompt=prompt, images=set())
+    _signoff_known(top, result, len(history) + 1)
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
-    held = ([(n, f) for n, f in enumerate(result["findings"], 1)
-             if f in opened and f["priority"] in review.SERIOUS] if canvas else
-            [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened])
+    held = [(n, f) for n, f in enumerate(result["findings"], 1) if f in opened]
     saved.update(review=result, rounds=history + [result], inputs=inputs,
                  stop=bool(held and len(history) + 1 >= 2 and (not critical or sample_data)))
     _write(top / rel, json.dumps(document, indent=2) + "\n")
@@ -592,9 +573,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
                             for _, f in held)
         repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
                   f"--done {quote(f'A review no longer finds: {details}')} --kind mechanical")
-        problem = ("The canvas completeness check found gaps: " + "; ".join(
-            f["title"] + ": " + f["body"] for f in opened) if canvas else
-            "Customer sign-off review found a blocking issue: " + "; ".join(f["title"] for f in opened))
+        problem = "Customer sign-off review found a blocking issue: " + "; ".join(f["title"] for f in opened)
         repo.refuse((problem + f".\nRun the next command from this sign-off checkout: {top}", repair +
             '\nThen fix and merge it, then from the repair checkout run '
             'forge decision accept client-signoff --by "<name>"'))

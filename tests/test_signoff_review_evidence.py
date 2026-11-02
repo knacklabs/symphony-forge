@@ -40,13 +40,12 @@ def test_1_signoff_uses_the_green_full_run_without_a_separate_test_run(
     assert "Run forge test on the finished product" not in prompt
 
 
-@pytest.mark.parametrize(("adopted", "phase"), [
-    pytest.param(False, "signoff", id="new-signoff"),
-    pytest.param(False, "completeness", id="new-completeness"),
-    pytest.param(True, "signoff", id="earlier-release"),
+@pytest.mark.parametrize("adopted", [
+    pytest.param(False, id="new-signoff"),
+    pytest.param(True, id="earlier-release"),
 ])
 def test_2_failed_strict_review_names_the_saved_raw_report(
-        repo, tmp_path, monkeypatch, adopted, phase):
+        repo, tmp_path, monkeypatch, adopted):
     make = _adopted_client if adopted else _client
     fix, answers, queue = make(repo, tmp_path, monkeypatch)
     if adopted:
@@ -54,8 +53,6 @@ def test_2_failed_strict_review_names_the_saved_raw_report(
     page = _decision(fix, answers)
     report = {"review_status": "incomplete", "findings": []}
     runs = [{"report": report}]
-    if phase == "signoff":
-        runs.insert(0, {"report": {"review_status": "scoped-clean", "findings": []}})
     queue.write_text(json.dumps(runs), encoding="utf-8")
 
     refused = repo.forge("decision", "accept", "client-signoff", "--by", "Ravi", cwd=fix)

@@ -88,7 +88,7 @@ Close records a reused review against the current branch after a replay. Land re
 when only Forge's review check reports a stale or missing review. If that check still fails,
 land stops without a worker round.
 
-The client sign-off code review excludes images; the canvas completeness check reviews them.
+The client sign-off code review excludes images. Canvas-only sign-off runs no model review.
 Sign-off runs each review's independent parts side by side inside its existing machine review run.
 It keeps the same model calls and result order.
 Normal reviews, reviews of docs and assets, and sign-off reviews use the selected tool's model and optional effort from
