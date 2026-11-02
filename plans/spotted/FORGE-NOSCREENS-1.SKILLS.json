@@ -21,6 +21,17 @@
       "item": "FORGE-NOSCREENS-1/SKILLS",
       "status": "open",
       "closed_by": null
+    },
+    {
+      "key": "edge\tsrc/forge/sync.py\t[P2] Preserve launcher executability when skills are added on Windows",
+      "kind": "edge",
+      "path": "src/forge/sync.py",
+      "line": 164,
+      "text": "[P2] Preserve launcher executability when skills are added on Windows",
+      "from": "review",
+      "item": "FORGE-NOSCREENS-1/SKILLS",
+      "status": "open",
+      "closed_by": null
     }
   ]
 }

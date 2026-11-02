@@ -34,21 +34,45 @@
       "security": false,
       "title": "[P1] Allow keyboard focus to leave the Steer field",
       "work": 2
+    },
+    {
+      "area": "write_file() in src/forge/sync.py",
+      "file": "src/forge/sync.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 164,
+      "outcome": "follow-up",
+      "reason": "",
+      "round": 5,
+      "security": false,
+      "title": "[P2] Preserve launcher executability when skills are added on Windows",
+      "work": 3
     }
   ],
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "ddd4ca006853c04a36221427bee48d185bc4e1ea20aec1c4e400e31d9072acca",
-    "changed": "e25b6a298ae0e31c9e12c55f07e4bd8a656a19ab921cf1ffe2c1b185717788a4",
-    "commit": "fb015d142c525410cb53510f82cd4d043d7ca3d6",
+    "branch_diff": "abaf39efbfeafb9c8b6d4f7a86329c0b8afc34f7c1f575f0e2515afef770af3a",
+    "changed": "3971fa031aa87acd9e93cf794322c0c30e1611fb0d22812a48358a092afed7f6",
+    "commit": "58cafa0758b552c4ecc439b8885efd384a44ee33",
     "dismissals": [],
-    "findings": [],
-    "id": "99cdcfee-afe1-4391-8631-f2832dae7b81",
+    "findings": [
+      {
+        "body": "chunk 1/6:\n\nGain 3, Work 3, Harm 3\nRaise: Functional\nCase: normal use - a Windows developer initializes or upgrades a client repo, then a teammate clones it on macOS or Linux.\nThis chmod does not preserve executable mode in the Windows-created commit: [Python documents](https://docs.python.org/3/library/os.html#os.chmod) that Windows ignores executable permission bits. Init stages these new files with ordinary git add (src/forge/init.py:363 and src/forge/repo.py:1143), so both launchers are committed as non-executable. Subsequent Unix clones cannot run the skill's documented launcher command. Running forge sync does not repair this because differing checks only content (sync.py:569), so write_file never runs for the unchanged launchers. Preserve the executable mode in committed output and let sync repair mode-only drift.",
+        "file": "src/forge/sync.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 164,
+        "priority": "P2",
+        "title": "[P2] Preserve launcher executability when skills are added on Windows",
+        "work": 3
+      }
+    ],
+    "id": "d4dc70b5-d297-45aa-9966-258618d1e2cb",
     "status": "clean"
   },
   "round": 6,
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T05:14:47.798079+00:00",
@@ -68,6 +92,10 @@
     },
     {
       "at": "2026-11-02T09:34:57.044988+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T21:37:48.649987+00:00",
       "step": "review"
     }
   ],
