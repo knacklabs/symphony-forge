@@ -1,0 +1,15 @@
+{
+  "base": "e7abb17344534e7ab54d927806b8498b94c5f8c4",
+  "branch": "fix/drop-windows-installers-check",
+  "done_when": "forge.toml's checks name only tests and forge-pr-check on the default branch",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "status": "started",
+  "steps": [
+    {
+      "at": "2026-11-02T19:01:38.220903+00:00",
+      "step": "start"
+    }
+  ],
+  "why": "Forge waits for checks named on the default branch's forge.toml, so a pull request that removes the windows-installers job waits forever for that job. Drop the name from forge.toml first, as a change of its own, so that branch protection and forge.toml agree and the CI cleanup can then merge."
+}
