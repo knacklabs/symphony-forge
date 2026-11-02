@@ -11,12 +11,27 @@
   "done_when": "A new app and an existing app that signs in another way get guide and baseline text whose basic screens follow the approved sign-in answer, and the review no longer reports a synced Forge file against the app.",
   "fix_kind": "mechanical",
   "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "72bdef62893117d2e97681147362defbe339ea35439069c2d374279bc2ee5c0a",
+    "changed": "0145a31e312bfc8e8cee498455264cdae396d46013c2f3c5c809dcf2012ffc79",
+    "commit": "3757d7163ab398bdbb7df7b7defd11e3568401b3",
+    "dismissals": [],
+    "findings": [],
+    "id": "329d4b8b-ca0a-45a1-ae7e-2a01d0fba816",
+    "status": "clean"
+  },
   "round": 1,
-  "status": "working",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-11-02T08:59:19.387415+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T09:05:09.035382+00:00",
+      "step": "review"
     }
   ],
   "stuck": {
