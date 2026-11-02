@@ -140,8 +140,11 @@ def test_1_next_names_a_failed_scheduled_run_and_offers_its_fix(repo, gh, tmp_pa
     assert elsewhere.returncode == 0, elsewhere.stderr
     lines = elsewhere.stdout.splitlines()
     assert lines[1:3] == expected
-    assert lines[3].startswith(f"The fix {fix} was started by ")
-    assert lines[3].endswith(" and runs on their machine.")
+    # Handover makes the published fix actionable here, whoever started it.
+    assert lines[3:5] == [f"The fix {fix} has no checkout on this machine.",
+                          f"Next: forge work {fix}"]
+    assert lines.count(lines[3]) == 1
+    assert lines.count(lines[4]) == 1
     assert "forge fix start" not in elsewhere.stdout
 
     monkeypatch.setenv("FORGE_NOW", "2030-01-03T10:00:00+00:00")
