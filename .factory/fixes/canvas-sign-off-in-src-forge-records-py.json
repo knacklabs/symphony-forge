@@ -49,8 +49,8 @@
     "id": "079b893e-a39f-4122-9b69-6b45cedbaa5c",
     "status": "clean"
   },
-  "round": 2,
-  "status": "waiting for checks",
+  "round": 3,
+  "status": "fixing",
   "steps": [
     {
       "at": "2026-11-02T05:35:17.840538+00:00",
@@ -75,10 +75,10 @@
     "worker_round": 1
   },
   "stuck": {
-    "close": "0ce6b15a-f824-41b6-a8d0-9fae52f6a17a",
-    "head": "92b8d4a0c6df3f71c7b23a7625f4dab5b4107c96",
+    "close": "c0fc654b-807f-4f6b-8b6a-f5332fb2d047",
+    "head": "d7162dc5d94fa953d5caf7270595ed6443efda66",
     "keys": {},
-    "round": 1
+    "round": 2
   },
   "why": "Canvas sign-off in src/forge/records.py (decision_accept, the branch that calls review.design_check) never reaches _signoff_review, so the owner's accept choice is read nowhere and is silently ignored. design_check in src/forge/review.py runs review.run with empty state and empty previous history, so no earlier rounds or settled findings reach the check and each run finds different P1s. A refused run never writes design_checked, so the roughly 40-minute check reruns on the same product.",
   "worker": "codex"
