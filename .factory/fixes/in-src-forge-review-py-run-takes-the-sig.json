@@ -1,6 +1,13 @@
 {
   "base": "e26302089bfdf304e514c5de6c8b666e65467cfb",
   "branch": "fix/in-src-forge-review-py-run-takes-the-sig",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19bb0-2f31-78d3-82ee-a9d2df2db52a",
+    "head": null,
+    "start": "dd4870645aeb838223d64a3248d988e396ee3dea"
+  },
   "done_when": "The sign-off screens check reviews only the attached screen images and the brief, its refusal states how many findings are open and which of them block sign-off, and source is reviewed only by the strict review.",
   "fix_kind": "backend",
   "kind": "fix",
