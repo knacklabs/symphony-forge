@@ -77,7 +77,11 @@ class Refused(Exception):
 def refuse(entry: tuple[str, str], code: int = 1, **values: Any) -> NoReturn:
     """Raise one entry of a module's REFUSALS table, filled in with values."""
     problem, next_step = entry
-    raise Refused(problem.format(**values), next_step.format(**values), code, entry)
+    def fill(text: str) -> str:
+        # Findings and engine errors are literal text, not format templates.
+        return re.sub(r"(?<!\{)\{(\w+)(![rsa])?(:[^{}]*)?\}(?!\})",
+                      lambda m: m[0].format(**values) if m[1] in values else m[0], text)
+    raise Refused(fill(problem), fill(next_step), code, entry)
 
 
 # --- git -------------------------------------------------------------------------------
