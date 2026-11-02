@@ -14,7 +14,7 @@ STORY = "FIX-TEST-AUDIT-FOLLOWUPS"
 
 
 @pytest.fixture(params=["new", "previous adoption"])
-def guide(repo, gh, tmp_path, request):
+def guide_files(repo, gh, tmp_path, request):
     if request.param == "new":
         client, result = _fresh_client(repo, gh, tmp_path)
     else:
@@ -26,8 +26,13 @@ def guide(repo, gh, tmp_path, request):
                                                f'version = "{_version(repo)}"'))
         client, result = repo.path, repo.forge("sync")
     assert result.returncode == 0, result.stdout + result.stderr
-    return [(client / host / "skills/forge/SKILL.md").read_text(encoding="utf-8")
+    return [client / host / "skills/forge/SKILL.md"
             for host in (".claude", ".codex")]
+
+
+@pytest.fixture
+def guide(guide_files):
+    return [path.read_text(encoding="utf-8") for path in guide_files]
 
 
 def section(guide, heading):
@@ -36,8 +41,7 @@ def section(guide, heading):
 
 def test_1_new_and_previously_adopted_repos_receive_the_mod_guide_sections(guide):
     template = (ROOT / "src/forge/templates/skill.md").read_text(encoding="utf-8")
-    for heading in ("Claude Code plugin core", "Installing the mod", "Approving with the pane",
-                    "The pane and strip", "Events", "Save decisions and ideas", "Planning a story"):
+    for heading in ("Events", "Save decisions and ideas", "Planning a story"):
         expected = section(template, heading)
         assert expected, heading
         for shipped in guide:

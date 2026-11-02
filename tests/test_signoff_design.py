@@ -131,10 +131,15 @@ def _holds_canvas_gaps_reported_by_completeness_check(
 
 
 def _refuses_app_code_until_a_build_is_requested(repo, tmp_path, monkeypatch, starter):
-    fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False, seed_starter=starter)
+    fix, answers, queue = _client(repo, tmp_path, monkeypatch, working_build=False)
     page = _decision(fix, answers)
     name = "apps/web/src/app.tsx" if starter else "app.py"
-    (fix / name).write_text("// A working prototype screen\n" if starter else "print('working prototype')\n", encoding="utf-8")
+    # A screen on main already counts as a working build. Add the first screen only here,
+    # so the command still checks app code introduced before a build request.
+    source = fix / name
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("export function App() { return <main>Prototype</main>; }\n"
+                      if starter else "print('working prototype')\n", encoding="utf-8")
     repo.git("add", name, cwd=fix)
     repo.git("commit", "-q", "-m", "Add prototype code", cwd=fix)
 

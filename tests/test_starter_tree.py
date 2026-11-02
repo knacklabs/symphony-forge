@@ -27,18 +27,7 @@ API_ZOD_CASES = (
     "documents the list query and request bodies from the shared zod schemas",
 )
 BROWSER_FLOWS = (
-    "sign up then sign in",
-    "forgot-password request confirms delivery",
-    "Ctrl+B collapses and expands the sidebar",
-    "Ctrl+K opens search and goes to Projects",
-    "create, view, edit, and delete a project",
-    "switching accounts does not show the previous account projects",
-    "theme changes in settings",
-    "unknown address shows the 404 page",
-    "axe finds no serious problem on the shell",
-    "a reloaded projects list link keeps its search, filters and page",
-    "keyboard sorting a cached order keeps focus on the header",
-    "a crash on one screen shows its error page and the other screens still work",
+    "the built app serves its page",
 )
 PINNED_PACKAGES = {
     "@nestjs/core": "11.2.7",
@@ -272,8 +261,6 @@ PYTHON_REACT_PATHS = (
     Path("libs/shared/util"),
     Path("libs/shared/ui"),
     Path("libs/core/web"),
-    *(Path("libs") / module / "web" for module in
-      ("auth", "history", "organisations", "projects")),
     Path("tsconfig.base.json"),
     Path(".npmrc"),
 )
@@ -358,7 +345,7 @@ def test_1_the_starter_is_a_runnable_stack(request):
         Path("apps") / "api" / "test" / "mcp.e2e-spec.ts",
         Path("apps") / "api" / "test" / "organisations.e2e-spec.ts",
         Path("apps") / "api" / "vitest.config.ts",
-        Path("apps") / "web" / "e2e" / "starter-shell.spec.ts",
+        Path("apps") / "web" / "e2e" / "served-app.spec.ts",
         Path("apps") / "web" / "playwright.config.ts",
         Path("apps") / "web" / "vitest.config.ts",
     )
@@ -435,26 +422,19 @@ def test_1_the_starter_is_a_runnable_stack(request):
     assert "exec npm run start:prod" in skeleton_dockerfile
 
     if LIVE:
-        _require_cases(request.getfixturevalue("live_starter")["api"], API_SECURITY_TESTS + API_ZOD_CASES)
+        live = request.getfixturevalue("live_starter")
+        _require_cases(live["api"], API_SECURITY_TESTS + API_ZOD_CASES)
+        _require_cases(live["browser"], BROWSER_FLOWS)
 
 
 @pytest.mark.platform
-@pytest.mark.timeout(1800)
-def test_2_the_starter_shell_comes_from_shadcn_components(request):
-    # Audit: this protects the browser starter's shell, route table, and new shadcn home.
-    # A misplaced copy or stale alias can break generated screens after `shadcn add`.
-    # Existing layout tests check libraries, but not this shell-and-router contract together.
-    # It reads the shipped starter directly and uses no test-only seam.
+def test_2_the_build_only_web_setup_keeps_its_theme_and_shadcn_components():
+    # The screen removal changes the shell contract: the starter keeps its theme and shadcn
+    # source components for future screens, but ships no routes or app shell. Init-tree coverage
+    # owns screen absence, while this check owns the retained component setup.
     web = STARTER / "apps" / "web" / "src"
     shared_ui = STARTER / "libs" / "shared" / "ui"
     ui = shared_ui / "src" / "components" / "ui"
-    shell_file = web / "components" / "app-shell.tsx"
-    assert shell_file.is_file(), "the app shell is missing"
-    shell = shell_file.read_text(encoding="utf-8")
-    assert "SidebarProvider" in shell
-    assert 'collapsible="icon"' in shell
-    assert "SidebarTrigger" in shell
-    assert "SidebarRail" in shell
     shadcn = _json(shared_ui / "components.json")
     assert shadcn["tailwind"]["css"] == "../../../apps/web/src/index.css"
     assert shadcn["aliases"] == {
@@ -472,13 +452,6 @@ def test_2_the_starter_shell_comes_from_shadcn_components(request):
     assert 'import { useIsMobile } from "../../hooks/use-mobile"' in (
         ui / "sidebar.tsx").read_text(encoding="utf-8")
 
-    router = web / "app.tsx"
-    assert router.is_file(), "the React Router configuration is missing"
-    routes = router.read_text(encoding="utf-8")
-    for route in ("/sign-in", "/sign-up", "/forgot-password", "/reset-password",
-                  "/settings", "/projects", "*"):
-        assert route in routes, route
-
     ui_stems = {path.stem for path in ui.rglob("*.tsx")}
     assert ui_stems, "shadcn/ui source components are missing"
     duplicates = [
@@ -486,9 +459,6 @@ def test_2_the_starter_shell_comes_from_shadcn_components(request):
         if not path.is_relative_to(ui) and path.stem in ui_stems
     ]
     assert not duplicates, f"shadcn components were copied outside components/ui: {duplicates}"
-
-    hooks = STARTER / "libs" / "projects" / "web" / "src" / "hooks"
-    assert hooks.is_dir(), "project hooks must live in the projects web library"
 
     css = (web / "index.css").read_text(encoding="utf-8")
     light = _theme_block(css, ":root")
@@ -501,6 +471,3 @@ def test_2_the_starter_shell_comes_from_shadcn_components(request):
     for token, (light_value, dark_value) in NEUTRAL_THEME.items():
         assert light.get(token) == light_value, (token, light.get(token), light_value)
         assert dark.get(token) == dark_value, (token, dark.get(token), dark_value)
-
-    if LIVE:
-        _require_cases(request.getfixturevalue("live_starter")["browser"], BROWSER_FLOWS)

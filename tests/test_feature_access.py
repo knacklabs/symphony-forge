@@ -40,10 +40,6 @@ ROUTE_PERMISSIONS = {
     ("delete", ":id"): "delete",
     ("post", ":id/restore"): "restore",
 }
-FLOWS = (
-    "a member does not see the project actions they lack",
-    "an admin shows deleted projects and restores one",
-)
 CASES = {
     "projects-typescript": ("each projects endpoint refuses a member without its permission",
                             "an admin restores a deleted project"),
@@ -179,4 +175,3 @@ def test_3_each_feature_checks_its_permissions(repo, gh, tmp_path, starter, requ
         live = (live_run(request.getfixturevalue("tmp_path_factory")) if typescript
                 else request.getfixturevalue("live_python_starter"))
         _require_cases(live["api"], CASES[starter])
-        _require_cases(live["browser"], FLOWS)
