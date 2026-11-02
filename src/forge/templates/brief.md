@@ -131,8 +131,9 @@ If that merge conflicts, the worker gets its normal full brief with one added li
 
 If the default branch moved after close, `forge merge` compares its new changed files with the item's changed files.
 It merges the default branch locally to check the combined change.
-It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the new
-merge base. It merges the pull request only after the tests pass. A failure names the failed tests
+It runs `fast_test`, or `test` when none is set, in the one test lane with `{base}` as the
+pull request's checked head. This selects tests for incoming default-branch changes instead of
+the pull request's own files, on the combined code. It merges only after those tests pass. A failure names the failed tests
 and gives `forge work <item>` as the next step. With no default-branch move, merge runs no extra tests.
 If the file sets do not overlap, Forge restores the original head and merges without a push or another check wait.
 If the file sets overlap, Forge keeps the local merge, reuses the existing review and commits its coverage of the combined change.

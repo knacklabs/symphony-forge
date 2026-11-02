@@ -10,6 +10,10 @@ Review repair: the check-read contract belongs here. The original head stays gre
 the combined head fails, so an incorrect wait on the old head cannot satisfy this test.
 The earlier call-count assertion could not distinguish those two GitHub requests.
 Extend this command test without a production seam or another test owner.
+
+Merge integration: the quarter threshold now measures incoming default changes,
+not the PR files already checked by CI. Keep disjoint incoming inputs for the
+same client tests so this still covers CI admission without a file overlap.
 """
 import json
 import re
@@ -61,11 +65,14 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
     for number in range(4):
         if number < 2:
             env.commit(setup, f"module{number}.py", "VALUE = 1\n")
+            env.commit(setup, f"tests/inputs/incoming{number}.txt", "1\n")
         env.commit(setup, f"tests/test_module{number}.py", (
             (f"from module{number} import VALUE\n" if number < 2 else "VALUE = 1\n")
             + "from pathlib import Path\n"
             f"def test_value():\n    assert VALUE > 0\n"
-            f"    Path({json.dumps((receipts / str(number)).as_posix())}).write_text(str(VALUE))\n"))
+            + (f"    assert int((Path(__file__).parent / 'inputs/incoming{number}.txt').read_text()) > 0\n"
+               if number < 2 else "")
+            + f"    Path({json.dumps((receipts / str(number)).as_posix())}).write_text(str(VALUE))\n"))
     env.repo.git("merge", "-q", "--ff-only", "fix/test-setup")
     remote = env.repo.git("remote", "get-url", "origin")
     env.repo.git("fetch", "-q", str(env.repo.path), "main:main", cwd=remote)
@@ -84,7 +91,8 @@ def test_1_broad_related_tests_wait_for_ci(env, tmp_path, monkeypatch,
     original = env.repo.git("rev-parse", "HEAD", cwd=where)
     other = tmp_path / "other-change"
     env.repo.git("clone", "-q", remote, str(other))
-    env.commit(other, "unrelated.txt", "Another change\n")
+    for number in range(selected):
+        env.commit(other, f"tests/inputs/incoming{number}.txt", "2\n")
     env.repo.git("push", "-q", "origin", "main", cwd=other)
     advanced = env.repo.git("rev-parse", "HEAD", cwd=other)
     _github_moves_default(env, False, "CLEAN")

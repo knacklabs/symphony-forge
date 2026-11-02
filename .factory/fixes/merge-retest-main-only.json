@@ -1,0 +1,61 @@
+{
+  "base": "b4824597a84a62789a5106257f11c1a6aac5e57b",
+  "branch": "fix/merge-retest-main-only",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19279-6cf8-77c1-ad3e-29d76a3fd4b9",
+    "head": null,
+    "start": "a26002fde97387f05533987ab0b018c3c6613429"
+  },
+  "done_when": "When the default branch moved after CI passed on the pull request's commit, forge merge runs on the laptop only the tests related to the files that changed on the default branch since that CI run, not the tests related to the pull request's own files",
+  "fix_kind": "mechanical",
+  "kind": "fix",
+  "known": [],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "ae04559695619770719d29ee98b890e77276869c9c2da62009b7cc188df4fe0d",
+    "changed": "da427f5ad924ccf3a3baa18aff87af8d943ec33c0eac89ef0a18f461b23cc753",
+    "commit": "24054a7e2e54e0746b68bd40f1c939df37ae4dcd",
+    "dismissals": [],
+    "findings": [],
+    "id": "1a1c6836-39c5-467f-a4b5-ef74d2dccf65",
+    "status": "clean"
+  },
+  "round": 4,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-10-31T14:44:25.522071+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-10-31T17:42:09.823165+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T18:32:18.295969+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-10-31T20:11:39.467180+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-01T16:03:13.215933+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T02:50:33.890570+00:00",
+      "step": "review"
+    }
+  ],
+  "stuck": {
+    "close": "9b75d41b-cffd-478c-aae3-ede97bcafb11",
+    "head": "99a359f85c81f29437eac6abb45ce38e2c909d8d",
+    "keys": {},
+    "round": 3
+  },
+  "why": "Each merge that finds the default branch moved reruns the related tests on the laptop's one test lane, so busy days queue every merge behind near-full-suite runs even when CI already checked the pull request's commit. The first fix for this merged with no code (issue 1260)",
+  "worker": "codex"
+}
