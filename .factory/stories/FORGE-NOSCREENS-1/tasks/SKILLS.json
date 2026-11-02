@@ -9,13 +9,19 @@
   },
   "part_line_limit": 400,
   "round": 2,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-02T05:14:47.798079+00:00",
       "step": "start"
     }
   ],
+  "stop": {
+    "question": "Starter ships no screens: Client repos get impeccable and emil-design-eng is stuck. It should deliver: The two skills, pinned with their licences; their `ships`; the executable bit; the installers and the doctor text.\nIt changes 15452 lines outside tests, over its limit of 400.\nThe worker tried: Ship the design skills to client repos.\nChoose one: switch this item to Claude; keep Codex for one more round; or narrow or split it.",
+    "size": true,
+    "tool": "codex",
+    "wait_id": "a6f351b7-f3ba-4225-b85e-b7524e4eedfa"
+  },
   "stuck": {
     "close": null,
     "head": "6f659bd6c2aa7fa51cb4cf07cb43ef361e59071d",
