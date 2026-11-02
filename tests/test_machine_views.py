@@ -66,24 +66,22 @@ def _board_shows_recorded_live_agent_metadata(env, kind):
         configure(env)
         item, _ = env.start_fix()
         command, model = "work", "sonnet"
-        marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
     else:
         setup(repo)
         folder = new_story(repo, "SHOP")
         (folder / "plans/SHOP.md").write_text(DOC, "utf-8")
         item, command, model = "SHOP", "read", "opus"
-        marker = 'said = here / "claude-says.md"'
+    marker = '    yield AssistantMessage([TextBlock("SDK worker output")], options.model)'
     # Only the external agent waits; the real launcher has already recorded its start.
     listener = socket.socket()
     listener.bind(("127.0.0.1", 0))
     listener.listen()
     listener.settimeout(30)
-    stub = repo.bin / ("claude_agent_sdk/__init__.py" if kind == "worker" else "claude")
+    stub = repo.bin / "claude_agent_sdk/__init__.py"
     source = stub.read_text("utf-8")
     wait = ('import socket\n'
             f'with socket.create_connection({listener.getsockname()!r}, timeout=30) as gate:\n    gate.recv(1)\n')
-    if kind == "worker":
-        wait = "".join("    " + line + "\n" for line in wait.splitlines())
+    wait = "".join("    " + line + "\n" for line in wait.splitlines())
     stub.write_text(source.replace(marker, wait + marker), "utf-8")
     process = subprocess.Popen([sys.executable, str(repo.bin / "forge"), command, item],
         cwd=repo.path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

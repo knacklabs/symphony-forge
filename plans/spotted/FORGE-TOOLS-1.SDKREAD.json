@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "key": "bug\ttests/test_fix_old_forge_records.py\tThe records check rejects the current idea list on the default branch.",
+      "kind": "bug",
+      "path": "tests/test_fix_old_forge_records.py",
+      "line": 22,
+      "text": "The records check rejects the current idea list on the default branch.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SDKREAD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_mod_install.py\tThe real plugin install test sometimes misses its settings change event in the full suite, although the focused run passes.",
+      "kind": "bug",
+      "path": "tests/test_mod_install.py",
+      "line": 177,
+      "text": "The real plugin install test sometimes misses its settings change event in the full suite, although the focused run passes.",
+      "from": "worker",
+      "item": "FORGE-TOOLS-1/SDKREAD",
+      "status": "open",
+      "closed_by": null
+    },
+    {
+      "key": "bug\ttests/test_tools_agent_sdk.py\tGate: Claude read process-tree shutdown is not exercised\tFORGE-TOOLS-1/SDKREAD",
+      "kind": "bug",
+      "path": "tests/test_tools_agent_sdk.py",
+      "line": 131,
+      "text": "Gate: Claude read process-tree shutdown is not exercised",
+      "from": "blocking",
+      "item": "FORGE-TOOLS-1/SDKREAD",
+      "status": "open",
+      "closed_by": null
+    }
+  ]
+}

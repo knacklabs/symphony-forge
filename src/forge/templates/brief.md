@@ -97,7 +97,8 @@ uses Autoreview's default. New and earlier-adopted repos get this behaviour on t
 
 After a red close test, a blocking review finding or a failed required check, a build, fix or
 lite round raises only its effort. Codex uses at least high and Claude at least xhigh.
-Design rounds keep their fixed effort. Claude uses the SDK when installed. Native rounds
+Design rounds keep their fixed effort. External Claude workers and cold reads use the Agent SDK;
+if it is missing, run `forge doctor --fix`. Cold reads use plan mode. Native rounds
 request the effort in their instructions and record it as requested.
 New repos start build, fix and lite at low effort on both tools. Existing repos keep
 their configured models and efforts; a failure round uses the higher of that effort
