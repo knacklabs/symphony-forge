@@ -1,6 +1,13 @@
 {
   "base": "e65fe4f96406916b16a7693d694ea23872fbb0e5",
   "branch": "fix/pull-requests-print-the-net-line-count-i",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19d5e-2599-7901-9714-e7223da08c92",
+    "head": null,
+    "start": "a9de201021a579ff657df7a92b234b1e54f5734f"
+  },
   "done_when": "Each check runs once per pull request, and the live starter tests still run every night.",
   "fix_kind": "mechanical",
   "kind": "fix",
