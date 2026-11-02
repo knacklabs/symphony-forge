@@ -11,14 +11,82 @@
   "done_when": "After round 2, a canvas sign-off with only non-P0 gaps can be accepted by the owner, the gaps are kept as known issues, sign-off continues, and a P0 still blocks.",
   "fix_kind": "backend",
   "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 950,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve the canvas priority bar when carrying earlier findings",
+      "work": 2
+    },
+    {
+      "area": "design_check() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 1148,
+      "outcome": "open",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Windows canvas batch findings",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "dc0a328e0f3ae7f2ebbd4e1c40bf303f417c8da2fead3a92d67be6167acde6b8",
+    "changed": "38fa117d1229a7ac075a9d128fbdcfe861674fb479e19aaa649a7b8d01ae35aa",
+    "commit": "2ceda29257ccc13c4f50901e4f35634b64285cdc",
+    "dismissals": [],
+    "findings": [
+      {
+        "body": "Gain 4, Work 2, Harm 3\nRaise: Functional\nCase: normal use - a repeated canvas P1 has scores Gain 3, Work 2, Harm 2.\nIncluding design-check here applies `_settled()` to canvas history. At src/forge/review.py:615\u2013616, that P1 becomes `known: below the bar`; the next result dismisses it automatically. Consequently, round two passes without the owner's question, and the gap never reaches the item's Known issues. The canvas explicitly retains its priority bar, so a previously blocking canvas gap must not become accepted solely because its scores fall below the code-review bar. The new test uses only Gain 5/Harm 4 findings and misses this path.",
+        "file": "src/forge/review.py",
+        "gain": 4,
+        "harm": 3,
+        "line": 950,
+        "priority": "P1",
+        "title": "Preserve the canvas priority bar when carrying earlier findings",
+        "work": 2
+      },
+      {
+        "body": "Gain 3, Work 2, Harm 3\nRaise: Test\nCase: normal use - a Windows canvas spans multiple batches and an earlier batch reports a P0 while the last batch is clean.\nThe new aggregation has no behavior proof with findings. `tests/test_canvas_image_review.py::test_3_windows_completeness_reviews_all_screen_images` returns only empty, scoped-clean reports, while the new round tests use one screen and never enter this loop. Both suites would pass if aggregation retained only the last batch, allowing the earlier P0 to disappear. Extend the real-command batching test with nonempty batch results and assert that earlier findings survive and a P0 prevents sign-off.",
+        "file": "src/forge/review.py",
+        "gain": 3,
+        "harm": 3,
+        "line": 1148,
+        "priority": "P1",
+        "title": "Gate: Windows canvas batch findings",
+        "work": 2
+      }
+    ],
+    "id": "5f43149d-14d2-4ce0-9b50-cb48b7c93606",
+    "status": "blocked"
+  },
   "round": 1,
-  "status": "working",
+  "status": "hotspot",
   "steps": [
     {
       "at": "2026-11-02T05:35:17.840538+00:00",
       "step": "start"
+    },
+    {
+      "at": "2026-11-02T05:48:52.013765+00:00",
+      "step": "review"
     }
   ],
+  "stop": {
+    "at": "2026-11-02T05:48:52.025936+00:00",
+    "file": "src/forge/review.py",
+    "wait_id": "f077ac38-427d-4a11-b8a8-e6130b1b708c"
+  },
   "stuck": {
     "close": null,
     "head": "153834eeaf80004d4a741ddb2859b21a26ef082a",
