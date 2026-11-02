@@ -52,25 +52,28 @@
   "part_line_limit": 400,
   "review": {
     "blocking_level": "P1",
-    "branch_diff": "5d252ebcc2fe96cf1cf671dbdd3b7be357c6613a448502623aa82d2429852bc8",
-    "changed": "a444d546336e3aceedfea35c5a1d5b042deb160df63e5b0bb7256139c583525b",
-    "commit": "297779875a9ca44ba6b8c51dc549fe9f2049a3f8",
+    "branch_diff": "88c9a00f34ec63d90f8e875f57e376fc610de5de671ab504e212e87501a4c35f",
+    "changed": "feb514167b4885f0562f429ce5c98cc3b5408f8a1227f08e8a0f0a1375722807",
+    "commit": "2c4ccd8e313a37ddab2e5b9a7dddafb927bbaa51",
     "dismissals": [],
     "findings": [
       {
-        "body": "If this machine previously closed the item, then another machine advances and closes it again, the old local receipt remains syntactically valid. Even after pickup fast-forwards the checkout to the newly reviewed head, this condition skips the matching shared record, and the head comparison below refuses the merge. The new `forge next` advice can therefore repeatedly recommend a merge that fails. Treat a local receipt whose commit differs from the PR head as stale and try the validated shared record before refusing.",
+        "body": "Gain 2, Work 2, Harm 2\nIf this machine previously closed the item and another machine subsequently advances and closes it, the old local receipt remains syntactically valid. This condition therefore skips the current shared ready record, even after pickup fast-forwards the checkout. The head comparison at merge.py:85 then refuses the merge despite the pull request carrying matching clean readiness. The previous finding remains unfixed: treat a local receipt whose commit differs from the pull request head as stale and try the validated shared record.",
         "file": "src/forge/merge.py",
+        "gain": 2,
+        "harm": 2,
         "line": 72,
         "priority": "P2",
-        "title": "[P2] Fall back to shared readiness when the local receipt is stale"
+        "title": "[P2] Fall back to shared readiness when the local receipt is stale",
+        "work": 2
       }
     ],
-    "id": "8d96eeb1-477c-4650-a17c-f21110401825",
+    "id": "255346d6-56cc-4c83-ba37-b83b3a491680",
     "status": "clean"
   },
   "round": 9,
   "stacked_on": "FORGE-STACK-1/CLOSE",
-  "status": "fixing",
+  "status": "waiting for checks",
   "steps": [
     {
       "at": "2026-10-31T10:55:49.065586+00:00",
@@ -94,6 +97,10 @@
     },
     {
       "at": "2026-11-02T20:18:40.861714+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T20:56:37.124439+00:00",
       "step": "review"
     }
   ],
