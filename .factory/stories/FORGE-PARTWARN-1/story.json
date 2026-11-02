@@ -1,0 +1,12 @@
+{
+  "doc": "plans/FORGE-PARTWARN-1.md",
+  "status": "planning",
+  "steps": [
+    {
+      "at": "2026-11-02T17:44:50.288412+00:00",
+      "step": "start"
+    }
+  ],
+  "title": "Warn instead of stop for story parts over 400 lines",
+  "touches": 0
+}
