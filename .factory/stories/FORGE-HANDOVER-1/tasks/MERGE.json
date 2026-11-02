@@ -71,9 +71,9 @@
     "id": "255346d6-56cc-4c83-ba37-b83b3a491680",
     "status": "clean"
   },
-  "round": 9,
+  "round": 10,
   "stacked_on": "FORGE-STACK-1/CLOSE",
-  "status": "waiting for checks",
+  "status": "working",
   "steps": [
     {
       "at": "2026-10-31T10:55:49.065586+00:00",
@@ -105,10 +105,10 @@
     }
   ],
   "stuck": {
-    "close": "9ca650c1-4676-47e4-a4ae-1ae3b982a2be",
-    "head": "c80ee22e48a729bbbacb19b0394a9f4cfc7e79f5",
+    "close": "0efadbe8-b861-41f8-a8fb-37e0dfacbaeb",
+    "head": "c4f3c12bd6c426656178de76b4bdfde8ec0cce6f",
     "keys": {},
-    "round": 8
+    "round": 9
   },
   "worker": "codex"
 }
