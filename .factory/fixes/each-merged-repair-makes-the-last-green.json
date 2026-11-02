@@ -36,8 +36,8 @@
     "id": "39a2e240-8d4f-428d-bd02-7f9509c52a37",
     "status": "clean"
   },
-  "round": 5,
-  "status": "waiting for checks",
+  "round": 6,
+  "status": "working",
   "steps": [
     {
       "at": "2026-11-02T09:14:10.523085+00:00",
@@ -69,10 +69,10 @@
     }
   ],
   "stuck": {
-    "close": "b0067969-a57e-4220-a04f-644060178679",
-    "head": "0b000f2c32876613c08010322762cd3da74d04e8",
+    "close": "42f0738f-bd23-4236-80ff-30aefa247fda",
+    "head": "793eae5b758808e7b48f00aed2f5b22de2f7eb85",
     "keys": {},
-    "round": 4
+    "round": 5
   },
   "why": "Each merged repair makes the last green full run stale, so client sign-off waits about 30 minutes even for Forge-written bookkeeping changes. The review already runs after the green check in the sign-off path (src/forge/records.py decision_accept: the gaps list that includes the green check refuses before _signoff_review is called), so only the reuse part is new; the sign-off also checks green on the default branch's latest commit but reviews HEAD, and nothing ties the two together.",
   "worker": "codex"
