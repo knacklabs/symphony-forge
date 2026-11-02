@@ -1,0 +1,89 @@
+{
+  "base": "ccd90f3b42239de99959952577345047f0fbc717",
+  "branch": "fix/canvas-sign-off-in-src-forge-records-py",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19ac4-9d65-7b80-b719-51d8733adbfb",
+    "head": null,
+    "start": "98d74a284a2a8437e3ea396f840bdccc4e2a653c"
+  },
+  "done_when": "After round 2, a canvas sign-off with only non-P0 gaps can be accepted by the owner, the gaps are kept as known issues, sign-off continues, and a P0 still blocks.",
+  "fix_kind": "backend",
+  "kind": "fix",
+  "known": [
+    {
+      "area": "run() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 4,
+      "harm": 3,
+      "line": 950,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Preserve the canvas priority bar when carrying earlier findings",
+      "work": 2
+    },
+    {
+      "area": "design_check() in src/forge/review.py",
+      "file": "src/forge/review.py",
+      "gain": 3,
+      "harm": 3,
+      "line": 1148,
+      "outcome": "fixed in round 2",
+      "reason": "",
+      "round": 1,
+      "security": false,
+      "title": "Gate: Windows canvas batch findings",
+      "work": 2
+    }
+  ],
+  "review": {
+    "blocking_level": "P1",
+    "branch_diff": "fc9fac7fd937ef4bd6d8766bb065eab9e737d9e34d626d1d5bd639e9d98973b7",
+    "changed": "e46a97c35a71cf3c2091868b373d5b67d6203401f992aedfba3a478eed430bbb",
+    "commit": "9d52e9775c70b6e9528b9974619809439fe8db17",
+    "dismissals": [],
+    "findings": [],
+    "id": "0f51a26e-05ef-4035-b1d9-43f8a9698a0a",
+    "status": "clean"
+  },
+  "round": 3,
+  "status": "waiting for checks",
+  "steps": [
+    {
+      "at": "2026-11-02T05:35:17.840538+00:00",
+      "step": "start"
+    },
+    {
+      "at": "2026-11-02T05:48:52.013765+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T06:01:35.950950+00:00",
+      "step": "review"
+    },
+    {
+      "at": "2026-11-02T06:23:34.750106+00:00",
+      "step": "review"
+    }
+  ],
+  "stop": {
+    "at": "2026-11-02T05:48:52.025936+00:00",
+    "by": "owner",
+    "choice": "more",
+    "file": "src/forge/review.py",
+    "reason": "The owner chose one more round: repair both review findings before the release.",
+    "wait_id": "f077ac38-427d-4a11-b8a8-e6130b1b708c",
+    "worker_round": 1
+  },
+  "stuck": {
+    "close": "c0fc654b-807f-4f6b-8b6a-f5332fb2d047",
+    "head": "d7162dc5d94fa953d5caf7270595ed6443efda66",
+    "keys": {},
+    "round": 2
+  },
+  "why": "Canvas sign-off in src/forge/records.py (decision_accept, the branch that calls review.design_check) never reaches _signoff_review, so the owner's accept choice is read nowhere and is silently ignored. design_check in src/forge/review.py runs review.run with empty state and empty previous history, so no earlier rounds or settled findings reach the check and each run finds different P1s. A refused run never writes design_checked, so the roughly 40-minute check reruns on the same product.",
+  "worker": "codex"
+}
