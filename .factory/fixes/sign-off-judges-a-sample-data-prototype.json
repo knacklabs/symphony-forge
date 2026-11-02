@@ -4,6 +4,11 @@
       "at": "2026-11-02T11:56:47.415149+00:00",
       "because": "The owner decided this on 2 November 2026, after one client's review found a new P0 each round on a prototype with no back end.",
       "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question."
+    },
+    {
+      "at": "2026-11-02T15:17:33.601263+00:00",
+      "because": "Combined testing showed that the merged reuse fix compares the green run with HEAD, so a branch with an app repair is told to run the full tests on main, which cannot include that repair. That is a new deadlock for client sign-off, and it must not ship.",
+      "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question. Risks that need a real-data build are build-story work. After round 2, on a repo whose sign-off decision declares only sample data, the owner may accept a remaining P0 with a reason, and it stays a known issue; a repo with real data keeps the hard block."
     }
   ],
   "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
@@ -15,7 +20,7 @@
     "head": null,
     "start": "acf6394aacf03b609adf2c7162b56a9207e3ed7e"
   },
-  "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question. Risks that need a real-data build are build-story work. After round 2, on a repo whose sign-off decision declares only sample data, the owner may accept a remaining P0 with a reason, and it stays a known issue; a repo with real data keeps the hard block.",
+  "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question. Risks that need a real-data build are build-story work. After round 2, on a repo whose sign-off decision declares only sample data, the owner may accept a remaining P0 with a reason, and it stays a known issue; a repo with real data keeps the hard block. Also: a sign-off on a fix branch whose app repair is not yet on the default branch can pass the full-run gate on the default branch's last green run; only changes on the default branch since that run can need a new run.",
   "fix_kind": "backend",
   "kind": "fix",
   "known": [
