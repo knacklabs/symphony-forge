@@ -1,6 +1,13 @@
 {
   "base": "7450721ddf8c0cbedf9d84c8311677a59f817675",
   "branch": "fix/sign-off-judges-a-sample-data-prototype",
+  "chat": {
+    "approval": null,
+    "claude": null,
+    "conversation": "01a19bf5-acd1-7700-a12a-f587fe83c58b",
+    "head": null,
+    "start": "acf6394aacf03b609adf2c7162b56a9207e3ed7e"
+  },
   "done_when": "At prototype sign-off, only a finding with Harm 4 or higher, Gain 5, or a P0 stops the work; every other finding goes to Known issues with no repair round and no question.",
   "fix_kind": "backend",
   "kind": "fix",
