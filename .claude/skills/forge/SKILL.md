@@ -674,7 +674,11 @@ run on main is green. When a precondition is
 missing, the refusal lists every gap and the next action for each. Existing clients can complete
 sign-off with the brief and design they have after upgrade and sync; they do not need to add
 prototype design files for this gate.
-Fix all findings from one sign-off review in one fix, then retry `forge decision accept client-signoff`.
+Fix all findings from one sign-off review in one fix. Run the printed repair command from
+the sign-off checkout that the refusal names. The repair includes the sign-off record and
+publishes its earlier review commits, even when that checkout's first fix already merged.
+After the repair merges, retry `forge decision accept client-signoff` from its checkout.
+The record keeps earlier rounds and owner choices after a squash merge or a move to another computer.
 If the review engine fails, fix the engine problem and run the accept command again.
 A canvas-only sign-off needs no working build. A working build gets a full first product review.
 Each later attempt reviews only product files changed since the previous review and its open findings.

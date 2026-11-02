@@ -451,7 +451,7 @@ def _app_files(top: Path, names: list[str], ref: str | None = None) -> list[str]
 
 def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence: str,
                     *, unchanged: bool = False) -> str:
-    """Keep sign-off rounds in git and reuse the review loop's notes and owner choices."""
+    """Keep sign-off rounds in the record across squash merges and reuse owner choices."""
     from forge import close, review, score
 
     rel = ".factory/client-signoff.json"
@@ -459,7 +459,8 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     saved = document
     previous = saved.get("review") or {}
     inputs = _digest(json.dumps([answers, evidence, story.agents_section(top, "Review rules"), constitution(top)]))
-    history = review._history(top, "client-signoff", "", previous, path=rel)
+    history = saved.get("rounds") or review._history(
+        top, "client-signoff", "", previous, path=rel)
     choice, reason = getattr(args, "resolve", None), getattr(args, "reason", None)
     next_step = ('forge decision accept client-signoff --by "<name>" '
                  '--resolve <accept|more|split> --reason "<human\'s choice>"')
@@ -488,9 +489,10 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
             repo.commit_state("Record the owner's sign-off findings", repo.state_path(item), top=top)
         saved["stop"] = False
         saved["choice"] = {"resolve": choice, "reason": reason.strip()}
+        history[-1] = previous
+        saved["rounds"] = history
         _write(top / rel, json.dumps(document, indent=2) + "\n")
         repo.commit_state("Record the owner's sign-off choice", rel, top=top)
-        history = review._history(top, "client-signoff", "", previous, path=rel)
     if saved.get("stop"):
         repo.refuse((review.stop_question(top, "client-signoff", {
             "why": "Client sign-off", "done_when": "The prototype matches the client's answers", "review": previous},
@@ -519,7 +521,7 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
     opened = score.open_findings(result)
     critical = any(f["priority"] == "P0" for f in opened)
     held = review.blocking(result)
-    saved.update(review=result, inputs=inputs,
+    saved.update(review=result, rounds=history + [result], inputs=inputs,
                  stop=bool(held and len(history) + 1 >= 2 and not critical))
     _write(top / rel, json.dumps(document, indent=2) + "\n")
     repo.commit_state("Record the client sign-off review", rel, top=top)
@@ -535,8 +537,9 @@ def _signoff_review(top: Path, args: argparse.Namespace, answers: str, evidence:
         repair = (f"forge fix start {quote(f'Sign-off findings: {details}')} "
                   f"--done {quote(f'A review no longer finds: {details}')} --kind mechanical")
         problem = "Customer sign-off review found a blocking issue: " + "; ".join(f["title"] for f in opened)
-        repo.refuse((problem + ".", repair +
-            '\nThen fix and merge it, then forge decision accept client-signoff --by "<name>"'))
+        repo.refuse((problem + f".\nRun the next command from this sign-off checkout: {top}", repair +
+            '\nThen fix and merge it, then from the repair checkout run '
+            'forge decision accept client-signoff --by "<name>"'))
     return result["commit"]
 
 
